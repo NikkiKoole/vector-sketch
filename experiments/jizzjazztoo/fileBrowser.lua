@@ -16,6 +16,7 @@ function TableConcat(t1, t2)
 end
 
 local verticalCount = 0
+local browserWidth = 0
 function handleFileBrowserWheelMoved(browser, a, b)
     browser.scrollTop = browser.scrollTop + b
     if browser.scrollTop < 0 then browser.scrollTop = 0 end
@@ -80,6 +81,7 @@ function renderBrowser(browser, x, y, w, h, font)
     --runningX = 20
     runningY = browser.y
     local buttonWidth = w
+    browserWidth = w
     local buttonHeight = font:getHeight()
     local amount = h / buttonHeight
     browser.amount = amount
@@ -111,6 +113,7 @@ function renderBrowser(browser, x, y, w, h, font)
                     filename = string.gsub(filename, '.' .. browser.allowedExtensions[j], '')
                 end
             end
+            --print(browser.lastClickedFile, thing.path)
             if (browser.lastClickedFile and browser.lastClickedFile == thing.path) then
                 love.graphics.setColor(palette.orange)
             else
@@ -132,9 +135,10 @@ end
 
 function handleBrowserClick(browser, x, y, font)
     --if not browser.x or not browser.y then return end
-    local result = false
+    local result = nil
     local buttonHeight = font:getHeight()
-    if x > browser.x and x < browser.x + 200 and y > browser.y then
+    local clickedPath = nil
+    if x > browser.x and x < browser.x + browserWidth and y > browser.y then
         local index = math.floor((y - browser.y) / buttonHeight) + 1
         index = index + browser.scrollTop
 
@@ -147,7 +151,9 @@ function handleBrowserClick(browser, x, y, font)
             else
                 table.insert(browser.subdirs, thing.path)
             end
-            result = true
+
+            result = 'directory'
+            clickedPath = thing.path
             print('clicked a folder')
         elseif thing.type == 'file' then
             local path = createFilePath(browser.root, browser.subdirs)
@@ -161,10 +167,12 @@ function handleBrowserClick(browser, x, y, font)
                     local instr = (loadstring(contents)())
                     --channel.main2audio:push({ loadInstrument = { instrument = instr, path = thing.path } })
                 end
-                print('clicked a file')
+                result = 'file'
+                clickedPath = thing.path
+                print('clicked a file', thing.path)
             end
         end
     end
-
-    return result
+    print('restuning', result, clickedPath)
+    return result, clickedPath
 end

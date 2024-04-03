@@ -167,13 +167,16 @@ local function cleanPlayingSounds()
 end
 
 local function semitoneTriggered(number, instrumentIndex)
-    local sampleIndex = instruments[instrumentIndex].sampleIndex
-    local source = samples[sampleIndex].source:clone()
+    local sample = instruments[instrumentIndex].sample
+    -- local sampleIndex = instruments[instrumentIndex].sampleIndex
+    -- local source = samples[sampleIndex].source:clone()
+    local source = sample.source:clone()
     local tuning = 0                                        --instruments[instrumentIndex].tuning
     local pitch = getPitch(number, tuning)
     local range = getPitchVariationRange(number, 0, tuning) -- PARAMTERIZE THIS
     local pitchOffset = love.math.random() * range - range / 2
-    if samples[sampleIndex].cycle then
+    --if samples[sampleIndex].cycle then
+    if sample.cycle then
         --print('triggered a looping sound')
         source:setLooping(true)
     end

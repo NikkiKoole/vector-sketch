@@ -58,9 +58,6 @@ function saveJizzJazzFile(song)
         print(instruments[i])
     end
 
-
-
-
     --print(drumkit.order)
 
     -- for i = 1, #song.voices do
@@ -86,73 +83,66 @@ function saveJizzJazzFile(song)
     love.system.openURL(openURL)
 end
 
---local cutoffFrequency = 500 -- Adjust this to change the cutoff frequency
---local resonance = .10       -- Adjust this to change the resonance amount
---local filterQ = 0.707       -- 1 / math.sqrt(2) -- Quality factor
-
-
--- Function to apply a resonant low-pass filter to a sound data
---
---
---
-
-local function prepareCycles(names)
-    local result = {}
-    for i = 1, #names do
-        local name = names[i]
-        local path = 'samples/oscillators/' .. name .. ".wav"
-        local info = love.filesystem.getInfo(path)
-        if info then
-            local soundData = love.sound.newSoundData(path)
-
-            result[i] = {
-                path = path,
-                name = name,
-                source = love.audio.newSource(soundData),
-                cycle = true,
-                soundData =
-                    soundData
-            }
-        else
-            print('file not found!', path)
+function prepareSingleSample(root, pathArray, filePath)
+    local fullPath = root
+    local isCycle = false
+    for i = 1, #pathArray do
+        fullPath = fullPath .. '/' .. pathArray[i]
+        if pathArray[i] == 'oscillators' then
+            isCycle = true
         end
     end
-    return result
-end
-
-local function prepareSamples(names)
-    local result = {}
-    for i = 1, #names do
-        local name = names[i]
-        local path = 'samples/' .. name .. ".wav"
-        local info = love.filesystem.getInfo(path)
-        if info then
-            local soundData = love.sound.newSoundData(path)
-            result[i] = { name = name, source = love.audio.newSource(soundData), soundData = soundData }
-        else
-            print('file not found!', path)
-        end
+    print('isCycle', isCycle)
+    fullPath = fullPath .. '/' .. filePath
+    local name = filePath:gsub(".wav", ""):gsub(".WAV", "")
+    local info = love.filesystem.getInfo(fullPath)
+    if info then
+        local soundData = love.sound.newSoundData(fullPath)
+        local result = {
+            name = name,
+            source = love.audio.newSource(soundData),
+            soundData = soundData,
+            cycle = isCycle,
+            path = fullPath,
+            pathParts = { root = root, pathArray = pathArray, filePath = filePath }
+        }
+        return result
     end
-    return result
 end
 
 local function prepareDrumkit(drumkitFiles)
     local result = {}
     for k, v in pairs(drumkitFiles) do
         if k ~= 'order' then
-            local path = 'samples/' .. v .. ".wav"
-            local info = love.filesystem.getInfo(path)
+            print(k)
+            local root = 'samples'
+            local fullPath = root
+            local pathArray = v[1]
+            local name = v[2]:gsub(".wav", ""):gsub(".WAV", "")
+            for i = 1, #pathArray do
+                fullPath = fullPath .. '/' .. pathArray[i]
+            end
+            local filePath = name .. '.wav'
+            fullPath = fullPath .. '/' .. filePath
+            local info = love.filesystem.getInfo(fullPath)
             if info then
-                local soundData = love.sound.newSoundData(path)
-                result[k] = { path = path, v = v, source = love.audio.newSource(soundData), soundData = soundData }
-            else
-                print('drumkit fail: ', k, v)
+                local soundData = love.sound.newSoundData(fullPath)
+                result[k] = {
+                    name = name,
+                    source = love.audio.newSource(soundData),
+                    soundData = soundData,
+                    cycle = false,
+                    path = fullPath,
+                    pathParts = { root = root, pathArray = pathArray, filePath = filePath }
+                }
             end
         end
     end
+    --print(drumkitFiles)
     if drumkitFiles.order then
         for i = 1, #drumkitFiles.order do
             if drumkitFiles[drumkitFiles.order[i]] then
+
             else
                 print('order issue:', drumkitFiles.order[i])
             end
@@ -244,88 +234,13 @@ function love.load()
 
     sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
-    browser = fileBrowser("samples", {}, { "wav", "WAV", "lua" })
+    browser = fileBrowser("samples", {}, { "wav", "WAV" })
+    browserClicked = false
+    fileBrowserForSound = nil
 
-    max_octave = 8
-    octave = 4
 
-    -- sample stuff
-    local sampleFiles = {
-        'lulla/rainbows', 'lulla/rainbows', "mt70/Vibraphone Mid",
-        'legow/Little Blip', 'legow/Little Blip Low', 'legow/Simple', 'legow/Synth Bell 3',
-        "legow/Clean High", "legow/Pinky Flute", "legow/Bellancholia",
-        "legow/Sine Filtered1", "legow/Boring Simple", "legow/Soft Tooter",
-        "ac/0x722380", "ac/0x14146A0", "ac/0xC3B760",
-        'mt70/top1', 'mt70/top2', 'mt70/top3', 'mt70/Bdrum1',
-        'lulla/tubo', 'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi', 'lulla/C4-pitchpedal',
-        'lulla/soft sk', 'lulla/receiver', 'lulla/C3', 'lulla/lobassy',
-        "misc/junopiano", "misc/synth03", "misc/4", "misc/sf1-015", "misc/ANCR I Mallet 7",
-        'juno/brass', 'juno/wire', 'juno/flute',
-        'wavparty/melodicC06', 'wavparty/bassC05', 'wavparty/bassC06', 'wavparty/synth22', 'wavparty/synth36',
-    }
-
-    samples = prepareSamples(sampleFiles)
-    local cycles = prepareCycles({
-        'fr4 odissey/Fr4 - odissey 1',
-        'Analog Waveforms in C/Fr4 - TOM - 1501 ',
-        'Analog Waveforms in C/Fr4 - Aetherphon',
-        'Analog Waveforms in C/Fr4 - synthi 1',
-        'fr4 korg/Fr4 - Korg MS-10 1',
-        'fr4 korg/Fr4 - Korg MS-10 2',
-        'fr4 korg/Fr4 - Korg MS-10 3',
-        'fr4 korg/Fr4 - Korg MS-10 4',
-        'akwf/bw_squrounded/rAsymSqu_01',
-        'akwf/bw_squrounded/rAsymSqu_02',
-        'akwf/bw_squrounded/rAsymSqu_03',
-        'akwf/bw_squrounded/rSymSqu_01',
-        'akwf/bw_squrounded/rSymSqu_02',
-        'akwf/bw_squrounded/rSymSqu_03',
-        'akwf/bw_tri/tri_0001',
-        'akwf/bw_tri/tri_0002',
-        'akwf/bw_tri/tri_0003',
-        'akwf/bw_tri/tri_0004',
-        'akwf/bw_sin/sin_0001',
-        'akwf/bw_sin/sin_0002',
-        'akwf/bw_sin/sin_0003',
-        'akwf/bw_sin/sin_0004',
-        'akwf/bw_sin/sin_0005',
-        'akwf/birds/birds_0001',
-        'akwf/birds/birds_0002',
-        'akwf/birds/birds_0003',
-        'akwf/birds/birds_0004',
-        'akwf/stringbox/cheeze_0001',
-        'akwf/stringbox/cheeze_0002',
-        'akwf/stringbox/cheeze_0003',
-        'akwf/stringbox/cheeze_0004',
-        'akwf/stringbox/cheeze_0005',
-        'akwf/stringbox/cheeze_0006',
-        '100 Void Vertex SCW/music box',
-        '100 Void Vertex SCW/perc',
-        '100 Void Vertex SCW/twinkle',
-        '100 Void Vertex SCW/voice_04_Mello',
-        '100 Void Vertex SCW/maschine ',
-        '100 Void Vertex SCW/underground',
-        '100 Void Vertex SCW/in a dream',
-        '100 Void Vertex SCW/phase',
-        '100 Void Vertex SCW/operator metal tin',
-        '100 Void Vertex SCW/druqks',
-        '100 Void Vertex SCW/druqks 2',
-        'akwf/piano/AKWF_piano_0011',
-        'fr4 odissey/Fr4 - odissey 9',
-        'fr4 prophet/Fr4 - Prophet 5 3',
-        'fr4 prophet/Fr4 - Prophet 5 8',
-        'fr4 prophet/Fr4 - Prophet 5 9',
-        'fr4 prophet/Fr4 - Prophet 5 10',
-        'fr4 prophet/Fr4 - Prophet 5 11',
-        'fr4 prophet/Fr4 - Prophet 5 12',
-        'fr4 moog/Fr4 - Polymoog 1',
-        'fr4 moog/Fr4 - Polymoog 2',
-        'fr4 moog/Fr4 - Polymoog 3',
-        'fr4 moog/Fr4 - Polymoog 4',
-        'fr4 moog/Fr4 - Polymoog 5',
-    })
-    samples = TableConcat(cycles, samples)
-    sendMessageToAudioThread({ type = 'samples', data = samples })
+    max_octave                = 8
+    octave                    = 4
 
     local defaultAttackTime   = 0.2
     local defaultDecayTime    = 0.01
@@ -335,9 +250,14 @@ function love.load()
     instrumentIndex           = 1
     instruments               = {}
 
-    for i = 1, 5 do
+    local sample              = prepareSingleSample('samples', { "oscillators", "fr4 arp" }, 'Fr4 - ARP 2600 14.wav')
+    print(inspect(sample))
+    --prepareSingleSample('samples', {}, 'Triangles 101.wav')
+    --prepeareSingleSample('samples', { 'legow' }, 'Little Blip.wav')
+    for i = 1, 1 do
         instruments[i] = {
-            sampleIndex = 1,
+            --sampleIndex = 1,
+            sample = sample,
             tuning = 0,
             adsr = {
                 attack = defaultAttackTime,
@@ -361,19 +281,19 @@ function love.load()
 
     local drumkitCR78 = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
-        AC = 'cr78/Kick Accent',
-        BD = 'cr78/Kick',
-        SD = 'cr78/Snare',
-        LT = 'cr78/Conga Low',
-        MT = 'cr78/Bongo Low',
-        HT = 'cr78/Bongo High',
-        CH = 'cr78/HiHat',
-        OH = 'cr78/Tamb 2',
-        CY = 'cr78/Cymbal',
-        RS = 'cr78/Rim Shot',
-        TB = 'cr78/Guiro 1',
-        CPS = 'per01',
-        CB = 'cr78/Cowbell'
+        AC = { { 'cr78' }, 'Kick Accent' },
+        BD = { { 'cr78' }, 'Kick' },
+        SD = { { 'cr78' }, 'Snare' },
+        LT = { { 'cr78' }, 'Conga Low' },
+        MT = { { 'cr78' }, 'Bongo Low' },
+        HT = { { 'cr78' }, 'Bongo High' },
+        CH = { { 'cr78' }, 'HiHat' },
+        OH = { { 'cr78' }, 'Tamb 2' },
+        CY = { { 'cr78' }, 'Cymbal' },
+        RS = { { 'cr78' }, 'Rim Shot' },
+        TB = { { 'cr78' }, 'Guiro 1' },
+        CPS = { {}, 'per01' },
+        CB = { { 'cr78' }, 'Cowbell' }
     }
 
     local drumkitJazzkit = {
@@ -619,11 +539,6 @@ function love.keypressed(k)
         print("Octave:", octave)
     end
 
-    if k == 'tab' then
-        instruments[instrumentIndex].sampleIndex = (instruments[instrumentIndex].sampleIndex % #samples) + 1
-        sendMessageToAudioThread({ type = "instruments", data = instruments })
-    end
-
     if k == 'c' then
         instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning + 1
         sendMessageToAudioThread({ type = "instruments", data = instruments })
@@ -637,8 +552,12 @@ function love.keypressed(k)
     end
 
     if k == 'escape' then
-        sendMessageToAudioThread({ type = "paused", data = true });
-        love.event.quit()
+        if fileBrowserForSound then
+            fileBrowserForSound = nil
+        else
+            sendMessageToAudioThread({ type = "paused", data = true });
+            love.event.quit()
+        end
     end
 
     if k == 'space' then
@@ -844,8 +763,12 @@ function drawMoreInfoForInstrument()
         if labelbutton(' trig', 0, startY + cellH * 7, 100, cellH, singleInstrumentJob == 'trig').clicked then
             singleInstrumentJob = 'trig'
         end
+        if labelbutton(' wav', 0, startY + cellH * 8, 100, cellH, singleInstrumentJob == 'wav').clicked then
+            fileBrowserForSound = { type = 'drum', index = lookinIntoIntrumentAtIndex }
+            browser = fileBrowser("samples", {}, { "wav", "WAV" })
+        end
         if singleInstrumentJob then
-            if labelbutton(' reset', 0, startY + cellH * 8, 100, cellH).clicked then
+            if labelbutton(' reset', 0, startY + cellH * 9, 100, cellH).clicked then
                 for i = 1, #drumgrid do
                     local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
                     if (cell and cell.on) then
@@ -963,6 +886,8 @@ function drawMoreInfoForInstrument()
                 end
             end
         end
+
+
         if singleInstrumentJob == 'echo' then
             local xOff = (cellW - smallfont:getWidth('x')) / 2
             drawDrumMachineGrid(startX, startY + cellH, cellW, cellH, #drumgrid, 0)
@@ -1018,11 +943,35 @@ function love.wheelmoved(a, b)
 end
 
 function love.mousepressed(x, y, button)
-    if handleBrowserClick(browser, x, y, smallfont) then
-        browser = fileBrowser(browser.root, browser.subdirs,
-            browser.allowedExtensions,
-            browser.kind)
+    if fileBrowserForSound then
+        local bclicked, path = handleBrowserClick(browser, x, y, smallfont)
+        --print(path)
+        if bclicked then
+            --  mouseState.clickedSomething = true
+            browserClicked = true
+            --print('mouseState.clickedSomething', mouseState.clickedSomething)
+            if bclicked == 'directory' then
+                --print(browser.root, inspect(browser.subdirs))
+                browser = fileBrowser(browser.root, browser.subdirs,
+                    browser.allowedExtensions)
+            else
+                local sample = prepareSingleSample(browser.root, browser.subdirs, path)
+                if sample then
+                    if fileBrowserForSound.type == 'instrument' then
+                        instruments[instrumentIndex].sample = sample
+                        sendMessageToAudioThread({ type = "instruments", data = instruments })
+                    end
+                    if fileBrowserForSound.type == 'drum' then
+                        local key = drumkit.order[lookinIntoIntrumentAtIndex]
+                        drumkit[key] = sample
+                        updateDrumKitData()
+                    end
+                end
+                --print(browser.root, inspect(browser.subdirs), path)
+            end
+        end
     end
+    if browserClicked then return end
     -- handleBrowserClick(browser, x, y)
 
     if lookinIntoIntrumentAtIndex <= 0 then
@@ -1154,7 +1103,7 @@ function drawInstrumentBanks(x, y)
     local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
     local margin = 4
 
-    for i = 1, 5 do
+    for i = 1, #instruments do
         local font = smallfont
         love.graphics.setFont(font)
         love.graphics.setLineWidth(4)
@@ -1171,21 +1120,42 @@ function drawInstrumentBanks(x, y)
         if instrumentIndex == i then
             love.graphics.setColor(1, 1, 1)
         end
-
-        local name = samples[instruments[i].sampleIndex].name
+        -- print(instruments[i].sample.name)
+        local name = instruments[i].sample.name --samples[instruments[i].sampleIndex].name
         love.graphics.print(' ' .. name, x, y + (i - 1) * (rowHeight + margin))
-        local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
 
-        if r then
-            instrumentIndex = i
-            sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+
+        if browserClicked == false then
+            local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
+
+            if r then
+                print('click instr')
+                instrumentIndex = i
+                sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+            end
         end
+        if instrumentIndex == i then
+            local buttonw = font:getWidth('wav')
+            local buttonh = rowHeight / 2
+            local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
+            if labelbutton('wav', x, buttony, buttonw, buttonh, false).clicked == true then
+                print('gonna do the wav')
 
+
+                print(inspect(instruments[instrumentIndex].sample.pathParts))
+                local pathParts = instruments[instrumentIndex].sample.pathParts
+                browser = fileBrowser(browser.root, pathParts.pathArray,
+                    browser.allowedExtensions)
+                fileBrowserForSound = { type = 'instrument', index = instrumentIndex }
+            end
+        end
         if #recordedClips[i].clips > 0 and instrumentIndex == i then
             local buttonw = font:getWidth('edit clips')
             local buttonh = rowHeight / 2
             local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
-            labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false)
+            if labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false).clicked == true then
+                print('gonna do the clip')
+            end
         end
 
         --- the clips
@@ -1260,8 +1230,28 @@ function love.draw()
     drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
 
     love.graphics.setColor(1, 1, 1)
-    renderBrowser(browser, 50, 50, w / 3, h - 100, smallfont)
 
+
+    if fileBrowserForSound then
+        if fileBrowserForSound.type == 'instrument' then
+            if labelbutton('ok', (w / 2) + 64, 90, 100, 30, false).clicked == true then
+                fileBrowserForSound = nil
+            end
+
+            renderBrowser(browser, (w / 2) + 64, 120, (w / 2) - 128, h - 240, smallfont)
+        end
+    end
+    if fileBrowserForSound then
+        if fileBrowserForSound.type == 'drum' then
+            --fileBrowserForSound = { type = 'drum', index = lookinIntoIntrumentAtIndex }
+            if labelbutton('ok', 64, 90, 100, 30, false).clicked == true then
+                print('jojo')
+                fileBrowserForSound = nil
+            end
+
+            renderBrowser(browser, 64, 120, (w / 2) - 128, h - 240, smallfont)
+        end
+    end
     local font = smallfont
     love.graphics.setFont(font)
 
@@ -1318,6 +1308,8 @@ function love.draw()
         uiData.allDrumSemitoneOffset = v.value
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
+
+    browserClicked = false
 end
 
 function drawLabelledKnob(label, x, y, value, min, max)

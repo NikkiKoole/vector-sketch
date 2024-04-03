@@ -74,9 +74,10 @@ function getUIRect(x, y, w, h)
         mouseState.hoveredSomething = true
     end
     --if (mouseState.released and mouseState.clickedSomething == false)
-    if mouseState.click then
+    if mouseState.clickedSomething == false and mouseState.click then
         if pointInRect(mx, my, x, y, w, h) then
             result = true
+            mouseState.clickedSomething = true
         end
     end
 
