@@ -254,7 +254,7 @@ function love.load()
 
     --prepareSingleSample('samples', {}, 'Triangles 101.wav')
     --prepeareSingleSample('samples', { 'legow' }, 'Little Blip.wav')
-    for i = 1, 1 do
+    for i = 1, 3 do
         instruments[i] = {
             --sampleIndex = 1,
             sample = sample,
@@ -916,7 +916,7 @@ end
 
 function love.wheelmoved(a, b)
     if showDrumPatternPicker then
-        handleDrumPickerWheelMoved(drummPatternPickData, a, b)
+        handleDrumPickerWheelMoved(drummPatternPickData, 500, a, b)
     end
     if fileBrowserForSound then
         handleFileBrowserWheelMoved(browser, a, b)
@@ -1012,18 +1012,18 @@ function drawDrumParts(x, y)
     end
 end
 
-function handleDrumPickerWheelMoved(pickData, a, b)
+function handleDrumPickerWheelMoved(pickData, xOffset, a, b)
     local mx, my = love.mouse:getPosition()
     local columnWidth = 200
-    if mx > 32 and mx < columnWidth + 32 then
+    if mx > xOffset + 32 and mx < xOffset + columnWidth + 32 then
         pickData.scrollLeft = pickData.scrollLeft + b
     end
-    if mx > columnWidth + 32 and mx < (columnWidth * 2) + 32 then
+    if mx > xOffset + columnWidth + 32 and mx < xOffset + (columnWidth * 2) + 32 then
         pickData.scrollRight = pickData.scrollRight + b
     end
 end
 
-function drawDrumPatternPicker(pickData)
+function drawDrumPatternPicker(pickData, xOffset)
     local leftColumn = {}
     local yOffset = 100
     local font = smallfont
@@ -1034,7 +1034,7 @@ function drawDrumPatternPicker(pickData)
     local panelWidth = columnWidth * 2
 
     love.graphics.setColor(palette.bg0)
-    love.graphics.rectangle('fill', 32, 100, panelWidth, panelHeight)
+    love.graphics.rectangle('fill', xOffset + 32, 100, panelWidth, panelHeight)
     local index = pickData.pickedCategoryIndex --pickedDrumCategory
     local index2 = pickData.pickedItemIndex
 
@@ -1062,14 +1062,17 @@ function drawDrumPatternPicker(pickData)
 
         local str = drumPatterns.patterns[i].name
         local buttonW = columnWidth
-        if i == index then
-            love.graphics.setColor(palette.orange)
-            love.graphics.rectangle('fill', 32, (pickData.scrollLeft * fontH) + yOffset + (i - 1) * fontH, buttonW, fontH)
-            love.graphics.setColor(1, 1, 1, 1)
-        end
+        local thisY = (pickData.scrollLeft * fontH) + yOffset + (i - 1) * fontH
+        if thisY >= yOffset and thisY < yOffset + panelHeight then
+            if i == index then
+                love.graphics.setColor(palette.orange)
+                love.graphics.rectangle('fill', 32 + xOffset, thisY, buttonW, fontH)
+                love.graphics.setColor(1, 1, 1, 1)
+            end
 
-        if labelbutton(str, 32, (pickData.scrollLeft * fontH) + yOffset + (i - 1) * fontH, buttonW, fontH, true).clicked then
-            pickData.pickedCategoryIndex = i
+            if labelbutton(str, 32 + xOffset, thisY, buttonW, fontH).clicked then
+                pickData.pickedCategoryIndex = i
+            end
         end
     end
 
@@ -1079,17 +1082,27 @@ function drawDrumPatternPicker(pickData)
 
         local str = it.name
         local buttonW = columnWidth
-
-        if i == index2 then
-            love.graphics.setColor(palette.orange)
-            love.graphics.rectangle('fill', 32 + columnWidth, (pickData.scrollRight * fontH) + yOffset + (i - 1) * fontH,
-                buttonW,
-                fontH)
-            love.graphics.setColor(1, 1, 1, 1)
-        end
-        if labelbutton(str, 32 + columnWidth, (pickData.scrollRight * fontH) + yOffset + (i - 1) * fontH, buttonW, fontH, true).clicked then
-            drumPatternName = drumPatterns.pickPatternByIndex(index, i)
-            pickData.pickedItemIndex = i
+        local thisY = (pickData.scrollRight * fontH) + yOffset + (i - 1) * fontH
+        if thisY >= yOffset and thisY < yOffset + panelHeight then
+            if i == index2 then
+                love.graphics.setColor(palette.orange)
+                love.graphics.rectangle('fill', xOffset + 32 + columnWidth, thisY,
+                    buttonW,
+                    fontH)
+                love.graphics.setColor(1, 1, 1, 1)
+            end
+            if smallfont:getWidth(str) > columnWidth then
+                love.graphics.setFont(smallestfont)
+            end
+            if labelbutton(str, xOffset + 32 + columnWidth, thisY, buttonW, fontH).clicked then
+                drumPatternName, gridlength = drumPatterns.pickPatternByIndex(index, i)
+                pickData.pickedItemIndex = i
+                grid.columns = gridlength
+                updateDrumKitData()
+            end
+            if smallfont:getWidth(str) > columnWidth then
+                love.graphics.setFont(smallfont)
+            end
         end
     end
 end
@@ -1187,7 +1200,7 @@ function drawInstrumentBanks(x, y)
         local name = instruments[i].sample.name --samples[instruments[i].sampleIndex].name
         love.graphics.print(' ' .. name, x, y + (i - 1) * (rowHeight + margin))
 
-
+        -- if not showDrumPatternPicker then
         if browserClicked == false then
             local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
 
@@ -1201,7 +1214,7 @@ function drawInstrumentBanks(x, y)
             local buttonw = font:getWidth('wav')
             local buttonh = rowHeight / 2
             local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
-            if labelbutton('wav', x, buttony, buttonw, buttonh, false).clicked == true then
+            if labelbutton('wav', x + rowWidth - buttonw, buttony - buttonh, buttonw, buttonh, false).clicked == true then
                 --print('gonna do the wav')
 
 
@@ -1212,6 +1225,7 @@ function drawInstrumentBanks(x, y)
                 fileBrowserForSound = { type = 'instrument', index = instrumentIndex }
             end
         end
+        --  end
         if #recordedClips[i].clips > 0 and instrumentIndex == i then
             local buttonw = font:getWidth('edit clips')
             local buttonh = rowHeight / 2
@@ -1273,10 +1287,10 @@ function love.draw()
 
 
     if lookinIntoIntrumentAtIndex <= 0 then
-        if (not showDrumPatternPicker) then
-            drawDrumMachine()
-            drawMouseOverGrid()
-        end
+        --if (not showDrumPatternPicker) then
+        drawDrumMachine()
+        drawMouseOverGrid()
+        --end
     end
 
     if lookinIntoIntrumentAtIndex > 0 then
@@ -1341,7 +1355,7 @@ function love.draw()
         showDrumPatternPicker = not showDrumPatternPicker
     end
     if (showDrumPatternPicker) then
-        drawDrumPatternPicker(drummPatternPickData)
+        drawDrumPatternPicker(drummPatternPickData, 500)
     end
     --love.graphics.print(drumPatternName, 0, 32 + font:getHeight())
 
