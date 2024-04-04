@@ -100,7 +100,9 @@ function renderBrowser(browser, x, y, w, h, font)
 
     local mx, my = love.mouse.getPosition()
 
-    for i = 1 + browser.scrollTop, math.min(#browser.all, browser.scrollTop + amount) do
+    -- for i = 1 + browser.scrollTop, math.min(#browser.all, browser.scrollTop + amount) do
+    for i = 1, #browser.all do
+        runningY = browser.y + (buttonHeight * ((i - 1) - browser.scrollTop))
         local thing = browser.all[i]
         --if thing then
         if mx > x and mx < x + w and my > runningY and my < runningY + buttonHeight then
@@ -131,7 +133,7 @@ function renderBrowser(browser, x, y, w, h, font)
             love.graphics.print(' ' .. filename, x, runningY)
         end
         --end
-        runningY = runningY + buttonHeight
+        --runningY = runningY + buttonHeight
     end
     love.graphics.setScissor()
 end
