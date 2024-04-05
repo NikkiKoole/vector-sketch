@@ -251,14 +251,19 @@ function love.load()
     instrumentIndex           = 1
     instruments               = {}
 
-    local sample              = prepareSingleSample('samples', { "oscillators", "fr4 arp" }, 'Fr4 - ARP 2600 14.wav')
-
+    local pickedSamples       = {
+        prepareSingleSample('samples', { "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav'),
+        prepareSingleSample('samples', { "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
+        prepareSingleSample('samples', { "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
+        prepareSingleSample('samples', { "oscillators", "100 Void Vertex SCW" }, 'twinkle.wav'),
+        prepareSingleSample('samples', { "legow" }, 'Pinky Flute.wav'),
+    }
     --prepareSingleSample('samples', {}, 'Triangles 101.wav')
     --prepeareSingleSample('samples', { 'legow' }, 'Little Blip.wav')
-    for i = 1, 3 do
+    for i = 1, 5 do
         instruments[i] = {
             --sampleIndex = 1,
-            sample = sample,
+            sample = pickedSamples[i],
             tuning = 0,
             adsr = {
                 attack = defaultAttackTime,
@@ -1228,7 +1233,6 @@ function drawInstrumentBanks(x, y)
             local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
 
             if r then
-                print('click instr')
                 instrumentIndex = i
                 sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
             end
