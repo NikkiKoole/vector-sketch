@@ -226,6 +226,7 @@ function love.load()
     recording = false
     playing = false
 
+    waitingForTriggerToStartRecording = false
     activeDrumPatternIndex = 1
     --queuedDrumPatternIndex = 0 --  todo
 
@@ -473,13 +474,14 @@ function love.keyreleased(k)
             tuningOffset = pressedKeys[k].tuning
             formerOctave = pressedKeys[k].octave
             formerScale = pressedKeys[k].scale
+            formerInstrumentIndex = pressedKeys[k].instrumentIndex
             pressedKeys[k] = nil
         end
         sendMessageToAudioThread({
             type = "semitoneReleased",
             data = {
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], formerScale), formerOctave) + tuningOffset,
-
+                instrumentIndex = formerInstrumentIndex
             }
         });
     end
@@ -496,13 +498,30 @@ function love.keypressed(k)
     end
 
     if (usingMap[k] ~= nil) then
+        if (waitingForTriggerToStartRecording) then
+            waitingForTriggerToStartRecording = false
+            -- start recording
+            --  sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
+            sendMessageToAudioThread({ type = "mode", data = 'record' });
+            sendMessageToAudioThread({ type = "paused", data = false });
+            playing = false
+            recording = true
+        end
+
+
         sendMessageToAudioThread({
             type = "semitonePressed",
             data = {
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + instruments[instrumentIndex].tuning,
             }
         });
-        pressedKeys[k] = { tuning = instruments[instrumentIndex].tuning, octave = octave, scale = scale }
+        pressedKeys[k] = {
+            tuning = instruments[instrumentIndex].tuning,
+            octave = octave,
+            scale = scale,
+            instrumentIndex =
+                instrumentIndex
+        }
     end
 
     if k == 'z' then
@@ -540,6 +559,9 @@ function love.keypressed(k)
         playing = not playing
 
         if not playing then
+            for i = 1, #instruments do
+                sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = i })
+            end
             sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
             sendMessageToAudioThread({ type = "paused", data = true });
         end
@@ -558,6 +580,7 @@ function love.keypressed(k)
             sendMessageToAudioThread({ type = "paused", data = true });
             sendMessageToAudioThread({ type = "finalizeRecordedDataOnIndex", data = instrumentIndex })
             sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
+            sendMessageToAudioThread({ type = "mode", data = 'play' });
         end
         if recording then
             sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
@@ -1350,6 +1373,11 @@ function love.draw()
     --print()
     --drawLabelledKnob(drumPatternName, bx, by, adsr.release, 0, 1)
 
+
+
+    if labelbutton('trigger', 0, 0, font:getWidth('trigger'), font:getHeight(), waitingForTriggerToStartRecording).clicked then
+        waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
+    end
     if labelbutton(drumPatternName, 0, 32 + font:getHeight(), font:getWidth(drumPatternName),
             font:getHeight()).clicked then
         showDrumPatternPicker = not showDrumPatternPicker

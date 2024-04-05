@@ -676,7 +676,7 @@ while (true) do
 
         if v.type == 'semitoneReleased' then
             local semitone = v.data.semitone
-            semitoneReleased(semitone, instrumentIndex)
+            semitoneReleased(semitone, v.data.instrumentIndex)
         end
 
         if v.type == 'semitonePressed' then
