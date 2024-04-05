@@ -188,6 +188,10 @@ function love.load()
         allDrumSemitoneOffset = 0
     }
 
+    messageAlpha = 0
+    msg = nil
+    messageTime = nil
+
     palette = {
         ['red'] = '#cc241d',
         ['green'] = '#98971a',
@@ -265,6 +269,7 @@ function love.load()
             --sampleIndex = 1,
             sample = pickedSamples[i],
             tuning = 0,
+            realtimeTuning = 0,
             adsr = {
                 attack = defaultAttackTime,
                 decay = defaultDecayTime,
@@ -445,7 +450,7 @@ function toggleScale()
 
     local nextScaleKey = getNextScaleKey()
     scale = scales[nextScaleKey]
-    print("Scale:", nextScaleKey)
+    return nextScaleKey
 end
 
 function fitKeyOffsetInScale(offset, scale)
@@ -494,6 +499,24 @@ end
 
 --local chordIndex = 1
 
+function updateMessage()
+    if msg and messageTime then
+        local now = love.timer.getTime()
+        if now - messageTime < 1 then
+            messageAlpha = 1.0 - (now - messageTime)
+        else
+            msg = nil
+        end
+    end
+    --messageAlpha
+end
+
+function message(str)
+    messageAlpha = 1
+    messageTime = love.timer.getTime()
+    msg = str
+end
+
 function love.keypressed(k)
     if k == '-' then
         local name, gridlength = drumPatterns.pickExistingPattern(drumgrid, drumkit)
@@ -529,24 +552,43 @@ function love.keypressed(k)
         }
     end
 
+
+
     if k == 'z' then
         octave = math.max(octave - 1, 0)
-        print("Octave:", octave)
+        --print("Octave:", octave)
+        message('octave: ' .. octave)
     elseif k == 'x' then
         octave = math.min(octave + 1, max_octave)
-        print("Octave:", octave)
+        -- print("Octave:", octave)
+        message('octave: ' .. octave)
     end
 
     if k == 'c' then
-        instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning + 1
-        sendMessageToAudioThread({ type = "instruments", data = instruments })
+        if love.keyboard.isDown('lshift') then
+            instruments[instrumentIndex].realtimeTuning = instruments[instrumentIndex].realtimeTuning + 1
+            sendMessageToAudioThread({ type = "instruments", data = instruments })
+            message('rt tuning: ' .. instruments[instrumentIndex].realtimeTuning)
+        else
+            instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning + 1
+            sendMessageToAudioThread({ type = "instruments", data = instruments })
+            message('tuning: ' .. instruments[instrumentIndex].tuning)
+        end
     end
     if k == 'v' then
-        instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning - 1
-        sendMessageToAudioThread({ type = "instruments", data = instruments })
+        if love.keyboard.isDown('lshift') then
+            instruments[instrumentIndex].realtimeTuning = instruments[instrumentIndex].realtimeTuning - 1
+            sendMessageToAudioThread({ type = "instruments", data = instruments })
+            message('rt tuning: ' .. instruments[instrumentIndex].realtimeTuning)
+        else
+            instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning - 1
+            sendMessageToAudioThread({ type = "instruments", data = instruments })
+            message('tuning: ' .. instruments[instrumentIndex].tuning)
+        end
     end
     if k == 'b' then
-        toggleScale()
+        local s = toggleScale()
+        message('scale: ' .. s)
     end
 
     if k == 'escape' then
@@ -598,6 +640,7 @@ function love.keypressed(k)
 end
 
 function love.update(dt)
+    updateMessage()
     repeat
         local msg = getMessageFromAudioThread()
         if msg then
@@ -1227,38 +1270,41 @@ function drawInstrumentBanks(x, y)
         -- print(instruments[i].sample.name)
         local name = instruments[i].sample.name --samples[instruments[i].sampleIndex].name
         love.graphics.print(' ' .. name, x, y + (i - 1) * (rowHeight + margin))
+        if (not showDrumPatternPicker) then
+            -- if not showDrumPatternPicker then
+            if browserClicked == false then
+                local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
 
-        -- if not showDrumPatternPicker then
-        if browserClicked == false then
-            local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
-
-            if r then
-                instrumentIndex = i
-                sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+                if r then
+                    instrumentIndex = i
+                    sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+                end
             end
-        end
-        if instrumentIndex == i then
-            local buttonw = font:getWidth('wav')
-            local buttonh = rowHeight / 2
-            local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
-            if labelbutton('wav', x + rowWidth - buttonw, buttony - buttonh, buttonw, buttonh, false).clicked == true then
-                --print('gonna do the wav')
+
+            if instrumentIndex == i then
+                local buttonw = font:getWidth('wav')
+                local buttonh = rowHeight / 2
+                local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
+
+                if labelbutton('wav', x + rowWidth - buttonw, buttony - buttonh, buttonw, buttonh, false).clicked == true then
+                    --print('gonna do the wav')
 
 
-                print(inspect(instruments[instrumentIndex].sample.pathParts))
-                local pathParts = instruments[instrumentIndex].sample.pathParts
-                browser = fileBrowser(browser.root, pathParts.pathArray,
-                    browser.allowedExtensions)
-                fileBrowserForSound = { type = 'instrument', index = instrumentIndex }
+                    -- print(inspect(instruments[instrumentIndex].sample.pathParts))
+                    local pathParts = instruments[instrumentIndex].sample.pathParts
+                    browser = fileBrowser(browser.root, pathParts.pathArray,
+                        browser.allowedExtensions)
+                    fileBrowserForSound = { type = 'instrument', index = instrumentIndex }
+                end
             end
-        end
-        --  end
-        if #recordedClips[i].clips > 0 and instrumentIndex == i then
-            local buttonw = font:getWidth('edit clips')
-            local buttonh = rowHeight / 2
-            local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
-            if labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false).clicked == true then
-                print('gonna do the clip')
+            --  end
+            if #recordedClips[i].clips > 0 and instrumentIndex == i then
+                local buttonw = font:getWidth('edit clips')
+                local buttonh = rowHeight / 2
+                local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
+                if labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false).clicked == true then
+                    print('gonna do the clip')
+                end
             end
         end
 
@@ -1373,6 +1419,11 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, .5)
     love.graphics.print(debugstring, 0, h - font:getHeight())
 
+
+    if msg then
+        love.graphics.setColor(1, 1, 1, messageAlpha)
+        love.graphics.print(msg, w - font:getWidth(msg), h - font:getHeight())
+    end
 
     --print()
     --drawLabelledKnob(drumPatternName, bx, by, adsr.release, 0, 1)

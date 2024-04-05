@@ -141,6 +141,7 @@ local function updatePlayingSoundsWithLFO()
             --local lfoValue = generateSineLFO(timeThis, 5) -- PARAMTERIZE THIS
             local lfoValue      = generateNoiseLFO(timeThis, 1) -- PARAMTERIZE THIS
             --print(lfoValue)
+
             local tuning        = instruments[it.instrumentIndex].tuning
             local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
             local lfoAmplitude  = range
@@ -171,7 +172,7 @@ local function semitoneTriggered(number, instrumentIndex)
     -- local sampleIndex = instruments[instrumentIndex].sampleIndex
     -- local source = samples[sampleIndex].source:clone()
     local source = sample.source:clone()
-    local tuning = 0                                        --instruments[instrumentIndex].tuning
+    local tuning = instruments[instrumentIndex].realtimeTuning
     local pitch = getPitch(number, tuning)
     local range = getPitchVariationRange(number, 0, tuning) -- PARAMTERIZE THIS
     local pitchOffset = love.math.random() * range - range / 2
