@@ -116,7 +116,8 @@ end
 local function generatePulseLFO(time, lfoFrequency, dutyCycle)
     local phase = time * lfoFrequency
     return (phase % 1 < dutyCycle) and 1 or -1
-end
+end    print(k, j)
+                
 local function generateSineLFO(time, lfoFrequency)
     return math.sin(2 * math.pi * lfoFrequency * time)
 end
@@ -557,8 +558,12 @@ function handlePlayingRecordedData()
     if true then
         local loopRounder = recordedData.meta and recordedData.meta.loopRounder or 1
         local beat = (math.floor(lastBeat) % loopRounder)
+        --print(beat, tick, recordedData.meta.loopRounder)
         local tick = math.floor(lastTick)
 
+        local percentageDonePlaying = ((beat*PPQN)+ tick) / (loopRounder * PPQN)
+        channel.audio2main:push({ type = 'looperPercentage', data = percentageDonePlaying })
+        --print(percentageDonePlaying)
         --missedTicks
         for j = 1, #missedTicks do
             local t = missedTicks[j]

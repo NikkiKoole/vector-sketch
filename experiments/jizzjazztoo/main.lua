@@ -215,8 +215,9 @@ function love.load()
     sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     myTick = 0
     myBeat = 0
-    myBeatInMeasure = 4
+    myBeatInMeasure = 0--4myPlayingCellPercentage
     myNumPlayingSounds = 0
+    myPlayingCellPercentage = 0
 
     bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
     smallestfont = love.graphics.newFont('WindsorBT-Roman.otf', 16)
@@ -644,6 +645,9 @@ function love.update(dt)
     repeat
         local msg = getMessageFromAudioThread()
         if msg then
+            if msg.type == 'looperPercentage' then 
+                myPlayingCellPercentage = msg.data
+            end
             if msg.type == 'tickUpdate' then
                 myTick = msg.data.tick
             end
@@ -1241,6 +1245,8 @@ function drawADSRForActiveInstrument(x, y)
     end
 end
 
+
+
 function drawInstrumentBanks(x, y)
     local font = smallfont
     love.graphics.setFont(font)
@@ -1333,20 +1339,20 @@ function drawInstrumentBanks(x, y)
                 love.graphics.rectangle('fill', x, y, clipSize, clipSize)
             end
 
+
+
             local r = getUIRect(x, y, clipSize, clipSize)
             if r then
                 for k = 1, #recordedClips[i].clips do
-                    print(k, j)
                     if (k ~= j) then
-                        recordedClips[i].clips[k].meta.isPlaying = false
+                        recordedClips[i].clips[k].meta.isSelected = false
                     else
-                        recordedClips[i].clips[k].meta.isPlaying = not recordedClips[i].clips[k].meta.isPlaying
+                        recordedClips[i].clips[k].meta.isSelected = not recordedClips[i].clips[k].meta.isSelected
                     end
-                    -- recordedClips[i].clips[j].meta.isPlaying = not recordedClips[i].clips[j].meta.isPlaying
                 end
-                print('only one!')
+                
             end
-            if (recordedClips[i].clips[j].meta.isPlaying) then
+            if (recordedClips[i].clips[j].meta.isSelected) then
                 love.graphics.setColor(1, 1, 1, 0.8)
                 love.graphics.rectangle('line', x, y, clipSize, clipSize)
             end
@@ -1359,6 +1365,15 @@ function drawInstrumentBanks(x, y)
             local xOff = (clipSize - font:getWidth(str .. '')) / 2
             love.graphics.setColor(0, 0, 0, 0.8)
             love.graphics.print(str .. '', x + xOff, y)
+
+            if instrumentIndex == i then
+                love.graphics.setColor(1, 1, 1, 0.8)
+                local doneCircleRadius = clipSize/3
+                local offset = clipSize/2
+                love.graphics.arc('fill',x + offset,y+offset,doneCircleRadius, -math.pi/2, (myPlayingCellPercentage * math.pi*2) -math.pi/2)
+                --myPlayingCellPercentage
+            end
+            
         end
     end
 end
