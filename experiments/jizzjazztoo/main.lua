@@ -1332,6 +1332,25 @@ function drawInstrumentBanks(x, y)
                 love.graphics.setColor(color[1], color[2], color[3], 0.3)
                 love.graphics.rectangle('fill', x, y, clipSize, clipSize)
             end
+
+            local r = getUIRect(x, y, clipSize, clipSize)
+            if r then
+                for k = 1, #recordedClips[i].clips do
+                    print(k, j)
+                    if (k ~= j) then
+                        recordedClips[i].clips[k].meta.isPlaying = false
+                    else
+                        recordedClips[i].clips[k].meta.isPlaying = not recordedClips[i].clips[k].meta.isPlaying
+                    end
+                    -- recordedClips[i].clips[j].meta.isPlaying = not recordedClips[i].clips[j].meta.isPlaying
+                end
+                print('only one!')
+            end
+            if (recordedClips[i].clips[j].meta.isPlaying) then
+                love.graphics.setColor(1, 1, 1, 0.8)
+                love.graphics.rectangle('line', x, y, clipSize, clipSize)
+            end
+
             local font = smallestfont
             love.graphics.setFont(smallestfont)
             local loopRounder = (recordedClips[i].clips[j].meta.loopRounder)

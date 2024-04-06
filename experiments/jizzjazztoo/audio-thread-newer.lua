@@ -96,11 +96,44 @@ local function updateADSREnvelopesForPlayingSounds(dt)
     end
 end
 
+
+
+local function generateSquareLFO(time, lfoFrequency)
+    local phase = time * lfoFrequency
+    return (math.floor(phase) % 2 == 0) and 1 or -1
+end
+
+local function generateTriangleLFO(time, lfoFrequency)
+    local phase = time * lfoFrequency
+    return 2 * math.abs((phase - 0.25 * math.floor(4 * phase + 0.5)) - 0.5) - 1
+end
+
+local function generateRoundedTriangleLFO(time, lfoFrequency)
+    local phase = time * lfoFrequency
+    return 2 * (0.5 - math.abs(phase - math.floor(phase + 0.5))) - 1
+end
+--generatePulseLFO: Produces a pulse wave LFO with a specified duty cycle (percentage of time spent at the maximum amplitude).
+local function generatePulseLFO(time, lfoFrequency, dutyCycle)
+    local phase = time * lfoFrequency
+    return (phase % 1 < dutyCycle) and 1 or -1
+end
 local function generateSineLFO(time, lfoFrequency)
     return math.sin(2 * math.pi * lfoFrequency * time)
 end
 local function generateNoiseLFO(time, lfoFrequency)
     return love.math.noise(2 * math.pi * lfoFrequency * time)
+end
+local function generateSawtoothLFO(time, lfoFrequency)
+    local phase = time * lfoFrequency
+    return 2 * (phase % 1) - 1
+end
+local function generateReverseSawtoothLFO(time, lfoFrequency)
+    local phase = time * lfoFrequency
+    return 1 - 2 * (phase % 1)
+end
+local function generateExponentialDecayLFO(time, lfoFrequency, decayRate)
+    local phase = time * lfoFrequency
+    return math.exp(-decayRate * phase) * 2 - 1
 end
 
 local function getUntunedPitch(semitone)
@@ -134,15 +167,14 @@ end
 
 local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
-        local useLFO = false
+        local useLFO = true
         if useLFO then
             local it            = playingSounds[i]
-            local timeThis      = love.timer.getTime() - it.timeNoteOn
-            --local lfoValue = generateSineLFO(timeThis, 5) -- PARAMTERIZE THIS
-            local lfoValue      = generateNoiseLFO(timeThis, 1) -- PARAMTERIZE THIS
-            --print(lfoValue)
-
-            local tuning        = instruments[it.instrumentIndex].tuning
+            local timeThis      = love.timer.getTime() - it.timeNoteOn -- PARAMTERIZE THIS (usefull when doing sine)
+            --local lfoValue      = generateSineLFO(timeThis, .5)        -- PARAMTERIZE THIS
+            local lfoValue      = generateNoiseLFO(timeThis, .25)      -- PARAMTERIZE THIS
+            --local lfoValue      = generateExponentialDecayLFO(timeThis, .5, -1)
+            local tuning        = instruments[it.instrumentIndex].realtimeTuning
             local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
             local lfoAmplitude  = range
             local lfoPitchDelta = (lfoValue * lfoAmplitude)
