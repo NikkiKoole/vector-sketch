@@ -46,6 +46,7 @@ local instruments       = {}
 local instrumentIndex   = 1
 
 local recordedData      = {}
+local recordedClips = {}
 
 local uiData            = nil
 
@@ -556,6 +557,10 @@ end
 
 function handlePlayingRecordedData()
     if true then
+        print(#recordedClips)
+        for i =1, #recordedClips do 
+            print(i, #recordedClips[i].clips)
+        end
         local loopRounder = recordedData.meta and recordedData.meta.loopRounder or 1
         local beat = (math.floor(lastBeat) % loopRounder)
         --print(beat, tick, recordedData.meta.loopRounder)
@@ -653,6 +658,9 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'clips' then 
+            recordedClips = v.data
+        end
         if v.type == 'samples' then
             samples = v.data
         end

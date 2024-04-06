@@ -662,6 +662,7 @@ function love.update(dt)
                 local index = msg.data.instrumentIndex
                 local clip = msg.data.clip
                 table.insert(recordedClips[index].clips, clip)
+                sendMessageToAudioThread({ type = "clips", data = recordedClips })
             end
         end
     until not msg
@@ -1350,8 +1351,10 @@ function drawInstrumentBanks(x, y)
                         recordedClips[i].clips[k].meta.isSelected = not recordedClips[i].clips[k].meta.isSelected
                     end
                 end
+                sendMessageToAudioThread({ type = "clips", data = recordedClips })
                 
             end
+
             if (recordedClips[i].clips[j].meta.isSelected) then
                 love.graphics.setColor(1, 1, 1, 0.8)
                 love.graphics.rectangle('line', x, y, clipSize, clipSize)
