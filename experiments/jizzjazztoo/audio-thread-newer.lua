@@ -46,7 +46,7 @@ local instruments       = {}
 local instrumentIndex   = 1
 
 local recordedData      = {}
-local recordedClips = {}
+local recordedClips     = {}
 
 local uiData            = nil
 
@@ -80,10 +80,9 @@ local function generateADSR(it, now)
         envelopeValue = sustainLevel * math.exp(-releaseDuration / releaseTime)
         if it.source:isLooping() and envelopeValue < 0.001 then
             it.source:stop()
-            -- print('stoping')
         end
     end
-    --print(envelopeValue)
+
     return envelopeValue
 end
 
@@ -117,8 +116,8 @@ end
 local function generatePulseLFO(time, lfoFrequency, dutyCycle)
     local phase = time * lfoFrequency
     return (phase % 1 < dutyCycle) and 1 or -1
-end    print(k, j)
-                
+end
+
 local function generateSineLFO(time, lfoFrequency)
     return math.sin(2 * math.pi * lfoFrequency * time)
 end
@@ -156,7 +155,7 @@ local function getPitch(semitone, tuning)
     local sampledAtSemitone = 60 + tuning
     local usingSemitone = (semitone - sampledAtSemitone)
     local result = 2 ^ (usingSemitone / 12)
-    --print(result)
+
     return result
 end
 
@@ -192,7 +191,6 @@ local function cleanPlayingSounds()
         local it = playingSounds[i]
         if (it.timeNoteOff and it.timeNoteOff < now) then
             if not it.source:isPlaying() then
-                --  print('removing')
                 it.source:release()
                 table.remove(playingSounds, i)
                 channel.audio2main:push({ type = 'numPlayingSounds', data = { numbers = #playingSounds } })
@@ -212,11 +210,10 @@ local function semitoneTriggered(number, instrumentIndex)
     local pitchOffset = love.math.random() * range - range / 2
     --if samples[sampleIndex].cycle then
     if sample.cycle then
-        --print('triggered a looping sound')
         source:setLooping(true)
     end
 
-    --print('play!')
+
     local monophonic = false
     if monophonic == true then
         local foundInstrumentSoundAlready = nil
@@ -228,7 +225,7 @@ local function semitoneTriggered(number, instrumentIndex)
         if foundInstrumentSoundAlready then
             --foundInstrumentSoundAlready.source:stop()
             foundInstrumentSoundAlready.source:setPitch(pitch + pitchOffset)
-            -- print('found already!', foundInstrumentSoundAlready)
+
             foundInstrumentSoundAlready.pitch = pitch + pitchOffset
             --foundInstrumentSoundAlready.source = source
             foundInstrumentSoundAlready.semitone = number
@@ -237,7 +234,6 @@ local function semitoneTriggered(number, instrumentIndex)
         end
     end
     if not foundInstrumentSoundAlready or monophonic == false then
-        -- print('not found already!', foundInstrumentSoundAlready)
         source:setPitch(pitch + pitchOffset)
         source:setVolume(0)
         source:play()
@@ -264,7 +260,6 @@ local function semitoneReleased(semitone, instrumentIndex)
                     recordedData[i].duration = totalDeltaTicks
                     recordedData[i].beatOff = math.floor(lastBeat)
                     recordedData[i].tickOff = math.floor(lastTick)
-                    -- print('got here!', i, math.floor(lastBeat), math.floor(lastTick))
                 end
             end
         end
@@ -544,44 +539,47 @@ function handlePlayingDrumGrid()
     end
 end
 
-function doReplayRecorded(beat, tick)
-    for i = 1, #recordedData do
-        if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
-            semitoneReleased(recordedData[i].semitone, recordedData[i].instrumentIndex)
+function doReplayRecorded(clip, beat, tick)
+    for i = 1, #clip do
+        if clip[i].beatOff == beat and clip[i].tickOff == tick then
+            semitoneReleased(clip[i].semitone, clip[i].instrumentIndex)
         end
-        if recordedData[i].beat == beat and recordedData[i].tick == tick then
-            semitoneTriggered(recordedData[i].semitone, recordedData[i].instrumentIndex)
+        if clip[i].beat == beat and clip[i].tick == tick then
+            semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex)
         end
     end
 end
 
 function handlePlayingRecordedData()
     if true then
-        print(#recordedClips)
-        for i =1, #recordedClips do 
-            print(i, #recordedClips[i].clips)
-        end
-        local loopRounder = recordedData.meta and recordedData.meta.loopRounder or 1
-        local beat = (math.floor(lastBeat) % loopRounder)
-        --print(beat, tick, recordedData.meta.loopRounder)
-        local tick = math.floor(lastTick)
+        for i = 1, #recordedClips do
+            for j = 1, #(recordedClips[i].clips) do
+                local it = recordedClips[i].clips[j]
+                if it.meta.isSelected then
+                    local loopRounder = it.meta and it.meta.loopRounder or 1
+                    local beat = (math.floor(lastBeat) % loopRounder)
+                    local tick = math.floor(lastTick)
 
-        local percentageDonePlaying = ((beat*PPQN)+ tick) / (loopRounder * PPQN)
-        channel.audio2main:push({ type = 'looperPercentage', data = percentageDonePlaying })
-        --print(percentageDonePlaying)
-        --missedTicks
-        for j = 1, #missedTicks do
-            local t = missedTicks[j]
-            local b = beat
-            if (t > tick) then
-                --print('oh dear, missed tick over the beat boundary', t, tick)
-                b = beat - 1
+                    local percentageDonePlaying = ((beat * PPQN) + tick) / (loopRounder * PPQN)
+                    channel.audio2main:push({ type = 'looperPercentage', data = { percentage = percentageDonePlaying, instrumentIndex = i, clipIndex = j } })
+                    --print(percentageDonePlaying)
+                    --missedTicks
+                    for j = 1, #missedTicks do
+                        local t = missedTicks[j]
+                        local b = beat
+                        if (t > tick) then
+                            --print('oh dear, missed tick over the beat boundary', t, tick)
+                            b = beat - 1
+                        end
+                        doReplayRecorded(it, b, t)
+                    end
+                    missedTicks = {}
+
+                    doReplayRecorded(it, beat, tick)
+                end
             end
-            doReplayRecorded(b, t)
+            --print(i, #recordedClips[i].clips)
         end
-        missedTicks = {}
-
-        doReplayRecorded(beat, tick)
     end
 end
 
@@ -631,6 +629,7 @@ while (true) do
                 handlePlayingDrumGrid()
             end
             if recording then
+                handlePlayingRecordedData()
                 handlePlayingDrumGrid()
             end
         end
@@ -658,7 +657,7 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
-        if v.type == 'clips' then 
+        if v.type == 'clips' then
             recordedClips = v.data
         end
         if v.type == 'samples' then
@@ -668,7 +667,6 @@ while (true) do
             for i = 1, #recordedData do
                 local it = recordedData[i]
 
-                --print(recordedData[i].beatOff, recordedData[i].tickOff)
                 if it.instrumentIndex ~= v.data then
                     print('SUHIAUSDH???')
                 end
@@ -696,9 +694,8 @@ while (true) do
             local index = v.data
             for i = 1, #playingSounds do
                 local it = playingSounds[i]
-                --print(it.instrumentIndex, index)
+
                 if it.instrumentIndex == index then
-                    --print('stopped a sound!')
                     it.source:stop()
                 end
             end

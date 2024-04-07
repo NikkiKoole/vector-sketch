@@ -21,12 +21,9 @@ local browserWidth = 0
 function handleFileBrowserWheelMoved(browser, a, b)
     browser.scrollTop = browser.scrollTop + b
     if browser.scrollTop < 0 then browser.scrollTop = 0 end
-    -- print(verticalCount, #browser.all)
     local maxScrollTop = math.max(#browser.all - verticalCount, 0)
-    -- print(maxScrollTop)
     if browser.scrollTop > maxScrollTop then browser.scrollTop = maxScrollTop end
     browser.scrollTop = math.floor(browser.scrollTop)
-    -- print(browser.scrollTop)
 end
 
 function fileBrowser(rootPath, subdirs, allowedExtensions)
@@ -163,7 +160,7 @@ function handleBrowserClick(browser, x, y, font)
 
             result = 'directory'
             clickedPath = thing.path
-            print('clicked a folder')
+            --print('clicked a folder')
         elseif thing.type == 'file' then
             local path = createFilePath(browser.root, browser.subdirs)
             if thing.path then
@@ -178,11 +175,11 @@ function handleBrowserClick(browser, x, y, font)
                 end
                 result = 'file'
                 clickedPath = thing.path
-                print('clicked a file', thing.path)
+                -- print('clicked a file', thing.path)
             end
         end
     end
 
-    print('restuning', result, clickedPath)
+
     return result, clickedPath
 end

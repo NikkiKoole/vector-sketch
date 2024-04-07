@@ -2,7 +2,7 @@ package.path = package.path .. ";../../?.lua"
 
 sone = require 'sone'
 require 'ui'
-
+local text         = require 'lib.text'
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
 local _thread
@@ -33,57 +33,100 @@ else
     _thread:start()
 end
 
+local function shallowcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
 
-function saveJizzJazzFile(song)
+
+function saveJizzJazzFile()
     local str               = os.date("%Y%m%d%H%M")
     local path              = str .. '.jizzjazz2.txt'
-    local indexToSamplePath = {}
 
-    local drumInstruments   = {}
-    local melodyInstruments = {}
-
+    local simplifiedDrumkit = {}
     for k, v in pairs(drumkit) do
         if k == 'order' then
-            -- print(inspect(v))
+            simplifiedDrumkit.order = v
         else
-            -- print(k, v.v)
+            simplifiedDrumkit[k] = { v.pathParts.pathArray, v.name }
         end
     end
 
-    for i = 1, #samples do
-        print(inspect(samples[i]))
-    end
-
+    local simplifiedInstrumentBanks = {}
     for i = 1, #instruments do
-        print(instruments[i])
+        local instr = instruments[i]
+        local sample = instr.sample
+        local adsr = instr.adsr
+        simplifiedInstrumentBanks[i] = {
+            sample = { sample.pathParts.pathArray, sample.pathParts.filePath },
+            adsr = { a = adsr.attack, d = adsr.decay, s = adsr.sustain, r = adsr.release },
+            tuning = instr.tuning,
+            realtimeTuning = instr.realtimeTuning
+        }
     end
 
-    --print(drumkit.order)
+    local simplifiedDrumGrid = {}
+    local drumColumns = #drumgrid
+    local drumRows = #simplifiedDrumkit.order
+    print('columns', drumColumns, grid.columns)
+    for x = 1, drumColumns do
+        simplifiedDrumGrid[x] = {}
+        for y = 1, drumRows do
+            simplifiedDrumGrid[x][y] = 0
+            local d = drumgrid[x][y]
+            if (d.on == true) then
+                local n = shallowcopy(d)
+                n.on = nil
+                simplifiedDrumGrid[x][y] = n
+            end
+        end
+    end
 
-    -- for i = 1, #song.voices do
-    --     if song.voices[i] then
-    --         indexToSamplePath[i] = {
-    -- index = song.voices[i].voiceIndex,
-    --path = samples[song.voices[i].voiceIndex].p,
-    --         }
-    --     end
-    -- end
+    --print(#recordedClips)
+
+    local simplifiedClips = shallowcopy(recordedClips)
+
+    for i = 1, #recordedClips do
+        for j = 1, #recordedClips[i].clips do
+            local c = shallowcopy(recordedClips[i].clips[j])
+            -- beat = 0,
+            --   beatOff = 0,
+            --   duration = 24,
+            --   instrumentIndex = 1,
+            --   semitone = 48,
+            --   tick = 22,
+            --   tickOff = 46
+            print(inspect(c))
+        end
+    end
+
 
     local data = {
-        --index = indexToSamplePath,
-        --voices = song.voices,
-        --pages = optimizeAllPages(song.pages),
-        --tuning = song.tuning,
-        --swing = song.swing,
-        --bpm = song.bpm
+        drumPatternName = drumPatternName,
+        drumkit = simplifiedDrumkit,
+        instruments = simplifiedInstrumentBanks,
+        simplifiedDrumGrid = simplifiedDrumGrid,
+
+        simplifiedClips = simplifiedClips,
+        uiData = shallowcopy(uiData)
     }
 
-    love.filesystem.write(path, inspect(data, { indent = "" }))
+    love.filesystem.write(path, inspect(data, { indent = " " }))
     local openURL = "file://" .. love.filesystem.getSaveDirectory()
     love.system.openURL(openURL)
 end
 
-function prepareSingleSample(root, pathArray, filePath)
+function prepareSingleSample(pathArray, filePath)
+    local root = 'samples'
     local fullPath = root
     local isCycle = false
     for i = 1, #pathArray do
@@ -154,6 +197,14 @@ local function prepareDrumkit(drumkitFiles)
     return result
 end
 
+
+function loadJizzJazzFile(data)
+    drumPatternName = data.drumPatternName
+    drumkit = prepareDrumkit(data.drumkit)
+    grid.columns = #data.simplifiedDrumGrid
+    print(grid.columns)
+end
+
 local function updateDrumKitData()
     sendMessageToAudioThread({
         type = 'drumkitData',
@@ -177,6 +228,19 @@ function TableConcat(t1, t2)
         t1[#t1 + 1] = t2[i]
     end
     return t1
+end
+
+function love.filedropped(file)
+    local filename = file:getFilename()
+
+    if text.ends_with(filename, 'jizzjazz2.txt') then
+        file:open("r")
+        local data = file:read()
+        local obj = (loadstring("return " .. data)())
+        loadJizzJazzFile(obj)
+        -- print(inspect(obj))
+        -- file:close()
+    end
 end
 
 function love.load()
@@ -215,7 +279,7 @@ function love.load()
     sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     myTick = 0
     myBeat = 0
-    myBeatInMeasure = 0--4myPlayingCellPercentage
+    myBeatInMeasure = 0 --4myPlayingCellPercentage
     myNumPlayingSounds = 0
     myPlayingCellPercentage = 0
 
@@ -240,10 +304,9 @@ function love.load()
 
     sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
-    browser = fileBrowser("samples", {}, { "wav", "WAV" })
-    browserClicked = false
-    fileBrowserForSound = nil
-
+    browser                   = fileBrowser("samples", {}, { "wav", "WAV" })
+    browserClicked            = false
+    fileBrowserForSound       = nil
 
     max_octave                = 8
     octave                    = 4
@@ -257,14 +320,13 @@ function love.load()
     instruments               = {}
 
     local pickedSamples       = {
-        prepareSingleSample('samples', { "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav'),
-        prepareSingleSample('samples', { "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
-        prepareSingleSample('samples', { "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
-        prepareSingleSample('samples', { "oscillators", "100 Void Vertex SCW" }, 'twinkle.wav'),
-        prepareSingleSample('samples', { "legow" }, 'Pinky Flute.wav'),
+        prepareSingleSample({ "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav'),
+        prepareSingleSample({ "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
+        prepareSingleSample({ "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
+        prepareSingleSample({ "oscillators", "100 Void Vertex SCW" }, 'twinkle.wav'),
+        prepareSingleSample({ "legow" }, 'Pinky Flute.wav'),
     }
-    --prepareSingleSample('samples', {}, 'Triangles 101.wav')
-    --prepeareSingleSample('samples', { 'legow' }, 'Little Blip.wav')
+
     for i = 1, 5 do
         instruments[i] = {
             --sampleIndex = 1,
@@ -287,7 +349,10 @@ function love.load()
             clips = {}
         }
     end
-
+    percentageThingies = {} -- 5
+    for i = 1, 5 do
+        percentageThingies[i] = {}
+    end
     sendMessageToAudioThread({ type = "instruments", data = instruments })
     sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
 
@@ -645,8 +710,12 @@ function love.update(dt)
     repeat
         local msg = getMessageFromAudioThread()
         if msg then
-            if msg.type == 'looperPercentage' then 
-                myPlayingCellPercentage = msg.data
+            if msg.type == 'looperPercentage' then
+                local intrIndex = msg.data.instrumentIndex
+                local clipIndex = msg.data.clipIndex
+                local percentage = msg.data.percentage
+                percentageThingies[intrIndex] = { clipIndex = clipIndex, percentage = percentage }
+                --myPlayingCellPercentage = msg.data.percentage
             end
             if msg.type == 'tickUpdate' then
                 myTick = msg.data.tick
@@ -659,9 +728,15 @@ function love.update(dt)
                 myNumPlayingSounds = msg.data.numbers
             end
             if msg.type == 'recordedClip' then
+                -- after you've recorded a clip it makes sense to select it.
                 local index = msg.data.instrumentIndex
                 local clip = msg.data.clip
+                for k = 1, #recordedClips[index].clips do
+                    recordedClips[index].clips[k].meta.isSelected = false
+                end
+                clip.meta.isSelected = true
                 table.insert(recordedClips[index].clips, clip)
+
                 sendMessageToAudioThread({ type = "clips", data = recordedClips })
             end
         end
@@ -1012,7 +1087,7 @@ function love.mousepressed(x, y, button)
                 browser = fileBrowser(browser.root, browser.subdirs,
                     browser.allowedExtensions)
             else
-                local sample = prepareSingleSample(browser.root, browser.subdirs, path)
+                local sample = prepareSingleSample(browser.subdirs, path)
                 if sample then
                     if fileBrowserForSound.type == 'instrument' then
                         instruments[instrumentIndex].sample = sample
@@ -1246,8 +1321,6 @@ function drawADSRForActiveInstrument(x, y)
     end
 end
 
-
-
 function drawInstrumentBanks(x, y)
     local font = smallfont
     love.graphics.setFont(font)
@@ -1340,8 +1413,6 @@ function drawInstrumentBanks(x, y)
                 love.graphics.rectangle('fill', x, y, clipSize, clipSize)
             end
 
-
-
             local r = getUIRect(x, y, clipSize, clipSize)
             if r then
                 for k = 1, #recordedClips[i].clips do
@@ -1351,8 +1422,8 @@ function drawInstrumentBanks(x, y)
                         recordedClips[i].clips[k].meta.isSelected = not recordedClips[i].clips[k].meta.isSelected
                     end
                 end
+                sendMessageToAudioThread({ type = 'stopPlayingSoundsOnIndex', data = i })
                 sendMessageToAudioThread({ type = "clips", data = recordedClips })
-                
             end
 
             if (recordedClips[i].clips[j].meta.isSelected) then
@@ -1369,14 +1440,19 @@ function drawInstrumentBanks(x, y)
             love.graphics.setColor(0, 0, 0, 0.8)
             love.graphics.print(str .. '', x + xOff, y)
 
-            if instrumentIndex == i then
+            local clip = recordedClips[i].clips[j]
+
+            if clip.meta.isSelected then
                 love.graphics.setColor(1, 1, 1, 0.8)
-                local doneCircleRadius = clipSize/3
-                local offset = clipSize/2
-                love.graphics.arc('fill',x + offset,y+offset,doneCircleRadius, -math.pi/2, (myPlayingCellPercentage * math.pi*2) -math.pi/2)
-                --myPlayingCellPercentage
+                local doneCircleRadius = clipSize / 3
+                local offset = clipSize / 2
+                local value = percentageThingies[i].percentage
+
+                if value then
+                    love.graphics.arc('fill', x + offset, y + offset, doneCircleRadius, -math.pi / 2,
+                        (value * math.pi * 2) - math.pi / 2)
+                end
             end
-            
         end
     end
 end
