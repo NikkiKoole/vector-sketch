@@ -2,6 +2,7 @@ package.path = package.path .. ";../../?.lua"
 
 sone = require 'sone'
 require 'ui'
+require 'wordsmith'
 local text         = require 'lib.text'
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
@@ -95,20 +96,6 @@ function saveJizzJazzFile()
 
     local simplifiedClips = shallowcopy(recordedClips)
 
-    for i = 1, #recordedClips do
-        for j = 1, #recordedClips[i].clips do
-            local c = shallowcopy(recordedClips[i].clips[j])
-            -- beat = 0,
-            --   beatOff = 0,
-            --   duration = 24,
-            --   instrumentIndex = 1,
-            --   semitone = 48,
-            --   tick = 22,
-            --   tickOff = 46
-            print(inspect(c))
-        end
-    end
-
 
     local data = {
         drumPatternName = drumPatternName,
@@ -150,6 +137,8 @@ function prepareSingleSample(pathArray, filePath)
             pathParts = { root = root, pathArray = pathArray, filePath = filePath }
         }
         return result
+    else
+        print('issue preparing sample: ', fullPath)
     end
 end
 
@@ -196,15 +185,6 @@ local function prepareDrumkit(drumkitFiles)
     end
     return result
 end
-
-
-function loadJizzJazzFile(data)
-    drumPatternName = data.drumPatternName
-    drumkit = prepareDrumkit(data.drumkit)
-    grid.columns = #data.simplifiedDrumGrid
-    print(grid.columns)
-end
-
 local function updateDrumKitData()
     sendMessageToAudioThread({
         type = 'drumkitData',
@@ -214,6 +194,54 @@ local function updateDrumKitData()
             beatInMeasure = grid.columns / 4
         }
     })
+end
+
+function loadJizzJazzFile(data, filename)
+    drumPatternName = data.drumPatternName
+    drumkit = prepareDrumkit(data.drumkit)
+    grid.columns = #data.simplifiedDrumGrid -- todo not working yet.
+
+    local g = data.simplifiedDrumGrid
+    for x = 1, #g do
+        for y = 1, #g[x] do
+            local dcell = g[x][y]
+            drumgrid[x][y] = { on = false }
+            if dcell ~= 0 then
+                drumgrid[x][y] = shallowcopy(dcell)
+                drumgrid[x][y].on = true
+            end
+        end
+    end
+    updateDrumKitData()
+
+
+    for i = 1, #data.instruments do
+        local readInstrument = data.instruments[i]
+        local newSample = prepareSingleSample(readInstrument.sample[1], readInstrument.sample[2])
+        if newSample then
+            instruments[i] = {
+                --sampleIndex = 1,
+                sample = newSample, -- pickedSamples[i],
+                tuning = readInstrument.tuning,
+                realtimeTuning = readInstrument.realtimeTuning,
+                adsr = {
+                    attack = readInstrument.adsr.a,
+                    decay = readInstrument.adsr.d,
+                    sustain = readInstrument.adsr.s,
+                    release = readInstrument.adsr.r
+                },
+            }
+        else
+            print('something was up making sample for this instrument: ', filename, i, inspect(readInstrument))
+        end
+    end
+    sendMessageToAudioThread({ type = "instruments", data = instruments })
+
+    recordedClips = data.simplifiedClips
+    sendMessageToAudioThread({ type = "clips", data = recordedClips })
+
+    uiData = data.uiData
+    sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
 end
 
 local function hex2rgb(hex)
@@ -237,13 +265,16 @@ function love.filedropped(file)
         file:open("r")
         local data = file:read()
         local obj = (loadstring("return " .. data)())
-        loadJizzJazzFile(obj)
+        loadJizzJazzFile(obj, filename)
         -- print(inspect(obj))
         -- file:close()
     end
 end
 
 function love.load()
+    title = getRandomName()
+
+    print(title)
     uiData = {
         bpm = 90,
         swing = 50,
@@ -669,19 +700,23 @@ function love.keypressed(k)
     end
 
     if k == 'space' then
-        playing = not playing
+        if recording then
+            love.keypressed('return')
+        else
+            playing = not playing
 
-        if not playing then
-            for i = 1, #instruments do
-                sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = i })
+            if not playing then
+                for i = 1, #instruments do
+                    sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = i })
+                end
+                sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
+                sendMessageToAudioThread({ type = "paused", data = true });
             end
-            sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
-            sendMessageToAudioThread({ type = "paused", data = true });
-        end
-        if playing then
-            sendMessageToAudioThread({ type = "mode", data = 'play' });
-            sendMessageToAudioThread({ type = "paused", data = false });
-            recording = false
+            if playing then
+                sendMessageToAudioThread({ type = "mode", data = 'play' });
+                sendMessageToAudioThread({ type = "paused", data = false });
+                recording = false
+            end
         end
     end
     if k == 'f5' then
@@ -1087,6 +1122,7 @@ function love.mousepressed(x, y, button)
                 browser = fileBrowser(browser.root, browser.subdirs,
                     browser.allowedExtensions)
             else
+                print(inspect(browser.subdirs), path)
                 local sample = prepareSingleSample(browser.subdirs, path)
                 if sample then
                     if fileBrowserForSound.type == 'instrument' then
@@ -1368,8 +1404,6 @@ function drawInstrumentBanks(x, y)
 
                 if labelbutton('wav', x + rowWidth - buttonw, buttony - buttonh, buttonw, buttonh, false).clicked == true then
                     --print('gonna do the wav')
-
-
                     -- print(inspect(instruments[instrumentIndex].sample.pathParts))
                     local pathParts = instruments[instrumentIndex].sample.pathParts
                     browser = fileBrowser(browser.root, pathParts.pathArray,
@@ -1517,6 +1551,11 @@ function love.draw()
             renderBrowser(browser, 64, 120, (w / 2) - 128, h - 240, smallfont)
         end
     end
+
+    love.graphics.setFont(bigfont)
+    love.graphics.setColor(1, 1, 1, 0.08)
+    love.graphics.print('  ' .. title, 100, 10)
+
     local font = smallfont
     love.graphics.setFont(font)
 
