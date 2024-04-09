@@ -350,6 +350,27 @@ function doHandleFutureDrumNotes(beat, tick)
     end
 end
 
+function createFutureDrumNote(beat, tick, delay, source, pitch, volume, gate, bpm)
+    local futureTick = tick + delay
+    local futureBeat = beat
+    if futureTick >= PPQN then
+        futureTick = futureTick - PPQN
+        futureBeat = futureBeat + 1
+    end
+    local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
+        bpm, futureBeat, futureTick, gate)
+    local future = {
+        tick = futureTick,
+        beat = futureBeat,
+        source = source,
+        pitch = pitch,
+        volume = volume,
+        gateCloseBeat = gateCloseBeat,
+        gateCloseTick = gateCloseTick
+    }
+    return future
+end
+
 function doHandleDrumNotes(beat, tick, bpm)
     -- why % 24 ??
     -- because the PPQN = 96 so PartsPer16th note is 24!
@@ -361,6 +382,7 @@ function doHandleDrumNotes(beat, tick, bpm)
     --
     local swing = uiData and uiData.swing or 50
     local delaySwungNote = math.ceil(((swing / 100) * 48) - 24)
+
     local isSwung = (tick % 48 == delaySwungNote)
     local shouldDelayEvenNotes = swing ~= 50
     local isEvenNoteUndelayed = tick % 48 == 0
@@ -417,9 +439,6 @@ function doHandleDrumNotes(beat, tick, bpm)
                     local afterOffset = getUntunedPitch(60 + semitoneOffset + (cell and cell.semitoneOffset or 0))
                     local pitch = afterOffset
 
-
-
-
                     local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
                         bpm, beat, tick, gate)
 
@@ -432,45 +451,37 @@ function doHandleDrumNotes(beat, tick, bpm)
                     source:setVolume(volume)
                     source:setPitch(pitch)
 
-                    source:play()
-
-                    table.insert(playingDrumSounds, {
-                        source = source,
-                        pitch = pitch,
-                        timeOn = love.timer.getTime(),
-                        beatOn = beat,
-                        tickOn = tick,
-                        drumIndex = i,
-                        gateCloseBeat = gateCloseBeat,
-                        gateCloseTick = gateCloseTick,
-                        volume = volume
-                    })
-
+                    if cell.delay and cell.delay > 0 then
+                        --print('DO NOT PLAY DIRECTLY BUT DELAY ')
+                        --print(cell.delay * PPQN)
+                        local future = createFutureDrumNote(beat, tick, math.ceil(cell.delay * 24),
+                            source, pitch,
+                            volume, gate, bpm)
+                        table.insert(futureDrumNotes, future)
+                    else
+                        source:play()
+                        table.insert(playingDrumSounds, {
+                            source = source,
+                            pitch = pitch,
+                            timeOn = love.timer.getTime(),
+                            beatOn = beat,
+                            tickOn = tick,
+                            drumIndex = i,
+                            gateCloseBeat = gateCloseBeat,
+                            gateCloseTick = gateCloseTick,
+                            volume = volume
+                        })
+                    end
 
 
                     if drumgrid[column + 1][i].flam == true then
                         local flamRepeat = 1
-
                         for j = 1, flamRepeat do
-                            local futureTick = tick + (12 / flamRepeat)
-                            local futureBeat = beat
+                            local future = createFutureDrumNote(beat, tick, (12 / flamRepeat),
+                                drumkit[key].source:clone(), pitch,
+                                volume, gate, bpm)
 
-                            if futureTick >= PPQN then
-                                futureTick = futureTick - PPQN
-                                futureBeat = futureBeat + 1
-                            end
-                            local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
-                                bpm, futureBeat, futureTick, gate)
-                            -- print(gateCloseTick, gateCloseBeat)
-                            local future = {
-                                tick = futureTick,
-                                beat = futureBeat,
-                                source = drumkit[key].source:clone(),
-                                pitch = pitch,
-                                volume = volume,
-                                gateCloseBeat = gateCloseBeat,
-                                gateCloseTick = gateCloseTick
-                            }
+
                             table.insert(futureDrumNotes, future)
                         end
                     end
@@ -482,29 +493,11 @@ function doHandleDrumNotes(beat, tick, bpm)
 
                         for k = 1, echoRepeats do
                             local delay = startDelay * k
+                            local future = createFutureDrumNote(beat, tick, startDelay * k,
+                                drumkit[key].source:clone(), pitch,
+                                volume / k, gate, bpm)
 
-                            local futureTick = tick + (delay)
-                            local futureBeat = beat
-                            if futureTick >= PPQN then
-                                futureTick = futureTick % PPQN
-                                futureBeat = futureBeat + math.ceil(futureTick / PPQN)
-                            end
-                            local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
-                                bpm, futureBeat, futureTick, gate)
-
-                            local future = {
-                                tick = futureTick,
-                                beat = futureBeat,
-                                source = drumkit[key].source:clone(),
-                                volume = volume / k,
-                                pitch = pitch,
-                                gateCloseBeat = gateCloseBeat,
-                                gateCloseTick = gateCloseTick
-                            }
-                            --     print(futureTick, futureBeat, volume)
                             table.insert(futureDrumNotes, future)
-
-                            volume = volume / 2
                         end
                     end
                 end

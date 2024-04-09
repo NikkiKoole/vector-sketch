@@ -925,12 +925,15 @@ function drawMoreInfoForInstrument()
         if labelbutton(' trig', 0, startY + cellH * 7, 100, cellH, singleInstrumentJob == 'trig').clicked then
             singleInstrumentJob = 'trig'
         end
-        if labelbutton(' wav', 0, startY + cellH * 8, 100, cellH, singleInstrumentJob == 'wav').clicked then
+        if labelbutton(' delay', 0, startY + cellH * 8, 100, cellH, singleInstrumentJob == 'delay').clicked then
+            singleInstrumentJob = 'delay'
+        end
+        if labelbutton(' wav', 0, startY + cellH * 9, 100, cellH, singleInstrumentJob == 'wav').clicked then
             fileBrowserForSound = { type = 'drum', index = lookinIntoIntrumentAtIndex }
             browser = fileBrowser("samples", {}, { "wav", "WAV" })
         end
         if singleInstrumentJob then
-            if labelbutton(' reset', 0, startY + cellH * 9, 100, cellH).clicked then
+            if labelbutton(' reset', 0, startY + cellH * 10, 100, cellH).clicked then
                 for i = 1, #drumgrid do
                     local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
                     if (cell and cell.on) then
@@ -1033,6 +1036,16 @@ function drawMoreInfoForInstrument()
                         updateDrumKitData()
                     end
                 end
+                if singleInstrumentJob == 'delay' then
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1),
+                        startY + cellH, 200,
+                        cell.delay or 0, 0, 1.0)
+                    if v.value then
+                        cell.delay = v.value
+                        updateDrumKitData()
+                    end
+                end
+
                 if singleInstrumentJob == 'pitch' then
                     local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1),
                         startY + cellH, 200,
