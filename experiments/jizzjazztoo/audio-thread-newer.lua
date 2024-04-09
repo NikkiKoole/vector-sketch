@@ -174,7 +174,7 @@ local function updatePlayingSoundsWithLFO()
             local timeThis      = love.timer.getTime() - it.timeNoteOn -- PARAMTERIZE THIS (usefull when doing sine)
             --local lfoValue      = generateSineLFO(timeThis, .5)        -- PARAMTERIZE THIS
             local lfoValue      = generateNoiseLFO(timeThis, .25)      -- PARAMTERIZE THIS
-            --local lfoValue      = generateExponentialDecayLFO(timeThis, .5, -1)
+            local lfoValue      = generateExponentialDecayLFO(timeThis, .5, 10)
             local tuning        = instruments[it.instrumentIndex].realtimeTuning
             local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
             local lfoAmplitude  = range
