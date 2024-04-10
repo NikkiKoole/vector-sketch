@@ -92,12 +92,10 @@ local function updateADSREnvelopesForPlayingSounds(dt)
         local it = playingSounds[i]
         local value = generateADSR(it, now)
         value = value * (uiData and uiData.instrumentsVolume or 1)
+        it.volume = value
         it.source:setVolume(value)
     end
 end
-
-
-
 
 local function generateSquareLFO(time, lfoFrequency)
     local phase = time * lfoFrequency
@@ -184,16 +182,26 @@ local function updatePlayingSoundsWithLFO()
             local lfoAmplitude  = range
             local lfoPitchDelta = (lfoValue * lfoAmplitude)
 
+
             it.source:setPitch(it.pitch + lfoPitchDelta)
+
+
+            --local freqLfo = (generateSineLFO(love.timer.getTime(), 1) + 1) / 2
+
+            --local lfoVolumeValue = ((generateSineLFO(timeThis, 1 / freqLfo) + 1) / 2)
+            -- print(lfoVolumeValue)
+            --if it.volume > 0.5 then
+            --it.source:setVolume(it.volume * lfoVolumeValue)
+            --end
         end
     end
 end
 
 local function cleanPlayingSounds()
     local now = love.timer.getTime()
-    if (#missedTicks > 0) then
-        --print('missed a tick shoul clean it too', #missedTicks)
-    end
+    --if (#missedTicks > 0) then
+    --print('missed a tick shoul clean it too', #missedTicks)
+    --end
     for i = #playingSounds, 1, -1 do
         local it = playingSounds[i]
         if not it.timeNoteOff then
@@ -253,6 +261,7 @@ local function semitoneTriggered(number, instrumentIndex)
         table.insert(playingSounds, {
             pitch = pitch + pitchOffset,
             source = source,
+            volume = 0,
             semitone = number,
             instrumentIndex = instrumentIndex,
             timeNoteOn = love.timer.getTime()
@@ -526,8 +535,8 @@ function handlePlayingDrumGrid()
         --  print(#missedTicks)
 
         for j = 1, #missedTicks do
-            local t = missedTicks[j]
-            local b = beat
+            local t = missedTicks[j].tick
+            local b = missedTicks[j].beat
             doTheGateClosing(b, t)
             doHandleFutureDrumNotes(b, t)
             doHandleDrumNotes(b, t, uiData.bpm)
@@ -546,9 +555,9 @@ function handlePlayingDrumGrid()
 end
 
 function doReplayRecorded(clip, beat, tick)
+    --print(beat, tick)
     for i = 1, #clip do
-        --print(i, beat, tick)
-        print(clip[i].beat, clip[i].tick, clip[i].beatOff, clip[i].tickOff)
+        -- print(clip[i].beat, clip[i].tick, clip[i].beatOff, clip[i].tickOff)
         if clip[i].beatOff == beat and clip[i].tickOff == tick then
             print('released', beat, tick)
             semitoneReleased(clip[i].semitone, clip[i].instrumentIndex)
@@ -572,28 +581,18 @@ function handlePlayingRecordedData()
 
                     local percentageDonePlaying = ((beat * PPQN) + tick) / (loopRounder * PPQN)
                     channel.audio2main:push({ type = 'looperPercentage', data = { percentage = percentageDonePlaying, instrumentIndex = i, clipIndex = j } })
-                    --print(percentageDonePlaying)
-                    --missedTicks
+
                     for j = 1, #missedTicks do
-                        local t = missedTicks[j]
-                        local b = beat
-                        -- print('b', b, t, loopRounder)
-                        if (t > tick) then
-                            --print('oh dear, missed tick over the beat boundary', t, tick)
-                            b = (beat - 1) % loopRounder
-                            --print('turning ', beat - 1, 'into', b)
-                        end
-                        --print('replaying because i missed a tick: ', b, t)
-                        -- if (b ~= beat or t ~= tick) then
+                        local t = missedTicks[j].tick
+                        local b = math.floor(missedTicks[j].beat % loopRounder)
+
                         doReplayRecorded(it, b, t)
-                        --end
                     end
-                    --  missedTicks = {}
+
 
                     doReplayRecorded(it, beat, tick)
                 end
             end
-            --print(i, #recordedClips[i].clips)
         end
     end
 end
@@ -623,14 +622,13 @@ while (true) do
     if not paused then
         beat = beat + (delta * (bpm / 60))
         tick = ((beat % 1) * (PPQN))
+        --print(beat, tick)
+        -- print((lastBeat - beat) * (PPQN), tick, lastTick)
 
-        if math.floor(tick) - math.floor(lastTick) > 1 then
-            for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
-                table.insert(missedTicks, i)
-                --print(i, tick, lastTick)
-                -- print('insert missing tick')
-            end
-        end
+
+
+
+
 
         if (math.floor(beat) ~= math.floor(lastBeat)) then
             if recording == true then
@@ -639,6 +637,22 @@ while (true) do
             channel.audio2main:push({ type = 'beatUpdate', data = { beat = math.floor(beat), beatInMeasure = beatInMeasure } })
         end
         if (math.floor(tick) ~= math.floor(lastTick)) then
+            local diff = math.abs((lastBeat - beat) * (PPQN))
+            if diff > 1 then
+                if tick > lastTick then
+                    for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
+                        table.insert(missedTicks, { tick = i, beat = math.floor(beat) })
+                    end
+                else
+                    for i = math.floor(lastTick) + 1, 95 do
+                        table.insert(missedTicks, { tick = i, beat = math.floor(lastBeat) })
+                    end
+                    for i = 0, math.floor(tick) - 1 do
+                        table.insert(missedTicks, { tick = i, beat = math.floor(beat) })
+                    end
+                end
+            end
+
             channel.audio2main:push({ type = 'tickUpdate', data = { tick = math.floor(tick) } })
             if playing then
                 handlePlayingRecordedData()
@@ -664,7 +678,7 @@ while (true) do
     local sleepForMultiplier = math.ceil(bpm / 25)
     local sleepFor = 1.0 / (PPQN * sleepForMultiplier)
     --print(sleepFor)
-    love.timer.sleep(sleepFor * 20)
+    love.timer.sleep(sleepFor)
 
     -- using this i can sleep for a good amount (no missed ticks)
     -- but also will sleep less if the bpm goes up,
