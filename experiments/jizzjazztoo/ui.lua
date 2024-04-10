@@ -178,9 +178,9 @@ function labelbutton(str, x, y, w, h, border)
     }
 end
 
-function draw_knob(id, x, y, v, min, max)
+function draw_knob(id, x, y, v, min, max, size)
     love.graphics.setLineWidth(4)
-    local cellHeight = 32
+    local cellHeight = size or 32
     local result = nil
     local r, g, b, a = love.graphics.getColor()
     love.graphics.setColor(.1, .1, .1)
@@ -200,7 +200,7 @@ function draw_knob(id, x, y, v, min, max)
     ax, ay = angleAtDistance(x, y, a, cellHeight / 2)
     bx, by = angleAtDistance(x, y, a, cellHeight / 4)
     love.graphics.setColor(1, 1, 1, 0.2)
-    love.graphics.arc("fill", x, y, 16, math.pi / 2, a, 32)
+    love.graphics.arc("fill", x, y, cellHeight / 2, math.pi / 2, a, cellHeight)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.line(x + ax, y + ay, x + bx, y + by)
     love.graphics.setColor(r, g, b, a)

@@ -22,7 +22,21 @@ CB: Cowbell
     sections={}
 },
 --]]
+
 local patterns = {
+    {
+        name = "BoomBAP",
+        sections = {
+            {
+                grid = {
+                    BD = "x.....x.x.x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
+                name = "Boombap1"
+            },
+        }
+    },
     {
         name = "EDM",
         sections = {

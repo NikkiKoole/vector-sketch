@@ -49,7 +49,7 @@ local recordedData      = {}
 local recordedClips     = {}
 
 local uiData            = nil
-
+local mixerData         = nil
 
 local function generateADSR(it, now)
     local adsr = instruments[it.instrumentIndex].adsr
@@ -95,6 +95,7 @@ local function updateADSREnvelopesForPlayingSounds(dt)
         it.source:setVolume(value)
     end
 end
+
 
 
 
@@ -169,12 +170,15 @@ end
 local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
         local useLFO = true
+
+        -- hoeveel sec oduurt 1/16 th ?
+
         if useLFO then
             local it            = playingSounds[i]
             local timeThis      = love.timer.getTime() - it.timeNoteOn -- PARAMTERIZE THIS (usefull when doing sine)
-            --local lfoValue      = generateSineLFO(timeThis, .5)        -- PARAMTERIZE THIS
+            --local lfoValue      = generateSawtoothLFO(timeThis, .25)   -- PARAMTERIZE THIS
             local lfoValue      = generateNoiseLFO(timeThis, .25)      -- PARAMTERIZE THIS
-            local lfoValue      = generateExponentialDecayLFO(timeThis, .5, 10)
+            --local lfoValue      = generateExponentialDecayLFO(timeThis, .5, 10)
             local tuning        = instruments[it.instrumentIndex].realtimeTuning
             local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
             local lfoAmplitude  = range
@@ -187,8 +191,17 @@ end
 
 local function cleanPlayingSounds()
     local now = love.timer.getTime()
+    if (#missedTicks > 0) then
+        --print('missed a tick shoul clean it too', #missedTicks)
+    end
     for i = #playingSounds, 1, -1 do
         local it = playingSounds[i]
+        if not it.timeNoteOff then
+            -- print('ok wy ?')
+        end
+        if (it.timeNoteOff and it.timeNoteOff < it.timeNoteOn) then
+            print('this is weird', it.timeNoteOn)
+        end
         if (it.timeNoteOff and it.timeNoteOff < now) then
             if not it.source:isPlaying() then
                 it.source:release()
@@ -323,7 +336,7 @@ function doHandleFutureDrumNotes(beat, tick)
         local f = futureDrumNotes[i]
         if (f.beat == beat and f.tick == tick) then
             local volume = f.volume or 1
-            volume = volume * (uiData and uiData.drumVolume or 1)
+            volume = volume * (uiData and uiData.drumVolume or 1) * (mixerData and mixerData[i].volume or 1)
             if f.volume then
                 f.source:setVolume(volume)
             end
@@ -408,7 +421,7 @@ function doHandleDrumNotes(beat, tick, bpm)
                 if cell.on and not dontTrigger then
                     local key = drumkit.order[i]
                     local source = drumkit[key].source:clone()
-                    local cellVolume = cell.volume or 1
+                    local cellVolume = (cell.volume or 1) * (mixerData and mixerData[i].volume or 1)
                     local gate = cell.gate or 1
                     local allDrumsVolume = (uiData and uiData.drumVolume or 1)
                     local volume = cellVolume * allDrumsVolume
@@ -534,10 +547,14 @@ end
 
 function doReplayRecorded(clip, beat, tick)
     for i = 1, #clip do
+        --print(i, beat, tick)
+        print(clip[i].beat, clip[i].tick, clip[i].beatOff, clip[i].tickOff)
         if clip[i].beatOff == beat and clip[i].tickOff == tick then
+            print('released', beat, tick)
             semitoneReleased(clip[i].semitone, clip[i].instrumentIndex)
         end
         if clip[i].beat == beat and clip[i].tick == tick then
+            print('triggered', beat, tick)
             semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex)
         end
     end
@@ -560,13 +577,18 @@ function handlePlayingRecordedData()
                     for j = 1, #missedTicks do
                         local t = missedTicks[j]
                         local b = beat
+                        -- print('b', b, t, loopRounder)
                         if (t > tick) then
                             --print('oh dear, missed tick over the beat boundary', t, tick)
-                            b = beat - 1
+                            b = (beat - 1) % loopRounder
+                            --print('turning ', beat - 1, 'into', b)
                         end
+                        --print('replaying because i missed a tick: ', b, t)
+                        -- if (b ~= beat or t ~= tick) then
                         doReplayRecorded(it, b, t)
+                        --end
                     end
-                    missedTicks = {}
+                    --  missedTicks = {}
 
                     doReplayRecorded(it, beat, tick)
                 end
@@ -605,7 +627,8 @@ while (true) do
         if math.floor(tick) - math.floor(lastTick) > 1 then
             for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
                 table.insert(missedTicks, i)
-                print('insert missing tick')
+                --print(i, tick, lastTick)
+                -- print('insert missing tick')
             end
         end
 
@@ -630,7 +653,7 @@ while (true) do
 
         -- handle the missed ticks here baby
         --
-        missedTicks = {}
+
         lastBeat = beat
         lastTick = tick
     end
@@ -640,14 +663,15 @@ while (true) do
 
     local sleepForMultiplier = math.ceil(bpm / 25)
     local sleepFor = 1.0 / (PPQN * sleepForMultiplier)
-    love.timer.sleep(sleepFor)
+    --print(sleepFor)
+    love.timer.sleep(sleepFor * 20)
 
     -- using this i can sleep for a good amount (no missed ticks)
     -- but also will sleep less if the bpm goes up,
     -- testing it i see missed ticks only >400 bpm.  RAVE ON!!
 
     cleanPlayingSounds()
-
+    missedTicks = {}
     local v = channel.main2audio:pop();
     if v then
         if v.type == 'clips' then
@@ -692,6 +716,9 @@ while (true) do
                     it.source:stop()
                 end
             end
+        end
+        if v.type == 'mixerData' then
+            mixerData = v.data
         end
         if v.type == 'drumkitData' then
             drumkit = v.data.drumkit

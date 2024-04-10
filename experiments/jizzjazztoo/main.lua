@@ -185,6 +185,12 @@ local function prepareDrumkit(drumkitFiles)
     end
     return result
 end
+local function updateMixerData()
+    sendMessageToAudioThread({
+        type = 'mixerData',
+        data = mixData
+    })
+end
 local function updateDrumKitData()
     sendMessageToAudioThread({
         type = 'drumkitData',
@@ -274,7 +280,7 @@ end
 function love.load()
     title = getRandomName()
 
-    print(title)
+    -- print(title)
     uiData = {
         bpm = 90,
         swing = 50,
@@ -283,6 +289,7 @@ function love.load()
         allDrumSemitoneOffset = 0
     }
 
+    showMixer = false
     messageAlpha = 0
     msg = nil
     messageTime = nil
@@ -408,7 +415,7 @@ function love.load()
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
-        startX = 120,
+        startX = 150,
         startY = 120,
         cellW = 20,
         cellH = 32,
@@ -416,9 +423,15 @@ function love.load()
         labels = drumkitFiles.order
     }
 
+    mixData = {}
+    for i = 1, #drumkitFiles.order do
+        mixData[i] = { volume = 1 }
+    end
+    updateMixerData()
     drumgrid = {}
     for x = 1, grid.columns do
         drumgrid[x] = {}
+
         for y = 1, #drumkitFiles.order do
             drumgrid[x][y] = { on = false }
         end
@@ -445,21 +458,21 @@ function love.load()
         ['melodic_minor'] = { 0, 2, 3, 5, 7, 9, 11 },
         ['major'] = { 0, 2, 4, 5, 7, 9, 11 },
         ['minor'] = { 0, 2, 3, 5, 7, 8, 10 },
-        -- ['lydian'] = { 0, 2, 4, 6, 7, 9, 11 },
-        -- ['mixolydian'] = { 0, 2, 4, 5, 7, 9, 10 },
-        --
-        -- ['locrian'] = { 0, 1, 3, 5, 6, 8, 10 },
-        -- ['phrygian'] = { 0, 1, 3, 5, 7, 8, 10 },
-        -- ['aeolian'] = { 0, 2, 3, 5, 7, 8, 10 },
-        -- ['enigmatic'] = { 0, 1, 4, 6, 8, 10, 11 },
-        -- ['double_harmonic_major'] = { 0, 1, 4, 5, 7, 8, 11 },
-        -- ['hungarian_minor'] = { 0, 2, 3, 6, 7, 8, 11 },
-        -- ['arabian'] = { 0, 2, 4, 5, 6, 8, 10 },
-        -- ['altered'] = { 0, 1, 3, 4, 6, 8, 10 },
-        -- ['prometheus'] = { 0, 2, 4, 6, 9, 10 },
-        -- ['kumoi'] = { 0, 2, 3, 7, 9 },
-        -- ['gypsy'] = { 0, 2, 4, 7, 8, 10 },
-        -- ['lydian_augmented'] = { 0, 2, 4, 6, 8, 9, 11 },
+        ['lydian'] = { 0, 2, 4, 6, 7, 9, 11 },
+        ['mixolydian'] = { 0, 2, 4, 5, 7, 9, 10 },
+
+        ['locrian'] = { 0, 1, 3, 5, 6, 8, 10 },
+        ['phrygian'] = { 0, 1, 3, 5, 7, 8, 10 },
+        ['aeolian'] = { 0, 2, 3, 5, 7, 8, 10 },
+        ['enigmatic'] = { 0, 1, 4, 6, 8, 10, 11 },
+        ['double_harmonic_major'] = { 0, 1, 4, 5, 7, 8, 11 },
+        ['hungarian_minor'] = { 0, 2, 3, 6, 7, 8, 11 },
+        ['arabian'] = { 0, 2, 4, 5, 6, 8, 10 },
+        ['altered'] = { 0, 1, 3, 4, 6, 8, 10 },
+        ['prometheus'] = { 0, 2, 4, 6, 9, 10 },
+        ['kumoi'] = { 0, 2, 3, 7, 9 },
+        ['gypsy'] = { 0, 2, 4, 7, 8, 10 },
+        ['lydian_augmented'] = { 0, 2, 4, 6, 8, 9, 11 },
     }
     scale = scales.chromatic
 
@@ -831,12 +844,33 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
     end
 end
 
+function drawMixerStuff(startX, startY, cellH, labels)
+    for i = 1, #mixData do
+        local it = mixData[i]
+        --  print(i, it, inspect(it))
+
+        if false then
+            if labelbutton('M', startX - 200, startY + (i - 1) * cellH, 24, cellH, it.mute).clicked then
+                mixData[i].mute = not it.mute
+            end
+            if labelbutton('S', startX - 170, startY + (i - 1) * cellH, 24, cellH, it.solo).clicked then
+                mixData[i].solo = not it.solo
+            end
+        end
+        local v = draw_knob(labels[i], startX - 120, cellH / 2 + startY + (i - 1) * cellH, it.volume, 0, 1, 24)
+        if v.value then
+            mixData[i].volume = v.value
+            updateMixerData()
+        end
+    end
+end
+
 function drawDrumMachineLabels(startX, startY, cellH, labels)
     local col = palette.fg2
     love.graphics.setColor(col[1], col[2], col[3], 0.3)
 
     for y = 0, #labels - 1 do
-        if labelbutton(' ' .. labels[y + 1], 0, startY + y * cellH, 100, grid.cellH).clicked then
+        if labelbutton(' ' .. labels[y + 1], startX - 100, startY + y * cellH, 100, grid.cellH).clicked then
             lookinIntoIntrumentAtIndex = y + 1
         end
     end
@@ -876,7 +910,11 @@ end
 
 function drawDrumMachine()
     love.graphics.setFont(smallfont)
+
     drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+    if showMixer then
+        drawMixerStuff(grid.startX + 150 + grid.columns * grid.cellW, grid.startY, grid.cellH, grid.labels)
+    end
     drawDrumMachineLabels(grid.startX, grid.startY, grid.cellH, grid.labels)
     drawDrumOnNotes(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
 
@@ -891,49 +929,49 @@ function drawMoreInfoForInstrument()
     local cellW = grid.cellW
     local cellH = grid.cellH
 
+    local buttonX = startX - 100
     if lookinIntoIntrumentAtIndex > 0 then
         drawDrumMachineGrid(startX, startY, cellW, cellH, grid.columns, 0)
         drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, grid.columns,
             lookinIntoIntrumentAtIndex - 1)
 
-        if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], 0, startY, 100, cellH).clicked then
+        if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], buttonX, startY, 100, cellH).clicked then
             lookinIntoIntrumentAtIndex = 0
         end
 
-        if labelbutton(' volume', 0, startY + cellH * 1, 100, cellH, singleInstrumentJob == 'volume').clicked then
+        if labelbutton(' volume', buttonX, startY + cellH * 1, 100, cellH, singleInstrumentJob == 'volume').clicked then
             singleInstrumentJob = 'volume'
         end
 
-        if labelbutton(' pitch', 0, startY + cellH * 2, 100, cellH, singleInstrumentJob == 'pitch').clicked then
+        if labelbutton(' pitch', buttonX, startY + cellH * 2, 100, cellH, singleInstrumentJob == 'pitch').clicked then
             singleInstrumentJob = 'pitch'
         end
 
-        if labelbutton(' pan', 0, startY + cellH * 3, 100, cellH, singleInstrumentJob == 'pan').clicked then
+        if labelbutton(' pan', buttonX, startY + cellH * 3, 100, cellH, singleInstrumentJob == 'pan').clicked then
             singleInstrumentJob = 'pan'
         end
 
-
-        if labelbutton(' gate', 0, startY + cellH * 4, 100, cellH, singleInstrumentJob == 'gate').clicked then
+        if labelbutton(' gate', buttonX, startY + cellH * 4, 100, cellH, singleInstrumentJob == 'gate').clicked then
             singleInstrumentJob = 'gate'
         end
-        if labelbutton(' echo', 0, startY + cellH * 5, 100, cellH, singleInstrumentJob == 'echo').clicked then
+        if labelbutton(' echo', buttonX, startY + cellH * 5, 100, cellH, singleInstrumentJob == 'echo').clicked then
             singleInstrumentJob = 'echo'
         end
-        if labelbutton(' randP', 0, startY + cellH * 6, 100, cellH, singleInstrumentJob == 'randP').clicked then
+        if labelbutton(' randP', buttonX, startY + cellH * 6, 100, cellH, singleInstrumentJob == 'randP').clicked then
             singleInstrumentJob = 'randP'
         end
-        if labelbutton(' trig', 0, startY + cellH * 7, 100, cellH, singleInstrumentJob == 'trig').clicked then
+        if labelbutton(' trig', buttonX, startY + cellH * 7, 100, cellH, singleInstrumentJob == 'trig').clicked then
             singleInstrumentJob = 'trig'
         end
-        if labelbutton(' delay', 0, startY + cellH * 8, 100, cellH, singleInstrumentJob == 'delay').clicked then
+        if labelbutton(' delay', buttonX, startY + cellH * 8, 100, cellH, singleInstrumentJob == 'delay').clicked then
             singleInstrumentJob = 'delay'
         end
-        if labelbutton(' wav', 0, startY + cellH * 9, 100, cellH, singleInstrumentJob == 'wav').clicked then
+        if labelbutton(' wav', buttonX, startY + cellH * 9, 100, cellH, singleInstrumentJob == 'wav').clicked then
             fileBrowserForSound = { type = 'drum', index = lookinIntoIntrumentAtIndex }
             browser = fileBrowser("samples", {}, { "wav", "WAV" })
         end
         if singleInstrumentJob then
-            if labelbutton(' reset', 0, startY + cellH * 10, 100, cellH).clicked then
+            if labelbutton(' reset', buttonX, startY + cellH * 10, 100, cellH).clicked then
                 for i = 1, #drumgrid do
                     local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
                     if (cell and cell.on) then
@@ -1521,6 +1559,7 @@ function love.draw()
 
     if lookinIntoIntrumentAtIndex <= 0 then
         --if (not showDrumPatternPicker) then
+
         drawDrumMachine()
         drawMouseOverGrid()
         --end
@@ -1584,31 +1623,30 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, .5)
     love.graphics.print(debugstring, 0, h - font:getHeight())
 
-
     if msg then
         love.graphics.setColor(1, 1, 1, messageAlpha)
         love.graphics.print(msg, w - font:getWidth(msg), h - font:getHeight())
     end
-
-    --print()
-    --drawLabelledKnob(drumPatternName, bx, by, adsr.release, 0, 1)
 
 
 
     if labelbutton('trigger', 0, 0, font:getWidth('trigger'), font:getHeight(), waitingForTriggerToStartRecording).clicked then
         waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
     end
+    if labelbutton('mixer', 0, font:getHeight(), font:getWidth('trigger'), font:getHeight(), showMixer).clicked then
+        showMixer = not showMixer
+    end
     if labelbutton(drumPatternName, 0, 32 + font:getHeight(), font:getWidth(drumPatternName),
             font:getHeight()).clicked then
         showDrumPatternPicker = not showDrumPatternPicker
     end
     if (showDrumPatternPicker) then
-        drawDrumPatternPicker(drummPatternPickData, 500)
+        drawDrumPatternPicker(drummPatternPickData, w / 2)
     end
     --love.graphics.print(drumPatternName, 0, 32 + font:getHeight())
 
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 1
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 1
     local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
@@ -1616,7 +1654,7 @@ function love.draw()
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 3
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 3
     local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 80)
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
@@ -1624,7 +1662,7 @@ function love.draw()
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 5
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 5
     local v = drawLabelledKnob('drums', bx, by, uiData.drumVolume, 0.01, 1)
     if v.value then
         drawLabel(string.format("%02.1f", v.value), bx, by, 1)
@@ -1632,7 +1670,7 @@ function love.draw()
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 7
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 7
     local v = drawLabelledKnob('instr', bx, by, uiData.instrumentsVolume, 0.01, 1)
     if v.value then
         drawLabel(string.format("%02.1f", v.value), bx, by, 1)
@@ -1640,7 +1678,7 @@ function love.draw()
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 9
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 9
     local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -72, 48)
     if v.value then
         drawLabel(string.format("%02.1i", v.value), bx, by, 1)
