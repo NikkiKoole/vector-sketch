@@ -159,6 +159,7 @@ local function prepareDrumkit(drumkitFiles)
             local info = love.filesystem.getInfo(fullPath)
             if info then
                 local soundData = love.sound.newSoundData(fullPath)
+                print(k)
                 result[k] = {
                     name = name,
                     source = love.audio.newSource(soundData),
@@ -206,7 +207,7 @@ function loadJizzJazzFile(data, filename)
     drumPatternName = data.drumPatternName
     drumkit = prepareDrumkit(data.drumkit)
     grid.columns = #data.simplifiedDrumGrid -- todo not working yet.
-
+    grid.labels = drumkit.order
     local g = data.simplifiedDrumGrid
     for x = 1, #g do
         for y = 1, #g[x] do
@@ -408,10 +409,29 @@ function love.load()
         RS = { { 'cr78' }, 'Rim Shot' },
         TB = { { 'cr78' }, 'Guiro 1' },
         CPS = { {}, 'per01' },
-        CB = { { 'cr78' }, 'Cowbell' }
+        CB = { { 'cr78' }, 'Cowbell' },
+        QU = { { 'mp7' }, 'Quijada' }
+    }
+    local drumkitMP7 = {
+        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB', 'QU' },
+        AC = { { 'mp7' }, '808 Kick' },
+        BD = { { 'mp7' }, 'Kickdrum' },
+        SD = { { 'mp7' }, 'Snare1' },
+        LT = { { 'mp7' }, 'Bongo3' },
+        MT = { { 'mp7' }, 'Bongo2' },
+        HT = { { 'mp7' }, 'Bongo1' },
+        CH = { { 'mp7' }, 'Maracas' },
+        OH = { { 'mp7' }, 'Cymbal1' },
+        CY = { { 'mp7' }, 'Cymbal2' },
+        RS = { { 'mp7' }, 'Rimshot' },
+        CPS = { { 'mp7' }, 'Guira' },
+        TB = { { 'mp7' }, 'Tambourine' },
+        CB = { { 'mp7' }, 'Clave' },
+        QU = { { 'mp7' }, 'Quijada' }
     }
 
-    drumkitFiles = drumkitCR78
+
+    drumkitFiles = drumkitMP7
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {

@@ -1,0 +1,384 @@
+{
+ drumPatternName = "Funk and Soul : AMEN BREAK - C",
+ drumkit = {
+  AC = { { "cr78" }, "Kick Accent" },
+  BD = { { "cr78" }, "Kick" },
+  CB = { { "cr78" }, "Cowbell" },
+  CH = { { "cr78" }, "HiHat" },
+  CPS = { {}, "per01" },
+  CY = { { "cr78" }, "Cymbal" },
+  HT = { { "cr78" }, "Bongo High" },
+  LT = { { "cr78" }, "Conga Low" },
+  MT = { { "cr78" }, "Bongo Low" },
+  OH = { { "cr78" }, "Tamb 2" },
+  RS = { { "cr78" }, "Rim Shot" },
+  SD = { { "cr78" }, "Snare" },
+  TB = { { "cr78" }, "Guiro 1" },
+  order = { "AC", "BD", "SD", "LT", "MT", "HT", "CH", "OH", "CY", "RS", "CPS", "TB", "CB" }
+ },
+ instruments = { {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 korg" }, "Fr4 - Korg MS-10 2.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 moog" }, "Fr4 - MemoryMoog 4.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "akwf", "ebass" }, "AKWF_ebass_0009.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "100 Void Vertex SCW" }, "twinkle.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "legow" }, "Pinky Flute.wav" },
+   tuning = 0
+  } },
+ simplifiedClips = { {
+   clips = { { {
+      beat = 0,
+      beatOff = 1,
+      duration = 14,
+      instrumentIndex = 1,
+      semitone = 50,
+      tick = 92,
+      tickOff = 10
+     }, {
+      beat = 4,
+      beatOff = 5,
+      duration = 19,
+      instrumentIndex = 1,
+      semitone = 52,
+      tick = 77,
+      tickOff = 0
+     }, {
+      beat = 7,
+      beatOff = 7,
+      duration = 7,
+      instrumentIndex = 1,
+      semitone = 53,
+      tick = 44,
+      tickOff = 51
+     }, {
+      beat = 7,
+      beatOff = 8,
+      duration = 12,
+      instrumentIndex = 1,
+      semitone = 55,
+      tick = 87,
+      tickOff = 3
+     }, {
+      beat = 8,
+      beatOff = 9,
+      duration = 19,
+      instrumentIndex = 1,
+      semitone = 50,
+      tick = 82,
+      tickOff = 5
+     }, {
+      beat = 12,
+      beatOff = 12,
+      duration = 14,
+      instrumentIndex = 1,
+      semitone = 52,
+      tick = 80,
+      tickOff = 94
+     }, {
+      beat = 15,
+      beatOff = 15,
+      duration = 16,
+      instrumentIndex = 1,
+      semitone = 53,
+      tick = 44,
+      tickOff = 60
+     }, {
+      beat = 15,
+      beatOff = 16,
+      duration = 14,
+      instrumentIndex = 1,
+      semitone = 55,
+      tick = 92,
+      tickOff = 10
+     }, {
+      beat = 16,
+      beatOff = 17,
+      duration = 19,
+      instrumentIndex = 1,
+      semitone = 50,
+      tick = 85,
+      tickOff = 8
+     }, {
+      beat = 20,
+      beatOff = 21,
+      duration = 15,
+      instrumentIndex = 1,
+      semitone = 52,
+      tick = 87,
+      tickOff = 6
+     }, {
+      beat = 23,
+      beatOff = 23,
+      duration = 17,
+      instrumentIndex = 1,
+      semitone = 53,
+      tick = 46,
+      tickOff = 63
+     }, {
+      beat = 23,
+      beatOff = 24,
+      duration = 17,
+      instrumentIndex = 1,
+      semitone = 55,
+      tick = 89,
+      tickOff = 10
+     }, {
+      beat = 24,
+      beatOff = 25,
+      duration = 19,
+      instrumentIndex = 1,
+      semitone = 50,
+      tick = 82,
+      tickOff = 5
+     }, {
+      beat = 26,
+      beatOff = 27,
+      duration = 18,
+      instrumentIndex = 1,
+      semitone = 48,
+      tick = 94,
+      tickOff = 16
+     },
+     meta = {
+      isSelected = true,
+      loopRounder = 28
+     }
+    } }
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = { { {
+      beat = 1,
+      beatOff = 2,
+      duration = 23,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 91,
+      tickOff = 18
+     }, {
+      beat = 3,
+      beatOff = 4,
+      duration = 28,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 90,
+      tickOff = 22
+     }, {
+      beat = 8,
+      beatOff = 8,
+      duration = 24,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 18,
+      tickOff = 42
+     }, {
+      beat = 10,
+      beatOff = 10,
+      duration = 33,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 18,
+      tickOff = 51
+     }, {
+      beat = 11,
+      beatOff = 12,
+      duration = 39,
+      instrumentIndex = 4,
+      semitone = 48,
+      tick = 85,
+      tickOff = 28
+     }, {
+      beat = 16,
+      beatOff = 17,
+      duration = 28,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 95,
+      tickOff = 27
+     }, {
+      beat = 18,
+      beatOff = 19,
+      duration = 28,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 86,
+      tickOff = 18
+     }, {
+      beat = 20,
+      beatOff = 21,
+      duration = 28,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 95,
+      tickOff = 27
+     }, {
+      beat = 25,
+      beatOff = 25,
+      duration = 19,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 19,
+      tickOff = 38
+     }, {
+      beat = 26,
+      beatOff = 27,
+      duration = 29,
+      instrumentIndex = 4,
+      semitone = 50,
+      tick = 86,
+      tickOff = 19
+     }, {
+      beat = 27,
+      beatOff = 28,
+      duration = 32,
+      instrumentIndex = 4,
+      semitone = 48,
+      tick = 77,
+      tickOff = 13
+     },
+     meta = {
+      isSelected = true,
+      loopRounder = 32
+     }
+    } }
+  }, {
+   clips = { { {
+      beat = 1,
+      beatOff = 1,
+      duration = 38,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 51,
+      tickOff = 89
+     }, {
+      beat = 5,
+      beatOff = 6,
+      duration = 43,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 85,
+      tickOff = 32
+     }, {
+      beat = 9,
+      beatOff = 10,
+      duration = 77,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 23,
+      tickOff = 4
+     }, {
+      beat = 13,
+      beatOff = 14,
+      duration = 109,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 9,
+      tickOff = 22
+     }, {
+      beat = 14,
+      beatOff = 16,
+      duration = 110,
+      instrumentIndex = 5,
+      semitone = 60,
+      tick = 86,
+      tickOff = 4
+     }, {
+      beat = 18,
+      beatOff = 18,
+      duration = 48,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 32,
+      tickOff = 80
+     }, {
+      beat = 22,
+      beatOff = 22,
+      duration = 67,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 28,
+      tickOff = 95
+     }, {
+      beat = 26,
+      beatOff = 26,
+      duration = 34,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 19,
+      tickOff = 53
+     }, {
+      beat = 28,
+      beatOff = 30,
+      duration = 157,
+      instrumentIndex = 5,
+      semitone = 60,
+      tick = 91,
+      tickOff = 56
+     }, {
+      beat = 30,
+      beatOff = 31,
+      duration = 38,
+      instrumentIndex = 5,
+      semitone = 62,
+      tick = 86,
+      tickOff = 28
+     },
+     meta = {
+      isSelected = true,
+      loopRounder = 32
+     }
+    } }
+  } },
+ simplifiedDrumGrid = { { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
+ uiData = {
+  allDrumSemitoneOffset = -15.594765955854,
+  bpm = 180.10581753147,
+  drumVolume = 1,
+  instrumentsVolume = 1,
+  swing = 50
+ }
+}

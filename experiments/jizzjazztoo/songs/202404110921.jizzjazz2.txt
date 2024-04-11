@@ -1,0 +1,89 @@
+{
+ drumPatternName = "",
+ drumkit = {
+  AC = { { "mp7" }, "808 Kick" },
+  BD = { { "mp7" }, "Kickdrum" },
+  CB = { { "mp7" }, "Clave" },
+  CH = { { "mp7" }, "Maracas" },
+  CY = { { "mp7" }, "Cymbal2" },
+  HT = { { "mp7" }, "Bongo1" },
+  LT = { { "mp7" }, "Bongo3" },
+  MT = { { "mp7" }, "Bongo2" },
+  OH = { { "mp7" }, "Cymbal1" },
+  QU = { { "mp7" }, "Quijada" },
+  RS = { { "mp7" }, "Rimshot" },
+  SD = { { "mp7" }, "Snare1" },
+  TB = { { "mp7" }, "Tambourine" },
+  order = { "AC", "BD", "SD", "LT", "MT", "HT", "CH", "OH", "CY", "RS", "CPS", "TB", "CB", "QU" }
+ },
+ instruments = { {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 korg" }, "Fr4 - Korg MS-10 2.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 moog" }, "Fr4 - MemoryMoog 4.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "akwf", "ebass" }, "AKWF_ebass_0009.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "100 Void Vertex SCW" }, "twinkle.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "legow" }, "Pinky Flute.wav" },
+   tuning = 0
+  } },
+ simplifiedClips = { {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  } },
+ simplifiedDrumGrid = { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
+ uiData = {
+  allDrumSemitoneOffset = 0,
+  bpm = 90,
+  drumVolume = 1,
+  instrumentsVolume = 1,
+  swing = 50
+ }
+}

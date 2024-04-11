@@ -1,0 +1,132 @@
+{
+ drumPatternName = "BoomBAP : Boombap1",
+ drumkit = {
+  AC = { { "cr78" }, "Kick Accent" },
+  BD = { { "cr78" }, "Kick" },
+  CB = { { "cr78" }, "Cowbell" },
+  CH = { { "cr78" }, "HiHat" },
+  CPS = { {}, "per01" },
+  CY = { { "cr78" }, "Cymbal" },
+  HT = { {}, "A_062__D4_3" },
+  LT = { { "cr78" }, "Conga Low" },
+  MT = { { "cr78" }, "Bongo Low" },
+  OH = { { "cr78" }, "Tamb 2" },
+  RS = { { "cr78" }, "Rim Shot" },
+  SD = { { "cr78" }, "Snare" },
+  TB = { { "cr78" }, "Guiro 1" },
+  order = { "AC", "BD", "SD", "LT", "MT", "HT", "CH", "OH", "CY", "RS", "CPS", "TB", "CB" }
+ },
+ instruments = { {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 korg" }, "Fr4 - Korg MS-10 2.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 moog" }, "Fr4 - MemoryMoog 4.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "akwf", "ebass" }, "AKWF_ebass_0009.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "100 Void Vertex SCW" }, "twinkle.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "legow" }, "Pinky Flute.wav" },
+   tuning = 0
+  } },
+ simplifiedClips = { {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  } },
+ simplifiedDrumGrid = { { 0, {}, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, {
+    flam = false,
+    gate = 0,
+    semitoneOffset = 0
+   }, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, {
+    flam = false,
+    gate = 0.016304347826087,
+    semitoneOffset = 0
+   }, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, {
+    delay = 0.375,
+    flam = false,
+    gate = 0.0054347826086957,
+    rndPOctMin = -1.6904761904762,
+    semitoneOffset = 0,
+    useRndP = true,
+    useRndPPentatonic = true
+   }, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {
+    flam = false
+   }, 0, 0, 0, {
+    delay = 0.1304347826087,
+    flam = false,
+    gate = 0.048913043478261,
+    rndPOctMin = -1.7142857142857,
+    semitoneOffset = 0,
+    useRndP = true,
+    useRndPPentatonic = true
+   }, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, {
+    flam = false,
+    gate = 0.021739130434783,
+    rndPOctMin = -1.6666666666667,
+    semitoneOffset = 0,
+    useRndP = true,
+    useRndPPentatonic = true
+   }, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, {
+    flam = false,
+    gate = 0.043478260869565,
+    rndPOctMin = -1.547619047619,
+    semitoneOffset = 0,
+    useRndP = true,
+    useRndPPentatonic = true
+   }, 0, {
+    delay = 0.76086956521739,
+    flam = false
+   }, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
+ uiData = {
+  allDrumSemitoneOffset = -1.4135066383957,
+  bpm = 133.25234851636,
+  drumVolume = 1,
+  instrumentsVolume = 1,
+  swing = 52.682977827893
+ }
+}

@@ -1,0 +1,158 @@
+{
+ drumPatternName = "Funk and Soul : THE FUNKY DRUMMER",
+ drumkit = {
+  AC = { { "cr78" }, "Kick Accent" },
+  BD = { { "cr78" }, "Kick" },
+  CB = { { "cr78" }, "Cowbell" },
+  CH = { { "cr78" }, "HiHat" },
+  CPS = { {}, "per01" },
+  CY = { { "cr78" }, "Cymbal" },
+  HT = { { "cr78" }, "Bongo High" },
+  LT = { { "cr78" }, "Conga Low" },
+  MT = { { "cr78" }, "Bongo Low" },
+  OH = { { "cr78" }, "Tamb 2" },
+  RS = { { "cr78" }, "Rim Shot" },
+  SD = { { "cr78" }, "Snare" },
+  TB = { { "cr78" }, "Guiro 1" },
+  order = { "AC", "BD", "SD", "LT", "MT", "HT", "CH", "OH", "CY", "RS", "CPS", "TB", "CB" }
+ },
+ instruments = { {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 korg" }, "Fr4 - Korg MS-10 2.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 moog" }, "Fr4 - MemoryMoog 4.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "lulla" }, "rainbows.wav" },
+   tuning = 1
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "100 Void Vertex SCW" }, "twinkle.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.19207094989006,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "legow" }, "Clean High.wav" },
+   tuning = 0
+  } },
+ simplifiedClips = { {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = { { {
+      beat = 0,
+      beatOff = 0,
+      duration = 75,
+      instrumentIndex = 5,
+      semitone = 48,
+      tick = 0,
+      tickOff = 75
+     }, {
+      beat = 0,
+      beatOff = 3,
+      duration = 302,
+      instrumentIndex = 5,
+      semitone = 52,
+      tick = 71,
+      tickOff = 85
+     }, {
+      beat = 3,
+      beatOff = 5,
+      duration = 199,
+      instrumentIndex = 5,
+      semitone = 49,
+      tick = 85,
+      tickOff = 92
+     }, {
+      beat = 5,
+      beatOff = 7,
+      duration = 172,
+      instrumentIndex = 5,
+      semitone = 48,
+      tick = 85,
+      tickOff = 65
+     }, {
+      beat = 7,
+      beatOff = 8,
+      duration = 35,
+      instrumentIndex = 5,
+      semitone = 48,
+      tick = 78,
+      tickOff = 17
+     }, {
+      beat = 8,
+      beatOff = 11,
+      duration = 363,
+      instrumentIndex = 5,
+      semitone = 52,
+      tick = 13,
+      tickOff = 88
+     }, {
+      beat = 11,
+      beatOff = 14,
+      duration = 203,
+      instrumentIndex = 5,
+      semitone = 49,
+      tick = 88,
+      tickOff = 3
+     }, {
+      beat = 14,
+      beatOff = 15,
+      duration = 153,
+      instrumentIndex = 5,
+      semitone = 48,
+      tick = 4,
+      tickOff = 61
+     },
+     meta = {
+      isSelected = true,
+      loopRounder = 16
+     }
+    } }
+  } },
+ simplifiedDrumGrid = { { 0, {}, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, {}, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {}, 0, 0, 0, {}, 0, 0, 0, 0, 0, 0 } },
+ uiData = {
+  allDrumSemitoneOffset = 0,
+  bpm = 90,
+  drumVolume = 1,
+  instrumentsVolume = 1,
+  swing = 50
+ }
+}

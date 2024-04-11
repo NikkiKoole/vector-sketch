@@ -1,0 +1,192 @@
+{
+ drumPatternName = "",
+ drumkit = {
+  AC = { { "cr78" }, "Kick Accent" },
+  BD = { { "cr78" }, "Kick" },
+  CB = { { "cr78" }, "Cowbell" },
+  CH = { { "cr78" }, "HiHat" },
+  CPS = { {}, "per01" },
+  CY = { { "cr78" }, "Cymbal" },
+  HT = { { "cr78" }, "Bongo High" },
+  LT = { { "cr78" }, "Conga Low" },
+  MT = { { "cr78" }, "Bongo Low" },
+  OH = { { "cr78" }, "Tamb 2" },
+  RS = { { "cr78" }, "Rim Shot" },
+  SD = { { "cr78" }, "Snare" },
+  TB = { { "cr78" }, "Guiro 1" },
+  order = { "AC", "BD", "SD", "LT", "MT", "HT", "CH", "OH", "CY", "RS", "CPS", "TB", "CB" }
+ },
+ instruments = { {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 korg" }, "Fr4 - Korg MS-10 2.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "fr4 moog" }, "Fr4 - MemoryMoog 4.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "akwf", "ebass" }, "AKWF_ebass_0009.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "oscillators", "100 Void Vertex SCW" }, "twinkle.wav" },
+   tuning = 0
+  }, {
+   adsr = {
+    a = 0.2,
+    d = 0.01,
+    r = 0.03,
+    s = 0.7
+   },
+   realtimeTuning = 0,
+   sample = { { "legow" }, "Clean High.wav" },
+   tuning = 0
+  } },
+ simplifiedClips = { {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = {}
+  }, {
+   clips = { { {
+      beat = 0,
+      beatOff = 4,
+      duration = 422,
+      instrumentIndex = 5,
+      semitone = 28,
+      tick = 54,
+      tickOff = 92
+     }, {
+      beat = 4,
+      beatOff = 9,
+      duration = 422,
+      instrumentIndex = 5,
+      semitone = 30,
+      tick = 95,
+      tickOff = 37
+     }, {
+      beat = 5,
+      beatOff = 9,
+      duration = 422,
+      instrumentIndex = 5,
+      semitone = 24,
+      tick = 3,
+      tickOff = 41
+     }, {
+      beat = 9,
+      beatOff = 13,
+      duration = 436,
+      instrumentIndex = 5,
+      semitone = 28,
+      tick = 37,
+      tickOff = 89
+     }, {
+      beat = 13,
+      beatOff = 19,
+      duration = 496,
+      instrumentIndex = 5,
+      semitone = 30,
+      tick = 85,
+      tickOff = 5
+     }, {
+      beat = 13,
+      beatOff = 19,
+      duration = 487,
+      instrumentIndex = 5,
+      semitone = 24,
+      tick = 92,
+      tickOff = 3
+     },
+     meta = {
+      isSelected = true,
+      loopRounder = 20
+     }
+    } }
+  } },
+ simplifiedDrumGrid = { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {
+    flam = false
+   }, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.76086956521739
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.72282608695652
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {
+    flam = false,
+    gate = 0.081521739130435,
+    rndPOctMin = -0.42857142857143,
+    semitoneOffset = -18,
+    useRndP = true
+   }, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.66304347826087
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.59782608695652
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.55978260869565
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.53260869565217
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.52173913043478
+   }, 0, 0, 0, 0, 0, 0, {
+    flam = false,
+    gate = 0.065217391304348,
+    rndPOctMin = -0.78571428571429,
+    semitoneOffset = -19,
+    useRndP = true
+   }, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.52717391304348
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.53804347826087
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.57065217391304
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = true,
+    volume = 0.6195652173913
+   }, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, {
+    flam = false,
+    volume = 0.67391304347826
+   }, 0, 0, 0, 0, 0, 0, 0, 0 } },
+ uiData = {
+  allDrumSemitoneOffset = 0,
+  bpm = 90,
+  drumVolume = 1,
+  instrumentsVolume = 1,
+  swing = 50
+ }
+}

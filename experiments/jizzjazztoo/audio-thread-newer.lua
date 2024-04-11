@@ -86,16 +86,7 @@ local function generateADSR(it, now)
     return envelopeValue
 end
 
-local function updateADSREnvelopesForPlayingSounds(dt)
-    local now = love.timer.getTime()
-    for i = 1, #playingSounds do
-        local it = playingSounds[i]
-        local value = generateADSR(it, now)
-        value = value * (uiData and uiData.instrumentsVolume or 1)
-        it.volume = value
-        it.source:setVolume(value)
-    end
-end
+
 
 local function generateSquareLFO(time, lfoFrequency)
     local phase = time * lfoFrequency
@@ -165,6 +156,18 @@ local function getPitchVariationRange(semitone, offsetInSemitones, tuning)
     return range
 end
 
+local function updateADSREnvelopesForPlayingSounds(dt)
+    local now = love.timer.getTime()
+    for i = 1, #playingSounds do
+        local it = playingSounds[i]
+        local value = generateADSR(it, now)
+        value = value * (uiData and uiData.instrumentsVolume or 1)
+        it.volume = value
+        --  print(value)
+        --it.source:setVolume(value)
+    end
+end
+
 local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
         local useLFO = true
@@ -183,15 +186,29 @@ local function updatePlayingSoundsWithLFO()
             local lfoPitchDelta = (lfoValue * lfoAmplitude)
 
 
+
             it.source:setPitch(it.pitch + lfoPitchDelta)
 
 
-            --local freqLfo = (generateSineLFO(love.timer.getTime(), 1) + 1) / 2
+            local volume = it.volume
+            local useVolumeLFO = false
+            if useVolumeLFO then
+                local freqLfo = (generateExponentialDecayLFO(timeThis, 1, 1) + 1) / 2
 
-            --local lfoVolumeValue = ((generateSineLFO(timeThis, 1 / freqLfo) + 1) / 2)
-            -- print(lfoVolumeValue)
-            --if it.volume > 0.5 then
-            --it.source:setVolume(it.volume * lfoVolumeValue)
+                local lfVolume = (generateSineLFO(timeThis, 1 / freqLfo) + 1) / 2
+
+                -- local lfoVolumeValue = ((generateExponentialDecayLFO(timeThis, 1 / freqLfo, 1) + 1) / 2)
+                -- print(lfoVolumeValue)
+                --if it.volume > 0.5 then
+                volume = it.volume * lfVolume
+                --if volume < 0.02 then volume = 0 end
+                --  print(i, volume)
+            end
+            it.source:setVolume(volume)
+
+            -- print('*****')
+            -- print(it.pitch + lfoPitchDelta)
+            -- print(it.volume * lfoVolumeValue)
             --end
         end
     end
@@ -208,7 +225,7 @@ local function cleanPlayingSounds()
             -- print('ok wy ?')
         end
         if (it.timeNoteOff and it.timeNoteOff < it.timeNoteOn) then
-            print('this is weird', it.timeNoteOn)
+            -- print('this is weird', it.timeNoteOn)
         end
         if (it.timeNoteOff and it.timeNoteOff < now) then
             if not it.source:isPlaying() then
@@ -429,6 +446,10 @@ function doHandleDrumNotes(beat, tick, bpm)
                 end
                 if cell.on and not dontTrigger then
                     local key = drumkit.order[i]
+                    --print(drumkit, drumkit[key], key)
+                    if (drumkit[key] == nil) then
+                        print(key)
+                    end
                     local source = drumkit[key].source:clone()
                     local cellVolume = (cell.volume or 1) * (mixerData and mixerData[i].volume or 1)
                     local gate = cell.gate or 1
