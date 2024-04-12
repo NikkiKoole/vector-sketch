@@ -41,7 +41,7 @@ local defaultReleaseTime  = 0.03
 
 lib.instruments = {}
 
-lib.initializeInstruments = function(samples)
+function lib.initializeInstruments(samples)
     for i = 1, 5 do
         lib.instruments[i] = {
             --sampleIndex = 1,
@@ -58,21 +58,18 @@ lib.initializeInstruments = function(samples)
     end
 end
 
-
-
-
-lib.getMessageFromAudioThread = function()
+function lib.getMessageFromAudioThread()
     local v = channel.audio2main:pop();
     local error = _thread:getError()
     assert(not error, error)
     return v
 end
 
-lib.sendMessageToAudioThread  = function(msg)
+function lib.sendMessageToAudioThread(msg)
     channel.main2audio:push(msg)
 end
 
-lib.pumpAudioThread           = function()
+function lib.pumpAudioThread()
     repeat
         local msg = lib.getMessageFromAudioThread()
         if msg then
@@ -111,7 +108,7 @@ lib.pumpAudioThread           = function()
     until not msg
 end
 
-lib.prepareDrumkit            = function(drumkitFiles)
+function lib.prepareDrumkit(drumkitFiles)
     local result = {}
     for k, v in pairs(drumkitFiles) do
         if k ~= 'order' then
@@ -156,7 +153,7 @@ lib.prepareDrumkit            = function(drumkitFiles)
     return result
 end
 
-lib.prepareSingleSample       = function(pathArray, filePath)
+function lib.prepareSingleSample(pathArray, filePath)
     local root = 'samples'
     local fullPath = root
     local isCycle = false
@@ -186,6 +183,23 @@ lib.prepareSingleSample       = function(pathArray, filePath)
     end
 end
 
+function lib.tuneRTInstrumentBySemitone(index, semitone)
+    lib.instruments[index].realtimeTuning = lib.instruments[index].realtimeTuning + semitone
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
+    return lib.instruments[index].realtimeTuning
+end
+
+function lib.tuneInstrumentBySemitone(index, semitone)
+    lib.instruments[index].tuning = lib.instruments[index].tuning + semitone
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
+    return lib.instruments[index].tuning
+end
+
+function lib.setADSRAtIndex(term, index, value)
+    lib.instruments[index].adsr[term] = value
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments });
+end
+
 local function shallowcopy(orig)
     local orig_type = type(orig)
     local copy
@@ -200,7 +214,7 @@ local function shallowcopy(orig)
     return copy
 end
 
-lib.saveJizzJazzFile = function()
+function lib.saveJizzJazzFile()
     local str               = os.date("%Y%m%d%H%M")
     local path              = str .. '.jizzjazz2.txt'
 
@@ -263,14 +277,14 @@ lib.saveJizzJazzFile = function()
     love.system.openURL(openURL)
 end
 
-lib.updateMixerData = function()
+function lib.updateMixerData()
     lib.sendMessageToAudioThread({
         type = 'mixerData',
         data = mixData
     })
 end
 
-lib.updateDrumKitData = function()
+function lib.updateDrumKitData()
     lib.sendMessageToAudioThread({
         type = 'drumkitData',
         data = {
@@ -281,8 +295,7 @@ lib.updateDrumKitData = function()
     })
 end
 
-
-lib.loadJizzJazzFile = function(data, filename)
+function lib.loadJizzJazzFile(data, filename)
     drumPatternName = data.drumPatternName
     drumkit = lib.prepareDrumkit(data.drumkit)
     grid.columns = #data.simplifiedDrumGrid -- todo not working yet.
@@ -306,7 +319,7 @@ lib.loadJizzJazzFile = function(data, filename)
         local readInstrument = data.instruments[i]
         local newSample = lib.prepareSingleSample(readInstrument.sample[1], readInstrument.sample[2])
         if newSample then
-            instruments[i] = {
+            lib.instruments[i] = {
                 --sampleIndex = 1,
                 sample = newSample, -- pickedSamples[i],
                 tuning = readInstrument.tuning,
@@ -322,10 +335,10 @@ lib.loadJizzJazzFile = function(data, filename)
             print('something was up making sample for this instrument: ', filename, i, inspect(readInstrument))
         end
     end
-    lib.sendMessageToAudioThread({ type = "instruments", data = instruments })
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
 
-    recordedClips = data.simplifiedClips
-    lib.sendMessageToAudioThread({ type = "clips", data = recordedClips })
+    lib.recordedClips = data.simplifiedClips
+    lib.sendMessageToAudioThread({ type = "clips", data = lib.recordedClips })
 
     uiData = data.uiData
     lib.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
