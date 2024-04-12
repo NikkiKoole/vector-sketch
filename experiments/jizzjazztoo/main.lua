@@ -3,253 +3,15 @@ package.path = package.path .. ";../../?.lua"
 sone = require 'sone'
 require 'ui'
 require 'wordsmith'
+
 local text         = require 'lib.text'
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
-local _thread
-local channel      = {};
-channel.audio2main = love.thread.getChannel("audio2main")
-channel.main2audio = love.thread.getChannel("main2audio")
+local audiohelper  = require 'jizzjazz-audiohelper'
 
 require 'fileBrowser'
 
 
-getMessageFromAudioThread = function()
-    local v = channel.audio2main:pop();
-    local error = _thread:getError()
-    assert(not error, error)
-    return v
-end
-
-sendMessageToAudioThread  = function(msg)
-    channel.main2audio:push(msg)
-end
-
-local sys                 = love.system.getOS()
-if sys == 'iOS' or sys == 'Android' then
-    _thread = love.thread.newThread('audio-thread-newer.lua')
-    _thread:start()
-else
-    _thread = love.thread.newThread('audio-thread-newer.lua')
-    _thread:start()
-end
-
-local function shallowcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in pairs(orig) do
-            copy[orig_key] = orig_value
-        end
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
-
-function saveJizzJazzFile()
-    local str               = os.date("%Y%m%d%H%M")
-    local path              = str .. '.jizzjazz2.txt'
-
-    local simplifiedDrumkit = {}
-    for k, v in pairs(drumkit) do
-        if k == 'order' then
-            simplifiedDrumkit.order = v
-        else
-            simplifiedDrumkit[k] = { v.pathParts.pathArray, v.name }
-        end
-    end
-
-    local simplifiedInstrumentBanks = {}
-    for i = 1, #instruments do
-        local instr = instruments[i]
-        local sample = instr.sample
-        local adsr = instr.adsr
-        simplifiedInstrumentBanks[i] = {
-            sample = { sample.pathParts.pathArray, sample.pathParts.filePath },
-            adsr = { a = adsr.attack, d = adsr.decay, s = adsr.sustain, r = adsr.release },
-            tuning = instr.tuning,
-            realtimeTuning = instr.realtimeTuning
-        }
-    end
-
-    local simplifiedDrumGrid = {}
-    local drumColumns = #drumgrid
-    local drumRows = #simplifiedDrumkit.order
-    print('columns', drumColumns, grid.columns)
-    for x = 1, drumColumns do
-        simplifiedDrumGrid[x] = {}
-        for y = 1, drumRows do
-            simplifiedDrumGrid[x][y] = 0
-            local d = drumgrid[x][y]
-            if (d.on == true) then
-                local n = shallowcopy(d)
-                n.on = nil
-                simplifiedDrumGrid[x][y] = n
-            end
-        end
-    end
-
-    --print(#recordedClips)
-
-    local simplifiedClips = shallowcopy(recordedClips)
-
-
-    local data = {
-        drumPatternName = drumPatternName,
-        drumkit = simplifiedDrumkit,
-        instruments = simplifiedInstrumentBanks,
-        simplifiedDrumGrid = simplifiedDrumGrid,
-
-        simplifiedClips = simplifiedClips,
-        uiData = shallowcopy(uiData)
-    }
-
-    love.filesystem.write(path, inspect(data, { indent = " " }))
-    local openURL = "file://" .. love.filesystem.getSaveDirectory()
-    love.system.openURL(openURL)
-end
-
-function prepareSingleSample(pathArray, filePath)
-    local root = 'samples'
-    local fullPath = root
-    local isCycle = false
-    for i = 1, #pathArray do
-        fullPath = fullPath .. '/' .. pathArray[i]
-        if pathArray[i] == 'oscillators' then
-            isCycle = true
-        end
-    end
-    -- print('isCycle', isCycle)
-    fullPath = fullPath .. '/' .. filePath
-    local name = filePath:gsub(".wav", ""):gsub(".WAV", "")
-    local info = love.filesystem.getInfo(fullPath)
-    if info then
-        local soundData = love.sound.newSoundData(fullPath)
-        local result = {
-            name = name,
-            source = love.audio.newSource(soundData),
-            soundData = soundData,
-            cycle = isCycle,
-            path = fullPath,
-            pathParts = { root = root, pathArray = pathArray, filePath = filePath }
-        }
-        return result
-    else
-        print('issue preparing sample: ', fullPath)
-    end
-end
-
-local function prepareDrumkit(drumkitFiles)
-    local result = {}
-    for k, v in pairs(drumkitFiles) do
-        if k ~= 'order' then
-            -- print(k)
-            local root = 'samples'
-            local fullPath = root
-            local pathArray = v[1]
-            local name = v[2]:gsub(".wav", ""):gsub(".WAV", "")
-            for i = 1, #pathArray do
-                fullPath = fullPath .. '/' .. pathArray[i]
-            end
-            local filePath = name .. '.wav'
-            fullPath = fullPath .. '/' .. filePath
-            local info = love.filesystem.getInfo(fullPath)
-            if info then
-                local soundData = love.sound.newSoundData(fullPath)
-                print(k)
-                result[k] = {
-                    name = name,
-                    source = love.audio.newSource(soundData),
-                    soundData = soundData,
-                    cycle = false,
-                    path = fullPath,
-                    pathParts = { root = root, pathArray = pathArray, filePath = filePath }
-                }
-            end
-        end
-    end
-    --print(drumkitFiles)
-    if drumkitFiles.order then
-        for i = 1, #drumkitFiles.order do
-            if drumkitFiles[drumkitFiles.order[i]] then
-
-            else
-                print('order issue:', drumkitFiles.order[i])
-            end
-        end
-        result.order = drumkitFiles.order
-    else
-        print('drumkitfile need an order to display')
-    end
-    return result
-end
-local function updateMixerData()
-    sendMessageToAudioThread({
-        type = 'mixerData',
-        data = mixData
-    })
-end
-local function updateDrumKitData()
-    sendMessageToAudioThread({
-        type = 'drumkitData',
-        data = {
-            drumgrid = drumgrid,
-            drumkit = drumkit,
-            beatInMeasure = grid.columns / 4
-        }
-    })
-end
-
-function loadJizzJazzFile(data, filename)
-    drumPatternName = data.drumPatternName
-    drumkit = prepareDrumkit(data.drumkit)
-    grid.columns = #data.simplifiedDrumGrid -- todo not working yet.
-    grid.labels = drumkit.order
-    local g = data.simplifiedDrumGrid
-    for x = 1, #g do
-        for y = 1, #g[x] do
-            local dcell = g[x][y]
-            drumgrid[x][y] = { on = false }
-            if dcell ~= 0 then
-                drumgrid[x][y] = shallowcopy(dcell)
-                drumgrid[x][y].on = true
-            end
-        end
-    end
-    updateDrumKitData()
-
-
-    for i = 1, #data.instruments do
-        local readInstrument = data.instruments[i]
-        local newSample = prepareSingleSample(readInstrument.sample[1], readInstrument.sample[2])
-        if newSample then
-            instruments[i] = {
-                --sampleIndex = 1,
-                sample = newSample, -- pickedSamples[i],
-                tuning = readInstrument.tuning,
-                realtimeTuning = readInstrument.realtimeTuning,
-                adsr = {
-                    attack = readInstrument.adsr.a,
-                    decay = readInstrument.adsr.d,
-                    sustain = readInstrument.adsr.s,
-                    release = readInstrument.adsr.r
-                },
-            }
-        else
-            print('something was up making sample for this instrument: ', filename, i, inspect(readInstrument))
-        end
-    end
-    sendMessageToAudioThread({ type = "instruments", data = instruments })
-
-    recordedClips = data.simplifiedClips
-    sendMessageToAudioThread({ type = "clips", data = recordedClips })
-
-    uiData = data.uiData
-    sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-end
 
 local function hex2rgb(hex)
     hex = hex:gsub("#", "")
@@ -272,7 +34,7 @@ function love.filedropped(file)
         file:open("r")
         local data = file:read()
         local obj = (loadstring("return " .. data)())
-        loadJizzJazzFile(obj, filename)
+        audiohelper.loadJizzJazzFile(obj, filename)
         -- print(inspect(obj))
         -- file:close()
     end
@@ -315,12 +77,7 @@ function love.load()
     lookinIntoIntrumentAtIndex = 0
     singleInstrumentJob = nil
 
-    sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-    myTick = 0
-    myBeat = 0
-    myBeatInMeasure = 0 --4myPlayingCellPercentage
-    myNumPlayingSounds = 0
-    myPlayingCellPercentage = 0
+    audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
 
     bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
     smallestfont = love.graphics.newFont('WindsorBT-Roman.otf', 16)
@@ -339,61 +96,34 @@ function love.load()
     --queuedDrumPatternIndex = 0 --  todo
 
     pressedKeys = {}
-    -- measure/beat
 
-    sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
-    browser                   = fileBrowser("samples", {}, { "wav", "WAV" })
-    browserClicked            = false
-    fileBrowserForSound       = nil
+    audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
-    max_octave                = 8
-    octave                    = 4
+    browser             = fileBrowser("samples", {}, { "wav", "WAV" })
+    browserClicked      = false
+    fileBrowserForSound = nil
 
-    local defaultAttackTime   = 0.2
-    local defaultDecayTime    = 0.01
-    local defaultSustainLevel = 0.7
-    local defaultReleaseTime  = 0.03
+    max_octave          = 8
+    octave              = 4
 
-    instrumentIndex           = 1
-    instruments               = {}
+    instrumentIndex     = 1
 
-    local pickedSamples       = {
-        prepareSingleSample({ "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav'),
-        prepareSingleSample({ "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
-        prepareSingleSample({ "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
-        prepareSingleSample({ "oscillators", "100 Void Vertex SCW" }, 'twinkle.wav'),
-        prepareSingleSample({ "legow" }, 'Pinky Flute.wav'),
+
+    local samples = {
+        audiohelper.prepareSingleSample({ "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav'),
+        audiohelper.prepareSingleSample({ "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
+        audiohelper.prepareSingleSample({ "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
+        audiohelper.prepareSingleSample({ "oscillators", "100 Void Vertex SCW" }, 'twinkle.wav'),
+        audiohelper.prepareSingleSample({ "legow" }, 'Pinky Flute.wav'),
     }
-
-    for i = 1, 5 do
-        instruments[i] = {
-            --sampleIndex = 1,
-            sample = pickedSamples[i],
-            tuning = 0,
-            realtimeTuning = 0,
-            adsr = {
-                attack = defaultAttackTime,
-                decay = defaultDecayTime,
-                sustain = defaultSustainLevel,
-                release = defaultReleaseTime
-            },
-        }
-    end
+    audiohelper.initializeInstruments(samples)
 
     -- here we will keep the recorded Data for all instruments, and every instrument can have multiple recorded things, lets call them clip
-    recordedClips = {}
-    for i = 1, 5 do
-        recordedClips[i] = {
-            clips = {}
-        }
-    end
-    percentageThingies = {} -- 5
-    for i = 1, 5 do
-        percentageThingies[i] = {}
-    end
-    sendMessageToAudioThread({ type = "instruments", data = instruments })
-    sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+
+
+    audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
+    audiohelper.sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
 
     local drumkitCR78 = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
@@ -431,8 +161,8 @@ function love.load()
     }
 
 
-    drumkitFiles = drumkitMP7
-    drumkit = prepareDrumkit(drumkitFiles)
+    drumkitFiles = drumkitCR78
+    drumkit = audiohelper.prepareDrumkit(drumkitFiles)
 
     grid = {
         startX = 150,
@@ -447,7 +177,7 @@ function love.load()
     for i = 1, #drumkitFiles.order do
         mixData[i] = { volume = 1 }
     end
-    updateMixerData()
+    audiohelper.updateMixerData()
     drumgrid = {}
     for x = 1, grid.columns do
         drumgrid[x] = {}
@@ -463,7 +193,7 @@ function love.load()
         pickedCategoryIndex = 1,
         pickedItemIndex = 1
     }
-    updateDrumKitData()
+    audiohelper.updateDrumKitData()
 
 
     -- scales
@@ -606,8 +336,11 @@ end
 
 function love.keyreleased(k)
     if (usingMap[k] ~= nil) then
-        local tuningOffset = instruments[instrumentIndex].tuning
+        local tuningOffset = audiohelper.instruments[instrumentIndex].tuning
         local formerOctave = octave
+        local formerInstrumentIndex = instrumentIndex
+        local formerScale = scale
+
         if pressedKeys[k] then
             -- we need to know wha the settings were when we started pressing.
             -- because we need to release THAT button, not the one that would be triggered now.
@@ -617,7 +350,7 @@ function love.keyreleased(k)
             formerInstrumentIndex = pressedKeys[k].instrumentIndex
             pressedKeys[k] = nil
         end
-        sendMessageToAudioThread({
+        audiohelper.sendMessageToAudioThread({
             type = "semitoneReleased",
             data = {
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], formerScale), formerOctave) + tuningOffset,
@@ -652,7 +385,7 @@ function love.keypressed(k)
         local name, gridlength = drumPatterns.pickExistingPattern(drumgrid, drumkit)
         drumPatternName = name
         grid.columns = gridlength
-        updateDrumKitData()
+        audiohelper.updateDrumKitData()
     end
 
     if (usingMap[k] ~= nil) then
@@ -660,21 +393,22 @@ function love.keypressed(k)
             waitingForTriggerToStartRecording = false
             -- start recording
             --  sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
-            sendMessageToAudioThread({ type = "mode", data = 'record' });
-            sendMessageToAudioThread({ type = "paused", data = false });
+            audiohelper.sendMessageToAudioThread({ type = "mode", data = 'record' });
+            audiohelper.sendMessageToAudioThread({ type = "paused", data = false });
             playing = false
             recording = true
         end
 
 
-        sendMessageToAudioThread({
+        audiohelper.sendMessageToAudioThread({
             type = "semitonePressed",
             data = {
-                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + instruments[instrumentIndex].tuning,
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) +
+                audiohelper.instruments[instrumentIndex].tuning,
             }
         });
         pressedKeys[k] = {
-            tuning = instruments[instrumentIndex].tuning,
+            tuning = audiohelper.instruments[instrumentIndex].tuning,
             octave = octave,
             scale = scale,
             instrumentIndex =
@@ -696,24 +430,26 @@ function love.keypressed(k)
 
     if k == 'c' then
         if love.keyboard.isDown('lshift') then
-            instruments[instrumentIndex].realtimeTuning = instruments[instrumentIndex].realtimeTuning + 1
-            sendMessageToAudioThread({ type = "instruments", data = instruments })
-            message('rt tuning: ' .. instruments[instrumentIndex].realtimeTuning)
+            audiohelper.instruments[instrumentIndex].realtimeTuning = audiohelper.instruments[instrumentIndex]
+            .realtimeTuning + 1
+            audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
+            message('rt tuning: ' .. audiohelper.instruments[instrumentIndex].realtimeTuning)
         else
-            instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning + 1
-            sendMessageToAudioThread({ type = "instruments", data = instruments })
-            message('tuning: ' .. instruments[instrumentIndex].tuning)
+            audiohelper.instruments[instrumentIndex].tuning = audiohelper.instruments[instrumentIndex].tuning + 1
+            audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
+            message('tuning: ' .. audiohelper.instruments[instrumentIndex].tuning)
         end
     end
     if k == 'v' then
         if love.keyboard.isDown('lshift') then
-            instruments[instrumentIndex].realtimeTuning = instruments[instrumentIndex].realtimeTuning - 1
-            sendMessageToAudioThread({ type = "instruments", data = instruments })
-            message('rt tuning: ' .. instruments[instrumentIndex].realtimeTuning)
+            audiohelper.instruments[instrumentIndex].realtimeTuning = audiohelper.instruments[instrumentIndex]
+            .realtimeTuning - 1
+            audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
+            message('rt tuning: ' .. audiohelper.instruments[instrumentIndex].realtimeTuning)
         else
-            instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning - 1
-            sendMessageToAudioThread({ type = "instruments", data = instruments })
-            message('tuning: ' .. instruments[instrumentIndex].tuning)
+            audiohelper.instruments[instrumentIndex].tuning = audiohelper.instruments[instrumentIndex].tuning - 1
+            audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
+            message('tuning: ' .. audiohelper.instruments[instrumentIndex].tuning)
         end
     end
     if k == 'b' then
@@ -727,7 +463,7 @@ function love.keypressed(k)
         elseif showDrumPatternPicker then
             showDrumPatternPicker = nil
         else
-            sendMessageToAudioThread({ type = "paused", data = true });
+            audiohelper.sendMessageToAudioThread({ type = "paused", data = true });
             love.event.quit()
         end
     end
@@ -739,76 +475,43 @@ function love.keypressed(k)
             playing = not playing
 
             if not playing then
-                for i = 1, #instruments do
-                    sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = i })
+                for i = 1, #audiohelper.instruments do
+                    audiohelper.sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = i })
                 end
-                sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
-                sendMessageToAudioThread({ type = "paused", data = true });
+                audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
+                audiohelper.sendMessageToAudioThread({ type = "paused", data = true });
             end
             if playing then
-                sendMessageToAudioThread({ type = "mode", data = 'play' });
-                sendMessageToAudioThread({ type = "paused", data = false });
+                audiohelper.sendMessageToAudioThread({ type = "mode", data = 'play' });
+                audiohelper.sendMessageToAudioThread({ type = "paused", data = false });
                 recording = false
             end
         end
     end
     if k == 'f5' then
-        saveJizzJazzFile()
+        audiohelper.saveJizzJazzFile()
     end
     if k == 'return' then
         recording = not recording
         if not recording then
-            sendMessageToAudioThread({ type = "paused", data = true });
-            sendMessageToAudioThread({ type = "finalizeRecordedDataOnIndex", data = instrumentIndex })
-            sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
-            sendMessageToAudioThread({ type = "mode", data = 'play' });
+            audiohelper.sendMessageToAudioThread({ type = "paused", data = true });
+            audiohelper.sendMessageToAudioThread({ type = "finalizeRecordedDataOnIndex", data = instrumentIndex })
+            audiohelper.sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
+            audiohelper.sendMessageToAudioThread({ type = "mode", data = 'play' });
         end
         if recording then
-            sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
-            sendMessageToAudioThread({ type = "mode", data = 'record' });
-            sendMessageToAudioThread({ type = "paused", data = false });
+            audiohelper.sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
+            audiohelper.sendMessageToAudioThread({ type = "mode", data = 'record' });
+            audiohelper.sendMessageToAudioThread({ type = "paused", data = false });
             playing = false
         end
-        sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
+        audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
     end
 end
 
 function love.update(dt)
     updateMessage()
-    repeat
-        local msg = getMessageFromAudioThread()
-        if msg then
-            if msg.type == 'looperPercentage' then
-                local intrIndex = msg.data.instrumentIndex
-                local clipIndex = msg.data.clipIndex
-                local percentage = msg.data.percentage
-                percentageThingies[intrIndex] = { clipIndex = clipIndex, percentage = percentage }
-                --myPlayingCellPercentage = msg.data.percentage
-            end
-            if msg.type == 'tickUpdate' then
-                myTick = msg.data.tick
-            end
-            if msg.type == 'beatUpdate' then
-                myBeat = msg.data.beat
-                myBeatInMeasure = msg.data.beatInMeasure
-            end
-            if msg.type == 'numPlayingSounds' then
-                myNumPlayingSounds = msg.data.numbers
-            end
-            if msg.type == 'recordedClip' then
-                -- after you've recorded a clip it makes sense to select it.
-                local index = msg.data.instrumentIndex
-                local clip = msg.data.clip
-                for k = 1, #recordedClips[index].clips do
-                    recordedClips[index].clips[k].meta.isSelected = false
-                end
-                clip.meta.isSelected = true
-                table.insert(recordedClips[index].clips, clip)
-
-                sendMessageToAudioThread({ type = "clips", data = recordedClips })
-            end
-        end
-    until not msg
+    audiohelper.pumpAudioThread()
 end
 
 function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
@@ -880,7 +583,7 @@ function drawMixerStuff(startX, startY, cellH, labels)
         local v = draw_knob(labels[i], startX - 120, cellH / 2 + startY + (i - 1) * cellH, it.volume, 0, 1, 24)
         if v.value then
             mixData[i].volume = v.value
-            updateMixerData()
+            audiohelper.updateMixerData()
         end
     end
 end
@@ -892,6 +595,7 @@ function drawDrumMachineLabels(startX, startY, cellH, labels)
     for y = 0, #labels - 1 do
         if labelbutton(' ' .. labels[y + 1], startX - 100, startY + y * cellH, 100, grid.cellH).clicked then
             lookinIntoIntrumentAtIndex = y + 1
+            print(lookinIntoIntrumentAtIndex)
         end
     end
 end
@@ -900,8 +604,9 @@ function drawDrumMachinePlayHead(startX, startY, cellW, cellH, columns, rows)
     -- i think we are assuming there are 16 columns
     --if columns ~= 16 then print('something is wrong about amount of columns') end
     --if myBeatInMeasure ~= 4 then print('kinda has to have 4 beats in a measure i think') end
-
-    local highlightedColumn = ((myBeat % myBeatInMeasure) * 4) + math.floor((myTick / 96) * 4)
+    local myBeat = audiohelper.myBeat
+    local myBeatInMeasure = audiohelper.myBeatInMeasure
+    local highlightedColumn = ((myBeat % myBeatInMeasure) * 4) + math.floor((audiohelper.myTick / 96) * 4)
     love.graphics.setLineWidth(4)
     love.graphics.setColor(1, 1, 1, 1)
 
@@ -1009,7 +714,7 @@ function drawMoreInfoForInstrument()
                         end
                     end
                 end
-                updateDrumKitData()
+                audiohelper.updateDrumKitData()
             end
         end
 
@@ -1028,7 +733,7 @@ function drawMoreInfoForInstrument()
                     local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
                     if r then
                         cell.useRndP = not cell.useRndP
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
 
                     local v = v_slider(singleInstrumentJob .. '1:' .. i, startX + cellW * (i - 1),
@@ -1036,14 +741,14 @@ function drawMoreInfoForInstrument()
                         cell.rndPOctMin or 0, -2, 0, 'top')
                     if v.value then
                         cell.rndPOctMin = v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                     local v = v_slider(singleInstrumentJob .. '2:' .. i, startX + cellW * (i - 1),
                         startY + cellH * 2 + 100, 100,
                         cell.rndPOctMax or 0, 0, 2, 'bottom')
                     if v.value then
                         cell.rndPOctMax = v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
 
                     love.graphics.setLineWidth(4)
@@ -1057,7 +762,7 @@ function drawMoreInfoForInstrument()
                     local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
                     if r then
                         cell.useRndPPentatonic = not cell.useRndPPentatonic
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'trig' then
@@ -1065,7 +770,7 @@ function drawMoreInfoForInstrument()
                         cell.trig or 1, 0, 1)
                     if v.value then
                         cell.trig = v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'gate' then
@@ -1073,7 +778,7 @@ function drawMoreInfoForInstrument()
                         cell.gate or 1, 0, 1)
                     if v.value then
                         cell.gate = v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'pan' then
@@ -1082,7 +787,7 @@ function drawMoreInfoForInstrument()
                         cell.pan or 0, -1, 1)
                     if v.value then
                         cell.pan = v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'volume' then
@@ -1091,7 +796,7 @@ function drawMoreInfoForInstrument()
                         1.0 - (cell.volume or 1), 0, 1)
                     if v.value then
                         cell.volume = 1.0 - v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'delay' then
@@ -1100,7 +805,7 @@ function drawMoreInfoForInstrument()
                         cell.delay or 0, 0, 1.0)
                     if v.value then
                         cell.delay = v.value
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
 
@@ -1114,7 +819,7 @@ function drawMoreInfoForInstrument()
                             v = mapOffsetToNeareastScaleOffset(v, scales['pentatonic_minor'])
                         end
                         cell.semitoneOffset = v
-                        updateDrumKitData()
+                        audiohelper.rumKitData()
                     end
                 end
             end
@@ -1143,7 +848,7 @@ function drawMoreInfoForInstrument()
                         else
                             cell.echo = cell.echo + 1
                         end
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
             end
@@ -1197,13 +902,14 @@ function love.mousepressed(x, y, button)
                 local sample = prepareSingleSample(browser.subdirs, path)
                 if sample then
                     if fileBrowserForSound.type == 'instrument' then
-                        instruments[instrumentIndex].sample = sample
-                        sendMessageToAudioThread({ type = "instruments", data = instruments })
+                        audiohelper.instruments[instrumentIndex].sample = sample
+                        audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
                     end
                     if fileBrowserForSound.type == 'drum' then
                         local key = drumkit.order[lookinIntoIntrumentAtIndex]
+                        print(lookinIntoIntrumentAtIndex)
                         drumkit[key] = sample
-                        updateDrumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
                 --print(browser.root, inspect(browser.subdirs), path)
@@ -1222,7 +928,7 @@ function love.mousepressed(x, y, button)
                 flam = true
             end
             drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on, flam = flam }
-            updateDrumKitData()
+            audiohelper.updateDrumKitData()
         end
     else
         if lookinIntoIntrumentAtIndex > 0 then
@@ -1238,7 +944,7 @@ function love.mousepressed(x, y, button)
                     flam =
                         flam
                 }
-                updateDrumKitData()
+                audiohelper.updateDrumKitData()
             end
         end
     end
@@ -1356,7 +1062,7 @@ function drawDrumPatternPicker(pickData, xOffset)
                 drumPatternName, gridlength = drumPatterns.pickPatternByIndex(index, i)
                 pickData.pickedItemIndex = i
                 grid.columns = gridlength
-                updateDrumKitData()
+                audiohelper.updateDrumKitData()
             end
             if smallfont:getWidth(str) > columnWidth then
                 love.graphics.setFont(smallfont)
@@ -1369,6 +1075,8 @@ function drawMeasureCounter(x, y)
     if (recording or playing) then
         local font = bigfont
         love.graphics.setFont(font)
+        local myBeat = audiohelper.myBeat
+        local myBeatInMeasure = audiohelper.myBeatInMeasure
 
         local str = string.format("%02d", math.floor(myBeat / myBeatInMeasure)) ..
             '|' .. string.format("%01d", math.floor(myBeat % myBeatInMeasure))
@@ -1394,28 +1102,28 @@ function drawADSRForActiveInstrument(x, y)
     love.graphics.setColor(color[1], color[2], color[3], 0.3)
     love.graphics.rectangle('line', x - 50, y, 300 + 100, 70)
     love.graphics.setColor(1, 1, 1)
-    local adsr = instruments[instrumentIndex].adsr
+    local adsr = audiohelper.instruments[instrumentIndex].adsr
 
     local bx, by = x, y + 20
     local v = drawLabelledKnob('attack', bx, by, adsr.attack, 0, 1)
     if v.value then
         drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        instruments[instrumentIndex].adsr.attack = v.value
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
+        audiohelper.instruments[instrumentIndex].adsr.attack = v.value
+        audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments });
     end
     local bx, by = x + 100, y + 20
     local v = drawLabelledKnob('decay', bx, by, adsr.decay, 0, 1)
     if v.value then
         drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        instruments[instrumentIndex].adsr.decay = v.value
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
+        audiohelper.instruments[instrumentIndex].adsr.decay = v.value
+        audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments });
     end
     local bx, by = x + 200, y + 20
     local v = drawLabelledKnob('sustain', bx, by, adsr.sustain, 0, 1)
     if v.value then
         drawLabel(string.format("%.1f", v.value), bx, by, 1)
-        instruments[instrumentIndex].adsr.sustain = v.value
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
+        audiohelper.instruments[instrumentIndex].adsr.sustain = v.value
+        audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments });
     end
 
     local bx, by = x + 300, y + 20
@@ -1423,8 +1131,8 @@ function drawADSRForActiveInstrument(x, y)
 
     if v.value then
         drawLabel(string.format("%.1f", v.value), bx, by, 1)
-        instruments[instrumentIndex].adsr.release = v.value
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
+        audiohelper.instruments[instrumentIndex].adsr.release = v.value
+        audiohelper.endMessageToAudioThread({ type = "instruments", data = audiohelper.instruments });
     end
 end
 
@@ -1437,7 +1145,7 @@ function drawInstrumentBanks(x, y)
     local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
     local margin = 4
 
-    for i = 1, #instruments do
+    for i = 1, #audiohelper.instruments do
         local font = smallfont
         love.graphics.setFont(font)
         love.graphics.setLineWidth(4)
@@ -1455,7 +1163,7 @@ function drawInstrumentBanks(x, y)
             love.graphics.setColor(1, 1, 1)
         end
         -- print(instruments[i].sample.name)
-        local name = instruments[i].sample.name --samples[instruments[i].sampleIndex].name
+        local name = audiohelper.instruments[i].sample.name --samples[instruments[i].sampleIndex].name
         love.graphics.print(' ' .. name, x, y + (i - 1) * (rowHeight + margin))
         if (not showDrumPatternPicker) then
             -- if not showDrumPatternPicker then
@@ -1464,7 +1172,7 @@ function drawInstrumentBanks(x, y)
 
                 if r then
                     instrumentIndex = i
-                    sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+                    audiohelper.sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
                 end
             end
 
@@ -1476,19 +1184,21 @@ function drawInstrumentBanks(x, y)
                 if labelbutton('wav', x + rowWidth - buttonw, buttony - buttonh, buttonw, buttonh, false).clicked == true then
                     --print('gonna do the wav')
                     -- print(inspect(instruments[instrumentIndex].sample.pathParts))
-                    local pathParts = instruments[instrumentIndex].sample.pathParts
+                    local pathParts = audiohelper.instruments[instrumentIndex].sample.pathParts
                     browser = fileBrowser(browser.root, pathParts.pathArray,
                         browser.allowedExtensions)
                     fileBrowserForSound = { type = 'instrument', index = instrumentIndex }
                 end
             end
             --  end
-            if #recordedClips[i].clips > 0 and instrumentIndex == i then
-                local buttonw = font:getWidth('edit clips')
-                local buttonh = rowHeight / 2
-                local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
-                if labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false).clicked == true then
-                    print('gonna do the clip')
+            if false then
+                if #audiohelper.recordedClips[i].clips > 0 and instrumentIndex == i then
+                    local buttonw = font:getWidth('edit clips')
+                    local buttonh = rowHeight / 2
+                    local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
+                    if labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false).clicked == true then
+                        print('gonna do the clip')
+                    end
                 end
             end
         end
@@ -1500,7 +1210,7 @@ function drawInstrumentBanks(x, y)
         local maxColumns = 5
         --print(i, #recordedClips[i].clips)
 
-        for j = 1, #recordedClips[i].clips do
+        for j = 1, #audiohelper.recordedClips[i].clips do
             local columnIndex = (j - 1) % maxColumns
             local rowIndex = math.floor((j - 1) / maxColumns)
             local x = startX + (columnIndex * (clipSize + 2))
@@ -1520,38 +1230,46 @@ function drawInstrumentBanks(x, y)
 
             local r = getUIRect(x, y, clipSize, clipSize)
             if r then
-                for k = 1, #recordedClips[i].clips do
+                --if love.keyboard.isDown('q') then
+                --    print('sound queued')
+                --end
+                for k = 1, #audiohelper.recordedClips[i].clips do
                     if (k ~= j) then
-                        recordedClips[i].clips[k].meta.isSelected = false
+                        audiohelper.recordedClips[i].clips[k].meta.isSelected = false
                     else
-                        recordedClips[i].clips[k].meta.isSelected = not recordedClips[i].clips[k].meta.isSelected
+                        audiohelper.recordedClips[i].clips[k].meta.isSelected = not audiohelper.recordedClips[i].clips
+                            [k].meta.isSelected
                     end
                 end
-                sendMessageToAudioThread({ type = 'stopPlayingSoundsOnIndex', data = i })
-                sendMessageToAudioThread({ type = "clips", data = recordedClips })
+                audiohelper.sendMessageToAudioThread({ type = 'stopPlayingSoundsOnIndex', data = i })
+                audiohelper.sendMessageToAudioThread({ type = "clips", data = audiohelper.recordedClips })
             end
 
-            if (recordedClips[i].clips[j].meta.isSelected) then
+            if (audiohelper.recordedClips[i].clips[j].meta.isQueued) then
+                love.graphics.setColor(.5, 1, 1, 0.8)
+                love.graphics.rectangle('line', x, y, clipSize, clipSize)
+            end
+            if (audiohelper.recordedClips[i].clips[j].meta.isSelected) then
                 love.graphics.setColor(1, 1, 1, 0.8)
                 love.graphics.rectangle('line', x, y, clipSize, clipSize)
             end
 
             local font = smallestfont
             love.graphics.setFont(smallestfont)
-            local loopRounder = (recordedClips[i].clips[j].meta.loopRounder)
-            local str = #recordedClips[i].clips[j] .. '\n' .. loopRounder
+            local loopRounder = (audiohelper.recordedClips[i].clips[j].meta.loopRounder)
+            local str = #audiohelper.recordedClips[i].clips[j] .. '\n' .. loopRounder
 
             local xOff = (clipSize - font:getWidth(str .. '')) / 2
             love.graphics.setColor(0, 0, 0, 0.8)
             love.graphics.print(str .. '', x + xOff, y)
 
-            local clip = recordedClips[i].clips[j]
+            local clip = audiohelper.recordedClips[i].clips[j]
 
             if clip.meta.isSelected then
                 love.graphics.setColor(1, 1, 1, 0.8)
                 local doneCircleRadius = clipSize / 3
                 local offset = clipSize / 2
-                local value = percentageThingies[i].percentage
+                local value = audiohelper.percentageThingies[i].percentage
 
                 if value then
                     love.graphics.arc('fill', x + offset, y + offset, doneCircleRadius, -math.pi / 2,
@@ -1637,7 +1355,7 @@ function love.draw()
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = string.format("%03i", love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-    local countNotes = string.format("%02i", myNumPlayingSounds)
+    local countNotes = string.format("%02i", audiohelper.myNumPlayingSounds)
     local debugstring = mem ..
         '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes .. ' ' .. love.audio.getActiveSourceCount()
     love.graphics.setColor(1, 1, 1, .5)
@@ -1671,7 +1389,7 @@ function love.draw()
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
         uiData.bpm = v.value
-        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 3
@@ -1679,7 +1397,7 @@ function love.draw()
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
         uiData.swing = v.value
-        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 5
@@ -1687,7 +1405,7 @@ function love.draw()
     if v.value then
         drawLabel(string.format("%02.1f", v.value), bx, by, 1)
         uiData.drumVolume = v.value
-        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 7
@@ -1695,7 +1413,7 @@ function love.draw()
     if v.value then
         drawLabel(string.format("%02.1f", v.value), bx, by, 1)
         uiData.instrumentsVolume = v.value
-        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 9
@@ -1703,7 +1421,7 @@ function love.draw()
     if v.value then
         drawLabel(string.format("%02.1i", v.value), bx, by, 1)
         uiData.allDrumSemitoneOffset = v.value
-        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
     browserClicked = false

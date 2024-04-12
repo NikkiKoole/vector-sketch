@@ -33,6 +33,8 @@ local text             = require "lib.text"
 local vehicle          = require 'vehicle-creator'
 local animParticles    = require 'frameAnimParticle'
 
+local dj               = require 'organicMusic'
+
 function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -2131,6 +2133,8 @@ function endContact(a, b, contact)
 end
 
 function love.load()
+    dj.loadJizzJazzSong('assets/jizzjazz/mountmipo2.jizzjazz2.txt')
+
     local url = 'assets/sounds/mountainmipo/bikesound.wav'
     source = love.audio.newSource(url, 'static')
     source:setLooping(true)

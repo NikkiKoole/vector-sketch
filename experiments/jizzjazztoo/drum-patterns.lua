@@ -25,6 +25,50 @@ CB: Cowbell
 
 local patterns = {
     {
+        name = "CR78",
+        sections = {
+            {
+                grid = {
+                    CY = "x...........x...",
+                    BD = "x...............",
+                    AC = "............x...",
+                    SD = "....x.......x..."
+                },
+                name = "Waltz1"
+            },
+            {
+                grid = {
+                    CY = "x.........x.x...",
+                    BD = "x...............",
+                    AC = "............x...",
+                    SD = "....x.......x..."
+                },
+                name = "Waltz2"
+            },
+            {
+                grid = {
+                    CY = "....x.......x...",
+                    CB = "x.......x.......",
+                    BD = "x.......x.......",
+                    AC = "x.......x...x...",
+                    SD = "....x.......x..."
+                },
+                name = "Foxtrot A"
+            },
+            {
+                grid = {
+                    CY = "x.....x......x..",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    RS = "x..x..x...x..x..",
+                    BD = "x..xx..xx..xx..x",
+                    AC = "....x.......x...",
+
+                },
+                name = "BOSSANOVA A"
+            },
+        }
+    },
+    {
         name = "BoomBAP",
         sections = {
             {
@@ -241,7 +285,7 @@ local patterns = {
                     CH = "x.x.x.x.x.x.x.x.",
                     LT = "x.....x...x...x."
                 },
-                name = ""
+                name = "unnamed"
             },
             {
                 grid = {

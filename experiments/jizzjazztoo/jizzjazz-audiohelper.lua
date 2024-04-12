@@ -1,0 +1,334 @@
+local inspect      = require 'vendor.inspect'
+
+local _thread
+local channel      = {};
+channel.audio2main = love.thread.getChannel("audio2main")
+channel.main2audio = love.thread.getChannel("main2audio")
+local sys          = love.system.getOS()
+
+if sys == 'iOS' or sys == 'Android' then
+    _thread = love.thread.newThread('jizzjazz-audiothread.lua')
+    _thread:start()
+else
+    _thread = love.thread.newThread('jizzjazz-audiothread.lua')
+    _thread:start()
+end
+
+local lib              = {}
+
+lib.percentageThingies = {} -- 5
+for i = 1, 5 do
+    lib.percentageThingies[i] = {}
+end
+
+lib.recordedClips = {}
+for i = 1, 5 do
+    lib.recordedClips[i] = {
+        clips = {}
+    }
+end
+
+lib.myTick                = 0
+lib.myBeat                = 0
+lib.myBeatInMeasure       = 0
+lib.myNumPlayingSounds    = 0
+
+local defaultAttackTime   = 0.2
+local defaultDecayTime    = 0.01
+local defaultSustainLevel = 0.7
+local defaultReleaseTime  = 0.03
+
+
+lib.instruments = {}
+
+lib.initializeInstruments = function(samples)
+    for i = 1, 5 do
+        lib.instruments[i] = {
+            --sampleIndex = 1,
+            sample = samples[i],
+            tuning = 0,
+            realtimeTuning = 0,
+            adsr = {
+                attack = defaultAttackTime,
+                decay = defaultDecayTime,
+                sustain = defaultSustainLevel,
+                release = defaultReleaseTime
+            },
+        }
+    end
+end
+
+
+
+
+lib.getMessageFromAudioThread = function()
+    local v = channel.audio2main:pop();
+    local error = _thread:getError()
+    assert(not error, error)
+    return v
+end
+
+lib.sendMessageToAudioThread  = function(msg)
+    channel.main2audio:push(msg)
+end
+
+lib.pumpAudioThread           = function()
+    repeat
+        local msg = lib.getMessageFromAudioThread()
+        if msg then
+            if msg.type == 'looperPercentage' then
+                local intrIndex = msg.data.instrumentIndex
+                local clipIndex = msg.data.clipIndex
+                local percentage = msg.data.percentage
+                lib.percentageThingies[intrIndex] = { clipIndex = clipIndex, percentage = percentage }
+            end
+            if msg.type == 'tickUpdate' then
+                lib.myTick = msg.data.tick
+            end
+            if msg.type == 'beatUpdate' then
+                lib.myBeat = msg.data.beat
+                lib.myBeatInMeasure = msg.data.beatInMeasure
+            end
+            if msg.type == 'numPlayingSounds' then
+                lib.myNumPlayingSounds = msg.data.numbers
+            end
+            if msg.type == 'clips' then
+                lib.recordedClips = msg.data
+            end
+            if msg.type == 'recordedClip' then
+                -- after you've recorded a clip it makes sense to select it.
+                local index = msg.data.instrumentIndex
+                local clip = msg.data.clip
+                for k = 1, #lib.recordedClips[index].clips do
+                    lib.recordedClips[index].clips[k].meta.isSelected = false
+                end
+                clip.meta.isSelected = true
+                table.insert(lib.recordedClips[index].clips, clip)
+
+                lib.sendMessageToAudioThread({ type = "clips", data = lib.recordedClips })
+            end
+        end
+    until not msg
+end
+
+lib.prepareDrumkit            = function(drumkitFiles)
+    local result = {}
+    for k, v in pairs(drumkitFiles) do
+        if k ~= 'order' then
+            -- print(k)
+            local root = 'samples'
+            local fullPath = root
+            local pathArray = v[1]
+            local name = v[2]:gsub(".wav", ""):gsub(".WAV", "")
+            for i = 1, #pathArray do
+                fullPath = fullPath .. '/' .. pathArray[i]
+            end
+            local filePath = name .. '.wav'
+            fullPath = fullPath .. '/' .. filePath
+            local info = love.filesystem.getInfo(fullPath)
+            if info then
+                local soundData = love.sound.newSoundData(fullPath)
+                print(k)
+                result[k] = {
+                    name = name,
+                    source = love.audio.newSource(soundData),
+                    soundData = soundData,
+                    cycle = false,
+                    path = fullPath,
+                    pathParts = { root = root, pathArray = pathArray, filePath = filePath }
+                }
+            end
+        end
+    end
+    --print(drumkitFiles)
+    if drumkitFiles.order then
+        for i = 1, #drumkitFiles.order do
+            if drumkitFiles[drumkitFiles.order[i]] then
+
+            else
+                print('order issue:', drumkitFiles.order[i])
+            end
+        end
+        result.order = drumkitFiles.order
+    else
+        print('drumkitfile need an order to display')
+    end
+    return result
+end
+
+lib.prepareSingleSample       = function(pathArray, filePath)
+    local root = 'samples'
+    local fullPath = root
+    local isCycle = false
+    for i = 1, #pathArray do
+        fullPath = fullPath .. '/' .. pathArray[i]
+        if pathArray[i] == 'oscillators' then
+            isCycle = true
+        end
+    end
+    -- print('isCycle', isCycle)
+    fullPath = fullPath .. '/' .. filePath
+    local name = filePath:gsub(".wav", ""):gsub(".WAV", "")
+    local info = love.filesystem.getInfo(fullPath)
+    if info then
+        local soundData = love.sound.newSoundData(fullPath)
+        local result = {
+            name = name,
+            source = love.audio.newSource(soundData),
+            soundData = soundData,
+            cycle = isCycle,
+            path = fullPath,
+            pathParts = { root = root, pathArray = pathArray, filePath = filePath }
+        }
+        return result
+    else
+        print('issue preparing sample: ', fullPath)
+    end
+end
+
+local function shallowcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
+lib.saveJizzJazzFile = function()
+    local str               = os.date("%Y%m%d%H%M")
+    local path              = str .. '.jizzjazz2.txt'
+
+    local simplifiedDrumkit = {}
+    for k, v in pairs(drumkit) do
+        if k == 'order' then
+            simplifiedDrumkit.order = v
+        else
+            simplifiedDrumkit[k] = { v.pathParts.pathArray, v.name }
+        end
+    end
+
+    local simplifiedInstrumentBanks = {}
+    for i = 1, #instruments do
+        local instr = instruments[i]
+        local sample = instr.sample
+        local adsr = instr.adsr
+        simplifiedInstrumentBanks[i] = {
+            sample = { sample.pathParts.pathArray, sample.pathParts.filePath },
+            adsr = { a = adsr.attack, d = adsr.decay, s = adsr.sustain, r = adsr.release },
+            tuning = instr.tuning,
+            realtimeTuning = instr.realtimeTuning
+        }
+    end
+
+    local simplifiedDrumGrid = {}
+    local drumColumns = #drumgrid
+    local drumRows = #simplifiedDrumkit.order
+    --print('columns', drumColumns, grid.columns)
+    for x = 1, drumColumns do
+        simplifiedDrumGrid[x] = {}
+        for y = 1, drumRows do
+            simplifiedDrumGrid[x][y] = 0
+            local d = drumgrid[x][y]
+            if (d.on == true) then
+                local n = shallowcopy(d)
+                n.on = nil
+                simplifiedDrumGrid[x][y] = n
+            end
+        end
+    end
+
+    --print(#recordedClips)
+
+    local simplifiedClips = shallowcopy(recordedClips)
+
+
+    local data = {
+        drumPatternName = drumPatternName,
+        drumkit = simplifiedDrumkit,
+        instruments = simplifiedInstrumentBanks,
+        simplifiedDrumGrid = simplifiedDrumGrid,
+
+        simplifiedClips = simplifiedClips,
+        uiData = shallowcopy(uiData)
+    }
+
+    love.filesystem.write(path, inspect(data, { indent = " " }))
+    local openURL = "file://" .. love.filesystem.getSaveDirectory()
+    love.system.openURL(openURL)
+end
+
+lib.updateMixerData = function()
+    lib.sendMessageToAudioThread({
+        type = 'mixerData',
+        data = mixData
+    })
+end
+
+lib.updateDrumKitData = function()
+    lib.sendMessageToAudioThread({
+        type = 'drumkitData',
+        data = {
+            drumgrid = drumgrid,
+            drumkit = drumkit,
+            beatInMeasure = grid.columns / 4
+        }
+    })
+end
+
+
+lib.loadJizzJazzFile = function(data, filename)
+    drumPatternName = data.drumPatternName
+    drumkit = lib.prepareDrumkit(data.drumkit)
+    grid.columns = #data.simplifiedDrumGrid -- todo not working yet.
+    grid.labels = drumkit.order
+    local g = data.simplifiedDrumGrid
+    for x = 1, #g do
+        for y = 1, #g[x] do
+            local dcell = g[x][y]
+            drumgrid[x][y] = { on = false }
+            if dcell ~= 0 then
+                drumgrid[x][y] = shallowcopy(dcell)
+                drumgrid[x][y].on = true
+            end
+        end
+    end
+
+    lib.updateDrumKitData()
+
+
+    for i = 1, #data.instruments do
+        local readInstrument = data.instruments[i]
+        local newSample = lib.prepareSingleSample(readInstrument.sample[1], readInstrument.sample[2])
+        if newSample then
+            instruments[i] = {
+                --sampleIndex = 1,
+                sample = newSample, -- pickedSamples[i],
+                tuning = readInstrument.tuning,
+                realtimeTuning = readInstrument.realtimeTuning,
+                adsr = {
+                    attack = readInstrument.adsr.a,
+                    decay = readInstrument.adsr.d,
+                    sustain = readInstrument.adsr.s,
+                    release = readInstrument.adsr.r
+                },
+            }
+        else
+            print('something was up making sample for this instrument: ', filename, i, inspect(readInstrument))
+        end
+    end
+    lib.sendMessageToAudioThread({ type = "instruments", data = instruments })
+
+    recordedClips = data.simplifiedClips
+    lib.sendMessageToAudioThread({ type = "clips", data = recordedClips })
+
+    uiData = data.uiData
+    lib.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+end
+
+return lib

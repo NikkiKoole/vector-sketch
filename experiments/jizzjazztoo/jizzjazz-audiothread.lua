@@ -580,11 +580,11 @@ function doReplayRecorded(clip, beat, tick)
     for i = 1, #clip do
         -- print(clip[i].beat, clip[i].tick, clip[i].beatOff, clip[i].tickOff)
         if clip[i].beatOff == beat and clip[i].tickOff == tick then
-            print('released', beat, tick)
+            -- print('released', beat, tick)
             semitoneReleased(clip[i].semitone, clip[i].instrumentIndex)
         end
         if clip[i].beat == beat and clip[i].tick == tick then
-            print('triggered', beat, tick)
+            --print('triggered', beat, tick)
             semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex)
         end
     end
@@ -595,7 +595,11 @@ function handlePlayingRecordedData()
         for i = 1, #recordedClips do
             for j = 1, #(recordedClips[i].clips) do
                 local it = recordedClips[i].clips[j]
+
+
+
                 if it.meta.isSelected then
+                    --print('it is selected')
                     local loopRounder = it.meta and it.meta.loopRounder or 1
                     local beat = (math.floor(lastBeat) % loopRounder)
                     local tick = math.floor(lastTick)
