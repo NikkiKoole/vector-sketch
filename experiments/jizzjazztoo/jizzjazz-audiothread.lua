@@ -204,6 +204,11 @@ local function updatePlayingSoundsWithLFO()
                 --if volume < 0.02 then volume = 0 end
                 --  print(i, volume)
             end
+
+            if (it.velocity) then
+                volume = volume * (it.velocity / 128)
+                --print(it.velocity)
+            end
             it.source:setVolume(volume)
 
             -- print('*****')
@@ -237,7 +242,7 @@ local function cleanPlayingSounds()
     end
 end
 
-local function semitoneTriggered(number, instrumentIndex)
+local function semitoneTriggered(number, instrumentIndex, velocity)
     local sample = instruments[instrumentIndex].sample
     -- local sampleIndex = instruments[instrumentIndex].sampleIndex
     -- local source = samples[sampleIndex].source:clone()
@@ -276,6 +281,8 @@ local function semitoneTriggered(number, instrumentIndex)
         source:setVolume(0)
         source:play()
         table.insert(playingSounds, {
+
+            velocity = velocity,
             pitch = pitch + pitchOffset,
             source = source,
             volume = 0,
@@ -585,7 +592,7 @@ function doReplayRecorded(clip, beat, tick)
         end
         if clip[i].beat == beat and clip[i].tick == tick then
             --print('triggered', beat, tick)
-            semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex)
+            semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex, clip[i].velocity or 128)
         end
     end
 end
@@ -783,9 +790,10 @@ while (true) do
 
         if v.type == 'semitonePressed' then
             local semitone = v.data.semitone
-            semitoneTriggered(semitone, instrumentIndex)
+            semitoneTriggered(semitone, instrumentIndex, v.data.velocity or 128)
             if recording == true then
                 table.insert(recordedData, {
+                    velocity = v.data.velocity or 128,
                     instrumentIndex = instrumentIndex,
                     beat = math.floor(lastBeat),
                     tick = math.floor(lastTick),

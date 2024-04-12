@@ -11,6 +11,8 @@ local audiohelper  = require 'jizzjazz-audiohelper'
 
 require 'fileBrowser'
 
+luamidi = require "luamidi"
+
 local function hex2rgb(hex)
     hex = hex:gsub("#", "")
     return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
@@ -180,7 +182,6 @@ function love.load()
     }
     audiohelper.updateDrumKitData()
 
-
     -- scales
     scales = {
         ['chromatic'] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
@@ -311,6 +312,51 @@ function fitKeyOffsetInScale(offset, scale)
     return result
 end
 
+function handleMIDIInput()
+    local activeChannelIndex = 1
+    if luamidi and luamidi.getinportcount() > 0 then
+        local msg, semitone, velocity, d = nil
+        msg, semitone, velocity, d = luamidi.getMessage(0)
+        --https://en.wikipedia.org/wiki/List_of_chords
+        --local integers = {0, 4,7,11}
+
+
+        --local integers = {0, 4, 7, 11}
+        --local integers = {0, 3, 7, 9}
+        if msg ~= nil then
+            -- look for an NoteON command
+
+            if msg == 144 then
+                if (waitingForTriggerToStartRecording) then
+                    waitingForTriggerToStartRecording = false
+                    audiohelper.sendMessageToAudioThread({ type = "mode", data = 'record' });
+                    audiohelper.sendMessageToAudioThread({ type = "paused", data = false });
+                    playing = false
+                    recording = true
+                end
+
+                --local semitone = b
+                audiohelper.sendMessageToAudioThread({
+                    type = "semitonePressed",
+                    data = {
+                        velocity = velocity,
+                        semitone = semitone + audiohelper.instruments[instrumentIndex].tuning,
+                    }
+                });
+            elseif msg == 128 then
+                --local semitone = b
+                audiohelper.sendMessageToAudioThread({
+                    type = "semitoneReleased",
+                    data = {
+                        semitone = semitone + audiohelper.instruments[instrumentIndex].tuning,
+                        instrumentIndex = instrumentIndex
+                    }
+                });
+            end
+        end
+    end
+end
+
 local function getSemitone(offset, optionalOctave)
     if optionalOctave ~= nil then
         return (optionalOctave * 12) + offset
@@ -386,6 +432,7 @@ function love.keypressed(k)
         audiohelper.sendMessageToAudioThread({
             type = "semitonePressed",
             data = {
+                velocity = 128,
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) +
                     audiohelper.instruments[instrumentIndex].tuning,
             }
@@ -492,6 +539,7 @@ end
 function love.update(dt)
     updateMessage()
     audiohelper.pumpAudioThread()
+    handleMIDIInput()
 end
 
 function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
