@@ -13,6 +13,99 @@ require 'fileBrowser'
 
 luamidi = require "luamidi"
 
+local function clear()
+    for x = 1, #audiohelper.drumgrid do
+        for y = 1, #audiohelper.drumgrid[1] do
+            audiohelper.drumgrid[x][y] = { on = false }
+        end
+    end
+
+    local totalSections = 0
+    for i = 1, #drumPatterns do
+        totalSections = totalSections + #drumPatterns[i].sections
+    end
+end
+
+local function fill(pattern, part)
+    local hasEveryThingNeeded = true
+    for k, v in pairs(part.grid) do
+        if not audiohelper.drumkit[k] then
+            print("failed looking for", k, "in drumkt")
+            hasEveryThingNeeded = false
+        end
+    end
+
+    if (hasEveryThingNeeded) then
+        local gridLength = 0
+
+        for k, v in pairs(part.grid) do
+            gridLength = string.len(v)
+        end
+        audiohelper.initializeDrumgrid(gridLength)
+        --print(inspect(part.grid))
+
+        for k, v in pairs(part.grid) do
+            -- find the correct row in the grid.
+            local index = -1
+            for i = 1, #audiohelper.drumkit.order do
+                if audiohelper.drumkit.order[i] == k then
+                    index = i
+                end
+            end
+
+            if string.len(v) ~= #audiohelper.drumgrid then
+                print("failed: issue with length of drumgrid", string.len(v), #audiohelper.drumgrid, pattern.name)
+            end
+            gridLength = string.len(v)
+            if index == -1 then
+                print("failed: I could find the correct key but something wrong with order: ", k)
+            end
+
+            for i = 1, string.len(v) do
+                local c = v:sub(i, i)
+                if (c == "x") then
+                    audiohelper.drumgrid[i][index] = { on = true }
+                elseif (c == "f") then
+                    audiohelper.drumgrid[i][index] = { on = true, flam = true }
+                else
+                    audiohelper.drumgrid[i][index] = { on = false }
+                end
+            end
+        end
+
+        return pattern.name .. " : " .. part.name, gridLength
+    end
+end
+
+function pickPatternByIndex(index1, index2)
+    -- clear it
+    clear()
+    local patternIndex = index1 --math.ceil(love.math.random() * #patterns)
+    local pattern = drumPatterns[patternIndex]
+
+    local partIndex = index2
+
+    local part = drumPatterns[patternIndex].sections[partIndex]
+
+    return fill(pattern, part)
+end
+
+function pickExistingPattern(drumgrid, drumkit)
+    -- clear it
+    clear()
+
+    local patternIndex = math.ceil(love.math.random() * #drumPatterns)
+    local pattern = drumPatterns[patternIndex]
+
+    local partIndex = math.ceil(love.math.random() * #pattern.sections)
+
+    local part = drumPatterns[patternIndex].sections[partIndex]
+    drummPatternPickData.pickedCategoryIndex = patternIndex
+    drummPatternPickData.pickedItemIndex = partIndex
+
+    return fill(pattern, part)
+end
+
 local function hex2rgb(hex)
     hex = hex:gsub("#", "")
     return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
@@ -147,8 +240,7 @@ function love.load()
         QU = { { 'mp7' }, 'Quijada' }
     }
 
-    drumkitFiles = drumkitCR78
-    drumkit = audiohelper.prepareDrumkit(drumkitFiles)
+    audiohelper.setDrumKitFiles(drumkitCR78)
 
     grid = {
         startX = 150,
@@ -156,23 +248,13 @@ function love.load()
         cellW = 20,
         cellH = 32,
         columns = 16,
-        labels = drumkitFiles.order
+        labels = audiohelper.drumkit.order
     }
 
-
-    mixData = {}
-    for i = 1, #drumkitFiles.order do
-        mixData[i] = { volume = 1 }
-    end
+    audiohelper.initializeMixer()
+    audiohelper.initializeDrumgrid()
     audiohelper.updateMixerData()
-    drumgrid = {}
-    for x = 1, grid.columns do
-        drumgrid[x] = {}
 
-        for y = 1, #drumkitFiles.order do
-            drumgrid[x][y] = { on = false }
-        end
-    end
     drumPatternName = ''
     drummPatternPickData = {
         scrollLeft = 0,
@@ -313,7 +395,6 @@ function fitKeyOffsetInScale(offset, scale)
 end
 
 function handleMIDIInput()
-    local activeChannelIndex = 1
     if luamidi and luamidi.getinportcount() > 0 then
         local msg, semitone, velocity, d = nil
         msg, semitone, velocity, d = luamidi.getMessage(0)
@@ -413,9 +494,10 @@ end
 
 function love.keypressed(k)
     if k == '-' then
-        local name, gridlength = drumPatterns.pickExistingPattern(drumgrid, drumkit)
+        local name, gridlength = pickExistingPattern(drumgrid, drumkit)
         drumPatternName = name
         grid.columns = gridlength
+
         audiohelper.updateDrumKitData()
     end
 
@@ -428,7 +510,6 @@ function love.keypressed(k)
             recording = true
         end
 
-
         audiohelper.sendMessageToAudioThread({
             type = "semitonePressed",
             data = {
@@ -437,6 +518,7 @@ function love.keypressed(k)
                     audiohelper.instruments[instrumentIndex].tuning,
             }
         });
+
         pressedKeys[k] = {
             tuning = audiohelper.instruments[instrumentIndex].tuning,
             octave = octave,
@@ -446,20 +528,13 @@ function love.keypressed(k)
         }
     end
 
-
-
     if k == 'z' then
         octave = math.max(octave - 1, 0)
-        --print("Octave:", octave)
         message('octave: ' .. octave)
     elseif k == 'x' then
         octave = math.min(octave + 1, max_octave)
-        -- print("Octave:", octave)
         message('octave: ' .. octave)
     end
-
-
-
 
     if k == 'c' then
         if love.keyboard.isDown('lshift') then
@@ -470,6 +545,7 @@ function love.keypressed(k)
             message('tuning: ' .. newTuning)
         end
     end
+
     if k == 'v' then
         if love.keyboard.isDown('lshift') then
             local newTuning = audiohelper.tuneRTInstrumentBySemitone(instrumentIndex, -1)
@@ -479,6 +555,7 @@ function love.keypressed(k)
             message('tuning: ' .. newTuning)
         end
     end
+
     if k == 'b' then
         local s = toggleScale()
         message('scale: ' .. s)
@@ -551,10 +628,12 @@ function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
         end
     end
     love.graphics.setColor(.3, .3, .3, 1)
-    love.graphics.line(startX + 4 * cellW, startY, startX + 4 * cellW, startY + cellH * (rows + 1))
-    love.graphics.line(startX + 8 * cellW, startY, startX + 8 * cellW, startY + cellH * (rows + 1))
-    love.graphics.line(startX + 12 * cellW, startY, startX + 12 * cellW, startY + cellH * (rows + 1))
-
+    for j = 0, columns, 4 do
+        love.graphics.line(startX + j * cellW, startY, startX + j * cellW, startY + cellH * (rows + 1))
+        -- love.graphics.line(startX + 4 * cellW, startY, startX + 4 * cellW, startY + cellH * (rows + 1))
+        -- love.graphics.line(startX + 8 * cellW, startY, startX + 8 * cellW, startY + cellH * (rows + 1))
+        -- love.graphics.line(startX + 12 * cellW, startY, startX + 12 * cellW, startY + cellH * (rows + 1))
+    end
     love.graphics.setLineWidth(1)
 end
 
@@ -569,8 +648,8 @@ function drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, columns, rowInde
     local xOff = (cellW - smallfont:getWidth('x')) / 2
     local y = rowIndex
     for x = 0, columns - 1 do
-        if drumgrid[x + 1][y + 1].on == true then
-            if drumgrid[x + 1][y + 1].flam == true then
+        if audiohelper.drumgrid[x + 1][y + 1].on == true then
+            if audiohelper.drumgrid[x + 1][y + 1].flam == true then
                 love.graphics.print('f', xOff + startX + x * cellW, startY)
             else
                 love.graphics.print('x', xOff + startX + x * cellW, startY)
@@ -584,8 +663,8 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
     local xOff = (cellW - smallfont:getWidth('x')) / 2
     for y = 0, rows do
         for x = 0, columns - 1 do
-            if drumgrid[x + 1][y + 1].on == true then
-                if drumgrid[x + 1][y + 1].flam == true then
+            if audiohelper.drumgrid[x + 1][y + 1].on == true then
+                if audiohelper.drumgrid[x + 1][y + 1].flam == true then
                     love.graphics.print('f', xOff + startX + x * cellW, startY + y * cellH)
                 else
                     love.graphics.print('x', xOff + startX + x * cellW, startY + y * cellH)
@@ -596,21 +675,21 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
 end
 
 function drawMixerStuff(startX, startY, cellH, labels)
-    for i = 1, #mixData do
-        local it = mixData[i]
-        --  print(i, it, inspect(it))
+    for i = 1, #audiohelper.mixData do
+        local it = audiohelper.mixData[i]
 
         if false then
             if labelbutton('M', startX - 200, startY + (i - 1) * cellH, 24, cellH, it.mute).clicked then
-                mixData[i].mute = not it.mute
+                audiohelper.mixData[i].mute = not it.mute
             end
             if labelbutton('S', startX - 170, startY + (i - 1) * cellH, 24, cellH, it.solo).clicked then
-                mixData[i].solo = not it.solo
+                audiohelper.mixData[i].solo = not it.solo
             end
         end
+
         local v = draw_knob(labels[i], startX - 120, cellH / 2 + startY + (i - 1) * cellH, it.volume, 0, 1, 24)
         if v.value then
-            mixData[i].volume = v.value
+            audiohelper.mixData[i].volume = v.value
             audiohelper.updateMixerData()
         end
     end
@@ -724,8 +803,8 @@ function drawMoreInfoForInstrument()
         end
         if drumJob then
             if labelbutton(' reset', buttonX, startY + cellH * 10, 100, cellH).clicked then
-                for i = 1, #drumgrid do
-                    local cell = drumgrid[i][drumIndex]
+                for i = 1, #audiohelper.drumgrid do
+                    local cell = audiohelper.drumgrid[i][drumIndex]
                     if (cell and cell.on) then
                         if drumJob == 'volume' then
                             cell.volume = 1
@@ -745,8 +824,8 @@ function drawMoreInfoForInstrument()
             end
         end
 
-        for i = 1, #drumgrid do
-            local cell = drumgrid[i][drumIndex]
+        for i = 1, #audiohelper.drumgrid do
+            local cell = audiohelper.drumgrid[i][drumIndex]
             if (cell and cell.on) then
                 if drumJob == 'randP' then
                     love.graphics.setLineWidth(4)
@@ -826,6 +905,7 @@ function drawMoreInfoForInstrument()
                         audiohelper.updateDrumKitData()
                     end
                 end
+
                 if drumJob == 'delay' then
                     local v = v_slider(drumJob .. ':' .. i, startX + cellW * (i - 1),
                         startY + cellH, 200,
@@ -846,18 +926,17 @@ function drawMoreInfoForInstrument()
                             v = mapOffsetToNeareastScaleOffset(v, scales['pentatonic_minor'])
                         end
                         cell.semitoneOffset = v
-                        audiohelper.rumKitData()
+                        audiohelper.updateDrumKitData()
                     end
                 end
             end
         end
 
-
         if drumJob == 'echo' then
             local xOff = (cellW - smallfont:getWidth('x')) / 2
-            drawDrumMachineGrid(startX, startY + cellH, cellW, cellH, #drumgrid, 0)
-            for i = 1, #drumgrid do
-                local cell = drumgrid[i][drumIndex]
+            drawDrumMachineGrid(startX, startY + cellH, cellW, cellH, #audiohelper.drumgrid, 0)
+            for i = 1, #audiohelper.drumgrid do
+                local cell = audiohelper.drumgrid[i][drumIndex]
 
                 if (cell and cell.on) then
                     if cell.echo then
@@ -915,17 +994,16 @@ end
 function love.mousepressed(x, y, button)
     if fileBrowserForSound then
         local bclicked, path = handleBrowserClick(browser, x, y, smallfont)
-        --print(path)
+
         if bclicked then
             mouseState.clickedSomething = true
             browserClicked = true
-            --print('mouseState.clickedSomething', mouseState.clickedSomething)
+
             if bclicked == 'directory' then
-                --print(browser.root, inspect(browser.subdirs))
                 browser = fileBrowser(browser.root, browser.subdirs,
                     browser.allowedExtensions)
             else
-                print(inspect(browser.subdirs), path)
+                --print(inspect(browser.subdirs), path)
                 local sample = audiohelper.prepareSingleSample(browser.subdirs, path)
                 if sample then
                     if fileBrowserForSound.type == 'instrument' then
@@ -933,22 +1011,21 @@ function love.mousepressed(x, y, button)
                         audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
                     end
                     if fileBrowserForSound.type == 'drum' then
-                        local key = drumkit.order[drumIndex]
-                        drumkit[key] = sample
+                        local key = audiohelper.drumkit.order[drumIndex]
+                        print(key, sample, drumIndex)
+                        audiohelper.drumkit[key] = sample
                         audiohelper.updateDrumKitData()
                     end
                 end
-                --print(browser.root, inspect(browser.subdirs), path)
             end
         end
     end
     if browserClicked then return end
-    -- handleBrowserClick(browser, x, y)
 
     if drumIndex <= 0 then
         local cx, cy = getCellUnderPosition(x, y)
         if cx >= 0 and cy >= 0 then
-            drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on, flam = love.keyboard.isDown('.') }
+            audiohelper.drumgrid[cx][cy] = { on = not audiohelper.drumgrid[cx][cy].on, flam = love.keyboard.isDown('.') }
             audiohelper.updateDrumKitData()
         end
     else
@@ -956,15 +1033,14 @@ function love.mousepressed(x, y, button)
             local cx, cy = getCellUnderPosition(x, y)
 
             if cx >= 0 and cy == 1 then
-                drumgrid[cx][drumIndex] = {
-                    on = not drumgrid[cx][drumIndex].on,
+                audiohelper.drumgrid[cx][drumIndex] = {
+                    on = not audiohelper.drumgrid[cx][drumIndex].on,
                     flam = love.keyboard.isDown('.')
                 }
                 audiohelper.updateDrumKitData()
             end
         end
     end
-    --print(lookinIntoIntrumentAtIndex)
 end
 
 function love.mousereleased()
@@ -1019,28 +1095,26 @@ function drawDrumPatternPicker(pickData, xOffset)
     local index2 = pickData.pickedItemIndex
 
     pickData.scrollLeft = math.min(0, pickData.scrollLeft)
-    local inList = #drumPatterns.patterns
+    local inList = #drumPatterns
     if panelHeight / fontH < inList then
         if (pickData.scrollLeft - panelHeight / fontH < inList * -1) then
             pickData.scrollLeft = (inList - panelHeight / fontH) * -1
         end
     end
 
-    --print(pickData.scrollRight)
-
-    local inList = #drumPatterns.patterns[index].sections
+    local inList = #drumPatterns[index].sections
     pickData.scrollRight = math.min(0, pickData.scrollRight)
     if panelHeight / fontH < inList then
-        if (pickData.scrollRight - panelHeight / fontH < (#drumPatterns.patterns[index].sections) * -1) then
-            pickData.scrollRight = (#drumPatterns.patterns[index].sections - panelHeight / fontH) * -1
+        if (pickData.scrollRight - panelHeight / fontH < (#drumPatterns[index].sections) * -1) then
+            pickData.scrollRight = (#drumPatterns[index].sections - panelHeight / fontH) * -1
         end
     else
         pickData.scrollRight = 0
     end
-    for i = 1, #drumPatterns.patterns do
+    for i = 1, #drumPatterns do
         love.graphics.setColor(palette.fg2)
 
-        local str = drumPatterns.patterns[i].name
+        local str = drumPatterns[i].name
         local buttonW = columnWidth
         local thisY = (pickData.scrollLeft * fontH) + yOffset + (i - 1) * fontH
         if thisY >= yOffset and thisY < yOffset + panelHeight then
@@ -1056,8 +1130,8 @@ function drawDrumPatternPicker(pickData, xOffset)
         end
     end
 
-    for i = 1, #drumPatterns.patterns[index].sections do
-        local it = drumPatterns.patterns[index].sections[i]
+    for i = 1, #drumPatterns[index].sections do
+        local it = drumPatterns[index].sections[i]
         love.graphics.setColor(1, 1, 1, 1)
 
         local str = it.name
@@ -1075,7 +1149,7 @@ function drawDrumPatternPicker(pickData, xOffset)
                 love.graphics.setFont(smallestfont)
             end
             if labelbutton(str, xOffset + 32 + columnWidth, thisY, buttonW, fontH).clicked then
-                drumPatternName, gridlength = drumPatterns.pickPatternByIndex(index, i)
+                drumPatternName, gridlength = pickPatternByIndex(index, i)
                 pickData.pickedItemIndex = i
                 grid.columns = gridlength
                 audiohelper.updateDrumKitData()
@@ -1194,15 +1268,13 @@ function drawInstrumentBanks(x, y)
                 local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
 
                 if labelbutton('wav', x + rowWidth - buttonw, buttony - buttonh, buttonw, buttonh, false).clicked == true then
-                    --print('gonna do the wav')
-                    -- print(inspect(instruments[instrumentIndex].sample.pathParts))
                     local pathParts = audiohelper.instruments[instrumentIndex].sample.pathParts
                     browser = fileBrowser(browser.root, pathParts.pathArray,
                         browser.allowedExtensions)
                     fileBrowserForSound = { type = 'instrument', index = instrumentIndex }
                 end
             end
-            --  end
+
             if false then
                 if #audiohelper.recordedClips[i].clips > 0 and instrumentIndex == i then
                     local buttonw = font:getWidth('edit clips')
@@ -1220,7 +1292,6 @@ function drawInstrumentBanks(x, y)
         local startY = y + (i - 1) * (rowHeight + margin)
         local clipSize = (rowHeight / 2) - 1
         local maxColumns = 5
-        --print(i, #recordedClips[i].clips)
 
         for j = 1, #audiohelper.recordedClips[i].clips do
             local columnIndex = (j - 1) % maxColumns
@@ -1242,9 +1313,6 @@ function drawInstrumentBanks(x, y)
 
             local r = getUIRect(x, y, clipSize, clipSize)
             if r then
-                --if love.keyboard.isDown('q') then
-                --    print('sound queued')
-                --end
                 for k = 1, #audiohelper.recordedClips[i].clips do
                     if (k ~= j) then
                         audiohelper.recordedClips[i].clips[k].meta.isSelected = false
@@ -1297,22 +1365,11 @@ function love.draw()
     local w, h = love.graphics.getDimensions()
     handleMouseClickStart()
 
-
-
-
     love.graphics.setColor(1, 1, 1)
-    --drawDrumParts(4, 4)
-
-    --    print(inspect(browser))
-
-
 
     if drumIndex <= 0 then
-        --if (not showDrumPatternPicker) then
-
         drawDrumMachine()
         drawMouseOverGrid()
-        --end
     end
 
     if drumIndex > 0 then
@@ -1378,8 +1435,6 @@ function love.draw()
         love.graphics.print(msg, w - font:getWidth(msg), h - font:getHeight())
     end
 
-
-
     if labelbutton('trigger', 0, 0, font:getWidth('trigger'), font:getHeight(), waitingForTriggerToStartRecording).clicked then
         waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
     end
@@ -1393,8 +1448,6 @@ function love.draw()
     if (showDrumPatternPicker) then
         drawDrumPatternPicker(drummPatternPickData, w / 2)
     end
-    --love.graphics.print(drumPatternName, 0, 32 + font:getHeight())
-
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 1
     local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)

@@ -38,8 +38,30 @@ local defaultDecayTime    = 0.01
 local defaultSustainLevel = 0.7
 local defaultReleaseTime  = 0.03
 
+lib.instruments           = {}
+lib.mixData               = {}
+lib.drumgrid              = {}
 
-lib.instruments = {}
+function lib.initializeMixer()
+    for i = 1, #lib.drumkit.order do
+        lib.mixData[i] = { volume = 1 }
+    end
+end
+
+function lib.initializeDrumgrid(optionalColumns)
+    for x = 1, optionalColumns or grid.columns do
+        lib.drumgrid[x] = {}
+        for y = 1, #lib.drumkit.order do
+            lib.drumgrid[x][y] = { on = false }
+        end
+    end
+end
+
+function lib.setDrumKitFiles(files)
+    --    print('set drumkit files')
+    --    lib.drumkitFiles = files
+    lib.drumkit = lib.prepareDrumkit(files)
+end
 
 function lib.initializeInstruments(samples)
     for i = 1, 5 do
@@ -125,7 +147,7 @@ function lib.prepareDrumkit(drumkitFiles)
             local info = love.filesystem.getInfo(fullPath)
             if info then
                 local soundData = love.sound.newSoundData(fullPath)
-                print(k)
+                --print(k)
                 result[k] = {
                     name = name,
                     source = love.audio.newSource(soundData),
@@ -137,7 +159,7 @@ function lib.prepareDrumkit(drumkitFiles)
             end
         end
     end
-    --print(drumkitFiles)
+
     if drumkitFiles.order then
         for i = 1, #drumkitFiles.order do
             if drumkitFiles[drumkitFiles.order[i]] then
@@ -219,7 +241,7 @@ function lib.saveJizzJazzFile()
     local path              = str .. '.jizzjazz2.txt'
 
     local simplifiedDrumkit = {}
-    for k, v in pairs(drumkit) do
+    for k, v in pairs(lib.drumkit) do
         if k == 'order' then
             simplifiedDrumkit.order = v
         else
@@ -228,8 +250,8 @@ function lib.saveJizzJazzFile()
     end
 
     local simplifiedInstrumentBanks = {}
-    for i = 1, #instruments do
-        local instr = instruments[i]
+    for i = 1, #lib.instruments do
+        local instr = lib.instruments[i]
         local sample = instr.sample
         local adsr = instr.adsr
         simplifiedInstrumentBanks[i] = {
@@ -241,14 +263,14 @@ function lib.saveJizzJazzFile()
     end
 
     local simplifiedDrumGrid = {}
-    local drumColumns = #drumgrid
+    local drumColumns = #lib.drumgrid
     local drumRows = #simplifiedDrumkit.order
-    --print('columns', drumColumns, grid.columns)
+    simplifiedDrumGrid.columns = grid.columns
     for x = 1, drumColumns do
         simplifiedDrumGrid[x] = {}
         for y = 1, drumRows do
             simplifiedDrumGrid[x][y] = 0
-            local d = drumgrid[x][y]
+            local d = lib.drumgrid[x][y]
             if (d.on == true) then
                 local n = shallowcopy(d)
                 n.on = nil
@@ -259,7 +281,7 @@ function lib.saveJizzJazzFile()
 
     --print(#recordedClips)
 
-    local simplifiedClips = shallowcopy(recordedClips)
+    local simplifiedClips = shallowcopy(lib.recordedClips)
 
 
     local data = {
@@ -280,7 +302,7 @@ end
 function lib.updateMixerData()
     lib.sendMessageToAudioThread({
         type = 'mixerData',
-        data = mixData
+        data = lib.mixData
     })
 end
 
@@ -288,8 +310,8 @@ function lib.updateDrumKitData()
     lib.sendMessageToAudioThread({
         type = 'drumkitData',
         data = {
-            drumgrid = drumgrid,
-            drumkit = drumkit,
+            drumgrid = lib.drumgrid,
+            drumkit = lib.drumkit,
             beatInMeasure = grid.columns / 4
         }
     })
@@ -297,17 +319,19 @@ end
 
 function lib.loadJizzJazzFile(data, filename)
     drumPatternName = data.drumPatternName
-    drumkit = lib.prepareDrumkit(data.drumkit)
-    grid.columns = #data.simplifiedDrumGrid -- todo not working yet.
-    grid.labels = drumkit.order
+    -- lib.drumkitFiles = data.drumkit
+    lib.drumkit = lib.prepareDrumkit(data.drumkit)
+    grid.columns = data.simplifiedDrumGrid.columns or #data.simplifiedDrumGrid -- todo not working yet.
+    grid.labels = lib.drumkit.order
     local g = data.simplifiedDrumGrid
+
     for x = 1, #g do
         for y = 1, #g[x] do
             local dcell = g[x][y]
-            drumgrid[x][y] = { on = false }
+            lib.drumgrid[x][y] = { on = false }
             if dcell ~= 0 then
-                drumgrid[x][y] = shallowcopy(dcell)
-                drumgrid[x][y].on = true
+                lib.drumgrid[x][y] = shallowcopy(dcell)
+                lib.drumgrid[x][y].on = true
             end
         end
     end
@@ -342,6 +366,8 @@ function lib.loadJizzJazzFile(data, filename)
 
     uiData = data.uiData
     lib.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+
+    lib.initializeMixer()
 end
 
 return lib

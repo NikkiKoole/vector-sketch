@@ -458,7 +458,7 @@ function doHandleDrumNotes(beat, tick, bpm)
                         print(key)
                     end
                     local source = drumkit[key].source:clone()
-                    local cellVolume = (cell.volume or 1) * (mixerData and mixerData[i].volume or 1)
+                    local cellVolume = (cell.volume or 1) * (mixerData and mixerData[i] and mixerData[i].volume or 1)
                     local gate = cell.gate or 1
                     local allDrumsVolume = (uiData and uiData.drumVolume or 1)
                     local volume = cellVolume * allDrumsVolume
