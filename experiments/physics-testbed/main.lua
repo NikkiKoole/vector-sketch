@@ -635,7 +635,7 @@ function connectMipoAndVehicle()
         v:setGravityScale(0)
         v:setActive(false)
     end
-
+    --  updatePart.resetPositions(mipos[1])
     Timer.after(.2, function()
         for k, v in pairs(b2d) do
             --print(k,v)
@@ -713,17 +713,13 @@ function connectMipoAndVehicle()
 
         local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')
         local bx, by = buttFixture:getBody():getPosition()
-
         local localX, localY = b2d.torso:getLocalPoint(bx, by)
-
 
         local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')
         local sx, sy = seatFixture:getBody():getPosition()
-
         local centroid = getCentroidOfFixture(bike.frame.body, seatFixture)
 
         b2d.torso:setPosition(centroid[1], centroid[2])
-
         connect.forceConnection(buttFixture, seatFixture)
 
         local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'lfoot')
@@ -733,7 +729,6 @@ function connectMipoAndVehicle()
 
         connect.forceConnection(lfootPedalFixture, lfootFixture)
         b2d.lfoot:setPosition(lfcentroid[1], lfcentroid[2])
-
 
         local rfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'rfoot')
         local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
@@ -1186,7 +1181,7 @@ function love.update(dt)
     if mipoOnVehicle then
         --source:setVolume(brrVolume)
         dj.setAllInstrumentsVolume(1)
-        local p = numbers.mapInto(velX, 0, 10000, 50, 250)
+        local p = numbers.mapInto(math.abs(velX), 0, 10000, 50, 250)
         --if p < 0.0001 then p = 0.0001 end
         --source:setPitch(p)
         if backWheelFromGround > 0.5 and frontWheelFromGround > 0.5 then
@@ -1202,7 +1197,6 @@ function love.update(dt)
 
         if frontWheelFromGround > 0.8 then
             local a = bike.frame.body:getAngle()
-            omhoog = -1.5
             local p = numbers.mapInto(a, -math.pi, math.pi, -10, 10)
 
             dj.setFreaky(p)
@@ -1218,7 +1212,7 @@ function love.update(dt)
         -- local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
         -- if p < 0.0001 then p = 0.0001 end
         -- source:setPitch(p)
-        local p = numbers.mapInto(velX, 0, 10000, 100, 150)
+        local p = numbers.mapInto(math.abs(velX), 0, 10000, 100, 150)
         dj.setTempo(p)
         dj.setAllInstrumentsVolume(.1)
     end
