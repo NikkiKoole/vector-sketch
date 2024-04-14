@@ -35,7 +35,6 @@ function lib.setFreaky(value)
         uiData.allDrumSemitoneOffset = 0
     else
         local offset = (love.math.noise(love.timer.getTime() * 100)) * 2 - 1
-        -- print(offset)
         uiData.allDrumSemitoneOffset = value + offset
     end
     audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
@@ -57,7 +56,7 @@ function lib.loadJizzJazzSong(path)
 
     audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     audiohelper.loadJizzJazzFile(obj, path)
-    audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+
 
     -- audiohelper.initializeMixer()
     -- audiohelper.initializeDrumgrid()

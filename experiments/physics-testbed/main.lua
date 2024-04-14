@@ -1182,8 +1182,7 @@ function love.update(dt)
         --source:setVolume(brrVolume)
         dj.setAllInstrumentsVolume(1)
         local p = numbers.mapInto(math.abs(velX), 0, 10000, 50, 250)
-        --if p < 0.0001 then p = 0.0001 end
-        --source:setPitch(p)
+
         if backWheelFromGround > 0.5 and frontWheelFromGround > 0.5 then
             p = numbers.mapInto(velX, 0, 10000, 150, 350)
             -- dj.setAllInstrumentsVolume(.5)
@@ -1197,7 +1196,7 @@ function love.update(dt)
 
         if frontWheelFromGround > 0.8 then
             local a = bike.frame.body:getAngle()
-            local p = numbers.mapInto(a, -math.pi, math.pi, -10, 10)
+            local p = numbers.mapInto(a, -math.pi, math.pi, -30, 30)
 
             dj.setFreaky(p)
             --  dj.setAllInstrumentsVolume(.3)
@@ -1214,7 +1213,7 @@ function love.update(dt)
         -- source:setPitch(p)
         local p = numbers.mapInto(math.abs(velX), 0, 10000, 100, 150)
         dj.setTempo(p)
-        dj.setAllInstrumentsVolume(.1)
+        dj.setAllInstrumentsVolume(0)
     end
 
 
@@ -2154,7 +2153,7 @@ end
 
 function love.load()
     dj.loadJizzJazzSong('assets/jizzjazz/mountmipo2.jizzjazz2.txt')
-
+    dj.setAllInstrumentsVolume(0)
     local url = 'assets/sounds/mountainmipo/bikesound.wav'
     source = love.audio.newSource(url, 'static')
     source:setLooping(true)
