@@ -7,8 +7,8 @@ require 'wordsmith'
 local text         = require 'lib.text'
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
-local audiohelper  = require 'jizzjazz-audiohelper'
-
+local audiohelper  = require 'lib.jizzjazz-audiohelper'
+audiohelper.startAudioThread()
 require 'fileBrowser'
 
 luamidi = require "luamidi"
@@ -175,6 +175,11 @@ function love.load()
         drumVolume = 1,
         allDrumSemitoneOffset = 0
     }
+    audiohelper.sendMessageToAudioThread({
+        type = 'metronome-sound',
+        data = love.audio.newSource(
+            "samples/cr78/Rim Shot.wav", "static")
+    })
     audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     -- livelooping
     recording = false
@@ -247,9 +252,12 @@ function love.load()
         startY = 120,
         cellW = 20,
         cellH = 32,
-        columns = 16,
-        labels = audiohelper.drumkit.order
+        --columns = 16,
+        --labels = audiohelper.drumkit.order
     }
+    audiohelper.setColumns(16)
+    audiohelper.setLabels(audiohelper.drumkit.order)
+
 
     audiohelper.initializeMixer()
     audiohelper.initializeDrumgrid()
@@ -496,8 +504,8 @@ function love.keypressed(k)
     if k == '-' then
         local name, gridlength = pickExistingPattern(drumgrid, drumkit)
         drumPatternName = name
-        grid.columns = gridlength
 
+        audiohelper.setColumns(gridlength)
         audiohelper.updateDrumKitData()
     end
 
@@ -722,8 +730,8 @@ function drawDrumMachinePlayHead(startX, startY, cellW, cellH, columns, rows)
 end
 
 local function getCellUnderPosition(x, y)
-    if x > grid.startX and x < grid.startX + (grid.cellW * grid.columns) then
-        if y > grid.startY and y < grid.startY + (grid.cellH * (#grid.labels)) then
+    if x > grid.startX and x < grid.startX + (grid.cellW * audiohelper.columns) then
+        if y > grid.startY and y < grid.startY + (grid.cellH * (#audiohelper.labels)) then
             return math.ceil((x - grid.startX) / grid.cellW), math.ceil((y - grid.startY) / grid.cellH)
         end
     end
@@ -732,7 +740,7 @@ end
 
 local function getInstrumentIndexUnderPosition(x, y)
     if x >= 0 and x <= grid.startX then
-        if y >= grid.startY and y < grid.startY + (grid.cellH * (#grid.labels)) then
+        if y >= grid.startY and y < grid.startY + (grid.cellH * (#audiohelper.labels)) then
             return math.ceil((y - grid.startY) / grid.cellH)
         end
     end
@@ -743,15 +751,16 @@ end
 function drawDrumMachine()
     love.graphics.setFont(smallfont)
 
-    drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+    drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns, #audiohelper.labels - 1)
     if showMixer then
-        drawMixerStuff(grid.startX + 150 + grid.columns * grid.cellW, grid.startY, grid.cellH, grid.labels)
+        drawMixerStuff(grid.startX + 150 + audiohelper.columns * grid.cellW, grid.startY, grid.cellH, audiohelper.labels)
     end
-    drawDrumMachineLabels(grid.startX, grid.startY, grid.cellH, grid.labels)
-    drawDrumOnNotes(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+    drawDrumMachineLabels(grid.startX, grid.startY, grid.cellH, audiohelper.labels)
+    drawDrumOnNotes(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns, #audiohelper.labels - 1)
 
     if playing or recording then
-        drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+        drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns,
+            #audiohelper.labels - 1)
     end
 end
 
@@ -763,10 +772,10 @@ function drawMoreInfoForInstrument()
 
     local buttonX = startX - 100
     if drumIndex > 0 then
-        drawDrumMachineGrid(startX, startY, cellW, cellH, grid.columns, 0)
-        drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, grid.columns, drumIndex - 1)
+        drawDrumMachineGrid(startX, startY, cellW, cellH, audiohelper.columns, 0)
+        drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, audiohelper.columns, drumIndex - 1)
 
-        if labelbutton(' ' .. grid.labels[drumIndex], buttonX, startY, 100, cellH).clicked then
+        if labelbutton(' ' .. audiohelper.labels[drumIndex], buttonX, startY, 100, cellH).clicked then
             drumIndex = 0
         end
 
@@ -1151,7 +1160,8 @@ function drawDrumPatternPicker(pickData, xOffset)
             if labelbutton(str, xOffset + 32 + columnWidth, thisY, buttonW, fontH).clicked then
                 drumPatternName, gridlength = pickPatternByIndex(index, i)
                 pickData.pickedItemIndex = i
-                grid.columns = gridlength
+
+                audiohelper.setColumns(gridlength)
                 audiohelper.updateDrumKitData()
             end
             if smallfont:getWidth(str) > columnWidth then
@@ -1376,7 +1386,7 @@ function love.draw()
         drawMoreInfoForInstrument()
         drawMouseOverMoreInfo()
         if playing then
-            drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, 0)
+            drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns, 0)
         end
     end
 
@@ -1401,9 +1411,7 @@ function love.draw()
     end
     if fileBrowserForSound then
         if fileBrowserForSound.type == 'drum' then
-            --fileBrowserForSound = { type = 'drum', index = lookinIntoIntrumentAtIndex }
             if labelbutton('ok', 64, 90, 100, 30, false).clicked == true then
-                print('jojo')
                 fileBrowserForSound = nil
             end
 
@@ -1449,7 +1457,7 @@ function love.draw()
         drawDrumPatternPicker(drummPatternPickData, w / 2)
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 1
+    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 1
     local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
@@ -1457,7 +1465,7 @@ function love.draw()
         audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 3
+    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 3
     local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 80)
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
@@ -1465,7 +1473,7 @@ function love.draw()
         audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 5
+    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 5
     local v = drawLabelledKnob('drums', bx, by, uiData.drumVolume, 0.01, 1)
     if v.value then
         drawLabel(string.format("%02.1f", v.value), bx, by, 1)
@@ -1473,7 +1481,7 @@ function love.draw()
         audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 7
+    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 7
     local v = drawLabelledKnob('instr', bx, by, uiData.instrumentsVolume, 0.01, 1)
     if v.value then
         drawLabel(string.format("%02.1f", v.value), bx, by, 1)
@@ -1481,7 +1489,7 @@ function love.draw()
         audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local bx, by = grid.startX + grid.cellW * (grid.columns + 5), grid.startY + grid.cellH * 9
+    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 9
     local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -72, 48)
     if v.value then
         drawLabel(string.format("%02.1i", v.value), bx, by, 1)

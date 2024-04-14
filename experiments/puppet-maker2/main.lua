@@ -57,7 +57,7 @@ lurker.postswap = function(f)
     focussed = true
 end
 
-local audioHelper = require 'lib.audio-helper'
+local audioHelper = require 'lib.melody-paint-audio-helper'
 audioHelper.startAudioThread()
 
 creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }

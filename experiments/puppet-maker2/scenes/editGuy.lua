@@ -1,4 +1,4 @@
-local audioHelper      = require 'lib.audio-helper'
+local audioHelper      = require 'lib.melody-paint-audio-helper'
 local gradient         = require 'lib.gradient'
 local Timer            = require 'vendor.timer'
 local scene            = {}
@@ -58,14 +58,14 @@ local function pointerPressed(x, y, id)
     local cx, cy = cam:getWorldCoordinates(x, y)
 
     local onPressedParams = {
-        onPressedFunc= function() growl(1) end,
+        onPressedFunc = function() growl(1) end,
         pointerForceFunc = function(fixture)
             local ud = fixture:getUserData()
-   
+
             local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
- 
-            return force 
-        end 
+
+            return force
+        end
     }
 
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
@@ -393,8 +393,6 @@ function scene.update(dt)
     if ScenePressedButtonScale > 1 then ScenePressedButtonScale = 1 end
 end
 
-
-
 function scene.draw()
     prof.push('editGuy.draw ')
     prof.push('editGuy.draw ui')
@@ -476,7 +474,7 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
         local a = ui.getUIRect('gotoscene', x, y, size, size)
-        if a and not swipes.getTransition() then 
+        if a and not swipes.getTransition() then
             ScenePressedButtonScale = 0.5
             Timer.clear()
             swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
@@ -487,7 +485,7 @@ function scene.draw()
                     swipes.fadeInTransition(.2)
                 end
             end)
-           -- print('scene button clicked')
+            -- print('scene button clicked')
         end
     end
 
@@ -511,43 +509,43 @@ function scene.draw()
 
 
         local a = ui.getUIRect('random', x, y, size, size)
-        if a  then 
-        if DEBUG_FIVE_GUYS_IN_EDIT then
-            for i = 1, #fiveGuys do
-                updatePart.randomizeGuy(fiveGuys[i])
+        if a then
+            if DEBUG_FIVE_GUYS_IN_EDIT then
+                for i = 1, #fiveGuys do
+                    updatePart.randomizeGuy(fiveGuys[i])
+                end
+            else
+                updatePart.randomizeGuy(editingGuy)
             end
-        else
-            updatePart.randomizeGuy(editingGuy)
-        end
-        DicePressedButtonScale = 0.5
-        setCategories(editingGuy)
-        handleCameraAfterCatgeoryChange(true)
+            DicePressedButtonScale = 0.5
+            setCategories(editingGuy)
+            handleCameraAfterCatgeoryChange(true)
 
-        local creation = editingGuy.dna.creation
-        if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
-            editGuyUI.setSelectedCategory('body')
-            Timer.tween(.5, scroller, { position = 8 })
-        end
+            local creation = editingGuy.dna.creation
+            if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
+                editGuyUI.setSelectedCategory('body')
+                Timer.tween(.5, scroller, { position = 8 })
+            end
 
 
-        local s = findSample('mp7/Quijada')
-        if s then
-            playSound(s.s, 1, 1)
+            local s = findSample('mp7/Quijada')
+            if s then
+                playSound(s.s, 1, 1)
+            end
         end
-    end
     end
 
 
     if true then
-    love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.setColor(0, 0, 0, 0.5)
 
-    local stats = love.graphics.getStats()
-    local memavg = calculateRollingAverage(rollingMemoryUsage)
-    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
-    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
-    local fps = tostring(love.timer.getFPS()) .. 'fps'
-    local draws = stats.drawcalls .. 'draws'
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+        local stats = love.graphics.getStats()
+        local memavg = calculateRollingAverage(rollingMemoryUsage)
+        local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+        local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+        local fps = tostring(love.timer.getFPS()) .. 'fps'
+        local draws = stats.drawcalls .. 'draws'
+        love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
     end
 
 

@@ -4,17 +4,37 @@ local _thread
 local channel      = {};
 channel.audio2main = love.thread.getChannel("audio2main")
 channel.main2audio = love.thread.getChannel("main2audio")
-local sys          = love.system.getOS()
 
-if sys == 'iOS' or sys == 'Android' then
-    _thread = love.thread.newThread('jizzjazz-audiothread.lua')
-    _thread:start()
-else
-    _thread = love.thread.newThread('jizzjazz-audiothread.lua')
-    _thread:start()
+
+local lib = {}
+
+function lib.startAudioThread()
+    local sys = love.system.getOS()
+    function getFileContents(path)
+        print(path, '../..' .. path)
+        local f = io.open(path, "rb") or io.open('../../' .. path, "rb")
+        local content
+        if f then
+            --assert(f)
+            content = f:read("*all")
+            f:close()
+        end
+
+        return content
+    end
+
+    if sys == 'iOS' or sys == 'Android' then
+        _thread = love.thread.newThread('jizzjazz-audiothread.lua')
+        _thread:start()
+    else
+        -- _thread = love.thread.newThread('jizzjazz-audiothread.lua')
+        -- _thread:start()
+
+        local code = getFileContents('lib/jizzjazz-audiothread.lua')
+        _thread = love.thread.newThread(code or 'jizzjazz-audiothread.lua')
+        _thread:start()
+    end
 end
-
-local lib              = {}
 
 lib.percentageThingies = {} -- 5
 for i = 1, 5 do
@@ -42,6 +62,13 @@ lib.instruments           = {}
 lib.mixData               = {}
 lib.drumgrid              = {}
 
+lib.columns               = nil
+lib.labels                = nil
+
+function lib.setColumns(v) lib.columns = v end
+
+function lib.setLabels(v) lib.labels = v end
+
 function lib.initializeMixer()
     for i = 1, #lib.drumkit.order do
         lib.mixData[i] = { volume = 1 }
@@ -49,7 +76,7 @@ function lib.initializeMixer()
 end
 
 function lib.initializeDrumgrid(optionalColumns)
-    for x = 1, optionalColumns or grid.columns do
+    for x = 1, optionalColumns or lib.columns do
         lib.drumgrid[x] = {}
         for y = 1, #lib.drumkit.order do
             lib.drumgrid[x][y] = { on = false }
@@ -156,6 +183,8 @@ function lib.prepareDrumkit(drumkitFiles)
                     path = fullPath,
                     pathParts = { root = root, pathArray = pathArray, filePath = filePath }
                 }
+            else
+                print('issuse with drumkit sample', fullPath)
             end
         end
     end
@@ -265,7 +294,7 @@ function lib.saveJizzJazzFile()
     local simplifiedDrumGrid = {}
     local drumColumns = #lib.drumgrid
     local drumRows = #simplifiedDrumkit.order
-    simplifiedDrumGrid.columns = grid.columns
+    simplifiedDrumGrid.columns = lib.columns
     for x = 1, drumColumns do
         simplifiedDrumGrid[x] = {}
         for y = 1, drumRows do
@@ -312,7 +341,7 @@ function lib.updateDrumKitData()
         data = {
             drumgrid = lib.drumgrid,
             drumkit = lib.drumkit,
-            beatInMeasure = grid.columns / 4
+            beatInMeasure = lib.columns / 4
         }
     })
 end
@@ -321,13 +350,14 @@ function lib.loadJizzJazzFile(data, filename)
     drumPatternName = data.drumPatternName
     -- lib.drumkitFiles = data.drumkit
     lib.drumkit = lib.prepareDrumkit(data.drumkit)
-    grid.columns = data.simplifiedDrumGrid.columns or #data.simplifiedDrumGrid -- todo not working yet.
-    grid.labels = lib.drumkit.order
+    lib.columns = data.simplifiedDrumGrid.columns or #data.simplifiedDrumGrid -- todo not working yet.
+    lib.labels = lib.drumkit.order
     local g = data.simplifiedDrumGrid
-
+    lib.initializeDrumgrid(lib.columns)
     for x = 1, #g do
         for y = 1, #g[x] do
             local dcell = g[x][y]
+
             lib.drumgrid[x][y] = { on = false }
             if dcell ~= 0 then
                 lib.drumgrid[x][y] = shallowcopy(dcell)
@@ -356,7 +386,7 @@ function lib.loadJizzJazzFile(data, filename)
                 },
             }
         else
-            print('something was up making sample for this instrument: ', filename, i, inspect(readInstrument))
+            -- print('something was up making sample for this instrument: ', filename)
         end
     end
     lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })

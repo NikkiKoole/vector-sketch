@@ -21,7 +21,7 @@ local beatInMeasure     = 4
 local countInMeasures   = 0
 --local bpm             = 90
 --local swing           = 50
-local metronome_click   = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
+local metronome_click   = nil
 
 local channel           = {};
 channel.audio2main      = love.thread.getChannel("audio2main"); -- from thread
@@ -651,6 +651,7 @@ while (true) do
     local n = love.timer.getTime()
     local delta = n - now
     now = n
+
     if not paused then
         beat = beat + (delta * (bpm / 60))
         tick = ((beat % 1) * (PPQN))
@@ -720,6 +721,9 @@ while (true) do
     missedTicks = {}
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'metronome-sound' then
+            metronome_click = v.data
+        end
         if v.type == 'clips' then
             recordedClips = v.data
         end

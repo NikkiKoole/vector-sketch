@@ -663,14 +663,11 @@ function connectMipoAndVehicle()
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
 
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.torso, { sleeping = true })
+
         if b2d.head then
             box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.head, { sleeping = true })
         end
     end
-
-
-
-
 
     if isPedalBike then
         if true then
@@ -1165,20 +1162,8 @@ function love.update(dt)
 
     local t = math.sin(math.abs(love.timer:getTime()))
 
-    if mipoOnVehicle then
-        source:setVolume(brrVolume)
 
-        local p = numbers.mapInto(velX, 0, 10000, .25, 3)
-        if p < 0.0001 then p = 0.0001 end
-        source:setPitch(p)
 
-        --print(velX, velY)
-    else
-        source:setVolume(0.1 * t)
-        local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
-        if p < 0.0001 then p = 0.0001 end
-        source:setPitch(p)
-    end
 
     --enableDisableObjects(mipos)
     -- enableDisableObjects({bike})  -- wrap the single bike in a table to make it consistent
@@ -1197,6 +1182,47 @@ function love.update(dt)
     if (backWheelFromGround >= 0) then
         backWheelFromGround = backWheelFromGround + dt
     end
+
+    if mipoOnVehicle then
+        --source:setVolume(brrVolume)
+        dj.setAllInstrumentsVolume(1)
+        local p = numbers.mapInto(velX, 0, 10000, 50, 250)
+        --if p < 0.0001 then p = 0.0001 end
+        --source:setPitch(p)
+        if backWheelFromGround > 0.5 and frontWheelFromGround > 0.5 then
+            p = numbers.mapInto(velX, 0, 10000, 150, 350)
+            -- dj.setAllInstrumentsVolume(.5)
+        else
+            --dj.setAllInstrumentsVolume(.5)
+        end
+
+
+        dj.setTempo(p)
+
+
+        if frontWheelFromGround > 0.8 then
+            local a = bike.frame.body:getAngle()
+            omhoog = -1.5
+            local p = numbers.mapInto(a, -math.pi, math.pi, -10, 10)
+
+            dj.setFreaky(p)
+            --  dj.setAllInstrumentsVolume(.3)
+        else
+            dj.setFreaky(false)
+        end
+
+
+        --print(velX, velY)
+    else
+        -- source:setVolume(0.1 * t)
+        -- local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
+        -- if p < 0.0001 then p = 0.0001 end
+        -- source:setPitch(p)
+        local p = numbers.mapInto(velX, 0, 10000, 100, 150)
+        dj.setTempo(p)
+        dj.setAllInstrumentsVolume(.1)
+    end
+
 
 
 
