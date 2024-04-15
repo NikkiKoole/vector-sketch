@@ -683,21 +683,20 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
 end
 
 function drawMixerStuff(startX, startY, cellH, labels)
-    for i = 1, #audiohelper.mixData do
-        local it = audiohelper.mixData[i]
-
-        if false then
-            if labelbutton('M', startX - 200, startY + (i - 1) * cellH, 24, cellH, it.mute).clicked then
-                audiohelper.mixData[i].mute = not it.mute
-            end
-            if labelbutton('S', startX - 170, startY + (i - 1) * cellH, 24, cellH, it.solo).clicked then
-                audiohelper.mixData[i].solo = not it.solo
-            end
-        end
-
+    for i = 1, #audiohelper.mixDataDrums do
+        local it = audiohelper.mixDataDrums[i]
         local v = draw_knob(labels[i], startX - 120, cellH / 2 + startY + (i - 1) * cellH, it.volume, 0, 1, 24)
         if v.value then
-            audiohelper.mixData[i].volume = v.value
+            audiohelper.mixDataDrums[i].volume = v.value
+            audiohelper.updateMixerData()
+        end
+    end
+    local w, h = love.graphics.getDimensions()
+    for i = 1, 5 do
+        local it = audiohelper.mixDataInstruments[i]
+        local v = draw_knob('instr' .. i, w / 2 + 16, cellH / 2 + startY + (i - 1) * 75, it.volume, 0, 1, 24)
+        if v.value then
+            audiohelper.mixDataInstruments[i].volume = v.value
             audiohelper.updateMixerData()
         end
     end

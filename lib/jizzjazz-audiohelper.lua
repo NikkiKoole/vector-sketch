@@ -59,7 +59,8 @@ local defaultSustainLevel = 0.7
 local defaultReleaseTime  = 0.03
 
 lib.instruments           = {}
-lib.mixData               = {}
+lib.mixDataDrums          = {}
+lib.mixDataInstruments    = {}
 lib.drumgrid              = {}
 
 lib.columns               = nil
@@ -69,9 +70,20 @@ function lib.setColumns(v) lib.columns = v end
 
 function lib.setLabels(v) lib.labels = v end
 
+function lib.updateClips()
+    lib.sendMessageToAudioThread({ type = "clips", data = lib.recordedClips })
+end
+
+function lib.stopSoundsAtInstrumentIndex(index)
+    lib.sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = index })
+end
+
 function lib.initializeMixer()
     for i = 1, #lib.drumkit.order do
-        lib.mixData[i] = { volume = 1 }
+        lib.mixDataDrums[i] = { volume = 1 }
+    end
+    for i = 1, 5 do
+        lib.mixDataInstruments[i] = { volume = 1 }
     end
 end
 
@@ -331,7 +343,8 @@ end
 function lib.updateMixerData()
     lib.sendMessageToAudioThread({
         type = 'mixerData',
-        data = lib.mixData
+        drums = lib.mixDataDrums,
+        instruments = lib.mixDataInstruments
     })
 end
 

@@ -7,49 +7,50 @@ require('love.math')
 -- Linn often used a timing resolution of 96 parts per quarter note (PPQN),
 -- meaning that each quarter note is subdivided into 96 equal parts.
 -- This high resolution allows for very precise timing and sequencing of musical events,
-local PPQN              = 96
+local PPQN                 = 96
 
-local min, max          = ...
-local paused            = true
-local now               = love.timer.getTime()
-local time              = 0
-local lastTick          = 0
-local lastBeat          = -1
-local beat              = 0
-local tick              = 0
-local beatInMeasure     = 4
-local countInMeasures   = 0
+local min, max             = ...
+local paused               = true
+local now                  = love.timer.getTime()
+local time                 = 0
+local lastTick             = 0
+local lastBeat             = -1
+local beat                 = 0
+local tick                 = 0
+local beatInMeasure        = 4
+local countInMeasures      = 0
 --local bpm             = 90
 --local swing           = 50
-local metronome_click   = nil
+local metronome_click      = nil
 
-local channel           = {};
-channel.audio2main      = love.thread.getChannel("audio2main"); -- from thread
-channel.main2audio      = love.thread.getChannel("main2audio"); --from main
+local channel              = {};
+channel.audio2main         = love.thread.getChannel("audio2main"); -- from thread
+channel.main2audio         = love.thread.getChannel("main2audio"); --from main
 
-local missedTicks       = {}
-local playingSounds     = {} -- playingSounds are just for the melodic sounds.
+local missedTicks          = {}
+local playingSounds        = {} -- playingSounds are just for the melodic sounds.
 
-local playingDrumSounds = {}
+local playingDrumSounds    = {}
 
-local drumkit           = {}
-local drumgrid          = {}
+local drumkit              = {}
+local drumgrid             = {}
 
-local samples           = {}
-local futureDrumNotes   = {}
+local samples              = {}
+local futureDrumNotes      = {}
 
-local playing           = false
-local recording         = false
+local playing              = false
+local recording            = false
 
 --local sampleTuning        = {}
-local instruments       = {}
-local instrumentIndex   = 1
+local instruments          = {}
+local instrumentIndex      = 1
 
-local recordedData      = {}
-local recordedClips     = {}
+local recordedData         = {}
+local recordedClips        = {}
 
-local uiData            = nil
-local mixerData         = nil
+local uiData               = nil
+local mixerDataDrums       = nil
+local mixerDataInstruments = nil
 
 local function generateADSR(it, now)
     local adsr = instruments[it.instrumentIndex].adsr
@@ -162,7 +163,9 @@ local function updateADSREnvelopesForPlayingSounds(dt)
         local it = playingSounds[i]
         local value = generateADSR(it, now)
         value = value * (uiData and uiData.instrumentsVolume or 1)
-        it.volume = value
+        local mixVolume = mixerDataInstruments and mixerDataInstruments[it.instrumentIndex].volume or 1
+
+        it.volume = value * mixVolume
         --  print(value)
         --it.source:setVolume(value)
     end
@@ -369,7 +372,8 @@ function doHandleFutureDrumNotes(beat, tick)
         local f = futureDrumNotes[i]
         if (f.beat == beat and f.tick == tick) then
             local volume = f.volume or 1
-            volume = volume * (uiData and uiData.drumVolume or 1) * (mixerData and mixerData[i].volume or 1)
+            volume = volume * (uiData and uiData.drumVolume or 1) *
+                (mixerDataDrums and mixerDataDrums[i] and mixerDataDrums[i].volume or 1)
             if f.volume then
                 f.source:setVolume(volume)
             end
@@ -458,7 +462,8 @@ function doHandleDrumNotes(beat, tick, bpm)
                         print(key)
                     end
                     local source = drumkit[key].source:clone()
-                    local cellVolume = (cell.volume or 1) * (mixerData and mixerData[i] and mixerData[i].volume or 1)
+                    local cellVolume = (cell.volume or 1) *
+                        (mixerDataDrums and mixerDataDrums[i] and mixerDataDrums[i].volume or 1)
                     local gate = cell.gate or 1
                     local allDrumsVolume = (uiData and uiData.drumVolume or 1)
                     local volume = cellVolume * allDrumsVolume
@@ -637,7 +642,7 @@ local function resetBeatsAndTicks()
 end
 
 local function playMetronomeSound()
-    local snd = metronome_click:clone()
+    local snd = metronome_click and metronome_click:clone()
     if (math.floor(beat) % beatInMeasure == 1) then
         snd:setVolume(1)
     else
@@ -768,7 +773,8 @@ while (true) do
             end
         end
         if v.type == 'mixerData' then
-            mixerData = v.data
+            mixerDataDrums = v.drums
+            mixerDataInstruments = v.instruments
         end
         if v.type == 'drumkitData' then
             drumkit = v.data.drumkit
