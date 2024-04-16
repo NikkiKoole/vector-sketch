@@ -58,13 +58,13 @@
    tuning = -4
   }, {
    adsr = {
-    a = 0.2,
+    a = 0.20762467026928,
     d = 0.01,
-    r = 0.03,
+    r = 0.16997001738063,
     s = 0.7
    },
    realtimeTuning = 0,
-   sample = { { "legow" }, "Pinky Flute.wav" },
+   sample = { { "oscillators" }, "Fr4 - Prophet 5 17.wav" },
    tuning = 0
   } },
  simplifiedClips = { {
@@ -303,182 +303,6 @@
       semitone = 48,
       tick = 95,
       tickOff = 73,
-      velocity = 128
-     },
-     meta = {
-      isSelected = false,
-      loopRounder = 12
-     }
-    }, { {
-      beat = 0,
-      beatOff = 0,
-      duration = 10,
-      instrumentIndex = 2,
-      semitone = 53,
-      tick = 0,
-      tickOff = 10,
-      velocity = 128
-     }, {
-      beat = 0,
-      beatOff = 0,
-      duration = 21,
-      instrumentIndex = 2,
-      semitone = 53,
-      tick = 29,
-      tickOff = 50,
-      velocity = 128
-     }, {
-      beat = 0,
-      beatOff = 0,
-      duration = 14,
-      instrumentIndex = 2,
-      semitone = 53,
-      tick = 73,
-      tickOff = 87,
-      velocity = 128
-     }, {
-      beat = 1,
-      beatOff = 1,
-      duration = 15,
-      instrumentIndex = 2,
-      semitone = 53,
-      tick = 69,
-      tickOff = 84,
-      velocity = 128
-     }, {
-      beat = 2,
-      beatOff = 2,
-      duration = 10,
-      instrumentIndex = 2,
-      semitone = 53,
-      tick = 66,
-      tickOff = 76,
-      velocity = 128
-     }, {
-      beat = 3,
-      beatOff = 4,
-      duration = 18,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 88,
-      tickOff = 10,
-      velocity = 128
-     }, {
-      beat = 4,
-      beatOff = 4,
-      duration = 22,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 29,
-      tickOff = 51,
-      velocity = 128
-     }, {
-      beat = 4,
-      beatOff = 4,
-      duration = 22,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 69,
-      tickOff = 91,
-      velocity = 128
-     }, {
-      beat = 5,
-      beatOff = 5,
-      duration = 26,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 21,
-      tickOff = 47,
-      velocity = 128
-     }, {
-      beat = 5,
-      beatOff = 5,
-      duration = 15,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 62,
-      tickOff = 77,
-      velocity = 128
-     }, {
-      beat = 6,
-      beatOff = 6,
-      duration = 33,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 10,
-      tickOff = 43,
-      velocity = 128
-     }, {
-      beat = 6,
-      beatOff = 7,
-      duration = 40,
-      instrumentIndex = 2,
-      semitone = 52,
-      tick = 92,
-      tickOff = 36,
-      velocity = 128
-     }, {
-      beat = 7,
-      beatOff = 8,
-      duration = 24,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 85,
-      tickOff = 13,
-      velocity = 128
-     }, {
-      beat = 8,
-      beatOff = 8,
-      duration = 18,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 36,
-      tickOff = 54,
-      velocity = 128
-     }, {
-      beat = 8,
-      beatOff = 8,
-      duration = 18,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 77,
-      tickOff = 95,
-      velocity = 128
-     }, {
-      beat = 9,
-      beatOff = 9,
-      duration = 22,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 25,
-      tickOff = 47,
-      velocity = 128
-     }, {
-      beat = 9,
-      beatOff = 9,
-      duration = 17,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 70,
-      tickOff = 87,
-      velocity = 128
-     }, {
-      beat = 10,
-      beatOff = 10,
-      duration = 48,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 14,
-      tickOff = 62,
-      velocity = 128
-     }, {
-      beat = 11,
-      beatOff = 11,
-      duration = 44,
-      instrumentIndex = 2,
-      semitone = 48,
-      tick = 7,
-      tickOff = 51,
       velocity = 128
      },
      meta = {
