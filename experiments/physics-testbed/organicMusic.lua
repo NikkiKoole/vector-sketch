@@ -114,10 +114,13 @@ end
 
 function lib.setFreaky(value)
     if not value then
+        uiData.instrumentsVolume = 1
         uiData.allDrumSemitoneOffset = 0
     else
         local offset = (love.math.noise(love.timer.getTime() * 100)) * 2 - 1
         uiData.allDrumSemitoneOffset = value + offset
+        uiData.instrumentsVolume = .5
+        print(value + offset)
     end
     audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
 end

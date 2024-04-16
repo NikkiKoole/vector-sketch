@@ -1221,7 +1221,7 @@ function love.update(dt)
 
         if frontWheelFromGround > 0.8 then
             local a = bike.frame.body:getAngle()
-            local p = numbers.mapInto(a, -math.pi, math.pi, -30, 30)
+            local p = numbers.mapInto(a, -math.pi, math.pi, -5, 5)
 
             dj.setFreaky(p)
             --  dj.setAllInstrumentsVolume(.3)
@@ -1641,6 +1641,27 @@ end
 
 
 local function textureTheBike(bike, bikeData)
+    local img          = tireImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.frontWheel.body:getPosition()
+    local a            = bike.frontWheel.body:getAngle()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+
+    local img          = tireOverImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.frontWheel.body:getPosition()
+    local a            = bike.frontWheel.body:getAngle()
+    love.graphics.setColor(.2, .1, .1, 0.5)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+
+
+
+    love.graphics.setColor(0, 0, 0)
     local img          = wheelImages[frontWheelImgIndex]
     local dimsW, dimsH = img:getDimensions()
     local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
@@ -1650,6 +1671,26 @@ local function textureTheBike(bike, bikeData)
     love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
 
     ----
+
+
+    local img          = tireImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.backWheel.body:getPosition()
+    local a            = bike.backWheel.body:getAngle()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+
+    local img          = tireOverImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.backWheel.body:getPosition()
+    local a            = bike.backWheel.body:getAngle()
+    love.graphics.setColor(.2, .1, .1, 0.5)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+    love.graphics.setColor(0, 0, 0)
     local img          = wheelImages[backWheelImgIndex]
     local dimsW, dimsH = img:getDimensions()
     local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
@@ -1819,7 +1860,7 @@ function love.draw()
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = tostring(love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-
+    local numSources = love.audio.getActiveSourceCount()
     --print(backWheelFromGround, frontWheelFromGround)
     -- if true then
     local wheelie = ''
@@ -1834,7 +1875,7 @@ function love.draw()
         loopings = ' loops: ' .. getLoopingDegrees() .. '°'
     end
     -- end
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. wheelie)
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. numSources .. ' ' .. wheelie)
 
 
 
@@ -2239,10 +2280,13 @@ function love.load()
 
     sunImage = love.graphics.newImage('assets/world/zon2.png')
 
-    wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel1.png')
-    , love.graphics.newImage('assets/vehicleparts/wheel2.png')
-    , love.graphics.newImage('assets/vehicleparts/wheel3.png')
-    , love.graphics.newImage('assets/vehicleparts/wheel4.png') }
+    wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel6.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel6.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel6.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel6.png') }
+
+    tireImage = love.graphics.newImage('assets/vehicleparts/wheel6back.png')
+    tireOverImage = love.graphics.newImage('assets/vehicleparts/wheel4.png')
 
     frontWheelImgIndex = math.ceil(#wheelImages * love.math.random())
     backWheelImgIndex = math.ceil(#wheelImages * love.math.random())
