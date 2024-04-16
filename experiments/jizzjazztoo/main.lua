@@ -11,7 +11,7 @@ local audiohelper  = require 'lib.jizzjazz-audiohelper'
 audiohelper.startAudioThread()
 require 'fileBrowser'
 
-luamidi = require "luamidi"
+--luamidi = require "luamidi"
 
 local function clear()
     for x = 1, #audiohelper.drumgrid do
