@@ -7,49 +7,50 @@ require('love.math')
 -- Linn often used a timing resolution of 96 parts per quarter note (PPQN),
 -- meaning that each quarter note is subdivided into 96 equal parts.
 -- This high resolution allows for very precise timing and sequencing of musical events,
-local PPQN              = 96
+local PPQN                 = 96
 
-local min, max          = ...
-local paused            = true
-local now               = love.timer.getTime()
-local time              = 0
-local lastTick          = 0
-local lastBeat          = -1
-local beat              = 0
-local tick              = 0
-local beatInMeasure     = 4
-local countInMeasures   = 0
+local min, max             = ...
+local paused               = true
+local now                  = love.timer.getTime()
+local time                 = 0
+local lastTick             = 0
+local lastBeat             = -1
+local beat                 = 0
+local tick                 = 0
+local beatInMeasure        = 4
+local countInMeasures      = 0
 --local bpm             = 90
 --local swing           = 50
-local metronome_click   = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
+local metronome_click      = nil
 
-local channel           = {};
-channel.audio2main      = love.thread.getChannel("audio2main"); -- from thread
-channel.main2audio      = love.thread.getChannel("main2audio"); --from main
+local channel              = {};
+channel.audio2main         = love.thread.getChannel("audio2main"); -- from thread
+channel.main2audio         = love.thread.getChannel("main2audio"); --from main
 
-local missedTicks       = {}
-local playingSounds     = {} -- playingSounds are just for the melodic sounds.
+local missedTicks          = {}
+local playingSounds        = {} -- playingSounds are just for the melodic sounds.
 
-local playingDrumSounds = {}
+local playingDrumSounds    = {}
 
-local drumkit           = {}
-local drumgrid          = {}
+local drumkit              = {}
+local drumgrid             = {}
 
-local samples           = {}
-local futureDrumNotes   = {}
+local samples              = {}
+local futureDrumNotes      = {}
 
-local playing           = false
-local recording         = false
+local playing              = false
+local recording            = false
 
 --local sampleTuning        = {}
-local instruments       = {}
-local instrumentIndex   = 1
+local instruments          = {}
+local instrumentIndex      = 1
 
-local recordedData      = {}
-local recordedClips     = {}
+local recordedData         = {}
+local recordedClips        = {}
 
-local uiData            = nil
-local mixerData         = nil
+local uiData               = nil
+local mixerDataDrums       = nil
+local mixerDataInstruments = nil
 
 local function generateADSR(it, now)
     local adsr = instruments[it.instrumentIndex].adsr
@@ -162,7 +163,9 @@ local function updateADSREnvelopesForPlayingSounds(dt)
         local it = playingSounds[i]
         local value = generateADSR(it, now)
         value = value * (uiData and uiData.instrumentsVolume or 1)
-        it.volume = value
+        local mixVolume = mixerDataInstruments and mixerDataInstruments[it.instrumentIndex].volume or 1
+
+        it.volume = value * mixVolume
         --  print(value)
         --it.source:setVolume(value)
     end
@@ -204,6 +207,11 @@ local function updatePlayingSoundsWithLFO()
                 --if volume < 0.02 then volume = 0 end
                 --  print(i, volume)
             end
+
+            if (it.velocity) then
+                volume = volume * (it.velocity / 128)
+                --print(it.velocity)
+            end
             it.source:setVolume(volume)
 
             -- print('*****')
@@ -237,7 +245,7 @@ local function cleanPlayingSounds()
     end
 end
 
-local function semitoneTriggered(number, instrumentIndex)
+local function semitoneTriggered(number, instrumentIndex, velocity)
     local sample = instruments[instrumentIndex].sample
     -- local sampleIndex = instruments[instrumentIndex].sampleIndex
     -- local source = samples[sampleIndex].source:clone()
@@ -276,6 +284,8 @@ local function semitoneTriggered(number, instrumentIndex)
         source:setVolume(0)
         source:play()
         table.insert(playingSounds, {
+
+            velocity = velocity,
             pitch = pitch + pitchOffset,
             source = source,
             volume = 0,
@@ -362,7 +372,8 @@ function doHandleFutureDrumNotes(beat, tick)
         local f = futureDrumNotes[i]
         if (f.beat == beat and f.tick == tick) then
             local volume = f.volume or 1
-            volume = volume * (uiData and uiData.drumVolume or 1) * (mixerData and mixerData[i].volume or 1)
+            volume = volume * (uiData and uiData.drumVolume or 1) *
+                (mixerDataDrums and mixerDataDrums[i] and mixerDataDrums[i].volume or 1)
             if f.volume then
                 f.source:setVolume(volume)
             end
@@ -451,7 +462,8 @@ function doHandleDrumNotes(beat, tick, bpm)
                         print(key)
                     end
                     local source = drumkit[key].source:clone()
-                    local cellVolume = (cell.volume or 1) * (mixerData and mixerData[i].volume or 1)
+                    local cellVolume = (cell.volume or 1) *
+                        (mixerDataDrums and mixerDataDrums[i] and mixerDataDrums[i].volume or 1)
                     local gate = cell.gate or 1
                     local allDrumsVolume = (uiData and uiData.drumVolume or 1)
                     local volume = cellVolume * allDrumsVolume
@@ -580,12 +592,12 @@ function doReplayRecorded(clip, beat, tick)
     for i = 1, #clip do
         -- print(clip[i].beat, clip[i].tick, clip[i].beatOff, clip[i].tickOff)
         if clip[i].beatOff == beat and clip[i].tickOff == tick then
-            print('released', beat, tick)
+            -- print('released', beat, tick)
             semitoneReleased(clip[i].semitone, clip[i].instrumentIndex)
         end
         if clip[i].beat == beat and clip[i].tick == tick then
-            print('triggered', beat, tick)
-            semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex)
+            --print('triggered', beat, tick)
+            semitoneTriggered(clip[i].semitone, clip[i].instrumentIndex, clip[i].velocity or 128)
         end
     end
 end
@@ -595,7 +607,11 @@ function handlePlayingRecordedData()
         for i = 1, #recordedClips do
             for j = 1, #(recordedClips[i].clips) do
                 local it = recordedClips[i].clips[j]
+
+
+
                 if it.meta.isSelected then
+                    --print('it is selected')
                     local loopRounder = it.meta and it.meta.loopRounder or 1
                     local beat = (math.floor(lastBeat) % loopRounder)
                     local tick = math.floor(lastTick)
@@ -626,7 +642,7 @@ local function resetBeatsAndTicks()
 end
 
 local function playMetronomeSound()
-    local snd = metronome_click:clone()
+    local snd = metronome_click and metronome_click:clone()
     if (math.floor(beat) % beatInMeasure == 1) then
         snd:setVolume(1)
     else
@@ -640,6 +656,7 @@ while (true) do
     local n = love.timer.getTime()
     local delta = n - now
     now = n
+
     if not paused then
         beat = beat + (delta * (bpm / 60))
         tick = ((beat % 1) * (PPQN))
@@ -709,6 +726,9 @@ while (true) do
     missedTicks = {}
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'metronome-sound' then
+            metronome_click = v.data
+        end
         if v.type == 'clips' then
             recordedClips = v.data
         end
@@ -753,7 +773,8 @@ while (true) do
             end
         end
         if v.type == 'mixerData' then
-            mixerData = v.data
+            mixerDataDrums = v.drums
+            mixerDataInstruments = v.instruments
         end
         if v.type == 'drumkitData' then
             drumkit = v.data.drumkit
@@ -779,9 +800,10 @@ while (true) do
 
         if v.type == 'semitonePressed' then
             local semitone = v.data.semitone
-            semitoneTriggered(semitone, instrumentIndex)
+            semitoneTriggered(semitone, instrumentIndex, v.data.velocity or 128)
             if recording == true then
                 table.insert(recordedData, {
+                    velocity = v.data.velocity or 128,
                     instrumentIndex = instrumentIndex,
                     beat = math.floor(lastBeat),
                     tick = math.floor(lastTick),

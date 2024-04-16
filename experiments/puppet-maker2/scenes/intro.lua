@@ -29,7 +29,7 @@ local parse            = require 'lib.parse-file'
 local bbox             = require 'lib.bbox'
 
 local swipes           = require 'lib.screen-transitions'
-local audioHelper      = require 'lib.audio-helper'
+local audioHelper      = require 'lib.melody-paint-audio-helper'
 local ui               = require 'lib.ui'
 local readAndParse     = require 'lib.readAndParse'
 
@@ -78,7 +78,7 @@ local function backgroundCreamToBlue()
     Timer.clear()
     bgColor = { unpack(creamColor) }
     Timer.after(.1, function()
-        Timer.tween(1, bgColor, { [1] = blueColor[1],[2] = blueColor[2],[3] = blueColor[3] }, 'out-cubic')
+        Timer.tween(1, bgColor, { [1] = blueColor[1], [2] = blueColor[2], [3] = blueColor[3] }, 'out-cubic')
     end)
     Timer.after(1.2, function()
         nextState()
@@ -425,7 +425,7 @@ function scene.load()
     nextState()
 
     for i = 1, #fiveGuys do
-        fiveGuys[i].b2d = box2dGuyCreation.makeGuy( -10000, 0, fiveGuys[i])
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(-10000, 0, fiveGuys[i])
     end
     for i = 1, #fiveGuys do
         updatePart.updateAllParts(fiveGuys[i])

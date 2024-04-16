@@ -41,7 +41,7 @@ lib.createVehicleUsingDNACreation = function(key, c, x, y)
         },
         ['bike'] = {
             steeringHeight = c.luleg.h + c.llleg.h,
-            floorWidth = c.luleg.h + c.llleg.h + c.torso.h / 1,
+            floorWidth = c.luleg.h + c.llleg.h + c.torso.h / 2,
             frameHeight = (c.luleg.h + c.llleg.h) / 3,
             radius = math.max((c.luleg.h + c.llleg.h) / 2),
             f = makeBike2
@@ -514,7 +514,7 @@ function makeBike2(x, y, data)
     --  ball2.fixture:setFriction(1)
 
     local seat = {}
-    local seatYOffset = 0 --radius * .5
+    local seatYOffset = -radius * .5
     local seatXOffset = 0 --radius --* .5
     seat.body = love.physics.newBody(world, x + seatXOffset, y - frameHeight + seatYOffset, "dynamic")
     seat.shape = love.physics.newRectangleShape(seatXOffset, -frameHeight + seatYOffset, 100, 100)

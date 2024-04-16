@@ -25,6 +25,69 @@ CB: Cowbell
 
 local patterns = {
     {
+        name = "CR78",
+        sections = {
+            {
+                grid = {
+                    CY = "x.........x.x.........x.",
+                    CB = "......x...........x.....",
+                    AC = "x.....x.....x.....x.....",
+                    BD = "x...........x...........",
+                    SD = "....x.......x..........."
+                },
+                name = "Swing A"
+            },
+            {
+                grid = {
+                    CY = "x...x.x...x.x...x.x...x.",
+                    AC = "x.....x.....x.....x.....",
+                    BD = "x........x..x...........",
+                    SD = "......x...........x....."
+                },
+                name = "Shuffle A"
+            },
+            {
+                grid = {
+                    CY = "x...........x...",
+                    BD = "x...............",
+                    AC = "............x...",
+                    SD = "....x.......x..."
+                },
+                name = "Waltz1"
+            },
+            {
+                grid = {
+                    CY = "x.........x.x...",
+                    BD = "x...............",
+                    AC = "............x...",
+                    SD = "....x.......x..."
+                },
+                name = "Waltz2"
+            },
+            {
+                grid = {
+                    CY = "....x.......x...",
+                    CB = "x.......x.......",
+                    BD = "x.......x.......",
+                    AC = "x.......x...x...",
+                    SD = "....x.......x..."
+                },
+                name = "Foxtrot A"
+            },
+            {
+                grid = {
+                    CY = "x.....x......x..",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    RS = "x..x..x...x..x..",
+                    BD = "x..xx..xx..xx..x",
+                    AC = "....x.......x...",
+
+                },
+                name = "BOSSANOVA A"
+            },
+        }
+    },
+    {
         name = "BoomBAP",
         sections = {
             {
@@ -241,7 +304,7 @@ local patterns = {
                     CH = "x.x.x.x.x.x.x.x.",
                     LT = "x.....x...x...x."
                 },
-                name = ""
+                name = "unnamed"
             },
             {
                 grid = {
@@ -6296,138 +6359,4 @@ local patterns = {
     }
 }
 
-function validatePatterns()
-    for i = 1, #patterns do
-        local p = patterns[i]
-
-        for j = 1, #p.sections do
-            local part = p.sections[j]
-
-            for k, v in pairs(part.grid) do
-                if string.len(v) ~= 16 and string.len(v) ~= 12 then
-                    -- print(p.name, part.name, k, string.len(v))
-                end
-            end
-        end
-    end
-end
-
---validatePatterns()
-local lib = {}
-lib.patterns = patterns
-
-local function clear()
-    for x = 1, #drumgrid do
-        for y = 1, #drumgrid[1] do
-            drumgrid[x][y] = { on = false }
-        end
-    end
-
-    local totalSections = 0
-    for i = 1, #patterns do
-        --   print(patterns[i].name)
-        totalSections = totalSections + #patterns[i].sections
-    end
-end
-
-local function fill(pattern, part)
-    local hasEveryThingNeeded = true
-    for k, v in pairs(part.grid) do
-        if not drumkit[k] then
-            print("failed looking for", k, "in drumkt")
-            hasEveryThingNeeded = false
-        end
-    end
-
-    if (hasEveryThingNeeded) then
-        local gridLength = 0
-        for k, v in pairs(part.grid) do
-            -- find the correct row in the grid.
-            local index = -1
-            for i = 1, #drumkit.order do
-                if drumkit.order[i] == k then
-                    index = i
-                end
-            end
-
-            if string.len(v) ~= #drumgrid then
-                print("failed: issue with length of drumgrid", string.len(v), #drumgrid, pattern.name)
-            end
-            gridLength = string.len(v)
-            if index == -1 then
-                print("failed: I could find the correct key but something wrong with order: ", k)
-            end
-
-            for i = 1, string.len(v) do
-                local c = v:sub(i, i)
-                if (c == "x") then
-                    drumgrid[i][index] = { on = true }
-                elseif (c == "f") then
-                    drumgrid[i][index] = { on = true, flam = true }
-                else
-                    drumgrid[i][index] = { on = false }
-                end
-            end
-        end
-
-        return pattern.name .. " : " .. part.name, gridLength
-    end
-end
-
-function lib.pickPatternByIndex(index1, index2)
-    -- clear it
-    clear()
-    local patternIndex = index1 --math.ceil(love.math.random() * #patterns)
-    local pattern = patterns[patternIndex]
-
-    local partIndex = index2
-
-    local part = patterns[patternIndex].sections[partIndex]
-
-    return fill(pattern, part)
-end
-
-function lib.pickExistingPattern(drumgrid, drumkit)
-    -- clear it
-    clear()
-    -- print(#patterns, totalSections)
-
-    local index = -1
-    --  print('**')
-    for i = 1, #patterns do
-        --   print(patterns[i].name)
-        --if patterns[i].name == 'Rock' then
-        if patterns[i].name == "Funk and Soul" then
-            -- if patterns[i].name == 'Standard Breaks' then
-            --if patterns[i].name == 'ChaCha' then
-            --if patterns[i].name == 'Funk and Soul' then
-            --if patterns[i].name == 'Electro' then
-            --if patterns[i].name == 'Drum and Bass' then
-            --if patterns[i].name == 'House' then
-            --if patterns[i].name == 'Miami Bass' then
-            --if patterns[i].name == 'Slow' then
-            --if patterns[i].name == 'Basic Patterns' then
-            -- if patterns[i].name == 'Ballad 1' then
-            --if patterns[i].name == 'Pop' then
-            --if patterns[i].name == 'Disco' then
-            --if patterns[i].name == 'EDM' then
-            --if patterns[i].name == 'Afro-Cuban' then
-            --if patterns[i].name == 'Hip Hop' then
-            index = i
-        end
-    end
-    local patternIndex = index --math.ceil(love.math.random() * #patterns)
-    local pattern = patterns[patternIndex]
-
-    local partIndex = math.ceil(love.math.random() * #pattern.sections)
-
-    local part = patterns[patternIndex].sections[partIndex]
-    drummPatternPickData.pickedCategoryIndex = patternIndex
-    drummPatternPickData.pickedItemIndex = partIndex
-
-    return fill(pattern, part)
-end
-
---transformData()
-
-return lib
+return patterns

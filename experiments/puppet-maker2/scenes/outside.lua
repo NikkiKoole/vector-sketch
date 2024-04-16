@@ -7,7 +7,7 @@ local cam              = require('lib.cameraBase').getInstance()
 local phys             = require 'lib.mainPhysics'
 local swipes           = require 'lib.screen-transitions'
 local Timer            = require 'vendor.timer'
-local audioHelper      = require 'lib.audio-helper'
+local audioHelper      = require 'lib.melody-paint-audio-helper'
 local texturedBox2d    = require 'lib.texturedBox2d'
 local box2dGuyCreation = require 'lib.box2dGuyCreation'
 local updatePart       = require 'lib.updatePart'
@@ -38,11 +38,10 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
 
     local cx, cy = cam:getWorldCoordinates(x, y)
-    
-    
-    
-    local check = function(body ) 
-    
+
+
+
+    local check = function(body)
         if (fiveGuys) then -- TODO MOVE THIS OUT, WAY TOO SPECIFIC
             for i = 1, #fiveGuys do
                 local g = fiveGuys[i]
@@ -50,11 +49,11 @@ local function pointerPressed(x, y, id)
                     for k, v in pairs(g.b2d) do
                         if body == v then
                             pickedFiveGuyIndex = i
-        editingGuy = fiveGuys[pickedFiveGuyIndex]
-        if SM.cName == 'outside' then
-            editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
-        end
-        growl(1)
+                            editingGuy = fiveGuys[pickedFiveGuyIndex]
+                            if SM.cName == 'outside' then
+                                editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
+                            end
+                            growl(1)
                             -- pickedFiveGuyIndex = i
                             -- editingGuy = fiveGuys[pickedFiveGuyIndex]
                             -- if SM.cName == 'outside' then
@@ -65,19 +64,18 @@ local function pointerPressed(x, y, id)
                 end
             end
         end
-    
     end
 
     local onPressedParams = {
         onPressedFunc = check,
         pointerForceFunc = function(fixture)
             local ud = fixture:getUserData()
-    -- TODO parametrtize this...!
-   -- 
-   local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
- 
-            return force 
-        end 
+            -- TODO parametrtize this...!
+            --
+            local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+
+            return force
+        end
     }
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
 
@@ -132,7 +130,7 @@ function scene.load()
     phys.resetLists()
     uiClickSound   = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
     -- uiTickSound    = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
-    cloud          = love.graphics.newImage('assets/world/clouds1.png' )
+    cloud          = love.graphics.newImage('assets/world/clouds1.png')
     borderImage    = love.graphics.newImage("assets/ui/border_shaduw.png")
     spriet         = {
         love.graphics.newImage('assets/world/spriet1.png'),
@@ -452,7 +450,7 @@ function scene.draw()
         local x = w - size + size / 2 - (size * ScenePressedButtonScale) / 2
         local y = 0 + size / 2 - (size * ScenePressedButtonScale) / 2
 
-       
+
         -- local x = w - size - (size * ScenePressedButtonScale) / 2
         --  local y = 0
 
@@ -470,7 +468,7 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.editguys, x, y, 0, sx, sy)
         local a = ui.getUIRect('poepscoop', x, y, size, size)
-        if a then 
+        if a then
             --print('clicked here')
             ScenePressedButtonScale = 0.5
             Timer.clear()
@@ -595,15 +593,15 @@ function scene.draw()
     end
 
     if false then
-    love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.setColor(0, 0, 0, 0.5)
 
-    local stats = love.graphics.getStats()
-    local memavg = calculateRollingAverage(rollingMemoryUsage)
-    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
-    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
-    local fps = tostring(love.timer.getFPS()) .. 'fps'
-    local draws = stats.drawcalls .. 'draws'
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+        local stats = love.graphics.getStats()
+        local memavg = calculateRollingAverage(rollingMemoryUsage)
+        local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+        local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+        local fps = tostring(love.timer.getFPS()) .. 'fps'
+        local draws = stats.drawcalls .. 'draws'
+        love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
     end
 
 

@@ -8,7 +8,7 @@ local parentize   = require 'lib.parentize'
 local render      = require 'lib.render'
 local mesh        = require 'lib.mesh'
 
-local audioHelper = require 'lib.audio-helper'
+local audioHelper = require 'lib.melody-paint-audio-helper'
 
 local camera      = require 'lib.camera'
 local cam         = require('lib.cameraBase').getInstance()
@@ -410,7 +410,7 @@ function drawGroundPlaneLinesSimple(far, near)
 
 
             local newuvs = { .05, .08, -- tl x and y}
-                .92, .95 - .09 } --width and height
+                .92, .95 - .09 }       --width and height
 
             local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
             local outward = geom.coloredOutsideTheLines(rect1, newuvs)
@@ -599,7 +599,7 @@ function scene.update(dt)
             -- that is to make it able to rotate and still cover the whole screen
             h = math.max(w, h) * 3
             if rand < 0.5 then
-                doRectOutTransition( -offset, -h, function()
+                doRectOutTransition(-offset, -h, function()
                 end)
             else
                 doRectOutTransition(w + offset, -h, function()

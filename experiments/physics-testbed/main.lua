@@ -33,6 +33,8 @@ local text             = require "lib.text"
 local vehicle          = require 'vehicle-creator'
 local animParticles    = require 'frameAnimParticle'
 
+local dj               = require 'organicMusic'
+
 function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -494,6 +496,27 @@ local function getConnectorFixtureAtBodyOfType(body, type)
     end
 end
 
+local function getRidOfBigRotationsInBody(body)
+    --local angle = body:getAngle()
+    --if angle > 0 then
+    --    body:setAngle(angle % (2 * math.pi))
+    --else
+    --    body:setAngle(angle % ( -2 * math.pi))
+    --end
+    local a = body:getAngle()
+    if true then
+        while a > (2 * math.pi) do
+            a = a - (2 * math.pi)
+            body:setAngle(a)
+        end
+        while a < -(2 * math.pi) do
+            a = a + (2 * math.pi)
+            body:setAngle(a)
+        end
+    end
+end
+
+
 
 function disconnectMipoAndVehicle()
     print('disconnect')
@@ -630,14 +653,14 @@ function connectMipoAndVehicle()
 
     for k, v in pairs(b2d) do
         --print(k,v)
-        v:setGravityScale(0)
+        v:setGravityScale(0.3)
         v:setActive(false)
     end
-
+    --  updatePart.resetPositions(mipos[1])
     Timer.after(.2, function()
         for k, v in pairs(b2d) do
             --print(k,v)
-            v:setGravityScale(0)
+            v:setGravityScale(0.3)
             v:setActive(true)
         end
     end)
@@ -661,14 +684,11 @@ function connectMipoAndVehicle()
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
 
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.torso, { sleeping = true })
+
         if b2d.head then
             box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.head, { sleeping = true })
         end
     end
-
-
-
-
 
     if isPedalBike then
         if true then
@@ -714,17 +734,13 @@ function connectMipoAndVehicle()
 
         local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')
         local bx, by = buttFixture:getBody():getPosition()
-
         local localX, localY = b2d.torso:getLocalPoint(bx, by)
-
 
         local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')
         local sx, sy = seatFixture:getBody():getPosition()
-
         local centroid = getCentroidOfFixture(bike.frame.body, seatFixture)
 
         b2d.torso:setPosition(centroid[1], centroid[2])
-
         connect.forceConnection(buttFixture, seatFixture)
 
         local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'lfoot')
@@ -735,7 +751,6 @@ function connectMipoAndVehicle()
         connect.forceConnection(lfootPedalFixture, lfootFixture)
         b2d.lfoot:setPosition(lfcentroid[1], lfcentroid[2])
 
-
         local rfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'rfoot')
         local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
         local rfcentroid = getCentroidOfFixture(bike.pedalWheel.body, rfootPedalFixture)
@@ -745,6 +760,9 @@ function connectMipoAndVehicle()
         connect.forceConnection(rfootPedalFixture, rfootFixture)
         b2d.rfoot:setPosition(rfcentroid[1], rfcentroid[2])
     end
+
+
+
 
     if not isPedalBike then
         local bx, by = bike.frame.body:getPosition()
@@ -1139,6 +1157,7 @@ end
 local timeSpent = 0
 local brrVolume = 0
 function love.update(dt)
+    dj.update()
     animParticles.updateAnimParticles(dt)
     -- print(dt)
     --local thingToFollow = bike.frontWheel.body
@@ -1163,20 +1182,8 @@ function love.update(dt)
 
     local t = math.sin(math.abs(love.timer:getTime()))
 
-    if mipoOnVehicle then
-        source:setVolume(brrVolume)
 
-        local p = numbers.mapInto(velX, 0, 10000, .25, 3)
-        if p < 0.0001 then p = 0.0001 end
-        source:setPitch(p)
 
-        --print(velX, velY)
-    else
-        source:setVolume(0.1 * t)
-        local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
-        if p < 0.0001 then p = 0.0001 end
-        source:setPitch(p)
-    end
 
     --enableDisableObjects(mipos)
     -- enableDisableObjects({bike})  -- wrap the single bike in a table to make it consistent
@@ -1195,6 +1202,45 @@ function love.update(dt)
     if (backWheelFromGround >= 0) then
         backWheelFromGround = backWheelFromGround + dt
     end
+
+    if mipoOnVehicle then
+        --source:setVolume(brrVolume)
+        dj.setAllInstrumentsVolume(1)
+        local p = numbers.mapInto(math.abs(velX), 0, 10000, 50, 250)
+
+        if backWheelFromGround > 0.5 and frontWheelFromGround > 0.5 then
+            p = numbers.mapInto(velX, 0, 10000, 150, 350)
+            -- dj.setAllInstrumentsVolume(.5)
+        else
+            --dj.setAllInstrumentsVolume(.5)
+        end
+
+
+        dj.setTempo(p)
+
+
+        if frontWheelFromGround > 0.8 then
+            local a = bike.frame.body:getAngle()
+            local p = numbers.mapInto(a, -math.pi, math.pi, -5, 5)
+
+            dj.setFreaky(p)
+            --  dj.setAllInstrumentsVolume(.3)
+        else
+            dj.setFreaky(false)
+        end
+
+
+        --print(velX, velY)
+    else
+        -- source:setVolume(0.1 * t)
+        -- local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
+        -- if p < 0.0001 then p = 0.0001 end
+        -- source:setPitch(p)
+        local p = numbers.mapInto(math.abs(velX), 0, 10000, 100, 150)
+        dj.setTempo(p)
+        dj.setAllInstrumentsVolume(0)
+    end
+
 
 
 
@@ -1224,6 +1270,17 @@ function love.update(dt)
         --bike.frame.body:applyAngularImpulse(bikeFrameAngle*-1000)
         -- print(bikeFrameAngle, mipoBody:getAngle())
         local b2d = mipos[1].b2d
+
+
+        getRidOfBigRotationsInBody(b2d.torso)
+        if (b2d.head) then
+            getRidOfBigRotationsInBody(b2d.head)
+        end
+        if (b2d.neck) then
+            getRidOfBigRotationsInBody(b2d.neck)
+            getRidOfBigRotationsInBody(b2d.neck1)
+        end
+
         if bike.pedalWheel and true then
             if false then
                 local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'lfoot')
@@ -1348,7 +1405,7 @@ anotherGrassColor = { hex2rgb('45783c') }
 
 
 
-function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, repeatScale)
+function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, alpha, repeatScale)
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
@@ -1372,7 +1429,7 @@ function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, repeat
     })
     mesh:setTexture(img)
 
-    love.graphics.setColor(color)
+    love.graphics.setColor(color[1], color[2], color[3], alpha)
     love.graphics.draw(mesh, 0, 0)
     love.graphics.setStencilTest()
 end
@@ -1430,9 +1487,9 @@ function drawHillGround()
             end
         end
 
-        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 0.5 / 2)
-        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 0.7 / 2)
-        drawRepeatedPatternUsingStencilFunction(topHillFunc, grassPattern2, darkGrassColor, 10 / 2)
+        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 1, 0.5 / 2)
+        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 1, 0.7 / 2)
+        drawRepeatedPatternUsingStencilFunction(topHillFunc, grassPattern2, darkGrassColor, 1, 1 / 2)
     end
 end
 
@@ -1584,6 +1641,27 @@ end
 
 
 local function textureTheBike(bike, bikeData)
+    local img          = tireImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.frontWheel.body:getPosition()
+    local a            = bike.frontWheel.body:getAngle()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+
+    local img          = tireOverImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.frontWheel.body:getPosition()
+    local a            = bike.frontWheel.body:getAngle()
+    love.graphics.setColor(.2, .1, .1, 0.5)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+
+
+
+    love.graphics.setColor(0, 0, 0)
     local img          = wheelImages[frontWheelImgIndex]
     local dimsW, dimsH = img:getDimensions()
     local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
@@ -1593,6 +1671,26 @@ local function textureTheBike(bike, bikeData)
     love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
 
     ----
+
+
+    local img          = tireImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.backWheel.body:getPosition()
+    local a            = bike.backWheel.body:getAngle()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+
+    local img          = tireOverImage
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+    local x, y         = bike.backWheel.body:getPosition()
+    local a            = bike.backWheel.body:getAngle()
+    love.graphics.setColor(.2, .1, .1, 0.5)
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+    love.graphics.setColor(0, 0, 0)
     local img          = wheelImages[backWheelImgIndex]
     local dimsW, dimsH = img:getDimensions()
     local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
@@ -1687,7 +1785,7 @@ function love.draw()
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
             texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
-            --texturedBox2d.drawNumbersOver(mipos[i].b2d)
+            texturedBox2d.drawNumbersOver(mipos[i].b2d)
         end
     end
 
@@ -1762,7 +1860,7 @@ function love.draw()
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = tostring(love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-
+    local numSources = love.audio.getActiveSourceCount()
     --print(backWheelFromGround, frontWheelFromGround)
     -- if true then
     local wheelie = ''
@@ -1777,7 +1875,7 @@ function love.draw()
         loopings = ' loops: ' .. getLoopingDegrees() .. '°'
     end
     -- end
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. wheelie)
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. numSources .. ' ' .. wheelie)
 
 
 
@@ -1843,6 +1941,13 @@ function disableLegs()
 end
 
 function love.keypressed(k)
+    if k == 'c' then
+        if love.math.random() < 0.5 then
+            dj.queueClip(4, 2)
+        else
+            dj.queueClip(4, 8)
+        end
+    end
     if k == 'escape' then love.event.quit() end
     if k == 'space' then
         cycleStep()
@@ -2008,6 +2113,7 @@ local function startNumberParticle(num, x1, y1, x2, y2)
         loopBack = num * 2,     -- frame where we will start looping again (after reaching end)
         endFrame = num * 2 + 2, -- frame where we end playing (-1 for defaul behaviour == end)
     }
+
     animParticles.startAnimParticle('numbers', 10, frameData, posData, colorData, alphaData, scaleData, rotationData)
 end
 local function drawNumbersNicely(num, x, y, x2, y2)
@@ -2081,6 +2187,12 @@ function displayLoopingData()
                 endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
             }
             brrVolume = 0.1
+            if love.math.random() < 0.5 then
+                dj.queueClip(4, 2)
+            else
+                dj.queueClip(4, 8)
+            end
+
             Timer.after(3, function() brrVolume = 0 end)
             animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
                 scaleData, rotationData)
@@ -2131,6 +2243,8 @@ function endContact(a, b, contact)
 end
 
 function love.load()
+    dj.loadJizzJazzSong('assets/jizzjazz/mountmipo2.jizzjazz2.txt')
+    dj.setAllInstrumentsVolume(0)
     local url = 'assets/sounds/mountainmipo/bikesound.wav'
     source = love.audio.newSource(url, 'static')
     source:setLooping(true)
@@ -2166,10 +2280,13 @@ function love.load()
 
     sunImage = love.graphics.newImage('assets/world/zon2.png')
 
-    wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel1.png')
-    , love.graphics.newImage('assets/vehicleparts/wheel2.png')
-    , love.graphics.newImage('assets/vehicleparts/wheel3.png')
-    , love.graphics.newImage('assets/vehicleparts/wheel4.png') }
+    wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel6.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel6.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel6.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel6.png') }
+
+    tireImage = love.graphics.newImage('assets/vehicleparts/wheel6back.png')
+    tireOverImage = love.graphics.newImage('assets/vehicleparts/wheel4.png')
 
     frontWheelImgIndex = math.ceil(#wheelImages * love.math.random())
     backWheelImgIndex = math.ceil(#wheelImages * love.math.random())
