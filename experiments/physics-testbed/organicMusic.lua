@@ -91,6 +91,7 @@ end
 function lib.queueClip(instrumentIndex, clipIndex)
     -- on 2 and 8
     -- find out how long this clip takes
+    audiohelper.setADSRAtIndex('release', instrumentIndex, love.math.random() * 0.3)
     print(inspect(audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta))
 
     local duration = audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta.loopRounder
@@ -137,13 +138,13 @@ function lib.setTempo(bpm)
 end
 
 function lib.fadeOutVolume(index)
-    audiohelper.mixDataInstruments[index].volume = 0
-    audiohelper.updateMixerData()
+    audiohelper.setADSRAtIndex('release', 1, .1)
 end
 
 function lib.fadeInVolume(index, volume)
-    audiohelper.mixDataInstruments[index].volume = volume
-    audiohelper.updateMixerData()
+    audiohelper.setADSRAtIndex('release', 1, .1)
+    --audiohelper.mixDataInstruments[index].volume = volume
+    -- audiohelper.updateMixerData()
 end
 
 function lib.fadeOutAndFadeInVolume(turnOffIndex, turnOnIndex)
