@@ -91,6 +91,7 @@ end
 function lib.queueClip(instrumentIndex, clipIndex)
     -- on 2 and 8
     -- find out how long this clip takes
+    audiohelper.setADSRAtIndex('release', instrumentIndex, love.math.random() * 0.3)
     print(inspect(audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta))
 
     local duration = audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta.loopRounder
@@ -114,13 +115,14 @@ end
 
 function lib.setFreaky(value)
     if not value then
-        uiData.instrumentsVolume = 1
+        -- uiData.instrumentsVolume = 1
         uiData.allDrumSemitoneOffset = 0
+        -- print(value)
     else
         local offset = (love.math.noise(love.timer.getTime() * 100)) * 2 - 1
         uiData.allDrumSemitoneOffset = value + offset
-        uiData.instrumentsVolume = .5
-        print(value + offset)
+        -- uiData.instrumentsVolume = .5
+        --  print(value + offset)
     end
     audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
 end
@@ -133,6 +135,23 @@ end
 function lib.setTempo(bpm)
     uiData.bpm = bpm
     audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+end
+
+function lib.fadeOutVolume(index)
+    audiohelper.setADSRAtIndex('release', 1, .1)
+end
+
+function lib.fadeInVolume(index, volume)
+    audiohelper.setADSRAtIndex('release', 1, .1)
+    --audiohelper.mixDataInstruments[index].volume = volume
+    -- audiohelper.updateMixerData()
+end
+
+function lib.fadeOutAndFadeInVolume(turnOffIndex, turnOnIndex)
+    audiohelper.mixDataInstruments[turnOffIndex].volume = 0
+    audiohelper.mixDataInstruments[turnOnIndex].volume = 1
+    audiohelper.updateMixerData()
+    -- print(turnOffIndex, turnOnIndex)
 end
 
 function lib.loadJizzJazzSong(path)
@@ -149,6 +168,12 @@ function lib.loadJizzJazzSong(path)
     audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
     audiohelper.sendMessageToAudioThread({ type = "paused", data = false });
     audiohelper.sendMessageToAudioThread({ type = "mode", data = 'play' });
+    for i = 1, 5 do
+        audiohelper.mixDataInstruments[i].volume = 0
+    end
+    audiohelper.mixDataInstruments[1].volume = 1
+    audiohelper.mixDataInstruments[4].volume = 1
+    audiohelper.updateMixerData()
     --audiohelper.initializeDrumgrid()
     --print(path)
 end

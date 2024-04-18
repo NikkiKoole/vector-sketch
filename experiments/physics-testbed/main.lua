@@ -1208,13 +1208,20 @@ function love.update(dt)
         dj.setAllInstrumentsVolume(1)
         local p = numbers.mapInto(math.abs(velX), 0, 10000, 50, 250)
 
-        if backWheelFromGround > 0.5 and frontWheelFromGround > 0.5 then
+        if backWheelFromGround > 0.15 and frontWheelFromGround > 0.15 and not bikeGroundFeelerIsTouchingGround(bike) then
             p = numbers.mapInto(velX, 0, 10000, 150, 350)
+            dj.fadeInVolume(2, 0)
+            -- dj.fadeOutAndFadeInVolume(1, 2)
             -- dj.setAllInstrumentsVolume(.5)
         else
+            dj.fadeOutVolume(2)
+            --dj.fadeOutAndFadeInVolume(2, 1)
             --dj.setAllInstrumentsVolume(.5)
         end
 
+        if not bikeGroundFeelerIsTouchingGround(bike) then
+            p = math.max(100, p)
+        end
 
         dj.setTempo(p)
 
@@ -1236,7 +1243,9 @@ function love.update(dt)
         -- local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
         -- if p < 0.0001 then p = 0.0001 end
         -- source:setPitch(p)
-        local p = numbers.mapInto(math.abs(velX), 0, 10000, 100, 150)
+
+        local p = numbers.mapInto(math.abs(velX), 0, 10000, 50, 200)
+        print(p, velX)
         dj.setTempo(p)
         dj.setAllInstrumentsVolume(0)
     end
