@@ -146,20 +146,7 @@ function locatePeakX(startX, endX, stepSize)
 end
 
 function startExample(number)
-    atlasImg = love.graphics.newArrayImage('assets/sprieten.png')
-    --atlasArray = love.graphics.newArrayImage({ 'assets/sprieten.png' })
-    q1 = love.graphics.newQuad(0, 0, 49, 192, atlasImg)
-    q2 = love.graphics.newQuad(51, 164, 40, 197, atlasImg)
-    q3 = love.graphics.newQuad(51, 0, 41, 162, atlasImg)
-    q4 = love.graphics.newQuad(94, 0, 46, 186, atlasImg)
-    q5 = love.graphics.newQuad(0, 194, 47, 231, atlasImg)
-    q6 = love.graphics.newQuad(94, 188, 45, 236, atlasImg)
-    q7 = love.graphics.newQuad(142, 197, 47, 208, atlasImg)
-    q8 = love.graphics.newQuad(142, 0, 52, 195, atlasImg)
-    quads = { q1, q2, q3, q4, q5, q6, q7, q8 }
-    origins = { { 22, 185 }, { 12, 187 }, { 19, 144 }, { 25, 176 }, { 27, 224 }, { 16, 210 }, { 22, 190 }, { 30, 173 } }
-
-
+    
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
@@ -1404,6 +1391,7 @@ end
 
 sunColor1 = { hex2rgb('ddc800', 1) }
 sunColor1b = { hex2rgb('ffc800', 1) }
+sunColor1c = { hex2rgb('ffc800', .05) }
 sunColor2 = { hex2rgb('ddc490', 0.2) }
 
 darkGrassColor = { hex2rgb('2a5b3e') }
@@ -1711,6 +1699,58 @@ end
 
 
 
+
+
+function drawSunFace(x,y, radius) 
+    love.graphics.setColor(1,1,1)
+
+    
+    love.graphics.setBlendMode("add")   
+    
+    local spotSize = radius*3
+    local sx, sy         = createFittingScale(sunSpot, spotSize, spotSize)
+    love.graphics.setColor(1,1,1,0.05)
+
+     local offset = radius/5
+    love.graphics.draw(sunSpot,x ,y+offset, timeSpent, sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
+    love.graphics.setBlendMode("subtract")   
+    love.graphics.draw(sunSpot,x ,y+offset, timeSpent*3.3, sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
+    love.graphics.setBlendMode("add")   
+    love.graphics.draw(sunSpot,x ,y+offset, timeSpent/1.3, sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
+    love.graphics.draw(sunSpot,x ,y+offset, love.math.random(), sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
+    
+    love.graphics.setBlendMode("subtract")   
+    
+    love.graphics.setColor(1,1,1,0.03)
+    local eyeSize = radius/2
+    local sx, sy         = createFittingScale(sunEye, eyeSize, eyeSize)
+    
+    
+    love.graphics.draw(sunEye,x - radius/2 -eyeSize/2 ,y - radius/2, 0, sx,sy)
+    love.graphics.draw(sunEye,x + radius/2 -eyeSize/2,y - radius/2, 0, sx,sy)
+
+
+    local sx, sy         = createFittingScale(sunNose, eyeSize, eyeSize)
+    love.graphics.draw(sunNose,x -eyeSize/2,y , 0, sx,sy)
+
+    local sx, sy         = createFittingScale(sunTeeth, radius, radius/3)
+    love.graphics.draw(sunTeeth,x - radius/2,y + radius/2, 0, sx,sy)
+
+    love.graphics.setBlendMode("alpha")
+end
+
+
+function drawSunRays(x,y, radius) 
+
+    love.graphics.setColor(1,0,0,0.1)
+    love.graphics.setBlendMode('alpha')
+
+    for i =1, 20 do
+        local index = math.ceil(love.math.random()* #quads)
+    love.graphics.draw(atlasImg, quads[index],x,y, i *(math.pi*2)/20,1,1,origins[index][1], origins[index][2]) 
+    end
+end
+
 local function drawCelestialBodies()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
 
@@ -1718,33 +1758,38 @@ local function drawCelestialBodies()
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
     local img            = sunImage
     local dimsW, dimsH   = img:getDimensions()
-    local sunRadius      = math.max(w, h) / 7
+    local sunRadius      = math.max(w, h) / 11
     local sx, sy         = createFittingScale(img, sunRadius, sunRadius)
     local x, y           = sunRadius / 2, sunRadius / 2
 
-    local sunX           = numbers.mapInto(camtlx, 800000, -100000, 0, w)
-    local sunY           = numbers.mapInto(camtly, 800000, -100000, 0, h)
-
-    --love.graphics.setBlendMode('add')
-
-    --love.graphics.setColor(1, 1, 1, 0.06)
-    --love.graphics.draw(img, sunX, sunY - (h - sunRadius), 0, sx * 1.1, sy * 1.1, dimsH / 2, dimsW / 2)
-
-    --love.graphics.setBlendMode('alpha')
-
-
+    local sunX           = w/2 --numbers.mapInto(camtlx, 800000, -100000, 0, w)
+    local sunY           = h -- numbers.mapInto(camtly, 800000, -100000, 0, h)
 
 
     local sunScale = 3 * ((math.sin(timeSpent) + 1) / 2) / 100
-    local sunAngle = (((math.sin(timeSpent) + 1) / 2) / 100) * (math.pi * 2)
+    local sunAngle = (((math.sin(timeSpent) + 1) / 2) / 10) * (math.pi * 2)
+
+
+    drawSunRays(sunX, sunY - (h - sunRadius), sunRadius*.8)
 
     love.graphics.setColor(sunColor1b)
+   -- 
 
-    love.graphics.draw(img, sunX, sunY - (h - sunRadius), sunAngle, 3 * sx + sunScale, 3 * sy + sunScale, dimsH / 2,
+    love.graphics.draw(img, sunX, sunY - (h - sunRadius),timeSpent/5, 3 * sx + sunScale, 3 * sy + sunScale, dimsH / 2,
+        dimsW / 2)
+        love.graphics.setColor(sunColor1c)
+        love.graphics.setBlendMode("alpha")   
+        love.graphics.draw(img, sunX, sunY - (h - sunRadius),-timeSpent/5, 3 * sx + sunScale, 3 * sy + sunScale, dimsH / 2,
         dimsW / 2)
 
-    love.graphics.setColor(sunColor1)
-    love.graphics.draw(img, sunX, sunY - (h - sunRadius), 0, 3 * sx * 0.8, 3 * sy * 0.8, dimsH / 2, dimsW / 2)
+
+        
+ --   love.graphics.setColor(sunColor1)
+--    love.graphics.draw(img, sunX, sunY - (h - sunRadius), 0, 3 * sx * 0.8, 3 * sy * 0.8, dimsH / 2, dimsW / 2)
+
+    drawSunFace(sunX, sunY - (h - sunRadius), sunRadius*.8)
+
+    
 end
 
 function love.draw()
@@ -2261,16 +2306,38 @@ function love.load()
     source:play()
 
 
+    atlasImg = love.graphics.newArrayImage('assets/sprieten.png')
+    --atlasArray = love.graphics.newArrayImage({ 'assets/sprieten.png' })
+    local q1 = love.graphics.newQuad(0, 0, 49, 192, atlasImg)
+    local q2 = love.graphics.newQuad(51, 164, 40, 197, atlasImg)
+    local q3 = love.graphics.newQuad(51, 0, 41, 162, atlasImg)
+    local q4 = love.graphics.newQuad(94, 0, 46, 186, atlasImg)
+    local q5 = love.graphics.newQuad(0, 194, 47, 231, atlasImg)
+    local q6 = love.graphics.newQuad(94, 188, 45, 236, atlasImg)
+    local q7 = love.graphics.newQuad(142, 197, 47, 208, atlasImg)
+    local q8 = love.graphics.newQuad(142, 0, 52, 195, atlasImg)
+    quads = { q1, q2, q3, q4, q5, q6, q7, q8 }
+    origins = { { 22, 185 }, { 12, 187 }, { 19, 144 }, { 25, 176 }, { 27, 224 }, { 16, 210 }, { 22, 190 }, { 30, 173 } }
+
+
+
+
     -- s
     local ffont = "WindsorBT-Roman.otf"
     font = love.graphics.newFont(ffont, 24)
     love.graphics.setFont(font)
+    
     jointsEnabled = true
     followCamera = 'bike'
+    
     startExample()
+    
     backWheelFromGround = 0
     frontWheelFromGround = 0
     bikeFrameAngleAtJump = 0
+    mipoOnVehicle = false
+
+
     world:setCallbacks(beginContact, endContact)
     pointsOfInterest = {}
 
@@ -2285,9 +2352,13 @@ function love.load()
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
     grassImage = love.graphics.newImage('assets/world/grass1.png')
     bloemBladImage = love.graphics.newImage('assets/world/bloemBlad2.png')
-    mipoOnVehicle = false
+   
+    sunImage = love.graphics.newImage('assets/world/zon3.png')
 
-    sunImage = love.graphics.newImage('assets/world/zon2.png')
+    sunEye = love.graphics.newImage('assets/parts/pupil5.png')
+    sunNose = love.graphics.newImage('assets/parts/nose13.png')
+    sunTeeth = love.graphics.newImage('assets/parts/teeth1-mask.png')
+    sunSpot = love.graphics.newImage('assets/parts/pupil6.png')
 
     wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel6.png')
     , love.graphics.newImage('assets/vehicleparts/wheel6.png')
