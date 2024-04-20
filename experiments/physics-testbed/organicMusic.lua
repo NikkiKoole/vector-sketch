@@ -61,10 +61,10 @@ function handleQueuedActions()
     -- print(#queuedActions)
     for i = #queuedActions, 1, -1 do
         local it = queuedActions[i]
-        print(it.startBeat, it.endBeat, myBeat)
+        --print(it.startBeat, it.endBeat, myBeat)
         if it.startBeat <= myBeat and it.started == false then
             queuedActions[i].started = true
-            print('started')
+            --print('started')
             audiohelper.mixDataInstruments[it.instrumentIndex].volume = 1
             audiohelper.recordedClips[it.instrumentIndex].clips[it.clipIndex].meta.isSelected = true
             audiohelper.updateClips()
@@ -75,7 +75,7 @@ function handleQueuedActions()
 
             finishAction = function()
                 audiohelper.recordedClips[it.instrumentIndex].clips[it.clipIndex].meta.isSelected = false
-                print('ended')
+                -- print('ended')
                 audiohelper.mixDataInstruments[it.instrumentIndex].volume = 0
 
                 audiohelper.updateClips()
@@ -92,7 +92,7 @@ function lib.queueClip(instrumentIndex, clipIndex)
     -- on 2 and 8
     -- find out how long this clip takes
     audiohelper.setADSRAtIndex('release', instrumentIndex, love.math.random() * 0.3)
-    print(inspect(audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta))
+    -- print(inspect(audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta))
 
     local duration = audiohelper.recordedClips[instrumentIndex].clips[clipIndex].meta.loopRounder
     local startBeat = math.ceil(myBeat) + (myBeat % duration) + 1

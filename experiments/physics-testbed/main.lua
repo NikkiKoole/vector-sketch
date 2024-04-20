@@ -146,7 +146,6 @@ function locatePeakX(startX, endX, stepSize)
 end
 
 function startExample(number)
-    
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
@@ -1123,8 +1122,9 @@ function getTargetPos(body)
         --print(nx, ny, tx, ty)
         return nx, ny
     else
-        print('somethign wrong with POI')
-        return 0, 0
+        return tx, ty
+        --print('somethign wrong with POI')
+        --return 0, 0
     end
 end
 
@@ -1231,8 +1231,8 @@ function love.update(dt)
         -- if p < 0.0001 then p = 0.0001 end
         -- source:setPitch(p)
 
-        local p = numbers.mapInto(math.abs(velX), 0, 10000, 50, 200)
-        print(p, velX)
+        local p = numbers.mapInto(math.abs(velX), 0, 35000, 50, 130)
+        --  print(p, velX)
         dj.setTempo(p)
         dj.setAllInstrumentsVolume(0)
     end
@@ -1390,7 +1390,7 @@ function love.update(dt)
 end
 
 sunColor1 = { hex2rgb('ddc800', 1) }
-sunColor1b = { hex2rgb('ffc800', 1) }
+sunColor1b = { hex2rgb('ffc800', .8) }
 sunColor1c = { hex2rgb('ffc800', .05) }
 sunColor2 = { hex2rgb('ddc490', 0.2) }
 
@@ -1695,63 +1695,99 @@ local function textureTheBike(bike, bikeData)
     local x, y         = bike.backWheel.body:getPosition()
     local a            = bike.backWheel.body:getAngle()
     love.graphics.draw(img, x, y, a + math.pi, sx, sy, dimsH / 2, dimsW / 2)
+
+
+    -- achter wile vork
+    local img          = achtervork
+    local dimsW, dimsH = img:getDimensions()
+    local shapePoints  = { bike.frame.shape:getPoints() }
+
+    local shapeTL      = { shapePoints[9], shapePoints[10] }
+    local shapeBL      = { shapePoints[7], shapePoints[8] }
+    local shapeBR      = { shapePoints[5], shapePoints[6] }
+    local sx, sy       = createFittingScale(img, shapeTL[1] - shapeBR[1], shapeTL[2] - shapeBL[2])
+    local x, y         = bike.frontWheel.body:getPosition() --bike.frame.body:getWorldPoint(shapeTL[1], shapeTL[2])
+    local a            = bike.frame.body:getAngle()
+
+    love.graphics.draw(img, x, y, a + math.pi, sx, sy, 40, 200)
+
+    if false then
+        local img          = voorvork
+        local dimsW, dimsH = img:getDimensions()
+        local shapePoints  = { bike.frame.shape:getPoints() }
+
+        local shapeTR      = { shapePoints[1], shapePoints[2] }
+        local shapeBR      = { shapePoints[3], shapePoints[4] }
+        local shapeBL      = { shapePoints[5], shapePoints[6] }
+        local sx, sy       = createFittingScale(img, shapeTR[1] - shapeTL[1], (shapeTR[2] - shapeBR[2]))
+        local x, y         = bike.frame.body:getWorldPoint(shapeBL[1], shapeTR[2]) -- bike.frontWheel.body:getPosition() --bike.frame.body:getWorldPoint(shapeTL[1], shapeTL[2])
+        local a            = bike.frame.body:getAngle()
+        love.graphics.draw(img, x, y, a + math.pi, sx * -1, sy, 0, 0)
+    end
 end
 
 
 
+function rndOffset(offset)
+    return (love.math.random() * offset) - offset / 2
+end
+
+function drawSunFace(x, y, radius)
+    love.graphics.setColor(1, 1, 1)
 
 
-function drawSunFace(x,y, radius) 
-    love.graphics.setColor(1,1,1)
+    love.graphics.setBlendMode("add")
 
-    
-    love.graphics.setBlendMode("add")   
-    
-    local spotSize = radius*3
-    local sx, sy         = createFittingScale(sunSpot, spotSize, spotSize)
-    love.graphics.setColor(1,1,1,0.05)
+    local spotSize = radius * 2.7
+    local sx, sy   = createFittingScale(sunSpot, spotSize, spotSize)
+    love.graphics.setColor(1, 1, 1, 0.025)
 
-     local offset = radius/5
-    love.graphics.draw(sunSpot,x ,y+offset, timeSpent, sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
-    love.graphics.setBlendMode("subtract")   
-    love.graphics.draw(sunSpot,x ,y+offset, timeSpent*3.3, sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
-    love.graphics.setBlendMode("add")   
-    love.graphics.draw(sunSpot,x ,y+offset, timeSpent/1.3, sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
-    love.graphics.draw(sunSpot,x ,y+offset, love.math.random(), sx,sy,sunSpot:getWidth()/2,sunSpot:getHeight()/2)
-    
-    love.graphics.setBlendMode("subtract")   
-    
-    love.graphics.setColor(1,1,1,0.03)
-    local eyeSize = radius/2
-    local sx, sy         = createFittingScale(sunEye, eyeSize, eyeSize)
-    
-    
-    love.graphics.draw(sunEye,x - radius/2 -eyeSize/2 ,y - radius/2, 0, sx,sy)
-    love.graphics.draw(sunEye,x + radius/2 -eyeSize/2,y - radius/2, 0, sx,sy)
+    local offset = radius / 5
+    love.graphics.draw(sunSpot, x, y + offset, timeSpent, sx, sy, sunSpot:getWidth() / 2, sunSpot:getHeight() / 2)
+    love.graphics.setBlendMode("subtract")
+    love.graphics.draw(sunSpot, x, y + offset, timeSpent * 3.3, sx, sy, sunSpot:getWidth() / 2, sunSpot:getHeight() / 2)
+    love.graphics.setBlendMode("add")
+    love.graphics.draw(sunSpot, x, y + offset, timeSpent / 1.3, sx, sy, sunSpot:getWidth() / 2, sunSpot:getHeight() / 2)
+    love.graphics.draw(sunSpot, x, y + offset, love.math.random(), sx, sy, sunSpot:getWidth() / 2, sunSpot:getHeight() /
+        2)
+    local sx, sy = createFittingScale(sunSpot2, spotSize, spotSize)
+    local offset = radius / 5
+    love.graphics.draw(sunSpot2, x, y + offset, timeSpent, sx, sy, sunSpot2:getWidth() / 2, sunSpot2:getHeight() / 2)
+
+    love.graphics.setBlendMode("subtract")
+
+    love.graphics.setColor(1, 1, 1, 0.03)
+    local eyeSize = radius / 2
+    local sx, sy  = createFittingScale(sunEye, eyeSize, eyeSize)
 
 
-    local sx, sy         = createFittingScale(sunNose, eyeSize, eyeSize)
-    love.graphics.draw(sunNose,x -eyeSize/2,y , 0, sx,sy)
 
-    local sx, sy         = createFittingScale(sunTeeth, radius, radius/3)
-    love.graphics.draw(sunTeeth,x - radius/2,y + radius/2, 0, sx,sy)
+    love.graphics.draw(sunEye, rndOffset(5) + x - radius / 2 - eyeSize / 2, rndOffset(5) + y - radius / 2, 0, sx, sy)
+    love.graphics.draw(sunEye, rndOffset(5) + x + radius / 2 - eyeSize / 2, rndOffset(5) + y - radius / 2, 0, sx, sy)
+
+
+    local sx, sy = createFittingScale(sunNose, eyeSize, eyeSize)
+    love.graphics.draw(sunNose, rndOffset(5) + x - eyeSize / 2, y + rndOffset(5), 0, sx, sy)
+
+    local sx, sy = createFittingScale(sunTeeth, radius, radius / 3)
+    love.graphics.draw(sunTeeth, rndOffset(5) + x - radius / 2, rndOffset(5) + y + radius / 2, 0, sx, sy)
 
     love.graphics.setBlendMode("alpha")
 end
 
-
-function drawSunRays(x,y, radius) 
-
-    love.graphics.setColor(1,0,0,0.1)
+function drawSunRays(x, y, radius)
+    love.graphics.setColor(sunColor1b)
     love.graphics.setBlendMode('alpha')
-
-    for i =1, 20 do
-        local index = math.ceil(love.math.random()* #quads)
-    love.graphics.draw(atlasImg, quads[index],x,y, i *(math.pi*2)/20,1,1,origins[index][1], origins[index][2]) 
+    local sy = radius / 70
+    --print(sy)
+    for i = 1, 20 do
+        local index = 1 --math.ceil(love.math.random() * #quads)
+        love.graphics.draw(atlasImg, quads[index], x, y, timeSpent + i * (math.pi * 2) / 20, sy, sy, origins[index][1],
+            origins[index][2])
     end
 end
 
-local function drawCelestialBodies()
+local function drawSun(sunX, sunY)
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
 
     local w, h           = love.graphics.getDimensions()
@@ -1762,34 +1798,68 @@ local function drawCelestialBodies()
     local sx, sy         = createFittingScale(img, sunRadius, sunRadius)
     local x, y           = sunRadius / 2, sunRadius / 2
 
-    local sunX           = w/2 --numbers.mapInto(camtlx, 800000, -100000, 0, w)
-    local sunY           = h -- numbers.mapInto(camtly, 800000, -100000, 0, h)
 
 
     local sunScale = 3 * ((math.sin(timeSpent) + 1) / 2) / 100
     local sunAngle = (((math.sin(timeSpent) + 1) / 2) / 10) * (math.pi * 2)
 
 
-    drawSunRays(sunX, sunY - (h - sunRadius), sunRadius*.8)
+    drawSunRays(sunX, sunY, sunRadius * .8)
 
     love.graphics.setColor(sunColor1b)
-   -- 
 
-    love.graphics.draw(img, sunX, sunY - (h - sunRadius),timeSpent/5, 3 * sx + sunScale, 3 * sy + sunScale, dimsH / 2,
+
+    love.graphics.draw(img, sunX, sunY, timeSpent / 5, 2 * sx + sunScale, 2 * sy + sunScale, dimsH / 2,
         dimsW / 2)
-        love.graphics.setColor(sunColor1c)
-        love.graphics.setBlendMode("alpha")   
-        love.graphics.draw(img, sunX, sunY - (h - sunRadius),-timeSpent/5, 3 * sx + sunScale, 3 * sy + sunScale, dimsH / 2,
+    love.graphics.setColor(sunColor1c)
+    love.graphics.setBlendMode("alpha")
+    love.graphics.draw(img, sunX, sunY, -timeSpent / 5, 2 * sx + sunScale, 2 * sy + sunScale, dimsH / 2,
         dimsW / 2)
 
+    drawSunFace(sunX, sunY - sunRadius / 8, sunRadius * .8)
+end
 
-        
- --   love.graphics.setColor(sunColor1)
---    love.graphics.draw(img, sunX, sunY - (h - sunRadius), 0, 3 * sx * 0.8, 3 * sy * 0.8, dimsH / 2, dimsW / 2)
+local function drawMoon(x, y)
+    local w, h         = love.graphics.getDimensions()
+    local img          = moonImage
+    local moonRadius   = math.max(w, h) / 11
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, moonRadius, moonRadius)
 
-    drawSunFace(sunX, sunY - (h - sunRadius), sunRadius*.8)
+    love.graphics.setColor(181 / 255, 226 / 255, 196 / 255, 0.25)
+    love.graphics.draw(img, x, y, 0, sx, sx, dimsH / 2, dimsW / 2)
+    love.graphics.draw(img, rndOffset(2) + x, rndOffset(2) + y, 0, sx, sx, dimsH / 2, dimsW / 2)
 
-    
+
+    local radius  = moonRadius
+    local eyeSize = radius / 7
+    local sx, sy  = createFittingScale(sunEye, eyeSize, eyeSize)
+    love.graphics.setBlendMode("add")
+    love.graphics.setColor(1, 1, 1, 0.05)
+    love.graphics.draw(sunEye, rndOffset(2) + x - radius / 1.2 - eyeSize / 2, rndOffset(2) + y + radius / 2, 0, sx, sy)
+    love.graphics.draw(sunEye, rndOffset(2) + x - radius / 1 - eyeSize / 2, rndOffset(2) + y + radius / 2, 0, sx, sy)
+
+    local sx, sy = createFittingScale(sunNose, eyeSize, eyeSize)
+    love.graphics.draw(sunNose, rndOffset(2) + x - radius / 1.1 - eyeSize / 2, rndOffset(2) + y + radius / 1.5, 0, sx, sy)
+
+
+    local sx, sy = createFittingScale(sunTeeth, radius / 4, radius / 5)
+    love.graphics.draw(sunTeeth, rndOffset(2) + x - radius / 1.1 - eyeSize / 2, rndOffset(2) + y + radius / 1, 0, sx,
+        sy)
+
+    love.graphics.setBlendMode("alpha")
+end
+
+local function drawCelestialBodies()
+    local w, h = love.graphics.getDimensions()
+    local sunX = w / 12 * 10 --numbers.mapInto(camtlx, 800000, -100000, 0, w)
+    local sunY = h / 12      --numbers.mapInto(camtly, 800000, -100000, 0, h)
+    drawSun(sunX, sunY)
+
+
+    local moonX = w / 12 * 2
+    local moonY = h / 12
+    drawMoon(moonX, moonY)
 end
 
 function love.draw()
@@ -1950,22 +2020,25 @@ function love.draw()
     local x = size / 2
     local y = h - size + size / 2
 
-    if circleLabelButton(x, y, size / 2, 'CAM\n' .. followCamera) then
-        if followCamera == 'free' then
-            followCamera = 'bike'
-        elseif followCamera == 'bike' then
-            followCamera = 'mipo'
-        elseif followCamera == 'mipo' then
-            followCamera = 'free'
+    if false then
+        if circleLabelButton(x, y, size / 2, 'CAM\n' .. followCamera) then
+            if followCamera == 'free' then
+                followCamera = 'bike'
+            elseif followCamera == 'bike' then
+                followCamera = 'mipo'
+            elseif followCamera == 'mipo' then
+                followCamera = 'free'
+            end
         end
     end
-
     local x = size / 2 + size
     if circleLabelButton(x, y, size / 2, mipoOnVehicle and 'UNLINK' or 'LINK') then
         if not mipoOnVehicle then
             connectMipoAndVehicle()
+            followCamera = 'bike'
         else
             disconnectMipoAndVehicle()
+            followCamera = 'mipo'
         end
         mipoOnVehicle = not mipoOnVehicle
     end
@@ -2170,19 +2243,33 @@ local function startNumberParticle(num, x1, y1, x2, y2)
 
     animParticles.startAnimParticle('numbers', 10, frameData, posData, colorData, alphaData, scaleData, rotationData)
 end
+
+local function getDigits(number)
+    local digits = {}
+
+    while number > 0 do
+        local digit = number % 10
+        table.insert(digits, 1, digit) -- Insert digit at the beginning of the array
+        number = math.floor(number / 10)
+    end
+
+    return digits
+end
+
 local function drawNumbersNicely(num, x, y, x2, y2)
     local rounded = roundToQuarters(math.abs(num))
     local integer = math.floor(rounded)
     local fraction = rounded % 1
 
-    print(num, rounded)
+    --  print(num, rounded, print(inspect(getDigits(math.abs(integer)))))
+    local digits = getDigits(math.abs(integer))
     if (integer ~= 0) then
-        print(integer)
-        startNumberParticle(math.abs(integer), x + 50, y, x2 + 100, y2)
+        for i = 1, #digits do
+            startNumberParticle(digits[i], x + 0 + (50 * i), y, x2 + 50 + (50 * i), y2)
+        end
     end
     if (fraction ~= 0) then
-        print(fraction)
-        startNumberParticle(9 + (fraction * 4), x + 100, y, x2 + 150, y2)
+        startNumberParticle(9 + (fraction * 4), x + (50 * (#digits + 1)), y, x2 + (50 * (#digits + 2)), y2)
     end
 end
 function displayWheelieData()
@@ -2214,8 +2301,8 @@ function displayWheelieData()
 
             drawNumbersNicely(frontWheelFromGround, x1, y1, x1, y2)
 
-            addScoreMessage('wheelied: ' ..
-                string.format("%02.1f", roundToQuarters(frontWheelFromGround)) .. 'seconds')
+            --   addScoreMessage('wheelied: ' ..
+            --      string.format("%02.1f", roundToQuarters(frontWheelFromGround)) .. 'seconds')
         end
     end
 end
@@ -2251,7 +2338,7 @@ function displayLoopingData()
             animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
                 scaleData, rotationData)
             drawNumbersNicely(loops, x1, y1, x1, y2)
-            addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
+            --  addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
         end
     end
 end
@@ -2326,12 +2413,12 @@ function love.load()
     local ffont = "WindsorBT-Roman.otf"
     font = love.graphics.newFont(ffont, 24)
     love.graphics.setFont(font)
-    
+
     jointsEnabled = true
-    followCamera = 'bike'
-    
+    followCamera = 'mipo'
+
     startExample()
-    
+
     backWheelFromGround = 0
     frontWheelFromGround = 0
     bikeFrameAngleAtJump = 0
@@ -2352,14 +2439,18 @@ function love.load()
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
     grassImage = love.graphics.newImage('assets/world/grass1.png')
     bloemBladImage = love.graphics.newImage('assets/world/bloemBlad2.png')
-   
+
+    moonImage = love.graphics.newImage('assets/world/maan.png')
+
     sunImage = love.graphics.newImage('assets/world/zon3.png')
 
     sunEye = love.graphics.newImage('assets/parts/pupil5.png')
     sunNose = love.graphics.newImage('assets/parts/nose13.png')
     sunTeeth = love.graphics.newImage('assets/parts/teeth1-mask.png')
     sunSpot = love.graphics.newImage('assets/parts/pupil6.png')
-
+    sunSpot2 = love.graphics.newImage('assets/parts/pupil2.png')
+    achtervork = love.graphics.newImage('assets/vehicleparts/achtervork.png')
+    voorvork = love.graphics.newImage('assets/vehicleparts/voorvork.png')
     wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel6.png')
     , love.graphics.newImage('assets/vehicleparts/wheel6.png')
     , love.graphics.newImage('assets/vehicleparts/wheel6.png')
@@ -2379,14 +2470,14 @@ function love.load()
 
 
     local w, h = love.graphics.getDimensions()
-
-    for i = 1, 1 do
-        local x = -200000 + love.math.random() * 400000
-        local y = lerpYAtX(x, stepSize)
-        table.insert(pointsOfInterest,
-            { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
+    if false then
+        for i = 1, 1 do
+            local x = -200000 + love.math.random() * 400000
+            local y = lerpYAtX(x, stepSize)
+            table.insert(pointsOfInterest,
+                { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
+        end
     end
-
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(0, 0, 3000, 3000)
 end

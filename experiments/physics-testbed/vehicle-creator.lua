@@ -43,7 +43,7 @@ lib.createVehicleUsingDNACreation = function(key, c, x, y)
             steeringHeight = c.luleg.h + c.llleg.h,
             floorWidth = c.luleg.h + c.llleg.h + c.torso.h / 2,
             frameHeight = (c.luleg.h + c.llleg.h) / 3,
-            radius = math.max((c.luleg.h + c.llleg.h) / 2),
+            radius = math.min((c.luleg.h + c.llleg.h) / 2),
             f = makeBike2
         },
         ['connectLess'] = {
@@ -55,6 +55,7 @@ lib.createVehicleUsingDNACreation = function(key, c, x, y)
         }
     }
     local data = vehicleData[key]
+    print(data.radius)
     local bike = data.f(x, y, data)
     return bike, data
 end
@@ -498,19 +499,20 @@ function makeBike2(x, y, data)
     groundFeeler.fixture:setSensor(true)
 
     local ball1 = {}
-    ball1.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
+    ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setUserData(makeUserData("backWheel"))
-
+    ball1.fixture:setFilterData(13, 13, -1)
 
     -- ball1.fixture:setFriction(1)
 
     local ball2 = {}
-    ball2.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
+    ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setUserData(makeUserData("frontWheel"))
+    ball2.fixture:setFilterData(13, 13, -1)
     --  ball2.fixture:setFriction(1)
 
     local seat = {}
@@ -547,8 +549,8 @@ function makeBike2(x, y, data)
     joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -1.0, false)
 
     return {
-        frontWheel = ball1,
-        backWheel = ball2,
+        frontWheel = ball2,
+        backWheel = ball1,
         frame = frame,
         seat = seat,
         pedalWheel = pedal,
