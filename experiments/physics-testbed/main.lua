@@ -1240,7 +1240,7 @@ function love.update(dt)
         --print(velX, velY)
     else
         -- source:setVolume(0.1 * t)
-        -- local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
+        -- local p = numbers.m   apInto(velX, 0, 10000, 0.25, 1)
         -- if p < 0.0001 then p = 0.0001 end
         -- source:setPitch(p)
 
