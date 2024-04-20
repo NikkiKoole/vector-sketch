@@ -425,7 +425,7 @@ function cycleStep()
     --  bike.backWheel.body:setAngularVelocity(120000)
     --bike.frame.body:applyLinearImpulse(10000, -1000)
     if bike.pedalWheel then
-        bike.backWheel.body:applyAngularImpulse(1000000)
+        --bike.backWheel.body:applyAngularImpulse(1000000)
         -- bike.frontWheel.body:applyAngularImpulse(1000000)
         bike.pedalWheel.body:applyAngularImpulse(1000000)
     end
@@ -1148,7 +1148,7 @@ function love.update(dt)
     animParticles.updateAnimParticles(dt)
     -- print(dt)
     --local thingToFollow = bike.frontWheel.body
-    local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
+    local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.backWheel.body
 
     local velX, velY = thingToFollow:getLinearVelocity()
     -- print(velX, velY)

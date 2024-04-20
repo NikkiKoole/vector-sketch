@@ -502,7 +502,7 @@ function makeBike2(x, y, data)
     ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
-    ball1.fixture:setUserData(makeUserData("backWheel"))
+    ball1.fixture:setUserData(makeUserData("frontWheel"))
     ball1.fixture:setFilterData(13, 13, -1)
 
     -- ball1.fixture:setFriction(1)
@@ -511,7 +511,7 @@ function makeBike2(x, y, data)
     ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
-    ball2.fixture:setUserData(makeUserData("frontWheel"))
+    ball2.fixture:setUserData(makeUserData("backWheel"))
     ball2.fixture:setFilterData(13, 13, -1)
     --  ball2.fixture:setFriction(1)
 
@@ -549,8 +549,8 @@ function makeBike2(x, y, data)
     joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -1.0, false)
 
     return {
-        frontWheel = ball2,
-        backWheel = ball1,
+        frontWheel = ball1,
+        backWheel = ball2,
         frame = frame,
         seat = seat,
         pedalWheel = pedal,
