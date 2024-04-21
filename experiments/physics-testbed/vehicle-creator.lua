@@ -503,7 +503,7 @@ function makeBike2(x, y, data)
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setUserData(makeUserData("frontWheel"))
-    ball1.fixture:setFilterData(13, 13, -1)
+    -- ball1.fixture:setFilterData(13, 13, -1)
 
     -- ball1.fixture:setFriction(1)
 
@@ -512,7 +512,7 @@ function makeBike2(x, y, data)
     ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setUserData(makeUserData("backWheel"))
-    ball2.fixture:setFilterData(13, 13, -1)
+    --  ball2.fixture:setFilterData(13, 13, -1)
     --  ball2.fixture:setFriction(1)
 
     local seat = {}
@@ -530,8 +530,8 @@ function makeBike2(x, y, data)
     local pedalRadius = 100 --== radius / 2
     local connectorRadius = pedalRadius / 3
     local connectorD = connectorRadius * 2
-    local pedalXOffset = floorWidth / 5 --radius * .5
-    local pedalYOffset = 0              -- radius * .5
+    local pedalXOffset = 0 -- floorWidth / 5 --radius * .5
+    local pedalYOffset = 0 -- radius * .5
     local pedal = {}
     pedal.body = love.physics.newBody(world, x + pedalXOffset, y + pedalYOffset, "dynamic")
     pedal.shape = love.physics.newCircleShape(pedalRadius)
@@ -546,7 +546,7 @@ function makeBike2(x, y, data)
 
     local pedalJoint = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
 
-    joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -1.0, false)
+    joint = love.physics.newGearJoint(joint2, pedalJoint, -1.0, false)
 
     return {
         frontWheel = ball1,

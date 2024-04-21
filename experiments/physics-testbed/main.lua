@@ -150,6 +150,7 @@ function startExample(number)
     stepSize = 300
     ground = initGround()
     mipos = addMipos.make(1)
+    schansjes = {}
     --print(inspect(mipos[1].dna.multipliers))
     obstacles = {}
 
@@ -172,7 +173,7 @@ function startExample(number)
     -- makeSlide(75000, 0, 20000, 20000)
 
     if true then
-        for i = 2, 100 do
+        for i = 1, 100 do
             local rangeSize = 75
 
             local psx = 0 + (i * rangeSize * stepSize)
@@ -195,15 +196,15 @@ function startExample(number)
             local schansShape = love.physics.newChainShape(false, points)
             local fixture = love.physics.newFixture(schansBody, schansShape)
             fixture:setUserData(makeUserData('ground'))
+            table.insert(schansjes, points)
+            --local body = love.physics.newBody(world, x1, y1, 'static')
+            --local shape = love.physics.newRectangleShape(1, 1)
+            --local fixture = love.physics.newFixture(body, shape, .3)
 
-            local body = love.physics.newBody(world, x1, y1, 'static')
-            local shape = love.physics.newRectangleShape(1, 1)
-            local fixture = love.physics.newFixture(body, shape, .3)
 
-
-            local body = love.physics.newBody(world, x3, y3, 'static')
-            local shape = love.physics.newRectangleShape(1, 1)
-            local fixture = love.physics.newFixture(body, shape, .3)
+            -- local body = love.physics.newBody(world, x3, y3, 'static')
+            -- local shape = love.physics.newRectangleShape(1, 1)
+            -- local fixture = love.physics.newFixture(body, shape, .3)
         end
     end
     if false then
@@ -425,7 +426,7 @@ function cycleStep()
     --  bike.backWheel.body:setAngularVelocity(120000)
     --bike.frame.body:applyLinearImpulse(10000, -1000)
     if bike.pedalWheel then
-        --bike.backWheel.body:applyAngularImpulse(1000000)
+        bike.backWheel.body:applyAngularImpulse(1000000)
         -- bike.frontWheel.body:applyAngularImpulse(1000000)
         bike.pedalWheel.body:applyAngularImpulse(1000000)
     end
@@ -1143,6 +1144,7 @@ end
 
 local timeSpent = 0
 local brrVolume = 0
+
 function love.update(dt)
     dj.update()
     animParticles.updateAnimParticles(dt)
@@ -1211,7 +1213,6 @@ function love.update(dt)
         end
 
         dj.setTempo(p)
-
 
         if frontWheelFromGround > 0.8 then
             local a = bike.frame.body:getAngle()
@@ -1389,6 +1390,7 @@ function love.update(dt)
     timeSpent = timeSpent + dt
 end
 
+brownColor = { hex2rgb('5b3e05', 1) }
 sunColor1 = { hex2rgb('ddc800', 1) }
 sunColor1b = { hex2rgb('ffc800', .8) }
 sunColor1c = { hex2rgb('ffc800', .05) }
@@ -1630,12 +1632,83 @@ function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier, batch)
     -- print(ccc)
 end
 
+function drawLineImage(img, x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local distance = math.sqrt(dx * dx + dy * dy)
+    local angle = math.atan2(dy, dx)
+    local scale = distance / img:getWidth()
+    love.graphics.draw(img, x1, y1, angle, scale, 1, 0, img:getHeight() / 2)
+end
+
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
     local sx, sy = desired_w / w, desired_h / h
     return sx, sy
 end
 
+local function subdivide2D(x1, y1, x2, y2, stepsize)
+    local result = {}
+
+    -- Calculate the distance between the two points
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local distance = math.sqrt(dx * dx + dy * dy)
+
+    -- Calculate the angle of the line segment
+    local angle = math.atan2(dy, dx)
+
+    -- Calculate the number of steps needed
+    local numSteps = distance / stepsize
+
+    -- Calculate the step increments for x and y
+    local stepX = dx / numSteps
+    local stepY = dy / numSteps
+
+    -- Iterate through the line segment and add the subdivided points to the result
+    for i = 0, numSteps do
+        local x = x1 + stepX * i
+        local y = y1 + stepY * i
+        table.insert(result, { x, y })
+    end
+
+    return result
+end
+
+local function textureTheSchansjes()
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    love.graphics.setColor(brownColor)
+
+    for i = 1, #schansjes do
+        local points = schansjes[i]
+        --  print(inspect(points))
+        local lx = points[1]
+        local ly = points[2]
+        local rx = points[#points - 1]
+        local ry = points[#points]
+        -- print(l, r)
+        if (lx > camtlx and lx < cambrx) or (rx > camtlx and rx < cambrx) then
+            --print('should render schansje #', i)
+            --print(inspect(points))
+            local startPoints = subdivide2D(points[1], points[2], points[3], points[4], 80)
+
+
+            for j = 1, #startPoints do
+                drawLineImage(stokdik, startPoints[j][1], startPoints[j][2] - 100, startPoints[j][1],
+                    startPoints[j][2] + 200)
+            end
+            local startPoints = subdivide2D(points[3], points[4], points[5], points[6], 80)
+
+
+            for j = 1, #startPoints do
+                drawLineImage(stokdik, startPoints[j][1], startPoints[j][2] - 100, startPoints[j][1],
+                    startPoints[j][2] + 200)
+            end
+        end
+    end
+end
 
 local function textureTheBike(bike, bikeData)
     local img          = tireImage
@@ -1697,32 +1770,60 @@ local function textureTheBike(bike, bikeData)
     love.graphics.draw(img, x, y, a + math.pi, sx, sy, dimsH / 2, dimsW / 2)
 
 
+    local x1, y1 = bike.backWheel.body:getPosition()
+
+
+
+
+    local shapePoints = { bike.frame.shape:getPoints() }
+    --   print(inspect(shapePoints))
+    local middlex     = numbers.lerp(shapePoints[1], shapePoints[9], 0.5)
+    local topy        = shapePoints[2] - (bikeData.radius * 0.2)
+    local bottomy     = shapePoints[4]
+    local x2, y2      = bike.frame.body:getWorldPoint(middlex, topy)
+    drawLineImage(stok1R, x1, y1, x2, y2)
+    local x3, y3 = bike.frame.body:getWorldPoint(middlex, bottomy)
+    drawLineImage(stok1R, x1, y1, x3, y3)
+
+
+
+    local xvw, yvw           = bike.backWheel.body:getPosition()
+    local gx, gy             = bike.frame.body:getLocalPoint(xvw, yvw)
+    --bikeData.radius
+    -- local x4, y4   = bike.frame.body:getWorldPoint(shapePoints[1],
+    --  shapePoints[2])
+    local steerSteepOffset   = (bikeData.radius * 0.2)
+    local endFrameAboveWheel = gy - (bikeData.radius * 1.2)
+    local x4, y4             = bike.frame.body:getWorldPoint(shapePoints[1] - steerSteepOffset, endFrameAboveWheel)
+    drawLineImage(stok1R, x2, y2, x4, y4)
+    drawLineImage(stok1R, x3, y3, x4, y4)
+
     -- achter wile vork
     local img          = achtervork
     local dimsW, dimsH = img:getDimensions()
-    local shapePoints  = { bike.frame.shape:getPoints() }
 
-    local shapeTL      = { shapePoints[9], shapePoints[10] }
-    local shapeBL      = { shapePoints[7], shapePoints[8] }
-    local shapeBR      = { shapePoints[5], shapePoints[6] }
-    local sx, sy       = createFittingScale(img, shapeTL[1] - shapeBR[1], shapeTL[2] - shapeBL[2])
-    local x, y         = bike.frontWheel.body:getPosition() --bike.frame.body:getWorldPoint(shapeTL[1], shapeTL[2])
-    local a            = bike.frame.body:getAngle()
 
-    love.graphics.draw(img, x, y, a + math.pi, sx, sy, 40, 200)
+    local shapeTL = { shapePoints[1], shapePoints[2] }
+    local shapeBL = { shapePoints[3], shapePoints[4] }
+    local shapeBR = { shapePoints[5], shapePoints[6] }
+    local sx, sy  = createFittingScale(img, shapeTL[1] - shapeBR[1], shapeBL[2] - shapeTL[2])
+    local x, y    = bike.backWheel.body:getPosition() --bike.frame.body:getWorldPoint(shapeTL[1], shapeTL[2])
+    local a       = bike.frame.body:getAngle()
+
+    --   love.graphics.draw(img, x, y, a, sx, sy, 40, 200)
 
     if false then
         local img          = voorvork
         local dimsW, dimsH = img:getDimensions()
         local shapePoints  = { bike.frame.shape:getPoints() }
-
-        local shapeTR      = { shapePoints[1], shapePoints[2] }
-        local shapeBR      = { shapePoints[3], shapePoints[4] }
-        local shapeBL      = { shapePoints[5], shapePoints[6] }
-        local sx, sy       = createFittingScale(img, shapeTR[1] - shapeTL[1], (shapeTR[2] - shapeBR[2]))
-        local x, y         = bike.frame.body:getWorldPoint(shapeBL[1], shapeTR[2]) -- bike.frontWheel.body:getPosition() --bike.frame.body:getWorldPoint(shapeTL[1], shapeTL[2])
-        local a            = bike.frame.body:getAngle()
-        love.graphics.draw(img, x, y, a + math.pi, sx * -1, sy, 0, 0)
+        print(inspect(shapePoints))
+        local shapeTR = { shapePoints[9], shapePoints[10] }
+        local shapeBR = { shapePoints[7], shapePoints[8] }
+        local shapeBL = { shapePoints[5], shapePoints[6] }
+        local sx, sy  = createFittingScale(img, shapeTR[1] - shapeBL[1], (shapeBR[2] - shapeTR[2]) * 1.5)
+        local x, y    = bike.frontWheel.body:getPosition() --bike.frame.body:getWorldPoint(shapeTL[1], shapeTL[2])
+        local a       = bike.frame.body:getAngle()
+        love.graphics.draw(img, x, y, a, sx * -1, sy, img:getWidth(), img:getHeight() / 2)
     end
 end
 
@@ -1898,25 +1999,39 @@ function love.draw()
 
     --
     drawPaardenBloemen()
+
+
     drawGrassLeaves(100, -90, 0, 1.5, batch2)
+
     love.graphics.setColor(darkGrassColor)
     if batch2:getCount() <= 500 then
         love.graphics.draw(batch2)
     end
-    phys.drawWorld(world)
+    textureTheSchansjes()
+    -- phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
             texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
-            texturedBox2d.drawNumbersOver(mipos[i].b2d)
+            --texturedBox2d.drawNumbersOver(mipos[i].b2d)
         end
     end
 
     -- texture the bike
     love.graphics.setColor(0, 0, 0)
     textureTheBike(bike, bikeData)
+    if mipoOnVehicle then
+        for i = 1, #mipos do
+            local bx = mipos[i].b2d.torso:getX()
+            if (bx > camtlx - 1000 and bx < cambrx + 1000) then
+                texturedBox2d.renderLeftLegAndHair(mipos[i].b2d, mipos[i])
+                texturedBox2d.renderLeftArmAndHair(mipos[i].b2d, mipos[i])
 
+                --texturedBox2d.drawNumbersOver(mipos[i].b2d)
+            end
+        end
+    end
     --
     drawGrassLeaves(.3, 250, 25, 2.05, batch1)
     love.graphics.setColor(lightGrassColor)
@@ -2272,6 +2387,7 @@ local function drawNumbersNicely(num, x, y, x2, y2)
         startNumberParticle(9 + (fraction * 4), x + (50 * (#digits + 1)), y, x2 + (50 * (#digits + 2)), y2)
     end
 end
+
 function displayWheelieData()
     if (frontWheelFromGround > .4) then
         brrVolume = 0.1
@@ -2451,6 +2567,9 @@ function love.load()
     sunSpot2 = love.graphics.newImage('assets/parts/pupil2.png')
     achtervork = love.graphics.newImage('assets/vehicleparts/achtervork.png')
     voorvork = love.graphics.newImage('assets/vehicleparts/voorvork.png')
+    stok1 = love.graphics.newImage('assets/vehicleparts/stok1.png')
+    stok1R = love.graphics.newImage('assets/vehicleparts/stok1R.png')
+    stokdik = love.graphics.newImage('assets/vehicleparts/stokdik.png')
     wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel6.png')
     , love.graphics.newImage('assets/vehicleparts/wheel6.png')
     , love.graphics.newImage('assets/vehicleparts/wheel6.png')
