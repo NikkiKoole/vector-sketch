@@ -1883,7 +1883,8 @@ function drawSunRays(x, y, radius)
     --print(sy)
     for i = 1, 20 do
         local index = 1 --math.ceil(love.math.random() * #quads)
-        love.graphics.draw(atlasImg, quads[index], x, y, timeSpent + i * (math.pi * 2) / 20, sy, sy, origins[index][1],
+        love.graphics.draw(atlasImg, quads[index], x, y, (timeSpent / 2) + i * (math.pi * 2) / 20, sy, sy,
+            origins[index][1],
             origins[index][2])
     end
 end
