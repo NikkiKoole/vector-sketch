@@ -2009,7 +2009,7 @@ function love.draw()
         love.graphics.draw(batch2)
     end
     textureTheSchansjes()
-    -- phys.drawWorld(world)
+    phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()

@@ -22,6 +22,7 @@ if (!process.argv[2] || !process.argv[2].endsWith(".svg")) {
 
 var url = process.argv[2];
 var simplifyValue = parseFloat(process.argv[3]);
+var getRidOfCounterClockwiseSVgContours = parseFloat(process.argv[4]) || 0;
 
 fs.readFile(url, function (err, data) {
   if (err) {
@@ -96,9 +97,21 @@ fs.readFile(url, function (err, data) {
         });
 
         //contours.forEach((c) => console.log(calculateWindingOrder(c)));
-        contours = contours.filter(
-          (c) => calculateWindingOrder(c) != "clockwise",
-        );
+        //console.log(
+        //  getRidOfCounterClockwiseSVgContours,
+        //  getRidOfCounterClockwiseSVgContours > 0.5,
+        //);
+        if (getRidOfCounterClockwiseSVgContours > 0.5) {
+          //console.log("getRidOfCounterClockwiseSVgContours");
+          contours = contours.filter(
+            (c) => calculateWindingOrder(c) != "clockwise",
+          );
+        }
+        //contours.forEach((c) => {
+        //  if (calculateWindingOrder(c) != "clockwise") {
+        //    c.hole = true;
+        //  }
+        //});
         contours = contours.filter((c) => c.length > 3);
 
         var polyline = denestPolyline(contours);
@@ -233,6 +246,7 @@ function makeLoveShape(fill, opacity, contours, groupIndex, pathIndex) {
 name="${groupIndex + "-" + pathIndex + "-" + contourIndex}",
 color=${color},
 points=${points}
+
 },
 `;
     //console.log(result)
