@@ -7,6 +7,9 @@ HC                    = require 'HC'
 Polygon               = require 'HC.polygon'
 local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
+local parentize       = require 'lib.parentize'
+local parse           = require 'lib.parse-file'
+local render          = require 'lib.render'
 
 function getRandomConvexPoly(radius, numVerts)
     local irregularity = 0.5
@@ -151,6 +154,18 @@ function makeMeshFromConcavePoints(points)
     return love.graphics.newMesh(vertices, "triangles") --, tris, tris2
 end
 
+function getTriangles(points)
+    local polys = mesh.decompose_complex_poly(points, {})
+    local triangles = {}
+    for k = 1, #polys do
+        local p = polys[k]
+        if (#p >= 6) then
+            mesh.reTriangulatePolygon(p, triangles)
+        end
+    end
+    return triangles
+end
+
 function getRandomPolyAndMore()
     local result = {}
     result.points = getRandomConvexPoly(100, 18)
@@ -188,15 +203,118 @@ function getRandomPolyAndMore()
     return result
 end
 
+function getBox2dAndVectorSketchPair(things)
+    things.transforms.l[1] = 0
+    things.transforms.l[2] = 0
+    things.transforms.l[3] = 0
+
+    local box2dThing = {}
+
+    if things.children and things.children[1] and things.children[1].type == 'meta' then
+        --print('looking good!')
+        --print(things.children[1].name)
+        if (things.children[1].name == 'box2d-hitarea') then
+            -- now we must assert this shape has 8 or less points AND is convex
+            local it = things.children[1]
+            local points = flattenNonFlat(it.points)
+
+            local x = love.math.random() * 2000
+            local y = -5000 + love.math.random() * 4000
+            box2dThing.body = love.physics.newBody(world, x, y, "dynamic")
+            if (#points / 2 <= 8 and love.math.isConvex(points)) then
+                --print('safe to use this', #points / 2)
+                box2dThing.shape = love.physics.newPolygonShape(points)
+                box2dThing.fixture = love.physics.newFixture(box2dThing.body, box2dThing.shape, 1)
+            else
+                --print(#points / 2 <= 8, love.math.isConvex(points))
+                local triangles = getTriangles(points)
+                for i = 1, #triangles do
+                    box2dThing.shape = love.physics.newPolygonShape(triangles[i])
+                    box2dThing.fixture = love.physics.newFixture(box2dThing.body, box2dThing.shape, 1)
+                end
+                --print('not safe to use this', #points / 2)
+            end
+            --  box2dThing.body:setPosition(0, 0)
+        end
+    end
+    return { things = things, box2dThing = box2dThing }
+end
+
 function love.load()
-    phys.setupWorld()
-    polygons   = {}
+    --love.window.setMode(600, 600)
+    phys.setupWorld(100)
+    polygons = {}
+
     local w, h = love.graphics.getDimensions()
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(0, 0, 2000, 2000)
+    camera.setCameraViewport(cam, 1000, 1000)
+    camera.centerCameraOnPosition(0, 0, w, h)
+
+    root = {
+        folder = true,
+        name = 'root',
+        transforms = { g = { 0, 0, 0, 1, 1, 0, 0 }, l = { 0, 0, 0, cam.scale, cam.scale, 0, 0 } },
+        children = {}
+    }
+
+    dings = {}
+    for i = 1, 20 do
+        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 20 do
+        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[2]
+        local ding1 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding1.things)
+        --  print((ding1.things))
+        table.insert(dings, ding1)
+    end
+
+    for i = 1, 20 do
+        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[3]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 120 do
+        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[4]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 120 do
+        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[5]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 20 do
+        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[6]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+
+
+
+
+
+
+
+
+
+
+
+    parentize.parentize(root)
+    mesh.meshAll(root)
+    render.renderThings(root)
+    -- print(inspect(things[1]))
+
+
     local itemsPerRow = 10
     local space = 200
-    for i = 1, 300 do
+    for i = 1, 1 do
         local thing = getRandomPolyAndMore()
         -- now make the thing physical
         --local x = love.math.random() * 4000
@@ -225,8 +343,8 @@ function love.load()
         table.insert(polygons, thing)
     end
 
-    local body    = love.physics.newBody(world, w / 2, h, "static")
-    local shape   = love.physics.newRectangleShape(w * 10, 20)
+    local body    = love.physics.newBody(world, w / 2, h - 100, "static")
+    local shape   = love.physics.newRectangleShape(w * 50, 20)
     local fixture = love.physics.newFixture(body, shape, 1)
 end
 
@@ -269,7 +387,8 @@ function love.draw()
         end
     end
     cam:push()
-    phys.drawWorld(world)
+    --phys.drawWorld(world)
+
     for i = 1, #polygons do
         local it = polygons[i]
         love.graphics.setColor(1, 0, 0)
@@ -278,11 +397,22 @@ function love.draw()
         local a = it.body:getAngle()
         love.graphics.draw(it.mesh, x, y, a)
     end
+
+    for i = 1, #dings do
+        local it = dings[i]
+        local bx, by = it.box2dThing.body:getPosition()
+        local angle = it.box2dThing.body:getAngle()
+        it.things.transforms.l[1] = bx
+        it.things.transforms.l[2] = by
+        it.things.transforms.l[3] = angle
+    end
+    render.renderThings(root)
+
     cam:pop()
-    --love.graphics.print('using ' .. #tris3 .. ' triangles', 0, 0)
-    ---love.graphics.print('using ' .. #splitted .. ' simplified shapes', 0, 20)
-    --love.graphics.print('for ' .. #polyPoints / 2 .. ' points', 0, 40)
-    --  love.graphics.polygon('fill', poly)
+
+
+
+
     love.graphics.setColor(0, 0, 0)
     love.graphics.print(tostring(love.timer.getFPS()) .. 'fps')
 end
@@ -332,14 +462,29 @@ function love.mousereleased(x, y, button, istouch)
     end
 end
 
+function love.mousemoved(x, y, dx, dy)
+    if love.mouse.isDown(3) then
+        cam:increaseTranslation(-dx / cam.scale, -dy / cam.scale)
+    end
+end
+
 function love.update(dt)
     world:update(dt)
     phys.handleUpdate(dt)
 end
 
+local function getGlobalDelta(transform, dx, dy)
+    -- this one is only used in the wheel moved offset stuff
+    local dx1, dy1 = transform:transformPoint(0, 0)
+    local dx2, dy2 = transform:transformPoint(dx, dy)
+    local dx3 = dx2 - dx1
+    local dy3 = dy2 - dy1
+    return dx3, dy3
+end
+
 function love.wheelmoved(dx, dy)
     local newScale = cam.scale * (1 + dy / 10)
-    if (newScale > 0.01 and newScale < 50) then
+    if (newScale > .1 and newScale < 10) then
         cam:scaleToPoint(1 + dy / 10)
     end
 end

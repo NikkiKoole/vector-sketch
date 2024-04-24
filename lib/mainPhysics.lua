@@ -288,8 +288,8 @@ lib.makeShape = function(shapeType, w, h)
     end
 end
 
-lib.setupWorld = function()
-    love.physics.setMeter(100)
+lib.setupWorld = function(m)
+    love.physics.setMeter(m)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
 
     disabledContacts = {}

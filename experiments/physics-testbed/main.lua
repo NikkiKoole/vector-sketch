@@ -146,7 +146,7 @@ function locatePeakX(startX, endX, stepSize)
 end
 
 function startExample(number)
-    phys.setupWorld()
+    phys.setupWorld(500)
     stepSize = 300
     ground = initGround()
     mipos = addMipos.make(1)
