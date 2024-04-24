@@ -257,47 +257,82 @@ function love.load()
     }
 
     dings = {}
-    for i = 1, 20 do
-        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[1]
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
-    for i = 1, 20 do
-        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[2]
-        local ding1 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding1.things)
-        --  print((ding1.things))
-        table.insert(dings, ding1)
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[2]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
     end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/theosding.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/theosding.polygons.txt', true)[2]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/broodenpoes.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/broodenpoes.polygons.txt', true)[2]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    if true then
+        for i = 1, 20 do
+            local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 20 do
+            local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[2]
+            local ding1 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding1.things)
+            --  print((ding1.things))
+            table.insert(dings, ding1)
+        end
 
-    for i = 1, 20 do
-        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[3]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
+        for i = 1, 20 do
+            local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[3]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 20 do
+            local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[4]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 20 do
+            local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[5]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 20 do
+            local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[6]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
     end
-    for i = 1, 120 do
-        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[4]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 120 do
-        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[5]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 20 do
-        local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[6]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-
-
-
 
 
 
