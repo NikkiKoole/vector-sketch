@@ -258,6 +258,12 @@ function love.load()
 
     dings = {}
     for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/kroko.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
         local vsketch = parse.parseFile('assets/groen.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
         table.insert(root.children, ding2.things)
