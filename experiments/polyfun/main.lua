@@ -225,12 +225,14 @@ function getBox2dAndVectorSketchPair(things)
                 --print('safe to use this', #points / 2)
                 box2dThing.shape = love.physics.newPolygonShape(points)
                 box2dThing.fixture = love.physics.newFixture(box2dThing.body, box2dThing.shape, 1)
+                --box2dThing.fixture:setGroupIndex(-1 * #dings)
             else
                 --print(#points / 2 <= 8, love.math.isConvex(points))
                 local triangles = getTriangles(points)
                 for i = 1, #triangles do
                     box2dThing.shape = love.physics.newPolygonShape(triangles[i])
                     box2dThing.fixture = love.physics.newFixture(box2dThing.body, box2dThing.shape, 1)
+                    --   box2dThing.fixture:setGroupIndex(-1)
                 end
                 --print('not safe to use this', #points / 2)
             end
@@ -240,8 +242,149 @@ function getBox2dAndVectorSketchPair(things)
     return { things = things, box2dThing = box2dThing }
 end
 
+local shadowCache = {}
+
+function makeOrGetShadow(url, index)
+    if not shadowCache[url .. index] then
+        shadowCache[url .. index] = makeShadowImage(url, index)
+    end
+    return shadowCache[url .. index]
+end
+
+local function getPolygonThatNeedsShadowing(vsketch)
+    if vsketch.children and vsketch.children[1] and vsketch.children[1].type == 'meta' then
+        --print('ok')
+        --print(inspect(vsketch.children[2]))
+        local colorAt2 = vsketch.children[2].color
+        --print(inspect(colorAt2))
+        --  if (colorAt2[1] + colorAt2[2] + colorAt2[3] == 0) then
+        --print('jojo@')
+        return vsketch.children[2].points
+        -- end
+    end
+    print('failed at getting the poolygon that needs shadowing')
+end
+
+function flattenNonFlat(nonFlatArray)
+    local flatArray = {}
+    for _, pair in ipairs(nonFlatArray) do
+        table.insert(flatArray, pair[1])
+        table.insert(flatArray, pair[2])
+    end
+    return flatArray
+end
+
+function makeShadowImage(url, index)
+    -- lets assume the first child is meta,
+    -- the second one is the all encomappsing black outline (I NEED THIS ONE)
+    local vsketch = parse.parseFile(url, true)[index]
+    local poly = flattenNonFlat(getPolygonThatNeedsShadowing(vsketch))
+    local triangles = getTriangles(poly)
+    --print(inspect(triangles))
+    --print(inspect(poly))
+    -- print(inspect(flattenNonFlat(poly)))
+    local shadow = makeSingleShadow(poly, triangles)
+    --return
+    return shadow
+end
+
+function getBBoxOfPolygon(poly)
+    local minX = math.huge
+    local minY = math.huge
+    local maxX = -math.huge
+    local maxY = -math.huge
+
+    for i = 1, #poly, 2 do
+        if minX > poly[i] then minX = poly[i] end
+        if maxX < poly[i] then maxX = poly[i] end
+        if minY > poly[i + 1] then minY = poly[i + 1] end
+        if maxY < poly[i + 1] then maxY = poly[i + 1] end
+    end
+
+    local width = maxX - minX
+    local height = maxY - minY
+    return minX, minY, maxX, maxY
+end
+
+function applyBlur(imageData, radius)
+    local blurredImageData = imageData:clone()
+
+    for x = 0, blurredImageData:getWidth() - 1 do
+        for y = 0, blurredImageData:getHeight() - 1 do
+            local totalR, totalG, totalB, totalA = 0, 0, 0, 0
+            local count = 0
+
+            -- Apply the blur filter within the specified radius
+            for dx = -radius, radius do
+                for dy = -radius, radius do
+                    local nx, ny = x + dx, y + dy
+                    if nx >= 0 and nx < blurredImageData:getWidth() and ny >= 0 and ny < blurredImageData:getHeight() then
+                        local r, g, b, a = imageData:getPixel(nx, ny)
+                        totalR = totalR + r
+                        totalG = totalG + g
+                        totalB = totalB + b
+                        totalA = totalA + a
+                        count = count + 1
+                    end
+                end
+            end
+
+            -- Average the colors within the radius
+            totalR = totalR / count
+            totalG = totalG / count
+            totalB = totalB / count
+            totalA = totalA / count
+
+            -- Set the pixel color in the blurred image
+            blurredImageData:setPixel(x, y, totalR, totalG, totalB, totalA)
+        end
+    end
+
+    return blurredImageData
+end
+
+function makeSingleShadow(thing, triangles)
+    local minX, minY, maxX, maxY = getBBoxOfPolygon(thing)
+    local centerX = minX + (maxX - minX) / 2
+    local centerY = minY + (maxY - minY) / 2
+    local width = maxX - minX
+    local height = maxY - minY
+
+    -- print(minX, minY, maxX, maxY)
+
+    local margin = width / 5
+    local canvasWidth, canvasHeight = (width + margin * 2) * scale, (height + margin * 2) * scale
+    local canvas = love.graphics.newCanvas(canvasWidth, canvasHeight, { dpiscale = 1 })
+    --local canvas = love.graphics.newCanvas(width * scale, height * scale)
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear()
+    love.graphics.setColor(1, 1, 1)
+    -- Scale and draw the polygon
+    love.graphics.push()
+    --love.graphics.translate(-minX * scale, -minY * scale)
+    love.graphics.translate((-minX + margin) * scale, (-minY + margin) * scale)
+    love.graphics.scale(scale)
+    for i = 1, #triangles do
+        love.graphics.polygon("fill", triangles[i])
+    end
+    love.graphics.pop()
+    love.graphics.setCanvas()
+
+    -- Get the ImageData from the canvas
+    local imageData = canvas:newImageData()
+
+    -- Apply blur filter to the ImageData
+    local blurredImageData = applyBlur(imageData, 1)
+
+    -- Convert blurred ImageData back to Love2D image
+    local blurredImage = love.graphics.newImage(blurredImageData)
+
+    return blurredImage
+end
+
 function love.load()
     --love.window.setMode(600, 600)
+    scale = .2
     phys.setupWorld(100)
     polygons = {}
 
@@ -258,20 +401,58 @@ function love.load()
 
     dings = {}
     for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/mipo.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+        ding2.shadow = shadow
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/die2.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/die2.polygons.txt', 1)
+        ding2.shadow = shadow
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/die2.polygons.txt', true)[2]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/die2.polygons.txt', 2)
+        ding2.shadow = shadow
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/cola.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/cola.polygons.txt', 1)
+        ding2.shadow = shadow
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
         local vsketch = parse.parseFile('assets/kroko.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/kroko.polygons.txt', 1)
+        ding2.shadow = shadow
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
     for i = 1, 5 do
         local vsketch = parse.parseFile('assets/groen.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/groen.polygons.txt', 1)
+        ding2.shadow = shadow
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
     for i = 1, 5 do
         local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        local shadow = makeOrGetShadow('assets/theosding2.polygons.txt', 1)
+        ding2.shadow = shadow
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
@@ -305,7 +486,8 @@ function love.load()
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
-    if true then
+
+    if false then
         for i = 1, 20 do
             local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[1]
             local ding2 = getBox2dAndVectorSketchPair(vsketch)
@@ -433,6 +615,7 @@ function love.draw()
             end
         end
     end
+
     cam:push()
     --phys.drawWorld(world)
 
@@ -444,7 +627,7 @@ function love.draw()
         local a = it.body:getAngle()
         love.graphics.draw(it.mesh, x, y, a)
     end
-
+    love.graphics.setColor(0, 0, 0, 0.5)
     for i = 1, #dings do
         local it = dings[i]
         local bx, by = it.box2dThing.body:getPosition()
@@ -452,8 +635,16 @@ function love.draw()
         it.things.transforms.l[1] = bx
         it.things.transforms.l[2] = by
         it.things.transforms.l[3] = angle
+
+        if (it.shadow) then
+            --print(it.shadow)
+            love.graphics.draw(it.shadow, bx, by, angle, 1 / scale, 1 / scale, it.shadow:getWidth() / 2,
+                it.shadow:getHeight() / 2)
+        end
     end
     render.renderThings(root)
+
+
 
     cam:pop()
 
