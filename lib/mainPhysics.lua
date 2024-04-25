@@ -288,8 +288,8 @@ lib.makeShape = function(shapeType, w, h)
     end
 end
 
-lib.setupWorld = function()
-    love.physics.setMeter(500)
+lib.setupWorld = function(m)
+    love.physics.setMeter(m)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
 
     disabledContacts = {}
@@ -313,7 +313,7 @@ lib.drawWorld = function(world)
 
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
-    love.graphics.setLineWidth(10)
+    love.graphics.setLineWidth(1)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -330,7 +330,7 @@ lib.drawWorld = function(world)
                     end
                 end
                 love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
-                love.graphics.setColor(1, 1, 1, alpha)
+                love.graphics.setColor(1, 0, 1, alpha)
                 if (fixture:getUserData()) then
                     if fixture:getUserData().bodyType == "connector" then
                         love.graphics.setColor(1, 0, 0, alpha)
@@ -382,7 +382,7 @@ lib.removeDeadPointerJoints = function()
 end
 
 
-lib.handleUpdate = function(dt, cam)
+lib.handleUpdate = function(dt)
     lib.removeDeadPointerJoints()
     -- connect connectors
     for i = 1, #pointerJoints do

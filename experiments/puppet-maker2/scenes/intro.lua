@@ -654,7 +654,7 @@ function scene.draw()
         local yPos = y + ((size / 2)) * (1 / myOptimalScale) + extraOffset
 
         part:setPosition(xPos, yPos)
-        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i], true)
+        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i], { 'neck' })
         love.graphics.setStencilTest()
 
         love.graphics.pop()

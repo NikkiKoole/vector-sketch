@@ -408,7 +408,7 @@ function love.load()
     winegums = {}
     upsideDown = false
     jointsEnabled = true
-    phys.setupWorld()
+    phys.setupWorld(500)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
     mainVolume = 1

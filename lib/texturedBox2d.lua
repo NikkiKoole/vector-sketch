@@ -661,7 +661,75 @@ lib.drawWineGums = function(items)
     end
 end
 
-lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
+-- this function is here fo when a mipo is on a bike, i can draw that bodypart separately over the bike
+lib.renderLeftLegAndHair = function(box2dGuy, guy)
+    local values = guy.dna.values
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
+    local positioners = guy.dna.positioners
+    local canvasCache = guy.canvasCache
+
+    local facing = guy.facingVars
+    love.graphics.setColor(1, 1, 1, 1)
+    local dpi = 1
+    local shrink = canvas.getShrinkFactor()
+    if canvasCache.legCanvas then
+        love.graphics.setColor(1, 1, 1, 1)
+        renderCurvedObjectGrow('luleg', 'llleg', 'lfoot', 25, canvasCache.legCanvas, canvasCache.legmesh, box2dGuy, 1,
+            shrink * multipliers.leg.wMultiplier / (4 * dpi))
+        love.graphics.draw(canvasCache.legmesh, 0, 0, 0, 1, 1)
+    end
+    if not box2dGuyCreation.isNullObject('leghair', values) and canvasCache.leghairCanvas then
+        renderCurvedObject('luleg', 'llleg', 'lfoot', canvasCache.leghairCanvas, canvasCache.leghairMesh, box2dGuy,
+            -1,
+            (multipliers.leg.wMultiplier * multipliers.leghair.wMultiplier) / (4 * dpi))
+        love.graphics.draw(canvasCache.leghairMesh, 0, 0, 0, 1, 1)
+    end
+    if canvasCache.footCanvas then
+        local yScale = 1.1
+        if guy.facingVars.legs == 'right' then
+            yScale = -1.1
+        end
+        if creation.lfoot.metaURL then
+            love.graphics.setColor(1, 1, 1, 1)
+            renderAtachedObject(canvasCache.footCanvas, 'lfoot', 'lfoot', -math.pi / 2, 1.1, yScale, box2dGuy,
+                creation)
+        end
+    end
+end
+-- this function is here fo when a mipo is on a bike, i can draw that bodypart separately over the bike
+lib.renderLeftArmAndHair = function(box2dGuy, guy)
+    local values = guy.dna.values
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
+    local positioners = guy.dna.positioners
+    local canvasCache = guy.canvasCache
+
+    local facing = guy.facingVars
+    love.graphics.setColor(1, 1, 1, 1)
+    local dpi = 1
+    local shrink = canvas.getShrinkFactor()
+
+    if canvasCache.armCanvas then
+        love.graphics.setColor(1, 1, 1, 1)
+        renderCurvedObjectGrow('luarm', 'llarm', 'lhand', 25, canvasCache.armCanvas, canvasCache.armmesh, box2dGuy, 1,
+            shrink * multipliers.arm.wMultiplier / (4 * dpi))
+        love.graphics.draw(canvasCache.armmesh, 0, 0, 0, 1, 1)
+    end
+    if not box2dGuyCreation.isNullObject('armhair', values) and canvasCache.armhairCanvas then
+        renderCurvedObject('luarm', 'llarm', 'lhand', canvasCache.armhairCanvas, canvasCache.armhairMesh, box2dGuy,
+            -1,
+            (multipliers.arm.wMultiplier * multipliers.armhair.wMultiplier) / (4 * dpi))
+        love.graphics.draw(canvasCache.armhairMesh, 0, 0, 0, 1, 1)
+    end
+
+    if canvasCache.handCanvas then
+        renderAtachedObject(canvasCache.handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
+    end
+end
+
+
+lib.drawSkinOver = function(box2dGuy, guy, skipList)
     --print(skipNeck)
     local values = guy.dna.values
     local creation = guy.dna.creation
