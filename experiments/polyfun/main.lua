@@ -401,6 +401,22 @@ function love.load()
 
     dings = {}
     for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/dontevenknow.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+        --ding2.shadow = shadow
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
+        local vsketch = parse.parseFile('assets/ziekevogel.polygons.txt', true)[1]
+        local ding2 = getBox2dAndVectorSketchPair(vsketch)
+        --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+        --ding2.shadow = shadow
+        table.insert(root.children, ding2.things)
+        table.insert(dings, ding2)
+    end
+    for i = 1, 5 do
         local vsketch = parse.parseFile('assets/mipo.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
         local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)

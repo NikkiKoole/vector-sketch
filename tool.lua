@@ -357,7 +357,13 @@ local function movePoints(node, dx, dy)
     if node.points then
         for i = 1, #childrenInRectangleSelect do
             local index = childrenInRectangleSelect[i]
-            node.points[index] = { node.points[index][1] + dx, node.points[index][2] + dy }
+
+
+            if type(index) == 'number' then
+                node.points[index] = { node.points[index][1] + dx, node.points[index][2] + dy }
+            else
+                print('this should maybe do something')
+            end
         end
         remeshNode(node)
     end
