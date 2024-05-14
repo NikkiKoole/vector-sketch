@@ -13,12 +13,14 @@ local skygradient      = gradient.makeSkyGradient(10)
 
 function love.load()
     phys.setupWorld(500)
-    mipos = addMipos.make(1)
+    mipos = addMipos.make(10)
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(0, 0, 3000, 3000)
-    local targetX, targetY = mipos[1].b2d.torso:getPosition()
-    camera.centerCameraOnPosition(targetX, targetY, 3000, 3000)
+    local sw = 10000
+    local sh = 10000
+    --camera.centerCameraOnPosition(0, 0, sw, sh)
+    local targetX, targetY = mipos[5].b2d.torso:getPosition()
+    camera.centerCameraOnPosition(targetX, targetY, sw, sh)
 end
 
 function love.draw()
@@ -32,7 +34,7 @@ function love.draw()
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
 
     cam:push()
-    phys.drawWorld(world)
+    -- phys.drawWorld(world)
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
@@ -41,6 +43,16 @@ function love.draw()
         end
     end
     cam:pop()
+
+
+    local stats = love.graphics.getStats()
+    local memavg = collectgarbage("count") / 1000 --numbers.calculateRollingAverage(rollingMemoryUsage)
+    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+    local fps = tostring(love.timer.getFPS()) .. 'fps'
+    local draws = stats.drawcalls .. 'draws'
+
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
 end
 
 function love.keypressed(k)
