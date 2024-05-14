@@ -19,7 +19,7 @@ function love.load()
     local sw = 10000
     local sh = 10000
     --camera.centerCameraOnPosition(0, 0, sw, sh)
-    local targetX, targetY = mipos[5].b2d.torso:getPosition()
+    local targetX, targetY = mipos[math.floor(#mipos / 2)].b2d.torso:getPosition()
     camera.centerCameraOnPosition(targetX, targetY, sw, sh)
 end
 

@@ -55,6 +55,7 @@ end
 -- todo hae the default coming from a general place too, so i odnt have to update it in  multiple places.
 
 lib.make = function(count)
+    local cache = {} -- if i use an external cache its much cheper to draw identical mipos..
     for i = 1, count do
         local dna = {
             multipliers = dna.getMultipliers(),
@@ -84,15 +85,16 @@ lib.make = function(count)
     end
 
     for i = 1, #fiveGuys do
-        updatePart.randomizeGuy(fiveGuys[i], true)
+        if true then
+            updatePart.randomizeGuy(fiveGuys[i], true)
 
 
-        -- legs are always long!
-        if (fiveGuys[i].dna.multipliers.leg.lMultiplier < 2) then
-            fiveGuys[i].dna.multipliers.leg.lMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier + 2
-            fiveGuys[i].dna.multipliers.leg.wMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier
+            -- legs are always long!
+            if (fiveGuys[i].dna.multipliers.leg.lMultiplier < 2) then
+                fiveGuys[i].dna.multipliers.leg.lMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier + 2
+                fiveGuys[i].dna.multipliers.leg.wMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier
+            end
         end
-
         fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, -10000, fiveGuys[i])
         updatePart.updateAllParts(fiveGuys[i])
     end
