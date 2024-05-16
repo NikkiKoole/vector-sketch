@@ -68,6 +68,7 @@ local function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p
     return 0
 end
 
+
 local function get_collisions(poly)
     local collisions = {}
 

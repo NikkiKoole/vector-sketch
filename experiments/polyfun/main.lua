@@ -11,6 +11,10 @@ local parentize       = require 'lib.parentize'
 local parse           = require 'lib.parse-file'
 local render          = require 'lib.render'
 
+local PROF_CAPTURE    = true
+ProFi                 = require 'vendor.ProFi'
+if (PROF_CAPTURE) then ProFi:start() end
+
 function getRandomConvexPoly(radius, numVerts)
     local irregularity = 0.5
     local spikeyness = 0.2
@@ -400,7 +404,7 @@ function love.load()
     }
 
     dings = {}
-    for i = 1, 5 do
+    for i = 1, 10 do
         local vsketch = parse.parseFile('assets/dontevenknow.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
         --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
@@ -408,99 +412,101 @@ function love.load()
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/ziekevogel.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
-        --ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/mipo.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/die2.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/die2.polygons.txt', 1)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/die2.polygons.txt', true)[2]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/die2.polygons.txt', 2)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/cola.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/cola.polygons.txt', 1)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/kroko.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/kroko.polygons.txt', 1)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/groen.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/groen.polygons.txt', 1)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        local shadow = makeOrGetShadow('assets/theosding2.polygons.txt', 1)
-        ding2.shadow = shadow
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[2]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/theosding.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/theosding.polygons.txt', true)[2]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/broodenpoes.polygons.txt', true)[1]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
-    end
-    for i = 1, 5 do
-        local vsketch = parse.parseFile('assets/broodenpoes.polygons.txt', true)[2]
-        local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        table.insert(root.children, ding2.things)
-        table.insert(dings, ding2)
+    if false then
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/ziekevogel.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+            --ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/mipo.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/die2.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/die2.polygons.txt', 1)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/die2.polygons.txt', true)[2]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/die2.polygons.txt', 2)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/cola.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/cola.polygons.txt', 1)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/kroko.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/kroko.polygons.txt', 1)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/groen.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/groen.polygons.txt', 1)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 5 do
+            local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            local shadow = makeOrGetShadow('assets/theosding2.polygons.txt', 1)
+            ding2.shadow = shadow
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 5 do
+            local vsketch = parse.parseFile('assets/theosding2.polygons.txt', true)[2]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/theosding.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/theosding.polygons.txt', true)[2]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/broodenpoes.polygons.txt', true)[1]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
+        for i = 1, 1 do
+            local vsketch = parse.parseFile('assets/broodenpoes.polygons.txt', true)[2]
+            local ding2 = getBox2dAndVectorSketchPair(vsketch)
+            table.insert(root.children, ding2.things)
+            table.insert(dings, ding2)
+        end
     end
 
     if false then
@@ -543,12 +549,6 @@ function love.load()
             table.insert(dings, ding2)
         end
     end
-
-
-
-
-
-
 
 
     parentize.parentize(root)
@@ -672,7 +672,13 @@ function love.draw()
 end
 
 function love.keypressed(k)
-    if k == 'escape' then love.event.quit() end
+    if k == 'escape' then
+        if (PROF_CAPTURE) then
+            ProFi:stop()
+            ProFi:writeReport('profilingReport.txt')
+        end
+        love.event.quit()
+    end
 end
 
 local function pointerPressed(x, y, id)
