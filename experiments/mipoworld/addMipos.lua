@@ -56,19 +56,21 @@ end
 
 lib.make = function(count)
     local cache = {} -- if i use an external cache its much cheper to draw identical mipos..
+
     for i = 1, count do
-        local dna = {
+        local dnatje = {
             multipliers = dna.getMultipliers(),
             creation = dna.getCreation(),
             values = dna.generateValues(),
             positioners = dna.getPositioners()
         }
+
         fiveGuys[i] = {
             init = false,
             id = i,
-            dna = dna,
+            dna = dnatje,
             b2d = nil,
-            canvasCache = {},
+            canvasCache = cache,
             facingVars = {
                 legs = 'front', --'right'/front
             },
@@ -85,7 +87,7 @@ lib.make = function(count)
     end
 
     for i = 1, #fiveGuys do
-        if true then
+        if false then
             updatePart.randomizeGuy(fiveGuys[i], true)
 
 
@@ -95,7 +97,7 @@ lib.make = function(count)
                 fiveGuys[i].dna.multipliers.leg.wMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier
             end
         end
-        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, -10000, fiveGuys[i])
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy((i % 10) * 1000, -10000 + (i / 10) * 1000, fiveGuys[i])
         updatePart.updateAllParts(fiveGuys[i])
     end
     --print(inspect(fiveGuys))

@@ -42,6 +42,9 @@ lib.updatePart     = function(name, guy)
     if name == 'chestHair' then
         local img = getOriginalImageForShape(guy, 'chestHair')
         canvasCache.chestHairCanvas = texturedBox2d.partToTexturedCanvasWrap('chestHair', guy)
+
+
+        -- print(canvasCache.chestHairMesh)
     end
 
     if name == 'lowerlip' then
@@ -304,16 +307,20 @@ lib.updatePart     = function(name, guy)
         box2dGuyCreation.changeMetaPoints('torso', guy, flippedFloppedBodyPoints)
         box2dGuyCreation.changeMetaTexture('torso', guy, data[bodyRndIndex])
         canvasCache.torsoCanvas = texturedBox2d.partToTexturedCanvasWrap('body', guy)
-        local body              = guy.b2d.torso
-        local longestLeg        = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
-        local oldLegLength      = longestLeg + creation.torso.h
+
+
+
+
+        local body         = guy.b2d.torso
+        local longestLeg   = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
+        local oldLegLength = longestLeg + creation.torso.h
 
         --creation.hasPhysicsHair = not creation.hasPhysicsHair
-        creation.torso.w        = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
-        creation.torso.h        = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
+        creation.torso.w   = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
+        creation.torso.h   = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
 
-        local newLegLength      = longestLeg + creation.torso.h
-        local bx, by            = body:getPosition()
+        local newLegLength = longestLeg + creation.torso.h
+        local bx, by       = body:getPosition()
         if (newLegLength > oldLegLength) then
             body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
         end
