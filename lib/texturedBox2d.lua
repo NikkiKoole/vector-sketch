@@ -224,7 +224,19 @@ local function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2
     return curve
 end
 
+local function getDimensions(points)
+    local tlx, tly = math.huge, math.huge
+    local brx, bry = -math.huge, -math.huge
+    for i = 1, #points do
+        local it = points[i]
+        if it[1] < tlx then tlx = it[1] end
+        if it[1] > brx then brx = it[1] end
+        if it[2] < tly then tly = it[2] end
+        if it[2] > bry then bry = it[2] end
+    end
 
+    return tlx, tly, brx, bry
+end
 lib.makeSquishableHairOverMesh = function(img, growFactor, creation)
     local f = creation.torso.metaPoints
     local p = {}
@@ -239,9 +251,27 @@ lib.makeSquishableHairOverMesh = function(img, growFactor, creation)
     local _mesh = love.graphics.newMesh(uvs, 'fan')
     local img = img
     _mesh:setTexture(img)
-    return _mesh
+
+
+    local tlx, tly, brx, bry = getDimensions(points)
+    local w = brx - tlx
+    local h = bry - tly
+    local canvas = love.graphics.newCanvas(w * 1, h * 1)
+    print(w, h)
+    local mx, my = tlx + w / 2, tly + h / 2
+    love.graphics.setCanvas(canvas)
+    love.graphics.setColor(1, 1, 1, 1)
+    --love.graphics.draw(_mesh, -tlx, -tly, 0, 10, 10)
+    love.graphics.rectangle('fill', 0, 0, 1000, 1000)
+    love.graphics.setCanvas()
+
+    return _mesh, canvas
 end
 
+lib.makeCanvasFromMesh = function(mesh)
+    local width, height = getDimensions()
+    local result = love.graphics.newCanvas(width, height, { dpiscale = 1 })
+end
 
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, creation)
     -- first get the polygon from the meta object that describes the shape in 8 points
@@ -754,7 +784,7 @@ end
 
 
 
-
+local weirdCanvas = nil
 
 
 lib.drawSkinOverMultiple = function(list)
@@ -792,21 +822,27 @@ lib.drawSkinOverMultiple = function(list)
         local box2dGuy = guy.b2d
 
 
-        if not canvasCache.chestHairMesh then
-            -- local x, y, r, sx, sy     = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
-            canvasCache.chestHairMesh = lib.makeSquishableHairOverMesh(canvasCache.chestHairCanvas,
-                multipliers.chesthair.mMultiplier,
-                creation)
-            print(canvasCache.chestHairMesh)
 
-            local x, y, r, sx, sy = renderMetaObject(canvasCache.torsoCanvas, 'torso', box2dGuy, creation)
-        end
+
+        --if not canvasCache.chestHairMesh then
+        -- local x, y, r, sx, sy     = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
+        canvasCache.chestHairMesh, weirdCanvas = lib.makeSquishableHairOverMesh(canvasCache.chestHairCanvas,
+            multipliers.chesthair.mMultiplier,
+            creation)
+        -- print(canvasCache.chestHairMesh)
+
+        local x, y, r, sx, sy = renderMetaObject(canvasCache.torsoCanvas, 'torso', box2dGuy, creation)
+        --end
         if creation.torso.metaURL and not creation.isPotatoHead then
             --  print(i, x, y)s
             local x, y, r, sx, sy = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
             if not box2dGuyCreation.isNullObject('chestHair', values) then
                 -- print(canvasCache.chestHairMesh)
-                love.graphics.draw(canvasCache.chestHairMesh, x, y, r, sx * dpi / shrink, sy * dpi / shrink)
+                --  love.graphics.draw(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink, sy * dpi / shrink)
+                if (weirdCanvas) then
+                    print('getting here')
+                    love.graphics.draw(weirdCanvas, x, y, r, 10, 10)
+                end
                 --local x, y, r, sx, sy = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
                 --drawSquishableHairOver(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink,
                 --    sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)

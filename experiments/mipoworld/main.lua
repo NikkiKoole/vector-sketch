@@ -12,10 +12,12 @@ local gradient         = require 'lib.gradient'
 local skygradient      = gradient.makeSkyGradient(10)
 local canvas           = require 'lib.canvas'
 
+
+
 function love.load()
     canvas.setShrinkFactor(4)
     phys.setupWorld(500)
-    mipos = addMipos.make(200)
+    mipos = addMipos.make(20)
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     local sw = 10000
