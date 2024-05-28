@@ -824,11 +824,13 @@ lib.drawSkinOverMultiple = function(list)
 
 
 
-        --if not canvasCache.chestHairMesh then
-        -- local x, y, r, sx, sy     = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
-        canvasCache.chestHairMesh, weirdCanvas = lib.makeSquishableHairOverMesh(canvasCache.chestHairCanvas,
-            multipliers.chesthair.mMultiplier,
-            creation)
+        if not canvasCache.weirdCanvas then
+            -- local x, y, r, sx, sy     = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
+            canvasCache.chestHairMesh, canvasCache.weirdCanvas = lib.makeSquishableHairOverMesh(
+                canvasCache.chestHairCanvas,
+                multipliers.chesthair.mMultiplier,
+                creation)
+        end
         -- print(canvasCache.chestHairMesh)
 
         local x, y, r, sx, sy = renderMetaObject(canvasCache.torsoCanvas, 'torso', box2dGuy, creation)
@@ -838,10 +840,10 @@ lib.drawSkinOverMultiple = function(list)
             local x, y, r, sx, sy = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
             if not box2dGuyCreation.isNullObject('chestHair', values) then
                 -- print(canvasCache.chestHairMesh)
-                --  love.graphics.draw(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink, sy * dpi / shrink)
-                if (weirdCanvas) then
+                love.graphics.draw(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink, sy * dpi / shrink)
+                if (canvasCache.weirdCanvas) then
                     print('getting here')
-                    love.graphics.draw(weirdCanvas, x, y, r, 10, 10)
+                    love.graphics.draw(canvasCache.weirdCanvas, x, y, r, 10, 10)
                 end
                 --local x, y, r, sx, sy = lib.getValues(canvasCache.torsoCanvas, 'torso', guy.b2d, creation)
                 --drawSquishableHairOver(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink,

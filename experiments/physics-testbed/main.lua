@@ -250,26 +250,54 @@ function initGround()
     return thing
 end
 
-function getYAtX(x, stepSize)
+function getYAtX(x, stepSize, buildOptions)
     --local h2 = love.math.noise(x / 10000)
-    local STEEPNESS = 3000 -- * h2
-    local index = math.floor(x / stepSize)
+    -- local STEEPNESS = 150 -- * h2 --3000
+    local c = x / stepSize
+    local index = math.floor(c)
 
     local function generateWave(amplitude, frequency)
         local h = love.math.noise(index / frequency, 1, 1) * amplitude
         return h - (amplitude / 2)
     end
 
-    local y1 = generateWave(200 * 10.78, 30)
-    local y2 = generateWave(70 * 10.78, 17)
+    local aLengthInSteps = 125 -- the steep part
+    local bLengthInSteps = 15  --  the flat part
+    local steepA = 150
+    local steepB = 20
 
-    local y3 = generateWave(20 * 10.78, 5)
+    local divved = index / (aLengthInSteps + bLengthInSteps)
+    local wholePart = math.floor(divved)
+    local fractionalPart = divved - wholePart
+    local restIndex = fractionalPart * (aLengthInSteps + bLengthInSteps)
 
-    y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
+    local insideB = restIndex > aLengthInSteps
+    local y1, y2, y3 = 0, 0, 0
 
-    local c = x / stepSize
-    local linear = numbers.mapInto(c, -20, 20, -STEEPNESS, STEEPNESS)
 
+    y1 = generateWave(200 * 10.78, 30)
+    y2 = generateWave(70 * 10.78, 17)
+    y3 = generateWave(20 * 10.78, 5)
+
+    if insideB then
+        y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
+    end
+
+
+
+
+
+
+
+    -- print(index, index % (aLengthInSteps + bLengthInSteps))
+
+    local v = math.min(restIndex, aLengthInSteps)
+    local v2 = math.max(restIndex - aLengthInSteps, 0)
+    local v3 = wholePart * (aLengthInSteps * steepA + bLengthInSteps * steepB)
+
+    local linear = v * steepA + v2 * steepB + v3
+    -- numbers.mapInto(c, -20, 20, -STEEPNESS, STEEPNESS)
+    --print(stepSize, aLengthInSteps, bLengthInSteps)
     return y1 + y2 + y3 + linear
 end
 
@@ -1145,6 +1173,7 @@ end
 local timeSpent = 0
 local brrVolume = 0
 
+
 function love.update(dt)
     dj.update()
     animParticles.updateAnimParticles(dt)
@@ -1216,6 +1245,9 @@ function love.update(dt)
 
         if frontWheelFromGround > 0.8 then
             local a = bike.frame.body:getAngle()
+            --  print(a)
+            a = numbers.clamp(a, -math.pi * 2, math.pi * 2)
+
             local p = numbers.mapInto(a, -math.pi, math.pi, -5, 5)
 
             dj.setFreaky(p)
@@ -1523,7 +1555,7 @@ end
 
 -- end lifted
 
-function drawSinglePaardenBloem(x, y, randomNumber)
+function drawSinglePaardenBloem(x, y, randomNumber, randomNumber2)
     local stengelScaleY = 1.2 - randomNumber * 3
     local h = stengelImage:getHeight() * stengelScaleY
     local x1 = math.sin(timeSpent * .4) * (h / 7)
@@ -1536,8 +1568,12 @@ function drawSinglePaardenBloem(x, y, randomNumber)
 
     love.graphics.draw(m, x, y, 0, 1, stengelScaleY, 0, 0)
 
+    if randomNumber2 > .6 then
+        love.graphics.setColor(1, 1, 0)
+    else
+        love.graphics.setColor(1, 0, 1)
+    end
 
-    love.graphics.setColor(1, 1, 0)
     love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY * stengelScaleY, math.sin(timeSpent),
         1, 1,
         bloemHoofdImage:getWidth() / 2, bloemHoofdImage:getHeight() / 2)
@@ -1561,6 +1597,7 @@ function drawPaardenBloemen()
         local y = ground.points[i + 1]
 
         local hh = love.math.noise((x) / 1000, .1, .1)
+        local hh2 = love.math.noise((x) / 100, .6, .1)
 
         if (x % 8 == 0) then
             --print(i, hh)
@@ -1573,7 +1610,15 @@ function drawPaardenBloemen()
                 --   love.graphics.circle('fill', x, y - 1000, 100)
                 --  love.graphics.print('none', x, y)
             else
-                drawSinglePaardenBloem(x, y, hh - 0.5)
+                print(hh)
+                if (hh > .6) then
+                    love.graphics.setColor(1, 1, 0)
+                else
+                    love.graphics.setColor(1, 0, 0)
+                end
+
+
+                drawSinglePaardenBloem(x, y, hh - 0.5, hh2)
             end
         end
     end
@@ -1959,9 +2004,9 @@ local function drawCelestialBodies()
     drawSun(sunX, sunY)
 
 
-    local moonX = w / 12 * 2
-    local moonY = h / 12
-    drawMoon(moonX, moonY)
+    --local moonX = w / 12 * 2
+    --local moonY = h / 12
+    --drawMoon(moonX, moonY)
 end
 
 function love.draw()
@@ -2009,7 +2054,7 @@ function love.draw()
         love.graphics.draw(batch2)
     end
     textureTheSchansjes()
-    phys.drawWorld(world)
+    --phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
