@@ -75,15 +75,20 @@ end
 local lib = {}
 lib.makeSkyGradient = function(timeIndex)
     return gradientMesh(
-            "vertical",
-            gradients[timeIndex].from, gradients[timeIndex].to
-        )
+        "vertical",
+        gradients[timeIndex].from, gradients[timeIndex].to
+    )
 end
+
+lib.getGradientData = function(timeIndex)
+    return gradients[timeIndex].from, gradients[timeIndex].to
+end
+
 lib.makeSkyGradientList = function(list)
     return gradientMesh(
-            "vertical",
-            unpack(list)
-        )
+        "vertical",
+        unpack(list)
+    )
 end
 lib.makeBackdropMesh = function()
     local w, h = love.graphics.getDimensions()
@@ -91,7 +96,7 @@ lib.makeBackdropMesh = function()
     local vertices = {
         {
             -- top-left corner (red-tinted)
-            0, 0, -- position of the vertex
+            0, 0,    -- position of the vertex
             1, 0, 0, -- color of the vertex
         },
         {

@@ -24,7 +24,9 @@ local box2dGuyCreation = require 'lib.box2dGuyCreation'
 local texturedBox2d    = require 'lib.texturedBox2d'
 local addMipos         = require 'addMipos'
 local gradient         = require 'lib.gradient'
-local skygradient      = gradient.makeSkyGradient(10)
+--local skygradient      = gradient.makeSkyGradient(10)
+--local skygradient      = gradient.makeSkyGradient(23)
+
 local ui               = require "lib.ui"
 local connect          = require 'lib.connectors'
 local updatePart       = require 'lib.updatePart'
@@ -455,7 +457,9 @@ function cycleStep()
     --bike.frame.body:applyLinearImpulse(10000, -1000)
     if bike.pedalWheel then
         bike.backWheel.body:applyAngularImpulse(1000000)
-        -- bike.frontWheel.body:applyAngularImpulse(1000000)
+        if frontWheelFromGround == 0 then
+            bike.frontWheel.body:applyAngularImpulse(1000000)
+        end
         bike.pedalWheel.body:applyAngularImpulse(1000000)
     end
 end
@@ -1433,9 +1437,32 @@ darkGrassColorTrans = { hex2rgb('2a5b3e', 0.5) }
 lightGrassColor = { hex2rgb('86a542') }
 anotherGrassColor = { hex2rgb('45783c') }
 
+pastelColors = {
+    { hex2rgb('FFB3BA') },
+    { hex2rgb('FFDFBA') },
+    { hex2rgb('FFFFBA') },
+    { hex2rgb('BAFFC9') },
+    { hex2rgb('BAE1FF') },
+    { hex2rgb('FFCCE5') },
+    { hex2rgb('D4A5A5') },
+    { hex2rgb('F0D9FF') },
+    { hex2rgb('C4FCEF') },
+    { hex2rgb('FFEBB7') },
+}
 
-
-
+flowerColors = {
+    { hex2rgb('FEDF00') },
+    { hex2rgb('FFD700') },
+    { hex2rgb('F9A602') },
+    { hex2rgb('FFC40C') },
+    --  { hex2rgb('FFDB58') },
+    ---  { hex2rgb('F4C430') },
+    --  { hex2rgb('E9A900') },
+    --  { hex2rgb('FFD800') },
+    --  { hex2rgb('FFC300') },
+    --  { hex2rgb('E3A857') },
+}
+--flowerColors = pastelColors
 function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, alpha, repeatScale)
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -1567,12 +1594,16 @@ function drawSinglePaardenBloem(x, y, randomNumber, randomNumber2)
     love.graphics.setColor(darkGrassColor)
 
     love.graphics.draw(m, x, y, 0, 1, stengelScaleY, 0, 0)
-
-    if randomNumber2 > .6 then
-        love.graphics.setColor(1, 1, 0)
-    else
-        love.graphics.setColor(1, 0, 1)
-    end
+    -- print(randomNumber2)
+    --if randomNumber2 > .6 then
+    local colorIndex = math.floor(numbers.mapInto(randomNumber2, .2, .8, 1, #flowerColors))
+    -- print(colors)
+    local colors = flowerColors[colorIndex]
+    --print(colorIndex, inspect(colors))
+    love.graphics.setColor(colors)
+    --else
+    --    love.graphics.setColor(1, 0, 1)
+    --end
 
     love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY * stengelScaleY, math.sin(timeSpent),
         1, 1,
@@ -1610,12 +1641,12 @@ function drawPaardenBloemen()
                 --   love.graphics.circle('fill', x, y - 1000, 100)
                 --  love.graphics.print('none', x, y)
             else
-                print(hh)
-                if (hh > .6) then
-                    love.graphics.setColor(1, 1, 0)
-                else
-                    love.graphics.setColor(1, 0, 0)
-                end
+                -- print(hh)
+                -- if (hh > .6) then
+                --     love.graphics.setColor(1, 1, 0)
+                --- else
+                --      love.graphics.setColor(1, 0, 0)
+                --  end
 
 
                 drawSinglePaardenBloem(x, y, hh - 0.5, hh2)
@@ -1975,7 +2006,7 @@ local function drawMoon(x, y)
 
     love.graphics.setColor(181 / 255, 226 / 255, 196 / 255, 0.25)
     love.graphics.draw(img, x, y, 0, sx, sx, dimsH / 2, dimsW / 2)
-    love.graphics.draw(img, rndOffset(2) + x, rndOffset(2) + y, 0, sx, sx, dimsH / 2, dimsW / 2)
+    love.graphics.draw(img, x, y, 0, sx, sx, dimsH / 2, dimsW / 2)
 
 
     local radius  = moonRadius
@@ -2001,7 +2032,11 @@ local function drawCelestialBodies()
     local w, h = love.graphics.getDimensions()
     local sunX = w / 12 * 10 --numbers.mapInto(camtlx, 800000, -100000, 0, w)
     local sunY = h / 12      --numbers.mapInto(camtly, 800000, -100000, 0, h)
-    drawSun(sunX, sunY)
+    if dayTime == 10 then
+        drawSun(sunX, sunY)
+    else
+        drawMoon(sunX, sunY)
+    end
 
 
     --local moonX = w / 12 * 2
@@ -2015,7 +2050,7 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
 
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
+    love.graphics.draw(skyGradient, 0, 0, 0, love.graphics.getDimensions())
 
 
     local w, h = love.graphics.getDimensions()
@@ -2136,6 +2171,15 @@ function love.draw()
     love.graphics.circle('line', curCamX, curCamY, 20)
     cam:pop()
 
+    -- dayTime
+    if (dayTime == 22) then
+        love.graphics.setColor(0.1, 0.1, .35, 0.25)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+    end
+    if (dayTime == 10) then
+        love.graphics.setColor(1, 1, 0, 0.05)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+    end
     animParticles.drawAnimParticles()
     love.graphics.setColor(0, 0, 0, 0.5)
 
@@ -2229,6 +2273,14 @@ function disableLegs()
 end
 
 function love.keypressed(k)
+    if k == 'd' then
+        if dayTime == 22 then
+            dayTime = 10
+        else
+            dayTime = 22
+        end
+        skyGradient = gradient.makeSkyGradient(dayTime)
+    end
     if k == 'c' then
         if love.math.random() < 0.5 then
             dj.queueClip(4, 2)
@@ -2546,6 +2598,9 @@ function endContact(a, b, contact)
 end
 
 function love.load()
+    dayTime = 10
+    skyGradient = gradient.makeSkyGradient(dayTime)
+
     dj.loadJizzJazzSong('assets/jizzjazz/mountmipo2.jizzjazz2.txt')
     dj.setAllInstrumentsVolume(0)
     local url = 'assets/sounds/mountainmipo/bikesound.wav'
