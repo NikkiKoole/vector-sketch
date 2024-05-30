@@ -13,29 +13,31 @@ print('after wait for event')
 
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
-local inspect          = require 'vendor.inspect'
-local cam              = require('lib.cameraBase').getInstance()
-local camera           = require 'lib.camera'
-local phys             = require 'lib.mainPhysics'
-local numbers          = require 'lib.numbers'
-local generatePolygon  = require('lib.generate-polygon').generatePolygon
-local gradient         = require 'lib.gradient'
-local box2dGuyCreation = require 'lib.box2dGuyCreation'
-local texturedBox2d    = require 'lib.texturedBox2d'
-local addMipos         = require 'addMipos'
-local gradient         = require 'lib.gradient'
+local inspect           = require 'vendor.inspect'
+local cam               = require('lib.cameraBase').getInstance()
+local camera            = require 'lib.camera'
+local phys              = require 'lib.mainPhysics'
+local numbers           = require 'lib.numbers'
+local generatePolygon   = require('lib.generate-polygon').generatePolygon
+local gradient          = require 'lib.gradient'
+local box2dGuyCreation  = require 'lib.box2dGuyCreation'
+local texturedBox2d     = require 'lib.texturedBox2d'
+local addMipos          = require 'addMipos'
+local gradient          = require 'lib.gradient'
 --local skygradient      = gradient.makeSkyGradient(10)
 --local skygradient      = gradient.makeSkyGradient(23)
 
-local ui               = require "lib.ui"
-local connect          = require 'lib.connectors'
-local updatePart       = require 'lib.updatePart'
-local Timer            = require 'vendor.timer'
-local text             = require "lib.text"
-local vehicle          = require 'vehicle-creator'
-local animParticles    = require 'frameAnimParticle'
+local ui                = require "lib.ui"
+local connect           = require 'lib.connectors'
+local updatePart        = require 'lib.updatePart'
+local Timer             = require 'vendor.timer'
+local text              = require "lib.text"
+local vehicle           = require 'vehicle-creator'
+local animParticles     = require 'frameAnimParticle'
 
-local dj               = require 'organicMusic'
+local dj                = require 'organicMusic'
+
+local dayTimeTransition = { t = 0 }
 
 function makeUserData(bodyType, moreData)
     local result = {
@@ -2050,7 +2052,11 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
 
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(skyGradient, 0, 0, 0, love.graphics.getDimensions())
+
+
+
+    local skyGradient2 = gradient.lerpSkyGradient(10, 22, dayTimeTransition.t)
+    love.graphics.draw(skyGradient2, 0, 0, 0, love.graphics.getDimensions())
 
 
     local w, h = love.graphics.getDimensions()
@@ -2171,13 +2177,25 @@ function love.draw()
     love.graphics.circle('line', curCamX, curCamY, 20)
     cam:pop()
 
+    if dayTimeTransition.t ~= 1 and dayTimeTransition.t ~= 0 then
+        print(dayTimeTransition.t)
+    end
+
+
+
     -- dayTime
-    if (dayTime == 22) then
+    if (dayTimeTransition.t >= 1) then
         love.graphics.setColor(0.1, 0.1, .35, 0.25)
         love.graphics.rectangle('fill', 0, 0, w, h)
-    end
-    if (dayTime == 10) then
+    elseif (dayTimeTransition.t <= 0) then
         love.graphics.setColor(1, 1, 0, 0.05)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+    else
+        local r = numbers.mapInto(dayTimeTransition.t, 0, 1, 1, .1)
+        local g = numbers.mapInto(dayTimeTransition.t, 0, 1, 1, .1)
+        local b = numbers.mapInto(dayTimeTransition.t, 0, 1, 0, .35)
+        local a = numbers.mapInto(dayTimeTransition.t, 0, 1, .05, .25)
+        love.graphics.setColor(r, g, b, a)
         love.graphics.rectangle('fill', 0, 0, w, h)
     end
     animParticles.drawAnimParticles()
@@ -2276,8 +2294,10 @@ function love.keypressed(k)
     if k == 'd' then
         if dayTime == 22 then
             dayTime = 10
+            Timer.tween(1, dayTimeTransition, { t = 0 })
         else
             dayTime = 22
+            Timer.tween(1, dayTimeTransition, { t = 1 })
         end
         skyGradient = gradient.makeSkyGradient(dayTime)
     end

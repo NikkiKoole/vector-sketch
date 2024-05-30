@@ -1,5 +1,6 @@
 require 'lib.basics'
-local formats = require 'lib.formats'
+local numbers   = require 'lib.numbers'
+local formats   = require 'lib.formats'
 -- https://codepen.io/bork/pen/wJhEm
 local gradients = {
     { from = { hex2rgb('#012459') }, to = { hex2rgb('#001322') } },
@@ -79,6 +80,39 @@ lib.makeSkyGradient = function(timeIndex)
         gradients[timeIndex].from, gradients[timeIndex].to
     )
 end
+
+lib.lerpSkyGradient = function(timeIndex1, timeIndex2, t)
+    local r1 = gradients[timeIndex1].from[1]
+    local g1 = gradients[timeIndex1].from[2]
+    local b1 = gradients[timeIndex1].from[3]
+
+    local r2 = gradients[timeIndex2].from[1]
+    local g2 = gradients[timeIndex2].from[2]
+    local b2 = gradients[timeIndex2].from[3]
+
+    local r3 = gradients[timeIndex1].to[1]
+    local g3 = gradients[timeIndex1].to[2]
+    local b3 = gradients[timeIndex1].to[3]
+
+    local r4 = gradients[timeIndex2].to[1]
+    local g4 = gradients[timeIndex2].to[2]
+    local b4 = gradients[timeIndex2].to[3]
+
+    local rfrom = numbers.mapInto(t, 0, 1, r1, r2)
+    local gfrom = numbers.mapInto(t, 0, 1, g1, g2)
+    local bfrom = numbers.mapInto(t, 0, 1, b1, b2)
+
+    local rto = numbers.mapInto(t, 0, 1, r3, r4)
+    local gto = numbers.mapInto(t, 0, 1, g3, g4)
+    local bto = numbers.mapInto(t, 0, 1, b3, b4)
+
+
+    return gradientMesh(
+        "vertical",
+        { rfrom, gfrom, bfrom }, { rto, gto, bto }
+    )
+end
+
 
 lib.getGradientData = function(timeIndex)
     return gradients[timeIndex].from, gradients[timeIndex].to
