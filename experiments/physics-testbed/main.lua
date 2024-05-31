@@ -1584,6 +1584,14 @@ end
 
 -- end lifted
 
+
+function lerpColor(color1, color2, t)
+    local r = numbers.mapInto(t, 0, 1, color1[1], color2[1])
+    local g = numbers.mapInto(t, 0, 1, color1[2], color2[2])
+    local b = numbers.mapInto(t, 0, 1, color1[3], color2[3])
+    return { r, g, b }
+end
+
 function drawSinglePaardenBloem(x, y, randomNumber, randomNumber2)
     local stengelScaleY = 1.2 - randomNumber * 3
     local h = stengelImage:getHeight() * stengelScaleY
@@ -1596,22 +1604,24 @@ function drawSinglePaardenBloem(x, y, randomNumber, randomNumber2)
     love.graphics.setColor(darkGrassColor)
 
     love.graphics.draw(m, x, y, 0, 1, stengelScaleY, 0, 0)
-    -- print(randomNumber2)
-    --if randomNumber2 > .6 then
-    local colorIndex = math.floor(numbers.mapInto(randomNumber2, .2, .8, 1, #flowerColors))
-    -- print(colors)
-    local colors = flowerColors[colorIndex]
-    --print(colorIndex, inspect(colors))
-    love.graphics.setColor(colors)
-    --else
-    --    love.graphics.setColor(1, 0, 1)
-    --end
 
+
+
+
+    --if dayTime == 10 then
+    local colorIndex = math.floor(numbers.mapInto(randomNumber2, .2, .8, 1, #flowerColors))
+    local daycolors = flowerColors[colorIndex]
+    --love.graphics.setColor(colors)
+    --else
+    local colorIndex = math.floor(numbers.mapInto(randomNumber2, .2, .8, 1, #pastelColors))
+    local nightcolors = pastelColors[colorIndex]
+    --l--ove.graphics.setColor(colors)
+    --end
+    local mixedColor = lerpColor(daycolors, nightcolors, dayTimeTransition.t)
+    love.graphics.setColor(mixedColor)
     love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY * stengelScaleY, math.sin(timeSpent),
         1, 1,
         bloemHoofdImage:getWidth() / 2, bloemHoofdImage:getHeight() / 2)
-
-
 
     love.graphics.setColor(darkGrassColor)
     love.graphics.draw(bloemBladImage, x, y, -math.pi / 2 + 0.5, 1, 1, bloemBladImage:getWidth() / 2,
@@ -1625,6 +1635,8 @@ function drawPaardenBloemen()
     local startY = ground.points[2]
     local eindX = ground.points[#ground.points - 1]
     local eindY = ground.points[#ground.points]
+
+
     for i = 1, #ground.points, 2 do
         local x = ground.points[i]
         local y = ground.points[i + 1]
@@ -1633,24 +1645,11 @@ function drawPaardenBloemen()
         local hh2 = love.math.noise((x) / 100, .6, .1)
 
         if (x % 8 == 0) then
-            --print(i, hh)
             if (hh < .4) then
                 love.graphics.setColor(1, 0, 0)
-                --  love.graphics.circle('fill', x, y - 1000, 100)
-                --  love.graphics.print('none', x, y)
             elseif (hh > .4 and hh < .5) then
                 love.graphics.setColor(1, 1, 0)
-                --   love.graphics.circle('fill', x, y - 1000, 100)
-                --  love.graphics.print('none', x, y)
             else
-                -- print(hh)
-                -- if (hh > .6) then
-                --     love.graphics.setColor(1, 1, 0)
-                --- else
-                --      love.graphics.setColor(1, 0, 0)
-                --  end
-
-
                 drawSinglePaardenBloem(x, y, hh - 0.5, hh2)
             end
         end
@@ -2034,16 +2033,22 @@ local function drawCelestialBodies()
     local w, h = love.graphics.getDimensions()
     local sunX = w / 12 * 10 --numbers.mapInto(camtlx, 800000, -100000, 0, w)
     local sunY = h / 12      --numbers.mapInto(camtly, 800000, -100000, 0, h)
-    if dayTime == 10 then
-        drawSun(sunX, sunY)
+    --  print(dayTimeTransition.t)
+
+    centerX = w / 2
+    centerY = h / 2
+
+    if dayTimeTransition.t >= 0 and dayTimeTransition.t < .5 then
+        local angle = dayTimeTransition.t * math.pi
+        local rotatedX = math.cos(angle) * (sunX - centerX) - math.sin(angle) * (sunY - centerY) + centerX
+        local rotatedY = math.sin(angle) * (sunX - centerX) + math.cos(angle) * (sunY - centerY) + centerY
+        drawSun(rotatedX, rotatedY)
     else
-        drawMoon(sunX, sunY)
+        local angle = math.pi + dayTimeTransition.t * -math.pi
+        local rotatedX = math.cos(angle) * (sunX - centerX) - math.sin(angle) * (sunY - centerY) + centerX
+        local rotatedY = math.sin(angle) * (sunX - centerX) + math.cos(angle) * (sunY - centerY) + centerY
+        drawMoon(rotatedX, rotatedY)
     end
-
-
-    --local moonX = w / 12 * 2
-    --local moonY = h / 12
-    --drawMoon(moonX, moonY)
 end
 
 function love.draw()
@@ -2177,9 +2182,9 @@ function love.draw()
     love.graphics.circle('line', curCamX, curCamY, 20)
     cam:pop()
 
-    if dayTimeTransition.t ~= 1 and dayTimeTransition.t ~= 0 then
-        print(dayTimeTransition.t)
-    end
+    --if dayTimeTransition.t ~= 1 and dayTimeTransition.t ~= 0 then
+    --    print(dayTimeTransition.t)
+    --end
 
 
 
@@ -2326,7 +2331,7 @@ function love.keypressed(k)
             Timer.after(3, function() brrVolume = 0 end)
         end
     end
-    if k == 'd' then
+    if k == 'p' then
         disableLegs()
     end
 end
