@@ -501,7 +501,7 @@ function makeBike2(x, y, data)
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 2)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setUserData(makeUserData("frontWheel"))
     -- ball1.fixture:setFilterData(13, 13, -1)
 
@@ -510,7 +510,7 @@ function makeBike2(x, y, data)
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 2)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setUserData(makeUserData("backWheel"))
     --  ball2.fixture:setFilterData(13, 13, -1)
     --  ball2.fixture:setFriction(1)

@@ -20,7 +20,8 @@ local lib = {}
 -- make looping
 -- doing wheelie
 -- doing jump
-
+-- change from day to night 
+-- change from night to day
 
 audiohelper.startAudioThread()
 
@@ -56,6 +57,22 @@ function lib.update()
         end
     end
 end
+
+function lib.toggleInstrumentAtIndex(toggle, index) 
+    
+
+    if toggle then
+        print('korg') 
+        local inst1 = audiohelper.prepareSingleSample({ "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav')
+        audiohelper.changeSingleInstrumentsAtIndex(inst1, index)
+    else 
+        print('rainbows')
+        local inst2 = audiohelper.prepareSingleSample({ "lulla" }, 'rainbows.wav')
+        audiohelper.changeSingleInstrumentsAtIndex(inst2, index)
+    end
+
+end
+
 
 function handleQueuedActions()
     -- print(#queuedActions)

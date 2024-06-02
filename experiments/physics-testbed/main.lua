@@ -266,8 +266,8 @@ function getYAtX(x, stepSize, buildOptions)
     end
 
     local aLengthInSteps = 125 -- the steep part
-    local bLengthInSteps = 15  --  the flat part
-    local steepA = 150
+    local bLengthInSteps = 0  --  the flat part
+    local steepA = 150 
     local steepB = 20
 
     local divved = index / (aLengthInSteps + bLengthInSteps)
@@ -2313,6 +2313,13 @@ function love.keypressed(k)
             dj.queueClip(4, 8)
         end
     end
+
+    if k == 's' then 
+        toggledState = not  toggledState
+        dj.toggleInstrumentAtIndex(toggledState, 1)
+        
+    end
+    
     if k == 'escape' then love.event.quit() end
     if k == 'space' then
         cycleStep()

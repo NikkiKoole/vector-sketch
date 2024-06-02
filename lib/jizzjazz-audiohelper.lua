@@ -102,6 +102,13 @@ function lib.setDrumKitFiles(files)
     lib.drumkit = lib.prepareDrumkit(files)
 end
 
+function lib.changeSingleInstrumentsAtIndex(sample, index) 
+-- im assuming we alkready have an instrument here and wetype want to keep adsr as is
+print(index)
+lib.instruments[index].sample = sample
+lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
+end
+
 function lib.initializeInstruments(samples)
     for i = 1, 5 do
         lib.instruments[i] = {
