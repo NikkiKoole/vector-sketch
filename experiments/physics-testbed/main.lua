@@ -266,8 +266,8 @@ function getYAtX(x, stepSize, buildOptions)
     end
 
     local aLengthInSteps = 125 -- the steep part
-    local bLengthInSteps = 0  --  the flat part
-    local steepA = 150 
+    local bLengthInSteps = 0   --  the flat part
+    local steepA = 150
     local steepB = 20
 
     local divved = index / (aLengthInSteps + bLengthInSteps)
@@ -678,7 +678,7 @@ function connectMipoAndVehicle()
         v:setActive(false)
     end
     --  updatePart.resetPositions(mipos[1])
-    Timer.after(.2, function()
+    Timer.after(10, function()
         for k, v in pairs(b2d) do
             --print(k,v)
             v:setGravityScale(0.3)
@@ -743,6 +743,10 @@ function connectMipoAndVehicle()
             setSensorValueBody(b2d.rlarm, true)
 
             setSensorValueBody(b2d.torso, true)
+            setSensorValueBody(b2d.lear, true)
+
+            setSensorValueBody(b2d.rear, true)
+
 
             if (b2d.head) then
                 setSensorValueBody(b2d.head, true)
@@ -1176,11 +1180,31 @@ function bikeGroundFeelerIsTouchingGround(bike)
     return true
 end
 
+function bikeGroundFeelerUpIsTouchingGround(bike)
+    if bike.groundFeelerUp then
+        local centroid = getCentroidOfFixture(bike.frame.body, bike.groundFeelerUp.fixture)
+        local y = getYAtX(centroid[1], stepSize)
+        --print(y, centroid[2])
+        return centroid[2] > y
+    end
+    return true
+end
+
 local timeSpent = 0
 local brrVolume = 0
 
 
 function love.update(dt)
+    if bikeGroundFeelerUpIsTouchingGround(bike) then
+        -- print('jo hello!, bike is upside down ')
+        local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
+
+        mass = mass * 3
+        local body = bike.frame.body
+        body:applyLinearImpulse(0, -(mass * 100))
+        body:applyAngularImpulse(10000)
+    end
+
     dj.update()
     animParticles.updateAnimParticles(dt)
     -- print(dt)
@@ -2100,7 +2124,7 @@ function love.draw()
         love.graphics.draw(batch2)
     end
     textureTheSchansjes()
-    --phys.drawWorld(world)
+    phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
@@ -2306,6 +2330,12 @@ function love.keypressed(k)
         end
         skyGradient = gradient.makeSkyGradient(dayTime)
     end
+
+    if k == 'f' then
+        if bikeGroundFeelerUpIsTouchingGround(bike) then
+            print('jo hello!, bike is upside down ')
+        end
+    end
     if k == 'c' then
         if love.math.random() < 0.5 then
             dj.queueClip(4, 2)
@@ -2314,12 +2344,11 @@ function love.keypressed(k)
         end
     end
 
-    if k == 's' then 
-        toggledState = not  toggledState
+    if k == 's' then
+        toggledState = not toggledState
         dj.toggleInstrumentAtIndex(toggledState, 1)
-        
     end
-    
+
     if k == 'escape' then love.event.quit() end
     if k == 'space' then
         cycleStep()

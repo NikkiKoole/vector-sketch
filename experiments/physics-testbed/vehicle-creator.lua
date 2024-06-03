@@ -219,6 +219,14 @@ function makePedalBike(x, y, data)
     groundFeeler.fixture = love.physics.newFixture(frame.body, groundFeeler.shape, 1)
     groundFeeler.fixture:setSensor(true)
 
+
+    local groundFeelerUp = {}
+    --groundFeeler.body = love.physics.newBody(world, x, y+600, "dynamic")
+    groundFeelerUp.shape = love.physics.newRectangleShape(0, -750, 100, 100)
+    groundFeelerUp.fixture = love.physics.newFixture(frame.body, groundFeelerUp.shape, 1)
+    groundFeelerUp.fixture:setSensor(true)
+
+
     local seat = {}
     local seatXOffset = -0
     local seatYOffset = -300
@@ -284,8 +292,8 @@ function makePedalBike(x, y, data)
         pedalWheel = pedal,
         frame = frame,
         seat = seat,
-        groundFeeler =
-            groundFeeler
+        groundFeeler = groundFeeler,
+        groundFeelerUp = groundFeelerUp
     }
 end
 
@@ -498,6 +506,13 @@ function makeBike2(x, y, data)
     groundFeeler.fixture = love.physics.newFixture(frame.body, groundFeeler.shape, 1)
     groundFeeler.fixture:setSensor(true)
 
+
+    local groundFeelerUp = {}
+    --groundFeeler.body = love.physics.newBody(world, x, y+600, "dynamic")
+    groundFeelerUp.shape = love.physics.newRectangleShape(0, -750, 10, 10)
+    groundFeelerUp.fixture = love.physics.newFixture(frame.body, groundFeelerUp.shape, 1)
+    groundFeelerUp.fixture:setSensor(true)
+
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
@@ -554,7 +569,8 @@ function makeBike2(x, y, data)
         frame = frame,
         seat = seat,
         pedalWheel = pedal,
-        groundFeeler = groundFeeler
+        groundFeeler = groundFeeler,
+        groundFeelerUp = groundFeelerUp
     }
 end
 
