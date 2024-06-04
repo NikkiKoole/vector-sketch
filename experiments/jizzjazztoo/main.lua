@@ -1,3 +1,16 @@
+function waitForEvent()
+    local a, b, c, d, e
+    repeat
+        a, b, c, d, e = love.event.wait()
+        print(a)
+    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
+end
+
+print('before wait for event')
+waitForEvent()
+print('after wait for event')
+
+
 package.path = package.path .. ";../../?.lua"
 
 sone = require 'sone'
@@ -27,58 +40,12 @@ local function clear()
 end
 
 local function fill(pattern, part)
-    local hasEveryThingNeeded = true
-    for k, v in pairs(part.grid) do
-        if not audiohelper.drumkit[k] then
-            print("failed looking for", k, "in drumkt")
-            hasEveryThingNeeded = false
-        end
-    end
-
-    if (hasEveryThingNeeded) then
-        local gridLength = 0
-
-        for k, v in pairs(part.grid) do
-            gridLength = string.len(v)
-        end
-        audiohelper.initializeDrumgrid(gridLength)
-        --print(inspect(part.grid))
-
-        for k, v in pairs(part.grid) do
-            -- find the correct row in the grid.
-            local index = -1
-            for i = 1, #audiohelper.drumkit.order do
-                if audiohelper.drumkit.order[i] == k then
-                    index = i
-                end
-            end
-
-            if string.len(v) ~= #audiohelper.drumgrid then
-                print("failed: issue with length of drumgrid", string.len(v), #audiohelper.drumgrid, pattern.name)
-            end
-            gridLength = string.len(v)
-            if index == -1 then
-                print("failed: I could find the correct key but something wrong with order: ", k)
-            end
-
-            for i = 1, string.len(v) do
-                local c = v:sub(i, i)
-                if (c == "x") then
-                    audiohelper.drumgrid[i][index] = { on = true }
-                elseif (c == "f") then
-                    audiohelper.drumgrid[i][index] = { on = true, flam = true }
-                else
-                    audiohelper.drumgrid[i][index] = { on = false }
-                end
-            end
-        end
-
-        return pattern.name .. " : " .. part.name, gridLength
-    end
+    return audiohelper.drumPatternFill(pattern, part)
 end
 
 function pickPatternByIndex(index1, index2)
     -- clear it
+    --print('picking pattern by i dex')
     clear()
     local patternIndex = index1 --math.ceil(love.math.random() * #patterns)
     local pattern = drumPatterns[patternIndex]
@@ -167,6 +134,7 @@ function love.load()
     instrumentIndex = 1
     drumIndex       = 0
     drumJob         = nil
+    activeDrumPart  = 1
 
     uiData          = {
         bpm = 90,
@@ -1064,15 +1032,38 @@ function drawDrumParts(x, y)
     local xOff = (w - smallfont:getWidth('x')) / 2
     local h = font:getHeight()
     local col = palette.fg2
-    love.graphics.setColor(col[1], col[2], col[3], 0.25)
+    love.graphics.setColor(col[1], col[2], col[3], 1)
     love.graphics.setLineWidth(4)
+
+
+
     for i = 1, 3 do
-        love.graphics.rectangle('line', x + w * (i - 1), y, w, h)
-        love.graphics.print(labels[i], xOff + x + w * (i - 1), y)
+        local myX = xOff + x + w * (i - 1)
+        local myY = y
+        if (activeDrumPart == i) then
+            love.graphics.setColor(1, 1, 1, 1)
+        else
+            love.graphics.setColor(col[1], col[2], col[3], .3)
+        end
+        local r = getUIRect(myX, myY, w, h)
+        if r then
+            activeDrumPart = i
+        end
+        love.graphics.print(labels[i], myX, myY)
     end
     for i = 4, 6 do
-        love.graphics.rectangle('line', x + w * (i - 4), y + h, w, h)
-        love.graphics.print(labels[i], xOff + x + w * (i - 4), y + h)
+        local myX = xOff + x + w * (i - 4)
+        local myY = y + h
+        if (activeDrumPart == i) then
+            love.graphics.setColor(1, 1, 1, 1)
+        else
+            love.graphics.setColor(col[1], col[2], col[3], .3)
+        end
+        local r = getUIRect(myX, myY, w, h)
+        if r then
+            activeDrumPart = i
+        end
+        love.graphics.print(labels[i], myX, myY)
     end
 end
 
@@ -1375,6 +1366,8 @@ function love.draw()
     handleMouseClickStart()
 
     love.graphics.setColor(1, 1, 1)
+
+    drawDrumParts(100, 0)
 
     if drumIndex <= 0 then
         drawDrumMachine()

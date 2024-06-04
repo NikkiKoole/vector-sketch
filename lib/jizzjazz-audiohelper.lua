@@ -96,17 +96,69 @@ function lib.initializeDrumgrid(optionalColumns)
     end
 end
 
+function lib.drumPatternFill(pattern, part)
+    print(inspect(pattern), inspect(part))
+    local hasEveryThingNeeded = true
+    for k, v in pairs(part.grid) do
+        if not lib.drumkit[k] then
+            print("failed looking for", k, "in drumkt")
+            hasEveryThingNeeded = false
+        end
+    end
+
+    if (hasEveryThingNeeded) then
+        local gridLength = 0
+
+        for k, v in pairs(part.grid) do
+            gridLength = string.len(v)
+        end
+        lib.initializeDrumgrid(gridLength)
+        --print(inspect(part.grid))
+
+        for k, v in pairs(part.grid) do
+            -- find the correct row in the grid.
+            local index = -1
+            for i = 1, #lib.drumkit.order do
+                if lib.drumkit.order[i] == k then
+                    index = i
+                end
+            end
+
+            if string.len(v) ~= #lib.drumgrid then
+                print("failed: issue with length of drumgrid", string.len(v), #lib.drumgrid, pattern.name)
+            end
+            gridLength = string.len(v)
+            if index == -1 then
+                print("failed: I could find the correct key but something wrong with order: ", k)
+            end
+
+            for i = 1, string.len(v) do
+                local c = v:sub(i, i)
+                if (c == "x") then
+                    lib.drumgrid[i][index] = { on = true }
+                elseif (c == "f") then
+                    lib.drumgrid[i][index] = { on = true, flam = true }
+                else
+                    lib.drumgrid[i][index] = { on = false }
+                end
+            end
+        end
+
+        return pattern.name .. " : " .. part.name, gridLength
+    end
+end
+
 function lib.setDrumKitFiles(files)
     --    print('set drumkit files')
     --    lib.drumkitFiles = files
     lib.drumkit = lib.prepareDrumkit(files)
 end
 
-function lib.changeSingleInstrumentsAtIndex(sample, index) 
--- im assuming we alkready have an instrument here and wetype want to keep adsr as is
-print(index)
-lib.instruments[index].sample = sample
-lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
+function lib.changeSingleInstrumentsAtIndex(sample, index)
+    -- im assuming we alkready have an instrument here and wetype want to keep adsr as is
+    print(index)
+    lib.instruments[index].sample = sample
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
 end
 
 function lib.initializeInstruments(samples)

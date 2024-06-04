@@ -1201,7 +1201,7 @@ function love.update(dt)
 
         mass = mass * 3
         local body = bike.frame.body
-        body:applyLinearImpulse(0, -(mass * 100))
+        body:applyLinearImpulse(0, -(mass * 500))
         body:applyAngularImpulse(10000)
     end
 
