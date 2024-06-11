@@ -27,9 +27,10 @@ require 'fileBrowser'
 --luamidi = require "luamidi"
 
 local function clear()
-    for x = 1, #audiohelper.drumgrid do
-        for y = 1, #audiohelper.drumgrid[1] do
-            audiohelper.drumgrid[x][y] = { on = false }
+    local k = 1
+    for x = 1, #audiohelper.drumgrid[k] do
+        for y = 1, #audiohelper.drumgrid[k][1] do
+            audiohelper.drumgrid[k][x][y] = { on = false }
         end
     end
 
@@ -782,7 +783,6 @@ function drawMoreInfoForInstrument()
         end
         if drumJob then
             if labelbutton(' reset', buttonX, startY + cellH * 10, 100, cellH).clicked then
-                
                 for i = 1, #audiohelper.drumgrid[k] do
                     local cell = audiohelper.drumgrid[k][i][drumIndex]
                     if (cell and cell.on) then
@@ -1006,7 +1006,11 @@ function love.mousepressed(x, y, button)
         local cx, cy = getCellUnderPosition(x, y)
         if cx >= 0 and cy >= 0 then
             local k = 1
-            audiohelper.drumgrid[k][cx][cy] = { on = not audiohelper.drumgrid[k][cx][cy].on, flam = love.keyboard.isDown('.') }
+            audiohelper.drumgrid[k][cx][cy] = {
+                on = not audiohelper.drumgrid[k][cx][cy].on,
+                flam = love.keyboard.isDown(
+                    '.')
+            }
             audiohelper.updateDrumKitData()
         end
     else

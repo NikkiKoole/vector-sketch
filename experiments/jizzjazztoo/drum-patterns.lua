@@ -23,10 +23,15 @@ CB: Cowbell
 },
 --]]
 
+
+
+-- I've disabled all non 16 length patterns, this makes my code a biunch easier to reason about..
+
 local patterns = {
     {
         name = "CR78",
         sections = {
+            --[[
             {
                 grid = {
                     CY = "x.........x.x.........x.",
@@ -46,6 +51,7 @@ local patterns = {
                 },
                 name = "Shuffle A"
             },
+            --]]
             {
                 grid = {
                     CY = "x...........x...",
@@ -2156,7 +2162,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --[[
     {
         name = "Funk 15",
         sections = {
@@ -2186,7 +2192,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
     {
         name = "Rhythm & Blues 1",
         sections = {
@@ -2755,7 +2761,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --[[
     {
         name = "Reggae 4",
         sections = {
@@ -2787,7 +2793,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
     {
         name = "Reggae 5",
         sections = {
@@ -3150,6 +3156,7 @@ local patterns = {
             }
         }
     },
+    --[[
     {
         name = "Blues 1",
         sections = {
@@ -3294,7 +3301,9 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
+
+    --[[
     {
         name = "Shuffle 1",
         sections = {
@@ -3323,7 +3332,9 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
+
+    --[[
     {
         name = "Shuffle 2",
         sections = {
@@ -3352,7 +3363,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
     {
         name = "Samba 1",
         sections = {
@@ -3703,7 +3714,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --[[
     {
         name = "Waltz",
         sections = {
@@ -3763,7 +3774,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
     {
         name = "Twist",
         sections = {
@@ -3824,7 +3835,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --[[
     {
         name = "Swing",
         sections = {
@@ -3910,7 +3921,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
     {
         name = "Slow",
         sections = {
@@ -4144,7 +4155,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --[[
     {
         name = "Shuffle",
         sections = {
@@ -4233,7 +4244,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --]]
     {
         name = "Samba",
         sections = {
@@ -4824,6 +4835,7 @@ local patterns = {
                     CH = "x.x.x.x.x.x.x.x."
                 }
             },
+            --[[
             {
                 name = "Reggae7",
                 grid = {
@@ -4849,7 +4861,7 @@ local patterns = {
                     BD = "x.....x.....",
                     CH = "x..x.xx..x.x"
                 }
-            },
+            },--]]
             {
                 name = "Reggae10",
                 grid = {
@@ -4942,7 +4954,7 @@ local patterns = {
                     BD = "x...............",
                     SD = "x..............."
                 }
-            },
+            }, --[[
             {
                 name = "ReggaeBreak7",
                 grid = {
@@ -4977,6 +4989,7 @@ local patterns = {
                     SD = "....xx..xx.."
                 }
             }
+        } --]]
         }
     },
     {
@@ -5353,7 +5366,7 @@ local patterns = {
                 }
             }
         }
-    },
+    }, --[[
     {
         name = "Jazz",
         sections = {
@@ -5438,8 +5451,10 @@ local patterns = {
                     BD = "x.x..xx....."
                 }
             }
+
         }
-    },
+
+    },--]]
     {
         name = "Funk",
         sections = {
@@ -6080,6 +6095,7 @@ local patterns = {
                     SD = "....x..x....x..x"
                 }
             },
+            --[[
             {
                 name = "BoogieBreak1",
                 grid = {
@@ -6106,8 +6122,10 @@ local patterns = {
                     SD = ".xx.xx.xx.xx"
                 }
             }
+            --]]
         }
     },
+    --[[
     {
         name = "Blues",
         sections = {
@@ -6196,6 +6214,7 @@ local patterns = {
             }
         }
     },
+    --]]
     {
         name = "Afro Cuban",
         sections = {
@@ -6358,5 +6377,7 @@ local patterns = {
         }
     }
 }
+
+
 
 return patterns

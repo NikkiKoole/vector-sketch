@@ -88,7 +88,7 @@ function lib.initializeMixer()
 end
 
 function lib.initializeDrumgrid(optionalColumns)
-    local k= 1
+    local k = 1
     lib.drumgrid[k] = {}
     for x = 1, optionalColumns or lib.columns do
         lib.drumgrid[k][x] = {}
@@ -126,7 +126,7 @@ function lib.drumPatternFill(pattern, part)
                 end
             end
 
-            if string.len(v) ~= #lib.drumgrid then
+            if string.len(v) ~= #lib.drumgrid[1] then
                 print("failed: issue with length of drumgrid", string.len(v), #lib.drumgrid, pattern.name)
             end
             gridLength = string.len(v)
@@ -369,7 +369,7 @@ function lib.saveJizzJazzFile()
     local drumRows = #simplifiedDrumkit.order
     simplifiedDrumGrid.columns = lib.columns
 
-    local k= 1
+    local k = 1
     simplifiedDrumGrid[k] = {}
     for x = 1, drumColumns do
         simplifiedDrumGrid[k][x] = {}
@@ -429,16 +429,16 @@ function lib.loadJizzJazzFile(data, filename)
     lib.drumkit = lib.prepareDrumkit(data.drumkit)
     lib.columns = data.simplifiedDrumGrid.columns or #data.simplifiedDrumGrid -- todo not working yet.
     lib.labels = lib.drumkit.order
-    
-    if (type(data.simplifiedDrumGrid[1][1]))== 'number' then  
+
+    if (type(data.simplifiedDrumGrid[1][1])) == 'number' then
         print('patching for multiple drumparts')
-        local temp = {[1]=data.simplifiedDrumGrid}
+        local temp = { [1] = data.simplifiedDrumGrid }
         data.simplifiedDrumGrid = temp
-    else 
+    else
         print("this didnt need patching")
     end
     local g = data.simplifiedDrumGrid
-    
+
 
 
     lib.initializeDrumgrid(lib.columns)
@@ -447,7 +447,7 @@ function lib.loadJizzJazzFile(data, filename)
     for x = 1, #g[k] do
         for y = 1, #g[k][x] do
             local dcell = g[k][x][y]
-            
+
             lib.drumgrid[k][x][y] = { on = false }
             if dcell ~= 0 then
                 lib.drumgrid[k][x][y] = shallowcopy(dcell)
