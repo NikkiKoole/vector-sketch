@@ -623,9 +623,10 @@ function drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, columns, rowInde
     love.graphics.setColor(1, 1, 1, 0.8)
     local xOff = (cellW - smallfont:getWidth('x')) / 2
     local y = rowIndex
+    local k = 1
     for x = 0, columns - 1 do
-        if audiohelper.drumgrid[x + 1][y + 1].on == true then
-            if audiohelper.drumgrid[x + 1][y + 1].flam == true then
+        if audiohelper.drumgrid[k][x + 1][y + 1].on == true then
+            if audiohelper.drumgrid[k][x + 1][y + 1].flam == true then
                 love.graphics.print('f', xOff + startX + x * cellW, startY)
             else
                 love.graphics.print('x', xOff + startX + x * cellW, startY)
@@ -636,11 +637,12 @@ end
 
 function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
     love.graphics.setColor(1, 1, 1, 0.8)
+    local k = 1
     local xOff = (cellW - smallfont:getWidth('x')) / 2
     for y = 0, rows do
         for x = 0, columns - 1 do
-            if audiohelper.drumgrid[x + 1][y + 1].on == true then
-                if audiohelper.drumgrid[x + 1][y + 1].flam == true then
+            if audiohelper.drumgrid[k][x + 1][y + 1].on == true then
+                if audiohelper.drumgrid[k][x + 1][y + 1].flam == true then
                     love.graphics.print('f', xOff + startX + x * cellW, startY + y * cellH)
                 else
                     love.graphics.print('x', xOff + startX + x * cellW, startY + y * cellH)
@@ -738,6 +740,7 @@ function drawMoreInfoForInstrument()
     local cellH = grid.cellH
 
     local buttonX = startX - 100
+    local k = 1
     if drumIndex > 0 then
         drawDrumMachineGrid(startX, startY, cellW, cellH, audiohelper.columns, 0)
         drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, audiohelper.columns, drumIndex - 1)
@@ -779,8 +782,9 @@ function drawMoreInfoForInstrument()
         end
         if drumJob then
             if labelbutton(' reset', buttonX, startY + cellH * 10, 100, cellH).clicked then
-                for i = 1, #audiohelper.drumgrid do
-                    local cell = audiohelper.drumgrid[i][drumIndex]
+                
+                for i = 1, #audiohelper.drumgrid[k] do
+                    local cell = audiohelper.drumgrid[k][i][drumIndex]
                     if (cell and cell.on) then
                         if drumJob == 'volume' then
                             cell.volume = 1
@@ -800,8 +804,8 @@ function drawMoreInfoForInstrument()
             end
         end
 
-        for i = 1, #audiohelper.drumgrid do
-            local cell = audiohelper.drumgrid[i][drumIndex]
+        for i = 1, #audiohelper.drumgrid[k] do
+            local cell = audiohelper.drumgrid[k][i][drumIndex]
             if (cell and cell.on) then
                 if drumJob == 'randP' then
                     love.graphics.setLineWidth(4)
@@ -910,9 +914,9 @@ function drawMoreInfoForInstrument()
 
         if drumJob == 'echo' then
             local xOff = (cellW - smallfont:getWidth('x')) / 2
-            drawDrumMachineGrid(startX, startY + cellH, cellW, cellH, #audiohelper.drumgrid, 0)
-            for i = 1, #audiohelper.drumgrid do
-                local cell = audiohelper.drumgrid[i][drumIndex]
+            drawDrumMachineGrid(startX, startY + cellH, cellW, cellH, #audiohelper.drumgrid[k], 0)
+            for i = 1, #audiohelper.drumgrid[k] do
+                local cell = audiohelper.drumgrid[k][i][drumIndex]
 
                 if (cell and cell.on) then
                     if cell.echo then
@@ -1001,16 +1005,18 @@ function love.mousepressed(x, y, button)
     if drumIndex <= 0 then
         local cx, cy = getCellUnderPosition(x, y)
         if cx >= 0 and cy >= 0 then
-            audiohelper.drumgrid[cx][cy] = { on = not audiohelper.drumgrid[cx][cy].on, flam = love.keyboard.isDown('.') }
+            local k = 1
+            audiohelper.drumgrid[k][cx][cy] = { on = not audiohelper.drumgrid[k][cx][cy].on, flam = love.keyboard.isDown('.') }
             audiohelper.updateDrumKitData()
         end
     else
         if drumIndex > 0 then
+            local k = 1
             local cx, cy = getCellUnderPosition(x, y)
 
             if cx >= 0 and cy == 1 then
-                audiohelper.drumgrid[cx][drumIndex] = {
-                    on = not audiohelper.drumgrid[cx][drumIndex].on,
+                audiohelper.drumgrid[k][cx][drumIndex] = {
+                    on = not audiohelper.drumgrid[k][cx][drumIndex].on,
                     flam = love.keyboard.isDown('.')
                 }
                 audiohelper.updateDrumKitData()

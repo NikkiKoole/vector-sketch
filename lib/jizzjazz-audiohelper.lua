@@ -88,10 +88,12 @@ function lib.initializeMixer()
 end
 
 function lib.initializeDrumgrid(optionalColumns)
+    local k= 1
+    lib.drumgrid[k] = {}
     for x = 1, optionalColumns or lib.columns do
-        lib.drumgrid[x] = {}
+        lib.drumgrid[k][x] = {}
         for y = 1, #lib.drumkit.order do
-            lib.drumgrid[x][y] = { on = false }
+            lib.drumgrid[k][x][y] = { on = false }
         end
     end
 end
@@ -135,11 +137,11 @@ function lib.drumPatternFill(pattern, part)
             for i = 1, string.len(v) do
                 local c = v:sub(i, i)
                 if (c == "x") then
-                    lib.drumgrid[i][index] = { on = true }
+                    lib.drumgrid[1][i][index] = { on = true }
                 elseif (c == "f") then
-                    lib.drumgrid[i][index] = { on = true, flam = true }
+                    lib.drumgrid[1][i][index] = { on = true, flam = true }
                 else
-                    lib.drumgrid[i][index] = { on = false }
+                    lib.drumgrid[1][i][index] = { on = false }
                 end
             end
         end
@@ -363,18 +365,21 @@ function lib.saveJizzJazzFile()
     end
 
     local simplifiedDrumGrid = {}
-    local drumColumns = #lib.drumgrid
+    local drumColumns = #lib.drumgrid[1]
     local drumRows = #simplifiedDrumkit.order
     simplifiedDrumGrid.columns = lib.columns
+
+    local k= 1
+    simplifiedDrumGrid[k] = {}
     for x = 1, drumColumns do
-        simplifiedDrumGrid[x] = {}
+        simplifiedDrumGrid[k][x] = {}
         for y = 1, drumRows do
-            simplifiedDrumGrid[x][y] = 0
-            local d = lib.drumgrid[x][y]
+            simplifiedDrumGrid[k][x][y] = 0
+            local d = lib.drumgrid[k][x][y]
             if (d.on == true) then
                 local n = shallowcopy(d)
                 n.on = nil
-                simplifiedDrumGrid[x][y] = n
+                simplifiedDrumGrid[k][x][y] = n
             end
         end
     end
@@ -424,16 +429,29 @@ function lib.loadJizzJazzFile(data, filename)
     lib.drumkit = lib.prepareDrumkit(data.drumkit)
     lib.columns = data.simplifiedDrumGrid.columns or #data.simplifiedDrumGrid -- todo not working yet.
     lib.labels = lib.drumkit.order
+    
+    if (type(data.simplifiedDrumGrid[1][1]))== 'number' then  
+        print('patching for multiple drumparts')
+        local temp = {[1]=data.simplifiedDrumGrid}
+        data.simplifiedDrumGrid = temp
+    else 
+        print("this didnt need patching")
+    end
     local g = data.simplifiedDrumGrid
-    lib.initializeDrumgrid(lib.columns)
-    for x = 1, #g do
-        for y = 1, #g[x] do
-            local dcell = g[x][y]
+    
 
-            lib.drumgrid[x][y] = { on = false }
+
+    lib.initializeDrumgrid(lib.columns)
+    local k = 1
+    print(#g)
+    for x = 1, #g[k] do
+        for y = 1, #g[k][x] do
+            local dcell = g[k][x][y]
+            
+            lib.drumgrid[k][x][y] = { on = false }
             if dcell ~= 0 then
-                lib.drumgrid[x][y] = shallowcopy(dcell)
-                lib.drumgrid[x][y].on = true
+                lib.drumgrid[k][x][y] = shallowcopy(dcell)
+                lib.drumgrid[k][x][y].on = true
             end
         end
     end

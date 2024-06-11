@@ -437,6 +437,7 @@ function doHandleDrumNotes(beat, tick, bpm)
     local shouldDelayEvenNotes = swing ~= 50
     local isEvenNoteUndelayed = tick % 48 == 0
 
+    local k = 1 
     if ((tick % 24 == 0 and isSwung == false) or isSwung) then
         if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
             -- here we do nothing, because even noted should be delayed and whe get here, the undelayed even note
@@ -448,7 +449,7 @@ function doHandleDrumNotes(beat, tick, bpm)
             end
 
             for i = 1, #drumkit.order do
-                local cell = drumgrid[column + 1][i]
+                local cell = drumgrid[k][column + 1][i]
                 local dontTrigger = false
                 if cell.on and cell.trig ~= nil then
                     if love.math.random() > cell.trig then
@@ -529,7 +530,7 @@ function doHandleDrumNotes(beat, tick, bpm)
                     end
 
 
-                    if drumgrid[column + 1][i].flam == true then
+                    if drumgrid[k][column + 1][i].flam == true then
                         local flamRepeat = 1
                         for j = 1, flamRepeat do
                             local future = createFutureDrumNote(beat, tick, (12 / flamRepeat),
