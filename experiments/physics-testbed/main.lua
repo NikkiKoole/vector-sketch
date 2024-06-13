@@ -1194,8 +1194,47 @@ local timeSpent = 0
 local brrVolume = 0
 
 
+local function bikeGroundFeelerUpIsBelowSchansje(bike) 
+    if bike.groundFeelerUp then
+        local centroid = getCentroidOfFixture(bike.frame.body, bike.groundFeelerUp.fixture)
+            local y = getYAtX(centroid[1], stepSize)
+            
+    for i = 1, #schansjes do
+        local points = schansjes[i]
+        local lx = points[1]
+        local ly = points[2]
+        local rx = points[#points - 1]
+        local ry = points[#points]
+
+            --print(y, centroid[2])
+           -- return centroid[2] > y
+        if centroid[1] > lx and centroid[1] < rx then 
+            if  centroid[2] > math.min(ly, ry) then return true end
+        end
+
+        --return true
+        --
+        --  print(inspect(points))
+            
+    end 
+    end
+    return false
+end
+
+
+function playRandomMiPoSound() 
+    if miposoundplaying == false or not miposoundplaying:isPlaying() then 
+    local index = math.ceil(math.random() * #miposounds)
+        local sound = miposounds[index]:clone()
+    sound:play()
+    miposoundplaying = sound
+    end
+end
+
 function love.update(dt)
-    if bikeGroundFeelerUpIsTouchingGround(bike) then
+
+
+    if bikeGroundFeelerUpIsTouchingGround(bike) or bikeGroundFeelerUpIsBelowSchansje(bike)  then
         -- print('jo hello!, bike is upside down ')
         local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
 
@@ -1203,6 +1242,7 @@ function love.update(dt)
         local body = bike.frame.body
         body:applyLinearImpulse(0, -(mass * 1000))
         body:applyAngularImpulse(10000)
+        playRandomMiPoSound() 
     end
 
     dj.update()
@@ -1775,6 +1815,8 @@ local function subdivide2D(x1, y1, x2, y2, stepsize)
 
     return result
 end
+
+
 
 local function textureTheSchansjes()
     local w, h = love.graphics.getDimensions()
@@ -2749,7 +2791,9 @@ function love.load()
     grassPattern2 = love.graphics.newImage('assets/world/grasspattern2.png')
     grassPattern2:setWrap('repeat', 'repeat')
 
-
+        --source = love.audio.newSource(url, 'static')
+    miposounds = {love.audio.newSource('assets/sounds/mi.wav', 'static'),love.audio.newSource('assets/sounds/po.wav', 'static') ,love.audio.newSource('assets/sounds/mo.wav', 'static'),love.audio.newSource('assets/sounds/pi.wav', 'static')}    
+    miposoundplaying = false    
     local w, h = love.graphics.getDimensions()
     if false then
         for i = 1, 1 do
