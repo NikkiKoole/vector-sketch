@@ -349,6 +349,26 @@ function lerpYAtX(targetX, stepSize)
     return y3
 end
 
+function enableDisableWinegums()
+    -- for i = 1, #mipos do
+    --     local b = mipos[i]
+    --     local bx, by = b.b2d.torso:getPosition()
+    -- end
+    local mainGuy = mipos[1]
+    local mainGuyX, mainGuyY = mainGuy.b2d.torso:getPosition()
+
+    for i = #winegums, 1, -1 do
+        local b = winegums[i].body
+        local bx, by = b:getPosition()
+
+        if math.abs(mainGuyX - bx) > 20000 or math.abs(mainGuyY - by) > 20000 then
+            winegums[i].body:destroy()
+            print('removed')
+            table.remove(winegums, i)
+        end
+    end
+end
+
 function enableDisableMipos()
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -458,11 +478,14 @@ function cycleStep()
     --  bike.backWheel.body:setAngularVelocity(120000)
     --bike.frame.body:applyLinearImpulse(10000, -1000)
     if bike.pedalWheel then
-        bike.backWheel.body:applyAngularImpulse(1000000)
+        local force = 1000000
+        bike.backWheel.body:applyAngularImpulse(force)
         if frontWheelFromGround == 0 then
-            bike.frontWheel.body:applyAngularImpulse(1000000)
+            bike.frontWheel.body:applyAngularImpulse(force)
         end
-        bike.pedalWheel.body:applyAngularImpulse(1000000)
+        bike.pedalWheel.body:applyAngularImpulse(force)
+
+        --bike.frame.body:applyLinearImpulse(50000, -1000)
     end
 end
 
@@ -1194,47 +1217,44 @@ local timeSpent = 0
 local brrVolume = 0
 
 
-local function bikeGroundFeelerUpIsBelowSchansje(bike) 
+local function bikeGroundFeelerUpIsBelowSchansje(bike)
     if bike.groundFeelerUp then
         local centroid = getCentroidOfFixture(bike.frame.body, bike.groundFeelerUp.fixture)
-            local y = getYAtX(centroid[1], stepSize)
-            
-    for i = 1, #schansjes do
-        local points = schansjes[i]
-        local lx = points[1]
-        local ly = points[2]
-        local rx = points[#points - 1]
-        local ry = points[#points]
+        local y = getYAtX(centroid[1], stepSize)
+
+        for i = 1, #schansjes do
+            local points = schansjes[i]
+            local lx = points[1]
+            local ly = points[2]
+            local rx = points[#points - 1]
+            local ry = points[#points]
 
             --print(y, centroid[2])
-           -- return centroid[2] > y
-        if centroid[1] > lx and centroid[1] < rx then 
-            if  centroid[2] > math.min(ly, ry) then return true end
-        end
+            -- return centroid[2] > y
+            if centroid[1] > lx and centroid[1] < rx then
+                if centroid[2] > math.min(ly, ry) then return true end
+            end
 
-        --return true
-        --
-        --  print(inspect(points))
-            
-    end 
+            --return true
+            --
+            --  print(inspect(points))
+        end
     end
     return false
 end
 
 
-function playRandomMiPoSound() 
-    if miposoundplaying == false or not miposoundplaying:isPlaying() then 
-    local index = math.ceil(math.random() * #miposounds)
+function playRandomMiPoSound()
+    if miposoundplaying == false or not miposoundplaying:isPlaying() then
+        local index = math.ceil(math.random() * #miposounds)
         local sound = miposounds[index]:clone()
-    sound:play()
-    miposoundplaying = sound
+        sound:play()
+        miposoundplaying = sound
     end
 end
 
 function love.update(dt)
-
-
-    if bikeGroundFeelerUpIsTouchingGround(bike) or bikeGroundFeelerUpIsBelowSchansje(bike)  then
+    if bikeGroundFeelerUpIsTouchingGround(bike) or bikeGroundFeelerUpIsBelowSchansje(bike) then
         -- print('jo hello!, bike is upside down ')
         local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
 
@@ -1242,7 +1262,7 @@ function love.update(dt)
         local body = bike.frame.body
         body:applyLinearImpulse(0, -(mass * 1000))
         body:applyAngularImpulse(10000)
-        playRandomMiPoSound() 
+        playRandomMiPoSound()
     end
 
     dj.update()
@@ -1267,7 +1287,7 @@ function love.update(dt)
     enableDisableMipos()
     enableDisableBikes()
 
-
+    enableDisableWinegums()
     local t = math.sin(math.abs(love.timer:getTime()))
 
 
@@ -2156,6 +2176,7 @@ function love.draw()
 
 
     --
+    texturedBox2d.drawWineGums(winegums)
     drawPaardenBloemen()
 
 
@@ -2166,7 +2187,7 @@ function love.draw()
         love.graphics.draw(batch2)
     end
     textureTheSchansjes()
-    phys.drawWorld(world)
+    --phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
@@ -2295,6 +2316,10 @@ function love.draw()
     -- end
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. numSources .. ' ' .. wheelie)
 
+    for i = 1, #dipper do
+        local it = dipper[i]
+        love.graphics.rectangle('fill', w / 6 + it[1] * w / 2, it[2] * w / 2, 10, 10)
+    end
 
 
     function circleLabelButton(x, y, radius, label)
@@ -2372,7 +2397,9 @@ function love.keypressed(k)
         end
         skyGradient = gradient.makeSkyGradient(dayTime)
     end
-
+    if k == 'g' then
+        addWineGums()
+    end
     if k == 'f' then
         if bikeGroundFeelerUpIsTouchingGround(bike) then
             print('jo hello!, bike is upside down ')
@@ -2545,9 +2572,11 @@ end
 
 
 
-local function startNumberParticle(num, x1, y1, x2, y2)
+local function startNumberParticle(num, x1, y1, x2, y2, color1, color2)
     local posData = { { x = x1, y = y1 }, { x = x2, y = y2 }, 2 }
-    local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 2 }
+    local color = numbers.mapInto(dayTimeTransition.t, 1, 0, 1, .1)
+
+    local colorData = { { color, color, color }, { color, color, color - 0.3 }, 2 }
     local alphaData = { 1, 0.2, 2 }
     local scaleData = { 0.8, 1.2, 2 }
     local rotationData = { 0, 0, 2 }
@@ -2603,8 +2632,10 @@ function displayWheelieData()
             local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
             local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 3)
             local posData = { { x = x1 - 50, y = y1 }, { x = x1 - 50, y = y2 }, 2 }
+            local textColor = numbers.mapInto(dayTimeTransition.t, 1, 0, 1, .1)
+            local colorData = { { textColor, textColor, textColor }, { textColor, textColor, textColor - 0.3 }, 1.5 }
 
-            local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+
             local alphaData = { 1, 0.2, 2.5 }
             local scaleData = { 0.3, 1.3, 2 }
             local rotationData = { 0, 0, 1 }
@@ -2613,6 +2644,7 @@ function displayWheelieData()
                 loopBack = 6,   -- frame where we will start looping again (after reaching end)
                 endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
             }
+
             animParticles.startAnimParticle('wheelie', 12, frameData, posData, colorData, alphaData, scaleData,
                 rotationData)
 
@@ -2635,7 +2667,9 @@ function displayLoopingData()
             local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
             local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 3)
             local posData = { { x = x1 - 50, y = y1 }, { x = x1 - 50, y = y2 }, 2 }
-            local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 2 }
+
+            local textColor = numbers.mapInto(dayTimeTransition.t, 1, 0, 1, .1)
+            local colorData = { { textColor, textColor, textColor }, { textColor, textColor, textColor - 0.3 }, 2 }
             local alphaData = { 1, 0.2, 2 }
             local scaleData = { 0.8, 1.3, 2 }
             local rotationData = { 0, 0, 2 }
@@ -2654,6 +2688,7 @@ function displayLoopingData()
             Timer.after(3, function() brrVolume = 0 end)
             animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
                 scaleData, rotationData)
+            love.graphics.setColor(textColor, textColor, textColor)
             drawNumbersNicely(loops, x1, y1, x1, y2)
             --  addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
         end
@@ -2697,6 +2732,58 @@ function endContact(a, b, contact)
             and (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel') then
             bikeFrameAngleAtJump = bike.frame.body:getAngle()
         end
+    end
+end
+
+function addWineGums()
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+
+    local subPalettes = { 1, 8, 9, 9, 9, 10, 14, 15, 15, 15, 23, 32, 77, 87 }
+    local amt = 3 + math.ceil(love.math.random() * 23)
+
+    local types = {
+        'capsule2', 'ruit', 'octagon', 'circle', 'rect3'
+    }
+    local dims = {
+        { 350, 150 }, { 300, 200 }, { 200, 200 }, { 100, 100 }, { 200, 150 }
+    }
+
+    for i = 1, amt do
+        local middleX = camtlx + boxWorldWidth / 2
+        local x = 2000 + middleX - (amt / 2) * 5 + (i * 5)
+        local y = cambry - 2000 + love.math.random() * 10
+        local body = love.physics.newBody(world, x, y, "dynamic")
+
+        --local shape = love.physics.newPolygonShape(getRandomConvexPoly(150, 8)) --love.physics.newRectangleShape(width, height / 4)
+        --local shape = phys.makeShape('capsule', 350, 150)
+        --local shape = phys.makeShape('ruit', 300, 200)
+        --local shape = phys.makeShape('octagon', 200, 200)
+        --local shape = phys.makeShape('circle', 100)
+        --local shape = phys.makeShape('rect3', 100, 200)
+
+        local typeIndex = math.ceil(math.random() * #types)
+        local wrnd = dims[typeIndex][1]
+        local hrnd = dims[typeIndex][2]
+        local shape = phys.makeShape(types[typeIndex], wrnd, hrnd)
+        local fixture = love.physics.newFixture(body, shape, .2)
+
+        fixture:setUserData(makeUserData('winegum', {}))
+        -- fixture.
+        local paletteIndex = subPalettes[math.ceil(math.random() * #subPalettes)]
+        table.insert(winegums, {
+            body = body,
+            color = palettes[paletteIndex],
+            index = math.ceil(love.math.random() * 7),
+            --type = 'circle',
+            --type = 'capsule',
+            type = types[typeIndex],
+            w = wrnd,
+            h = hrnd
+        })
+        print(#winegums)
     end
 end
 
@@ -2745,6 +2832,65 @@ function love.load()
     mipoOnVehicle = false
 
 
+
+
+    dipper = {
+
+        { 70,   573 },
+        { 377,  370 },
+        { 625,  392 },
+        { 904,  420 },
+        { 1399, 183 },
+        { 1444, 462 },
+        { 1034, 624 }
+
+
+    }
+
+
+    winegums = {
+        ruits = {
+            love.graphics.newImage('assets/img/candyparts/ruit1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/ruit1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/ruit2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/ruit2-line.png'),
+
+        },
+        capsules = {
+            love.graphics.newImage('assets/img/candyparts/capsule1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/capsule1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/capsule2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/capsule2-line.png'),
+
+        },
+        circs = {
+            love.graphics.newImage('assets/img/candyparts/circle1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/circle1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/circle2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/circle2-line.png'),
+        },
+        octas = {
+            love.graphics.newImage('assets/img/candyparts/octa1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/octa1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/octa2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/octa2-line.png'),
+
+        },
+        rekts = {
+            love.graphics.newImage('assets/img/candyparts/rect1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/rect1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/rect2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/rect2-line.png'),
+
+        }
+    }
+
+
+    for i = 1, #dipper do
+        dipper[i][1] = dipper[i][1] / 1522
+        dipper[i][2] = dipper[i][2] / 1522
+    end
+
     world:setCallbacks(beginContact, endContact)
     pointsOfInterest = {}
 
@@ -2791,9 +2937,11 @@ function love.load()
     grassPattern2 = love.graphics.newImage('assets/world/grasspattern2.png')
     grassPattern2:setWrap('repeat', 'repeat')
 
-        --source = love.audio.newSource(url, 'static')
-    miposounds = {love.audio.newSource('assets/sounds/mi.wav', 'static'),love.audio.newSource('assets/sounds/po.wav', 'static') ,love.audio.newSource('assets/sounds/mo.wav', 'static'),love.audio.newSource('assets/sounds/pi.wav', 'static')}    
-    miposoundplaying = false    
+    --source = love.audio.newSource(url, 'static')
+    miposounds = { love.audio.newSource('assets/sounds/mi.wav', 'static'), love.audio.newSource('assets/sounds/po.wav',
+        'static'), love.audio.newSource('assets/sounds/mo.wav', 'static'), love.audio.newSource('assets/sounds/pi.wav',
+        'static') }
+    miposoundplaying = false
     local w, h = love.graphics.getDimensions()
     if false then
         for i = 1, 1 do
