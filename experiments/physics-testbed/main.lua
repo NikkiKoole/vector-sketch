@@ -479,13 +479,17 @@ function cycleStep()
     --bike.frame.body:applyLinearImpulse(10000, -1000)
     if bike.pedalWheel then
         local force = 1000000
+        if turboCharged > 0 then
+            force = 2000000
+        end
         bike.backWheel.body:applyAngularImpulse(force)
         if frontWheelFromGround == 0 then
             bike.frontWheel.body:applyAngularImpulse(force)
         end
         bike.pedalWheel.body:applyAngularImpulse(force)
-
-        --bike.frame.body:applyLinearImpulse(50000, -1000)
+        if turboCharged > 0 then
+            bike.frame.body:applyLinearImpulse(20000, -1000)
+        end
     end
 end
 
@@ -1263,6 +1267,12 @@ function love.update(dt)
         body:applyLinearImpulse(0, -(mass * 1000))
         body:applyAngularImpulse(10000)
         playRandomMiPoSound()
+    end
+
+
+    if turboCharged > 0 then
+        turboCharged = turboCharged - 1
+        print(turboCharged)
     end
 
     dj.update()
@@ -2161,8 +2171,19 @@ function love.draw()
         love.graphics.draw(sky, 0, 0, 0, w, h)
     end
 
+    love.graphics.setColor(1, 1, 1, 0.5)
+    for i = 1, #dipper do
+        local it = dipper[i]
+        love.graphics.rectangle('fill', w / 6 + it[1] * w / 2, it[2] * w / 2, 10, 10)
+    end
+    for i = 1, #dipperRest do
+        local it = dipperRest[i]
+        love.graphics.rectangle('fill', it[1] * w, it[2] * h, 5, 5)
+    end
 
     drawCelestialBodies()
+
+
 
     cam:push()
 
@@ -2187,7 +2208,7 @@ function love.draw()
         love.graphics.draw(batch2)
     end
     textureTheSchansjes()
-    --phys.drawWorld(world)
+    phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
@@ -2316,10 +2337,6 @@ function love.draw()
     -- end
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. numSources .. ' ' .. wheelie)
 
-    for i = 1, #dipper do
-        local it = dipper[i]
-        love.graphics.rectangle('fill', w / 6 + it[1] * w / 2, it[2] * w / 2, 10, 10)
-    end
 
 
     function circleLabelButton(x, y, radius, label)
@@ -2387,6 +2404,10 @@ function disableLegs()
 end
 
 function love.keypressed(k)
+    if k == 't' then
+        addTurboButton()
+        -- turboCharged = 1000
+    end
     if k == 'd' then
         if dayTime == 22 then
             dayTime = 10
@@ -2419,7 +2440,7 @@ function love.keypressed(k)
     end
 
     if k == 'escape' then love.event.quit() end
-    if k == 'space' then
+    if k == 'space' and mipoOnVehicle then
         cycleStep()
     end
     if k == 'w' then
@@ -2715,6 +2736,15 @@ function beginContact(a, b, contact)
             --print('beginning contatc front')
         end
     end
+
+    if (a:getUserData() and a:getUserData().bodyType == 'turbo') then
+        a:destroy()
+        print('jojo')
+        turboCharged = 1000
+        --        displayLoopingData()
+
+        --      bikeFrameAngleAtJump = 0
+    end
 end
 
 function endContact(a, b, contact)
@@ -2733,6 +2763,22 @@ function endContact(a, b, contact)
             bikeFrameAngleAtJump = bike.frame.body:getAngle()
         end
     end
+end
+
+function addTurboButton(x, y)
+    -- how do we do this? the buttons ought to be static and ou can colide with them
+
+
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+
+    local shape = phys.makeShape('ruit', 300, 300)
+    local yy = getYAtX(camtlx + boxWorldWidth, stepSize)
+    local body = love.physics.newBody(world, camtlx + boxWorldWidth, yy - 100, "kinematic")
+    local fixture = love.physics.newFixture(body, shape, .2)
+    fixture:setUserData(makeUserData('turbo', {}))
 end
 
 function addWineGums()
@@ -2831,7 +2877,7 @@ function love.load()
     bikeFrameAngleAtJump = 0
     mipoOnVehicle = false
 
-
+    turboCharged = 0
 
 
     dipper = {
@@ -2843,9 +2889,21 @@ function love.load()
         { 1399, 183 },
         { 1444, 462 },
         { 1034, 624 }
+    }
 
+    for i = 1, #dipper do
+        dipper[i][1] = dipper[i][1] / 1522
+        dipper[i][2] = dipper[i][2] / 1522
+    end
+
+    dipperRest = {
 
     }
+    for i = 1, 25 do
+        dipperRest[i] = {}
+        dipperRest[i][1] = love.math.random()
+        dipperRest[i][2] = (love.math.random() * 0.75)
+    end
 
 
     winegums = {
@@ -2886,10 +2944,7 @@ function love.load()
     }
 
 
-    for i = 1, #dipper do
-        dipper[i][1] = dipper[i][1] / 1522
-        dipper[i][2] = dipper[i][2] / 1522
-    end
+
 
     world:setCallbacks(beginContact, endContact)
     pointsOfInterest = {}
