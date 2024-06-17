@@ -2171,14 +2171,30 @@ function love.draw()
         love.graphics.draw(sky, 0, 0, 0, w, h)
     end
 
-    love.graphics.setColor(1, 1, 1, 0.5)
+
+
+    local alphaMultiplier = numbers.mapInto(dayTimeTransition.t, 0, 1, 0.1, 1)
+    love.graphics.setColor(1, 1, 1, .9 * alphaMultiplier)
     for i = 1, #dipper do
         local it = dipper[i]
-        love.graphics.rectangle('fill', w / 6 + it[1] * w / 2, it[2] * w / 2, 10, 10)
+
+        local x = w / 6 + it[1] * w / 2
+        local y = it[2] * w / 2
+        local fonkel = 0.9 + (love.math.noise(i, love.timer.getTime() / 10)) / 5
+        local dimsw, dimsh = stars[1]:getDimensions()
+        love.graphics.draw(stars[1], x, y, i % 12, 0.5 * fonkel, 0.5 * fonkel, dimsw / 2, dimsh / 2)
+        --  love.graphics.rectangle('fill',x,y, 10, 10)
     end
+    love.graphics.setColor(1, 1, 1, .6 * alphaMultiplier)
     for i = 1, #dipperRest do
         local it = dipperRest[i]
-        love.graphics.rectangle('fill', it[1] * w, it[2] * h, 5, 5)
+        local x = it[1] * w
+        local y = it[2] * h
+        local fonkel = 0.9 + (love.math.noise(i, love.timer.getTime() / 10)) / 5
+        local dimsw, dimsh = stars[1]:getDimensions()
+
+        love.graphics.draw(stars[1], x, y, i % 12, 0.23 * fonkel, 0.23 * fonkel, dimsw / 2, dimsh / 2)
+        --love.graphics.rectangle('fill', x, y, 5, 5)
     end
 
     drawCelestialBodies()
@@ -2943,6 +2959,9 @@ function love.load()
         }
     }
 
+    stars = {
+        love.graphics.newImage('assets/world/star1.png'),
+    }
 
 
 
