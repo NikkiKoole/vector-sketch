@@ -1,3 +1,8 @@
+package.path = package.path .. ";../../?.lua"
+
+
+local ui = require 'lib.ui'
+
 local function hex2rgb(hex)
     hex = hex:gsub("#", "")
     return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
@@ -51,11 +56,13 @@ end
 
 function love.load()
     helvetica = love.graphics.newFont('helvetica-light-587ebe5a59211.ttf', 64)
-    helveticasmall = love.graphics.newFont('helvetica-light-587ebe5a59211.ttf', 24)
+    helveticasmall = love.graphics.newFont('helvetica-light-587ebe5a59211.ttf', 48)
     vag = love.graphics.newFont('VAG Rounded Regular.otf', 64)
     bg = love.graphics.newImage('mathhead2.png')
     newCalculation()
     answer = ''
+
+    last = nil
 end
 
 function newCalculation()
@@ -78,6 +85,7 @@ function addDigitToAnswer(digit)
 end
 
 function button(x, y, w, h, color, labelfont, label, labelcolor)
+    love.graphics.setFont(labelfont)
     local cornerRadius = math.min(w, h) / 10
     love.graphics.setColor(color)
     love.graphics.rectangle('fill', x, y, w, h, cornerRadius, cornerRadius)
@@ -85,10 +93,13 @@ function button(x, y, w, h, color, labelfont, label, labelcolor)
     local xoff = (w - labelfont:getWidth(label)) / 2
     local yoff = (h - labelfont:getHeight(label)) / 2
     love.graphics.print(label, x + xoff, y + yoff, 0)
+
+    return ui.getUIRect(label, x, y, w, h)
 end
 
 function answerIsCorrect()
-    return (tonumber(answer) == calculation.a * calculation.b)
+    local result = (tonumber(answer) == calculation.a * calculation.b)
+    last = { result = result, time = 100, answer = calculation.a * calculation.b }
 end
 
 function love.keypressed(k)
@@ -114,8 +125,7 @@ function love.keypressed(k)
     end
     if k == 'return' then
         --print('return ')
-        if answerIsCorrect() then else print(calculation.a .. ' * ' .. calculation.b, calculation.a * calculation.b) end
-
+        answerIsCorrect()
         answer = ''
         newCalculation()
     end
@@ -126,24 +136,46 @@ function makeNumpad(tlx, tly)
     local size = 64
     local d = size + margin
 
-    button(tlx, tly, size, size, palette.neutral_orange, helvetica, '7', palette.light0)
-    button(tlx + d, tly, size, size, palette.neutral_orange, helvetica, '8', palette.light0)
-    button(tlx + d * 2, tly, size, size, palette.neutral_orange, helvetica, '9', palette.light0)
+    if button(tlx, tly, size, size, palette.neutral_orange, helvetica, '7', palette.light0) then addDigitToAnswer(7) end
+    if button(tlx + d, tly, size, size, palette.neutral_orange, helvetica, '8', palette.light0) then addDigitToAnswer(8) end
+    if button(tlx + d * 2, tly, size, size, palette.neutral_orange, helvetica, '9', palette.light0) then addDigitToAnswer(9) end
 
-    button(tlx, tly + d, size, size, palette.neutral_orange, helvetica, '4', palette.light0)
-    button(tlx + d, tly + d, size, size, palette.neutral_orange, helvetica, '5', palette.light0)
-    button(tlx + d * 2, tly + d, size, size, palette.neutral_orange, helvetica, '6', palette.light0)
+    if button(tlx, tly + d, size, size, palette.neutral_orange, helvetica, '4', palette.light0) then addDigitToAnswer(4) end
+    if button(tlx + d, tly + d, size, size, palette.neutral_orange, helvetica, '5', palette.light0) then addDigitToAnswer(5) end
+    if button(tlx + d * 2, tly + d, size, size, palette.neutral_orange, helvetica, '6', palette.light0) then
+        addDigitToAnswer(6)
+    end
 
-    button(tlx, tly + d * 2, size, size, palette.neutral_orange, helvetica, '1', palette.light0)
-    button(tlx + d, tly + d * 2, size, size, palette.neutral_orange, helvetica, '2', palette.light0)
-    button(tlx + d * 2, tly + d * 2, size, size, palette.neutral_orange, helvetica, '3', palette.light0)
+    if button(tlx, tly + d * 2, size, size, palette.neutral_orange, helvetica, '1', palette.light0) then addDigitToAnswer(1) end
+    if button(tlx + d, tly + d * 2, size, size, palette.neutral_orange, helvetica, '2', palette.light0) then
+        addDigitToAnswer(2)
+    end
+    if button(tlx + d * 2, tly + d * 2, size, size, palette.neutral_orange, helvetica, '3', palette.light0) then
+        addDigitToAnswer(3)
+    end
 
-    button(tlx, tly + d * 3, size + d, size, palette.neutral_orange, helvetica, '0', palette.light0)
+    if button(tlx, tly + d * 3, size + d, size, palette.neutral_orange, helvetica, '0', palette.light0) then
+        addDigitToAnswer(0)
+    end
+    if button(tlx + d * 2, tly + d * 3, size, size, palette.neutral_orange, helveticasmall, 'ok', palette.light0) then
+        if answerIsCorrect() then else print(calculation.a .. ' * ' .. calculation.b, calculation.a * calculation.b) end
+
+        answer = ''
+        newCalculation()
+    end
     --  button(tlx + d * 2, tly + d * 3, size, size, palette.neutral_orange, helvetica, 'C', palette.light0)
     -- button(tlx + d * 3, tly + d, size, size + d, palette.neutral_yellow, helvetica, '=', palette.light0)
 end
 
+function love.update()
+    if last and last.time > 0 then
+        last.time = last.time - 1
+        if last.time <= 0 then last = nil end
+    end
+end
+
 function love.draw()
+    ui.handleMouseClickStart()
     love.graphics.clear(palette.dark1)
 
     love.graphics.setColor(1, 1, 1)
@@ -167,6 +199,27 @@ function love.draw()
     local totalW = vag:getWidth('XXX')
     love.graphics.setColor(0, 0, 0)
     love.graphics.rectangle('fill', vag:getWidth('XXXXXXXX'), 0, totalW, strH, strH / 10, strH / 10)
+
+
+    if last then
+        local alpha = last.time / 100
+
+        if last.result then
+            love.graphics.setColor(palette.bright_green[1], palette.bright_green[2], palette.bright_green[3], alpha)
+        else
+            love.graphics.setColor(palette.bright_red[1], palette.bright_red[2], palette.bright_red[3], alpha)
+        end
+        love.graphics.rectangle('fill', vag:getWidth('XXXXXXXX'), 0, totalW, strH, strH / 10, strH / 10)
+
+        if last.result then
+            love.graphics.setColor(palette.bright_yellow[1], palette.bright_yellow[2], palette.bright_yellow[3], alpha)
+            love.graphics.print(last.answer, vag:getWidth('XXXXXXXX'))
+        end
+        if not last.result then
+            love.graphics.setColor(palette.dark0[1], palette.dark0[2], palette.dark0[3], alpha)
+            love.graphics.print(last.answer, vag:getWidth('XXXXXXXX'))
+        end
+    end
 
     love.graphics.setColor(palette.light0)
     love.graphics.print(answer, vag:getWidth('XXXXXXXX'))
