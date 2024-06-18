@@ -73,15 +73,32 @@ function newCalculation()
     calculation.operation = operation
 end
 
+function pickRandom(container)
+    local index = math.ceil(math.random() * #container)
+    return container[index]
+end
+
 function makeCalculation()
     local a = math.ceil(love.math.random() * 32)
     local b = math.ceil(love.math.random() * 16)
-    local operation = 'x'
+    local operation = pickRandom({ 'x', '-', '+' })
+    if operation == '-' then
+        if a < b then
+            local c = a
+            a = b
+            b = c
+        end
+    end
     return a, operation, b
 end
 
 function addDigitToAnswer(digit)
     answer = answer .. digit
+    if (#answer >= 3) then
+        answerIsCorrect()
+        answer = ''
+        newCalculation()
+    end
 end
 
 function button(x, y, w, h, color, labelfont, label, labelcolor)
@@ -98,8 +115,18 @@ function button(x, y, w, h, color, labelfont, label, labelcolor)
 end
 
 function answerIsCorrect()
-    local result = (tonumber(answer) == calculation.a * calculation.b)
-    last = { result = result, time = 100, answer = calculation.a * calculation.b }
+    local getAnswer = function(a, b, operator)
+        if operator == 'x' then
+            return a * b
+        elseif operator == '+' then
+            return a + b
+        elseif operator == '-' then
+            return a - b
+        end
+    end
+    local correct = getAnswer(calculation.a, calculation.b, calculation.operation)
+    local result = (tonumber(answer) == correct)
+    last = { result = result, time = 100, answer = correct }
 end
 
 function love.keypressed(k)
@@ -174,6 +201,12 @@ function love.update()
     end
 end
 
+local function printCentered(text, centerX)
+    local strWidth = vag:getWidth(text)
+    love.graphics.print(text, centerX - strWidth / 2)
+end
+
+
 function love.draw()
     ui.handleMouseClickStart()
     love.graphics.clear(palette.dark1)
@@ -183,15 +216,26 @@ function love.draw()
     love.graphics.setFont(vag)
 
 
+    local widthXXX = vag:getWidth('XXX')
+    local widthXX = vag:getWidth('XXXX')
+    local widthXXXXXX = vag:getWidth('XXXXXXX')
 
 
-    local strW1 = vag:getWidth(string.format("%2d", calculation.a))
-    love.graphics.print(string.format("%2d", calculation.a), (vag:getWidth('XX') - strW1) / 2)
-    love.graphics.print(calculation.operation, vag:getWidth('XX'))
+    -- Print the first number centered
+    local formattedA = string.format("%2d", calculation.a)
+    printCentered(formattedA, widthXX / 2)
 
-    local strW2 = vag:getWidth(string.format("%2d", calculation.b))
-    love.graphics.print(string.format("%2d", calculation.b), vag:getWidth('XXX') + (vag:getWidth('XX') - strW2) / 2)
-    love.graphics.print("=", vag:getWidth('XXXXXX'))
+    -- Print the operation symbol
+    printCentered(calculation.operation, widthXX)
+
+    -- Print the second number centered
+    local formattedB = string.format("%2d", calculation.b)
+    printCentered(formattedB, widthXX + widthXX / 2)
+
+    -- Print the equals sign
+    love.graphics.print("=", widthXXXXXX)
+
+
 
 
     -- local strW = vag:getWidth(str)
