@@ -632,6 +632,46 @@ local function createFittingScale(img, desired_w, desired_h)
 end
 
 
+lib.drawTurboButtons = function(items)
+    --print(items, #items)
+    for i = 1, #items do
+        local body = items[i].body
+        local color = { 1, 0, 0 }
+        local type = items[i].type
+        local x, y = body:getPosition()
+
+        local factor = 1.1
+        local shade = 0.2
+        if type == 'ruit' then
+            --  print('getting here')
+            local rndIndex = (items[i].index % 2) + 1
+            local w = items[i].w
+            local h = items[i].h
+            local img = winegums.ruits[1]
+            love.graphics.setColor(1, 1, 1)
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle() + love.timer.getTime() * 3, sx, sy, img:getWidth() / 2,
+                img:getHeight() / 2)
+
+            if false then
+                local img = winegums.ruits[2]
+                love.graphics.setColor(1, 0, 0)
+                local sx, sy = createFittingScale(img, w * factor, h * factor)
+                love.graphics.draw(img, x, y, body:getAngle() + love.timer.getTime() * 3, sx, sy, img:getWidth() / 2,
+                    img:getHeight() / 2)
+                love.graphics.setColor(0, 1, 0)
+                local sx, sy = createFittingScale(img, w * factor, h * factor)
+                love.graphics.draw(img, x, y, body:getAngle() + love.timer.getTime() * 2, sx, sy, img:getWidth() / 2,
+                    img:getHeight() / 2)
+                love.graphics.setColor(0, 0, 1)
+                local sx, sy = createFittingScale(img, w * factor, h * factor)
+                love.graphics.draw(img, x, y, body:getAngle() + love.timer.getTime() * 4, sx, sy, img:getWidth() / 2,
+                    img:getHeight() / 2)
+            end
+        end
+    end
+end
+
 lib.drawWineGums = function(items)
     for i = 1, #items do
         local body = items[i].body

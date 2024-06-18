@@ -369,6 +369,26 @@ function enableDisableWinegums()
     end
 end
 
+function enableDisableTurboButtons()
+    -- for i = 1, #mipos do
+    --     local b = mipos[i]
+    --     local bx, by = b.b2d.torso:getPosition()
+    -- end
+    local mainGuy = mipos[1]
+    local mainGuyX, mainGuyY = mainGuy.b2d.torso:getPosition()
+
+    for i = #turbobuttons, 1, -1 do
+        local b = turbobuttons[i].body
+        local bx, by = b:getPosition()
+
+        if math.abs(mainGuyX - bx) > 20000 or math.abs(mainGuyY - by) > 20000 then
+            turbobuttons[i].body:destroy()
+            print('removed')
+            table.remove(turbobuttons, i)
+        end
+    end
+end
+
 function enableDisableMipos()
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -662,10 +682,10 @@ function disconnectMipoAndVehicle()
 
     local bodyMass = getBodyMass(mipos[1])
     --  print(bodyMass)
-    b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
+    b2d.torso:applyLinearImpulse(0, -3000 * bodyMass)
 
     updatePart.resetPositions(mipos[1])
-    b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
+    b2d.torso:applyLinearImpulse(0, -3000 * bodyMass)
 end
 
 function connectMipoAndVehicle()
@@ -1272,7 +1292,7 @@ function love.update(dt)
 
     if turboCharged > 0 then
         turboCharged = turboCharged - 1
-        print(turboCharged)
+        -- print(turboCharged)
     end
 
     dj.update()
@@ -1293,11 +1313,13 @@ function love.update(dt)
     table.remove(rollingMemoryUsage, 1)
 
     updateGround(ground)
+
     enableDisableObstacles()
     enableDisableMipos()
     enableDisableBikes()
-
     enableDisableWinegums()
+    enableDisableTurboButtons()
+
     local t = math.sin(math.abs(love.timer:getTime()))
 
 
@@ -2092,6 +2114,9 @@ local function drawSun(sunX, sunY)
         dimsW / 2)
 
     drawSunFace(sunX, sunY - sunRadius / 8, sunRadius * .8)
+    sunMoonPositions.x = sunX
+    sunMoonPositions.y = sunY
+    sunMoonPositions.radius = sunRadius * .8
 end
 
 local function drawMoon(x, y)
@@ -2123,6 +2148,10 @@ local function drawMoon(x, y)
         sy)
 
     love.graphics.setBlendMode("alpha")
+
+    sunMoonPositions.x = x
+    sunMoonPositions.y = y
+    sunMoonPositions.radius = moonRadius
 end
 
 local function drawCelestialBodies()
@@ -2214,6 +2243,7 @@ function love.draw()
 
     --
     texturedBox2d.drawWineGums(winegums)
+
     drawPaardenBloemen()
 
 
@@ -2224,7 +2254,7 @@ function love.draw()
         love.graphics.draw(batch2)
     end
     textureTheSchansjes()
-    phys.drawWorld(world)
+    -- phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
@@ -2258,7 +2288,7 @@ function love.draw()
 
 
 
-
+    texturedBox2d.drawTurboButtons(turbobuttons)
 
     love.graphics.setColor(0, 0, 0)
     local sx = stepSize / grassImage:getWidth()
@@ -2286,24 +2316,26 @@ function love.draw()
     end
 
 
+    if false then
+        love.graphics.setColor(1, 1, 1)
+        local wx, wy = bike.frontWheel.body:getPosition()
+        local yy = lerpYAtX(wx, stepSize)
+        love.graphics.circle('fill', wx, yy, 10)
+        love.graphics.setColor(0.3, 0.3, 0.3)
 
-    love.graphics.setColor(1, 1, 1)
-    local wx, wy = bike.frontWheel.body:getPosition()
-    local yy = lerpYAtX(wx, stepSize)
-    love.graphics.circle('fill', wx, yy, 10)
-    love.graphics.setColor(0.3, 0.3, 0.3)
+        for i = 1, #pointsOfInterest do
+            local poi = pointsOfInterest[i]
+            love.graphics.circle('line', poi.x, poi.y, poi.radius)
+            love.graphics.circle('line', poi.x, poi.y, poi.radius * 3)
+        end
+        love.graphics.setColor(1, 1, 1)
+        local targetX, targetY = getTargetPos(bike.frontWheel.body)
+        love.graphics.rectangle('line', targetX, targetY, 40, 40)
 
-    for i = 1, #pointsOfInterest do
-        local poi = pointsOfInterest[i]
-        love.graphics.circle('line', poi.x, poi.y, poi.radius)
-        love.graphics.circle('line', poi.x, poi.y, poi.radius * 3)
+        local curCamX, curCamY = cam:getTranslation()
+        love.graphics.circle('line', curCamX, curCamY, 20)
     end
-    love.graphics.setColor(1, 1, 1)
-    local targetX, targetY = getTargetPos(bike.frontWheel.body)
-    love.graphics.rectangle('line', targetX, targetY, 40, 40)
 
-    local curCamX, curCamY = cam:getTranslation()
-    love.graphics.circle('line', curCamX, curCamY, 20)
     cam:pop()
 
     --if dayTimeTransition.t ~= 1 and dayTimeTransition.t ~= 0 then
@@ -2354,7 +2386,9 @@ function love.draw()
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. numSources .. ' ' .. wheelie)
 
 
-
+    if frontWheelFromGround > 1 or getLoopingDegrees() > 1 then
+        if #turbobuttons == 0 and math.random() < 0.001 then addTurboButton() end
+    end
     function circleLabelButton(x, y, radius, label)
         love.graphics.setColor(0, 0, 0, 0.5)
 
@@ -2419,20 +2453,24 @@ function disableLegs()
     box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi / 2, 'revolute')
 end
 
+function toggleDayTime()
+    if dayTime == 22 then
+        dayTime = 10
+        Timer.tween(1, dayTimeTransition, { t = 0 })
+    else
+        dayTime = 22
+        Timer.tween(1, dayTimeTransition, { t = 1 })
+    end
+    skyGradient = gradient.makeSkyGradient(dayTime)
+end
+
 function love.keypressed(k)
     if k == 't' then
         addTurboButton()
         -- turboCharged = 1000
     end
     if k == 'd' then
-        if dayTime == 22 then
-            dayTime = 10
-            Timer.tween(1, dayTimeTransition, { t = 0 })
-        else
-            dayTime = 22
-            Timer.tween(1, dayTimeTransition, { t = 1 })
-        end
-        skyGradient = gradient.makeSkyGradient(dayTime)
+
     end
     if k == 'g' then
         addWineGums()
@@ -2496,6 +2534,13 @@ function love.wheelmoved(dx, dy)
     end
 end
 
+local function isSunMoonPressed(x, y)
+    local dx = sunMoonPositions.x - x
+    local dy = sunMoonPositions.y - y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    return (distance < sunMoonPositions.radius)
+end
+
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local cx, cy = cam:getWorldCoordinates(x, y)
@@ -2514,6 +2559,11 @@ local function pointerPressed(x, y, id)
     }
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
     ui.addToPressedPointers(x, y, id)
+
+
+    if isSunMoonPressed(x, y) then
+        toggleDayTime()
+    end
 end
 
 function love.mousepressed(x, y, button, istouch)
@@ -2732,6 +2782,15 @@ function displayLoopingData()
     end
 end
 
+function removeTurboButtonFromContainer(ding)
+    for i = #turbobuttons, 1, -1 do
+        local it = turbobuttons[i]
+        if (it.fixture == ding) then
+            table.remove(turbobuttons, i)
+        end
+    end
+end
+
 function beginContact(a, b, contact)
     -- local fixtureA, fixtureB = contact:getFixtures()
     if a:getUserData() and b:getUserData() then
@@ -2746,20 +2805,22 @@ function beginContact(a, b, contact)
             displayWheelieData()
             frontWheelFromGround = -1
             displayLoopingData()
-
-
             bikeFrameAngleAtJump = 0
             --print('beginning contatc front')
         end
     end
 
     if (a:getUserData() and a:getUserData().bodyType == 'turbo') then
+        removeTurboButtonFromContainer(a)
+        guiro:clone():play()
         a:destroy()
-        print('jojo')
-        turboCharged = 1000
-        --        displayLoopingData()
-
-        --      bikeFrameAngleAtJump = 0
+        turboCharged = turboCharged + 1000
+    end
+    if (b:getUserData() and b:getUserData().bodyType == 'turbo') then
+        removeTurboButtonFromContainer(b)
+        guiro:clone():play()
+        b:destroy()
+        turboCharged = turboCharged + 1000
     end
 end
 
@@ -2795,6 +2856,21 @@ function addTurboButton(x, y)
     local body = love.physics.newBody(world, camtlx + boxWorldWidth, yy - 100, "kinematic")
     local fixture = love.physics.newFixture(body, shape, .2)
     fixture:setUserData(makeUserData('turbo', {}))
+
+    if true then
+        table.insert(turbobuttons, {
+            body = body,
+            fixture = fixture,
+            color = palettes[12],
+            index = math.ceil(love.math.random() * 7),
+            --type = 'circle',
+            --type = 'capsule',
+            type = 'ruit',
+            w = 300,
+            h = 300
+        })
+    end
+    print(#winegums)
 end
 
 function addWineGums()
@@ -2895,7 +2971,7 @@ function love.load()
 
     turboCharged = 0
 
-
+    sunMoonPositions = { x = 0, y = 0, radius = 0 }
     dipper = {
 
         { 70,   573 },
@@ -2921,8 +2997,8 @@ function love.load()
         dipperRest[i][2] = (love.math.random() * 0.75)
     end
 
-
-    winegums = {
+    turbobuttons = {}
+    winegums     = {
         ruits = {
             love.graphics.newImage('assets/img/candyparts/ruit1-shape.png'),
             love.graphics.newImage('assets/img/candyparts/ruit1-line.png'),
@@ -2959,7 +3035,7 @@ function love.load()
         }
     }
 
-    stars = {
+    stars        = {
         love.graphics.newImage('assets/world/star1.png'),
     }
 
@@ -3016,6 +3092,8 @@ function love.load()
         'static'), love.audio.newSource('assets/sounds/mo.wav', 'static'), love.audio.newSource('assets/sounds/pi.wav',
         'static') }
     miposoundplaying = false
+
+    guiro = love.audio.newSource('samples/cr78/Guiro 1.wav', 'static')
     local w, h = love.graphics.getDimensions()
     if false then
         for i = 1, 1 do

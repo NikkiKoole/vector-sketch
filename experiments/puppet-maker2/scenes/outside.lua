@@ -166,7 +166,10 @@ function scene.load()
         love.graphics.newImage('assets/ui/circle4.png'),
     }
 
-    winegums       = {
+
+
+    winegums = {
+
         ruits = {
             love.graphics.newImage('assets/img/candyparts/ruit1-shape.png'),
             love.graphics.newImage('assets/img/candyparts/ruit1-line.png'),
