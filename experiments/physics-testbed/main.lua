@@ -2386,8 +2386,12 @@ function love.draw()
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. numSources .. ' ' .. wheelie)
 
 
-    if frontWheelFromGround > 1 or getLoopingDegrees() > 1 then
+    if frontWheelFromGround > 1 or getLoopingDegrees() > 360 then
         if #turbobuttons == 0 and math.random() < 0.001 then addTurboButton() end
+    end
+    if getLoopingDegrees() > 360 and #turbobuttons == 0 and math.random() < 0.01 then
+        -- print(getLoopingDegrees())
+        addTurboButton()
     end
     function circleLabelButton(x, y, radius, label)
         love.graphics.setColor(0, 0, 0, 0.5)
@@ -2462,6 +2466,9 @@ function toggleDayTime()
         Timer.tween(1, dayTimeTransition, { t = 1 })
     end
     skyGradient = gradient.makeSkyGradient(dayTime)
+
+    dj.toggleInstrumentAtIndex(toggledState, 1)
+    toggledState = not toggledState
 end
 
 function love.keypressed(k)
@@ -2489,8 +2496,8 @@ function love.keypressed(k)
     end
 
     if k == 's' then
-        toggledState = not toggledState
-        dj.toggleInstrumentAtIndex(toggledState, 1)
+        --  toggledState = not toggledState
+        --  dj.toggleInstrumentAtIndex(toggledState, 1)
     end
 
     if k == 'escape' then love.event.quit() end

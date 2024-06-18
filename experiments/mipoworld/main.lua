@@ -39,11 +39,11 @@ function love.draw()
 
     cam:push()
     -- phys.drawWorld(world)
-    texturedBox2d.drawSkinOverMultiple(mipos)
+    --texturedBox2d.drawSkinOverMultiple(mipos)
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
-            --texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
+            texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
             --texturedBox2d.drawNumbersOver(mipos[i].b2d)
         end
     end
