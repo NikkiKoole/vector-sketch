@@ -3,6 +3,10 @@ local numbers       = require 'lib.numbers'
 local Timer         = require 'vendor.timer'
 local dj            = require 'organicMusic'
 
+
+local function getLoopingDegrees()
+    return math.floor(((bikeFrameAngleAtJump - bike.frame.body:getAngle()) / (math.pi * 2)) * 360)
+end
 local function roundToQuarters(value)
     local result = math.floor(value * 4 + 0.5) / 4
     return result

@@ -429,6 +429,9 @@ local function drawSunRays(x, y, radius)
     end
 end
 
+local function rndOffset(offset)
+    return math.random() * offset * 2 - offset
+end
 
 local function drawSunFace(x, y, radius)
     love.graphics.setColor(1, 1, 1)

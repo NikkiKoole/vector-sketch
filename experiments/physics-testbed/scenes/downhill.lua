@@ -26,6 +26,39 @@ local lightGrassColor = { hex2rgb('86a542') }
 require 'particle_effects'
 require 'renderJoy'
 
+
+
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+
+
+local function getAngle(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local angle = math.atan2(dy, dx)
+    return angle
+end
+
+local function calculateEndPoint(startPoint, angleRad, distance)
+    local angleRadians = angleRad
+    local deltaX = distance * math.cos(angleRadians)
+    local deltaY = distance * math.sin(angleRadians)
+    local endPoint = {
+        x = startPoint.x + deltaX,
+        y = startPoint.y + deltaY
+    }
+
+    return endPoint.x, endPoint.y
+end
+
 local function locatePeakX(startX, endX, stepSize)
     local bestPos = nil
     local bestValue = math.huge
@@ -649,6 +682,28 @@ function scene.load()
                 { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
         end
     end
+
+
+    dj.loadJizzJazzSong('assets/jizzjazz/mountmipo2.jizzjazz2.txt')
+    dj.setAllInstrumentsVolume(0)
+
+    if false then
+        local url = 'assets/sounds/mountainmipo/bikesound.wav'
+        source = love.audio.newSource(url, 'static')
+        source:setLooping(true)
+        source:setPitch(0.05)
+        source:play()
+    end
+
+
+    -- s
+    local ffont = "WindsorBT-Roman.otf"
+    font = love.graphics.newFont(ffont, 24)
+    love.graphics.setFont(font)
+
+    local w, h = love.graphics.getDimensions()
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(0, 0, 3000, 3000)
 end
 
 function scene.unload()
@@ -663,6 +718,10 @@ local function getBodyMass(mipo)
     end
 
     return total
+end
+
+local function getLoopingDegrees()
+    return math.floor(((bikeFrameAngleAtJump - bike.frame.body:getAngle()) / (math.pi * 2)) * 360)
 end
 
 local function getVehicleMass(vehicle)
@@ -1514,8 +1573,81 @@ end
 
 -- end rest
 
+local function toggleDayTime()
+    if dayTime == 22 then
+        dayTime = 10
+        Timer.tween(1, dayTimeTransition, { t = 0 })
+    else
+        dayTime = 22
+        Timer.tween(1, dayTimeTransition, { t = 1 })
+    end
+    skyGradient = gradient.makeSkyGradient(dayTime)
 
-function scene.update(dt)
+    dj.toggleInstrumentAtIndex(toggledState, 1)
+    toggledState = not toggledState
+end
+
+
+local function isSunMoonPressed(x, y)
+    local dx = sunMoonPositions.x - x
+    local dy = sunMoonPositions.y - y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    return (distance < sunMoonPositions.radius)
+end
+
+
+
+local function pointerPressed(x, y, id)
+    local w, h = love.graphics.getDimensions()
+    local cx, cy = cam:getWorldCoordinates(x, y)
+    local onPressedParams = {
+        pointerForceFunc = function(fixture)
+            local ud = fixture:getUserData()
+            --print(inspect(ud))
+            local force =
+                (ud and ud.bodyType == 'torso' and 1000000) or
+                (ud and ud.bodyType == 'frame' and 1000000) or
+                50000
+            -- print(force)
+            return force
+        end
+        --pointerForceFunc = function(fixture) return 1400 end
+    }
+    local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
+    ui.addToPressedPointers(x, y, id)
+
+
+    if isSunMoonPressed(x, y) then
+        toggleDayTime()
+    end
+end
+
+local function disableLegs()
+    local b2d = mipos[1].b2d
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
+    --box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, math.pi / 2, math.pi, 'revolute')
+    --box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, math.pi / 2, math.pi, 'revolute')
+
+    box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
+    box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
+
+    box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi / 2, 'revolute')
+    box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi / 2, 'revolute')
+end
+
+local function playRandomMiPoSound()
+    if miposoundplaying == false or not miposoundplaying:isPlaying() then
+        local index = math.ceil(math.random() * #miposounds)
+        local sound = miposounds[index]:clone()
+        sound:play()
+        miposoundplaying = sound
+    end
+end
+
+function handleInputs()
     function love.keypressed(k)
         if k == 't' then
             addTurboButton()
@@ -1567,6 +1699,31 @@ function scene.update(dt)
             disableLegs()
         end
     end
+
+    function love.mousepressed(x, y, button, istouch)
+        -- print('mousepresed')
+        if not istouch then
+            if button == 1 then
+                pointerPressed(x, y, 'mouse')
+            end
+        end
+    end
+
+    function love.touchpressed(id, x, y, dx, dy, pressure)
+        pointerPressed(x, y, id)
+        -- ui.addToPressedPointers(x, y, id)
+    end
+end
+
+function scene.update(dt)
+    if splashSound:isPlaying() then
+        local volume = splashSound:getVolume()
+        splashSound:setVolume(volume * .90)
+        if volume < 0.01 then
+            splashSound:stop()
+        end
+    end
+    handleInputs()
 
     if bikeGroundFeelerUpIsTouchingGround(bike) or bikeGroundFeelerUpIsBelowSchansje(bike) then
         -- print('jo hello!, bike is upside down ')
