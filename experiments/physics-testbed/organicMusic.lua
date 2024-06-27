@@ -130,6 +130,14 @@ function lib.queueClip(instrumentIndex, clipIndex)
     audiohelper.updateClips()
 end
 
+function lib.toggleTurbo(value)
+    audiohelper.recordedClips[5].clips[1].meta.isSelected = value
+    audiohelper.mixDataInstruments[5].volume = value and 1 or 0
+    if value then
+        lib.queueClip(5, 1)
+    end
+end
+
 function lib.setFreaky(value)
     if not value then
         -- uiData.instrumentsVolume = 1
@@ -190,6 +198,7 @@ function lib.loadJizzJazzSong(path)
     end
     audiohelper.mixDataInstruments[1].volume = 1
     audiohelper.mixDataInstruments[4].volume = 1
+    --audiohelper.mixDataInstruments[5].volume = 1
     audiohelper.updateMixerData()
     --audiohelper.initializeDrumgrid()
     --print(path)

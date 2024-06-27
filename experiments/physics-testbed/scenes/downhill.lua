@@ -684,16 +684,17 @@ function scene.load()
     end
 
 
-    dj.loadJizzJazzSong('assets/jizzjazz/mountmipo2.jizzjazz2.txt')
+    dj.loadJizzJazzSong('assets/jizzjazz/mountmi.jizzjazz2.txt')
     dj.setAllInstrumentsVolume(0)
 
-    if false then
-        local url = 'assets/sounds/mountainmipo/bikesound.wav'
-        source = love.audio.newSource(url, 'static')
-        source:setLooping(true)
-        source:setPitch(0.05)
-        source:play()
-    end
+    --if true then
+    url = 'assets/sounds/mountainmipo/bikesound.wav'
+    wheeliesource = love.audio.newSource(url, 'static')
+    wheeliesource:setLooping(true)
+    wheeliesource:setPitch(1)
+    wheeliesource:setVolume(0)
+    wheeliesource:play()
+    --end
 
 
     -- s
@@ -1120,12 +1121,14 @@ function beginContact(a, b, contact)
         guiro:clone():play()
         a:destroy()
         turboCharged = turboCharged + 1000
+        dj.toggleTurbo(true)
     end
     if (b:getUserData() and b:getUserData().bodyType == 'turbo') then
         removeTurboButtonFromContainer(b)
         guiro:clone():play()
         b:destroy()
         turboCharged = turboCharged + 1000
+        dj.toggleTurbo(true)
     end
 end
 
@@ -1671,11 +1674,14 @@ function handleInputs()
                 dj.queueClip(4, 8)
             end
         end
-
         if k == 's' then
-            --  toggledState = not toggledState
-            --  dj.toggleInstrumentAtIndex(toggledState, 1)
+            --dj.queueClip(5, 1)
         end
+
+        --   if k == 's' then
+        --  toggledState = not toggledState
+        --  dj.toggleInstrumentAtIndex(toggledState, 1)
+        --  end
 
         if k == 'escape' then love.event.quit() end
         if k == 'space' and mipoOnVehicle then
@@ -1739,12 +1745,27 @@ function scene.update(dt)
 
     if turboCharged > 0 then
         turboCharged = turboCharged - 1
+        if turboCharged <= 0 then
+            dj.toggleTurbo(false)
+        end
         -- print(turboCharged)
     end
 
 
     local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.backWheel.body
     local velX, velY = thingToFollow:getLinearVelocity()
+
+
+    if frontWheelFromGround > .1 then
+        local v = numbers.mapInto(frontWheelFromGround, 0, 20, 0, 1)
+
+        wheeliesource:setVolume(v)
+        local p = numbers.mapInto(velX, -1000, 1000, 0.5, 1)
+        wheeliesource:setPitch(p)
+    else
+        wheeliesource:setVolume(0)
+    end
+
     -- print(velX, velY)
     table.insert(rollingAverageVelX, velX)
     table.remove(rollingAverageVelX, 1)
