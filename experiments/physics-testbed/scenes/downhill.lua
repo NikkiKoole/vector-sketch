@@ -1758,9 +1758,10 @@ function scene.update(dt)
 
     if frontWheelFromGround > .1 then
         local v = numbers.mapInto(frontWheelFromGround, 0, 20, 0, 1)
-
+        if v < 0.01 then v = 0.01 end
         wheeliesource:setVolume(v)
         local p = numbers.mapInto(velX, -1000, 1000, 0.5, 1)
+        if p < 0.01 then p = 0.01 end
         wheeliesource:setPitch(p)
     else
         wheeliesource:setVolume(0)
