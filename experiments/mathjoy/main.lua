@@ -114,16 +114,17 @@ function button(x, y, w, h, color, labelfont, label, labelcolor)
     return ui.getUIRect(label, x, y, w, h)
 end
 
-function answerIsCorrect()
-    local getAnswer = function(a, b, operator)
-        if operator == 'x' then
-            return a * b
-        elseif operator == '+' then
-            return a + b
-        elseif operator == '-' then
-            return a - b
-        end
+local getAnswer = function(a, b, operator)
+    if operator == 'x' then
+        return a * b
+    elseif operator == '+' then
+        return a + b
+    elseif operator == '-' then
+        return a - b
     end
+end
+function answerIsCorrect()
+    
     local correct = getAnswer(calculation.a, calculation.b, calculation.operation)
     local result = (tonumber(answer) == correct)
     last = { result = result, time = 100, answer = correct }
@@ -185,7 +186,10 @@ function makeNumpad(tlx, tly)
         addDigitToAnswer(0)
     end
     if button(tlx + d * 2, tly + d * 3, size, size, palette.neutral_orange, helveticasmall, 'ok', palette.light0) then
-        if answerIsCorrect() then else print(calculation.a .. ' * ' .. calculation.b, calculation.a * calculation.b) end
+        if answerIsCorrect() then 
+        else 
+            print(calculation.a .. ' '..calculation.operation..' ' .. calculation.b, getAnswer(calculation.a, calculation.b, calculation.operation)) 
+        end
 
         answer = ''
         newCalculation()
