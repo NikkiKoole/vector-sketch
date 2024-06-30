@@ -1,5 +1,12 @@
 package.path = package.path .. ";../../?.lua"
 
+-- 5 + 5  = 8 + ?
+--
+-- 5 + ? = 10
+--
+-- radiobuttons om tafels te oefenen
+-- /
+--
 
 local ui = require 'lib.ui'
 
@@ -59,6 +66,11 @@ function love.load()
     helveticasmall = love.graphics.newFont('helvetica-light-587ebe5a59211.ttf', 48)
     vag = love.graphics.newFont('VAG Rounded Regular.otf', 64)
     bg = love.graphics.newImage('mathhead2.png')
+
+    correctAnswersNeeded = 3
+    answeredCorrectlyAtThisLevel = 0
+    level = 1
+    -- you should answer a few answer correclty before increasing alvel
     newCalculation()
     answer = ''
 
@@ -66,7 +78,7 @@ function love.load()
 end
 
 function newCalculation()
-    local a, operation, b = makeCalculation()
+    local a, operation, b = makeCalculation(level)
     calculation = {}
     calculation.a = a
     calculation.b = b
@@ -78,10 +90,91 @@ function pickRandom(container)
     return container[index]
 end
 
-function makeCalculation()
-    local a = math.ceil(love.math.random() * 32)
-    local b = math.ceil(love.math.random() * 16)
-    local operation = pickRandom({ 'x', '-', '+' })
+function makeCalculation(level)
+    local operators = { '+' }
+    local aMax = 10
+    local bMax = 10
+    local aMin = 0
+    local bMin = 0
+    local cMin = 0
+    local dMin = 0
+    local cMax = 10
+    local dMax = 10
+
+    if level == 1 then
+        operators = { '+' }
+        aMax = 5
+        bMax = 5
+    elseif level == 2 then
+        operators = { '+', '-' }
+        aMax = 8
+        bMax = 8
+    elseif level == 3 then
+        operators = { '+', '-' }
+        aMax = 10
+        bMax = 10
+    elseif level == 4 then
+        operators = { '+', '-', 'x' }
+        aMax = 20
+        bMax = 20
+        aMin = 10
+        bMin = 10
+        cMax = 5
+        dMax = 5
+    elseif level == 5 then
+        operators = { '+', '-', 'x' }
+        aMin = 10
+        bMin = 10
+        aMax = 20
+        bMax = 20
+        cMax = 10
+        dMax = 10
+    elseif level == 6 then
+        operators = { '+', '-', 'x' }
+        aMax = 40
+        bMax = 40
+        cMax = 20
+        dMax = 10
+    elseif level == 7 then
+        operators = { '+', '-', 'x' }
+        aMax = 50
+        bMax = 50
+        cMin = 5
+        dMin = 5
+        cMax = 10
+        dMax = 16
+    elseif level == 8 then
+        operators = { '+', '-', 'x' }
+        aMax = 80
+        bMax = 80
+        aMin = 10
+        bMin = 10
+        cMax = 10
+        dMax = 20
+        cMin = 5
+        dMin = 5
+    elseif level == 9 then
+        operators = { '+', '-', 'x' }
+        aMax = 80
+        bMax = 80
+        aMin = 20
+        bMin = 20
+        cMax = 20
+        dMax = 20
+        cMin = 5
+        dMin = 5
+    end
+
+    local operation = pickRandom(operators)
+    if operation == 'x' then
+        aMax = cMax
+        bMax = dMax
+        aMin = cMin
+        bMin = dMin
+    end
+    local a = aMin + math.ceil(love.math.random() * (aMax - aMin))
+    local b = bMin + math.ceil(love.math.random() * (bMax - bMin))
+
     if operation == '-' then
         if a < b then
             local c = a
@@ -89,6 +182,7 @@ function makeCalculation()
             b = c
         end
     end
+    print(level)
     return a, operation, b
 end
 
@@ -126,6 +220,18 @@ end
 function answerIsCorrect()
     
     local correct = getAnswer(calculation.a, calculation.b, calculation.operation)
+
+    if correct then
+        answeredCorrectlyAtThisLevel = answeredCorrectlyAtThisLevel + 1
+        if answeredCorrectlyAtThisLevel >= correctAnswersNeeded then
+            level = level + 1
+            answeredCorrectlyAtThisLevel = 0
+        end
+    else
+        answeredCorrectlyAtThisLevel = 0
+    end
+    if level > 9 then level = 9 end
+
     local result = (tonumber(answer) == correct)
     last = { result = result, time = 100, answer = correct }
 end

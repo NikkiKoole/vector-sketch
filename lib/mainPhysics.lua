@@ -222,17 +222,19 @@ end
 
 lib.killMouseJointIfPossible = function(id)
     local index = -1
-    for i = 1, #pointerJoints do
-        if pointerJoints[i].id == id then
-            index = i
-            if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
-                pointerJoints[i].joint:destroy()
+    if pointerJoints then
+        for i = 1, #pointerJoints do
+            if pointerJoints[i].id == id then
+                index = i
+                if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
+                    pointerJoints[i].joint:destroy()
+                end
+                pointerJoints[i].joint     = nil
+                pointerJoints[i].jointBody = nil
             end
-            pointerJoints[i].joint     = nil
-            pointerJoints[i].jointBody = nil
         end
+        table.remove(pointerJoints, index)
     end
-    table.remove(pointerJoints, index)
 end
 
 lib.makeShapeFromCreationPart = function(part)
@@ -411,42 +413,44 @@ lib.handleUpdate = function(dt)
 end
 
 lib.handlePointerReleased = function(x, y, id)
-    for i = 1, #pointerJoints do
-        local mj = pointerJoints[i]
-        -- if false then
-        if mj.id == id then
-            if (mj.joint) then --- UNUSED
-                if false then  -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
-                    if (mj.jointBody and objects.ground) then
-                        local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
-                        local tl = { points[1], points[2] }
-                        local tr = { points[3], points[4] }
-                        -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
-                        -- oh wait, this is actually kinda good enough-ish (tm)
-                        if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
-                            local x1, y1 = mj.jointBody:getPosition()
-                            if (#mj.positionOfLastDisabledContact > 0) then
-                                local x2 = mj.positionOfLastDisabledContact[1]
-                                local y2 = mj.positionOfLastDisabledContact[2]
+    if pointerJoints then
+        for i = 1, #pointerJoints do
+            local mj = pointerJoints[i]
+            -- if false then
+            if mj.id == id then
+                if (mj.joint) then --- UNUSED
+                    if false then  -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
+                        if (mj.jointBody and objects.ground) then
+                            local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
+                            local tl = { points[1], points[2] }
+                            local tr = { points[3], points[4] }
+                            -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
+                            -- oh wait, this is actually kinda good enough-ish (tm)
+                            if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
+                                local x1, y1 = mj.jointBody:getPosition()
+                                if (#mj.positionOfLastDisabledContact > 0) then
+                                    local x2 = mj.positionOfLastDisabledContact[1]
+                                    local y2 = mj.positionOfLastDisabledContact[2]
 
-                                local delta = Vector(x1 - x2, y1 - y2)
-                                local l = delta:getLength()
+                                    local delta = Vector(x1 - x2, y1 - y2)
+                                    local l = delta:getLength()
 
-                                local v = delta:getNormalized() * l * -2
-                                if v.y > 0 then
-                                    v.y = 0
-                                    v.x = 0
-                                end -- i odnt want  you shoooting downward!
-                                mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                                    local v = delta:getNormalized() * l * -2
+                                    if v.y > 0 then
+                                        v.y = 0
+                                        v.x = 0
+                                    end -- i odnt want  you shoooting downward!
+                                    mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                                end
+                                mj.bodyLastDisabledContact = nil
+                                mj.positionOfLastDisabledContact = nil
+                                --
                             end
-                            mj.bodyLastDisabledContact = nil
-                            mj.positionOfLastDisabledContact = nil
-                            --
                         end
                     end
                 end
+                --   end
             end
-            --   end
         end
     end
     lib.killMouseJointIfPossible(id)

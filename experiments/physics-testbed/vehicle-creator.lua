@@ -1,7 +1,19 @@
-local connect                     = require 'lib.connectors'
-package.path                      = package.path .. ";../../?.lua"
+local connect = require 'lib.connectors'
+package.path  = package.path .. ";../../?.lua"
 
-local lib                         = {}
+local lib     = {}
+
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+
 lib.createVehicleUsingDNACreation = function(key, c, x, y)
     local vehicleData = {
         ['scooter'] = {
