@@ -3,8 +3,9 @@ local gradient   = require 'lib.gradient'
 local fluxObject = { blobScale = 0, blobOffset = 0, headerOffset = 0, alpha1 = 0.1, alpha2 = .25 }
 local Timer      = require 'vendor.timer'
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
-
+local addMipos   = require 'addMipos'
 local isGoing    = false
+local phys       = require 'lib.mainPhysics'
 function gotoNext()
     if not isGoing then
         isGoing = true
@@ -32,6 +33,11 @@ function scene.update(dt)
 
         if key == '1' or key == '2' or key == '3' or key == '4' or key == '5' then
             print('key', key)
+            love.math.setRandomSeed((key + 0))
+            phys.setupWorld(500)
+            stepSize = 300
+
+            mipos = addMipos.make(1)
             gotoNext()
         else
             gotoNext()

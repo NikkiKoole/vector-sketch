@@ -347,10 +347,8 @@ local function cycleStep()
 end
 
 local function startExample(number)
-    phys.setupWorld(500)
-    stepSize = 300
+    -- mipos = addMipos.make(1)
     ground = initGround()
-    mipos = addMipos.make(1)
     schansjes = {}
     --print(inspect(mipos[1].dna.multipliers))
     obstacles = {}
