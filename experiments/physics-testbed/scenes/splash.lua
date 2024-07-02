@@ -12,13 +12,17 @@ local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 function scene.modify(obj)
 end
 
+local isGoing = false
 function gotoNext()
-    Timer.tween(.3, fluxObject, { alpha1 = 0, alpha2 = 0 }, 'out-bounce')
-    Timer.after(.4,
-        function()
-            Timer.clear()
-            SM.load("downhill")
-        end)
+    if not isGoing then
+        isGoing = true
+        Timer.tween(.3, fluxObject, { alpha1 = 0, alpha2 = 0 }, 'out-bounce')
+        Timer.after(.4,
+            function()
+                Timer.clear()
+                SM.load("intro")
+            end)
+    end
 end
 
 function scene.handleAudioMessage()

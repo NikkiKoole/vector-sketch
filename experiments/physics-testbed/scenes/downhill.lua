@@ -540,7 +540,7 @@ function scene.load()
 
     jointsEnabled = true
     followCamera = 'mipo'
-
+    print('scene load downlhill')
     startExample()
 
     backWheelFromGround = 0
@@ -1754,7 +1754,7 @@ function scene.update(dt)
 
     local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.backWheel.body
     local velX, velY = thingToFollow:getLinearVelocity()
-
+    --print('isDestroyed', thingToFollow:isDestroyed())
 
     if frontWheelFromGround > .1 then
         local v = numbers.mapInto(frontWheelFromGround, 0, 20, 0, 1)
@@ -1945,6 +1945,7 @@ function scene.update(dt)
     --   print(mipos[1].b2d.torso)
     --   print(bike.frontWheel.body)
     --mipos[1].b2d.torso
+    --print('isDestroyed2', thingToFollow:isDestroyed())
     local targetX, targetY = getTargetPos(thingToFollow)
     targetY = targetY - 1000
 
