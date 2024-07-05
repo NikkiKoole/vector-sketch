@@ -1,0 +1,3551 @@
+{ {
+creation = {
+brow = {
+h = 10,
+w = 10
+},
+eye = {
+h = 10,
+w = 10
+},
+hair1 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hair2 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair3 = {
+d = 0.1,
+friction = 5000,
+h = 150,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair4 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair5 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hasNeck = false,
+hasPhysicsHair = false,
+head = {
+d = 1,
+flipx = 1,
+flipy = 1,
+h = 200,
+limits = {
+enabled = true,
+low = -0.78539816339745,
+up = 0.78539816339745
+},
+shape = "capsule3",
+w = 100
+},
+isPotatoHead = true,
+lear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = 1.5707963267949,
+w = 100
+},
+lfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+lhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+llarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = 0,
+up = 2.6415926535898
+},
+shape = "capsule",
+w = 40
+},
+llleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+lowerlip = {
+h = 10,
+w = 10
+},
+luarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = 0,
+up = 3.1415926535898
+},
+shape = "capsule",
+w = 40
+},
+luleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 1.5707963267949
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+neck = {
+d = 1,
+h = 150,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+neck1 = {
+d = 1,
+h = 110,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+nose = {
+h = 10,
+w = 10
+},
+pupil = {
+h = 10,
+w = 10
+},
+rear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = -1.5707963267949,
+w = 100
+},
+rfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+rhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+rlarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = -2.6415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+rlleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 0.39269908169872
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+ruarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = -3.1415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+ruleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+teeth = {
+h = 10,
+w = 10
+},
+torso = {
+d = 2.15,
+flipx = 1,
+flipy = 1,
+h = 300,
+shape = "trapezium",
+w = 300
+},
+upperlip = {
+h = 10,
+w = 10
+}
+},
+multipliers = {
+arm = {
+lMultiplier = 3,
+wMultiplier = 2
+},
+armhair = {
+wMultiplier = 1
+},
+brow = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+chesthair = {
+mMultiplier = 1
+},
+ear = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+eye = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+face = {
+mMultiplier = 1
+},
+feet = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+hair = {
+sMultiplier = 1,
+tension = 0.5,
+wMultiplier = 1
+},
+hand = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+head = {
+hMultiplier = 2.5,
+wMultiplier = 1.5
+},
+leg = {
+lMultiplier = 3.5,
+wMultiplier = 3.5
+},
+leghair = {
+wMultiplier = 1
+},
+mouth = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+neck = {
+hMultiplier = 1,
+wMultiplier = 2.5
+},
+nose = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+pupil = {
+hMultiplier = 0.5,
+wMultiplier = 0.5
+},
+teeth = {
+hMultiplier = 1
+},
+torso = {
+hMultiplier = 1,
+wMultiplier = 1
+}
+},
+positioners = {
+brow = {
+bend = 1,
+y = 0.8
+},
+ear = {
+y = 0.5
+},
+eye = {
+r = 0,
+x = 0.2,
+y = 0.5
+},
+leg = {
+x = 0.5
+},
+mouth = {
+y = 0.25
+},
+nose = {
+y = 0.5
+},
+teeth = {
+z = 0
+}
+},
+values = {
+armhair = {
+bgAlpha = 5,
+bgPal = 85,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 73,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 50,
+shape = 15,
+texRot = 0,
+texScale = 1
+},
+arms = {
+bgAlpha = 5,
+bgPal = 71,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 90,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+body = {
+bgAlpha = 5,
+bgPal = 65,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 18,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 11,
+texRot = 0,
+texScale = 1
+},
+brows = {
+bgAlpha = 5,
+bgPal = 102,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 18,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 50,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+chestHair = {
+bgAlpha = 5,
+bgPal = 38,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 20,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 50,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+ears = {
+bgAlpha = 5,
+bgPal = 64,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 17,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 10,
+texRot = 0,
+texScale = 1
+},
+eyes = {
+bgAlpha = 5,
+bgPal = 3,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 13,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+feet = {
+bgAlpha = 5,
+bgPal = 4,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 62,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 13,
+texRot = 0,
+texScale = 1
+},
+hair = {
+bgAlpha = 5,
+bgPal = 26,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 92,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 50,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+hands = {
+bgAlpha = 5,
+bgPal = 11,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 79,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+head = {
+bgAlpha = 5,
+bgPal = 88,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 14,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+leghair = {
+bgAlpha = 5,
+bgPal = 32,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 34,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 50,
+shape = 15,
+texRot = 0,
+texScale = 1
+},
+legs = {
+bgAlpha = 5,
+bgPal = 46,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 95,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 9,
+texRot = 0,
+texScale = 1
+},
+lowerlip = {
+bgAlpha = 5,
+bgPal = 19,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 49,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+neck = {
+bgAlpha = 5,
+bgPal = 95,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 87,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+nose = {
+bgAlpha = 5,
+bgPal = 80,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 25,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+pupils = {
+bgAlpha = 5,
+bgPal = 57,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 40,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 11,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1 = {
+bgAlpha = 3,
+bgPal = 20,
+bgTex = 1,
+fgAlpha = 4,
+fgPal = 38,
+fgTex = 2,
+lineAlpha = 3,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = -2,
+ty = 0
+},
+skinPatchEye2 = {
+bgAlpha = 3,
+bgPal = 9,
+bgTex = 1,
+fgAlpha = 4,
+fgPal = 77,
+fgTex = 2,
+lineAlpha = 3,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye2PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = 2,
+ty = 0
+},
+skinPatchSnout = {
+bgAlpha = 5,
+bgPal = 56,
+bgTex = 1,
+fgAlpha = 1,
+fgPal = 84,
+fgTex = 2,
+lineAlpha = 2,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+skinPatchSnoutPV = {
+r = 1,
+sx = 2,
+sy = 1,
+tx = 0,
+ty = 5
+},
+teeth = {
+bgAlpha = 5,
+bgPal = 5,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 5,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+upperlip = {
+bgAlpha = 5,
+bgPal = 72,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 46,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+}
+}
+}, {
+creation = {
+brow = {
+h = 10,
+w = 10
+},
+eye = {
+h = 10,
+w = 10
+},
+hair1 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hair2 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair3 = {
+d = 0.1,
+friction = 5000,
+h = 150,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair4 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair5 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hasNeck = false,
+hasPhysicsHair = false,
+head = {
+d = 1,
+flipx = 1,
+flipy = 1,
+h = 200,
+limits = {
+enabled = true,
+low = -0.78539816339745,
+up = 0.78539816339745
+},
+shape = "capsule3",
+w = 100
+},
+isPotatoHead = false,
+lear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = 1.5707963267949,
+w = 100
+},
+lfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+lhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+llarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = 0,
+up = 2.6415926535898
+},
+shape = "capsule",
+w = 40
+},
+llleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+lowerlip = {
+h = 10,
+w = 10
+},
+luarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = 0,
+up = 3.1415926535898
+},
+shape = "capsule",
+w = 40
+},
+luleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 1.5707963267949
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+neck = {
+d = 1,
+h = 150,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+neck1 = {
+d = 1,
+h = 110,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+nose = {
+h = 10,
+w = 10
+},
+pupil = {
+h = 10,
+w = 10
+},
+rear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = -1.5707963267949,
+w = 100
+},
+rfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+rhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+rlarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = -2.6415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+rlleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 0.39269908169872
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+ruarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = -3.1415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+ruleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+teeth = {
+h = 10,
+w = 10
+},
+torso = {
+d = 2.15,
+flipx = 1,
+flipy = 1,
+h = 300,
+shape = "trapezium",
+w = 300
+},
+upperlip = {
+h = 10,
+w = 10
+}
+},
+multipliers = {
+arm = {
+lMultiplier = 1.5,
+wMultiplier = 1.5
+},
+armhair = {
+wMultiplier = 1
+},
+brow = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+chesthair = {
+mMultiplier = 1
+},
+ear = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+eye = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+face = {
+mMultiplier = 1
+},
+feet = {
+hMultiplier = 1.5,
+wMultiplier = 1
+},
+hair = {
+sMultiplier = 1,
+tension = 0.5,
+wMultiplier = 1
+},
+hand = {
+hMultiplier = 1,
+wMultiplier = 1.5
+},
+head = {
+hMultiplier = 2,
+wMultiplier = 1.5
+},
+leg = {
+lMultiplier = 1,
+wMultiplier = 1
+},
+leghair = {
+wMultiplier = 1
+},
+mouth = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+neck = {
+hMultiplier = 2.5,
+wMultiplier = 1.5
+},
+nose = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+pupil = {
+hMultiplier = 0.5,
+wMultiplier = 0.5
+},
+teeth = {
+hMultiplier = 1
+},
+torso = {
+hMultiplier = 1,
+wMultiplier = 1
+}
+},
+positioners = {
+brow = {
+bend = 1,
+y = 0.8
+},
+ear = {
+y = 0.5
+},
+eye = {
+r = 0,
+x = 0.2,
+y = 0.5
+},
+leg = {
+x = 0.5
+},
+mouth = {
+y = 0.25
+},
+nose = {
+y = 0.5
+},
+teeth = {
+z = 0
+}
+},
+values = {
+armhair = {
+bgAlpha = 5,
+bgPal = 103,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 108,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 73,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+arms = {
+bgAlpha = 5,
+bgPal = 63,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 3,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+body = {
+bgAlpha = 5,
+bgPal = 64,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 69,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+brows = {
+bgAlpha = 5,
+bgPal = 47,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 6,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 73,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+chestHair = {
+bgAlpha = 5,
+bgPal = 67,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 109,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 73,
+shape = 7,
+texRot = 0,
+texScale = 1
+},
+ears = {
+bgAlpha = 5,
+bgPal = 86,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 86,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+eyes = {
+bgAlpha = 5,
+bgPal = 38,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 53,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+feet = {
+bgAlpha = 5,
+bgPal = 89,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 77,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 7,
+texRot = 0,
+texScale = 1
+},
+hair = {
+bgAlpha = 5,
+bgPal = 95,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 38,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 73,
+shape = 13,
+texRot = 0,
+texScale = 1
+},
+hands = {
+bgAlpha = 5,
+bgPal = 42,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 16,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 10,
+texRot = 0,
+texScale = 1
+},
+head = {
+bgAlpha = 5,
+bgPal = 105,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 29,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 14,
+texRot = 0,
+texScale = 1
+},
+leghair = {
+bgAlpha = 5,
+bgPal = 88,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 106,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 73,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+legs = {
+bgAlpha = 5,
+bgPal = 104,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 25,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+lowerlip = {
+bgAlpha = 5,
+bgPal = 5,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 97,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+neck = {
+bgAlpha = 5,
+bgPal = 26,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 68,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+nose = {
+bgAlpha = 5,
+bgPal = 81,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 17,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 7,
+texRot = 0,
+texScale = 1
+},
+pupils = {
+bgAlpha = 5,
+bgPal = 34,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 74,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 7,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1 = {
+bgAlpha = 5,
+bgPal = 96,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 12,
+fgTex = 2,
+lineAlpha = 2,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = -2,
+ty = 0
+},
+skinPatchEye2 = {
+bgAlpha = 5,
+bgPal = 84,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 18,
+fgTex = 2,
+lineAlpha = 2,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye2PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = 2,
+ty = 0
+},
+skinPatchSnout = {
+bgAlpha = 5,
+bgPal = 30,
+bgTex = 1,
+fgAlpha = 1,
+fgPal = 75,
+fgTex = 2,
+lineAlpha = 2,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+skinPatchSnoutPV = {
+r = 1,
+sx = 2,
+sy = 1,
+tx = 0,
+ty = 5
+},
+teeth = {
+bgAlpha = 5,
+bgPal = 5,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 5,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+upperlip = {
+bgAlpha = 5,
+bgPal = 7,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 26,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+}
+}
+}, {
+creation = {
+brow = {
+h = 10,
+w = 10
+},
+eye = {
+h = 10,
+w = 10
+},
+hair1 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hair2 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair3 = {
+d = 0.1,
+friction = 5000,
+h = 150,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair4 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair5 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hasNeck = false,
+hasPhysicsHair = false,
+head = {
+d = 1,
+flipx = 1,
+flipy = 1,
+h = 200,
+limits = {
+enabled = true,
+low = -0.78539816339745,
+up = 0.78539816339745
+},
+shape = "capsule3",
+w = 100
+},
+isPotatoHead = true,
+lear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = 1.5707963267949,
+w = 100
+},
+lfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+lhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+llarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = 0,
+up = 2.6415926535898
+},
+shape = "capsule",
+w = 40
+},
+llleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+lowerlip = {
+h = 10,
+w = 10
+},
+luarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = 0,
+up = 3.1415926535898
+},
+shape = "capsule",
+w = 40
+},
+luleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 1.5707963267949
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+neck = {
+d = 1,
+h = 150,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+neck1 = {
+d = 1,
+h = 110,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+nose = {
+h = 10,
+w = 10
+},
+pupil = {
+h = 10,
+w = 10
+},
+rear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = -1.5707963267949,
+w = 100
+},
+rfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+rhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+rlarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = -2.6415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+rlleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 0.39269908169872
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+ruarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = -3.1415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+ruleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+teeth = {
+h = 10,
+w = 10
+},
+torso = {
+d = 2.15,
+flipx = 1,
+flipy = 1,
+h = 300,
+shape = "trapezium",
+w = 300
+},
+upperlip = {
+h = 10,
+w = 10
+}
+},
+multipliers = {
+arm = {
+lMultiplier = 2.5,
+wMultiplier = 2.5
+},
+armhair = {
+wMultiplier = 1
+},
+brow = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+chesthair = {
+mMultiplier = 1
+},
+ear = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+eye = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+face = {
+mMultiplier = 1
+},
+feet = {
+hMultiplier = 1.5,
+wMultiplier = 1.5
+},
+hair = {
+sMultiplier = 1,
+tension = 0.5,
+wMultiplier = 1
+},
+hand = {
+hMultiplier = 1.5,
+wMultiplier = 1
+},
+head = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+leg = {
+lMultiplier = 2,
+wMultiplier = 1.5
+},
+leghair = {
+wMultiplier = 1
+},
+mouth = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+neck = {
+hMultiplier = 1,
+wMultiplier = 2.5
+},
+nose = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+pupil = {
+hMultiplier = 0.5,
+wMultiplier = 0.5
+},
+teeth = {
+hMultiplier = 1
+},
+torso = {
+hMultiplier = 1,
+wMultiplier = 1
+}
+},
+positioners = {
+brow = {
+bend = 1,
+y = 0.8
+},
+ear = {
+y = 0.5
+},
+eye = {
+r = 0,
+x = 0.2,
+y = 0.5
+},
+leg = {
+x = 0.5
+},
+mouth = {
+y = 0.25
+},
+nose = {
+y = 0.5
+},
+teeth = {
+z = 0
+}
+},
+values = {
+armhair = {
+bgAlpha = 5,
+bgPal = 88,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 20,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 83,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+arms = {
+bgAlpha = 5,
+bgPal = 99,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 36,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+body = {
+bgAlpha = 5,
+bgPal = 52,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 65,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+brows = {
+bgAlpha = 5,
+bgPal = 40,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 80,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 83,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+chestHair = {
+bgAlpha = 5,
+bgPal = 33,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 46,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 83,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+ears = {
+bgAlpha = 5,
+bgPal = 37,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 25,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+eyes = {
+bgAlpha = 5,
+bgPal = 98,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 1,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+feet = {
+bgAlpha = 5,
+bgPal = 65,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 94,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 7,
+texRot = 0,
+texScale = 1
+},
+hair = {
+bgAlpha = 5,
+bgPal = 66,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 85,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 83,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+hands = {
+bgAlpha = 5,
+bgPal = 91,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 86,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+head = {
+bgAlpha = 5,
+bgPal = 82,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 70,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 17,
+texRot = 0,
+texScale = 1
+},
+leghair = {
+bgAlpha = 5,
+bgPal = 85,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 76,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 83,
+shape = 17,
+texRot = 0,
+texScale = 1
+},
+legs = {
+bgAlpha = 5,
+bgPal = 98,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 86,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+lowerlip = {
+bgAlpha = 5,
+bgPal = 86,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 33,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+neck = {
+bgAlpha = 5,
+bgPal = 35,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 8,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 16,
+texRot = 0,
+texScale = 1
+},
+nose = {
+bgAlpha = 5,
+bgPal = 25,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 23,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+pupils = {
+bgAlpha = 5,
+bgPal = 14,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 38,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1 = {
+bgAlpha = 2,
+bgPal = 7,
+bgTex = 1,
+fgAlpha = 1,
+fgPal = 86,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = -2,
+ty = 0
+},
+skinPatchEye2 = {
+bgAlpha = 2,
+bgPal = 107,
+bgTex = 1,
+fgAlpha = 1,
+fgPal = 77,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye2PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = 2,
+ty = 0
+},
+skinPatchSnout = {
+bgAlpha = 3,
+bgPal = 57,
+bgTex = 1,
+fgAlpha = 2,
+fgPal = 8,
+fgTex = 2,
+lineAlpha = 3,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+skinPatchSnoutPV = {
+r = 1,
+sx = 2,
+sy = 1,
+tx = 0,
+ty = 5
+},
+teeth = {
+bgAlpha = 5,
+bgPal = 5,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 5,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+},
+upperlip = {
+bgAlpha = 5,
+bgPal = 101,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 73,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+}
+}
+}, {
+creation = {
+brow = {
+h = 10,
+w = 10
+},
+eye = {
+h = 10,
+w = 10
+},
+hair1 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hair2 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair3 = {
+d = 0.1,
+friction = 5000,
+h = 150,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair4 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair5 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hasNeck = false,
+hasPhysicsHair = false,
+head = {
+d = 1,
+flipx = 1,
+flipy = 1,
+h = 200,
+limits = {
+enabled = true,
+low = -0.78539816339745,
+up = 0.78539816339745
+},
+shape = "capsule3",
+w = 100
+},
+isPotatoHead = true,
+lear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = 1.5707963267949,
+w = 100
+},
+lfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+lhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+llarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = 0,
+up = 2.6415926535898
+},
+shape = "capsule",
+w = 40
+},
+llleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+lowerlip = {
+h = 10,
+w = 10
+},
+luarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = 0,
+up = 3.1415926535898
+},
+shape = "capsule",
+w = 40
+},
+luleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 1.5707963267949
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+neck = {
+d = 1,
+h = 150,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+neck1 = {
+d = 1,
+h = 110,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+nose = {
+h = 10,
+w = 10
+},
+pupil = {
+h = 10,
+w = 10
+},
+rear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = -1.5707963267949,
+w = 100
+},
+rfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+rhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+rlarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = -2.6415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+rlleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 0.39269908169872
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+ruarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = -3.1415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+ruleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+teeth = {
+h = 10,
+w = 10
+},
+torso = {
+d = 2.15,
+flipx = 1,
+flipy = 1,
+h = 300,
+shape = "trapezium",
+w = 300
+},
+upperlip = {
+h = 10,
+w = 10
+}
+},
+multipliers = {
+arm = {
+lMultiplier = 2.5,
+wMultiplier = 1
+},
+armhair = {
+wMultiplier = 1
+},
+brow = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+chesthair = {
+mMultiplier = 1
+},
+ear = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+eye = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+face = {
+mMultiplier = 1
+},
+feet = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+hair = {
+sMultiplier = 1,
+tension = 0.5,
+wMultiplier = 1
+},
+hand = {
+hMultiplier = 1.5,
+wMultiplier = 1.5
+},
+head = {
+hMultiplier = 1.5,
+wMultiplier = 2.5
+},
+leg = {
+lMultiplier = 2,
+wMultiplier = 1.5
+},
+leghair = {
+wMultiplier = 1
+},
+mouth = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+neck = {
+hMultiplier = 2,
+wMultiplier = 1.5
+},
+nose = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+pupil = {
+hMultiplier = 0.5,
+wMultiplier = 0.5
+},
+teeth = {
+hMultiplier = 1
+},
+torso = {
+hMultiplier = 1,
+wMultiplier = 1
+}
+},
+positioners = {
+brow = {
+bend = 1,
+y = 0.8
+},
+ear = {
+y = 0.5
+},
+eye = {
+r = 0,
+x = 0.2,
+y = 0.5
+},
+leg = {
+x = 0.5
+},
+mouth = {
+y = 0.25
+},
+nose = {
+y = 0.5
+},
+teeth = {
+z = 0
+}
+},
+values = {
+armhair = {
+bgAlpha = 5,
+bgPal = 102,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 88,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 44,
+shape = 16,
+texRot = 0,
+texScale = 1
+},
+arms = {
+bgAlpha = 5,
+bgPal = 43,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 7,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+body = {
+bgAlpha = 5,
+bgPal = 77,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 15,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+brows = {
+bgAlpha = 5,
+bgPal = 21,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 98,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 44,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+chestHair = {
+bgAlpha = 5,
+bgPal = 67,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 37,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 44,
+shape = 6,
+texRot = 0,
+texScale = 1
+},
+ears = {
+bgAlpha = 5,
+bgPal = 21,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 89,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+eyes = {
+bgAlpha = 5,
+bgPal = 45,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 38,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+feet = {
+bgAlpha = 5,
+bgPal = 47,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 64,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+hair = {
+bgAlpha = 5,
+bgPal = 31,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 17,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 44,
+shape = 14,
+texRot = 0,
+texScale = 1
+},
+hands = {
+bgAlpha = 5,
+bgPal = 65,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 97,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 7,
+texRot = 0,
+texScale = 1
+},
+head = {
+bgAlpha = 5,
+bgPal = 1,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 56,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+leghair = {
+bgAlpha = 5,
+bgPal = 90,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 68,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 44,
+shape = 13,
+texRot = 0,
+texScale = 1
+},
+legs = {
+bgAlpha = 5,
+bgPal = 94,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 16,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+lowerlip = {
+bgAlpha = 5,
+bgPal = 56,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 51,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+},
+neck = {
+bgAlpha = 5,
+bgPal = 81,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 72,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+nose = {
+bgAlpha = 5,
+bgPal = 65,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 43,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 13,
+texRot = 0,
+texScale = 1
+},
+pupils = {
+bgAlpha = 5,
+bgPal = 39,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 38,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1 = {
+bgAlpha = 4,
+bgPal = 36,
+bgTex = 1,
+fgAlpha = 2,
+fgPal = 23,
+fgTex = 2,
+lineAlpha = 4,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = -2,
+ty = 0
+},
+skinPatchEye2 = {
+bgAlpha = 4,
+bgPal = 63,
+bgTex = 1,
+fgAlpha = 2,
+fgPal = 46,
+fgTex = 2,
+lineAlpha = 4,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye2PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = 2,
+ty = 0
+},
+skinPatchSnout = {
+bgAlpha = 3,
+bgPal = 4,
+bgTex = 1,
+fgAlpha = 3,
+fgPal = 46,
+fgTex = 2,
+lineAlpha = 2,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+skinPatchSnoutPV = {
+r = 1,
+sx = 2,
+sy = 1,
+tx = 0,
+ty = 5
+},
+teeth = {
+bgAlpha = 5,
+bgPal = 5,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 5,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+upperlip = {
+bgAlpha = 5,
+bgPal = 55,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 97,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+}
+}
+}, {
+creation = {
+brow = {
+h = 10,
+w = 10
+},
+eye = {
+h = 10,
+w = 10
+},
+hair1 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hair2 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair3 = {
+d = 0.1,
+friction = 5000,
+h = 150,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair4 = {
+d = 0.1,
+friction = 5000,
+h = 100,
+limits = {
+enabled = true,
+low = -1.0471975511966,
+up = 1.0471975511966
+},
+shape = "capsule2",
+w = 150
+},
+hair5 = {
+d = 0.1,
+friction = 5000,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 1.5707963267949
+},
+shape = "capsule",
+w = 180
+},
+hasNeck = false,
+hasPhysicsHair = false,
+head = {
+d = 1,
+flipx = 1,
+flipy = 1,
+h = 200,
+limits = {
+enabled = true,
+low = -0.78539816339745,
+up = 0.78539816339745
+},
+shape = "capsule3",
+w = 100
+},
+isPotatoHead = true,
+lear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = 1.5707963267949,
+w = 100
+},
+lfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+lhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+llarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = 0,
+up = 2.6415926535898
+},
+shape = "capsule",
+w = 40
+},
+llleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+lowerlip = {
+h = 10,
+w = 10
+},
+luarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = 0,
+up = 3.1415926535898
+},
+shape = "capsule",
+w = 40
+},
+luleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 1.5707963267949
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+neck = {
+d = 1,
+h = 150,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+neck1 = {
+d = 1,
+h = 110,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+w = 140
+},
+nose = {
+h = 10,
+w = 10
+},
+pupil = {
+h = 10,
+w = 10
+},
+rear = {
+d = 0.1,
+h = 100,
+limits = {
+enabled = true,
+low = -0.19634954084936,
+up = 0.19634954084936
+},
+shape = "capsule",
+stanceAngle = -1.5707963267949,
+w = 100
+},
+rfoot = {
+d = 2,
+h = 150,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 80
+},
+rhand = {
+d = 2,
+h = 40,
+limits = {
+enabled = true,
+low = -0.39269908169872,
+up = 0.39269908169872
+},
+shape = "rect1",
+w = 40
+},
+rlarm = {
+d = 2.5,
+friction = 2000,
+h = 160,
+limits = {
+enabled = false,
+low = -2.6415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+rlleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = 0,
+up = 0.39269908169872
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+ruarm = {
+d = 2.5,
+friction = 4000,
+h = 280,
+limits = {
+enabled = false,
+low = -3.1415926535898,
+up = 0
+},
+shape = "capsule",
+w = 40
+},
+ruleg = {
+d = 2.5,
+h = 200,
+limits = {
+enabled = true,
+low = -1.5707963267949,
+up = 0
+},
+shape = "capsule",
+stanceAngle = 0,
+w = 40
+},
+teeth = {
+h = 10,
+w = 10
+},
+torso = {
+d = 2.15,
+flipx = 1,
+flipy = 1,
+h = 300,
+shape = "trapezium",
+w = 300
+},
+upperlip = {
+h = 10,
+w = 10
+}
+},
+multipliers = {
+arm = {
+lMultiplier = 3,
+wMultiplier = 3.5
+},
+armhair = {
+wMultiplier = 1
+},
+brow = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+chesthair = {
+mMultiplier = 1
+},
+ear = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+eye = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+face = {
+mMultiplier = 1
+},
+feet = {
+hMultiplier = 1.5,
+wMultiplier = 1
+},
+hair = {
+sMultiplier = 1,
+tension = 0.5,
+wMultiplier = 1
+},
+hand = {
+hMultiplier = 1.5,
+wMultiplier = 1
+},
+head = {
+hMultiplier = 1,
+wMultiplier = 2.5
+},
+leg = {
+lMultiplier = 1.5,
+wMultiplier = 3.5
+},
+leghair = {
+wMultiplier = 1
+},
+mouth = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+neck = {
+hMultiplier = 1,
+wMultiplier = 2
+},
+nose = {
+hMultiplier = 1,
+wMultiplier = 1
+},
+pupil = {
+hMultiplier = 0.5,
+wMultiplier = 0.5
+},
+teeth = {
+hMultiplier = 1
+},
+torso = {
+hMultiplier = 1,
+wMultiplier = 1
+}
+},
+positioners = {
+brow = {
+bend = 1,
+y = 0.8
+},
+ear = {
+y = 0.5
+},
+eye = {
+r = 0,
+x = 0.2,
+y = 0.5
+},
+leg = {
+x = 0.5
+},
+mouth = {
+y = 0.25
+},
+nose = {
+y = 0.5
+},
+teeth = {
+z = 0
+}
+},
+values = {
+armhair = {
+bgAlpha = 5,
+bgPal = 22,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 1,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 95,
+shape = 13,
+texRot = 0,
+texScale = 1
+},
+arms = {
+bgAlpha = 5,
+bgPal = 3,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 36,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 9,
+texRot = 0,
+texScale = 1
+},
+body = {
+bgAlpha = 5,
+bgPal = 76,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 31,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 10,
+texRot = 0,
+texScale = 1
+},
+brows = {
+bgAlpha = 5,
+bgPal = 30,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 23,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 95,
+shape = 2,
+texRot = 0,
+texScale = 1
+},
+chestHair = {
+bgAlpha = 5,
+bgPal = 80,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 15,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 95,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+ears = {
+bgAlpha = 5,
+bgPal = 98,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 85,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 9,
+texRot = 0,
+texScale = 1
+},
+eyes = {
+bgAlpha = 5,
+bgPal = 72,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 70,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 5,
+texRot = 0,
+texScale = 1
+},
+feet = {
+bgAlpha = 5,
+bgPal = 101,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 24,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 8,
+texRot = 0,
+texScale = 1
+},
+hair = {
+bgAlpha = 5,
+bgPal = 102,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 87,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 95,
+shape = 15,
+texRot = 0,
+texScale = 1
+},
+hands = {
+bgAlpha = 5,
+bgPal = 9,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 64,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+head = {
+bgAlpha = 5,
+bgPal = 46,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 30,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 15,
+texRot = 0,
+texScale = 1
+},
+leghair = {
+bgAlpha = 5,
+bgPal = 97,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 5,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 95,
+shape = 12,
+texRot = 0,
+texScale = 1
+},
+legs = {
+bgAlpha = 5,
+bgPal = 55,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 75,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 9,
+texRot = 0,
+texScale = 1
+},
+lowerlip = {
+bgAlpha = 5,
+bgPal = 16,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 15,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+neck = {
+bgAlpha = 5,
+bgPal = 105,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 27,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 19,
+texRot = 0,
+texScale = 1
+},
+nose = {
+bgAlpha = 5,
+bgPal = 66,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 29,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+pupils = {
+bgAlpha = 5,
+bgPal = 35,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 109,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 11,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1 = {
+bgAlpha = 1,
+bgPal = 56,
+bgTex = 1,
+fgAlpha = 4,
+fgPal = 77,
+fgTex = 2,
+lineAlpha = 4,
+linePal = 1,
+shape = 3,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye1PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = -2,
+ty = 0
+},
+skinPatchEye2 = {
+bgAlpha = 1,
+bgPal = 66,
+bgTex = 1,
+fgAlpha = 4,
+fgPal = 18,
+fgTex = 2,
+lineAlpha = 4,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+skinPatchEye2PV = {
+r = 1,
+sx = 1,
+sy = 1,
+tx = 2,
+ty = 0
+},
+skinPatchSnout = {
+bgAlpha = 3,
+bgPal = 104,
+bgTex = 1,
+fgAlpha = 2,
+fgPal = 32,
+fgTex = 2,
+lineAlpha = 1,
+linePal = 1,
+shape = 1,
+texRot = 0,
+texScale = 1
+},
+skinPatchSnoutPV = {
+r = 1,
+sx = 2,
+sy = 1,
+tx = 0,
+ty = 5
+},
+teeth = {
+bgAlpha = 5,
+bgPal = 5,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 5,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 4,
+texRot = 0,
+texScale = 1
+},
+upperlip = {
+bgAlpha = 5,
+bgPal = 8,
+bgTex = 1,
+fgAlpha = 5,
+fgPal = 26,
+fgTex = 2,
+lineAlpha = 5,
+linePal = 1,
+shape = 2,
+texRot = 0,
+texScale = 1
+}
+}
+} }

@@ -1672,14 +1672,10 @@ function handleInputs()
                 dj.queueClip(4, 8)
             end
         end
-        if k == 's' then
-            --dj.queueClip(5, 1)
-        end
 
-        --   if k == 's' then
-        --  toggledState = not toggledState
-        --  dj.toggleInstrumentAtIndex(toggledState, 1)
-        --  end
+
+
+
 
         if k == 'escape' then love.event.quit() end
         if k == 'space' and mipoOnVehicle then

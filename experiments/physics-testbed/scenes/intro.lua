@@ -14,13 +14,18 @@ function gotoNext()
         Timer.after(.4,
             function()
                 Timer.clear()
+
+                if not mipos then
+                    mipos = addMipos.make(1)
+                end
                 SM.load("downhill")
             end)
     end
 end
 
 function scene.load()
-
+    phys.setupWorld(500)
+    stepSize = 300
 end
 
 function scene.update(dt)
@@ -32,11 +37,9 @@ function scene.update(dt)
 
 
         if key == '1' or key == '2' or key == '3' or key == '4' or key == '5' then
-            print('key', key)
-            love.math.setRandomSeed((key + 0))
-            phys.setupWorld(500)
-            stepSize = 300
+            -- print('key', key)
 
+            love.math.setRandomSeed((key + 0))
             mipos = addMipos.make(1)
             gotoNext()
         else
