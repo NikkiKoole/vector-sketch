@@ -706,7 +706,7 @@ function scene.load()
     camera.centerCameraOnPosition(0, 0, 3000, 3000)
 
 
-    swipes.fadeInTransition(.2) 
+    swipes.fadeInTransition(1) 
 end
 
 function scene.unload()
