@@ -15,6 +15,7 @@ local connect          = require 'lib.connectors'
 local updatePart       = require 'lib.updatePart'
 local addMipos         = require 'addMipos'
 local vehicle          = require 'vehicle-creator'
+local swipes           = require 'lib.screen-transitions'
 
 dayTimeTransition      = { t = 0 }
 local timeSpent        = 0
@@ -703,6 +704,9 @@ function scene.load()
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(0, 0, 3000, 3000)
+
+
+    swipes.fadeInTransition(.2) 
 end
 
 function scene.unload()
@@ -1447,6 +1451,12 @@ function scene.draw()
             cycleStep()
         end
     end
+
+
+    if swipes.getTransition() then
+        swipes.renderTransition(swipes.getTransition())
+    end
+
 end
 
 local function bikeGroundFeelerUpIsBelowSchansje(bike)
