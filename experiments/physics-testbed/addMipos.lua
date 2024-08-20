@@ -54,6 +54,47 @@ end
 
 -- todo hae the default coming from a general place too, so i odnt have to update it in  multiple places.
 
+
+lib.makeFromDNA = function(dna) 
+    
+    fiveGuys[1] = {
+        init = false,
+        id = 1,
+        dna = dna,
+        b2d = nil,
+        canvasCache = {},
+        facingVars = {
+            legs = 'right', --'right'/front
+        },
+        tweenVars = {
+            lookAtPosX = 0,
+            lookAtPosY = 0,
+            lookAtCounter = 0,
+            blinkCounter = love.math.random() * 5,
+            eyesOpen = 1,
+            mouthWide = 1,
+            mouthOpen = 0
+        }
+    }
+    
+    for i = 1, #fiveGuys do
+        updatePart.randomizeGuy(fiveGuys[i], true)
+
+
+        -- legs are always long!
+        if (fiveGuys[i].dna.multipliers.leg.lMultiplier < 2) then
+            fiveGuys[i].dna.multipliers.leg.lMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier + 2
+            fiveGuys[i].dna.multipliers.leg.wMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier
+        end
+
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, -10000, fiveGuys[i])
+        updatePart.updateAllParts(fiveGuys[i])
+    end
+    --print(inspect(fiveGuys))
+    return fiveGuys
+
+end
+
 lib.make = function(count)
     for i = 1, count do
         local dna = {

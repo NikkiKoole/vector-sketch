@@ -6,6 +6,46 @@ local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 local addMipos   = require 'addMipos'
 local isGoing    = false
 local phys       = require 'lib.mainPhysics'
+local dna = require 'lib.dna'
+local swipes           = require 'lib.screen-transitions'
+
+local inspect = require 'vendor.inspect'
+
+
+
+function loadDNA5File()
+    local contents, size = love.filesystem.read('assets/dna5.txt')
+    --print('wants to load an earlier saved file')
+    local parsed = (loadstring("return " .. contents)())
+
+    local result = {}
+
+    
+    for i = 1, 5 do
+        result[i] = {
+            init = false,
+            id = i,
+            dna = dna.patchDNA(parsed[i]),
+            b2d = nil,
+            canvasCache = {},
+            facingVars = {
+                legs = 'front', --'right'/front
+            },
+            tweenVars = {
+                lookAtPosX = 0,
+                lookAtPosY = 0,
+                lookAtCounter = 0,
+                blinkCounter = love.math.random() * 5,
+                eyesOpen = 1,
+                mouthWide = 1,
+                mouthOpen = 0
+            }
+        }
+    end 
+
+    return result
+end
+
 function gotoNext()
     if not isGoing then
         isGoing = true
@@ -18,12 +58,14 @@ function gotoNext()
                 if not mipos then
                     mipos = addMipos.make(1)
                 end
-                SM.load("downhill")
+                swipes.fadeOutTransition(.2 , function()
+                SM.load("downhill") end )
             end)
     end
 end
 
 function scene.load()
+    mipoGenetics = loadDNA5File()
     phys.setupWorld(500)
     stepSize = 300
 end
@@ -40,7 +82,8 @@ function scene.update(dt)
             -- print('key', key)
 
             love.math.setRandomSeed((key + 0))
-            mipos = addMipos.make(1)
+            --print(inspect(mipoGenetics[key+0].dna))
+            mipos = addMipos.makeFromDNA(mipoGenetics[key+0].dna)
             gotoNext()
         else
             gotoNext()
@@ -67,6 +110,9 @@ function scene.draw()
 
     love.graphics.print('press 1 - 5 to pick a mipo')
     --love.graphics.clear(creamColor)
+    if swipes.getTransition() then
+        swipes.renderTransition(swipes.getTransition())
+    end
 end
 
 return scene
