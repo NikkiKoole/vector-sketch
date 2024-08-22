@@ -31,7 +31,7 @@ function love.load()
     myFinder = Pathfinder(grid, 'JPS', walkable)
 
     max_speed = 100
-    guy_count = 5
+    guy_count = 50
     guys = {}
 
     for i = 1, guy_count do
