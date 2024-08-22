@@ -166,6 +166,7 @@ function love.draw()
         local it = guys[i]
         love.graphics.setColor(it.r, it.g, it.b)
         love.graphics.draw(img, quads[frameNames.head2], it.x, it.y, it.rad, 1, 1, 4, 4)
+        love.graphics.draw(img, quads[frameNames['arrow-up-down']], it.x, it.y, it.rad, 1, 1, 4, 4)
         if it.path then
             for node, count in it.path:nodes() do
                 love.graphics.rectangle('fill', node.x * 8, node.y * 8, 5, 5)

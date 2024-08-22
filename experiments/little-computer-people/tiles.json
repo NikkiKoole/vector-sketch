@@ -46,6 +46,14 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 8, "h": 8 },
     "sourceSize": { "w": 8, "h": 8 },
     "duration": 100
+   },
+   "tiles 6.aseprite": {
+    "frame": { "x": 54, "y": 0, "w": 8, "h": 8 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 8, "h": 8 },
+    "sourceSize": { "w": 8, "h": 8 },
+    "duration": 100
    }
  },
  "meta": {
@@ -53,7 +61,7 @@
   "version": "1.x-dev",
   "image": "tiles.png",
   "format": "RGBA8888",
-  "size": { "w": 53, "h": 8 },
+  "size": { "w": 62, "h": 8 },
   "scale": "1",
   "frameTags": [
    { "name": "head1", "from": 0, "to": 0, "direction": "forward" },
@@ -61,7 +69,8 @@
    { "name": "heart", "from": 2, "to": 2, "direction": "forward" },
    { "name": "dither1", "from": 3, "to": 3, "direction": "forward" },
    { "name": "dither2", "from": 4, "to": 4, "direction": "forward" },
-   { "name": "arrow-down", "from": 5, "to": 5, "direction": "forward" }
+   { "name": "arrow-down", "from": 5, "to": 5, "direction": "forward" },
+   { "name": "arrow-up-down", "from": 6, "to": 6, "direction": "forward" }
   ],
   "layers": [
    { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }

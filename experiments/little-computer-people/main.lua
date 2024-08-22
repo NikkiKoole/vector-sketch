@@ -168,6 +168,7 @@ function love.draw()
     local rows = #walkgrid
     local columns = #walkgrid[1]
     love.graphics.setColor(1, 1, 1)
+
     for y = 1, rows do
         for x = 1, columns do
             -- love.graphics.rectangle('line', x * cellsize, y * cellsize, cellsize, cellsize)
@@ -176,6 +177,7 @@ function love.draw()
             end
         end
     end
+    love.graphics.rectangle('line', cellsize, cellsize, cellsize * rows, cellsize * columns)
     love.graphics.setColor(1, 0, 0)
     if path then
         --print(('Path found! Length: %.2f'):format(path:getLength()))
@@ -192,6 +194,7 @@ function love.draw()
         --love.graphics.setColor(1, 0, 0)
         love.graphics.setColor(it.r, it.g, it.b)
         love.graphics.draw(img, quads[frameNames.head2], it.x, it.y, it.rad, 1, 1, 4, 4)
+        --love.graphics.draw(img, quads[frameNames['arrow-up-down']], it.x, it.y, it.rad, 1, 1, 4, 4)
         if it.path then
             for node, count in it.path:nodes() do
                 love.graphics.rectangle('fill', node.x * 8, node.y * 8, 5, 5)
