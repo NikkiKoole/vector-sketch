@@ -23,7 +23,7 @@ function makeVehicle(x, y)
 end
 
 function love.load()
-    success = love.window.setMode(1024, 1024, { highdpi = true })
+    success = love.window.setMode(1024, 1024, { highdpi = false })
 
     font = love.graphics.newFont('SMW.Whole-Pixel.Spacing.ttf', 24)
     love.graphics.setFont(font)
@@ -364,6 +364,9 @@ function love.keypressed(key)
 end
 
 function love.draw()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+
     love.graphics.push()
     love.graphics.translate(screen.dx, screen.dy)
     love.graphics.scale(screen.scale, screen.scale)
@@ -408,9 +411,6 @@ function love.draw()
     end
 
     love.graphics.pop()
-
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 end
 
 function love.mousemoved(x, y, dx, dy)
