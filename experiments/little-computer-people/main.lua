@@ -14,7 +14,7 @@ function makeVehicle(x, y)
         position = Vector(x, y),
         velocity = Vector(0, 0),
         acceleration = Vector(0, 0),
-        r = 3,
+        r = 4,
         currentTarget = nil,
         maxSpeed = 1 + love.math.random() * 3,
         maxForce = 2,
@@ -24,6 +24,9 @@ end
 
 function love.load()
     success = love.window.setMode(1024, 1024, { highdpi = true })
+
+    font = love.graphics.newFont('SMW.Whole-Pixel.Spacing.ttf', 24)
+    love.graphics.setFont(font)
     screen = {
         scale = 1, dx = 0, dy = 0
     }
@@ -260,7 +263,7 @@ function love.update(dt)
 
     for i = 1, #vehicles do
         local vehicle = vehicles[i]
-        vehicleSetRadiusDependingOnNeighbors(vehicle, vehicles, 3, i)
+        vehicleSetRadiusDependingOnNeighbors(vehicle, vehicles, 4, i)
         vehicleApplyBehaviors(vehicle, vehicles, vehicle.currentTarget)
         vehicleUpdate(vehicle)
         --love.graphics.setColor(vehicle.color.r, vehicle.color.g, vehicle.color.b)
@@ -405,6 +408,9 @@ function love.draw()
     end
 
     love.graphics.pop()
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 end
 
 function love.mousemoved(x, y, dx, dy)
