@@ -4,7 +4,7 @@ Vector = require 'vendor.brinevector'
 -- Define grid dimensions and cell size
 local GRID_WIDTH = 20
 local GRID_HEIGHT = 15
-local CELL_SIZE = 40
+local CELL_SIZE = 20
 
 function makeVehicle(x, y)
     return {
@@ -12,28 +12,34 @@ function makeVehicle(x, y)
         velocity = Vector(0, 0),
         acceleration = Vector(0, 0),
         r = 8,
-        maxSpeed = 8,
-        maxForce = 0.2
+        maxSpeed = 10,
+        maxForce = .4
     }
 end
 
 function vehicleApplyBehaviors(v, others, target)
     local separate = vehicleSeparate(v, others)
-    -- local seek = vehicleSeek(v, target)
+    local seek = vehicleSeek(v, target)
     local arrive = vehicleArrive(v, target)
-
+    local align = vehicleAlignment(v, others)
     local avoidWalls = vehicleAvoidWalls(v, grid)
     local wander = vehicleWander(v)
+    --local cohesion = vehicleCohesion(v, others)
 
+    align = align * 1
     wander = wander * .2
-    separate = separate * 1
-    -- seek = seek * 0.5
+    separate = separate * .8
+    seek = seek * 0.5
     arrive = arrive * .5
-    avoidWalls = avoidWalls * 1
-    vehicleApplyForce(v, wander)
+    avoidWalls = avoidWalls * .5
+    --cohesion = cohesion * .15
+
+    -- vehicleApplyForce(v, align)
+    -- vehicleApplyForce(v, wander)
+    -- vehicleApplyForce(v, cohesion)
     vehicleApplyForce(v, separate)
-    -- vehicleApplyForce(v, arrive)
-    -- vehicleApplyForce(v, avoidWalls)
+    vehicleApplyForce(v, arrive)
+    vehicleApplyForce(v, avoidWalls)
 end
 
 function vehicleApplyForce(v, force)
@@ -48,9 +54,9 @@ function vehicleUpdate(v)
 end
 
 function vehicleWander(v)
-    local wanderRadius = 25
+    local wanderRadius = 250
     local wanderDistance = 8
-    local wanderJitter = 10
+    local wanderJitter = 100
 
     v.wanderTheta = (v.wanderTheta or 0) + love.math.random() * wanderJitter - wanderJitter * 0.5
 
@@ -119,7 +125,7 @@ function vehicleAvoidWalls(v, grid)
                     local effectiveDistance = math.max(distance, minDistance)
                     local strength = (v.maxForce / effectiveDistance) * 10
                     --print(strength)
-                    print(effectiveDistance)
+                    -- print(effectiveDistance)
                     --local strength = v.maxForce
                     steerAway = Vector.setMag(steerAway, strength)
 
@@ -138,6 +144,31 @@ function vehicleAvoidWalls(v, grid)
     end
 
     return avoidanceForce
+end
+
+function vehicleAlignment(v, others)
+    local neighborDist = 50
+    local sum = Vector(0, 0)
+    local count = 0
+
+    for i = 1, #others do
+        local other = others[i]
+        local d = Vector.distance(v.position, other.position)
+        if (v ~= other and d < neighborDist) then
+            sum = sum + other.velocity
+            count = count + 1
+        end
+    end
+
+    if (count > 0) then
+        sum = sum / count
+        sum = Vector.setMag(sum, v.maxSpeed)
+        local steer = sum - v.velocity
+        steer = Vector.limit(steer, v.maxForce)
+        return steer
+    else
+        return Vector(0, 0)
+    end
 end
 
 function vehicleSeparate(v, others)
@@ -163,6 +194,28 @@ function vehicleSeparate(v, others)
     return sum
 end
 
+function vehicleCohesion(v, others)
+    local neighborDist = 100
+    local sum = Vector(0, 0)
+    local count = 0
+
+    for i = 1, #others do
+        local other = others[i]
+        local d = Vector.distance(v.position, other.position)
+        if (v ~= other and d < neighborDist) then
+            sum = sum + other.position
+            count = count + 1
+        end
+    end
+
+    if (count > 0) then
+        sum = sum / count -- Average position
+        return vehicleSeek(v, sum)
+    else
+        return Vector(0, 0)
+    end
+end
+
 -- Create a grid with some walls
 function createGrid()
     local grid = {}
@@ -177,8 +230,11 @@ function createGrid()
 end
 
 function love.load()
+    -- font = love.graphics.newFont('SMW.Monospace.ttf', 24)
+    font = love.graphics.newFont('SMW.Whole-Pixel.Spacing.ttf', 24)
+    love.graphics.setFont(font)
     vehicles = {}
-    for i = 1, 10 do
+    for i = 1, 400 do
         vehicles[i] = makeVehicle(love.math.random() * 800, 300)
     end
 
@@ -203,12 +259,17 @@ function love.draw()
     local m = Vector(love.mouse.getX(), love.mouse.getY())
     for i = 1, #vehicles do
         local vehicle = vehicles[i]
-        -- vehicleSeparate(vehicle, vehicles)
-        -- vehicleArrive(vehicle, m)
         vehicleApplyBehaviors(vehicle, vehicles, m)
         vehicleUpdate(vehicle)
         love.graphics.circle('fill', vehicle.position.x, vehicle.position.y, vehicle.r)
     end
+    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+    love.graphics.print("v1.1.0 (18 August 2010)\n" ..
+        " * Added --strict command line option\n" ..
+        " * Altered default handling of read names\n" ..
+        " abced  v1.0.0 (17 August 2010)\n" ..
+        "× ÷ ⋅ ≠ ≥ ≈ π etc." ..
+        " * Initial release\n", 10, 30)
 end
 
 function love.keypressed(k)
