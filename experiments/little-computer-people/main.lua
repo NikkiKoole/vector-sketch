@@ -3,24 +3,15 @@ package.path = package.path .. ";../../?.lua"
 json = require "vendor.json"
 inspect = require 'vendor.inspect'
 
+require 'steer'
+require 'bresenham'
+
 Vector = require 'vendor.brinevector'
 local Grid = require("jumper.grid")             -- The grid class
 local Pathfinder = require("jumper.pathfinder") -- The pathfinder class
 
 
 
-function makeVehicle(x, y)
-    return {
-        position = Vector(x, y),
-        velocity = Vector(0, 0),
-        acceleration = Vector(0, 0),
-        r = 4,
-        currentTarget = nil,
-        maxSpeed = 1 + love.math.random() * 3,
-        maxForce = 2,
-        color = { r = love.math.random(), g = love.math.random(), b = love.math.random() }
-    }
-end
 
 function love.load()
     success = love.window.setMode(1024, 1024, { highdpi = false })
@@ -52,10 +43,10 @@ function love.load()
 
     walkable = 0
     grid = Grid(walkgrid)
-    myFinder = Pathfinder(grid, 'ASTAR', walkable)
+    myFinder = Pathfinder(grid, 'JPS', walkable)
 
     max_speed = 100
-    guy_count = 32
+    guy_count = 132
     guys = {}
     vehicles = {}
     for i = 1, guy_count do
@@ -98,166 +89,6 @@ function mapInto(x, in_min, in_max, out_min, out_max)
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
 
-function vehicleApplyBehaviors(v, others, target)
-    local separate = vehicleSeparate(v, others)
-    --local seek = vehicleSeek(v, target)
-    if target then
-        --print('got a target')
-        local arrive = vehicleArrive(v, target)
-        arrive = arrive * .8
-        vehicleApplyForce(v, arrive)
-    end
-
-    if false then
-        local avoidWalls = vehicleAvoidWalls(v, walkgrid)
-        avoidWalls = avoidWalls * .1
-        vehicleApplyForce(v, avoidWalls)
-    end
-    --local align = vehicleAlignment(v, others)
-    --local avoidWalls = vehicleAvoidWalls(v, grid)
-    --local wander = vehicleWander(v)
-    --local cohesion = vehicleCohesion(v, others)
-
-    -- align = align * 1
-    -- wander = wander * .2
-    separate = separate * 0.6 -- seek = seek * 0.5
-    --
-
-    --cohesion = cohesion * .15
-
-    -- vehicleApplyForce(v, align)
-    -- vehicleApplyForce(v, wander)
-    -- vehicleApplyForce(v, cohesion)
-    vehicleApplyForce(v, separate)
-end
-
-function vehicleAvoidWalls(v, grid)
-    local lookahead = 4 --2 * CELL_SIZE -- Distance to look ahead
-    local ahead = v.position + Vector.setMag(v.velocity, lookahead)
-
-    local avoidanceForce = Vector(0, 0)
-    local closestWall = nil
-
-    -- Check nearby cells in the direction of movement
-    for y = 1, GRID_HEIGHT do
-        for x = 1, GRID_WIDTH do
-            if grid[y][x] == 1 then -- If there's a wall
-                local wallPos = Vector((x - 1) * CELL_SIZE + CELL_SIZE / 2, (y - 1) * CELL_SIZE + CELL_SIZE / 2)
-                local distance = Vector.distance(ahead, wallPos)
-
-                if distance < CELL_SIZE then
-                    local steerAway = ahead - wallPos
-
-                    --local strength = math.min(v.maxForce, v.maxForce / (distance * distance))
-                    -- local strength = v.maxForce / math.sqrt(distance)
-                    local minDistance = 4 -- Minimum effective distance
-                    local effectiveDistance = math.max(distance, minDistance)
-                    local strength = (v.maxForce / effectiveDistance) * 10
-                    --print(strength)
-                    -- print(effectiveDistance)
-                    --local strength = v.maxForce
-                    steerAway = Vector.setMag(steerAway, strength)
-
-
-                    --steerAway = Vector.setMag(steerAway, strength)
-
-                    -- steerAway = Vector.setMag(steerAway, v.maxForce / distance)
-                    avoidanceForce = avoidanceForce + steerAway
-
-                    if not closestWall or distance < Vector.distance(v.position, closestWall) then
-                        closestWall = wallPos
-                    end
-                end
-            end
-        end
-    end
-
-    return avoidanceForce
-end
-
-function vehicleSetRadiusDependingOnNeighbors(v, others, default, i)
-    local desiredSeparation = 4 * 2
-    local sum = Vector(0, 0)
-    local count = 0
-    for i = 1, #others do
-        local other = others[i]
-        local d = Vector.distance(v.position, other.position)
-        if v ~= other and d < desiredSeparation then
-            local diff = v.position - other.position
-            diff = Vector.setMag(diff, 1 / d)
-            sum = sum + diff
-            count = count + 1
-        end
-    end
-    if count >= 0 then
-        local radius = mapInto(count, 0, 2, default, 0)
-        --vehicles[i].r = math.max(radius, 0)
-        --print('doing stuff: ', vehicles[i].r)
-    end
-end
-
-function vehicleSeparate(v, others)
-    local desiredSeparation = v.r
-    local sum = Vector(0, 0)
-    local count = 0
-    for i = 1, #others do
-        local other = others[i]
-        local d = Vector.distance(v.position, other.position)
-        if v ~= other and d < desiredSeparation then
-            local diff = v.position - other.position
-            diff = Vector.setMag(diff, 1 / d)
-            sum = sum + diff
-            count = count + 1
-        end
-    end
-    if count > 0 then
-        sum = sum / count
-        sum = Vector.setMag(sum, v.maxSpeed)
-        sum = sum - v.velocity
-
-        sum = Vector.limit(sum, v.maxForce)
-    end
-    return sum
-end
-
-function vehicleSeek(v, target)
-    local desired = target - v.position
-    desired = Vector.setMag(desired, v.maxSpeed)
-    local steer = desired - v.velocity
-    steer = Vector.limit(steer, v.maxForce)
-    return steer
-    -- vehicleApplyForce(v, steer)
-end
-
-function vehicleArrive(v, target)
-    local desired = target - v.position
-    local d = desired.length
-
-    local ARRIVE_DISTANCE = 8
-    if (d < ARRIVE_DISTANCE) then
-        local m = mapInto(d, 0, ARRIVE_DISTANCE, 0, v.maxSpeed)
-        desired = Vector.setMag(desired, m)
-    else
-        desired = Vector.setMag(desired, v.maxSpeed)
-    end
-
-    local steer = desired - v.velocity
-    steer = Vector.limit(steer, v.maxForce)
-    return steer
-    --vehicleApplyForce(v, steer)
-end
-
-function vehicleApplyForce(v, force)
-    v.acceleration = v.acceleration + force
-end
-
-function vehicleUpdate(v)
-    v.velocity = v.velocity + v.acceleration
-    Vector.limit(v.velocity, v.maxSpeed)
-    v.position = v.position + v.velocity
-    v.acceleration = v.acceleration * 0
-end
-
 function love.update(dt)
     local waitWithAdvancing = false
 
@@ -285,9 +116,12 @@ function love.update(dt)
 
     if not waitWithAdvancing then
         for i = 1, #guys do
+            local neighbors = getNeighborsInRange(vehicles[i], vehicles, 8)
+            -- print(#neighbors)
+
             local it = guys[i]
             local arrived = true
-            local eps = 1
+            local eps = 4
 
 
             -- Calculate the difference between target and current position
@@ -305,14 +139,28 @@ function love.update(dt)
                     if count == it.nextNode then
                         nextX = cellsize / 2 + node.x * cellsize
                         nextY = cellsize / 2 + node.y * cellsize
+
+                        if #neighbors > 0 then
+                            local offsetX = love.math.random() * 2 - 1
+                            local offsetY = love.math.random() * 2 - 1
+                            nextX = nextX + offsetX
+                            nextY = nextY + offsetY
+                        end
                         vehicles[i].currentTarget = { x = nextX, y = nextY }
                     end
                     it.nodesCount = count
                 end
             else
                 --print('why no path')
+
                 nextX = it.x
                 nextY = it.y
+                if #neighbors > 0 then
+                    local offsetX = love.math.random() * 2 - 1
+                    local offsetY = love.math.random() * 2 - 1
+                    nextX = nextX + offsetX
+                    nextY = nextY + offsetY
+                end
                 vehicles[i].currentTarget = { x = nextX, y = nextY }
                 it.nodesCount = 0
 
@@ -366,6 +214,7 @@ end
 function love.draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+    love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10, 40)
 
     love.graphics.push()
     love.graphics.translate(screen.dx, screen.dy)
@@ -491,121 +340,6 @@ function buildWorld(walkgrid)
             walkgrid[it.y][it.x] = 0
         end
     end
-end
-
--- Bresenham-based Supercover line marching algorithm
--- See: http://lifc.univ-fcomte.fr/home/~ededu/projects/bresenham/
-
--- Note: This algorithm is based on Bresenham's line marching, but
---  instead of considering one step per axis, it covers all the points
---  the ideal line covers. It may be useful for example when you have
---  to know if an obstacle exists between two points (in which case the
---  points do not see each other)
-
--- x1: the x-coordinate of the start point
--- y1: the y-coordinate of the end point
--- x2: the x-coordinate of the start point
--- y2: the y-coordinate of the end point
--- returns: an array of {x = x, y = y} pairs
-function bresenhamSuperCover(x1, y1, x2, y2)
-    local points = {}
-    local xstep, ystep, err, errprev, ddx, ddy
-    local x, y = x1, y1
-    local dx, dy = x2 - x1, y2 - y1
-
-    points[#points + 1] = { x = x1, y = y1 }
-
-    if dy < 0 then
-        ystep = -1
-        dy = -dy
-    else
-        ystep = 1
-    end
-
-    if dx < 0 then
-        xstep = -1
-        dx = -dx
-    else
-        xstep = 1
-    end
-
-    ddx, ddy = dx * 2, dy * 2
-
-    if ddx >= ddy then
-        errprev, err = dx, dx
-        for i = 1, dx do
-            x = x + xstep
-            err = err + ddy
-            if err > ddx then
-                y = y + ystep
-                err = err - ddx
-                if err + errprev < ddx then
-                    points[#points + 1] = { x = x, y = y - ystep }
-                elseif err + errprev > ddx then
-                    points[#points + 1] = { x = x - xstep, y = y }
-                else
-                    points[#points + 1] = { x = x, y = y - ystep }
-                    points[#points + 1] = { x = x - xstep, y = y }
-                end
-            end
-            points[#points + 1] = { x = x, y = y }
-            errprev = err
-        end
-    else
-        errprev, err = dy, dy
-        for i = 1, dy do
-            y = y + ystep
-            err = err + ddx
-            if err > ddy then
-                x = x + xstep
-                err = err - ddy
-                if err + errprev < ddy then
-                    points[#points + 1] = { x = x - xstep, y = y }
-                elseif err + errprev > ddy then
-                    points[#points + 1] = { x = x, y = y - ystep }
-                else
-                    points[#points + 1] = { x = x, y = y - ystep }
-                    points[#points + 1] = { x = x - xstep, y = y }
-                end
-            end
-            points[#points + 1] = { x = x, y = y }
-            errprev = err
-        end
-    end
-    return points
-end
-
-function bresenhamLine(x0, y0, x1, y1, value)
-    local points = {}
-    local dx = math.abs(x1 - x0)
-    local dy = math.abs(y1 - y0)
-    local sx = x0 < x1 and 1 or -1
-    local sy = y0 < y1 and 1 or -1
-    local err = dx - dy
-
-    while true do
-        -- Plot the point (x0, y0)
-        --print(y0, x0)
-        points[#points + 1] = { x = x0, y = y0 }
-        --walkgrid[y0][x0] = value
-
-        -- Check if we've reached the endpoint
-        if x0 == x1 and y0 == y1 then break end
-
-        local e2 = 2 * err
-
-        if e2 > -dy then
-            err = err - dy
-            x0 = x0 + sx
-        end
-
-        if e2 < dx then
-            err = err + dx
-            y0 = y0 + sy
-        end
-    end
-
-    return points
 end
 
 function loadTiles()
