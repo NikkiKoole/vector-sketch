@@ -1,0 +1,125 @@
+###############################################################################################################
+#####  ProFi, a lua profiler. This profile was generated on: Fri Aug 30 09:25:51 2024
+#####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
+#####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
+#####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
+###############################################################################################################
+
+
+| TOTAL TIME = 3.088933
+| FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
+| jumper/core/bheap.lua                             : percolate_up                            :   40                : 22.669      : 733.88%     :      54     |
+| jumper/search/jps.lua                             : jump                                    :  170                : 11.432      : 370.11%     :      53     |
+| jumper/core/bheap.lua                             : percolate_down                          :   58                : 6.550       : 212.04%     :      15     |
+| jumper/core/bheap.lua                             : sort                                    :   35                : 4.318       : 139.79%     :      64     |
+| jumper/core/node.lua                              : __lt                                    :   40                : 4.317       : 139.77%     :      64     |
+| main.lua                                          : update                                  :   96                : 3.065       : 99.24%      :      13     |
+| [string "boot.lua"]                               : anonymous                               :  594                : 2.847       : 92.16%      :      13     |
+| ../../vendor/brinevector.lua                      : distance                                :  134                : 2.678       : 86.71%      :   62400     |
+| steer.lua                                         : vehicleApplyBehaviors                   :   14                : 1.075       : 34.80%      :     520     |
+| steer.lua                                         : vehicleSetRadiusDependingOnNeighbors    :  127                : 0.972       : 31.45%      :     520     |
+| steer.lua                                         : vehicleSeparate                         :  148                : 0.958       : 31.01%      :     520     |
+| steer.lua                                         : getNeighborsInRange                     :  115                : 0.951       : 30.77%      :     520     |
+| steer.lua                                         : vehicleArrive                           :  181                : 0.065       : 2.10%       :     520     |
+| ../../vendor/brinevector.lua                      : setMag                                  :  143                : 0.043       : 1.40%       :     758     |
+| steer.lua                                         : vehicleUpdate                           :  234                : 0.039       : 1.25%       :     520     |
+| steer.lua                                         : vehicleApplyForce                       :  230                : 0.024       : 0.77%       :    1040     |
+| jumper/search/jps.lua                             : identifySuccessors                      :  241                : 0.014       : 0.45%       :      10     |
+| main.lua                                          : draw                                    :  233                : 0.010       : 0.32%       :      13     |
+| main.lua                                          : guyGetPath                              :  384                : 0.007       : 0.23%       :       5     |
+| jumper/pathfinder.lua                             : getPath                                 :  326                : 0.007       : 0.23%       :       4     |
+| jumper/search/jps.lua                             : anonymous                               :  296                : 0.007       : 0.22%       :       4     |
+| jumper/grid.lua                                   : isWalkableAt                            :  228                : 0.006       : 0.21%       :     161     |
+| jumper/search/jps.lua                             : findNeighbours                          :   70                : 0.006       : 0.19%       :      10     |
+| ../../vendor/brinevector.lua                      : limit                                   :  147                : 0.006       : 0.18%       :    1075     |
+| jumper/core/bheap.lua                             : push                                    :  124                : 0.004       : 0.12%       :      75     |
+| jumper/core/path.lua                              : (for generator)                         :   43                : 0.003       : 0.10%       :    1093     |
+| main.lua                                          : mapInto                                 :   92                : 0.002       : 0.06%       :     618     |
+| jumper/core/path.lua                              : nodes                                   :   41                : 0.002       : 0.05%       :     520     |
+| jumper/grid.lua                                   : getNodeAt                               :  428                : 0.000       : 0.01%       :     149     |
+| jumper/core/heuristics.lua                        : heuristic                               :   61                : 0.000       : 0.01%       :      71     |
+| jumper/pathfinder.lua                             : traceBackPath                           :  127                : 0.000       : 0.01%       :       4     |
+| main.lua                                          : pickNewGoal                             :  402                : 0.000       : 0.00%       :       5     |
+| jumper/core/bheap.lua                             : empty                                   :  106                : 0.000       : 0.00%       :      36     |
+| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.000       : 0.00%       :      13     |
+| jumper/core/bheap.lua                             : heapify                                 :  159                : 0.000       : 0.00%       :       2     |
+| jumper/pathfinder.lua                             : reset                                   :  111                : 0.000       : 0.00%       :       4     |
+| main.lua                                          : anonymous                               :  284                : 0.000       : 0.00%       :       2     |
+| jumper/core/bheap.lua                             : clear                                   :  113                : 0.000       : 0.00%       :       4     |
+| [string "boot.lua"]                               : anonymous                               :  192                : 0.000       : 0.00%       :       1     |
+| [string "boot.lua"]                               : anonymous                               :  189                : 0.000       : 0.00%       :       1     |
+| ../../vendor/ProFi.lua                            : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
+| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : t_insert                                :   -1                : 0.000       : 0.00%       :      49     |
+| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :      13     |
+| jumper/core/path.lua                              : new                                     :   30                : 0.000       : 0.00%       :       4     |
+| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : new                                     :   -1                : 0.000       : 0.00%       :       4     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : getFPS                                  :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : abs                                     :   -1                : 0.000       : 0.00%       :      20     |
+| [C]                                               : max                                     :   -1                : 0.000       : 0.00%       :      20     |
+| [string "boot.lua"]                               : anonymous                               :  198                : 0.000       : 0.00%       :       2     |
+| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :      13     |
+| jumper/core/bheap.lua                             : pop                                     :  138                : 0.000       : 0.00%       :       0     |
+| [C]                                               : anonymous                               :   -1                : 0.000       : 0.00%       :       2     |
+| jumper/core/bheap.lua                             : indexOf                                 :   27                : 0.000       : 0.00%       :       2     |
+| ../../vendor/ProFi.lua                            : stop                                    :   88                : 0.000       : 0.00%       :       1     |
+| [string "boot.lua"]                               : anonymous                               :  186                : 0.000       : 0.00%       :       1     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :     559     |
+| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : collectgarbage                          :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :      28     |
+| [C]                                               : tostring                                :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :    2288     |
+| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :     520     |
+| ../../vendor/ProFi.lua                            : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
+| [C]                                               : assert                                  :   -1                : 0.000       : 0.00%       :       8     |
+| jumper/core/heuristics.lua                        : EUCLIDIAN                               :   78                : 0.000       : 0.00%       :      45     |
+| ../../vendor/brinevector.lua                      : __index                                 :   65                : 0.000       : 0.00%       :   63678     |
+| ../../vendor/brinevector.lua                      : __index                                 :   58                : 0.000       : 0.00%       :   63678     |
+| ../../vendor/brinevector.lua                      : __sub                                   :  274                : 0.000       : 0.00%       :   63678     |
+| [C]                                               : __index                                 :   -1                : 0.000       : 0.00%       :  652386     |
+| ../../vendor/brinevector.lua                      : getNormalized                           :   73                : 0.000       : 0.00%       :     758     |
+| [C]                                               : getNormalized                           :   -1                : 0.000       : 0.00%       :     758     |
+| ../../vendor/brinevector.lua                      : getNormalized                           :  274                : 0.000       : 0.00%       :     758     |
+| [C]                                               : __mul                                   :   -1                : 0.000       : 0.00%       :    4762     |
+| ../../vendor/brinevector.lua                      : __mul                                   :  225                : 0.000       : 0.00%       :    2381     |
+| ../../vendor/brinevector.lua                      : __sub                                   :  221                : 0.000       : 0.00%       :   63678     |
+| [C]                                               : Vector                                  :   -1                : 0.000       : 0.00%       :    1040     |
+| ../../vendor/ProFi.lua                            : start                                   :   70                : 0.000       : 0.00%       :       0     |
+| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :       2     |
+| [C]                                               : __sub                                   :   -1                : 0.000       : 0.00%       :  127356     |
+| main.lua                                          : anonymous                               :  214                : 0.000       : 0.00%       :       1     |
+| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :      18     |
+| ../../vendor/brinevector.lua                      : Vector                                  :  274                : 0.000       : 0.00%       :    1040     |
+| [C]                                               : EUCLIDIAN                               :   -1                : 0.000       : 0.00%       :      45     |
+| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :    4860     |
+| [C]                                               : __add                                   :   -1                : 0.000       : 0.00%       :    4566     |
+| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :      20     |
+| [string "RandomGenerator.lua"]                    : random                                  :   33                : 0.000       : 0.00%       :       0     |
+| [string "RandomGenerator.lua"]                    : random                                  :   75                : 0.000       : 0.00%       :      12     |
+| [string "wrap_Math.lua"]                          : random                                  :   37                : 0.000       : 0.00%       :      12     |
+| [C]                                               : pairs                                   :   -1                : 0.000       : 0.00%       :       4     |
+| ../../vendor/ProFi.lua                            : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
+| [C]                                               : format                                  :   -1                : 0.000       : 0.00%       :       8     |
+| jumper/grid.lua                                   : findNeighbours                          :  281                : 0.000       : 0.00%       :       0     |
+| ../../vendor/brinevector.lua                      : __mul                                   :  274                : 0.000       : 0.00%       :    2381     |
+| [C]                                               : atan2                                   :   -1                : 0.000       : 0.00%       :     496     |
+| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :      28     |
+| ../../vendor/brinevector.lua                      : __add                                   :  274                : 0.000       : 0.00%       :    2283     |
+| ../../vendor/brinevector.lua                      : __add                                   :  217                : 0.000       : 0.00%       :    2283     |
+| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :     166     |
+| [C]                                               : sqrt                                    :   -1                : 0.000       : 0.00%       :     583     |
+| ../../vendor/brinevector.lua                      : __div                                   :  238                : 0.000       : 0.00%       :      98     |
+| [C]                                               : __div                                   :   -1                : 0.000       : 0.00%       :     196     |
+| ../../vendor/brinevector.lua                      : __div                                   :  274                : 0.000       : 0.00%       :      98     |
+| [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |

@@ -1,13 +1,17 @@
-package.path = package.path .. ";../../?.lua"
+package.path    = package.path .. ";../../?.lua"
 
-json = require "vendor.json"
-inspect = require 'vendor.inspect'
+json            = require "vendor.json"
+inspect         = require 'vendor.inspect'
 
+PROF_CAPTURE    = true
+prof            = require 'vendor.jprof'
+ProFi           = require 'vendor.ProFi'
+local profiling = false
 require 'steer'
 require 'bresenham'
-
-Vector = require 'vendor.brinevector'
-local Grid = require("jumper.grid")             -- The grid class
+--local manual_gc  = require 'vendor.batteries.manual_gc'
+Vector           = require 'vendor.brinevector'
+local Grid       = require("jumper.grid")       -- The grid class
 local Pathfinder = require("jumper.pathfinder") -- The pathfinder class
 
 
@@ -43,10 +47,10 @@ function love.load()
 
     walkable = 0
     grid = Grid(walkgrid)
-    myFinder = Pathfinder(grid, 'JPS', walkable)
+    myFinder = Pathfinder(grid, 'BFS', walkable)
 
     max_speed = 100
-    guy_count = 132
+    guy_count = 400
     guys = {}
     vehicles = {}
     for i = 1, guy_count do
@@ -209,6 +213,21 @@ end
 
 function love.keypressed(key)
     if key == 'escape' then love.event.quit() end
+
+    if key == 'p' then
+        if true then
+            if (PROF_CAPTURE) then
+                if profiling then
+                    ProFi:stop()
+                    ProFi:writeReport('profilingReport.txt')
+                    profiling = false
+                else
+                    ProFi:start()
+                    profiling = true
+                end
+            end
+        end
+    end
 end
 
 function love.draw()
@@ -371,8 +390,9 @@ function guyGetPath(guy)
             guy.path = myFinder:getPath(currentTileX, currentTileY, guy.goaltileX, guy.goaltileY)
         end
     else
-        print('current tilex or y was out of bounds', currentTileX < world_width, currentTileY < world_height)
-        print(currentTileY, world_height)
+        --print('current tilex or y was out of bounds', currentTileX < world_width, currentTileY < world_height)
+        --
+        --print(currentTileY, world_height, guy.y, guy.x)
     end
     guy.currentNode = 0
     guy.nextNode = 1
