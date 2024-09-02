@@ -47,10 +47,10 @@ function love.load()
 
     walkable = 0
     grid = Grid(walkgrid)
-    myFinder = Pathfinder(grid, 'BFS', walkable)
+    myFinder = Pathfinder(grid, 'ASTAR', walkable)
 
     max_speed = 100
-    guy_count = 400
+    guy_count = 32
     guys = {}
     vehicles = {}
     for i = 1, guy_count do
@@ -125,7 +125,7 @@ function love.update(dt)
 
             local it = guys[i]
             local arrived = true
-            local eps = 4
+            local eps = 8
 
 
             -- Calculate the difference between target and current position
