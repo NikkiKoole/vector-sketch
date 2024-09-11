@@ -1,6 +1,9 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.printC'
+
+require 'lib.box2dGuyCreation'
+require 'lib.texturedBox2d'
 local lurker          = require 'vendor.lurker'
 lurker.quiet          = true
 local inspect         = require 'vendor.inspect'
@@ -12,8 +15,8 @@ local geom            = require 'lib.geom'
 local bbox            = require 'lib.bbox'
 local mesh            = require 'lib.mesh'
 local ui              = require 'lib.ui'
-require 'lib.box2dGuyCreation'
-require 'lib.texturedBox2d'
+
+print('o!')
 local dna      = require 'lib.dna'
 local creation = dna.getCreation()
 local canvas   = require 'lib.canvas'
@@ -1248,7 +1251,7 @@ function startExample(number)
         --for i = 1, 100 do
         --table.insert(grass, makeGrassThing(i * 40, -500, i))
         --end
-
+        print(loadVectorSketch)
         data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         bodyRndIndex = math.ceil(love.math.random() * #data)
 
@@ -1343,6 +1346,7 @@ function startExample(number)
         for i = 1, 5 do
             --      makeBalloon(i * 100, -1000)
         end
+        print('hello!')
     end
 
     example = number
@@ -1480,7 +1484,7 @@ function love.load()
 
     --create()
     example = nil
-    startExample(3)
+    startExample(2)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
 
