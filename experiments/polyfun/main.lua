@@ -3,15 +3,15 @@ local generatePolygon = require('lib.generate-polygon').generatePolygon
 local mesh            = require('lib.mesh')
 local inspect         = require 'vendor.inspect'
 local phys            = require 'lib.mainPhysics'
-HC                    = require 'HC'
-Polygon               = require 'HC.polygon'
+--HC                    = require 'HC'
+--Polygon               = require 'HC.polygon'
 local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
 local parentize       = require 'lib.parentize'
 local parse           = require 'lib.parse-file'
 local render          = require 'lib.render'
 
-local PROF_CAPTURE    = true
+local PROF_CAPTURE    = false
 ProFi                 = require 'vendor.ProFi'
 if (PROF_CAPTURE) then ProFi:start() end
 
@@ -407,17 +407,17 @@ function love.load()
     for i = 1, 10 do
         local vsketch = parse.parseFile('assets/dontevenknow.polygons.txt', true)[1]
         local ding2 = getBox2dAndVectorSketchPair(vsketch)
-        --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
-        --ding2.shadow = shadow
+        local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+        ding2.shadow = shadow
         table.insert(root.children, ding2.things)
         table.insert(dings, ding2)
     end
-    if false then
+    if true then
         for i = 1, 1 do
             local vsketch = parse.parseFile('assets/ziekevogel.polygons.txt', true)[1]
             local ding2 = getBox2dAndVectorSketchPair(vsketch)
-            --local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
-            --ding2.shadow = shadow
+            local shadow = makeOrGetShadow('assets/mipo.polygons.txt', 1)
+            ding2.shadow = shadow
             table.insert(root.children, ding2.things)
             table.insert(dings, ding2)
         end
@@ -509,7 +509,7 @@ function love.load()
         end
     end
 
-    if false then
+    if true then
         for i = 1, 20 do
             local vsketch = parse.parseFile('assets/weirdshapes.polygons.txt', true)[1]
             local ding2 = getBox2dAndVectorSketchPair(vsketch)

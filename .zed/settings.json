@@ -1,0 +1,11 @@
+// Folder-specific settings
+//
+// For a full list of overridable settings, and general information on folder-specific settings,
+// see the documentation: https://zed.dev/docs/configuring-zed#settings-files
+{
+  "Lua.runtime.version": "LuaJIT",
+  "Lua.workspace.library": ["${3rd}/love2d/library"],
+  "Lua.workspace.checkThirdParty": false,
+  "Lua.diagnostics.disable": ["lowercase-global"],
+  "Lua.diagnostics.globals": ["jit"]
+}
