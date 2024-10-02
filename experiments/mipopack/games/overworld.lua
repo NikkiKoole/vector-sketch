@@ -39,6 +39,8 @@ end
 
 function scene:draw()
     love.graphics.clear(.4, .7, .7)
+
+
     local w = 400
     local h = 300
     for i = 1, #games do
@@ -50,6 +52,7 @@ function scene:draw()
         end
         love.graphics.draw(games[i].img, 0, (i - 1) * h)
     end
+    love.graphics.print('Mipo-Pops')
 end
 
 function scene:update(dt)
