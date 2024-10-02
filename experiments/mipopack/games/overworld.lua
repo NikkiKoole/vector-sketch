@@ -17,7 +17,11 @@ function scene:load(args)
             end
         end
     end
+    font = love.graphics.newFont('WindsorBT-Roman.otf', 32)
+    font = love.graphics.newFont('COOPBL.TTF', 48)
+    font = love.graphics.newFont('OPTISouvenir-Bold.otf', 48)
 
+    love.graphics.setFont(font)
     -- print(inspect(games))
 end
 
