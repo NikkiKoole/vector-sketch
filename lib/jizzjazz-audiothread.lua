@@ -188,8 +188,6 @@ local function updatePlayingSoundsWithLFO()
             local lfoAmplitude  = range
             local lfoPitchDelta = (lfoValue * lfoAmplitude)
 
-
-
             it.source:setPitch(it.pitch + lfoPitchDelta)
 
 
@@ -437,7 +435,7 @@ function doHandleDrumNotes(beat, tick, bpm)
     local shouldDelayEvenNotes = swing ~= 50
     local isEvenNoteUndelayed = tick % 48 == 0
 
-    local k = 1 
+    local k = 1
     if ((tick % 24 == 0 and isSwung == false) or isSwung) then
         if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
             -- here we do nothing, because even noted should be delayed and whe get here, the undelayed even note

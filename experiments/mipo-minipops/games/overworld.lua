@@ -17,9 +17,9 @@ function scene:load(args)
             end
         end
     end
-    font = love.graphics.newFont('WindsorBT-Roman.otf', 32)
-    font = love.graphics.newFont('COOPBL.TTF', 48)
-    font = love.graphics.newFont('OPTISouvenir-Bold.otf', 48)
+    --font = love.graphics.newFont('assets/fonts/WindsorBT-Roman.otf', 32)
+    font = love.graphics.newFont('assets/fonts/COOPBL.TTF', 48)
+    --font = love.graphics.newFont('assets/fonts/OPTISouvenir-Bold.otf', 48)
 
     love.graphics.setFont(font)
     -- print(inspect(games))
@@ -37,12 +37,17 @@ function scene:mousemoved(x, y, dx, dy)
     -- print(dx, dy)
 end
 
+local function drawInto(img, x, y, w, h)
+    local myWidth, myHeight = img:getDimensions()
+    local myScaleX = w / myWidth
+    local myScaleY = h / myHeight
+    love.graphics.draw(img, x, y, 0, myScaleX, myScaleY)
+end
+
 function scene:draw()
     love.graphics.clear(.4, .7, .7)
-
-
-    local w = 400
-    local h = 300
+    local w = 400 / 5
+    local h = 300 / 5
     for i = 1, #games do
         if love.mouse.isDown(1) then
             local mx, my = love.mouse.getPosition()
@@ -50,7 +55,7 @@ function scene:draw()
                 self.setScene(games[i].key)
             end
         end
-        love.graphics.draw(games[i].img, 0, (i - 1) * h)
+        drawInto(games[i].img, 0, (i - 1) * h, w, h)
     end
     love.graphics.print('Mipo-Pops')
 end
