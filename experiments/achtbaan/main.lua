@@ -14,6 +14,7 @@ function love.draw()
             local p1 = coaster_track_points[i]
             local p2 = coaster_track_points[i + 1]
             love.graphics.line(p1.x, p1.y, p2.x, p2.y)
+            love.graphics.circle('fill', p1.x, p1.y, 3)
         end
     end
 end
