@@ -63,7 +63,7 @@ function scene:draw()
         end
 
         if (games[i].draft == true) then
-            love.graphics.setColor(1,0,1,0.1)
+            love.graphics.setColor(1,1,1,.1)
             else
             love.graphics.setColor(1,1,1,1)
         end

@@ -79,19 +79,19 @@ function scene:load(args)
     }
 
     local RZSMaze = require("games/thief-vs-police/RZSMaze")
-    local myMaze = RZSMaze.new({50, 50}) -- Create a blank 6x6 maze
+    local myMaze = RZSMaze.new({15, 15}) -- Create a blank 6x6 maze
     myMaze:generate() -- Generate it
     myMaze:createLoops(30) -- Create some loops
     local newMap = myMaze:toSimpleRepresentation()
     map = makeBetterMap(newMap, screenData.columns, screenData.rows, 1)
-    map = scaleMap(map, 4)
+    map = scaleMap(map, 2)
 
     entities = {}
     local x, y = getRandomEmptyPositionWithinRect(map, 1, 1, screenData.columns * 10, screenData.rows * 10)
     table.insert(entities, {x = x, y = y, type = "dief"})
 
     diefEnt = entities[1]
-    for i = 1, 10 do
+    for i = 1, 50 do
             local x, y = getRandomEmptyPositionWithinRect(map, 1, 1, screenData.columns * 10, screenData.rows * 10)
             table.insert(entities, {x = x, y = y, type = "politie"})
     end
@@ -140,10 +140,15 @@ function scene:keypressed(k)
             if newX >= 1 and newX <= #map[1] and newY >= 1 and newY <= #map then
                 if map[newY][newX] == 0 then
 
-                    maybeMoveCamera(diefPos.x, diefPos.y, newX, newY)
-                    diefEnt.x = newX
-                    diefEnt.y = newY
-                    updatePolities()
+
+
+                    if (isFreeFromPolice(newX, newY, diefEnt)) then
+                         maybeMoveCamera(diefPos.x, diefPos.y, newX, newY)
+                        diefEnt.x = newX
+                        diefEnt.y = newY
+                        updatePolities()
+                    end
+
                 end
             end
     end
@@ -180,6 +185,7 @@ function updatePolities()
 
         -- Determine movement in x-axis
         local xDir = 0
+        local yDir = 0
         if target.x < it.x then
             xDir = -1
         elseif target.x > it.x then
@@ -193,6 +199,13 @@ function updatePolities()
             yDir = 1
         end
 
+        if xDir ~=0 and yDir ~= 0 then -- prohibit diagonally moving, just pick one axis at random
+             if math.random() < 0.5 then
+                 xDir = 0
+                 else
+                 yDir = 0
+             end
+        end
         nextX = it.x + xDir
         nextY = it.y + yDir
 
