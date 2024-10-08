@@ -29,6 +29,7 @@ function makeBetterMap(old, wm, hm, default)
 
     return result
 end
+
 function scaleMap(map, factor)
     local newMap = {}
 
@@ -57,6 +58,7 @@ function getRandomEmptyPositionWithinRect(map, x, y, w, h)
         end
     end
 end
+
 function calculateCamPosFromDiefPos(diefX, diefY)
     local camX = math.floor((diefX - 1) / screenData.columns) * screenData.columns + 1
     local camY = math.floor((diefY - 1) / screenData.rows) * screenData.rows + 1
@@ -64,42 +66,44 @@ function calculateCamPosFromDiefPos(diefX, diefY)
 end
 
 function scene:load(args)
-    success = love.window.setMode( 1400, 1000 )
-    love.keyboard.setKeyRepeat( true )
+    success = love.window.setMode(1400, 1000)
+    love.keyboard.setKeyRepeat(true)
     --print("Scenery 2 is awesome")
     gras = love.graphics.newImage('games/thief-vs-police/img/gras.png')
+
+
     muur = love.graphics.newImage('games/thief-vs-police/img/muur.png')
+    muurquad = love.graphics.newQuad(0, 0, muur:getWidth(), muur:getHeight(), muur:getWidth(), muur:getHeight())
     dief = love.graphics.newImage('games/thief-vs-police/img/thief2.png')
     politie = love.graphics.newImage('games/thief-vs-police/img/politie2.png')
 
-    camPos = {x=1,y=1}
+    camPos = { x = 1, y = 1 }
     screenData = {
         columns = 10,
         rows = 10
     }
 
     local RZSMaze = require("games/thief-vs-police/RZSMaze")
-    local myMaze = RZSMaze.new({15, 15}) -- Create a blank 6x6 maze
-    myMaze:generate() -- Generate it
-    myMaze:createLoops(30) -- Create some loops
+    local myMaze = RZSMaze.new({ 15, 15 }) -- Create a blank 6x6 maze
+    myMaze:generate()                      -- Generate it
+    myMaze:createLoops(30)                 -- Create some loops
     local newMap = myMaze:toSimpleRepresentation()
     map = makeBetterMap(newMap, screenData.columns, screenData.rows, 1)
     map = scaleMap(map, 2)
 
     entities = {}
     local x, y = getRandomEmptyPositionWithinRect(map, 1, 1, screenData.columns * 10, screenData.rows * 10)
-    table.insert(entities, {x = x, y = y, type = "dief"})
+    table.insert(entities, { x = x, y = y, type = "dief" })
 
     diefEnt = entities[1]
     for i = 1, 50 do
-            local x, y = getRandomEmptyPositionWithinRect(map, 1, 1, screenData.columns * 10, screenData.rows * 10)
-            table.insert(entities, {x = x, y = y, type = "politie"})
+        local x, y = getRandomEmptyPositionWithinRect(map, 1, 1, screenData.columns * 10, screenData.rows * 10)
+        table.insert(entities, { x = x, y = y, type = "politie" })
     end
 
-    local x,y = calculateCamPosFromDiefPos(diefEnt.x, diefEnt.y)
+    local x, y = calculateCamPosFromDiefPos(diefEnt.x, diefEnt.y)
     camPos.x = x
     camPos.y = y
-
 end
 
 local function drawInto(img, x, y, w, h)
@@ -112,8 +116,8 @@ end
 local function drawIntoW(img, x, y, w)
     local myWidth, myHeight = img:getDimensions()
     local myScaleX = w / myWidth
-    local myScaleY =  myScaleX
-    love.graphics.draw(img, x, y, 0, myScaleX, myScaleY, myWidth/2, myHeight)
+    local myScaleY = myScaleX
+    love.graphics.draw(img, x, y, 0, myScaleX, myScaleY, myWidth / 2, myHeight)
 end
 
 function scene:keypressed(k)
@@ -130,32 +134,28 @@ function scene:keypressed(k)
     }
 
     local dir = directions[k]
-    local moveMap = false
- local diefPos = diefEnt
-    if dir  then
+    local diefPos = diefEnt
 
-            local newX = diefPos.x + dir.x
-            local newY = diefPos.y + dir.y
+    if dir then
+        local newX = diefPos.x + dir.x
+        local newY = diefPos.y + dir.y
 
-            if newX >= 1 and newX <= #map[1] and newY >= 1 and newY <= #map then
-                if map[newY][newX] == 0 then
-
-
-
-                    if (isFreeFromPolice(newX, newY, diefEnt)) then
-                         maybeMoveCamera(diefPos.x, diefPos.y, newX, newY)
-                        diefEnt.x = newX
-                        diefEnt.y = newY
-                        updatePolities()
-                    end
-
+        if newX >= 1 and newX <= #map[1] and newY >= 1 and newY <= #map then
+            if map[newY][newX] == 0 then
+                if (isFreeFromPolice(newX, newY, diefEnt)) then
+                    maybeMoveCamera(diefPos.x, diefPos.y, newX, newY)
+                    diefEnt.x = newX
+                    diefEnt.y = newY
+                    diefEnt.lastDir = dir
+                    updatePolities()
                 end
             end
+        end
     end
 end
 
-function isFreeFromPolice(x,y, popo)
-    for i =1, #entities do
+function isFreeFromPolice(x, y, popo)
+    for i = 1, #entities do
         local it = entities[i]
         if it ~= pop then
             if it.x == x and it.y == y then return false end
@@ -163,10 +163,14 @@ function isFreeFromPolice(x,y, popo)
     end
     return true
 end
+
 function updatePolities()
-    local target = {x = diefEnt.x, y = diefEnt.y}
+    local target = { x = diefEnt.x, y = diefEnt.y }
 
     for i = 1, #entities do
+        if (i % 2 == 0) then
+            target = { x = diefEnt.x + diefEnt.lastDir.x, y = diefEnt.y + diefEnt.lastDir.y }
+        end
         local it = entities[i]
 
         -- Skip the dief entity
@@ -199,12 +203,12 @@ function updatePolities()
             yDir = 1
         end
 
-        if xDir ~=0 and yDir ~= 0 then -- prohibit diagonally moving, just pick one axis at random
-             if math.random() < 0.5 then
-                 xDir = 0
-                 else
-                 yDir = 0
-             end
+        if xDir ~= 0 and yDir ~= 0 then -- prohibit diagonally moving, just pick one axis at random
+            if math.random() < 0.5 then
+                xDir = 0
+            else
+                yDir = 0
+            end
         end
         nextX = it.x + xDir
         nextY = it.y + yDir
@@ -218,25 +222,25 @@ function updatePolities()
         ::continue::
     end
 end
-function maybeMoveCamera(oldX, oldY, newX, newY)
 
-    if (oldX % screenData.columns == 0 ) then
+function maybeMoveCamera(oldX, oldY, newX, newY)
+    if (oldX % screenData.columns == 0) then
         if newX > oldX then
             camPos.x = camPos.x + screenData.columns
         end
     end
-    if (newX % screenData.columns == 0 ) then
+    if (newX % screenData.columns == 0) then
         if newX < oldX then
             camPos.x = camPos.x - screenData.columns
         end
     end
 
-    if (oldY % screenData.rows == 0 ) then
+    if (oldY % screenData.rows == 0) then
         if newY > oldY then
             camPos.y = camPos.y + screenData.rows
         end
     end
-    if (newY % screenData.rows == 0 ) then
+    if (newY % screenData.rows == 0) then
         if newY < oldY then
             camPos.y = camPos.y - screenData.rows
         end
@@ -271,11 +275,13 @@ function scene:draw()
             -- Draw border or regular tiles
             if isBorder then
                 if t == 0 then
-                    love.graphics.setColor(0.1, 0.45, 0.11, 0.2) -- Walkable (border)
+                    love.graphics.setColor(0.1, 0.45, 0.11, 0.5) -- Walkable (border)
+                    drawInto(gras, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
                 else
-                    love.graphics.setColor(0.62, 0.22, 0, 0.2) -- Non-walkable (border)
+                    love.graphics.setColor(0.62, 0.22, 0, 0.5) -- Non-walkable (border)
+                    drawInto(muur, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
                 end
-                love.graphics.rectangle('fill', offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                --  love.graphics.rectangle('fill', offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
             else
                 if t == 0 then
                     love.graphics.setColor(1, 1, 1) -- Walkable (inside the map)
@@ -296,35 +302,44 @@ function scene:draw()
     --local diefScreenY = (diefPos.y - math.floor(camPos.y)) * size + offsetY + size / 2
     --drawIntoW(dief, diefScreenX, diefScreenY, size)
 
-      table.sort(entities, function(a,b)
-          if (a.y == b.y) then
-              return #(a.type) > #(b.type)
-          end
-          return a.y < b.y
-          end)
+    table.sort(entities, function(a, b)
+        if (a.y == b.y) then
+            return #(a.type) > #(b.type)
+        end
+        return a.y < b.y
+    end)
     for i = 1, #entities do
-
         local it = entities[i]
-               local screenX = (it.x - math.floor(camPos.x)) * size + offsetX + size / 2
-               local screenY = (it.y - math.floor(camPos.y)) * size + offsetY + size / 2
+        local screenX = (it.x - math.floor(camPos.x)) * size + offsetX + size / 2
+        local screenY = (it.y - math.floor(camPos.y)) * size + offsetY + size / 2
 
 
-        if it.x >= camPos.x and it.x <camPos.x + columns then
-              if it.y >= camPos.y and it.y <camPos.y + rows then
 
-                  if it.type == "dief" then
-                                  drawIntoW(dief, screenX, screenY, size)
-                              elseif it.type == "politie" then
-                                  drawIntoW(politie, screenX, screenY, size)
-                              end
+        if it.x == camPos.x - 1 or it.x == camPos.x + columns or
+            it.y == camPos.y - 1 or it.y == camPos.y + rows then
+            if it.type == "dief" then
+                --    drawIntoW(dief, screenX, screenY, size)
+            elseif it.type == "politie" then
+                love.graphics.setColor(.5, .5, .5, 1)
+                drawIntoW(politie, screenX, screenY, size)
+            end
+        end
 
 
-              end end
+        love.graphics.setColor(1, 1, 1)
+        if it.x >= camPos.x and it.x < camPos.x + columns then
+            if it.y >= camPos.y and it.y < camPos.y + rows then
+                if it.type == "dief" then
+                    drawIntoW(dief, screenX, screenY, size)
+                elseif it.type == "politie" then
+                    drawIntoW(politie, screenX, screenY, size)
+                end
+            end
+        end
     end
     -- Print player coordinates
-   -- love.graphics.print(diefPos.x .. ',' .. diefPos.y, diefScreenX - size / 2, diefScreenY - size / 2)
+    -- love.graphics.print(diefPos.x .. ',' .. diefPos.y, diefScreenX - size / 2, diefScreenY - size / 2)
 end
-
 
 function scene:update(dt)
     -- print("You agree, don't you?")
