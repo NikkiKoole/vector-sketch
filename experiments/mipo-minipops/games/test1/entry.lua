@@ -20,6 +20,8 @@ function scene:draw()
     love.graphics.setColor(0, 0, 0)
     love.graphics.print("Scenery makes life easier TEST 1, press S for settings", 200, 300)
     love.graphics.setColor(1, 1, 1)
+
+    print(love.mouse.isDown(1))
 end
 
 function scene:update(dt)

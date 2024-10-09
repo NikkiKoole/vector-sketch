@@ -6,6 +6,7 @@ function isInRect(x, y, rx, ry, rw, rh)
 end
 
 function scene:load(args)
+
     -- print("Scenery is awesome", inspect(args))
     games = {}
     for i = 1, #scenes do
@@ -50,7 +51,7 @@ function scene:draw()
     local offsetX = (screenW - (w * itemsInRow)) / 2
     local offsetY = (screenH - (h * 2)) / 2
     love.graphics.clear(.4, .7, .7)
-
+    --print(love.mouse,  love.mouse.isDown(1))
     for i = 1, #games do
         local x = offsetX + ((i - 1) % itemsInRow) * w
         local y = offsetY + math.floor((i - 1) / itemsInRow) * h
@@ -74,7 +75,7 @@ function scene:draw()
 end
 
 function scene:update(dt)
-    --print("You agree, don't you?")
+
 end
 
 

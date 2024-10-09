@@ -12,6 +12,7 @@ end
 function scene:draw()
     love.graphics.clear(.3, .5, .5)
     love.graphics.print("Scenery makes life easier TEST 2 ", 200, 300)
+    print(love.mouse.isDown(1))
 end
 
 function scene:update(dt)

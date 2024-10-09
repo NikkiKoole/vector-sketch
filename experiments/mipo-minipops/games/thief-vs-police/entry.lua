@@ -142,51 +142,14 @@ function calculateCamPosFromDiefPos(diefX, diefY)
     return camX, camY
 end
 
-function scene:load(args)
-    print('hello')
+
+function scene:resetGame(level)
+    print(level.name)
     verloren = false
     gewonnen = false
-    success = love.window.setMode(1400, 1000)
-    love.keyboard.setKeyRepeat(true)
-    --print("Scenery 2 is awesome")
-    gras = love.graphics.newImage('games/thief-vs-police/img/gras.png')
-    muur = love.graphics.newImage('games/thief-vs-police/img/muur.png')
-    muurquad = love.graphics.newQuad(0, 0, muur:getWidth(), muur:getHeight(), muur:getWidth(), muur:getHeight())
-    dief = love.graphics.newImage('games/thief-vs-police/img/thief2.png')
-     geldzak = love.graphics.newImage('games/thief-vs-police/img/geldzak.png')
-     diefsad = love.graphics.newImage('games/thief-vs-police/img/thief-sad.png')
-     diefhappy = love.graphics.newImage('games/thief-vs-police/img/thief-happy.png')
-    kooi = love.graphics.newImage('games/thief-vs-police/img/kooi.png')
+    music:play()
 
-      mist = love.graphics.newImage('games/thief-vs-police/img/mist.png')
-
-    politie = love.graphics.newImage('games/thief-vs-police/img/politie2.png')
-
-    stapsnd =  love.audio.newSource("games/thief-vs-police/sfx/stap.wav", "static")
-     huilsnd =  love.audio.newSource("games/thief-vs-police/sfx/huil.wav", "static")
-     winsnd =  love.audio.newSource("games/thief-vs-police/sfx/win.wav", "static")
-     verlorensnd = love.audio.newSource("games/thief-vs-police/sfx/verloren.wav", "static")
-     music =  love.audio.newSource("games/thief-vs-police/sfx/muziekje.mp3", "static")
-     music:setLooping(true)
-     music:play()
-
-     camPos = { x = 1, y = 1 }
-     screenData = {
-        columns = 10,
-        rows = 10
-    }
-
-    levels = {
-        test = {police=4, loops=1, size=5,scale=1 },
-        noob = {police=2, loops=1, size=5,scale=3 },
-        easy = {police=4, loops=.8,size=6,scale=3 },
-        medium = {police=6, loops=.5,size=12,scale=2 },
-        hard = {police=8, loops=0.2,size=12,scale=1},
-        expert = {police=10, loops=0.2,size=12,scale=1},
-        impossible = {police=44, loops=0.12,size=12,scale=1}
-    }
-    level =  levels.hard
-    local RZSMaze = require("games/thief-vs-police/RZSMaze")
+     local RZSMaze = require("games/thief-vs-police/RZSMaze")
     local myMaze = RZSMaze.new({ level.size, level.size }, love.math.random) -- Create a blank 6x6 maze
     myMaze:generate()                      -- Generate it
     myMaze:createLoops(level.loops)                 -- Create some loops
@@ -210,6 +173,59 @@ function scene:load(args)
     camPos.y = y
 end
 
+function scene:load(args)
+    --print('hello')
+
+    success = love.window.setMode(1400, 1000)
+    love.keyboard.setKeyRepeat(true)
+    --print("Scenery 2 is awesome")
+
+    -- images
+    gras = love.graphics.newImage('games/thief-vs-police/img/gras.png')
+    muur = love.graphics.newImage('games/thief-vs-police/img/muur.png')
+    muurquad = love.graphics.newQuad(0, 0, muur:getWidth(), muur:getHeight(), muur:getWidth(), muur:getHeight())
+    dief = love.graphics.newImage('games/thief-vs-police/img/thief2.png')
+     geldzak = love.graphics.newImage('games/thief-vs-police/img/geldzak.png')
+     diefsad = love.graphics.newImage('games/thief-vs-police/img/thief-sad.png')
+     diefhappy = love.graphics.newImage('games/thief-vs-police/img/thief-happy.png')
+    kooi = love.graphics.newImage('games/thief-vs-police/img/kooi.png')
+      mist = love.graphics.newImage('games/thief-vs-police/img/mist.png')
+    politie = love.graphics.newImage('games/thief-vs-police/img/politie2.png')
+    tryagain = love.graphics.newImage('games/thief-vs-police/img/opnieuw.png')
+    nextlevel = love.graphics.newImage('games/thief-vs-police/img/nextlevel.png')
+    circle = love.graphics.newImage('games/thief-vs-police/img/circle.png')
+    -- sounds
+    stapsnd =  love.audio.newSource("games/thief-vs-police/sfx/stap.wav", "static")
+     huilsnd =  love.audio.newSource("games/thief-vs-police/sfx/huil.wav", "static")
+     winsnd =  love.audio.newSource("games/thief-vs-police/sfx/win.wav", "static")
+     verlorensnd = love.audio.newSource("games/thief-vs-police/sfx/verloren.wav", "static")
+     music =  love.audio.newSource("games/thief-vs-police/sfx/muziekje.mp3", "static")
+     music:setLooping(true)
+
+
+     camPos = { x = 1, y = 1 }
+     screenData = {
+        columns = 10,
+        rows = 10
+    }
+
+    levelIndex = 1  -- Keep track of the current level
+    levels = {
+        {police=40, loops=1, size=5, scale=2, name="test"},
+        {police=2, loops=1, size=5, scale=3, name="noob"},
+        {police=4, loops=0.8, size=6, scale=3, name="easy"},
+        {police=6, loops=0.5, size=12, scale=2, name="medium"},
+        {police=8, loops=0.2, size=12, scale=1, name="hard"},
+        {police=10, loops=0.2, size=12, scale=1, name="expert"},
+        {police=100, loops=0.12, size=12, scale=1, name="impossible"}
+    }
+
+    levelIndex = 1
+  level =  levels[levelIndex]
+   self.resetGame(self, level)
+end
+
+
 local function drawInto(img, x, y, w, h)
     local myWidth, myHeight = img:getDimensions()
     local myScaleX = w / myWidth
@@ -226,6 +242,7 @@ end
 
 function scene:keypressed(k)
     if k == 'escape' then
+         music:stop()
         self.setScene("overworld", { score = 52 })
         return
     end
@@ -383,12 +400,7 @@ function playSound(source)
     source:clone():play()
 end
 
-function resetGame()
-    verloren = false
-    gewonnen = false
-    scene.setScene("overworld", { score = 52 })
-    scene.setScene('thief-vs-police')
-end
+
 
 function win()
     if gewonnen == false then
@@ -507,7 +519,7 @@ function scene:draw()
                 --    drawIntoW(dief, screenX, screenY, size)
             elseif it.type == "politie" then
                 love.graphics.setColor(.5, .5, .5, 1)
-                drawIntoW(politie, screenX, screenY, size)
+                drawIntoW(politie, screenX, screenY+size/4, size)
             end
         end
 
@@ -529,17 +541,60 @@ function scene:draw()
                      --drawInto(geldzak, screenX+50, screenY-80, size/1.5,size/1.5)
                     end
                 elseif it.type == "politie" then
-                    drawIntoW(politie, screenX, screenY, size)
+                    drawIntoW(politie, screenX, screenY+size/4, size)
                 end
             end
         end
     end
     checkGame()
+    showNextLevelUI = true
+    showAgainLevelUI = true
+    if showNextLevelUI then
+         drawInto(circle, 100,100,100,100)
+    drawInto(nextlevel, 100,100,100,100)
+    end
+      if showAgainLevelUI then
+          drawInto(circle, 100,400,100,100)
+    drawInto(tryagain, 100,400,100,100)
+    end
     -- Print player coordinates
     -- love.graphics.print(diefPos.x .. ',' .. diefPos.y, diefScreenX - size / 2, diefScreenY - size / 2)
 end
 
+function distance(x1, y1, x2, y2)
+    return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+end
+
+-- Function to check if the mouse is inside the circle
+function isMouseInCircle(mouseX, mouseY, circleX, circleY, radius)
+    -- Calculate the distance between the mouse position and the circle's center
+    local dist = distance(mouseX, mouseY, circleX, circleY)
+
+    -- If the distance is less than or equal to the circle's radius, the mouse is inside
+    return dist <= radius
+end
+function scene:mousepressed(x,y)
+
+    if (showNextLevelUI) then
+       if isMouseInCircle(x,y,100,100,50) then
+
+
+           levelIndex = math.min(levelIndex + 1, #levels)  -- Increment, but clamp to max level
+                self:resetGame(levels[levelIndex])
+
+
+       end
+    end
+    if (showAgainLevelUI) then
+       if isMouseInCircle(x,y,100,400,50) then
+
+            self:resetGame(level)
+       end
+    end
+end
+
 function scene:update(dt)
+    --print('entry',love.mouse.isDown(1))
     -- print("You agree, don't you?")
 end
 
