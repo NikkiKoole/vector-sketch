@@ -402,7 +402,7 @@ function isverloren()
        playSound(huilsnd)
        playSound(verlorensnd)
        music:stop()
-       resetGame()
+     --  resetGame()
       end
     verloren = true
 
