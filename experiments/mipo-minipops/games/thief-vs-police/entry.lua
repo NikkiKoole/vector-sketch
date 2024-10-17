@@ -147,7 +147,7 @@ function scene:resetGame(level)
     print(level.name)
     verloren = false
     gewonnen = false
-    music:play()
+    --music:play()
 
      local RZSMaze = require("games/thief-vs-police/RZSMaze")
     local myMaze = RZSMaze.new({ level.size, level.size }, love.math.random) -- Create a blank 6x6 maze
@@ -221,7 +221,7 @@ function scene:load(args)
     }
 
     levelIndex = 1
-  level =  levels[levelIndex]
+    level =  levels[levelIndex]
    self.resetGame(self, level)
 end
 
