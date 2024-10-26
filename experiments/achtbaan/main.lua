@@ -1,4 +1,5 @@
 function love.load()
+    success = love.window.setMode(1800, 1000)
     coaster_track_points = {}                     -- Table to store the points
     support_beam_positions = {}                   -- Table to store support beam positions
     mousepressed = false
@@ -8,11 +9,11 @@ function love.load()
     ground_level = love.graphics.getHeight() - 50 -- Define where the ground is
 
     -- Physical constants
-    gravity = 9.81              -- Gravitational acceleration (pixels/s^2)
+    gravity = 90.81             -- Gravitational acceleration (pixels/s^2)
     mass = 1                    -- Mass of the cart (arbitrary units)
     friction_coefficient = 0.05 -- Coefficient of friction (adjust as needed)
-    max_speed = 500             -- Maximum speed of the cart (pixels/s)
-    min_speed = 0               -- Minimum speed (to prevent negative speeds)
+    max_speed = 1500            -- Maximum speed of the cart (pixels/s)
+    min_speed = -1500           -- Minimum speed (to prevent negative speeds)
 
     -- Cart variables
     cart = {
@@ -32,8 +33,8 @@ function love.load()
     cartInitialized = false
 
     -- Acceleration and Deceleration values
-    acceleration_value = 200 -- Increase in speed (pixels/s)
-    deceleration_value = 200 -- Decrease in speed (pixels/s)
+    acceleration_value = 100 -- Increase in speed (pixels/s)
+    deceleration_value = 100 -- Decrease in speed (pixels/s)
 end
 
 function love.update(dt)
