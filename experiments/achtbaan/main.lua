@@ -62,7 +62,7 @@ function love.draw()
             else
                 love.graphics.setColor(1, 1, 1) -- White for normal points
             end
-            love.graphics.circle('fill', p1.x, p1.y, 5)
+            love.graphics.circle('fill', p1.x, p1.y, 2)
         end
     elseif #coaster_track_points == 1 then
         -- If there's only one point, draw it
@@ -72,14 +72,14 @@ function love.draw()
 
     -- Draw support beams
     if #support_beam_positions > 0 then
-        love.graphics.setColor(0.5, 0.5, 0.5) -- Gray color for beams
+        love.graphics.setColor(0.25, 0.25, 0.25) -- Gray color for beams
         for _, beam in ipairs(support_beam_positions) do
             -- Draw the beam (line from track to ground)
             love.graphics.line(beam.x, beam.y, beam.x, ground_level)
             -- Draw red circle at the connection point
-            love.graphics.setColor(1, 0, 0)       -- Red color for connection
+            love.graphics.setColor(.37, .37, .37)    -- Red color for connection
             love.graphics.circle('fill', beam.x, beam.y, 5)
-            love.graphics.setColor(0.5, 0.5, 0.5) -- Reset color for beams
+            love.graphics.setColor(0.25, 0.25, 0.25) -- Reset color for beams
         end
     end
 
