@@ -1,6 +1,11 @@
+-- love2d_coaster_with_mass.lua
+
 function love.load()
+    -- Set up the window
     success = love.window.setMode(1800, 1000)
-    coaster_track_points = {}                     -- Table to store the points
+
+    -- Initialize tables and variables
+    coaster_track_points = {}                     -- Table to store the track points
     support_beam_positions = {}                   -- Table to store support beam positions
     mousepressed = false
     min_distance = 30                             -- Minimum distance between points
@@ -9,11 +14,11 @@ function love.load()
     ground_level = love.graphics.getHeight() - 50 -- Define where the ground is
 
     -- Physical constants
-    gravity = 90.81             -- Gravitational acceleration (pixels/s^2)
-    mass = 1                    -- Mass of the cart (arbitrary units)
-    friction_coefficient = 0.05 -- Coefficient of friction (adjust as needed)
-    max_speed = 1500            -- Maximum speed of the cart (pixels/s)
-    min_speed = -1500           -- Minimum speed (to prevent negative speeds)
+    gravity = 90.81         -- Gravitational acceleration (pixels/s^2)
+    mass = 1                -- Mass of the cart (arbitrary units)
+    friction_coefficient = 0 -- 0.01 -- Adjusted for realistic deceleration
+    max_speed = 1500        -- Maximum speed of the cart (pixels/s)
+    min_speed = -1500       -- Minimum speed (to prevent negative speeds)
 
     -- Cart variables
     cart = {
@@ -32,9 +37,9 @@ function love.load()
     segment_lengths = {}
     cartInitialized = false
 
-    -- Acceleration and Deceleration values
-    acceleration_value = 100 -- Increase in speed (pixels/s)
-    deceleration_value = 100 -- Decrease in speed (pixels/s)
+    -- Define external forces
+    acceleration_force = 10000 -- Adjusted for balanced acceleration
+    deceleration_force = 10000 -- Adjusted for balanced deceleration
 end
 
 function love.update(dt)
@@ -44,7 +49,7 @@ function love.update(dt)
 end
 
 function love.draw()
-    -- Draw the line connecting the points (the track)
+    -- Draw the track
     if #coaster_track_points > 1 then
         for i = 1, #coaster_track_points do
             local p1 = coaster_track_points[i]
@@ -76,8 +81,8 @@ function love.draw()
         for _, beam in ipairs(support_beam_positions) do
             -- Draw the beam (line from track to ground)
             love.graphics.line(beam.x, beam.y, beam.x, ground_level)
-            -- Draw red circle at the connection point
-            love.graphics.setColor(.37, .37, .37)    -- Red color for connection
+            -- Draw gray circle at the connection point
+            love.graphics.setColor(0.37, 0.37, 0.37) -- Light Gray for connection
             love.graphics.circle('fill', beam.x, beam.y, 5)
             love.graphics.setColor(0.25, 0.25, 0.25) -- Reset color for beams
         end
@@ -93,10 +98,11 @@ function love.draw()
         love.graphics.rectangle('fill', -10, -5, 20, 10)
         love.graphics.pop()
 
-        -- Display cart speed and acceleration
+        -- Display cart speed, acceleration, and mass
         love.graphics.setColor(1, 1, 1)
         love.graphics.print(string.format("Speed: %.2f px/s", cart.velocity), 10, 10)
         love.graphics.print(string.format("Acceleration: %.2f px/s²", cart.acceleration), 10, 30)
+        love.graphics.print(string.format("Mass: %.2f", mass), 10, 50)
     end
 
     -- Draw ground
@@ -186,6 +192,14 @@ function love.keypressed(key)
             closest_point.accelerate = false -- Ensure accelerate is false
             print('Deceleration point at index', closest_point.index, 'decelerate set to', closest_point.decelerate)
         end
+    elseif key == 'up' then
+        -- Increase mass
+        mass = mass + 0.5
+        print("Mass increased to", mass)
+    elseif key == 'down' then
+        -- Decrease mass, ensuring it doesn't go below a minimum value
+        mass = math.max(mass - 0.5, 0.1) -- Prevent mass from being zero or negative
+        print("Mass decreased to", mass)
     end
 end
 
@@ -371,32 +385,39 @@ function updateCartPosition(dt)
     -- Calculate acceleration due to gravity along the slope
     local gravity_component = gravity * sin_theta
 
-    -- Calculate friction acceleration (opposes motion)
-    local friction_acceleration = 0
-    if cart.velocity ~= 0 then
-        friction_acceleration = -friction_coefficient * gravity * cos_theta * (cart.velocity / math.abs(cart.velocity))
-    else
-        friction_acceleration = 0
-    end
+    -- Calculate friction acceleration (linear drag)
+    local friction_acceleration = -friction_coefficient * cart.velocity
 
-    -- Total acceleration
+    -- Total acceleration from gravity and friction
     cart.acceleration = gravity_component + friction_acceleration
-
-    -- Update velocity
-    cart.velocity = cart.velocity + cart.acceleration * dt
-
-    -- Check for acceleration point at p1
+    if (segmentIndex ~= cart.lastAccelIndex) then
+        cart.lastAccelIndex = -1
+    end
+    -- Handle external forces (Acceleration and Deceleration)
     if p1.accelerate and cart.lastAccelIndex ~= segmentIndex then
-        cart.velocity = cart.velocity + acceleration_value
+        -- Apply external acceleration force
+        local applied_acceleration = acceleration_force / mass
+        cart.acceleration = cart.acceleration + applied_acceleration
         cart.lastAccelIndex = segmentIndex
         print('Cart accelerated at index', segmentIndex)
     end
 
-    -- Check for deceleration point at p1
     if p1.decelerate and cart.lastBrakeIndex ~= segmentIndex then
-        cart.velocity = cart.velocity - deceleration_value
+        -- Apply external deceleration force
+        local applied_deceleration = deceleration_force / mass
+        cart.acceleration = cart.acceleration - applied_deceleration
         cart.lastBrakeIndex = segmentIndex
         print('Cart decelerated at index', segmentIndex)
+    end
+
+    -- Update velocity based on total acceleration
+    cart.velocity = cart.velocity + cart.acceleration * dt
+
+    -- Prevent velocity from reversing due to friction
+    if cart.velocity > 0 and cart.acceleration < 0 and (cart.velocity + cart.acceleration * dt) < 0 then
+        cart.velocity = 0
+    elseif cart.velocity < 0 and cart.acceleration > 0 and (cart.velocity + cart.acceleration * dt) > 0 then
+        cart.velocity = 0
     end
 
     -- Apply speed limits
@@ -433,7 +454,7 @@ function updateCartPosition(dt)
     local nx = uy
     local ny = -ux
 
-    -- Apply offset along the normal vector
+    -- Apply offset along the normal vector for visual flipping
     local offset_distance = 10 -- Adjust this value as needed
     cart.x = cart.x + nx * offset_distance * cart.offsetDirection
     cart.y = cart.y + ny * offset_distance * cart.offsetDirection
