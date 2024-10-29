@@ -14,11 +14,11 @@ function love.load()
     ground_level = love.graphics.getHeight() - 50 -- Define where the ground is
 
     -- Physical constants
-    gravity = 90.81         -- Gravitational acceleration (pixels/s^2)
-    mass = 1                -- Mass of the cart (arbitrary units)
+    gravity = 90.81          -- Gravitational acceleration (pixels/s^2)
+    mass = 1                 -- Mass of the cart (arbitrary units)
     friction_coefficient = 0 -- 0.01 -- Adjusted for realistic deceleration
-    max_speed = 1500        -- Maximum speed of the cart (pixels/s)
-    min_speed = -1500       -- Minimum speed (to prevent negative speeds)
+    max_speed = 1500         -- Maximum speed of the cart (pixels/s)
+    min_speed = -1500        -- Minimum speed (to prevent negative speeds)
 
     -- Cart variables
     cart = {
