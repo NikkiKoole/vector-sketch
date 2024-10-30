@@ -1,4 +1,4 @@
--- love2d_coaster_with_mass.lua
+-- love2d_coaster_with_mass_and_train.lua
 
 function love.load()
     -- Set up the window
@@ -14,37 +14,31 @@ function love.load()
     ground_level = love.graphics.getHeight() - 50 -- Define where the ground is
 
     -- Physical constants
-    gravity = 90.81          -- Gravitational acceleration (pixels/s^2)
-    mass = 1                 -- Mass of the cart (arbitrary units)
-    friction_coefficient = 0 -- 0.01 -- Adjusted for realistic deceleration
-    max_speed = 1500         -- Maximum speed of the cart (pixels/s)
-    min_speed = -1500        -- Minimum speed (to prevent negative speeds)
+    gravity = 90.81              -- Gravitational acceleration (pixels/s^2)
+    mass = 1                     -- Mass of the carts (arbitrary units)
+    friction_coefficient = 0.015 -- Friction coefficient for realistic deceleration
+    max_speed = 15000            -- Maximum speed of the cart (pixels/s)
+    min_speed = -15000           -- Minimum speed (to prevent negative speeds)
 
-    -- Cart variables
-    cart = {
-        positionOnTrack = 0,  -- Distance along the track
-        velocity = 0,         -- Velocity of the cart (pixels/s)
-        acceleration = 0,     -- Acceleration of the cart (pixels/s^2)
-        x = 0,                -- Current x-coordinate
-        y = 0,                -- Current y-coordinate
-        direction = 0,        -- Direction angle in radians
-        offsetDirection = 1,  -- 1 for above the track, -1 for below
-        lastFlipIndex = nil,  -- To prevent multiple flips at the same flip point
-        lastAccelIndex = nil, -- To prevent multiple accelerations at the same point
-        lastBrakeIndex = nil, -- To prevent multiple brakes at the same point
-    }
-    totalTrackLength = 0
-    segment_lengths = {}
-    cartInitialized = false
+    -- Cart Train Variables
+    carts = {}              -- Table to store multiple carts
+    number_of_carts = 13    -- Initial number of carts in the train
+    cart_spacing = 25       -- Fixed distance between each cart (pixels)
+    flip_offset = 10        -- Adjustable flip offset for visual flipping
+    cartInitialized = false -- Flag to check if carts are initialized
 
     -- Define external forces
     acceleration_force = 10000 -- Adjusted for balanced acceleration
     deceleration_force = 10000 -- Adjusted for balanced deceleration
+
+    -- Initialize segment_lengths globally
+    segment_lengths = {}
+    totalTrackLength = 0
 end
 
 function love.update(dt)
     if cartInitialized then
-        updateCartPosition(dt)
+        updateTrainPosition(dt)
     end
 end
 
@@ -88,20 +82,23 @@ function love.draw()
         end
     end
 
-    -- Draw the cart
+    -- Draw the carts
     if cartInitialized then
-        love.graphics.setColor(1, 0, 0) -- Red color for the cart
-        love.graphics.push()
-        love.graphics.translate(cart.x, cart.y)
-        love.graphics.rotate(cart.direction)
-        -- Draw the cart as a rectangle
-        love.graphics.rectangle('fill', -10, -5, 20, 10)
-        love.graphics.pop()
+        for i, cart in ipairs(carts) do
+            love.graphics.setColor(1, 0, 0) -- Red color for the carts
+            love.graphics.push()
+            love.graphics.translate(cart.x, cart.y)
+            love.graphics.rotate(cart.direction)
+            -- Draw the cart as a rectangle
+            love.graphics.rectangle('fill', -10, -5, 20, 10)
+            love.graphics.pop()
+        end
 
-        -- Display cart speed, acceleration, and mass
+        -- Display lead cart speed, acceleration, and mass
+        local lead_cart = carts[1]
         love.graphics.setColor(1, 1, 1)
-        love.graphics.print(string.format("Speed: %.2f px/s", cart.velocity), 10, 10)
-        love.graphics.print(string.format("Acceleration: %.2f px/s²", cart.acceleration), 10, 30)
+        love.graphics.print(string.format("Speed: %.2f px/s", lead_cart.velocity), 10, 10)
+        love.graphics.print(string.format("Acceleration: %.2f px/s²", lead_cart.acceleration), 10, 30)
         love.graphics.print(string.format("Mass: %.2f", mass), 10, 50)
     end
 
@@ -116,8 +113,9 @@ function love.mousepressed(x, y, button)
     if button == 1 then -- Only track left mouse button press
         coaster_track_points = {}
         support_beam_positions = {}
+        carts = {}
         cartInitialized = false
-        print('hello!')
+        print('Track creation started!')
         mousepressed = true
         -- Start a new line by adding the first point
         table.insert(coaster_track_points, { x = x, y = y, flip = false, accelerate = false, decelerate = false })
@@ -152,14 +150,16 @@ end
 function love.mousereleased(x, y, button)
     if button == 1 then
         mousepressed = false
-        print('released', #coaster_track_points)
+        print('Track creation completed with', #coaster_track_points, 'points.')
 
-        -- After completing the track, calculate support beam positions and track lengths
-        calculateSupportBeams()
+        -- After completing the track, calculate total track lengths first
         calculateTrackLengths()
 
-        -- Initialize the cart
-        initializeCart()
+        -- Then calculate support beam positions using the populated segment_lengths
+        calculateSupportBeams()
+
+        -- Initialize the train of carts
+        initializeTrain()
     end
 end
 
@@ -224,13 +224,10 @@ function findClosestPoint(x, y)
     end
 end
 
--- Function to calculate support beam positions along the track
-function calculateSupportBeams()
-    support_beam_positions = {}
-    local initial_beam_positions = {}
-
-    -- Total length of the track
-    local total_length = 0
+-- Function to calculate total track length and segment lengths
+function calculateTrackLengths()
+    totalTrackLength = 0
+    segment_lengths = {} -- Ensure this is a global table
 
     for i = 1, #coaster_track_points do
         local p1 = coaster_track_points[i]
@@ -239,8 +236,23 @@ function calculateSupportBeams()
         local dy = p2.y - p1.y
         local segment_length = math.sqrt(dx * dx + dy * dy)
         segment_lengths[i] = segment_length
-        total_length = total_length + segment_length
+        totalTrackLength = totalTrackLength + segment_length
     end
+end
+
+-- Function to calculate support beam positions along the track
+function calculateSupportBeams()
+    support_beam_positions = {}
+    local initial_beam_positions = {}
+
+    -- Ensure segment_lengths is already calculated
+    if not segment_lengths or #segment_lengths == 0 then
+        print("Error: segment_lengths is not calculated before support beams.")
+        return
+    end
+
+    -- Total length of the track is already calculated
+    local total_length = totalTrackLength
 
     -- Place initial support beams at regular intervals along the total length
     local num_beams = math.floor(total_length / support_spacing)
@@ -300,55 +312,120 @@ function calculateSupportBeams()
     support_beam_positions = merged_beams
 end
 
--- Function to calculate total track length and segment lengths
-function calculateTrackLengths()
-    totalTrackLength = 0
-    segment_lengths = {}
-
-    for i = 1, #coaster_track_points do
-        local p1 = coaster_track_points[i]
-        local p2 = coaster_track_points[i % #coaster_track_points + 1] -- Wrap around
-        local dx = p2.x - p1.x
-        local dy = p2.y - p1.y
-        local segment_length = math.sqrt(dx * dx + dy * dy)
-        segment_lengths[i] = segment_length
-        totalTrackLength = totalTrackLength + segment_length
-    end
-end
-
--- Function to initialize the cart after track creation
-function initializeCart()
+-- Function to initialize the train after track creation
+function initializeTrain()
     if #coaster_track_points < 2 then
         print("Error: Not enough points to form a track.")
         cartInitialized = false
         return
     end
 
-    cart.positionOnTrack = 0
-    cart.velocity = 0        -- Starting velocity
-    cart.acceleration = 0    -- Starting acceleration
+    carts = {}
+    for i = 1, number_of_carts do
+        local cart = {
+            positionOnTrack = 0,  -- Will set properly below
+            velocity = 0,         -- Velocity of the cart (pixels/s)
+            acceleration = 0,     -- Acceleration of the cart (pixels/s^2)
+            x = 0,                -- Current x-coordinate
+            y = 0,                -- Current y-coordinate
+            direction = 0,        -- Direction angle in radians
+            offsetDirection = 1,  -- 1 for above the track, -1 for below
+            lastFlipIndex = nil,  -- To prevent multiple flips at the same flip point
+            lastAccelIndex = nil, -- To prevent multiple accelerations at the same point
+            lastBrakeIndex = nil, -- To prevent multiple brakes at the same point
+            prev_velocity = 0,    -- To track previous velocity for reversal detection
+        }
+        -- Position each cart based on its spacing behind the lead cart
+        cart.positionOnTrack = (0 - (i - 1) * cart_spacing) % totalTrackLength
+        table.insert(carts, cart)
+    end
+
+    -- Initialize all carts' positions and directions
+    for i, cart in ipairs(carts) do
+        local pos, segIndex, t = getPointOnTrack(cart.positionOnTrack)
+        cart.x = pos.x
+        cart.y = pos.y
+
+        -- Calculate initial direction based on the segment
+        local p1 = coaster_track_points[segIndex]
+        local p2 = coaster_track_points[segIndex % #coaster_track_points + 1]
+        local dx = p2.x - p1.x
+        local dy = p2.y - p1.y
+        cart.direction = math.atan2(dy, dx)
+        cart.prev_velocity = cart.velocity
+    end
+
+    -- Set initial velocity for the lead cart
+    carts[1].velocity = 100 -- Starting velocity
+    carts[1].prev_velocity = carts[1].velocity
+
     cartInitialized = true
-    cart.offsetDirection = 1 -- Start above the track
-    cart.lastFlipIndex = nil
-    cart.lastAccelIndex = nil
-    cart.lastBrakeIndex = nil
-
-    -- Set initial position
-    local p1 = coaster_track_points[1]
-    local p2 = coaster_track_points[2]
-    cart.x = p1.x
-    cart.y = p1.y
-
-    -- Calculate initial direction based on the first segment
-    local dx = p2.x - p1.x
-    local dy = p2.y - p1.y
-    cart.direction = math.atan2(dy, dx)
 end
 
--- Function to update the cart's position
-function updateCartPosition(dt)
-    if not cartInitialized then return end
+-- Function to update the entire train's position
+function updateTrainPosition(dt)
+    -- Update the lead cart (first cart)
+    local lead_cart = carts[1]
+    updateSingleCart(lead_cart, dt)
 
+    -- Check for reversal based on lead cart's velocity
+    if (lead_cart.velocity > 0 and lead_cart.prev_velocity < 0) or
+        (lead_cart.velocity < 0 and lead_cart.prev_velocity > 0) then
+        reverseTrainDirection()
+    end
+    lead_cart.prev_velocity = lead_cart.velocity
+
+    -- Update following carts based on lead cart's position
+    for i = 2, #carts do
+        local desired_position = (carts[1].positionOnTrack - (i - 1) * cart_spacing) % totalTrackLength
+        local cart = carts[i]
+        cart.positionOnTrack = desired_position
+
+        -- Get the current position on the track
+        local pos, segIndex, t = getPointOnTrack(cart.positionOnTrack)
+        cart.x = pos.x
+        cart.y = pos.y
+
+        -- Update direction based on the current segment
+        local p1 = coaster_track_points[segIndex]
+        local p2 = coaster_track_points[segIndex % #coaster_track_points + 1]
+        local dx = p2.x - p1.x
+        local dy = p2.y - p1.y
+        cart.direction = math.atan2(dy, dx)
+
+        -- Handle flipping
+        if p1.flip and cart.lastFlipIndex ~= segIndex then
+            cart.offsetDirection = cart.offsetDirection * -1
+            cart.lastFlipIndex = segIndex
+            print('Cart', i, 'flipped at index', segIndex)
+        end
+
+        -- Apply offset for visual flipping
+        local angle = math.atan2(dy, dx)
+        local sin_theta = math.sin(angle)
+        local cos_theta = math.cos(angle)
+        local nx = sin_theta
+        local ny = -cos_theta
+
+        cart.x = pos.x + nx * flip_offset * cart.offsetDirection
+        cart.y = pos.y + ny * flip_offset * cart.offsetDirection
+    end
+end
+
+function resetCartIndexCounters(cart, segmentIndex)
+    if segmentIndex ~= cart.lastFlipIndex then
+        cart.lastFlipIndex = -1
+    end
+    if segmentIndex ~= cart.lastAccelIndex then
+        cart.lastAccelIndex = -1
+    end
+    if segmentIndex ~= cart.lastBrakeIndex then
+        cart.lastBrakeIndex = -1
+    end
+end
+
+-- Function to update a single cart (lead cart)
+function updateSingleCart(cart, dt)
     -- Get the cart's current position on the track
     local cartPos, segmentIndex, t = getPointOnTrack(cart.positionOnTrack)
     cart.x = cartPos.x
@@ -361,6 +438,7 @@ function updateCartPosition(dt)
         segmentIndex = 1
     end
 
+    resetCartIndexCounters(cart, segmentIndex)
     -- Update the cart's direction based on the current segment
     local p1 = coaster_track_points[segmentIndex]
     local p2 = coaster_track_points[segmentIndex % #coaster_track_points + 1]
@@ -390,9 +468,7 @@ function updateCartPosition(dt)
 
     -- Total acceleration from gravity and friction
     cart.acceleration = gravity_component + friction_acceleration
-    if (segmentIndex ~= cart.lastAccelIndex) then
-        cart.lastAccelIndex = -1
-    end
+
     -- Handle external forces (Acceleration and Deceleration)
     if p1.accelerate and cart.lastAccelIndex ~= segmentIndex then
         -- Apply external acceleration force
@@ -428,20 +504,7 @@ function updateCartPosition(dt)
     end
 
     -- Update position along the track
-    cart.positionOnTrack = cart.positionOnTrack + cart.velocity * dt
-
-    -- Loop the track if necessary
-    if cart.positionOnTrack > totalTrackLength then
-        cart.positionOnTrack = cart.positionOnTrack - totalTrackLength
-        cart.lastFlipIndex = nil -- Reset flip tracking when looping
-        cart.lastAccelIndex = nil
-        cart.lastBrakeIndex = nil
-    elseif cart.positionOnTrack < 0 then
-        cart.positionOnTrack = cart.positionOnTrack + totalTrackLength
-        cart.lastFlipIndex = nil -- Reset flip tracking when looping
-        cart.lastAccelIndex = nil
-        cart.lastBrakeIndex = nil
-    end
+    cart.positionOnTrack = (cart.positionOnTrack + cart.velocity * dt) % totalTrackLength
 
     -- Check for flip point at p1
     if p1.flip and cart.lastFlipIndex ~= segmentIndex then
@@ -455,13 +518,27 @@ function updateCartPosition(dt)
     local ny = -ux
 
     -- Apply offset along the normal vector for visual flipping
-    local offset_distance = 10 -- Adjust this value as needed
-    cart.x = cart.x + nx * offset_distance * cart.offsetDirection
-    cart.y = cart.y + ny * offset_distance * cart.offsetDirection
+    cart.x = cart.x + nx * flip_offset * cart.offsetDirection
+    cart.y = cart.y + ny * flip_offset * cart.offsetDirection
+end
+
+-- Function to reverse the direction of all carts in the train
+function reverseTrainDirection()
+    for i, cart in ipairs(carts) do
+        cart.velocity = -cart.velocity
+    end
+    print("Train direction reversed!")
 end
 
 -- Function to get the point on the track at a given distance
 function getPointOnTrack(distance)
+    -- Handle negative distances by wrapping around the track
+    if distance < 0 then
+        distance = distance + math.ceil(math.abs(distance) / totalTrackLength) * totalTrackLength
+    elseif distance > totalTrackLength then
+        distance = distance % totalTrackLength
+    end
+
     local accumulated_distance = 0
 
     for i = 1, #coaster_track_points do
