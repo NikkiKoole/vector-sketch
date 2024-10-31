@@ -7,14 +7,22 @@ Commander.__index = Commander
 
 -- === Commander Class ===
 
-function Commander:new()
+function Commander:new(config)
+    local showPath = nil
+    if config and config.showPath ~= nil then
+        showPath = config.showPath
+    else
+        showPath = true
+    end
+
     local obj = {
         -- File Management Variables
         all_files = {},      -- Complete list of files in the current directory
         filtered_files = {}, -- List of files filtered based on search_query
         selected_index = 1,
-        root_path = '',      -- THIS WILL LIMIT MOVING UP WITH ..
-        current_path = "",
+        showPath = showPath,
+        root_path = config and config.root_path or '', -- THIS WILL LIMIT MOVING UP WITH ..
+        current_path = config and config.current_path or "",
         scroll_offset = 0,
         max_display_items = 20,
         line_height = 24,
@@ -271,7 +279,10 @@ function Commander:load()
     love.keyboard.setKeyRepeat(true)
     love.graphics.setLineWidth(3)
     -- Load a retro font (ensure the path is correct)
-    self.retro_font = love.graphics.newFont("SMW.Whole-Pixel.Spacing.ttf", self.TEXT_SIZE) -- Adjust font size as needed
+    local font1 = "SMW.Whole-Pixel.Spacing.ttf"
+    local font2 = "WindsorBT-Roman.otf"
+    local font3 = "COOPBL.ttf"
+    self.retro_font = love.graphics.newFont(font3, self.TEXT_SIZE) -- Adjust font size as needed
     love.graphics.setFont(self.retro_font)
 
     -- Dynamically set line height based on font metrics
@@ -284,7 +295,7 @@ function Commander:load()
     -- Calculate layout positions
     self.SEARCH_BAR_HEIGHT = self.TEXT_SIZE + self.TEXT_PADDING * 2 + 5
     self.CURRENT_PATH_Y = self.SEARCH_BAR_Y + self.SEARCH_BAR_HEIGHT + 5
-    self.FRAME_Y = self.CURRENT_PATH_Y + self.line_height + 10
+    self.FRAME_Y = self.CURRENT_PATH_Y + (self.showPath and (self.line_height + 10) or 0)
     self.FILE_START_Y = self.FRAME_Y + self.FRAME_PADDING + 5
 
     -- Set popup position to center
@@ -294,6 +305,8 @@ function Commander:load()
     love.window.setTitle("=== Nikki Commander 1.0 ===")
     self:loadFiles()
     self:listSaveDirectoryFiles()
+    local w, h = love.graphics.getDimensions()
+    self:resize(w, h)
 end
 
 -- Resize function
@@ -310,7 +323,7 @@ function Commander:resize(w, h)
     -- Recalculate layout positions
     self.SEARCH_BAR_HEIGHT = self.TEXT_SIZE + self.TEXT_PADDING * 2 + 5
     self.CURRENT_PATH_Y = self.SEARCH_BAR_Y + self.SEARCH_BAR_HEIGHT + 5
-    self.FRAME_Y = self.CURRENT_PATH_Y + self.line_height + 10
+    self.FRAME_Y = self.CURRENT_PATH_Y + (self.showPath and (self.line_height + 10) or 0)
     self.FILE_START_Y = self.FRAME_Y + self.FRAME_PADDING + 5
 
     -- Reposition popup to remain centered
@@ -343,8 +356,9 @@ function Commander:draw()
     end
 
     -- Draw current path
+    --
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Current Path: /" .. self.current_path, self.FRAME_X, self.CURRENT_PATH_Y)
+    if self.showPath then love.graphics.print("Current Path: /" .. self.current_path, self.FRAME_X, self.CURRENT_PATH_Y) end
 
     -- Draw frame for file list
     love.graphics.setColor(1, 1, 1)
@@ -559,10 +573,6 @@ function Commander:mousepressed(x, y, button)
             end
         end
     end
-end
-
-function Commander:mousereleased(x, y, button)
-    -- No action needed here for double-click logic
 end
 
 -- Handle mouse wheel for scrolling
