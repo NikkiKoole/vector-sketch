@@ -24,6 +24,9 @@ local CONSTANTS = {
         DEFAULT_CARTS = 13, -- Initial number of carts
         CART_SPACING = 25,  -- pixels
         FLIP_OFFSET = 10    -- pixels
+    },
+    HOIST = {
+        SPEED = 100 -- pixels/s, adjust as needed
     }
 }
 
@@ -53,7 +56,8 @@ function Track:addPoint(x, y)
         y = y,
         flip = false,
         accelerate = false,
-        decelerate = false
+        decelerate = false,
+        hoist = false -- Added hoist field
     })
 end
 
@@ -158,7 +162,7 @@ function Track:findClosestPoint(x, y, threshold_sq)
     end
 end
 
--- **Added Function: getPointOnTrack**
+-- Function to get a point on the track based on distance traveled
 function Track:getPointOnTrack(distance)
     -- Handle cases where the track has no points
     if #self.points == 0 then
@@ -208,6 +212,7 @@ function Track:getPointOnTrack(distance)
     return self.points[1], 1, 0
 end
 
+-- Draw function for the Track class
 function Track:draw()
     -- Draw the track
     if #self.points > 1 then
@@ -224,6 +229,8 @@ function Track:draw()
                 love.graphics.setColor(0, 1, 0) -- Green
             elseif p1.decelerate then
                 love.graphics.setColor(1, 0, 0) -- Red
+            elseif p1.hoist then                -- Added hoist visualization
+                love.graphics.setColor(1, 1, 0) -- Yellow
             else
                 love.graphics.setColor(1, 1, 1) -- White
             end
@@ -266,6 +273,7 @@ function Cart.new(initial_position, track)
     self.last_flip_index = nil
     self.last_accel_index = nil
     self.last_brake_index = nil
+    self.last_hoist_index = nil -- Added hoist tracking
     self.prev_velocity = 0
     return self
 end
@@ -279,6 +287,9 @@ function Cart:resetCartIndexCounters(segmentIndex)
     end
     if segmentIndex ~= self.last_brake_index then
         self.last_brake_index = -1
+    end
+    if segmentIndex ~= self.last_hoist_index then -- Reset hoist index
+        self.last_hoist_index = -1
     end
 end
 
@@ -337,6 +348,13 @@ function Cart:update(dt, mass, constants)
         self.acceleration = self.acceleration - applied_deceleration
         self.last_brake_index = segmentIndex
         print('Cart decelerated at index', segmentIndex)
+    end
+
+    -- Handle Hoist
+    if p1.hoist and self.last_hoist_index ~= segmentIndex then
+        self.velocity = constants.HOIST.SPEED -- Set velocity to hoist speed
+        self.last_hoist_index = segmentIndex
+        print('Hoist activated at index', segmentIndex, 'Setting velocity to', self.velocity)
     end
 
     -- Update velocity
@@ -545,6 +563,14 @@ function love.keypressed(key)
                 closest_point.accelerate = false -- Ensure acceleration is false
             end
             print(string.format("Deceleration point at index %d set to %s", index, tostring(closest_point.decelerate)))
+        end
+    elseif key == 'h' then
+        -- Toggle hoist at the closest point
+        local x, y = love.mouse.getPosition()
+        local closest_point, index = GameState.track:findClosestPoint(x, y)
+        if closest_point then
+            closest_point.hoist = not closest_point.hoist
+            print(string.format("Hoist point at index %d set to %s", index, tostring(closest_point.hoist)))
         end
     elseif key == 'up' then
         -- Increase mass
