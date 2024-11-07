@@ -2,16 +2,19 @@
 
 local ui = {}
 
+
+
 -- Theme Configuration
 local theme = {
     button = {
-        default = { 1.2, 0.6, 1 },   -- Default fill color
-        hover = { 0.3, 0.6, 1 },     -- Hover fill color
-        pressed = { 0.1, 0.3, 0.8 }, -- Pressed fill color
-        outline = { 1, 1, 1 },       -- Outline color
-        text_default = { 1, 1, 1 },  -- Default text color
-        text_hover = { 1, 1, 0 },    -- Text color on hover
+        default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
+        hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
+        pressed = { 217 / 255, 189 / 255, 197 / 255 },   -- Pressed fill color
+        outline = { 1, 1, 1 },                           -- Outline color
+        text_default = { 1, 1, 1 },                      -- Default text color
+        text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
+        height = 40
     },
     checkbox = {
         label = { 1, 1, 1 }, -- Label text color
@@ -19,7 +22,10 @@ local theme = {
     slider = {
         track = { 0.5, 0.5, 0.5 }, -- Slider track color
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color (if needed)
+
+        outline = { 1, 1, 1 },
         track_radius = 2,
+        height = 32
     },
     draggedElement = {
         fill = { 1, 1, 1 }, -- Color of the dragged element
@@ -27,7 +33,12 @@ local theme = {
     general = {
         text = { 1, 1, 1 }, -- General text color
     },
-    lineWidth = 3,          -- General line width
+    panel = {
+        background = { 50 / 255, 50 / 255, 50 / 255 }, -- Panel background color
+        outline = { 1, 1, 1 },                         -- Panel outline color
+        label = { 1, 1, 1 },                           -- Panel label text color
+    },
+    lineWidth = 3,                                     -- General line width
 }
 
 -- Initialize Love2D
@@ -41,6 +52,8 @@ function love.load()
     ui.dragOffset = { x = 0, y = 0 }
     value = 50
     checked = true
+    settingsSlider = 44
+    settingsCheck = true
 end
 
 -- Reset UI state at the start of each frame
@@ -68,18 +81,53 @@ function ui.generateID()
     return id
 end
 
+function ui.panel(x, y, width, height, label, drawFunc)
+    -- Draw panel background
+    love.graphics.setColor(theme.panel.background)
+    love.graphics.rectangle("fill", x, y, width, height, theme.button.radius, theme.button.radius)
+
+    -- Draw panel outline
+    love.graphics.setColor(theme.panel.outline)
+    love.graphics.setLineWidth(theme.lineWidth)
+    love.graphics.rectangle("line", x, y, width, height, theme.button.radius, theme.button.radius)
+
+    -- Draw panel label if provided
+    if label then
+        love.graphics.setColor(theme.panel.label)
+        local labelHeight = font:getHeight()
+        love.graphics.print(label, x + 10, y + 5) -- Adjust position as needed
+    end
+
+    -- Enable scissor to clip UI elements within the panel
+    love.graphics.setScissor(x, y, width, height)
+
+    -- Call the provided draw function to render UI elements inside the panel
+    if drawFunc then
+        drawFunc()
+    end
+
+    -- Disable scissor
+    love.graphics.setScissor()
+
+    -- Reset color to white
+    love.graphics.setColor(1, 1, 1)
+end
+
 function ui.checkbox(x, y, size, checked, label)
     -- Determine the label to display inside the checkbox
     local checkmark = checked and "x" or ""
 
     -- Render the checkbox square using the existing button function
-    local clicked, pressed, released = ui.button(x, y, size, size, checkmark)
+    local clicked, pressed, released = ui.button(x, y, size, size, '')
 
     -- Toggle the checked state if the checkbox was clicked
     if clicked then
         checked = not checked
     end
-
+    radius = size / 4
+    if (checked) then
+        love.graphics.circle('fill', x + size / 2, y + size / 2, radius)
+    end
     -- Draw the label text next to the checkbox
     love.graphics.setColor(theme.checkbox.label)    -- Label text color
     local textY = y + (size - font:getHeight()) / 2 -- Vertically center the text
@@ -178,6 +226,12 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
         love.graphics.rectangle("fill", x, y, thickness, length, rxry, rxry)
     end
 
+    love.graphics.setColor(theme.slider.outline) -- Slider track color
+    if isHorizontal then
+        love.graphics.rectangle("line", x, y, length, thickness, rxry, rxry)
+    else
+        love.graphics.rectangle("line", x, y, thickness, length, rxry, rxry)
+    end
     -- Render the thumb using the existing button function
     local thumbLabel = ''
     local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thickness, thumbLabel)
@@ -244,25 +298,25 @@ function love.draw()
     ui.startFrame()
 
     -- Horizontal Slider
-    local slide = ui.slider(50, 300, 200, 32, 'horizontal', 0, 100, value)
+    local slide = ui.slider(50, 300, 200, theme.slider.height, 'horizontal', 0, 100, value)
     if slide then
         value = slide
     end
 
     -- Checkbox
-    local clicked, newChecked = ui.checkbox(100, 100, 32, checked, 'weird stuff')
+    local clicked, newChecked = ui.checkbox(100, 100, theme.slider.height, checked, 'weird stuff')
     if clicked then
         checked = newChecked
     end
 
     -- Vertical Slider
-    local slideV = ui.slider(350, 100, 200, 32, 'vertical', 0, 100, value)
+    local slideV = ui.slider(350, 100, 200, theme.slider.height, 'vertical', 0, 100, value)
     if slideV then
         value = slideV
     end
 
     -- "Press Me" Button
-    local buttonClicked, buttonPressed = ui.button(50, 50, 200, 50, 'Press Me')
+    local buttonClicked, buttonPressed = ui.button(50, 50, 200, theme.button.height, 'Press Me')
     if buttonClicked then
         print('Hello button is clicked! Now I say World!')
     end
@@ -271,7 +325,7 @@ function love.draw()
     end
 
     -- "Spawn" Button
-    local spawnClicked, spawnPressed, spawnReleased = ui.button(50, 150, 200, 50, 'spawn')
+    local spawnClicked, spawnPressed, spawnReleased = ui.button(50, 150, 200, theme.button.height, 'spawn')
     if spawnClicked then
         print('Hello spawn is clicked! Now I say World!')
     end
@@ -284,6 +338,34 @@ function love.draw()
         ui.draggingActive = nil
         print('Hello spawn is released! Now I say World!')
     end
+
+
+    ui.panel(400, 50, 300, 450, "Settings Panel", function()
+        -- UI elements inside the panel should have positions relative to the panel's top-left corner
+
+        -- Example Button inside the panel
+        local panelButtonClicked, panelButtonPressed = ui.button(410, 370, 280, theme.button.height, 'Panel Button')
+        if panelButtonClicked then
+            print('Panel Button clicked!')
+        end
+        if panelButtonPressed then
+            print('Panel Button pressed!')
+        end
+
+        -- Example Checkbox inside the panel
+        local panelClicked, panelChecked = ui.checkbox(410, 130, theme.slider.height, settingsCheck, 'Panel Checkbox')
+        if panelClicked then
+            settingsCheck = panelChecked
+            print('Panel Checkbox toggled!')
+        end
+
+        -- Example Slider inside the panel
+        local panelSlider = ui.slider(410, 180, 280, theme.slider.height, 'horizontal', 0, 100, settingsSlider)
+        if panelSlider then
+            settingsSlider = panelSlider
+            print('Panel Slider value:', panelSlider)
+        end
+    end)
 
     -- Render Dragged Element
     if ui.draggingActive then
