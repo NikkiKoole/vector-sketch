@@ -216,12 +216,12 @@ function scene.load()
 
 
     if JUST_ONE_GUY then
-        phys.setupBox2dScene(pickedFiveGuyIndex, box2dGuyCreation.makeGuy)
+        phys.setupBox2dSceneWithFiveGuys(pickedFiveGuyIndex, box2dGuyCreation.makeGuy, fiveGuys)
 
         --for i = 1, #fiveGuys do
         updatePart.updateAllParts(fiveGuys[pickedFiveGuyIndex])
     else
-        phys.setupBox2dScene(nil, box2dGuyCreation.makeGuy)
+        phys.setupBox2dSceneWithFiveGuys(nil, box2dGuyCreation.makeGuy, fiveGuys)
 
         for i = 1, #fiveGuys do
             updatePart.updateAllParts(fiveGuys[i])

@@ -2,8 +2,6 @@
 
 local ui = {}
 
-
-
 -- Theme Configuration
 local theme = {
     button = {
@@ -17,11 +15,12 @@ local theme = {
         height = 40
     },
     checkbox = {
+        checked = { 1, 1, 1 },
         label = { 1, 1, 1 }, -- Label text color
     },
     slider = {
         track = { 0.5, 0.5, 0.5 }, -- Slider track color
-        thumb = { 0.2, 0.6, 1 },   -- Slider thumb color (if needed)
+        thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
 
         outline = { 1, 1, 1 },
         track_radius = 2,
@@ -38,7 +37,15 @@ local theme = {
         outline = { 1, 1, 1 },                         -- Panel outline color
         label = { 1, 1, 1 },                           -- Panel label text color
     },
-    lineWidth = 3,                                     -- General line width
+    textinput = {
+        background = { 0.1, 0.1, 0.1 },                          -- Background color of the TextInput
+        outline = { 1, 1, 1 },                                   -- Default outline color
+        text = { 1, 1, 1 },                                      -- Text color
+        placeholder = { 0.5, 0.5, 0.5 },                         -- Placeholder text color
+        cursor = { 1, 1, 1 },                                    -- Cursor color
+        focusedBorderColor = { 244 / 255, 189 / 255, 94 / 255 }, -- Border color when focused
+    },
+    lineWidth = 3,                                               -- General line width
 }
 
 -- Initialize Love2D
@@ -48,17 +55,21 @@ function love.load()
     love.graphics.setFont(font)
 
     -- Initialize UI
-    ui.startFrame()
+    ui.nextID = 1 -- Initialize unique ID counter once
     ui.dragOffset = { x = 0, y = 0 }
     value = 50
     checked = true
     settingsSlider = 44
     settingsCheck = true
+
+    -- Initialize TextInput States
+    textInputs = {}          -- Table to store state of each TextInput
+    focusedTextInputID = nil -- Tracks the currently focused TextInput
 end
 
 -- Reset UI state at the start of each frame
 function ui.startFrame()
-    ui.nextID = 1
+    ui.nextID = 1           -- Reset unique ID counter at the start of each frame
 
     ui.mousePressed = false -- Reset click state
     ui.mouseReleased = false
@@ -81,6 +92,11 @@ function ui.generateID()
     return id
 end
 
+-- Panel Function
+-- x, y: Position of the panel
+-- width, height: Size of the panel
+-- label: Optional label text
+-- drawFunc: Function to draw UI elements inside the panel
 function ui.panel(x, y, width, height, label, drawFunc)
     -- Draw panel background
     love.graphics.setColor(theme.panel.background)
@@ -113,6 +129,7 @@ function ui.panel(x, y, width, height, label, drawFunc)
     love.graphics.setColor(1, 1, 1)
 end
 
+-- Checkbox Function
 function ui.checkbox(x, y, size, checked, label)
     -- Determine the label to display inside the checkbox
     local checkmark = checked and "x" or ""
@@ -124,8 +141,9 @@ function ui.checkbox(x, y, size, checked, label)
     if clicked then
         checked = not checked
     end
-    radius = size / 4
-    if (checked) then
+    local radius = size / 4
+    if checked then
+        love.graphics.setColor(theme.checkbox.checked) -- Use checkbox's checked color
         love.graphics.circle('fill', x + size / 2, y + size / 2, radius)
     end
     -- Draw the label text next to the checkbox
@@ -148,7 +166,7 @@ function ui.button(x, y, width, height, label)
         ui.mouseY >= y and ui.mouseY <= y + height
     local pressed = isHover and ui.mousePressed
 
-    if (pressed) then
+    if pressed then
         ui.activeElementID = id
     end
     -- Draw the button with state-based colors
@@ -169,7 +187,6 @@ function ui.button(x, y, width, height, label)
     -- Draw button outline
     love.graphics.setColor(theme.button.outline) -- Outline color
     love.graphics.setLineWidth(theme.lineWidth)
-
     love.graphics.rectangle("line", x, y, width, height, rxry, rxry)
 
     -- Draw button label with state-based color
@@ -197,6 +214,7 @@ function ui.button(x, y, width, height, label)
     return clicked, pressed, released
 end
 
+-- Slider Function
 function ui.slider(x, y, length, thickness, orientation, min, max, value)
     local inValue = value
     local sliderID = ui.generateID()
@@ -226,12 +244,15 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
         love.graphics.rectangle("fill", x, y, thickness, length, rxry, rxry)
     end
 
-    love.graphics.setColor(theme.slider.outline) -- Slider track color
+    -- Draw track outline
+    love.graphics.setColor(theme.slider.outline) -- Slider track outline color
+    love.graphics.setLineWidth(theme.lineWidth)
     if isHorizontal then
         love.graphics.rectangle("line", x, y, length, thickness, rxry, rxry)
     else
         love.graphics.rectangle("line", x, y, thickness, length, rxry, rxry)
     end
+
     -- Render the thumb using the existing button function
     local thumbLabel = ''
     local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thickness, thumbLabel)
@@ -269,8 +290,6 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
         ui.dragOffset.x = 0
         ui.dragOffset.y = 0
     end
-
-
     -- Reset color
     love.graphics.setColor(1, 1, 1)
 
@@ -282,7 +301,126 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
     end
 end
 
--- Update function (if needed in the future)
+-- TextInput Function
+-- x, y: Position of the TextInput
+-- width, height: Size of the TextInput
+-- placeholder: Optional placeholder text
+-- currentText: The current text (to be updated)
+-- isNumeric: Optional boolean to restrict input to numeric only
+-- Returns the updated text
+function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric)
+    local id = ui.generateID()
+
+    -- Initialize state for this TextInput if not already done
+    if not textInputs[id] then
+        textInputs[id] = {
+            text = currentText or "",
+            cursorPosition = 0,
+            cursorTimer = 0,
+            cursorVisible = true,
+            isNumeric = isNumeric or false, -- Store the isNumeric flag
+        }
+    end
+
+    local state = textInputs[id]
+
+    -- Determine if the TextInput is hovered
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
+        ui.mouseY >= y and ui.mouseY <= y + height
+
+    -- Handle focus and cursor positioning
+    if ui.mousePressed then
+        if isHover then
+            focusedTextInputID = id
+
+            -- Calculate the relative X position within the TextInput
+            local relativeX = ui.mouseX - x - 5 -- Subtracting padding (5 pixels)
+
+            -- Clamp relativeX to ensure it's within the TextInput boundaries
+            relativeX = math.max(0, math.min(relativeX, width - 10)) -- 10 accounts for padding on both sides
+
+            -- Initialize cursorPosition
+            local newCursorPosition = 0
+
+            -- Iterate through each character to find the cursor position
+            for i = 1, #state.text do
+                local subText = state.text:sub(1, i)
+                local textWidth = font:getWidth(subText)
+
+                if textWidth > relativeX then
+                    newCursorPosition = i - 1
+                    break
+                end
+            end
+
+            -- If the click is beyond the last character, set cursor to the end
+            if relativeX > font:getWidth(state.text) then
+                newCursorPosition = #state.text
+            end
+
+            -- Update the cursor position
+            state.cursorPosition = newCursorPosition
+        else
+            if focusedTextInputID == id then
+                focusedTextInputID = nil
+            end
+        end
+    end
+
+    -- Check if this TextInput is focused
+    local isFocused = (focusedTextInputID == id)
+
+    -- Update cursor blinking
+    if isFocused then
+        state.cursorTimer = state.cursorTimer + love.timer.getDelta()
+        if state.cursorTimer >= 0.5 then
+            state.cursorVisible = not state.cursorVisible
+            state.cursorTimer = 0
+        end
+    else
+        state.cursorVisible = false
+        state.cursorTimer = 0
+    end
+
+    -- Draw TextInput background
+    love.graphics.setColor(theme.textinput.background)
+    love.graphics.rectangle("fill", x, y, width, height, theme.button.radius, theme.button.radius)
+
+    -- Draw TextInput outline
+    if isFocused then
+        love.graphics.setColor(theme.textinput.focusedBorderColor)
+    else
+        love.graphics.setColor(theme.textinput.outline)
+    end
+    love.graphics.setLineWidth(theme.lineWidth)
+    love.graphics.rectangle("line", x, y, width, height, theme.button.radius, theme.button.radius)
+
+    -- Draw placeholder or text
+    if state.text == "" and not isFocused and placeholder then
+        love.graphics.setColor(theme.textinput.placeholder)
+        love.graphics.print(placeholder, x + 5, y + (height - font:getHeight()) / 2)
+    else
+        love.graphics.setColor(theme.textinput.text)
+        love.graphics.print(state.text, x + 5, y + (height - font:getHeight()) / 2)
+    end
+
+    -- Draw cursor if focused
+    if isFocused and state.cursorVisible then
+        -- Calculate cursor position
+        local textBeforeCursor = state.text:sub(1, state.cursorPosition)
+        local cursorX = x + 5 + font:getWidth(textBeforeCursor)
+        local cursorY = y + (height - font:getHeight()) / 2
+        love.graphics.setColor(theme.textinput.cursor)
+        love.graphics.line(cursorX, cursorY, cursorX, cursorY + font:getHeight())
+    end
+
+    -- Reset color
+    love.graphics.setColor(1, 1, 1)
+
+    return state.text
+end
+
+-- Update function
 function love.update(dt)
     -- Currently not used, but reserved for future UI updates
 end
@@ -290,9 +428,26 @@ end
 -- Draw UI and Handle Interactions
 function love.draw()
     -- Draw a greeting message
-    love.graphics.setColor(theme.general.text)   -- General text color
-    love.graphics.print('hello world', 200, 200) -- Position adjusted for visibility
-    love.graphics.setColor(1, 1, 1)              -- Reset color
+    love.graphics.setColor(theme.general.text) -- General text color
+    if false then
+        love.graphics.print(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk\n" ..
+            "lmnopqrstuvwxyz\n" ..
+            "àáâãäåæçèéêëìíîïðñòóôõöøùúûüýÿ\n" ..
+            "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝŸ\n" ..
+            "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿‘’“”•\n" ..
+            "–—˜™š›œžŸ‚ƒ„…†‡ˆ‰Š‹ŒŽ‰\n" ..
+            "!#$%&()*+,-./:;?@[\\]^_`{|}~\n" ..
+            "0123456789¥¢₤₣₱\n" ..
+            "× ÷ ≠ ≈ ≤ ≥ ∞ ∑ ∏ ∫\n" ..
+            "ÞþÐðßøØåÅœŒÆæπ\n" ..
+            "\n" ..
+            "ß π µ Ω ∞ »««¬®¥¦§\n",
+            0, 0
+        )
+    end
+    -- Position adjusted for visibility
+    love.graphics.setColor(1, 1, 1) -- Reset color
 
     -- Start a new UI frame
     ui.startFrame()
@@ -304,7 +459,7 @@ function love.draw()
     end
 
     -- Checkbox
-    local clicked, newChecked = ui.checkbox(100, 100, theme.slider.height, checked, 'weird stuff')
+    local clicked, newChecked = ui.checkbox(100, 100, theme.slider.height, checked, 'Weird Stuff')
     if clicked then
         checked = newChecked
     end
@@ -325,7 +480,7 @@ function love.draw()
     end
 
     -- "Spawn" Button
-    local spawnClicked, spawnPressed, spawnReleased = ui.button(50, 150, 200, theme.button.height, 'spawn')
+    local spawnClicked, spawnPressed, spawnReleased = ui.button(50, 150, 200, theme.button.height, 'Spawn')
     if spawnClicked then
         print('Hello spawn is clicked! Now I say World!')
     end
@@ -339,7 +494,7 @@ function love.draw()
         print('Hello spawn is released! Now I say World!')
     end
 
-
+    -- Panel with UI elements inside it
     ui.panel(400, 50, 300, 450, "Settings Panel", function()
         -- UI elements inside the panel should have positions relative to the panel's top-left corner
 
@@ -365,7 +520,20 @@ function love.draw()
             settingsSlider = panelSlider
             print('Panel Slider value:', panelSlider)
         end
+
+        -- Example TextInput inside the panel (Numeric)
+        local numericInputText = ui.textinput(420, 240, 260, 40, "Enter number...", "12345", true)
+        -- Uncomment the lines below to display the entered number within the panel
+        love.graphics.setColor(theme.general.text)
+        love.graphics.print("Number entered: " .. numericInputText, 420, 290)
+        love.graphics.setColor(1, 1, 1)
     end)
+
+    -- Example TextInput outside the panel (Non-numeric)
+    local inputText = ui.textinput(50, 400, 200, 40, "Enter text...", "Initial Text", false)
+    love.graphics.setColor(theme.general.text)
+    love.graphics.print("You entered: " .. inputText, 50, 450)
+    love.graphics.setColor(1, 1, 1)
 
     -- Render Dragged Element
     if ui.draggingActive then
@@ -376,7 +544,69 @@ function love.draw()
     end
 end
 
--- Handle key presses
-function love.keypressed(k)
-    if k == 'escape' then love.event.quit() end
+-- Handle text input globally and delegate to the focused TextInput
+function love.textinput(t)
+    if focusedTextInputID and textInputs[focusedTextInputID] then
+        local state = textInputs[focusedTextInputID]
+
+        if state.isNumeric then
+            -- Define allowed characters: digits (0-9)
+            -- Modify the pattern if you want to allow decimals or negative signs
+            --
+            if t:match("^[%d%.%-]$") then
+                -- Additional logic to prevent multiple decimals or multiple minus signs can be added here
+                state.text = state.text:sub(1, state.cursorPosition) .. t .. state.text:sub(state.cursorPosition + 1)
+                state.cursorPosition = state.cursorPosition + #t
+                -- if t:match("^%d$") then
+                -- Insert the numeric character
+                --     state.text = state.text:sub(1, state.cursorPosition) .. t .. state.text:sub(state.cursorPosition + 1)
+                --     state.cursorPosition = state.cursorPosition + #t
+            else
+                -- Optionally, provide feedback for invalid input
+                -- Example: print("Only numeric input is allowed.")
+            end
+        else
+            -- For non-numeric TextInputs, allow all characters
+            state.text = state.text:sub(1, state.cursorPosition) .. t .. state.text:sub(state.cursorPosition + 1)
+            state.cursorPosition = state.cursorPosition + #t
+        end
+    end
+end
+
+-- Handle key presses globally and delegate to the focused TextInput
+function love.keypressed(key)
+    if focusedTextInputID and textInputs[focusedTextInputID] then
+        local state = textInputs[focusedTextInputID]
+        if key == "backspace" then
+            if state.cursorPosition > 0 then
+                state.text = state.text:sub(1, state.cursorPosition - 1) .. state.text:sub(state.cursorPosition + 1)
+                state.cursorPosition = state.cursorPosition - 1
+            end
+        elseif key == "delete" then
+            if state.cursorPosition < #state.text then
+                state.text = state.text:sub(1, state.cursorPosition) .. state.text:sub(state.cursorPosition + 2)
+                -- No change to cursorPosition
+            end
+        elseif key == "left" then
+            if state.cursorPosition > 0 then
+                state.cursorPosition = state.cursorPosition - 1
+            end
+        elseif key == "right" then
+            if state.cursorPosition < #state.text then
+                state.cursorPosition = state.cursorPosition + 1
+            end
+        elseif key == "home" then
+            state.cursorPosition = 0
+        elseif key == "end" then
+            state.cursorPosition = #state.text
+        elseif key == "return" or key == "kpenter" then
+            -- Optionally handle 'enter' key (e.g., lose focus)
+            focusedTextInputID = nil
+        end
+    end
+
+    -- Existing key handling (e.g., escape key)
+    if key == 'escape' then
+        love.event.quit()
+    end
 end

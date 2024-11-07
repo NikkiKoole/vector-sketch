@@ -4,10 +4,11 @@ local Vector          = require 'vendor.brinevector'
 local camera          = require 'lib.camera'
 local numbers         = require 'lib.numbers'
 local cam             = require('lib.cameraBase').getInstance()
-local lib             = {}
 local inspect         = require 'vendor.inspect'
 local connect         = require 'lib.connectors'
 
+
+local lib = {}
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -135,7 +136,7 @@ local function getBodyColor(body)
     end
 end
 
-lib.setupBox2dScene = function(onlyThisGuyIndex, makeFunc)
+lib.setupBox2dSceneWithFiveGuys = function(onlyThisGuyIndex, makeFunc, fiveGuys)
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
@@ -233,7 +234,9 @@ lib.killMouseJointIfPossible = function(id)
                 pointerJoints[i].jointBody = nil
             end
         end
-        table.remove(pointerJoints, index)
+        if index ~= -1 then
+            table.remove(pointerJoints, index)
+        end
     end
 end
 
