@@ -21,7 +21,6 @@ local theme = {
     slider = {
         track = { 0.5, 0.5, 0.5 }, -- Slider track color
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
-
         outline = { 1, 1, 1 },
         track_radius = 2,
         height = 32
@@ -61,7 +60,7 @@ function love.load()
     checked = true
     settingsSlider = 44
     settingsCheck = true
-
+    sharedValue = 50
     -- Initialize TextInput States
     textInputs = {}          -- Table to store state of each TextInput
     focusedTextInputID = nil -- Tracks the currently focused TextInput
@@ -308,7 +307,7 @@ end
 -- currentText: The current text (to be updated)
 -- isNumeric: Optional boolean to restrict input to numeric only
 -- Returns the updated text
-function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric)
+function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, reparse)
     local id = ui.generateID()
 
     -- Initialize state for this TextInput if not already done
@@ -323,7 +322,9 @@ function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric)
     end
 
     local state = textInputs[id]
-
+    if reparse then
+        textInputs[id].text = currentText
+    end
     -- Determine if the TextInput is hovered
     local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
         ui.mouseY >= y and ui.mouseY <= y + height
@@ -417,7 +418,7 @@ function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric)
     -- Reset color
     love.graphics.setColor(1, 1, 1)
 
-    return state.text
+    return state.text, state.text ~= currentText
 end
 
 -- Update function
@@ -429,13 +430,13 @@ end
 function love.draw()
     -- Draw a greeting message
     love.graphics.setColor(theme.general.text) -- General text color
-    if false then
+    if true then
         love.graphics.print(
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk\n" ..
             "lmnopqrstuvwxyz\n" ..
             "àáâãäåæçèéêëìíîïðñòóôõöøùúûüýÿ\n" ..
             "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝŸ\n" ..
-            "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿‘’“”•\n" ..
+            "¡¢£¤¥¦§¨©ª«¬®¯°¹²³±´µ¶·¸º»¼½¾¿‘’“”•\n" ..
             "–—˜™š›œžŸ‚ƒ„…†‡ˆ‰Š‹ŒŽ‰\n" ..
             "!#$%&()*+,-./:;?@[\\]^_`{|}~\n" ..
             "0123456789¥¢₤₣₱\n" ..
@@ -494,6 +495,9 @@ function love.draw()
         print('Hello spawn is released! Now I say World!')
     end
 
+
+
+
     -- Panel with UI elements inside it
     ui.panel(400, 50, 300, 450, "Settings Panel", function()
         -- UI elements inside the panel should have positions relative to the panel's top-left corner
@@ -514,19 +518,7 @@ function love.draw()
             print('Panel Checkbox toggled!')
         end
 
-        -- Example Slider inside the panel
-        local panelSlider = ui.slider(410, 180, 280, theme.slider.height, 'horizontal', 0, 100, settingsSlider)
-        if panelSlider then
-            settingsSlider = panelSlider
-            print('Panel Slider value:', panelSlider)
-        end
-
-        -- Example TextInput inside the panel (Numeric)
-        local numericInputText = ui.textinput(420, 240, 260, 40, "Enter number...", "12345", true)
-        -- Uncomment the lines below to display the entered number within the panel
-        love.graphics.setColor(theme.general.text)
-        love.graphics.print("Number entered: " .. numericInputText, 420, 290)
-        love.graphics.setColor(1, 1, 1)
+        ui.sliderWithInput(410, 180, 100, 0, 100, settingsSlider)
     end)
 
     -- Example TextInput outside the panel (Non-numeric)
@@ -544,6 +536,31 @@ function love.draw()
     end
 end
 
+ui.sliderWithInput = function(x, y, w, min, max, value)
+    local yOffset = (40 - theme.slider.height) / 2
+    local panelSlider = ui.slider(x, y + yOffset, w, theme.slider.height, 'horizontal', min, max, settingsSlider)
+    local valueHasChangedViaSlider = false
+    local returnValue = nil
+    if panelSlider then
+        settingsSlider = string.format(
+            "%.2f", panelSlider)
+        valueHasChangedViaSlider = true
+        returnValue = settingsSlider
+        --print('Panel Slider value:', panelSlider)
+    end
+    -- Example TextInput inside the panel (Numeric)
+    local numericInputText, dirty = ui.textinput(x + w + 20, y, 110, 40, "Enter number...", "" .. settingsSlider,
+        true,
+        valueHasChangedViaSlider)
+    if dirty then
+        --print(numericInputText, dirty)
+        settingsSlider = tonumber(numericInputText)
+        returnValue = settingsSlider
+    end
+    if returnValue then
+        return returnValue
+    end
+end
 -- Handle text input globally and delegate to the focused TextInput
 function love.textinput(t)
     if focusedTextInputID and textInputs[focusedTextInputID] then
