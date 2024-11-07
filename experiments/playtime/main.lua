@@ -499,7 +499,7 @@ function love.draw()
 
 
     -- Panel with UI elements inside it
-    ui.panel(400, 50, 300, 450, "Settings Panel", function()
+    ui.panel(400, 50, 300, 450, "• Settings Panel •", function()
         -- UI elements inside the panel should have positions relative to the panel's top-left corner
 
         -- Example Button inside the panel
