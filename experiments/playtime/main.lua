@@ -16,11 +16,12 @@ function love.load()
     add_shape_opened = false
     add_joint_opened = false
     world_settings_opened = false
+    gravity = 9.81
 
     value = 50
     checked = true
     settingsSlider = 44
-    settingsSlider2 = 9.8
+
     settingsSlider3 = 56
     settingsCheck = true
     sharedValue = 50
@@ -34,20 +35,22 @@ end
 
 -- Draw UI and Handle Interactions
 function love.draw()
+    local w, h = love.graphics.getDimensions()
+    love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
+
     ui.startFrame() -- Start a new UI frame
 
     -- "Add Shape" Button
-    local addShapeClicked, _ = ui.button(10, 10, 200, 'add shape')
+    local addShapeClicked, _ = ui.button(20, 20, 200, 'add shape')
     if addShapeClicked then
         add_shape_opened = not add_shape_opened
     end
 
     if add_shape_opened then
         local types = { 'rectangle', 'circle', 'chain', 'edge', 'polygon' }
-
         local titleHeight = font:getHeight() + 10
-        local startX = 10
-        local startY = 60
+        local startX = 20
+        local startY = 70
         local panelWidth = 200
         local buttonSpacing = 10
         local buttonHeight = ui.theme.button.height
@@ -82,7 +85,7 @@ function love.draw()
     end
 
     -- "Add Joint" Button
-    local addJointClicked, _ = ui.button(220, 10, 200, 'add joint')
+    local addJointClicked, _ = ui.button(230, 20, 200, 'add joint')
     if addJointClicked then
         add_joint_opened = not add_joint_opened
     end
@@ -92,8 +95,8 @@ function love.draw()
             'motor', 'wheel' }
 
         local titleHeight = font:getHeight() + 10
-        local startX = 220
-        local startY = 60
+        local startX = 230
+        local startY = 70
         local panelWidth = 200
         local buttonSpacing = 10
         local buttonHeight = ui.theme.button.height
@@ -127,13 +130,13 @@ function love.draw()
         end)
     end
 
-    local worldSettingsClicked, _ = ui.button(430, 10, 300, 'world settings')
+    local worldSettingsClicked, _ = ui.button(440, 20, 300, 'world settings')
     if worldSettingsClicked then
         world_settings_opened = not world_settings_opened
     end
     if world_settings_opened then
-        local startX = 430
-        local startY = 60
+        local startX = 440
+        local startY = 70
         local panelWidth = 300
         local panelHeight = 400
         local buttonSpacing = 10
@@ -151,10 +154,8 @@ function love.draw()
             local x, y = ui.nextLayoutPosition(layout, width, 50)
             ui.label(x, y, 'gravity m/s²')
             local x, y = ui.nextLayoutPosition(layout, width, 50)
-            local ab = ui.sliderWithInput(x, y, 160, -10, 40, settingsSlider2)
-            if ab then
-                settingsSlider2 = ab
-            end
+            local grav = ui.sliderWithInput(x, y, 160, -10, 40, gravity)
+            if grav then gravity = grav end
             local x, y = ui.nextLayoutPosition(layout, width, 50)
             local t = ui.textinput(x, y, 280, 200, 'poep', text)
         end)
