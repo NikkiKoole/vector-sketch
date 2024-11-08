@@ -1,5 +1,5 @@
+-- ui.lua
 local ui = {}
-
 
 -- Theme Configuration
 local theme = {
@@ -42,6 +42,7 @@ local theme = {
         placeholder = { 0.5, 0.5, 0.5 },                         -- Placeholder text color
         cursor = { 1, 1, 1 },                                    -- Cursor color
         focusedBorderColor = { 244 / 255, 189 / 255, 94 / 255 }, -- Border color when focused
+        selectionBackground = { 0.2, 0.4, 0.8, 0.5 },            -- Selection highlight color
     },
     lineWidth = 3,                                               -- General line width
 }
@@ -49,17 +50,14 @@ local theme = {
 ui.theme = theme
 
 --- Initializes the UI module.
------
 function ui.init()
-    -- Initialize UI
-    ui.nextID = 1               -- Initialize unique ID counter once
+    ui.nextID = 1               -- Unique ID counter
     ui.dragOffset = { x = 0, y = 0 }
     ui.focusedTextInputID = nil -- Tracks the currently focused TextInput
     ui.textInputs = {}
 end
 
 --- Resets UI state at the start of each frame.
------
 function ui.startFrame()
     ui.nextID = 1           -- Reset unique ID counter at the start of each frame
 
@@ -84,33 +82,161 @@ function ui.generateID()
     return id
 end
 
+--- Helper function to calculate cursor position within a line based on mouse X coordinate.
+function ui.calculateCursorPositionInLine(text, relativeX)
+    local newCursorPosition = 0
+    for i = 1, #text do
+        local subText = text:sub(1, i)
+        local textWidth = font:getWidth(subText)
+        if textWidth > relativeX then
+            newCursorPosition = i - 1
+            break
+        end
+    end
+    if relativeX > font:getWidth(text) then
+        newCursorPosition = #text
+    end
+    return newCursorPosition
+end
+
+--- Function to reconstruct the text from lines.
+function ui.reconstructText(lines)
+    return table.concat(lines, "\n")
+end
+
+--- Function to split text into lines.
+function ui.splitTextIntoLines(text)
+    local lines = {}
+    for line in (text .. "\n"):gmatch("(.-)\n") do
+        table.insert(lines, line)
+    end
+    return lines
+end
+
+--- Function to check if the selection is empty.
+function ui.isSelectionEmpty(state)
+    return state.selectionStart.line == state.selectionEnd.line and state.selectionStart.char == state.selectionEnd.char
+end
+
+--- Function to get the selected text.
+function ui.getSelectedText(state)
+    local selStartLine = state.selectionStart.line
+    local selStartChar = state.selectionStart.char
+    local selEndLine = state.selectionEnd.line
+    local selEndChar = state.selectionEnd.char
+
+    -- Normalize selection indices
+    if selStartLine > selEndLine or (selStartLine == selEndLine and selStartChar > selEndChar) then
+        selStartLine, selEndLine = selEndLine, selStartLine
+        selStartChar, selEndChar = selEndChar, selStartChar
+    end
+
+    local selectedText = {}
+    for i = selStartLine, selEndLine do
+        local lineText = state.lines[i]
+        local startChar = (i == selStartLine) and selStartChar + 1 or 1
+        local endChar = (i == selEndLine) and selEndChar or #lineText
+        table.insert(selectedText, lineText:sub(startChar, endChar))
+    end
+    return table.concat(selectedText, "\n")
+end
+
+--- Function to delete the selected text.
+function ui.deleteSelection(state)
+    local selStartLine = state.selectionStart.line
+    local selStartChar = state.selectionStart.char
+    local selEndLine = state.selectionEnd.line
+    local selEndChar = state.selectionEnd.char
+
+    -- Normalize selection indices
+    if selStartLine > selEndLine or (selStartLine == selEndLine and selStartChar > selEndChar) then
+        selStartLine, selEndLine = selEndLine, selStartLine
+        selStartChar, selEndChar = selEndChar, selStartChar
+    end
+
+    if selStartLine == selEndLine then
+        -- Selection within a single line
+        local line = state.lines[selStartLine]
+        state.lines[selStartLine] = line:sub(1, selStartChar) .. line:sub(selEndChar + 1)
+    else
+        -- Selection spans multiple lines
+        local startLineText = state.lines[selStartLine]:sub(1, selStartChar)
+        local endLineText = state.lines[selEndLine]:sub(selEndChar + 1)
+        -- Remove middle lines
+        for i = selStartLine + 1, selEndLine do
+            table.remove(state.lines, selStartLine + 1)
+        end
+        -- Merge start and end lines
+        state.lines[selStartLine] = startLineText .. endLineText
+    end
+    -- Update cursor position
+    state.cursorPosition = { line = selStartLine, char = selStartChar }
+    -- Clear selection
+    state.selectionStart = { line = selStartLine, char = selStartChar }
+    state.selectionEnd = { line = selStartLine, char = selStartChar }
+    -- Reconstruct text
+    state.text = ui.reconstructText(state.lines)
+end
+
+--- Creates a layout context for arranging UI elements.
+function ui.createLayout(params)
+    local layout = {
+        type = params.type or 'rows',
+        margin = params.margin or 0,
+        spacing = params.spacing or 0,
+        curX = params.startX or 0,
+        curY = params.startY or 0,
+    }
+    return layout
+end
+
+--- Calculates the next position in the layout and updates the layout context.
+function ui.nextLayoutPosition(layout, elementWidth, elementHeight)
+    local x = layout.curX
+    local y = layout.curY
+
+    -- Update positions for the next element
+    if layout.type == 'rows' then
+        layout.curX = layout.curX + elementWidth + layout.spacing
+    elseif layout.type == 'columns' then
+        layout.curY = layout.curY + elementHeight + layout.spacing
+    end
+
+    return x, y
+end
+
+--- Helper function to calculate cursor position based on mouse X coordinate.
+function ui.calculateCursorPosition(text, relativeX)
+    local newCursorPosition = 0
+    for i = 1, #text do
+        local subText = text:sub(1, i)
+        local textWidth = font:getWidth(subText)
+        if textWidth > relativeX then
+            newCursorPosition = i - 1
+            break
+        end
+    end
+    if relativeX > font:getWidth(text) then
+        newCursorPosition = #text
+    end
+    return newCursorPosition
+end
+
 --- Creates a horizontal slider with a numeric input field.
-------
--- @param x The x-coordinate of the slider.
--- @param y The y-coordinate of the slider.
--- @param w The width of the slider.
--- @param min The minimum value of the slider.
--- @param max The maximum value of the slider.
--- @param value The current value of the slider.
--- @return The updated value if it has changed, otherwise nil.
 function ui.sliderWithInput(x, y, w, min, max, value)
     local yOffset = (40 - theme.slider.height) / 2
     local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value)
     local valueHasChangedViaSlider = false
     local returnValue = nil
     if panelSlider then
-        value = string.format(
-            "%.2f", panelSlider)
+        value = string.format("%.2f", panelSlider)
         valueHasChangedViaSlider = true
         returnValue = value
-        --print('Panel Slider value:', panelSlider)
     end
-    -- Example TextInput inside the panel (Numeric)
-    local numericInputText, dirty = ui.textinput(x + w + 20, y, 110, 40, "Enter number...", "" .. value,
-        true,
-        valueHasChangedViaSlider)
+    -- TextInput for numeric input
+    local numericInputText, dirty = ui.textinput(x + w + 10, y, 110, 40, "Enter number...", "" .. value,
+        true, valueHasChangedViaSlider)
     if dirty then
-        --print(numericInputText, dirty)
         value = tonumber(numericInputText)
         returnValue = value
     end
@@ -120,13 +246,6 @@ function ui.sliderWithInput(x, y, w, min, max, value)
 end
 
 --- Draws a panel with optional label and content.
-------
--- @param x The x-coordinate of the panel.
--- @param y The y-coordinate of the panel.
--- @param width The width of the panel.
--- @param height The height of the panel.
--- @param label Optional label text.
--- @param drawFunc Function to draw UI elements inside the panel.
 function ui.panel(x, y, width, height, label, drawFunc)
     -- Draw panel background
     love.graphics.setColor(theme.panel.background)
@@ -141,7 +260,6 @@ function ui.panel(x, y, width, height, label, drawFunc)
     if label then
         love.graphics.setColor(theme.panel.label)
         local labelHeight = font:getHeight()
-        --love.graphics.print(label, x + 10, y + 5) -- Adjust position as needed
         love.graphics.printf(label, x, y + 5, width, "center")
     end
 
@@ -161,12 +279,6 @@ function ui.panel(x, y, width, height, label, drawFunc)
 end
 
 --- Creates a checkbox with a label.
-------
--- @param x The x-coordinate of the checkbox.
--- @param y The y-coordinate of the checkbox.
--- @param checked The initial checked state.
--- @param label The label text.
--- @return clicked, checked - whether the checkbox was clicked, and the updated checked state.
 function ui.checkbox(x, y, checked, label)
     local size = theme.slider.height
     -- Determine the label to display inside the checkbox
@@ -197,13 +309,6 @@ function ui.checkbox(x, y, checked, label)
 end
 
 --- Creates a button.
-------
--- @param x The x-coordinate of the button.
--- @param y The y-coordinate of the button.
--- @param width The width of the button.
--- @param label The text label of the button.
--- @param[opt] optionalHeight The height of the button. Defaults to theme.button.height if not provided.
--- @return clicked, pressed, released - Booleans indicating the button state.
 function ui.button(x, y, width, label, optionalHeight)
     local height = optionalHeight and optionalHeight or theme.button.height
 
@@ -261,16 +366,6 @@ function ui.button(x, y, width, label, optionalHeight)
 end
 
 --- Creates a slider (horizontal or vertical).
-------
--- @param x The x-coordinate of the slider.
--- @param y The y-coordinate of the slider.
--- @param length The length of the slider.
--- @param thickness The thickness of the slider.
--- @param orientation The orientation ('horizontal' or 'vertical').
--- @param min The minimum value of the slider.
--- @param max The maximum value of the slider.
--- @param value The current value of the slider.
--- @return The updated value if it has changed, otherwise false.
 function ui.slider(x, y, length, thickness, orientation, min, max, value)
     local inValue = value
     local sliderID = ui.generateID()
@@ -357,79 +452,6 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
     end
 end
 
---- Handles key presses for the UI, particularly for text inputs.
-------
--- @param key The key that was pressed.
-function ui.handleKeyPress(key)
-    if ui.focusedTextInputID and ui.textInputs[ui.focusedTextInputID] then
-        local state = ui.textInputs[ui.focusedTextInputID]
-        if key == "backspace" then
-            if state.cursorPosition > 0 then
-                state.text = state.text:sub(1, state.cursorPosition - 1) .. state.text:sub(state.cursorPosition + 1)
-                state.cursorPosition = state.cursorPosition - 1
-            end
-        elseif key == "delete" then
-            if state.cursorPosition < #state.text then
-                state.text = state.text:sub(1, state.cursorPosition) .. state.text:sub(state.cursorPosition + 2)
-                -- No change to cursorPosition
-            end
-        elseif key == "left" then
-            if state.cursorPosition > 0 then
-                state.cursorPosition = state.cursorPosition - 1
-            end
-        elseif key == "right" then
-            if state.cursorPosition < #state.text then
-                state.cursorPosition = state.cursorPosition + 1
-            end
-        elseif key == "home" then
-            state.cursorPosition = 0
-        elseif key == "end" then
-            state.cursorPosition = #state.text
-        elseif key == "return" or key == "kpenter" then
-            -- Optionally handle 'enter' key (e.g., lose focus)
-            ui.focusedTextInputID = nil
-        end
-    end
-end
-
---- Handles text input for the UI, particularly for text inputs.
-------
--- @param t The text input.
-function ui.handleTextInput(t)
-    if ui.focusedTextInputID and ui.textInputs[ui.focusedTextInputID] then
-        local state = ui.textInputs[ui.focusedTextInputID]
-
-        if state.isNumeric then
-            -- Define allowed characters: digits (0-9)
-            -- Modify the pattern if you want to allow decimals or negative signs
-            --
-            if t:match("^[%d%.%-]$") then
-                -- Additional logic to prevent multiple decimals or multiple minus signs can be added here
-                state.text = state.text:sub(1, state.cursorPosition) .. t .. state.text:sub(state.cursorPosition + 1)
-                state.cursorPosition = state.cursorPosition + #t
-            else
-                -- Optionally, provide feedback for invalid input
-                -- Example: print("Only numeric input is allowed.")
-            end
-        else
-            -- For non-numeric TextInputs, allow all characters
-            state.text = state.text:sub(1, state.cursorPosition) .. t .. state.text:sub(state.cursorPosition + 1)
-            state.cursorPosition = state.cursorPosition + #t
-        end
-    end
-end
-
---- Creates a text input field.
-------
--- @param x The x-coordinate of the text input.
--- @param y The y-coordinate of the text input.
--- @param width The width of the text input.
--- @param height The height of the text input.
--- @param placeholder Optional placeholder text.
--- @param currentText The current text content.
--- @param isNumeric Optional boolean to restrict input to numeric only.
--- @param reparse Optional boolean indicating if the text should be reparsed.
--- @return The updated text and a boolean indicating if the text has changed.
 function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, reparse)
     local id = ui.generateID()
 
@@ -437,18 +459,25 @@ function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, 
     if not ui.textInputs[id] then
         ui.textInputs[id] = {
             text = currentText or "",
-            cursorPosition = 0,
+            lines = {}, -- Stores text broken into lines
+            cursorPosition = { line = 1, char = 0 },
             cursorTimer = 0,
             cursorVisible = true,
-            isNumeric = isNumeric or false, -- Store the isNumeric flag
+            isNumeric = isNumeric or false,
+            selectionStart = { line = 1, char = 0 },
+            selectionEnd = { line = 1, char = 0 },
+            isSelecting = false,
         }
+        -- Split initial text into lines
+        ui.textInputs[id].lines = ui.splitTextIntoLines(ui.textInputs[id].text)
     end
 
     local state = ui.textInputs[id]
     if reparse then
-        ui.textInputs[id].text = currentText
+        state.text = currentText
+        state.lines = ui.splitTextIntoLines(state.text)
     end
-    -- Determine if the TextInput is hovered
+
     local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
         ui.mouseY >= y and ui.mouseY <= y + height
 
@@ -456,39 +485,35 @@ function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, 
     if ui.mousePressed then
         if isHover then
             ui.focusedTextInputID = id
-
-            -- Calculate the relative X position within the TextInput
-            local relativeX = ui.mouseX - x - 5 -- Subtracting padding (5 pixels)
-
-            -- Clamp relativeX to ensure it's within the TextInput boundaries
-            relativeX = math.max(0, math.min(relativeX, width - 10)) -- 10 accounts for padding on both sides
-
-            -- Initialize cursorPosition
-            local newCursorPosition = 0
-
-            -- Iterate through each character to find the cursor position
-            for i = 1, #state.text do
-                local subText = state.text:sub(1, i)
-                local textWidth = font:getWidth(subText)
-
-                if textWidth > relativeX then
-                    newCursorPosition = i - 1
-                    break
-                end
-            end
-
-            -- If the click is beyond the last character, set cursor to the end
-            if relativeX > font:getWidth(state.text) then
-                newCursorPosition = #state.text
-            end
-
-            -- Update the cursor position
-            state.cursorPosition = newCursorPosition
+            local relativeX = ui.mouseX - x - 5 -- Subtracting padding
+            local relativeY = ui.mouseY - y
+            local lineIndex = math.floor(relativeY / font:getHeight()) + 1
+            lineIndex = math.max(1, math.min(lineIndex, #state.lines))
+            local lineText = state.lines[lineIndex]
+            local charIndex = ui.calculateCursorPositionInLine(lineText, relativeX)
+            state.cursorPosition = { line = lineIndex, char = charIndex }
+            state.selectionStart = { line = lineIndex, char = charIndex }
+            state.selectionEnd = { line = lineIndex, char = charIndex }
+            state.isSelecting = true
         else
             if ui.focusedTextInputID == id then
                 ui.focusedTextInputID = nil
             end
         end
+    end
+
+    -- Handle text selection with mouse dragging
+    if ui.focusedTextInputID == id and ui.mouseIsDown and state.isSelecting then
+        local relativeX = ui.mouseX - x - 5
+        local relativeY = ui.mouseY - y
+        local lineIndex = math.floor(relativeY / font:getHeight()) + 1
+        lineIndex = math.max(1, math.min(lineIndex, #state.lines))
+        local lineText = state.lines[lineIndex]
+        local charIndex = ui.calculateCursorPositionInLine(lineText, relativeX)
+        state.cursorPosition = { line = lineIndex, char = charIndex }
+        state.selectionEnd = { line = lineIndex, char = charIndex }
+    elseif ui.mouseReleased and state.isSelecting then
+        state.isSelecting = false
     end
 
     -- Check if this TextInput is focused
@@ -519,24 +544,55 @@ function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, 
     love.graphics.setLineWidth(theme.lineWidth)
     love.graphics.rectangle("line", x, y, width, height, theme.button.radius, theme.button.radius)
 
-    -- Draw placeholder or text
-    if state.text == "" and not isFocused and placeholder then
-        love.graphics.setColor(theme.textinput.placeholder)
-        love.graphics.print(placeholder, x + 5, y + (height - font:getHeight()) / 2)
-    else
+    local lineHeight = font:getHeight()
+
+    -- Set up scissor to clip text inside the TextInput area
+    love.graphics.setScissor(x, y, width, height)
+
+    -- Draw selection background
+    local selStartLine = state.selectionStart.line
+    local selStartChar = state.selectionStart.char
+    local selEndLine = state.selectionEnd.line
+    local selEndChar = state.selectionEnd.char
+
+    -- Normalize selection indices
+    if selStartLine > selEndLine or (selStartLine == selEndLine and selStartChar > selEndChar) then
+        selStartLine, selEndLine = selEndLine, selStartLine
+        selStartChar, selEndChar = selEndChar, selStartChar
+    end
+
+    if not (selStartLine == selEndLine and selStartChar == selEndChar) then
+        for i = selStartLine, selEndLine do
+            local lineText = state.lines[i]
+            local startChar = (i == selStartLine) and selStartChar or 0
+            local endChar = (i == selEndLine) and selEndChar or #lineText
+            local selectionWidth = font:getWidth(lineText:sub(startChar + 1, endChar))
+            local selectionX = x + 5 + font:getWidth(lineText:sub(1, startChar))
+            local selectionY = y + (i - 1) * lineHeight
+            love.graphics.setColor(theme.textinput.selectionBackground)
+            love.graphics.rectangle('fill', selectionX, selectionY, selectionWidth, lineHeight)
+        end
+    end
+
+    -- Draw text
+    for i, line in ipairs(state.lines) do
+        local textY = y + (i - 1) * lineHeight
         love.graphics.setColor(theme.textinput.text)
-        love.graphics.print(state.text, x + 5, y + (height - font:getHeight()) / 2)
+        love.graphics.print(line, x + 5, textY)
     end
 
     -- Draw cursor if focused
     if isFocused and state.cursorVisible then
-        -- Calculate cursor position
-        local textBeforeCursor = state.text:sub(1, state.cursorPosition)
-        local cursorX = x + 5 + font:getWidth(textBeforeCursor)
-        local cursorY = y + (height - font:getHeight()) / 2
+        local pos = state.cursorPosition
+        local lineText = state.lines[pos.line]:sub(1, pos.char)
+        local cursorX = x + 5 + font:getWidth(lineText)
+        local cursorY = y + (pos.line - 1) * lineHeight
         love.graphics.setColor(theme.textinput.cursor)
-        love.graphics.line(cursorX, cursorY, cursorX, cursorY + font:getHeight())
+        love.graphics.line(cursorX, cursorY, cursorX, cursorY + lineHeight)
     end
+
+    -- Remove scissor
+    love.graphics.setScissor()
 
     -- Reset color
     love.graphics.setColor(1, 1, 1)
@@ -544,11 +600,215 @@ function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, 
     return state.text, state.text ~= currentText
 end
 
+--- Handles text input for the UI, particularly for text inputs.
+function ui.handleTextInput(t)
+    if ui.focusedTextInputID and ui.textInputs[ui.focusedTextInputID] then
+        local state = ui.textInputs[ui.focusedTextInputID]
+
+        if state.isNumeric and not tonumber(t) and t ~= "." and t ~= "-" then
+            -- Ignore non-numeric input
+            return
+        end
+
+        if not ui.isSelectionEmpty(state) then
+            ui.deleteSelection(state)
+        end
+
+        local pos = state.cursorPosition
+        local line = state.lines[pos.line]
+        if t == "\n" or t == "\r" then
+            -- Handle new line
+            local beforeCursor = line:sub(1, pos.char)
+            local afterCursor = line:sub(pos.char + 1)
+            state.lines[pos.line] = beforeCursor
+            table.insert(state.lines, pos.line + 1, afterCursor)
+            pos.line = pos.line + 1
+            pos.char = 0
+        else
+            -- Regular character input
+            state.lines[pos.line] = line:sub(1, pos.char) .. t .. line:sub(pos.char + 1)
+            pos.char = pos.char + #t
+        end
+        -- Update selection
+        state.selectionStart = { line = pos.line, char = pos.char }
+        state.selectionEnd = { line = pos.line, char = pos.char }
+        -- Reconstruct text
+        state.text = ui.reconstructText(state.lines)
+    end
+end
+
+--- Handles key presses for the UI, particularly for text inputs.
+function ui.handleKeyPress(key)
+    if ui.focusedTextInputID and ui.textInputs[ui.focusedTextInputID] then
+        local state = ui.textInputs[ui.focusedTextInputID]
+        local isCtrlDown = love.keyboard.isDown('lctrl', 'rctrl')
+        local isShiftDown = love.keyboard.isDown('lshift', 'rshift')
+
+        if isCtrlDown then
+            if key == 'c' then
+                -- Copy
+                if not ui.isSelectionEmpty(state) then
+                    local selectedText = ui.getSelectedText(state)
+                    love.system.setClipboardText(selectedText)
+                end
+            elseif key == 'v' then
+                -- Paste
+                local clipboardText = love.system.getClipboardText() or ""
+                if clipboardText ~= "" then
+                    -- Delete selected text if any
+                    if not ui.isSelectionEmpty(state) then
+                        ui.deleteSelection(state)
+                    end
+                    -- Insert clipboard text
+                    local pos = state.cursorPosition
+                    local linesToInsert = ui.splitTextIntoLines(clipboardText)
+                    if #linesToInsert == 1 then
+                        -- Insert into current line
+                        local line = state.lines[pos.line]
+                        state.lines[pos.line] = line:sub(1, pos.char) .. linesToInsert[1] .. line:sub(pos.char + 1)
+                        pos.char = pos.char + #linesToInsert[1]
+                    else
+                        -- Insert multiple lines
+                        local line = state.lines[pos.line]
+                        local beforeCursor = line:sub(1, pos.char)
+                        local afterCursor = line:sub(pos.char + 1)
+                        state.lines[pos.line] = beforeCursor .. linesToInsert[1]
+                        for i = 2, #linesToInsert - 1 do
+                            table.insert(state.lines, pos.line + i - 1, linesToInsert[i])
+                        end
+                        table.insert(state.lines, pos.line + #linesToInsert - 1,
+                            linesToInsert[#linesToInsert] .. afterCursor)
+                        pos.line = pos.line + #linesToInsert - 1
+                        pos.char = #linesToInsert[#linesToInsert]
+                    end
+                    -- Clear selection
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                    -- Reconstruct text
+                    state.text = ui.reconstructText(state.lines)
+                end
+            elseif key == 'x' then
+                -- Cut
+                if not ui.isSelectionEmpty(state) then
+                    local selectedText = ui.getSelectedText(state)
+                    love.system.setClipboardText(selectedText)
+                    ui.deleteSelection(state)
+                end
+            end
+        else
+            -- Handle other keys
+            local pos = state.cursorPosition
+            if key == "backspace" then
+                if not ui.isSelectionEmpty(state) then
+                    ui.deleteSelection(state)
+                elseif pos.char > 0 then
+                    -- Delete character before cursor
+                    local line = state.lines[pos.line]
+                    state.lines[pos.line] = line:sub(1, pos.char - 1) .. line:sub(pos.char + 1)
+                    pos.char = pos.char - 1
+                elseif pos.line > 1 then
+                    -- Merge with previous line
+                    local prevLine = state.lines[pos.line - 1]
+                    pos.char = #prevLine
+                    state.lines[pos.line - 1] = prevLine .. state.lines[pos.line]
+                    table.remove(state.lines, pos.line)
+                    pos.line = pos.line - 1
+                end
+                -- Update selection
+                state.selectionStart = { line = pos.line, char = pos.char }
+                state.selectionEnd = { line = pos.line, char = pos.char }
+                state.text = ui.reconstructText(state.lines)
+            elseif key == "delete" then
+                if not ui.isSelectionEmpty(state) then
+                    ui.deleteSelection(state)
+                elseif pos.char < #state.lines[pos.line] then
+                    -- Delete character after cursor
+                    local line = state.lines[pos.line]
+                    state.lines[pos.line] = line:sub(1, pos.char) .. line:sub(pos.char + 2)
+                elseif pos.line < #state.lines then
+                    -- Merge with next line
+                    state.lines[pos.line] = state.lines[pos.line] .. state.lines[pos.line + 1]
+                    table.remove(state.lines, pos.line + 1)
+                end
+                -- Update selection
+                state.selectionStart = { line = pos.line, char = pos.char }
+                state.selectionEnd = { line = pos.line, char = pos.char }
+                state.text = ui.reconstructText(state.lines)
+            elseif key == "left" then
+                if pos.char > 0 then
+                    pos.char = pos.char - 1
+                elseif pos.line > 1 then
+                    pos.line = pos.line - 1
+                    pos.char = #state.lines[pos.line]
+                end
+                if isShiftDown then
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                else
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                end
+            elseif key == "right" then
+                if pos.char < #state.lines[pos.line] then
+                    pos.char = pos.char + 1
+                elseif pos.line < #state.lines then
+                    pos.line = pos.line + 1
+                    pos.char = 0
+                end
+                if isShiftDown then
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                else
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                end
+            elseif key == "up" then
+                if pos.line > 1 then
+                    pos.line = pos.line - 1
+                    pos.char = math.min(pos.char, #state.lines[pos.line])
+                end
+                if isShiftDown then
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                else
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                end
+            elseif key == "down" then
+                if pos.line < #state.lines then
+                    pos.line = pos.line + 1
+                    pos.char = math.min(pos.char, #state.lines[pos.line])
+                end
+                if isShiftDown then
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                else
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                end
+            elseif key == "home" then
+                pos.char = 0
+                if isShiftDown then
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                else
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                end
+            elseif key == "end" then
+                pos.char = #state.lines[pos.line]
+                if isShiftDown then
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                else
+                    state.selectionStart = { line = pos.line, char = pos.char }
+                    state.selectionEnd = { line = pos.line, char = pos.char }
+                end
+            elseif key == "return" or key == "kpenter" then
+                -- Handle new line on enter key
+                ui.handleTextInput("\n")
+            elseif key == "escape" then
+                ui.focusedTextInputID = nil
+            end
+        end
+    end
+end
+
 --- Draws a text label at the specified position.
------
--- @param x The x-coordinate of the label.
--- @param y The y-coordinate of the label.
--- @param text The text to display.
 function ui.label(x, y, text)
     love.graphics.setColor(ui.theme.general.text)
     love.graphics.print(text, x, y)

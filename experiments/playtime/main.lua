@@ -1,6 +1,6 @@
 -- main.lua
 package.path = package.path .. ";../../?.lua"
-local ui = require 'whisper-ui'
+local ui = require 'whisper-ui' -- Assuming 'ui.lua' is in the same directory
 
 -- Initialize Love2D
 function love.load()
@@ -12,16 +12,20 @@ function love.load()
     ui.init()
 
     -- Initialize variables
+    add_shape_opened = false
+    add_joint_opened = false
+
     value = 50
     checked = true
     settingsSlider = 44
-    settingsSlider2 = 48
+    settingsSlider2 = 9.8
     settingsSlider3 = 56
     settingsCheck = true
     sharedValue = 50
+    text = ''
 end
 
--- Update function (currently not used)
+-- Update function
 function love.update(dt)
     -- Reserved for future UI updates
 end
@@ -30,86 +34,105 @@ end
 function love.draw()
     ui.startFrame() -- Start a new UI frame
 
-    -- Horizontal Slider
-    local slide = ui.slider(50, 300, 200, ui.theme.slider.height, 'horizontal', 0, 100, value)
-    if slide then
-        value = slide
+    -- "Add Shape" Button
+    local addShapeClicked, _ = ui.button(10, 10, 200, 'add shape')
+    if addShapeClicked then
+        add_shape_opened = not add_shape_opened
     end
 
-    -- Checkbox
-    local clicked, newChecked = ui.checkbox(100, 100, checked, 'Weird Stuff')
-    if clicked then
-        checked = newChecked
+    if add_shape_opened then
+        local types = { 'rectangle', 'circle', 'chain', 'edge', 'polygon' }
+
+        local titleHeight = font:getHeight() + 10
+        local startX = 10
+        local startY = 60
+        local panelWidth = 200
+        local buttonSpacing = 10
+        local buttonHeight = ui.theme.button.height
+        local panelHeight = titleHeight + (#types * (buttonHeight + buttonSpacing)) + buttonSpacing
+
+        ui.panel(startX, startY, panelWidth, panelHeight, 'drag »', function()
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = buttonSpacing,
+                startX = startX + 10,
+                startY = startY + titleHeight + 10
+            })
+            for i = 1, #types do
+                local width = panelWidth - 20
+                local height = buttonHeight
+                local x, y = ui.nextLayoutPosition(layout, width, height)
+                local spawnClicked, spawnPressed, spawnReleased = ui.button(x, y, width, types[i])
+                if spawnClicked then
+                    print('Hello ' .. types[i] .. ' is clicked! Now I say World!')
+                end
+                if spawnPressed then
+                    -- Track which element is being dragged
+                    ui.draggingActive = ui.activeElementID
+                    print('Hello ' .. types[i] .. ' is pressed! Now I say World!')
+                end
+                if spawnReleased then
+                    ui.draggingActive = nil
+                    print('Hello ' .. types[i] .. ' is released! Now I say World!')
+                end
+            end
+        end)
     end
 
-    -- Vertical Slider
-    local slideV = ui.slider(350, 100, 200, ui.theme.slider.height, 'vertical', 0, 100, value)
-    if slideV then
-        value = slideV
+    -- "Add Joint" Button
+    local addJointClicked, _ = ui.button(220, 10, 200, 'add joint')
+    if addJointClicked then
+        add_joint_opened = not add_joint_opened
     end
 
-    -- "Press Me" Button
-    local buttonClicked, buttonPressed = ui.button(50, 50, 200, 'Press Me')
-    if buttonClicked then
-        print('Hello button is clicked! Now I say World!')
+    if add_joint_opened then
+        local types = { 'distance', 'friction', 'gear', 'mouse', 'prismatic', 'pulley', 'revolute', 'rope', 'weld',
+            'motor', 'wheel' }
+
+        local titleHeight = font:getHeight() + 10
+        local startX = 220
+        local startY = 60
+        local panelWidth = 200
+        local buttonSpacing = 10
+        local buttonHeight = ui.theme.button.height
+        local panelHeight = titleHeight + (#types * (buttonHeight + buttonSpacing)) + buttonSpacing
+
+        ui.panel(startX, startY, panelWidth, panelHeight, 'drag »', function()
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = buttonSpacing,
+                startX = startX + 10,
+                startY = startY + titleHeight + 10
+            })
+            for i = 1, #types do
+                local width = panelWidth - 20
+                local height = buttonHeight
+                local x, y = ui.nextLayoutPosition(layout, width, height)
+                local spawnClicked, spawnPressed, spawnReleased = ui.button(x, y, width, types[i])
+                if spawnClicked then
+                    print('Hello ' .. types[i] .. ' is clicked! Now I say World!')
+                end
+                if spawnPressed then
+                    -- Track which element is being dragged
+                    ui.draggingActive = ui.activeElementID
+                    print('Hello ' .. types[i] .. ' is pressed! Now I say World!')
+                end
+                if spawnReleased then
+                    ui.draggingActive = nil
+                    print('Hello ' .. types[i] .. ' is released! Now I say World!')
+                end
+            end
+        end)
     end
-    if buttonPressed then
-        print('Hello button is pressed! Now I say World!')
+
+    -- Example Label and Slider with Input
+    ui.label(430, 180, 'gravity m/s²')
+    local ab = ui.sliderWithInput(410, 230, 100, -10, 40, settingsSlider2)
+    if ab then
+        settingsSlider2 = ab
     end
 
-    -- "Spawn" Button
-    local spawnClicked, spawnPressed, spawnReleased = ui.button(50, 150, 200, 'Spawn')
-    if spawnClicked then
-        print('Hello spawn is clicked! Now I say World!')
-    end
-    if spawnPressed then
-        -- Track which element is being dragged
-        ui.draggingActive = ui.activeElementID
-        print('Hello spawn is pressed! Now I say World!')
-    end
-    if spawnReleased then
-        ui.draggingActive = nil
-        print('Hello spawn is released! Now I say World!')
-    end
-
-    -- Panel with UI elements inside it
-    ui.panel(400, 50, 300, 450, "• Settings •", function()
-        -- Example Checkbox inside the panel
-        local panelClicked, panelChecked = ui.checkbox(410, 130, settingsCheck, 'Panel Checkbox')
-        if panelClicked then
-            settingsCheck = panelChecked
-            print('Panel Checkbox toggled!')
-        end
-
-        -- Example Button inside the panel
-        local panelButtonClicked, panelButtonPressed = ui.button(410, 370, 280, 'Panel Button')
-        if panelButtonClicked then
-            print('Panel Button clicked!')
-        end
-        if panelButtonPressed then
-            print('Panel Button pressed!')
-        end
-
-        -- Sliders with Input inside the panel
-        local aa = ui.sliderWithInput(410, 180, 100, 0, 100, settingsSlider)
-        if aa then
-            settingsSlider = aa
-        end
-
-        local ab = ui.sliderWithInput(410, 230, 100, -100, 100, settingsSlider2)
-        if ab then
-            settingsSlider2 = ab
-        end
-
-        local ac = ui.sliderWithInput(410, 280, 100, 0, 100, settingsSlider3)
-        if ac then
-            settingsSlider3 = ac
-        end
-    end)
-
-    -- Example TextInput outside the panel (Non-numeric)
-    local inputText = ui.textinput(50, 400, 200, 40, "Enter text...", "Initial Text", false)
-    ui.label(50, 450, "You entered: " .. inputText)
+    local t = ui.textinput(200, 200, 200, 200, 'poep', text)
 
     -- Render Dragged Element
     if ui.draggingActive then
