@@ -6,6 +6,7 @@ local ui = require 'whisper-ui' -- Assuming 'ui.lua' is in the same directory
 function love.load()
     -- Load and set the font
     font = love.graphics.newFont('cooper_bold_bt.ttf', 32)
+    love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 
     -- Initialize UI
@@ -14,6 +15,7 @@ function love.load()
     -- Initialize variables
     add_shape_opened = false
     add_joint_opened = false
+    world_settings_opened = false
 
     value = 50
     checked = true
@@ -125,16 +127,39 @@ function love.draw()
         end)
     end
 
-    -- Example Label and Slider with Input
-    ui.label(430, 180, 'gravity m/s²')
-    local ab = ui.sliderWithInput(410, 230, 100, -10, 40, settingsSlider2)
-    if ab then
-        settingsSlider2 = ab
+    local worldSettingsClicked, _ = ui.button(430, 10, 300, 'world settings')
+    if worldSettingsClicked then
+        world_settings_opened = not world_settings_opened
+    end
+    if world_settings_opened then
+        local startX = 430
+        local startY = 60
+        local panelWidth = 300
+        local panelHeight = 400
+        local buttonSpacing = 10
+        local titleHeight = font:getHeight() + 10
+
+        ui.panel(startX, startY, panelWidth, panelHeight, '• world •', function()
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = buttonSpacing,
+                startX = startX + 10,
+                startY = startY + titleHeight + 10
+            })
+            local width = panelWidth - 20
+
+            local x, y = ui.nextLayoutPosition(layout, width, 50)
+            ui.label(x, y, 'gravity m/s²')
+            local x, y = ui.nextLayoutPosition(layout, width, 50)
+            local ab = ui.sliderWithInput(x, y, 160, -10, 40, settingsSlider2)
+            if ab then
+                settingsSlider2 = ab
+            end
+            local x, y = ui.nextLayoutPosition(layout, width, 50)
+            local t = ui.textinput(x, y, 280, 200, 'poep', text)
+        end)
     end
 
-    local t = ui.textinput(200, 200, 200, 200, 'poep', text)
-
-    -- Render Dragged Element
     if ui.draggingActive then
         love.graphics.setColor(ui.theme.draggedElement.fill) -- Dragged element color
         local x, y = love.mouse.getPosition()

@@ -643,8 +643,8 @@ function ui.handleKeyPress(key)
         local state = ui.textInputs[ui.focusedTextInputID]
         local isCtrlDown = love.keyboard.isDown('lctrl', 'rctrl')
         local isShiftDown = love.keyboard.isDown('lshift', 'rshift')
-
-        if isCtrlDown then
+        local isCMDDown = love.keyboard.isDown('lgui', 'rgui')
+        if isCtrlDown or isCMDDown then
             if key == 'c' then
                 -- Copy
                 if not ui.isSelectionEmpty(state) then
