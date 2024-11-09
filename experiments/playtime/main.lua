@@ -1,16 +1,17 @@
 -- main.lua
 package.path = package.path .. ";../../?.lua"
-local ui = require 'whisper-ui' -- Assuming 'ui.lua' is in the same directory
+inspect = require 'inspect'
+local ui = require 'ui-all' -- Assuming 'ui.lua' is in the same directory
 
 -- Initialize Love2D
 function love.load()
     -- Load and set the font
-    font = love.graphics.newFont('cooper_bold_bt.ttf', 32)
+    local font = love.graphics.newFont('cooper_bold_bt.ttf', 32)
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 
     -- Initialize UI
-    ui.init()
+    ui.init(font)
 
     -- Initialize variables
     add_shape_opened = false
@@ -26,6 +27,9 @@ function love.load()
     settingsCheck = true
     sharedValue = 50
     text = ''
+
+    pickedoption = 'dynamic'
+    gravityState = true
 end
 
 -- Update function
@@ -48,7 +52,7 @@ function love.draw()
 
     if add_shape_opened then
         local types = { 'rectangle', 'circle', 'chain', 'edge', 'polygon' }
-        local titleHeight = font:getHeight() + 10
+        local titleHeight = ui.font:getHeight() + 10
         local startX = 20
         local startY = 70
         local panelWidth = 200
@@ -94,7 +98,7 @@ function love.draw()
         local types = { 'distance', 'friction', 'gear', 'mouse', 'prismatic', 'pulley', 'revolute', 'rope', 'weld',
             'motor', 'wheel' }
 
-        local titleHeight = font:getHeight() + 10
+        local titleHeight = ui.font:getHeight() + 10
         local startX = 230
         local startY = 70
         local panelWidth = 200
@@ -140,9 +144,9 @@ function love.draw()
         local panelWidth = 300
         local panelHeight = 400
         local buttonSpacing = 10
-        local titleHeight = font:getHeight() + 10
+        local titleHeight = ui.font:getHeight() + 10
 
-        ui.panel(startX, startY, panelWidth, panelHeight, '• world •', function()
+        ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = buttonSpacing,
@@ -153,6 +157,10 @@ function love.draw()
 
             local x, y = ui.nextLayoutPosition(layout, width, 50)
             ui.label(x, y, 'gravity m/s²')
+            local clicked, checkstate = ui.checkbox(x + ui.font:getWidth('gravity m/s²') + 10, y, gravityState, '')
+            if clicked then
+                gravityState = checkstate
+            end
             local x, y = ui.nextLayoutPosition(layout, width, 50)
             local grav = ui.sliderWithInput(x, y, 160, -10, 40, gravity)
             if grav then gravity = grav end
@@ -166,6 +174,28 @@ function love.draw()
         local x, y = love.mouse.getPosition()
         love.graphics.circle('fill', x, y, 10)
         love.graphics.setColor(1, 1, 1) -- Reset color
+    end
+
+    if false then
+        local toggled, value = ui.toggleButton(30, 500, 200, 40, "Gravity On", "Gravity Off", gravityState)
+        if toggled then
+            gravityState = value
+        end
+
+        local options = { "dynamic", "static", "kinematic" }
+        local dropd, dropPressed, dropReleased = ui.dropdown(100, 100, 200, options, pickedoption)
+        if dropd then
+            pickedoption = dropd
+        end
+        if dropPressed then
+            -- Track which element is being dragged
+            ui.draggingActive = ui.activeElementID
+            print('Hello ' .. pickedoption .. ' is pressed! Now I say World!')
+        end
+        if dropReleased then
+            ui.draggingActive = nil
+            print('Hello ' .. pickedoption .. ' is released! Now I say World!')
+        end
     end
 end
 
