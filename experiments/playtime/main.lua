@@ -316,9 +316,31 @@ function drawUI()
             local body = uiState.currentlySelectedObject:getBody()
             local angleDegrees = body:getAngle() * 180 / math.pi
             local sliderID = tostring(body)
-            local newAngle = ui.sliderWithInput(sliderID, w - 290, 120, 160, -180, 180, angleDegrees)
+            local newAngle = ui.sliderWithInput(sliderID .. 'angle', w - 290, 120, 160, -180, 180, angleDegrees,
+                body:isAwake())
             if newAngle and angleDegrees ~= newAngle then
                 body:setAngle(newAngle * math.pi / 180)
+            end
+
+            local fixtures = body:getFixtures()
+            if #fixtures == 1 then
+                local density = fixtures[1]:getDensity()
+                local newDensity = ui.sliderWithInput(sliderID .. 'density', w - 290, 180, 160, 0, 10, density)
+                if newDensity and density ~= newDensity then
+                    fixtures[1]:setDensity(newDensity)
+                end
+
+                local bounciness = fixtures[1]:getRestitution()
+                local newBounce = ui.sliderWithInput(sliderID .. 'bounciness', w - 290, 240, 160, 0, 1, bounciness)
+                if newBounce and bounciness ~= newBounce then
+                    fixtures[1]:setRestitution(newBounce)
+                end
+
+                local friction = fixtures[1]:getFriction()
+                local newFriction = ui.sliderWithInput(sliderID .. 'friction', w - 290, 300, 160, 0, 1, friction)
+                if newFriction and friction ~= newFriction then
+                    fixtures[1]:setFriction(newFriction)
+                end
             end
         end)
     end
