@@ -1,16 +1,0 @@
-/Applications/krita.app/Contents/MacOS/ffmpeg -hide_banner -y -y -r 9 -start_number 0 -start_number_range 1 -i /Users/nikkikoole/Projects/love/vector-sketch/experiments/mipo-minipops/games/thief-vs-police/img/villgaers/frame%04d.png -f apng -pred none -plays 0 /Users/nikkikoole/Projects/love/vector-sketch/experiments/mipo-minipops/games/thief-vs-police/img/villgaers/fixedalittle4.apng
-=====================================================
-Input #0, image2, from '/Users/nikkikoole/Projects/love/vector-sketch/experiments/mipo-minipops/games/thief-vs-police/img/villgaers/frame%04d.png':
-  Duration: 00:00:00.28, start: 0.000000, bitrate: N/A
-  Stream #0:0: Video: png, rgba(pc), 1135x847 [SAR 2835:2835 DAR 1135:847], 25 fps, 25 tbr, 25 tbn, 25 tbc
-Stream mapping:
-  Stream #0:0 -> #0:0 (png (native) -> apng (native))
-Press [q] to stop, [?] for help
-Output #0, apng, to '/Users/nikkikoole/Projects/love/vector-sketch/experiments/mipo-minipops/games/thief-vs-police/img/villgaers/fixedalittle4.apng':
-  Metadata:
-    encoder         : Lavf58.76.100
-  Stream #0:0: Video: apng, rgba(pc, progressive), 1135x847 [SAR 2835:2835 DAR 1135:847], q=2-31, 200 kb/s, 9 fps, 9 tbn
-    Metadata:
-      encoder         : Lavc58.134.100 apng
-frame=    1 fps=0.0 q=0.0 size=       0kB time=00:00:00.00 bitrate=N/A speed=   0x    frame=    4 fps=0.0 q=-0.0 size=     256kB time=00:00:00.33 bitrate=6291.5kbits/s speed=0.605x    frame=    6 fps=5.6 q=-0.0 size=     512kB time=00:00:00.55 bitrate=7549.7kbits/s speed=0.518x    frame=    7 fps=4.3 q=-0.0 size=     768kB time=00:00:00.66 bitrate=9437.2kbits/s speed=0.413x    frame=    7 fps=4.3 q=-0.0 Lsize=    1266kB time=00:00:00.77 bitrate=13337.5kbits/s speed=0.482x    
-video:1266kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.006633%

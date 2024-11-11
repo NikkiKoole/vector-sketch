@@ -1,9 +1,8 @@
 inspect = require 'inspect'
+Timer = require "hump.timer"
 local SceneryInit = require("scenery")
 
 font = love.graphics.newFont('assets/fonts/COOPBL.TTF', 48)
-
-
 love.graphics.setFont(font)
 
 scenes = {

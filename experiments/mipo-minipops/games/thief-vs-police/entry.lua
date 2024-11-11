@@ -11,18 +11,18 @@ function makeBetterMap(old, wm, hm)
     for y = 1, newH do
         result[y] = {}
         for x = 1, newW do
-            result[y][x] = {tile=1}
+            result[y][x] = { tile = 1 }
         end
     end
 
-     --Calculate the offset to center the old map in the new map
+    --Calculate the offset to center the old map in the new map
     local xOff = math.floor((newW - oldW) / 2)
     local yOff = math.floor((newH - oldH) / 2)
 
     -- Copy the old map into the new map, centered
     for y = 1, oldH do
         for x = 1, oldW do
-            result[y + yOff][x + xOff] = old[y][x] and {tile=1} or {tile=0}
+            result[y + yOff][x + xOff] = old[y][x] and { tile = 1 } or { tile = 0 }
         end
     end
 
@@ -47,8 +47,8 @@ function scaleMap(map, factor)
     return newMap
 end
 
-function carve(map, x,y)
-    map[y][x] = {tile=0}
+function carve(map, x, y)
+    map[y][x] = { tile = 0 }
 end
 
 function makeExit(map)
@@ -93,22 +93,21 @@ function makeExit(map)
 
     -- Mark the exit on the border
     if side == 1 then
-        map[1][x].exit1 = true -- Top side
-         map[2][x].exit2 = true -- Top side
-          map[3][x].exit3 = true -- Top side
+        map[1][x].exit1 = true          -- Top side
+        map[2][x].exit2 = true          -- Top side
+        map[3][x].exit3 = true          -- Top side
     elseif side == 2 then
-        map[y][1].exit1 = true -- Left side
-        map[y][2].exit2 = true -- Left side
-        map[y][3].exit3 = true -- Left side
+        map[y][1].exit1 = true          -- Left side
+        map[y][2].exit2 = true          -- Left side
+        map[y][3].exit3 = true          -- Left side
     elseif side == 3 then
-        map[height][x].exit1 = true -- Bottom side
-         map[height-1][x].exit2 = true -- Bottom side
-          map[height-2][x].exit3 = true -- Bottom side
+        map[height][x].exit1 = true     -- Bottom side
+        map[height - 1][x].exit2 = true -- Bottom side
+        map[height - 2][x].exit3 = true -- Bottom side
     elseif side == 4 then
-
-        map[y][width].exit1 = true -- Right side
-         map[y][width-1].exit2 = true -- Right side
-          map[y][width-2].exit3 = true -- Right side
+        map[y][width].exit1 = true      -- Right side
+        map[y][width - 1].exit2 = true  -- Right side
+        map[y][width - 2].exit3 = true  -- Right side
     end
 
     return map
@@ -116,8 +115,8 @@ end
 
 function getRandomEmptyPositionWithinRange(map, x, y, range)
     while true do
-        local xindex = math.floor(x + math.random() * range - range/2)
-        local yindex = math.floor(y + math.random() * range - range/2)
+        local xindex = math.floor(x + math.random() * range - range / 2)
+        local yindex = math.floor(y + math.random() * range - range / 2)
         --print( yindex, xindex, w,h,map[yindex][xindex])
         if map[yindex] and map[yindex][xindex].tile == 0 then
             return xindex, yindex
@@ -142,29 +141,28 @@ function calculateCamPosFromDiefPos(diefX, diefY)
     return camX, camY
 end
 
-
 function scene:resetGame(level)
-    print(level.name)
+    --print(level.name)
     verloren = false
     gewonnen = false
     --music:play()
 
-     local RZSMaze = require("games/thief-vs-police/RZSMaze")
+    local RZSMaze = require("games/thief-vs-police/RZSMaze")
     local myMaze = RZSMaze.new({ level.size, level.size }, love.math.random) -- Create a blank 6x6 maze
-    myMaze:generate()                      -- Generate it
-    myMaze:createLoops(level.loops)                 -- Create some loops
+    myMaze:generate()                                                        -- Generate it
+    myMaze:createLoops(level.loops)                                          -- Create some loops
     local newMap = myMaze:toSimpleRepresentation()
-    map = makeBetterMap(newMap, screenData.columns, screenData.rows, {tile=1})
+    map = makeBetterMap(newMap, screenData.columns, screenData.rows, { tile = 1 })
     map = scaleMap(map, level.scale)
     map = makeExit(map)
 
     entities = {}
-    local x, y = getRandomEmptyPositionWithinRange(map, #map[1]/2 , #map/2, 5)
+    local x, y = getRandomEmptyPositionWithinRange(map, #map[1] / 2, #map / 2, 5)
     table.insert(entities, { x = x, y = y, type = "dief" })
 
     diefEnt = entities[1]
     for i = 1, level.police do
-        local x, y = getRandomEmptyPositionWithinRect(map, 1, 1,  #map[1] , #map )
+        local x, y = getRandomEmptyPositionWithinRect(map, 1, 1, #map[1], #map)
         table.insert(entities, { x = x, y = y, type = "politie" })
     end
 
@@ -179,58 +177,61 @@ function scene:load(args)
     success = love.window.setMode(1400, 1000)
     love.keyboard.setKeyRepeat(true)
     --print("Scenery 2 is awesome")
-
+    font = love.graphics.newFont('assets/fonts/COOPBL.TTF', 100)
+    love.graphics.setFont(font)
     -- images
     gras = love.graphics.newImage('games/thief-vs-police/img/gras.png')
     muur = love.graphics.newImage('games/thief-vs-police/img/muur.png')
     muurquad = love.graphics.newQuad(0, 0, muur:getWidth(), muur:getHeight(), muur:getWidth(), muur:getHeight())
     dief = love.graphics.newImage('games/thief-vs-police/img/thief2.png')
-     geldzak = love.graphics.newImage('games/thief-vs-police/img/geldzak.png')
-     diefsad = love.graphics.newImage('games/thief-vs-police/img/thief-sad.png')
-     diefhappy = love.graphics.newImage('games/thief-vs-police/img/thief-happy.png')
+    geldzak = love.graphics.newImage('games/thief-vs-police/img/geldzak.png')
+    diefsad = love.graphics.newImage('games/thief-vs-police/img/thief-sad.png')
+    diefhappy = love.graphics.newImage('games/thief-vs-police/img/thief-happy.png')
     kooi = love.graphics.newImage('games/thief-vs-police/img/kooi.png')
-      mist = love.graphics.newImage('games/thief-vs-police/img/mist.png')
+    mist = love.graphics.newImage('games/thief-vs-police/img/mist.png')
     politie = love.graphics.newImage('games/thief-vs-police/img/politie2.png')
     tryagain = love.graphics.newImage('games/thief-vs-police/img/opnieuw.png')
     nextlevel = love.graphics.newImage('games/thief-vs-police/img/nextlevel.png')
     circle = love.graphics.newImage('games/thief-vs-police/img/circle.png')
     -- sounds
-    stapsnd =  love.audio.newSource("games/thief-vs-police/sfx/stap.wav", "static")
-     huilsnd =  love.audio.newSource("games/thief-vs-police/sfx/huil.wav", "static")
-     winsnd =  love.audio.newSource("games/thief-vs-police/sfx/win.wav", "static")
-     verlorensnd = love.audio.newSource("games/thief-vs-police/sfx/verloren.wav", "static")
-     music =  love.audio.newSource("games/thief-vs-police/sfx/muziekje.mp3", "static")
-     music:setLooping(true)
+    stapsnd = love.audio.newSource("games/thief-vs-police/sfx/stap.wav", "static")
+    huilsnd = love.audio.newSource("games/thief-vs-police/sfx/huil.wav", "static")
+    winsnd = love.audio.newSource("games/thief-vs-police/sfx/win.wav", "static")
+    verlorensnd = love.audio.newSource("games/thief-vs-police/sfx/verloren.wav", "static")
+    music = love.audio.newSource("games/thief-vs-police/sfx/muziekje.mp3", "static")
+    music:setLooping(true)
 
+    score = 3
 
-     camPos = { x = 1, y = 1 }
-     screenData = {
+    camPos = { x = 1, y = 1 }
+    screenData = {
         columns = 10,
         rows = 10
     }
 
-    levelIndex = 1  -- Keep track of the current level
+    levelIndex = 6 -- Keep track of the current level
     levels = {
-        {police=40, loops=1, size=5, scale=2, name="test"},
-        {police=2, loops=1, size=5, scale=3, name="noob"},
-        {police=4, loops=0.8, size=6, scale=3, name="easy"},
-        {police=6, loops=0.5, size=12, scale=2, name="medium"},
-        {police=8, loops=0.2, size=12, scale=1, name="hard"},
-        {police=10, loops=0.2, size=12, scale=1, name="expert"},
-        {police=100, loops=0.12, size=12, scale=1, name="impossible"}
+        --{ police = 40,  loops = 1,    size = 5,  scale = 2, name = "test" },
+        { police = 2,  loops = 1,    size = 5,  scale = 3, name = "noob" },
+        { police = 4,  loops = 0.8,  size = 6,  scale = 3, name = "easy" },
+        { police = 6,  loops = 0.5,  size = 12, scale = 2, name = "medium" },
+        { police = 8,  loops = 0.4,  size = 12, scale = 1, name = "hard" },
+        { police = 10, loops = 0.3,  size = 12, scale = 1, name = "expert" },
+        { police = 30, loops = 0.32, size = 12, scale = 2, name = "impossible" },
+        { police = 50, loops = 0.22, size = 12, scale = 2, name = "impossible" },
+        { police = 70, loops = 0.12, size = 12, scale = 2, name = "impossible" }
     }
 
-    levelIndex = 1
-    level =  levels[levelIndex]
-   self.resetGame(self, level)
+    --  levelIndex = 1
+    --  level = levels[levelIndex]
+    self.resetGame(self, levels[levelIndex])
 end
-
 
 local function drawInto(img, x, y, w, h)
     local myWidth, myHeight = img:getDimensions()
     local myScaleX = w / myWidth
     local myScaleY = h / myHeight
-    love.graphics.draw(img, x, y, 0, myScaleX, myScaleY, myWidth/2, myHeight/2)
+    love.graphics.draw(img, x, y, 0, myScaleX, myScaleY, myWidth / 2, myHeight / 2)
 end
 
 local function drawIntoW(img, x, y, w)
@@ -242,7 +243,7 @@ end
 
 function scene:keypressed(k)
     if k == 'escape' then
-         music:stop()
+        music:stop()
         self.setScene("overworld", { score = 52 })
         return
     end
@@ -370,12 +371,11 @@ function maybeMoveCamera(oldX, oldY, newX, newY)
 end
 
 function checkGame()
-
-    function cannotGoHere(x,y)
+    function cannotGoHere(x, y)
         if not map[y] then return true end
         if not map[y][x] then return true end
         if map[y][x].tile == 1 then return true end
-        for i =1, #entities do
+        for i = 1, #entities do
             local it = entities[i]
             if it.type == 'politie' then
                 if it.x == x and it.y == y then return true end
@@ -386,24 +386,27 @@ function checkGame()
 
     local x = diefEnt.x
     local y = diefEnt.y
-    if map[y][ x].exit1 then
+    if map[y][x].exit1 then
         win()
     end
-
-    if cannotGoHere(x-1,y) and cannotGoHere(x+1,y) and cannotGoHere(x,y-1) and cannotGoHere(x,y+1) then
-        isverloren()
+    if not gewonnen then
+        if cannotGoHere(x - 1, y) and cannotGoHere(x + 1, y) and cannotGoHere(x, y - 1) and cannotGoHere(x, y + 1) then
+            isverloren()
+        end
     end
-
 end
 
 function playSound(source)
     source:clone():play()
 end
 
-
-
 function win()
     if gewonnen == false then
+        score = score + 1
+        Timer.after(2, function()
+            levelIndex = math.min(levelIndex + 1, #levels) -- Increment, but clamp to max level
+            scene:resetGame(levels[levelIndex])
+        end)
         playSound(winsnd)
     end
     gewonnen = true
@@ -411,13 +414,18 @@ end
 
 function isverloren()
     if verloren == false then
-       playSound(huilsnd)
-       playSound(verlorensnd)
-       music:stop()
-     --  resetGame()
-      end
-    verloren = true
+        playSound(huilsnd)
+        playSound(verlorensnd)
+        music:stop()
+        Timer.after(2, function()
+            score = score - 1
+            scene:resetGame(levels[levelIndex])
+            -- retry the level
+        end)
 
+        --  resetGame()
+    end
+    verloren = true
 end
 
 function scene:draw()
@@ -429,73 +437,69 @@ function scene:draw()
     local size = math.min(math.floor(w / columns), math.floor(h / rows)) * 0.9
 
     local offsetX = (w - (size * columns)) / 2
-    local offsetY = (h - (size * rows)) / 2  + size/2
+    local offsetY = (h - (size * rows)) / 2 + size / 2
 
     -- Loop through all rows and columns
-     if true then
+    if true then
+        for row = 0, rows + 1 do
+            for col = 0, columns + 1 do
+                local mapX = math.floor(camPos.x) + col - 1
+                local mapY = math.floor(camPos.y) + row - 1
 
-    for row = 0, rows + 1 do
-        for col = 0, columns + 1 do
-            local mapX = math.floor(camPos.x) + col - 1
-            local mapY = math.floor(camPos.y) + row - 1
+                local t = 1 -- Default to non-walkable (walls)
+                local isBorder = (row == 0 or col == 0 or row == rows + 1 or col == columns + 1)
+                local exit1 = false
+                local exit2 = false
+                local exit3 = false
+                -- Determine if it's inside the map and set walkable or non-walkable
+                if mapY >= 1 and mapY <= #map and mapX >= 1 and mapX <= #map[1] then
+                    t = map[mapY][mapX].tile
+                    exit1 = map[mapY][mapX].exit1
+                    exit2 = map[mapY][mapX].exit2
+                    exit3 = map[mapY][mapX].exit3
+                end
 
-            local t = 1 -- Default to non-walkable (walls)
-            local isBorder = (row == 0 or col == 0 or row == rows + 1 or col == columns + 1)
-            local exit1 = false
-            local exit2 = false
-            local exit3 = false
-            -- Determine if it's inside the map and set walkable or non-walkable
-            if mapY >= 1 and mapY <= #map and mapX >= 1 and mapX <= #map[1] then
-                t = map[mapY][mapX].tile
-                exit1 = map[mapY][mapX].exit1
-               exit2 = map[mapY][mapX].exit2
-              exit3= map[mapY][mapX].exit3
-            end
-
-            -- Draw border or regular tiles
-            if isBorder then
-                if t == 0 then
-                    love.graphics.setColor(0.1, 0.45, 0.11, 0.5) -- Walkable (border)
-                    drawInto(gras, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                -- Draw border or regular tiles
+                if isBorder then
+                    if t == 0 then
+                        love.graphics.setColor(0.1, 0.45, 0.11, 0.5) -- Walkable (border)
+                        drawInto(gras, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                    else
+                        love.graphics.setColor(0.62, 0.22, 0, 0.5) -- Non-walkable (border)
+                        drawInto(muur, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                    end
+                    --  love.graphics.rectangle('fill', offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
                 else
-                    love.graphics.setColor(0.62, 0.22, 0, 0.5) -- Non-walkable (border)
-                    drawInto(muur, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                    if t == 0 then
+                        love.graphics.setColor(1, 1, 1) -- Walkable (inside the map)
+                        drawInto(gras, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                    else
+                        love.graphics.setColor(1, 1, 1) -- Non-walkable (inside the map)
+                        drawInto(muur, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+                    end
                 end
-                --  love.graphics.rectangle('fill', offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
-            else
-                if t == 0 then
-                    love.graphics.setColor(1, 1, 1) -- Walkable (inside the map)
-                    drawInto(gras, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+
+                if (exit1 or exit2 or exit3) then
+                    if exit1 then
+                        love.graphics.setColor(1, 1, 1, .8)
+                    end
+                    if exit2 then
+                        love.graphics.setColor(1, 1, 1, .6)
+                    end
+                    if exit3 then
+                        love.graphics.setColor(1, 1, 1, .4)
+                    end
+
+                    drawInto(mist, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
                 else
-                    love.graphics.setColor(1, 1, 1) -- Non-walkable (inside the map)
-                    drawInto(muur, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size)
+
                 end
+
+                -- Reset color
+                love.graphics.setColor(1, 1, 1)
             end
-
-            if (exit1 or exit2 or exit3) then
-
-                if exit1 then
-
-                    love.graphics.setColor(1,1,1,.8)
-                end
-                if exit2 then
-
-                    love.graphics.setColor(1,1,1,.6)
-                end
-                if exit3 then
-
-                    love.graphics.setColor(1,1,1,.4)
-                end
-
-                drawInto(mist, offsetX + (col - 1) * size, offsetY + (row - 1) * size, size, size) else
-
-            end
-
-            -- Reset color
-            love.graphics.setColor(1, 1, 1)
         end
     end
-     end
 
     -- Draw the player (dief) at its relative position
     --local diefScreenX = (diefPos.x - math.floor(camPos.x)) * size + offsetX + size / 2
@@ -508,6 +512,7 @@ function scene:draw()
         end
         return a.y < b.y
     end)
+
     for i = 1, #entities do
         local it = entities[i]
         local screenX = (it.x - math.floor(camPos.x)) * size + offsetX
@@ -519,7 +524,7 @@ function scene:draw()
                 --    drawIntoW(dief, screenX, screenY, size)
             elseif it.type == "politie" then
                 love.graphics.setColor(.5, .5, .5, 1)
-                drawIntoW(politie, screenX, screenY+size/4, size)
+                drawIntoW(politie, screenX, screenY + size / 4, size)
             end
         end
 
@@ -529,40 +534,49 @@ function scene:draw()
             if it.y >= camPos.y and it.y < camPos.y + rows then
                 if it.type == "dief" then
                     if (verloren) then
-                    drawIntoW(diefsad, screenX, screenY, size)
-                    drawIntoW(kooi, screenX, screenY, size)
+                        drawIntoW(diefsad, screenX, screenY, size)
+                        drawIntoW(kooi, screenX, screenY, size)
                     elseif (gewonnen) then
-                     drawIntoW(diefhappy, screenX, screenY, size)
+                        drawIntoW(diefhappy, screenX, screenY, size)
                     else
+                        drawIntoW(dief, screenX, screenY, size)
 
-                     drawIntoW(dief, screenX, screenY, size)
-
-                     --drawInto(geldzak, screenX-50, screenY-60, size/1.5,size/1.5)
-                     --drawInto(geldzak, screenX+50, screenY-80, size/1.5,size/1.5)
+                        --drawInto(geldzak, screenX-50, screenY-60, size/1.5,size/1.5)
+                        --drawInto(geldzak, screenX+50, screenY-80, size/1.5,size/1.5)
                     end
                 elseif it.type == "politie" then
-                    drawIntoW(politie, screenX, screenY+size/4, size)
+                    drawIntoW(politie, screenX, screenY + size / 4, size)
                 end
             end
         end
     end
     checkGame()
-    showNextLevelUI = true
-    showAgainLevelUI = true
-    if showNextLevelUI then
-         drawInto(circle, 100,100,100,100)
-    drawInto(nextlevel, 100,100,100,100)
+    if false then
+        showNextLevelUI = true
+        showAgainLevelUI = true
+        if showNextLevelUI then
+            drawInto(circle, 100, 100, 100, 100)
+            drawInto(nextlevel, 100, 100, 100, 100)
+        end
+        if showAgainLevelUI then
+            drawInto(circle, 100, 400, 100, 100)
+            drawInto(tryagain, 100, 400, 100, 100)
+        end
     end
-      if showAgainLevelUI then
-          drawInto(circle, 100,400,100,100)
-    drawInto(tryagain, 100,400,100,100)
-    end
-    -- Print player coordinates
-    -- love.graphics.print(diefPos.x .. ',' .. diefPos.y, diefScreenX - size / 2, diefScreenY - size / 2)
+    tekenZakjes()
+end
+
+function tekenZakjes()
+    local w, h = love.graphics.getDimensions()
+    local imgW, imgH = geldzak:getDimensions()
+
+    love.graphics.draw(geldzak, w - imgW - 150)
+    local textHOffset = (imgH - font:getHeight()) / 2
+    love.graphics.print(score, w - 150, textHOffset)
 end
 
 function distance(x1, y1, x2, y2)
-    return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
 
 -- Function to check if the mouse is inside the circle
@@ -573,27 +587,23 @@ function isMouseInCircle(mouseX, mouseY, circleX, circleY, radius)
     -- If the distance is less than or equal to the circle's radius, the mouse is inside
     return dist <= radius
 end
-function scene:mousepressed(x,y)
 
-    if (showNextLevelUI) then
-       if isMouseInCircle(x,y,100,100,50) then
-
-
-           levelIndex = math.min(levelIndex + 1, #levels)  -- Increment, but clamp to max level
-                self:resetGame(levels[levelIndex])
-
-
-       end
-    end
-    if (showAgainLevelUI) then
-       if isMouseInCircle(x,y,100,400,50) then
-
-            self:resetGame(level)
-       end
-    end
+function scene:mousepressed(x, y)
+    -- if (showNextLevelUI) then
+    --     if isMouseInCircle(x, y, 100, 100, 50) then
+    --         levelIndex = math.min(levelIndex + 1, #levels) -- Increment, but clamp to max level
+    --         self:resetGame(levels[levelIndex])
+    --     end
+    -- end
+    -- if (showAgainLevelUI) then
+    --     if isMouseInCircle(x, y, 100, 400, 50) then
+    --         self:resetGame(level)
+    --     end
+    -- end
 end
 
 function scene:update(dt)
+    Timer.update(dt)
     --print('entry',love.mouse.isDown(1))
     -- print("You agree, don't you?")
 end

@@ -145,13 +145,19 @@ end
 --- Draws a panel with optional label and content.
 function ui.panel(x, y, width, height, label, drawFunc)
     -- Draw panel background
+    --
+    --
+    local rxry = 0
+    if theme.button.radius > 0 then
+        rxry = math.min(width / 6, height / 6) / theme.button.radius
+    end
     love.graphics.setColor(theme.panel.background)
-    love.graphics.rectangle("fill", x, y, width, height, theme.button.radius, theme.button.radius)
+    love.graphics.rectangle("fill", x, y, width, height, rxry, rxry)
 
     -- Draw panel outline
     love.graphics.setColor(theme.panel.outline)
     love.graphics.setLineWidth(theme.lineWidth)
-    love.graphics.rectangle("line", x, y, width, height, theme.button.radius, theme.button.radius)
+    love.graphics.rectangle("line", x, y, width, height, rxry, rxry)
 
     -- Draw panel label if provided
     if label then
@@ -264,6 +270,7 @@ function ui.button(x, y, width, label, optionalHeight)
     local pressed = isHover and ui.mousePressed
 
     if pressed then
+        print('hello', id)
         ui.activeElementID = id
     end
     -- Draw the button with state-based colors
@@ -440,7 +447,7 @@ function ui.dropdown(x, y, width, options, currentSelection)
     if isOpen then
         for i, option in ipairs(options) do
             local optionY = y + i * (theme.button.height + 10)
-            local optionClicked = ui.button(x, optionY, width, option)
+            local optionClicked = ui.button(x + width, optionY, width, option)
             if optionClicked then
                 currentSelection = option
                 ui.dropdownStates[id] = false -- Close dropdown

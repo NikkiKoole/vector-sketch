@@ -318,7 +318,7 @@ lib.drawWorld = function(world)
 
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
-    love.graphics.setLineWidth(1)
+    -- love.graphics.setLineWidth(1)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -335,7 +335,7 @@ lib.drawWorld = function(world)
                     end
                 end
                 love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
-                love.graphics.setColor(1, 0, 1, alpha)
+                love.graphics.setColor(1, 1, 1, alpha)
                 if (fixture:getUserData()) then
                     if fixture:getUserData().bodyType == "connector" then
                         love.graphics.setColor(1, 0, 0, alpha)
@@ -363,16 +363,22 @@ lib.drawWorld = function(world)
     end
     love.graphics.setColor(255, 255, 255, alpha)
     -- Joint debug
-    love.graphics.setColor(1, 0, 0, alpha)
+
     local joints = world:getJoints()
     for _, joint in ipairs(joints) do
         local x1, y1, x2, y2 = joint:getAnchors()
+
+        if (x1 and y1 and x2 and y2) then
+            love.graphics.setColor(1, 1, 1, alpha)
+            love.graphics.line(x1, y1, x2, y2)
+        end
+        love.graphics.setColor(1, 0, 0, alpha)
         if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
         if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
     end
 
     love.graphics.setColor(r, g, b, a)
-    love.graphics.setLineWidth(1)
+    --   love.graphics.setLineWidth(1)
 end
 
 lib.removeDeadPointerJoints = function()
@@ -459,17 +465,31 @@ lib.handlePointerReleased = function(x, y, id)
     lib.killMouseJointIfPossible(id)
 end
 
+
+
 lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
     -- local wx, wy = cam:getWorldCoordinates(x, y)
+    --
+    if false then
+        local closeBodies = {}
+        local radius = 100
+        world:queryBoundingBox(wx - radius, wy - radius, wx + radius, wy + radius, function(f)
+            table.insert(closeBodies, f:getBody())
+        end)
+        local bodies = closeBodies --world:getBodies()
+    end
     local bodies = world:getBodies()
     local temp = {}
+    local hitted = {}
     for _, body in ipairs(bodies) do
         if body:getType() ~= 'kinematic' then
             local fixtures = body:getFixtures()
             for _, fixture in ipairs(fixtures) do
                 local hitThisOne = fixture:testPoint(wx, wy)
                 local isSensor = fixture:isSensor()
-
+                if (hitThisOne) then
+                    table.insert(hitted, fixture)
+                end
                 -- something here needs to be parameterized.
 
                 if (hitThisOne and not isSensor) then
@@ -498,7 +518,7 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
     -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end
 
-    return #temp > 0
+    return #temp > 0, hitted
 end
 
 
