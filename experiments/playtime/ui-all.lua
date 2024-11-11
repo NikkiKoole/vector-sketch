@@ -130,10 +130,15 @@ function ui.sliderWithInput(x, y, w, min, max, value)
         valueHasChangedViaSlider = true
         returnValue = value
     end
+
+    local valueChangeFromOutside = valueHasChangedViaSlider or uiState.currentlySelectedObjectChange
+
     -- TextInput for numeric input
     local numericInputText, dirty = ui.textinput(x + w + 10, y, 110, 40, "Enter number...", "" .. value,
-        true, valueHasChangedViaSlider)
+        true, valueChangeFromOutside)
+
     if dirty then
+        --print('number', value, numericInputText, valueHasChangedViaSlider)
         value = tonumber(numericInputText)
         returnValue = value
     end
@@ -385,6 +390,7 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
             thumbY = math.max(y, math.min(mouseY - ui.dragOffset.y, y + length - thickness))
             proportion = 1 - ((thumbY - y) / (length - thickness))
         end
+
         value = min + proportion * (max - min)
     end
 

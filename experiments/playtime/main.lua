@@ -29,7 +29,8 @@ function love.load()
         world_settings_opened = false,
         maybeHideSelectedPanel = false,
         currentlySelectedObject = nil,
-        currentlySpawningObject = nil
+        currentlySpawningObject = nil,
+        worldText = ''
     }
     worldState = {
         paused = true,
@@ -344,7 +345,11 @@ function drawUI()
                 end
             end
             local x, y = ui.nextLayoutPosition(layout, width, 50)
-            local t = ui.textinput(x, y, 280, 200, 'poep')
+            local t = ui.textinput(x, y, 280, 200, 'add text...', uiState.worldText)
+            if t then
+                -- print('jo!')
+                uiState.worldText = t
+            end
         end)
     end
 
@@ -357,6 +362,16 @@ function drawUI()
     if uiState.currentlySelectedObject then
         ui.panel(w - 300, 60, 280, h - 80, '∞ Properties ∞', function()
             --print(uiState.currentlySelectedObject)
+            local b = uiState.currentlySelectedObject:getBody()
+            local v = b:getAngle() / (math.pi / 180)
+            local r = ui.slider(w - 290, 120, 180, 30, 'horizontal', -180, 180, v)
+            --  local r = ui.sliderWithInput(w - 290, 120, 180, -180, 180, v)
+            if r then
+                r = string.format("%.2f", r)
+                if v ~= r then
+                    b:setAngle(r * math.pi / 180)
+                end
+            end
         end)
     end
 
@@ -398,8 +413,13 @@ function love.draw()
             -- nothing todo, i've interacted on some UI so do not hide the panel
         else
             uiState.currentlySelectedObject = nil
+            -- this is needed becaue some elements (textinput) hold on to state
+            uiState.currentlySelectedObjectChange = true
         end
         uiState.maybeHideSelectedPanel = false
+    end
+    if uiState.currentlySelectedObjectChange then
+        uiState.currentlySelectedObjectChange = false
     end
 end
 
@@ -456,6 +476,7 @@ local function pointerPressed(x, y, id)
         --print('hitted 401', inspect(hitted), ui.mouseReleased)
         if #hitted == 1 then
             uiState.currentlySelectedObject = hitted[1]
+            uiState.currentlySelectedObjectChange = true
         end
     else
         -- print('activelemet id', ui.activeElementID, ui.mousePressed)

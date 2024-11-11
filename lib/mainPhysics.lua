@@ -482,6 +482,18 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
     local temp = {}
     local hitted = {}
     for _, body in ipairs(bodies) do
+        if body:getType() == 'kinematic' then
+            -- for the playitme editor i do want to be able to slect these..
+            -- local fixtures = body:getFixtures()
+            local fixtures = body:getFixtures()
+            for _, fixture in ipairs(fixtures) do
+                local hitThisOne = fixture:testPoint(wx, wy)
+
+                if (hitThisOne) then
+                    table.insert(hitted, fixture)
+                end
+            end
+        end
         if body:getType() ~= 'kinematic' then
             local fixtures = body:getFixtures()
             for _, fixture in ipairs(fixtures) do

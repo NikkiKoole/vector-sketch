@@ -337,7 +337,19 @@ return function(ui)
         end
 
         local state = ui.textInputs[id]
-
+        --local textBefore = state.text
+        --print(currentText, state.text)
+        -- if (currentText or '') ~= state.text then
+        --     print('got in here!', currentText, state.text)
+        --     state.text = currentText or ''
+        --     state.lines = ui.splitTextIntoLines(state.text)
+        -- end
+        --     -- Optionally reset cursor and selection positions
+        --     --state.cursorPosition = { line = 1, char = #state.text }
+        --     --state.selectionStart = { line = 1, char = #state.text }
+        --     --state.selectionEnd = { line = 1, char = #state.text }
+        -- end
+        --print(currentText, state.text)
         if reparse then
             state.text = currentText
             state.lines = ui.splitTextIntoLines(state.text)
@@ -350,6 +362,7 @@ return function(ui)
         if ui.mousePressed then
             if isHover then
                 ui.focusedTextInputID = id
+
                 local relativeX = ui.mouseX - x - 5 -- Subtracting padding
                 local relativeY = ui.mouseY - y
                 local lineIndex = math.floor(relativeY / ui.font:getHeight()) + 1
@@ -363,6 +376,7 @@ return function(ui)
             else
                 if ui.focusedTextInputID == id then
                     ui.focusedTextInputID = nil
+                    ui.activeElementID = nil
                 end
             end
         end
