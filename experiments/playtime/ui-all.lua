@@ -120,25 +120,26 @@ function ui.nextLayoutPosition(layout, elementWidth, elementHeight)
 end
 
 --- Creates a horizontal slider with a numeric input field.
-function ui.sliderWithInput(x, y, w, min, max, value)
+function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
     local yOffset = (40 - theme.slider.height) / 2
     local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value)
     local valueHasChangedViaSlider = false
     local returnValue = nil
+
     if panelSlider then
         value = string.format("%.2f", panelSlider)
         valueHasChangedViaSlider = true
         returnValue = value
     end
 
-    local valueChangeFromOutside = valueHasChangedViaSlider or uiState.currentlySelectedObjectChange
+    local valueChangeFromOutside = valueHasChangedViaSlider or changed
 
     -- TextInput for numeric input
-    local numericInputText, dirty = ui.textinput(x + w + 10, y, 110, 40, "Enter number...", "" .. value,
+    local numericInputText, dirty = ui.textinput(_id, x + w + 10, y, 110, 40, "Enter number...", "" .. value,
         true, valueChangeFromOutside)
 
+
     if dirty then
-        --print('number', value, numericInputText, valueHasChangedViaSlider)
         value = tonumber(numericInputText)
         returnValue = value
     end
@@ -275,7 +276,6 @@ function ui.button(x, y, width, label, optionalHeight)
     local pressed = isHover and ui.mousePressed
 
     if pressed then
-        print('hello', id)
         ui.activeElementID = id
     end
     -- Draw the button with state-based colors

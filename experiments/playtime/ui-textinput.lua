@@ -317,8 +317,9 @@ return function(ui)
         end
     end
 
-    function ui.textinput(x, y, width, height, placeholder, currentText, isNumeric, reparse)
-        local id = ui.generateID()
+    function ui.textinput(_id, x, y, width, height, placeholder, currentText, isNumeric, reparse)
+        local id = _id or ui.generateID()
+        --print(id, currentText)
         -- Initialize state for this TextInput if not already done
         if not ui.textInputs[id] then
             ui.textInputs[id] = {
@@ -376,7 +377,6 @@ return function(ui)
             else
                 if ui.focusedTextInputID == id then
                     ui.focusedTextInputID = nil
-                    ui.activeElementID = nil
                 end
             end
         end
