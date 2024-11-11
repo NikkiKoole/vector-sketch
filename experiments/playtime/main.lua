@@ -317,7 +317,7 @@ function drawUI()
             local angleDegrees = body:getAngle() * 180 / math.pi
             local sliderID = tostring(body)
             local newAngle = ui.sliderWithInput(sliderID .. 'angle', w - 290, 120, 160, -180, 180, angleDegrees,
-                body:isAwake())
+                body:isAwake() and not worldState.paused)
             if newAngle and angleDegrees ~= newAngle then
                 body:setAngle(newAngle * math.pi / 180)
             end
