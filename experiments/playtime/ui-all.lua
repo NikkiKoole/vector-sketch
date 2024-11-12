@@ -429,6 +429,13 @@ function ui.handleKeyPress(key)
 end
 
 --- Draws a text label at the specified position.
+function ui.centeredLabel(x, y, width, text)
+    love.graphics.setColor(ui.theme.general.text)
+    --  love.graphics.print(text, x, y)
+    love.graphics.printf(text, x, y, width, "center")
+    love.graphics.setColor(1, 1, 1)
+end
+
 function ui.label(x, y, text)
     love.graphics.setColor(ui.theme.general.text)
     love.graphics.print(text, x, y)

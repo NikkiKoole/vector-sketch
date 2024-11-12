@@ -365,7 +365,7 @@ end
 lib.drawWorld = function(world)
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8
-
+    love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
     -- love.graphics.setLineWidth(1)
@@ -426,7 +426,7 @@ lib.drawWorld = function(world)
         if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
         if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
     end
-
+    love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
     --   love.graphics.setLineWidth(1)
 end

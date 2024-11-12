@@ -27,7 +27,12 @@ function love.load()
         currentlySelectedObject = nil,
         currentlyDraggingObject = nil,
         offsetForCurrentlyDragging = { nil, nil },
-        worldText = ''
+        worldText = '',
+        jointCreationMode = nil,
+        isDrawingPolygon = false,
+        polygonVertices = {},
+        minPointDistance = 10, -- Default minimum distance
+        lastPolygonPoint = nil,
     }
 
     worldState = {
@@ -149,6 +154,91 @@ function startSpawn(shapeType, mx, my)
     uiState.offsetForCurrentlyDragging = { 0, 0 }
 end
 
+-- function createJoint(data)
+--     print(inspect(data))
+--     uiState.jointCreationMode = nil
+-- end
+function createJoint(data)
+    local bodyA = data.body1
+    local bodyB = data.body2
+    local jointType = data.jointType
+
+    local joint
+    if jointType == 'distance' then
+        -- Create a Distance Joint
+        local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
+        local length = data.length or ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
+        joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, false)
+        joint:setLength(length)
+    elseif jointType == 'revolute' then
+        -- Create a Revolute Joint at the first body's position
+        local x, y = bodyA:getPosition()
+        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x, y, false)
+    elseif jointType == 'weld' then
+        -- Create a Weld Joint at the first body's position
+        local x, y = bodyA:getPosition()
+        joint = love.physics.newWeldJoint(bodyA, bodyB, x, y, false)
+    elseif jointType == 'motor' then
+        -- Create a Motor Joint
+        local correctionFactor = data.correctionFactor or 1
+        joint = love.physics.newMotorJoint(bodyA, bodyB, correctionFactor, false)
+        if data.maxForce then
+            joint:setMaxForce(data.maxForce)
+        end
+        if data.maxTorque then
+            joint:setMaxTorque(data.maxTorque)
+        end
+    elseif jointType == 'wheel' then
+        -- Create a Wheel Joint
+        local x, y = bodyA:getPosition()
+        local axisX, axisY = 0, 1 -- Vertical axis
+        joint = love.physics.newWheelJoint(bodyA, bodyB, x, y, axisX, axisY, false)
+        if data.frequency then
+            joint:setSpringFrequency(data.frequency)
+        end
+        if data.dampingRatio then
+            joint:setSpringDampingRatio(data.dampingRatio)
+        end
+    elseif jointType == 'rope' then
+        -- Create a Rope Joint
+        local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
+        local maxLength = data.maxLength or ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
+        joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength, false)
+    elseif jointType == 'pulley' then
+        -- Create a Pulley Joint
+        local x1, y1 = bodyA:getWorldCenter()
+        local x2, y2 = bodyB:getWorldCenter()
+        local gx1, gy1 = x1, y1 - 100
+        local gx2, gy2 = x2, y2 - 100
+        local ratio = data.ratio or 1
+        joint = love.physics.newPulleyJoint(bodyA, bodyB, gx1, gy1, gx2, gy2, x1, y1, x2, y2, ratio, false)
+    elseif jointType == 'friction' then
+        -- Create a Friction Joint
+        local x, y = bodyA:getPosition()
+        joint = love.physics.newFrictionJoint(bodyA, bodyB, x, y, false)
+        if data.maxForce then
+            joint:setMaxForce(data.maxForce)
+        end
+        if data.maxTorque then
+            joint:setMaxTorque(data.maxTorque)
+        end
+    else
+        -- Handle other joints or unimplemented types
+        print("Joint type '" .. jointType .. "' is not implemented yet.")
+        uiState.jointCreationMode = nil
+        return
+    end
+
+    -- Store the joint
+    worldState.joints = worldState.joints or {}
+    table.insert(worldState.joints, joint)
+
+    -- Clear joint creation mode
+    uiState.jointCreationMode = nil
+end
+
 function finalizeSpawn()
     if uiState.currentlyDraggingObject then
         uiState.currentlyDraggingObject.body:setAwake(true)
@@ -234,6 +324,23 @@ function drawUI()
                     ui.draggingActive = nil
                 end
             end
+
+            local width = panelWidth - 20
+            local height = buttonHeight
+            x, y = ui.nextLayoutPosition(layout, width, height)
+            local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 50, uiState.minPointDistance or 10)
+            ui.label(x, y, 'dis')
+            if minDist then
+                uiState.minPointDistance = minDist
+            end
+
+            -- Add a button for custom polygon
+            x, y = ui.nextLayoutPosition(layout, width, height)
+            if ui.button(x, y, width, 'custom') then
+                uiState.isDrawingPolygon = true
+                uiState.polygonVertices = {}
+                uiState.lastPolygonPoint = nil
+            end
         end)
     end
 
@@ -243,8 +350,10 @@ function drawUI()
     end
 
     if uiState.addJointOpened then
-        local jointTypes = { 'distance', 'friction', 'gear', 'mouse', 'prismatic', 'pulley', 'revolute', 'rope', 'weld',
+        --'gear'
+        local jointTypes = { 'distance', 'friction', 'prismatic', 'pulley', 'revolute', 'rope', 'weld',
             'motor', 'wheel' }
+        --local jointTypes = { 'distance', 'revolute', 'weld', 'prismatic', 'motor' }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230
         local startY = 70
@@ -264,7 +373,10 @@ function drawUI()
                 local width = panelWidth - 20
                 local height = buttonHeight
                 local x, y = ui.nextLayoutPosition(layout, width, height)
-                ui.button(x, y, width, joint)
+                local jointStarted = ui.button(x, y, width, joint)
+                if jointStarted then
+                    uiState.jointCreationMode = { body1 = nil, body2 = nil, jointType = joint }
+                end
             end
         end)
     end
@@ -354,6 +466,130 @@ function drawUI()
         end)
     end
 
+    if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
+        ui.panel(500, 100, 300, 400, 'Configure Joint', function()
+            local x = 510
+            local y = 130
+            local width = 280
+            local jointType = uiState.jointCreationMode.jointType
+            y = y + 50
+            -- Joint-specific configurations
+            if jointType == 'distance' then
+                -- Length
+                local x1, y1 = uiState.jointCreationMode.body1:getPosition()
+                local x2, y2 = uiState.jointCreationMode.body2:getPosition()
+                local defaultLength = ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
+                local length = ui.sliderWithInput('length', x, y, 160, 0.1, 500,
+                    uiState.jointCreationMode.length or defaultLength)
+                ui.label(x, y, 'Length')
+                if length then
+                    uiState.jointCreationMode.length = length
+                end
+                y = y + 60
+            elseif jointType == 'motor' then
+                -- Max Force
+                local maxForce = ui.sliderWithInput('maxForce', x, y, 160, 0, 10000,
+                    uiState.jointCreationMode.maxForce or 1000)
+                ui.label(x, y, 'Max Force')
+                if maxForce then
+                    uiState.jointCreationMode.maxForce = maxForce
+                end
+                y = y + 60
+                -- Max Torque
+                local maxTorque = ui.sliderWithInput('maxTorque', x, y, 160, 0, 10000,
+                    uiState.jointCreationMode.maxTorque or 1000)
+                ui.label(x, y, 'Max Torque')
+                if maxTorque then
+                    uiState.jointCreationMode.maxTorque = maxTorque
+                end
+                y = y + 60
+                -- Correction Factor
+                local correctionFactor = ui.sliderWithInput('correctionFactor', x, y, 160, 0, 1,
+                    uiState.jointCreationMode.correctionFactor or 1)
+                ui.label(x, y, 'Correction')
+                if correctionFactor then
+                    uiState.jointCreationMode.correctionFactor = correctionFactor
+                end
+                y = y + 60
+            elseif jointType == 'wheel' then
+                -- Frequency
+                local frequency = ui.sliderWithInput('frequency', x, y, 160, 0, 10,
+                    uiState.jointCreationMode.frequency or 5)
+                ui.label(x, y, 'Frequency')
+                if frequency then
+                    uiState.jointCreationMode.frequency = frequency
+                end
+                y = y + 60
+                -- Damping Ratio
+                local dampingRatio = ui.sliderWithInput('damping', x, y, 160, 0, 1,
+                    uiState.jointCreationMode.dampingRatio or 0.7)
+                ui.label(x, y, 'Damping')
+                if dampingRatio then
+                    uiState.jointCreationMode.dampingRatio = dampingRatio
+                end
+                y = y + 60
+            elseif jointType == 'rope' then
+                -- Max Length
+                local x1, y1 = uiState.jointCreationMode.body1:getPosition()
+                local x2, y2 = uiState.jointCreationMode.body2:getPosition()
+                local defaultLength = ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
+                local maxLength = ui.sliderWithInput('maxLength', x, y, 160, 0.1, 500,
+                    uiState.jointCreationMode.maxLength or defaultLength)
+                ui.label(x, y, 'Max Length')
+                if maxLength then
+                    uiState.jointCreationMode.maxLength = maxLength
+                end
+                y = y + 60
+            elseif jointType == 'pulley' then
+                -- Ratio
+                local ratio = ui.sliderWithInput('ratio', x, y, 160, 0.1, 10, uiState.jointCreationMode.ratio or 1)
+                ui.label(x, y, 'Ratio')
+                if ratio then
+                    uiState.jointCreationMode.ratio = ratio
+                end
+                y = y + 60
+            elseif jointType == 'friction' then
+                -- Max Force
+                local maxForce = ui.sliderWithInput('maxForce', x, y, 160, 0, 1000,
+                    uiState.jointCreationMode.maxForce or 10)
+                ui.label(x, y, 'Max Force')
+                if maxForce then
+                    uiState.jointCreationMode.maxForce = maxForce
+                end
+                y = y + 60
+                -- Max Torque
+                local maxTorque = ui.sliderWithInput('maxTorque', x, y, 160, 0, 1000,
+                    uiState.jointCreationMode.maxTorque or 10)
+                ui.label(x, y, 'Max Torque')
+                if maxTorque then
+                    uiState.jointCreationMode.maxTorque = maxTorque
+                end
+                y = y + 60
+            end
+
+            -- "Create Joint" and "Cancel" Buttons
+            y = y + 50
+            if ui.button(x, y, width, 'Create Joint') then
+                createJoint(uiState.jointCreationMode)
+                uiState.jointCreationMode = nil
+            end
+            y = y + 50
+            if ui.button(x, y, width, 'Cancel') then
+                uiState.jointCreationMode = nil
+            end
+        end)
+    end
+
+    if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
+        if (uiState.jointCreationMode.body1 == nil) then
+            ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
+            end)
+        elseif (uiState.jointCreationMode.body2 == nil) then
+            ui.panel(500, 100, 300, 100, '• pick 2nd body •', function()
+            end)
+        end
+    end
+
     if ui.draggingActive then
         love.graphics.setColor(ui.theme.draggedElement.fill)
         local x, y = love.mouse.getPosition()
@@ -368,6 +604,18 @@ function love.draw()
     phys.drawWorld(world)
     if (uiState.currentlySelectedObject) then
         --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
+    end
+    if uiState.isDrawingPolygon then
+        --print(inspect(uiState.polygonVertices))
+        if (#uiState.polygonVertices > 3) then
+            local polygon = {}
+            for i = 1, #uiState.polygonVertices do
+                table.insert(polygon, uiState.polygonVertices[i].x)
+                table.insert(polygon, uiState.polygonVertices[i].y)
+            end
+            --print(inspect(polygon))
+            love.graphics.polygon('line', polygon)
+        end
     end
     cam:pop()
     drawUI()
@@ -387,7 +635,24 @@ function love.wheelmoved(dx, dy)
 end
 
 function love.mousemoved(x, y, dx, dy)
-    if love.keyboard.isDown('space') or love.mouse.isDown(3) then
+    if uiState.isCapturingPolygon then
+        local wx, wy = cam:getWorldCoordinates(x, y)
+        -- Check if the distance from the last point is greater than minPointDistance
+        local addPoint = false
+        if not uiState.lastPolygonPoint then
+            addPoint = true
+        else
+            local lastX, lastY = uiState.lastPolygonPoint.x, uiState.lastPolygonPoint.y
+            local distSq = (wx - lastX) ^ 2 + (wy - lastY) ^ 2
+            if distSq >= (uiState.minPointDistance / cam.scale) ^ 2 then
+                addPoint = true
+            end
+        end
+        if addPoint then
+            table.insert(uiState.polygonVertices, { x = wx, y = wy })
+            uiState.lastPolygonPoint = { x = wx, y = wy }
+        end
+    elseif love.keyboard.isDown('space') or love.mouse.isDown(3) then
         local tx, ty = cam:getTranslation()
         cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
     end
@@ -415,11 +680,23 @@ local function pointerPressed(x, y, id)
     if #hitted > 0 then
         uiState.currentlySelectedObject = hitted[1]
         if (worldState.paused) then
-            local ud = uiState.currentlySelectedObject:getBody():getUserData()
-            uiState.currentlyDraggingObject = ud.thing
+            if uiState.jointCreationMode then
+                if uiState.jointCreationMode.body1 == nil then
+                    print('setting body 1')
+                    uiState.jointCreationMode.body1 = uiState.currentlySelectedObject:getBody()
+                elseif uiState.jointCreationMode.body2 == nil then
+                    if (uiState.currentlySelectedObject:getBody() ~= uiState.jointCreationMode.body1) then
+                        print('setting body 2')
+                        uiState.jointCreationMode.body2 = uiState.currentlySelectedObject:getBody()
+                    end
+                end
+            else
+                local ud = uiState.currentlySelectedObject:getBody():getUserData()
+                uiState.currentlyDraggingObject = ud.thing
 
-            local offx, offy = ud.thing.body:getLocalPoint(cx, cy)
-            uiState.offsetForCurrentlyDragging = { -offx, -offy }
+                local offx, offy = ud.thing.body:getLocalPoint(cx, cy)
+                uiState.offsetForCurrentlyDragging = { -offx, -offy }
+            end
         end
     else
         uiState.maybeHideSelectedPanel = true
@@ -428,7 +705,14 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if not istouch and button == 1 then
-        pointerPressed(x, y, 'mouse')
+        if uiState.isDrawingPolygon then
+            -- Start capturing mouse movement
+            uiState.isCapturingPolygon = true
+            uiState.polygonVertices = {}
+            uiState.lastPolygonPoint = nil
+        else
+            pointerPressed(x, y, 'mouse')
+        end
     end
 end
 
@@ -436,10 +720,80 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
     pointerPressed(x, y, id)
 end
 
+function createPolygonShape(vertices)
+    -- Convert vertices to a format suitable for love.math.triangulate()
+    local polygon = {}
+    for _, vertex in ipairs(vertices) do
+        table.insert(polygon, vertex.x)
+        table.insert(polygon, vertex.y)
+    end
+
+    -- Triangulate the polygon
+    local triangles = love.math.triangulate(polygon)
+
+    if #triangles == 0 then
+        print("Failed to triangulate polygon.")
+        return
+    end
+
+    -- Create the physics body
+    local bodyType = uiState.bodyTypeOfNextSpawn or 'dynamic'
+    -- Compute centroid for body position
+    local centroidX, centroidY = computeCentroid(vertices)
+    local body = love.physics.newBody(world, centroidX, centroidY, bodyType)
+
+    -- Create fixtures for each triangle
+    for _, triangle in ipairs(triangles) do
+        -- Adjust triangle vertices relative to body position
+        local localVertices = {}
+        for i = 1, #triangle, 2 do
+            local x = triangle[i] - centroidX
+            local y = triangle[i + 1] - centroidY
+            table.insert(localVertices, x)
+            table.insert(localVertices, y)
+        end
+        local shape = love.physics.newPolygonShape(localVertices)
+        local fixture = love.physics.newFixture(body, shape, 1)
+        fixture:setRestitution(0.3)
+    end
+
+    -- Store the body in your simulation
+    body:setUserData({ thing = { body = body } })
+end
+
+function computeCentroid(vertices)
+    local sumX, sumY = 0, 0
+    for _, vertex in ipairs(vertices) do
+        sumX = sumX + vertex.x
+        sumY = sumY + vertex.y
+    end
+    local count = #vertices
+    return sumX / count, sumY / count
+end
+
+function finalizePolygon()
+    if #uiState.polygonVertices >= 3 then
+        -- Proceed to triangulate and create the physics body
+        createPolygonShape(uiState.polygonVertices)
+    else
+        -- Not enough vertices to form a polygon
+        print("Not enough vertices to create a polygon.")
+    end
+    -- Reset the drawing state
+    uiState.isDrawingPolygon = false
+    uiState.isCapturingPolygon = false
+    uiState.polygonVertices = {}
+    uiState.lastPolygonPoint = nil
+end
+
 local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
     if uiState.currentlyDraggingObject then
         finalizeSpawn()
+    end
+    if uiState.isDrawingPolygon then
+        finalizePolygon()
+        --print('releasde')
     end
 end
 
