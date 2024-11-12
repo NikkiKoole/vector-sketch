@@ -135,7 +135,7 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
     local valueChangeFromOutside = valueHasChangedViaSlider or changed
 
     -- TextInput for numeric input
-    local numericInputText, dirty = ui.textinput(_id, x + w + 10, y, 110, 40, "Enter number...", "" .. value,
+    local numericInputText, dirty = ui.textinput(_id, x + w + 10, y, 90, 40, "Enter number...", "" .. value,
         true, valueChangeFromOutside)
 
 

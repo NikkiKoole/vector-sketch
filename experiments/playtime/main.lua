@@ -25,7 +25,8 @@ function love.load()
         worldSettingsOpened = false,
         maybeHideSelectedPanel = false,
         currentlySelectedObject = nil,
-        currentlySpawningObject = nil,
+        currentlyDraggingObject = nil,
+        offsetForCurrentlyDragging = { nil, nil },
         worldText = ''
     }
 
@@ -37,27 +38,27 @@ function love.load()
     love.physics.setMeter(64)
     world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
     phys.setupWorld(64)
-    objects = {}
-
-    -- Create the ground
-    objects.ground = {}
-    objects.ground.body = love.physics.newBody(world, 325, 625)
-    objects.ground.shape = love.physics.newRectangleShape(650, 50)
-    objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape)
-
-    -- Create a ball
-    objects.ball = {}
-    objects.ball.body = love.physics.newBody(world, 325, 325, "dynamic")
-    objects.ball.body:setSleepingAllowed(false)
-    objects.ball.shape = love.physics.newCircleShape(20)
-    objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
-    objects.ball.fixture:setRestitution(0.9)
 
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 end
 
+local function rotatePoint(x, y, originX, originY, angle)
+    -- Translate the point to the origin
+    local translatedX = x - originX
+    local translatedY = y - originY
+
+    -- Apply rotation
+    local rotatedX = translatedX * math.cos(angle) - translatedY * math.sin(angle)
+    local rotatedY = translatedX * math.sin(angle) + translatedY * math.cos(angle)
+
+    -- Translate back to the original position
+    local finalX = rotatedX + originX
+    local finalY = rotatedY + originY
+
+    return finalX, finalY
+end
 -- Function to generate vertices of a regular polygon
 local function makePolygonVertices(sides, radius)
     local vertices = {}
@@ -143,13 +144,15 @@ function startSpawn(shapeType, mx, my)
     thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
     thing.fixture:setRestitution(0.3)
     thing.body:setAwake(false)
-    uiState.currentlySpawningObject = thing
+    thing.body:setUserData({ thing = thing })
+    uiState.currentlyDraggingObject = thing
+    uiState.offsetForCurrentlyDragging = { 0, 0 }
 end
 
 function finalizeSpawn()
-    if uiState.currentlySpawningObject then
-        uiState.currentlySpawningObject.body:setAwake(true)
-        uiState.currentlySpawningObject = nil
+    if uiState.currentlyDraggingObject then
+        uiState.currentlyDraggingObject.body:setAwake(true)
+        uiState.currentlyDraggingObject = nil
     end
 end
 
@@ -159,10 +162,13 @@ function love.update(dt)
     end
     phys.handleUpdate(dt)
 
-    if uiState.currentlySpawningObject then
+    if uiState.currentlyDraggingObject then
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
-        uiState.currentlySpawningObject.body:setPosition(wx, wy)
+        local offx = uiState.offsetForCurrentlyDragging[1]
+        local offy = uiState.offsetForCurrentlyDragging[2]
+        local rx, ry = rotatePoint(offx, offy, 0, 0, uiState.currentlyDraggingObject.body:getAngle())
+        uiState.currentlyDraggingObject.body:setPosition(wx + rx, wy + ry)
     end
 end
 
@@ -197,7 +203,8 @@ function drawUI()
             })
 
             local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-            local r = ui.sliderWithInput('radius', x, y, 60, 0.1, 150, uiState.radiusOfNextSpawn)
+            local r = ui.sliderWithInput('radius', x, y, 80, 0.1, 150, uiState.radiusOfNextSpawn)
+            ui.label(x, y, ' size')
             if r then
                 uiState.radiusOfNextSpawn = r
             end
@@ -225,7 +232,6 @@ function drawUI()
                 end
                 if released then
                     ui.draggingActive = nil
-                    finalizeSpawn()
                 end
             end
         end)
@@ -316,11 +322,13 @@ function drawUI()
             local body = uiState.currentlySelectedObject:getBody()
             local angleDegrees = body:getAngle() * 180 / math.pi
             local sliderID = tostring(body)
+
             local newAngle = ui.sliderWithInput(sliderID .. 'angle', w - 290, 120, 160, -180, 180, angleDegrees,
                 body:isAwake() and not worldState.paused)
             if newAngle and angleDegrees ~= newAngle then
                 body:setAngle(newAngle * math.pi / 180)
             end
+            ui.label(w - 290, 120, ' angle')
 
             local fixtures = body:getFixtures()
             if #fixtures == 1 then
@@ -329,18 +337,19 @@ function drawUI()
                 if newDensity and density ~= newDensity then
                     fixtures[1]:setDensity(newDensity)
                 end
-
+                ui.label(w - 290, 180, ' density')
                 local bounciness = fixtures[1]:getRestitution()
                 local newBounce = ui.sliderWithInput(sliderID .. 'bounciness', w - 290, 240, 160, 0, 1, bounciness)
                 if newBounce and bounciness ~= newBounce then
                     fixtures[1]:setRestitution(newBounce)
                 end
-
+                ui.label(w - 290, 240, ' bounce')
                 local friction = fixtures[1]:getFriction()
                 local newFriction = ui.sliderWithInput(sliderID .. 'friction', w - 290, 300, 160, 0, 1, friction)
                 if newFriction and friction ~= newFriction then
                     fixtures[1]:setFriction(newFriction)
                 end
+                ui.label(w - 290, 300, ' friction')
             end
         end)
     end
@@ -357,6 +366,9 @@ function love.draw()
     love.graphics.clear(20 / 255, 5 / 255, 20 / 255)
     cam:push()
     phys.drawWorld(world)
+    if (uiState.currentlySelectedObject) then
+        --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
+    end
     cam:pop()
     drawUI()
     if uiState.maybeHideSelectedPanel then
@@ -399,9 +411,16 @@ local function pointerPressed(x, y, id)
             return 50000
         end
     }
-    local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
+    local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
     if #hitted > 0 then
         uiState.currentlySelectedObject = hitted[1]
+        if (worldState.paused) then
+            local ud = uiState.currentlySelectedObject:getBody():getUserData()
+            uiState.currentlyDraggingObject = ud.thing
+
+            local offx, offy = ud.thing.body:getLocalPoint(cx, cy)
+            uiState.offsetForCurrentlyDragging = { -offx, -offy }
+        end
     else
         uiState.maybeHideSelectedPanel = true
     end
@@ -419,6 +438,9 @@ end
 
 local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
+    if uiState.currentlyDraggingObject then
+        finalizeSpawn()
+    end
 end
 
 function love.mousereleased(x, y, button, istouch)

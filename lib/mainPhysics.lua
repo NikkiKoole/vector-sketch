@@ -312,6 +312,56 @@ lib.resetLists = function()
     pointerJoints = {}
 end
 
+lib.drawSelected = function(body)
+    local fixtures = body:getFixtures()
+    local r, g, b, a = love.graphics.getColor()
+    local alpha = 1 * ((math.sin(love.timer.getTime() * 10) + 1) / 2)
+
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(lw)
+    for _, fixture in ipairs(fixtures) do
+        --if fixture:getUserData() then
+        --     print(inspect(fixture:getUserData()))
+        --end
+        if fixture:getShape():type() == 'PolygonShape' then
+            local color = getBodyColor(body)
+            love.graphics.setColor(color[1], color[2], color[3], alpha)
+            if (fixture:getUserData()) then
+                if fixture:getUserData().bodyType == "connector" then
+                    love.graphics.setColor(1, 0, 0, alpha)
+                end
+            end
+            love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+            love.graphics.setColor(1, 1, 1, alpha)
+            if (fixture:getUserData()) then
+                if fixture:getUserData().bodyType == "connector" then
+                    love.graphics.setColor(1, 0, 0, alpha)
+                end
+                --  print(inspect(fixture:getUserData() ))
+            end
+            love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
+        elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
+            love.graphics.setColor(1, 1, 1, alpha)
+            local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
+            for i = 1, #points, 2 do
+                if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
+            end
+        elseif fixture:getShape():type() == 'CircleShape' then
+            local body_x, body_y = body:getPosition()
+            local shape_x, shape_y = fixture:getShape():getPoint()
+            local r = fixture:getShape():getRadius()
+            local color = getBodyColor(body)
+            love.graphics.setColor(color[1], color[2], color[3], alpha)
+            love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, 360)
+            love.graphics.setColor(1, 1, 1, alpha)
+            love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360)
+        end
+    end
+
+    love.graphics.setColor(r, g, b, a)
+    love.graphics.setLineWidth(lw)
+end
+
 lib.drawWorld = function(world)
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8
@@ -467,7 +517,8 @@ end
 
 
 
-lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
+lib.handlePointerPressed = function(wx, wy, id, onPressedParams, allowMouseJointMaking)
+    if allowMouseJointMaking == nil then allowMouseJointMaking = true end
     -- local wx, wy = cam:getWorldCoordinates(x, y)
     --
     if false then
@@ -524,8 +575,9 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
         if onPressedParams and onPressedParams.pointerForceFunc then
             force = onPressedParams.pointerForceFunc(temp[1].fixture)
         end
-
-        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force))
+        if (allowMouseJointMaking) then
+            table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force))
+        end
     end
     -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end
