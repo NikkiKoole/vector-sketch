@@ -5,7 +5,7 @@ local ui = require 'ui-all'
 local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 local phys = require 'lib.mainPhysics'
-
+local decompose = require 'decompose'
 function love.load()
     -- Load and set the font
     local font = love.graphics.newFont('cooper_bold_bt.ttf', 32)
@@ -18,6 +18,7 @@ function love.load()
     bodyTypes = { 'dynamic', 'kinematic', 'static' }
 
     uiState = {
+        showGrid = false,
         radiusOfNextSpawn = 20,
         bodyTypeOfNextSpawn = 'dynamic',
         addShapeOpened = false,
@@ -36,11 +37,12 @@ function love.load()
     }
 
     worldState = {
+        meter = 200,
         paused = true,
         gravity = 9.81
     }
 
-    love.physics.setMeter(64)
+    love.physics.setMeter(worldState.meter)
     world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
     phys.setupWorld(64)
 
@@ -284,12 +286,12 @@ function drawUI()
         local buttonHeight = ui.theme.button.height
         local panelHeight = titleHeight + ((#shapeTypes + 4) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
-        ui.panel(startX, startY, panelWidth, panelHeight, 'drag »', function()
+        ui.panel(startX, startY, panelWidth, panelHeight, '', function()
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = buttonSpacing,
                 startX = startX + 10,
-                startY = startY + titleHeight + 10
+                startY = startY + 10
             })
 
             local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
@@ -328,7 +330,7 @@ function drawUI()
             local width = panelWidth - 20
             local height = buttonHeight
             x, y = ui.nextLayoutPosition(layout, width, height)
-            local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 50, uiState.minPointDistance or 10)
+            local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150, uiState.minPointDistance or 10)
             ui.label(x, y, 'dis')
             if minDist then
                 uiState.minPointDistance = minDist
@@ -362,12 +364,12 @@ function drawUI()
         local buttonHeight = ui.theme.button.height
         local panelHeight = titleHeight + (#jointTypes * (buttonHeight + buttonSpacing)) + buttonSpacing
 
-        ui.panel(startX, startY, panelWidth, panelHeight, 'drag »', function()
+        ui.panel(startX, startY, panelWidth, panelHeight, '', function()
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = buttonSpacing,
                 startX = startX + 10,
-                startY = startY + titleHeight + 10
+                startY = startY + 10
             })
             for _, joint in ipairs(jointTypes) do
                 local width = panelWidth - 20
@@ -414,7 +416,11 @@ function drawUI()
                     world:setGravity(0, worldState.gravity * love.physics.getMeter())
                 end
             end
-
+            x, y = ui.nextLayoutPosition(layout, width, 50)
+            local g, value = ui.checkbox(x, y, uiState.showGrid, 'grid') --showGrid = true,
+            if g then
+                uiState.showGrid = value
+            end
             x, y = ui.nextLayoutPosition(layout, width, 50)
             local t = ui.textinput('worldText', x, y, 280, 200, 'add text...', uiState.worldText)
             if t then
@@ -430,7 +436,7 @@ function drawUI()
 
     -- Properties Panel
     if uiState.currentlySelectedObject then
-        ui.panel(w - 300, 60, 280, h - 80, '∞ Properties ∞', function()
+        ui.panel(w - 300, 20, 280, h - 40, '∞ Properties ∞', function()
             local body = uiState.currentlySelectedObject:getBody()
             local angleDegrees = body:getAngle() * 180 / math.pi
             local sliderID = tostring(body)
@@ -443,23 +449,29 @@ function drawUI()
             ui.label(w - 290, 120, ' angle')
 
             local fixtures = body:getFixtures()
-            if #fixtures == 1 then
+            if #fixtures >= 1 then
                 local density = fixtures[1]:getDensity()
                 local newDensity = ui.sliderWithInput(sliderID .. 'density', w - 290, 180, 160, 0, 10, density)
                 if newDensity and density ~= newDensity then
-                    fixtures[1]:setDensity(newDensity)
+                    for i = 1, #fixtures do
+                        fixtures[i]:setDensity(newDensity)
+                    end
                 end
                 ui.label(w - 290, 180, ' density')
                 local bounciness = fixtures[1]:getRestitution()
                 local newBounce = ui.sliderWithInput(sliderID .. 'bounciness', w - 290, 240, 160, 0, 1, bounciness)
                 if newBounce and bounciness ~= newBounce then
-                    fixtures[1]:setRestitution(newBounce)
+                    for i = 1, #fixtures do
+                        fixtures[i]:setRestitution(newBounce)
+                    end
                 end
                 ui.label(w - 290, 240, ' bounce')
                 local friction = fixtures[1]:getFriction()
                 local newFriction = ui.sliderWithInput(sliderID .. 'friction', w - 290, 300, 160, 0, 1, friction)
                 if newFriction and friction ~= newFriction then
-                    fixtures[1]:setFriction(newFriction)
+                    for i = 1, #fixtures do
+                        fixtures[i]:setFriction(newFriction)
+                    end
                 end
                 ui.label(w - 290, 300, ' friction')
             end
@@ -583,9 +595,21 @@ function drawUI()
     if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
         if (uiState.jointCreationMode.body1 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
+                local x = 510
+                local y = 150
+                local width = 280
+                if ui.button(x, y, width, 'Cancel') then
+                    uiState.jointCreationMode = nil
+                end
             end)
         elseif (uiState.jointCreationMode.body2 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 2nd body •', function()
+                local x = 510
+                local y = 150
+                local width = 280
+                if ui.button(x, y, width, 'Cancel') then
+                    uiState.jointCreationMode = nil
+                end
             end)
         end
     end
@@ -599,7 +623,34 @@ function drawUI()
 end
 
 function love.draw()
+    local w, h = love.graphics.getDimensions()
     love.graphics.clear(20 / 255, 5 / 255, 20 / 255)
+    if uiState.showGrid then
+        local lw = love.graphics.getLineWidth()
+        love.graphics.setLineWidth(1)
+        love.graphics.setColor(1, 1, 1, .1)
+        local w, h = love.graphics.getDimensions()
+        local tlx, tly = cam:getWorldCoordinates(0, 0)
+        local brx, bry = cam:getWorldCoordinates(w, h)
+        local step = worldState.meter
+        local roundedStartX = math.floor(tlx / step) * step
+        local roundedEndX = math.ceil(brx / step) * step
+        local roundedStartY = math.floor(tly / step) * step
+        local roundedEndY = math.ceil(bry / step) * step
+
+        for i = roundedStartX, roundedEndX, step do
+            local x, _ = cam:getScreenCoordinates(i, 0)
+            love.graphics.line(x, 0, x, h)
+        end
+        for i = roundedStartY, roundedEndY, step do
+            local _, y = cam:getScreenCoordinates(0, i)
+
+            love.graphics.line(0, y, w, y)
+        end
+        love.graphics.setLineWidth(lw)
+        love.graphics.setColor(1, 1, 1, 1)
+        --print(w)
+    end
     cam:push()
     phys.drawWorld(world)
     if (uiState.currentlySelectedObject) then
@@ -625,6 +676,7 @@ function love.draw()
         end
         uiState.maybeHideSelectedPanel = false
     end
+    love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
 end
 
 function love.wheelmoved(dx, dy)
@@ -720,17 +772,35 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
     pointerPressed(x, y, id)
 end
 
+local function tableConcat(t1, t2)
+    for i = 1, #t2 do
+        table.insert(t1, t2[i])
+    end
+    return t1
+end
 function createPolygonShape(vertices)
     -- Convert vertices to a format suitable for love.math.triangulate()
+
     local polygon = {}
     for _, vertex in ipairs(vertices) do
         table.insert(polygon, vertex.x)
         table.insert(polygon, vertex.y)
     end
 
-    -- Triangulate the polygon
-    local triangles = love.math.triangulate(polygon)
+    local allowComplex = true -- todo parametrize this
+    local triangles
 
+    if allowComplex then
+        local result = {}
+        decompose.decompose_complex_poly(polygon, result)
+        triangles = {}
+        for i = 1, #result do
+            local tris = love.math.triangulate(result[i])
+            tableConcat(triangles, tris)
+        end
+    else
+        triangles = love.math.triangulate(polygon)
+    end
     if #triangles == 0 then
         print("Failed to triangulate polygon.")
         return
