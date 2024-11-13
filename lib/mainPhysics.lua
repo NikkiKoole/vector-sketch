@@ -362,6 +362,107 @@ lib.drawSelected = function(body)
     love.graphics.setLineWidth(lw)
 end
 
+
+-- Joint Draw Functions
+local function drawDistanceJoint(joint)
+    local x1, y1, x2, y2 = joint:getAnchors()
+    love.graphics.setColor(0, 1, 0) -- Green
+    love.graphics.line(x1, y1, x2, y2)
+    love.graphics.print(string.format("Length: %.2f", joint:getLength()), (x1 + x2) / 2, (y1 + y2) / 2)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawRevoluteJoint(joint)
+    local x, y = joint:getAnchors()
+    love.graphics.setColor(0, 0, 1) -- Blue
+    love.graphics.circle('line', x, y, 10)
+    if joint:isLimitEnabled() then
+        local lower = joint:getLowerLimit()
+        local upper = joint:getUpperLimit()
+        love.graphics.arc('line', x, y, 15, lower, upper)
+    end
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawPrismaticJoint(joint)
+    local x, y = joint:getAnchors()
+    local ax, ay = joint:getAxis()
+    local length = 50
+    love.graphics.setColor(1, 0.5, 0) -- Orange
+    love.graphics.line(x, y, x + ax * length, y + ay * length)
+    if joint:isLimitEnabled() then
+        local lower, upper = joint:getLimits()
+        love.graphics.setColor(1, 1, 0) -- Yellow
+        love.graphics.line(x + ax * lower, y + ay * lower, x + ax * lower + ax * 10, y + ay * lower + ay * 10)
+        love.graphics.line(x + ax * upper, y + ay * upper, x + ax * upper + ax * 10, y + ay * upper + ay * 10)
+    end
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawWheelJoint(joint)
+    local x, y = joint:getAnchors()
+    local ax, ay = joint:getAxis()
+    local length = 50
+    love.graphics.setColor(1, 0.5, 0) -- Orange
+    love.graphics.line(x, y, x + ax * length, y + ay * length)
+    love.graphics.circle('line', x, y, 10)
+    local frequency = joint:getSpringFrequency()
+    local damping = joint:getSpringDampingRatio()
+    love.graphics.print(string.format("Freq: %.2f", frequency), x + ax * 60, y + ay * 60)
+    love.graphics.print(string.format("Damp: %.2f", damping), x + ax * 60, y + ay * 70)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawPulleyJoint(joint)
+    local gx1, gy1, gx2, gy2 = joint:getGroundAnchors()
+    local x1, y1 = joint:getAnchors()
+    love.graphics.setColor(1, 0, 1) -- Purple
+    love.graphics.circle('fill', gx1, gy1, 5)
+    love.graphics.circle('fill', gx2, gy2, 5)
+    love.graphics.line(gx1, gy1, x1, y1)
+    love.graphics.line(gx2, gy2, x1, y1)
+    love.graphics.print(string.format("Ratio: %.2f", joint:getRatio()), x1, y1)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawWeldJoint(joint)
+    local x, y = joint:getAnchors()
+    love.graphics.setColor(0, 1, 1) -- Cyan
+    love.graphics.circle('fill', x, y, 5)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawMotorJoint(joint)
+    local x1, y1, x2, y2 = joint:getAnchors()
+    love.graphics.setColor(1, 0.5, 0.5) -- Light Red
+    love.graphics.line(x1, y1, x2, y2)
+    local velocity = joint:getLinearVelocity()
+    love.graphics.setColor(1, 0, 0) -- Red
+    love.graphics.line(x2, y2, x2 + velocity.x, y2 + velocity.y)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawRopeJoint(joint)
+    local x1, y1 = joint:getAnchors()
+    local x2, y2 = joint:getOtherAnchor()
+    love.graphics.setColor(1, 1, 0)     -- Yellow
+    love.graphics.setLineStyle('rough') -- Dashed approximation
+    love.graphics.line(x1, y1, x2, y2)
+    love.graphics.setLineStyle('smooth')
+    love.graphics.print(string.format("Max Length: %.2f", joint:getMaxLength()), (x1 + x2) / 2, (y1 + y2) / 2)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+local function drawFrictionJoint(joint)
+    local x1, y1 = joint:getAnchors()
+    local x2, y2 = joint:getOtherAnchor()
+    love.graphics.setColor(0.5, 0, 0.5) -- Dark Purple
+    love.graphics.circle('fill', x1, y1, 5)
+    love.graphics.circle('fill', x2, y2, 5)
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+
 lib.drawWorld = function(world)
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8
@@ -425,6 +526,16 @@ lib.drawWorld = function(world)
         love.graphics.setColor(1, 0, 0, alpha)
         if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
         if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
+
+
+        local jointType = joint:getType()
+        if jointType == 'pulley' then
+            local gx1, gy1, gx2, gy2 = joint:getGroundAnchors()
+            love.graphics.setColor(1, 1, 0, alpha)
+            love.graphics.line(x1, y1, gx1, gy1)
+            love.graphics.line(x2, y2, gx2, gy2)
+            love.graphics.line(gx1, gy1, gx2, gy2)
+        end
     end
     love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
