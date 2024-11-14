@@ -558,9 +558,6 @@ function drawUI()
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
         ui.panel(500, 100, 300, 400, uiState.jointCreationMode.jointType .. ' joint', function()
-            --    local x = 510
-            --    local y = 130
-
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = 10,
@@ -568,12 +565,10 @@ function drawUI()
                 startY = 100 + 10
             })
 
-
             local width = 280
             local jointType = uiState.jointCreationMode.jointType
             local x, y = ui.nextLayoutPosition(layout, 160, 50)
-            -- y = y + 50
-            -- Joint-specific configurations
+
             if jointType == 'distance' then
                 -- Length
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
@@ -586,9 +581,7 @@ function drawUI()
                 if length then
                     uiState.jointCreationMode.length = length
                 end
-                -- y = y + 60
             elseif jointType == 'motor' then
-                -- Max Force
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
                 local maxForce = ui.sliderWithInput('maxForce', x, y, 160, 0, 10000,
                     uiState.jointCreationMode.maxForce or 1000)
@@ -596,8 +589,7 @@ function drawUI()
                 if maxForce then
                     uiState.jointCreationMode.maxForce = maxForce
                 end
-                --y = y + 60
-                -- Max Torque
+
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
                 local maxTorque = ui.sliderWithInput('maxTorque', x, y, 160, 0, 10000,
                     uiState.jointCreationMode.maxTorque or 1000)
@@ -606,15 +598,13 @@ function drawUI()
                     uiState.jointCreationMode.maxTorque = maxTorque
                 end
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
-                -- y = y + 60
-                -- Correction Factor
+
                 local correctionFactor = ui.sliderWithInput('correctionFactor', x, y, 160, 0, 1,
                     uiState.jointCreationMode.correctionFactor or 1)
                 ui.label(x, y, 'Correction')
                 if correctionFactor then
                     uiState.jointCreationMode.correctionFactor = correctionFactor
                 end
-                --y = y + 60
             elseif jointType == 'wheel' then
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
                 -- Frequency
@@ -838,11 +828,9 @@ local function pointerPressed(x, y, id)
         if (worldState.paused) then
             if uiState.jointCreationMode then
                 if uiState.jointCreationMode.body1 == nil then
-                    print('setting body 1')
                     uiState.jointCreationMode.body1 = uiState.currentlySelectedObject:getBody()
                 elseif uiState.jointCreationMode.body2 == nil then
                     if (uiState.currentlySelectedObject:getBody() ~= uiState.jointCreationMode.body1) then
-                        print('setting body 2')
                         uiState.jointCreationMode.body2 = uiState.currentlySelectedObject:getBody()
                     end
                 end
