@@ -6,6 +6,7 @@ local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 local phys = require 'lib.mainPhysics'
 local decompose = require 'decompose'
+
 function love.load()
     -- Load and set the font
     local font = love.graphics.newFont('cooper_bold_bt.ttf', 32)
@@ -49,6 +50,65 @@ function love.load()
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
+
+    addShape('rectangle', 300, 400, 'dynamic', 100)
+    addShape('rectangle', 600, 400, 'dynamic', 100)
+end
+
+-- Function to add a shape to the stage
+function addShape(shapeType, x, y, bodyType, size)
+    -- Default values if not provided
+    bodyType = bodyType or 'dynamic'
+    size = size or 20 -- Default size if not specified
+
+    -- Create a new table to store the shape's properties
+    local thing = {}
+
+    -- Create the physics body at the specified world coordinates
+    thing.body = love.physics.newBody(world, x, y, bodyType)
+
+    -- Create the shape based on the shapeType
+    if shapeType == 'circle' then
+        thing.shape = love.physics.newCircleShape(size)
+    elseif shapeType == 'rectangle' then
+        thing.shape = love.physics.newRectangleShape(size * 2, size * 2)
+    elseif shapeType == 'capsule' then
+        local w = size
+        local h = size * 2
+        local vertices = capsuleXY(w, h, w / 5, 0, 0)
+        thing.shape = love.physics.newPolygonShape(vertices)
+    elseif shapeType == 'trapezium' then
+        local w = size
+        local h = size * 2
+        local vertices = makeTrapezium(w, w * 1.2, h, 0, 0)
+        thing.shape = love.physics.newPolygonShape(vertices)
+    else
+        -- Handle regular polygons (triangle, pentagon, etc.)
+        local sides = ({
+            triangle = 3,
+            pentagon = 5,
+            hexagon = 6,
+            heptagon = 7,
+            octagon = 8,
+        })[shapeType]
+
+        if sides then
+            local vertices = makePolygonVertices(sides, size)
+            thing.shape = love.physics.newPolygonShape(vertices)
+        else
+            error("Unknown shape type: " .. tostring(shapeType))
+        end
+    end
+
+    -- Create the fixture and attach it to the body
+    thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
+    thing.fixture:setRestitution(0.3) -- Set bounciness
+
+    -- Set the body to sleep initially
+    thing.body:setAwake(true)
+
+    -- Store the 'thing' in the body's user data for easy access
+    thing.body:setUserData({ thing = thing })
 end
 
 local function rotatePoint(x, y, originX, originY, angle)
@@ -156,10 +216,6 @@ function startSpawn(shapeType, mx, my)
     uiState.offsetForCurrentlyDragging = { 0, 0 }
 end
 
--- function createJoint(data)
---     print(inspect(data))
---     uiState.jointCreationMode = nil
--- end
 function createJoint(data)
     local bodyA = data.body1
     local bodyB = data.body2
@@ -764,6 +820,7 @@ function love.draw()
     end
     cam:pop()
     drawUI()
+
     if uiState.maybeHideSelectedPanel then
         if not (ui.activeElementID or ui.focusedTextInputID) then
             uiState.currentlySelectedObject = nil
@@ -870,6 +927,7 @@ local function tableConcat(t1, t2)
     end
     return t1
 end
+
 function createPolygonShape(vertices)
     -- Convert vertices to a format suitable for love.math.triangulate()
 
