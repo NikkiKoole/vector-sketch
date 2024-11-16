@@ -1,15 +1,19 @@
 -- main.lua
 package.path = package.path .. ";../../?.lua"
-local inspect = require 'inspect'
-local ui = require 'ui-all'
+
+local inspect = require 'vendor.inspect'
+
 local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 local phys = require 'lib.mainPhysics'
-local decompose = require 'decompose'
+
+local ui = require 'src.ui-all'
+local decompose = require 'src.decompose'
+local joint = require 'src.joints'
 
 function love.load()
     -- Load and set the font
-    local font = love.graphics.newFont('cooper_bold_bt.ttf', 32)
+    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 32)
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 
@@ -40,7 +44,9 @@ function love.load()
     worldState = {
         meter = 200,
         paused = true,
-        gravity = 9.81
+        gravity = 9.81,
+        mouseForce = 500000,
+        mouseDamping = 0.5
     }
 
     love.physics.setMeter(worldState.meter)
@@ -53,6 +59,7 @@ function love.load()
 
     addShape('rectangle', 300, 400, 'dynamic', 100)
     addShape('rectangle', 600, 400, 'dynamic', 100)
+    addShape('rectangle', 450, 800, 'static', 200)
 end
 
 -- Function to add a shape to the stage
@@ -216,87 +223,6 @@ function startSpawn(shapeType, mx, my)
     uiState.offsetForCurrentlyDragging = { 0, 0 }
 end
 
-function createJoint(data)
-    local bodyA = data.body1
-    local bodyB = data.body2
-    local jointType = data.jointType
-
-    local joint
-    if jointType == 'distance' then
-        -- Create a Distance Joint
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
-        local length = data.length or ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
-        joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, false)
-        joint:setLength(length)
-    elseif jointType == 'revolute' then
-        -- Create a Revolute Joint at the first body's position
-        local x, y = bodyA:getPosition()
-        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x, y, false)
-    elseif jointType == 'weld' then
-        -- Create a Weld Joint at the first body's position
-        local x, y = bodyA:getPosition()
-        joint = love.physics.newWeldJoint(bodyA, bodyB, x, y, false)
-    elseif jointType == 'motor' then
-        -- Create a Motor Joint
-        local correctionFactor = data.correctionFactor or 1
-        joint = love.physics.newMotorJoint(bodyA, bodyB, correctionFactor, false)
-        if data.maxForce then
-            joint:setMaxForce(data.maxForce)
-        end
-        if data.maxTorque then
-            joint:setMaxTorque(data.maxTorque)
-        end
-    elseif jointType == 'wheel' then
-        -- Create a Wheel Joint
-        local x, y = bodyA:getPosition()
-        local axisX, axisY = 0, 1 -- Vertical axis
-        joint = love.physics.newWheelJoint(bodyA, bodyB, x, y, axisX, axisY, false)
-        if data.frequency then
-            joint:setSpringFrequency(data.frequency)
-        end
-        if data.dampingRatio then
-            joint:setSpringDampingRatio(data.dampingRatio)
-        end
-    elseif jointType == 'rope' then
-        -- Create a Rope Joint
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
-        local maxLength = data.maxLength or ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
-        joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength, false)
-    elseif jointType == 'pulley' then
-        -- Create a Pulley Joint
-        local x1, y1 = bodyA:getWorldCenter()
-        local x2, y2 = bodyB:getWorldCenter()
-        local gx1, gy1 = x1, y1 - 100
-        local gx2, gy2 = x2, y2 - 100
-        local ratio = data.ratio or 1
-        joint = love.physics.newPulleyJoint(bodyA, bodyB, gx1, gy1, gx2, gy2, x1, y1, x2, y2, ratio, false)
-    elseif jointType == 'friction' then
-        -- Create a Friction Joint
-        local x, y = bodyA:getPosition()
-        joint = love.physics.newFrictionJoint(bodyA, bodyB, x, y, false)
-        if data.maxForce then
-            joint:setMaxForce(data.maxForce)
-        end
-        if data.maxTorque then
-            joint:setMaxTorque(data.maxTorque)
-        end
-    else
-        -- Handle other joints or unimplemented types
-        print("Joint type '" .. jointType .. "' is not implemented yet.")
-        uiState.jointCreationMode = nil
-        return
-    end
-
-    -- Store the joint
-    worldState.joints = worldState.joints or {}
-    table.insert(worldState.joints, joint)
-
-    -- Clear joint creation mode
-    uiState.jointCreationMode = nil
-end
-
 function finalizeSpawn()
     if uiState.currentlyDraggingObject then
         uiState.currentlyDraggingObject.body:setAwake(true)
@@ -410,8 +336,9 @@ function drawUI()
     if uiState.addJointOpened then
         --'gear'
         --'prismatic',
+        -- 'motor'
         local jointTypes = { 'distance', 'friction', 'pulley', 'revolute', 'rope', 'weld', 'motor', 'wheel' }
-        --local jointTypes = { 'distance', 'revolute', 'weld', 'prismatic', 'motor' }
+        --local jointTypes = { 'distance', 'revolute', 'weld', }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230
         local startY = 70
@@ -462,9 +389,8 @@ function drawUI()
             local width = panelWidth - 20
 
             local x, y = ui.nextLayoutPosition(layout, width, 50)
-            ui.label(x, y, 'gravity m/s²')
 
-            x, y = ui.nextLayoutPosition(layout, width, 50)
+            --  x, y = ui.nextLayoutPosition(layout, width, 50)
             local grav = ui.sliderWithInput('grav', x, y, 160, -10, 50, worldState.gravity)
             if grav then
                 worldState.gravity = grav
@@ -472,11 +398,28 @@ function drawUI()
                     world:setGravity(0, worldState.gravity * love.physics.getMeter())
                 end
             end
+            ui.label(x, y, ' gravity')
+
             x, y = ui.nextLayoutPosition(layout, width, 50)
             local g, value = ui.checkbox(x, y, uiState.showGrid, 'grid') --showGrid = true,
             if g then
                 uiState.showGrid = value
             end
+
+
+            x, y = ui.nextLayoutPosition(layout, width, 50)
+            local mouseForce = ui.sliderWithInput(' mouse F', x, y, 160, 0, 1000000, worldState.mouseForce)
+            if mouseForce then
+                worldState.mouseForce = mouseForce
+            end
+            ui.label(x, y, ' mouse F')
+            x, y = ui.nextLayoutPosition(layout, width, 50)
+            local mouseDamp = ui.sliderWithInput(' damp', x, y, 160, 0.001, 1, worldState.mouseDamping)
+            if mouseDamp then
+                worldState.mouseDamping = mouseDamp
+            end
+            ui.label(x, y, ' damp')
+
             x, y = ui.nextLayoutPosition(layout, width, 50)
             local t = ui.textinput('worldText', x, y, 280, 200, 'add text...', uiState.worldText)
             if t then
@@ -532,7 +475,7 @@ function drawUI()
             end
 
             x, y = ui.nextLayoutPosition(layout, 160, 50)
-            local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed rotation')
+            local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
             if dirty then
                 body:setFixedRotation(not body:isFixedRotation())
             end
@@ -562,13 +505,13 @@ function drawUI()
                 -- Bounciness Slider
                 local bounciness = fixtures[1]:getRestitution()
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newBounce = ui.sliderWithInput(sliderID .. 'bounciness', x, y, 160, 0, 1, bounciness)
+                local newBounce = ui.sliderWithInput(sliderID .. 'bounce', x, y, 160, 0, 1, bounciness)
                 if newBounce and bounciness ~= newBounce then
                     for i = 1, #fixtures do
                         fixtures[i]:setRestitution(newBounce)
                     end
                 end
-                ui.label(x, y, ' bounciness')
+                ui.label(x, y, ' bounce')
 
                 -- Friction Slider
                 local friction = fixtures[1]:getFriction()
@@ -587,7 +530,7 @@ function drawUI()
 
             -- List Attached Joints Using Body:getJoints()
             local attachedJoints = body:getJoints()
-            if attachedJoints and #attachedJoints > 0 then
+            if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
                 ui.label(x, y + 60, '∞ joints ∞')
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
 
@@ -603,7 +546,8 @@ function drawUI()
                         local jointLabel = string.format("%s", jointType)
 
                         if ui.button(x, y, 160, jointLabel) then
-                            uiState.selectedJoint = joint
+                            uiState.currentlySelectedJoint = joint
+                            uiState.currentlySelectedObject = nil
                         end
                     end
                     --layout:nextRow()
@@ -612,130 +556,14 @@ function drawUI()
         end)
     end
 
+
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
-        ui.panel(500, 100, 300, 400, uiState.jointCreationMode.jointType .. ' joint', function()
-            local layout = ui.createLayout({
-                type = 'columns',
-                spacing = 10,
-                startX = 500 + 10,
-                startY = 100 + 10
-            })
+        joint.doJointCreateUI(uiState, 500, 100, 300, 600)
+    end
 
-            local width = 280
-            local jointType = uiState.jointCreationMode.jointType
-            local x, y = ui.nextLayoutPosition(layout, 160, 50)
-
-            if jointType == 'distance' then
-                -- Length
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local x1, y1 = uiState.jointCreationMode.body1:getPosition()
-                local x2, y2 = uiState.jointCreationMode.body2:getPosition()
-                local defaultLength = ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
-                local length = ui.sliderWithInput('length', x, y, 160, 0.1, 500,
-                    uiState.jointCreationMode.length or defaultLength)
-                ui.label(x, y, 'Length')
-                if length then
-                    uiState.jointCreationMode.length = length
-                end
-            elseif jointType == 'motor' then
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local maxForce = ui.sliderWithInput('maxForce', x, y, 160, 0, 10000,
-                    uiState.jointCreationMode.maxForce or 1000)
-                ui.label(x, y, 'Max Force')
-                if maxForce then
-                    uiState.jointCreationMode.maxForce = maxForce
-                end
-
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local maxTorque = ui.sliderWithInput('maxTorque', x, y, 160, 0, 10000,
-                    uiState.jointCreationMode.maxTorque or 1000)
-                ui.label(x, y, 'Max Torque')
-                if maxTorque then
-                    uiState.jointCreationMode.maxTorque = maxTorque
-                end
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-
-                local correctionFactor = ui.sliderWithInput('correctionFactor', x, y, 160, 0, 1,
-                    uiState.jointCreationMode.correctionFactor or 1)
-                ui.label(x, y, 'Correction')
-                if correctionFactor then
-                    uiState.jointCreationMode.correctionFactor = correctionFactor
-                end
-            elseif jointType == 'wheel' then
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                -- Frequency
-                local frequency = ui.sliderWithInput('frequency', x, y, 160, 0, 10,
-                    uiState.jointCreationMode.frequency or 5)
-                ui.label(x, y, 'Frequency')
-                if frequency then
-                    uiState.jointCreationMode.frequency = frequency
-                end
-                --y = y + 60
-                -- Damping Ratio
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local dampingRatio = ui.sliderWithInput('damping', x, y, 160, 0, 1,
-                    uiState.jointCreationMode.dampingRatio or 0.7)
-                ui.label(x, y, 'Damping')
-                if dampingRatio then
-                    uiState.jointCreationMode.dampingRatio = dampingRatio
-                end
-                -- y = y + 60
-            elseif jointType == 'rope' then
-                -- Max Length
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local x1, y1 = uiState.jointCreationMode.body1:getPosition()
-                local x2, y2 = uiState.jointCreationMode.body2:getPosition()
-                local defaultLength = ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
-                local maxLength = ui.sliderWithInput('maxLength', x, y, 160, 0.1, 500,
-                    uiState.jointCreationMode.maxLength or defaultLength)
-                ui.label(x, y, 'Max Length')
-                if maxLength then
-                    uiState.jointCreationMode.maxLength = maxLength
-                end
-                -- y = y + 60
-            elseif jointType == 'pulley' then
-                -- Ratio
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local ratio = ui.sliderWithInput('ratio', x, y, 160, 0.1, 10, uiState.jointCreationMode.ratio or 1)
-                ui.label(x, y, 'Ratio')
-                if ratio then
-                    uiState.jointCreationMode.ratio = ratio
-                end
-                --  y = y + 60
-            elseif jointType == 'friction' then
-                -- Max Force
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local maxForce = ui.sliderWithInput('maxForce', x, y, 160, 0, 1000,
-                    uiState.jointCreationMode.maxForce or 10)
-                ui.label(x, y, 'Max Force')
-                if maxForce then
-                    uiState.jointCreationMode.maxForce = maxForce
-                end
-                --y = y + 60
-                -- Max Torque
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local maxTorque = ui.sliderWithInput('maxTorque', x, y, 160, 0, 1000,
-                    uiState.jointCreationMode.maxTorque or 10)
-                ui.label(x, y, 'Max Torque')
-                if maxTorque then
-                    uiState.jointCreationMode.maxTorque = maxTorque
-                end
-                --  y = y + 60
-            end
-
-            -- "Create Joint" and "Cancel" Buttons
-            -- y = y + 50
-            x, y = ui.nextLayoutPosition(layout, 160, 50)
-            if ui.button(x, y, width, 'Create Joint') then
-                createJoint(uiState.jointCreationMode)
-                uiState.jointCreationMode = nil
-            end
-            x, y = ui.nextLayoutPosition(layout, 160, 50)
-            --y = y + 50
-            if ui.button(x, y, width, 'Cancel') then
-                uiState.jointCreationMode = nil
-            end
-        end)
+    if uiState.currentlySelectedJoint then
+        -- (w - panelWidth - 20, 20, panelWidth, h - 40
+        joint.doJointUpdateUI(uiState, uiState.currentlySelectedJoint, w - 300 - 20, 20, 300, h - 40)
     end
 
 
@@ -748,7 +576,7 @@ function drawUI()
                 local x = 510
                 local y = 150
                 local width = 280
-                if ui.button(x, y, width, 'Cancel') then
+                if ui.button(x, y, width, 'cancel') then
                     uiState.jointCreationMode = nil
                 end
             end)
@@ -757,7 +585,7 @@ function drawUI()
                 local x = 510
                 local y = 150
                 local width = 280
-                if ui.button(x, y, width, 'Cancel') then
+                if ui.button(x, y, width, 'cancel') then
                     uiState.jointCreationMode = nil
                 end
             end)
@@ -824,6 +652,7 @@ function love.draw()
     if uiState.maybeHideSelectedPanel then
         if not (ui.activeElementID or ui.focusedTextInputID) then
             uiState.currentlySelectedObject = nil
+            uiState.currentlySelectedJoint = nil
         end
         uiState.maybeHideSelectedPanel = false
     end
@@ -876,8 +705,9 @@ local function pointerPressed(x, y, id)
     local cx, cy = cam:getWorldCoordinates(x, y)
     local onPressedParams = {
         pointerForceFunc = function(fixture)
-            return 50000
-        end
+            return worldState.mouseForce
+        end,
+        damp = worldState.mouseDamping
     }
     local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
     if #hitted > 0 then

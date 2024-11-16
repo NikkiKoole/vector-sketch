@@ -1,7 +1,7 @@
 -- ui.lua
 local ui = {}
 
-require('ui-textinput')(ui)
+require('src.ui-textinput')(ui)
 
 -- Theme Configuration
 local theme = {

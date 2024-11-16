@@ -79,7 +79,7 @@ local function makeTrapeziumPoly(w, w2, h, x, y)
     )
 end
 
-local function makePointerJoint(id, bodyToAttachTo, wx, wy, force)
+local function makePointerJoint(id, bodyToAttachTo, wx, wy, force, damp)
     local pointerJoint = {}
     pointerJoint.id = id
 
@@ -89,7 +89,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy, force)
 
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
-    pointerJoint.joint:setDampingRatio(.5)
+    pointerJoint.joint:setDampingRatio(damp or .5)
     pointerJoint.joint:setMaxForce(force)
     return pointerJoint
 end
@@ -682,12 +682,18 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams, allowMouseJoint
     if #temp > 0 then
         table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
         lib.killMouseJointIfPossible(id)
+
+        local damp = .5
+        if onPressedParams and onPressedParams.damp then
+            damp = onPressedParams.damp
+        end
         local force = 100
         if onPressedParams and onPressedParams.pointerForceFunc then
             force = onPressedParams.pointerForceFunc(temp[1].fixture)
         end
+        print(force, damp)
         if (allowMouseJointMaking) then
-            table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force))
+            table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force, damp))
         end
     end
     -- print(#pointerJoints)
