@@ -35,6 +35,7 @@ function love.load()
         offsetForCurrentlyDragging = { nil, nil },
         worldText = '',
         jointCreationMode = nil,
+        jointUpdateMode = nil,
         isDrawingPolygon = false,
         polygonVertices = {},
         minPointDistance = 10, -- Default minimum distance
@@ -337,7 +338,7 @@ function drawUI()
         --'gear'
         --'prismatic',
         -- 'motor'
-        local jointTypes = { 'distance', 'friction', 'pulley', 'revolute', 'rope', 'weld', 'motor', 'wheel' }
+        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'friction', 'pulley', 'motor', 'wheel' }
         --local jointTypes = { 'distance', 'revolute', 'weld', }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230

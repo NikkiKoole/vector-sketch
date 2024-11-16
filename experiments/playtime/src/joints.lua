@@ -36,21 +36,27 @@ function lib.createJoint(data)
         local x1, y1 = bodyA:getPosition()
         local x2, y2 = bodyB:getPosition()
         local length = data.length or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, false)
+        joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
         joint:setLength(length)
-        if data.frequency then
-            print('setting distance frequency ', data.frequency)
-            joint:setFrequency(data.frequency)
-        end
-        if data.dampingRatio then
-            print('setting distance damping ratio ', data.dampingRatio)
-            joint:setDampingRatio(data.dampingRatio)
-        end
+    elseif jointType == 'weld' then
+        -- Create a Weld Joint at the first body's position
+        local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
+        joint = love.physics.newWeldJoint(bodyA, bodyB, x1, y1, data.collideConnected)
+        --joint = love.physics.newWeldJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
+        -- Weld joints don't have frequency or damping ratio by default, but you can simulate similar behavior if needed.
+    elseif jointType == 'rope' then
+        -- Create a Rope Joint
+        local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
+        local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+        joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength, data.collideConnected)
     elseif jointType == 'revolute' then
         -- Create a Revolute Joint at the first body's position
-        local x, y = bodyA:getPosition()
-        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x, y, false)
-
+        local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
+        --joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, false)
+        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, false)
         -- Enable Limits if specified
         if data.limitsEnabled then
             joint:setLimits((data.lowerLimit or 0) * (math.pi / 180), (data.upperLimit or 0) * (math.pi / 180))
@@ -81,12 +87,6 @@ function lib.createJoint(data)
             joint:setMotorSpeed(data.motorSpeed or 0)
             joint:setMaxMotorForce(data.maxMotorForce or 0)
         end
-    elseif jointType == 'weld' then
-        -- Create a Weld Joint at the first body's position
-        local x, y = bodyA:getPosition()
-        joint = love.physics.newWeldJoint(bodyA, bodyB, x, y, false)
-
-        -- Weld joints don't have frequency or damping ratio by default, but you can simulate similar behavior if needed.
     elseif jointType == 'motor' then
         -- Create a Motor Joint
         joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or 1)
@@ -116,12 +116,6 @@ function lib.createJoint(data)
             joint:setMotorSpeed(data.motorSpeed or 0)
             joint:setMaxMotorTorque(data.maxMotorTorque or 0)
         end
-    elseif jointType == 'rope' then
-        -- Create a Rope Joint
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
-        local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength)
     elseif jointType == 'pulley' then
         -- Create a Pulley Joint
         -- Ground anchors are typically fixed points; adjust as necessary
@@ -158,7 +152,7 @@ function lib.createJoint(data)
         -- uiState.jointCreationMode = nil
         return
     end
-
+    return joint
     -- Optionally, set additional properties common to all joints here
     -- For example, you might want to set user data or collision filtering
 
@@ -179,7 +173,6 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
             startY = _y + 10
         })
 
-
         local width = 280
         local jointType = uiState.jointCreationMode.jointType
         local x, y = ui.nextLayoutPosition(layout, 160, 50)
@@ -192,27 +185,21 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
         -- Function to handle joint-specific UI
         local function handleJointUI()
             if jointType == 'distance' then
-                -- Length
-                local x1, y1 = uiState.jointCreationMode.body1:getPosition()
-                local x2, y2 = uiState.jointCreationMode.body2:getPosition()
-                local defaultLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                local length = createSlider(' length', x, y, 160, 0.1, 500,
-                    uiState.jointCreationMode.length or defaultLength,
-                    function(val) uiState.jointCreationMode.length = val end
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    uiState.jointCreationMode.collideConnected or false,
+                    function(val) uiState.jointCreationMode.collideConnected = (val) end
                 )
-                nextRow()
-
-                local frequency = createSlider(' freq', x, y, 160, 0, 20,
-                    uiState.jointCreationMode.frequency or 0,
-                    function(val) uiState.jointCreationMode.frequency = val end
+            elseif jointType == 'weld' then
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    uiState.jointCreationMode.collideConnected or false,
+                    function(val) uiState.jointCreationMode.collideConnected = (val) end
                 )
-                nextRow()
-
-                local dampingRatio = createSlider(' damp', x, y, 160, 0, 1,
-                    uiState.jointCreationMode.dampingRatio or 0,
-                    function(val) uiState.jointCreationMode.dampingRatio = val end
+            elseif jointType == 'rope' then
+                -- Max Length
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    uiState.jointCreationMode.collideConnected or false,
+                    function(val) uiState.jointCreationMode.collideConnected = (val) end
                 )
-                nextRow()
             elseif jointType == 'revolute' then
                 -- Enable Limitl
                 nextRow()
@@ -358,30 +345,6 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                 ui.label(x, y, string.format("Ground Anchors: (%.1f, %.1f), (%.1f, %.1f)", gx1, gy1, gx2, gy2))
 
                 nextRow()
-            elseif jointType == 'rope' then
-                -- Max Length
-                local x1, y1 = uiState.jointCreationMode.body1:getPosition()
-                local x2, y2 = uiState.jointCreationMode.body2:getPosition()
-                local defaultLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                local maxLength = createSlider('Max Len', x, y, 160, 0.1, 500,
-                    uiState.jointCreationMode.maxLength or defaultLength,
-                    function(val) uiState.jointCreationMode.maxLength = val end
-                )
-                nextRow()
-            elseif jointType == 'weld' then
-                -- Frequency
-                local frequency = createSlider('Freq', x, y, 160, 0, 20,
-                    uiState.jointCreationMode.frequency or 0,
-                    function(val) uiState.jointCreationMode.frequency = val end
-                )
-                nextRow()
-
-                -- Damping Ratio
-                local dampingRatio = createSlider('Damp', x, y, 160, 0, 1,
-                    uiState.jointCreationMode.dampingRatio or 0,
-                    function(val) uiState.jointCreationMode.dampingRatio = val end
-                )
-                nextRow()
             elseif jointType == 'motor' then
                 -- Max Force
                 local maxForce = createSlider('Max F', x, y, 160, 0, 10000,
@@ -426,7 +389,9 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
 
 
         if ui.button(x, y, width, 'Create') then
-            lib.createJoint(uiState.jointCreationMode)
+            local j = lib.createJoint(uiState.jointCreationMode)
+            uiState.currentlySelectedJoint = j
+            uiState.currentlySelectedObject = nil
             uiState.jointCreationMode = nil
         end
         nextRow()
@@ -437,7 +402,104 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
 end
 
 function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
-    ui.panel(_x, _y, w, h, '∞ ' .. j:getType() .. ' ∞', function() end)
+    if not j:isDestroyed() then
+        ui.panel(_x, _y, w, h, '∞ ' .. j:getType() .. ' ∞', function()
+            local bodyA, bodyB = j:getBodies()
+            if uiState.jointUpdateMode == nil then
+                uiState.jointUpdateMode = { body1 = bodyA, body2 = bodyB, jointType = j:getType() }
+            end
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = 10,
+                startX = _x + 10,
+                startY = _y + 10
+            })
+            local jointType = j:getType()
+            local x, y = ui.nextLayoutPosition(layout, 160, 50)
+            x, y = ui.nextLayoutPosition(layout, 160, 50)
+            local width = 280
+            local nextRow = function()
+                x, y = ui.nextLayoutPosition(layout, 160, 50)
+            end
+
+            if ui.button(x, y, width, 'destroy') then
+                j:destroy()
+                return;
+            end
+
+            if jointType == 'distance' then
+                nextRow()
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    j:getCollideConnected(),
+                    --uiState.jointCreationMode.motorEnabled or false,
+                    function(val) end
+                )
+                nextRow()
+                -- local bodyA, bodyB = j:getBodies()
+                local x1, y1 = bodyA:getPosition()
+                local x2, y2 = bodyB:getPosition()
+                local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+                local length = createSlider(' length', x, y, 160, 0.1, 500,
+                    uiState.jointUpdateMode.length or myLength,
+                    function(val)
+                        j:setLength(val)
+                        uiState.jointUpdateMode.length = val
+                    end
+                )
+                nextRow()
+
+                local frequency = createSlider(' freq', x, y, 160, 0, 20,
+                    j:getFrequency(),
+                    function(val) j:setFrequency(val) end
+                )
+                nextRow()
+                local damping = createSlider(' damp', x, y, 160, 0, 20,
+                    j:getDampingRatio(),
+                    function(val) j:setDampingRatio(val) end
+                )
+                nextRow()
+                nextRow()
+            elseif jointType == 'weld' then
+                nextRow()
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    j:getCollideConnected(),
+                    --uiState.jointCreationMode.motorEnabled or false,
+                    function(val) end
+                )
+                nextRow()
+                local frequency = createSlider(' freq', x, y, 160, 0, 20,
+                    j:getFrequency(),
+                    function(val) j:setFrequency(val) end
+                )
+                nextRow()
+                local damping = createSlider(' damp', x, y, 160, 0, 20,
+                    j:getDampingRatio(),
+                    function(val) j:getDampingRatio(val) end
+                )
+                nextRow()
+            elseif jointType == 'rope' then
+                nextRow()
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    j:getCollideConnected(),
+                    --uiState.jointCreationMode.motorEnabled or false,
+                    function(val) end
+                )
+                nextRow()
+                -- local bodyA, bodyB = j:getBodies()
+                local x1, y1 = bodyA:getPosition()
+                local x2, y2 = bodyB:getPosition()
+                local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+                local length = createSlider(' length', x, y, 160, 0.1, 500,
+                    uiState.jointUpdateMode.maxLength or myLength,
+                    function(val)
+                        j:setMaxLength(val)
+                        uiState.jointUpdateMode.maxLength = val
+                    end
+                )
+                nextRow()
+            end
+        end)
+    end
 end
 
 return lib
