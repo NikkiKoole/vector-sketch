@@ -61,6 +61,11 @@ function love.load()
     addShape('rectangle', 300, 400, 'dynamic', 100)
     addShape('rectangle', 600, 400, 'dynamic', 100)
     addShape('rectangle', 450, 800, 'static', 200)
+    addShape('rectangle', 850, 800, 'static', 200)
+    addShape('rectangle', 1250, 800, 'static', 200)
+    addShape('rectangle', 1100, 100, 'dynamic', 300)
+    addShape('circle', 1000, 400, 'dynamic', 100)
+    addShape('circle', 1300, 400, 'dynamic', 100)
 end
 
 -- Function to add a shape to the stage
@@ -338,7 +343,7 @@ function drawUI()
         --'gear'
         --'prismatic',
         -- 'motor'
-        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'friction', 'pulley', 'motor', 'wheel' }
+        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'friction', 'pulley', 'motor', }
         --local jointTypes = { 'distance', 'revolute', 'weld', }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230

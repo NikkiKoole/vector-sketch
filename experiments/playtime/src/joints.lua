@@ -57,10 +57,18 @@ function lib.createJoint(data)
         local x2, y2 = bodyB:getPosition()
         --joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, false)
         joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, data.collideConnected)
-        -- Enable Limits if specified
-        if data.limitsEnabled then
-            joint:setLimits((data.lowerLimit or 0) * (math.pi / 180), (data.upperLimit or 0) * (math.pi / 180))
-            joint:setLimitsEnabled(true)
+    elseif jointType == 'wheel' then
+        -- Create a Wheel Joint
+
+        local x1, y1 = bodyA:getPosition()
+        -- local axisX, axisY = data.axisX, data.axisY -- Vertical axis by default; adjust as needed
+        joint = love.physics.newWheelJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1, data.collideConnected)
+
+        if data.frequency then
+            joint:setSpringFrequency(data.frequency)
+        end
+        if data.dampingRatio then
+            joint:setSpringDampingRatio(data.dampingRatio)
         end
 
         -- Enable Motor if specified
@@ -96,25 +104,6 @@ function lib.createJoint(data)
         end
         if data.maxTorque then
             joint:setMaxTorque(data.maxTorque)
-        end
-    elseif jointType == 'wheel' then
-        -- Create a Wheel Joint
-        local x, y = bodyA:getPosition()
-        local axisX, axisY = 0, 1 -- Vertical axis by default; adjust as needed
-        joint = love.physics.newWheelJoint(bodyA, bodyB, x, y, axisX, axisY, false)
-
-        if data.frequency then
-            joint:setSpringFrequency(data.frequency)
-        end
-        if data.dampingRatio then
-            joint:setSpringDampingRatio(data.dampingRatio)
-        end
-
-        -- Enable Motor if specified
-        if data.motorEnabled then
-            joint:setMotorEnabled(true)
-            joint:setMotorSpeed(data.motorSpeed or 0)
-            joint:setMaxMotorTorque(data.maxMotorTorque or 0)
         end
     elseif jointType == 'pulley' then
         -- Create a Pulley Joint
@@ -205,52 +194,58 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                     uiState.jointCreationMode.collideConnected or false,
                     function(val) uiState.jointCreationMode.collideConnected = (val) end
                 )
-                -- Enable Limitl
+            elseif jointType == 'wheel' then
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    uiState.jointCreationMode.collideConnected or false,
+                    function(val) uiState.jointCreationMode.collideConnected = (val) end
+                )
                 nextRow()
+                local axisX = createSlider(' axisX', x, y, 160, -1, 1,
+                    uiState.jointCreationMode.axisX or 0,
+                    function(val) uiState.jointCreationMode.axisX = val end
+                )
+                nextRow()
+                local axisY = createSlider(' axisY', x, y, 160, -1, 1,
+                    uiState.jointCreationMode.axisY or 1,
+                    function(val) uiState.jointCreationMode.axisY = val end
+                )
+                if (false) then
+                    -- Enable Limitl
+                    nextRow()
+                    -- Frequency
+                    local frequency = createSlider(' freq', x, y, 160, 0, 20,
+                        uiState.jointCreationMode.frequency or 0,
+                        function(val) uiState.jointCreationMode.frequency = val end
+                    )
+                    nextRow()
 
-                -- local limitsEnabled = createCheckbox(' limits', x, y,
-                --     uiState.jointCreationMode.limitsEnabled or false,
-                --     function(val) uiState.jointCreationMode.limitsEnabled = val end
-                -- )
+                    local dampingRatio = createSlider(' damp', x, y, 160, 0, 1,
+                        uiState.jointCreationMode.dampingRatio or 0,
+                        function(val) uiState.jointCreationMode.dampingRatio = val end
+                    )
+                    nextRow()
 
-                -- nextRow()
+                    local motorEnabled = createCheckbox(' motor', x, y,
+                        uiState.jointCreationMode.motorEnabled or false,
+                        function(val) uiState.jointCreationMode.motorEnabled = val end
+                    )
+                    nextRow()
 
-                -- if uiState.jointCreationMode.limitsEnabled then
-                --     local lowerLimit = createSlider(' lower', x, y, 160, -180, 180,
-                --         uiState.jointCreationMode.lowerLimit or 0,
-                --         function(val) uiState.jointCreationMode.lowerLimit = val end
-                --     )
-                --     nextRow()
+                    if uiState.jointCreationMode.motorEnabled then
+                        -- Motor Speed
+                        local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
+                            uiState.jointCreationMode.motorSpeed or 0,
+                            function(val) uiState.jointCreationMode.motorSpeed = val end
+                        )
+                        nextRow()
 
-                --     local upperLimit = createSlider(' upper', x, y, 160, -180, 180,
-                --         uiState.jointCreationMode.upperLimit or 0,
-                --         function(val) uiState.jointCreationMode.upperLimit = val end
-                --     )
-                --     nextRow()
-                -- end
-
-                -- -- Enable Motor
-                -- local motorEnabled = createCheckbox(' motor', x, y,
-                --     uiState.jointCreationMode.motorEnabled or false,
-                --     function(val) uiState.jointCreationMode.motorEnabled = val end
-                -- )
-                -- nextRow()
-
-                -- if uiState.jointCreationMode.motorEnabled then
-                --     -- Motor Speed
-                --     local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
-                --         uiState.jointCreationMode.motorSpeed or 0,
-                --         function(val) uiState.jointCreationMode.motorSpeed = val end
-                --     )
-                --     nextRow()
-
-                --     -- Max Motor Torque
-                --     local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 10000,
-                --         uiState.jointCreationMode.maxMotorTorque or 0,
-                --         function(val) uiState.jointCreationMode.maxMotorTorque = val end
-                --     )
-                --     nextRow()
-                -- end
+                        local maxMotorTorque = createSlider(' max t', x, y, 160, 0, 10000,
+                            uiState.jointCreationMode.maxMotorTorque or 0,
+                            function(val) uiState.jointCreationMode.maxMotorTorque = val end
+                        )
+                        nextRow()
+                    end
+                end
             elseif jointType == 'prismatic' then
                 print('PRISMATIC ISNT WORKING YET!!!')
                 -- Axis (Display Only)
@@ -298,40 +293,6 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                     local maxMotorForce = createSlider('max f', x, y, 160, 0, 10000,
                         uiState.jointCreationMode.maxMotorForce or 0,
                         function(val) uiState.jointCreationMode.maxMotorForce = val end
-                    )
-                    nextRow()
-                end
-            elseif jointType == 'wheel' then
-                -- Frequency
-                local frequency = createSlider(' freq', x, y, 160, 0, 20,
-                    uiState.jointCreationMode.frequency or 0,
-                    function(val) uiState.jointCreationMode.frequency = val end
-                )
-                nextRow()
-
-                local dampingRatio = createSlider(' damp', x, y, 160, 0, 1,
-                    uiState.jointCreationMode.dampingRatio or 0,
-                    function(val) uiState.jointCreationMode.dampingRatio = val end
-                )
-                nextRow()
-
-                local motorEnabled = createCheckbox(' motor', x, y,
-                    uiState.jointCreationMode.motorEnabled or false,
-                    function(val) uiState.jointCreationMode.motorEnabled = val end
-                )
-                nextRow()
-
-                if uiState.jointCreationMode.motorEnabled then
-                    -- Motor Speed
-                    local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
-                        uiState.jointCreationMode.motorSpeed or 0,
-                        function(val) uiState.jointCreationMode.motorSpeed = val end
-                    )
-                    nextRow()
-
-                    local maxMotorTorque = createSlider(' max t', x, y, 160, 0, 10000,
-                        uiState.jointCreationMode.maxMotorTorque or 0,
-                        function(val) uiState.jointCreationMode.maxMotorTorque = val end
                     )
                     nextRow()
                 end
@@ -485,7 +446,6 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 local collideEnabled = createCheckbox(' collide', x, y,
                     j:getCollideConnected(),
-                    --uiState.jointCreationMode.motorEnabled or false,
                     function(val) end
                 )
                 nextRow()
@@ -513,21 +473,17 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     j:areLimitsEnabled(),
                     function(val)
                         j:setLimitsEnabled(val)
-                        --uiState.jointUpdateMode.limitsEnabled = val
                     end
                 )
-                nextRow()
+
                 if (j:areLimitsEnabled()) then
+                    nextRow()
                     local up = j:getUpperLimit() / (math.pi / 180)
                     local lowerLimit = createSlider(' lower', x, y, 160, -180, up,
                         j:getLowerLimit() / (math.pi / 180),
                         function(val)
-                            -- local upper = j:getUpperLimit()
                             local newValue = val * (math.pi / 180)
-                            -- if newValue < upper then
                             j:setLowerLimit(newValue)
-                            -- end
-                            --uiState.jointCreationMode.lowerLimit = val
                         end
                     )
                     nextRow()
@@ -536,13 +492,39 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         j:getUpperLimit() / (math.pi / 180),
                         function(val)
                             local newValue = val * (math.pi / 180)
-                            --print(val * (math.pi / 180))
                             j:setUpperLimit(newValue)
-                            --uiState.jointCreationMode.lowerLimit = val
                         end
+                    )
+                end
+                nextRow()
+                local motorEnabled = createCheckbox(' motor', x, y,
+                    j:isMotorEnabled(),
+                    function(val)
+                        j:setMotorEnabled(val)
+                    end
+                )
+                nextRow()
+                if j:isMotorEnabled() then
+                    local motorSpeed = createSlider(' speed', x, y, 160, -1000, 1000,
+                        j:getMotorSpeed(),
+                        function(val) j:setMotorSpeed(val) end
+                    )
+                    nextRow()
+
+                    local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
+                        j:getMaxMotorTorque(),
+                        function(val) j:setMaxMotorTorque(val) end
                     )
                     nextRow()
                 end
+            elseif jointType == 'wheel' then
+                nextRow()
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    j:getCollideConnected(),
+                    --uiState.jointCreationMode.motorEnabled or false,
+                    function(val) end
+                )
+                nextRow()
             end
         end)
     end
