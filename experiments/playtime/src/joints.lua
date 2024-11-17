@@ -56,7 +56,7 @@ function lib.createJoint(data)
         local x1, y1 = bodyA:getPosition()
         local x2, y2 = bodyB:getPosition()
         --joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, false)
-        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, false)
+        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, data.collideConnected)
         -- Enable Limits if specified
         if data.limitsEnabled then
             joint:setLimits((data.lowerLimit or 0) * (math.pi / 180), (data.upperLimit or 0) * (math.pi / 180))
@@ -201,52 +201,56 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                     function(val) uiState.jointCreationMode.collideConnected = (val) end
                 )
             elseif jointType == 'revolute' then
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    uiState.jointCreationMode.collideConnected or false,
+                    function(val) uiState.jointCreationMode.collideConnected = (val) end
+                )
                 -- Enable Limitl
                 nextRow()
 
-                local limitsEnabled = createCheckbox(' limits', x, y,
-                    uiState.jointCreationMode.limitsEnabled or false,
-                    function(val) uiState.jointCreationMode.limitsEnabled = val end
-                )
+                -- local limitsEnabled = createCheckbox(' limits', x, y,
+                --     uiState.jointCreationMode.limitsEnabled or false,
+                --     function(val) uiState.jointCreationMode.limitsEnabled = val end
+                -- )
 
-                nextRow()
+                -- nextRow()
 
-                if uiState.jointCreationMode.limitsEnabled then
-                    local lowerLimit = createSlider(' lower', x, y, 160, -180, 180,
-                        uiState.jointCreationMode.lowerLimit or 0,
-                        function(val) uiState.jointCreationMode.lowerLimit = val end
-                    )
-                    nextRow()
+                -- if uiState.jointCreationMode.limitsEnabled then
+                --     local lowerLimit = createSlider(' lower', x, y, 160, -180, 180,
+                --         uiState.jointCreationMode.lowerLimit or 0,
+                --         function(val) uiState.jointCreationMode.lowerLimit = val end
+                --     )
+                --     nextRow()
 
-                    local upperLimit = createSlider(' upper', x, y, 160, -180, 180,
-                        uiState.jointCreationMode.upperLimit or 0,
-                        function(val) uiState.jointCreationMode.upperLimit = val end
-                    )
-                    nextRow()
-                end
+                --     local upperLimit = createSlider(' upper', x, y, 160, -180, 180,
+                --         uiState.jointCreationMode.upperLimit or 0,
+                --         function(val) uiState.jointCreationMode.upperLimit = val end
+                --     )
+                --     nextRow()
+                -- end
 
-                -- Enable Motor
-                local motorEnabled = createCheckbox(' motor', x, y,
-                    uiState.jointCreationMode.motorEnabled or false,
-                    function(val) uiState.jointCreationMode.motorEnabled = val end
-                )
-                nextRow()
+                -- -- Enable Motor
+                -- local motorEnabled = createCheckbox(' motor', x, y,
+                --     uiState.jointCreationMode.motorEnabled or false,
+                --     function(val) uiState.jointCreationMode.motorEnabled = val end
+                -- )
+                -- nextRow()
 
-                if uiState.jointCreationMode.motorEnabled then
-                    -- Motor Speed
-                    local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
-                        uiState.jointCreationMode.motorSpeed or 0,
-                        function(val) uiState.jointCreationMode.motorSpeed = val end
-                    )
-                    nextRow()
+                -- if uiState.jointCreationMode.motorEnabled then
+                --     -- Motor Speed
+                --     local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
+                --         uiState.jointCreationMode.motorSpeed or 0,
+                --         function(val) uiState.jointCreationMode.motorSpeed = val end
+                --     )
+                --     nextRow()
 
-                    -- Max Motor Torque
-                    local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 10000,
-                        uiState.jointCreationMode.maxMotorTorque or 0,
-                        function(val) uiState.jointCreationMode.maxMotorTorque = val end
-                    )
-                    nextRow()
-                end
+                --     -- Max Motor Torque
+                --     local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 10000,
+                --         uiState.jointCreationMode.maxMotorTorque or 0,
+                --         function(val) uiState.jointCreationMode.maxMotorTorque = val end
+                --     )
+                --     nextRow()
+                -- end
             elseif jointType == 'prismatic' then
                 print('PRISMATIC ISNT WORKING YET!!!')
                 -- Axis (Display Only)
@@ -497,6 +501,48 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     end
                 )
                 nextRow()
+            elseif jointType == 'revolute' then
+                nextRow()
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    j:getCollideConnected(),
+                    --uiState.jointCreationMode.motorEnabled or false,
+                    function(val) end
+                )
+                nextRow()
+                local limitsEnabled = createCheckbox(' limits', x, y,
+                    j:areLimitsEnabled(),
+                    function(val)
+                        j:setLimitsEnabled(val)
+                        --uiState.jointUpdateMode.limitsEnabled = val
+                    end
+                )
+                nextRow()
+                if (j:areLimitsEnabled()) then
+                    local up = j:getUpperLimit() / (math.pi / 180)
+                    local lowerLimit = createSlider(' lower', x, y, 160, -180, up,
+                        j:getLowerLimit() / (math.pi / 180),
+                        function(val)
+                            -- local upper = j:getUpperLimit()
+                            local newValue = val * (math.pi / 180)
+                            -- if newValue < upper then
+                            j:setLowerLimit(newValue)
+                            -- end
+                            --uiState.jointCreationMode.lowerLimit = val
+                        end
+                    )
+                    nextRow()
+                    local low = j:getLowerLimit() / (math.pi / 180)
+                    local upperLimit = createSlider(' upper', x, y, 160, low, 180,
+                        j:getUpperLimit() / (math.pi / 180),
+                        function(val)
+                            local newValue = val * (math.pi / 180)
+                            --print(val * (math.pi / 180))
+                            j:setUpperLimit(newValue)
+                            --uiState.jointCreationMode.lowerLimit = val
+                        end
+                    )
+                    nextRow()
+                end
             end
         end)
     end

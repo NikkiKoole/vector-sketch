@@ -463,6 +463,26 @@ local function drawFrictionJoint(joint)
 end
 
 
+-- Helper function to calculate end coordinates
+local function calculateEndPoint(x1, y1, bodyA, bodyB, length)
+    -- Get positions of bodyA and bodyB
+    local xA, yA = bodyA:getPosition()
+    local xB, yB = bodyB:getPosition()
+
+    -- Calculate direction vector from bodyA to bodyB
+    local dx = xB - xA
+    local dy = yB - yA
+
+    -- Calculate the angle using atan2
+    local theta = math.atan2(dy, dx)
+
+    -- Calculate end coordinates for the line with the specified length
+    local endX = x1 + length * math.cos(theta)
+    local endY = y1 + length * math.sin(theta)
+
+    return endX, endY
+end
+
 lib.drawWorld = function(world)
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8
@@ -524,9 +544,10 @@ lib.drawWorld = function(world)
             love.graphics.line(x1, y1, x2, y2)
         end
         love.graphics.setColor(1, 0, 0, alpha)
+        love.graphics.setLineJoin("miter")
         if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
         if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
-
+        love.graphics.setLineJoin("none")
 
         local jointType = joint:getType()
         if jointType == 'pulley' then
@@ -535,6 +556,26 @@ lib.drawWorld = function(world)
             love.graphics.line(x1, y1, gx1, gy1)
             love.graphics.line(x2, y2, gx2, gy2)
             love.graphics.line(gx1, gy1, gx2, gy2)
+        end
+
+        if jointType == 'revolute' then
+            if joint:areLimitsEnabled() then
+                local lower = joint:getLowerLimit()
+                local upper = joint:getUpperLimit()
+
+                local bodyA, bodyB = joint:getBodies()
+                local b1A = bodyA:getAngle()
+
+                love.graphics.setColor(1, 1, 1, alpha)
+                love.graphics.setLineJoin("miter")
+                love.graphics.arc('line', x1, y1, 15, b1A + lower, b1A + upper)
+                love.graphics.setLineJoin("none")
+
+                local endX, endY = calculateEndPoint(x1, y1, bodyA, bodyB, 15)
+                -- Draw the line
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.line(x1, y1, endX, endY)
+            end
         end
     end
     love.graphics.setLineJoin("miter")
