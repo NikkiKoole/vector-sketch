@@ -633,7 +633,6 @@ function love.draw()
         end
         love.graphics.setLineWidth(lw)
         love.graphics.setColor(1, 1, 1, 1)
-        --print(w)
     end
     cam:push()
     phys.drawWorld(world)
@@ -641,14 +640,13 @@ function love.draw()
         --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
     end
     if uiState.isDrawingPolygon then
-        --print(inspect(uiState.polygonVertices))
         if (#uiState.polygonVertices > 3) then
             local polygon = {}
             for i = 1, #uiState.polygonVertices do
                 table.insert(polygon, uiState.polygonVertices[i].x)
                 table.insert(polygon, uiState.polygonVertices[i].y)
             end
-            --print(inspect(polygon))
+
             love.graphics.polygon('line', polygon)
         end
     end
@@ -849,7 +847,6 @@ local function pointerReleased(x, y, id)
     end
     if uiState.isDrawingPolygon then
         finalizePolygon()
-        --print('releasde')
     end
 end
 

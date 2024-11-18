@@ -732,7 +732,7 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams, allowMouseJoint
         if onPressedParams and onPressedParams.pointerForceFunc then
             force = onPressedParams.pointerForceFunc(temp[1].fixture)
         end
-        print(force, damp)
+
         if (allowMouseJointMaking) then
             table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force, damp))
         end

@@ -2,7 +2,6 @@ local ui = require 'src.ui-all'
 local lib = {}
 local inspect = require 'vendor.inspect'
 
-
 -- Helper function to create a slider with an associated label
 local function createSlider(labelText, x, y, width, min, max, value, callback)
     local newValue = ui.sliderWithInput(labelText, x, y, width, min, max, value)
@@ -55,7 +54,7 @@ function lib.createJoint(data)
         -- Create a Revolute Joint at the first body's position
         local x1, y1 = bodyA:getPosition()
         local x2, y2 = bodyB:getPosition()
-        --joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, false)
+        -- joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
         joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, data.collideConnected)
     elseif jointType == 'wheel' then
         -- Create a Wheel Joint
@@ -142,15 +141,6 @@ function lib.createJoint(data)
         return
     end
     return joint
-    -- Optionally, set additional properties common to all joints here
-    -- For example, you might want to set user data or collision filtering
-
-    -- Store the joint
-    -- worldState.joints = worldState.joints or {}
-    -- table.insert(worldState.joints, joint)
-
-    -- Clear joint creation mode
-    -- uiState.jointCreationMode = nil
 end
 
 function lib.doJointCreateUI(uiState, _x, _y, w, h)
@@ -171,86 +161,55 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
             x, y = ui.nextLayoutPosition(layout, 160, 50)
         end
 
+        local function collideFunctionality()
+            local collideEnabled = createCheckbox(' collide', x, y,
+                uiState.jointCreationMode.collideConnected or false,
+                function(val) uiState.jointCreationMode.collideConnected = (val) end
+            )
+        end
         -- Function to handle joint-specific UI
         local function handleJointUI()
             if jointType == 'distance' then
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    uiState.jointCreationMode.collideConnected or false,
-                    function(val) uiState.jointCreationMode.collideConnected = (val) end
-                )
+                collideFunctionality()
             elseif jointType == 'weld' then
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    uiState.jointCreationMode.collideConnected or false,
-                    function(val) uiState.jointCreationMode.collideConnected = (val) end
-                )
+                collideFunctionality()
             elseif jointType == 'rope' then
-                -- Max Length
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    uiState.jointCreationMode.collideConnected or false,
-                    function(val) uiState.jointCreationMode.collideConnected = (val) end
-                )
+                collideFunctionality()
             elseif jointType == 'revolute' then
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    uiState.jointCreationMode.collideConnected or false,
-                    function(val) uiState.jointCreationMode.collideConnected = (val) end
-                )
+                collideFunctionality()
             elseif jointType == 'wheel' then
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    uiState.jointCreationMode.collideConnected or false,
-                    function(val) uiState.jointCreationMode.collideConnected = (val) end
-                )
+                collideFunctionality()
+
+                local function normalizeAxis(x, y)
+                    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
+                    if magnitude == 0 then
+                        return 1, 0 -- Default to (1, 0) if the vector is zero
+                    else
+                        print('normalizing', x / magnitude, y / magnitude)
+                        return x / magnitude, y / magnitude
+                    end
+                end
                 nextRow()
                 local axisX = createSlider(' axisX', x, y, 160, -1, 1,
                     uiState.jointCreationMode.axisX or 0,
-                    function(val) uiState.jointCreationMode.axisX = val end
+                    function(val)
+                        uiState.jointCreationMode.axisX = val
+                        uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
+                            normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
+                    end
                 )
                 nextRow()
                 local axisY = createSlider(' axisY', x, y, 160, -1, 1,
                     uiState.jointCreationMode.axisY or 1,
-                    function(val) uiState.jointCreationMode.axisY = val end
-                )
-                if (false) then
-                    -- Enable Limitl
-                    nextRow()
-                    -- Frequency
-                    local frequency = createSlider(' freq', x, y, 160, 0, 20,
-                        uiState.jointCreationMode.frequency or 0,
-                        function(val) uiState.jointCreationMode.frequency = val end
-                    )
-                    nextRow()
-
-                    local dampingRatio = createSlider(' damp', x, y, 160, 0, 1,
-                        uiState.jointCreationMode.dampingRatio or 0,
-                        function(val) uiState.jointCreationMode.dampingRatio = val end
-                    )
-                    nextRow()
-
-                    local motorEnabled = createCheckbox(' motor', x, y,
-                        uiState.jointCreationMode.motorEnabled or false,
-                        function(val) uiState.jointCreationMode.motorEnabled = val end
-                    )
-                    nextRow()
-
-                    if uiState.jointCreationMode.motorEnabled then
-                        -- Motor Speed
-                        local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
-                            uiState.jointCreationMode.motorSpeed or 0,
-                            function(val) uiState.jointCreationMode.motorSpeed = val end
-                        )
-                        nextRow()
-
-                        local maxMotorTorque = createSlider(' max t', x, y, 160, 0, 10000,
-                            uiState.jointCreationMode.maxMotorTorque or 0,
-                            function(val) uiState.jointCreationMode.maxMotorTorque = val end
-                        )
-                        nextRow()
+                    function(val)
+                        uiState.jointCreationMode.axisY = val
+                        uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
+                            normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
                     end
-                end
+                )
             elseif jointType == 'prismatic' then
                 print('PRISMATIC ISNT WORKING YET!!!')
-                -- Axis (Display Only)
-                --local ax, ay = uiState.jointCreationMode.axis or { 1, 0 } -- Default axis
-                --ui.label(x, y, string.format("Axis: (%.2f, %.2f)", ax, ay))
+
                 nextRow()
 
                 local limitsEnabled = createCheckbox(' limits', x, y,
@@ -306,7 +265,7 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
 
                 -- Ground Anchors (Display Only)
                 local gx1, gy1, gx2, gy2 = uiState.jointCreationMode.groundAnchor1 or 0, 0, 0, 0
-                --print(inspect(uiState.jointCreationMode.groundAnchor1))
+
                 ui.label(x, y, string.format("Ground Anchors: (%.1f, %.1f), (%.1f, %.1f)", gx1, gy1, gx2, gy2))
 
                 nextRow()
@@ -392,13 +351,70 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 return;
             end
 
-            if jointType == 'distance' then
+            local function motorFunctionality(j)
+                local motorEnabled = createCheckbox(' motor', x, y,
+                    j:isMotorEnabled(),
+                    function(val)
+                        j:setMotorEnabled(val)
+                    end
+                )
                 nextRow()
+                if j:isMotorEnabled() then
+                    local motorSpeed = createSlider(' speed', x, y, 160, -1000, 1000,
+                        j:getMotorSpeed(),
+                        function(val) j:setMotorSpeed(val) end
+                    )
+                    nextRow()
+
+                    local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
+                        j:getMaxMotorTorque(),
+                        function(val) j:setMaxMotorTorque(val) end
+                    )
+                    nextRow()
+                end
+            end
+
+            local function collideFunctionality(j)
                 local collideEnabled = createCheckbox(' collide', x, y,
                     j:getCollideConnected(),
                     --uiState.jointCreationMode.motorEnabled or false,
                     function(val) end
                 )
+            end
+
+            local function limitsFunctionality(j)
+                local limitsEnabled = createCheckbox(' limits', x, y,
+                    j:areLimitsEnabled(),
+                    function(val)
+                        j:setLimitsEnabled(val)
+                    end
+                )
+
+                if (j:areLimitsEnabled()) then
+                    nextRow()
+                    local up = math.deg(j:getUpperLimit())
+                    local lowerLimit = createSlider(' lower', x, y, 160, -180, up,
+                        math.deg(j:getLowerLimit()),
+                        function(val)
+                            local newValue = math.rad(val)
+                            j:setLowerLimit(newValue)
+                        end
+                    )
+                    nextRow()
+                    local low = math.deg(j:getLowerLimit())
+                    local upperLimit = createSlider(' upper', x, y, 160, low, 180,
+                        math.deg(j:getUpperLimit()),
+                        function(val)
+                            local newValue = math.rad(val)
+                            j:setUpperLimit(newValue)
+                        end
+                    )
+                end
+            end
+
+            if jointType == 'distance' then
+                nextRow()
+                collideFunctionality(j)
                 nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
@@ -426,11 +442,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
             elseif jointType == 'weld' then
                 nextRow()
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    j:getCollideConnected(),
-                    --uiState.jointCreationMode.motorEnabled or false,
-                    function(val) end
-                )
+                collideFunctionality(j)
                 nextRow()
                 local frequency = createSlider(' freq', x, y, 160, 0, 20,
                     j:getFrequency(),
@@ -444,10 +456,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
             elseif jointType == 'rope' then
                 nextRow()
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    j:getCollideConnected(),
-                    function(val) end
-                )
+                collideFunctionality(j)
                 nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
@@ -463,298 +472,30 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
             elseif jointType == 'revolute' then
                 nextRow()
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    j:getCollideConnected(),
-                    --uiState.jointCreationMode.motorEnabled or false,
-                    function(val) end
-                )
+                collideFunctionality(j)
                 nextRow()
-                local limitsEnabled = createCheckbox(' limits', x, y,
-                    j:areLimitsEnabled(),
-                    function(val)
-                        j:setLimitsEnabled(val)
-                    end
-                )
-
-                if (j:areLimitsEnabled()) then
-                    nextRow()
-                    local up = j:getUpperLimit() / (math.pi / 180)
-                    local lowerLimit = createSlider(' lower', x, y, 160, -180, up,
-                        j:getLowerLimit() / (math.pi / 180),
-                        function(val)
-                            local newValue = val * (math.pi / 180)
-                            j:setLowerLimit(newValue)
-                        end
-                    )
-                    nextRow()
-                    local low = j:getLowerLimit() / (math.pi / 180)
-                    local upperLimit = createSlider(' upper', x, y, 160, low, 180,
-                        j:getUpperLimit() / (math.pi / 180),
-                        function(val)
-                            local newValue = val * (math.pi / 180)
-                            j:setUpperLimit(newValue)
-                        end
-                    )
-                end
+                limitsFunctionality(j)
                 nextRow()
-                local motorEnabled = createCheckbox(' motor', x, y,
-                    j:isMotorEnabled(),
-                    function(val)
-                        j:setMotorEnabled(val)
-                    end
-                )
-                nextRow()
-                if j:isMotorEnabled() then
-                    local motorSpeed = createSlider(' speed', x, y, 160, -1000, 1000,
-                        j:getMotorSpeed(),
-                        function(val) j:setMotorSpeed(val) end
-                    )
-                    nextRow()
-
-                    local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
-                        j:getMaxMotorTorque(),
-                        function(val) j:setMaxMotorTorque(val) end
-                    )
-                    nextRow()
-                end
+                motorFunctionality(j)
             elseif jointType == 'wheel' then
                 nextRow()
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    j:getCollideConnected(),
-                    --uiState.jointCreationMode.motorEnabled or false,
-                    function(val) end
+                collideFunctionality(j)
+                nextRow()
+
+                local springFrequency = createSlider(' spring F', x, y, 160, 0, 100,
+                    j:getSpringFrequency(),
+                    function(val) j:setSpringFrequency(val) end
                 )
                 nextRow()
+                local springDamping = createSlider(' spring D', x, y, 160, 0, 1,
+                    j:getSpringDampingRatio(),
+                    function(val) j:setSpringDampingRatio(val) end
+                )
+                nextRow()
+                motorFunctionality(j)
             end
         end)
     end
 end
 
 return lib
-
-
--- function createJointOLD(data)
---     local bodyA = data.body1
---     local bodyB = data.body2
---     local jointType = data.jointType
-
---     local joint
---     if jointType == 'distance' then
---         -- Create a Distance Joint
---         local x1, y1 = bodyA:getPosition()
---         local x2, y2 = bodyB:getPosition()
---         local length = data.length or ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
---         joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, false)
---         joint:setLength(length)
---     elseif jointType == 'revolute' then
---         -- Create a Revolute Joint at the first body's position
---         local x, y = bodyA:getPosition()
---         joint = love.physics.newRevoluteJoint(bodyA, bodyB, x, y, false)
---     elseif jointType == 'weld' then
---         -- Create a Weld Joint at the first body's position
---         local x, y = bodyA:getPosition()
---         joint = love.physics.newWeldJoint(bodyA, bodyB, x, y, false)
---     elseif jointType == 'motor' then
---         -- Create a Motor Joint
---         local correctionFactor = data.correctionFactor or 1
---         joint = love.physics.newMotorJoint(bodyA, bodyB, correctionFactor, false)
---         if data.maxForce then
---             joint:setMaxForce(data.maxForce)
---         end
---         if data.maxTorque then
---             joint:setMaxTorque(data.maxTorque)
---         end
---     elseif jointType == 'wheel' then
---         -- Create a Wheel Joint
---         local x, y = bodyA:getPosition()
---         local axisX, axisY = 0, 1 -- Vertical axis
---         joint = love.physics.newWheelJoint(bodyA, bodyB, x, y, axisX, axisY, false)
---         if data.frequency then
---             joint:setSpringFrequency(data.frequency)
---         end
---         if data.dampingRatio then
---             joint:setSpringDampingRatio(data.dampingRatio)
---         end
---     elseif jointType == 'rope' then
---         -- Create a Rope Joint
---         local x1, y1 = bodyA:getPosition()
---         local x2, y2 = bodyB:getPosition()
---         local maxLength = data.maxLength or ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
---         joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength, false)
---     elseif jointType == 'pulley' then
---         -- Create a Pulley Joint
---         local x1, y1 = bodyA:getWorldCenter()
---         local x2, y2 = bodyB:getWorldCenter()
---         local gx1, gy1 = x1, y1 - 100
---         local gx2, gy2 = x2, y2 - 100
---         local ratio = data.ratio or 1
---         joint = love.physics.newPulleyJoint(bodyA, bodyB, gx1, gy1, gx2, gy2, x1, y1, x2, y2, ratio, false)
---     elseif jointType == 'friction' then
---         -- Create a Friction Joint
---         local x, y = bodyA:getPosition()
---         joint = love.physics.newFrictionJoint(bodyA, bodyB, x, y, false)
---         if data.maxForce then
---             joint:setMaxForce(data.maxForce)
---         end
---         if data.maxTorque then
---             joint:setMaxTorque(data.maxTorque)
---         end
---     else
---         -- Handle other joints or unimplemented types
---         print("Joint type '" .. jointType .. "' is not implemented yet.")
---         uiState.jointCreationMode = nil
---         return
---     end
-
---     -- Store the joint
---     worldState.joints = worldState.joints or {}
---     table.insert(worldState.joints, joint)
-
---     -- Clear joint creation mode
---     uiState.jointCreationMode = nil
--- end
-
--- function createJoint(data)
---     local bodyA = data.body1
---     local bodyB = data.body2
---     local jointType = data.jointType
-
---     local joint
---     local world = bodyA:getWorld() -- Assuming both bodies are in the same world
-
---     if jointType == 'distance' then
---         -- Create a Distance Joint
---         local x1, y1 = bodyA:getPosition()
---         local x2, y2 = bodyB:getPosition()
---         local length = data.length or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
---         joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, false)
---         joint:setLength(length)
---         if data.frequency then
---             joint:setFrequency(data.frequency)
---         end
---         if data.dampingRatio then
---             joint:setDampingRatio(data.dampingRatio)
---         end
---     elseif jointType == 'revolute' then
---         -- Create a Revolute Joint at the first body's position
---         local x, y = bodyA:getPosition()
---         joint = love.physics.newRevoluteJoint(bodyA, bodyB, x, y, false)
-
---         -- Enable Limits if specified
---         if data.limitsEnabled then
---             joint:setLimits(data.lowerLimit or 0, data.upperLimit or 0)
---             joint:setLimitsEnabled(true)
---         end
-
---         -- Enable Motor if specified
---         if data.motorEnabled then
---             joint:setMotorEnabled(true)
---             joint:setMotorSpeed(data.motorSpeed or 0)
---             joint:setMaxMotorTorque(data.maxMotorTorque or 0)
---         end
---     elseif jointType == 'prismatic' then
---         -- Create a Prismatic Joint
---         local x, y = bodyA:getPosition()
---         local axis = data.axis or { 1, 0 } -- Default axis (horizontal)
---         joint = love.physics.newPrismaticJoint(bodyA, bodyB, x, y, axis[1], axis[2], false)
-
---         -- Enable Limits if specified
---         if data.limitsEnabled then
---             joint:setLimits(data.lowerLimit or 0, data.upperLimit or 0)
---             joint:setLimitsEnabled(true)
---         end
-
---         -- Enable Motor if specified
---         if data.motorEnabled then
---             joint:setMotorEnabled(true)
---             joint:setMotorSpeed(data.motorSpeed or 0)
---             joint:setMaxMotorForce(data.maxMotorForce or 0)
---         end
---     elseif jointType == 'weld' then
---         -- Create a Weld Joint at the first body's position
---         local x, y = bodyA:getPosition()
---         joint = love.physics.newWeldJoint(bodyA, bodyB, x, y, false)
-
---         -- Weld joints don't have frequency or damping ratio by default, but you can simulate similar behavior if needed.
---     elseif jointType == 'motor' then
---         -- Create a Motor Joint
---         joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or 1)
---         joint:setMotorEnabled(true)
---         if data.maxForce then
---             joint:setMaxForce(data.maxForce)
---         end
---         if data.maxTorque then
---             joint:setMaxTorque(data.maxTorque)
---         end
---     elseif jointType == 'wheel' then
---         -- Create a Wheel Joint
---         local x, y = bodyA:getPosition()
---         local axisX, axisY = 0, 1 -- Vertical axis by default; adjust as needed
---         joint = love.physics.newWheelJoint(bodyA, bodyB, x, y, axisX, axisY, false)
-
---         if data.frequency then
---             joint:setSpringFrequency(data.frequency)
---         end
---         if data.dampingRatio then
---             joint:setSpringDampingRatio(data.dampingRatio)
---         end
-
---         -- Enable Motor if specified
---         if data.motorEnabled then
---             joint:setMotorEnabled(true)
---             joint:setMotorSpeed(data.motorSpeed or 0)
---             joint:setMaxMotorTorque(data.maxMotorTorque or 0)
---         end
---     elseif jointType == 'rope' then
---         -- Create a Rope Joint
---         local x1, y1 = bodyA:getPosition()
---         local x2, y2 = bodyB:getPosition()
---         local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
---         joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength)
---     elseif jointType == 'pulley' then
---         -- Create a Pulley Joint
---         -- Ground anchors are typically fixed points; adjust as necessary
---         local x1, y1 = data.groundAnchor1 or { 0, 0 }, data.groundAnchor2 or { 0, 0 }
---         local groundAnchorA = data.groundAnchor1 or { 0, 0 }
---         local groundAnchorB = data.groundAnchor2 or { 0, 0 }
---         local bodyA_center = bodyA:getWorldCenter()
---         local bodyB_center = bodyB:getWorldCenter()
---         local ratio = data.ratio or 1
-
---         joint = love.physics.newPulleyJoint(
---             bodyA, bodyB,
---             groundAnchorA[1], groundAnchorA[2],
---             groundAnchorB[1], groundAnchorB[2],
---             bodyA_center.x, bodyA_center.y,
---             bodyB_center.x, bodyB_center.y,
---             ratio,
---             false
---         )
---     elseif jointType == 'friction' then
---         -- Create a Friction Joint
---         local x, y = bodyA:getPosition()
---         joint = love.physics.newFrictionJoint(bodyA, bodyB, x, y, false)
-
---         if data.maxForce then
---             joint:setMaxForce(data.maxForce)
---         end
---         if data.maxTorque then
---             joint:setMaxTorque(data.maxTorque)
---         end
---     else
---         -- Handle other joints or unimplemented types
---         print("Joint type '" .. jointType .. "' is not implemented yet.")
---         uiState.jointCreationMode = nil
---         return
---     end
-
---     -- Optionally, set additional properties common to all joints here
---     -- For example, you might want to set user data or collision filtering
-
---     -- Store the joint
---     worldState.joints = worldState.joints or {}
---     table.insert(worldState.joints, joint)
-
---     -- Clear joint creation mode
---     uiState.jointCreationMode = nil
--- end
