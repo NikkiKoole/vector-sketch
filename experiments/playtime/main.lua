@@ -343,7 +343,7 @@ function drawUI()
         --'gear'
         --'prismatic',
         -- 'motor'
-        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'friction', 'pulley', 'motor', }
+        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'friction', 'pulley' }
         --local jointTypes = { 'distance', 'revolute', 'weld', }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230

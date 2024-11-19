@@ -62,20 +62,9 @@ function lib.createJoint(data)
         local x1, y1 = bodyA:getPosition()
         -- local axisX, axisY = data.axisX, data.axisY -- Vertical axis by default; adjust as needed
         joint = love.physics.newWheelJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1, data.collideConnected)
-
-        if data.frequency then
-            joint:setSpringFrequency(data.frequency)
-        end
-        if data.dampingRatio then
-            joint:setSpringDampingRatio(data.dampingRatio)
-        end
-
-        -- Enable Motor if specified
-        if data.motorEnabled then
-            joint:setMotorEnabled(true)
-            joint:setMotorSpeed(data.motorSpeed or 0)
-            joint:setMaxMotorTorque(data.maxMotorTorque or 0)
-        end
+    elseif jointType == 'motor' then
+        -- Create a Motor Joint
+        joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or .3, data.collideConnected)
     elseif jointType == 'prismatic' then
         -- Create a Prismatic Joint
         local x, y = bodyA:getPosition()
@@ -93,16 +82,6 @@ function lib.createJoint(data)
             joint:setMotorEnabled(true)
             joint:setMotorSpeed(data.motorSpeed or 0)
             joint:setMaxMotorForce(data.maxMotorForce or 0)
-        end
-    elseif jointType == 'motor' then
-        -- Create a Motor Joint
-        joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or 1)
-        joint:setMotorEnabled(true)
-        if data.maxForce then
-            joint:setMaxForce(data.maxForce)
-        end
-        if data.maxTorque then
-            joint:setMaxTorque(data.maxTorque)
         end
     elseif jointType == 'pulley' then
         -- Create a Pulley Joint
@@ -207,6 +186,8 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                             normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
                     end
                 )
+            elseif jointType == 'motor' then
+                collideFunctionality()
             elseif jointType == 'prismatic' then
                 print('PRISMATIC ISNT WORKING YET!!!')
 
@@ -269,7 +250,7 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                 ui.label(x, y, string.format("Ground Anchors: (%.1f, %.1f), (%.1f, %.1f)", gx1, gy1, gx2, gy2))
 
                 nextRow()
-            elseif jointType == 'motor' then
+            elseif jointType == 'motorOLD' then
                 -- Max Force
                 local maxForce = createSlider('Max F', x, y, 160, 0, 10000,
                     uiState.jointCreationMode.maxForce or 1000,
@@ -365,7 +346,6 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         function(val) j:setMotorSpeed(val) end
                     )
                     nextRow()
-
                     local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
                         j:getMaxMotorTorque(),
                         function(val) j:setMaxMotorTorque(val) end
@@ -377,7 +357,6 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             local function collideFunctionality(j)
                 local collideEnabled = createCheckbox(' collide', x, y,
                     j:getCollideConnected(),
-                    --uiState.jointCreationMode.motorEnabled or false,
                     function(val) end
                 )
             end
@@ -493,6 +472,41 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 )
                 nextRow()
                 motorFunctionality(j)
+            elseif jointType == 'motor' then
+                nextRow()
+                collideFunctionality(j)
+                nextRow()
+                local angularOffset = createSlider(' angular o', x, y, 160, -180, 180,
+                    math.deg(j:getAngularOffset()),
+                    function(val) j:setAngularOffset(math.rad(val)) end
+                )
+                nextRow()
+                local correctionF = createSlider(' corr.', x, y, 160, 0, 1,
+                    j:getCorrectionFactor(),
+                    function(val) j:setCorrectionFactor(val) end
+                )
+
+                local lx, ly = j:getLinearOffset()
+                local lxOff = createSlider(' lx', x, y, 160, -1000, 1000,
+                    lx,
+                    function(val) j:setLinearOffset(val, ly) end
+                )
+                nextRow()
+                local lyOff = createSlider(' ly', x, y, 160, -1000, 1000,
+                    ly,
+                    function(val) j:setLinearOffset(lx, val) end
+                )
+                nextRow()
+                local maxForce = createSlider(' force', x, y, 160, 0, 100000,
+                    j:getMaxForce(),
+                    function(val) j:setMaxForce(val) end
+                )
+                nextRow()
+                local maxTorque = createSlider(' torque', x, y, 160, 0, 100000,
+                    j:getMaxTorque(),
+                    function(val) j:setMaxTorque(val) end
+                )
+                nextRow()
             end
         end)
     end
