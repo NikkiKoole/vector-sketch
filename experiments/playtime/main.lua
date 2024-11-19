@@ -30,6 +30,7 @@ function love.load()
         addJointOpened = false,
         worldSettingsOpened = false,
         maybeHideSelectedPanel = false,
+        currentlySelectedJoint = nil,
         currentlySelectedObject = nil,
         currentlyDraggingObject = nil,
         offsetForCurrentlyDragging = { nil, nil },
@@ -343,7 +344,7 @@ function drawUI()
         --'gear'
         --'prismatic',
         -- 'motor'
-        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'friction', 'pulley' }
+        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'friction', 'pulley' }
         --local jointTypes = { 'distance', 'revolute', 'weld', }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230

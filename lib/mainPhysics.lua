@@ -390,7 +390,7 @@ local function drawPrismaticJoint(joint)
     local length = 50
     love.graphics.setColor(1, 0.5, 0) -- Orange
     love.graphics.line(x, y, x + ax * length, y + ay * length)
-    if joint:isLimitEnabled() then
+    if joint:areLimitsEnabled() then
         local lower, upper = joint:getLimits()
         love.graphics.setColor(1, 1, 0) -- Yellow
         love.graphics.line(x + ax * lower, y + ay * lower, x + ax * lower + ax * 10, y + ay * lower + ay * 10)
@@ -557,7 +557,9 @@ lib.drawWorld = function(world)
             love.graphics.line(x2, y2, gx2, gy2)
             love.graphics.line(gx1, gy1, gx2, gy2)
         end
-
+        if jointType == 'prismatic' then
+            drawPrismaticJoint(joint)
+        end
         if jointType == 'revolute' then
             if joint:areLimitsEnabled() then
                 local lower = joint:getLowerLimit()

@@ -60,29 +60,22 @@ function lib.createJoint(data)
         -- Create a Wheel Joint
 
         local x1, y1 = bodyA:getPosition()
-        -- local axisX, axisY = data.axisX, data.axisY -- Vertical axis by default; adjust as needed
+
         joint = love.physics.newWheelJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1, data.collideConnected)
     elseif jointType == 'motor' then
         -- Create a Motor Joint
         joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or .3, data.collideConnected)
     elseif jointType == 'prismatic' then
         -- Create a Prismatic Joint
-        local x, y = bodyA:getPosition()
-        local axis = data.axis or { 1, 0 } -- Default axis (horizontal)
-        joint = love.physics.newPrismaticJoint(bodyA, bodyB, x, y, axis[1], axis[2], false)
+        local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
 
-        -- Enable Limits if specified
-        if data.limitsEnabled then
-            joint:setLimits(data.lowerLimit or 0, data.upperLimit or 0)
-            joint:setLimitsEnabled(true)
-        end
-
-        -- Enable Motor if specified
-        if data.motorEnabled then
-            joint:setMotorEnabled(true)
-            joint:setMotorSpeed(data.motorSpeed or 0)
-            joint:setMaxMotorForce(data.maxMotorForce or 0)
-        end
+        joint = love.physics.newPrismaticJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1,
+            data.collideConnected)
+        --joint = love.physics.newPrismaticJoint(bodyA, bodyB, x1, y1, x2, y2, data.axisX or 0, data.axisX or 1,
+        --    data.collideConnected)
+        joint:setLowerLimit(0)
+        joint:setUpperLimit(0)
     elseif jointType == 'pulley' then
         -- Create a Pulley Joint
         -- Ground anchors are typically fixed points; adjust as necessary
@@ -119,7 +112,87 @@ function lib.createJoint(data)
         -- uiState.jointCreationMode = nil
         return
     end
+    print(inspect(getmetatable(joint)))
     return joint
+end
+
+function lib.recreateJoint(joint, newSettings)
+    if joint:isDestroyed() then
+        print("The joint is already destroyed.")
+        return nil
+    end
+
+    local bodyA, bodyB = joint:getBodies()
+    local jointType = joint:getType()
+
+    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType }
+
+    -- Add new settings to the data
+    for key, value in pairs(newSettings or {}) do
+        data[key] = value
+    end
+
+
+
+    -- Extract settings based on the joint type
+    if jointType == 'distance' then
+        data.length = joint:getLength()
+        data.frequency = joint:getFrequency()
+        data.dampingRatio = joint:getDampingRatio()
+    elseif jointType == 'weld' then
+        data.frequency = joint:getFrequency()
+        data.dampingRatio = joint:getDampingRatio()
+    elseif jointType == 'rope' then
+        data.maxLength = joint:getMaxLength()
+    elseif jointType == 'revolute' then
+        data.motorEnabled = joint:isMotorEnabled()
+        if data.motorEnabled then
+            data.motorSpeed = joint:getMotorSpeed()
+            data.maxMotorTorque = joint:getMaxMotorTorque()
+        end
+        data.limitsEnabled = joint:areLimitsEnabled()
+        if data.limitsEnabled then
+            data.lowerLimit = joint:getLowerLimit()
+            data.upperLimit = joint:getUpperLimit()
+        end
+    elseif jointType == 'wheel' then
+        data.springFrequency = joint:getSpringFrequency()
+        data.springDampingRatio = joint:getSpringDampingRatio()
+    elseif jointType == 'motor' then
+        data.correctionFactor = joint:getCorrectionFactor()
+        data.angularOffset = joint:getAngularOffset()
+        data.linearOffsetX, data.linearOffsetY = joint:getLinearOffset()
+        data.maxForce = joint:getMaxForce()
+        data.maxTorque = joint:getMaxTorque()
+    elseif jointType == 'prismatic' then
+        data.motorEnabled = joint:isMotorEnabled()
+        if data.motorEnabled then
+            data.motorSpeed = joint:getMotorSpeed()
+            data.maxMotorForce = joint:getMaxMotorForce()
+        end
+        data.limitsEnabled = joint:areLimitsEnabled()
+        if data.limitsEnabled then
+            data.lowerLimit = joint:getLowerLimit()
+            data.upperLimit = joint:getUpperLimit()
+        end
+    elseif jointType == 'pulley' then
+        data.groundAnchor1 = { joint:getGroundAnchors() }
+        data.ratio = joint:getRatio()
+    elseif jointType == 'friction' then
+        data.maxForce = joint:getMaxForce()
+        data.maxTorque = joint:getMaxTorque()
+    else
+        print("Unsupported joint type: " .. jointType)
+        return nil
+    end
+
+    -- Destroy the existing joint
+    joint:destroy()
+
+    -- Create a new joint with the updated data
+    bodyA:setAwake(true)
+    bodyB:setAwake(true)
+    return lib.createJoint(data)
 end
 
 function lib.doJointCreateUI(uiState, _x, _y, w, h)
@@ -140,12 +213,48 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
             x, y = ui.nextLayoutPosition(layout, 160, 50)
         end
 
+
+
+        local function normalizeAxis(x, y)
+            local magnitude = math.sqrt(x ^ 2 + y ^ 2)
+            if magnitude == 0 then
+                return 1, 0 -- Default to (1, 0) if the vector is zero
+            else
+                print('normalizing', x / magnitude, y / magnitude)
+                return x / magnitude, y / magnitude
+            end
+        end
+
+        local function axisFunctionality()
+            local axisX = createSlider(' axisX', x, y, 160, -1, 1,
+                uiState.jointCreationMode.axisX or 0,
+                function(val)
+                    uiState.jointCreationMode.axisX = val
+                    uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
+                        normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
+                end
+            )
+            nextRow()
+            local axisY = createSlider(' axisY', x, y, 160, -1, 1,
+                uiState.jointCreationMode.axisY or 1,
+                function(val)
+                    uiState.jointCreationMode.axisY = val
+                    uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
+                        normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
+                end
+            )
+        end
+
         local function collideFunctionality()
             local collideEnabled = createCheckbox(' collide', x, y,
                 uiState.jointCreationMode.collideConnected or false,
                 function(val) uiState.jointCreationMode.collideConnected = (val) end
             )
         end
+
+
+
+
         -- Function to handle joint-specific UI
         local function handleJointUI()
             if jointType == 'distance' then
@@ -158,84 +267,14 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
                 collideFunctionality()
             elseif jointType == 'wheel' then
                 collideFunctionality()
-
-                local function normalizeAxis(x, y)
-                    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
-                    if magnitude == 0 then
-                        return 1, 0 -- Default to (1, 0) if the vector is zero
-                    else
-                        print('normalizing', x / magnitude, y / magnitude)
-                        return x / magnitude, y / magnitude
-                    end
-                end
                 nextRow()
-                local axisX = createSlider(' axisX', x, y, 160, -1, 1,
-                    uiState.jointCreationMode.axisX or 0,
-                    function(val)
-                        uiState.jointCreationMode.axisX = val
-                        uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
-                            normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
-                    end
-                )
-                nextRow()
-                local axisY = createSlider(' axisY', x, y, 160, -1, 1,
-                    uiState.jointCreationMode.axisY or 1,
-                    function(val)
-                        uiState.jointCreationMode.axisY = val
-                        uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
-                            normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
-                    end
-                )
+                axisFunctionality()
             elseif jointType == 'motor' then
                 collideFunctionality()
             elseif jointType == 'prismatic' then
-                print('PRISMATIC ISNT WORKING YET!!!')
-
+                collideFunctionality()
                 nextRow()
-
-                local limitsEnabled = createCheckbox(' limits', x, y,
-                    uiState.jointCreationMode.limitsEnabled or false,
-                    function(val) uiState.jointCreationMode.limitsEnabled = val end
-                )
-                nextRow()
-
-                if uiState.jointCreationMode.limitsEnabled then
-                    -- Lower Limit
-                    local lowerLimit = createSlider(' lower', x, y, 160, -100, 100,
-                        uiState.jointCreationMode.lowerLimit or 0,
-                        function(val) uiState.jointCreationMode.lowerLimit = val end
-                    )
-                    nextRow()
-
-                    local upperLimit = createSlider(' upper', x, y, 160, -100, 100,
-                        uiState.jointCreationMode.upperLimit or 0,
-                        function(val) uiState.jointCreationMode.upperLimit = val end
-                    )
-                    nextRow()
-                end
-
-                -- Enable Motor
-                local motorEnabled = createCheckbox(' motor', x, y,
-                    uiState.jointCreationMode.motorEnabled or false,
-                    function(val) uiState.jointCreationMode.motorEnabled = val end
-                )
-                nextRow()
-
-                if uiState.jointCreationMode.motorEnabled then
-                    -- Motor Speed
-                    local motorSpeed = createSlider(' speed', x, y, 160, -100, 100,
-                        uiState.jointCreationMode.motorSpeed or 0,
-                        function(val) uiState.jointCreationMode.motorSpeed = val end
-                    )
-                    nextRow()
-
-
-                    local maxMotorForce = createSlider('max f', x, y, 160, 0, 10000,
-                        uiState.jointCreationMode.maxMotorForce or 0,
-                        function(val) uiState.jointCreationMode.maxMotorForce = val end
-                    )
-                    nextRow()
-                end
+                axisFunctionality()
             elseif jointType == 'pulley' then
                 -- Ratio
                 local ratio = createSlider('Ratio', x, y, 160, 0.1, 10,
@@ -249,26 +288,6 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
 
                 ui.label(x, y, string.format("Ground Anchors: (%.1f, %.1f), (%.1f, %.1f)", gx1, gy1, gx2, gy2))
 
-                nextRow()
-            elseif jointType == 'motorOLD' then
-                -- Max Force
-                local maxForce = createSlider('Max F', x, y, 160, 0, 10000,
-                    uiState.jointCreationMode.maxForce or 1000,
-                    function(val) uiState.jointCreationMode.maxForce = val end
-                )
-                nextRow()
-
-                -- Max Torque
-                local maxTorque = createSlider('Max T', x, y, 160, 0, 10000,
-                    uiState.jointCreationMode.maxTorque or 1000,
-                    function(val) uiState.jointCreationMode.maxTorque = val end
-                )
-                nextRow()
-
-                local correctionFactor = createSlider('Corr Fac', x, y, 160, 0, 1,
-                    uiState.jointCreationMode.correctionFactor or 1,
-                    function(val) uiState.jointCreationMode.correctionFactor = val end
-                )
                 nextRow()
             elseif jointType == 'friction' then
                 -- Max Force
@@ -306,6 +325,17 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
     end)
 end
 
+-- local function normalizeAxis(x, y)
+--     local magnitude = math.sqrt(x ^ 2 + y ^ 2)
+--     if magnitude == 0 then
+--         return 1, 0 -- Default to (1, 0) if the vector is zero
+--     else
+--         print('normalizing', x / magnitude, y / magnitude)
+--         return x / magnitude, y / magnitude
+--     end
+-- end
+
+
 function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
     if not j:isDestroyed() then
         ui.panel(_x, _y, w, h, '∞ ' .. j:getType() .. ' ∞', function()
@@ -323,6 +353,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             local x, y = ui.nextLayoutPosition(layout, 160, 50)
             x, y = ui.nextLayoutPosition(layout, 160, 50)
             local width = 280
+
             local nextRow = function()
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
             end
@@ -332,7 +363,40 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 return;
             end
 
-            local function motorFunctionality(j)
+            -- local function axisFunctionality(j)
+            --     local _x, _y = j:getAxis()
+            --     _x, _y = normalizeAxis(_x, _y)
+            --     local axisX = createSlider(' axisX', x, y, 160, -1, 1,
+            --         _x or 0,
+            --         function(val)
+            --             local newX, newY = normalizeAxis(val, _y or 1)
+            --             uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = newX, axisY = newY })
+            --             j = uiState.currentlySelectedJoint
+            --         end
+            --     )
+            --     nextRow()
+            --     local axisY = createSlider(' axisY', x, y, 160, -1, 1,
+            --         _y or 1,
+            --         function(val)
+            --             local newX, newY = normalizeAxis(_x or 0, val)
+            --             uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = newX, axisY = newY })
+            --             j = uiState.currentlySelectedJoint
+            --         end
+            --     )
+            -- end
+
+            local function collideFunctionality(j)
+                local collideEnabled = createCheckbox(' collide', x, y,
+                    j:getCollideConnected(),
+                    function(val)
+                        uiState.currentlySelectedJoint = lib.recreateJoint(j, { collideConnected = val })
+                        j = uiState.currentlySelectedJoint
+                    end
+                )
+            end
+
+
+            local function motorFunctionality(j, settings)
                 local motorEnabled = createCheckbox(' motor', x, y,
                     j:isMotorEnabled(),
                     function(val)
@@ -346,22 +410,26 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         function(val) j:setMotorSpeed(val) end
                     )
                     nextRow()
-                    local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
-                        j:getMaxMotorTorque(),
-                        function(val) j:setMaxMotorTorque(val) end
-                    )
-                    nextRow()
+                    if (settings and settings.useTorque) then
+                        local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
+                            j:getMaxMotorTorque(),
+                            function(val) j:setMaxMotorTorque(val) end
+                        )
+                        nextRow()
+                    end
+                    if (settings and settings.useForce) then
+                        local maxMotorForce = createSlider(' max F', x, y, 160, 0, 100000,
+                            j:getMaxMotorForce(),
+                            function(val) j:setMaxMotorForce(val) end
+                        )
+                        nextRow()
+                    end
                 end
             end
 
-            local function collideFunctionality(j)
-                local collideEnabled = createCheckbox(' collide', x, y,
-                    j:getCollideConnected(),
-                    function(val) end
-                )
-            end
 
-            local function limitsFunctionality(j)
+
+            local function limitsFunctionalityAngular(j)
                 local limitsEnabled = createCheckbox(' limits', x, y,
                     j:areLimitsEnabled(),
                     function(val)
@@ -386,6 +454,34 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         function(val)
                             local newValue = math.rad(val)
                             j:setUpperLimit(newValue)
+                        end
+                    )
+                end
+            end
+
+            local function limitsFunctionalityLinear(j)
+                local limitsEnabled = createCheckbox(' limits', x, y,
+                    j:areLimitsEnabled(),
+                    function(val)
+                        j:setLimitsEnabled(val)
+                    end
+                )
+
+                if (j:areLimitsEnabled()) then
+                    nextRow()
+                    local up = (j:getUpperLimit())
+                    local lowerLimit = createSlider(' lower', x, y, 160, -1000, up,
+                        j:getLowerLimit(),
+                        function(val)
+                            j:setLowerLimit(val)
+                        end
+                    )
+                    nextRow()
+                    local low = j:getLowerLimit()
+                    local upperLimit = createSlider(' upper', x, y, 160, low, 1000,
+                        j:getUpperLimit(),
+                        function(val)
+                            j:setUpperLimit(val)
                         end
                     )
                 end
@@ -453,17 +549,20 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 collideFunctionality(j)
                 nextRow()
-                limitsFunctionality(j)
+                limitsFunctionalityAngular(j)
                 nextRow()
-                motorFunctionality(j)
+                motorFunctionality(j, { useTorque = true })
             elseif jointType == 'wheel' then
                 nextRow()
                 collideFunctionality(j)
                 nextRow()
-
+                -- if not j:isDestroyed() then
                 local springFrequency = createSlider(' spring F', x, y, 160, 0, 100,
                     j:getSpringFrequency(),
-                    function(val) j:setSpringFrequency(val) end
+                    function(val)
+                        print('doing shit')
+                        j:setSpringFrequency(val)
+                    end
                 )
                 nextRow()
                 local springDamping = createSlider(' spring D', x, y, 160, 0, 1,
@@ -471,7 +570,10 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     function(val) j:setSpringDampingRatio(val) end
                 )
                 nextRow()
-                motorFunctionality(j)
+                motorFunctionality(j, { useTorque = true })
+                -- axisFunctionality(j)
+                nextRow()
+                --  end
             elseif jointType == 'motor' then
                 nextRow()
                 collideFunctionality(j)
@@ -485,7 +587,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     j:getCorrectionFactor(),
                     function(val) j:setCorrectionFactor(val) end
                 )
-
+                nextRow()
                 local lx, ly = j:getLinearOffset()
                 local lxOff = createSlider(' lx', x, y, 160, -1000, 1000,
                     lx,
@@ -507,6 +609,13 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     function(val) j:setMaxTorque(val) end
                 )
                 nextRow()
+            elseif jointType == 'prismatic' then
+                nextRow()
+                collideFunctionality(j)
+                nextRow()
+                limitsFunctionalityLinear(j)
+                nextRow()
+                motorFunctionality(j, { useForce = true })
             end
         end)
     end
