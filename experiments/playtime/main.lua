@@ -41,6 +41,7 @@ function love.load()
         polygonVertices = {},
         minPointDistance = 10, -- Default minimum distance
         lastPolygonPoint = nil,
+        lastSelectedBody = nil
     }
 
     worldState = {
@@ -69,35 +70,18 @@ function love.load()
     addShape('circle', 1300, 400, 'dynamic', 100)
 end
 
--- Function to add a shape to the stage
-function addShape(shapeType, x, y, bodyType, size)
-    -- Default values if not provided
-    bodyType = bodyType or 'dynamic'
-    size = size or 20 -- Default size if not specified
-
-    -- Create a new table to store the shape's properties
-    local thing = {}
-
-    -- Create the physics body at the specified world coordinates
-    thing.body = love.physics.newBody(world, x, y, bodyType)
-
-    -- Create the shape based on the shapeType
+function createShape(shapeType, radius, width, height)
     if shapeType == 'circle' then
-        thing.shape = love.physics.newCircleShape(size)
+        return love.physics.newCircleShape(radius)
     elseif shapeType == 'rectangle' then
-        thing.shape = love.physics.newRectangleShape(size * 2, size * 2)
+        return love.physics.newRectangleShape(width, height)
     elseif shapeType == 'capsule' then
-        local w = size
-        local h = size * 2
-        local vertices = capsuleXY(w, h, w / 5, 0, 0)
-        thing.shape = love.physics.newPolygonShape(vertices)
+        local vertices = capsuleXY(width, height, width / 5, 0, 0)
+        return love.physics.newPolygonShape(vertices), vertices
     elseif shapeType == 'trapezium' then
-        local w = size
-        local h = size * 2
-        local vertices = makeTrapezium(w, w * 1.2, h, 0, 0)
-        thing.shape = love.physics.newPolygonShape(vertices)
+        local vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
+        return love.physics.newPolygonShape(vertices), vertices
     else
-        -- Handle regular polygons (triangle, pentagon, etc.)
         local sides = ({
             triangle = 3,
             pentagon = 5,
@@ -107,12 +91,103 @@ function addShape(shapeType, x, y, bodyType, size)
         })[shapeType]
 
         if sides then
-            local vertices = makePolygonVertices(sides, size)
-            thing.shape = love.physics.newPolygonShape(vertices)
+            local vertices = makePolygonVertices(sides, radius)
+            return love.physics.newPolygonShape(vertices), vertices
         else
             error("Unknown shape type: " .. tostring(shapeType))
         end
     end
+end
+
+function recreateBody(body, newSettings)
+    -- Ensure the body is valid
+    if body:isDestroyed() then
+        print("The body is already destroyed.")
+        return nil
+    end
+
+    -- Extract current properties from the existing body
+    local x, y = body:getPosition()
+    local angle = body:getAngle()
+    local linearVelocityX, linearVelocityY = body:getLinearVelocity()
+    local angularVelocity = body:getAngularVelocity()
+    local isAwake = body:isAwake()
+    local isFixedRotation = body:isFixedRotation()
+    local bodyType = newSettings.bodyType or body:getType()
+
+    -- Extract fixtures for recreation if new shape is not provided
+    local fixtures = body:getFixtures()
+    local fixtureData = {}
+    for _, fixture in ipairs(fixtures) do
+        local shape = fixture:getShape()
+        table.insert(fixtureData, {
+            shapeType = shape:getType(),
+            shape = shape,
+            density = fixture:getDensity(),
+            restitution = fixture:getRestitution(),
+            friction = fixture:getFriction(),
+        })
+    end
+
+    -- Destroy the old body
+    body:destroy()
+
+    -- Create a new body with updated settings
+    local newBody = love.physics.newBody(world, x, y, bodyType)
+    newBody:setAngle(angle)
+    newBody:setLinearVelocity(linearVelocityX, linearVelocityY)
+    newBody:setAngularVelocity(angularVelocity)
+    newBody:setAwake(isAwake)
+    newBody:setFixedRotation(isFixedRotation)
+
+    -- Apply new shape if provided
+    if newSettings.shapeType then
+        local shape, vertices = createShape(
+            newSettings.shapeType,
+            newSettings.radius or 20, -- Default radius
+            newSettings.width or 40,  -- Default width
+            newSettings.height or 40  -- Default height
+        )
+
+        local fixture = love.physics.newFixture(newBody, shape, newSettings.density or 1)
+        fixture:setRestitution(newSettings.restitution or 0.3)
+        fixture:setFriction(newSettings.friction or 0.5)
+    else
+        -- Reattach old fixtures if no new shape is specified
+        for _, data in ipairs(fixtureData) do
+            local fixture = love.physics.newFixture(newBody, data.shape, data.density)
+            fixture:setRestitution(data.restitution)
+            fixture:setFriction(data.friction)
+        end
+    end
+
+    -- Return the newly created body
+    return newBody
+end
+
+-- Function to add a shape to the stage
+function addShape(shapeType, x, y, bodyType, radius, width, height)
+    -- Default values if not provided
+    bodyType = bodyType or 'dynamic'
+
+    radius = radius or 20         -- Default radius for circular shapes
+    width = width or radius * 2   -- Default width for polygons
+    height = height or radius * 2 -- Default height for polygons
+
+    -- Create a new table to store the shape's properties
+
+    local thing = {
+        shapeType = shapeType,
+        radius = radius,
+        width = width,
+        height = height,
+    }
+
+    -- Create the physics body at the specified world coordinates
+    thing.body = love.physics.newBody(world, x, y, bodyType)
+
+    -- Use createShape to generate the shape
+    thing.shape = createShape(shapeType, radius, width, height)
 
     -- Create the fixture and attach it to the body
     thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
@@ -342,10 +417,8 @@ function drawUI()
 
     if uiState.addJointOpened then
         --'gear'
-        --'prismatic',
-        -- 'motor'
-        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'friction', 'pulley' }
-        --local jointTypes = { 'distance', 'revolute', 'weld', }
+        -- 'friction'
+        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley' }
         local titleHeight = ui.font:getHeight() + 10
         local startX = 230
         local startY = 70
@@ -481,6 +554,59 @@ function drawUI()
                 body:setAwake(true)
             end
 
+            --local body = uiState.currentlySelectedObject:getBody()
+
+            local userData = body:getUserData()
+            local thing = userData and userData.thing
+            --print(body, userData, thing, thing.width, thing.height)
+            local dirtyBodyChange = false
+            if (uiState.lastSelectedBody ~= body) then
+                dirtyBodyChange = true
+                uiState.lastSelectedBody = body
+            end
+            if false and thing then
+                -- Shape Properties
+                local shapeType = thing.shapeType
+                local x, y = ui.nextLayoutPosition(layout, 160, 50)
+
+                if shapeType == 'circle' then
+                    x, y = ui.nextLayoutPosition(layout, 160, 50)
+                    local newRadius = ui.sliderWithInput(' radius', x, y, 160, 1, 200, thing.radius)
+                    ui.label(x, y, ' radius')
+                    if newRadius and newRadius ~= thing.radius then
+                        thing.radius = newRadius
+                        uiState.currentlySelectedObject = recreateBody(
+                            body,
+                            { shapeType = 'circle', radius = newRadius }
+                        )
+                        print('got here')
+                    end
+                elseif shapeType == 'rectangle' then
+                    x, y = ui.nextLayoutPosition(layout, 160, 50)
+                    local newWidth = ui.sliderWithInput(' width', x, y, 160, 1, 400, thing.width, dirtyBodyChange)
+                    ui.label(x, y, ' width')
+                    x, y = ui.nextLayoutPosition(layout, 160, 50)
+                    local newHeight = ui.sliderWithInput(' height', x, y, 160, 1, 400, thing.height, dirtyBodyChange)
+                    ui.label(x, y, ' height')
+
+                    if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
+                        thing.width = newWidth or thing.width
+                        thing.height = newHeight or thing.height
+
+                        thing.body = recreateBody(
+                            body,
+                            { shapeType = 'rectangle', width = thing.width, height = thing.height }
+                        )
+                        uiState.currentlySelectedObject = thing
+                        print(inspect(thing))
+                        --body = uiState.currentlySelectedObject:getBody()
+                        --body = thing.body
+                        -- body = uiState.currentlySelectedObject
+                        --print('got here', thing.width, thing.height)
+                    end
+                end
+            end
+
             x, y = ui.nextLayoutPosition(layout, 160, 50)
             local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
             if dirty then
@@ -565,7 +691,7 @@ function drawUI()
 
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
-        joint.doJointCreateUI(uiState, 500, 100, 300, 600)
+        joint.doJointCreateUI(uiState, 500, 100, 300, 200)
     end
 
     if uiState.currentlySelectedJoint then
@@ -716,23 +842,25 @@ local function pointerPressed(x, y, id)
     }
     local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
     if #hitted > 0 then
+        --local ud =  hitted[1]:getBody():getUserData()
         uiState.currentlySelectedObject = hitted[1]
-        if (worldState.paused) then
-            if uiState.jointCreationMode then
-                if uiState.jointCreationMode.body1 == nil then
-                    uiState.jointCreationMode.body1 = uiState.currentlySelectedObject:getBody()
-                elseif uiState.jointCreationMode.body2 == nil then
-                    if (uiState.currentlySelectedObject:getBody() ~= uiState.jointCreationMode.body1) then
-                        uiState.jointCreationMode.body2 = uiState.currentlySelectedObject:getBody()
-                    end
-                end
-            else
-                local ud = uiState.currentlySelectedObject:getBody():getUserData()
-                uiState.currentlyDraggingObject = ud.thing
 
-                local offx, offy = ud.thing.body:getLocalPoint(cx, cy)
-                uiState.offsetForCurrentlyDragging = { -offx, -offy }
+        if uiState.jointCreationMode then
+            if uiState.jointCreationMode.body1 == nil then
+                uiState.jointCreationMode.body1 = uiState.currentlySelectedObject:getBody()
+            elseif uiState.jointCreationMode.body2 == nil then
+                if (uiState.currentlySelectedObject:getBody() ~= uiState.jointCreationMode.body1) then
+                    uiState.jointCreationMode.body2 = uiState.currentlySelectedObject:getBody()
+                end
             end
+        end
+
+        if (worldState.paused) then
+            local ud = uiState.currentlySelectedObject:getBody():getUserData()
+            uiState.currentlyDraggingObject = ud.thing
+
+            local offx, offy = ud.thing.body:getLocalPoint(cx, cy)
+            uiState.offsetForCurrentlyDragging = { -offx, -offy }
         end
     else
         uiState.maybeHideSelectedPanel = true

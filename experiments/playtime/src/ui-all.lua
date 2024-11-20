@@ -143,6 +143,7 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
         value = tonumber(numericInputText)
         returnValue = value
     end
+    --print(valueHasChangedViaSlider, changed, dirty)
     if returnValue then
         return returnValue
     end

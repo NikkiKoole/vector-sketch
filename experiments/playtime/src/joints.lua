@@ -20,7 +20,11 @@ local function createCheckbox(labelText, x, y, value, callback)
     end
     return newValue
 end
-
+local function calculateDistance(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
 
 function lib.createJoint(data)
     local bodyA = data.body1
@@ -95,6 +99,11 @@ function lib.createJoint(data)
             ratio,
             false
         )
+        --local d1 = calculateDistance(bodyA_centerX, bodyA_centerY, groundAnchorA[1], groundAnchorA[2])
+        --local d2 = calculateDistance(bodyB_centerX, bodyB_centerY, groundAnchorB[1], groundAnchorB[2])
+        --print(d1, d2)
+        -- print(inspect(setmetatable(joint)))
+        -- joint:setMaxLengths(d1 + d2, d1 + d2)
     elseif jointType == 'friction' then
         -- Create a Friction Joint
         local x, y = bodyA:getPosition()
@@ -131,8 +140,6 @@ function lib.recreateJoint(joint, newSettings)
     for key, value in pairs(newSettings or {}) do
         data[key] = value
     end
-
-
 
     -- Extract settings based on the joint type
     if jointType == 'distance' then
@@ -205,113 +212,11 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
         })
 
         local width = 280
-        local jointType = uiState.jointCreationMode.jointType
         local x, y = ui.nextLayoutPosition(layout, 160, 50)
-        x, y = ui.nextLayoutPosition(layout, 160, 50)
-
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, 160, 50)
         end
-
-
-
-        local function normalizeAxis(x, y)
-            local magnitude = math.sqrt(x ^ 2 + y ^ 2)
-            if magnitude == 0 then
-                return 1, 0 -- Default to (1, 0) if the vector is zero
-            else
-                print('normalizing', x / magnitude, y / magnitude)
-                return x / magnitude, y / magnitude
-            end
-        end
-
-        local function axisFunctionality()
-            local axisX = createSlider(' axisX', x, y, 160, -1, 1,
-                uiState.jointCreationMode.axisX or 0,
-                function(val)
-                    uiState.jointCreationMode.axisX = val
-                    uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
-                        normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
-                end
-            )
-            nextRow()
-            local axisY = createSlider(' axisY', x, y, 160, -1, 1,
-                uiState.jointCreationMode.axisY or 1,
-                function(val)
-                    uiState.jointCreationMode.axisY = val
-                    uiState.jointCreationMode.axisX, uiState.jointCreationMode.axisY =
-                        normalizeAxis(uiState.jointCreationMode.axisX or 0, uiState.jointCreationMode.axisY or 1)
-                end
-            )
-        end
-
-        local function collideFunctionality()
-            local collideEnabled = createCheckbox(' collide', x, y,
-                uiState.jointCreationMode.collideConnected or false,
-                function(val) uiState.jointCreationMode.collideConnected = (val) end
-            )
-        end
-
-
-
-
-        -- Function to handle joint-specific UI
-        local function handleJointUI()
-            if jointType == 'distance' then
-                collideFunctionality()
-            elseif jointType == 'weld' then
-                collideFunctionality()
-            elseif jointType == 'rope' then
-                collideFunctionality()
-            elseif jointType == 'revolute' then
-                collideFunctionality()
-            elseif jointType == 'wheel' then
-                collideFunctionality()
-                nextRow()
-                axisFunctionality()
-            elseif jointType == 'motor' then
-                collideFunctionality()
-            elseif jointType == 'prismatic' then
-                collideFunctionality()
-                nextRow()
-                axisFunctionality()
-            elseif jointType == 'pulley' then
-                -- Ratio
-                local ratio = createSlider('Ratio', x, y, 160, 0.1, 10,
-                    uiState.jointCreationMode.ratio or 1,
-                    function(val) uiState.jointCreationMode.ratio = val end
-                )
-                nextRow()
-
-                -- Ground Anchors (Display Only)
-                local gx1, gy1, gx2, gy2 = uiState.jointCreationMode.groundAnchor1 or 0, 0, 0, 0
-
-                ui.label(x, y, string.format("Ground Anchors: (%.1f, %.1f), (%.1f, %.1f)", gx1, gy1, gx2, gy2))
-
-                nextRow()
-            elseif jointType == 'friction' then
-                -- Max Force
-                local maxForce = createSlider('Max F', x, y, 160, 0, 1000,
-                    uiState.jointCreationMode.maxForce or 10,
-                    function(val) uiState.jointCreationMode.maxForce = val end
-                )
-                nextRow()
-
-                local maxTorque = createSlider('Max T', x, y, 160, 0, 1000,
-                    uiState.jointCreationMode.maxTorque or 10,
-                    function(val) uiState.jointCreationMode.maxTorque = val end
-                )
-                nextRow()
-            end
-        end
-
-        handleJointUI()
-
-        -- "Create Joint" and "Cancel" Buttons
-        --x, y = ui.nextLayoutPosition(layout, 160, 50)
         nextRow()
-
-
         if ui.button(x, y, width, 'Create') then
             local j = lib.createJoint(uiState.jointCreationMode)
             uiState.currentlySelectedJoint = j
@@ -325,16 +230,15 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
     end)
 end
 
--- local function normalizeAxis(x, y)
---     local magnitude = math.sqrt(x ^ 2 + y ^ 2)
---     if magnitude == 0 then
---         return 1, 0 -- Default to (1, 0) if the vector is zero
---     else
---         print('normalizing', x / magnitude, y / magnitude)
---         return x / magnitude, y / magnitude
---     end
--- end
-
+local function normalizeAxis(x, y)
+    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
+    if magnitude == 0 then
+        return 1, 0 -- Default to (1, 0) if the vector is zero
+    else
+        --   print('normalizing', x / magnitude, y / magnitude)
+        return x / magnitude, y / magnitude
+    end
+end
 
 function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
     if not j:isDestroyed() then
@@ -363,27 +267,43 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 return;
             end
 
-            -- local function axisFunctionality(j)
-            --     local _x, _y = j:getAxis()
-            --     _x, _y = normalizeAxis(_x, _y)
-            --     local axisX = createSlider(' axisX', x, y, 160, -1, 1,
-            --         _x or 0,
-            --         function(val)
-            --             local newX, newY = normalizeAxis(val, _y or 1)
-            --             uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = newX, axisY = newY })
-            --             j = uiState.currentlySelectedJoint
-            --         end
-            --     )
-            --     nextRow()
-            --     local axisY = createSlider(' axisY', x, y, 160, -1, 1,
-            --         _y or 1,
-            --         function(val)
-            --             local newX, newY = normalizeAxis(_x or 0, val)
-            --             uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = newX, axisY = newY })
-            --             j = uiState.currentlySelectedJoint
-            --         end
-            --     )
-            -- end
+            local function axisFunctionality(j)
+                local axisEnabled = createCheckbox(' axis', x, y,
+                    uiState.axisEnabled or false,
+                    function(val)
+                        uiState.axisEnabled = val
+                    end
+                )
+
+                if axisEnabled then
+                    local _x, _y = j:getAxis()
+                    --_x, _y = normalizeAxis(_x, _y)
+                    nextRow()
+                    local axisX = createSlider(' axisX', x, y, 160, -1, 1,
+                        _x or 0,
+                        function(val)
+                            uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = val, axisY = _y })
+                            j = uiState.currentlySelectedJoint
+                        end
+                    )
+                    nextRow()
+                    local axisY = createSlider(' axisY', x, y, 160, -1, 1,
+                        _y or 1,
+                        function(val)
+                            uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = val })
+                            j = uiState.currentlySelectedJoint
+                        end
+                    )
+                    nextRow()
+                    if ui.button(x, y, 160, 'normalize') then
+                        local _x, _y = j:getAxis()
+                        _x, _y = normalizeAxis(_x, _y)
+                        uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = _y })
+                        j = uiState.currentlySelectedJoint
+                    end
+                end
+                return j
+            end
 
             local function collideFunctionality(j)
                 local collideEnabled = createCheckbox(' collide', x, y,
@@ -393,8 +313,8 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         j = uiState.currentlySelectedJoint
                     end
                 )
+                return j
             end
-
 
             local function motorFunctionality(j, settings)
                 local motorEnabled = createCheckbox(' motor', x, y,
@@ -489,8 +409,9 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 
             if jointType == 'distance' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
                 nextRow()
+
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
@@ -513,11 +434,12 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     j:getDampingRatio(),
                     function(val) j:setDampingRatio(val) end
                 )
+
                 nextRow()
                 nextRow()
             elseif jointType == 'weld' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
                 nextRow()
                 local frequency = createSlider(' freq', x, y, 160, 0, 20,
                     j:getFrequency(),
@@ -531,7 +453,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
             elseif jointType == 'rope' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
                 nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
@@ -547,14 +469,16 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
             elseif jointType == 'revolute' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
                 nextRow()
                 limitsFunctionalityAngular(j)
                 nextRow()
                 motorFunctionality(j, { useTorque = true })
             elseif jointType == 'wheel' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
+                nextRow()
+                j = axisFunctionality(j)
                 nextRow()
                 -- if not j:isDestroyed() then
                 local springFrequency = createSlider(' spring F', x, y, 160, 0, 100,
@@ -576,7 +500,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 --  end
             elseif jointType == 'motor' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
                 nextRow()
                 local angularOffset = createSlider(' angular o', x, y, 160, -180, 180,
                     math.deg(j:getAngularOffset()),
@@ -611,7 +535,9 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
             elseif jointType == 'prismatic' then
                 nextRow()
-                collideFunctionality(j)
+                j = collideFunctionality(j)
+                nextRow()
+                j = axisFunctionality(j)
                 nextRow()
                 limitsFunctionalityLinear(j)
                 nextRow()
