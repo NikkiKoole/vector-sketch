@@ -24,7 +24,7 @@ function love.load()
 
     uiState = {
         showGrid = false,
-        radiusOfNextSpawn = 20,
+        radiusOfNextSpawn = 100,
         bodyTypeOfNextSpawn = 'dynamic',
         addShapeOpened = false,
         addJointOpened = false,
@@ -70,35 +70,6 @@ function love.load()
     addShape('circle', 1300, 400, 'dynamic', 100)
 end
 
-function createShape(shapeType, radius, width, height)
-    if shapeType == 'circle' then
-        return love.physics.newCircleShape(radius)
-    elseif shapeType == 'rectangle' then
-        return love.physics.newRectangleShape(width, height)
-    elseif shapeType == 'capsule' then
-        local vertices = capsuleXY(width, height, width / 5, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
-    elseif shapeType == 'trapezium' then
-        local vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
-    else
-        local sides = ({
-            triangle = 3,
-            pentagon = 5,
-            hexagon = 6,
-            heptagon = 7,
-            octagon = 8,
-        })[shapeType]
-
-        if sides then
-            local vertices = makePolygonVertices(sides, radius)
-            return love.physics.newPolygonShape(vertices), vertices
-        else
-            error("Unknown shape type: " .. tostring(shapeType))
-        end
-    end
-end
-
 function recreateBody(body, newSettings)
     if body:isDestroyed() then
         print("The body is already destroyed.")
@@ -114,9 +85,13 @@ function recreateBody(body, newSettings)
     local bodyType = newSettings.bodyType or body:getType()
     local restitution = thing.fixture:getRestitution()
     local friction = thing.fixture:getFriction()
+    local fixedRotation = body:isFixedRotation() -- Capture fixed angle state
     -- Get the original `thing` for shape info
 
-
+    -- Extract joint information
+    -- TODO
+    local jointData = joint.extractJoints(body)
+    -- print(inspect(jointData))
     -- Destroy the old body
     body:destroy()
 
@@ -125,8 +100,9 @@ function recreateBody(body, newSettings)
     newBody:setAngle(angle)
     newBody:setLinearVelocity(velocityX, velocityY)
     newBody:setAngularVelocity(angularVelocity)
-
+    newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
     -- Create a new shape
+
     local shape = createShape(
         newSettings.shapeType or thing.shapeType,
         newSettings.radius or thing.radius,
@@ -148,6 +124,9 @@ function recreateBody(body, newSettings)
     -- Update user data
     newBody:setUserData({ thing = thing })
 
+    joint.reattachJoints(jointData, newBody)
+    -- Recreate the joints
+    -- TODO
     return thing
 end
 
@@ -161,7 +140,7 @@ function addShape(shapeType, x, y, bodyType, radius, width, height)
     height = height or radius * 2 -- Default height for polygons
 
     -- Create a new table to store the shape's properties
-
+    --print(shapeType)
     local thing = {
         shapeType = shapeType,
         radius = radius,
@@ -246,6 +225,13 @@ local function makeTrapezium(w, w2, h, x, y)
         x - w2 / 2, y + h / 2
     }
 end
+local function makeITriangle(w, h, x, y)
+    return {
+        x - w / 2, y + h / 2,
+        x + w / 2, y + h / 2,
+        x, y - h / 2
+    }
+end
 
 function startSpawn(shapeType, mx, my)
     local thing = {}
@@ -255,34 +241,15 @@ function startSpawn(shapeType, mx, my)
 
     thing.body = love.physics.newBody(world, wx, wy, bodyType)
 
-    if shapeType == 'circle' then
-        thing.shape = love.physics.newCircleShape(radius)
-    elseif shapeType == 'rectangle' then
-        thing.shape = love.physics.newRectangleShape(radius * 2, radius * 2)
-    elseif shapeType == 'capsule' then
-        local w = radius
-        local h = radius * 2
-        local vertices = capsuleXY(w, h, w / 5, 0, 0)
-        thing.shape = love.physics.newPolygonShape(vertices)
-    elseif shapeType == 'trapezium' then
-        local w = radius
-        local h = radius * 2
-        local vertices = makeTrapezium(w, w * 1.2, h, 0, 0)
-        thing.shape = love.physics.newPolygonShape(vertices)
-    else
-        local sides = ({
-            triangle = 3,
-            pentagon = 5,
-            hexagon = 6,
-            heptagon = 7,
-            octagon = 8,
-        })[shapeType]
-        if sides then
-            local vertices = makePolygonVertices(sides, radius)
-            thing.shape = love.physics.newPolygonShape(vertices)
-        end
-    end
+    radius = tonumber(uiState.radiusOfNextSpawn) or 10 -- Default radius for circular shapes
+    width = width or radius * 2                        -- Default width for polygons
+    height = height or radius * 2                      -- Default height for polygons
 
+    thing.shape = createShape(shapeType, radius, width, height)
+    thing.shapeType = shapeType
+    thing.radius = radius
+    thing.width = width
+    thing.height = height
     thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
     thing.fixture:setRestitution(0.3)
     thing.body:setAwake(false)
@@ -325,7 +292,8 @@ function drawUI()
     end
 
     if uiState.addShapeOpened then
-        local shapeTypes = { 'circle', 'triangle', 'capsule', 'trapezium', 'rectangle', 'pentagon', 'hexagon',
+        local shapeTypes = { 'circle', 'triangle', 'itriangle', 'capsule', 'trapezium', 'rectangle', 'pentagon',
+            'hexagon',
             'heptagon',
             'octagon' }
         local titleHeight = ui.font:getHeight() + 10
@@ -345,13 +313,13 @@ function drawUI()
             })
 
             local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-            local r = ui.sliderWithInput('radius', x, y, 80, 0.1, 150, uiState.radiusOfNextSpawn)
-            ui.label(x, y, ' size')
-            if r then
-                uiState.radiusOfNextSpawn = r
-            end
+            -- local r = ui.sliderWithInput('radius', x, y, 80, 0.1, 150, uiState.radiusOfNextSpawn)
+            -- ui.label(x, y, ' size')
+            -- if r then
+            --     uiState.radiusOfNextSpawn = r
+            -- end
 
-            x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
+            --x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
             if ui.button(x, y, 180, uiState.bodyTypeOfNextSpawn) then
                 local index = -1
                 for i, v in ipairs(bodyTypes) do
@@ -540,8 +508,6 @@ function drawUI()
                 body:setAwake(true)
             end
 
-            --local body = uiState.currentlySelectedObject:getBody()
-
             local userData = body:getUserData()
             local thing = userData and userData.thing
             --print(body, userData, thing, thing.width, thing.height)
@@ -550,9 +516,10 @@ function drawUI()
                 dirtyBodyChange = true
                 uiState.lastSelectedBody = body
             end
-            if true and thing then
+            if false and thing then
                 -- Shape Properties
                 local shapeType = thing.shapeType
+                --print(shapeType)
                 local x, y = ui.nextLayoutPosition(layout, 160, 50)
 
                 if shapeType == 'circle' then
@@ -564,7 +531,7 @@ function drawUI()
 
                         body = uiState.currentlySelectedObject.body
                     end
-                elseif shapeType == 'rectangle' then
+                elseif shapeType ~= 'custom' then
                     x, y = ui.nextLayoutPosition(layout, 160, 50)
                     local newWidth = ui.sliderWithInput(' width', x, y, 160, 1, 800, thing.width, dirtyBodyChange)
                     ui.label(x, y, ' width')
@@ -574,11 +541,62 @@ function drawUI()
 
                     if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
                         uiState.currentlySelectedObject = recreateBody(body, {
-                            shapeType = "rectangle",
+                            shapeType = shapeType,
                             width = newWidth or thing.width,
                             height = newHeight or thing.height,
                         })
                         body = uiState.currentlySelectedObject.body
+                    end
+                end
+            end
+
+            if thing then
+                -- Shape Properties
+                local shapeType = thing.shapeType
+
+                local x, y = ui.nextLayoutPosition(layout, 160, 50)
+
+                if shapeType == 'circle' then
+                    -- Show radius control for circles
+                    x, y = ui.nextLayoutPosition(layout, 160, 50)
+                    local newRadius = ui.sliderWithInput(' radius', x, y, 160, 1, 200, thing.radius)
+                    ui.label(x, y, ' radius')
+                    if newRadius and newRadius ~= thing.radius then
+                        uiState.currentlySelectedObject = recreateBody(body, { shapeType = "circle", radius = newRadius })
+                        body = uiState.currentlySelectedObject.body
+                    end
+                elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
+                    -- Show width and height controls for these shapes
+                    x, y = ui.nextLayoutPosition(layout, 160, 50)
+                    local newWidth = ui.sliderWithInput(' width', x, y, 160, 1, 800, thing.width, dirtyBodyChange)
+                    ui.label(x, y, ' width')
+                    x, y = ui.nextLayoutPosition(layout, 160, 50)
+                    local newHeight = ui.sliderWithInput(' height', x, y, 160, 1, 800, thing.height, dirtyBodyChange)
+                    ui.label(x, y, ' height')
+
+                    if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
+                        uiState.currentlySelectedObject = recreateBody(body, {
+                            shapeType = shapeType,
+                            width = newWidth or thing.width,
+                            height = newHeight or thing.height,
+                        })
+                        body = uiState.currentlySelectedObject.body
+                    end
+                else
+                    -- For polygonal or other custom shapes, only allow radius control if applicable
+                    if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
+                        shapeType == 'heptagon' or shapeType == 'octagon' then
+                        x, y = ui.nextLayoutPosition(layout, 160, 50)
+                        local newRadius = ui.sliderWithInput(' radius', x, y, 160, 1, 200, thing.radius, dirtyBodyChange)
+                        ui.label(x, y, ' radius')
+                        if newRadius and newRadius ~= thing.radius then
+                            uiState.currentlySelectedObject = recreateBody(body,
+                                { shapeType = shapeType, radius = newRadius })
+                            body = uiState.currentlySelectedObject.body
+                        end
+                    else
+                        -- No UI controls for custom or unsupported shapes
+                        ui.label(x, y, 'custom')
                     end
                 end
             end
@@ -917,7 +935,7 @@ function createPolygonShape(vertices)
     end
 
     -- Store the body in your simulation
-    body:setUserData({ thing = { body = body } })
+    body:setUserData({ thing = { shapeType = 'custom', body = body } })
 end
 
 function computeCentroid(vertices)
@@ -963,4 +981,39 @@ end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
     pointerReleased(x, y, id)
+end
+
+function createShape(shapeType, radius, width, height)
+    if (radius == 0) then radius = 1 end
+    if (width == 0) then width = 1 end
+    if (height == 0) then height = 1 end
+    if shapeType == 'circle' then
+        return love.physics.newCircleShape(radius)
+    elseif shapeType == 'rectangle' then
+        return love.physics.newRectangleShape(width, height)
+    elseif shapeType == 'capsule' then
+        local vertices = capsuleXY(width, height, width / 5, 0, 0)
+        return love.physics.newPolygonShape(vertices), vertices
+    elseif shapeType == 'trapezium' then
+        local vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
+        return love.physics.newPolygonShape(vertices), vertices
+    elseif shapeType == 'itriangle' then
+        local vertices = makeITriangle(width, height, 0, 0)
+        return love.physics.newPolygonShape(vertices), vertices
+    else
+        local sides = ({
+            triangle = 3,
+            pentagon = 5,
+            hexagon = 6,
+            heptagon = 7,
+            octagon = 8,
+        })[shapeType]
+
+        if sides then
+            local vertices = makePolygonVertices(sides, radius)
+            return love.physics.newPolygonShape(vertices), vertices
+        else
+            error("Unknown shape type: " .. tostring(shapeType))
+        end
+    end
 end

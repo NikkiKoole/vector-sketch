@@ -20,6 +20,7 @@ local function createCheckbox(labelText, x, y, value, callback)
     end
     return newValue
 end
+
 local function calculateDistance(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
@@ -64,6 +65,7 @@ function lib.createJoint(data)
         -- Create a Wheel Joint
 
         local x1, y1 = bodyA:getPosition()
+        local x2, y2 = bodyB:getPosition()
 
         joint = love.physics.newWheelJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1, data.collideConnected)
     elseif jointType == 'motor' then
@@ -99,11 +101,6 @@ function lib.createJoint(data)
             ratio,
             false
         )
-        --local d1 = calculateDistance(bodyA_centerX, bodyA_centerY, groundAnchorA[1], groundAnchorA[2])
-        --local d2 = calculateDistance(bodyB_centerX, bodyB_centerY, groundAnchorB[1], groundAnchorB[2])
-        --print(d1, d2)
-        -- print(inspect(setmetatable(joint)))
-        -- joint:setMaxLengths(d1 + d2, d1 + d2)
     elseif jointType == 'friction' then
         -- Create a Friction Joint
         local x, y = bodyA:getPosition()
@@ -121,7 +118,7 @@ function lib.createJoint(data)
         -- uiState.jointCreationMode = nil
         return
     end
-    print(inspect(getmetatable(joint)))
+    -- print(inspect(getmetatable(joint)))
     return joint
 end
 
@@ -200,6 +197,24 @@ function lib.recreateJoint(joint, newSettings)
     bodyA:setAwake(true)
     bodyB:setAwake(true)
     return lib.createJoint(data)
+end
+
+function lib.reattachJoints(jointData, newBody)
+    for _, data in ipairs(jointData) do
+        local jointType = data.jointType
+        local otherBody = data.otherBody
+
+        if data.originalBodyOrder == "bodyA" then
+            data.body1 = newBody
+            data.body2 = data.otherBody
+        else
+            data.body1 = data.otherBody
+            data.body2 = newBody
+        end
+
+        -- Create the joint using the existing createJoint method
+        lib.createJoint(data)
+    end
 end
 
 function lib.doJointCreateUI(uiState, _x, _y, w, h)
@@ -484,7 +499,6 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 local springFrequency = createSlider(' spring F', x, y, 160, 0, 100,
                     j:getSpringFrequency(),
                     function(val)
-                        print('doing shit')
                         j:setSpringFrequency(val)
                     end
                 )
@@ -545,6 +559,79 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             end
         end)
     end
+end
+
+function lib.extractJoints(body)
+    local joints = body:getJoints()
+    local jointData = {}
+
+    for _, joint in ipairs(joints) do
+        local bodyA, bodyB = joint:getBodies()
+        local otherBody = (bodyA == body) and bodyB or bodyA -- Determine the other connected body
+        local jointType = joint:getType()
+        local isBodyA = (bodyA == body)
+        local data = {
+            jointType = jointType,
+            otherBody = otherBody,
+            collideConnected = joint:getCollideConnected(),
+            originalBodyOrder = isBodyA and "bodyA" or "bodyB",
+        }
+
+        -- Extract settings based on joint type
+        if jointType == 'distance' then
+            data.length = joint:getLength()
+            data.frequency = joint:getFrequency()
+            data.dampingRatio = joint:getDampingRatio()
+        elseif jointType == 'weld' then
+            data.frequency = joint:getFrequency()
+            data.dampingRatio = joint:getDampingRatio()
+        elseif jointType == 'rope' then
+            data.maxLength = joint:getMaxLength()
+        elseif jointType == 'revolute' then
+            data.motorEnabled = joint:isMotorEnabled()
+            if data.motorEnabled then
+                data.motorSpeed = joint:getMotorSpeed()
+                data.maxMotorTorque = joint:getMaxMotorTorque()
+            end
+            data.limitsEnabled = joint:areLimitsEnabled()
+            if data.limitsEnabled then
+                data.lowerLimit = joint:getLowerLimit()
+                data.upperLimit = joint:getUpperLimit()
+            end
+        elseif jointType == 'wheel' then
+            data.springFrequency = joint:getSpringFrequency()
+            data.springDampingRatio = joint:getSpringDampingRatio()
+        elseif jointType == 'motor' then
+            data.correctionFactor = joint:getCorrectionFactor()
+            data.angularOffset = joint:getAngularOffset()
+            data.linearOffsetX, data.linearOffsetY = joint:getLinearOffset()
+            data.maxForce = joint:getMaxForce()
+            data.maxTorque = joint:getMaxTorque()
+        elseif jointType == 'prismatic' then
+            data.motorEnabled = joint:isMotorEnabled()
+            if data.motorEnabled then
+                data.motorSpeed = joint:getMotorSpeed()
+                data.maxMotorForce = joint:getMaxMotorForce()
+            end
+            data.limitsEnabled = joint:areLimitsEnabled()
+            if data.limitsEnabled then
+                data.lowerLimit = joint:getLowerLimit()
+                data.upperLimit = joint:getUpperLimit()
+            end
+        elseif jointType == 'pulley' then
+            data.groundAnchor1, data.groundAnchor2 = joint:getGroundAnchors()
+            data.ratio = joint:getRatio()
+        elseif jointType == 'friction' then
+            data.maxForce = joint:getMaxForce()
+            data.maxTorque = joint:getMaxTorque()
+        else
+            print("Unsupported joint type: " .. jointType)
+        end
+
+        table.insert(jointData, data)
+    end
+
+    return jointData
 end
 
 return lib
