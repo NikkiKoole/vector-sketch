@@ -6,11 +6,10 @@ local inspect = require 'vendor.inspect'
 local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 local phys = require 'lib.mainPhysics'
-
 local ui = require 'src.ui-all'
-local decompose = require 'src.decompose'
-local joint = require 'src.joints'
 
+local joint = require 'src.joints'
+local shapes = require 'src.shapes'
 local _id = 0
 function generateID()
     _id = _id + 1
@@ -111,7 +110,7 @@ function recreateBody(body, newSettings)
     newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
     -- Create a new shape
 
-    local shape = createShape(
+    local shape = shapes.createShape(
         newSettings.shapeType or thing.shapeType,
         newSettings.radius or thing.radius,
         newSettings.width or thing.width,
@@ -139,7 +138,6 @@ function recreateBody(body, newSettings)
     return thing
 end
 
--- Function to add a shape to the stage
 function addShape(shapeType, x, y, bodyType, radius, width, height)
     -- Default values if not provided
     bodyType = bodyType or 'dynamic'
@@ -161,7 +159,7 @@ function addShape(shapeType, x, y, bodyType, radius, width, height)
     thing.body = love.physics.newBody(world, x, y, bodyType)
 
     -- Use createShape to generate the shape
-    thing.shape = createShape(shapeType, radius, width, height)
+    thing.shape = shapes.createShape(shapeType, radius, width, height)
 
     -- Create the fixture and attach it to the body
     thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
@@ -172,75 +170,6 @@ function addShape(shapeType, x, y, bodyType, radius, width, height)
     thing.id = generateID()
     -- Store the 'thing' in the body's user data for easy access
     thing.body:setUserData({ thing = thing })
-end
-
-local function rotatePoint(x, y, originX, originY, angle)
-    -- Translate the point to the origin
-    local translatedX = x - originX
-    local translatedY = y - originY
-
-    -- Apply rotation
-    local rotatedX = translatedX * math.cos(angle) - translatedY * math.sin(angle)
-    local rotatedY = translatedX * math.sin(angle) + translatedY * math.cos(angle)
-
-    -- Translate back to the original position
-    local finalX = rotatedX + originX
-    local finalY = rotatedY + originY
-
-    return finalX, finalY
-end
--- Function to generate vertices of a regular polygon
-local function makePolygonVertices(sides, radius)
-    local vertices = {}
-    local angleStep = (2 * math.pi) / sides
-    local rotationOffset = math.pi / 2 -- Rotate so one vertex is at the top
-    for i = 0, sides - 1 do
-        local angle = i * angleStep - rotationOffset
-        local x = radius * math.cos(angle)
-        local y = radius * math.sin(angle)
-        table.insert(vertices, x)
-        table.insert(vertices, y)
-    end
-    return vertices
-end
-
-local function capsuleXY(w, h, cs, x, y)
-    -- cs == cornerSize
-    local w2 = w / 2
-    local h2 = h / 2
-
-    local bt = -h2 + cs
-    local bb = h2 - cs
-    local bl = -w2 + cs
-    local br = w2 - cs
-
-    return {
-        x - w2, y + bt,
-        x + bl, y - h2,
-        x + br, y - h2,
-        x + w2, y + bt,
-        x + w2, y + bb,
-        x + br, y + h2,
-        x + bl, y + h2,
-        x - w2, y + bb
-    }
-end
-
-local function makeTrapezium(w, w2, h, x, y)
-    return {
-        x - w / 2, y - h / 2,
-        x + w / 2, y - h / 2,
-        x + w2 / 2, y + h / 2,
-        x - w2 / 2, y + h / 2
-    }
-end
-
-local function makeITriangle(w, h, x, y)
-    return {
-        x - w / 2, y + h / 2,
-        x + w / 2, y + h / 2,
-        x, y - h / 2
-    }
 end
 
 function startSpawn(shapeType, mx, my)
@@ -255,7 +184,7 @@ function startSpawn(shapeType, mx, my)
     width = width or radius * 2                        -- Default width for polygons
     height = height or radius * 2                      -- Default height for polygons
 
-    thing.shape = createShape(shapeType, radius, width, height)
+    thing.shape = shapes.createShape(shapeType, radius, width, height)
     thing.shapeType = shapeType
     thing.radius = radius
     thing.width = width
@@ -274,6 +203,22 @@ function finalizeSpawn()
         uiState.currentlyDraggingObject.body:setAwake(true)
         uiState.currentlyDraggingObject = nil
     end
+end
+
+local function rotatePoint(x, y, originX, originY, angle)
+    -- Translate the point to the origin
+    local translatedX = x - originX
+    local translatedY = y - originY
+
+    -- Apply rotation
+    local rotatedX = translatedX * math.cos(angle) - translatedY * math.sin(angle)
+    local rotatedY = translatedX * math.sin(angle) + translatedY * math.cos(angle)
+
+    -- Translate back to the original position
+    local finalX = rotatedX + originX
+    local finalY = rotatedY + originY
+
+    return finalX, finalY
 end
 
 function love.update(dt)
@@ -857,80 +802,10 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
     pointerPressed(x, y, id)
 end
 
-local function tableConcat(t1, t2)
-    for i = 1, #t2 do
-        table.insert(t1, t2[i])
-    end
-    return t1
-end
-
-function createPolygonShape(vertices)
-    -- Convert vertices to a format suitable for love.math.triangulate()
-
-    local polygon = {}
-    for _, vertex in ipairs(vertices) do
-        table.insert(polygon, vertex.x)
-        table.insert(polygon, vertex.y)
-    end
-
-    local allowComplex = true -- todo parametrize this
-    local triangles
-
-    if allowComplex then
-        local result = {}
-        decompose.decompose_complex_poly(polygon, result)
-        triangles = {}
-        for i = 1, #result do
-            local tris = love.math.triangulate(result[i])
-            tableConcat(triangles, tris)
-        end
-    else
-        triangles = love.math.triangulate(polygon)
-    end
-    if #triangles == 0 then
-        print("Failed to triangulate polygon.")
-        return
-    end
-
-    -- Create the physics body
-    local bodyType = uiState.bodyTypeOfNextSpawn or 'dynamic'
-    -- Compute centroid for body position
-    local centroidX, centroidY = computeCentroid(vertices)
-    local body = love.physics.newBody(world, centroidX, centroidY, bodyType)
-
-    -- Create fixtures for each triangle
-    for _, triangle in ipairs(triangles) do
-        -- Adjust triangle vertices relative to body position
-        local localVertices = {}
-        for i = 1, #triangle, 2 do
-            local x = triangle[i] - centroidX
-            local y = triangle[i + 1] - centroidY
-            table.insert(localVertices, x)
-            table.insert(localVertices, y)
-        end
-        local shape = love.physics.newPolygonShape(localVertices)
-        local fixture = love.physics.newFixture(body, shape, 1)
-        fixture:setRestitution(0.3)
-    end
-
-    -- Store the body in your simulation
-    body:setUserData({ thing = { shapeType = 'custom', body = body } })
-end
-
-function computeCentroid(vertices)
-    local sumX, sumY = 0, 0
-    for _, vertex in ipairs(vertices) do
-        sumX = sumX + vertex.x
-        sumY = sumY + vertex.y
-    end
-    local count = #vertices
-    return sumX / count, sumY / count
-end
-
 function finalizePolygon()
     if #uiState.polygonVertices >= 3 then
         -- Proceed to triangulate and create the physics body
-        createPolygonShape(uiState.polygonVertices)
+        shapes.createPolygonShape(uiState.polygonVertices)
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")
@@ -960,39 +835,4 @@ end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
     pointerReleased(x, y, id)
-end
-
-function createShape(shapeType, radius, width, height)
-    if (radius == 0) then radius = 1 end
-    if (width == 0) then width = 1 end
-    if (height == 0) then height = 1 end
-    if shapeType == 'circle' then
-        return love.physics.newCircleShape(radius)
-    elseif shapeType == 'rectangle' then
-        return love.physics.newRectangleShape(width, height)
-    elseif shapeType == 'capsule' then
-        local vertices = capsuleXY(width, height, width / 5, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
-    elseif shapeType == 'trapezium' then
-        local vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
-    elseif shapeType == 'itriangle' then
-        local vertices = makeITriangle(width, height, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
-    else
-        local sides = ({
-            triangle = 3,
-            pentagon = 5,
-            hexagon = 6,
-            heptagon = 7,
-            octagon = 8,
-        })[shapeType]
-
-        if sides then
-            local vertices = makePolygonVertices(sides, radius)
-            return love.physics.newPolygonShape(vertices), vertices
-        else
-            error("Unknown shape type: " .. tostring(shapeType))
-        end
-    end
 end
