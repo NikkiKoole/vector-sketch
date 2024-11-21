@@ -11,6 +11,13 @@ local ui = require 'src.ui-all'
 local decompose = require 'src.decompose'
 local joint = require 'src.joints'
 
+local _id = 0
+function generateID()
+    _id = _id + 1
+    print('id:', _id)
+    return _id
+end
+
 function love.load()
     -- Load and set the font
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 32)
@@ -41,11 +48,12 @@ function love.load()
         polygonVertices = {},
         minPointDistance = 10, -- Default minimum distance
         lastPolygonPoint = nil,
-        lastSelectedBody = nil
+        lastSelectedBody = nil,
+        lastSelectedJoint = nil
     }
 
     worldState = {
-        meter = 200,
+        meter = 100,
         paused = true,
         gravity = 9.81,
         mouseForce = 500000,
@@ -120,7 +128,8 @@ function recreateBody(body, newSettings)
     thing.radius = newSettings.radius or thing.radius
     thing.width = newSettings.width or thing.width
     thing.height = newSettings.height or thing.height
-
+    thing.id = thing.id or generateID()
+    --print(thing.id)
     -- Update user data
     newBody:setUserData({ thing = thing })
 
@@ -160,7 +169,7 @@ function addShape(shapeType, x, y, bodyType, radius, width, height)
 
     -- Set the body to sleep initially
     thing.body:setAwake(true)
-
+    thing.id = generateID()
     -- Store the 'thing' in the body's user data for easy access
     thing.body:setUserData({ thing = thing })
 end
@@ -225,6 +234,7 @@ local function makeTrapezium(w, w2, h, x, y)
         x - w2 / 2, y + h / 2
     }
 end
+
 local function makeITriangle(w, h, x, y)
     return {
         x - w / 2, y + h / 2,
@@ -253,6 +263,7 @@ function startSpawn(shapeType, mx, my)
     thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
     thing.fixture:setRestitution(0.3)
     thing.body:setAwake(false)
+    thing.id = generateID()
     thing.body:setUserData({ thing = thing })
     uiState.currentlyDraggingObject = thing
     uiState.offsetForCurrentlyDragging = { 0, 0 }
@@ -475,7 +486,7 @@ function drawUI()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
             local body = uiState.currentlySelectedObject.body
             local angleDegrees = body:getAngle() * 180 / math.pi
-            local sliderID = tostring(body)
+            local myID = uiState.currentlySelectedObject.id
 
             -- Initialize Layout
             local padding = 10
@@ -516,39 +527,6 @@ function drawUI()
                 dirtyBodyChange = true
                 uiState.lastSelectedBody = body
             end
-            if false and thing then
-                -- Shape Properties
-                local shapeType = thing.shapeType
-                --print(shapeType)
-                local x, y = ui.nextLayoutPosition(layout, 160, 50)
-
-                if shapeType == 'circle' then
-                    x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newRadius = ui.sliderWithInput(' radius', x, y, 160, 1, 200, thing.radius)
-                    ui.label(x, y, ' radius')
-                    if newRadius and newRadius ~= thing.radius then
-                        uiState.currentlySelectedObject = recreateBody(body, { shapeType = "circle", radius = newRadius })
-
-                        body = uiState.currentlySelectedObject.body
-                    end
-                elseif shapeType ~= 'custom' then
-                    x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newWidth = ui.sliderWithInput(' width', x, y, 160, 1, 800, thing.width, dirtyBodyChange)
-                    ui.label(x, y, ' width')
-                    x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newHeight = ui.sliderWithInput(' height', x, y, 160, 1, 800, thing.height, dirtyBodyChange)
-                    ui.label(x, y, ' height')
-
-                    if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
-                        uiState.currentlySelectedObject = recreateBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            height = newHeight or thing.height,
-                        })
-                        body = uiState.currentlySelectedObject.body
-                    end
-                end
-            end
 
             if thing then
                 -- Shape Properties
@@ -559,7 +537,7 @@ function drawUI()
                 if shapeType == 'circle' then
                     -- Show radius control for circles
                     x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newRadius = ui.sliderWithInput(' radius', x, y, 160, 1, 200, thing.radius)
+                    local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, 160, 1, 200, thing.radius)
                     ui.label(x, y, ' radius')
                     if newRadius and newRadius ~= thing.radius then
                         uiState.currentlySelectedObject = recreateBody(body, { shapeType = "circle", radius = newRadius })
@@ -568,10 +546,10 @@ function drawUI()
                 elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
                     -- Show width and height controls for these shapes
                     x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newWidth = ui.sliderWithInput(' width', x, y, 160, 1, 800, thing.width, dirtyBodyChange)
+                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, 160, 1, 800, thing.width)
                     ui.label(x, y, ' width')
                     x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newHeight = ui.sliderWithInput(' height', x, y, 160, 1, 800, thing.height, dirtyBodyChange)
+                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, 160, 1, 800, thing.height)
                     ui.label(x, y, ' height')
 
                     if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
@@ -587,7 +565,8 @@ function drawUI()
                     if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
                         shapeType == 'heptagon' or shapeType == 'octagon' then
                         x, y = ui.nextLayoutPosition(layout, 160, 50)
-                        local newRadius = ui.sliderWithInput(' radius', x, y, 160, 1, 200, thing.radius, dirtyBodyChange)
+                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, 160, 1, 200, thing.radius,
+                            dirtyBodyChange)
                         ui.label(x, y, ' radius')
                         if newRadius and newRadius ~= thing.radius then
                             uiState.currentlySelectedObject = recreateBody(body,
@@ -609,7 +588,7 @@ function drawUI()
 
             -- Angle Slider
             local x, y = ui.nextLayoutPosition(layout, 160, 50)
-            local newAngle = ui.sliderWithInput(sliderID .. 'angle', x, y, 160, -180, 180, angleDegrees,
+            local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, 160, -180, 180, angleDegrees,
                 body:isAwake() and not worldState.paused)
             if newAngle and angleDegrees ~= newAngle then
                 body:setAngle(newAngle * math.pi / 180)
@@ -621,7 +600,7 @@ function drawUI()
             if #fixtures >= 1 then
                 local density = fixtures[1]:getDensity()
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newDensity = ui.sliderWithInput(sliderID .. 'density', x, y, 160, 0, 10, density)
+                local newDensity = ui.sliderWithInput(myID .. 'density', x, y, 160, 0, 10, density)
                 if newDensity and density ~= newDensity then
                     for i = 1, #fixtures do
                         fixtures[i]:setDensity(newDensity)
@@ -632,7 +611,7 @@ function drawUI()
                 -- Bounciness Slider
                 local bounciness = fixtures[1]:getRestitution()
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newBounce = ui.sliderWithInput(sliderID .. 'bounce', x, y, 160, 0, 1, bounciness)
+                local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, 160, 0, 1, bounciness)
                 if newBounce and bounciness ~= newBounce then
                     for i = 1, #fixtures do
                         fixtures[i]:setRestitution(newBounce)
@@ -643,7 +622,7 @@ function drawUI()
                 -- Friction Slider
                 local friction = fixtures[1]:getFriction()
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newFriction = ui.sliderWithInput(sliderID .. 'friction', x, y, 160, 0, 1, friction)
+                local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, 160, 0, 1, friction)
                 if newFriction and friction ~= newFriction then
                     for i = 1, #fixtures do
                         fixtures[i]:setFriction(newFriction)

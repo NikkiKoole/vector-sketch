@@ -122,7 +122,7 @@ end
 --- Creates a horizontal slider with a numeric input field.
 function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
     local yOffset = (40 - theme.slider.height) / 2
-    local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value)
+    local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value, _id)
     local valueHasChangedViaSlider = false
     local returnValue = nil
 
@@ -325,9 +325,12 @@ function ui.button(x, y, width, label, optionalHeight)
 end
 
 --- Creates a slider (horizontal or vertical).
-function ui.slider(x, y, length, thickness, orientation, min, max, value)
+function ui.slider(x, y, length, thickness, orientation, min, max, value, extraId)
     local inValue = value
     local sliderID = ui.generateID()
+    if (extraId) then
+        sliderID = sliderID .. extraId
+    end
     local isHorizontal = orientation == 'horizontal'
 
     -- Calculate proportion and initial thumb position
@@ -363,9 +366,22 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value)
         love.graphics.rectangle("line", x, y, thickness, length, rxry, rxry)
     end
 
+
+    -- Set scissor to restrict rendering to the track area
+    love.graphics.setScissor(x, y, isHorizontal and length or thickness, isHorizontal and thickness or length)
+
     -- Render the thumb using the existing button function
     local thumbLabel = ''
     local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
+
+    -- Remove scissor after rendering the thumb
+    love.graphics.setScissor()
+
+
+
+    -- -- Render the thumb using the existing button function
+    -- local thumbLabel = ''
+    -- local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
 
     -- Handle dragging
     if pressed then

@@ -3,12 +3,22 @@ local lib = {}
 local inspect = require 'vendor.inspect'
 
 -- Helper function to create a slider with an associated label
-local function createSlider(labelText, x, y, width, min, max, value, callback)
-    local newValue = ui.sliderWithInput(labelText, x, y, width, min, max, value)
+local function createSlider(labelText, x, y, width, min, max, value, callback, changed)
+    if not _id then _id = '' end
+    local newValue = ui.sliderWithInput(_id .. labelText, x, y, width, min, max, value, changed)
     if newValue then
         callback(newValue)
     end
     ui.label(x, y, labelText)
+    return newValue
+end
+
+local function createSliderWithId(id, label, x, y, width, min, max, value, callback)
+    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value)
+    if newValue then
+        callback(newValue)
+    end
+    ui.label(x, y, label)
     return newValue
 end
 
@@ -34,38 +44,37 @@ function lib.createJoint(data)
 
     local joint
     local world = bodyA:getWorld() -- Assuming both bodies are in the same world
+    local x1, y1 = bodyA:getPosition()
+    local x2, y2 = bodyB:getPosition()
+    local offsetA = data.offsetA or { x = 0, y = 0 }
+    x1, y1 = x1 + offsetA.x, y1 + offsetA.y
 
     if jointType == 'distance' then
         -- Create a Distance Joint
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
+
         local length = data.length or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
         joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
         joint:setLength(length)
     elseif jointType == 'weld' then
         -- Create a Weld Joint at the first body's position
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
+
         joint = love.physics.newWeldJoint(bodyA, bodyB, x1, y1, data.collideConnected)
         --joint = love.physics.newWeldJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
         -- Weld joints don't have frequency or damping ratio by default, but you can simulate similar behavior if needed.
     elseif jointType == 'rope' then
         -- Create a Rope Joint
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
+
         local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
         joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength, data.collideConnected)
     elseif jointType == 'revolute' then
         -- Create a Revolute Joint at the first body's position
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
+
         -- joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
         joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, data.collideConnected)
     elseif jointType == 'wheel' then
         -- Create a Wheel Joint
 
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
+
 
         joint = love.physics.newWheelJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1, data.collideConnected)
     elseif jointType == 'motor' then
@@ -73,8 +82,7 @@ function lib.createJoint(data)
         joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or .3, data.collideConnected)
     elseif jointType == 'prismatic' then
         -- Create a Prismatic Joint
-        local x1, y1 = bodyA:getPosition()
-        local x2, y2 = bodyB:getPosition()
+
 
         joint = love.physics.newPrismaticJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1,
             data.collideConnected)
@@ -104,7 +112,7 @@ function lib.createJoint(data)
     elseif jointType == 'friction' then
         -- Create a Friction Joint
         local x, y = bodyA:getPosition()
-        joint = love.physics.newFrictionJoint(bodyA, bodyB, x, y, false)
+        joint = love.physics.newFrictionJoint(bodyA, bodyB, x1, y1, false)
 
         if data.maxForce then
             joint:setMaxForce(data.maxForce)
@@ -118,8 +126,50 @@ function lib.createJoint(data)
         -- uiState.jointCreationMode = nil
         return
     end
+    local setId = data.id or generateID()
+    joint:setUserData({ id = setId })
+    setJointMetaSetting(joint, 'offsetA', offsetA)
+    --print('joint' .. setId)
     -- print(inspect(getmetatable(joint)))
     return joint
+end
+
+function getJointId(joint)
+    local ud = joint:getUserData()
+    if ud then
+        return ud.id
+    end
+    print('THIS IS WRONG WHY THIS JOINT HAS NO ID!!', tostring(joint:getType()))
+    return nil
+end
+
+function setJointMetaSetting(joint, settingKey, settingValue)
+    -- Get the existing userdata
+    local ud = joint:getUserData() or {}
+
+    -- Ensure userdata is a table
+    if type(ud) ~= "table" then
+        ud = {} -- Initialize as a table if not already
+    end
+
+    -- Update or add the specific setting
+    ud[settingKey] = settingValue
+
+    -- Set the updated userdata back on the joint
+    joint:setUserData(ud)
+end
+
+function getJointMetaSetting(joint, settingKey)
+    -- Get the existing userdata
+    local ud = joint:getUserData()
+
+    -- Check if userdata exists and is a table
+    if type(ud) == "table" then
+        return ud[settingKey] -- Return the specific setting
+    else
+        print('could not find meta settting ' .. settingKey .. ' on joint with type ' .. tostring(joint:getType()))
+        return nil -- Return nil if userdata is not a table or doesn't exist
+    end
 end
 
 function lib.recreateJoint(joint, newSettings)
@@ -131,7 +181,9 @@ function lib.recreateJoint(joint, newSettings)
     local bodyA, bodyB = joint:getBodies()
     local jointType = joint:getType()
 
-    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType }
+    local id = getJointId(joint)
+    local offsetA = getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
+    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType, id = id, offsetA = offsetA }
 
     -- Add new settings to the data
     for key, value in pairs(newSettings or {}) do
@@ -269,6 +321,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 startY = _y + 10
             })
             local jointType = j:getType()
+            local jointId = getJointId(j)
             local x, y = ui.nextLayoutPosition(layout, 160, 50)
             x, y = ui.nextLayoutPosition(layout, 160, 50)
             local width = 280
@@ -294,7 +347,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     local _x, _y = j:getAxis()
                     --_x, _y = normalizeAxis(_x, _y)
                     nextRow()
-                    local axisX = createSlider(' axisX', x, y, 160, -1, 1,
+                    local axisX = createSliderWithId(jointId, ' axisX', x, y, 160, -1, 1,
                         _x or 0,
                         function(val)
                             uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = val, axisY = _y })
@@ -302,7 +355,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         end
                     )
                     nextRow()
-                    local axisY = createSlider(' axisY', x, y, 160, -1, 1,
+                    local axisY = createSliderWithId(jointId, ' axisY', x, y, 160, -1, 1,
                         _y or 1,
                         function(val)
                             uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = val })
@@ -340,20 +393,20 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 )
                 nextRow()
                 if j:isMotorEnabled() then
-                    local motorSpeed = createSlider(' speed', x, y, 160, -1000, 1000,
+                    local motorSpeed = createSliderWithId(jointId, ' speed', x, y, 160, -1000, 1000,
                         j:getMotorSpeed(),
                         function(val) j:setMotorSpeed(val) end
                     )
                     nextRow()
                     if (settings and settings.useTorque) then
-                        local maxMotorTorque = createSlider(' max T', x, y, 160, 0, 100000,
+                        local maxMotorTorque = createSliderWithId(jointId, ' max T', x, y, 160, 0, 100000,
                             j:getMaxMotorTorque(),
                             function(val) j:setMaxMotorTorque(val) end
                         )
                         nextRow()
                     end
                     if (settings and settings.useForce) then
-                        local maxMotorForce = createSlider(' max F', x, y, 160, 0, 100000,
+                        local maxMotorForce = createSliderWithId(jointId, ' max F', x, y, 160, 0, 100000,
                             j:getMaxMotorForce(),
                             function(val) j:setMaxMotorForce(val) end
                         )
@@ -361,8 +414,6 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     end
                 end
             end
-
-
 
             local function limitsFunctionalityAngular(j)
                 local limitsEnabled = createCheckbox(' limits', x, y,
@@ -375,7 +426,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 if (j:areLimitsEnabled()) then
                     nextRow()
                     local up = math.deg(j:getUpperLimit())
-                    local lowerLimit = createSlider(' lower', x, y, 160, -180, up,
+                    local lowerLimit = createSliderWithId(jointId, ' lower', x, y, 160, -180, up,
                         math.deg(j:getLowerLimit()),
                         function(val)
                             local newValue = math.rad(val)
@@ -384,7 +435,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     )
                     nextRow()
                     local low = math.deg(j:getLowerLimit())
-                    local upperLimit = createSlider(' upper', x, y, 160, low, 180,
+                    local upperLimit = createSliderWithId(jointId, ' upper', x, y, 160, low, 180,
                         math.deg(j:getUpperLimit()),
                         function(val)
                             local newValue = math.rad(val)
@@ -405,7 +456,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 if (j:areLimitsEnabled()) then
                     nextRow()
                     local up = (j:getUpperLimit())
-                    local lowerLimit = createSlider(' lower', x, y, 160, -1000, up,
+                    local lowerLimit = createSliderWithId(jointId, ' lower', x, y, 160, -1000, up,
                         j:getLowerLimit(),
                         function(val)
                             j:setLowerLimit(val)
@@ -413,7 +464,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     )
                     nextRow()
                     local low = j:getLowerLimit()
-                    local upperLimit = createSlider(' upper', x, y, 160, low, 1000,
+                    local upperLimit = createSliderWithId(jointId, ' upper', x, y, 160, low, 1000,
                         j:getUpperLimit(),
                         function(val)
                             j:setUpperLimit(val)
@@ -422,16 +473,54 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 end
             end
 
+            local function offsetSliders(j)
+                -- Ensure offsets exist
+                if not getJointMetaSetting(j, 'offsetA') then
+                    setJointMetaSetting(j, 'offsetA', { x = 0, y = 0 })
+                end
+                local offsetA = getJointMetaSetting(j, 'offsetA') or 0
+
+                nextRow()
+                -- Sliders for offsetA.x
+                local offsetX = createSliderWithId(jointId, 'Offset A X', x, y, 160, -200, 200,
+                    offsetA.x,
+                    function(val)
+                        offsetA.x = val
+
+                        setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
+                        uiState.currentlySelectedJoint = lib.recreateJoint(j)
+                        j = uiState.currentlySelectedJoint
+                    end
+
+                )
+                nextRow()
+                -- Move to the next row for offsetA.y
+                local offsetY = createSliderWithId(jointId, 'Offset A Y', x, y, 160, -200, 200,
+                    offsetA.y,
+
+                    function(val)
+                        offsetA.y = val
+
+                        setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
+                        uiState.currentlySelectedJoint = lib.recreateJoint(j)
+                        j = uiState.currentlySelectedJoint
+                    end
+
+                )
+                return j
+            end
+
             if jointType == 'distance' then
                 nextRow()
                 j = collideFunctionality(j)
                 nextRow()
-
+                j = offsetSliders(j)
+                nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                local length = createSlider(' length', x, y, 160, 0.1, 500,
+                local length = createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
                     uiState.jointUpdateMode.length or myLength,
                     function(val)
                         j:setLength(val)
@@ -440,12 +529,12 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 )
                 nextRow()
 
-                local frequency = createSlider(' freq', x, y, 160, 0, 20,
+                local frequency = createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
                     j:getFrequency(),
                     function(val) j:setFrequency(val) end
                 )
                 nextRow()
-                local damping = createSlider(' damp', x, y, 160, 0, 20,
+                local damping = createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
                     j:getDampingRatio(),
                     function(val) j:setDampingRatio(val) end
                 )
@@ -456,12 +545,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 j = collideFunctionality(j)
                 nextRow()
-                local frequency = createSlider(' freq', x, y, 160, 0, 20,
+                j = offsetSliders(j)
+                nextRow()
+                local frequency = createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
                     j:getFrequency(),
                     function(val) j:setFrequency(val) end
                 )
                 nextRow()
-                local damping = createSlider(' damp', x, y, 160, 0, 20,
+                local damping = createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
                     j:getDampingRatio(),
                     function(val) j:getDampingRatio(val) end
                 )
@@ -470,11 +561,13 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 j = collideFunctionality(j)
                 nextRow()
+                j = offsetSliders(j)
+                nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                local length = createSlider(' length', x, y, 160, 0.1, 500,
+                local length = createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
                     uiState.jointUpdateMode.maxLength or myLength,
                     function(val)
                         j:setMaxLength(val)
@@ -486,6 +579,8 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 j = collideFunctionality(j)
                 nextRow()
+                j = offsetSliders(j)
+                nextRow()
                 limitsFunctionalityAngular(j)
                 nextRow()
                 motorFunctionality(j, { useTorque = true })
@@ -493,17 +588,19 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 j = collideFunctionality(j)
                 nextRow()
+                j = offsetSliders(j)
+                nextRow()
                 j = axisFunctionality(j)
                 nextRow()
                 -- if not j:isDestroyed() then
-                local springFrequency = createSlider(' spring F', x, y, 160, 0, 100,
+                local springFrequency = createSliderWithId(jointId, ' spring F', x, y, 160, 0, 100,
                     j:getSpringFrequency(),
                     function(val)
                         j:setSpringFrequency(val)
                     end
                 )
                 nextRow()
-                local springDamping = createSlider(' spring D', x, y, 160, 0, 1,
+                local springDamping = createSliderWithId(jointId, ' spring D', x, y, 160, 0, 1,
                     j:getSpringDampingRatio(),
                     function(val) j:setSpringDampingRatio(val) end
                 )
@@ -516,33 +613,35 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 j = collideFunctionality(j)
                 nextRow()
-                local angularOffset = createSlider(' angular o', x, y, 160, -180, 180,
+                j = offsetSliders(j)
+                nextRow()
+                local angularOffset = createSliderWithId(jointId, ' angular o', x, y, 160, -180, 180,
                     math.deg(j:getAngularOffset()),
                     function(val) j:setAngularOffset(math.rad(val)) end
                 )
                 nextRow()
-                local correctionF = createSlider(' corr.', x, y, 160, 0, 1,
+                local correctionF = createSliderWithId(jointId, ' corr.', x, y, 160, 0, 1,
                     j:getCorrectionFactor(),
                     function(val) j:setCorrectionFactor(val) end
                 )
                 nextRow()
                 local lx, ly = j:getLinearOffset()
-                local lxOff = createSlider(' lx', x, y, 160, -1000, 1000,
+                local lxOff = createSliderWithId(jointId, ' lx', x, y, 160, -1000, 1000,
                     lx,
                     function(val) j:setLinearOffset(val, ly) end
                 )
                 nextRow()
-                local lyOff = createSlider(' ly', x, y, 160, -1000, 1000,
+                local lyOff = createSliderWithId(jointId, ' ly', x, y, 160, -1000, 1000,
                     ly,
                     function(val) j:setLinearOffset(lx, val) end
                 )
                 nextRow()
-                local maxForce = createSlider(' force', x, y, 160, 0, 100000,
+                local maxForce = createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
                     j:getMaxForce(),
                     function(val) j:setMaxForce(val) end
                 )
                 nextRow()
-                local maxTorque = createSlider(' torque', x, y, 160, 0, 100000,
+                local maxTorque = createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
                     j:getMaxTorque(),
                     function(val) j:setMaxTorque(val) end
                 )
@@ -550,6 +649,8 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             elseif jointType == 'prismatic' then
                 nextRow()
                 j = collideFunctionality(j)
+                nextRow()
+                j = offsetSliders(j)
                 nextRow()
                 j = axisFunctionality(j)
                 nextRow()
@@ -571,6 +672,8 @@ function lib.extractJoints(body)
         local jointType = joint:getType()
         local isBodyA = (bodyA == body)
         local data = {
+            offsetA = getJointMetaSetting(joint, "offsetA"),
+            id = getJointId(joint),
             jointType = jointType,
             otherBody = otherBody,
             collideConnected = joint:getCollideConnected(),

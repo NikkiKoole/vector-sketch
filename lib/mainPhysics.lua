@@ -579,6 +579,16 @@ lib.drawWorld = function(world)
                 love.graphics.line(x1, y1, endX, endY)
             end
         end
+        if jointType == 'wheel' then
+            -- Draw wheel joint axis
+            local axisX, axisY = joint:getAxis()
+            if x1 and y1 and axisX and axisY then
+                local axisLength = 50                   -- Scale factor for visualizing the axis
+                love.graphics.setColor(0, .5, 0, alpha) -- Green for axis
+                love.graphics.line(x1, y1, x1 + axisX * axisLength, y1 + axisY * axisLength)
+                love.graphics.setColor(1, 1, 1, alpha)
+            end
+        end
     end
     love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
