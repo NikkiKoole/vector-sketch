@@ -425,7 +425,7 @@ function drawUI()
 
     -- Properties Panel
     -- Properties Panel
-    if uiState.currentlySelectedObject then
+    if uiState.currentlySelectedObject and not uiState.currentlySelectedJoint then
         local panelWidth = 300
         local w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
@@ -607,7 +607,6 @@ function drawUI()
         end)
     end
 
-
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
         joint.doJointCreateUI(uiState, 500, 100, 300, 200)
     end
@@ -616,10 +615,6 @@ function drawUI()
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
         joint.doJointUpdateUI(uiState, uiState.currentlySelectedJoint, w - 300 - 20, 20, 300, h - 40)
     end
-
-
-
-
 
     if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
         if (uiState.jointCreationMode.body1 == nil) then
@@ -751,6 +746,15 @@ function love.keypressed(key)
 end
 
 local function pointerPressed(x, y, id)
+    -- this will block interacting on bodies when 'roughly' over the opened panel
+    if uiState.currentlySelectedJoint or uiState.currentlySelectedObject then
+        local w, h = love.graphics.getDimensions()
+        if x > w - 300 then
+            return
+        end
+    end
+
+
     local cx, cy = cam:getWorldCoordinates(x, y)
     local onPressedParams = {
         pointerForceFunc = function(fixture)
