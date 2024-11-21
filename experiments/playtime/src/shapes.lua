@@ -97,58 +97,6 @@ local function tableConcat(t1, t2)
     return t1
 end
 
-function shapes.createPolygonShapeUNSAFE(vertices)
-    -- Convert vertices to a format suitable for love.math.triangulate()
-
-    local polygon = {}
-    for _, vertex in ipairs(vertices) do
-        table.insert(polygon, vertex.x)
-        table.insert(polygon, vertex.y)
-    end
-
-    local allowComplex = true -- todo parametrize this
-    local triangles
-
-    if allowComplex then
-        local result = {}
-        decompose.decompose_complex_poly(polygon, result)
-        triangles = {}
-        for i = 1, #result do
-            local tris = love.math.triangulate(result[i])
-            tableConcat(triangles, tris)
-        end
-    else
-        triangles = love.math.triangulate(polygon)
-    end
-    if #triangles == 0 then
-        print("Failed to triangulate polygon.")
-        return
-    end
-
-    -- Create the physics body
-    local bodyType = 'dynamic'
-    -- Compute centroid for body position
-    local centroidX, centroidY = computeCentroid(vertices)
-    local body = love.physics.newBody(world, centroidX, centroidY, bodyType)
-
-    -- Create fixtures for each triangle
-    for _, triangle in ipairs(triangles) do
-        -- Adjust triangle vertices relative to body position
-        local localVertices = {}
-        for i = 1, #triangle, 2 do
-            local x = triangle[i] - centroidX
-            local y = triangle[i + 1] - centroidY
-            table.insert(localVertices, x)
-            table.insert(localVertices, y)
-        end
-        local shape = love.physics.newPolygonShape(localVertices)
-        local fixture = love.physics.newFixture(body, shape, 1)
-        fixture:setRestitution(0.3)
-    end
-
-    -- Store the body in your simulation
-    body:setUserData({ thing = { id = generateID(), shapeType = 'custom', body = body } })
-end
 
 function shapes.createPolygonShape(vertices)
     -- Convert vertices to a format suitable for love.math.triangulate()
