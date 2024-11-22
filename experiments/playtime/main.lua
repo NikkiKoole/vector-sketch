@@ -102,8 +102,7 @@ function recreateThingFromBody(body, newSettings)
     local fixedRotation = body:isFixedRotation() -- Capture fixed angle state
     -- Get the original `thing` for shape info
 
-    -- Extract joint information
-    -- TODO
+
     local jointData = joint.extractJoints(body)
     -- print(inspect(jointData))
     -- Destroy the old body
@@ -135,13 +134,11 @@ function recreateThingFromBody(body, newSettings)
     thing.width = newSettings.width or thing.width
     thing.height = newSettings.height or thing.height
     thing.id = thing.id or generateID()
-    --print(thing.id)
-    -- Update user data
+
     newBody:setUserData({ thing = thing })
 
     joint.reattachJoints(jointData, newBody)
-    -- Recreate the joints
-    -- TODO
+
     return thing
 end
 

@@ -11,7 +11,7 @@ local mousejoint = nil
 
 function love.load()
     -- init the physics world
-    love.physics.setMeter(16)
+    love.physics.setMeter(100)
     world = love.physics.newWorld(0, 9.81 * 16, true)
 
     -- make a floor out of a softsurface
@@ -42,9 +42,9 @@ end
 
 function love.update(dt)
     -- update the physics world
-    for i = 1, 4 do
-        world:update(dt)
-    end
+    --for i = 1, 4 do
+    world:update(dt)
+    --end
 
     local mx, my = love.mouse:getPosition()
     for i, v in ipairs(softbodies) do
