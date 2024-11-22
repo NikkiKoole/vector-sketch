@@ -338,19 +338,7 @@ return function(ui)
         end
 
         local state = ui.textInputs[id]
-        --local textBefore = state.text
-        --print(currentText, state.text)
-        -- if (currentText or '') ~= state.text then
-        --     print('got in here!', currentText, state.text)
-        --     state.text = currentText or ''
-        --     state.lines = ui.splitTextIntoLines(state.text)
-        -- end
-        --     -- Optionally reset cursor and selection positions
-        --     --state.cursorPosition = { line = 1, char = #state.text }
-        --     --state.selectionStart = { line = 1, char = #state.text }
-        --     --state.selectionEnd = { line = 1, char = #state.text }
-        -- end
-        --print(currentText, state.text)
+
         if reparse then
             state.text = currentText
             state.lines = ui.splitTextIntoLines(state.text)

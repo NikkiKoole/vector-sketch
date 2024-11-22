@@ -55,6 +55,23 @@ local function makeITriangle(w, h, x, y)
     }
 end
 
+local function tableConcat(t1, t2)
+    for i = 1, #t2 do
+        table.insert(t1, t2[i])
+    end
+    return t1
+end
+
+local function computeCentroid(vertices)
+    local sumX, sumY = 0, 0
+    for _, vertex in ipairs(vertices) do
+        sumX = sumX + vertex.x
+        sumY = sumY + vertex.y
+    end
+    local count = #vertices
+    return sumX / count, sumY / count
+end
+
 function shapes.createShape(shapeType, radius, width, height)
     if (radius == 0) then radius = 1 end
     if (width == 0) then width = 1 end
@@ -89,14 +106,6 @@ function shapes.createShape(shapeType, radius, width, height)
         end
     end
 end
-
-local function tableConcat(t1, t2)
-    for i = 1, #t2 do
-        table.insert(t1, t2[i])
-    end
-    return t1
-end
-
 
 function shapes.createPolygonShape(vertices)
     -- Convert vertices to a format suitable for love.math.triangulate()
@@ -172,16 +181,6 @@ function shapes.createPolygonShape(vertices)
     -- Store the body in your simulation
     body:setUserData({ thing = { id = generateID(), shapeType = 'custom', body = body } })
     return body
-end
-
-function computeCentroid(vertices)
-    local sumX, sumY = 0, 0
-    for _, vertex in ipairs(vertices) do
-        sumX = sumX + vertex.x
-        sumY = sumY + vertex.y
-    end
-    local count = #vertices
-    return sumX / count, sumY / count
 end
 
 return shapes

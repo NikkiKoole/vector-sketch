@@ -242,6 +242,7 @@ local function rotatePoint(x, y, originX, originY, angle)
 
     return finalX, finalY
 end
+
 function love.update(dt)
     if not worldState.paused then
         world:update(dt)
@@ -821,7 +822,6 @@ local function handlePointer(x, y, id, action)
         end
     end
 end
-
 
 function love.mousepressed(x, y, button, istouch)
     if not istouch and button == 1 then

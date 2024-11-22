@@ -21,7 +21,6 @@ local function createSliderWithId(id, label, x, y, width, min, max, value, callb
     ui.label(x, y, label)
     return newValue
 end
-
 -- Helper function to create a checkbox with an associated label
 local function createCheckbox(labelText, x, y, value, callback)
     local changed, newValue = ui.checkbox(x, y, value, labelText)
@@ -35,6 +34,54 @@ local function calculateDistance(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
     return math.sqrt(dx * dx + dy * dy)
+end
+
+local function getJointId(joint)
+    local ud = joint:getUserData()
+    if ud then
+        return ud.id
+    end
+    print('THIS IS WRONG WHY THIS JOINT HAS NO ID!!', tostring(joint:getType()))
+    return nil
+end
+
+local function setJointMetaSetting(joint, settingKey, settingValue)
+    -- Get the existing userdata
+    local ud = joint:getUserData() or {}
+
+    -- Ensure userdata is a table
+    if type(ud) ~= "table" then
+        ud = {} -- Initialize as a table if not already
+    end
+
+    -- Update or add the specific setting
+    ud[settingKey] = settingValue
+
+    -- Set the updated userdata back on the joint
+    joint:setUserData(ud)
+end
+
+local function getJointMetaSetting(joint, settingKey)
+    -- Get the existing userdata
+    local ud = joint:getUserData()
+
+    -- Check if userdata exists and is a table
+    if type(ud) == "table" then
+        return ud[settingKey] -- Return the specific setting
+    else
+        print('could not find meta settting ' .. settingKey .. ' on joint with type ' .. tostring(joint:getType()))
+        return nil -- Return nil if userdata is not a table or doesn't exist
+    end
+end
+
+local function normalizeAxis(x, y)
+    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
+    if magnitude == 0 then
+        return 1, 0 -- Default to (1, 0) if the vector is zero
+    else
+        --   print('normalizing', x / magnitude, y / magnitude)
+        return x / magnitude, y / magnitude
+    end
 end
 
 function lib.createJoint(data)
@@ -132,44 +179,6 @@ function lib.createJoint(data)
     --print('joint' .. setId)
     -- print(inspect(getmetatable(joint)))
     return joint
-end
-
-function getJointId(joint)
-    local ud = joint:getUserData()
-    if ud then
-        return ud.id
-    end
-    print('THIS IS WRONG WHY THIS JOINT HAS NO ID!!', tostring(joint:getType()))
-    return nil
-end
-
-function setJointMetaSetting(joint, settingKey, settingValue)
-    -- Get the existing userdata
-    local ud = joint:getUserData() or {}
-
-    -- Ensure userdata is a table
-    if type(ud) ~= "table" then
-        ud = {} -- Initialize as a table if not already
-    end
-
-    -- Update or add the specific setting
-    ud[settingKey] = settingValue
-
-    -- Set the updated userdata back on the joint
-    joint:setUserData(ud)
-end
-
-function getJointMetaSetting(joint, settingKey)
-    -- Get the existing userdata
-    local ud = joint:getUserData()
-
-    -- Check if userdata exists and is a table
-    if type(ud) == "table" then
-        return ud[settingKey] -- Return the specific setting
-    else
-        print('could not find meta settting ' .. settingKey .. ' on joint with type ' .. tostring(joint:getType()))
-        return nil -- Return nil if userdata is not a table or doesn't exist
-    end
 end
 
 function lib.recreateJoint(joint, newSettings)
@@ -295,16 +304,6 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
             uiState.jointCreationMode = nil
         end
     end)
-end
-
-local function normalizeAxis(x, y)
-    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
-    if magnitude == 0 then
-        return 1, 0 -- Default to (1, 0) if the vector is zero
-    else
-        --   print('normalizing', x / magnitude, y / magnitude)
-        return x / magnitude, y / magnitude
-    end
 end
 
 function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
