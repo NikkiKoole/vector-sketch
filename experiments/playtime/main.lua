@@ -12,6 +12,7 @@ local joint = require 'src.joints'
 local shapes = require 'src.shapes'
 
 local _id = 0
+
 function generateID()
     _id = _id + 1
     print('id:', _id)
@@ -73,7 +74,7 @@ function love.load()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
-    addShape('rectangle', 300, 400, 'dynamic', 100)
+    addShape('rectangle', 200, 400, 'dynamic', 100, 400)
     addShape('rectangle', 600, 400, 'dynamic', 100)
     addShape('rectangle', 450, 800, 'static', 200)
     addShape('rectangle', 850, 800, 'static', 200)
@@ -275,13 +276,7 @@ function drawUI()
             })
 
             local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-            -- local r = ui.sliderWithInput('radius', x, y, 80, 0.1, 150, uiState.radiusOfNextSpawn)
-            -- ui.label(x, y, ' size')
-            -- if r then
-            --     uiState.radiusOfNextSpawn = r
-            -- end
 
-            --x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
             if ui.button(x, y, 180, uiState.bodyTypeOfNextSpawn) then
                 local index = -1
                 for i, v in ipairs(bodyTypes) do
