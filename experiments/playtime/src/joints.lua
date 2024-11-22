@@ -287,7 +287,7 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
             startY = _y + 10
         })
 
-        local width = 280
+        local width = 180
         local x, y = ui.nextLayoutPosition(layout, 160, 50)
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, 160, 50)
@@ -299,8 +299,8 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
             uiState.currentlySelectedObject = nil
             uiState.jointCreationMode = nil
         end
-        nextRow()
-        if ui.button(x, y, width, 'Cancel') then
+
+        if ui.button(x + width + 10, y, width, 'Cancel') then
             uiState.jointCreationMode = nil
         end
     end)
@@ -322,12 +322,13 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             local jointType = j:getType()
             local jointId = getJointId(j)
             local x, y = ui.nextLayoutPosition(layout, 160, 50)
-            x, y = ui.nextLayoutPosition(layout, 160, 50)
-            local width = 280
 
             local nextRow = function()
                 x, y = ui.nextLayoutPosition(layout, 160, 50)
             end
+            nextRow()
+            local width = 280
+
 
             if ui.button(x, y, width, 'destroy') then
                 j:destroy()

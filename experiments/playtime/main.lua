@@ -11,8 +11,16 @@ local ui = require 'src.ui-all'
 local joint = require 'src.joints'
 local shapes = require 'src.shapes'
 
-local _id = 0
+function waitForEvent()
+    local a, b, c, d, e
+    repeat
+        a, b, c, d, e = love.event.wait()
+    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
+end
 
+waitForEvent()
+
+local _id = 0
 function generateID()
     _id = _id + 1
     print('id:', _id)
@@ -76,7 +84,7 @@ function love.load()
 
     addThing('rectangle', 200, 400, 'dynamic', 100, 400)
     addThing('rectangle', 600, 400, 'dynamic', 100)
-    addThing('rectangle', 450, 800, 'static', 200)
+    addThing('rectangle', 450, 800, 'kinematic', 200)
     addThing('rectangle', 850, 800, 'static', 200)
     addThing('rectangle', 1250, 800, 'static', 200)
     addThing('rectangle', 1100, 100, 'dynamic', 300)
@@ -162,6 +170,7 @@ function addThing(shapeType, x, y, bodyType, radius, width, height)
     -- Create the physics body at the specified world coordinates
     thing.body = love.physics.newBody(world, x, y, bodyType)
 
+    print(inspect(getmetatable(thing.body)))
     -- Use createShape to generate the shape
     thing.shape = shapes.createShape(shapeType, radius, width, height)
 
@@ -171,6 +180,7 @@ function addThing(shapeType, x, y, bodyType, radius, width, height)
 
     -- Set the body to sleep initially
     thing.body:setAwake(true)
+
     thing.id = generateID()
     -- Store the 'thing' in the body's user data for easy access
     thing.body:setUserData({ thing = thing })
@@ -357,6 +367,10 @@ local function drawUpdateSelectedObjectUI()
 
         -- Add a button to toggle the body type
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        end
         if ui.button(x, y, 260, currentBodyType) then
             body:setType(nextBodyType)
             body:setAwake(true)
@@ -374,12 +388,13 @@ local function drawUpdateSelectedObjectUI()
         if thing then
             -- Shape Properties
             local shapeType = thing.shapeType
+            nextRow()
 
-            local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
             if shapeType == 'circle' then
                 -- Show radius control for circles
-                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                nextRow()
+
                 local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
                 ui.label(x, y, ' radius')
                 if newRadius and newRadius ~= thing.radius then
@@ -389,10 +404,12 @@ local function drawUpdateSelectedObjectUI()
                 end
             elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
                 -- Show width and height controls for these shapes
-                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                nextRow()
+
                 local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
                 ui.label(x, y, ' width')
-                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                nextRow()
+
                 local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
                 ui.label(x, y, ' height')
 
@@ -408,7 +425,8 @@ local function drawUpdateSelectedObjectUI()
                 -- For polygonal or other custom shapes, only allow radius control if applicable
                 if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
                     shapeType == 'heptagon' or shapeType == 'octagon' then
-                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                    nextRow()
+
                     local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
                         dirtyBodyChange)
                     ui.label(x, y, ' radius')
@@ -423,15 +441,16 @@ local function drawUpdateSelectedObjectUI()
                 end
             end
         end
+        nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
         if dirty then
             body:setFixedRotation(not body:isFixedRotation())
         end
 
         -- Angle Slider
-        local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        nextRow()
+
         local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180, angleDegrees,
             body:isAwake() and not worldState.paused)
         if newAngle and angleDegrees ~= newAngle then
@@ -443,7 +462,8 @@ local function drawUpdateSelectedObjectUI()
         local fixtures = body:getFixtures()
         if #fixtures >= 1 then
             local density = fixtures[1]:getDensity()
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            nextRow()
+
             local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
             if newDensity and density ~= newDensity then
                 for i = 1, #fixtures do
@@ -454,7 +474,8 @@ local function drawUpdateSelectedObjectUI()
 
             -- Bounciness Slider
             local bounciness = fixtures[1]:getRestitution()
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            nextRow()
+
             local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
             if newBounce and bounciness ~= newBounce then
                 for i = 1, #fixtures do
@@ -465,7 +486,8 @@ local function drawUpdateSelectedObjectUI()
 
             -- Friction Slider
             local friction = fixtures[1]:getFriction()
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            nextRow()
+
             local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
             if newFriction and friction ~= newFriction then
                 for i = 1, #fixtures do
@@ -479,7 +501,8 @@ local function drawUpdateSelectedObjectUI()
         local attachedJoints = body:getJoints()
         if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
             ui.label(x, y + 60, '∞ joints ∞')
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            nextRow()
+
 
             -- layout:nextRow()
 
@@ -649,7 +672,7 @@ function drawUI()
     end
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
-        joint.doJointCreateUI(uiState, 500, 100, PANEL_WIDTH, 200)
+        joint.doJointCreateUI(uiState, 500, 100, 400, 150)
     end
 
     if uiState.currentlySelectedJoint then
