@@ -10,12 +10,18 @@ local ui = require 'src.ui-all'
 
 local joint = require 'src.joints'
 local shapes = require 'src.shapes'
+
 local _id = 0
 function generateID()
     _id = _id + 1
     print('id:', _id)
     return _id
 end
+
+local PANEL_WIDTH = 300
+local BUTTON_HEIGHT = 50
+local ROW_WIDTH = 160
+local BUTTON_SPACING = 10
 
 function love.load()
     -- Load and set the font
@@ -252,20 +258,20 @@ function drawUI()
             'hexagon',
             'heptagon',
             'octagon' }
-        local titleHeight = ui.font:getHeight() + 10
+        local titleHeight = ui.font:getHeight() + BUTTON_SPACING
         local startX = 20
         local startY = 70
         local panelWidth = 200
-        local buttonSpacing = 10
+        local buttonSpacing = BUTTON_SPACING
         local buttonHeight = ui.theme.button.height
-        local panelHeight = titleHeight + ((#shapeTypes + 4) * (buttonHeight + buttonSpacing)) + buttonSpacing
+        local panelHeight = titleHeight + ((#shapeTypes + 2) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
         ui.panel(startX, startY, panelWidth, panelHeight, '', function()
             local layout = ui.createLayout({
                 type = 'columns',
-                spacing = buttonSpacing,
-                startX = startX + 10,
-                startY = startY + 10
+                spacing = BUTTON_SPACING,
+                startX = startX + BUTTON_SPACING,
+                startY = startY + BUTTON_SPACING
             })
 
             local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
@@ -329,20 +335,20 @@ function drawUI()
         --'gear'
         -- 'friction'
         local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley' }
-        local titleHeight = ui.font:getHeight() + 10
+        local titleHeight = ui.font:getHeight() + BUTTON_SPACING
         local startX = 230
         local startY = 70
         local panelWidth = 200
-        local buttonSpacing = 10
+        local buttonSpacing = BUTTON_SPACING
         local buttonHeight = ui.theme.button.height
-        local panelHeight = titleHeight + (#jointTypes * (buttonHeight + buttonSpacing)) + buttonSpacing
+        local panelHeight = titleHeight + (#jointTypes * (buttonHeight + BUTTON_SPACING))
 
         ui.panel(startX, startY, panelWidth, panelHeight, '', function()
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = buttonSpacing,
-                startX = startX + 10,
-                startY = startY + 10
+                startX = startX + BUTTON_SPACING,
+                startY = startY + BUTTON_SPACING
             })
             for _, joint in ipairs(jointTypes) do
                 local width = panelWidth - 20
@@ -364,24 +370,24 @@ function drawUI()
     if uiState.worldSettingsOpened then
         local startX = 440
         local startY = 70
-        local panelWidth = 300
+        local panelWidth = PANEL_WIDTH
         local panelHeight = 400
-        local buttonSpacing = 10
-        local titleHeight = ui.font:getHeight() + 10
+        local buttonSpacing = BUTTON_SPACING
+        local titleHeight = ui.font:getHeight() + BUTTON_SPACING
 
         ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
             local layout = ui.createLayout({
                 type = 'columns',
-                spacing = buttonSpacing,
-                startX = startX + 10,
-                startY = startY + titleHeight + 10
+                spacing = BUTTON_SPACING,
+                startX = startX + BUTTON_SPACING,
+                startY = startY + titleHeight + BUTTON_SPACING
             })
-            local width = panelWidth - 20
+            local width = panelWidth - BUTTON_SPACING * 2
 
-            local x, y = ui.nextLayoutPosition(layout, width, 50)
+            local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
 
             --  x, y = ui.nextLayoutPosition(layout, width, 50)
-            local grav = ui.sliderWithInput('grav', x, y, 160, -10, 50, worldState.gravity)
+            local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, worldState.gravity)
             if grav then
                 worldState.gravity = grav
                 if world then
@@ -390,28 +396,28 @@ function drawUI()
             end
             ui.label(x, y, ' gravity')
 
-            x, y = ui.nextLayoutPosition(layout, width, 50)
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
             local g, value = ui.checkbox(x, y, uiState.showGrid, 'grid') --showGrid = true,
             if g then
                 uiState.showGrid = value
             end
 
 
-            x, y = ui.nextLayoutPosition(layout, width, 50)
-            local mouseForce = ui.sliderWithInput(' mouse F', x, y, 160, 0, 1000000, worldState.mouseForce)
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, worldState.mouseForce)
             if mouseForce then
                 worldState.mouseForce = mouseForce
             end
             ui.label(x, y, ' mouse F')
-            x, y = ui.nextLayoutPosition(layout, width, 50)
-            local mouseDamp = ui.sliderWithInput(' damp', x, y, 160, 0.001, 1, worldState.mouseDamping)
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, worldState.mouseDamping)
             if mouseDamp then
                 worldState.mouseDamping = mouseDamp
             end
             ui.label(x, y, ' damp')
 
-            x, y = ui.nextLayoutPosition(layout, width, 50)
-            local t = ui.textinput('worldText', x, y, 280, 200, 'add text...', uiState.worldText)
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            local t = ui.textinput('worldText', x, y, 280, 70, 'add text...', uiState.worldText)
             if t then
                 uiState.worldText = t
             end
@@ -426,7 +432,7 @@ function drawUI()
     -- Properties Panel
     -- Properties Panel
     if uiState.currentlySelectedObject and not uiState.currentlySelectedJoint then
-        local panelWidth = 300
+        local panelWidth = PANEL_WIDTH
         local w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
             local body = uiState.currentlySelectedObject.body
@@ -434,10 +440,10 @@ function drawUI()
             local myID = uiState.currentlySelectedObject.id
 
             -- Initialize Layout
-            local padding = 10
+            local padding = BUTTON_SPACING
             local layout = ui.createLayout({
                 type = 'columns',
-                spacing = 10,
+                spacing = BUTTON_SPACING,
                 startX = w - panelWidth,
                 startY = 100 + padding
             })
@@ -458,7 +464,7 @@ function drawUI()
             end
 
             -- Add a button to toggle the body type
-            x, y = ui.nextLayoutPosition(layout, 160, 50)
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, currentBodyType) then
                 body:setType(nextBodyType)
                 body:setAwake(true)
@@ -477,12 +483,12 @@ function drawUI()
                 -- Shape Properties
                 local shapeType = thing.shapeType
 
-                local x, y = ui.nextLayoutPosition(layout, 160, 50)
+                local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
                 if shapeType == 'circle' then
                     -- Show radius control for circles
-                    x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, 160, 1, 200, thing.radius)
+                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                    local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
                     ui.label(x, y, ' radius')
                     if newRadius and newRadius ~= thing.radius then
                         uiState.currentlySelectedObject = recreateBody(body, { shapeType = "circle", radius = newRadius })
@@ -490,11 +496,11 @@ function drawUI()
                     end
                 elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
                     -- Show width and height controls for these shapes
-                    x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, 160, 1, 800, thing.width)
+                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
                     ui.label(x, y, ' width')
-                    x, y = ui.nextLayoutPosition(layout, 160, 50)
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, 160, 1, 800, thing.height)
+                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
                     ui.label(x, y, ' height')
 
                     if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
@@ -509,8 +515,8 @@ function drawUI()
                     -- For polygonal or other custom shapes, only allow radius control if applicable
                     if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
                         shapeType == 'heptagon' or shapeType == 'octagon' then
-                        x, y = ui.nextLayoutPosition(layout, 160, 50)
-                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, 160, 1, 200, thing.radius,
+                        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
                             dirtyBodyChange)
                         ui.label(x, y, ' radius')
                         if newRadius and newRadius ~= thing.radius then
@@ -525,15 +531,15 @@ function drawUI()
                 end
             end
 
-            x, y = ui.nextLayoutPosition(layout, 160, 50)
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
             if dirty then
                 body:setFixedRotation(not body:isFixedRotation())
             end
 
             -- Angle Slider
-            local x, y = ui.nextLayoutPosition(layout, 160, 50)
-            local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, 160, -180, 180, angleDegrees,
+            local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180, angleDegrees,
                 body:isAwake() and not worldState.paused)
             if newAngle and angleDegrees ~= newAngle then
                 body:setAngle(newAngle * math.pi / 180)
@@ -544,8 +550,8 @@ function drawUI()
             local fixtures = body:getFixtures()
             if #fixtures >= 1 then
                 local density = fixtures[1]:getDensity()
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newDensity = ui.sliderWithInput(myID .. 'density', x, y, 160, 0, 10, density)
+                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
                 if newDensity and density ~= newDensity then
                     for i = 1, #fixtures do
                         fixtures[i]:setDensity(newDensity)
@@ -555,8 +561,8 @@ function drawUI()
 
                 -- Bounciness Slider
                 local bounciness = fixtures[1]:getRestitution()
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, 160, 0, 1, bounciness)
+                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
                 if newBounce and bounciness ~= newBounce then
                     for i = 1, #fixtures do
                         fixtures[i]:setRestitution(newBounce)
@@ -566,8 +572,8 @@ function drawUI()
 
                 -- Friction Slider
                 local friction = fixtures[1]:getFriction()
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
-                local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, 160, 0, 1, friction)
+                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
                 if newFriction and friction ~= newFriction then
                     for i = 1, #fixtures do
                         fixtures[i]:setFriction(newFriction)
@@ -583,7 +589,7 @@ function drawUI()
             local attachedJoints = body:getJoints()
             if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
                 ui.label(x, y + 60, '∞ joints ∞')
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
+                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
                 -- layout:nextRow()
 
@@ -593,10 +599,10 @@ function drawUI()
                     local jointID = tostring(joint)
                     if (jointType ~= 'mouse') then
                         -- Display joint button
-                        x, y = ui.nextLayoutPosition(layout, 160, 30)
+                        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
                         local jointLabel = string.format("%s", jointType)
 
-                        if ui.button(x, y, 160, jointLabel) then
+                        if ui.button(x, y, ROW_WIDTH, jointLabel) then
                             uiState.currentlySelectedJoint = joint
                             uiState.currentlySelectedObject = nil
                         end
@@ -608,12 +614,12 @@ function drawUI()
     end
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
-        joint.doJointCreateUI(uiState, 500, 100, 300, 200)
+        joint.doJointCreateUI(uiState, 500, 100, PANEL_WIDTH, 200)
     end
 
     if uiState.currentlySelectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
-        joint.doJointUpdateUI(uiState, uiState.currentlySelectedJoint, w - 300 - 20, 20, 300, h - 40)
+        joint.doJointUpdateUI(uiState, uiState.currentlySelectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
     if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
@@ -646,33 +652,37 @@ function drawUI()
     end
 end
 
+local function drawGrid(cam, worldState)
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1, .1)
+
+    local w, h = love.graphics.getDimensions()
+    local tlx, tly = cam:getWorldCoordinates(0, 0)
+    local brx, bry = cam:getWorldCoordinates(w, h)
+    local step = worldState.meter
+    local startX = math.floor(tlx / step) * step
+    local endX = math.ceil(brx / step) * step
+    local startY = math.floor(tly / step) * step
+    local endY = math.ceil(bry / step) * step
+
+    for i = startX, endX, step do
+        local x, _ = cam:getScreenCoordinates(i, 0)
+        love.graphics.line(x, 0, x, h)
+    end
+    for i = startY, endY, step do
+        local _, y = cam:getScreenCoordinates(0, i)
+        love.graphics.line(0, y, w, y)
+    end
+    love.graphics.setLineWidth(lw)
+    love.graphics.setColor(1, 1, 1)
+end
+
 function love.draw()
     local w, h = love.graphics.getDimensions()
     love.graphics.clear(20 / 255, 5 / 255, 20 / 255)
     if uiState.showGrid then
-        local lw = love.graphics.getLineWidth()
-        love.graphics.setLineWidth(1)
-        love.graphics.setColor(1, 1, 1, .1)
-        local w, h = love.graphics.getDimensions()
-        local tlx, tly = cam:getWorldCoordinates(0, 0)
-        local brx, bry = cam:getWorldCoordinates(w, h)
-        local step = worldState.meter
-        local roundedStartX = math.floor(tlx / step) * step
-        local roundedEndX = math.ceil(brx / step) * step
-        local roundedStartY = math.floor(tly / step) * step
-        local roundedEndY = math.ceil(bry / step) * step
-
-        for i = roundedStartX, roundedEndX, step do
-            local x, _ = cam:getScreenCoordinates(i, 0)
-            love.graphics.line(x, 0, x, h)
-        end
-        for i = roundedStartY, roundedEndY, step do
-            local _, y = cam:getScreenCoordinates(0, i)
-
-            love.graphics.line(0, y, w, y)
-        end
-        love.graphics.setLineWidth(lw)
-        love.graphics.setColor(1, 1, 1, 1)
+        drawGrid(cam, worldState)
     end
     cam:push()
     phys.drawWorld(world)
