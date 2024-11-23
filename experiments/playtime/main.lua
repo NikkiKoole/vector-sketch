@@ -11,6 +11,7 @@ local ui = require 'src.ui-all'
 local joint = require 'src.joints'
 local shapes = require 'src.shapes'
 
+local blob = require 'src.loveblobs'
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -84,12 +85,27 @@ function love.load()
 
     addThing('rectangle', 200, 400, 'dynamic', 100, 400)
     addThing('rectangle', 600, 400, 'dynamic', 100)
-    addThing('rectangle', 450, 800, 'kinematic', 200)
-    addThing('rectangle', 850, 800, 'static', 200)
-    addThing('rectangle', 1250, 800, 'static', 200)
-    addThing('rectangle', 1100, 100, 'dynamic', 300)
+    -- addThing('rectangle', 450, 800, 'kinematic', 200)
+    -- addThing('rectangle', 850, 800, 'static', 200)
+    addThing('rectangle', 250, 1000, 'static', 100, 1800)
+    -- addThing('rectangle', 1100, 100, 'dynamic', 300)
     addThing('circle', 1000, 400, 'dynamic', 100)
     addThing('circle', 1300, 400, 'dynamic', 100)
+
+    softbodies = {}
+
+    local b = blob.softbody(world, 500, 0, 102, 2, 4)
+    b:setFrequency(1)
+    b:setDamping(0.1)
+    b:setFriction(1)
+
+    table.insert(softbodies, b)
+    local points = {
+        0, 500, 800, 500,
+        800, 800, 0, 800
+    }
+    local b = blob.softsurface(world, points, 64, "static")
+    table.insert(softbodies, b)
 end
 
 function recreateThingFromBody(body, newSettings)
@@ -252,7 +268,12 @@ end
 
 function love.update(dt)
     if not worldState.paused then
-        world:update(dt)
+        for i, v in ipairs(softbodies) do
+            v:update(dt)
+        end
+        for i = 1, 2 do
+            world:update(dt)
+        end
     end
     phys.handleUpdate(dt)
 
@@ -717,7 +738,19 @@ function love.draw()
         drawGrid(cam, worldState)
     end
     cam:push()
+
+
+
     phys.drawWorld(world)
+    for i, v in ipairs(softbodies) do
+        love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255)
+        if (tostring(v) == "softbody") then
+            v:draw("fill", false)
+        else
+            v:draw(false)
+        end
+    end
+    love.graphics.setColor(1, 1, 1)
     if (uiState.currentlySelectedObject) then
         --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
     end
@@ -806,11 +839,13 @@ local function handlePointer(x, y, id, action)
             end,
             damp = worldState.mouseDamping
         }
+
         local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
         if #hitted > 0 then
             local ud = hitted[1]:getBody():getUserData()
-            uiState.currentlySelectedObject = ud.thing
-
+            if ud and ud.thing then
+                uiState.currentlySelectedObject = ud.thing
+            end
             if uiState.jointCreationMode then
                 if uiState.jointCreationMode.body1 == nil then
                     uiState.jointCreationMode.body1 = uiState.currentlySelectedObject.body
@@ -824,9 +859,10 @@ local function handlePointer(x, y, id, action)
             if (worldState.paused) then
                 -- local ud = uiState.currentlySelectedObject:getBody():getUserData()
                 uiState.currentlyDraggingObject = uiState.currentlySelectedObject
-
-                local offx, offy = uiState.currentlySelectedObject.body:getLocalPoint(cx, cy)
-                uiState.offsetForCurrentlyDragging = { -offx, -offy }
+                if uiState.currentlySelectedObject then
+                    local offx, offy = uiState.currentlySelectedObject.body:getLocalPoint(cx, cy)
+                    uiState.offsetForCurrentlyDragging = { -offx, -offy }
+                end
             end
         else
             uiState.maybeHideSelectedPanel = true
@@ -853,6 +889,15 @@ function love.mousepressed(x, y, button, istouch)
         else
             handlePointer(x, y, 'mouse', 'pressed')
         end
+    end
+    if button == 2 then
+        local cx, cy = cam:getWorldCoordinates(x, y)
+        local b = blob.softbody(world, cx, cy, 102, 2, 4)
+        b:setFrequency(1)
+        b:setDamping(0.1)
+        b:setFriction(1)
+
+        table.insert(softbodies, b)
     end
 end
 

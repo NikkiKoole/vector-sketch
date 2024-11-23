@@ -96,7 +96,7 @@ end
 
 local function makePrio(fixture)
     local ud = fixture:getUserData()
-    if ud then
+    if ud and type(ud) == 'table' then
         if string.match(ud.bodyType, 'hand') then
             return 3
         end
@@ -620,7 +620,7 @@ lib.handleUpdate = function(dt)
             local fixtures = mj.jointBody:getFixtures()
             for k = 1, #fixtures do
                 local f = fixtures[k]
-                if f:getUserData() and f:getUserData().bodyType then
+                if f:getUserData() and type(f:getUserData()) == 'table' and f:getUserData().bodyType then
                     if f:getUserData().bodyType == 'connector' then
                         connect.maybeConnectThisConnector(f)
                     end
