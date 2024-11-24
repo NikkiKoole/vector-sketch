@@ -32,7 +32,7 @@ function softbody:init(world, x, y, r, s, t, reinit)
     self.nodes = {};
 
     --  local nodes = r / 2
-    local nodes = r / 4
+    local nodes = r / 2
     for node = 1, nodes do
         local angle = (2 * math.pi) / nodes * node;
 

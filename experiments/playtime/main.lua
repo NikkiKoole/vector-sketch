@@ -10,8 +10,8 @@ local ui = require 'src.ui-all'
 
 local joint = require 'src.joints'
 local shapes = require 'src.shapes'
-
 local blob = require 'src.loveblobs'
+
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -94,18 +94,21 @@ function love.load()
 
     softbodies = {}
 
-    local b = blob.softbody(world, 500, 0, 102, 2, 4)
-    b:setFrequency(1)
-    b:setDamping(0.1)
-    b:setFriction(1)
+    playWithSoftbodies = false
+    if playWithSoftbodies then
+        local b = blob.softbody(world, 500, 0, 102, 2, 4)
+        b:setFrequency(1)
+        b:setDamping(0.1)
+        b:setFriction(1)
 
-    table.insert(softbodies, b)
-    local points = {
-        0, 500, 800, 500,
-        800, 800, 0, 800
-    }
-    local b = blob.softsurface(world, points, 64, "static")
-    table.insert(softbodies, b)
+        table.insert(softbodies, b)
+        local points = {
+            0, 500, 800, 500,
+            800, 800, 0, 800
+        }
+        local b = blob.softsurface(world, points, 64, "static")
+        table.insert(softbodies, b)
+    end
 end
 
 function recreateThingFromBody(body, newSettings)
@@ -397,6 +400,8 @@ local function drawUpdateSelectedObjectUI()
             body:setAwake(true)
         end
 
+
+
         local userData = body:getUserData()
         local thing = userData and userData.thing
         --print(body, userData, thing, thing.width, thing.height)
@@ -464,6 +469,8 @@ local function drawUpdateSelectedObjectUI()
         end
         nextRow()
 
+
+
         local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
         if dirty then
             body:setFixedRotation(not body:isFixedRotation())
@@ -517,14 +524,29 @@ local function drawUpdateSelectedObjectUI()
             end
             ui.label(x, y, ' friction')
         end
+        nextRow()
+        -- set sleeping allowed
+        local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
+        if dirty then
+            body:setSleepingAllowed(not body:isSleepingAllowed())
+        end
+        nextRow()
+        -- angukar veloicity
+        local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
+        if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
+        local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
+            body:isAwake() and not worldState.paused)
+        if newAngle and angleDegrees ~= newAngle then
+            body:setAngularVelocity(math.rad(newAngle))
+        end
+        ui.label(x, y, ' ang-vel')
+
 
         -- List Attached Joints Using Body:getJoints()
         local attachedJoints = body:getJoints()
         if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
             ui.label(x, y + 60, '∞ joints ∞')
             nextRow()
-
-
             -- layout:nextRow()
 
             for _, joint in ipairs(attachedJoints) do
@@ -742,14 +764,16 @@ function love.draw()
 
 
     phys.drawWorld(world)
+    local lw = love.graphics.getLineWidth()
     for i, v in ipairs(softbodies) do
-        love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255)
+        love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
         if (tostring(v) == "softbody") then
             v:draw("fill", false)
         else
             v:draw(false)
         end
     end
+    love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1)
     if (uiState.currentlySelectedObject) then
         --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
@@ -803,7 +827,7 @@ function love.mousemoved(x, y, dx, dy)
             table.insert(uiState.polygonVertices, { x = wx, y = wy })
             uiState.lastPolygonPoint = { x = wx, y = wy }
         end
-    elseif love.keyboard.isDown('space') or love.mouse.isDown(3) then
+    elseif love.mouse.isDown(3) then
         local tx, ty = cam:getTranslation()
         cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
     end
@@ -817,6 +841,9 @@ function love.keypressed(key)
     ui.handleKeyPress(key)
     if key == 'escape' then
         love.event.quit()
+    end
+    if key == 'space' then
+        worldState.paused = not worldState.paused
     end
 end
 
@@ -890,7 +917,7 @@ function love.mousepressed(x, y, button, istouch)
             handlePointer(x, y, 'mouse', 'pressed')
         end
     end
-    if button == 2 then
+    if playWithSoftbodies and button == 2 then
         local cx, cy = cam:getWorldCoordinates(x, y)
         local b = blob.softbody(world, cx, cy, 102, 2, 4)
         b:setFrequency(1)
