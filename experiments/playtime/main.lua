@@ -253,7 +253,7 @@ function finalizePolygon()
     uiState.lastPolygonPoint = nil
 end
 
-local function rotatePoint(x, y, originX, originY, angle)
+function rotatePoint(x, y, originX, originY, angle)
     -- Translate the point to the origin
     local translatedX = x - originX
     local translatedY = y - originY

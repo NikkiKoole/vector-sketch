@@ -2,6 +2,7 @@ local ui = require 'src.ui-all'
 local lib = {}
 local inspect = require 'vendor.inspect'
 
+local offsetHasChangedViaOutside
 -- Helper function to create a slider with an associated label
 local function createSlider(labelText, x, y, width, min, max, value, callback, changed)
     if not _id then _id = '' end
@@ -13,8 +14,8 @@ local function createSlider(labelText, x, y, width, min, max, value, callback, c
     return newValue
 end
 
-local function createSliderWithId(id, label, x, y, width, min, max, value, callback)
-    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value)
+local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
+    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
     if newValue then
         callback(newValue)
     end
@@ -475,12 +476,61 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 
             local function offsetSliders(j)
                 -- Ensure offsets exist
+
                 if not getJointMetaSetting(j, 'offsetA') then
                     setJointMetaSetting(j, 'offsetA', { x = 0, y = 0 })
                 end
                 local offsetA = getJointMetaSetting(j, 'offsetA') or 0
 
                 nextRow()
+                if (offsetHasChangedViaOutside) then offsetHasChangedViaOutside = false end
+
+                local bodyA, bodyB = j:getBodies()
+                local ud = bodyA:getUserData()
+
+                function updateOffset(x, y)
+                    local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
+
+                    offsetA.x = rx
+                    offsetA.y = ry
+                    setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
+                    uiState.currentlySelectedJoint = lib.recreateJoint(j)
+                    j = uiState.currentlySelectedJoint
+                    offsetHasChangedViaOutside = true
+                end
+
+                if ud and ud.thing then
+                    --print(inspect(ud.thing))
+                    if ui.button(x, y, 30, '0', 30) then
+                        updateOffset(0, -ud.thing.height / 2)
+                    end
+                    if ui.button(x + 30, y, 30, '1', 30) then
+                        updateOffset(ud.thing.width / 2, -ud.thing.height / 2)
+                    end
+                    if ui.button(x + 60, y, 30, '2', 30) then
+                        updateOffset(ud.thing.width / 2, 0)
+                    end
+                    if ui.button(x + 90, y, 30, '3', 30) then
+                        updateOffset(ud.thing.width / 2, ud.thing.height / 2)
+                    end
+                    if ui.button(x + 120, y, 30, '4', 30) then
+                        updateOffset(0, ud.thing.height / 2)
+                    end
+                    if ui.button(x + 150, y, 30, '5', 30) then
+                        updateOffset(-ud.thing.width / 2, ud.thing.height / 2)
+                    end
+                    if ui.button(x + 180, y, 30, '6', 30) then
+                        updateOffset(-ud.thing.width / 2, 0)
+                    end
+                    if ui.button(x + 210, y, 30, '7', 30) then
+                        updateOffset(-ud.thing.width / 2, -ud.thing.height / 2)
+                    end
+                    if ui.button(x + 240, y, 30, '8', 30) then
+                        updateOffset(0, 0)
+                    end
+                end
+                nextRow()
+
                 -- Sliders for offsetA.x
                 local offsetX = createSliderWithId(jointId, 'Offset A X', x, y, 160, -200, 200,
                     offsetA.x,
@@ -490,7 +540,8 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
                         uiState.currentlySelectedJoint = lib.recreateJoint(j)
                         j = uiState.currentlySelectedJoint
-                    end
+                    end,
+                    offsetHasChangedViaOutside
 
                 )
                 nextRow()
@@ -504,9 +555,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
                         uiState.currentlySelectedJoint = lib.recreateJoint(j)
                         j = uiState.currentlySelectedJoint
-                    end
+                    end,
+                    offsetHasChangedViaOutside
 
                 )
+                nextRow()
+
+
+
                 return j
             end
 
