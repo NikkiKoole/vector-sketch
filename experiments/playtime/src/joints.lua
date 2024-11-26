@@ -84,6 +84,21 @@ local function normalizeAxis(x, y)
         return x / magnitude, y / magnitude
     end
 end
+function rotatePoint(x, y, originX, originY, angle)
+    -- Translate the point to the origin
+    local translatedX = x - originX
+    local translatedY = y - originY
+
+    -- Apply rotation
+    local rotatedX = translatedX * math.cos(angle) - translatedY * math.sin(angle)
+    local rotatedY = translatedX * math.sin(angle) + translatedY * math.cos(angle)
+
+    -- Translate back to the original position
+    local finalX = rotatedX + originX
+    local finalY = rotatedY + originY
+
+    return finalX, finalY
+end
 
 function lib.createJoint(data)
     local bodyA = data.body1
@@ -95,8 +110,10 @@ function lib.createJoint(data)
     local x1, y1 = bodyA:getPosition()
     local x2, y2 = bodyB:getPosition()
     local offsetA = data.offsetA or { x = 0, y = 0 }
-    x1, y1 = x1 + offsetA.x, y1 + offsetA.y
+    local rx, ry = rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
 
+    --x1, y1 = x1 + offsetA.x, y1 + offsetA.y
+    x1, y1 = x1 + rx, y1 + ry
     if jointType == 'distance' then
         -- Create a Distance Joint
 
@@ -489,10 +506,10 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 local ud = bodyA:getUserData()
 
                 function updateOffset(x, y)
-                    local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
+                    --local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
 
-                    offsetA.x = rx
-                    offsetA.y = ry
+                    offsetA.x = x
+                    offsetA.y = y
                     setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
                     uiState.currentlySelectedJoint = lib.recreateJoint(j)
                     j = uiState.currentlySelectedJoint

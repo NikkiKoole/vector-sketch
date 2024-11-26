@@ -77,7 +77,7 @@ function love.load()
 
     love.physics.setMeter(worldState.meter)
     world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
-    phys.setupWorld(64)
+    phys.setupWorld(worldState.meter)
 
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
