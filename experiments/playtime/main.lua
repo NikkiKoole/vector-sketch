@@ -21,10 +21,21 @@ end
 
 waitForEvent()
 
+
+local random = love.math.random
+local function uuid()
+    local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return (string.gsub(template, '[xy]', function(c)
+        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+        return string.format('%x', v)
+    end))
+end
+
 local _id = 0
 function generateID()
     _id = _id + 1
-    print('id:', _id)
+    --  print('id:', _id)
+    print(uuid(), _id)
     return _id
 end
 
@@ -189,7 +200,7 @@ function addThing(shapeType, x, y, bodyType, radius, width, height)
     -- Create the physics body at the specified world coordinates
     thing.body = love.physics.newBody(world, x, y, bodyType)
 
-    print(inspect(getmetatable(thing.body)))
+    -- print(inspect(getmetatable(thing.body)))
     -- Use createShape to generate the shape
     thing.shape = shapes.createShape(shapeType, radius, width, height)
 

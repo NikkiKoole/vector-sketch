@@ -580,6 +580,7 @@ lib.drawWorld = function(world)
 
 
                 local b1B = bodyB:getAngle()
+                print(b1A - b1B, b1A, b1B)
                 local angleBetween = b1A - b1B
 
                 local endX, endY = getEndpoint(x1, y1, -angleBetween, 15)
