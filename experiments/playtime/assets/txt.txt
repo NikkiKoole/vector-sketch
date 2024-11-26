@@ -2,7 +2,7 @@
         love.graphics.print(
             "∫ƒF, g, vm, K, t)√∆\n" ..
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk\n" ..
-            "lmnopqrstuvwxyz\n" ..
+            "lmnopqrstuvwxyz~~~\n" ..
             "àáâãäåæçèéêëìíîïðñòóôõöøùúûüýÿ\n" ..
             "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝŸ\n" ..
             "¡¢£¤¥¦§¨©ª«¬®¯°¹²³±´µ¶·¸º»¼½¾¿‘’“”•\n" ..
