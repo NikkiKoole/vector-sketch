@@ -448,6 +448,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         math.deg(j:getLowerLimit()),
                         function(val)
                             local newValue = math.rad(val)
+
                             j:setLowerLimit(newValue)
                         end
                     )

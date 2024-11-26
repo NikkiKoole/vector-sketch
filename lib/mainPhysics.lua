@@ -482,6 +482,11 @@ local function calculateEndPoint(x1, y1, bodyA, bodyB, length)
 
     return endX, endY
 end
+function getEndpoint(x, y, angle, length)
+    local endX = x + length * math.cos(angle)
+    local endY = y + length * math.sin(angle)
+    return endX, endY
+end
 
 lib.drawWorld = function(world)
     local r, g, b, a = love.graphics.getColor()
@@ -570,12 +575,16 @@ lib.drawWorld = function(world)
 
                 love.graphics.setColor(1, 1, 1, alpha)
                 love.graphics.setLineJoin("miter")
-                love.graphics.arc('line', x1, y1, 15, b1A + lower, b1A + upper)
+                love.graphics.arc('line', x1, y1, 15, math.pi / 2 + b1A + lower, math.pi / 2 + b1A + upper)
                 love.graphics.setLineJoin("none")
 
-                local endX, endY = calculateEndPoint(x1, y1, bodyA, bodyB, 15)
-                -- Draw the line
-                love.graphics.setColor(0, 0, 0, alpha)
+
+                local b1B = bodyB:getAngle()
+                local angleBetween = b1A - b1B
+
+                local endX, endY = getEndpoint(x1, y1, -angleBetween, 15)
+
+                love.graphics.setColor(0.5, 0.5, 0.5, alpha)
                 love.graphics.line(x1, y1, endX, endY)
             end
         end
