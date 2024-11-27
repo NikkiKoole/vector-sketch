@@ -17,6 +17,12 @@ local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
 
+---- todo
+-- offsetA is related to anchor points, either after load calculate and set the new offsetA point or
+--  use the anchor point better.
+
+
+
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -69,6 +75,7 @@ function love.load()
         minPointDistance = 50, -- Default minimum distance
         lastPolygonPoint = nil,
         lastSelectedBody = nil,
+        selectedBodies = nil,
         lastSelectedJoint = nil,
         saveDialogOpened = false,
         saveName = 'untitled'
@@ -297,7 +304,25 @@ function love.update(dt)
         local offx = uiState.offsetForCurrentlyDragging[1]
         local offy = uiState.offsetForCurrentlyDragging[2]
         local rx, ry = rotatePoint(offx, offy, 0, 0, uiState.currentlyDraggingObject.body:getAngle())
+        local oldPosX, oldPosY = uiState.currentlyDraggingObject.body:getPosition()
         uiState.currentlyDraggingObject.body:setPosition(wx + rx, wy + ry)
+
+        -- figure out if we are dragging a group!
+        if uiState.selectedBodies then
+            for i = 1, #uiState.selectedBodies do
+                if (uiState.selectedBodies[i] == uiState.currentlyDraggingObject) then
+                    local newPosX, newPosY = uiState.currentlyDraggingObject.body:getPosition()
+                    local dx = newPosX - oldPosX
+                    local dy = newPosY - oldPosY
+                    for j = 1, #uiState.selectedBodies do
+                        if (uiState.selectedBodies[j] ~= uiState.currentlyDraggingObject) then
+                            local oldPosX, oldPosY = uiState.selectedBodies[j].body:getPosition()
+                            uiState.selectedBodies[j].body:setPosition(oldPosX + dx, oldPosY + dy)
+                        end
+                    end
+                end
+            end
+        end
     end
 end
 
@@ -834,10 +859,43 @@ function love.draw()
     end
 
 
+
+    -- Highlight selected bodies
+    if uiState.selectedBodies then
+        local lw = love.graphics.getLineWidth()
+        love.graphics.setLineWidth(6)
+        love.graphics.setColor(1, 0, 1) -- Red outline for selection
+        for _, thing in ipairs(uiState.selectedBodies) do
+            --local fixtures = body:getFixtures()
+            local body = thing.body
+            for _, fixture in ipairs(body:getFixtures()) do
+                --for fixture in pairs(fixtures) do
+                local shape = fixture:getShape()
+                love.graphics.push()
+                love.graphics.translate(body:getX(), body:getY())
+                love.graphics.rotate(body:getAngle())
+                if shape:typeOf("CircleShape") then
+                    love.graphics.circle("line", 0, 0, shape:getRadius())
+                elseif shape:typeOf("PolygonShape") then
+                    local points = { shape:getPoints() }
+                    love.graphics.polygon("line", points)
+                elseif shape:typeOf("EdgeShape") then
+                    local x1, y1, x2, y2 = shape:getPoints()
+                    love.graphics.line(x1, y1, x2, y2)
+                end
+                love.graphics.pop()
+            end
+        end
+        love.graphics.setLineWidth(lw)
+        love.graphics.setColor(1, 1, 1) -- Reset color
+    end
+
+
     cam:pop()
     if uiState.startSelection then
         selectrect.draw(uiState.startSelection)
     end
+
     drawUI()
 
     if uiState.maybeHideSelectedPanel then
@@ -940,6 +998,11 @@ local function handlePointer(x, y, id, action)
         }
 
         local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
+
+        if (uiState.selectedBodies and #hitted == 0) then
+            uiState.selectedBodies = nil
+        end
+
         if #hitted > 0 then
             local ud = hitted[1]:getBody():getUserData()
             if ud and ud.thing then
@@ -985,6 +1048,7 @@ local function handlePointer(x, y, id, action)
             local selected = selectrect.selectWithin(world,
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
             print(#selected)
+            uiState.selectedBodies = selected
             -- print(inspect(selected))
             uiState.startSelection = nil
         end

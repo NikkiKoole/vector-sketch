@@ -524,6 +524,13 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
                     uiState.currentlySelectedJoint = lib.recreateJoint(j)
                     j = uiState.currentlySelectedJoint
+
+                    if false then
+                        -- keep this around because it will make offsetA unneeded.
+                        local ax1, ay1, b1x2, b1y2 = j:getAnchors()
+                        local fx, fy = rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                        print('GREAT', fx, fy, x, y)
+                    end
                     offsetHasChangedViaOutside = true
                 end
 
