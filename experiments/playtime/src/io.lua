@@ -98,6 +98,7 @@ function lib.load(data, world)
             local anchorB = jointData.anchorB
             local collideConnected = jointData.collideConnected
 
+
             if jointData.type == "distance" then
                 joint = love.physics.newDistanceJoint(
                     bodyA, bodyB,
@@ -205,7 +206,17 @@ function lib.load(data, world)
 
             if joint then
                 -- Assign the joint ID
-                joint:setUserData({ id = jointData.id })
+                -- joint:setUserData({ id = jointData.id })
+
+
+                local fxa, fya = rotatePoint(anchorA.x - bodyA:getX(), anchorA.y - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                local fxb, fyb = rotatePoint(anchorB.x - bodyB:getX(), anchorB.y - bodyB:getY(), 0, 0, -bodyB:getAngle())
+                joint:setUserData({
+                    id = jointData.id,
+                    offsetA = { x = fxa, y = fya },
+                    offsetB = { x = fxb, y = fyb }
+                })
+
 
                 -- Register the joint in the registry
                 registry.registerJoint(jointData.id, joint)

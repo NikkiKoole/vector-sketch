@@ -12,8 +12,7 @@ end
 local offsetHasChangedViaOutside
 -- Helper function to create a slider with an associated label
 local function createSlider(labelText, x, y, width, min, max, value, callback, changed)
-    if not _id then _id = '' end
-    local newValue = ui.sliderWithInput(_id .. labelText, x, y, width, min, max, value, changed)
+    local newValue = ui.sliderWithInput(labelText, x, y, width, min, max, value, changed)
     if newValue then
         callback(newValue)
     end
@@ -118,9 +117,12 @@ function lib.createJoint(data)
     local x2, y2 = bodyB:getPosition()
     local offsetA = data.offsetA or { x = 0, y = 0 }
     local rx, ry = rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
-
-    --x1, y1 = x1 + offsetA.x, y1 + offsetA.y
     x1, y1 = x1 + rx, y1 + ry
+
+    local offsetB = data.offsetB or { x = 0, y = 0 }
+    local rx, ry = rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
+    x2, y2 = x2 + rx, y2 + ry
+
     if jointType == 'distance' then
         -- Create a Distance Joint
 
@@ -201,10 +203,88 @@ function lib.createJoint(data)
     local setId = data.id or generateID()
     joint:setUserData({ id = setId })
     setJointMetaSetting(joint, 'offsetA', offsetA)
+    setJointMetaSetting(joint, 'offsetB', offsetB)
     --print('joint' .. setId)
     -- print(inspect(getmetatable(joint)))
     registry.registerJoint(setId, joint)
     return joint
+end
+
+function lib.extractJoints(body)
+    local joints = body:getJoints()
+    local jointData = {}
+
+    for _, joint in ipairs(joints) do
+        local bodyA, bodyB = joint:getBodies()
+        local otherBody = (bodyA == body) and bodyB or bodyA -- Determine the other connected body
+        local jointType = joint:getType()
+        local isBodyA = (bodyA == body)
+
+        local data = {
+            offsetA = getJointMetaSetting(joint, "offsetA"),
+            offsetB = getJointMetaSetting(joint, "offsetB"),
+            id = getJointId(joint),
+            jointType = jointType,
+            otherBody = otherBody,
+            collideConnected = joint:getCollideConnected(),
+            originalBodyOrder = isBodyA and "bodyA" or "bodyB",
+        }
+
+        -- Extract settings based on joint type
+        if jointType == 'distance' then
+            data.length = joint:getLength()
+            data.frequency = joint:getFrequency()
+            data.dampingRatio = joint:getDampingRatio()
+        elseif jointType == 'weld' then
+            data.frequency = joint:getFrequency()
+            data.dampingRatio = joint:getDampingRatio()
+        elseif jointType == 'rope' then
+            data.maxLength = joint:getMaxLength()
+        elseif jointType == 'revolute' then
+            data.motorEnabled = joint:isMotorEnabled()
+            if data.motorEnabled then
+                data.motorSpeed = joint:getMotorSpeed()
+                data.maxMotorTorque = joint:getMaxMotorTorque()
+            end
+            data.limitsEnabled = joint:areLimitsEnabled()
+            if data.limitsEnabled then
+                data.lowerLimit = joint:getLowerLimit()
+                data.upperLimit = joint:getUpperLimit()
+            end
+        elseif jointType == 'wheel' then
+            data.springFrequency = joint:getSpringFrequency()
+            data.springDampingRatio = joint:getSpringDampingRatio()
+        elseif jointType == 'motor' then
+            data.correctionFactor = joint:getCorrectionFactor()
+            data.angularOffset = joint:getAngularOffset()
+            data.linearOffsetX, data.linearOffsetY = joint:getLinearOffset()
+            data.maxForce = joint:getMaxForce()
+            data.maxTorque = joint:getMaxTorque()
+        elseif jointType == 'prismatic' then
+            data.motorEnabled = joint:isMotorEnabled()
+            if data.motorEnabled then
+                data.motorSpeed = joint:getMotorSpeed()
+                data.maxMotorForce = joint:getMaxMotorForce()
+            end
+            data.limitsEnabled = joint:areLimitsEnabled()
+            if data.limitsEnabled then
+                data.lowerLimit = joint:getLowerLimit()
+                data.upperLimit = joint:getUpperLimit()
+            end
+        elseif jointType == 'pulley' then
+            data.groundAnchor1, data.groundAnchor2 = joint:getGroundAnchors()
+            data.ratio = joint:getRatio()
+        elseif jointType == 'friction' then
+            data.maxForce = joint:getMaxForce()
+            data.maxTorque = joint:getMaxTorque()
+        else
+            print("Unsupported joint type: " .. jointType)
+        end
+
+        table.insert(jointData, data)
+    end
+
+    return jointData
 end
 
 function lib.recreateJoint(joint, newSettings)
@@ -218,7 +298,9 @@ function lib.recreateJoint(joint, newSettings)
 
     local id = getJointId(joint)
     local offsetA = getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
-    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType, id = id, offsetA = offsetA }
+    local offsetB = getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
+    --  print(inspect(offsetA), inspect(offsetB))
+    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType, id = id, offsetA = offsetA, offsetB = offsetB }
 
     -- Add new settings to the data
     for key, value in pairs(newSettings or {}) do
@@ -503,20 +585,17 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             end
 
             local function offsetSliders(j)
-                -- Ensure offsets exist
-
                 if not getJointMetaSetting(j, 'offsetA') then
                     setJointMetaSetting(j, 'offsetA', { x = 0, y = 0 })
                 end
                 local offsetA = getJointMetaSetting(j, 'offsetA') or 0
 
-                nextRow()
-                if (offsetHasChangedViaOutside) then offsetHasChangedViaOutside = false end
+                if not getJointMetaSetting(j, 'offsetB') then
+                    setJointMetaSetting(j, 'offsetB', { x = 0, y = 0 })
+                end
+                local offsetB = getJointMetaSetting(j, 'offsetB') or 0
 
-                local bodyA, bodyB = j:getBodies()
-                local ud = bodyA:getUserData()
-
-                function updateOffset(x, y)
+                function updateOffsetA(x, y)
                     --local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
 
                     offsetA.x = x
@@ -532,68 +611,115 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         print('GREAT', fx, fy, x, y)
                     end
                     offsetHasChangedViaOutside = true
+                    return j
                 end
 
-                if ud and ud.thing then
+                function updateOffsetB(x, y)
+                    --local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
+
+                    offsetB.x = x
+                    offsetB.y = y
+                    setJointMetaSetting(j, 'offsetB', { x = offsetB.x, y = offsetB.y })
+                    uiState.currentlySelectedJoint = lib.recreateJoint(j)
+                    j = uiState.currentlySelectedJoint
+
+                    if false then
+                        -- keep this around because it will make offsetA unneeded.
+                        local ax1, ay1, b1x2, b1y2 = j:getAnchors()
+                        local fx, fy = rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                        print('GREAT', fx, fy, x, y)
+                    end
+                    offsetHasChangedViaOutside = true
+                    return j
+                end
+
+                -- Ensure offsets exist
+
+
+                nextRow()
+                if ui.button(x, y, 40, 'O') then
+                    uiState.currentlySettingOffsetAFunction = function(x, y)
+                        local fx, fy = rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                        -- print(fx, fy)
+                        return updateOffsetA(fx, fy)
+                    end
+                end
+                if ui.button(x + 50, y, 40, '+') then
+                    uiState.currentlySettingOffsetBFunction = function(x, y)
+                        local fx, fy = rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
+                        -- print(fx, fy)
+                        return updateOffsetB(fx, fy)
+                    end
+                end
+                nextRow()
+                if (offsetHasChangedViaOutside) then offsetHasChangedViaOutside = false end
+
+                local bodyA, bodyB = j:getBodies()
+                local ud = bodyA:getUserData()
+
+
+                if true and ud and ud.thing then
                     --print(inspect(ud.thing))
-                    if ui.button(x, y, 30, '0', 30) then
-                        updateOffset(0, -ud.thing.height / 2)
-                    end
-                    if ui.button(x + 30, y, 30, '1', 30) then
-                        updateOffset(ud.thing.width / 2, -ud.thing.height / 2)
-                    end
-                    if ui.button(x + 60, y, 30, '2', 30) then
-                        updateOffset(ud.thing.width / 2, 0)
-                    end
-                    if ui.button(x + 90, y, 30, '3', 30) then
-                        updateOffset(ud.thing.width / 2, ud.thing.height / 2)
-                    end
-                    if ui.button(x + 120, y, 30, '4', 30) then
-                        updateOffset(0, ud.thing.height / 2)
-                    end
-                    if ui.button(x + 150, y, 30, '5', 30) then
-                        updateOffset(-ud.thing.width / 2, ud.thing.height / 2)
-                    end
-                    if ui.button(x + 180, y, 30, '6', 30) then
-                        updateOffset(-ud.thing.width / 2, 0)
-                    end
-                    if ui.button(x + 210, y, 30, '7', 30) then
-                        updateOffset(-ud.thing.width / 2, -ud.thing.height / 2)
+                    if ud.thing.width and ud.thing.height then
+                        if ui.button(x, y, 30, '0', 30) then
+                            updateOffsetA(0, -ud.thing.height / 2)
+                        end
+                        if ui.button(x + 30, y, 30, '1', 30) then
+                            updateOffsetA(ud.thing.width / 2, -ud.thing.height / 2)
+                        end
+                        if ui.button(x + 60, y, 30, '2', 30) then
+                            updateOffsetA(ud.thing.width / 2, 0)
+                        end
+                        if ui.button(x + 90, y, 30, '3', 30) then
+                            updateOffsetA(ud.thing.width / 2, ud.thing.height / 2)
+                        end
+                        if ui.button(x + 120, y, 30, '4', 30) then
+                            updateOffsetA(0, ud.thing.height / 2)
+                        end
+                        if ui.button(x + 150, y, 30, '5', 30) then
+                            updateOffsetA(-ud.thing.width / 2, ud.thing.height / 2)
+                        end
+                        if ui.button(x + 180, y, 30, '6', 30) then
+                            updateOffsetA(-ud.thing.width / 2, 0)
+                        end
+                        if ui.button(x + 210, y, 30, '7', 30) then
+                            updateOffsetA(-ud.thing.width / 2, -ud.thing.height / 2)
+                        end
                     end
                     if ui.button(x + 240, y, 30, '8', 30) then
-                        updateOffset(0, 0)
+                        updateOffsetA(0, 0)
                     end
                 end
-                nextRow()
+                --nextRow()
 
-                -- Sliders for offsetA.x
-                local offsetX = createSliderWithId(jointId, 'Offset A X', x, y, 160, -200, 200,
-                    offsetA.x,
-                    function(val)
-                        offsetA.x = val
+                -- -- Sliders for offsetA.x
+                -- local offsetX = createSliderWithId(jointId, 'Offset A X', x, y, 160, -200, 200,
+                --     offsetA.x,
+                --     function(val)
+                --         offsetA.x = val
 
-                        setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                        uiState.currentlySelectedJoint = lib.recreateJoint(j)
-                        j = uiState.currentlySelectedJoint
-                    end,
-                    offsetHasChangedViaOutside
+                --         setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
+                --         uiState.currentlySelectedJoint = lib.recreateJoint(j)
+                --         j = uiState.currentlySelectedJoint
+                --     end,
+                --     offsetHasChangedViaOutside
 
-                )
-                nextRow()
-                -- Move to the next row for offsetA.y
-                local offsetY = createSliderWithId(jointId, 'Offset A Y', x, y, 160, -200, 200,
-                    offsetA.y,
+                -- )
+                -- nextRow()
+                -- -- Move to the next row for offsetA.y
+                -- local offsetY = createSliderWithId(jointId, 'Offset A Y', x, y, 160, -200, 200,
+                --     offsetA.y,
 
-                    function(val)
-                        offsetA.y = val
+                --     function(val)
+                --         offsetA.y = val
 
-                        setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                        uiState.currentlySelectedJoint = lib.recreateJoint(j)
-                        j = uiState.currentlySelectedJoint
-                    end,
-                    offsetHasChangedViaOutside
+                --         setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
+                --         uiState.currentlySelectedJoint = lib.recreateJoint(j)
+                --         j = uiState.currentlySelectedJoint
+                --     end,
+                --     offsetHasChangedViaOutside
 
-                )
+                -- )
                 nextRow()
 
 
@@ -751,81 +877,6 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             end
         end)
     end
-end
-
-function lib.extractJoints(body)
-    local joints = body:getJoints()
-    local jointData = {}
-
-    for _, joint in ipairs(joints) do
-        local bodyA, bodyB = joint:getBodies()
-        local otherBody = (bodyA == body) and bodyB or bodyA -- Determine the other connected body
-        local jointType = joint:getType()
-        local isBodyA = (bodyA == body)
-        local data = {
-            offsetA = getJointMetaSetting(joint, "offsetA"),
-            id = getJointId(joint),
-            jointType = jointType,
-            otherBody = otherBody,
-            collideConnected = joint:getCollideConnected(),
-            originalBodyOrder = isBodyA and "bodyA" or "bodyB",
-        }
-
-        -- Extract settings based on joint type
-        if jointType == 'distance' then
-            data.length = joint:getLength()
-            data.frequency = joint:getFrequency()
-            data.dampingRatio = joint:getDampingRatio()
-        elseif jointType == 'weld' then
-            data.frequency = joint:getFrequency()
-            data.dampingRatio = joint:getDampingRatio()
-        elseif jointType == 'rope' then
-            data.maxLength = joint:getMaxLength()
-        elseif jointType == 'revolute' then
-            data.motorEnabled = joint:isMotorEnabled()
-            if data.motorEnabled then
-                data.motorSpeed = joint:getMotorSpeed()
-                data.maxMotorTorque = joint:getMaxMotorTorque()
-            end
-            data.limitsEnabled = joint:areLimitsEnabled()
-            if data.limitsEnabled then
-                data.lowerLimit = joint:getLowerLimit()
-                data.upperLimit = joint:getUpperLimit()
-            end
-        elseif jointType == 'wheel' then
-            data.springFrequency = joint:getSpringFrequency()
-            data.springDampingRatio = joint:getSpringDampingRatio()
-        elseif jointType == 'motor' then
-            data.correctionFactor = joint:getCorrectionFactor()
-            data.angularOffset = joint:getAngularOffset()
-            data.linearOffsetX, data.linearOffsetY = joint:getLinearOffset()
-            data.maxForce = joint:getMaxForce()
-            data.maxTorque = joint:getMaxTorque()
-        elseif jointType == 'prismatic' then
-            data.motorEnabled = joint:isMotorEnabled()
-            if data.motorEnabled then
-                data.motorSpeed = joint:getMotorSpeed()
-                data.maxMotorForce = joint:getMaxMotorForce()
-            end
-            data.limitsEnabled = joint:areLimitsEnabled()
-            if data.limitsEnabled then
-                data.lowerLimit = joint:getLowerLimit()
-                data.upperLimit = joint:getUpperLimit()
-            end
-        elseif jointType == 'pulley' then
-            data.groundAnchor1, data.groundAnchor2 = joint:getGroundAnchors()
-            data.ratio = joint:getRatio()
-        elseif jointType == 'friction' then
-            data.maxForce = joint:getMaxForce()
-            data.maxTorque = joint:getMaxTorque()
-        else
-            print("Unsupported joint type: " .. jointType)
-        end
-
-        table.insert(jointData, data)
-    end
-
-    return jointData
 end
 
 return lib

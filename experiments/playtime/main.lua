@@ -18,9 +18,8 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 
 ---- todo
--- offsetA is related to anchor points, either after load calculate and set the new offsetA point or
---  use the anchor point better.
-
+-- offsetA & offsetB now use a rotation that needs to be done in the other direction too.
+-- it feels its not needed. per se
 
 
 function waitForEvent()
@@ -64,6 +63,7 @@ function love.load()
         worldSettingsOpened = false,
         maybeHideSelectedPanel = false,
         currentlySelectedJoint = nil,
+        currentlySettingOffsetAFunction = nil,
         currentlySelectedObject = nil,
         currentlyDraggingObject = nil,
         offsetForCurrentlyDragging = { nil, nil },
@@ -831,7 +831,18 @@ function love.draw()
     end
     cam:push()
 
+
+
     phys.drawWorld(world)
+
+    if uiState.currentlySelectedJoint and not uiState.currentlySelectedJoint:isDestroyed() then
+        local x1, y1, x2, y2 = uiState.currentlySelectedJoint:getAnchors()
+        love.graphics.circle('line', x1, y1, 10)
+
+        love.graphics.line(x2 - 10, y2, x2 + 10, y2)
+        love.graphics.line(x2, y2 - 10, x2, y2 + 10)
+    end
+
     local lw = love.graphics.getLineWidth()
     for i, v in ipairs(softbodies) do
         love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
@@ -990,6 +1001,15 @@ local function handlePointer(x, y, id, action)
             uiState.startSelection = { x = x, y = y }
         end
         local cx, cy = cam:getWorldCoordinates(x, y)
+
+        if (uiState.currentlySettingOffsetAFunction) then
+            uiState.currentlySelectedJoint = uiState.currentlySettingOffsetAFunction(cx, cy)
+            uiState.currentlySettingOffsetAFunction = nil
+        end
+        if (uiState.currentlySettingOffsetBFunction) then
+            uiState.currentlySelectedJoint = uiState.currentlySettingOffsetBFunction(cx, cy)
+            uiState.currentlySettingOffsetBFunction = nil
+        end
         local onPressedParams = {
             pointerForceFunc = function(fixture)
                 return worldState.mouseForce
