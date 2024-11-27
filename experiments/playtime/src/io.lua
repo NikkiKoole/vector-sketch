@@ -85,10 +85,6 @@ function lib.load(data, world)
         -- Assign the 'thing' to the body's user data
         body:setUserData({ thing = thing })
         registry.registerBody(thing.id, body)
-        -- Update the global _id to prevent ID collisions
-        --if bodyData.id > _id then
-        --    _id = bodyData.id
-        --end
     end
 
     -- Iterate through saved joints and recreate them
@@ -161,8 +157,8 @@ function lib.load(data, world)
             elseif jointData.type == "pulley" then
                 joint = love.physics.newPulleyJoint(
                     bodyA, bodyB,
-                    jointData.properties.groundAnchor1[1], jointData.properties.groundAnchor1[2],
-                    jointData.properties.groundAnchor2[1], jointData.properties.groundAnchor2[2],
+                    jointData.properties.groundAnchor1.x, jointData.properties.groundAnchor1.y,
+                    jointData.properties.groundAnchor2.x, jointData.properties.groundAnchor2.y,
                     anchorA.x, anchorA.y,
                     anchorB.x, anchorB.y,
                     jointData.properties.ratio,
@@ -347,7 +343,9 @@ function lib.save(world, worldState, filename)
                     jointData.properties.upperLimit = joint:getUpperLimit()
                 end
             elseif joint:getType() == "pulley" then
-                jointData.properties.groundAnchor1, jointData.properties.groundAnchor2 = joint:getGroundAnchors()
+                local a1x, a1y, a2x, a2y = joint:getGroundAnchors()
+                jointData.properties.groundAnchor1 = { x = a1x, y = a1y }
+                jointData.properties.groundAnchor2 = { x = a2x, y = a2y }
                 jointData.properties.ratio = joint:getRatio()
             elseif joint:getType() == "wheel" then
                 jointData.properties.motorEnabled = joint:isMotorEnabled()

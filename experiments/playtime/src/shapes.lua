@@ -1,7 +1,10 @@
 -- Function to generate vertices of a regular polygon
 local decompose = require 'src.decompose'
+local uuid = require 'src.uuid'
 local shapes = {}
-
+local function generateID()
+    return uuid.uuid()
+end
 local function makePolygonVertices(sides, radius)
     local vertices = {}
     local angleStep = (2 * math.pi) / sides
