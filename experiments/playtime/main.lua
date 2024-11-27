@@ -11,6 +11,11 @@ local ui = require 'src.ui-all'
 local joint = require 'src.joints'
 local shapes = require 'src.shapes'
 local blob = require 'src.loveblobs'
+local selectrect = require 'src.selection-rect'
+local io = require 'src.io'
+local uuid = require 'src.uuid'
+
+local registry = require 'src.registry'
 
 function waitForEvent()
     local a, b, c, d, e
@@ -21,28 +26,17 @@ end
 
 waitForEvent()
 
-
-local random = love.math.random
-local function uuid()
-    local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return (string.gsub(template, '[xy]', function(c)
-        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-        return string.format('%x', v)
-    end))
-end
-
-local _id = 0
-function generateID()
-    _id = _id + 1
-    --  print('id:', _id)
-    print(uuid(), _id)
-    return _id
+local function generateID()
+    return uuid.uuid()
 end
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 50
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
+
+local FIXED_TIMESTEP = false
+local TICKRATE = 1 / 60
 
 function love.load()
     -- Load and set the font
@@ -72,7 +66,7 @@ function love.load()
         jointUpdateMode = nil,
         isDrawingPolygon = false,
         polygonVertices = {},
-        minPointDistance = 10, -- Default minimum distance
+        minPointDistance = 50, -- Default minimum distance
         lastPolygonPoint = nil,
         lastSelectedBody = nil,
         lastSelectedJoint = nil,
@@ -174,7 +168,7 @@ function recreateThingFromBody(body, newSettings)
     thing.width = newSettings.width or thing.width
     thing.height = newSettings.height or thing.height
     thing.id = thing.id or generateID()
-
+    registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 
     joint.reattachJoints(jointData, newBody)
@@ -216,6 +210,7 @@ function addThing(shapeType, x, y, bodyType, radius, width, height)
     thing.id = generateID()
     -- Store the 'thing' in the body's user data for easy access
     thing.body:setUserData({ thing = thing })
+    registry.registerBody(thing.id, thing.body)
 end
 
 function startSpawn(shapeType, mx, my)
@@ -239,6 +234,7 @@ function startSpawn(shapeType, mx, my)
     thing.fixture:setRestitution(0.3)
     thing.body:setAwake(false)
     thing.id = generateID()
+    registry.registerBody(thing.id, thing.body)
     thing.body:setUserData({ thing = thing })
     uiState.currentlyDraggingObject = thing
     uiState.offsetForCurrentlyDragging = { 0, 0 }
@@ -247,6 +243,8 @@ end
 function finalizeSpawn()
     if uiState.currentlyDraggingObject then
         uiState.currentlyDraggingObject.body:setAwake(true)
+
+        uiState.currentlySelectedObject = uiState.currentlyDraggingObject
         uiState.currentlyDraggingObject = nil
     end
 end
@@ -427,7 +425,7 @@ local function drawUpdateSelectedObjectUI()
         if thing then
             -- Shape Properties
             local shapeType = thing.shapeType
-            nextRow()
+
 
 
             if shapeType == 'circle' then
@@ -481,8 +479,6 @@ local function drawUpdateSelectedObjectUI()
             end
         end
         nextRow()
-
-
 
         local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
         if dirty then
@@ -554,26 +550,43 @@ local function drawUpdateSelectedObjectUI()
         end
         ui.label(x, y, ' ang-vel')
 
+        nextRow()
+        if ui.button(x, y, 260, 'destroy') then
+            local joints = body:getJoints()
+            for i = 1, #joints do
+                local ud = joints[i]:getUserData()
+                if ud then
+                    registry.unregisterJoint(ud.id)
+                    joints[i]:destroy()
+                    --print('jointid:', ud.id)
+                end
+            end
+            registry.unregisterBody(thing.id)
+            body:destroy()
+            uiState.currentlySelectedObject = nil
+        end
 
         -- List Attached Joints Using Body:getJoints()
-        local attachedJoints = body:getJoints()
-        if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
-            ui.label(x, y + 60, '∞ joints ∞')
-            nextRow()
-            -- layout:nextRow()
+        if not body:isDestroyed() then
+            local attachedJoints = body:getJoints()
+            if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
+                ui.label(x, y + 60, '∞ joints ∞')
+                nextRow()
+                -- layout:nextRow()
 
-            for _, joint in ipairs(attachedJoints) do
-                -- Display joint type and unique identifier for identification
-                local jointType = joint:getType()
-                local jointID = tostring(joint)
-                if (jointType ~= 'mouse') then
-                    -- Display joint button
-                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
-                    local jointLabel = string.format("%s", jointType)
+                for _, joint in ipairs(attachedJoints) do
+                    -- Display joint type and unique identifier for identification
+                    local jointType = joint:getType()
+                    local jointID = tostring(joint)
+                    if (jointType ~= 'mouse') then
+                        -- Display joint button
+                        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
+                        local jointLabel = string.format("%s", jointType)
 
-                    if ui.button(x, y, ROW_WIDTH, jointLabel) then
-                        uiState.currentlySelectedJoint = joint
-                        uiState.currentlySelectedObject = nil
+                        if ui.button(x, y, ROW_WIDTH, jointLabel) then
+                            uiState.currentlySelectedJoint = joint
+                            uiState.currentlySelectedObject = nil
+                        end
                     end
                 end
             end
@@ -769,6 +782,7 @@ function drawUI()
             end
             if ui.button(320, 500, 200, 'save') then
                 uiState.saveDialogOpened = false
+                io.save(world, worldState, uiState.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
                 uiState.saveDialogOpened = false
@@ -782,37 +796,6 @@ function drawUI()
         love.graphics.circle('fill', x, y, 10)
         love.graphics.setColor(1, 1, 1)
     end
-end
-
--- Include the drawDottedLine function here
-local function drawDottedLine(x1, y1, x2, y2, dotSize, spacing)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    local distance = math.sqrt(dx * dx + dy * dy)
-
-    local numDots = math.floor(distance / spacing)
-
-    local stepX = dx / distance
-    local stepY = dy / distance
-
-    for i = 0, numDots do
-        local cx = x1 + stepX * spacing * i
-        local cy = y1 + stepY * spacing * i
-        love.graphics.rectangle("fill", cx, cy, dotSize, dotSize)
-    end
-end
-
-local function drawSelectionBox(selection)
-    local x, y = love.mouse:getPosition()
-    local tlx = math.min(selection.x, x)
-    local tly = math.min(selection.y, y)
-    local brx = math.max(selection.x, x)
-    local bry = math.max(selection.y, y)
-    -- print(inspect(selection), x, y)
-    drawDottedLine(tlx, tly, brx, tly, 5, 10)
-    drawDottedLine(brx, tly, brx, bry, 5, 10)
-    drawDottedLine(tlx, bry, brx, bry, 5, 10)
-    drawDottedLine(tlx, tly, tlx, bry, 5, 10)
 end
 
 function love.draw()
@@ -853,7 +836,7 @@ function love.draw()
 
     cam:pop()
     if uiState.startSelection then
-        drawSelectionBox(uiState.startSelection)
+        selectrect.draw(uiState.startSelection)
     end
     drawUI()
 
@@ -864,7 +847,11 @@ function love.draw()
         end
         uiState.maybeHideSelectedPanel = false
     end
-    love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
+    if FIXED_TIMESTEP then
+        love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
+    else
+        love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
+    end
 end
 
 function love.wheelmoved(dx, dy)
@@ -898,6 +885,18 @@ function love.mousemoved(x, y, dx, dy)
     end
 end
 
+function love.filedropped(file)
+    local name = file:getFilename()
+    if string.find(name, '.playtime.json') then
+        file:open("r")
+        local data = file:read()
+        uiState.currentlySelectedJoint = nil
+        uiState.currentlySelectedObject = nil
+        io.load(data, world)
+        file:close()
+    end
+end
+
 function love.textinput(t)
     ui.handleTextInput(t)
 end
@@ -914,73 +913,6 @@ function love.keypressed(key)
         worldState.paused = true
         uiState.saveDialogOpened = true
     end
-end
-
--- Convert local shape vertices to world coordinates based on the body's position and angle
-local function getShapeWorldPoints(body, shape)
-    local points = {}
-    local angle = body:getAngle()
-    local xBody, yBody = body:getPosition()
-
-    if shape:typeOf("CircleShape") then
-        -- For circles, represent as the center point
-        table.insert(points, { x = xBody, y = yBody })
-    elseif shape:typeOf("PolygonShape") or shape:typeOf("EdgeShape") then
-        local points2 = { shape:getPoints() }
-
-        for i = 1, #points2, 2 do
-            local localX, localY = points2[i], points2[i + 1]
-            -- Apply rotation
-            local rotatedX = localX * math.cos(angle) - localY * math.sin(angle)
-            local rotatedY = localX * math.sin(angle) + localY * math.cos(angle)
-            -- Translate to world coordinates
-            local worldX = xBody + rotatedX
-            local worldY = yBody + rotatedY
-            table.insert(points, { x = worldX, y = worldY })
-        end
-    elseif shape:typeOf("RectangleShape") then
-        print('NOT HANDLING THIS SHAPE RectangleShape')
-        -- Handle RectangleShape if using a custom shape type
-        -- Love2D does not have a native RectangleShape; rectangles are typically PolygonShapes
-    else
-        print('NOT HANDLING THIS SHAPE ??')
-    end
-
-    return points
-end
-local function pointInRect(px, py, rect)
-    return px >= rect.x and px <= (rect.x + rect.width) and
-        py >= rect.y and py <= (rect.y + rect.height)
-end
-local function selectEverythingWithin(world, rect)
-    local bodiesInside = {}
-    for _, body in pairs(world:getBodies()) do
-        local userData = body:getUserData()
-        local thing = userData and userData.thing
-        if thing then
-            local fixtures = body:getFixtures()
-            local allFixturesInside = true
-            for _, fixture in ipairs(fixtures) do
-                local shape = fixture:getShape()
-                local worldPoints = getShapeWorldPoints(body, shape)
-
-                -- For each point of the shape, check if it's inside the rectangle
-                for _, point in ipairs(worldPoints) do
-                    if not pointInRect(point.x, point.y, rect) then
-                        allFixturesInside = false
-                        break  -- No need to check further points
-                    end
-                end
-                if not allFixturesInside then
-                    break -- No need to check further fixtures
-                end
-            end
-            if allFixturesInside then
-                table.insert(bodiesInside, thing)
-            end
-        end
-    end
-    return bodiesInside
 end
 
 local function handlePointer(x, y, id, action)
@@ -1050,7 +982,7 @@ local function handlePointer(x, y, id, action)
             local bry = math.max(uiState.startSelection.y, y)
             local tlxw, tlyw = cam:getWorldCoordinates(tlx, tly)
             local brxw, bryw = cam:getWorldCoordinates(brx, bry)
-            local selected = selectEverythingWithin(world,
+            local selected = selectrect.selectWithin(world,
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
             print(#selected)
             -- print(inspect(selected))
@@ -1093,4 +1025,47 @@ end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
     handlePointer(x, y, id, 'released')
+end
+
+if FIXED_TIMESTEP then
+    function love.run()
+        if love.math then
+            love.math.setRandomSeed(os.time())
+        end
+
+        if love.load then love.load(arg) end
+
+        local previous = love.timer.getTime()
+        local lag = 0.0
+        while true do
+            local current = love.timer.getTime()
+            local elapsed = current - previous
+            previous = current
+            lag = lag + elapsed
+
+            if love.event then
+                love.event.pump()
+                for name, a, b, c, d, e, f in love.event.poll() do
+                    if name == "quit" then
+                        if not love.quit or not love.quit() then
+                            return a
+                        end
+                    end
+                    love.handlers[name](a, b, c, d, e, f)
+                end
+            end
+
+            while lag >= TICKRATE do
+                if love.update then love.update(TICKRATE) end
+                lag = lag - TICKRATE
+            end
+
+            if love.graphics and love.graphics.isActive() then
+                love.graphics.clear(love.graphics.getBackgroundColor())
+                love.graphics.origin()
+                if love.draw then love.draw(lag / TICKRATE) end
+                love.graphics.present()
+            end
+        end
+    end
 end

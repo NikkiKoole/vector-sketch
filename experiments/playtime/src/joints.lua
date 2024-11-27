@@ -1,6 +1,13 @@
 local ui = require 'src.ui-all'
 local lib = {}
 local inspect = require 'vendor.inspect'
+local uuid = require 'src.uuid'
+
+local registry = require 'src.registry'
+
+local function generateID()
+    return uuid.uuid()
+end
 
 local offsetHasChangedViaOutside
 -- Helper function to create a slider with an associated label
@@ -196,6 +203,7 @@ function lib.createJoint(data)
     setJointMetaSetting(joint, 'offsetA', offsetA)
     --print('joint' .. setId)
     -- print(inspect(getmetatable(joint)))
+    registry.registerJoint(setId, joint)
     return joint
 end
 
@@ -349,6 +357,8 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 
 
             if ui.button(x, y, width, 'destroy') then
+                local setId = getJointId(j)
+                registry.unregisterJoint(setId)
                 j:destroy()
                 return;
             end
@@ -628,7 +638,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 local damping = createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
                     j:getDampingRatio(),
-                    function(val) j:getDampingRatio(val) end
+                    function(val) j:setDampingRatio(val) end
                 )
                 nextRow()
             elseif jointType == 'rope' then
