@@ -23,7 +23,7 @@ local registry = require 'src.registry'
 
 -- a factory that creates new objects ..
 -- floaty karlsson ting
--- planet gravity like mario galaxy
+-- planet gravity like mario galaxy  DONE
 -- scripts !!
 
 function waitForEvent()
@@ -134,9 +134,9 @@ function love.load()
 
 
        -- Create planets
-       createPlanet(0, 300, 50, 200, 10000) -- Central planet
-       createPlanet(700, 300, 50, 200, 100000) -- Central planet
-        createPlanet(1000, 300, 50, 200, 500000) -- Central planet
+       createPlanet(0, 300, 500, 2000, 10000) -- Central planet
+       createPlanet(7000, 300, 500, 2000, 100000) -- Central planet
+        createPlanet(10000, 300, 500, 2000, 500000) -- Central planet
 
        --createPlanet(800, 300, 50) -- Central planet
        -- Create a dynamic body (e.g., player)
