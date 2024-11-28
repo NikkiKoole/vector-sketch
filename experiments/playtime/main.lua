@@ -40,7 +40,7 @@ local BUTTON_HEIGHT = 50
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
-local FIXED_TIMESTEP = false
+local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
 function love.load()

@@ -26,12 +26,12 @@ function lib.load(data, world)
         return
     end
     -- Clear existing world
-
-    for _, body in pairs(world:getBodies()) do
-        body:destroy()
+    if true then
+        for _, body in pairs(world:getBodies()) do
+            body:destroy()
+        end
+        registry.reset()
     end
-    registry.reset()
-
     -- Iterate through saved bodies and recreate them
     for _, bodyData in ipairs(jsonData.bodies) do
         -- Create a new body
