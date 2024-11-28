@@ -2,7 +2,7 @@ local ui = require 'src.ui-all'
 local lib = {}
 local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
-
+local jointHandlers = require 'src.jointHandlers'
 local registry = require 'src.registry'
 
 local function generateID()
@@ -112,7 +112,7 @@ function lib.createJoint(data)
     local jointType = data.jointType
 
     local joint
-    local world = bodyA:getWorld() -- Assuming both bodies are in the same world
+
     local x1, y1 = bodyA:getPosition()
     local x2, y2 = bodyB:getPosition()
     local offsetA = data.offsetA or { x = 0, y = 0 }
@@ -123,89 +123,20 @@ function lib.createJoint(data)
     local rx, ry = rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
 
-    if jointType == 'distance' then
-        -- Create a Distance Joint
+    local handler = jointHandlers[jointType]
 
-        local length = data.length or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        joint = love.physics.newDistanceJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
-        joint:setLength(length)
-    elseif jointType == 'weld' then
-        -- Create a Weld Joint at the first body's position
-
-        joint = love.physics.newWeldJoint(bodyA, bodyB, x1, y1, data.collideConnected)
-        --joint = love.physics.newWeldJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
-        -- Weld joints don't have frequency or damping ratio by default, but you can simulate similar behavior if needed.
-    elseif jointType == 'rope' then
-        -- Create a Rope Joint
-
-        local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        joint = love.physics.newRopeJoint(bodyA, bodyB, x1, y1, x2, y2, maxLength, data.collideConnected)
-    elseif jointType == 'revolute' then
-        -- Create a Revolute Joint at the first body's position
-
-        -- joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, x2, y2, data.collideConnected)
-        joint = love.physics.newRevoluteJoint(bodyA, bodyB, x1, y1, data.collideConnected)
-    elseif jointType == 'wheel' then
-        -- Create a Wheel Joint
-
-
-
-        joint = love.physics.newWheelJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1, data.collideConnected)
-    elseif jointType == 'motor' then
-        -- Create a Motor Joint
-        joint = love.physics.newMotorJoint(bodyA, bodyB, data.correctionFactor or .3, data.collideConnected)
-    elseif jointType == 'prismatic' then
-        -- Create a Prismatic Joint
-
-
-        joint = love.physics.newPrismaticJoint(bodyA, bodyB, x1, y1, data.axisX or 0, data.axisY or 1,
-            data.collideConnected)
-        --joint = love.physics.newPrismaticJoint(bodyA, bodyB, x1, y1, x2, y2, data.axisX or 0, data.axisX or 1,
-        --    data.collideConnected)
-        joint:setLowerLimit(0)
-        joint:setUpperLimit(0)
-    elseif jointType == 'pulley' then
-        -- Create a Pulley Joint
-        -- Ground anchors are typically fixed points; adjust as necessary
-        --  local x1, y1 = data.groundAnchor1 or { 0, 0 }, data.groundAnchor2 or { 0, 0 }
-        local groundAnchorA = data.groundAnchor1 or { 0, 0 }
-        local groundAnchorB = data.groundAnchor2 or { 0, 0 }
-        local bodyA_centerX, bodyA_centerY = bodyA:getWorldCenter()
-        local bodyB_centerX, bodyB_centerY = bodyB:getWorldCenter()
-        local ratio = data.ratio or 1
-
-        joint = love.physics.newPulleyJoint(
-            bodyA, bodyB,
-            bodyA_centerX or groundAnchorA[1], groundAnchorA[2],
-            bodyB_centerX or groundAnchorB[1], groundAnchorB[2],
-            bodyA_centerX, bodyA_centerY,
-            bodyB_centerX, bodyB_centerY,
-            ratio,
-            false
-        )
-    elseif jointType == 'friction' then
-        -- Create a Friction Joint
-        local x, y = bodyA:getPosition()
-        joint = love.physics.newFrictionJoint(bodyA, bodyB, x1, y1, false)
-
-        if data.maxForce then
-            joint:setMaxForce(data.maxForce)
-        end
-        if data.maxTorque then
-            joint:setMaxTorque(data.maxTorque)
-        end
+    if handler and handler.create then
+        joint = handler.create(data, x1, y1, x2, y2)
     else
-        -- Handle other joints or unimplemented types
         print("Joint type '" .. jointType .. "' is not implemented yet.")
-        -- uiState.jointCreationMode = nil
         return
     end
+
     local setId = data.id or generateID()
     joint:setUserData({ id = setId })
     setJointMetaSetting(joint, 'offsetA', offsetA)
     setJointMetaSetting(joint, 'offsetB', offsetB)
-    --print('joint' .. setId)
-    -- print(inspect(getmetatable(joint)))
+
     registry.registerJoint(setId, joint)
     return joint
 end
@@ -230,58 +161,20 @@ function lib.extractJoints(body)
             originalBodyOrder = isBodyA and "bodyA" or "bodyB",
         }
 
-        -- Extract settings based on joint type
-        if jointType == 'distance' then
-            data.length = joint:getLength()
-            data.frequency = joint:getFrequency()
-            data.dampingRatio = joint:getDampingRatio()
-        elseif jointType == 'weld' then
-            data.frequency = joint:getFrequency()
-            data.dampingRatio = joint:getDampingRatio()
-        elseif jointType == 'rope' then
-            data.maxLength = joint:getMaxLength()
-        elseif jointType == 'revolute' then
-            data.motorEnabled = joint:isMotorEnabled()
-            if data.motorEnabled then
-                data.motorSpeed = joint:getMotorSpeed()
-                data.maxMotorTorque = joint:getMaxMotorTorque()
-            end
-            data.limitsEnabled = joint:areLimitsEnabled()
-            if data.limitsEnabled then
-                data.lowerLimit = joint:getLowerLimit()
-                data.upperLimit = joint:getUpperLimit()
-            end
-        elseif jointType == 'wheel' then
-            data.springFrequency = joint:getSpringFrequency()
-            data.springDampingRatio = joint:getSpringDampingRatio()
-        elseif jointType == 'motor' then
-            data.correctionFactor = joint:getCorrectionFactor()
-            data.angularOffset = joint:getAngularOffset()
-            data.linearOffsetX, data.linearOffsetY = joint:getLinearOffset()
-            data.maxForce = joint:getMaxForce()
-            data.maxTorque = joint:getMaxTorque()
-        elseif jointType == 'prismatic' then
-            data.motorEnabled = joint:isMotorEnabled()
-            if data.motorEnabled then
-                data.motorSpeed = joint:getMotorSpeed()
-                data.maxMotorForce = joint:getMaxMotorForce()
-            end
-            data.limitsEnabled = joint:areLimitsEnabled()
-            if data.limitsEnabled then
-                data.lowerLimit = joint:getLowerLimit()
-                data.upperLimit = joint:getUpperLimit()
-            end
-        elseif jointType == 'pulley' then
-            data.groundAnchor1, data.groundAnchor2 = joint:getGroundAnchors()
-            data.ratio = joint:getRatio()
-        elseif jointType == 'friction' then
-            data.maxForce = joint:getMaxForce()
-            data.maxTorque = joint:getMaxTorque()
-        else
-            print("Unsupported joint type: " .. jointType)
+        local handler = jointHandlers[jointType]
+        if not handler or not handler.extract then
+            print("extract: Unsupported joint type: " .. jointType)
+            goto continue
+        end
+
+        -- Extract additional data using the handler
+        local additionalData = handler.extract(joint)
+        for key, value in pairs(additionalData) do
+            data[key] = value
         end
 
         table.insert(jointData, data)
+        ::continue::
     end
 
     return jointData
@@ -307,64 +200,23 @@ function lib.recreateJoint(joint, newSettings)
         data[key] = value
     end
 
-    -- Extract settings based on the joint type
-    if jointType == 'distance' then
-        data.length = joint:getLength()
-        data.frequency = joint:getFrequency()
-        data.dampingRatio = joint:getDampingRatio()
-    elseif jointType == 'weld' then
-        data.frequency = joint:getFrequency()
-        data.dampingRatio = joint:getDampingRatio()
-    elseif jointType == 'rope' then
-        data.maxLength = joint:getMaxLength()
-    elseif jointType == 'revolute' then
-        data.motorEnabled = joint:isMotorEnabled()
-        if data.motorEnabled then
-            data.motorSpeed = joint:getMotorSpeed()
-            data.maxMotorTorque = joint:getMaxMotorTorque()
-        end
-        data.limitsEnabled = joint:areLimitsEnabled()
-        if data.limitsEnabled then
-            data.lowerLimit = joint:getLowerLimit()
-            data.upperLimit = joint:getUpperLimit()
-        end
-    elseif jointType == 'wheel' then
-        data.springFrequency = joint:getSpringFrequency()
-        data.springDampingRatio = joint:getSpringDampingRatio()
-    elseif jointType == 'motor' then
-        data.correctionFactor = joint:getCorrectionFactor()
-        data.angularOffset = joint:getAngularOffset()
-        data.linearOffsetX, data.linearOffsetY = joint:getLinearOffset()
-        data.maxForce = joint:getMaxForce()
-        data.maxTorque = joint:getMaxTorque()
-    elseif jointType == 'prismatic' then
-        data.motorEnabled = joint:isMotorEnabled()
-        if data.motorEnabled then
-            data.motorSpeed = joint:getMotorSpeed()
-            data.maxMotorForce = joint:getMaxMotorForce()
-        end
-        data.limitsEnabled = joint:areLimitsEnabled()
-        if data.limitsEnabled then
-            data.lowerLimit = joint:getLowerLimit()
-            data.upperLimit = joint:getUpperLimit()
-        end
-    elseif jointType == 'pulley' then
-        data.groundAnchor1 = { joint:getGroundAnchors() }
-        data.ratio = joint:getRatio()
-    elseif jointType == 'friction' then
-        data.maxForce = joint:getMaxForce()
-        data.maxTorque = joint:getMaxTorque()
-    else
-        print("Unsupported joint type: " .. jointType)
-        return nil
+    local handler = jointHandlers[jointType]
+    if not handler or not handler.extract then
+        print("recreate extract: Unsupported joint type: " .. jointType)
     end
 
-    -- Destroy the existing joint
+    -- Extract additional data using the handler
+    local additionalData = handler.extract(joint)
+    for key, value in pairs(additionalData) do
+        data[key] = value
+    end
+
     joint:destroy()
 
     -- Create a new joint with the updated data
     bodyA:setAwake(true)
     bodyB:setAwake(true)
+
     return lib.createJoint(data)
 end
 
