@@ -293,6 +293,19 @@ lib.makeShape = function(shapeType, w, h)
     end
 end
 
+lib.setupWorldWithGravity = function(m, g)
+    love.physics.setMeter(m)
+    world = love.physics.newWorld(0, g * love.physics.getMeter(), true)
+
+    disabledContacts = {}
+    pointerJoints = {}
+
+    connect.resetConnectors()
+
+    --connectorCooldownList = {}
+    --connectors = {}
+end
+
 lib.setupWorld = function(m)
     love.physics.setMeter(m)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)

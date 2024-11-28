@@ -8,11 +8,7 @@ jointHandlers["distance"] = {
         joint:setLength(length)
         return joint
     end,
-    -- update = function(joint, data)
-    --     joint:setLength(data.length)
-    --     joint:setFrequency(data.frequency)
-    --     joint:setDampingRatio(data.dampingRatio)
-    -- end,
+
     extract = function(joint)
         return {
             length = joint:getLength(),

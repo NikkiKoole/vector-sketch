@@ -2,8 +2,11 @@ local lib = {}
 package.path = package.path .. ";../../?.lua"
 local inspect = require 'vendor.inspect'
 local json = require 'src.dkjson'
-
+local uuid = require 'src.uuid'
 local registry = require 'src.registry'
+local function generateID()
+    return uuid.uuid()
+end
 
 
 function lib.load(data, world)
@@ -26,7 +29,16 @@ function lib.load(data, world)
         return
     end
     -- Clear existing world
-    if true then
+
+    local idMap = {}
+    local function getNewId(oldId)
+        if idMap[oldId] == nil then
+            idMap[oldId] = generateID()
+        end
+        return idMap[oldId]
+    end
+
+    if false then
         for _, body in pairs(world:getBodies()) do
             body:destroy()
         end
@@ -72,7 +84,7 @@ function lib.load(data, world)
 
         -- Recreate the 'thing' table
         local thing = {
-            id = bodyData.id,
+            id =  getNewId(bodyData.id),
             shapeType = bodyData.shapeType,
             radius = bodyData.radius,
             width = bodyData.width,
@@ -89,8 +101,8 @@ function lib.load(data, world)
 
     -- Iterate through saved joints and recreate them
     for _, jointData in ipairs(jsonData.joints) do
-        local bodyA = registry.getBodyByID(jointData.bodyA)
-        local bodyB = registry.getBodyByID(jointData.bodyB)
+        local bodyA = registry.getBodyByID(getNewId(jointData.bodyA))
+        local bodyB = registry.getBodyByID(getNewId(jointData.bodyB))
 
         if bodyA and bodyB then
             local joint
@@ -212,7 +224,7 @@ function lib.load(data, world)
                 local fxa, fya = rotatePoint(anchorA.x - bodyA:getX(), anchorA.y - bodyA:getY(), 0, 0, -bodyA:getAngle())
                 local fxb, fyb = rotatePoint(anchorB.x - bodyB:getX(), anchorB.y - bodyB:getY(), 0, 0, -bodyB:getAngle())
                 joint:setUserData({
-                    id = jointData.id,
+                    id = getNewId(jointData.id),
                     offsetA = { x = fxa, y = fya },
                     offsetB = { x = fxb, y = fyb }
                 })
