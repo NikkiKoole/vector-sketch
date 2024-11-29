@@ -1,14 +1,31 @@
 local script = {}
 package.path = package.path .. ";../../?.lua"
 local inspect = require 'vendor.inspect'
+
+
+
+
+function getObjectsByLabel(label)
+    local objects = {}
+    for _, body in pairs(world:getBodies()) do
+        local userData = body:getUserData()
+        if (userData and userData.thing and userData.thing.label == label) then
+            table.insert(objects, userData.thing)
+        end
+    end
+    return objects
+end
+
 local scriptEnv = {
-    ipairs = ipairs,
-    table = table,
-    inspect = inspect,
-    print = print,
-    math = math,
-    love = love,
-    random = love.math.random
+    ipairs            = ipairs,
+    table             = table,
+    inspect           = inspect,
+    print             = print,
+    math              = math,
+    love              = love,
+    random            = love.math.random,
+    getObjectsByLabel = getObjectsByLabel,
+    world             = world
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

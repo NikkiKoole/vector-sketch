@@ -85,6 +85,7 @@ function lib.load(data, world)
         -- Recreate the 'thing' table
         local thing = {
             id = getNewId(bodyData.id),
+            label = bodyData.label,
             shapeType = bodyData.shapeType,
             radius = bodyData.radius,
             width = bodyData.width,
@@ -241,6 +242,10 @@ function lib.load(data, world)
     print("World successfully loaded")
 end
 
+local function sanitizeString(input)
+    if not input then return "" end   -- Handle nil or empty strings
+    return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
+end
 function lib.save(world, worldState, filename)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
@@ -255,6 +260,7 @@ function lib.save(world, worldState, filename)
             local lvx, lvy = body:getLinearVelocity()
             local bodyData = {
                 id = thing.id, -- Unique identifier
+                label = sanitizeString(thing.label),
                 shapeType = thing.shapeType,
                 radius = thing.radius,
                 width = thing.width,

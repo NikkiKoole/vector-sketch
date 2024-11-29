@@ -9,6 +9,7 @@ local phys = require 'lib.mainPhysics'
 local ui = require 'src.ui-all'
 
 local joint = require 'src.joints'
+local jointHandlers = require 'src.jointHandlers'
 local shapes = require 'src.shapes'
 local blob = require 'src.loveblobs'
 local selectrect = require 'src.selection-rect'
@@ -25,8 +26,7 @@ local script = require 'src.scriptRunner'
 
 -- a factory that creates new objects ..
 -- floaty karlsson ting
--- planet gravity like mario galaxy  DONE
--- scripts !!
+
 
 function waitForEvent()
     local a, b, c, d, e
@@ -179,6 +179,7 @@ function recreateThingFromBody(body, newSettings)
     fixture:setFriction(newSettings.friction or friction)
 
     -- Update the `thing` table
+    thing.label = thing.label
     thing.body = newBody
     thing.shape = shape
     thing.fixture = fixture
@@ -186,6 +187,7 @@ function recreateThingFromBody(body, newSettings)
     thing.width = newSettings.width or thing.width
     thing.height = newSettings.height or thing.height
     thing.id = thing.id or generateID()
+
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 
@@ -194,14 +196,14 @@ function recreateThingFromBody(body, newSettings)
     return thing
 end
 
-function addThing(shapeType, x, y, bodyType, radius, width, height)
+function addThing(shapeType, x, y, bodyType, radius, width, height, label)
     -- Default values if not provided
     bodyType = bodyType or 'dynamic'
 
     radius = radius or 20         -- Default radius for circular shapes
     width = width or radius * 2   -- Default width for polygons
     height = height or radius * 2 -- Default height for polygons
-
+    label = label or ""           -- Default to empty string
     -- Create a new table to store the shape's properties
     --print(shapeType)
     local thing = {
@@ -209,6 +211,7 @@ function addThing(shapeType, x, y, bodyType, radius, width, height)
         radius = radius,
         width = width,
         height = height,
+        label = label, -- Add the label
     }
 
     -- Create the physics body at the specified world coordinates
@@ -231,6 +234,20 @@ function addThing(shapeType, x, y, bodyType, radius, width, height)
     registry.registerBody(thing.id, thing.body)
 end
 
+local function destroyBody(body)
+    local thing = body:getUserData().thing
+    local joints = body:getJoints()
+    for i = 1, #joints do
+        local ud = joints[i]:getUserData()
+        if ud then
+            registry.unregisterJoint(ud.id)
+            joints[i]:destroy()
+            --print('jointid:', ud.id)
+        end
+    end
+    registry.unregisterBody(thing.id)
+    body:destroy()
+end
 function startSpawn(shapeType, mx, my)
     local thing = {}
     local wx, wy = cam:getWorldCoordinates(mx, my)
@@ -252,6 +269,7 @@ function startSpawn(shapeType, mx, my)
     thing.fixture:setRestitution(0.3)
     thing.body:setAwake(false)
     thing.id = generateID()
+    thing.label = ''
     registry.registerBody(thing.id, thing.body)
     thing.body:setUserData({ thing = thing })
     uiState.currentlyDraggingObject = thing
@@ -298,17 +316,13 @@ function rotatePoint(x, y, originX, originY, angle)
     return finalX, finalY
 end
 
--- Maximum influence radius to optimize performance
---local maxInfluenceRadius = 10000
-
-
 function love.update(dt)
     if not worldState.paused then
         -- for i, v in ipairs(softbodies) do
         --     v:update(dt)
         -- end
 
-        for i = 1, 2 do
+        for i = 1, 1 do
             world:update(dt)
         end
 
@@ -471,7 +485,14 @@ local function drawUpdateSelectedObjectUI()
             -- Shape Properties
             local shapeType = thing.shapeType
 
+            -- Label Editor
+            nextRow()
+            local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", thing.label)
+            if newLabel and newLabel ~= thing.label then
+                thing.label = newLabel -- Update the label
+            end
 
+            nextRow()
 
             if shapeType == 'circle' then
                 -- Show radius control for circles
@@ -598,17 +619,8 @@ local function drawUpdateSelectedObjectUI()
 
         nextRow()
         if ui.button(x, y, 260, 'destroy') then
-            local joints = body:getJoints()
-            for i = 1, #joints do
-                local ud = joints[i]:getUserData()
-                if ud then
-                    registry.unregisterJoint(ud.id)
-                    joints[i]:destroy()
-                    --print('jointid:', ud.id)
-                end
-            end
-            registry.unregisterBody(thing.id)
-            body:destroy()
+            destroyBody(body)
+
             uiState.currentlySelectedObject = nil
         end
 
@@ -665,6 +677,123 @@ local function drawGrid(cam, worldState)
     love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1)
 end
+
+
+local function cloneSelection()
+    if not uiState.selectedBodies or #uiState.selectedBodies == 0 then
+        print("No bodies selected to clone.")
+        return
+    end
+
+    -- Mapping from original body IDs to cloned body instances
+    local clonedBodiesMap = {}
+
+    -- Step 1: Clone Bodies
+    for _, originalThing in ipairs(uiState.selectedBodies) do
+        local originalBody = originalThing.body
+        local userData     = originalBody:getUserData()
+        if userData and userData.thing then
+            local originalThing = userData.thing
+
+            -- Generate a new unique ID for the cloned body
+            local newID = generateID()
+
+            -- Clone body properties
+            local newBody = love.physics.newBody(world, originalBody:getX() + 50, originalBody:getY() + 50,
+                originalBody:getType())
+            newBody:setAngle(originalBody:getAngle())
+            newBody:setLinearVelocity(originalBody:getLinearVelocity())
+            newBody:setAngularVelocity(originalBody:getAngularVelocity())
+            newBody:setFixedRotation(originalBody:isFixedRotation())
+            newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
+
+            -- Clone shape
+            local newShape = shapes.createShape(originalThing.shapeType, originalThing.radius, originalThing.width,
+                originalThing.height)
+
+            -- Clone fixture
+            local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())
+            newFixture:setRestitution(originalThing.fixture:getRestitution())
+            newFixture:setFriction(originalThing.fixture:getFriction())
+
+            -- Clone user data
+            local clonedThing = {
+                shapeType = originalThing.shapeType,
+                radius = originalThing.radius,
+                width = originalThing.width,
+                height = originalThing.height,
+                label = originalThing.label,
+                body = newBody,
+                shape = newShape,
+                fixture = newFixture,
+                id = newID
+            }
+            newBody:setUserData({ thing = clonedThing })
+
+            -- Register the cloned body
+            registry.registerBody(newID, newBody)
+
+            -- Store in the map for joint cloning
+            clonedBodiesMap[originalThing.id] = clonedThing
+        end
+    end
+
+    -- Step 2: Clone Joints
+    for _, originalThing in ipairs(uiState.selectedBodies) do
+        local originalBody = originalThing.body
+        local joints = originalBody:getJoints()
+        for _, originalJoint in ipairs(joints) do
+            local ud = originalJoint:getUserData()
+            if ud and ud.id then
+                local jointType = originalJoint:getType()
+                local handler = jointHandlers[jointType]
+                if handler and handler.extract then
+                    local jointData = handler.extract(originalJoint)
+
+                    -- Determine the original bodies connected by the joint
+                    local bodyA, bodyB = originalJoint:getBodies()
+                    local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
+                    local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
+
+                    -- If both bodies are cloned, proceed to clone the joint
+                    if clonedBodyA and clonedBodyB then
+                        local newJointData = {
+                            body1 = clonedBodyA.body,
+                            body2 = clonedBodyB.body,
+                            jointType = jointType,
+                            collideConnected = originalJoint:getCollideConnected(),
+                            id = generateID()
+                        }
+
+                        -- Include all joint-specific properties
+                        for key, value in pairs(jointData) do
+                            newJointData[key] = value
+                        end
+
+                        -- Create the new joint
+                        local newJoint = handler.create(newJointData,
+                            clonedBodyA.body:getX(), clonedBodyA.body:getY(),
+                            clonedBodyB.body:getX(), clonedBodyB.body:getY()
+                        )
+
+                        -- Set user data for the new joint
+                        newJoint:setUserData({ id = newJointData.id })
+
+                        -- Register the new joint
+                        registry.registerJoint(newJointData.id, newJoint)
+                    end
+                end
+            end
+        end
+    end
+
+    local result = {}
+    for k, v in pairs(clonedBodiesMap) do
+        table.insert(result, v)
+    end
+    uiState.selectedBodies = result
+end
+
 
 function drawUI()
     ui.startFrame()
@@ -790,6 +919,36 @@ function drawUI()
     if uiState.currentlySelectedObject and not uiState.currentlySelectedJoint then
         drawUpdateSelectedObjectUI()
     end
+
+    if uiState.selectedBodies and #uiState.selectedBodies > 0 then
+        local panelWidth = PANEL_WIDTH
+        local w, h = love.graphics.getDimensions()
+        ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ selection ∞', function()
+            local padding = BUTTON_SPACING
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = BUTTON_SPACING,
+                startX = w - panelWidth,
+                startY = 100 + padding
+            })
+
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+
+            if ui.button(x, y, 260, 'clone') then
+                cloneSelection()
+            end
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if ui.button(x, y, 260, 'destroy') then
+                for i = #uiState.selectedBodies, 1, -1 do
+                    destroyBody(uiState.selectedBodies[i].body)
+                end
+                uiState.selectedBodies = nil
+            end
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        end)
+    end
+
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
         joint.doJointCreateUI(uiState, 500, 100, 400, 150)
@@ -1034,7 +1193,7 @@ local function handlePointer(x, y, id, action)
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if uiState.saveDialogOpened then return end
-        if uiState.currentlySelectedJoint or uiState.currentlySelectedObject then
+        if uiState.currentlySelectedJoint or uiState.currentlySelectedObject or uiState.selectedBodies then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -1112,7 +1271,7 @@ local function handlePointer(x, y, id, action)
             local brxw, bryw = cam:getWorldCoordinates(brx, bry)
             local selected = selectrect.selectWithin(world,
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
-            print(#selected)
+
             uiState.selectedBodies = selected
             -- print(inspect(selected))
             uiState.startSelection = nil

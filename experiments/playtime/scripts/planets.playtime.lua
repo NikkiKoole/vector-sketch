@@ -36,20 +36,35 @@ function s.onStart()
     planets = {}
 
     -- because i dont have labels or ids yet ill just make al the static objects planets,
-    for _, body in ipairs(world:getBodies()) do
-        if body:getType() == 'static' then
-            local d = {
-                body = body,
-                maxInfluenceRadius = 10000,
-                gravity = 100000 + random() * 1000000
-            }
-            table.insert(planets, d)
-        end
-        if body:getType() == 'dynamic' then
-            body:setAwake(true)
+    planets = getObjectsByLabel('planet')
+
+    for i = 1, #planets do
+        local it = planets[i]
+        it.maxInfluenceRadius = 10000
+        it.gravity = 100000 + random() * 1000000
+        print(inspect(it))
+    end
+
+    local bodies = world:getBodies()
+    for i = 1, #bodies do
+        bodies[i]:setAwake(true)
+    end
+
+    if false then
+        for _, body in ipairs(world:getBodies()) do
+            if body:getType() == 'static' then
+                local d = {
+                    body = body,
+                    maxInfluenceRadius = 10000,
+                    gravity = 1000000 + random() * 1000000
+                }
+                table.insert(planets, d)
+            end
+            if body:getType() == 'dynamic' then
+                body:setAwake(true)
+            end
         end
     end
-    -- end
 end
 
 function s.draw()

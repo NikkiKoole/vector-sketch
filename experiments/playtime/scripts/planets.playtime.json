@@ -2,18 +2,16 @@
   "joints":[],
   "version":"1.0",
   "bodies":[{
-      "angle":0,
+      "width":40,
       "position":{
-        "y":416.369140625,
-        "x":-4442.7465820312
+        "y":416.48651123047,
+        "x":-4442.2890625
       },
-      "id":"98beda11-2868-41c7-afb5-d2312e56050d",
+      "id":"2a92205a-77b9-4e21-b1d4-2d0d08deaeb2",
       "linearVelocity":{
-        "y":0,
-        "x":0
+        "y":0.00089733366621658,
+        "x":0.0039619635790586
       },
-      "fixedRotation":false,
-      "bodyType":"dynamic",
       "fixtures":[{
           "shapeType":"circle",
           "radius":44.659999847412,
@@ -21,24 +19,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":44.66,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":688.12017822266,
-        "x":1196.0870361328
-      },
-      "id":"bb65fc94-d03e-4552-b2e1-d82386084f60",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":44.66
+    },{
+      "width":40,
+      "position":{
+        "y":688.19146728516,
+        "x":1195.3854980469
+      },
+      "id":"06b0c959-0ea3-42fd-a8d6-f171e2c4f7eb",
+      "linearVelocity":{
+        "y":0.0005941282142885,
+        "x":-0.0043956954032183
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":44.659999847412,
@@ -46,24 +45,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
+      "fixedRotation":false,
+      "bodyType":"dynamic",
+      "label":"",
       "shapeType":"circle",
       "angularVelocity":0,
-      "radius":44.66,
-      "height":40,
-      "width":40
-    },{
       "angle":0,
+      "height":40,
+      "radius":44.66
+    },{
+      "width":40,
       "position":{
-        "y":3975.0502929688,
+        "y":3974.6037597656,
         "x":14056.16015625
       },
-      "id":"21cb718f-c5e4-4c8b-805a-ea396e2bc812",
+      "id":"0d1c1911-e894-4d15-81a8-aba8ede0e71a",
       "linearVelocity":{
-        "y":0,
-        "x":0
+        "y":-0.0070930551737547,
+        "x":-0.0065987748093903
       },
-      "fixedRotation":false,
-      "bodyType":"dynamic",
       "fixtures":[{
           "shapeType":"circle",
           "radius":44.659999847412,
@@ -71,24 +71,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
+      "fixedRotation":false,
+      "bodyType":"dynamic",
+      "label":"",
       "shapeType":"circle",
       "angularVelocity":0,
-      "radius":44.66,
-      "height":40,
-      "width":40
-    },{
       "angle":0,
+      "height":40,
+      "radius":44.66
+    },{
+      "width":40,
       "position":{
-        "y":-2971.2451171875,
+        "y":-2970.5310058594,
         "x":12079.133789062
       },
-      "id":"8ff028f2-b380-4fda-a280-3d2d93c41da4",
+      "id":"b4232e00-c64a-4070-9c0d-821a505d93de",
       "linearVelocity":{
-        "y":0,
-        "x":0
+        "y":0.0095250830054283,
+        "x":-0.0018835491500795
       },
-      "fixedRotation":false,
-      "bodyType":"dynamic",
       "fixtures":[{
           "shapeType":"circle",
           "radius":44.659999847412,
@@ -96,24 +97,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":44.66,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":3761.3193359375,
-        "x":7804.4951171875
-      },
-      "id":"77b7c4b1-2c20-4c73-bf0e-aafbbb26cdb6",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":44.66
+    },{
+      "width":40,
+      "position":{
+        "y":3761.0258789062,
+        "x":7804.49609375
+      },
+      "id":"bbaa67ba-6af3-4e53-bd7c-71de7f83eb0a",
+      "linearVelocity":{
+        "y":-0.0051007131114602,
+        "x":0.0059762061573565
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":44.659999847412,
@@ -121,24 +123,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":44.66,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-299.59286499023,
-        "x":14430.192382812
-      },
-      "id":"d02c1163-8e8c-4313-97e5-bee80c59432f",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":44.66
+    },{
+      "width":40,
+      "position":{
+        "y":-299.15277099609,
+        "x":14430.075195312
+      },
+      "id":"ee6d4899-5116-4b4d-84f8-3d94720c1a3e",
+      "linearVelocity":{
+        "y":0.0053014773875475,
+        "x":-0.012756514362991
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":44.659999847412,
@@ -146,24 +149,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":"44.66",
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-887.35626220703,
-        "x":8231.955078125
-      },
-      "id":"82db9fe6-a274-4263-b2e7-7e76fb26bc67",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":"44.66"
+    },{
+      "width":40,
+      "position":{
+        "y":-886.69366455078,
+        "x":8232.763671875
+      },
+      "id":"0835ce78-a5c5-4b3e-9fd3-980097244f7b",
+      "linearVelocity":{
+        "y":0.0080722849816084,
+        "x":0.013062140904367
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -171,24 +175,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-1016.2367553711,
-        "x":-4016.818359375
-      },
-      "id":"00cd6f7a-d293-4130-ac0c-0104c136b426",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
+      "position":{
+        "y":-1015.8033447266,
+        "x":-4016.423828125
+      },
+      "id":"90c0bfc8-1fce-4dde-96c6-1fb6729f6024",
+      "linearVelocity":{
+        "y":0.0027597136795521,
+        "x":0.0032278520520777
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -196,24 +201,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-1286.30859375,
-        "x":1093.7739257812
-      },
-      "id":"7f22dc24-e471-4097-9d7c-b239bbf6ecfd",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
+      "position":{
+        "y":-1285.9710693359,
+        "x":1093.3771972656
+      },
+      "id":"445fd8a8-202b-42ef-a3a7-b9f5b34edafc",
+      "linearVelocity":{
+        "y":0.0022608791477978,
+        "x":-0.002576018916443
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -221,24 +227,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-1992.6511230469,
-        "x":-3310.4748535156
-      },
-      "id":"67dc3c43-17bb-410f-b3ad-7c47ed3071bf",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
+      "position":{
+        "y":-1992.2626953125,
+        "x":-3310.349609375
+      },
+      "id":"9ffb3405-9e31-44b8-b752-3a954b1c2c63",
+      "linearVelocity":{
+        "y":0.0030738047789782,
+        "x":0.0017363536171615
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -246,24 +253,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-1968.4689941406,
-        "x":-256.91778564453
-      },
-      "id":"3231b8f9-b661-45b6-9b59-f349ac283360",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
+      "position":{
+        "y":-1967.9890136719,
+        "x":-257.17373657227
+      },
+      "id":"0f9a9bcc-20e5-47e2-9572-8d33d7ec8d2b",
+      "linearVelocity":{
+        "y":0.0036380472593009,
+        "x":-0.0015921028098091
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -271,24 +279,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
-      "shapeType":"circle",
-      "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
-      "angle":0,
-      "position":{
-        "y":-2560.4409179688,
-        "x":-1163.8929443359
-      },
-      "id":"d8299fdf-80c6-4a60-baf6-c8fb4ed587b6",
-      "linearVelocity":{
-        "y":0,
-        "x":0
-      },
       "fixedRotation":false,
       "bodyType":"dynamic",
+      "label":"",
+      "shapeType":"circle",
+      "angularVelocity":0,
+      "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
+      "position":{
+        "y":-2560.0227050781,
+        "x":-1163.9014892578
+      },
+      "id":"c24cb298-49f6-442a-ae8e-08e296ebd8e2",
+      "linearVelocity":{
+        "y":0.0032463048119098,
+        "x":-0.00037631625309587
+      },
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -296,24 +305,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
+      "fixedRotation":false,
+      "bodyType":"dynamic",
+      "label":"",
       "shapeType":"circle",
       "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
       "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
       "position":{
-        "y":-2649.3139648438,
+        "y":-2648.9289550781,
         "x":-2132.5295410156
       },
-      "id":"56998782-c20d-4c95-8df5-3750a9d773c7",
+      "id":"4e8c90ef-517f-47c4-a2a9-5256bed26d19",
       "linearVelocity":{
-        "y":0,
-        "x":0
+        "y":0.0030546791385859,
+        "x":0.0004513117892202
       },
-      "fixedRotation":false,
-      "bodyType":"dynamic",
       "fixtures":[{
           "shapeType":"circle",
           "radius":40,
@@ -321,24 +331,25 @@
           "density":1,
           "friction":0.20000000298023
         }],
+      "fixedRotation":false,
+      "bodyType":"dynamic",
+      "label":"",
       "shapeType":"circle",
       "angularVelocity":0,
-      "radius":40,
-      "height":40,
-      "width":40
-    },{
       "angle":0,
+      "height":40,
+      "radius":40
+    },{
+      "width":40,
       "position":{
         "y":1004.551574707,
         "x":11293.076171875
       },
-      "id":"b25abc05-4c23-422d-b2eb-80157c49705f",
+      "id":"dda78a35-909f-4270-b8c1-0dd0c0882c8b",
       "linearVelocity":{
         "y":0,
         "x":0
       },
-      "fixedRotation":false,
-      "bodyType":"static",
       "fixtures":[{
           "shapeType":"circle",
           "radius":2000,
@@ -346,24 +357,25 @@
           "density":1,
           "friction":0
         }],
+      "fixedRotation":false,
+      "bodyType":"static",
+      "label":"planet",
       "shapeType":"circle",
       "angularVelocity":0,
-      "radius":2000,
-      "height":40,
-      "width":40
-    },{
       "angle":0,
+      "height":40,
+      "radius":2000
+    },{
+      "width":40,
       "position":{
         "y":1063.8552246094,
         "x":-1583.9865722656
       },
-      "id":"8f545fca-7287-47f4-aca3-3f5461f24985",
+      "id":"dde2a45f-69c1-4ae7-a1f4-170c3f1de8ce",
       "linearVelocity":{
         "y":0,
         "x":0
       },
-      "fixedRotation":false,
-      "bodyType":"static",
       "fixtures":[{
           "shapeType":"circle",
           "radius":2000,
@@ -371,10 +383,13 @@
           "density":1,
           "friction":0.20000000298023
         }],
+      "fixedRotation":false,
+      "bodyType":"static",
+      "label":"planet",
       "shapeType":"circle",
       "angularVelocity":0,
-      "radius":2000,
+      "angle":0,
       "height":40,
-      "width":40
+      "radius":2000
     }]
 }
