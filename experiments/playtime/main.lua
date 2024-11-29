@@ -1,24 +1,22 @@
 -- main.lua
 package.path = package.path .. ";../../?.lua"
 
-local inspect = require 'vendor.inspect'
-
+-- todo extract jsut the camera stuff i need nowadasy from these files and wrap it in one package
 local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
+-- todo extract just the routines i need nowadays.. (render box2d world debug draw, something about pointer)
 local phys = require 'lib.mainPhysics'
-local ui = require 'src.ui-all'
 
+local blob = require 'vendor.loveblobs'
+
+local ui = require 'src.ui-all'
 local joint = require 'src.joints'
-local jointHandlers = require 'src.jointHandlers'
 local shapes = require 'src.shapes'
-local blob = require 'src.loveblobs'
 local selectrect = require 'src.selection-rect'
 local io = require 'src.io'
 local uuid = require 'src.uuid'
-
 local registry = require 'src.registry'
-
-local script = require 'src.scriptRunner'
+local script = require 'src.script'
 
 ---- todo
 -- offsetA & offsetB now use a rotation that needs to be done in the other direction too.
@@ -46,7 +44,7 @@ local BUTTON_HEIGHT = 50
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
-local FIXED_TIMESTEP = false
+local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
 

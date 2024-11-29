@@ -1,7 +1,7 @@
 local lib = {}
-package.path = package.path .. ";../../?.lua"
+--package.path = package.path .. ";../../?.lua"
 local inspect = require 'vendor.inspect'
-local json = require 'src.dkjson'
+local json = require 'vendor.dkjson'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local shapes = require 'src.shapes'
@@ -9,7 +9,6 @@ local shapes = require 'src.shapes'
 local function generateID()
     return uuid.uuid()
 end
-
 
 function lib.load(data, world)
     -- Read the JSON file

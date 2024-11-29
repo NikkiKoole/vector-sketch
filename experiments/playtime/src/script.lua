@@ -1,9 +1,5 @@
 local script = {}
-package.path = package.path .. ";../../?.lua"
 local inspect = require 'vendor.inspect'
-
-
-
 
 function getObjectsByLabel(label)
     local objects = {}

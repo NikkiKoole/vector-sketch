@@ -27,7 +27,6 @@ local function applyGravity(planet, body)
     body:applyForce(force.x, force.y)
 end
 
-
 function s.onStart()
     -- how to set the gravity.
     worldState.gravity = 0
@@ -41,8 +40,10 @@ function s.onStart()
     for i = 1, #planets do
         local it = planets[i]
         it.maxInfluenceRadius = 10000
+        --   print(it.body:getMass())
+        --  it.body:applyAngularImpulse(random() * 10000)
         it.gravity = 100000 + random() * 1000000
-        print(inspect(it))
+        --print(inspect(it))
     end
 
     local bodies = world:getBodies()

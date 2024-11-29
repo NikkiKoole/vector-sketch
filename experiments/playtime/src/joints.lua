@@ -2,7 +2,7 @@ local ui = require 'src.ui-all'
 local lib = {}
 local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
-local jointHandlers = require 'src.jointHandlers'
+local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
 
 local function generateID()
