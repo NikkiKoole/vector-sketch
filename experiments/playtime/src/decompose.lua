@@ -144,7 +144,7 @@ local function splitPoly(poly, intersection)
     return wrap, back
 end
 
--- Main function to decompose a complex polygon into simpler polygons.
+
 function decompose_complex.decompose_complex_poly(poly, result)
     result = result or {}
     local intersections = getCollisions(poly)
@@ -154,23 +154,13 @@ function decompose_complex.decompose_complex_poly(poly, result)
         return result
     end
 
-    for _, intersection in ipairs(intersections) do
-        local p1, p2 = splitPoly(poly, intersection)
-        local p1Collisions = getCollisions(p1)
-        local p2Collisions = getCollisions(p2)
+    -- Process only the first intersection to avoid redundant splits
+    local intersection = intersections[1]
+    local p1, p2 = splitPoly(poly, intersection)
 
-        if #p1Collisions > 0 then
-            decompose_complex.decompose_complex_poly(p1, result)
-        else
-            tableConcat(result, { p1 })
-        end
-
-        if #p2Collisions > 0 then
-            decompose_complex.decompose_complex_poly(p2, result)
-        else
-            tableConcat(result, { p2 })
-        end
-    end
+    -- Recursively decompose the resulting polygons
+    decompose_complex.decompose_complex_poly(p1, result)
+    decompose_complex.decompose_complex_poly(p2, result)
 
     return result
 end

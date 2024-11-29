@@ -679,120 +679,6 @@ local function drawGrid(cam, worldState)
 end
 
 
-local function cloneSelection()
-    if not uiState.selectedBodies or #uiState.selectedBodies == 0 then
-        print("No bodies selected to clone.")
-        return
-    end
-
-    -- Mapping from original body IDs to cloned body instances
-    local clonedBodiesMap = {}
-
-    -- Step 1: Clone Bodies
-    for _, originalThing in ipairs(uiState.selectedBodies) do
-        local originalBody = originalThing.body
-        local userData     = originalBody:getUserData()
-        if userData and userData.thing then
-            local originalThing = userData.thing
-
-            -- Generate a new unique ID for the cloned body
-            local newID = generateID()
-
-            -- Clone body properties
-            local newBody = love.physics.newBody(world, originalBody:getX() + 50, originalBody:getY() + 50,
-                originalBody:getType())
-            newBody:setAngle(originalBody:getAngle())
-            newBody:setLinearVelocity(originalBody:getLinearVelocity())
-            newBody:setAngularVelocity(originalBody:getAngularVelocity())
-            newBody:setFixedRotation(originalBody:isFixedRotation())
-            newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
-
-            -- Clone shape
-            local newShape = shapes.createShape(originalThing.shapeType, originalThing.radius, originalThing.width,
-                originalThing.height)
-
-            -- Clone fixture
-            local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())
-            newFixture:setRestitution(originalThing.fixture:getRestitution())
-            newFixture:setFriction(originalThing.fixture:getFriction())
-
-            -- Clone user data
-            local clonedThing = {
-                shapeType = originalThing.shapeType,
-                radius = originalThing.radius,
-                width = originalThing.width,
-                height = originalThing.height,
-                label = originalThing.label,
-                body = newBody,
-                shape = newShape,
-                fixture = newFixture,
-                id = newID
-            }
-            newBody:setUserData({ thing = clonedThing })
-
-            -- Register the cloned body
-            registry.registerBody(newID, newBody)
-
-            -- Store in the map for joint cloning
-            clonedBodiesMap[originalThing.id] = clonedThing
-        end
-    end
-
-    -- Step 2: Clone Joints
-    for _, originalThing in ipairs(uiState.selectedBodies) do
-        local originalBody = originalThing.body
-        local joints = originalBody:getJoints()
-        for _, originalJoint in ipairs(joints) do
-            local ud = originalJoint:getUserData()
-            if ud and ud.id then
-                local jointType = originalJoint:getType()
-                local handler = jointHandlers[jointType]
-                if handler and handler.extract then
-                    local jointData = handler.extract(originalJoint)
-
-                    -- Determine the original bodies connected by the joint
-                    local bodyA, bodyB = originalJoint:getBodies()
-                    local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
-                    local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
-
-                    -- If both bodies are cloned, proceed to clone the joint
-                    if clonedBodyA and clonedBodyB then
-                        local newJointData = {
-                            body1 = clonedBodyA.body,
-                            body2 = clonedBodyB.body,
-                            jointType = jointType,
-                            collideConnected = originalJoint:getCollideConnected(),
-                            id = generateID()
-                        }
-
-                        -- Include all joint-specific properties
-                        for key, value in pairs(jointData) do
-                            newJointData[key] = value
-                        end
-
-                        -- Create the new joint
-                        local newJoint = handler.create(newJointData,
-                            clonedBodyA.body:getX(), clonedBodyA.body:getY(),
-                            clonedBodyB.body:getX(), clonedBodyB.body:getY()
-                        )
-
-                        -- Set user data for the new joint
-                        newJoint:setUserData({ id = newJointData.id })
-
-                        -- Register the new joint
-                        registry.registerJoint(newJointData.id, newJoint)
-                    end
-                end
-            end
-        end
-    end
-
-    local result = {}
-    for k, v in pairs(clonedBodiesMap) do
-        table.insert(result, v)
-    end
-    uiState.selectedBodies = result
-end
 
 
 function drawUI()
@@ -936,7 +822,8 @@ function drawUI()
 
 
             if ui.button(x, y, 260, 'clone') then
-                cloneSelection()
+                local cloned = io.cloneSelection(uiState.selectedBodies)
+                uiState.selectedBodies = cloned
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'destroy') then

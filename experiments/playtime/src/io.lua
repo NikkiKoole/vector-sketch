@@ -4,6 +4,8 @@ local inspect = require 'vendor.inspect'
 local json = require 'src.dkjson'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
+local shapes = require 'src.shapes'
+
 local function generateID()
     return uuid.uuid()
 end
@@ -47,38 +49,42 @@ function lib.load(data, world)
     -- Iterate through saved bodies and recreate them
     for _, bodyData in ipairs(jsonData.bodies) do
         -- Create a new body
-        local body = love.physics.newBody(world, bodyData.position.x, bodyData.position.y, bodyData.bodyType)
+        local body = love.physics.newBody(world, bodyData.position[1], bodyData.position[2], bodyData.bodyType)
         body:setAngle(bodyData.angle)
-        body:setLinearVelocity(bodyData.linearVelocity.x, bodyData.linearVelocity.y)
+        body:setLinearVelocity(bodyData.linearVelocity[1], bodyData.linearVelocity[2])
         body:setAngularVelocity(bodyData.angularVelocity)
         body:setFixedRotation(bodyData.fixedRotation)
 
+        local shared = bodyData.sharedFixtureData
         -- Iterate through fixtures and recreate shapes
         for _, fixtureData in ipairs(bodyData.fixtures) do
             local shape
-            if fixtureData.shapeType == "circle" then
+            if shared.shapeType == "circle" then
                 shape = love.physics.newCircleShape(fixtureData.radius)
-            elseif fixtureData.shapeType == "polygon" then
+            elseif shared.shapeType == "polygon" then
                 local points = {}
+                -- for _, point in ipairs(fixtureData.points) do
+                --     table.insert(points, point.x)
+                --     table.insert(points, point.y)
+                -- end
                 for _, point in ipairs(fixtureData.points) do
-                    table.insert(points, point.x)
-                    table.insert(points, point.y)
+                    table.insert(points, point)
                 end
                 shape = love.physics.newPolygonShape(unpack(points))
-            elseif fixtureData.shapeType == "edge" then
-                local x1 = fixtureData.points[1].x
-                local y1 = fixtureData.points[1].y
-                local x2 = fixtureData.points[2].x
-                local y2 = fixtureData.points[2].y
-                shape = love.physics.newEdgeShape(x1, y1, x2, y2)
+                -- elseif fixtureData.shapeType == "edge" then
+                --     local x1 = fixtureData.points[1].x
+                --     local y1 = fixtureData.points[1].y
+                --     local x2 = fixtureData.points[2].x
+                --     local y2 = fixtureData.points[2].y
+                --     shape = love.physics.newEdgeShape(x1, y1, x2, y2)
             else
                 print("Unsupported shape type:", fixtureData.shapeType)
             end
 
             if shape then
-                local fixture = love.physics.newFixture(body, shape, fixtureData.density)
-                fixture:setFriction(fixtureData.friction)
-                fixture:setRestitution(fixtureData.restitution)
+                local fixture = love.physics.newFixture(body, shape, shared.density)
+                fixture:setFriction(shared.friction)
+                fixture:setRestitution(shared.restitution)
             end
         end
 
@@ -91,8 +97,8 @@ function lib.load(data, world)
             width = bodyData.width,
             height = bodyData.height,
             body = body,
-            shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
-            fixture = body:getFixtures()[1],
+            --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
+            fixture = body:getFixtures()[1], -- this is used in clone.
         }
 
         -- Assign the 'thing' to the body's user data
@@ -115,8 +121,8 @@ function lib.load(data, world)
             if jointData.type == "distance" then
                 joint = love.physics.newDistanceJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
-                    anchorB.x, anchorB.y,
+                    anchorA[1], anchorA[2],
+                    anchorB[1], anchorB[2],
                     collideConnected
                 )
                 joint:setLength(jointData.properties.length)
@@ -125,7 +131,7 @@ function lib.load(data, world)
             elseif jointData.type == "revolute" then
                 joint = love.physics.newRevoluteJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
+                    anchorA[1], anchorA[2],
                     collideConnected
                 )
                 joint:setMotorEnabled(jointData.properties.motorEnabled)
@@ -140,14 +146,14 @@ function lib.load(data, world)
             elseif jointData.type == "rope" then
                 joint = love.physics.newRopeJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
-                    anchorB.x, anchorB.y,
+                    anchorA[1], anchorA[2],
+                    anchorB[1], anchorB[2],
                     jointData.properties.maxLength
                 )
             elseif jointData.type == "weld" then
                 joint = love.physics.newWeldJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
+                    anchorA[1], anchorA[2],
                     collideConnected
                 )
                 joint:setFrequency(jointData.properties.frequency)
@@ -155,7 +161,7 @@ function lib.load(data, world)
             elseif jointData.type == "prismatic" then
                 joint = love.physics.newPrismaticJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
+                    anchorA[1], anchorA[2],
                     jointData.properties.axis.x, jointData.properties.axis.y,
                     collideConnected
                 )
@@ -173,15 +179,15 @@ function lib.load(data, world)
                     bodyA, bodyB,
                     jointData.properties.groundAnchor1.x, jointData.properties.groundAnchor1.y,
                     jointData.properties.groundAnchor2.x, jointData.properties.groundAnchor2.y,
-                    anchorA.x, anchorA.y,
-                    anchorB.x, anchorB.y,
+                    anchorA[1], anchorA[2],
+                    anchorB[1], anchorB[2],
                     jointData.properties.ratio,
                     collideConnected
                 )
             elseif jointData.type == "wheel" then
                 joint = love.physics.newWheelJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
+                    anchorA[1], anchorA[2],
                     jointData.properties.axis.x, jointData.properties.axis.y,
                     collideConnected
                 )
@@ -207,7 +213,7 @@ function lib.load(data, world)
             elseif jointData.type == "friction" then
                 joint = love.physics.newFrictionJoint(
                     bodyA, bodyB,
-                    anchorA.x, anchorA.y,
+                    anchorA[1], anchorA[2],
                     collideConnected
                 )
                 joint:setMaxForce(jointData.properties.maxForce)
@@ -222,8 +228,10 @@ function lib.load(data, world)
                 -- joint:setUserData({ id = jointData.id })
 
 
-                local fxa, fya = rotatePoint(anchorA.x - bodyA:getX(), anchorA.y - bodyA:getY(), 0, 0, -bodyA:getAngle())
-                local fxb, fyb = rotatePoint(anchorB.x - bodyB:getX(), anchorB.y - bodyB:getY(), 0, 0, -bodyB:getAngle())
+                local fxa, fya = rotatePoint(anchorA[1] - bodyA:getX(), anchorA[2] - bodyA:getY(), 0, 0,
+                    -bodyA:getAngle())
+                local fxb, fyb = rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
+                    -bodyB:getAngle())
                 joint:setUserData({
                     id = getNewId(jointData.id),
                     offsetA = { x = fxa, y = fya },
@@ -246,6 +254,10 @@ local function sanitizeString(input)
     if not input then return "" end   -- Handle nil or empty strings
     return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
 end
+local function round_to_decimals(num, dec)
+    local multiplier = 10 ^ dec -- 10^4 for 4 decimal places
+    return math.floor(num * multiplier + 0.5) / multiplier
+end
 function lib.save(world, worldState, filename)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
@@ -266,38 +278,51 @@ function lib.save(world, worldState, filename)
                 width = thing.width,
                 height = thing.height,
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
-                position = { x = body:getX(), y = body:getY() },
-                angle = body:getAngle(),
-                linearVelocity = { x = lvx, y = lvy },
-                angularVelocity = body:getAngularVelocity(),
+                position = { round_to_decimals(body:getX(), 4), round_to_decimals(body:getY(), 4) },
+                angle = round_to_decimals(body:getAngle(), 4),
+                linearVelocity = { lvx, lvy },
+                angularVelocity = round_to_decimals(body:getAngularVelocity(), 4),
                 fixedRotation = body:isFixedRotation(),
-                fixtures = {}
+                fixtures = {},
+                sharedFixtureData = {}
             }
             -- Iterate through all fixtures of the body
+
+            -- to save data i am assuming all fixtures are the same type and have the same settings.
+            local bodyFixtures = body:getFixtures()
+            if #bodyFixtures >= 1 then
+                if #bodyFixtures >= 1 then
+                    local first = bodyFixtures[1]
+                    bodyData.sharedFixtureData.density = round_to_decimals(first:getDensity(), 4)
+                    bodyData.sharedFixtureData.friction = round_to_decimals(first:getFriction(), 4)
+                    bodyData.sharedFixtureData.restitution = round_to_decimals(first:getRestitution(), 4)
+                    local shape = first:getShape()
+                    if shape:typeOf("CircleShape") then
+                        bodyData.sharedFixtureData.shapeType = 'circle'
+                    elseif shape:typeOf("PolygonShape") then
+                        bodyData.sharedFixtureData.shapeType = 'polygon'
+                    end
+                end
+            end
+
             for _, fixture in ipairs(body:getFixtures()) do
                 local shape = fixture:getShape()
-                local fixtureData = {
-                    density = fixture:getDensity(),
-                    friction = fixture:getFriction(),
-                    restitution = fixture:getRestitution()
-                }
 
+                local fixtureData = {}
                 if shape:typeOf("CircleShape") then
-                    fixtureData.shapeType = "circle"
+                    --fixtureData.shapeType = "circle"
                     fixtureData.radius = shape:getRadius()
                 elseif shape:typeOf("PolygonShape") then
-                    fixtureData.shapeType = "polygon"
-                    local points = {}
-                    local points2 = { shape:getPoints() }
-                    for i = 1, #points2, 2 do
-                        local x, y = points2[i], points2[i + 1]
-                        table.insert(points, { x = x, y = y })
+                    local result = {}
+                    local points = { shape:getPoints() }
+                    for i = 1, #points do
+                        table.insert(result, round_to_decimals(points[i], 3))
                     end
-                    fixtureData.points = points
-                elseif shape:typeOf("EdgeShape") then
-                    fixtureData.shapeType = "edge"
-                    local x1, y1, x2, y2 = shape:getPoints()
-                    fixtureData.points = { { x = x1, y = y1 }, { x = x2, y = y2 } }
+                    fixtureData.points = result
+                    -- elseif shape:typeOf("EdgeShape") then
+                    --     fixtureData.shapeType = "edge"
+                    --     local x1, y1, x2, y2 = shape:getPoints()
+                    --     fixtureData.points = { { x = x1, y = y1 }, { x = x2, y = y2 } }
                 else
                     -- Handle other shape types if any
                     fixtureData.shapeType = "unknown"
@@ -331,8 +356,8 @@ function lib.save(world, worldState, filename)
                 type = joint:getType(),
                 bodyA = thingA.id,
                 bodyB = thingB.id,
-                anchorA = { x = x1, y = y1 },
-                anchorB = { x = x2, y = y2 },
+                anchorA = { round_to_decimals(x1, 3), round_to_decimals(y1, 3) },
+                anchorB = { round_to_decimals(x2, 3), round_to_decimals(y2, 3) },
                 collideConnected = joint:getCollideConnected(),
                 properties = {}
             }
@@ -418,6 +443,122 @@ function lib.save(world, worldState, filename)
     end
 
     love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+end
+
+function lib.cloneSelection(selectedBodies)
+    -- if not uiState.selectedBodies or #uiState.selectedBodies == 0 then
+    --     print("No bodies selected to clone.")
+    --     return
+    -- end
+
+    -- Mapping from original body IDs to cloned body instances
+    local clonedBodiesMap = {}
+
+    -- Step 1: Clone Bodies
+    for _, originalThing in ipairs(selectedBodies) do
+        local originalBody = originalThing.body
+        local userData     = originalBody:getUserData()
+        if userData and userData.thing then
+            local originalThing = userData.thing
+
+            -- Generate a new unique ID for the cloned body
+            local newID = generateID()
+
+            -- Clone body properties
+            local newBody = love.physics.newBody(world, originalBody:getX() + 50, originalBody:getY() + 50,
+                originalBody:getType())
+            newBody:setAngle(originalBody:getAngle())
+            newBody:setLinearVelocity(originalBody:getLinearVelocity())
+            newBody:setAngularVelocity(originalBody:getAngularVelocity())
+            newBody:setFixedRotation(originalBody:isFixedRotation())
+            newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
+
+            -- Clone shape
+            local newShape = shapes.createShape(originalThing.shapeType, originalThing.radius, originalThing.width,
+                originalThing.height)
+
+            -- Clone fixture
+            local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())
+            newFixture:setRestitution(originalThing.fixture:getRestitution())
+            newFixture:setFriction(originalThing.fixture:getFriction())
+
+            -- Clone user data
+            local clonedThing = {
+                shapeType = originalThing.shapeType,
+                radius = originalThing.radius,
+                width = originalThing.width,
+                height = originalThing.height,
+                label = originalThing.label,
+                body = newBody,
+                shape = newShape,
+                fixture = newFixture,
+                id = newID
+            }
+            newBody:setUserData({ thing = clonedThing })
+
+            -- Register the cloned body
+            registry.registerBody(newID, newBody)
+
+            -- Store in the map for joint cloning
+            clonedBodiesMap[originalThing.id] = clonedThing
+        end
+    end
+
+    -- Step 2: Clone Joints
+    for _, originalThing in ipairs(uiState.selectedBodies) do
+        local originalBody = originalThing.body
+        local joints = originalBody:getJoints()
+        for _, originalJoint in ipairs(joints) do
+            local ud = originalJoint:getUserData()
+            if ud and ud.id then
+                local jointType = originalJoint:getType()
+                local handler = jointHandlers[jointType]
+                if handler and handler.extract then
+                    local jointData = handler.extract(originalJoint)
+
+                    -- Determine the original bodies connected by the joint
+                    local bodyA, bodyB = originalJoint:getBodies()
+                    local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
+                    local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
+
+                    -- If both bodies are cloned, proceed to clone the joint
+                    if clonedBodyA and clonedBodyB then
+                        local newJointData = {
+                            body1 = clonedBodyA.body,
+                            body2 = clonedBodyB.body,
+                            jointType = jointType,
+                            collideConnected = originalJoint:getCollideConnected(),
+                            id = generateID()
+                        }
+
+                        -- Include all joint-specific properties
+                        for key, value in pairs(jointData) do
+                            newJointData[key] = value
+                        end
+
+                        -- Create the new joint
+                        local newJoint = handler.create(newJointData,
+                            clonedBodyA.body:getX(), clonedBodyA.body:getY(),
+                            clonedBodyB.body:getX(), clonedBodyB.body:getY()
+                        )
+
+                        -- Set user data for the new joint
+                        newJoint:setUserData({ id = newJointData.id })
+
+                        -- Register the new joint
+                        registry.registerJoint(newJointData.id, newJoint)
+                    end
+                end
+            end
+        end
+    end
+
+    local result = {}
+    for k, v in pairs(clonedBodiesMap) do
+        table.insert(result, v)
+    end
+    return result
+    --uiState.selectedBodies = result
 end
 
 return lib
