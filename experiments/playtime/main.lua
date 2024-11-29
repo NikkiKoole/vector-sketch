@@ -17,6 +17,8 @@ local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
 
+local script = require 'src.scriptRunner'
+
 ---- todo
 -- offsetA & offsetB now use a rotation that needs to be done in the other direction too.
 -- it feels its not needed. per se
@@ -90,14 +92,17 @@ function love.load()
     worldState = {
         meter = 100,
         paused = true,
-        gravity = 0,
+        gravity = 9.80,
         mouseForce = 500000,
         mouseDamping = 0.5
     }
 
+    sceneScript = nil
+
+
     love.physics.setMeter(worldState.meter)
     --world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
-    phys.setupWorldWithGravity(worldState.meter,worldState.gravity)
+    phys.setupWorldWithGravity(worldState.meter, worldState.gravity)
 
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
@@ -105,10 +110,10 @@ function love.load()
 
     addThing('rectangle', 200, 400, 'dynamic', 100, 400)
     addThing('rectangle', 600, 400, 'dynamic', 100)
-    -- addThing('rectangle', 450, 800, 'kinematic', 200)
-    -- addThing('rectangle', 850, 800, 'static', 200)
+    -- -- addThing('rectangle', 450, 800, 'kinematic', 200)
+    -- -- addThing('rectangle', 850, 800, 'static', 200)
     addThing('rectangle', 250, 1000, 'static', 100, 1800)
-    -- addThing('rectangle', 1100, 100, 'dynamic', 300)
+    -- -- addThing('rectangle', 1100, 100, 'dynamic', 300)
     addThing('circle', 1000, 400, 'dynamic', 100)
     addThing('circle', 1300, 400, 'dynamic', 100)
 
@@ -129,40 +134,6 @@ function love.load()
         local b = blob.softsurface(world, points, 64, "static")
         table.insert(softbodies, b)
     end
-
-    planets = {}
-
-
-       -- Create planets
-       createPlanet(0, 300, 500, 2000, 10000) -- Central planet
-       createPlanet(7000, 300, 500, 2000, 100000) -- Central planet
-        createPlanet(10000, 300, 500, 2000, 500000) -- Central planet
-
-       --createPlanet(800, 300, 50) -- Central planet
-       -- Create a dynamic body (e.g., player)
-       -- createDynamicBody(400, 100)
-       -- createDynamicBody(200, 100)
-       -- createDynamicBody(0, 300)
-end
--- Function to create a dynamic body
--- function createDynamicBody(x, y)
---     local body = {}
---     body.body = love.physics.newBody(world, x, y, "dynamic")
---     body.shape = love.physics.newCircleShape(20) -- Radius of 10 pixels
---     body.fixture = love.physics.newFixture(body.body, body.shape, 1) -- Density = 1
---     body.fixture:setRestitution(0.5) -- Bounciness
---     table.insert(dynamicBodies, body)
--- end
--- Function to create a planet
-function createPlanet(x, y, radius, maxInfluenceRadius, gravity)
-    local planet = {}
-    planet.body = love.physics.newBody(world, x, y, "static")
-    planet.shape = love.physics.newCircleShape(radius)
-    planet.fixture = love.physics.newFixture(planet.body, planet.shape)
-    planet.radius = radius
-    planet.maxInfluenceRadius = maxInfluenceRadius
-    planet.gravity = gravity
-    table.insert(planets, planet)
 end
 
 function recreateThingFromBody(body, newSettings)
@@ -269,8 +240,8 @@ function startSpawn(shapeType, mx, my)
     thing.body = love.physics.newBody(world, wx, wy, bodyType)
 
     radius = tonumber(uiState.lastUsedRadius) or 10 -- Default radius for circular shapes
-    width = width or radius * 2                        -- Default width for polygons
-    height = height or radius * 2                      -- Default height for polygons
+    width = width or radius * 2                     -- Default width for polygons
+    height = height or radius * 2                   -- Default height for polygons
 
     thing.shape = shapes.createShape(shapeType, radius, width, height)
     thing.shapeType = shapeType
@@ -327,36 +298,8 @@ function rotatePoint(x, y, originX, originY, angle)
     return finalX, finalY
 end
 
-
-
 -- Maximum influence radius to optimize performance
 --local maxInfluenceRadius = 10000
-local function applyGravity(planet, body)
-    local planetPosX, planetPosY = planet.body:getPosition()
-    local bodyPosX, bodyPosY = body:getPosition()
-    local direction = {x = planetPosX- bodyPosX, y = planetPosY - bodyPosY}
-    local distanceSquared = direction.x^2 + direction.y^2
-
-    -- Check if within influence radius
-    if distanceSquared > planet.maxInfluenceRadius^2 then
-        return
-    end
-
-    -- Avoid division by zero
-    if distanceSquared == 0 then
-        return
-    end
-
-    local distance = math.sqrt(distanceSquared)
-    local forceMagnitude = planet.gravity / distanceSquared
-
-    -- Normalize direction
-    local force = {x = (direction.x / distance) * forceMagnitude, y = (direction.y / distance) * forceMagnitude}
-
-    -- Apply force to the center of the body
-    --print(force.x, force.y)
-    body:applyForce(force.x, force.y)
-end
 
 
 function love.update(dt)
@@ -369,12 +312,8 @@ function love.update(dt)
             world:update(dt)
         end
 
-        for _, planet in ipairs(planets) do
-            for _, body in ipairs(world:getBodies()) do
-                if body:getType() == 'dynamic' then
-                     applyGravity(planet, body)
-                end
-            end
+        if sceneScript and sceneScript.update then
+            sceneScript.update()
         end
     end
     phys.handleUpdate(dt)
@@ -405,10 +344,6 @@ function love.update(dt)
             end
         end
     end
-
-
-
-
 end
 
 local function drawAddShapeUI()
@@ -808,7 +743,7 @@ function drawUI()
             if grav then
                 worldState.gravity = grav
                 if world then
-                    world:setGravity(0, worldState.gravity * love.physics.getMeter())
+                    world:setGravity(0, worldState.gravity * worldState.meter)
                 end
             end
             ui.label(x, y, ' gravity')
@@ -846,6 +781,11 @@ function drawUI()
         worldState.paused = not worldState.paused
     end
 
+    if sceneScript and sceneScript.onStart then
+        if ui.button(920, 20, 50, 'R') then
+            sceneScript.onStart()
+        end
+    end
 
     if uiState.currentlySelectedObject and not uiState.currentlySelectedJoint then
         drawUpdateSelectedObjectUI()
@@ -921,10 +861,10 @@ function love.draw()
 
     phys.drawWorld(world)
 
-    for i = 1, #planets do
-        local x,y = planets[i].body:getPosition()
-        love.graphics.circle('line',x,y, planets[i].maxInfluenceRadius)
+    if sceneScript and sceneScript.draw then
+        sceneScript.draw()
     end
+
 
 
     if uiState.currentlySelectedJoint and not uiState.currentlySelectedJoint:isDestroyed() then
@@ -1054,6 +994,19 @@ function love.filedropped(file)
         uiState.currentlySelectedJoint = nil
         uiState.currentlySelectedObject = nil
         io.load(data, world)
+        file:close()
+    end
+    if string.find(name, '.playtime.lua') then
+        file:open("r")
+        local data = file:read()
+
+        script.setEnv({ bodies = registry.bodies, joints = registry.joints, world = world, worldState = worldState })
+        sceneScript = script.loadScript(data, name)()
+        -- print(world)
+        if sceneScript and sceneScript.onStart then
+            sceneScript.onStart()
+        end
+        -- print(world)
         file:close()
     end
 end

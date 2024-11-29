@@ -38,7 +38,7 @@ function lib.load(data, world)
         return idMap[oldId]
     end
 
-    if false then
+    if true then
         for _, body in pairs(world:getBodies()) do
             body:destroy()
         end
@@ -84,7 +84,7 @@ function lib.load(data, world)
 
         -- Recreate the 'thing' table
         local thing = {
-            id =  getNewId(bodyData.id),
+            id = getNewId(bodyData.id),
             shapeType = bodyData.shapeType,
             radius = bodyData.radius,
             width = bodyData.width,
