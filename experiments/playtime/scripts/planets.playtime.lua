@@ -45,6 +45,9 @@ function s.onStart()
             }
             table.insert(planets, d)
         end
+        if body:getType() == 'dynamic' then
+            body:setAwake(true)
+        end
     end
     -- end
 end

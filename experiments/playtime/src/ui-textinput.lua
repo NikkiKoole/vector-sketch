@@ -388,7 +388,8 @@ return function(ui)
 
         -- Update cursor blinking
         if isFocused then
-            state.cursorTimer = state.cursorTimer + love.timer.getDelta()
+            --  print(love.timer.getDelta())
+            state.cursorTimer = state.cursorTimer + 1.0 / 90 --love.timer.getDelta()
             if state.cursorTimer >= 0.5 then
                 state.cursorVisible = not state.cursorVisible
                 state.cursorTimer = 0

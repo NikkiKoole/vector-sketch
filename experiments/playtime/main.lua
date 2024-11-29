@@ -46,7 +46,7 @@ local BUTTON_HEIGHT = 50
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
-local FIXED_TIMESTEP = true
+local FIXED_TIMESTEP = false
 local TICKRATE = 1 / 60
 
 
@@ -304,9 +304,9 @@ end
 
 function love.update(dt)
     if not worldState.paused then
-        for i, v in ipairs(softbodies) do
-            v:update(dt)
-        end
+        -- for i, v in ipairs(softbodies) do
+        --     v:update(dt)
+        -- end
 
         for i = 1, 2 do
             world:update(dt)
