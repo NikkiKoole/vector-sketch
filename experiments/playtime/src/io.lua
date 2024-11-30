@@ -5,7 +5,7 @@ local json = require 'vendor.dkjson'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local shapes = require 'src.shapes'
-
+local jointHandlers = require 'src.joint-handlers'
 local function generateID()
     return uuid.uuid()
 end
@@ -473,8 +473,11 @@ function lib.cloneSelection(selectedBodies)
             newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
 
             -- Clone shape
+            if (originalThing.shapeType == 'custom' and originalThing.vertices) then
+                print('need todo some magic to these vertices babay!')
+            end
             local newShape = shapes.createShape(originalThing.shapeType, originalThing.radius, originalThing.width,
-                originalThing.height)
+                originalThing.height, originalThing.vertices)
 
             -- Clone fixture
             local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())

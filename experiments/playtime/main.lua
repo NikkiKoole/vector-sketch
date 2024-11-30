@@ -283,6 +283,10 @@ function finalizeSpawn()
     end
 end
 
+local function sanitizeString(input)
+    if not input then return "" end   -- Handle nil or empty strings
+    return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
+end
 function finalizePolygon()
     if #uiState.polygonVertices >= 3 then
         -- Proceed to triangulate and create the physics body
@@ -873,7 +877,7 @@ function drawUI()
         ui.panel(300, 300, w - 600, h - 600, '»»» save «««', function()
             local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', uiState.saveName)
             if t then
-                uiState.saveName = t
+                uiState.saveName = sanitizeString(t)
             end
             if ui.button(320, 500, 200, 'save') then
                 uiState.saveDialogOpened = false

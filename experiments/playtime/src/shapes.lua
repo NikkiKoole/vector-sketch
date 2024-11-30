@@ -5,6 +5,7 @@ local shapes = {}
 local function generateID()
     return uuid.uuid()
 end
+
 local function makePolygonVertices(sides, radius)
     local vertices = {}
     local angleStep = (2 * math.pi) / sides
@@ -75,7 +76,7 @@ local function computeCentroid(vertices)
     return sumX / count, sumY / count
 end
 
-function shapes.createShape(shapeType, radius, width, height)
+function shapes.createShape(shapeType, radius, width, height, optionalVertices)
     if (radius == 0) then radius = 1 end
     if (width == 0) then width = 1 end
     if (height == 0) then height = 1 end
@@ -182,7 +183,7 @@ function shapes.createPolygonShape(vertices)
     end
 
     -- Store the body in your simulation
-    body:setUserData({ thing = { id = generateID(), shapeType = 'custom', body = body } })
+    body:setUserData({ thing = { id = generateID(), shapeType = 'custom', body = body, vertices = vertices } })
     return body
 end
 
