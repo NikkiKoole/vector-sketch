@@ -1,7 +1,9 @@
 -- Function to generate vertices of a regular polygon
 local decompose = require 'src.decompose'
+local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
 local shapes = {}
+
 local function generateID()
     return uuid.uuid()
 end
@@ -66,33 +68,112 @@ local function tableConcat(t1, t2)
     return t1
 end
 
-local function computeCentroid(vertices)
+
+function shapes.computeCentroid(polygon)
     local sumX, sumY = 0, 0
-    for _, vertex in ipairs(vertices) do
-        sumX = sumX + vertex.x
-        sumY = sumY + vertex.y
+    for i = 1, #polygon, 2 do
+        --for _, vertex in ipairs(vertices) do
+        sumX = sumX + polygon[i]
+        sumY = sumY + polygon[i + 1]
+        -- end
     end
-    local count = #vertices
+    local count = (#polygon / 2)
     return sumX / count, sumY / count
+end
+
+local function makeShapeListFromPolygon(polygon)
+    local shapesList = {}
+    local allowComplex = true -- TODO: parameterize this
+    local triangles = {}
+
+    -- first figure out if we are maybe a simple polygon we can use -as is- by box2d
+    if #polygon <= 16 and love.math.isConvex(polygon) then
+        local centroidX, centroidY = shapes.computeCentroid(polygon)
+        local localVertices = {}
+        for i = 1, #polygon, 2 do
+            local x = polygon[i] - centroidX
+            local y = polygon[i + 1] - centroidY
+            table.insert(localVertices, x)
+            table.insert(localVertices, y)
+        end
+        table.insert(shapesList, love.physics.newPolygonShape(localVertices))
+    else                     -- ok we are not the simplest polygons we need more work,
+        if allowComplex then -- when this is true we also solve, self intersecting and everythign
+            local result = {}
+            local success, err = pcall(function()
+                decompose.decompose_complex_poly(polygon, result)
+            end)
+
+            if not success then
+                print("Error in decompose_complex_poly: " .. err)
+                return nil -- Exit early if decomposition fails
+            end
+
+            for i = 1, #result do
+                local success, tris = pcall(love.math.triangulate, result[i])
+                if success then
+                    tableConcat(triangles, tris)
+                else
+                    print("Failed to triangulate part of the polygon: " .. tris)
+                end
+            end
+        else -- this is a bit of a nono, its no longer really in use and doenst fix all werid cases. faster though.
+            local success, result = pcall(love.math.triangulate, polygon)
+            if success then
+                triangles = result
+            else
+                print("Failed to triangulate polygon: " .. result)
+                return nil -- Exit early if triangulation fails
+            end
+        end
+
+        if #triangles == 0 then
+            print("No valid triangles were created.")
+            return nil
+        end
+        local centroidX, centroidY = shapes.computeCentroid(polygon)
+        for _, triangle in ipairs(triangles) do
+            -- Adjust triangle vertices relative to body position
+            local localVertices = {}
+            for i = 1, #triangle, 2 do
+                local x = triangle[i] - centroidX
+                local y = triangle[i + 1] - centroidY
+                table.insert(localVertices, x)
+                table.insert(localVertices, y)
+            end
+
+            local shapeSuccess, shape = pcall(love.physics.newPolygonShape, localVertices)
+            if shapeSuccess then
+                table.insert(shapesList, shape)
+            else
+                print("Failed to create shape for triangle: " .. shape)
+            end
+        end
+    end
+    return shapesList
 end
 
 function shapes.createShape(shapeType, radius, width, height, optionalVertices)
     if (radius == 0) then radius = 1 end
     if (width == 0) then width = 1 end
     if (height == 0) then height = 1 end
+
+    local shapesList = {}
+    local vertices = nil
+
     if shapeType == 'circle' then
-        return love.physics.newCircleShape(radius)
+        table.insert(shapesList, love.physics.newCircleShape(radius))
     elseif shapeType == 'rectangle' then
-        return love.physics.newRectangleShape(width, height)
+        table.insert(shapesList, love.physics.newRectangleShape(width, height))
     elseif shapeType == 'capsule' then
-        local vertices = capsuleXY(width, height, width / 5, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
+        vertices = capsuleXY(width, height, width / 5, 0, 0)
+        table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'trapezium' then
-        local vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
+        vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
+        table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'itriangle' then
-        local vertices = makeITriangle(width, height, 0, 0)
-        return love.physics.newPolygonShape(vertices), vertices
+        vertices = makeITriangle(width, height, 0, 0)
+        table.insert(shapesList, love.physics.newPolygonShape(vertices))
     else
         local sides = ({
             triangle = 3,
@@ -103,88 +184,22 @@ function shapes.createShape(shapeType, radius, width, height, optionalVertices)
         })[shapeType]
 
         if sides then
-            local vertices = makePolygonVertices(sides, radius)
-            return love.physics.newPolygonShape(vertices), vertices
+            vertices = makePolygonVertices(sides, radius)
+            table.insert(shapesList, love.physics.newPolygonShape(vertices))
+        elseif shapeType == 'custom' then
+            if optionalVertices then
+                local polygon = optionalVertices
+                shapesList = makeShapeListFromPolygon(polygon) or {}
+                vertices = polygon
+            else
+                error('shapetype custom needs optionalVertices!')
+            end
         else
+            --print(shapeType, radius, width, height, optionalVertices)
             error("Unknown shape type: " .. tostring(shapeType))
         end
     end
-end
-
-function shapes.createPolygonShape(vertices)
-    -- Convert vertices to a format suitable for love.math.triangulate()
-    local polygon = {}
-    for _, vertex in ipairs(vertices) do
-        table.insert(polygon, vertex.x)
-        table.insert(polygon, vertex.y)
-    end
-
-    local allowComplex = true -- TODO: parameterize this
-    local triangles = {}
-
-    if allowComplex then
-        local result = {}
-        local success, err = pcall(function()
-            decompose.decompose_complex_poly(polygon, result)
-        end)
-
-        if not success then
-            print("Error in decompose_complex_poly: " .. err)
-            return nil -- Exit early if decomposition fails
-        end
-
-        for i = 1, #result do
-            local success, tris = pcall(love.math.triangulate, result[i])
-            if success then
-                tableConcat(triangles, tris)
-            else
-                print("Failed to triangulate part of the polygon: " .. tris)
-            end
-        end
-    else
-        local success, result = pcall(love.math.triangulate, polygon)
-        if success then
-            triangles = result
-        else
-            print("Failed to triangulate polygon: " .. result)
-            return nil -- Exit early if triangulation fails
-        end
-    end
-
-    if #triangles == 0 then
-        print("No valid triangles were created.")
-        return nil
-    end
-
-    -- Create the physics body
-    local bodyType = 'dynamic'
-    -- Compute centroid for body position
-    local centroidX, centroidY = computeCentroid(vertices)
-    local body = love.physics.newBody(world, centroidX, centroidY, bodyType)
-
-    -- Create fixtures for each triangle
-    for _, triangle in ipairs(triangles) do
-        -- Adjust triangle vertices relative to body position
-        local localVertices = {}
-        for i = 1, #triangle, 2 do
-            local x = triangle[i] - centroidX
-            local y = triangle[i + 1] - centroidY
-            table.insert(localVertices, x)
-            table.insert(localVertices, y)
-        end
-
-        local shapeSuccess, shape = pcall(love.physics.newPolygonShape, localVertices)
-        if shapeSuccess then
-            local fixture = love.physics.newFixture(body, shape, 1)
-            fixture:setRestitution(0.3)
-        else
-            print("Failed to create shape for triangle: " .. shape)
-        end
-    end
-
-    -- Store the body in your simulation
-    body:setUserData({ thing = { id = generateID(), shapeType = 'custom', body = body, vertices = vertices } })
-    return body
+    return shapesList, vertices
 end
 
 return shapes

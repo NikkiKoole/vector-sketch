@@ -13,7 +13,7 @@ local theme = {
         text_default = { 1, 1, 1 },                      -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
-        height = 40
+        height = 34
     },
     checkbox = {
         checked = { 1, 1, 1 },

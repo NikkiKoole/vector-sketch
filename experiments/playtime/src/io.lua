@@ -1,11 +1,12 @@
 local lib = {}
---package.path = package.path .. ";../../?.lua"
+
 local inspect = require 'vendor.inspect'
 local json = require 'vendor.dkjson'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local shapes = require 'src.shapes'
 local jointHandlers = require 'src.joint-handlers'
+
 local function generateID()
     return uuid.uuid()
 end
@@ -253,10 +254,12 @@ local function sanitizeString(input)
     if not input then return "" end   -- Handle nil or empty strings
     return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
 end
+
 local function round_to_decimals(num, dec)
     local multiplier = 10 ^ dec -- 10^4 for 4 decimal places
     return math.floor(num * multiplier + 0.5) / multiplier
 end
+
 function lib.save(world, worldState, filename)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
@@ -445,17 +448,12 @@ function lib.save(world, worldState, filename)
 end
 
 function lib.cloneSelection(selectedBodies)
-    -- if not uiState.selectedBodies or #uiState.selectedBodies == 0 then
-    --     print("No bodies selected to clone.")
-    --     return
-    -- end
-
     -- Mapping from original body IDs to cloned body instances
     local clonedBodiesMap = {}
 
     -- Step 1: Clone Bodies
-    for _, originalThing in ipairs(selectedBodies) do
-        local originalBody = originalThing.body
+    for _, originals in ipairs(selectedBodies) do
+        local originalBody = originals.body
         local userData     = originalBody:getUserData()
         if userData and userData.thing then
             local originalThing = userData.thing
@@ -473,16 +471,24 @@ function lib.cloneSelection(selectedBodies)
             newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
 
             -- Clone shape
-            if (originalThing.shapeType == 'custom' and originalThing.vertices) then
-                print('need todo some magic to these vertices babay!')
-            end
-            local newShape = shapes.createShape(originalThing.shapeType, originalThing.radius, originalThing.width,
+
+            local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, originalThing.radius,
+                originalThing.width,
                 originalThing.height, originalThing.vertices)
 
+
+            local oldFixtures = originalBody:getFixtures()
+
+            for i = 1, #oldFixtures do
+                local oldF = oldFixtures[i]
+                local newFixture = love.physics.newFixture(newBody, newShapeList[i], oldF:getDensity())
+                newFixture:setRestitution(oldF:getRestitution())
+                newFixture:setFriction(oldF:getFriction())
+            end
             -- Clone fixture
-            local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())
-            newFixture:setRestitution(originalThing.fixture:getRestitution())
-            newFixture:setFriction(originalThing.fixture:getFriction())
+            --local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())
+            --newFixture:setRestitution(originalThing.fixture:getRestitution())
+            --newFixture:setFriction(originalThing.fixture:getFriction())
 
             -- Clone user data
             local clonedThing = {
@@ -492,8 +498,8 @@ function lib.cloneSelection(selectedBodies)
                 height = originalThing.height,
                 label = originalThing.label,
                 body = newBody,
-                shape = newShape,
-                fixture = newFixture,
+                shapes = newShapeList,
+                vertices = newVertices,
                 id = newID
             }
             newBody:setUserData({ thing = clonedThing })

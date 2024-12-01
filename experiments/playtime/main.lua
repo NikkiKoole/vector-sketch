@@ -6,7 +6,6 @@ local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 -- todo extract just the routines i need nowadays.. (render box2d world debug draw, something about pointer)
 local phys = require 'lib.mainPhysics'
-
 local blob = require 'vendor.loveblobs'
 
 local ui = require 'src.ui-all'
@@ -17,7 +16,7 @@ local io = require 'src.io'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local script = require 'src.script'
-
+local objectManager = require 'src.object-manager'
 ---- todo
 -- offsetA & offsetB now use a rotation that needs to be done in the other direction too.
 -- it feels its not needed. per se
@@ -40,17 +39,15 @@ local function generateID()
 end
 
 local PANEL_WIDTH = 300
-local BUTTON_HEIGHT = 50
+local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
-
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
-
 function love.load()
     -- Load and set the font
-    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 32)
+    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 
@@ -61,6 +58,8 @@ function love.load()
 
     uiState = {
         lastUsedRadius = 20,
+        lastUsedWidth = 40,
+        lastUsedHeight = 40,
         showGrid = false,
         radiusOfNextSpawn = 100,
         bodyTypeOfNextSpawn = 'dynamic',
@@ -76,7 +75,8 @@ function love.load()
         worldText = '',
         jointCreationMode = nil,
         jointUpdateMode = nil,
-        isDrawingPolygon = false,
+        isDrawingFreeformPolygon = false,
+        isDrawingClickPlacePolygon = false,
         polygonVertices = {},
         minPointDistance = 50, -- Default minimum distance
         lastPolygonPoint = nil,
@@ -106,14 +106,24 @@ function love.load()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
-    addThing('rectangle', 200, 400, 'dynamic', 100, 400)
-    addThing('rectangle', 600, 400, 'dynamic', 100)
+    objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400)
+    objectManager.addThing('rectangle', 600, 400, 'dynamic', 100)
     -- -- addThing('rectangle', 450, 800, 'kinematic', 200)
     -- -- addThing('rectangle', 850, 800, 'static', 200)
-    addThing('rectangle', 250, 1000, 'static', 100, 1800)
+    objectManager.addThing('rectangle', 250, 1000, 'static', 100, 1800)
     -- -- addThing('rectangle', 1100, 100, 'dynamic', 300)
-    addThing('circle', 1000, 400, 'dynamic', 100)
-    addThing('circle', 1300, 400, 'dynamic', 100)
+    objectManager.addThing('circle', 1000, 400, 'dynamic', 100)
+    objectManager.addThing('circle', 1300, 400, 'dynamic', 100)
+
+
+    -- -- Adding custom polygon
+    local customVertices = {
+        0, 0,
+        100, 0,
+        50, 500,
+        -- Add more vertices as needed
+    }
+    objectManager.addThing('custom', 500, 500, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
 
     softbodies = {}
 
@@ -134,146 +144,6 @@ function love.load()
     end
 end
 
-function recreateThingFromBody(body, newSettings)
-    if body:isDestroyed() then
-        print("The body is already destroyed.")
-        return nil
-    end
-    local userData = body:getUserData()
-    local thing = userData and userData.thing
-    -- Extract current properties
-    local x, y = body:getPosition()
-    local angle = body:getAngle()
-    local velocityX, velocityY = body:getLinearVelocity()
-    local angularVelocity = body:getAngularVelocity()
-    local bodyType = newSettings.bodyType or body:getType()
-    local restitution = thing.fixture:getRestitution()
-    local friction = thing.fixture:getFriction()
-    local fixedRotation = body:isFixedRotation() -- Capture fixed angle state
-    -- Get the original `thing` for shape info
-
-
-    local jointData = joint.extractJoints(body)
-    -- print(inspect(jointData))
-    -- Destroy the old body
-    body:destroy()
-
-    -- Create new body
-    local newBody = love.physics.newBody(world, x, y, bodyType)
-    newBody:setAngle(angle)
-    newBody:setLinearVelocity(velocityX, velocityY)
-    newBody:setAngularVelocity(angularVelocity)
-    newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
-    -- Create a new shape
-
-    local shape = shapes.createShape(
-        newSettings.shapeType or thing.shapeType,
-        newSettings.radius or thing.radius,
-        newSettings.width or thing.width,
-        newSettings.height or thing.height
-    )
-    local fixture = love.physics.newFixture(newBody, shape, 1)
-    fixture:setRestitution(newSettings.restitution or restitution)
-    fixture:setFriction(newSettings.friction or friction)
-
-    -- Update the `thing` table
-    thing.label = thing.label
-    thing.body = newBody
-    thing.shape = shape
-    thing.fixture = fixture
-    thing.radius = newSettings.radius or thing.radius
-    thing.width = newSettings.width or thing.width
-    thing.height = newSettings.height or thing.height
-    thing.id = thing.id or generateID()
-
-    registry.registerBody(thing.id, thing.body)
-    newBody:setUserData({ thing = thing })
-
-    joint.reattachJoints(jointData, newBody)
-
-    return thing
-end
-
-function addThing(shapeType, x, y, bodyType, radius, width, height, label)
-    -- Default values if not provided
-    bodyType = bodyType or 'dynamic'
-
-    radius = radius or 20         -- Default radius for circular shapes
-    width = width or radius * 2   -- Default width for polygons
-    height = height or radius * 2 -- Default height for polygons
-    label = label or ""           -- Default to empty string
-    -- Create a new table to store the shape's properties
-    --print(shapeType)
-    local thing = {
-        shapeType = shapeType,
-        radius = radius,
-        width = width,
-        height = height,
-        label = label, -- Add the label
-    }
-
-    -- Create the physics body at the specified world coordinates
-    thing.body = love.physics.newBody(world, x, y, bodyType)
-
-    -- print(inspect(getmetatable(thing.body)))
-    -- Use createShape to generate the shape
-    thing.shape = shapes.createShape(shapeType, radius, width, height)
-
-    -- Create the fixture and attach it to the body
-    thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
-    thing.fixture:setRestitution(0.3) -- Set bounciness
-
-    -- Set the body to sleep initially
-    thing.body:setAwake(true)
-
-    thing.id = generateID()
-    -- Store the 'thing' in the body's user data for easy access
-    thing.body:setUserData({ thing = thing })
-    registry.registerBody(thing.id, thing.body)
-end
-
-local function destroyBody(body)
-    local thing = body:getUserData().thing
-    local joints = body:getJoints()
-    for i = 1, #joints do
-        local ud = joints[i]:getUserData()
-        if ud then
-            registry.unregisterJoint(ud.id)
-            joints[i]:destroy()
-            --print('jointid:', ud.id)
-        end
-    end
-    registry.unregisterBody(thing.id)
-    body:destroy()
-end
-function startSpawn(shapeType, mx, my)
-    local thing = {}
-    local wx, wy = cam:getWorldCoordinates(mx, my)
-    local radius = tonumber(uiState.lastUsedRadius) or 10
-    local bodyType = uiState.bodyTypeOfNextSpawn
-
-    thing.body = love.physics.newBody(world, wx, wy, bodyType)
-
-    radius = tonumber(uiState.lastUsedRadius) or 10 -- Default radius for circular shapes
-    width = width or radius * 2                     -- Default width for polygons
-    height = height or radius * 2                   -- Default height for polygons
-
-    thing.shape = shapes.createShape(shapeType, radius, width, height)
-    thing.shapeType = shapeType
-    thing.radius = radius
-    thing.width = width
-    thing.height = height
-    thing.fixture = love.physics.newFixture(thing.body, thing.shape, 1)
-    thing.fixture:setRestitution(0.3)
-    thing.body:setAwake(false)
-    thing.id = generateID()
-    thing.label = ''
-    registry.registerBody(thing.id, thing.body)
-    thing.body:setUserData({ thing = thing })
-    uiState.currentlyDraggingObject = thing
-    uiState.offsetForCurrentlyDragging = { 0, 0 }
-end
-
 function finalizeSpawn()
     if uiState.currentlyDraggingObject then
         uiState.currentlyDraggingObject.body:setAwake(true)
@@ -287,16 +157,21 @@ local function sanitizeString(input)
     if not input then return "" end   -- Handle nil or empty strings
     return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
 end
+
 function finalizePolygon()
-    if #uiState.polygonVertices >= 3 then
+    if #uiState.polygonVertices >= 6 then
         -- Proceed to triangulate and create the physics body
-        shapes.createPolygonShape(uiState.polygonVertices)
+        --
+        local cx, cy = shapes.computeCentroid(uiState.polygonVertices)
+        objectManager.addThing('custom', cx, cy, uiState.bodyTypeOfNextSpawn, nil, nil, nil, '', uiState.polygonVertices)
+        --shapes.createPolygonShape(uiState.polygonVertices)
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")
     end
     -- Reset the drawing state
-    uiState.isDrawingPolygon = false
+    uiState.isDrawingClickPlacePolygon = false
+    uiState.isDrawingFreeformPolygon = false
     uiState.isCapturingPolygon = false
     uiState.polygonVertices = {}
     uiState.lastPolygonPoint = nil
@@ -373,7 +248,7 @@ local function drawAddShapeUI()
     local panelWidth = 200
     local buttonSpacing = BUTTON_SPACING
     local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 2) * (buttonHeight + buttonSpacing)) + buttonSpacing
+    local panelHeight = titleHeight + ((#shapeTypes + 3) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
     ui.panel(startX, startY, panelWidth, panelHeight, '', function()
         local layout = ui.createLayout({
@@ -403,7 +278,8 @@ local function drawAddShapeUI()
             if pressed then
                 ui.draggingActive = ui.activeElementID
                 local mx, my = love.mouse.getPosition()
-                startSpawn(shape, mx, my)
+                local wx, wy = cam:getWorldCoordinates(mx, my)
+                objectManager.startSpawn(shape, wx, wy)
             end
             if released then
                 ui.draggingActive = nil
@@ -421,8 +297,15 @@ local function drawAddShapeUI()
 
         -- Add a button for custom polygon
         x, y = ui.nextLayoutPosition(layout, width, height)
-        if ui.button(x, y, width, 'custom') then
-            uiState.isDrawingPolygon = true
+        if ui.button(x, y, width, 'freeform') then
+            uiState.isDrawingFreeformPolygon = true
+            uiState.polygonVertices = {}
+            uiState.lastPolygonPoint = nil
+        end
+
+        x, y = ui.nextLayoutPosition(layout, width, height)
+        if ui.button(x, y, width, 'click') then
+            uiState.isDrawingClickPlacePolygon = true
             uiState.polygonVertices = {}
             uiState.lastPolygonPoint = nil
         end
@@ -503,7 +386,7 @@ local function drawUpdateSelectedObjectUI()
                 local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
                 ui.label(x, y, ' radius')
                 if newRadius and newRadius ~= thing.radius then
-                    uiState.currentlySelectedObject = recreateThingFromBody(body,
+                    uiState.currentlySelectedObject = objectManager.recreateThingFromBody(body,
                         { shapeType = "circle", radius = newRadius })
                     uiState.lastUsedRadius = newRadius
                     body = uiState.currentlySelectedObject.body
@@ -520,7 +403,9 @@ local function drawUpdateSelectedObjectUI()
                 ui.label(x, y, ' height')
 
                 if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
-                    uiState.currentlySelectedObject = recreateThingFromBody(body, {
+                    uiState.lastUsedWidth = newWidth
+                    uiState.lastUsedHeight = newHeight
+                    uiState.currentlySelectedObject = objectManager.recreateThingFromBody(body, {
                         shapeType = shapeType,
                         width = newWidth or thing.width,
                         height = newHeight or thing.height,
@@ -537,8 +422,9 @@ local function drawUpdateSelectedObjectUI()
                         dirtyBodyChange)
                     ui.label(x, y, ' radius')
                     if newRadius and newRadius ~= thing.radius then
-                        uiState.currentlySelectedObject = recreateThingFromBody(body,
+                        uiState.currentlySelectedObject = objectManager.recreateThingFromBody(body,
                             { shapeType = shapeType, radius = newRadius })
+                        uiState.lastUsedRadius = newRadius
                         body = uiState.currentlySelectedObject.body
                     end
                 else
@@ -621,7 +507,7 @@ local function drawUpdateSelectedObjectUI()
 
         nextRow()
         if ui.button(x, y, 260, 'destroy') then
-            destroyBody(body)
+            objectManager.destroyBody(body)
 
             uiState.currentlySelectedObject = nil
         end
@@ -679,9 +565,6 @@ local function drawGrid(cam, worldState)
     love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1)
 end
-
-
-
 
 function drawUI()
     ui.startFrame()
@@ -808,6 +691,27 @@ function drawUI()
         drawUpdateSelectedObjectUI()
     end
 
+
+    if uiState.isDrawingClickPlacePolygon then
+        local panelWidth = PANEL_WIDTH
+        local w, h = love.graphics.getDimensions()
+        ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
+            local padding = BUTTON_SPACING
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = BUTTON_SPACING,
+                startX = w - panelWidth,
+                startY = 100 + padding
+            })
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if ui.button(x, y, 260, 'finalize') then
+                finalizePolygon()
+                --local cloned = io.cloneSelection(uiState.selectedBodies)
+                -- uiState.selectedBodies = cloned
+            end
+        end)
+    end
+
     if uiState.selectedBodies and #uiState.selectedBodies > 0 then
         local panelWidth = PANEL_WIDTH
         local w, h = love.graphics.getDimensions()
@@ -830,7 +734,7 @@ function drawUI()
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'destroy') then
                 for i = #uiState.selectedBodies, 1, -1 do
-                    destroyBody(uiState.selectedBodies[i].body)
+                    objectManager.destroyBody(uiState.selectedBodies[i].body)
                 end
                 uiState.selectedBodies = nil
             end
@@ -937,15 +841,15 @@ function love.draw()
     if (uiState.currentlySelectedObject) then
         --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
     end
-    if uiState.isDrawingPolygon then
-        if (#uiState.polygonVertices > 3) then
-            local polygon = {}
-            for i = 1, #uiState.polygonVertices do
-                table.insert(polygon, uiState.polygonVertices[i].x)
-                table.insert(polygon, uiState.polygonVertices[i].y)
-            end
+    if uiState.isDrawingFreeformPolygon or uiState.isDrawingClickPlacePolygon then
+        if (#uiState.polygonVertices >= 6) then
+            --local polygon = {}
+            -- for i = 1, #uiState.polygonVertices do
+            --     table.insert(polygon, uiState.polygonVertices[i].x)
+            --     table.insert(polygon, uiState.polygonVertices[i].y)
+            -- end
 
-            love.graphics.polygon('line', polygon)
+            love.graphics.polygon('line', uiState.polygonVertices)
         end
     end
 
@@ -1025,7 +929,9 @@ function love.mousemoved(x, y, dx, dy)
             end
         end
         if addPoint then
-            table.insert(uiState.polygonVertices, { x = wx, y = wy })
+            --table.insert(uiState.polygonVertices, { x = wx, y = wy })
+            table.insert(uiState.polygonVertices, wx)
+            table.insert(uiState.polygonVertices, wy)
             uiState.lastPolygonPoint = { x = wx, y = wy }
         end
     elseif love.mouse.isDown(3) then
@@ -1082,7 +988,7 @@ local function handlePointer(x, y, id, action)
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if uiState.saveDialogOpened then return end
-        if uiState.currentlySelectedJoint or uiState.currentlySelectedObject or uiState.selectedBodies then
+        if uiState.currentlySelectedJoint or uiState.currentlySelectedObject or uiState.selectedBodies or uiState.isDrawingClickPlacePolygon then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -1093,8 +999,14 @@ local function handlePointer(x, y, id, action)
         if (startSelection) then
             uiState.startSelection = { x = x, y = y }
         end
-        local cx, cy = cam:getWorldCoordinates(x, y)
 
+
+        local cx, cy = cam:getWorldCoordinates(x, y)
+        if (uiState.isDrawingClickPlacePolygon) then
+            -- uiState.polygonVertices
+            table.insert(uiState.polygonVertices, cx)
+            table.insert(uiState.polygonVertices, cy)
+        end
         if (uiState.currentlySettingOffsetAFunction) then
             uiState.currentlySelectedJoint = uiState.currentlySettingOffsetAFunction(cx, cy)
             uiState.currentlySettingOffsetAFunction = nil
@@ -1103,6 +1015,7 @@ local function handlePointer(x, y, id, action)
             uiState.currentlySelectedJoint = uiState.currentlySettingOffsetBFunction(cx, cy)
             uiState.currentlySettingOffsetBFunction = nil
         end
+
         local onPressedParams = {
             pointerForceFunc = function(fixture)
                 return worldState.mouseForce
@@ -1148,7 +1061,7 @@ local function handlePointer(x, y, id, action)
         if uiState.currentlyDraggingObject then
             finalizeSpawn()
         end
-        if uiState.isDrawingPolygon then
+        if uiState.isDrawingFreeformPolygon then
             finalizePolygon()
         end
         if (uiState.startSelection) then
@@ -1170,7 +1083,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if not istouch and button == 1 then
-        if uiState.isDrawingPolygon then
+        if uiState.isDrawingFreeformPolygon then
             -- Start capturing mouse movement
             uiState.isCapturingPolygon = true
             uiState.polygonVertices = {}
