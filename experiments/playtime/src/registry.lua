@@ -13,13 +13,13 @@ end
 -- Register a body
 function registry.registerBody(id, body)
     registry.bodies[id] = body
-    print('bodies:', tablelength(registry.bodies))
+    --print('bodies:', tablelength(registry.bodies))
 end
 
 -- Unregister a body
 function registry.unregisterBody(id)
     registry.bodies[id] = nil
-    print('bodies:', tablelength(registry.bodies))
+    --print('bodies:', tablelength(registry.bodies))
 end
 
 -- Get a body by ID
