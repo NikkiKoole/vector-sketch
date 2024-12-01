@@ -63,7 +63,7 @@ function lib.startSpawn(shapeType, wx, wy)
     local width = tonumber(uiState.lastUsedWidth) or radius * 2   -- Default width for polygons
     local height = tonumber(uiState.lastUsedHeight) or radius * 2 -- Default height for polygons
 
-    local bodyType = uiState.bodyTypeOfNextSpawn
+    local bodyType = uiState.nextType
     local thing = createThing(shapeType, wx, wy, bodyType, radius, width, height, '')
 
     if not thing then
@@ -71,8 +71,8 @@ function lib.startSpawn(shapeType, wx, wy)
         return
     end
 
-    uiState.currentlyDraggingObject = thing
-    uiState.offsetForCurrentlyDragging = { 0, 0 }
+    uiState.draggingObj = thing
+    uiState.offsetDragging = { 0, 0 }
 end
 
 function lib.addThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)

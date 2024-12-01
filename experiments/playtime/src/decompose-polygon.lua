@@ -145,7 +145,7 @@ local function splitPoly(poly, intersection)
 end
 
 
-function decompose_complex.decompose_complex_poly(poly, result)
+function decompose_complex.run(poly, result)
     result = result or {}
     local intersections = getCollisions(poly)
 
@@ -159,8 +159,8 @@ function decompose_complex.decompose_complex_poly(poly, result)
     local p1, p2 = splitPoly(poly, intersection)
 
     -- Recursively decompose the resulting polygons
-    decompose_complex.decompose_complex_poly(p1, result)
-    decompose_complex.decompose_complex_poly(p2, result)
+    decompose_complex.run(p1, result)
+    decompose_complex.run(p2, result)
 
     return result
 end

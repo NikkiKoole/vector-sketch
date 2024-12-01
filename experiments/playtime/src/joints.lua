@@ -256,7 +256,7 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
         if ui.button(x, y, width, 'Create') then
             local j = lib.createJoint(uiState.jointCreationMode)
             uiState.currentlySelectedJoint = j
-            uiState.currentlySelectedObject = nil
+            uiState.selectedObject = nil
             uiState.jointCreationMode = nil
         end
 

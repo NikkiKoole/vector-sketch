@@ -1,5 +1,5 @@
 -- Function to generate vertices of a regular polygon
-local decompose = require 'src.decompose'
+local decompose = require 'src.decompose-polygon'
 local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
 local shapes = {}
@@ -101,7 +101,7 @@ local function makeShapeListFromPolygon(polygon)
         if allowComplex then -- when this is true we also solve, self intersecting and everythign
             local result = {}
             local success, err = pcall(function()
-                decompose.decompose_complex_poly(polygon, result)
+                decompose.run(polygon, result)
             end)
 
             if not success then
