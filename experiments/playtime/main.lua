@@ -7,6 +7,7 @@ local camera = require 'lib.camera'
 -- todo extract just the routines i need nowadays.. (render box2d world debug draw, something about pointer)
 local phys = require 'lib.mainPhysics'
 local blob = require 'vendor.loveblobs'
+local inspect = require 'vendor.inspect'
 
 local ui = require 'src.ui-all'
 local joint = require 'src.joints'
@@ -17,6 +18,7 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
+
 ---- todo
 -- offsetA & offsetB now use a rotation that needs to be done in the other direction too.
 -- it feels its not needed. per se
@@ -36,6 +38,31 @@ waitForEvent()
 
 local function generateID()
     return uuid.uuid()
+end
+local function shallowCopy(original)
+    local copy = {}
+    for key, value in pairs(original) do
+        copy[key] = value
+    end
+    -- setmetatable(copy, getmetatable(original))
+    return copy
+end
+-- Function to compare two tables for equality (assuming they are arrays of numbers)
+local function tablesEqualNumbers(t1, t2)
+    -- Check if both tables have the same number of elements
+    if #t1 ~= #t2 then
+        return false
+    end
+
+    -- Compare each corresponding element
+    for i = 1, #t1 do
+        if t1[i] ~= t2[i] then
+            return false
+        end
+    end
+
+    -- All elements are equal
+    return true
 end
 
 local PANEL_WIDTH = 300
@@ -77,6 +104,10 @@ function love.load()
         jointUpdateMode = nil,
         isDrawingFreeformPolygon = false,
         isDrawingClickPlacePolygon = false,
+        customPolygonLockedVerts = true,
+        customPolygonDraggingVertexIndex = 0,
+        customPolygonTempVertices = nil, -- used when dragging a vertex
+        customPolygonCXCY = nil,
         polygonVertices = {},
         minPointDistance = 50, -- Default minimum distance
         lastPolygonPoint = nil,
@@ -359,7 +390,7 @@ local function drawUpdateSelectedObjectUI()
 
         local userData = body:getUserData()
         local thing = userData and userData.thing
-        --print(body, userData, thing, thing.width, thing.height)
+
         local dirtyBodyChange = false
         if (uiState.lastSelectedBody ~= body) then
             dirtyBodyChange = true
@@ -429,7 +460,18 @@ local function drawUpdateSelectedObjectUI()
                     end
                 else
                     -- No UI controls for custom or unsupported shapes
-                    ui.label(x, y, 'custom')
+                    --ui.label(x, y, 'custom')
+                    if ui.button(x, y, 260, uiState.customPolygonLockedVerts and 'verts locked' or 'verts unlocked') then
+                        uiState.customPolygonLockedVerts = not uiState.customPolygonLockedVerts
+                        if uiState.customPolygonLockedVerts == false then
+                            uiState.customPolygonTempVertices = shallowCopy(uiState.currentlySelectedObject.vertices)
+                            local cx, cy = shapes.computeCentroid(uiState.currentlySelectedObject.vertices)
+                            uiState.customPolygonCXCY = { x = cx, y = cy }
+                        else
+                            uiState.customPolygonTempVertices = nil
+                            uiState.customPolygonCXCY = nil
+                        end
+                    end
                 end
             end
         end
@@ -801,6 +843,21 @@ function drawUI()
     end
 end
 
+local function getLocalVerticesForCustomSelected(vertices, obj, cx, cy)
+    local verts = vertices
+    local offX, offY = obj.body:getPosition()
+    local angle = obj.body:getAngle()
+    local result = {}
+
+    for i = 1, #verts, 2 do
+        local rx, ry = rotatePoint(verts[i] - cx, verts[i + 1] - cy, 0, 0, angle)
+        local vx, vy = offX + rx, offY + ry
+        table.insert(result, vx)
+        table.insert(result, vy)
+    end
+
+    return result
+end
 function love.draw()
     local w, h = love.graphics.getDimensions()
     love.graphics.clear(20 / 255, 5 / 255, 20 / 255)
@@ -838,23 +895,33 @@ function love.draw()
     end
     love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1)
-    if (uiState.currentlySelectedObject) then
-        --        phys.drawSelected(uiState.currentlySelectedObject:getBody())
-    end
+
+
     if uiState.isDrawingFreeformPolygon or uiState.isDrawingClickPlacePolygon then
         if (#uiState.polygonVertices >= 6) then
-            --local polygon = {}
-            -- for i = 1, #uiState.polygonVertices do
-            --     table.insert(polygon, uiState.polygonVertices[i].x)
-            --     table.insert(polygon, uiState.polygonVertices[i].y)
-            -- end
-
             love.graphics.polygon('line', uiState.polygonVertices)
         end
     end
 
+    -- draw mousehandlers for dragging vertices
+    if uiState.customPolygonTempVertices and uiState.currentlySelectedObject and uiState.currentlySelectedObject.shapeType == 'custom' and uiState.customPolygonLockedVerts == false then
+        local verts = getLocalVerticesForCustomSelected(uiState.customPolygonTempVertices,
+            uiState.currentlySelectedObject, uiState.customPolygonCXCY.x, uiState.customPolygonCXCY.y)
 
+        local mx, my = love.mouse:getPosition()
+        local cx, cy = cam:getWorldCoordinates(mx, my)
 
+        for i = 1, #verts, 2 do
+            local vx = verts[i]
+            local vy = verts[i + 1]
+            local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+            if dist < 10 then
+                love.graphics.circle('fill', vx, vy, 10)
+            else
+                love.graphics.circle('line', vx, vy, 10)
+            end
+        end
+    end
     -- Highlight selected bodies
     if uiState.selectedBodies then
         local lw = love.graphics.getLineWidth()
@@ -885,6 +952,16 @@ function love.draw()
         love.graphics.setColor(1, 1, 1) -- Reset color
     end
 
+    if uiState.customPolygonTempVertices then
+        -- local result = getLocalVerticesForCustomSelected(uiState.customPolygonTempVertices, obj, cx, cy)
+        local verts = getLocalVerticesForCustomSelected(uiState.customPolygonTempVertices,
+            uiState.currentlySelectedObject, uiState.customPolygonCXCY.x, uiState.customPolygonCXCY.y)
+
+        --uiState.customPolygonTempVertices
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.polygon('line', verts)
+        love.graphics.setColor(1, 1, 1) -- Rese
+    end
 
     cam:pop()
     if uiState.startSelection then
@@ -899,11 +976,32 @@ function love.draw()
             uiState.currentlySelectedJoint = nil
         end
         uiState.maybeHideSelectedPanel = false
+        uiState.customPolygonTempVertices = nil
+        uiState.customPolygonLockedVerts = true
     end
+
     if FIXED_TIMESTEP then
         love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
     else
         love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
+    end
+end
+
+local function maybeUpdateCustomPolygonVertices()
+    if not tablesEqualNumbers(uiState.customPolygonTempVertices, uiState.currentlySelectedObject.vertices) then
+        local nx, ny = shapes.computeCentroid(uiState.customPolygonTempVertices)
+        local ox, oy = shapes.computeCentroid(uiState.currentlySelectedObject.vertices)
+        local dx = nx - ox
+        local dy = ny - oy
+        local body = uiState.currentlySelectedObject.body
+        local oldX, oldY = body:getPosition()
+        body:setPosition(oldX + dx, oldY + dy)
+        uiState.currentlySelectedObject = objectManager.recreateThingFromBody(body,
+            { optionalVertices = uiState.customPolygonTempVertices })
+
+        uiState.customPolygonTempVertices = shallowCopy(uiState.currentlySelectedObject.vertices)
+
+        uiState.customPolygonCXCY = { x = nx, y = ny }
     end
 end
 
@@ -915,7 +1013,16 @@ function love.wheelmoved(dx, dy)
 end
 
 function love.mousemoved(x, y, dx, dy)
-    if uiState.isCapturingPolygon then
+    if uiState.customPolygonDraggingVertexIndex and uiState.customPolygonDraggingVertexIndex > 0 then
+        local index = uiState.customPolygonDraggingVertexIndex
+        local obj = uiState.currentlySelectedObject
+        local angle = obj.body:getAngle()
+        local dx2, dy2 = rotatePoint(dx, dy, 0, 0, -angle)
+        dx2 = dx2 / cam.scale
+        dy2 = dy2 / cam.scale
+        uiState.customPolygonTempVertices[index] = uiState.customPolygonTempVertices[index] + dx2
+        uiState.customPolygonTempVertices[index + 1] = uiState.customPolygonTempVertices[index + 1] + dy2
+    elseif uiState.isCapturingPolygon then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
@@ -969,6 +1076,167 @@ function love.textinput(t)
     ui.handleTextInput(t)
 end
 
+-- Function to convert world coordinates to local coordinates of a shape
+local function worldToLocal(worldX, worldY, obj, cx, cy)
+    -- Get the body's position and angle
+    local offX, offY = obj.body:getPosition()
+    local angle = obj.body:getAngle()
+
+    -- Step 1: Translate the world point to the body's origin
+    local translatedX = worldX - offX
+    local translatedY = worldY - offY
+
+    -- Step 2: Rotate the point by -angle to align with the local coordinate system
+    local cosA = math.cos(-angle)
+    local sinA = math.sin(-angle)
+    local rotatedX = translatedX * cosA - translatedY * sinA
+    local rotatedY = translatedX * sinA + translatedY * cosA
+
+    -- Step 3: Adjust for the centroid offset
+    local localX = rotatedX + cx
+    local localY = rotatedY + cy
+
+    return localX, localY
+end
+
+local function distancePointToSegment(px, py, x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+
+    if dx == 0 and dy == 0 then
+        -- The segment is a single point
+        local dist = math.sqrt((px - x1) ^ 2 + (py - y1) ^ 2)
+        return dist, { x = x1, y = y1 }
+    end
+
+    -- Calculate the t that minimizes the distance
+    local t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
+
+    -- Clamp t to the [0,1] range
+    t = math.max(0, math.min(1, t))
+
+    -- Find the closest point on the segment
+    local closestX = x1 + t * dx
+    local closestY = y1 + t * dy
+
+    -- Calculate the distance
+    local dist = math.sqrt((px - closestX) ^ 2 + (py - closestY) ^ 2)
+
+    return dist, { x = closestX, y = closestY }
+end
+-- Function to find the closest edge to a given point
+-- Returns the index of the first vertex of the closest edge
+local function findClosestEdge(verts, px, py)
+    local minDist = math.huge
+    local closestEdgeIndex = nil
+
+    local numVertices = #verts / 2
+
+    for i = 1, numVertices do
+        local j = (i % numVertices) + 1 -- Next vertex (wrap around)
+        local x1 = verts[(i - 1) * 2 + 1]
+        local y1 = verts[(i - 1) * 2 + 2]
+        local x2 = verts[(j - 1) * 2 + 1]
+        local y2 = verts[(j - 1) * 2 + 2]
+
+        local dist, _ = distancePointToSegment(px, py, x1, y1, x2, y2)
+
+        if dist < minDist then
+            minDist = dist
+            closestEdgeIndex = i -- Insert after vertex i
+        end
+    end
+
+    return closestEdgeIndex
+end
+
+local function findClosestVertex(verts, px, py)
+    local minDistSq = math.huge
+    local closestVertexIndex = nil
+
+    local numVertices = #verts / 2
+
+    for i = 1, numVertices do
+        local vx = verts[(i - 1) * 2 + 1]
+        local vy = verts[(i - 1) * 2 + 2]
+        local dx = px - vx
+        local dy = py - vy
+        local distSq = dx * dx + dy * dy
+
+        if distSq < minDistSq then
+            minDistSq = distSq
+            closestVertexIndex = i
+        end
+    end
+
+    return closestVertexIndex
+end
+-- Function to remove a vertex from the table based on its vertex index
+-- verts: flat list {x1, y1, x2, y2, ...}
+-- vertexIndex: the index of the vertex to remove (1, 2, 3, ...)
+local function removeVertexAt(verts, vertexIndex)
+    local posX = (vertexIndex - 1) * 2 + 1
+    local posY = posX + 1
+
+    -- Remove y-coordinate first to prevent shifting issues
+    table.remove(verts, posY)
+    table.remove(verts, posX)
+end
+
+local function insertValuesAt(tbl, pos, val1, val2)
+    table.insert(tbl, pos, val1)
+    table.insert(tbl, pos + 1, val2)
+end
+
+local function insertCustomPolygonVertex(x, y)
+    local px, py = worldToLocal(x, y, uiState.currentlySelectedObject, uiState.customPolygonCXCY.x,
+        uiState.customPolygonCXCY.y)
+    -- Find the closest edge index
+    local insertAfterVertexIndex = findClosestEdge(uiState.customPolygonTempVertices, px, py)
+    insertValuesAt(uiState.customPolygonTempVertices, insertAfterVertexIndex * 2 + 1, px, py)
+end
+
+-- Function to remove a custom polygon vertex based on mouse click
+local function removeCustomPolygonVertex(x, y)
+    -- Step 1: Convert world coordinates to local coordinates
+    local px, py = worldToLocal(x, y, uiState.currentlySelectedObject,
+        uiState.customPolygonCXCY.x, uiState.customPolygonCXCY.y)
+
+    -- Step 2: Find the closest vertex index
+    local closestVertexIndex = findClosestVertex(uiState.customPolygonTempVertices, px, py)
+
+    if closestVertexIndex then
+        -- Optional: Define a maximum allowable distance to consider for deletion
+        local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
+        local vx = uiState.customPolygonTempVertices[(closestVertexIndex - 1) * 2 + 1]
+        local vy = uiState.customPolygonTempVertices[(closestVertexIndex - 1) * 2 + 2]
+        local dx = px - vx
+        local dy = py - vy
+        local distSq = dx * dx + dy * dy
+
+        if distSq <= maxDeletionDistanceSq then
+            -- Step 3: Remove the vertex from the vertex list
+
+            -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
+            if #uiState.customPolygonTempVertices <= 6 then
+                print("Cannot delete vertex: A polygon must have at least three vertices.")
+                -- Optionally, you can restore the removed vertex or prevent deletion
+                return
+            end
+            removeVertexAt(uiState.customPolygonTempVertices, closestVertexIndex)
+
+            maybeUpdateCustomPolygonVertices()
+
+            -- Debugging Output
+            print(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
+        else
+            print("No vertex close enough to delete.")
+        end
+    else
+        print("No vertex found to delete.")
+    end
+end
+
 function love.keypressed(key)
     ui.handleKeyPress(key)
     if key == 'escape' then
@@ -980,6 +1248,19 @@ function love.keypressed(key)
     if key == 'f5' then
         worldState.paused = true
         uiState.saveDialogOpened = true
+    end
+    if key == 'i' and uiState.customPolygonTempVertices then
+        -- figure out where my mousecursor is, between what nodes?
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        insertCustomPolygonVertex(wx, wy)
+        maybeUpdateCustomPolygonVertices()
+    end
+    if key == 'd' and uiState.customPolygonTempVertices then
+        -- Remove a vertex
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        removeCustomPolygonVertex(wx, wy)
     end
 end
 
@@ -1000,8 +1281,25 @@ local function handlePointer(x, y, id, action)
             uiState.startSelection = { x = x, y = y }
         end
 
-
         local cx, cy = cam:getWorldCoordinates(x, y)
+
+        if uiState.customPolygonTempVertices and uiState.currentlySelectedObject and uiState.currentlySelectedObject.shapeType == 'custom' and uiState.customPolygonLockedVerts == false then
+            local verts = getLocalVerticesForCustomSelected(uiState.customPolygonTempVertices,
+                uiState.currentlySelectedObject, uiState.customPolygonCXCY.x, uiState.customPolygonCXCY.y)
+            for i = 1, #verts, 2 do
+                local vx = verts[i]
+                local vy = verts[i + 1]
+                local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+                if dist < 10 then
+                    uiState.customPolygonDraggingVertexIndex = i
+
+                    return
+                else
+                    uiState.customPolygonDraggingVertexIndex = 0
+                end
+            end
+        end
+
         if (uiState.isDrawingClickPlacePolygon) then
             -- uiState.polygonVertices
             table.insert(uiState.polygonVertices, cx)
@@ -1064,6 +1362,10 @@ local function handlePointer(x, y, id, action)
         if uiState.isDrawingFreeformPolygon then
             finalizePolygon()
         end
+        if uiState.customPolygonDraggingVertexIndex > 0 then
+            uiState.customPolygonDraggingVertexIndex = 0
+            maybeUpdateCustomPolygonVertices()
+        end
         if (uiState.startSelection) then
             local tlx = math.min(uiState.startSelection.x, x)
             local tly = math.min(uiState.startSelection.y, y)
@@ -1075,7 +1377,7 @@ local function handlePointer(x, y, id, action)
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
 
             uiState.selectedBodies = selected
-            -- print(inspect(selected))
+
             uiState.startSelection = nil
         end
     end

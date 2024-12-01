@@ -118,11 +118,12 @@ function lib.recreateThingFromBody(body, newSettings)
     newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
     -- Create a new shape
 
-    local shapeList, vertices = shapes.createShape(
+    local shapeList, newVertices = shapes.createShape(
         newSettings.shapeType or thing.shapeType,
         newSettings.radius or thing.radius,
         newSettings.width or thing.width,
-        newSettings.height or thing.height
+        newSettings.height or thing.height,
+        newSettings.optionalVertices
     )
 
     for _, shape in ipairs(shapeList) do
@@ -142,7 +143,7 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.width = newSettings.width or thing.width
     thing.height = newSettings.height or thing.height
     thing.id = thing.id or generateID()
-
+    thing.vertices = newVertices
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 
