@@ -6,8 +6,6 @@ local registry = require 'src.registry'
 local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
 local inspect = require 'vendor.inspect'
-local mathutil = require 'src.math-utils'
-
 
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)

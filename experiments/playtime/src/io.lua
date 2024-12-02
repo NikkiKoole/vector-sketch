@@ -7,7 +7,7 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local shapes = require 'src.shapes'
 local jointHandlers = require 'src.joint-handlers'
-local mathutil = require 'src.math-utils'
+local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 
 
@@ -229,9 +229,9 @@ function lib.load(data, world)
                 -- joint:setUserData({ id = jointData.id })
 
 
-                local fxa, fya = mathutil.rotatePoint(anchorA[1] - bodyA:getX(), anchorA[2] - bodyA:getY(), 0, 0,
+                local fxa, fya = mathutils.rotatePoint(anchorA[1] - bodyA:getX(), anchorA[2] - bodyA:getY(), 0, 0,
                     -bodyA:getAngle())
-                local fxb, fyb = mathutil.rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
+                local fxb, fyb = mathutils.rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
                     -bodyB:getAngle())
                 joint:setUserData({
                     id = getNewId(jointData.id),

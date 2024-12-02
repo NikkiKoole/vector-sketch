@@ -5,7 +5,7 @@ local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
 local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
-local mathutil = require 'src.math-utils'
+local mathutils = require 'src.math-utils'
 
 local offsetHasChangedViaOutside
 -- Helper function to create a slider with an associated label
@@ -86,11 +86,11 @@ function lib.createJoint(data)
     local x1, y1 = bodyA:getPosition()
     local x2, y2 = bodyB:getPosition()
     local offsetA = data.offsetA or { x = 0, y = 0 }
-    local rx, ry = mathutil.rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
+    local rx, ry = mathutils.rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
     x1, y1 = x1 + rx, y1 + ry
 
     local offsetB = data.offsetB or { x = 0, y = 0 }
-    local rx, ry = mathutil.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
+    local rx, ry = mathutils.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
 
     local handler = jointHandlers[jointType]
@@ -297,7 +297,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     nextRow()
                     if ui.button(x, y, 160, 'normalize') then
                         local _x, _y = j:getAxis()
-                        _x, _y = mathutil.normalizeAxis(_x, _y)
+                        _x, _y = mathutils.normalizeAxis(_x, _y)
                         uiState.selectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = _y })
                         j = uiState.selectedJoint
                     end
@@ -429,7 +429,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     if false then
                         -- keep this around because it will make offsetA unneeded.
                         local ax1, ay1, b1x2, b1y2 = j:getAnchors()
-                        local fx, fy = mathutil.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
+                        local fx, fy = mathutils.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
                             -bodyA:getAngle())
                         print('GREAT', fx, fy, x, y)
                     end
@@ -449,7 +449,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     if false then
                         -- keep this around because it will make offsetA unneeded.
                         local ax1, ay1, b1x2, b1y2 = j:getAnchors()
-                        local fx, fy = mathutil.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
+                        local fx, fy = mathutils.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
                             -bodyA:getAngle())
                         print('GREAT', fx, fy, x, y)
                     end
@@ -463,14 +463,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 nextRow()
                 if ui.button(x, y, 40, 'O') then
                     uiState.setOffsetAFunc = function(x, y)
-                        local fx, fy = mathutil.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                        local fx, fy = mathutils.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
                         -- print(fx, fy)
                         return updateOffsetA(fx, fy)
                     end
                 end
                 if ui.button(x + 50, y, 40, '+') then
                     uiState.setOffsetBFunc = function(x, y)
-                        local fx, fy = mathutil.rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
+                        local fx, fy = mathutils.rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
                         -- print(fx, fy)
                         return updateOffsetB(fx, fy)
                     end

@@ -1,6 +1,6 @@
 -- shapes.lua
-local decompose = require 'src.decompose-polygon'
-local mathutil = require 'src.math-utils'
+
+local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 
 local shapes = {}
@@ -67,7 +67,7 @@ local function makeShapeListFromPolygon(polygon)
 
     -- first figure out if we are maybe a simple polygon we can use -as is- by box2d
     if #polygon <= 16 and love.math.isConvex(polygon) then
-        local centroidX, centroidY = mathutil.computeCentroid(polygon)
+        local centroidX, centroidY = mathutils.computeCentroid(polygon)
         local localVertices = {}
         for i = 1, #polygon, 2 do
             local x = polygon[i] - centroidX
@@ -80,7 +80,7 @@ local function makeShapeListFromPolygon(polygon)
         if allowComplex then -- when this is true we also solve, self intersecting and everythign
             local result = {}
             local success, err = pcall(function()
-                decompose.run(polygon, result)
+                mathutils.decompose(polygon, result)
             end)
 
             if not success then
@@ -110,7 +110,7 @@ local function makeShapeListFromPolygon(polygon)
             print("No valid triangles were created.")
             return nil
         end
-        local centroidX, centroidY = mathutil.computeCentroid(polygon)
+        local centroidX, centroidY = mathutils.computeCentroid(polygon)
         for _, triangle in ipairs(triangles) do
             -- Adjust triangle vertices relative to body position
             local localVertices = {}

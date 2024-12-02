@@ -1,6 +1,6 @@
 --selection-rect.lua
 local lib = {}
-local mathutil = require 'src.math-utils'
+local mathutils = require 'src.math-utils'
 -- Include the drawDottedLine function here
 local function drawDottedLine(x1, y1, x2, y2, dotSize, spacing)
     local dx = x2 - x1
@@ -81,7 +81,7 @@ function lib.selectWithin(world, rect)
 
                 -- For each point of the shape, check if it's inside the rectangle
                 for _, point in ipairs(worldPoints) do
-                    if not mathutil.pointInRect(point.x, point.y, rect) then
+                    if not mathutils.pointInRect(point.x, point.y, rect) then
                         allFixturesInside = false
                         break -- No need to check further points
                     end
