@@ -185,12 +185,12 @@ local function collectBodies(thing, collected)
     end
     return collected
 end
--- Rotates a point (x, y) by angle radians
-local function rotatePoint(x, y, angle)
-    local cosA = math.cos(angle)
-    local sinA = math.sin(angle)
-    return x * cosA - y * sinA, x * sinA + y * cosA
-end
+-- -- Rotates a point (x, y) by angle radians
+-- local function rotatePoint(x, y, angle)
+--     local cosA = math.cos(angle)
+--     local sinA = math.sin(angle)
+--     return x * cosA - y * sinA, x * sinA + y * cosA
+-- end
 -- Function to calculate centroid
 local function calculateCentroid(thing)
     local bodies = collectBodies(thing)
