@@ -148,10 +148,10 @@ function love.load()
 
     objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400)
     objectManager.addThing('rectangle', 600, 400, 'dynamic', 100)
-    -- -- addThing('rectangle', 450, 800, 'kinematic', 200)
-    -- -- addThing('rectangle', 850, 800, 'static', 200)
+    objectManager.addThing('rectangle', 450, 800, 'kinematic', 200)
+    objectManager.addThing('rectangle', 850, 800, 'static', 200)
     objectManager.addThing('rectangle', 250, 1000, 'static', 100, 1800)
-    -- -- addThing('rectangle', 1100, 100, 'dynamic', 300)
+    objectManager.addThing('rectangle', 1100, 100, 'dynamic', 300)
     objectManager.addThing('circle', 1000, 400, 'dynamic', 100)
     objectManager.addThing('circle', 1300, 400, 'dynamic', 100)
 
@@ -375,6 +375,10 @@ local function drawUpdateSelectedObjectUI()
             local shapeType = thing.shapeType
 
             -- Label Editor
+            nextRow()
+            if ui.button(x, y, 260, 'flip') then
+                objectManager.flipThing(thing, 'x')
+            end
             nextRow()
             local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", thing.label)
             if newLabel and newLabel ~= thing.label then
@@ -873,6 +877,7 @@ function love.draw()
             end
         end
     end
+
 
     -- Highlight selected bodies
     if uiState.selectedBodies then

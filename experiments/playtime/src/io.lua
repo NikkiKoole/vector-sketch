@@ -6,7 +6,7 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local shapes = require 'src.shapes'
 local jointHandlers = require 'src.joint-handlers'
-
+local mathutil = require 'src.math-utils'
 local function generateID()
     return uuid.uuid()
 end
@@ -97,6 +97,7 @@ function lib.load(data, world)
             width = bodyData.width,
             height = bodyData.height,
             body = body,
+            vertices = bodyData.vertices,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
         }
@@ -228,9 +229,9 @@ function lib.load(data, world)
                 -- joint:setUserData({ id = jointData.id })
 
 
-                local fxa, fya = rotatePoint(anchorA[1] - bodyA:getX(), anchorA[2] - bodyA:getY(), 0, 0,
+                local fxa, fya = mathutil.rotatePoint(anchorA[1] - bodyA:getX(), anchorA[2] - bodyA:getY(), 0, 0,
                     -bodyA:getAngle())
-                local fxb, fyb = rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
+                local fxb, fyb = mathutil.rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
                     -bodyB:getAngle())
                 joint:setUserData({
                     id = getNewId(jointData.id),
@@ -279,6 +280,7 @@ function lib.save(world, worldState, filename)
                 radius = thing.radius,
                 width = thing.width,
                 height = thing.height,
+                vertices = thing.shapeType == 'custom' and thing.vertices,
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
                 position = { round_to_decimals(body:getX(), 4), round_to_decimals(body:getY(), 4) },
                 angle = round_to_decimals(body:getAngle(), 4),
