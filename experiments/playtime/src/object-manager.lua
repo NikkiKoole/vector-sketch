@@ -271,7 +271,6 @@ function lib.flipThing(thing, axis, recursive)
         currentThing.body:setPosition(newX, newY)
         currentThing.body:setAngle(newAngle)
 
-
         -- Flip each fixture's shape
         for _, fixture in ipairs(currentBody:getFixtures()) do
             local shape = fixture:getShape()
@@ -284,7 +283,7 @@ function lib.flipThing(thing, axis, recursive)
                         points[i + 1] = -points[i + 1] -- Invert Y coordinate
                     end
                 end
-
+                currentThing.vertices = points;
                 -- Create a new shape with flipped vertices
                 local success, newShape = pcall(love.physics.newPolygonShape, unpack(points))
                 if not success then

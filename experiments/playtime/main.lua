@@ -468,11 +468,12 @@ local function drawUpdateSelectedObjectUI()
         -- Angle Slider
         nextRow()
 
-        -- local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180, angleDegrees,
-        --     body:isAwake() and not worldState.paused)
-        -- if newAngle and angleDegrees ~= newAngle then
-        --     body:setAngle(newAngle * math.pi / 180)
-        -- end
+        local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
+            (body:getAngle() * 180 / math.pi),
+            (body:isAwake() and not worldState.paused) or dirtyBodyChange)
+        if newAngle and angleDegrees ~= newAngle then
+            body:setAngle(newAngle * math.pi / 180)
+        end
         ui.label(x, y, ' angle')
 
         -- Density Slider
