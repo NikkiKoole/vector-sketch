@@ -139,7 +139,7 @@ function Track:calculateSupportBeams()
 end
 
 function Track:findClosestPoint(x, y, threshold_sq)
-    threshold_sq = threshold_sq or 100 ^ 2
+    threshold_sq = threshold_sq or (100 ^ 2)
     local min_dist_sq = math.huge
     local closest_point = nil
     local closest_index = nil

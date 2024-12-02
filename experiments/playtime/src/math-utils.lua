@@ -1,4 +1,29 @@
+--math-utils.lua
 local lib = {}
+
+-- Utility function to check if a point is inside a polygon.
+-- Implements the ray-casting algorithm.
+local function pointInPath(x, y, poly)
+    local inside = false
+    local n = #poly
+    for i = 1, n, 2 do
+        local j = (i + 2) % n
+        if j == 0 then j = n end
+        local xi, yi = poly[i], poly[i + 1]
+        local xj, yj = poly[j], poly[j + 1]
+
+        local intersect = ((yi > y) ~= (yj > y)) and
+            (x < (xj - xi) * (y - yi) / (yj - yi + 1e-10) + xi)
+        if intersect then
+            inside = not inside
+        end
+    end
+    return inside
+end
+function lib.pointInRect(px, py, rect)
+    return px >= rect.x and px <= (rect.x + rect.width) and
+        py >= rect.y and py <= (rect.y + rect.height)
+end
 
 local function distancePointToSegment(px, py, x1, y1, x2, y2)
     local dx = x2 - x1

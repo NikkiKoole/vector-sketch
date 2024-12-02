@@ -1,4 +1,4 @@
--- ui.lua
+-- ui-all.lua
 local ui = {}
 
 require('src.ui-textinput')(ui)

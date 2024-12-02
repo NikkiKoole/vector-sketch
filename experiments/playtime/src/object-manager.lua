@@ -1,3 +1,4 @@
+-- object-manager.lua
 local lib = {}
 local shapes = require 'src.shapes'
 local uuid = require 'src.uuid'
@@ -6,9 +7,7 @@ local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
 local inspect = require 'vendor.inspect'
 local mathutil = require 'src.math-utils'
-local function generateID()
-    return uuid.uuid()
-end
+
 
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
@@ -48,7 +47,7 @@ local function createThing(shapeType, x, y, bodyType, radius, width, height, lab
         body = body,
         shapes = shapeList,
         vertices = vertices, -- Store vertices if needed
-        id = generateID(),
+        id = uuid.generateID(),
     }
 
     -- Set user data for easy access
@@ -144,7 +143,7 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.radius = newSettings.radius or thing.radius
     thing.width = newSettings.width or thing.width
     thing.height = newSettings.height or thing.height
-    thing.id = thing.id or generateID()
+    thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })

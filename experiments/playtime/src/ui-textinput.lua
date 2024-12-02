@@ -1,4 +1,4 @@
---local ui = {}
+--ui-text-input.lua
 return function(ui)
     --- Helper function to calculate cursor position within a line based on mouse X coordinate.
     function ui.calculateCursorPositionInLine(text, relativeX)

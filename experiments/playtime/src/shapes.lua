@@ -1,13 +1,9 @@
--- Function to generate vertices of a regular polygon
+-- shapes.lua
 local decompose = require 'src.decompose-polygon'
-local inspect = require 'vendor.inspect'
-local uuid = require 'src.uuid'
 local mathutil = require 'src.math-utils'
-local shapes = {}
+local utils = require 'src.utils'
 
-local function generateID()
-    return uuid.uuid()
-end
+local shapes = {}
 
 local function makePolygonVertices(sides, radius)
     local vertices = {}
@@ -62,12 +58,7 @@ local function makeITriangle(w, h, x, y)
     }
 end
 
-local function tableConcat(t1, t2)
-    for i = 1, #t2 do
-        table.insert(t1, t2[i])
-    end
-    return t1
-end
+
 
 local function makeShapeListFromPolygon(polygon)
     local shapesList = {}
@@ -100,7 +91,7 @@ local function makeShapeListFromPolygon(polygon)
             for i = 1, #result do
                 local success, tris = pcall(love.math.triangulate, result[i])
                 if success then
-                    tableConcat(triangles, tris)
+                    utils.tableConcat(triangles, tris)
                 else
                     print("Failed to triangulate part of the polygon: " .. tris)
                 end

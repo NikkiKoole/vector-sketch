@@ -1,3 +1,4 @@
+--io.lua
 local lib = {}
 
 local inspect = require 'vendor.inspect'
@@ -7,9 +8,8 @@ local registry = require 'src.registry'
 local shapes = require 'src.shapes'
 local jointHandlers = require 'src.joint-handlers'
 local mathutil = require 'src.math-utils'
-local function generateID()
-    return uuid.uuid()
-end
+local utils = require 'src.utils'
+
 
 function lib.load(data, world)
     -- Read the JSON file
@@ -35,7 +35,7 @@ function lib.load(data, world)
     local idMap = {}
     local function getNewId(oldId)
         if idMap[oldId] == nil then
-            idMap[oldId] = generateID()
+            idMap[oldId] = uuid.generateID()
         end
         return idMap[oldId]
     end
@@ -251,16 +251,6 @@ function lib.load(data, world)
     print("World successfully loaded")
 end
 
-local function sanitizeString(input)
-    if not input then return "" end   -- Handle nil or empty strings
-    return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
-end
-
-local function round_to_decimals(num, dec)
-    local multiplier = 10 ^ dec -- 10^4 for 4 decimal places
-    return math.floor(num * multiplier + 0.5) / multiplier
-end
-
 function lib.save(world, worldState, filename)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
@@ -275,17 +265,17 @@ function lib.save(world, worldState, filename)
             local lvx, lvy = body:getLinearVelocity()
             local bodyData = {
                 id = thing.id, -- Unique identifier
-                label = sanitizeString(thing.label),
+                label = utils.sanitizeString(thing.label),
                 shapeType = thing.shapeType,
                 radius = thing.radius,
                 width = thing.width,
                 height = thing.height,
                 vertices = thing.shapeType == 'custom' and thing.vertices,
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
-                position = { round_to_decimals(body:getX(), 4), round_to_decimals(body:getY(), 4) },
-                angle = round_to_decimals(body:getAngle(), 4),
+                position = { utils.round_to_decimals(body:getX(), 4), utils.round_to_decimals(body:getY(), 4) },
+                angle = utils.round_to_decimals(body:getAngle(), 4),
                 linearVelocity = { lvx, lvy },
-                angularVelocity = round_to_decimals(body:getAngularVelocity(), 4),
+                angularVelocity = utils.round_to_decimals(body:getAngularVelocity(), 4),
                 fixedRotation = body:isFixedRotation(),
                 fixtures = {},
                 sharedFixtureData = {}
@@ -297,9 +287,9 @@ function lib.save(world, worldState, filename)
             if #bodyFixtures >= 1 then
                 if #bodyFixtures >= 1 then
                     local first = bodyFixtures[1]
-                    bodyData.sharedFixtureData.density = round_to_decimals(first:getDensity(), 4)
-                    bodyData.sharedFixtureData.friction = round_to_decimals(first:getFriction(), 4)
-                    bodyData.sharedFixtureData.restitution = round_to_decimals(first:getRestitution(), 4)
+                    bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
+                    bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
+                    bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
                     local shape = first:getShape()
                     if shape:typeOf("CircleShape") then
                         bodyData.sharedFixtureData.shapeType = 'circle'
@@ -320,7 +310,7 @@ function lib.save(world, worldState, filename)
                     local result = {}
                     local points = { shape:getPoints() }
                     for i = 1, #points do
-                        table.insert(result, round_to_decimals(points[i], 3))
+                        table.insert(result, utils.round_to_decimals(points[i], 3))
                     end
                     fixtureData.points = result
                     -- elseif shape:typeOf("EdgeShape") then
@@ -360,8 +350,8 @@ function lib.save(world, worldState, filename)
                 type = joint:getType(),
                 bodyA = thingA.id,
                 bodyB = thingB.id,
-                anchorA = { round_to_decimals(x1, 3), round_to_decimals(y1, 3) },
-                anchorB = { round_to_decimals(x2, 3), round_to_decimals(y2, 3) },
+                anchorA = { utils.round_to_decimals(x1, 3), utils.round_to_decimals(y1, 3) },
+                anchorB = { utils.round_to_decimals(x2, 3), utils.round_to_decimals(y2, 3) },
                 collideConnected = joint:getCollideConnected(),
                 properties = {}
             }
@@ -461,7 +451,7 @@ function lib.cloneSelection(selectedBodies)
             local originalThing = userData.thing
 
             -- Generate a new unique ID for the cloned body
-            local newID = generateID()
+            local newID = uuid.generateID()
 
             -- Clone body properties
             local newBody = love.physics.newBody(world, originalBody:getX() + 50, originalBody:getY() + 50,
@@ -538,7 +528,7 @@ function lib.cloneSelection(selectedBodies)
                             body2 = clonedBodyB.body,
                             jointType = jointType,
                             collideConnected = originalJoint:getCollideConnected(),
-                            id = generateID()
+                            id = uuid.generateID()
                         }
 
                         -- Include all joint-specific properties

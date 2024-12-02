@@ -1,3 +1,4 @@
+--script.lua
 local script = {}
 local inspect = require 'vendor.inspect'
 
@@ -34,11 +35,6 @@ function script.setEnv(newEnv)
     end
 end
 
-local function printTableKeys(tbl)
-    for key, _ in pairs(tbl) do
-        print(key)
-    end
-end
 function script.loadScript(data, filePath)
     --print('>>>>> script environment api')
     --printTableKeys(scriptEnv)

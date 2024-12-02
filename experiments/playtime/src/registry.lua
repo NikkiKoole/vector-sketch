@@ -1,20 +1,17 @@
 -- src/registry.lua
+local utils = require 'src.utils'
+
 local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint
     -- Add more categories if needed
 }
 
-function tablelength(T)
-    local count = 0
-    for _ in pairs(T) do count = count + 1 end
-    return count
-end
 
 -- Register a body
 function registry.registerBody(id, body)
     registry.bodies[id] = body
-    --print('bodies:', tablelength(registry.bodies))
+    print('bodies:', utils.tablelength(registry.bodies))
 end
 
 -- Unregister a body

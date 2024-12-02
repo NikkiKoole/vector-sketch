@@ -1,3 +1,4 @@
+--uuid.lua
 local random = love.math.random
 local lib = {}
 function lib.uuid128()
@@ -37,6 +38,10 @@ end
 function lib.uuid()
     return lib.uuid32_base62()
     --return lib.uuid128()
+end
+
+function lib.generateID()
+    return lib.uuid()
 end
 
 return lib

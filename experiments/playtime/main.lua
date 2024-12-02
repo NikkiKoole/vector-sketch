@@ -11,22 +11,13 @@ local inspect = require 'vendor.inspect'
 
 local ui = require 'src.ui-all'
 local joint = require 'src.joints'
-local shapes = require 'src.shapes'
 local selectrect = require 'src.selection-rect'
 local io = require 'src.io'
-local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
 local mathutil = require 'src.math-utils'
-
----- todo
--- offsetA & offsetB now use a rotation that needs to be done in the other direction too.
--- it feels its not needed. per se
-
--- a factory that creates new objects ..
--- floaty karlsson ting
-
+local utils = require 'src.utils'
 
 function waitForEvent()
     local a, b, c, d, e
@@ -36,43 +27,6 @@ function waitForEvent()
 end
 
 waitForEvent()
-
-local function generateID()
-    return uuid.uuid()
-end
-
-local function sanitizeString(input)
-    if not input then return "" end   -- Handle nil or empty strings
-    return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces
-end
-
-local function shallowCopy(original)
-    local copy = {}
-    for key, value in pairs(original) do
-        copy[key] = value
-    end
-    -- setmetatable(copy, getmetatable(original))
-    return copy
-end
-
--- Function to compare two tables for equality (assuming they are arrays of numbers)
-local function tablesEqualNumbers(t1, t2)
-    -- Check if both tables have the same number of elements
-    if #t1 ~= #t2 then
-        return false
-    end
-
-    -- Compare each corresponding element
-    for i = 1, #t1 do
-        if t1[i] ~= t2[i] then
-            return false
-        end
-    end
-
-    return true
-end
-
-
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
@@ -447,7 +401,7 @@ local function drawUpdateSelectedObjectUI()
                     if ui.button(x, y, 260, uiState.polyLockedVerts and 'verts locked' or 'verts unlocked') then
                         uiState.polyLockedVerts = not uiState.polyLockedVerts
                         if uiState.polyLockedVerts == false then
-                            uiState.polyTempVerts = shallowCopy(uiState.selectedObj.vertices)
+                            uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
                             local cx, cy = mathutil.computeCentroid(uiState.selectedObj.vertices)
                             uiState.polyCentroid = { x = cx, y = cy }
                         else
@@ -805,7 +759,7 @@ function drawUI()
         ui.panel(300, 300, w - 600, h - 600, '»»» save «««', function()
             local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', uiState.saveName)
             if t then
-                uiState.saveName = sanitizeString(t)
+                uiState.saveName = utils.sanitizeString(t)
             end
             if ui.button(320, 500, 200, 'save') then
                 uiState.saveDialogOpened = false
@@ -813,6 +767,7 @@ function drawUI()
             end
             if ui.button(540, 500, 200, 'cancel') then
                 uiState.saveDialogOpened = false
+                love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
             end
         end)
     end
@@ -1022,7 +977,7 @@ function love.textinput(t)
 end
 
 local function maybeUpdateCustomPolygonVertices()
-    if not tablesEqualNumbers(uiState.polyTempVerts, uiState.selectedObj.vertices) then
+    if not utils.tablesEqualNumbers(uiState.polyTempVerts, uiState.selectedObj.vertices) then
         local nx, ny = mathutil.computeCentroid(uiState.polyTempVerts)
         local ox, oy = mathutil.computeCentroid(uiState.selectedObj.vertices)
         local dx = nx - ox
@@ -1033,7 +988,7 @@ local function maybeUpdateCustomPolygonVertices()
         uiState.selectedObj = objectManager.recreateThingFromBody(body,
             { optionalVertices = uiState.polyTempVerts })
 
-        uiState.polyTempVerts = shallowCopy(uiState.selectedObj.vertices)
+        uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
         -- uiState.selectedObj.vertices = uiState.polyTempVerts
         uiState.polyCentroid = { x = nx, y = ny }
     end

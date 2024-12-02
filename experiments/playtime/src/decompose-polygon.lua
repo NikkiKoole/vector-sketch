@@ -1,40 +1,8 @@
 -- decompose_complex.lua
 -- A module for decomposing complex polygons into simpler polygons by handling intersections.
-
+local utils = require 'src.utils'
 local decompose_complex = {}
 
--- Utility function to concatenate two tables.
-local function tableConcat(t1, t2)
-    for i = 1, #t2 do
-        table.insert(t1, t2[i])
-    end
-    return t1
-end
-
--- Utility function to calculate the distance between two points.
-local function distance(x1, y1, x2, y2)
-    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-end
-
--- Utility function to check if a point is inside a polygon.
--- Implements the ray-casting algorithm.
-local function pointInPath(x, y, poly)
-    local inside = false
-    local n = #poly
-    for i = 1, n, 2 do
-        local j = (i + 2) % n
-        if j == 0 then j = n end
-        local xi, yi = poly[i], poly[i + 1]
-        local xj, yj = poly[j], poly[j + 1]
-
-        local intersect = ((yi > y) ~= (yj > y)) and
-            (x < (xj - xi) * (y - yi) / (yj - yi + 1e-10) + xi)
-        if intersect then
-            inside = not inside
-        end
-    end
-    return inside
-end
 
 -- Function to find the intersection point between two line segments.
 local function getLineIntersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
@@ -149,7 +117,7 @@ function decompose_complex.run(poly, result)
     local intersections = getCollisions(poly)
 
     if #intersections == 0 then
-        tableConcat(result, { poly })
+        utils.tableConcat(result, { poly })
         return result
     end
 

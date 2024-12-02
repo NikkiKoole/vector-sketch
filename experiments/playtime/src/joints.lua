@@ -1,3 +1,4 @@
+--joints.lua
 local ui = require 'src.ui-all'
 local lib = {}
 local inspect = require 'vendor.inspect'
@@ -5,10 +6,6 @@ local uuid = require 'src.uuid'
 local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
 local mathutil = require 'src.math-utils'
-
-local function generateID()
-    return uuid.uuid()
-end
 
 local offsetHasChangedViaOutside
 -- Helper function to create a slider with an associated label
@@ -105,7 +102,7 @@ function lib.createJoint(data)
         return
     end
 
-    local setId = data.id or generateID()
+    local setId = data.id or uuid.generateID()
     joint:setUserData({ id = setId })
     setJointMetaSetting(joint, 'offsetA', offsetA)
     setJointMetaSetting(joint, 'offsetB', offsetB)
