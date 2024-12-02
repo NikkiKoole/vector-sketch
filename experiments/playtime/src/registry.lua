@@ -29,12 +29,13 @@ end
 function registry.registerJoint(id, joint)
     registry.joints[id] = joint
     --print('joints:', tablelength(registry.joints))
+    print('joints:', utils.tablelength(registry.joints))
 end
 
 -- Unregister a joint
 function registry.unregisterJoint(id)
     registry.joints[id] = nil
-    --print('joints:', tablelength(registry.joints))
+    print('joints:', utils.tablelength(registry.joints))
 end
 
 -- Get a joint by ID

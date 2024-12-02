@@ -19,6 +19,11 @@ local objectManager = require 'src.object-manager'
 local mathutil = require 'src.math-utils'
 local utils = require 'src.utils'
 
+
+-- eerst flip dan kloon = okay
+-- eerst kloon en dan flip = NIET okay
+-- waarom ?
+--
 function waitForEvent()
     local a, b, c, d, e
     repeat

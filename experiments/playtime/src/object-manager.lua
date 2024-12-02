@@ -6,7 +6,7 @@ local registry = require 'src.registry'
 local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
 local inspect = require 'vendor.inspect'
-
+local utils = require 'src.utils'
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
     -- Initialize default values
@@ -268,6 +268,20 @@ function lib.flipThing(thing, axis, recursive)
         currentThing.body:setPosition(newX, newY)
         currentThing.body:setAngle(newAngle)
 
+
+        if currentThing.vertices then
+            --print('jojjo!')
+            local flippedVertices = utils.shallowCopy(currentThing.vertices)
+            for i = 1, #currentThing.vertices, 2 do
+                if axis == 'x' then
+                    flippedVertices[i] = -flippedVertices[i]         -- Invert X coordinate
+                elseif axis == 'y' then
+                    flippedVertices[i + 1] = -flippedVertices[i + 1] -- Invert Y coordinate
+                end
+            end
+            currentThing.vertices = flippedVertices
+        end
+
         -- Flip each fixture's shape
         for _, fixture in ipairs(currentBody:getFixtures()) do
             local shape = fixture:getShape()
@@ -280,7 +294,7 @@ function lib.flipThing(thing, axis, recursive)
                         points[i + 1] = -points[i + 1] -- Invert Y coordinate
                     end
                 end
-                currentThing.vertices = points;
+                -- currentThing.vertices = points;
                 -- Create a new shape with flipped vertices
                 local success, newShape = pcall(love.physics.newPolygonShape, unpack(points))
                 if not success then

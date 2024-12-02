@@ -169,10 +169,11 @@ function shapes.createShape(shapeType, radius, width, height, optionalVertices)
         elseif shapeType == 'custom' then
             if optionalVertices then
                 local polygon = optionalVertices
-                print(inspect(polygon))
+                --print(inspect(polygon))
                 shapesList = makeShapeListFromPolygon(polygon) or {}
-                print(#shapesList)
+                --print('shapelist size:', #shapesList)
                 vertices = polygon
+                --print('numvertices', #vertices)
             else
                 error('shapetype custom needs optionalVertices!')
             end

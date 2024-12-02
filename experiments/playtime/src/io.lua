@@ -482,6 +482,9 @@ function lib.cloneSelection(selectedBodies)
             --newFixture:setFriction(originalThing.fixture:getFriction())
 
             -- Clone user data
+            if (originalThing.vertices) then
+                print('vertex count before and after cloning ', #originalThing.vertices, #newVertices)
+            end
             local clonedThing = {
                 shapeType = originalThing.shapeType,
                 radius = originalThing.radius,
@@ -503,6 +506,7 @@ function lib.cloneSelection(selectedBodies)
         end
     end
 
+    local doneJoints = {}
     -- Step 2: Clone Joints
     for _, originalThing in ipairs(uiState.selectedBodies) do
         local originalBody = originalThing.body
@@ -510,53 +514,56 @@ function lib.cloneSelection(selectedBodies)
         for _, originalJoint in ipairs(joints) do
             local ud = originalJoint:getUserData()
             if ud and ud.id then
-                local jointType = originalJoint:getType()
-                local handler = jointHandlers[jointType]
-                if handler and handler.extract then
-                    local jointData = handler.extract(originalJoint)
+                if not doneJoints[ud.id] == true then
+                    local jointType = originalJoint:getType()
+                    local handler = jointHandlers[jointType]
+                    doneJoints[ud.id] = true
+                    if handler and handler.extract then
+                        local jointData = handler.extract(originalJoint)
 
-                    -- Determine the original bodies connected by the joint
-                    local bodyA, bodyB = originalJoint:getBodies()
-                    local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
-                    local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
+                        -- Determine the original bodies connected by the joint
+                        local bodyA, bodyB = originalJoint:getBodies()
+                        local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
+                        local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
 
-                    -- If both bodies are cloned, proceed to clone the joint
-                    if clonedBodyA and clonedBodyB then
-                        local newJointData = {
-                            body1 = clonedBodyA.body,
-                            body2 = clonedBodyB.body,
-                            jointType = jointType,
-                            collideConnected = originalJoint:getCollideConnected(),
-                            id = uuid.generateID()
-                        }
+                        -- If both bodies are cloned, proceed to clone the joint
+                        if clonedBodyA and clonedBodyB then
+                            local newJointData = {
+                                body1 = clonedBodyA.body,
+                                body2 = clonedBodyB.body,
+                                jointType = jointType,
+                                collideConnected = originalJoint:getCollideConnected(),
+                                id = uuid.generateID()
+                            }
 
-                        -- Include all joint-specific properties
-                        for key, value in pairs(jointData) do
-                            newJointData[key] = value
+                            -- Include all joint-specific properties
+                            for key, value in pairs(jointData) do
+                                newJointData[key] = value
+                            end
+                            --  print(inspect(newJointData))
+                            -- Create the new joint
+                            local newJoint = handler.create(newJointData,
+                                clonedBodyA.body:getX(), clonedBodyA.body:getY(),
+                                clonedBodyB.body:getX(), clonedBodyB.body:getY()
+                            )
+
+
+                            local ax, ay, bx, by = newJoint:getAnchors()
+                            local fxa, fya = mathutils.rotatePoint(ax - clonedBodyA.body:getX(),
+                                ay - clonedBodyA.body:getY(), 0, 0,
+                                -bodyA:getAngle())
+                            local fxb, fyb = mathutils.rotatePoint(bx - clonedBodyB.body:getX(),
+                                by - clonedBodyB.body:getY(), 0, 0,
+                                -bodyB:getAngle())
+
+
+                            -- Set user data for the new joint
+                            newJoint:setUserData({ id = newJointData.id, offsetA = { x = fxa, y = fya }, offsetB = { x = fxb, y = fyb } })
+                            --                             })
+
+                            -- Register the new joint
+                            registry.registerJoint(newJointData.id, newJoint)
                         end
-                        print(inspect(newJointData))
-                        -- Create the new joint
-                        local newJoint = handler.create(newJointData,
-                            clonedBodyA.body:getX(), clonedBodyA.body:getY(),
-                            clonedBodyB.body:getX(), clonedBodyB.body:getY()
-                        )
-
-
-                        local ax, ay, bx, by = newJoint:getAnchors()
-
-
-                        local fxa, fya = mathutils.rotatePoint(ax - bodyA:getX(), ay - bodyA:getY(), 0, 0,
-                            -bodyA:getAngle())
-                        local fxb, fyb = mathutils.rotatePoint(bx - bodyB:getX(), by - bodyB:getY(), 0, 0,
-                            -bodyB:getAngle())
-
-
-                        -- Set user data for the new joint
-                        newJoint:setUserData({ id = newJointData.id, offsetA = { x = fxa, y = fya }, offsetB = { x = fxb, y = fyb } })
-                        --                             })
-
-                        -- Register the new joint
-                        registry.registerJoint(newJointData.id, newJoint)
                     end
                 end
             end
