@@ -89,6 +89,18 @@ function lib.calculateDistance(x1, y1, x2, y2)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+function lib.computeCentroid(polygon)
+    local sumX, sumY = 0, 0
+    for i = 1, #polygon, 2 do
+        --for _, vertex in ipairs(vertices) do
+        sumX = sumX + polygon[i]
+        sumY = sumY + polygon[i + 1]
+        -- end
+    end
+    local count = (#polygon / 2)
+    return sumX / count, sumY / count
+end
+
 function lib.rotatePoint(x, y, originX, originY, angle)
     -- Translate the point to the origin
     local translatedX = x - originX

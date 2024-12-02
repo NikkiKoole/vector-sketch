@@ -2,6 +2,7 @@
 local decompose = require 'src.decompose-polygon'
 local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
+local mathutil = require 'src.math-utils'
 local shapes = {}
 
 local function generateID()
@@ -68,19 +69,6 @@ local function tableConcat(t1, t2)
     return t1
 end
 
-
-function shapes.computeCentroid(polygon)
-    local sumX, sumY = 0, 0
-    for i = 1, #polygon, 2 do
-        --for _, vertex in ipairs(vertices) do
-        sumX = sumX + polygon[i]
-        sumY = sumY + polygon[i + 1]
-        -- end
-    end
-    local count = (#polygon / 2)
-    return sumX / count, sumY / count
-end
-
 local function makeShapeListFromPolygon(polygon)
     local shapesList = {}
     local allowComplex = true -- TODO: parameterize this
@@ -88,7 +76,7 @@ local function makeShapeListFromPolygon(polygon)
 
     -- first figure out if we are maybe a simple polygon we can use -as is- by box2d
     if #polygon <= 16 and love.math.isConvex(polygon) then
-        local centroidX, centroidY = shapes.computeCentroid(polygon)
+        local centroidX, centroidY = mathutil.computeCentroid(polygon)
         local localVertices = {}
         for i = 1, #polygon, 2 do
             local x = polygon[i] - centroidX
@@ -131,7 +119,7 @@ local function makeShapeListFromPolygon(polygon)
             print("No valid triangles were created.")
             return nil
         end
-        local centroidX, centroidY = shapes.computeCentroid(polygon)
+        local centroidX, centroidY = mathutil.computeCentroid(polygon)
         for _, triangle in ipairs(triangles) do
             -- Adjust triangle vertices relative to body position
             local localVertices = {}

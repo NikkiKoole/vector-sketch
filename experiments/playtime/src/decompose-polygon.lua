@@ -144,7 +144,6 @@ local function splitPoly(poly, intersection)
     return wrap, back
 end
 
-
 function decompose_complex.run(poly, result)
     result = result or {}
     local intersections = getCollisions(poly)

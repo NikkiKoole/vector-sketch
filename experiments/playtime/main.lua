@@ -186,7 +186,7 @@ end
 
 function finalizePolygon()
     if #uiState.polyVerts >= 6 then
-        local cx, cy = shapes.computeCentroid(uiState.polyVerts)
+        local cx, cy = mathutil.computeCentroid(uiState.polyVerts)
         objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
     else
         -- Not enough vertices to form a polygon
@@ -438,7 +438,7 @@ local function drawUpdateSelectedObjectUI()
                         uiState.polyLockedVerts = not uiState.polyLockedVerts
                         if uiState.polyLockedVerts == false then
                             uiState.polyTempVerts = shallowCopy(uiState.selectedObj.vertices)
-                            local cx, cy = shapes.computeCentroid(uiState.selectedObj.vertices)
+                            local cx, cy = mathutil.computeCentroid(uiState.selectedObj.vertices)
                             uiState.polyCentroid = { x = cx, y = cy }
                         else
                             uiState.polyTempVerts = nil
@@ -822,8 +822,6 @@ function love.draw()
     end
     cam:push()
 
-
-
     phys.drawWorld(world)
 
     if sceneScript and sceneScript.draw then
@@ -833,7 +831,6 @@ function love.draw()
     if uiState.selectedJoint and not uiState.selectedJoint:isDestroyed() then
         local x1, y1, x2, y2 = uiState.selectedJoint:getAnchors()
         love.graphics.circle('line', x1, y1, 10)
-
         love.graphics.line(x2 - 10, y2, x2 + 10, y2)
         love.graphics.line(x2, y2 - 10, x2, y2 + 10)
     end
@@ -850,7 +847,7 @@ function love.draw()
     love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1)
 
-
+    -- draw to be drawn polygon
     if uiState.drawFreePoly or uiState.drawClickPoly then
         if (#uiState.polyVerts >= 6) then
             love.graphics.polygon('line', uiState.polyVerts)
@@ -876,6 +873,7 @@ function love.draw()
             end
         end
     end
+
     -- Highlight selected bodies
     if uiState.selectedBodies then
         local lw = love.graphics.getLineWidth()
@@ -906,18 +904,17 @@ function love.draw()
         love.graphics.setColor(1, 1, 1) -- Reset color
     end
 
+    -- draw temp poly when changing vertices
     if uiState.polyTempVerts then
-        -- local result = getLocalVerticesForCustomSelected(uiState.customPolygonTempVertices, obj, cx, cy)
         local verts = mathutil.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
             uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
-
-        --uiState.customPolygonTempVertices
         love.graphics.setColor(1, 0, 0)
         love.graphics.polygon('line', verts)
         love.graphics.setColor(1, 1, 1) -- Rese
     end
 
     cam:pop()
+
     if uiState.startSelection then
         selectrect.draw(uiState.startSelection)
     end
@@ -1014,8 +1011,8 @@ end
 
 local function maybeUpdateCustomPolygonVertices()
     if not tablesEqualNumbers(uiState.polyTempVerts, uiState.selectedObj.vertices) then
-        local nx, ny = shapes.computeCentroid(uiState.polyTempVerts)
-        local ox, oy = shapes.computeCentroid(uiState.selectedObj.vertices)
+        local nx, ny = mathutil.computeCentroid(uiState.polyTempVerts)
+        local ox, oy = mathutil.computeCentroid(uiState.selectedObj.vertices)
         local dx = nx - ox
         local dy = ny - oy
         local body = uiState.selectedObj.body
