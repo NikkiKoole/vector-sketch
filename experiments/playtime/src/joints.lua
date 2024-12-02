@@ -4,6 +4,7 @@ local inspect = require 'vendor.inspect'
 local uuid = require 'src.uuid'
 local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
+local mathutil = require 'src.math-utils'
 
 local function generateID()
     return uuid.uuid()
@@ -37,11 +38,6 @@ local function createCheckbox(labelText, x, y, value, callback)
     return newValue
 end
 
-local function calculateDistance(x1, y1, x2, y2)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    return math.sqrt(dx * dx + dy * dy)
-end
 
 local function getJointId(joint)
     local ud = joint:getUserData()
@@ -81,30 +77,7 @@ local function getJointMetaSetting(joint, settingKey)
     end
 end
 
-local function normalizeAxis(x, y)
-    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
-    if magnitude == 0 then
-        return 1, 0 -- Default to (1, 0) if the vector is zero
-    else
-        --   print('normalizing', x / magnitude, y / magnitude)
-        return x / magnitude, y / magnitude
-    end
-end
-function rotatePoint(x, y, originX, originY, angle)
-    -- Translate the point to the origin
-    local translatedX = x - originX
-    local translatedY = y - originY
 
-    -- Apply rotation
-    local rotatedX = translatedX * math.cos(angle) - translatedY * math.sin(angle)
-    local rotatedY = translatedX * math.sin(angle) + translatedY * math.cos(angle)
-
-    -- Translate back to the original position
-    local finalX = rotatedX + originX
-    local finalY = rotatedY + originY
-
-    return finalX, finalY
-end
 
 function lib.createJoint(data)
     local bodyA = data.body1
@@ -116,11 +89,11 @@ function lib.createJoint(data)
     local x1, y1 = bodyA:getPosition()
     local x2, y2 = bodyB:getPosition()
     local offsetA = data.offsetA or { x = 0, y = 0 }
-    local rx, ry = rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
+    local rx, ry = mathutil.rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
     x1, y1 = x1 + rx, y1 + ry
 
     local offsetB = data.offsetB or { x = 0, y = 0 }
-    local rx, ry = rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
+    local rx, ry = mathutil.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
 
     local handler = jointHandlers[jointType]
@@ -255,7 +228,7 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
         nextRow()
         if ui.button(x, y, width, 'Create') then
             local j = lib.createJoint(uiState.jointCreationMode)
-            uiState.currentlySelectedJoint = j
+            uiState.selectedJoint = j
             uiState.selectedObject = nil
             uiState.jointCreationMode = nil
         end
@@ -312,24 +285,24 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     local axisX = createSliderWithId(jointId, ' axisX', x, y, 160, -1, 1,
                         _x or 0,
                         function(val)
-                            uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = val, axisY = _y })
-                            j = uiState.currentlySelectedJoint
+                            uiState.selectedJoint = lib.recreateJoint(j, { axisX = val, axisY = _y })
+                            j = uiState.selectedJoint
                         end
                     )
                     nextRow()
                     local axisY = createSliderWithId(jointId, ' axisY', x, y, 160, -1, 1,
                         _y or 1,
                         function(val)
-                            uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = val })
-                            j = uiState.currentlySelectedJoint
+                            uiState.selectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = val })
+                            j = uiState.selectedJoint
                         end
                     )
                     nextRow()
                     if ui.button(x, y, 160, 'normalize') then
                         local _x, _y = j:getAxis()
-                        _x, _y = normalizeAxis(_x, _y)
-                        uiState.currentlySelectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = _y })
-                        j = uiState.currentlySelectedJoint
+                        _x, _y = mathutil.normalizeAxis(_x, _y)
+                        uiState.selectedJoint = lib.recreateJoint(j, { axisX = _x, axisY = _y })
+                        j = uiState.selectedJoint
                     end
                 end
                 return j
@@ -339,8 +312,8 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 local collideEnabled = createCheckbox(' collide', x, y,
                     j:getCollideConnected(),
                     function(val)
-                        uiState.currentlySelectedJoint = lib.recreateJoint(j, { collideConnected = val })
-                        j = uiState.currentlySelectedJoint
+                        uiState.selectedJoint = lib.recreateJoint(j, { collideConnected = val })
+                        j = uiState.selectedJoint
                     end
                 )
                 return j
@@ -453,13 +426,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     offsetA.x = x
                     offsetA.y = y
                     setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                    uiState.currentlySelectedJoint = lib.recreateJoint(j)
-                    j = uiState.currentlySelectedJoint
+                    uiState.selectedJoint = lib.recreateJoint(j)
+                    j = uiState.selectedJoint
 
                     if false then
                         -- keep this around because it will make offsetA unneeded.
                         local ax1, ay1, b1x2, b1y2 = j:getAnchors()
-                        local fx, fy = rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                        local fx, fy = mathutil.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
+                            -bodyA:getAngle())
                         print('GREAT', fx, fy, x, y)
                     end
                     offsetHasChangedViaOutside = true
@@ -472,13 +446,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     offsetB.x = x
                     offsetB.y = y
                     setJointMetaSetting(j, 'offsetB', { x = offsetB.x, y = offsetB.y })
-                    uiState.currentlySelectedJoint = lib.recreateJoint(j)
-                    j = uiState.currentlySelectedJoint
+                    uiState.selectedJoint = lib.recreateJoint(j)
+                    j = uiState.selectedJoint
 
                     if false then
                         -- keep this around because it will make offsetA unneeded.
                         local ax1, ay1, b1x2, b1y2 = j:getAnchors()
-                        local fx, fy = rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                        local fx, fy = mathutil.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
+                            -bodyA:getAngle())
                         print('GREAT', fx, fy, x, y)
                     end
                     offsetHasChangedViaOutside = true
@@ -490,15 +465,15 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 
                 nextRow()
                 if ui.button(x, y, 40, 'O') then
-                    uiState.currentlySettingOffsetAFunction = function(x, y)
-                        local fx, fy = rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
+                    uiState.setOffsetAFunc = function(x, y)
+                        local fx, fy = mathutil.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
                         -- print(fx, fy)
                         return updateOffsetA(fx, fy)
                     end
                 end
                 if ui.button(x + 50, y, 40, '+') then
-                    uiState.currentlySettingOffsetBFunction = function(x, y)
-                        local fx, fy = rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
+                    uiState.setOffsetBFunc = function(x, y)
+                        local fx, fy = mathutil.rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
                         -- print(fx, fy)
                         return updateOffsetB(fx, fy)
                     end
@@ -542,36 +517,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                         updateOffsetA(0, 0)
                     end
                 end
-                --nextRow()
 
-                -- -- Sliders for offsetA.x
-                -- local offsetX = createSliderWithId(jointId, 'Offset A X', x, y, 160, -200, 200,
-                --     offsetA.x,
-                --     function(val)
-                --         offsetA.x = val
-
-                --         setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                --         uiState.currentlySelectedJoint = lib.recreateJoint(j)
-                --         j = uiState.currentlySelectedJoint
-                --     end,
-                --     offsetHasChangedViaOutside
-
-                -- )
-                -- nextRow()
-                -- -- Move to the next row for offsetA.y
-                -- local offsetY = createSliderWithId(jointId, 'Offset A Y', x, y, 160, -200, 200,
-                --     offsetA.y,
-
-                --     function(val)
-                --         offsetA.y = val
-
-                --         setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                --         uiState.currentlySelectedJoint = lib.recreateJoint(j)
-                --         j = uiState.currentlySelectedJoint
-                --     end,
-                --     offsetHasChangedViaOutside
-
-                -- )
                 nextRow()
 
 

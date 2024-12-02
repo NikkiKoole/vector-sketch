@@ -73,6 +73,22 @@ function lib.findClosestVertex(verts, px, py)
     return closestVertexIndex
 end
 
+function lib.normalizeAxis(x, y)
+    local magnitude = math.sqrt(x ^ 2 + y ^ 2)
+    if magnitude == 0 then
+        return 1, 0 -- Default to (1, 0) if the vector is zero
+    else
+        --   print('normalizing', x / magnitude, y / magnitude)
+        return x / magnitude, y / magnitude
+    end
+end
+
+function lib.calculateDistance(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
+
 function lib.rotatePoint(x, y, originX, originY, angle)
     -- Translate the point to the origin
     local translatedX = x - originX
