@@ -147,19 +147,20 @@ function love.load()
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
     objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400)
-    objectManager.addThing('rectangle', 600, 400, 'dynamic', 100)
-    objectManager.addThing('rectangle', 450, 800, 'kinematic', 200)
-    objectManager.addThing('rectangle', 850, 800, 'static', 200)
-    objectManager.addThing('rectangle', 250, 1000, 'static', 100, 1800)
-    objectManager.addThing('rectangle', 1100, 100, 'dynamic', 300)
-    objectManager.addThing('circle', 1000, 400, 'dynamic', 100)
-    objectManager.addThing('circle', 1300, 400, 'dynamic', 100)
+    -- objectManager.addThing('rectangle', 600, 400, 'dynamic', 100)
+    -- objectManager.addThing('rectangle', 450, 800, 'kinematic', 200)
+    -- objectManager.addThing('rectangle', 850, 800, 'static', 200)
+    -- objectManager.addThing('rectangle', 250, 1000, 'static', 100, 1800)
+    -- objectManager.addThing('rectangle', 1100, 100, 'dynamic', 300)
+    -- objectManager.addThing('circle', 1000, 400, 'dynamic', 100)
+    -- objectManager.addThing('circle', 1300, 400, 'dynamic', 100)
 
 
     -- -- Adding custom polygon
     local customVertices = {
         0, 0,
         100, 0,
+        200, 100,
         50, 500,
         -- Add more vertices as needed
     }
@@ -376,8 +377,13 @@ local function drawUpdateSelectedObjectUI()
 
             -- Label Editor
             nextRow()
-            if ui.button(x, y, 260, 'flip') then
-                objectManager.flipThing(thing, 'x')
+            if ui.button(x, y, 120, 'flipX') then
+                uiState.selectedObj = objectManager.flipThing(thing, 'x', true)
+                dirtyBodyChange = true
+            end
+            if ui.button(x + 140, y, 120, 'flipY') then
+                uiState.selectedObj = objectManager.flipThing(thing, 'y', true)
+                dirtyBodyChange = true
             end
             nextRow()
             local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", thing.label)
@@ -462,11 +468,11 @@ local function drawUpdateSelectedObjectUI()
         -- Angle Slider
         nextRow()
 
-        local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180, angleDegrees,
-            body:isAwake() and not worldState.paused)
-        if newAngle and angleDegrees ~= newAngle then
-            body:setAngle(newAngle * math.pi / 180)
-        end
+        -- local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180, angleDegrees,
+        --     body:isAwake() and not worldState.paused)
+        -- if newAngle and angleDegrees ~= newAngle then
+        --     body:setAngle(newAngle * math.pi / 180)
+        -- end
         ui.label(x, y, ' angle')
 
         -- Density Slider

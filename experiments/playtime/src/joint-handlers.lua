@@ -61,6 +61,13 @@ jointHandlers["wheel"] = {
     create = function(data, x1, y1, x2, y2)
         local joint = love.physics.newWheelJoint(data.body1, data.body2, x1, y1, data.axisX or 0, data.axisY or 1,
             data.collideConnected)
+
+        if data.springFrequency then
+            joint:setSpringFrequency(data.springFrequency)
+        end
+        if data.springDampingRatio then
+            joint:setSpringDampingRatio(data.springDampingRatio)
+        end
         return joint
     end,
     extract = function(joint)

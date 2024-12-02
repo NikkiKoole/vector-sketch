@@ -2,8 +2,10 @@ local lib = {}
 local shapes = require 'src.shapes'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
-local joint = require 'src.joints'
+local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
+local inspect = require 'vendor.inspect'
+local mathutil = require 'src.math-utils'
 local function generateID()
     return uuid.uuid()
 end
@@ -106,7 +108,7 @@ function lib.recreateThingFromBody(body, newSettings)
     -- Get the original `thing` for shape info
 
 
-    local jointData = joint.extractJoints(body)
+    local jointData = joints.extractJoints(body)
     -- Destroy the old body
     body:destroy()
 
@@ -147,7 +149,7 @@ function lib.recreateThingFromBody(body, newSettings)
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 
-    joint.reattachJoints(jointData, newBody)
+    joints.reattachJoints(jointData, newBody)
 
     return thing
 end
@@ -166,8 +168,50 @@ function lib.destroyBody(body)
     body:destroy()
 end
 
--- Function to flip a body and its attached joints
-function lib.flipThing(thing, axis)
+-- Helper function to collect all connected bodies
+local function collectBodies(thing, collected)
+    collected = collected or {}
+    if not thing or not thing.body or collected[thing.id] then
+        return collected
+    end
+    collected[thing.id] = thing.body
+    for _, joint in ipairs(thing.body:getJoints()) do
+        local bodyA, bodyB = joint:getBodies()
+        local otherBody = (bodyA == thing.body) and bodyB or bodyA
+        local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
+        if otherThing then
+            collectBodies(otherThing, collected)
+        end
+    end
+    return collected
+end
+-- Rotates a point (x, y) by angle radians
+local function rotatePoint(x, y, angle)
+    local cosA = math.cos(angle)
+    local sinA = math.sin(angle)
+    return x * cosA - y * sinA, x * sinA + y * cosA
+end
+-- Function to calculate centroid
+local function calculateCentroid(thing)
+    local bodies = collectBodies(thing)
+    local totalMass = 0
+    local sumX, sumY = 0, 0
+    for id, body in pairs(bodies) do
+        local mass = body:getMass()
+        local x, y = body:getPosition()
+        sumX = sumX + x * mass
+        sumY = sumY + y * mass
+        totalMass = totalMass + mass
+    end
+    if totalMass == 0 then
+        return 0, 0 -- Avoid division by zero
+    end
+    return sumX / totalMass, sumY / totalMass
+end
+
+function lib.flipThing(thing, axis, recursive)
+    -- print('************* Flipping Thing *************')
+
     -- Validate input
     if not thing or not thing.body then
         print("flipThing: Invalid 'thing' provided.")
@@ -179,123 +223,181 @@ function lib.flipThing(thing, axis)
         return
     end
 
-    local body = thing.body
-    local currentX, currentY = body:getPosition()
-    local currentAngle = body:getAngle()
+    -- Tables to keep track of processed bodies and joints
+    local processedBodies = {}
+    local processedJoints = {}
+    local toBeProcessedJoints = {}
+    local centroidX, centroidY = calculateCentroid(thing)
 
-    -- Determine new position based on flip axis
-    local newX, newY
-    if axis == 'x' then
-        newX = -currentX
-        newY = currentY
-    elseif axis == 'y' then
-        newX = currentX
-        newY = -currentY
-    end
 
-    -- Determine new angle based on flip axis
-    local newAngle
-    if axis == 'x' then
-        newAngle = -currentAngle
-    elseif axis == 'y' then
-        newAngle = math.pi - currentAngle
-    end
-
-    -- Update body's position and angle
-    body:setPosition(newX, newY)
-    body:setAngle(newAngle)
-
-    -- Flip each fixture's shape
-    for _, fixture in ipairs(body:getFixtures()) do
-        local shape = fixture:getShape()
-        if shape:typeOf("PolygonShape") then
-            local points = { shape:getPoints() }
-            for i = 1, #points, 2 do
-                if axis == 'x' then
-                    points[i] = -points[i]         -- Invert X coordinate
-                elseif axis == 'y' then
-                    points[i + 1] = -points[i + 1] -- Invert Y coordinate
-                end
-            end
-            -- Destroy and recreate the shape with flipped vertices
-            --fixture:destroy()
-            local newShape = love.physics.newPolygonShape(unpack(points))
-            local newfixture = love.physics.newFixture(body, newShape, fixture:getDensity())
-            -- body:createFixture(newShape, fixture:getDensity())
-            newfixture:setFriction(fixture:getFriction())
-            newfixture:setRestitution(fixture:getRestitution())
-            fixture:destroy()
-        elseif shape:typeOf("CircleShape") then
-            -- No need to flip circle shapes beyond position
-            -- Circle radius remains the same
-            -- If the circle has user data affecting orientation, handle it here
-        end
-    end
-
-    -- Update attached joints
-    for _, joint in ipairs(body:getJoints()) do
-        local jointType = joint:getType()
-        local jointUserData = joint:getUserData()
-        if not jointUserData or not jointUserData.id then
-            print("flipThing: Joint without valid user data encountered.")
-            goto continue
+    -- Phase 1: Flip All Bodies
+    local function flipBody(currentThing)
+        --print('called flipbody')
+        local currentBody = currentThing.body
+        if not currentBody or processedBodies[currentThing.id] then
+            return
         end
 
-        -- Extract joint data
-        local jointData = jointHandlers[jointType].extract(joint)
-        if not jointData then
-            print("flipThing: Failed to extract joint data for joint type:", jointType)
-            goto continue
-        end
+        processedBodies[currentThing.id] = true
 
-        -- Determine the other body connected by the joint
-        local bodyA, bodyB = joint:getBodies()
-        local otherBody = (bodyA == body) and bodyB or bodyA
-        local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
+        -- Get current position and angle
+        local currentX, currentY = currentBody:getPosition()
+        local currentAngle = currentBody:getAngle()
 
-        if not otherThing then
-            print("flipThing: Connected joint's other body is invalid.")
-            goto continue
-        end
+        -- Calculate relative position to centroid
+        local relX = currentX - centroidX
+        local relY = currentY - centroidY
 
-        -- Calculate new anchor points based on flip axis
-
-        local anchorA = { joint:getAnchorA() }
-        local anchorB = { joint:getAnchorB() }
-
+        -- Determine new relative position based on flip axis
+        local newRelX, newRelY
         if axis == 'x' then
-            anchorA[1] = -anchorA[1]
-            anchorB[1] = -anchorB[1]
+            newRelX = -relX
+            newRelY = relY
         elseif axis == 'y' then
-            anchorA[2] = -anchorA[2]
-            anchorB[2] = -anchorB[2]
+            newRelX = relX
+            newRelY = -relY
+        end
+        -- Calculate new absolute position
+        local newX = centroidX + newRelX
+        local newY = centroidY + newRelY
+        local newAngle
+        if axis == 'x' then
+            newAngle = -currentAngle
+        elseif axis == 'y' then
+            newAngle = -currentAngle
         end
 
-        -- Prepare new joint data with updated anchors
-        local newJointData = {
-            body1 = body,
-            body2 = otherBody,
-            jointType = jointType,
-            collideConnected = joint:getCollideConnected(),
-            id = jointUserData.id, -- Preserve joint ID
-            anchorA = { anchorA[1], anchorA[2] },
-            anchorB = { anchorB[1], anchorB[2] },
-            properties = jointData,
-        }
+        -- Update body's position and angle
+        currentThing.body:setPosition(newX, newY)
+        currentThing.body:setAngle(newAngle)
 
-        -- Destroy the old joint
-        joint:destroy()
 
-        -- Recreate the joint with flipped anchor points
-        local newJoint = jointHandlers.createJoint(newJointData)
-        if newJoint then
-            print("flipThing: Joint flipped successfully:", jointType, jointUserData.id)
-        else
-            print("flipThing: Failed to recreate joint:", jointType, jointUserData.id)
+        -- Flip each fixture's shape
+        for _, fixture in ipairs(currentBody:getFixtures()) do
+            local shape = fixture:getShape()
+            if shape:typeOf("PolygonShape") then
+                local points = { shape:getPoints() }
+                for i = 1, #points, 2 do
+                    if axis == 'x' then
+                        points[i] = -points[i]         -- Invert X coordinate
+                    elseif axis == 'y' then
+                        points[i + 1] = -points[i + 1] -- Invert Y coordinate
+                    end
+                end
+
+                -- Create a new shape with flipped vertices
+                local success, newShape = pcall(love.physics.newPolygonShape, unpack(points))
+                if not success then
+                    print("flipThing: Failed to create new PolygonShape:", newShape)
+                else
+                    -- Preserve fixture properties
+                    local density = fixture:getDensity()
+                    local friction = fixture:getFriction()
+                    local restitution = fixture:getRestitution()
+
+                    -- Create a new fixture and destroy the old one
+                    local newFixture = love.physics.newFixture(currentBody, newShape, density)
+                    newFixture:setFriction(friction)
+                    newFixture:setRestitution(restitution)
+                    fixture:destroy()
+                end
+            elseif shape:typeOf("CircleShape") then
+                -- No need to flip circle shapes beyond position
+                -- Circle radius remains the same
+                -- If the circle has user data affecting orientation, handle it here
+            end
         end
 
-        ::continue::
+        -- Determine new angle based on flip axis
+
+        -- If recursive, flip connected bodies first
+        if recursive then
+            for _, joint in ipairs(currentBody:getJoints()) do
+                local jointUserData = joint:getUserData()
+                if not jointUserData or not jointUserData.id then
+                    print("flipThing: Joint without valid user data encountered.")
+                    goto continue
+                end
+
+                toBeProcessedJoints[jointUserData.id] = joint
+                -- Determine the other body connected by the joint
+                local bodyA, bodyB = joint:getBodies()
+                local otherBody = (bodyA == currentBody) and bodyB or bodyA
+                local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
+
+                if not otherThing then
+                    print("flipThing: Connected joint's other body is invalid.")
+                    goto continue
+                end
+
+                -- Recursively flip the connected body
+                flipBody(otherThing)
+
+                ::continue::
+            end
+        end
     end
+
+    -- Phase 2: Flip All Joints
+    local function flipJoints()
+        for jointID, joint in pairs(toBeProcessedJoints) do
+            local jointType = joint:getType()
+            local jointUserData = joint:getUserData()
+
+            if not jointUserData or not jointUserData.id then
+                print("flipThing: Joint without valid user data encountered.")
+                goto continue
+            end
+
+            if processedJoints[jointUserData.id] then
+                goto continue
+            end
+            processedJoints[jointUserData.id] = true
+
+            -- Extract joint data using the handler
+            local handler = jointHandlers[jointType]
+            if not handler or not handler.extract then
+                print("flipThing: No handler found for joint type:", jointType)
+                goto continue
+            end
+            local jointData = handler.extract(joint)
+
+            -- Determine the connected bodies
+            local bodyA, bodyB = joint:getBodies()
+            local thingA = bodyA:getUserData() and bodyA:getUserData().thing
+            local thingB = bodyB:getUserData() and bodyB:getUserData().thing
+
+            if not thingA or not thingB then
+                print("flipThing: One or both connected things are invalid.")
+                goto continue
+            end
+
+            local offsetA = jointUserData.offsetA
+            local offsetB = jointUserData.offsetB
+            --print('before', inspect(offsetA), inspect(offsetB))
+            if axis == 'x' then
+                offsetA.x = -offsetA.x
+                offsetB.x = -offsetB.x
+            elseif axis == 'y' then
+                offsetA.y = -offsetA.y
+                offsetB.y = -offsetB.y
+            end
+
+
+            joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+
+            ::continue::
+        end
+    end
+
+    -- Phase 1: Flip All Bodies Recursively
+    flipBody(thing)
+
+    -- Phase 2: Flip All Joints
+    flipJoints()
+
+    --print('************* Flip Completed *************')
+    return thing
 end
 
 return lib
