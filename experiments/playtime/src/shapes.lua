@@ -2,7 +2,7 @@
 
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
-
+local inspect = require 'vendor.inspect'
 local shapes = {}
 
 local function makePolygonVertices(sides, radius)
@@ -67,6 +67,7 @@ local function makeShapeListFromPolygon(polygon)
 
     -- first figure out if we are maybe a simple polygon we can use -as is- by box2d
     if #polygon <= 16 and love.math.isConvex(polygon) then
+        --print('cause its simple!')
         local centroidX, centroidY = mathutils.computeCentroid(polygon)
         local localVertices = {}
         for i = 1, #polygon, 2 do
@@ -168,7 +169,9 @@ function shapes.createShape(shapeType, radius, width, height, optionalVertices)
         elseif shapeType == 'custom' then
             if optionalVertices then
                 local polygon = optionalVertices
+                print(inspect(polygon))
                 shapesList = makeShapeListFromPolygon(polygon) or {}
+                print(#shapesList)
                 vertices = polygon
             else
                 error('shapetype custom needs optionalVertices!')

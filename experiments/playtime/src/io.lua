@@ -12,8 +12,6 @@ local utils = require 'src.utils'
 
 
 function lib.load(data, world)
-    -- Read the JSON file
-    -- print(love.filesystem.read(filename))
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then
         print("Error decoding JSON:", err)
@@ -470,6 +468,7 @@ function lib.cloneSelection(selectedBodies)
 
 
             local oldFixtures = originalBody:getFixtures()
+            --print(#oldFixtures, #newShapeList, inspect(originalThing.vertices))
 
             for i = 1, #oldFixtures do
                 local oldF = oldFixtures[i]
@@ -535,15 +534,26 @@ function lib.cloneSelection(selectedBodies)
                         for key, value in pairs(jointData) do
                             newJointData[key] = value
                         end
-
+                        print(inspect(newJointData))
                         -- Create the new joint
                         local newJoint = handler.create(newJointData,
                             clonedBodyA.body:getX(), clonedBodyA.body:getY(),
                             clonedBodyB.body:getX(), clonedBodyB.body:getY()
                         )
 
+
+                        local ax, ay, bx, by = newJoint:getAnchors()
+
+
+                        local fxa, fya = mathutils.rotatePoint(ax - bodyA:getX(), ay - bodyA:getY(), 0, 0,
+                            -bodyA:getAngle())
+                        local fxb, fyb = mathutils.rotatePoint(bx - bodyB:getX(), by - bodyB:getY(), 0, 0,
+                            -bodyB:getAngle())
+
+
                         -- Set user data for the new joint
-                        newJoint:setUserData({ id = newJointData.id })
+                        newJoint:setUserData({ id = newJointData.id, offsetA = { x = fxa, y = fya }, offsetB = { x = fxb, y = fyb } })
+                        --                             })
 
                         -- Register the new joint
                         registry.registerJoint(newJointData.id, newJoint)
