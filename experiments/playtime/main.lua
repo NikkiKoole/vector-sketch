@@ -325,7 +325,7 @@ local function drawUpdateSelectedObjectUI()
     local w, h = love.graphics.getDimensions()
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
         local body = uiState.selectedObj.body
-        local angleDegrees = body:getAngle() * 180 / math.pi
+        -- local angleDegrees = body:getAngle() * 180 / math.pi
         local myID = uiState.selectedObj.id
 
         -- Initialize Layout
@@ -471,7 +471,7 @@ local function drawUpdateSelectedObjectUI()
         local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
             (body:getAngle() * 180 / math.pi),
             (body:isAwake() and not worldState.paused) or dirtyBodyChange)
-        if newAngle and angleDegrees ~= newAngle then
+        if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
             body:setAngle(newAngle * math.pi / 180)
         end
         ui.label(x, y, ' angle')
@@ -1034,7 +1034,7 @@ local function maybeUpdateCustomPolygonVertices()
             { optionalVertices = uiState.polyTempVerts })
 
         uiState.polyTempVerts = shallowCopy(uiState.selectedObj.vertices)
-
+        -- uiState.selectedObj.vertices = uiState.polyTempVerts
         uiState.polyCentroid = { x = nx, y = ny }
     end
 end
