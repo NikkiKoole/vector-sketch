@@ -213,6 +213,7 @@ function lib.load(data, world)
                 joint = love.physics.newFrictionJoint(
                     bodyA, bodyB,
                     anchorA[1], anchorA[2],
+                    anchorB[1], anchorB[2],
                     collideConnected
                 )
                 joint:setMaxForce(jointData.properties.maxForce)
@@ -547,7 +548,7 @@ function lib.cloneSelection(selectedBodies)
                                 clonedBodyB.body:getX(), clonedBodyB.body:getY()
                             )
 
-                            print(inspect(newJoint))
+                            --print(inspect(newJoint))
                             local ax, ay, bx, by = newJoint:getAnchors()
                             local fxa, fya = mathutils.rotatePoint(ax - clonedBodyA.body:getX(),
                                 ay - clonedBodyA.body:getY(), 0, 0,

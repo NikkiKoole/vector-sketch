@@ -163,8 +163,16 @@ function lib.recreateJoint(joint, newSettings)
     local offsetA = getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
     local offsetB = getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
     --  print(inspect(offsetA), inspect(offsetB))
-    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType, id = id, offsetA = offsetA, offsetB = offsetB, collideConnected =
-    joint:getCollideConnected() }
+    local data = {
+        body1 = bodyA,
+        body2 = bodyB,
+        jointType = jointType,
+        id = id,
+        offsetA = offsetA,
+        offsetB = offsetB,
+        collideConnected =
+            joint:getCollideConnected()
+    }
 
     -- Add new settings to the data
     for key, value in pairs(newSettings or {}) do
@@ -427,13 +435,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     uiState.selectedJoint = lib.recreateJoint(j)
                     j = uiState.selectedJoint
 
-                    if false then
-                        -- keep this around because it will make offsetA unneeded.
-                        local ax1, ay1, b1x2, b1y2 = j:getAnchors()
-                        local fx, fy = mathutils.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
-                            -bodyA:getAngle())
-                        print('GREAT', fx, fy, x, y)
-                    end
+
                     offsetHasChangedViaOutside = true
                     return j
                 end
@@ -447,13 +449,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     uiState.selectedJoint = lib.recreateJoint(j)
                     j = uiState.selectedJoint
 
-                    if false then
-                        -- keep this around because it will make offsetA unneeded.
-                        local ax1, ay1, b1x2, b1y2 = j:getAnchors()
-                        local fx, fy = mathutils.rotatePoint(ax1 - bodyA:getX(), ay1 - bodyA:getY(), 0, 0,
-                            -bodyA:getAngle())
-                        print('GREAT', fx, fy, x, y)
-                    end
+
                     offsetHasChangedViaOutside = true
                     return j
                 end
@@ -648,6 +644,19 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                     ly,
                     function(val) j:setLinearOffset(lx, val) end
                 )
+                nextRow()
+                local maxForce = createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
+                    j:getMaxForce(),
+                    function(val) j:setMaxForce(val) end
+                )
+                nextRow()
+                local maxTorque = createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
+                    j:getMaxTorque(),
+                    function(val) j:setMaxTorque(val) end
+                )
+                nextRow()
+            elseif jointType == 'friction' then
+                j = offsetSliders(j)
                 nextRow()
                 local maxForce = createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
                     j:getMaxForce(),

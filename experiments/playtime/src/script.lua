@@ -1,7 +1,7 @@
 --script.lua
 local script = {}
 local inspect = require 'vendor.inspect'
-
+local cam = require('lib.cameraBase').getInstance()
 function getObjectsByLabel(label)
     local objects = {}
     for _, body in pairs(world:getBodies()) do
@@ -13,6 +13,12 @@ function getObjectsByLabel(label)
     return objects
 end
 
+function mouseWorldPos()
+    local mx, my = love.mouse:getPosition()
+    local cx, cy = cam:getWorldCoordinates(mx, my)
+    return cx, cy
+end
+
 local scriptEnv = {
     ipairs            = ipairs,
     table             = table,
@@ -22,7 +28,9 @@ local scriptEnv = {
     love              = love,
     random            = love.math.random,
     getObjectsByLabel = getObjectsByLabel,
-    world             = world
+    world             = world,
+    string            = string,
+    mouseWorldPos     = mouseWorldPos
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

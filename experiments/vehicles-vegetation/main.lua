@@ -1,9 +1,9 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.printC'
-
 require 'lib.box2dGuyCreation'
 require 'lib.texturedBox2d'
+
 local lurker          = require 'vendor.lurker'
 lurker.quiet          = true
 local inspect         = require 'vendor.inspect'
@@ -1484,7 +1484,7 @@ function love.load()
 
     --create()
     example = nil
-    startExample(2)
+    startExample(1)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
 

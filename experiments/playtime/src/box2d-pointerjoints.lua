@@ -110,7 +110,7 @@ function lib.handlePointerReleased(x, y, id)
         end
         lib.killMouseJointIfPossible(id)
     end
-
+    print('jo!', #released)
     return released
 end
 

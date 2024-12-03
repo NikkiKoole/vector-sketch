@@ -40,10 +40,7 @@ function s.onStart()
     for i = 1, #planets do
         local it = planets[i]
         it.maxInfluenceRadius = 10000
-        --   print(it.body:getMass())
-        --  it.body:applyAngularImpulse(random() * 10000)
         it.gravity = 100000 + random() * 1000000
-        --print(inspect(it))
     end
 
     local bodies = world:getBodies()

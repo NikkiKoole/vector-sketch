@@ -23,6 +23,33 @@ function lib.trace(...)
     print(table.concat(t, " "))
 end
 
+-- Utility function to get the difference between two paths
+function lib.getPathDifference(base, full)
+    -- Ensure both inputs are strings
+    if type(base) ~= "string" or type(full) ~= "string" then
+        error("Both base and full paths must be strings")
+    end
+
+    -- If the paths are identical, return an empty string
+    if full == base then
+        return ""
+    end
+
+    -- Check if the base path is a prefix of the full path
+    if full:sub(1, #base) == base then
+        -- Ensure that the base path ends at a directory boundary
+        -- i.e., the next character should be '/' or the full path should end here
+        local nextChar = full:sub(#base + 1, #base + 1)
+        if nextChar == "/" then
+            -- Extract the remaining part of the path
+            return full:sub(#base + 1)
+        end
+    end
+
+    -- If base is not a proper prefix, return nil or handle accordingly
+    return nil
+end
+
 function lib.sanitizeString(input)
     if not input then return "" end   -- Handle nil or empty strings
     return input:gsub("[%c%s]+$", "") -- Remove control characters and trailing spaces

@@ -17,6 +17,19 @@ jointHandlers["distance"] = {
         }
     end
 }
+jointHandlers["friction"] = {
+    create = function(data, x1, y1, x2, y2)
+        local joint = love.physics.newFrictionJoint(data.body1, data.body2, x1, y1, x2, y2, data.collideConnected)
+        return joint
+    end,
+
+    extract = function(joint)
+        return {
+            maxForce = joint:getMaxForce(),
+            maxTorque = joint:getMaxTorque()
+        }
+    end
+}
 jointHandlers["weld"] = {
     create = function(data, x1, y1, x2, y2)
         local joint = love.physics.newWeldJoint(data.body1, data.body2, x1, y1, data.collideConnected)

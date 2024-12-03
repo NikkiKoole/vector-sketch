@@ -11,7 +11,7 @@ local inspect = require 'vendor.inspect'
 local ui = require 'src.ui-all'
 local joint = require 'src.joints'
 local selectrect = require 'src.selection-rect'
-local io = require 'src.io'
+local eio = require 'src.io'
 local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
@@ -38,7 +38,7 @@ local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
-function love.load()
+function love.load(args)
     -- Load and set the font
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
     love.keyboard.setKeyRepeat(true)
@@ -92,8 +92,12 @@ function love.load()
         mouseDamping = 0.5
     }
 
-    sceneScript = nil
 
+    sceneScript = nil
+    scriptPath = nil
+    lastModTime = nil
+    hotReloadTimer = 0    -- Accumulates time
+    hotReloadInterval = 1 -- Check every 1 second
 
     love.physics.setMeter(worldState.meter)
     --world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
@@ -145,23 +149,62 @@ function love.load()
     end
 end
 
-function finalizePolygon()
-    if #uiState.polyVerts >= 6 then
-        local cx, cy = mathutil.computeCentroid(uiState.polyVerts)
-        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
-    else
-        -- Not enough vertices to form a polygon
-        print("Not enough vertices to create a polygon.")
+local function getFileModificationTime(path)
+    local cwd = love.filesystem.getWorkingDirectory()
+    local diff = utils.getPathDifference(cwd, path)
+    if diff then
+        local info = love.filesystem.getInfo(diff)
+        return info and info.modtime or 0
     end
-    -- Reset the drawing state
-    uiState.drawClickPoly = false
-    uiState.drawFreePoly = false
-    uiState.capturingPoly = false
-    uiState.polyVerts = {}
-    uiState.lastPolyPt = nil
+    return 0
+end
+
+function getFiledata(filename)
+    local f = io.open(filename, 'r')
+    local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+    f:close()
+    return filedata
+end
+
+function loadAndRunScript(name)
+    local cwd = love.filesystem.getWorkingDirectory()
+    local diff = utils.getPathDifference(cwd, name)
+
+    --local file, err = io.open(name, "r") -- Open in read mode
+    -- local file = love.filesystem.openFile("data.txt", "r")
+    local data = file:read('*a')
+    --print(data)
+    scriptPath = name
+    script.setEnv({ bodies = registry.bodies, joints = registry.joints, world = world, worldState = worldState })
+    sceneScript = script.loadScript(data, name)()
+    -- print(world)
+
+    if sceneScript and sceneScript.onStart then
+        sceneScript.onStart()
+    end
+    -- print(world)
+    file:close()
+    lastModTime = getFileModificationTime(name)
+end
+
+function maybeHotReload(dt)
+    -- Accumulate time
+    hotReloadTimer = hotReloadTimer + dt
+    -- Check if the accumulated time exceeds the interval
+    if hotReloadTimer >= hotReloadInterval then
+        hotReloadTimer = hotReloadTimer - hotReloadInterval -- Reset timer
+        if scriptPath then
+            local newModeTime = (getFileModificationTime(scriptPath))
+            if (newModeTime ~= lastModTime) then
+                loadAndRunScript(scriptPath)
+            end
+            lastModTime = newModeTime
+        end
+    end
 end
 
 function love.update(dt)
+    maybeHotReload(dt)
     if not worldState.paused then
         -- for i, v in ipairs(softbodies) do
         --     v:update(dt)
@@ -172,9 +215,10 @@ function love.update(dt)
         end
 
         if sceneScript and sceneScript.update then
-            sceneScript.update()
+            sceneScript.update(dt)
         end
     end
+
     box2dPointerJoints.handlePointerUpdate(dt, cam)
     --phys.handleUpdate(dt)
 
@@ -204,6 +248,22 @@ function love.update(dt)
             end
         end
     end
+end
+
+function finalizePolygon()
+    if #uiState.polyVerts >= 6 then
+        local cx, cy = mathutil.computeCentroid(uiState.polyVerts)
+        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
+    else
+        -- Not enough vertices to form a polygon
+        print("Not enough vertices to create a polygon.")
+    end
+    -- Reset the drawing state
+    uiState.drawClickPoly = false
+    uiState.drawFreePoly = false
+    uiState.capturingPoly = false
+    uiState.polyVerts = {}
+    uiState.lastPolyPt = nil
 end
 
 local function drawAddShapeUI()
@@ -573,14 +633,14 @@ function drawUI()
     end
 
     if uiState.addJointOpened then
-        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley' }
+        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley', 'friction' }
         local titleHeight = ui.font:getHeight() + BUTTON_SPACING
         local startX = 230
         local startY = 70
         local panelWidth = 200
         local buttonSpacing = BUTTON_SPACING
         local buttonHeight = ui.theme.button.height
-        local panelHeight = titleHeight + (#jointTypes * (buttonHeight + BUTTON_SPACING))
+        local panelHeight = (#jointTypes * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
 
         ui.panel(startX, startY, panelWidth, panelHeight, '', function()
             local layout = ui.createLayout({
@@ -610,10 +670,12 @@ function drawUI()
         local startX = 440
         local startY = 70
         local panelWidth = PANEL_WIDTH
-        local panelHeight = 400
+        --local panelHeight = 255
+        local buttonHeight = ui.theme.button.height
+
         local buttonSpacing = BUTTON_SPACING
         local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-
+        local panelHeight = titleHeight + titleHeight + (4 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
         ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
             local layout = ui.createLayout({
                 type = 'columns',
@@ -655,11 +717,11 @@ function drawUI()
             end
             ui.label(x, y, ' damp')
 
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            local t = ui.textinput('worldText', x, y, 280, 70, 'add text...', uiState.worldText)
-            if t then
-                uiState.worldText = t
-            end
+            -- x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            -- local t = ui.textinput('worldText', x, y, 280, 70, 'add text...', uiState.worldText)
+            -- if t then
+            --     uiState.worldText = t
+            -- end
         end)
     end
 
@@ -671,6 +733,7 @@ function drawUI()
     if sceneScript and sceneScript.onStart then
         if ui.button(920, 20, 50, 'R') then
             -- todo actually reread the file itself!
+            loadAndRunScript(scriptPath)
             sceneScript.onStart()
         end
     end
@@ -713,7 +776,7 @@ function drawUI()
 
 
             if ui.button(x, y, 260, 'clone') then
-                local cloned = io.cloneSelection(uiState.selectedBodies)
+                local cloned = eio.cloneSelection(uiState.selectedBodies)
                 uiState.selectedBodies = cloned
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
@@ -770,7 +833,7 @@ function drawUI()
             end
             if ui.button(320, 500, 200, 'save') then
                 uiState.saveDialogOpened = false
-                io.save(world, worldState, uiState.saveName)
+                eio.save(world, worldState, uiState.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
                 uiState.saveDialogOpened = false
@@ -939,21 +1002,11 @@ function love.filedropped(file)
         local data = file:read()
         uiState.selectedJoint = nil
         uiState.selectedObj = nil
-        io.load(data, world)
+        eio.load(data, world)
         file:close()
     end
     if string.find(name, '.playtime.lua') then
-        file:open("r")
-        local data = file:read()
-
-        script.setEnv({ bodies = registry.bodies, joints = registry.joints, world = world, worldState = worldState })
-        sceneScript = script.loadScript(data, name)()
-        -- print(world)
-        if sceneScript and sceneScript.onStart then
-            sceneScript.onStart()
-        end
-        -- print(world)
-        file:close()
+        loadAndRunScript(name)
     end
 end
 
@@ -996,7 +1049,7 @@ local function removeCustomPolygonVertex(x, y)
     local obj = uiState.selectedObj
 
     local offx, offy = obj.body:getPosition()
-    local px, py = mathutil.worldToLocal(x, y, obj.body:getAngle(),
+    local px, py = mathutil.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
         uiState.polyCentroid.x, uiState.polyCentroid.y)
 
     -- Step 2: Find the closest vertex index
@@ -1010,7 +1063,7 @@ local function removeCustomPolygonVertex(x, y)
         local dx = px - vx
         local dy = py - vy
         local distSq = dx * dx + dy * dy
-
+        print(distSq)
         if distSq <= maxDeletionDistanceSq then
             -- Step 3: Remove the vertex from the vertex list
 
@@ -1144,6 +1197,11 @@ local function handlePointer(x, y, id, action)
                     local offx, offy = uiState.selectedObj.body:getLocalPoint(cx, cy)
                     uiState.offsetDragging = { -offx, -offy }
                 end
+            else
+                if sceneScript and sceneScript.onPressed then
+                    local newHitted = utils.map(hitted, function(h) return h:getBody():getUserData().thing end)
+                    sceneScript.onPressed(newHitted)
+                end
             end
         else
             uiState.maybeHideSelectedPanel = true
@@ -1152,7 +1210,10 @@ local function handlePointer(x, y, id, action)
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
-            --print(inspect(releasedObjs))
+            if sceneScript and sceneScript.onReleased then
+                local newReleased = utils.map(releasedObjs, function(h) return h:getUserData().thing end)
+                sceneScript.onReleased(newReleased)
+            end
         end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)
