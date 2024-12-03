@@ -29,12 +29,12 @@ function s.draw()
     end
 
     local mx, my = mouseWorldPos()
-    love.graphics.setColor(1, 1, 1, .5)
+    love.graphics.setColor(1, 0, 1, .5)
     love.graphics.circle('fill', mx, my, 20)
 
     local bx, by = base.body:getPosition()
     love.graphics.line(mx, my, bx, by)
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(1, 0, 0, 1)
 end
 
 function s.onPressed(objs)

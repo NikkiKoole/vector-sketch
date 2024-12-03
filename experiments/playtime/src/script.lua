@@ -43,6 +43,12 @@ function script.setEnv(newEnv)
     end
 end
 
+function script.call(method, ...)
+    if sceneScript and sceneScript[method] then
+        sceneScript[method](...)
+    end
+end
+
 function script.loadScript(data, filePath)
     --print('>>>>> script environment api')
     --printTableKeys(scriptEnv)

@@ -150,6 +150,9 @@ function love.load(args)
 end
 
 local function getFileModificationTime(path)
+    -- a bit of lame thing, i'm getting the cwd and the fll path
+    -- then im cutting the duplication, so i'm left with the local fileName
+    -- load that using love filesystem so i can get the mod time....
     local cwd = love.filesystem.getWorkingDirectory()
     local diff = utils.getPathDifference(cwd, path)
     if diff then
@@ -161,29 +164,24 @@ end
 
 function getFiledata(filename)
     local f = io.open(filename, 'r')
-    local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-    f:close()
-    return filedata
+    if f then
+        local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+        f:close()
+        return filedata
+    end
 end
 
 function loadAndRunScript(name)
-    local cwd = love.filesystem.getWorkingDirectory()
-    local diff = utils.getPathDifference(cwd, name)
+    local data = getFiledata(name):getString()
 
-    --local file, err = io.open(name, "r") -- Open in read mode
-    -- local file = love.filesystem.openFile("data.txt", "r")
-    local data = file:read('*a')
-    --print(data)
-    scriptPath = name
     script.setEnv({ bodies = registry.bodies, joints = registry.joints, world = world, worldState = worldState })
     sceneScript = script.loadScript(data, name)()
-    -- print(world)
+    scriptPath = name
+    script.call('onStart')
+    --if sceneScript and sceneScript.onStart then
+    --    sceneScript.onStart()
+    --end
 
-    if sceneScript and sceneScript.onStart then
-        sceneScript.onStart()
-    end
-    -- print(world)
-    file:close()
     lastModTime = getFileModificationTime(name)
 end
 
@@ -213,10 +211,10 @@ function love.update(dt)
         for i = 1, 1 do
             world:update(dt)
         end
-
-        if sceneScript and sceneScript.update then
-            sceneScript.update(dt)
-        end
+        script.call('update', dt)
+        -- if sceneScript and sceneScript.update then
+        --     sceneScript.update(dt)
+        -- end
     end
 
     box2dPointerJoints.handlePointerUpdate(dt, cam)
@@ -616,7 +614,9 @@ end
 function drawUI()
     ui.startFrame()
     local w, h = love.graphics.getDimensions()
+    if worldState.paused then love.graphics.setColor(.7, .7, .5) else love.graphics.setColor(1, 1, 1) end
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
+    love.graphics.setColor(1, 1, 1)
 
     -- "Add Shape" Button
     if ui.button(20, 20, 200, 'add shape') then
@@ -860,9 +860,10 @@ function love.draw()
 
     box2dDraw.drawWorld(world)
 
-    if sceneScript and sceneScript.draw then
-        sceneScript.draw()
-    end
+    script.call('draw')
+    -- if sceneScript and sceneScript.draw then
+    --     sceneScript.draw()
+    -- end
 
     if uiState.selectedJoint and not uiState.selectedJoint:isDestroyed() then
         local x1, y1, x2, y2 = uiState.selectedJoint:getAnchors()
@@ -1198,10 +1199,11 @@ local function handlePointer(x, y, id, action)
                     uiState.offsetDragging = { -offx, -offy }
                 end
             else
-                if sceneScript and sceneScript.onPressed then
-                    local newHitted = utils.map(hitted, function(h) return h:getBody():getUserData().thing end)
-                    sceneScript.onPressed(newHitted)
-                end
+                local newHitted = utils.map(hitted, function(h) return h:getBody():getUserData().thing end)
+                script.call('onPressed', newHitted)
+                -- if sceneScript and sceneScript.onPressed then
+                --     sceneScript.onPressed(newHitted)
+                -- end
             end
         else
             uiState.maybeHideSelectedPanel = true
@@ -1210,10 +1212,13 @@ local function handlePointer(x, y, id, action)
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
-            if sceneScript and sceneScript.onReleased then
-                local newReleased = utils.map(releasedObjs, function(h) return h:getUserData().thing end)
-                sceneScript.onReleased(newReleased)
-            end
+            local newReleased = utils.map(releasedObjs, function(h) return h:getUserData().thing end)
+
+            script.call('onReleased', newReleased)
+            -- if sceneScript and sceneScript.onReleased then
+            --     local newReleased = utils.map(releasedObjs, function(h) return h:getUserData().thing end)
+            --     sceneScript.onReleased(newReleased)
+            -- end
         end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)
