@@ -221,24 +221,6 @@ lib.makeRectPoly2 = function(w, h, x, y)
     )
 end
 
-lib.killMouseJointIfPossible = function(id)
-    local index = -1
-    if pointerJoints then
-        for i = 1, #pointerJoints do
-            if pointerJoints[i].id == id then
-                index = i
-                if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
-                    pointerJoints[i].joint:destroy()
-                end
-                pointerJoints[i].joint     = nil
-                pointerJoints[i].jointBody = nil
-            end
-        end
-        if index ~= -1 then
-            table.remove(pointerJoints, index)
-        end
-    end
-end
 
 lib.makeShapeFromCreationPart = function(part)
     if part.metaPoints then
@@ -618,6 +600,25 @@ lib.drawWorld = function(world)
     --   love.graphics.setLineWidth(1)
 end
 
+lib.killMouseJointIfPossible = function(id)
+    local index = -1
+    if pointerJoints then
+        for i = 1, #pointerJoints do
+            if pointerJoints[i].id == id then
+                index = i
+                if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
+                    pointerJoints[i].joint:destroy()
+                end
+                pointerJoints[i].joint     = nil
+                pointerJoints[i].jointBody = nil
+            end
+        end
+        if index ~= -1 then
+            table.remove(pointerJoints, index)
+        end
+    end
+end
+
 lib.removeDeadPointerJoints = function()
     local index = -1
     for i = #pointerJoints, 1, -1 do
@@ -628,7 +629,6 @@ lib.removeDeadPointerJoints = function()
         end
     end
 end
-
 
 lib.handleUpdate = function(dt)
     lib.removeDeadPointerJoints()
@@ -702,20 +702,11 @@ lib.handlePointerReleased = function(x, y, id)
     lib.killMouseJointIfPossible(id)
 end
 
-
-
 lib.handlePointerPressed = function(wx, wy, id, onPressedParams, allowMouseJointMaking)
     if allowMouseJointMaking == nil then allowMouseJointMaking = true end
     -- local wx, wy = cam:getWorldCoordinates(x, y)
     --
-    if false then
-        local closeBodies = {}
-        local radius = 100
-        world:queryBoundingBox(wx - radius, wy - radius, wx + radius, wy + radius, function(f)
-            table.insert(closeBodies, f:getBody())
-        end)
-        local bodies = closeBodies --world:getBodies()
-    end
+
     local bodies = world:getBodies()
     local temp = {}
     local hitted = {}
@@ -777,7 +768,6 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams, allowMouseJoint
 
     return #temp > 0, hitted
 end
-
 
 
 return lib

@@ -58,8 +58,6 @@ local function makeITriangle(w, h, x, y)
     }
 end
 
-
-
 local function makeShapeListFromPolygon(polygon)
     local shapesList = {}
     local allowComplex = true -- TODO: parameterize this

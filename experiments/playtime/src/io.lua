@@ -483,7 +483,7 @@ function lib.cloneSelection(selectedBodies)
 
             -- Clone user data
             if (originalThing.vertices) then
-                print('vertex count before and after cloning ', #originalThing.vertices, #newVertices)
+                utils.trace('vertex count before and after cloning ', #originalThing.vertices, #newVertices)
             end
             local clonedThing = {
                 shapeType = originalThing.shapeType,
@@ -514,13 +514,13 @@ function lib.cloneSelection(selectedBodies)
         for _, originalJoint in ipairs(joints) do
             local ud = originalJoint:getUserData()
             if ud and ud.id then
-                if not doneJoints[ud.id] == true then
+                if not doneJoints[ud.id] == true then -- make sure we dont do joints twice..
                     local jointType = originalJoint:getType()
                     local handler = jointHandlers[jointType]
                     doneJoints[ud.id] = true
                     if handler and handler.extract then
                         local jointData = handler.extract(originalJoint)
-
+                        utils.trace(inspect(jointData))
                         -- Determine the original bodies connected by the joint
                         local bodyA, bodyB = originalJoint:getBodies()
                         local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
@@ -547,7 +547,7 @@ function lib.cloneSelection(selectedBodies)
                                 clonedBodyB.body:getX(), clonedBodyB.body:getY()
                             )
 
-
+                            print(inspect(newJoint))
                             local ax, ay, bx, by = newJoint:getAnchors()
                             local fxa, fya = mathutils.rotatePoint(ax - clonedBodyA.body:getX(),
                                 ay - clonedBodyA.body:getY(), 0, 0,

@@ -4,8 +4,7 @@ package.path = package.path .. ";../../?.lua"
 -- todo extract jsut the camera stuff i need nowadasy from these files and wrap it in one package
 local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
--- todo extract just the routines i need nowadays.. (render box2d world debug draw, something about pointer)
-local phys = require 'lib.mainPhysics'
+
 local blob = require 'vendor.loveblobs'
 local inspect = require 'vendor.inspect'
 
@@ -19,10 +18,9 @@ local objectManager = require 'src.object-manager'
 local mathutil = require 'src.math-utils'
 local utils = require 'src.utils'
 
-
--- eerst flip dan kloon = okay
--- eerst kloon en dan flip = NIET okay
--- waarom ?
+local box2dDraw = require 'src.box2d-draw'
+local box2dPointerJoints = require 'src.box2d-pointerjoints'
+-- todo, jointhandlers, dont really reuse properties after flip..
 --
 function waitForEvent()
     local a, b, c, d, e
@@ -99,7 +97,10 @@ function love.load()
 
     love.physics.setMeter(worldState.meter)
     --world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
-    phys.setupWorldWithGravity(worldState.meter, worldState.gravity)
+
+    --love.physics.setMeter(m)
+    world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
+    --phys.setupWorldWithGravity(worldState.meter, worldState.gravity)
 
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
@@ -174,7 +175,8 @@ function love.update(dt)
             sceneScript.update()
         end
     end
-    phys.handleUpdate(dt)
+    box2dPointerJoints.handlePointerUpdate(dt, cam)
+    --phys.handleUpdate(dt)
 
     if uiState.draggingObj then
         local mx, my = love.mouse.getPosition()
@@ -793,7 +795,7 @@ function love.draw()
     end
     cam:push()
 
-    phys.drawWorld(world)
+    box2dDraw.drawWorld(world)
 
     if sceneScript and sceneScript.draw then
         sceneScript.draw()
@@ -848,32 +850,10 @@ function love.draw()
 
     -- Highlight selected bodies
     if uiState.selectedBodies then
-        local lw = love.graphics.getLineWidth()
-        love.graphics.setLineWidth(6)
-        love.graphics.setColor(1, 0, 1) -- Red outline for selection
-        for _, thing in ipairs(uiState.selectedBodies) do
-            --local fixtures = body:getFixtures()
-            local body = thing.body
-            for _, fixture in ipairs(body:getFixtures()) do
-                --for fixture in pairs(fixtures) do
-                local shape = fixture:getShape()
-                love.graphics.push()
-                love.graphics.translate(body:getX(), body:getY())
-                love.graphics.rotate(body:getAngle())
-                if shape:typeOf("CircleShape") then
-                    love.graphics.circle("line", 0, 0, shape:getRadius())
-                elseif shape:typeOf("PolygonShape") then
-                    local points = { shape:getPoints() }
-                    love.graphics.polygon("line", points)
-                elseif shape:typeOf("EdgeShape") then
-                    local x1, y1, x2, y2 = shape:getPoints()
-                    love.graphics.line(x1, y1, x2, y2)
-                end
-                love.graphics.pop()
-            end
-        end
-        love.graphics.setLineWidth(lw)
-        love.graphics.setColor(1, 1, 1) -- Reset color
+        local bodies = utils.map(uiState.selectedBodies, function(thing)
+            return thing.body
+        end)
+        box2dDraw.drawBodies(bodies)
     end
 
     -- draw temp poly when changing vertices
@@ -1136,7 +1116,7 @@ local function handlePointer(x, y, id, action)
             damp = worldState.mouseDamping
         }
 
-        local _, hitted = phys.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
+        local _, hitted = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
 
         if (uiState.selectedBodies and #hitted == 0) then
             uiState.selectedBodies = nil
@@ -1170,7 +1150,10 @@ local function handlePointer(x, y, id, action)
         end
     elseif action == "released" then
         -- Handle release logic
-        phys.handlePointerReleased(x, y, id)
+        local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
+        if (#releasedObjs > 0) then
+            --print(inspect(releasedObjs))
+        end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)
             uiState.selectedObj = uiState.draggingObj
@@ -1197,7 +1180,6 @@ local function handlePointer(x, y, id, action)
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
 
             uiState.selectedBodies = selected
-
             uiState.startSelection = nil
         end
     end

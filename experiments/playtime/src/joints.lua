@@ -163,7 +163,8 @@ function lib.recreateJoint(joint, newSettings)
     local offsetA = getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
     local offsetB = getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
     --  print(inspect(offsetA), inspect(offsetB))
-    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType, id = id, offsetA = offsetA, offsetB = offsetB }
+    local data = { body1 = bodyA, body2 = bodyB, jointType = jointType, id = id, offsetA = offsetA, offsetB = offsetB, collideConnected =
+    joint:getCollideConnected() }
 
     -- Add new settings to the data
     for key, value in pairs(newSettings or {}) do
@@ -186,7 +187,7 @@ function lib.recreateJoint(joint, newSettings)
     -- Create a new joint with the updated data
     bodyA:setAwake(true)
     bodyB:setAwake(true)
-
+    print(inspect(data))
     return lib.createJoint(data)
 end
 

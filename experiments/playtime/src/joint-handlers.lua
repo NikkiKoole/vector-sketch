@@ -135,10 +135,10 @@ jointHandlers["pulley"] = {
         return joint
     end,
     extract = function(joint)
-        local a1, a2 = joint:getGroundAnchors()
+        local x1, y1, x2, y2 = joint:getGroundAnchors()
         return {
-            groundAnchor1 = a1,
-            groundAnchor2 = a2,
+            groundAnchor1 = { x1, y1 },
+            groundAnchor2 = { x2, y2 },
             ratio = joint:getRatio()
         }
     end

@@ -1,6 +1,14 @@
 local lib = {}
 -- Utility function to concatenate two tables.
 
+-- Define the map function
+function lib.map(tbl, func)
+    local new_tbl = {}
+    for i, v in ipairs(tbl) do
+        new_tbl[i] = func(v)
+    end
+    return new_tbl
+end
 
 function lib.trace(...)
     local info = debug.getinfo(2, "Sl")
