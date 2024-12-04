@@ -1204,6 +1204,9 @@ local function handlePointer(x, y, id, action)
             if ud and ud.thing then
                 uiState.selectedObj = ud.thing
             end
+            if sceneScript and not worldState.paused and uiState.selectedObj then
+                uiState.selectedObj = nil
+            end
             if uiState.jointCreationMode then
                 if uiState.jointCreationMode.body1 == nil then
                     uiState.jointCreationMode.body1 = uiState.selectedObj.body

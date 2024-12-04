@@ -11,6 +11,7 @@ local function mapInto(x, in_min, in_max, out_min, out_max)
 end
 
 function s.onStart()
+    worldState.paused = false
     cup = getObjectsByLabel('catapult-cup')[1]
     base = getObjectsByLabel('catapult-frame')[1]
     projectile = getObjectsByLabel('projectile')[1]
@@ -99,11 +100,15 @@ function s.onReleased(objs)
                     local forceMultiplier = force -- Adjust based on desired power
                     cup.body:setLinearVelocity(dx * forceMultiplier, dy * forceMultiplier)
                     local attachedJoints = projectile.body:getJoints()
+                    local projectileWasAttachedTpCup = false
                     for i = 1, #attachedJoints do
+                        if attachedJoints[i]:getType() == 'weld' then projectileWasAttachedTpCup = true end
                         attachedJoints[i]:destroy()
                     end
                     projectile.fixture:setSensor(false)
-                    projectile.body:setLinearVelocity(dx * forceMultiplier, dy * forceMultiplier)
+                    if projectileWasAttachedTpCup then
+                        projectile.body:setLinearVelocity(dx * forceMultiplier, dy * forceMultiplier)
+                    end
                 end
             end
             isHoldingCup = false

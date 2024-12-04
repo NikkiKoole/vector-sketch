@@ -33,7 +33,7 @@ function lib.load(data, world)
     local idMap = {}
     local function getNewId(oldId)
         if idMap[oldId] == nil then
-            print(oldId, idMap)
+            --  print(oldId, idMap)
             idMap[oldId] = uuid.generateID()
         end
         return idMap[oldId]

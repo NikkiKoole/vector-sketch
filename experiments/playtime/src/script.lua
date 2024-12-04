@@ -32,7 +32,8 @@ local scriptEnv = {
     getObjectsByLabel = getObjectsByLabel,
     world             = world,
     string            = string,
-    mouseWorldPos     = mouseWorldPos
+    mouseWorldPos     = mouseWorldPos,
+    worldState        = worldState
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting
