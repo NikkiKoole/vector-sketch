@@ -4,6 +4,7 @@ local inspect = require 'vendor.inspect'
 local cam = require('lib.cameraBase').getInstance()
 local utils = require 'src.utils'
 
+--- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
     local objects = {}
     for _, body in pairs(world:getBodies()) do
@@ -20,6 +21,8 @@ function mouseWorldPos()
     local cx, cy = cam:getWorldCoordinates(mx, my)
     return cx, cy
 end
+
+-- end collection
 
 local scriptEnv = {
     ipairs            = ipairs,

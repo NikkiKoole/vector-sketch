@@ -1,6 +1,7 @@
 --selection-rect.lua
 local lib = {}
 local mathutils = require 'src.math-utils'
+
 -- Include the drawDottedLine function here
 local function drawDottedLine(x1, y1, x2, y2, dotSize, spacing)
     local dx = x2 - x1

@@ -10,7 +10,6 @@ local jointHandlers = require 'src.joint-handlers'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 
-
 function lib.load(data, world)
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then

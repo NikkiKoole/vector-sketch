@@ -22,6 +22,7 @@ local function pointInPath(x, y, poly)
     end
     return inside
 end
+
 function lib.pointInRect(px, py, rect)
     return px >= rect.x and px <= (rect.x + rect.width) and
         py >= rect.y and py <= (rect.y + rect.height)

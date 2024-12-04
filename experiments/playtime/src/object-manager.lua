@@ -7,6 +7,7 @@ local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
 local inspect = require 'vendor.inspect'
 local utils = require 'src.utils'
+
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
     -- Initialize default values
@@ -182,12 +183,7 @@ local function collectBodies(thing, collected)
     end
     return collected
 end
--- -- Rotates a point (x, y) by angle radians
--- local function rotatePoint(x, y, angle)
---     local cosA = math.cos(angle)
---     local sinA = math.sin(angle)
---     return x * cosA - y * sinA, x * sinA + y * cosA
--- end
+
 -- Function to calculate centroid
 local function calculateCentroid(thing)
     local bodies = collectBodies(thing)
@@ -207,8 +203,6 @@ local function calculateCentroid(thing)
 end
 
 function lib.flipThing(thing, axis, recursive)
-    -- print('************* Flipping Thing *************')
-
     -- Validate input
     if not thing or not thing.body then
         print("flipThing: Invalid 'thing' provided.")

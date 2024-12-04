@@ -146,7 +146,7 @@ function love.load(args)
         table.insert(softbodies, b)
     end
 
-    loadScriptAndScene('catapult')
+    --loadScriptAndScene('catapult')
 end
 
 function loadScene(name)
