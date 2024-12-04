@@ -194,6 +194,7 @@ function maybeHotReload(dt)
         if scriptPath then
             local newModeTime = (getFileModificationTime(scriptPath))
             if (newModeTime ~= lastModTime) then
+                print('trying to load file because timestamp differs.')
                 loadAndRunScript(scriptPath)
             end
             lastModTime = newModeTime
@@ -675,7 +676,7 @@ function drawUI()
 
         local buttonSpacing = BUTTON_SPACING
         local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-        local panelHeight = titleHeight + titleHeight + (4 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+        local panelHeight = titleHeight + titleHeight + (5 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
         ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
             local layout = ui.createLayout({
                 type = 'columns',
@@ -717,7 +718,9 @@ function drawUI()
             end
             ui.label(x, y, ' damp')
 
-            -- x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            ui.label(x, y, registry.print())
             -- local t = ui.textinput('worldText', x, y, 280, 70, 'add text...', uiState.worldText)
             -- if t then
             --     uiState.worldText = t
@@ -945,6 +948,12 @@ function love.draw()
         uiState.maybeHideSelectedPanel = false
         uiState.polyTempVerts = nil
         uiState.polyLockedVerts = true
+    end
+
+    if sceneScript and sceneScript.foundError then
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.print(sceneScript.foundError, 0, h / 2)
+        love.graphics.setColor(1, 1, 1)
     end
 
     if FIXED_TIMESTEP then

@@ -34,7 +34,7 @@ function s.draw()
 
     local bx, by = base.body:getPosition()
     love.graphics.line(mx, my, bx, by)
-    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.setColor(1, 0, 1, 1)
 end
 
 function s.onPressed(objs)

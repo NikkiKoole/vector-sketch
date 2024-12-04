@@ -7,11 +7,14 @@ local registry = {
     -- Add more categories if needed
 }
 
+function registry.print()
+    return '#b:' .. utils.tablelength(registry.bodies) .. ', #j:' .. utils.tablelength(registry.joints)
+end
 
 -- Register a body
 function registry.registerBody(id, body)
     registry.bodies[id] = body
-    print('bodies:', utils.tablelength(registry.bodies))
+    --print('bodies:', utils.tablelength(registry.bodies))
 end
 
 -- Unregister a body
@@ -29,13 +32,13 @@ end
 function registry.registerJoint(id, joint)
     registry.joints[id] = joint
     --print('joints:', tablelength(registry.joints))
-    print('joints:', utils.tablelength(registry.joints))
+    -- print('joints:', utils.tablelength(registry.joints))
 end
 
 -- Unregister a joint
 function registry.unregisterJoint(id)
     registry.joints[id] = nil
-    print('joints:', utils.tablelength(registry.joints))
+    --print('joints:', utils.tablelength(registry.joints))
 end
 
 -- Get a joint by ID

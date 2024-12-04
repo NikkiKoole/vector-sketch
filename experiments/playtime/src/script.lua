@@ -2,6 +2,8 @@
 local script = {}
 local inspect = require 'vendor.inspect'
 local cam = require('lib.cameraBase').getInstance()
+local utils = require 'src.utils'
+
 function getObjectsByLabel(label)
     local objects = {}
     for _, body in pairs(world:getBodies()) do
@@ -58,19 +60,31 @@ function script.loadScript(data, filePath)
         error("Script not found: " .. filePath)
     end
 
+
     local chunk, err = load(scriptContent, "@" .. filePath, "t", scriptEnv)
-    if not chunk then
-        error("Error loading script: " .. err)
+    if err then
+        print('error: ' .. err)
+    else
+        if not chunk then
+            error("Error loading script: " .. err)
+        end
+
+        local success, err = pcall(chunk)
+        if not success then
+            error("Error executing script: " .. err)
+        end
+
+        print("Script loaded: " .. filePath)
+        if success then
+            return chunk
+        end
     end
 
-    local success, err = pcall(chunk)
-    if not success then
-        error("Error executing script: " .. err)
-    end
-
-    print("Script loaded: " .. filePath)
-    if success then
-        return chunk
+    return function()
+        local s = {}
+        s.onStart = function() print("error: " .. err .. "\nError in script: " .. filePath) end
+        s.foundError = err -- utils.insertNewlines(err, 100)
+        return s
     end
 end
 
