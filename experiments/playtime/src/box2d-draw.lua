@@ -11,6 +11,11 @@ local function getBodyColor(body)
         return { 1, 1, 0, 1 } --palette[colors.green]
     end
 end
+local function getEndpoint(x, y, angle, length)
+    local endX = x + length * math.cos(angle)
+    local endY = y + length * math.sin(angle)
+    return endX, endY
+end
 
 function lib.drawWorld(world)
     local r, g, b, a = love.graphics.getColor()

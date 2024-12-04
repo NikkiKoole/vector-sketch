@@ -129,9 +129,7 @@ function love.load(args)
         -- Add more vertices as needed
     }
     objectManager.addThing('custom', 500, 500, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
-
     softbodies = {}
-
     playWithSoftbodies = false
     if playWithSoftbodies then
         local b = blob.softbody(world, 500, 0, 102, 2, 4)
@@ -146,6 +144,30 @@ function love.load(args)
         }
         local b = blob.softsurface(world, points, 64, "static")
         table.insert(softbodies, b)
+    end
+
+    loadScriptAndScene('catapult')
+end
+
+function loadScene(name)
+    local data = getFiledata(name):getString()
+    uiState.selectedJoint = nil
+    uiState.selectedObj = nil
+    eio.load(data, world)
+    return data
+end
+
+function loadScriptAndScene(id)
+    local jsonPath = '/scripts/' .. id .. '.playtime.json'
+    local luaPath = '/scripts/' .. id .. '.playtime.lua'
+    jsoninfo = love.filesystem.getInfo(jsonPath)
+    luainfo = love.filesystem.getInfo(luaPath)
+    if (jsoninfo and luainfo) then
+        local cwd = love.filesystem.getWorkingDirectory()
+        loadScene(cwd .. jsonPath)
+        loadAndRunScript(cwd .. luaPath)
+    else
+        print('issue loading both files.')
     end
 end
 
@@ -173,7 +195,6 @@ end
 
 function loadAndRunScript(name)
     local data = getFiledata(name):getString()
-
     script.setEnv({ bodies = registry.bodies, joints = registry.joints, world = world, worldState = worldState })
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
@@ -213,9 +234,6 @@ function love.update(dt)
             world:update(dt)
         end
         script.call('update', dt)
-        -- if sceneScript and sceneScript.update then
-        --     sceneScript.update(dt)
-        -- end
     end
 
     box2dPointerJoints.handlePointerUpdate(dt, cam)
@@ -247,22 +265,6 @@ function love.update(dt)
             end
         end
     end
-end
-
-function finalizePolygon()
-    if #uiState.polyVerts >= 6 then
-        local cx, cy = mathutil.computeCentroid(uiState.polyVerts)
-        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
-    else
-        -- Not enough vertices to form a polygon
-        print("Not enough vertices to create a polygon.")
-    end
-    -- Reset the drawing state
-    uiState.drawClickPoly = false
-    uiState.drawFreePoly = false
-    uiState.capturingPoly = false
-    uiState.polyVerts = {}
-    uiState.lastPolyPt = nil
 end
 
 local function drawAddShapeUI()
@@ -1008,12 +1010,7 @@ end
 function love.filedropped(file)
     local name = file:getFilename()
     if string.find(name, '.playtime.json') then
-        file:open("r")
-        local data = file:read()
-        uiState.selectedJoint = nil
-        uiState.selectedObj = nil
-        eio.load(data, world)
-        file:close()
+        loadScene(name)
     end
     if string.find(name, '.playtime.lua') then
         loadAndRunScript(name)
@@ -1022,6 +1019,22 @@ end
 
 function love.textinput(t)
     ui.handleTextInput(t)
+end
+
+function finalizePolygon()
+    if #uiState.polyVerts >= 6 then
+        local cx, cy = mathutil.computeCentroid(uiState.polyVerts)
+        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
+    else
+        -- Not enough vertices to form a polygon
+        print("Not enough vertices to create a polygon.")
+    end
+    -- Reset the drawing state
+    uiState.drawClickPoly = false
+    uiState.drawFreePoly = false
+    uiState.capturingPoly = false
+    uiState.polyVerts = {}
+    uiState.lastPolyPt = nil
 end
 
 local function maybeUpdateCustomPolygonVertices()
@@ -1121,6 +1134,7 @@ function love.keypressed(key)
         local wx, wy = cam:getWorldCoordinates(mx, my)
         removeCustomPolygonVertex(wx, wy)
     end
+    script.call('onKeyPress', key)
 end
 
 local function handlePointer(x, y, id, action)

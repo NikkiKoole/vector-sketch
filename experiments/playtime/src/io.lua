@@ -33,6 +33,7 @@ function lib.load(data, world)
     local idMap = {}
     local function getNewId(oldId)
         if idMap[oldId] == nil then
+            print(oldId, idMap)
             idMap[oldId] = uuid.generateID()
         end
         return idMap[oldId]
@@ -260,7 +261,7 @@ function lib.save(world, worldState, filename)
         local userData = body:getUserData()
         local thing = userData and userData.thing
 
-        if thing then
+        if thing and thing.id then
             local lvx, lvy = body:getLinearVelocity()
             local bodyData = {
                 id = thing.id, -- Unique identifier
@@ -335,92 +336,93 @@ function lib.save(world, worldState, filename)
 
         if not jointID then
             print('what is up with this joint?')
-        end
-        -- Get connected bodies
-        local bodyA, bodyB = joint:getBodies()
-
-        local thingA = bodyA:getUserData() and bodyA:getUserData().thing
-        local thingB = bodyB:getUserData() and bodyB:getUserData().thing
-
-        if thingA and thingB then
-            local x1, y1, x2, y2 = joint:getAnchors()
-            local jointData = {
-                id = jointID,
-                type = joint:getType(),
-                bodyA = thingA.id,
-                bodyB = thingB.id,
-                anchorA = { utils.round_to_decimals(x1, 3), utils.round_to_decimals(y1, 3) },
-                anchorB = { utils.round_to_decimals(x2, 3), utils.round_to_decimals(y2, 3) },
-                collideConnected = joint:getCollideConnected(),
-                properties = {}
-            }
-
-            -- Extract joint-specific properties
-            if joint:getType() == "distance" then
-                jointData.properties.length = joint:getLength()
-                jointData.properties.frequency = joint:getFrequency()
-                jointData.properties.dampingRatio = joint:getDampingRatio()
-            elseif joint:getType() == 'rope' then
-                jointData.properties.maxLength = joint:getMaxLength()
-            elseif joint:getType() == "revolute" then
-                jointData.properties.motorEnabled = joint:isMotorEnabled()
-                if jointData.properties.motorEnabled then
-                    jointData.properties.motorSpeed = joint:getMotorSpeed()
-                    jointData.properties.maxMotorTorque = joint:getMaxMotorTorque()
-                end
-                jointData.properties.limitsEnabled = joint:areLimitsEnabled()
-                if jointData.properties.limitsEnabled then
-                    jointData.properties.lowerLimit = joint:getLowerLimit()
-                    jointData.properties.upperLimit = joint:getUpperLimit()
-                end
-            elseif joint:getType() == "weld" then
-                jointData.properties.frequency = joint:getFrequency()
-                jointData.properties.dampingRatio = joint:getDampingRatio()
-            elseif joint:getType() == "prismatic" then
-                local axisx, axisy = joint:getAxis()
-                jointData.properties.axis = { x = axisx, y = axisy }
-                jointData.properties.motorEnabled = joint:isMotorEnabled()
-                if jointData.properties.motorEnabled then
-                    jointData.properties.motorSpeed = joint:getMotorSpeed()
-                    jointData.properties.maxMotorForce = joint:getMaxMotorForce()
-                end
-                jointData.properties.limitsEnabled = joint:areLimitsEnabled()
-                if jointData.properties.limitsEnabled then
-                    jointData.properties.lowerLimit = joint:getLowerLimit()
-                    jointData.properties.upperLimit = joint:getUpperLimit()
-                end
-            elseif joint:getType() == "pulley" then
-                local a1x, a1y, a2x, a2y = joint:getGroundAnchors()
-                jointData.properties.groundAnchor1 = { x = a1x, y = a1y }
-                jointData.properties.groundAnchor2 = { x = a2x, y = a2y }
-                jointData.properties.ratio = joint:getRatio()
-            elseif joint:getType() == "wheel" then
-                jointData.properties.motorEnabled = joint:isMotorEnabled()
-                if jointData.properties.motorEnabled then
-                    jointData.properties.motorSpeed = joint:getMotorSpeed()
-                    jointData.properties.maxMotorTorque = joint:getMaxMotorTorque()
-                end
-                local axisx, axisy = joint:getAxis()
-                jointData.properties.axis = { x = axisx, y = axisy }
-                jointData.properties.springFrequency = joint:getSpringFrequency()
-                jointData.properties.springDampingRatio = joint:getSpringDampingRatio()
-            elseif joint:getType() == "motor" then
-                jointData.properties.correctionFactor = joint:getCorrectionFactor()
-                jointData.properties.angularOffset = joint:getAngularOffset()
-                jointData.properties.linearOffsetX, jointData.properties.linearOffsetY = joint:getLinearOffset()
-                jointData.properties.maxForce = joint:getMaxForce()
-                jointData.properties.maxTorque = joint:getMaxTorque()
-            elseif joint:getType() == "friction" then
-                jointData.properties.maxForce = joint:getMaxForce()
-                jointData.properties.maxTorque = joint:getMaxTorque()
-            else
-                -- Handle unsupported joint types
-                print("Unsupported joint type during save:", joint:getType())
-            end
-
-            table.insert(saveData.joints, jointData)
         else
-            print("Failed to find bodies for joint:", jointID)
+            -- Get connected bodies
+            local bodyA, bodyB = joint:getBodies()
+
+            local thingA = bodyA:getUserData() and bodyA:getUserData().thing
+            local thingB = bodyB:getUserData() and bodyB:getUserData().thing
+
+            if thingA and thingB then
+                local x1, y1, x2, y2 = joint:getAnchors()
+                local jointData = {
+                    id = jointID,
+                    type = joint:getType(),
+                    bodyA = thingA.id,
+                    bodyB = thingB.id,
+                    anchorA = { utils.round_to_decimals(x1, 3), utils.round_to_decimals(y1, 3) },
+                    anchorB = { utils.round_to_decimals(x2, 3), utils.round_to_decimals(y2, 3) },
+                    collideConnected = joint:getCollideConnected(),
+                    properties = {}
+                }
+
+                -- Extract joint-specific properties
+                if joint:getType() == "distance" then
+                    jointData.properties.length = joint:getLength()
+                    jointData.properties.frequency = joint:getFrequency()
+                    jointData.properties.dampingRatio = joint:getDampingRatio()
+                elseif joint:getType() == 'rope' then
+                    jointData.properties.maxLength = joint:getMaxLength()
+                elseif joint:getType() == "revolute" then
+                    jointData.properties.motorEnabled = joint:isMotorEnabled()
+                    if jointData.properties.motorEnabled then
+                        jointData.properties.motorSpeed = joint:getMotorSpeed()
+                        jointData.properties.maxMotorTorque = joint:getMaxMotorTorque()
+                    end
+                    jointData.properties.limitsEnabled = joint:areLimitsEnabled()
+                    if jointData.properties.limitsEnabled then
+                        jointData.properties.lowerLimit = joint:getLowerLimit()
+                        jointData.properties.upperLimit = joint:getUpperLimit()
+                    end
+                elseif joint:getType() == "weld" then
+                    jointData.properties.frequency = joint:getFrequency()
+                    jointData.properties.dampingRatio = joint:getDampingRatio()
+                elseif joint:getType() == "prismatic" then
+                    local axisx, axisy = joint:getAxis()
+                    jointData.properties.axis = { x = axisx, y = axisy }
+                    jointData.properties.motorEnabled = joint:isMotorEnabled()
+                    if jointData.properties.motorEnabled then
+                        jointData.properties.motorSpeed = joint:getMotorSpeed()
+                        jointData.properties.maxMotorForce = joint:getMaxMotorForce()
+                    end
+                    jointData.properties.limitsEnabled = joint:areLimitsEnabled()
+                    if jointData.properties.limitsEnabled then
+                        jointData.properties.lowerLimit = joint:getLowerLimit()
+                        jointData.properties.upperLimit = joint:getUpperLimit()
+                    end
+                elseif joint:getType() == "pulley" then
+                    local a1x, a1y, a2x, a2y = joint:getGroundAnchors()
+                    jointData.properties.groundAnchor1 = { x = a1x, y = a1y }
+                    jointData.properties.groundAnchor2 = { x = a2x, y = a2y }
+                    jointData.properties.ratio = joint:getRatio()
+                elseif joint:getType() == "wheel" then
+                    jointData.properties.motorEnabled = joint:isMotorEnabled()
+                    if jointData.properties.motorEnabled then
+                        jointData.properties.motorSpeed = joint:getMotorSpeed()
+                        jointData.properties.maxMotorTorque = joint:getMaxMotorTorque()
+                    end
+                    local axisx, axisy = joint:getAxis()
+                    jointData.properties.axis = { x = axisx, y = axisy }
+                    jointData.properties.springFrequency = joint:getSpringFrequency()
+                    jointData.properties.springDampingRatio = joint:getSpringDampingRatio()
+                elseif joint:getType() == "motor" then
+                    jointData.properties.correctionFactor = joint:getCorrectionFactor()
+                    jointData.properties.angularOffset = joint:getAngularOffset()
+                    jointData.properties.linearOffsetX, jointData.properties.linearOffsetY = joint:getLinearOffset()
+                    jointData.properties.maxForce = joint:getMaxForce()
+                    jointData.properties.maxTorque = joint:getMaxTorque()
+                elseif joint:getType() == "friction" then
+                    jointData.properties.maxForce = joint:getMaxForce()
+                    jointData.properties.maxTorque = joint:getMaxTorque()
+                else
+                    -- Handle unsupported joint types
+                    print("Unsupported joint type during save:", joint:getType())
+                end
+
+                table.insert(saveData.joints, jointData)
+            else
+                print("Failed to find bodies for joint:", jointID)
+            end
         end
     end
     -- Serialize the data to JSON
