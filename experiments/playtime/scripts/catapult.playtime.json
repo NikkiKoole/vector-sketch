@@ -1,2092 +1,2882 @@
 {
-  "version": "1.0",
-  "bodies": [
-    {
-      "position": [200.7401, 221.0606],
-      "bodyType": "dynamic",
-      "radius": 25,
-      "angularVelocity": -2.2477,
-      "angle": -3.702,
-      "sharedFixtureData": {
-        "shapeType": "circle",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+  "joints":[{
+      "id":"tZcH7",
+      "properties":{
+        "maxLength":79.959999084473
       },
-      "id": "uz6L5",
-      "fixtures": [
-        {
-          "radius": 25
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": false,
-      "label": "projectile",
-      "linearVelocity": [-55.73509979248, 1.0914235115051],
-      "shapeType": "circle",
-      "height": 40
-    },
-    {
-      "position": [200.1979, 141.1016],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "circle",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "bodyA":"4kWLuC",
+      "bodyB":"31JZaK",
+      "collideConnected":false,
+      "anchorB":[200.74,221.06],
+      "type":"rope",
+      "anchorA":[200.198,141.102]
+    },{
+      "id":"2PFA8t",
+      "properties":{
+        "maxTorque":12,
+        "maxForce":2
       },
-      "id": "1cfqA0",
-      "fixtures": [
-        {
-          "radius": 20
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": false,
-      "label": "catapult-frame",
-      "linearVelocity": [0, 0],
-      "shapeType": "circle",
-      "height": 40
-    },
-    {
-      "position": [200.7401, 221.0606],
-      "bodyType": "dynamic",
-      "radius": 40,
-      "angularVelocity": 0,
-      "angle": -291.7311,
-      "sharedFixtureData": {
-        "shapeType": "circle",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 0.53
+      "bodyA":"31JZaK",
+      "bodyB":"4kWLuC",
+      "collideConnected":false,
+      "anchorB":[199.223,140.846],
+      "type":"friction",
+      "anchorA":[200.739,221.06]
+    }],
+  "bodies":[{
+      "id":"3tdhod",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "Rtdzd",
-      "fixtures": [
-        {
-          "radius": 40
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": false,
-      "label": "catapult-cup",
-      "linearVelocity": [0, 0],
-      "shapeType": "circle",
-      "height": 96.18
-    },
-    {
-      "position": [150.1443, -106.7224],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[758.0974,-5289.3271],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5697,
+      "angularVelocity":0
+    },{
+      "id":"3huidk",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3mnZBh",
-      "fixtures": [
-        {
-          "points": [2901.568, 402.873, 2897.562, 571.134, -6.946, 611.196]
-        },
-        {
-          "points": [2901.568, 402.873, -6.946, 611.196, -202.29, 536.558]
-        },
-        {
-          "points": [-202.29, 536.558, -680.154, 439, -618.149, 376.802]
-        },
-        {
-          "points": [-558.478, -293.269, -618.149, 376.802, -640.731, -311.548]
-        },
-        {
-          "points": [-150.068, -628.642, -334.173, -526.361, -252.348, -640.006]
-        },
-        {
-          "points": [-150.068, -628.642, -275.077, -499.086, -334.173, -526.361]
-        },
-        {
-          "points": [-275.077, -499.086, -404.633, -326.345, -334.173, -526.361]
-        },
-        {
-          "points": [-334.173, -526.361, -404.633, -326.345, -522.824, -183.152]
-        },
-        {
-          "points": [2901.568, 402.873, -202.29, 536.558, -157.976, 462.786]
-        },
-        {
-          "points": [-157.976, 462.786, -202.29, 536.558, -618.149, 376.802]
-        },
-        {
-          "points": [-334.173, -526.361, -522.824, -183.152, -456.91, -378.622]
-        },
-        {
-          "points": [-157.976, 462.786, -618.149, 376.802, -538.372, 386.683]
-        },
-        {
-          "points": [-538.372, 386.683, -618.149, 376.802, -558.478, -293.269]
-        },
-        {
-          "points": [-456.91, -378.622, -522.824, -183.152, -558.478, -293.269]
-        },
-        {
-          "points": [-522.824, -183.152, -538.372, 386.683, -558.478, -293.269]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        147.36870331118, 504.47341191934, 3051.8759077625, 464.41124358208,
-        3055.8821245963, 296.15013656558, -3.6614811852942, 356.0640081364,
-        -384.05759632846, 279.96096557762, -368.50962061491, -289.87483830784,
-        -250.31856759451, -433.06782927823, -120.76299251157, -605.80860499045,
-        4.2467714572097, -735.36418520255, -98.033944961663, -746.72870982201,
-        -179.85851898806, -633.08346332396, -302.59537132682, -485.3446532165,
-        -404.16373683208, -399.99177209442, -486.41611529027, -418.27008310811,
-        -463.83464173292, 270.0800263875, -525.83976770395, 332.27760475569,
-        -47.97608542618, 429.83509026237
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [3768.9058, -297.4468],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[884.7882,-5051.3154],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0055,
+      "angularVelocity":0
+    },{
+      "id":"349Jj1",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4aQVbw",
-      "fixtures": [
-        {
-          "points": [
-            274.76, -74.828, 270.083, 88.858, -267.744, 70.151, -277.098,
-            -84.182
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        1585.9469027937, -643.08229227633, 1595.3004209213, -488.74924316995,
-        2133.1277132618, -470.04220691463, 2137.8044723256, -633.72877414867
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [3192.5513, -1402.0099],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[641.0085,-4574.7363],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0043,
+      "angularVelocity":0
+    },{
+      "id":"2wXdcI",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "29hZKp",
-      "fixtures": [
-        {
-          "points": [
-            198.625, 94.828, -175.516, 90.151, -194.223, -92.243, 171.114,
-            -92.736
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        2998.3281400703, -1494.2524418934, 3017.0351763256, -1311.858838404,
-        3391.175901432, -1307.1820793402, 3363.6650387249, -1494.7462884377
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [7330.9028, 656363.1875],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 3.1428,
-      "angle": 191.6837,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[886.0279,-5527.6484],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0062,
+      "angularVelocity":0
+    },{
+      "id":"248rBy",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3AgXil",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [3.0032689571381, 11999.998046875],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3294.1162, -1719.1105],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0074,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[757.0415,-4813.0312],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5695,
+      "angularVelocity":0
+    },{
+      "id":"1MGisz",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3TzflM",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3059.4846, -1718.7689],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0047,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[774.0634,-4257.9878],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3wWl4K",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4q3AkS",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3175.5105, -1957.11],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 1.5692,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[651.1884,-5527.3291],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0018,
+      "angularVelocity":0
+    },{
+      "id":"3j9HQB",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1Jw8JP",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3069.5544, -2195.1282],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0064,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[651.1063,-5051.0381],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.006,
+      "angularVelocity":0
+    },{
+      "id":"3GvsLh",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "91OIi",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3303.2417, -2195.4968],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0058,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[875.6407,-4575.0664],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0068,
+      "angularVelocity":0
+    },{
+      "id":"2ueZmu",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "40oGcw",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [2059.782, -1664.4808],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0053,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[158.6245,-3531.3254],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0062,
+      "angularVelocity":0
+    },{
+      "id":"4upcUv",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1Kt80k",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [1825.8711, -1663.8068],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0059,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[29.638,-2816.7085],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5695,
+      "angularVelocity":0
+    },{
+      "id":"c3ZKX",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "2jPcdY",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [1932.0536, -1425.8032],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 1.5686,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[157.3847,-3054.9922],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0055,
+      "angularVelocity":0
+    },{
+      "id":"1FZ7D",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "zjFC2",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [1816.0023, -1187.2037],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0051,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[-76.2972,-3054.7148],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.006,
+      "angularVelocity":0
+    },{
+      "id":"2eYu7h",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3vPBJy",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [2050.6443, -1187.7158],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0081,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[-76.2152,-3531.0054],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0018,
+      "angularVelocity":0
+    },{
+      "id":"tp4FF",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "BTyKU",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [1949.0431, -870.3845],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[-86.395,-2578.4136],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0043,
+      "angularVelocity":0
+    },{
+      "id":"2FGJaU",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3aXNYW",
-      "fixtures": [
-        {
-          "points": [
-            198.625, 94.828, -175.516, 90.151, -194.223, -92.243, 171.114,
-            -92.736
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        2998.3281400703, -1494.2524418934, 3017.0351763256, -1311.858838404,
-        3391.175901432, -1307.1820793402, 3363.6650387249, -1494.7462884377
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [3912.7759, -1075.6779],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0043,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[30.6939,-3293.0039],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5697,
+      "angularVelocity":0
+    },{
+      "id":"146Qk3",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3WyuEa",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3684.3589, -1079.545],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.032,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[46.6599,-2261.665],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"Rj0k8",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "WnSbD",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3783.644, -839.5296],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 1.5877,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[148.2372,-2578.7437],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0068,
+      "angularVelocity":0
+    },{
+      "id":"NKQS3",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4wcXEQ",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3666.873, -603.2048],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0053,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[1323.2417,-2001.1882],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"1O2BCG",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1B9xks",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3901.6953, -599.1914],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0087,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1424.819,-2318.2666],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0068,
+      "angularVelocity":0
+    },{
+      "id":"1mJtRO",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "Id1yZ",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [4989.6528, -266.1807],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1190.1868,-2317.9365],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0043,
+      "angularVelocity":0
+    },{
+      "id":"eHEEr",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1OZBXU",
-      "fixtures": [
-        {
-          "points": [
-            198.625, 94.828, -175.516, 90.151, -194.223, -92.243, 171.114,
-            -92.736
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        2998.3281400703, -1494.2524418934, 3017.0351763256, -1311.858838404,
-        3391.175901432, -1307.1820793402, 3363.6650387249, -1494.7462884377
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [5091.2305, -583.4723],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0081,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1306.2198,-2556.2314],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5695,
+      "angularVelocity":0
+    },{
+      "id":"2hf2Q",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "LLpBZ",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [4856.5972, -583.0001],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0051,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1200.2847,-2794.2378],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.006,
+      "angularVelocity":0
+    },{
+      "id":"37zJ6x",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "3gwNnW",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [4972.6294, -821.5519],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 1.5687,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1433.9664,-2794.5151],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0055,
+      "angularVelocity":0
+    },{
+      "id":"KrFKN",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "mVl8P",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [4866.3813, -1059.564],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0056,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1435.2062,-3270.8491],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0062,
+      "angularVelocity":0
+    },{
+      "id":"1bQBet",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "2tyRe",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [5100.3105, -1060.2625],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0052,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1200.3667,-3270.53],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0018,
+      "angularVelocity":0
+    },{
+      "id":"4EG20v",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1CRhNt",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [6343.8765, -1591.9028],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0052,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1307.2758,-3032.5264],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5697,
+      "angularVelocity":0
+    },{
+      "id":"2xaBNx",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "2pcr0n",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [6110.021, -1591.2323],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.006,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[1585.9469027937,-643.08229227633,1595.3004209213,-488.74924316995,2133.1277132618,-470.04220691463,2137.8044723256,-633.72877414867],
+      "label":"",
+      "fixedRotation":false,
+      "position":[4070.3906,-2270.7664],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[274.76,-74.828,270.083,88.858,-267.744,70.151,-277.098,-84.182]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"2b5qls",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "2W0HYm",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [6216.1875, -1353.2272],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 1.5686,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[3494.0364,-3375.3303],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"5m3tI",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1KFc2Y",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [6100.1299, -1114.6255],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0051,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3595.6138,-3692.408],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0068,
+      "angularVelocity":0
+    },{
+      "id":"2sZ31E",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1XIF5c",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [6334.77, -1115.1372],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0081,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3360.9822,-3692.0784],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0043,
+      "angularVelocity":0
+    },{
+      "id":"3G92Fb",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4scGA9",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [6233.1616, -797.8064],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3477.0154,-3930.3752],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5695,
+      "angularVelocity":0
+    },{
+      "id":"aT4Q0",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "xNz2t",
-      "fixtures": [
-        {
-          "points": [
-            198.625, 94.828, -175.516, 90.151, -194.223, -92.243, 171.114,
-            -92.736
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        2998.3281400703, -1494.2524418934, 3017.0351763256, -1311.858838404,
-        3391.175901432, -1307.1820793402, 3363.6650387249, -1494.7462884377
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [3304.4045, -2671.9126],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0061,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3371.0803,-4168.3809],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.006,
+      "angularVelocity":0
+    },{
+      "id":"lo6E1",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1vtJGT",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3069.6042, -2671.4812],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0.0019,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3604.762,-4168.6572],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0055,
+      "angularVelocity":0
+    },{
+      "id":"MypeQ",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "1kgmZ7",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [3176.5317, -2433.4956],
-      "bodyType": "dynamic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 1.5692,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2361.248,-3637.7605],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0053,
+      "angularVelocity":0
+    },{
+      "id":"2vrOG9",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "VOeTm",
-      "fixtures": [
-        {
-          "points": [
-            13.76, -222.87, 13.76, 222.87, -13.76, 222.87, -13.76, -222.87
-          ]
-        }
-      ],
-      "fixedRotation": false,
-      "width": "27.52",
-      "vertices": false,
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "rectangle",
-      "height": "445.74"
-    },
-    {
-      "position": [-2126.5991, -1540.3817],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2127.3213,-3637.0864],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0058,
+      "angularVelocity":0
+    },{
+      "id":"1DYXkn",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "2zW7p1",
-      "fixtures": [
-        {
-          "points": [-181.638, 312.052, -213.416, 197.654, -238.837, 45.124]
-        },
-        {
-          "points": [-181.638, 312.052, -238.837, 45.124, -251.548, -81.985]
-        },
-        {
-          "points": [-181.638, 312.052, -251.548, -81.985, -257.904, -183.672]
-        },
-        {
-          "points": [-181.638, 312.052, -257.904, -183.672, -264.259, -285.359]
-        },
-        {
-          "points": [-159.394, -336.203, -181.638, 312.052, -264.259, -285.359]
-        },
-        {
-          "points": [-16.397, -371.157, -181.638, 312.052, -159.394, -336.203]
-        },
-        {
-          "points": [209.221, -399.757, -16.397, -371.157, 104.356, -390.224]
-        },
-        {
-          "points": [323.619, -374.335, -16.397, -371.157, 209.221, -399.757]
-        },
-        {
-          "points": [396.706, -304.425, -16.397, -371.157, 323.619, -374.335]
-        },
-        {
-          "points": [396.706, -304.425, 383.995, -202.738, -16.397, -371.157]
-        },
-        {
-          "points": [383.995, -202.738, 342.685, -97.874, -16.397, -371.157]
-        },
-        {
-          "points": [342.685, -97.874, 256.887, -47.03, -16.397, -371.157]
-        },
-        {
-          "points": [256.887, -47.03, 152.022, -34.319, -16.397, -371.157]
-        },
-        {
-          "points": [152.022, -34.319, 34.446, -18.431, -16.397, -371.157]
-        },
-        {
-          "points": [34.446, -18.431, -73.596, 10.169, -16.397, -371.157]
-        },
-        {
-          "points": [-41.819, 318.407, -86.307, 111.856, -57.707, 219.898]
-        },
-        {
-          "points": [-25.93, 416.917, -86.307, 111.856, -41.819, 318.407]
-        },
-        {
-          "points": [-25.93, 416.917, -35.463, 518.604, -86.307, 111.856]
-        },
-        {
-          "points": [-35.463, 518.604, -143.506, 566.269, -86.307, 111.856]
-        },
-        {
-          "points": [-86.307, 111.856, -143.506, 566.269, -156.217, 410.561]
-        },
-        {
-          "points": [-86.307, 111.856, -156.217, 410.561, -181.638, 312.052]
-        },
-        {
-          "points": [-16.397, -371.157, -73.596, 10.169, -181.638, 312.052]
-        },
-        {
-          "points": [-73.596, 10.169, -86.307, 111.856, -181.638, 312.052]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        -738.23746702433, -658.10115756286, -750.94833827812, -813.80933042176,
-        -776.37008078569, -912.31858263862, -808.14725892016, -1026.7164239227,
-        -833.56900142774, -1179.2468789682, -846.27987268153, -1306.355591506,
-        -852.63530830842, -1408.0425615363, -858.99074393532, -1509.7295315666,
-        -754.12605609157, -1560.5730165818, -611.12875448645, -1595.5279125297,
-        -490.37547757547, -1614.5942194104, -385.51078973172, -1624.1273728507,
-        -271.11294844763, -1598.7056303432, -198.02543873835, -1528.7958384473,
-        -210.73630999214, -1427.108868417, -252.04664156695, -1322.2441805733,
-        -337.84502253002, -1271.4006955581, -442.70971037377, -1258.6898243043,
-        -560.2852694713, -1242.8012352371, -668.3276751285, -1214.2017749161,
-        -681.03854638229, -1112.5148048858, -652.43908606126, -1004.4723992286,
-        -636.55049699403, -905.96314701173, -620.6619079268, -807.45389479487,
-        -630.19506136714, -705.76692476457
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [-1932.2075, -1316.4585],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2233.5276,-3399.0811],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5686,
+      "angularVelocity":0
+    },{
+      "id":"22T8sH",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "22WxB8",
-      "fixtures": [
-        {
-          "points": [-147.234, -121.601, -153.59, 135.794, -150.412, -4.025]
-        },
-        {
-          "points": [-64.614, -121.601, -153.59, 135.794, -147.234, -121.601]
-        },
-        {
-          "points": [14.829, -185.155, -153.59, 135.794, -64.614, -121.601]
-        },
-        {
-          "points": [116.516, -226.465, -153.59, 135.794, 14.829, -185.155]
-        },
-        {
-          "points": [230.914, -229.643, 224.559, -127.956, 116.516, -226.465]
-        },
-        {
-          "points": [224.559, -127.956, 106.983, -105.712, 116.516, -226.465]
-        },
-        {
-          "points": [116.516, -226.465, 106.983, -105.712, 18.007, -48.513]
-        },
-        {
-          "points": [116.516, -226.465, 18.007, -48.513, -42.37, 37.285]
-        },
-        {
-          "points": [21.185, 250.192, -42.37, 37.285, -10.592, 142.15]
-        },
-        {
-          "points": [21.185, 250.192, -39.192, 332.813, -42.37, 37.285]
-        },
-        {
-          "points": [-39.192, 332.813, -124.99, 272.436, -42.37, 37.285]
-        },
-        {
-          "points": [-42.37, 37.285, -124.99, 272.436, -153.59, 135.794]
-        },
-        {
-          "points": [116.516, -226.465, -42.37, 37.285, -153.59, 135.794]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        -547.57439821752, -1122.0479583261, -550.75211603096, -1004.4723992286,
-        -553.92983384441, -864.65281543692, -525.33037352339, -728.0109494587,
-        -439.53199256032, -667.63431100321, -379.15535410483, -750.25497415283,
-        -410.9325322393, -858.29737981002, -442.70971037377, -963.16206765377,
-        -382.33307191827, -1048.9604486168, -293.35697314176, -1106.1593692589,
-        -175.78141404422, -1128.403393953, -169.42597841733, -1230.0903639833,
-        -283.82381970142, -1226.9126461699, -385.51078973172, -1185.6023145951,
-        -464.9537350679, -1122.0479583261
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [-1581.0243, -1184.1493],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2117.4829,-3160.5232],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0051,
+      "angularVelocity":0
+    },{
+      "id":"31fn4m",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4lD9o5",
-      "fixtures": [
-        {
-          "points": [-140.24, -219.712, -156.075, -112.825, -148.157, -168.248]
-        },
-        {
-          "points": [-84.817, -235.547, -140.24, -219.712, -148.157, -219.712]
-        },
-        {
-          "points": [-29.394, -239.506, -140.24, -219.712, -84.817, -235.547]
-        },
-        {
-          "points": [22.07, -243.465, -140.24, -219.712, -29.394, -239.506]
-        },
-        {
-          "points": [73.534, -243.465, -140.24, -219.712, 22.07, -243.465]
-        },
-        {
-          "points": [101.246, -199.918, -140.24, -219.712, 73.534, -243.465]
-        },
-        {
-          "points": [109.163, -144.495, -140.24, -219.712, 101.246, -199.918]
-        },
-        {
-          "points": [109.163, -144.495, 57.699, -124.701, -140.24, -219.712]
-        },
-        {
-          "points": [57.699, -124.701, 6.235, -112.825, -140.24, -219.712]
-        },
-        {
-          "points": [6.235, -112.825, -57.105, -104.908, -140.24, -219.712]
-        },
-        {
-          "points": [-57.105, -104.908, -92.734, -65.32, -140.24, -219.712]
-        },
-        {
-          "points": [45.823, -45.526, -61.064, -25.732, -5.641, -41.567]
-        },
-        {
-          "points": [97.287, -49.485, -61.064, -25.732, 45.823, -45.526]
-        },
-        {
-          "points": [132.916, -9.897, -61.064, -25.732, 97.287, -49.485]
-        },
-        {
-          "points": [132.916, -9.897, 93.328, 21.773, -61.064, -25.732]
-        },
-        {
-          "points": [93.328, 21.773, 41.864, 25.732, -61.064, -25.732]
-        },
-        {
-          "points": [41.864, 25.732, -17.518, 41.567, -61.064, -25.732]
-        },
-        {
-          "points": [-17.518, 41.567, -49.188, 81.155, -61.064, -25.732]
-        },
-        {
-          "points": [81.452, 104.908, -25.435, 128.66, 29.988, 112.825]
-        },
-        {
-          "points": [208.133, 100.949, 81.452, 104.908, 148.751, 89.073]
-        },
-        {
-          "points": [227.927, 148.454, 81.452, 104.908, 208.133, 100.949]
-        },
-        {
-          "points": [227.927, 148.454, 204.174, 203.877, 81.452, 104.908]
-        },
-        {
-          "points": [204.174, 203.877, 144.792, 203.877, 81.452, 104.908]
-        },
-        {
-          "points": [144.792, 203.877, 85.411, 219.712, 81.452, 104.908]
-        },
-        {
-          "points": [85.411, 219.712, 18.111, 231.588, 81.452, 104.908]
-        },
-        {
-          "points": [81.452, 104.908, 18.111, 231.588, -33.353, 247.424]
-        },
-        {
-          "points": [81.452, 104.908, -33.353, 247.424, -96.693, 243.465]
-        },
-        {
-          "points": [81.452, 104.908, -96.693, 243.465, -120.446, 195.959]
-        },
-        {
-          "points": [-120.446, 195.959, -156.075, 140.537, -163.992, 89.073]
-        },
-        {
-          "points": [-120.446, 195.959, -163.992, 89.073, -171.91, 25.732]
-        },
-        {
-          "points": [-120.446, 195.959, -171.91, 25.732, -171.91, -49.485]
-        },
-        {
-          "points": [-120.446, 195.959, -171.91, -49.485, -156.075, -112.825]
-        },
-        {
-          "points": [-120.446, 195.959, -156.075, -112.825, -140.24, -219.712]
-        },
-        {
-          "points": [-92.734, -65.32, -120.446, 195.959, -140.24, -219.712]
-        },
-        {
-          "points": [-61.064, -25.732, -120.446, 195.959, -92.734, -65.32]
-        },
-        {
-          "points": [-49.188, 81.155, -120.446, 195.959, -61.064, -25.732]
-        },
-        {
-          "points": [-25.435, 128.66, -120.446, 195.959, -49.188, 81.155]
-        },
-        {
-          "points": [81.452, 104.908, -120.446, 195.959, -25.435, 128.66]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        -30.324414239756, -1271.3940036415, -38.241968224484, -1219.9299027408,
-        -46.159522209212, -1164.5070248477, -61.994630178668, -1101.1665929698,
-        -61.994630178668, -1025.9498301149, -54.07707619394, -962.6093982371,
-        -46.159522209212, -911.14529733636, -10.530529277935, -855.72241944327,
-        13.222132676249, -808.2170955349, 76.562564554075, -804.25831854253,
-        128.02666545481, -820.09342651199, 195.325874325, -831.96975748908,
-        254.70752921046, -847.80486545854, 314.08918409592, -847.80486545854,
-        337.8418460501, -903.22774335164, 318.04796108828, -950.73306726,
-        258.66630620282, -962.6093982371, 191.36709733263, -946.77429026764,
-        139.9029964319, -938.85673628291, 84.480118538803, -923.02162831346,
-        60.727456584618, -970.52695222183, 92.397672523531, -1010.1147221455,
-        151.77932740899, -1025.9498301149, 203.24342830973, -1029.9086071073,
-        242.83119823337, -1061.5788230462, 207.20220530209, -1101.1665929698,
-        155.73810440136, -1097.2078159775, 104.27400350062, -1093.2490389851,
-        48.851125607526, -1077.4139310157, 17.180909668613, -1117.0017009393,
-        52.80990259989, -1156.5894708629, 116.15033447772, -1164.5070248477,
-        167.61443537845, -1176.3833558248, 219.07853627918, -1196.1772407866,
-        211.16098229445, -1251.6001186797, 183.4495433479, -1295.1466655957,
-        131.98544244717, -1295.1466655957, 80.521341546439, -1291.1878886033,
-        25.098463653342, -1287.229111611, -38.241968224484, -1271.3940036415
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [-1196.5464, -1357.1656],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2352.1221,-3161.0149],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0081,
+      "angularVelocity":0
+    },{
+      "id":"NHYlV",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "322RD1",
-      "fixtures": [
-        {
-          "points": [199.738, -236.717, 140.357, -220.882, 88.893, -209.005]
-        },
-        {
-          "points": [108.686, 44.356, -2.159, 56.233, 57.222, 36.439]
-        },
-        {
-          "points": [164.109, 56.233, -2.159, 56.233, 108.686, 44.356]
-        },
-        {
-          "points": [219.532, 83.944, -2.159, 56.233, 164.109, 56.233]
-        },
-        {
-          "points": [255.161, 123.532, -2.159, 56.233, 219.532, 83.944]
-        },
-        {
-          "points": [255.161, 123.532, 255.161, 174.996, -2.159, 56.233]
-        },
-        {
-          "points": [255.161, 174.996, 207.656, 238.336, -2.159, 56.233]
-        },
-        {
-          "points": [207.656, 238.336, 160.151, 273.965, 104.728, 301.677]
-        },
-        {
-          "points": [207.656, 238.336, 104.728, 301.677, 57.222, 321.471]
-        },
-        {
-          "points": [207.656, 238.336, 57.222, 321.471, 5.758, 341.265]
-        },
-        {
-          "points": [207.656, 238.336, 5.758, 341.265, -25.912, 285.842]
-        },
-        {
-          "points": [207.656, 238.336, -25.912, 285.842, 17.635, 242.295]
-        },
-        {
-          "points": [207.656, 238.336, 17.635, 242.295, 73.057, 222.501]
-        },
-        {
-          "points": [207.656, 238.336, 73.057, 222.501, 116.604, 190.831]
-        },
-        {
-          "points": [207.656, 238.336, 116.604, 190.831, 84.934, 143.326]
-        },
-        {
-          "points": [29.511, 139.367, -25.912, 135.408, -77.376, 127.491]
-        },
-        {
-          "points": [29.511, 139.367, -77.376, 127.491, -128.84, 95.82]
-        },
-        {
-          "points": [29.511, 139.367, -128.84, 95.82, -168.428, 56.233]
-        },
-        {
-          "points": [29.511, 139.367, -168.428, 56.233, -208.016, 20.604]
-        },
-        {
-          "points": [29.511, 139.367, -208.016, 20.604, -235.727, -30.86]
-        },
-        {
-          "points": [-235.727, -30.86, -251.562, -82.325, -247.604, -141.706]
-        },
-        {
-          "points": [-223.851, -205.047, -235.727, -30.86, -247.604, -141.706]
-        },
-        {
-          "points": [-180.304, -252.552, -235.727, -30.86, -223.851, -205.047]
-        },
-        {
-          "points": [-132.799, -284.222, -235.727, -30.86, -180.304, -252.552]
-        },
-        {
-          "points": [-77.376, -304.016, -235.727, -30.86, -132.799, -284.222]
-        },
-        {
-          "points": [-21.953, -319.851, -235.727, -30.86, -77.376, -304.016]
-        },
-        {
-          "points": [33.47, -331.727, -235.727, -30.86, -21.953, -319.851]
-        },
-        {
-          "points": [88.893, -339.645, -235.727, -30.86, 33.47, -331.727]
-        },
-        {
-          "points": [140.357, -339.645, -235.727, -30.86, 88.893, -339.645]
-        },
-        {
-          "points": [199.738, -236.717, 88.893, -209.005, 140.357, -339.645]
-        },
-        {
-          "points": [140.357, -339.645, 88.893, -209.005, 29.511, -181.294]
-        },
-        {
-          "points": [140.357, -339.645, 29.511, -181.294, -57.582, -137.747]
-        },
-        {
-          "points": [140.357, -339.645, -57.582, -137.747, -97.17, -106.077]
-        },
-        {
-          "points": [207.656, 238.336, 84.934, 143.326, -2.159, 56.233]
-        },
-        {
-          "points": [84.934, 143.326, 29.511, 139.367, -2.159, 56.233]
-        },
-        {
-          "points": [140.357, -339.645, -97.17, -106.077, -235.727, -30.86]
-        },
-        {
-          "points": [-97.17, -106.077, -132.799, -62.531, -235.727, -30.86]
-        },
-        {
-          "points": [-132.799, -62.531, -152.593, -15.025, -235.727, -30.86]
-        },
-        {
-          "points": [-120.923, 32.48, -235.727, -30.86, -152.593, -15.025]
-        },
-        {
-          "points": [29.511, 139.367, -69.459, 56.233, -2.159, 56.233]
-        },
-        {
-          "points": [29.511, 139.367, -235.727, -30.86, -120.923, 32.48]
-        },
-        {
-          "points": [29.511, 139.367, -120.923, 32.48, -69.459, 56.233]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        694.13177536287, -1461.415299275, 634.75012047741, -1445.5801913055,
-        583.28601957668, -1433.7038603284, 523.90436469122, -1405.9924213819,
-        436.81127085921, -1362.4458744659, 397.22350093557, -1330.775658527,
-        361.59450800429, -1287.229111611, 341.80062304247, -1239.7237877026,
-        373.47083898138, -1192.2184637942, 424.93493988211, -1168.46580184,
-        492.2341487523, -1168.46580184, 551.61580363776, -1188.2596868018,
-        603.0799045385, -1180.3421328171, 658.50278243159, -1168.46580184,
-        713.92566032469, -1140.7543628935, 749.55465325597, -1101.1665929698,
-        749.55465325597, -1049.7024920691, 702.0493293476, -986.36206019128,
-        654.54400543923, -950.73306726, 599.12112754613, -923.02162831346,
-        551.61580363776, -903.22774335164, 500.15170273703, -883.43385838982,
-        468.48148679812, -938.85673628291, 512.02803371412, -982.40328319892,
-        567.45091160722, -1002.1971681607, 610.99745852323, -1033.8673840997,
-        579.32724258431, -1081.372708008, 523.90436469122, -1085.3314850004,
-        468.48148679812, -1089.2902619927, 417.01738589739, -1097.2078159775,
-        365.55328499665, -1128.8780319164, 325.96551507301, -1168.46580184,
-        286.37774514937, -1204.0947947713, 258.66630620282, -1255.558895672,
-        242.83119823337, -1307.0229965728, 246.78997522573, -1366.4046514582,
-        270.54263717991, -1429.7450833361, 314.08918409592, -1477.2504072444,
-        361.59450800429, -1508.9206231833, 417.01738589739, -1528.7145081452,
-        472.44026379048, -1544.5496161146, 527.86314168358, -1556.4259470917,
-        583.28601957668, -1564.3435010764, 634.75012047741, -1564.3435010764
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [-783.2865, -1541.3235],
-      "bodyType": "static",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[2250.5291,-2843.7041],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3cWpvn",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4nNJIf",
-      "fixtures": [
-        {
-          "points": [126.934, -262.374, 55.676, -230.704, -3.706, -210.91]
-        },
-        {
-          "points": [95.263, -5.054, -15.582, -1.095, 39.84, -5.054]
-        },
-        {
-          "points": [154.645, -5.054, -15.582, -1.095, 95.263, -5.054]
-        },
-        {
-          "points": [206.109, -1.095, -15.582, -1.095, 154.645, -5.054]
-        },
-        {
-          "points": [214.027, 50.369, -15.582, -1.095, 206.109, -1.095]
-        },
-        {
-          "points": [221.944, 101.833, -15.582, -1.095, 214.027, 50.369]
-        },
-        {
-          "points": [221.944, 101.833, 210.068, 157.256, -15.582, -1.095]
-        },
-        {
-          "points": [210.068, 157.256, 190.274, 204.761, -15.582, -1.095]
-        },
-        {
-          "points": [190.274, 204.761, 174.439, 260.184, 134.851, 311.648]
-        },
-        {
-          "points": [190.274, 204.761, 134.851, 311.648, 87.346, 335.401]
-        },
-        {
-          "points": [190.274, 204.761, 87.346, 335.401, 16.088, 351.236]
-        },
-        {
-          "points": [190.274, 204.761, 16.088, 351.236, -35.376, 351.236]
-        },
-        {
-          "points": [190.274, 204.761, -35.376, 351.236, -55.17, 299.772]
-        },
-        {
-          "points": [-7.665, 236.432, -55.17, 299.772, -67.047, 244.349]
-        },
-        {
-          "points": [47.758, 224.555, -55.17, 299.772, -7.665, 236.432]
-        },
-        {
-          "points": [95.263, 196.844, -55.17, 299.772, 47.758, 224.555]
-        },
-        {
-          "points": [-59.129, 101.833, -118.511, 101.833, -169.975, 89.957]
-        },
-        {
-          "points": [-59.129, 101.833, -169.975, 89.957, -205.604, 50.369]
-        },
-        {
-          "points": [-59.129, 101.833, -205.604, 50.369, -209.562, -5.054]
-        },
-        {
-          "points": [-59.129, 101.833, -209.562, -5.054, -205.604, -60.477]
-        },
-        {
-          "points": [-59.129, 101.833, -205.604, -60.477, -209.562, -111.941]
-        },
-        {
-          "points": [-181.851, -222.786, -209.562, -111.941, -201.645, -171.322]
-        },
-        {
-          "points": [-142.263, -262.374, -209.562, -111.941, -181.851, -222.786]
-        },
-        {
-          "points": [-86.84, -290.086, -209.562, -111.941, -142.263, -262.374]
-        },
-        {
-          "points": [-31.418, -317.797, -209.562, -111.941, -86.84, -290.086]
-        },
-        {
-          "points": [20.047, -333.632, -209.562, -111.941, -31.418, -317.797]
-        },
-        {
-          "points": [87.346, -341.55, -209.562, -111.941, 20.047, -333.632]
-        },
-        {
-          "points": [142.769, -349.467, -209.562, -111.941, 87.346, -341.55]
-        },
-        {
-          "points": [178.398, -278.209, 126.934, -262.374, 142.769, -349.467]
-        },
-        {
-          "points": [142.769, -349.467, 126.934, -262.374, -3.706, -210.91]
-        },
-        {
-          "points": [142.769, -349.467, -3.706, -210.91, -51.211, -191.116]
-        },
-        {
-          "points": [142.769, -349.467, -51.211, -191.116, -98.717, -155.487]
-        },
-        {
-          "points": [142.769, -349.467, -98.717, -155.487, -138.305, -123.817]
-        },
-        {
-          "points": [190.274, 204.761, -74.964, -1.095, -15.582, -1.095]
-        },
-        {
-          "points": [190.274, 204.761, -55.17, 299.772, 95.263, 196.844]
-        },
-        {
-          "points": [190.274, 204.761, 95.263, 196.844, 103.181, 141.421]
-        },
-        {
-          "points": [142.769, -349.467, -138.305, -123.817, -209.562, -111.941]
-        },
-        {
-          "points": [-138.305, -123.817, -150.181, -64.435, -209.562, -111.941]
-        },
-        {
-          "points": [-130.387, -16.93, -209.562, -111.941, -150.181, -64.435]
-        },
-        {
-          "points": [190.274, 204.761, 103.181, 141.421, -74.964, -1.095]
-        },
-        {
-          "points": [103.181, 141.421, 51.717, 105.792, -74.964, -1.095]
-        },
-        {
-          "points": [51.717, 105.792, -3.706, 101.833, -74.964, -1.095]
-        },
-        {
-          "points": [-3.706, 101.833, -59.129, 101.833, -74.964, -1.095]
-        },
-        {
-          "points": [-59.129, 101.833, -209.562, -111.941, -130.387, -16.93]
-        },
-        {
-          "points": [-59.129, 101.833, -130.387, -16.93, -74.964, -1.095]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        1086.0506976069, -1687.0655878397, 1034.5865967062, -1671.2304798703,
-        963.32861084363, -1639.5602639314, 903.94695595817, -1619.7663789695,
-        856.4416320498, -1599.9724940077, 808.93630814143, -1564.3435010764,
-        769.34853821779, -1532.6732851375, 757.4722072407, -1473.2916302521,
-        777.26609220252, -1425.7863063437, 832.68897009561, -1409.9511983742,
-        892.07062498108, -1409.9511983742, 947.49350287417, -1413.9099753666,
-        1002.9163807673, -1413.9099753666, 1062.2980356527, -1413.9099753666,
-        1113.7621365535, -1409.9511983742, 1121.6796905382, -1358.4870974735,
-        1129.5972445229, -1307.0229965728, 1117.7209135458, -1251.6001186797,
-        1097.927028584, -1204.0947947713, 1082.0919206146, -1148.6719168782,
-        1042.5041506909, -1097.2078159775, 994.99882678254, -1073.4551540233,
-        923.74084091999, -1057.6200460538, 872.27674001926, -1057.6200460538,
-        852.48285505743, -1109.0841469546, 840.60652408034, -1164.5070248477,
-        899.9881789658, -1172.4245788324, 955.4110568589, -1184.3009098095,
-        1002.9163807673, -1212.012348756, 1010.833934752, -1267.4352266491,
-        959.36983385127, -1303.0642195804, 903.94695595817, -1307.0229965728,
-        848.52407806507, -1307.0229965728, 789.14242317961, -1307.0229965728,
-        737.67832227888, -1318.8993275499, 702.0493293476, -1358.4870974735,
-        698.09055235524, -1413.9099753666, 702.0493293476, -1469.3328532597,
-        698.09055235524, -1520.7969541604, 706.00810633996, -1580.1786090459,
-        725.80199130178, -1631.6427099466, 765.38976122542, -1671.2304798703,
-        820.81263911852, -1698.9419188168, 876.23551701162, -1726.6533577634,
-        927.69961791235, -1742.4884657328, 994.99882678254, -1750.4060197175,
-        1050.4217046756, -1758.3235737023
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    },
-    {
-      "position": [-873.4241, -666.6437],
-      "bodyType": "kinematic",
-      "radius": 20,
-      "angularVelocity": 0,
-      "angle": 0,
-      "sharedFixtureData": {
-        "shapeType": "polygon",
-        "restitution": 0.3,
-        "friction": 0.2,
-        "density": 1
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[4214.2798,-3048.9419],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0044,
+      "angularVelocity":0
+    },{
+      "id":"4rOU6F",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "id": "4ulrfH",
-      "fixtures": [
-        {
-          "points": [-344.148, 286.047, -363.942, 238.541, -387.694, 175.201]
-        },
-        {
-          "points": [-344.148, 286.047, -387.694, 175.201, -411.447, 111.861]
-        },
-        {
-          "points": [-411.447, 111.861, -431.241, 64.355, -451.035, -2.944]
-        },
-        {
-          "points": [-411.447, 111.861, -451.035, -2.944, -458.952, -58.367]
-        },
-        {
-          "points": [-411.447, 111.861, -458.952, -58.367, -462.911, -109.831]
-        },
-        {
-          "points": [-411.447, 111.861, -462.911, -109.831, -462.911, -161.295]
-        },
-        {
-          "points": [-411.447, 111.861, -462.911, -161.295, -419.365, -200.883]
-        },
-        {
-          "points": [-359.983, -216.718, -411.447, 111.861, -419.365, -200.883]
-        },
-        {
-          "points": [-273.356, -234.155, -411.447, 111.861, -359.983, -216.718]
-        },
-        {
-          "points": [-258.094, -186.981, -411.447, 111.861, -273.356, -234.155]
-        },
-        {
-          "points": [-234.506, -84.307, -411.447, 111.861, -258.094, -186.981]
-        },
-        {
-          "points": [-224.794, 69.704, -411.447, 111.861, -234.506, -84.307]
-        },
-        {
-          "points": [278.864, -107.894, -224.794, 69.704, -122.12, 11.43]
-        },
-        {
-          "points": [435.65, -218.893, -109.633, -192.531, -247.938, -190.746]
-        },
-        {
-          "points": [435.65, -218.893, -247.938, -190.746, -263.957, -230.781]
-        },
-        {
-          "points": [435.65, -218.893, -263.957, -230.781, -193.714, -252.347]
-        },
-        {
-          "points": [435.65, -218.893, -193.714, -252.347, -114.539, -264.223]
-        },
-        {
-          "points": [435.65, -218.893, -114.539, -264.223, -15.569, -272.141]
-        },
-        {
-          "points": [435.65, -218.893, -15.569, -272.141, 35.895, -276.1]
-        },
-        {
-          "points": [435.65, -218.893, 35.895, -276.1, 134.864, -280.058]
-        },
-        {
-          "points": [435.65, -218.893, 134.864, -280.058, 206.122, -280.058]
-        },
-        {
-          "points": [435.65, -218.893, 206.122, -280.058, 265.504, -287.976]
-        },
-        {
-          "points": [435.65, -218.893, 265.504, -287.976, 328.844, -295.893]
-        },
-        {
-          "points": [435.65, -218.893, 328.844, -295.893, 396.144, -307.77]
-        },
-        {
-          "points": [447.608, -315.687, 435.65, -218.893, 396.144, -307.77]
-        },
-        {
-          "points": [499.072, -315.687, 435.65, -218.893, 447.608, -315.687]
-        },
-        {
-          "points": [554.495, -311.729, 435.65, -218.893, 499.072, -315.687]
-        },
-        {
-          "points": [609.917, -299.852, 435.65, -218.893, 554.495, -311.729]
-        },
-        {
-          "points": [657.423, -260.264, 435.65, -218.893, 609.917, -299.852]
-        },
-        {
-          "points": [657.423, -260.264, 649.505, -185.048, 435.65, -218.893]
-        },
-        {
-          "points": [649.505, -185.048, 613.876, -137.542, 435.65, -218.893]
-        },
-        {
-          "points": [613.876, -137.542, 550.536, -101.913, 435.65, -218.893]
-        },
-        {
-          "points": [550.536, -101.913, 483.237, -70.243, 435.65, -218.893]
-        },
-        {
-          "points": [483.237, -70.243, 415.937, -50.449, 435.65, -218.893]
-        },
-        {
-          "points": [435.65, -218.893, 415.937, -50.449, 364.473, -38.573]
-        },
-        {
-          "points": [435.65, -218.893, 364.473, -38.573, 277.38, -30.655]
-        },
-        {
-          "points": [435.65, -218.893, 277.38, -30.655, 214.04, -22.738]
-        },
-        {
-          "points": [435.65, -218.893, 214.04, -22.738, 158.617, -6.903]
-        },
-        {
-          "points": [43.812, 32.685, -3.693, 52.479, -59.116, 68.314]
-        },
-        {
-          "points": [43.812, 32.685, -59.116, 68.314, -110.58, 80.19]
-        },
-        {
-          "points": [-67.033, 187.077, -110.58, 80.19, -86.827, 135.613]
-        },
-        {
-          "points": [-47.24, 238.541, -110.58, 80.19, -67.033, 187.077]
-        },
-        {
-          "points": [-31.404, 290.005, -110.58, 80.19, -47.24, 238.541]
-        },
-        {
-          "points": [16.101, 396.892, -31.404, 290.005, -3.693, 349.387]
-        },
-        {
-          "points": [20.06, 448.357, -31.404, 290.005, 16.101, 396.892]
-        },
-        {
-          "points": [20.06, 448.357, -39.322, 472.109, -31.404, 290.005]
-        },
-        {
-          "points": [-31.404, 290.005, -39.322, 472.109, -94.745, 472.109]
-        },
-        {
-          "points": [-31.404, 290.005, -94.745, 472.109, -158.085, 480.027]
-        },
-        {
-          "points": [-31.404, 290.005, -158.085, 480.027, -217.467, 483.986]
-        },
-        {
-          "points": [-31.404, 290.005, -217.467, 483.986, -268.931, 487.944]
-        },
-        {
-          "points": [-31.404, 290.005, -268.931, 487.944, -312.478, 456.274]
-        },
-        {
-          "points": [-31.404, 290.005, -312.478, 456.274, -324.354, 396.892]
-        },
-        {
-          "points": [-31.404, 290.005, -324.354, 396.892, -324.354, 365.222]
-        },
-        {
-          "points": [-31.404, 290.005, -324.354, 365.222, -344.148, 286.047]
-        },
-        {
-          "points": [-31.404, 290.005, -344.148, 286.047, -411.447, 111.861]
-        },
-        {
-          "points": [-31.404, 290.005, -411.447, 111.861, -224.794, 69.704]
-        },
-        {
-          "points": [435.65, -218.893, 158.617, -6.903, 278.864, -107.894]
-        },
-        {
-          "points": [278.864, -107.894, 158.617, -6.903, 103.194, 8.932]
-        },
-        {
-          "points": [278.864, -107.894, 103.194, 8.932, 43.812, 32.685]
-        },
-        {
-          "points": [278.864, -107.894, 43.812, 32.685, -110.58, 80.19]
-        },
-        {
-          "points": [-31.404, 290.005, -224.794, 69.704, -110.58, 80.19]
-        },
-        {
-          "points": [278.864, -107.894, -110.58, 80.19, -224.794, 69.704]
-        }
-      ],
-      "fixedRotation": false,
-      "width": 40,
-      "vertices": [
-        131.98544244717, -52.090689993358, 112.19155748535, -131.26622984064,
-        92.397672523531, -178.77155374901, 68.645010569346, -242.11198562683,
-        44.892348615162, -305.45241750466, 25.098463653342, -352.95774141303,
-        5.3045786915212, -420.25695028322, -2.612975293207, -475.67982817631,
-        -6.5717522855711, -527.14392907705, -6.5717522855711, -578.60802997778,
-        36.974794630434, -618.19579990142, 96.356449515895, -634.03090787088,
-        182.98347090694, -651.46826707083, 198.24580920664, -604.29371033387,
-        221.83309841778, -501.6197347718, 231.54543451105, -347.60870035478,
-        334.21941786825, -405.88315156999, 735.20298209661, -525.20694191864,
-        891.98892468632, -636.20587960527, 346.70681484965, -609.84363222827,
-        208.40110599969, -608.05882404968, 192.3828114636, -648.09396616144,
-        262.62508319519, -669.65990080215, 341.80062304247, -681.53623177925,
-        440.77004785157, -689.45378576398, 492.2341487523, -693.41256275634,
-        591.20357356141, -697.3713397487, 662.46155942396, -697.3713397487,
-        721.84321430942, -705.28889373343, 785.18364618725, -713.20644771816,
-        852.48285505743, -725.08277869525, 903.94695595817, -733.00033267998,
-        955.4110568589, -733.00033267998, 1010.833934752, -729.04155568762,
-        1066.2568126451, -717.16522471052, 1113.7621365535, -677.57745478688,
-        1105.8445825687, -602.36069193197, 1070.2155896375, -554.8553680236,
-        1006.8751577596, -519.22637509232, 939.57594888944, -487.55615915341,
-        872.27674001926, -467.76227419159, 820.81263911852, -455.88594321449,
-        733.71954528651, -447.96838922977, 670.37911340869, -440.05083524504,
-        614.95623551559, -424.21572727558, 559.53335762249, -408.38061930613,
-        500.15170273703, -384.62795735194, 452.64637882866, -364.83407239012,
-        397.22350093557, -348.99896442066, 345.75940003483, -337.12263344357,
-        369.51206198902, -281.69975555047, 389.30594695084, -230.23565464974,
-        409.09983191266, -178.77155374901, 424.93493988211, -127.30745284828,
-        452.64637882866, -67.925797962814, 472.44026379048, -20.420474054445,
-        476.39904078285, 31.043626846288, 417.01738589739, 54.796288800473,
-        361.59450800429, 54.796288800473, 298.25407612646, 62.713842785201,
-        238.872421241, 66.672619777565, 187.40832034027, 70.631396769929,
-        143.86177342426, 38.961180831016, 131.98544244717, -20.420474054445
-      ],
-      "label": "",
-      "linearVelocity": [0, 0],
-      "shapeType": "custom",
-      "height": 40
-    }
-  ],
-  "joints": [
-    {
-      "bodyA": "Rtdzd",
-      "bodyB": "1cfqA0",
-      "properties": {
-        "maxTorque": 12,
-        "maxForce": 2
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3985.8333,-3052.8599],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0319,
+      "angularVelocity":0
+    },{
+      "id":"hjW2m",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "type": "friction",
-      "anchorB": [199.223, 140.846],
-      "collideConnected": false,
-      "anchorA": [200.739, 221.06],
-      "id": "3O99ho"
-    },
-    {
-      "bodyA": "1cfqA0",
-      "bodyB": "Rtdzd",
-      "properties": {
-        "maxLength": 79.959999084473
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[4085.1311,-2812.8237],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5879,
+      "angularVelocity":0
+    },{
+      "id":"yjqAg",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
       },
-      "type": "rope",
-      "anchorB": [200.74, 221.06],
-      "collideConnected": false,
-      "anchorA": [200.198, 141.102],
-      "id": "Lb6DL"
-    }
-  ]
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3968.3616,-2576.5237],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0054,
+      "angularVelocity":0
+    },{
+      "id":"1BW8BQ",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[4203.1802,-2572.511],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0087,
+      "angularVelocity":0
+    },{
+      "id":"2XP1Iy",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[5291.1382,-2239.5005],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3CU9IV",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5392.7212,-2556.7917],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0081,
+      "angularVelocity":0
+    },{
+      "id":"40CVhP",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5158.0894,-2556.3201],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0051,
+      "angularVelocity":0
+    },{
+      "id":"1fj6BA",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5274.1265,-2794.8386],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5686,
+      "angularVelocity":0
+    },{
+      "id":"1DMrTF",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5167.8979,-3032.8408],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0057,
+      "angularVelocity":0
+    },{
+      "id":"6zDFd",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5401.8364,-3033.5168],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0053,
+      "angularVelocity":0
+    },{
+      "id":"2HA2YM",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6645.3408,-3565.1836],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0052,
+      "angularVelocity":0
+    },{
+      "id":"2rW550",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6411.4722,-3564.5129],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0059,
+      "angularVelocity":0
+    },{
+      "id":"oG9G8",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6517.6611,-3326.5049],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5686,
+      "angularVelocity":0
+    },{
+      "id":"38ORS4",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6401.6123,-3087.9456],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0051,
+      "angularVelocity":0
+    },{
+      "id":"44eiDd",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6636.2471,-3088.4365],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0081,
+      "angularVelocity":0
+    },{
+      "id":"46fyqE",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[6534.6465,-2771.1265],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"1JdiV7",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3606.0017,-4644.9912],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0062,
+      "angularVelocity":0
+    },{
+      "id":"3YOaD3",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3371.1616,-4644.6709],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0018,
+      "angularVelocity":0
+    },{
+      "id":"1OnU3l",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3478.0708,-4406.6689],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[-13.76,-222.87,13.76,-222.87,13.76,222.87,-13.76,222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5697,
+      "angularVelocity":0
+    },{
+      "id":"5Ol9b",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[131.98544244717,-52.090689993358,112.19155748535,-131.26622984064,92.397672523531,-178.77155374901,68.645010569346,-242.11198562683,44.892348615162,-305.45241750466,25.098463653342,-352.95774141303,5.3045786915212,-420.25695028322,-2.612975293207,-475.67982817631,-6.5717522855711,-527.14392907705,-6.5717522855711,-578.60802997778,36.974794630434,-618.19579990142,96.356449515895,-634.03090787088,182.98347090694,-651.46826707083,198.24580920664,-604.29371033387,221.83309841778,-501.6197347718,231.54543451105,-347.60870035478,334.21941786825,-405.88315156999,735.20298209661,-525.20694191864,891.98892468632,-636.20587960527,346.70681484965,-609.84363222827,208.40110599969,-608.05882404968,192.3828114636,-648.09396616144,262.62508319519,-669.65990080215,341.80062304247,-681.53623177925,440.77004785157,-689.45378576398,492.2341487523,-693.41256275634,591.20357356141,-697.3713397487,662.46155942396,-697.3713397487,721.84321430942,-705.28889373343,785.18364618725,-713.20644771816,852.48285505743,-725.08277869525,903.94695595817,-733.00033267998,955.4110568589,-733.00033267998,1010.833934752,-729.04155568762,1066.2568126451,-717.16522471052,1113.7621365535,-677.57745478688,1105.8445825687,-602.36069193197,1070.2155896375,-554.8553680236,1006.8751577596,-519.22637509232,939.57594888944,-487.55615915341,872.27674001926,-467.76227419159,820.81263911852,-455.88594321449,733.71954528651,-447.96838922977,670.37911340869,-440.05083524504,614.95623551559,-424.21572727558,559.53335762249,-408.38061930613,500.15170273703,-384.62795735194,452.64637882866,-364.83407239012,397.22350093557,-348.99896442066,345.75940003483,-337.12263344357,369.51206198902,-281.69975555047,389.30594695084,-230.23565464974,409.09983191266,-178.77155374901,424.93493988211,-127.30745284828,452.64637882866,-67.925797962814,472.44026379048,-20.420474054445,476.39904078285,31.043626846288,417.01738589739,54.796288800473,361.59450800429,54.796288800473,298.25407612646,62.713842785201,238.872421241,66.672619777565,187.40832034027,70.631396769929,143.86177342426,38.961180831016,131.98544244717,-20.420474054445],
+      "label":"",
+      "fixedRotation":false,
+      "position":[-873.4241,-666.6437],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[278.864,-107.894,-110.58,80.19,-224.794,69.704]
+        },{
+          "points":[-31.404,290.005,-224.794,69.704,-110.58,80.19]
+        },{
+          "points":[278.864,-107.894,43.812,32.685,-110.58,80.19]
+        },{
+          "points":[278.864,-107.894,103.194,8.932,43.812,32.685]
+        },{
+          "points":[278.864,-107.894,158.617,-6.903,103.194,8.932]
+        },{
+          "points":[435.65,-218.893,158.617,-6.903,278.864,-107.894]
+        },{
+          "points":[-31.404,290.005,-411.447,111.861,-224.794,69.704]
+        },{
+          "points":[-31.404,290.005,-344.148,286.047,-411.447,111.861]
+        },{
+          "points":[-31.404,290.005,-324.354,365.222,-344.148,286.047]
+        },{
+          "points":[-31.404,290.005,-324.354,396.892,-324.354,365.222]
+        },{
+          "points":[-31.404,290.005,-312.478,456.274,-324.354,396.892]
+        },{
+          "points":[-31.404,290.005,-268.931,487.944,-312.478,456.274]
+        },{
+          "points":[-31.404,290.005,-217.467,483.986,-268.931,487.944]
+        },{
+          "points":[-31.404,290.005,-158.085,480.027,-217.467,483.986]
+        },{
+          "points":[-31.404,290.005,-94.745,472.109,-158.085,480.027]
+        },{
+          "points":[-31.404,290.005,-39.322,472.109,-94.745,472.109]
+        },{
+          "points":[20.06,448.357,-39.322,472.109,-31.404,290.005]
+        },{
+          "points":[20.06,448.357,-31.404,290.005,16.101,396.892]
+        },{
+          "points":[16.101,396.892,-31.404,290.005,-3.693,349.387]
+        },{
+          "points":[-31.404,290.005,-110.58,80.19,-47.24,238.541]
+        },{
+          "points":[-47.24,238.541,-110.58,80.19,-67.033,187.077]
+        },{
+          "points":[-67.033,187.077,-110.58,80.19,-86.827,135.613]
+        },{
+          "points":[43.812,32.685,-59.116,68.314,-110.58,80.19]
+        },{
+          "points":[43.812,32.685,-3.693,52.479,-59.116,68.314]
+        },{
+          "points":[435.65,-218.893,214.04,-22.738,158.617,-6.903]
+        },{
+          "points":[435.65,-218.893,277.38,-30.655,214.04,-22.738]
+        },{
+          "points":[435.65,-218.893,364.473,-38.573,277.38,-30.655]
+        },{
+          "points":[435.65,-218.893,415.937,-50.449,364.473,-38.573]
+        },{
+          "points":[483.237,-70.243,415.937,-50.449,435.65,-218.893]
+        },{
+          "points":[550.536,-101.913,483.237,-70.243,435.65,-218.893]
+        },{
+          "points":[613.876,-137.542,550.536,-101.913,435.65,-218.893]
+        },{
+          "points":[649.505,-185.048,613.876,-137.542,435.65,-218.893]
+        },{
+          "points":[657.423,-260.264,649.505,-185.048,435.65,-218.893]
+        },{
+          "points":[657.423,-260.264,435.65,-218.893,609.917,-299.852]
+        },{
+          "points":[609.917,-299.852,435.65,-218.893,554.495,-311.729]
+        },{
+          "points":[554.495,-311.729,435.65,-218.893,499.072,-315.687]
+        },{
+          "points":[499.072,-315.687,435.65,-218.893,447.608,-315.687]
+        },{
+          "points":[447.608,-315.687,435.65,-218.893,396.144,-307.77]
+        },{
+          "points":[435.65,-218.893,328.844,-295.893,396.144,-307.77]
+        },{
+          "points":[435.65,-218.893,265.504,-287.976,328.844,-295.893]
+        },{
+          "points":[435.65,-218.893,206.122,-280.058,265.504,-287.976]
+        },{
+          "points":[435.65,-218.893,134.864,-280.058,206.122,-280.058]
+        },{
+          "points":[435.65,-218.893,35.895,-276.1,134.864,-280.058]
+        },{
+          "points":[435.65,-218.893,-15.569,-272.141,35.895,-276.1]
+        },{
+          "points":[435.65,-218.893,-114.539,-264.223,-15.569,-272.141]
+        },{
+          "points":[435.65,-218.893,-193.714,-252.347,-114.539,-264.223]
+        },{
+          "points":[435.65,-218.893,-263.957,-230.781,-193.714,-252.347]
+        },{
+          "points":[435.65,-218.893,-247.938,-190.746,-263.957,-230.781]
+        },{
+          "points":[435.65,-218.893,-109.633,-192.531,-247.938,-190.746]
+        },{
+          "points":[278.864,-107.894,-224.794,69.704,-122.12,11.43]
+        },{
+          "points":[-224.794,69.704,-411.447,111.861,-234.506,-84.307]
+        },{
+          "points":[-234.506,-84.307,-411.447,111.861,-258.094,-186.981]
+        },{
+          "points":[-258.094,-186.981,-411.447,111.861,-273.356,-234.155]
+        },{
+          "points":[-273.356,-234.155,-411.447,111.861,-359.983,-216.718]
+        },{
+          "points":[-359.983,-216.718,-411.447,111.861,-419.365,-200.883]
+        },{
+          "points":[-411.447,111.861,-462.911,-161.295,-419.365,-200.883]
+        },{
+          "points":[-411.447,111.861,-462.911,-109.831,-462.911,-161.295]
+        },{
+          "points":[-411.447,111.861,-458.952,-58.367,-462.911,-109.831]
+        },{
+          "points":[-411.447,111.861,-451.035,-2.944,-458.952,-58.367]
+        },{
+          "points":[-411.447,111.861,-431.241,64.355,-451.035,-2.944]
+        },{
+          "points":[-344.148,286.047,-387.694,175.201,-411.447,111.861]
+        },{
+          "points":[-344.148,286.047,-363.942,238.541,-387.694,175.201]
+        }],
+      "radius":20,
+      "bodyType":"kinematic",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"4F4cXu",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[1086.0506976069,-1687.0655878397,1034.5865967062,-1671.2304798703,963.32861084363,-1639.5602639314,903.94695595817,-1619.7663789695,856.4416320498,-1599.9724940077,808.93630814143,-1564.3435010764,769.34853821779,-1532.6732851375,757.4722072407,-1473.2916302521,777.26609220252,-1425.7863063437,832.68897009561,-1409.9511983742,892.07062498108,-1409.9511983742,947.49350287417,-1413.9099753666,1002.9163807673,-1413.9099753666,1062.2980356527,-1413.9099753666,1113.7621365535,-1409.9511983742,1121.6796905382,-1358.4870974735,1129.5972445229,-1307.0229965728,1117.7209135458,-1251.6001186797,1097.927028584,-1204.0947947713,1082.0919206146,-1148.6719168782,1042.5041506909,-1097.2078159775,994.99882678254,-1073.4551540233,923.74084091999,-1057.6200460538,872.27674001926,-1057.6200460538,852.48285505743,-1109.0841469546,840.60652408034,-1164.5070248477,899.9881789658,-1172.4245788324,955.4110568589,-1184.3009098095,1002.9163807673,-1212.012348756,1010.833934752,-1267.4352266491,959.36983385127,-1303.0642195804,903.94695595817,-1307.0229965728,848.52407806507,-1307.0229965728,789.14242317961,-1307.0229965728,737.67832227888,-1318.8993275499,702.0493293476,-1358.4870974735,698.09055235524,-1413.9099753666,702.0493293476,-1469.3328532597,698.09055235524,-1520.7969541604,706.00810633996,-1580.1786090459,725.80199130178,-1631.6427099466,765.38976122542,-1671.2304798703,820.81263911852,-1698.9419188168,876.23551701162,-1726.6533577634,927.69961791235,-1742.4884657328,994.99882678254,-1750.4060197175,1050.4217046756,-1758.3235737023],
+      "label":"",
+      "fixedRotation":false,
+      "position":[-783.2865,-1541.3235],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[-59.129,101.833,-130.387,-16.93,-74.964,-1.095]
+        },{
+          "points":[-59.129,101.833,-209.562,-111.941,-130.387,-16.93]
+        },{
+          "points":[-3.706,101.833,-59.129,101.833,-74.964,-1.095]
+        },{
+          "points":[51.717,105.792,-3.706,101.833,-74.964,-1.095]
+        },{
+          "points":[103.181,141.421,51.717,105.792,-74.964,-1.095]
+        },{
+          "points":[190.274,204.761,103.181,141.421,-74.964,-1.095]
+        },{
+          "points":[-130.387,-16.93,-209.562,-111.941,-150.181,-64.435]
+        },{
+          "points":[-138.305,-123.817,-150.181,-64.435,-209.562,-111.941]
+        },{
+          "points":[142.769,-349.467,-138.305,-123.817,-209.562,-111.941]
+        },{
+          "points":[190.274,204.761,95.263,196.844,103.181,141.421]
+        },{
+          "points":[190.274,204.761,-55.17,299.772,95.263,196.844]
+        },{
+          "points":[190.274,204.761,-74.964,-1.095,-15.582,-1.095]
+        },{
+          "points":[142.769,-349.467,-98.717,-155.487,-138.305,-123.817]
+        },{
+          "points":[142.769,-349.467,-51.211,-191.116,-98.717,-155.487]
+        },{
+          "points":[142.769,-349.467,-3.706,-210.91,-51.211,-191.116]
+        },{
+          "points":[142.769,-349.467,126.934,-262.374,-3.706,-210.91]
+        },{
+          "points":[178.398,-278.209,126.934,-262.374,142.769,-349.467]
+        },{
+          "points":[142.769,-349.467,-209.562,-111.941,87.346,-341.55]
+        },{
+          "points":[87.346,-341.55,-209.562,-111.941,20.047,-333.632]
+        },{
+          "points":[20.047,-333.632,-209.562,-111.941,-31.418,-317.797]
+        },{
+          "points":[-31.418,-317.797,-209.562,-111.941,-86.84,-290.086]
+        },{
+          "points":[-86.84,-290.086,-209.562,-111.941,-142.263,-262.374]
+        },{
+          "points":[-142.263,-262.374,-209.562,-111.941,-181.851,-222.786]
+        },{
+          "points":[-181.851,-222.786,-209.562,-111.941,-201.645,-171.322]
+        },{
+          "points":[-59.129,101.833,-205.604,-60.477,-209.562,-111.941]
+        },{
+          "points":[-59.129,101.833,-209.562,-5.054,-205.604,-60.477]
+        },{
+          "points":[-59.129,101.833,-205.604,50.369,-209.562,-5.054]
+        },{
+          "points":[-59.129,101.833,-169.975,89.957,-205.604,50.369]
+        },{
+          "points":[-59.129,101.833,-118.511,101.833,-169.975,89.957]
+        },{
+          "points":[95.263,196.844,-55.17,299.772,47.758,224.555]
+        },{
+          "points":[47.758,224.555,-55.17,299.772,-7.665,236.432]
+        },{
+          "points":[-7.665,236.432,-55.17,299.772,-67.047,244.349]
+        },{
+          "points":[190.274,204.761,-35.376,351.236,-55.17,299.772]
+        },{
+          "points":[190.274,204.761,16.088,351.236,-35.376,351.236]
+        },{
+          "points":[190.274,204.761,87.346,335.401,16.088,351.236]
+        },{
+          "points":[190.274,204.761,134.851,311.648,87.346,335.401]
+        },{
+          "points":[190.274,204.761,174.439,260.184,134.851,311.648]
+        },{
+          "points":[210.068,157.256,190.274,204.761,-15.582,-1.095]
+        },{
+          "points":[221.944,101.833,210.068,157.256,-15.582,-1.095]
+        },{
+          "points":[221.944,101.833,-15.582,-1.095,214.027,50.369]
+        },{
+          "points":[214.027,50.369,-15.582,-1.095,206.109,-1.095]
+        },{
+          "points":[206.109,-1.095,-15.582,-1.095,154.645,-5.054]
+        },{
+          "points":[154.645,-5.054,-15.582,-1.095,95.263,-5.054]
+        },{
+          "points":[95.263,-5.054,-15.582,-1.095,39.84,-5.054]
+        },{
+          "points":[126.934,-262.374,55.676,-230.704,-3.706,-210.91]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3w7v0H",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[694.13177536287,-1461.415299275,634.75012047741,-1445.5801913055,583.28601957668,-1433.7038603284,523.90436469122,-1405.9924213819,436.81127085921,-1362.4458744659,397.22350093557,-1330.775658527,361.59450800429,-1287.229111611,341.80062304247,-1239.7237877026,373.47083898138,-1192.2184637942,424.93493988211,-1168.46580184,492.2341487523,-1168.46580184,551.61580363776,-1188.2596868018,603.0799045385,-1180.3421328171,658.50278243159,-1168.46580184,713.92566032469,-1140.7543628935,749.55465325597,-1101.1665929698,749.55465325597,-1049.7024920691,702.0493293476,-986.36206019128,654.54400543923,-950.73306726,599.12112754613,-923.02162831346,551.61580363776,-903.22774335164,500.15170273703,-883.43385838982,468.48148679812,-938.85673628291,512.02803371412,-982.40328319892,567.45091160722,-1002.1971681607,610.99745852323,-1033.8673840997,579.32724258431,-1081.372708008,523.90436469122,-1085.3314850004,468.48148679812,-1089.2902619927,417.01738589739,-1097.2078159775,365.55328499665,-1128.8780319164,325.96551507301,-1168.46580184,286.37774514937,-1204.0947947713,258.66630620282,-1255.558895672,242.83119823337,-1307.0229965728,246.78997522573,-1366.4046514582,270.54263717991,-1429.7450833361,314.08918409592,-1477.2504072444,361.59450800429,-1508.9206231833,417.01738589739,-1528.7145081452,472.44026379048,-1544.5496161146,527.86314168358,-1556.4259470917,583.28601957668,-1564.3435010764,634.75012047741,-1564.3435010764],
+      "label":"",
+      "fixedRotation":false,
+      "position":[-1196.5464,-1357.1656],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[29.511,139.367,-120.923,32.48,-69.459,56.233]
+        },{
+          "points":[29.511,139.367,-235.727,-30.86,-120.923,32.48]
+        },{
+          "points":[29.511,139.367,-69.459,56.233,-2.159,56.233]
+        },{
+          "points":[-120.923,32.48,-235.727,-30.86,-152.593,-15.025]
+        },{
+          "points":[-132.799,-62.531,-152.593,-15.025,-235.727,-30.86]
+        },{
+          "points":[-97.17,-106.077,-132.799,-62.531,-235.727,-30.86]
+        },{
+          "points":[140.357,-339.645,-97.17,-106.077,-235.727,-30.86]
+        },{
+          "points":[84.934,143.326,29.511,139.367,-2.159,56.233]
+        },{
+          "points":[207.656,238.336,84.934,143.326,-2.159,56.233]
+        },{
+          "points":[140.357,-339.645,-57.582,-137.747,-97.17,-106.077]
+        },{
+          "points":[140.357,-339.645,29.511,-181.294,-57.582,-137.747]
+        },{
+          "points":[140.357,-339.645,88.893,-209.005,29.511,-181.294]
+        },{
+          "points":[199.738,-236.717,88.893,-209.005,140.357,-339.645]
+        },{
+          "points":[140.357,-339.645,-235.727,-30.86,88.893,-339.645]
+        },{
+          "points":[88.893,-339.645,-235.727,-30.86,33.47,-331.727]
+        },{
+          "points":[33.47,-331.727,-235.727,-30.86,-21.953,-319.851]
+        },{
+          "points":[-21.953,-319.851,-235.727,-30.86,-77.376,-304.016]
+        },{
+          "points":[-77.376,-304.016,-235.727,-30.86,-132.799,-284.222]
+        },{
+          "points":[-132.799,-284.222,-235.727,-30.86,-180.304,-252.552]
+        },{
+          "points":[-180.304,-252.552,-235.727,-30.86,-223.851,-205.047]
+        },{
+          "points":[-223.851,-205.047,-235.727,-30.86,-247.604,-141.706]
+        },{
+          "points":[-235.727,-30.86,-251.562,-82.325,-247.604,-141.706]
+        },{
+          "points":[29.511,139.367,-208.016,20.604,-235.727,-30.86]
+        },{
+          "points":[29.511,139.367,-168.428,56.233,-208.016,20.604]
+        },{
+          "points":[29.511,139.367,-128.84,95.82,-168.428,56.233]
+        },{
+          "points":[29.511,139.367,-77.376,127.491,-128.84,95.82]
+        },{
+          "points":[29.511,139.367,-25.912,135.408,-77.376,127.491]
+        },{
+          "points":[207.656,238.336,116.604,190.831,84.934,143.326]
+        },{
+          "points":[207.656,238.336,73.057,222.501,116.604,190.831]
+        },{
+          "points":[207.656,238.336,17.635,242.295,73.057,222.501]
+        },{
+          "points":[207.656,238.336,-25.912,285.842,17.635,242.295]
+        },{
+          "points":[207.656,238.336,5.758,341.265,-25.912,285.842]
+        },{
+          "points":[207.656,238.336,57.222,321.471,5.758,341.265]
+        },{
+          "points":[207.656,238.336,104.728,301.677,57.222,321.471]
+        },{
+          "points":[207.656,238.336,160.151,273.965,104.728,301.677]
+        },{
+          "points":[255.161,174.996,207.656,238.336,-2.159,56.233]
+        },{
+          "points":[255.161,123.532,255.161,174.996,-2.159,56.233]
+        },{
+          "points":[255.161,123.532,-2.159,56.233,219.532,83.944]
+        },{
+          "points":[219.532,83.944,-2.159,56.233,164.109,56.233]
+        },{
+          "points":[164.109,56.233,-2.159,56.233,108.686,44.356]
+        },{
+          "points":[108.686,44.356,-2.159,56.233,57.222,36.439]
+        },{
+          "points":[199.738,-236.717,140.357,-220.882,88.893,-209.005]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"UZS3T",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[-30.324414239756,-1271.3940036415,-38.241968224484,-1219.9299027408,-46.159522209212,-1164.5070248477,-61.994630178668,-1101.1665929698,-61.994630178668,-1025.9498301149,-54.07707619394,-962.6093982371,-46.159522209212,-911.14529733636,-10.530529277935,-855.72241944327,13.222132676249,-808.2170955349,76.562564554075,-804.25831854253,128.02666545481,-820.09342651199,195.325874325,-831.96975748908,254.70752921046,-847.80486545854,314.08918409592,-847.80486545854,337.8418460501,-903.22774335164,318.04796108828,-950.73306726,258.66630620282,-962.6093982371,191.36709733263,-946.77429026764,139.9029964319,-938.85673628291,84.480118538803,-923.02162831346,60.727456584618,-970.52695222183,92.397672523531,-1010.1147221455,151.77932740899,-1025.9498301149,203.24342830973,-1029.9086071073,242.83119823337,-1061.5788230462,207.20220530209,-1101.1665929698,155.73810440136,-1097.2078159775,104.27400350062,-1093.2490389851,48.851125607526,-1077.4139310157,17.180909668613,-1117.0017009393,52.80990259989,-1156.5894708629,116.15033447772,-1164.5070248477,167.61443537845,-1176.3833558248,219.07853627918,-1196.1772407866,211.16098229445,-1251.6001186797,183.4495433479,-1295.1466655957,131.98544244717,-1295.1466655957,80.521341546439,-1291.1878886033,25.098463653342,-1287.229111611,-38.241968224484,-1271.3940036415],
+      "label":"",
+      "fixedRotation":false,
+      "position":[-1581.0243,-1184.1493],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[81.452,104.908,-120.446,195.959,-25.435,128.66]
+        },{
+          "points":[-25.435,128.66,-120.446,195.959,-49.188,81.155]
+        },{
+          "points":[-49.188,81.155,-120.446,195.959,-61.064,-25.732]
+        },{
+          "points":[-61.064,-25.732,-120.446,195.959,-92.734,-65.32]
+        },{
+          "points":[-92.734,-65.32,-120.446,195.959,-140.24,-219.712]
+        },{
+          "points":[-120.446,195.959,-156.075,-112.825,-140.24,-219.712]
+        },{
+          "points":[-120.446,195.959,-171.91,-49.485,-156.075,-112.825]
+        },{
+          "points":[-120.446,195.959,-171.91,25.732,-171.91,-49.485]
+        },{
+          "points":[-120.446,195.959,-163.992,89.073,-171.91,25.732]
+        },{
+          "points":[-120.446,195.959,-156.075,140.537,-163.992,89.073]
+        },{
+          "points":[81.452,104.908,-96.693,243.465,-120.446,195.959]
+        },{
+          "points":[81.452,104.908,-33.353,247.424,-96.693,243.465]
+        },{
+          "points":[81.452,104.908,18.111,231.588,-33.353,247.424]
+        },{
+          "points":[85.411,219.712,18.111,231.588,81.452,104.908]
+        },{
+          "points":[144.792,203.877,85.411,219.712,81.452,104.908]
+        },{
+          "points":[204.174,203.877,144.792,203.877,81.452,104.908]
+        },{
+          "points":[227.927,148.454,204.174,203.877,81.452,104.908]
+        },{
+          "points":[227.927,148.454,81.452,104.908,208.133,100.949]
+        },{
+          "points":[208.133,100.949,81.452,104.908,148.751,89.073]
+        },{
+          "points":[81.452,104.908,-25.435,128.66,29.988,112.825]
+        },{
+          "points":[-17.518,41.567,-49.188,81.155,-61.064,-25.732]
+        },{
+          "points":[41.864,25.732,-17.518,41.567,-61.064,-25.732]
+        },{
+          "points":[93.328,21.773,41.864,25.732,-61.064,-25.732]
+        },{
+          "points":[132.916,-9.897,93.328,21.773,-61.064,-25.732]
+        },{
+          "points":[132.916,-9.897,-61.064,-25.732,97.287,-49.485]
+        },{
+          "points":[97.287,-49.485,-61.064,-25.732,45.823,-45.526]
+        },{
+          "points":[45.823,-45.526,-61.064,-25.732,-5.641,-41.567]
+        },{
+          "points":[-57.105,-104.908,-92.734,-65.32,-140.24,-219.712]
+        },{
+          "points":[6.235,-112.825,-57.105,-104.908,-140.24,-219.712]
+        },{
+          "points":[57.699,-124.701,6.235,-112.825,-140.24,-219.712]
+        },{
+          "points":[109.163,-144.495,57.699,-124.701,-140.24,-219.712]
+        },{
+          "points":[109.163,-144.495,-140.24,-219.712,101.246,-199.918]
+        },{
+          "points":[101.246,-199.918,-140.24,-219.712,73.534,-243.465]
+        },{
+          "points":[73.534,-243.465,-140.24,-219.712,22.07,-243.465]
+        },{
+          "points":[22.07,-243.465,-140.24,-219.712,-29.394,-239.506]
+        },{
+          "points":[-29.394,-239.506,-140.24,-219.712,-84.817,-235.547]
+        },{
+          "points":[-84.817,-235.547,-140.24,-219.712,-148.157,-219.712]
+        },{
+          "points":[-140.24,-219.712,-156.075,-112.825,-148.157,-168.248]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"12bM9R",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[-547.57439821752,-1122.0479583261,-550.75211603096,-1004.4723992286,-553.92983384441,-864.65281543692,-525.33037352339,-728.0109494587,-439.53199256032,-667.63431100321,-379.15535410483,-750.25497415283,-410.9325322393,-858.29737981002,-442.70971037377,-963.16206765377,-382.33307191827,-1048.9604486168,-293.35697314176,-1106.1593692589,-175.78141404422,-1128.403393953,-169.42597841733,-1230.0903639833,-283.82381970142,-1226.9126461699,-385.51078973172,-1185.6023145951,-464.9537350679,-1122.0479583261],
+      "label":"",
+      "fixedRotation":false,
+      "position":[-1932.2075,-1316.4585],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[116.516,-226.465,-42.37,37.285,-153.59,135.794]
+        },{
+          "points":[-42.37,37.285,-124.99,272.436,-153.59,135.794]
+        },{
+          "points":[-39.192,332.813,-124.99,272.436,-42.37,37.285]
+        },{
+          "points":[21.185,250.192,-39.192,332.813,-42.37,37.285]
+        },{
+          "points":[21.185,250.192,-42.37,37.285,-10.592,142.15]
+        },{
+          "points":[116.516,-226.465,18.007,-48.513,-42.37,37.285]
+        },{
+          "points":[116.516,-226.465,106.983,-105.712,18.007,-48.513]
+        },{
+          "points":[224.559,-127.956,106.983,-105.712,116.516,-226.465]
+        },{
+          "points":[230.914,-229.643,224.559,-127.956,116.516,-226.465]
+        },{
+          "points":[116.516,-226.465,-153.59,135.794,14.829,-185.155]
+        },{
+          "points":[14.829,-185.155,-153.59,135.794,-64.614,-121.601]
+        },{
+          "points":[-64.614,-121.601,-153.59,135.794,-147.234,-121.601]
+        },{
+          "points":[-147.234,-121.601,-153.59,135.794,-150.412,-4.025]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"2cdt2W",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[-738.23746702433,-658.10115756286,-750.94833827812,-813.80933042176,-776.37008078569,-912.31858263862,-808.14725892016,-1026.7164239227,-833.56900142774,-1179.2468789682,-846.27987268153,-1306.355591506,-852.63530830842,-1408.0425615363,-858.99074393532,-1509.7295315666,-754.12605609157,-1560.5730165818,-611.12875448645,-1595.5279125297,-490.37547757547,-1614.5942194104,-385.51078973172,-1624.1273728507,-271.11294844763,-1598.7056303432,-198.02543873835,-1528.7958384473,-210.73630999214,-1427.108868417,-252.04664156695,-1322.2441805733,-337.84502253002,-1271.4006955581,-442.70971037377,-1258.6898243043,-560.2852694713,-1242.8012352371,-668.3276751285,-1214.2017749161,-681.03854638229,-1112.5148048858,-652.43908606126,-1004.4723992286,-636.55049699403,-905.96314701173,-620.6619079268,-807.45389479487,-630.19506136714,-705.76692476457],
+      "label":"",
+      "fixedRotation":false,
+      "position":[-2126.5991,-1540.3817],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[-73.596,10.169,-86.307,111.856,-181.638,312.052]
+        },{
+          "points":[-16.397,-371.157,-73.596,10.169,-181.638,312.052]
+        },{
+          "points":[-86.307,111.856,-156.217,410.561,-181.638,312.052]
+        },{
+          "points":[-86.307,111.856,-143.506,566.269,-156.217,410.561]
+        },{
+          "points":[-35.463,518.604,-143.506,566.269,-86.307,111.856]
+        },{
+          "points":[-25.93,416.917,-35.463,518.604,-86.307,111.856]
+        },{
+          "points":[-25.93,416.917,-86.307,111.856,-41.819,318.407]
+        },{
+          "points":[-41.819,318.407,-86.307,111.856,-57.707,219.898]
+        },{
+          "points":[34.446,-18.431,-73.596,10.169,-16.397,-371.157]
+        },{
+          "points":[152.022,-34.319,34.446,-18.431,-16.397,-371.157]
+        },{
+          "points":[256.887,-47.03,152.022,-34.319,-16.397,-371.157]
+        },{
+          "points":[342.685,-97.874,256.887,-47.03,-16.397,-371.157]
+        },{
+          "points":[383.995,-202.738,342.685,-97.874,-16.397,-371.157]
+        },{
+          "points":[396.706,-304.425,383.995,-202.738,-16.397,-371.157]
+        },{
+          "points":[396.706,-304.425,-16.397,-371.157,323.619,-374.335]
+        },{
+          "points":[323.619,-374.335,-16.397,-371.157,209.221,-399.757]
+        },{
+          "points":[209.221,-399.757,-16.397,-371.157,104.356,-390.224]
+        },{
+          "points":[-16.397,-371.157,-181.638,312.052,-159.394,-336.203]
+        },{
+          "points":[-159.394,-336.203,-181.638,312.052,-264.259,-285.359]
+        },{
+          "points":[-181.638,312.052,-257.904,-183.672,-264.259,-285.359]
+        },{
+          "points":[-181.638,312.052,-251.548,-81.985,-257.904,-183.672]
+        },{
+          "points":[-181.638,312.052,-238.837,45.124,-251.548,-81.985]
+        },{
+          "points":[-181.638,312.052,-213.416,197.654,-238.837,45.124]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"1M0q6T",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3176.5852,-2433.3484],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5697,
+      "angularVelocity":0
+    },{
+      "id":"2yTha",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3069.676,-2671.3516],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0018,
+      "angularVelocity":0
+    },{
+      "id":"3dPic0",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3304.5161,-2671.6711],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0062,
+      "angularVelocity":0
+    },{
+      "id":"3l3S3z",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[6233.1616,-797.8064],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3DUku5",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6334.7622,-1115.1169],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0081,
+      "angularVelocity":0
+    },{
+      "id":"4vq7cI",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6100.1265,-1114.6255],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0051,
+      "angularVelocity":0
+    },{
+      "id":"4wv9Vd",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6216.1763,-1353.1849],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5686,
+      "angularVelocity":0
+    },{
+      "id":"38Dkze",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6109.9863,-1591.1929],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0059,
+      "angularVelocity":0
+    },{
+      "id":"1NIiBY",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[6343.8564,-1591.8627],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0052,
+      "angularVelocity":0
+    },{
+      "id":"3IFkMj",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5100.3511,-1060.1969],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0053,
+      "angularVelocity":0
+    },{
+      "id":"2vAVDW",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[4866.4121,-1059.5212],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0057,
+      "angularVelocity":0
+    },{
+      "id":"2TiJTo",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[4972.6406,-821.5185],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5686,
+      "angularVelocity":0
+    },{
+      "id":"1vemy9",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[4856.604,-583.0003],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0051,
+      "angularVelocity":0
+    },{
+      "id":"1XNcws",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[5091.2354,-583.4723],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0081,
+      "angularVelocity":0
+    },{
+      "id":"48HfYR",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[4989.6528,-266.1807],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"1IvC6A",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3901.6941,-599.1914],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0087,
+      "angularVelocity":0
+    },{
+      "id":"PRHle",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3666.877,-603.2036],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0054,
+      "angularVelocity":0
+    },{
+      "id":"36QVJE",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3783.6453,-839.5038],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5879,
+      "angularVelocity":0
+    },{
+      "id":"2t1S9j",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3684.3486,-1079.5404],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0319,
+      "angularVelocity":0
+    },{
+      "id":"w1kPr",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3912.7944,-1075.6228],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0044,
+      "angularVelocity":0
+    },{
+      "id":"1xQwZs",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[1949.0431,-870.3845],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"zkCb",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2050.636,-1187.6956],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0081,
+      "angularVelocity":0
+    },{
+      "id":"3o1lzt",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1815.9971,-1187.2037],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0051,
+      "angularVelocity":0
+    },{
+      "id":"1W9WNN",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1932.0415,-1425.761],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5686,
+      "angularVelocity":0
+    },{
+      "id":"16DBob",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[1825.8354,-1663.7668],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0058,
+      "angularVelocity":0
+    },{
+      "id":"3JLbSw",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[2059.762,-1664.4406],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0053,
+      "angularVelocity":0
+    },{
+      "id":"48hxUj",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3303.2756,-2195.3374],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0055,
+      "angularVelocity":0
+    },{
+      "id":"2krwIa",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3069.5947,-2195.0601],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.006,
+      "angularVelocity":0
+    },{
+      "id":"1bQlUI",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3175.5291,-1957.0533],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":1.5695,
+      "angularVelocity":0
+    },{
+      "id":"62RYH",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3059.4966,-1718.7582],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0043,
+      "angularVelocity":0
+    },{
+      "id":"UND7y",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[3294.1284,-1719.0885],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":0.0068,
+      "angularVelocity":0
+    },{
+      "id":"45mCMh",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[1.5380388498306,11999.999023438],
+      "shapeType":"rectangle",
+      "vertices":false,
+      "label":"",
+      "fixedRotation":false,
+      "position":[7348.8472,754763.1875],
+      "width":"27.52",
+      "height":"445.74",
+      "fixtures":[{
+          "points":[13.76,-222.87,13.76,222.87,-13.76,222.87,-13.76,-222.87]
+        }],
+      "radius":20,
+      "bodyType":"dynamic",
+      "angle":217.4563,
+      "angularVelocity":3.1428
+    },{
+      "id":"2dl53b",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[2998.3281400703,-1494.2524418934,3017.0351763256,-1311.858838404,3391.175901432,-1307.1820793402,3363.6650387249,-1494.7462884377],
+      "label":"",
+      "fixedRotation":false,
+      "position":[3192.5513,-1402.0099],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[198.625,94.828,-175.516,90.151,-194.223,-92.243,171.114,-92.736]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3jATjP",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[1585.9469027937,-643.08229227633,1595.3004209213,-488.74924316995,2133.1277132618,-470.04220691463,2137.8044723256,-633.72877414867],
+      "label":"",
+      "fixedRotation":false,
+      "position":[3768.9058,-297.4468],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[274.76,-74.828,270.083,88.858,-267.744,70.151,-277.098,-84.182]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"4pCpt5",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"polygon",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"custom",
+      "vertices":[147.36870331118,504.47341191934,3051.8759077625,464.41124358208,3055.8821245963,296.15013656558,-3.6614811852942,356.0640081364,-384.05759632846,279.96096557762,-368.50962061491,-289.87483830784,-250.31856759451,-433.06782927823,-120.76299251157,-605.80860499045,4.2467714572097,-735.36418520255,-98.033944961663,-746.72870982201,-179.85851898806,-633.08346332396,-302.59537132682,-485.3446532165,-404.16373683208,-399.99177209442,-486.41611529027,-418.27008310811,-463.83464173292,270.0800263875,-525.83976770395,332.27760475569,-47.97608542618,429.83509026237],
+      "label":"",
+      "fixedRotation":false,
+      "position":[150.1443,-106.7224],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "points":[-522.824,-183.152,-538.372,386.683,-558.478,-293.269]
+        },{
+          "points":[-456.91,-378.622,-522.824,-183.152,-558.478,-293.269]
+        },{
+          "points":[-538.372,386.683,-618.149,376.802,-558.478,-293.269]
+        },{
+          "points":[-157.976,462.786,-618.149,376.802,-538.372,386.683]
+        },{
+          "points":[-334.173,-526.361,-522.824,-183.152,-456.91,-378.622]
+        },{
+          "points":[-157.976,462.786,-202.29,536.558,-618.149,376.802]
+        },{
+          "points":[2901.568,402.873,-202.29,536.558,-157.976,462.786]
+        },{
+          "points":[-334.173,-526.361,-404.633,-326.345,-522.824,-183.152]
+        },{
+          "points":[-275.077,-499.086,-404.633,-326.345,-334.173,-526.361]
+        },{
+          "points":[-150.068,-628.642,-275.077,-499.086,-334.173,-526.361]
+        },{
+          "points":[-150.068,-628.642,-334.173,-526.361,-252.348,-640.006]
+        },{
+          "points":[-558.478,-293.269,-618.149,376.802,-640.731,-311.548]
+        },{
+          "points":[-202.29,536.558,-680.154,439,-618.149,376.802]
+        },{
+          "points":[2901.568,402.873,-6.946,611.196,-202.29,536.558]
+        },{
+          "points":[2901.568,402.873,2897.562,571.134,-6.946,611.196]
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"31JZaK",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":0.53,
+        "shapeType":"circle",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"circle",
+      "vertices":false,
+      "label":"catapult-cup",
+      "fixedRotation":false,
+      "position":[200.7398,221.0608],
+      "width":40,
+      "height":96.18,
+      "fixtures":[{
+          "radius":40
+        }],
+      "radius":40,
+      "bodyType":"dynamic",
+      "angle":-291.7311,
+      "angularVelocity":0
+    },{
+      "id":"4kWLuC",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"circle",
+        "restitution":0.3
+      },
+      "linearVelocity":[0,0],
+      "shapeType":"circle",
+      "vertices":false,
+      "label":"catapult-frame",
+      "fixedRotation":false,
+      "position":[200.1979,141.1016],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "radius":20
+        }],
+      "radius":20,
+      "bodyType":"static",
+      "angle":0,
+      "angularVelocity":0
+    },{
+      "id":"3GzfOY",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "shapeType":"circle",
+        "restitution":0.3
+      },
+      "linearVelocity":[34.308704376221,-0.67187148332596],
+      "shapeType":"circle",
+      "vertices":false,
+      "label":"projectile",
+      "fixedRotation":false,
+      "position":[200.7398,221.0608],
+      "width":40,
+      "height":40,
+      "fixtures":[{
+          "radius":25
+        }],
+      "radius":25,
+      "bodyType":"dynamic",
+      "angle":-2.3202,
+      "angularVelocity":1.3756
+    }],
+  "version":"1.0"
 }
