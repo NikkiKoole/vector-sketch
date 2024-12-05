@@ -6,7 +6,7 @@ local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 
 local blob = require 'vendor.loveblobs'
-local inspect = require 'vendor.inspect'
+inspect = require 'vendor.inspect'
 
 local ui = require 'src.ui-all'
 local joint = require 'src.joints'
@@ -146,7 +146,25 @@ function love.load(args)
         table.insert(softbodies, b)
     end
 
-    --loadScriptAndScene('catapult')
+    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+
+    loadScriptAndScene('water')
+end
+
+function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('beginContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+function endContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('endContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+function preSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('preSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
 function loadScene(name)
