@@ -11,12 +11,43 @@ end
 local function flatToPoints(flat)
     local result = {}
     for i = 1, #flat, 2 do
-        result[(i + 1) / 2] = { flat[i], flat[i + 1] }
+        result[(i + 1) / 2] = { x = flat[i], y = flat[i + 1] }
     end
     return result
 end
 
+local function isCounterClockwise(polygon)
+    local sum = 0
+    for i = 1, #polygon do
+        local p1 = polygon[i]
+        local p2 = polygon[i % #polygon + 1]
+        sum = sum + (p2.x - p1.x) * (p2.y + p1.y)
+    end
+    return sum < 0 -- Negative means counterclockwise
+end
+
+local function reversePolygon(polygon)
+    local reversed = {}
+    for i = #polygon, 1, -1 do
+        reversed[#reversed + 1] = polygon[i]
+    end
+    return reversed
+end
+
+local function prepareVerticesForClipping(thing)
+    local lverts = mathutils.localVerts(water)
+    local points = flatToPoints(lverts)
+    if not isCounterClockwise(points) then
+        points = reversePolygon(points)
+    end
+    return points
+end
+
 function s.update(dt)
+
+end
+
+function s.draw()
     local submergedThings = {}
     for i = 1, #submergedFixtures do
         local t = submergedFixtures[i]:getBody():getUserData().thing
@@ -27,25 +58,16 @@ function s.update(dt)
         table.insert(result, v)
     end
 
-    local wverts = mathutils.localVerts(water.vertices, water)
-    local waterPoints = flatToPoints(wverts)
+
+    local waterPoly = prepareVerticesForClipping(water)
+
 
     for i = 1, #result do
-        local verts = mathutils.localVerts(result[i].vertices, result[i])
-        local b = flatToPoints(verts)
-        print(inspect(waterPoints))
-        print(inspect(b))
-
-        --local a = polygonClip(waterPoints, b)
-
-        --print(#a)
-        -- print(inspect({ points = waterPoints }))
-        -- print(inspect({ points = b }))
+        local otherPoly = prepareVerticesForClipping(result[i])
+        local clip = mathutils.polygonClip(waterPoly, otherPoly)
+        -- print(inspect(otherPoly))
+        love.graphics.print(inspect(clip), 0, 0)
     end
-    --print(inspect(flatToPoints(water.vertices)))
-    -- now we have the (partly)submerged things in result.
-    -- now i can run extract vertices the way i want from water and from result[x]
-    -- then run the polygon clipping.
 end
 
 function s.beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)

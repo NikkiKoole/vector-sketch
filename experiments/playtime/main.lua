@@ -15,7 +15,7 @@ local eio = require 'src.io'
 local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
-local mathutil = require 'src.math-utils'
+mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 
 local box2dDraw = require 'src.box2d-draw'
@@ -148,7 +148,7 @@ function love.load(args)
 
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-    loadScriptAndScene('water')
+    loadScriptAndScene('catapult')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -262,7 +262,7 @@ function love.update(dt)
         local wx, wy = cam:getWorldCoordinates(mx, my)
         local offx = uiState.offsetDragging[1]
         local offy = uiState.offsetDragging[2]
-        local rx, ry = mathutil.rotatePoint(offx, offy, 0, 0, uiState.draggingObj.body:getAngle())
+        local rx, ry = mathutils.rotatePoint(offx, offy, 0, 0, uiState.draggingObj.body:getAngle())
         local oldPosX, oldPosY = uiState.draggingObj.body:getPosition()
         uiState.draggingObj.body:setPosition(wx + rx, wy + ry)
 
@@ -488,7 +488,7 @@ local function drawUpdateSelectedObjectUI()
                         uiState.polyLockedVerts = not uiState.polyLockedVerts
                         if uiState.polyLockedVerts == false then
                             uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
-                            local cx, cy = mathutil.computeCentroid(uiState.selectedObj.vertices)
+                            local cx, cy = mathutils.computeCentroid(uiState.selectedObj.vertices)
                             uiState.polyCentroid = { x = cx, y = cy }
                         else
                             uiState.polyTempVerts = nil
@@ -916,7 +916,7 @@ function love.draw()
 
     -- draw mousehandlers for dragging vertices
     if uiState.polyTempVerts and uiState.selectedObj and uiState.selectedObj.shapeType == 'custom' and uiState.polyLockedVerts == false then
-        local verts = mathutil.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
+        local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
             uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
 
         local mx, my = love.mouse:getPosition()
@@ -945,7 +945,7 @@ function love.draw()
 
     -- draw temp poly when changing vertices
     if uiState.polyTempVerts then
-        local verts = mathutil.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
+        local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
             uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
         love.graphics.setColor(1, 0, 0)
         love.graphics.polygon('line', verts)
@@ -995,7 +995,7 @@ function love.mousemoved(x, y, dx, dy)
         local index = uiState.polyDragIdx
         local obj = uiState.selectedObj
         local angle = obj.body:getAngle()
-        local dx2, dy2 = mathutil.rotatePoint(dx, dy, 0, 0, -angle)
+        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
         uiState.polyTempVerts[index] = uiState.polyTempVerts[index] + dx2
@@ -1041,7 +1041,7 @@ end
 
 function finalizePolygon()
     if #uiState.polyVerts >= 6 then
-        local cx, cy = mathutil.computeCentroid(uiState.polyVerts)
+        local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
         objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
     else
         -- Not enough vertices to form a polygon
@@ -1057,8 +1057,8 @@ end
 
 local function maybeUpdateCustomPolygonVertices()
     if not utils.tablesEqualNumbers(uiState.polyTempVerts, uiState.selectedObj.vertices) then
-        local nx, ny = mathutil.computeCentroid(uiState.polyTempVerts)
-        local ox, oy = mathutil.computeCentroid(uiState.selectedObj.vertices)
+        local nx, ny = mathutils.computeCentroid(uiState.polyTempVerts)
+        local ox, oy = mathutils.computeCentroid(uiState.selectedObj.vertices)
         local dx = nx - ox
         local dy = ny - oy
         local body = uiState.selectedObj.body
@@ -1076,11 +1076,11 @@ end
 local function insertCustomPolygonVertex(x, y)
     local obj = uiState.selectedObj
     local offx, offy = obj.body:getPosition()
-    local px, py = mathutil.worldToLocal(x - offx, y - offy, obj.body:getAngle(), uiState.polyCentroid.x,
+    local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), uiState.polyCentroid.x,
         uiState.polyCentroid.y)
     -- Find the closest edge index
-    local insertAfterVertexIndex = mathutil.findClosestEdge(uiState.polyTempVerts, px, py)
-    mathutil.insertValuesAt(uiState.polyTempVerts, insertAfterVertexIndex * 2 + 1, px, py)
+    local insertAfterVertexIndex = mathutils.findClosestEdge(uiState.polyTempVerts, px, py)
+    mathutils.insertValuesAt(uiState.polyTempVerts, insertAfterVertexIndex * 2 + 1, px, py)
 end
 
 -- Function to remove a custom polygon vertex based on mouse click
@@ -1090,11 +1090,11 @@ local function removeCustomPolygonVertex(x, y)
     local obj = uiState.selectedObj
 
     local offx, offy = obj.body:getPosition()
-    local px, py = mathutil.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
+    local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
         uiState.polyCentroid.x, uiState.polyCentroid.y)
 
     -- Step 2: Find the closest vertex index
-    local closestVertexIndex = mathutil.findClosestVertex(uiState.polyTempVerts, px, py)
+    local closestVertexIndex = mathutils.findClosestVertex(uiState.polyTempVerts, px, py)
 
     if closestVertexIndex then
         -- Optional: Define a maximum allowable distance to consider for deletion
@@ -1114,7 +1114,7 @@ local function removeCustomPolygonVertex(x, y)
                 -- Optionally, you can restore the removed vertex or prevent deletion
                 return
             end
-            mathutil.removeVertexAt(uiState.polyTempVerts, closestVertexIndex)
+            mathutils.removeVertexAt(uiState.polyTempVerts, closestVertexIndex)
             maybeUpdateCustomPolygonVertices()
 
             -- Debugging Output
@@ -1175,7 +1175,7 @@ local function handlePointer(x, y, id, action)
         local cx, cy = cam:getWorldCoordinates(x, y)
 
         if uiState.polyTempVerts and uiState.selectedObj and uiState.selectedObj.shapeType == 'custom' and uiState.polyLockedVerts == false then
-            local verts = mathutil.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
+            local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
                 uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
             for i = 1, #verts, 2 do
                 local vx = verts[i]

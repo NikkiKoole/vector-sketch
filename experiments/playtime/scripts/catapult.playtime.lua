@@ -69,7 +69,7 @@ function s.draw()
     local d = calculateDistance(mx, my, bx, by)
 
     if d > maxLength and isHoldingCup then
-        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.setColor(1, 1, 0, 1)
     else
         love.graphics.setColor(1, 1, 1, .5)
     end

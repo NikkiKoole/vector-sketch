@@ -145,9 +145,12 @@ function lib.rotatePoint(x, y, originX, originY, angle)
     return finalX, finalY
 end
 
-function lib.localVerts(vertices, obj)
-    local cx, cy = lib.computeCentroid(vertices)
-    return lib.getLocalVerticesForCustomSelected(vertices, obj, cx, cy)
+function lib.localVerts(obj)
+    if not obj.vertices then
+        error('obj needs vertices if you want to do stuff with them')
+    end
+    local cx, cy = lib.computeCentroid(obj.vertices)
+    return lib.getLocalVerticesForCustomSelected(obj.vertices, obj, cx, cy)
 end
 
 function lib.getLocalVerticesForCustomSelected(vertices, obj, cx, cy)
