@@ -65,6 +65,13 @@ function s.onStart()
     end
 end
 
+-- function s.drawUI(x,y,w,h)
+--     ui.panel(.... , function()
+--     if ui.button(x, y, label) then
+
+--     end end
+-- end
+
 function s.draw()
     for i = 1, #planets do
         local x, y = planets[i].body:getPosition()
