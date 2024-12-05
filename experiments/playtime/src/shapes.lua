@@ -131,6 +131,28 @@ local function makeShapeListFromPolygon(polygon)
     return shapesList
 end
 
+-- function shapes.getTriangles(polygon)
+--     local triangles = {}
+--     local result = {}
+--     local success, err = pcall(function()
+--         mathutils.decompose(polygon, result)
+--     end)
+
+--     if not success then
+--         print("Error in decompose_complex_poly: " .. err)
+--         return nil -- Exit early if decomposition fails
+--     end
+--     for i = 1, #result do
+--         local success, tris = pcall(love.math.triangulate, result[i])
+--         if success then
+--             utils.tableConcat(triangles, tris)
+--         else
+--             print("Failed to triangulate part of the polygon: " .. tris)
+--         end
+--     end
+--     return triangles
+-- end
+
 function shapes.createShape(shapeType, radius, width, height, optionalVertices)
     if (radius == 0) then radius = 1 end
     if (width == 0) then width = 1 end
