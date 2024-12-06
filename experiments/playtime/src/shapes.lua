@@ -65,6 +65,7 @@ local function rect(w, h, x, y)
         x - w / 2, y + h / 2
     }
 end
+
 local function makeTrapezium(w, w2, h, x, y)
     return {
         x - w / 2, y - h / 2,

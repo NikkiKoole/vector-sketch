@@ -4,20 +4,45 @@ local dragCoefficient = .1
 local angularDamping = .15
 local fluidDensity = 1
 
-function s.onStart()
-    worldState.paused = false
-    water = getObjectsByLabel('water')[1]
-    water.body:getFixtures()[1]:setSensor(true)
-
-    submergedFixtures = {} -- a body can have multipe fixtures
-end
-
 local function flatToPoints(flat)
     local result = {}
     for i = 1, #flat, 2 do
         result[(i + 1) / 2] = { x = flat[i], y = flat[i + 1] }
     end
     return result
+end
+
+function calculatePolygonArea(polygon)
+    local area = 0
+    local cx, cy = 0, 0 -- Centroid components
+    local count = #polygon
+
+    -- Ensure we have at least 3 vertices (a valid polygon)
+    if count < 3 then
+        return 0, { x = 0, y = 0 }
+    end
+
+    -- Loop through each edge of the polygon
+    for i = 1, count do
+        local p1 = polygon[i]
+        local p2 = polygon[(i % count) + 1] -- Wrap to the first vertex
+
+        -- Calculate area contribution (Shoelace formula)
+        local cross = p1.x * p2.y - p2.x * p1.y
+        area = area + cross
+
+        -- Calculate centroid contribution
+        cx = cx + (p1.x + p2.x) * cross
+        cy = cy + (p1.y + p2.y) * cross
+    end
+
+    -- Finalize area and centroid calculations
+    area = area / 2
+    cx = cx / (6 * area)
+    cy = cy / (6 * area)
+
+    -- Return absolute area (since it can be negative depending on vertex order)
+    return math.abs(area), { x = cx, y = cy }
 end
 
 local function isCounterClockwise(polygon)
@@ -45,6 +70,15 @@ local function prepareVerticesForClipping(thing)
         points = reversePolygon(points)
     end
     return points
+end
+
+
+function s.onStart()
+    worldState.paused = false
+    water = getObjectsByLabel('water')[1]
+    water.body:getFixtures()[1]:setSensor(true)
+
+    submergedFixtures = {} -- a body can have multipe fixtures
 end
 
 function s.update(dt)
@@ -146,39 +180,6 @@ function s.update(dt)
         end
     end
     local duration = love.timer.getTime() - start
-end
-
-function calculatePolygonArea(polygon)
-    local area = 0
-    local cx, cy = 0, 0 -- Centroid components
-    local count = #polygon
-
-    -- Ensure we have at least 3 vertices (a valid polygon)
-    if count < 3 then
-        return 0, { x = 0, y = 0 }
-    end
-
-    -- Loop through each edge of the polygon
-    for i = 1, count do
-        local p1 = polygon[i]
-        local p2 = polygon[(i % count) + 1] -- Wrap to the first vertex
-
-        -- Calculate area contribution (Shoelace formula)
-        local cross = p1.x * p2.y - p2.x * p1.y
-        area = area + cross
-
-        -- Calculate centroid contribution
-        cx = cx + (p1.x + p2.x) * cross
-        cy = cy + (p1.y + p2.y) * cross
-    end
-
-    -- Finalize area and centroid calculations
-    area = area / 2
-    cx = cx / (6 * area)
-    cy = cy / (6 * area)
-
-    -- Return absolute area (since it can be negative depending on vertex order)
-    return math.abs(area), { x = cx, y = cy }
 end
 
 function s.draw()
