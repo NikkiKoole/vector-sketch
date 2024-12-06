@@ -101,9 +101,10 @@ function love.load(args)
     hotReloadInterval = 1 -- Check every 1 second
 
     love.physics.setMeter(worldState.meter)
-    --world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
 
+    --world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
     --love.physics.setMeter(m)
+
     world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
     --phys.setupWorldWithGravity(worldState.meter, worldState.gravity)
 
@@ -149,7 +150,7 @@ function love.load(args)
 
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-    loadScriptAndScene('water')
+    loadScriptAndScene('straight')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)

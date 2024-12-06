@@ -23,15 +23,6 @@ function lib.trace(...)
     print(table.concat(t, " "))
 end
 
-function lib.insertNewlines(str, interval)
-    local result = {}
-    local length = #str
-    for i = 1, length, interval do
-        table.insert(result, str:sub(i, i + interval - 1))
-    end
-    return table.concat(result, "\n")
-end
-
 -- Utility function to get the difference between two paths
 function lib.getPathDifference(base, full)
     -- Ensure both inputs are strings
