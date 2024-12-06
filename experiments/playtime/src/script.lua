@@ -5,6 +5,7 @@ local cam = require('lib.cameraBase').getInstance()
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local shapes = require 'src.shapes'
+local ui = require 'src.ui-all'
 
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
@@ -27,7 +28,7 @@ end
 -- end collection
 
 local scriptEnv = {
-
+    ui                = ui,
     cam               = cam,
     mathutils         = mathutils,
     polygonClip       = mathutils.polygonClip,

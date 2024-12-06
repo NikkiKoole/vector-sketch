@@ -958,8 +958,9 @@ function love.draw()
         selectrect.draw(uiState.startSelection)
     end
 
-    drawUI()
 
+    drawUI()
+    script.call('drawUI')
     if uiState.maybeHideSelectedPanel then
         if not (ui.activeElementID or ui.focusedTextInputID) then
             uiState.selectedObj = nil

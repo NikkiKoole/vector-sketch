@@ -1,5 +1,9 @@
 local s = {}
 
+local dragCoefficient = .1
+local angularDamping = .15
+local fluidDensity = 1
+
 function s.onStart()
     worldState.paused = false
     water = getObjectsByLabel('water')[1]
@@ -101,6 +105,10 @@ function s.draw()
         local clip = mathutils.polygonClip(waterPoly, otherPoly)
         local submergedArea, center = calculatePolygonArea(clip) --local cx, cy = mathutils.computeCentroid(resultpoly)
 
+
+
+
+        -- print()
         local resultpoly = {}
         for j = 1, #clip do
             table.insert(resultpoly, clip[j].x)
@@ -110,9 +118,7 @@ function s.draw()
         --
         --
         --
-        local dragCoefficient = .1
-        local angularDamping = .15
-        local fluidDensity = 1
+        local round = mathutils.round_to_decimals
         local m = love.physics.getMeter()
         local g = worldState.gravity
 
@@ -123,11 +129,24 @@ function s.draw()
 
 
             if (worldState.paused == false) then
+                -- Apply drag resistance
+
+
+
+
+
                 result[i].body:applyForce(0, b, center.x, center.y)
 
 
 
-                -- Apply drag resistance
+                --3. Apply Torque Correction
+                -- If the centroid is oscillating and generating unwanted torque, you can counteract this torque explicitly by adding a corrective term.
+                -- Calculate the torque caused by the buoyant force
+                local fx, fy = result[i].body:getLocalPoint(center.x, center.y) -- Local offset
+                local torque = fx * b                                           -- Cross product approximation for torque
+                -- Apply a counteracting torque to stabilize rotation
+                result[i].body:applyTorque(-torque * 0.25)
+
                 local vx, vy = result[i].body:getLinearVelocity()
                 local speed = math.sqrt(vx ^ 2 + vy ^ 2)
                 local dragForceX = -dragCoefficient * vx * speed
@@ -136,13 +155,76 @@ function s.draw()
 
                 -- Apply angular damping
                 local omega = result[i].body:getAngularVelocity()
-                local torque = -angularDamping * omega
+                if math.abs(omega) < 0.01 then
+                    omega = 0
+                    result[i].body:setAngularVelocity(0)
+                end
+                local inertia = result[i].body:getInertia()
+                local torque = -angularDamping * omega * inertia
                 result[i].body:applyTorque(torque)
+
+
+                -- Scale down correction for stability
+
+
+                local x, y = result[i].body:getPosition()
+
+                love.graphics.setColor(1, 0, 0)
+                love.graphics.print(b .. ',' .. dragForceX .. ',' .. dragForceY .. ',' .. torque, x, y)
+                love.graphics.setColor(1, 1, 1)
+
+
+                --local torque = -angularDamping * omega
+                --result[i].body:applyTorque(torque)
             end
         end
     end
     local duration = love.timer.getTime() - start
     --  print(string.format("It took %.3f milliseconds", duration * 1000))
+end
+
+function s.drawUI()
+    local w, h = love.graphics.getDimensions()
+    local BUTTON_SPACING = 10
+    local BUTTON_HEIGHT = 40
+    local margin = 20
+    local startX = margin
+    local panelWidth = 350 --w - margin * 2
+
+    local panelHeight = BUTTON_HEIGHT * 6
+    local startY = h - panelHeight - margin
+
+
+    ui.panel(startX, startY, panelWidth, panelHeight, '•• buoyancy ••', function()
+        local layout = ui.createLayout({
+            type = 'columns',
+            spacing = BUTTON_SPACING,
+            startX = startX + BUTTON_SPACING,
+            startY = startY + BUTTON_SPACING
+        })
+
+        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
+        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
+        local newDrag = ui.sliderWithInput(' drag', x, y, 200, 0.01, 2, dragCoefficient)
+        if newDrag then
+            dragCoefficient = newDrag
+        end
+        ui.label(x, y, ' dragCoeff.')
+
+        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
+        local newDamp = ui.sliderWithInput(' angdamp', x, y, 200, 0.01, 2, angularDamping)
+        if newDamp then
+            angularDamping = newDamp
+        end
+        ui.label(x, y, ' angDamping.')
+
+        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
+        local newDens = ui.sliderWithInput(' fdensity', x, y, 200, 0.01, 4, fluidDensity)
+        if newDens then
+            fluidDensity = newDens
+        end
+        ui.label(x, y, ' fluidDensity.')
+    end)
 end
 
 function s.beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
