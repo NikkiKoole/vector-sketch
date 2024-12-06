@@ -48,43 +48,6 @@ local function prepareVerticesForClipping(thing)
 end
 
 function s.update(dt)
-
-end
-
-function calculatePolygonArea(polygon)
-    local area = 0
-    local cx, cy = 0, 0 -- Centroid components
-    local count = #polygon
-
-    -- Ensure we have at least 3 vertices (a valid polygon)
-    if count < 3 then
-        return 0, { x = 0, y = 0 }
-    end
-
-    -- Loop through each edge of the polygon
-    for i = 1, count do
-        local p1 = polygon[i]
-        local p2 = polygon[(i % count) + 1] -- Wrap to the first vertex
-
-        -- Calculate area contribution (Shoelace formula)
-        local cross = p1.x * p2.y - p2.x * p1.y
-        area = area + cross
-
-        -- Calculate centroid contribution
-        cx = cx + (p1.x + p2.x) * cross
-        cy = cy + (p1.y + p2.y) * cross
-    end
-
-    -- Finalize area and centroid calculations
-    area = area / 2
-    cx = cx / (6 * area)
-    cy = cy / (6 * area)
-
-    -- Return absolute area (since it can be negative depending on vertex order)
-    return math.abs(area), { x = cx, y = cy }
-end
-
-function s.draw()
     local start = love.timer.getTime()
     local submergedThings = {}
     for i = 1, #submergedFixtures do
@@ -123,16 +86,13 @@ function s.draw()
         local g = worldState.gravity
 
         if resultpoly and #resultpoly >= 6 then
-            love.graphics.polygon('fill', resultpoly)
+            -- love.graphics.polygon('fill', resultpoly)
             -- print(area)
-            local b = -(g / m) * submergedArea * fluidDensity
+            local b = -(g / (m)) * submergedArea * 2 * fluidDensity
 
 
             if (worldState.paused == false) then
                 -- Apply drag resistance
-
-
-
 
 
                 result[i].body:applyForce(0, b, center.x, center.y)
@@ -147,21 +107,27 @@ function s.draw()
                 -- Apply a counteracting torque to stabilize rotation
                 result[i].body:applyTorque(-torque * 0.25)
 
-                local vx, vy = result[i].body:getLinearVelocity()
-                local speed = math.sqrt(vx ^ 2 + vy ^ 2)
-                local dragForceX = -dragCoefficient * vx * speed
-                local dragForceY = -dragCoefficient * vy * speed
-                result[i].body:applyForce(dragForceX, dragForceY)
+                result[i].body:setLinearDamping(dragCoefficient)
 
-                -- Apply angular damping
+
+
                 local omega = result[i].body:getAngularVelocity()
                 if math.abs(omega) < 0.01 then
                     omega = 0
                     result[i].body:setAngularVelocity(0)
                 end
-                local inertia = result[i].body:getInertia()
-                local torque = -angularDamping * omega * inertia
-                result[i].body:applyTorque(torque)
+                result[i].body:setAngularDamping(angularDamping)
+
+
+                -- -- Apply angular damping
+                -- local omega = result[i].body:getAngularVelocity()
+                -- if math.abs(omega) < 0.01 then
+                --     omega = 0
+                --     result[i].body:setAngularVelocity(0)
+                -- end
+                -- local inertia = result[i].body:getInertia()
+                -- local torque = -angularDamping * omega * inertia
+                -- result[i].body:applyTorque(torque)
 
 
                 -- Scale down correction for stability
@@ -170,7 +136,7 @@ function s.draw()
                 local x, y = result[i].body:getPosition()
 
                 love.graphics.setColor(1, 0, 0)
-                love.graphics.print(b .. ',' .. dragForceX .. ',' .. dragForceY .. ',' .. torque, x, y)
+                -- love.graphics.print(b .. ',' .. dragForceX .. ',' .. dragForceY .. ',' .. torque, x, y)
                 love.graphics.setColor(1, 1, 1)
 
 
@@ -180,6 +146,71 @@ function s.draw()
         end
     end
     local duration = love.timer.getTime() - start
+end
+
+function calculatePolygonArea(polygon)
+    local area = 0
+    local cx, cy = 0, 0 -- Centroid components
+    local count = #polygon
+
+    -- Ensure we have at least 3 vertices (a valid polygon)
+    if count < 3 then
+        return 0, { x = 0, y = 0 }
+    end
+
+    -- Loop through each edge of the polygon
+    for i = 1, count do
+        local p1 = polygon[i]
+        local p2 = polygon[(i % count) + 1] -- Wrap to the first vertex
+
+        -- Calculate area contribution (Shoelace formula)
+        local cross = p1.x * p2.y - p2.x * p1.y
+        area = area + cross
+
+        -- Calculate centroid contribution
+        cx = cx + (p1.x + p2.x) * cross
+        cy = cy + (p1.y + p2.y) * cross
+    end
+
+    -- Finalize area and centroid calculations
+    area = area / 2
+    cx = cx / (6 * area)
+    cy = cy / (6 * area)
+
+    -- Return absolute area (since it can be negative depending on vertex order)
+    return math.abs(area), { x = cx, y = cy }
+end
+
+function s.draw()
+    local submergedThings = {}
+    for i = 1, #submergedFixtures do
+        local t = submergedFixtures[i]:getBody():getUserData().thing
+        submergedThings[t.id] = t
+    end
+    local result = {}
+    for k, v in pairs(submergedThings) do
+        table.insert(result, v)
+    end
+
+    local waterPoly = prepareVerticesForClipping(water)
+
+    for i = 1, #result do
+        local otherPoly = prepareVerticesForClipping(result[i])
+        local clip = mathutils.polygonClip(waterPoly, otherPoly)
+        local submergedArea, center = calculatePolygonArea(clip)
+
+        local resultpoly = {}
+        for j = 1, #clip do
+            table.insert(resultpoly, clip[j].x)
+            table.insert(resultpoly, clip[j].y)
+        end
+
+        if resultpoly and #resultpoly >= 6 then
+            love.graphics.setColor(0, 0, 1, 0.6) -- Semi-transparent blue for submerged area
+            love.graphics.polygon('fill', resultpoly)
+            love.graphics.setColor(1, 1, 1)
+        end
+    end
     --  print(string.format("It took %.3f milliseconds", duration * 1000))
 end
 

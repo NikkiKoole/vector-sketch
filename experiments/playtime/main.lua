@@ -89,7 +89,8 @@ function love.load(args)
         paused = true,
         gravity = 9.80,
         mouseForce = 500000,
-        mouseDamping = 0.5
+        mouseDamping = 0.5,
+        speedMultiplier = 1.0
     }
 
 
@@ -243,18 +244,20 @@ end
 
 function love.update(dt)
     maybeHotReload(dt)
+
+    local scaled_dt = dt * worldState.speedMultiplier
     if not worldState.paused then
         -- for i, v in ipairs(softbodies) do
         --     v:update(dt)
         -- end
 
         for i = 1, 1 do
-            world:update(dt)
+            world:update(scaled_dt)
         end
-        script.call('update', dt)
+        script.call('update', scaled_dt)
     end
 
-    box2dPointerJoints.handlePointerUpdate(dt, cam)
+    box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
     --phys.handleUpdate(dt)
 
     if uiState.draggingObj then
@@ -696,7 +699,7 @@ function drawUI()
 
         local buttonSpacing = BUTTON_SPACING
         local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-        local panelHeight = titleHeight + titleHeight + (5 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+        local panelHeight = titleHeight + titleHeight + (6 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
         ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
             local layout = ui.createLayout({
                 type = 'columns',
@@ -737,6 +740,15 @@ function drawUI()
                 worldState.mouseDamping = mouseDamp
             end
             ui.label(x, y, ' damp')
+
+
+            -- Add Speed Multiplier Slider
+            local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            local newSpeed = ui.sliderWithInput('speed', x, y, ROW_WIDTH, 0.1, 10.0, worldState.speedMultiplier)
+            if newSpeed then
+                worldState.speedMultiplier = newSpeed
+            end
+            ui.label(x, y, ' speed')
 
 
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
@@ -1347,7 +1359,7 @@ if FIXED_TIMESTEP then
             local current = love.timer.getTime()
             local elapsed = current - previous
             previous = current
-            lag = lag + elapsed
+            lag = lag + elapsed * worldState.speedMultiplier
 
             if love.event then
                 love.event.pump()

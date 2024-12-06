@@ -41,6 +41,30 @@ local function capsuleXY(w, h, cs, x, y)
     }
 end
 
+local function approximateCircle(radius, centerX, centerY, segments)
+    segments = segments or 32 -- Default to 32 segments if not specified
+    local vertices = {}
+    local angleIncrement = (2 * math.pi) / segments
+
+    for i = 0, segments - 1 do
+        local angle = i * angleIncrement
+        local x = centerX + radius * math.cos(angle)
+        local y = centerY + radius * math.sin(angle)
+        table.insert(vertices, x)
+        table.insert(vertices, y)
+    end
+
+    return vertices
+end
+
+local function rect(w, h, x, y)
+    return {
+        x - w / 2, y - h / 2,
+        x + w / 2, y - h / 2,
+        x + w / 2, y + h / 2,
+        x - w / 2, y + h / 2
+    }
+end
 local function makeTrapezium(w, w2, h, x, y)
     return {
         x - w / 2, y - h / 2,
@@ -162,8 +186,10 @@ function shapes.createShape(shapeType, radius, width, height, optionalVertices)
     local vertices = nil
 
     if shapeType == 'circle' then
+        vertices = approximateCircle(radius, 0, 0, 20)
         table.insert(shapesList, love.physics.newCircleShape(radius))
     elseif shapeType == 'rectangle' then
+        vertices = rect(width, height, 0, 0)
         table.insert(shapesList, love.physics.newRectangleShape(width, height))
     elseif shapeType == 'capsule' then
         vertices = capsuleXY(width, height, width / 5, 0, 0)
