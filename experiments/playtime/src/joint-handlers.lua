@@ -57,7 +57,7 @@ jointHandlers["rope"] = {
 jointHandlers["revolute"] = {
 
     create = function(data, x1, y1, x2, y2)
-        print(x1, y1)
+        --print(x1, y1)
         local joint = love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, data.collideConnected)
         return joint
     end,

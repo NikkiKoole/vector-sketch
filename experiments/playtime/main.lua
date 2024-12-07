@@ -20,8 +20,7 @@ local utils = require 'src.utils'
 
 local box2dDraw = require 'src.box2d-draw'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
--- todo, jointhandlers, dont really reuse properties after flip..
---
+
 function waitForEvent()
     local a, b, c, d, e
     repeat
