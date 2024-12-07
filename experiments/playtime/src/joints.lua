@@ -195,7 +195,7 @@ function lib.recreateJoint(joint, newSettings)
     -- Create a new joint with the updated data
     bodyA:setAwake(true)
     bodyB:setAwake(true)
-    print(inspect(data))
+    --  print(inspect(data))
     return lib.createJoint(data)
 end
 
@@ -479,7 +479,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
                 local ud = bodyA:getUserData()
 
 
-                if true and ud and ud.thing then
+                if false and ud and ud.thing then
                     --print(inspect(ud.thing))
                     if ud.thing.width and ud.thing.height then
                         if ui.button(x, y, 30, '0', 30) then

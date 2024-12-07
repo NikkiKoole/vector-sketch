@@ -1,9 +1,6 @@
 local s            = {}
 
 local desiredAngle = 0
-local divider      = 32
-local smarter      = 1
-
 local Kp           = 50 -- Proportional gain
 local Kd           = 10 -- Derivative gain
 
@@ -33,7 +30,6 @@ function rotateToHorizontalPD(body, desiredAngle, Kp, Kd, dt)
 
     -- Calculate torque: Torque = Inertia * Control Signal
     local torque = inertia * controlSignal
-
     -- Apply torque to the body
     body:applyTorque(torque)
 end
@@ -80,10 +76,7 @@ end
 
 function s.update(dt)
     for i = 1, #keepStraights do
-        --print(keepStraights[i].body:getMass())
-        --  local m = keepStraights[i].body:getMass()
         rotateToHorizontalPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-        rotateToHorizontalAdjusted(keepStraights[i].body, desiredAngle, divider, smarter, dt)
     end
 end
 

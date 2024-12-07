@@ -9,6 +9,7 @@ local shapes = require 'src.shapes'
 local jointHandlers = require 'src.joint-handlers'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
+local jointslib = require 'src.joints'
 
 function lib.load(data, world)
     local jsonData, pos, err = json.decode(data, 1, nil)
@@ -128,9 +129,11 @@ function lib.load(data, world)
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
             elseif jointData.type == "revolute" then
+                print(inspect(anchorA), inspect(anchorB))
                 joint = love.physics.newRevoluteJoint(
                     bodyA, bodyB,
                     anchorA[1], anchorA[2],
+                    --anchorB[1], anchorB[2],
                     collideConnected
                 )
                 joint:setMotorEnabled(jointData.properties.motorEnabled)
@@ -485,7 +488,9 @@ function lib.cloneSelection(selectedBodies)
 
             -- Clone user data
             if (originalThing.vertices) then
-                utils.trace('vertex count before and after cloning ', #originalThing.vertices, #newVertices)
+                if (#originalThing.vertices ~= #newVertices) then
+                    utils.trace('vertex count before and after cloning ', #originalThing.vertices, #newVertices)
+                end
             end
             local clonedThing = {
                 shapeType = originalThing.shapeType,
@@ -522,7 +527,7 @@ function lib.cloneSelection(selectedBodies)
                     doneJoints[ud.id] = true
                     if handler and handler.extract then
                         local jointData = handler.extract(originalJoint)
-                        utils.trace(inspect(jointData))
+                        -- utils.trace(inspect(jointData))
                         -- Determine the original bodies connected by the joint
                         local bodyA, bodyB = originalJoint:getBodies()
                         local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
@@ -535,33 +540,17 @@ function lib.cloneSelection(selectedBodies)
                                 body2 = clonedBodyB.body,
                                 jointType = jointType,
                                 collideConnected = originalJoint:getCollideConnected(),
-                                id = uuid.generateID()
+                                id = uuid.generateID(),
+                                offsetA = { x = ud.offsetA.x, y = ud.offsetA.y },
+                                offsetB = { x = ud.offsetB.x, y = ud.offsetB.x }
                             }
 
                             -- Include all joint-specific properties
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
                             end
-                            --  print(inspect(newJointData))
-                            -- Create the new joint
-                            local newJoint = handler.create(newJointData,
-                                clonedBodyA.body:getX(), clonedBodyA.body:getY(),
-                                clonedBodyB.body:getX(), clonedBodyB.body:getY()
-                            )
 
-                            --print(inspect(newJoint))
-                            local ax, ay, bx, by = newJoint:getAnchors()
-                            local fxa, fya = mathutils.rotatePoint(ax - clonedBodyA.body:getX(),
-                                ay - clonedBodyA.body:getY(), 0, 0,
-                                -bodyA:getAngle())
-                            local fxb, fyb = mathutils.rotatePoint(bx - clonedBodyB.body:getX(),
-                                by - clonedBodyB.body:getY(), 0, 0,
-                                -bodyB:getAngle())
-
-
-                            -- Set user data for the new joint
-                            newJoint:setUserData({ id = newJointData.id, offsetA = { x = fxa, y = fya }, offsetB = { x = fxb, y = fyb } })
-                            --                             })
+                            local newJoint = jointslib.createJoint(newJointData)
 
                             -- Register the new joint
                             registry.registerJoint(newJointData.id, newJoint)

@@ -38,6 +38,10 @@ local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
+
+
+
+
 function love.load(args)
     -- Load and set the font
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
@@ -1257,7 +1261,11 @@ local function handlePointer(x, y, id, action)
                     uiState.offsetDragging = { -offx, -offy }
                 end
             else
-                local newHitted = utils.map(hitted, function(h) return h:getBody():getUserData().thing end)
+                local newHitted = utils.map(hitted, function(h)
+                    local ud = (h:getBody() and h:getBody():getUserData())
+                    local thing = ud and ud.thing
+                    return thing
+                end)
                 script.call('onPressed', newHitted)
                 -- if sceneScript and sceneScript.onPressed then
                 --     sceneScript.onPressed(newHitted)
@@ -1270,7 +1278,7 @@ local function handlePointer(x, y, id, action)
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
-            local newReleased = utils.map(releasedObjs, function(h) return h:getUserData().thing end)
+            local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)
             -- if sceneScript and sceneScript.onReleased then

@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "bodies": [
+    {
+      "sharedFixtureData": {
+        "restitution": 0.3,
+        "shapeType": "circle",
+        "density": 1,
+        "friction": 0.2
+      },
+      "fixtures": [
+        {
+          "radius": 10
+        }
+      ],
+      "width": 4000,
+      "height": 40,
+      "radius": 10,
+      "bodyType": "dynamic",
+      "angle": 0,
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearVelocity": [0, 0],
+      "id": "4D9Pfq",
+      "position": [-3616.3848, 1610.9867],
+      "shapeType": "circle",
+      "vertices": false,
+      "label": "elasto-end"
+    },
+    {
+      "sharedFixtureData": {
+        "restitution": 0.3,
+        "shapeType": "circle",
+        "density": 1,
+        "friction": 0.2
+      },
+      "fixtures": [
+        {
+          "radius": 10
+        }
+      ],
+      "width": 4000,
+      "height": 40,
+      "radius": 10,
+      "bodyType": "dynamic",
+      "angle": 0,
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearVelocity": [0, 0],
+      "id": "183Z3V",
+      "position": [-3631.0317, 1483.3263],
+      "shapeType": "circle",
+      "vertices": false,
+      "label": "elasto-start"
+    },
+    {
+      "sharedFixtureData": {
+        "restitution": 0.3,
+        "shapeType": "polygon",
+        "density": 1,
+        "friction": 0.2
+      },
+      "fixtures": [
+        {
+          "points": [-2000, -20, 2000, -20, 2000, 20, -2000, 20]
+        }
+      ],
+      "width": 4000,
+      "height": 40,
+      "radius": 20,
+      "bodyType": "static",
+      "angle": 0,
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearVelocity": [0, 0],
+      "id": "373Ujf",
+      "position": [-3322.3477, 2439.584],
+      "shapeType": "rectangle",
+      "vertices": false,
+      "label": ""
+    }
+  ],
+  "joints": []
+}
