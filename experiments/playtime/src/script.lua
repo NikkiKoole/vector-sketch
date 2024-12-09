@@ -46,7 +46,8 @@ local scriptEnv = {
     world             = world,
     string            = string,
     mouseWorldPos     = mouseWorldPos,
-    worldState        = worldState
+    worldState        = worldState,
+    unpack            = unpack
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

@@ -2,6 +2,111 @@ local s = {}
 
 function s.onStart()
     platform = getObjectsByLabel('platform')[1]
+
+    local lverts = mathutils.localVerts(platform)
+
+    chains = generateChainShapesFromPolygonWithNormals(lverts, 10)
+    -- print(inspect(chains))
+    -- local body = love.physics.newBody(world, 0, 0)
+    -- local shape = love.physics.newChainShape(false, unpack(chainverts))
+    -- local fixture = love.physics.newFixture(body, shape)
+end
+
+function s.draw()
+    love.graphics.setColor(1, 0, 0)
+    for j = 1, #chains do
+        local chainverts = chains[j]
+        for i = 1, #chainverts / 2 do
+            local index = (i - 1) * 2
+            local c = chainverts
+            love.graphics.line(c[index + 1][1], c[index + 1][2], c[index + 2][1], c[index + 2][2])
+        end
+    end
+    love.graphics.setColor(1, 1, 1)
+    --love.graphics.polygon('fill', chainverts)
+end
+
+function generateChainShapesFromPolygonWithNormals(polygon, yOffset)
+    local function calculateNormal(x1, y1, x2, y2)
+        -- Compute the normal vector
+        local dx, dy = x2 - x1, y2 - y1
+        local length = math.sqrt(dx ^ 2 + dy ^ 2)
+        return -dy / length, dx / length -- Perpendicular vector (dx, -dy rotated 90 degrees CCW)
+    end
+
+    local chains = {}
+    local currentChain = {}
+
+    for i = 1, #polygon - 2, 2 do
+        local x1, y1 = polygon[i], polygon[i + 1]
+        local x2, y2 = polygon[i + 2], polygon[i + 3]
+
+        -- Compute the normal vector
+        local nx, ny = calculateNormal(x1, y1, x2, y2)
+
+        -- Check if this edge is facing downward (positive y in Love2D)
+        if ny > 0 then
+            -- This is a bottom edge, offset the vertices downward
+            table.insert(currentChain, { x1, y1 + yOffset })
+            table.insert(currentChain, { x2, y2 + yOffset })
+        else
+            -- If not a bottom edge, finalize the current chain (if any)
+            if #currentChain > 0 then
+                table.insert(chains, currentChain)
+                currentChain = {}
+            end
+        end
+    end
+
+    -- Finalize the last chain if there are remaining edges
+    if #currentChain > 0 then
+        table.insert(chains, currentChain)
+    end
+
+    return chains
+end
+
+-- Function to create a chain shape for the bottom edges of a polygon
+function createBottomChainShape(polygonVertices, yOffset)
+    local chainVertices = {}
+
+    local function calculateNormal(x1, y1, x2, y2)
+        local dx, dy = x2 - x1, y2 - y1
+        local length = math.sqrt(dx * dx + dy * dy)
+        return -dy / length, dx / length -- Outward normal
+    end
+
+    -- Traverse each edge of the polygon
+    for i = 1, #polygonVertices - 2, 2 do
+        local x1, y1 = polygonVertices[i], polygonVertices[i + 1]
+        local x2, y2 = polygonVertices[i + 2], polygonVertices[i + 3]
+
+        -- Calculate the outward normal of the edge
+        local nx, ny = calculateNormal(x1, y1, x2, y2)
+
+        -- Check if the normal has a downward component
+        if ny > 0 then
+            -- Add the edge to the chain shape with offset
+            table.insert(chainVertices, x1)
+            table.insert(chainVertices, y1 + yOffset)
+            table.insert(chainVertices, x2)
+            table.insert(chainVertices, y2 + yOffset)
+        end
+    end
+
+    -- Check the last edge (closing the polygon)
+    local x1, y1 = polygonVertices[#polygonVertices - 1], polygonVertices[#polygonVertices]
+    local x2, y2 = polygonVertices[1], polygonVertices[2]
+    local nx, ny = calculateNormal(x1, y1, x2, y2)
+
+    if ny > 0 then
+        table.insert(chainVertices, x1)
+        table.insert(chainVertices, y1 + yOffset)
+        table.insert(chainVertices, x2)
+        table.insert(chainVertices, y2 + yOffset)
+    end
+
+    return chainVertices
 end
 
 -- Function to calculate drag direction using MouseJoint
@@ -44,7 +149,7 @@ local function getDragDirection(body, mouseJoint)
     return { x = dx / magnitude, y = dy / magnitude }
 end
 
-function s.preSolve(fix1, fix2, contact)
+function s.preSolveqoiwdhioqw(fix1, fix2, contact)
     -- Get fixtures and bodies involved in the collision
     local fixtureA, fixtureB = contact:getFixtures()
     local bodyA, bodyB = fixtureA:getBody(), fixtureB:getBody()

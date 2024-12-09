@@ -50,7 +50,7 @@ function lib.drawWorld(world)
                 end
                 love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
             elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
-                love.graphics.setColor(1, 1, 1, alpha)
+                love.graphics.setColor(0, 1, 1, alpha)
                 local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
                 for i = 1, #points, 2 do
                     if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
