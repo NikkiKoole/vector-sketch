@@ -33,6 +33,7 @@ local scriptEnv = {
     cam               = cam,
     mathutils         = mathutils,
     getPJAttachedTo   = box2dPointerJoints.getPointerJointAttachedTo,
+    getPointerJoints  = box2dPointerJoints.getPointerJoints,
     polygonClip       = mathutils.polygonClip,
     pairs             = pairs,
     ipairs            = ipairs,

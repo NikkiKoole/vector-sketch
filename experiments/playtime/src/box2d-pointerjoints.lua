@@ -107,6 +107,10 @@ function lib.getPointerJointAttachedTo(body)
     end
 end
 
+function lib.getPointerJoints()
+    return pointerJoints
+end
+
 function lib.handlePointerReleased(x, y, id)
     local released = {}
     if pointerJoints then

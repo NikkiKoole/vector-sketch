@@ -153,7 +153,7 @@ function love.load(args)
 
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-    loadScriptAndScene('platforms')
+    loadScriptAndScene('snap')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -1242,7 +1242,7 @@ local function handlePointer(x, y, id, action)
             if sceneScript and not worldState.paused and uiState.selectedObj then
                 uiState.selectedObj = nil
             end
-            if uiState.jointCreationMode then
+            if uiState.jointCreationMode and uiState.selectedObj then
                 if uiState.jointCreationMode.body1 == nil then
                     uiState.jointCreationMode.body1 = uiState.selectedObj.body
                 elseif uiState.jointCreationMode.body2 == nil then
