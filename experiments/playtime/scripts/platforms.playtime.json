@@ -1,51 +1,67 @@
 {
-  "version":"1.0",
-  "joints":[],
   "bodies":[{
-      "vertices":[-537,461,-527,773,867,687,935,335],
-      "label":"platform",
-      "sharedFixtureData":{
-        "density":1,
-        "shapeType":"polygon",
-        "restitution":0.3,
-        "friction":0.2
-      },
-      "fixedRotation":false,
-      "fixtures":[{
-          "points":[750.5,-229,682.5,123,-711.5,209,-721.5,-103]
-        }],
-      "angularVelocity":0,
-      "radius":20,
-      "linearVelocity":[0,0],
-      "angle":0,
-      "position":[184.5,563.9999],
       "height":40,
-      "id":"1vpyot",
-      "width":40,
-      "bodyType":"static",
-      "shapeType":"custom"
-    },{
-      "vertices":false,
-      "label":"dragme",
+      "fixtures":[{
+          "points":[813.205,-328.115,-159.288,126.008,-574.926,200.082]
+        },{
+          "points":[-159.288,126.008,-290.976,261.811,-574.926,200.082]
+        },{
+          "points":[813.205,-328.115,9.436,105.432,-159.288,126.008]
+        },{
+          "points":[813.205,-328.115,190.506,43.704,9.436,105.432]
+        },{
+          "points":[813.205,-328.115,527.954,179.506,190.506,43.704]
+        },{
+          "points":[813.205,-328.115,745.205,23.885,527.954,179.506]
+        },{
+          "points":[813.205,-328.115,-574.926,200.082,46.473,-520.082]
+        },{
+          "points":[46.473,-520.082,-574.926,200.082,-658.795,-202.115]
+        },{
+          "points":[-574.926,200.082,-648.795,109.885,-658.795,-202.115]
+        }],
       "sharedFixtureData":{
+        "friction":0.2,
         "density":1,
-        "shapeType":"polygon",
         "restitution":0.3,
-        "friction":0.2
+        "shapeType":"polygon"
       },
+      "shapeType":"custom",
+      "vertices":[-537,461,-527,773,-453.13167597308,863.19766801628,-169.18106275675,924.92606734796,-37.493820994484,789.12362326671,131.23047118469,768.54747046834,312.30041520233,706.81908129782,649.7489717439,842.62157433697,867,687,935,335,168.26748971193,143.03304388101],
+      "label":"platform",
+      "id":"skRwD",
+      "angularVelocity":0,
+      "position":[121.7946,663.1152],
+      "bodyType":"static",
+      "linearVelocity":[0,0],
+      "radius":20,
       "fixedRotation":false,
+      "angle":0,
+      "width":40
+    },{
+      "height":"208.54",
       "fixtures":[{
           "points":[104.27,-62.562,104.27,62.562,62.562,104.27,-62.562,104.27,-104.27,62.562,-104.27,-62.562,-62.562,-104.27,62.562,-104.27]
         }],
-      "angularVelocity":-2.0917,
-      "radius":20,
-      "linearVelocity":[19.575510025024,81.621589660645],
-      "angle":12.7402,
-      "position":[386.6685,100.2528],
-      "height":"208.54",
-      "id":"15xJIm",
-      "width":"208.54",
+      "sharedFixtureData":{
+        "friction":0.2,
+        "density":1,
+        "restitution":0.3,
+        "shapeType":"polygon"
+      },
+      "shapeType":"capsule",
+      "vertices":false,
+      "label":"dragme",
+      "id":"40j9XB",
+      "angularVelocity":-1.144,
+      "position":[397.7928,-106.0029],
       "bodyType":"dynamic",
-      "shapeType":"capsule"
-    }]
+      "linearVelocity":[20.602827072144,512.89526367188],
+      "radius":20,
+      "fixedRotation":false,
+      "angle":8.6404,
+      "width":"208.54"
+    }],
+  "version":"1.0",
+  "joints":[]
 }
