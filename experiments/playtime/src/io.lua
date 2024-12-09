@@ -129,7 +129,7 @@ function lib.load(data, world)
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
             elseif jointData.type == "revolute" then
-                print(inspect(anchorA), inspect(anchorB))
+                --print(inspect(anchorA), inspect(anchorB))
                 joint = love.physics.newRevoluteJoint(
                     bodyA, bodyB,
                     anchorA[1], anchorA[2],

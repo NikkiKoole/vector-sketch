@@ -96,6 +96,17 @@ function lib.handlePointerUpdate(dt, cam)
     --connect.cleanupCoolDownList(dt)
 end
 
+function lib.getPointerJointAttachedTo(body)
+    if pointerJoints then
+        for i = 1, #pointerJoints do
+            local mj = pointerJoints[i]
+            if mj.joint and mj.jointBody and mj.jointBody == body then
+                return mj
+            end
+        end
+    end
+end
+
 function lib.handlePointerReleased(x, y, id)
     local released = {}
     if pointerJoints then

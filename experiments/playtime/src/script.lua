@@ -6,6 +6,7 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local shapes = require 'src.shapes'
 local ui = require 'src.ui-all'
+local box2dPointerJoints = require 'src.box2d-pointerjoints'
 
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
@@ -31,6 +32,7 @@ local scriptEnv = {
     ui                = ui,
     cam               = cam,
     mathutils         = mathutils,
+    getPJAttachedTo   = box2dPointerJoints.getPointerJointAttachedTo,
     polygonClip       = mathutils.polygonClip,
     pairs             = pairs,
     ipairs            = ipairs,

@@ -153,7 +153,7 @@ function love.load(args)
 
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-    loadScriptAndScene('straight')
+    loadScriptAndScene('platforms')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -1121,7 +1121,7 @@ local function removeCustomPolygonVertex(x, y)
         local dx = px - vx
         local dy = py - vy
         local distSq = dx * dx + dy * dy
-        print(distSq)
+        --print(distSq)
         if distSq <= maxDeletionDistanceSq then
             -- Step 3: Remove the vertex from the vertex list
 
