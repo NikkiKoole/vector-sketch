@@ -235,12 +235,18 @@ function lib.load(data, world)
                     -bodyA:getAngle())
                 local fxb, fyb = mathutils.rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
                     -bodyB:getAngle())
-                joint:setUserData({
+
+
+                local scriptmeta = jointData.scriptmeta
+
+                local ud = {
                     id = getNewId(jointData.id),
                     offsetA = { x = fxa, y = fya },
                     offsetB = { x = fxb, y = fyb }
-                })
-
+                }
+                if jointData.scriptmeta then ud.scriptmeta = jointData.scriptmeta end
+                --print('hello loading a joint ', inspect(ud))
+                joint:setUserData(ud)
 
                 -- Register the joint in the registry
                 registry.registerJoint(jointData.id, joint)
@@ -348,6 +354,7 @@ function lib.save(world, worldState, filename)
             if thingA and thingB then
                 local x1, y1, x2, y2 = joint:getAnchors()
                 local jointData = {
+
                     id = jointID,
                     type = joint:getType(),
                     bodyA = thingA.id,
@@ -357,6 +364,11 @@ function lib.save(world, worldState, filename)
                     collideConnected = joint:getCollideConnected(),
                     properties = {}
                 }
+
+
+                if (jointUserData.scriptmeta) then
+                    jointData.scriptmeta = utils.shallowCopy(jointUserData.scriptmeta)
+                end
 
                 -- Extract joint-specific properties
                 if joint:getType() == "distance" then

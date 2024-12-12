@@ -7,6 +7,7 @@ local mathutils = require 'src.math-utils'
 local shapes = require 'src.shapes'
 local ui = require 'src.ui-all'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
+local uuid = require 'src.uuid'
 
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
@@ -29,6 +30,7 @@ end
 -- end collection
 
 local scriptEnv = {
+    generateID               = uuid.generateID,
     ui                       = ui,
     cam                      = cam,
     mathutils                = mathutils,
@@ -48,7 +50,8 @@ local scriptEnv = {
     string                   = string,
     mouseWorldPos            = mouseWorldPos,
     worldState               = worldState,
-    unpack                   = unpack
+    unpack                   = unpack,
+    getmetatable             = getmetatable
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

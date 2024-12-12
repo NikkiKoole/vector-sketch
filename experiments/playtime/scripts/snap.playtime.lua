@@ -1,7 +1,8 @@
 local s = {}
+
 local snapPoints = {}              -- List of all snap points
 local snapDistance = 40            -- Maximum distance to snap
-local joints = {}                  -- Store created joints
+local mySnapJoints = {}            -- Store created joints
 local jointBreakThreshold = 100000 -- Force threshold for breaking the joint
 local cooldownTime = .5            -- Time in seconds to prevent immediate reconnection
 local cooldownList = {}            -- Table to track cooldown for each snap point
@@ -35,7 +36,41 @@ function addSnapPoint(body, x, y)
     table.insert(snapPoints, { type = "snapPoint", fixture = fixture, xOffset = x, yOffset = y, at = body, to = nil })
 end
 
+function s.onSceneUnload()
+    snaps = {}
+    snapPoints = {}
+end
+
+function s.onSceneLoaded()
+    snaps = getObjectsByLabel('havesnap')
+    -- Create snap points on the body of each object
+    for i = 1, #snaps do
+        local it = snaps[i]
+        addSnapPoint(it.body, it.width / 2, 0)
+        addSnapPoint(it.body, -it.width / 2, 0)
+    end
+
+    --  print(inspect(registry.joints))
+
+
+    -- print(registry.joints)
+    for k, value in pairs(registry.joints) do
+        local ud = value:getUserData()
+        if ud and ud.scriptmeta and ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
+            local index1 = ud.scriptmeta.index1
+            local index2 = ud.scriptmeta.index2
+
+            snapPoints[index1].to = snapPoints[index2].at
+            snapPoints[index2].to = snapPoints[index1].at
+
+            table.insert(mySnapJoints, value)
+        end
+        --   print(inspect(ud))
+    end
+end
+
 function s.onStart()
+    print(inspect(registry.joints))
     snaps = getObjectsByLabel('havesnap')
     -- Create snap points on the body of each object
     for i = 1, #snaps do
@@ -64,7 +99,7 @@ function checkForSnaps(interacted)
                         if distance <= snapDistance then
                             if (not onlyConnectWhenInteracted or (oneOfThemIsInteractedWith(body1, body2, interacted))) then
                                 if not areBodiesConnected(body1, body2) then -- else these bodies are already connected..
-                                    createRevoluteJoint(body1, body2, x1, y1, x2, y2)
+                                    createRevoluteJoint(body1, body2, x1, y1, x2, y2, i, j)
                                     it1.to = body2
                                     it2.to = body1
                                     break
@@ -89,14 +124,17 @@ function areBodiesConnected(body1, body2)
 end
 
 -- Create a revolute joint between two bodies
-function createRevoluteJoint(body1, body2, x, y, x2, y2)
+function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
+    local id = generateID()
+    -- print(id)
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
-    table.insert(joints, joint)
+    joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
+    table.insert(mySnapJoints, joint)
 end
 
 function checkForJointBreaks(dt, interacted)
-    for i = #joints, 1, -1 do
-        local joint = joints[i]
+    for i = #mySnapJoints, 1, -1 do
+        local joint = mySnapJoints[i]
 
         -- Check if the force exceeds the threshold
         local xf, yf = joint:getReactionForce(1 / dt)
@@ -118,7 +156,7 @@ function checkForJointBreaks(dt, interacted)
 
                 joint:destroy()
                 -- Remove the joint from the list of joints
-                table.remove(joints, i)
+                table.remove(mySnapJoints, i)
             end
         end
     end

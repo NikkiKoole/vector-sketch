@@ -217,10 +217,14 @@ function getFiledata(filename)
 end
 
 function loadAndRunScript(name)
+    print('load and run script')
     local data = getFiledata(name):getString()
-    script.setEnv({ bodies = registry.bodies, joints = registry.joints, world = world, worldState = worldState })
+    script.setEnv({ registry = registry, bodies = registry.bodies, joints = registry.joints, world = world, worldState =
+    worldState })
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
+
+    script.call('onUnload')
     script.call('onStart')
     --if sceneScript and sceneScript.onStart then
     --    sceneScript.onStart()
@@ -1043,9 +1047,12 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.filedropped(file)
+    print('file droped')
     local name = file:getFilename()
     if string.find(name, '.playtime.json') then
+        script.call('onSceneUnload')
         loadScene(name)
+        script.call('onSceneLoaded')
     end
     if string.find(name, '.playtime.lua') then
         loadAndRunScript(name)
