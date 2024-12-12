@@ -29,26 +29,26 @@ end
 -- end collection
 
 local scriptEnv = {
-    ui                = ui,
-    cam               = cam,
-    mathutils         = mathutils,
-    getPJAttachedTo   = box2dPointerJoints.getPointerJointAttachedTo,
-    getPointerJoints  = box2dPointerJoints.getPointerJoints,
-    polygonClip       = mathutils.polygonClip,
-    pairs             = pairs,
-    ipairs            = ipairs,
-    table             = table,
-    inspect           = inspect,
-    print             = print,
-    math              = math,
-    love              = love,
-    random            = love.math.random,
-    getObjectsByLabel = getObjectsByLabel,
-    world             = world,
-    string            = string,
-    mouseWorldPos     = mouseWorldPos,
-    worldState        = worldState,
-    unpack            = unpack
+    ui                       = ui,
+    cam                      = cam,
+    mathutils                = mathutils,
+    getPJAttachedTo          = box2dPointerJoints.getPointerJointAttachedTo,
+    getInteractedWithPointer = box2dPointerJoints.getInteractedWithPointer,
+    polygonClip              = mathutils.polygonClip,
+    pairs                    = pairs,
+    ipairs                   = ipairs,
+    table                    = table,
+    inspect                  = inspect,
+    print                    = print,
+    math                     = math,
+    love                     = love,
+    random                   = love.math.random,
+    getObjectsByLabel        = getObjectsByLabel,
+    world                    = world,
+    string                   = string,
+    mouseWorldPos            = mouseWorldPos,
+    worldState               = worldState,
+    unpack                   = unpack
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

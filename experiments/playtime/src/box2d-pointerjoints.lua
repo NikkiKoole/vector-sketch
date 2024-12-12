@@ -107,6 +107,15 @@ function lib.getPointerJointAttachedTo(body)
     end
 end
 
+function lib.getInteractedWithPointer()
+    local interactedWith = {}
+    local pjs = pointerJoints
+    for i = 1, #pjs do
+        table.insert(interactedWith, pjs[i].jointBody)
+    end
+    return interactedWith
+end
+
 function lib.getPointerJoints()
     return pointerJoints
 end
