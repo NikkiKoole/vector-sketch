@@ -72,7 +72,6 @@ local function prepareVerticesForClipping(thing)
     return points
 end
 
-
 function s.onStart()
     worldState.paused = false
     water = getObjectsByLabel('water')[1]
@@ -102,26 +101,18 @@ function s.update(dt)
         local clip = mathutils.polygonClip(waterPoly, otherPoly)
         local submergedArea, center = calculatePolygonArea(clip) --local cx, cy = mathutils.computeCentroid(resultpoly)
 
-
-
-
-        -- print()
         local resultpoly = {}
         for j = 1, #clip do
             table.insert(resultpoly, clip[j].x)
             table.insert(resultpoly, clip[j].y)
         end
-        -- print(#result)
-        --
-        --
-        --
+
         local round = mathutils.round_to_decimals
         local m = love.physics.getMeter()
         local g = worldState.gravity
 
         if resultpoly and #resultpoly >= 6 then
-            -- love.graphics.polygon('fill', resultpoly)
-            -- print(area)
+
             local b = -(g / (m)) * submergedArea * 2 * fluidDensity
 
 

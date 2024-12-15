@@ -293,8 +293,164 @@ local function getCollisions(poly)
     return collisions
 end
 
+
+local function tableConcat(t1, t2)
+    for i = 1, #t2 do
+        table.insert(t1, t2[i])
+    end
+    return t1
+end
+
+function lib.decompose(poly, result)
+    result = result or {}
+    local intersections = getCollisions(poly)
+
+    if #intersections == 0 then
+        tableConcat(result, { poly })
+        return result
+    end
+
+    -- Process only the first intersection to avoid redundant splits
+    local intersection = intersections[1]
+    print(inspect(poly), inspect(intersection))
+    local p1, p2 = lib.splitPoly(poly, intersection)
+
+    -- Recursively decompose the resulting polygons
+    lib.decompose(p1, result)
+    lib.decompose(p2, result)
+
+    return result
+end
+
+---
+
+
+---
+
+-- for the boyonce i prolly need thi algo:
+-- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
+-- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
+
+function inside(p, cp1, cp2)
+    return (cp2.x - cp1.x) * (p.y - cp1.y) > (cp2.y - cp1.y) * (p.x - cp1.x)
+end
+
+function intersection(cp1, cp2, s, e)
+    local dcx, dcy = cp1.x - cp2.x, cp1.y - cp2.y
+    local dpx, dpy = s.x - e.x, s.y - e.y
+    local n1 = cp1.x * cp2.y - cp1.y * cp2.x
+    local n2 = s.x * e.y - s.y * e.x
+    local n3 = 1 / (dcx * dpy - dcy * dpx)
+    local x = (n1 * dpx - n2 * dcx) * n3
+    local y = (n1 * dpy - n2 * dcy) * n3
+    return { x = x, y = y }
+end
+-- function lib.polygonClip2(subjectPolygon, clipPolygon)
+--     local outputList = {}
+--     -- Convert flat array to table of points
+--     local subj = {}
+--     for i = 1, #subjectPolygon, 2 do
+--         table.insert(subj, { x = subjectPolygon[i], y = subjectPolygon[i + 1] })
+--     end
+
+--     local clip = {}
+--     for i = 1, #clipPolygon, 2 do
+--         table.insert(clip, { x = clipPolygon[i], y = clipPolygon[i + 1] })
+--     end
+
+--     local cp1 = clip[#clip]
+--     for i, cp2 in ipairs(clip) do
+--         local inputList = outputList
+--         if #inputList == 0 then
+--             inputList = subj
+--         end
+--         outputList = {}
+--         local s = inputList[#inputList]
+
+--         for j, e in ipairs(inputList) do
+--             if inside(e, cp1, cp2) then
+--                 if not inside(s, cp1, cp2) then
+--                     local inter = intersection(cp1, cp2, s, e)
+--                     if inter then table.insert(outputList, inter) end
+--                 end
+--                 table.insert(outputList, e)
+--             elseif inside(s, cp1, cp2) then
+--                 local inter = intersection(cp1, cp2, s, e)
+--                 if inter then table.insert(outputList, inter) end
+--             end
+--             s = e
+--         end
+--         cp1 = cp2
+--     end
+
+--     -- Convert back to flat array
+--     local flat = {}
+--     for _, point in ipairs(outputList) do
+--         table.insert(flat, point.x)
+--         table.insert(flat, point.y)
+--     end
+--     return flat
+-- end
+function lib.polygonClip(subjectPolygon, clipPolygon)
+    local outputList = subjectPolygon
+    local cp1 = clipPolygon[#clipPolygon]
+    for _, cp2 in ipairs(clipPolygon) do -- WP clipEdge is cp1,cp2 here
+        local inputList = outputList
+        outputList = {}
+        local s = inputList[#inputList]
+        for _, e in ipairs(inputList) do
+            if inside(e, cp1, cp2) then
+                if not inside(s, cp1, cp2) then
+                    outputList[#outputList + 1] = intersection(cp1, cp2, s, e)
+                end
+                outputList[#outputList + 1] = e
+            elseif inside(s, cp1, cp2) then
+                outputList[#outputList + 1] = intersection(cp1, cp2, s, e)
+            end
+            s = e
+        end
+        cp1 = cp2
+    end
+    return outputList
+end
+
+function lib.findIntersections(polygon, line)
+    local intersections = {}
+    local n = #polygon / 2  -- Number of vertices
+
+    for i = 1, n do
+        local j = (i % n) + 1  -- Next vertex index (wrap around)
+
+        -- Current edge points
+        local x1, y1 = polygon[(i - 1) * 2 + 1], polygon[(i - 1) * 2 + 2]
+        local x2, y2 = polygon[(j - 1) * 2 + 1], polygon[(j - 1) * 2 + 2]
+
+        -- Line to check against
+        local lx1, ly1, lx2, ly2 = line.x1, line.y1, line.x2, line.y2
+
+        -- Get intersection point
+        local Px, Py = getLineIntersection(x1, y1, x2, y2, lx1, ly1, lx2, ly2)
+        --print(Px,Py, x1, y1, x2, y2, lx1, ly1, lx2, ly2)
+        if Px and Py then
+            -- Check for duplicates
+            local duplicate = false
+            for _, inter in ipairs(intersections) do
+                if math.abs(inter.x - Px) < 1e-6 and math.abs(inter.y - Py) < 1e-6 then
+                    duplicate = true
+                    break
+                end
+            end
+
+            if not duplicate then
+                table.insert(intersections, { x = Px, y = Py, i1 =i, i2=j})
+            end
+        end
+    end
+
+    return intersections
+end
 -- Function to split a polygon into two at a given intersection point.
-local function splitPoly(poly, intersection)
+ function lib.splitPoly(poly, intersection)
     local function getIndices()
         local biggestIndex = math.max(intersection.i1, intersection.i2)
         local smallestIndex = math.min(intersection.i1, intersection.i2)
@@ -334,76 +490,142 @@ local function splitPoly(poly, intersection)
     return wrap, back
 end
 
-local function tableConcat(t1, t2)
-    for i = 1, #t2 do
-        table.insert(t1, t2[i])
+-- Add or replace this function in your existing math-utils.lua
+
+-- Function to slice a polygon with a line defined by points p1 and p2
+function lib.slicePolygon(polygon, p1, p2)
+    -- p1 and p2 define the slicing line: {x = ..., y = ...}
+
+    -- Step 1: Find intersection points between the slice line and the polygon
+    local sliceLine = { x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y }
+    local intersections = lib.findIntersections(polygon, sliceLine)
+
+    -- Debug: Print found intersections
+ --   print("Found Intersections:")
+    for _, inter in ipairs(intersections) do
+   --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
     end
-    return t1
-end
 
-function lib.decompose(poly, result)
-    result = result or {}
-    local intersections = getCollisions(poly)
+    -- Ensure there are at least two unique intersection points
+    if #intersections < 2 then
+   --     print("Slice line does not intersect the polygon twice.")
+        return { polygon } -- Return the original polygon as a single-element table
+    end
 
-    if #intersections == 0 then
-        tableConcat(result, { poly })
+    -- Step 2: Sort intersections based on their order along the slice line
+    local function sortByDistance(a, b)
+        local dx = sliceLine.x2 - sliceLine.x1
+        local dy = sliceLine.y2 - sliceLine.y1
+        local distanceA = (a.x - sliceLine.x1) * dx + (a.y - sliceLine.y1) * dy
+        local distanceB = (b.x - sliceLine.x1) * dx + (b.y - sliceLine.y1) * dy
+        return distanceA < distanceB
+    end
+    table.sort(intersections, sortByDistance)
+
+    -- Step 3: Select two unique intersection points
+    local uniqueIntersections = {}
+    local threshold = 1e-6
+    for _, inter in ipairs(intersections) do
+        local isUnique = true
+        for _, unique in ipairs(uniqueIntersections) do
+            if math.abs(inter.x - unique.x) < threshold and math.abs(inter.y - unique.y) < threshold then
+                isUnique = false
+                break
+            end
+        end
+        if isUnique then
+            table.insert(uniqueIntersections, inter)
+            if #uniqueIntersections == 2 then break end
+        end
+    end
+
+    if #uniqueIntersections < 2 then
+        print("Not enough unique intersections to slice the polygon.")
+        return { polygon }
+    end
+
+    local inter1, inter2 = uniqueIntersections[1], uniqueIntersections[2]
+
+    -- Step 4: Insert intersection points into the polygon's vertex list
+    -- To prevent index shifting issues, insert the intersection points in descending order of their insertion positions
+
+    -- Determine insertion positions
+    -- inter.i1 is the index of the first vertex of the edge where the intersection occurs
+    local insertPos1 = inter1.i1 * 2 -- Position in the flat array
+    local insertPos2 = inter2.i1 * 2 -- Position in the flat array
+
+    -- Sort insertion positions in descending order
+    if insertPos1 < insertPos2 then
+        insertPos1, insertPos2 = insertPos2, insertPos1
+        inter1, inter2 = inter2, inter1
+    end
+
+    -- Insert inter1 first
+    lib.insertValuesAt(polygon, insertPos1 + 1, inter1.x, inter1.y)
+    -- Insert inter2 next
+    lib.insertValuesAt(polygon, insertPos2 + 1, inter2.x, inter2.y)
+
+    -- Debug: Print polygon after insertions
+    -- print("Polygon after inserting intersection points:")
+    -- print(inspect(polygon))
+
+    -- Step 5: Find the new indices of the inserted intersection points
+    local function findVertexIndex(x, y)
+        for i = 1, #polygon, 2 do
+            if math.abs(polygon[i] - x) < threshold and math.abs(polygon[i + 1] - y) < threshold then
+                return (i + 1) / 2 -- Convert flat index to vertex index (1-based)
+            end
+        end
+        return nil
+    end
+
+    local newInter1Index = findVertexIndex(inter1.x, inter1.y)
+    local newInter2Index = findVertexIndex(inter2.x, inter2.y)
+
+    if not newInter1Index or not newInter2Index then
+        print("Failed to find the new intersection indices after insertion.")
+        return { polygon }
+    end
+
+    -- Step 6: Traverse the polygon to create two new polygons
+    local function traverse(polygon, startIdx, endIdx, direction)
+        local result = {}
+        local n = #polygon / 2
+        local idx = startIdx
+
+        while true do
+            table.insert(result, polygon[(idx - 1) * 2 + 1])
+            table.insert(result, polygon[(idx - 1) * 2 + 2])
+
+            if idx == endIdx then
+                break
+            end
+
+            if direction == "clockwise" then
+                idx = idx % n + 1
+            else
+                idx = (idx - 2) % n + 1
+            end
+        end
+
         return result
     end
 
-    -- Process only the first intersection to avoid redundant splits
-    local intersection = intersections[1]
-    local p1, p2 = splitPoly(poly, intersection)
+    -- Create first polygon: traverse from inter1 to inter2 clockwise
+    local poly1 = traverse(polygon, newInter1Index, newInter2Index, "clockwise")
+    -- Create second polygon: traverse from inter2 to inter1 clockwise
+    local poly2 = traverse(polygon, newInter2Index, newInter1Index, "clockwise")
 
-    -- Recursively decompose the resulting polygons
-    lib.decompose(p1, result)
-    lib.decompose(p2, result)
+    -- At this point, poly1 and poly2 already include the intersection points
+    -- There's no need to append inter1 and inter2 again, as it causes duplication
 
-    return result
+    -- Debug: Print the resulting polygons
+    -- print("Resulting Polygons:")
+    -- print("Polygon 1:")
+    -- print(inspect(poly1))
+    -- print("Polygon 2:")
+    -- print(inspect(poly2))
+
+    return { poly1, poly2 }
 end
-
--- for the boyonce i prolly need thi algo:
--- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
--- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
-
-function inside(p, cp1, cp2)
-    return (cp2.x - cp1.x) * (p.y - cp1.y) > (cp2.y - cp1.y) * (p.x - cp1.x)
-end
-
-function intersection(cp1, cp2, s, e)
-    local dcx, dcy = cp1.x - cp2.x, cp1.y - cp2.y
-    local dpx, dpy = s.x - e.x, s.y - e.y
-    local n1 = cp1.x * cp2.y - cp1.y * cp2.x
-    local n2 = s.x * e.y - s.y * e.x
-    local n3 = 1 / (dcx * dpy - dcy * dpx)
-    local x = (n1 * dpx - n2 * dcx) * n3
-    local y = (n1 * dpy - n2 * dcy) * n3
-    return { x = x, y = y }
-end
-
-function lib.polygonClip(subjectPolygon, clipPolygon)
-    local outputList = subjectPolygon
-    local cp1 = clipPolygon[#clipPolygon]
-    for _, cp2 in ipairs(clipPolygon) do -- WP clipEdge is cp1,cp2 here
-        local inputList = outputList
-        outputList = {}
-        local s = inputList[#inputList]
-        for _, e in ipairs(inputList) do
-            if inside(e, cp1, cp2) then
-                if not inside(s, cp1, cp2) then
-                    outputList[#outputList + 1] = intersection(cp1, cp2, s, e)
-                end
-                outputList[#outputList + 1] = e
-            elseif inside(s, cp1, cp2) then
-                outputList[#outputList + 1] = intersection(cp1, cp2, s, e)
-            end
-            s = e
-        end
-        cp1 = cp2
-    end
-    return outputList
-end
-
-------
-
-
 return lib

@@ -27,6 +27,13 @@ function waitForEvent()
 end
 
 waitForEvent()
+function shallowCopy(original)
+    local copy = {}
+    for key, value in pairs(original) do
+        copy[key] = value
+    end
+    return copy
+end
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
@@ -34,6 +41,14 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
+
+local function flatToPoints(flat)
+    local result = {}
+    for i = 1, #flat, 2 do
+        result[(i + 1) / 2] = { x = flat[i], y = flat[i + 1] }
+    end
+    return result
+end
 
 function love.load(args)
     -- Load and set the font
@@ -149,9 +164,32 @@ function love.load(args)
         -- b:setFixtureFriction(10)
     end
 
+
+    polygon = {
+        100, 100,
+        300, 100,
+        200, 200,
+        100, 200,
+    }
+
+    polygon = {
+        100, 100,
+        -300, 300,
+        300, 300,
+
+    }
+
+    -- Define slicing points
+    local p1 = { x = -5000, y = 150 }
+    local p2 = { x = 5000, y = 150 }
+
+    -- Slice the polygon
+    slicedPolygons = mathutils.slicePolygon(shallowCopy(polygon), p1, p2)
+   --print(inspect(slicedPolygons))
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-   -- loadScriptAndScene('snap')
+
+  -- loadScriptAndScene('water')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -218,7 +256,7 @@ function loadAndRunScript(name)
     local data = getFiledata(name):getString()
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
-
+    script.setEnv({worldState=worldState})
     script.call('onUnload')
     script.call('onStart')
 
@@ -899,6 +937,14 @@ function love.draw()
     box2dDraw.drawWorld(world)
 
     script.call('draw')
+
+   -- print(inspect(polygon))
+      -- love.graphics.polygon("line", polygon)
+               -- end
+               --  end
+                for i =1 , #slicedPolygons do
+                    love.graphics.polygon("line", slicedPolygons[i])
+                end
     -- if sceneScript and sceneScript.draw then
     --     sceneScript.draw()
     -- end
