@@ -141,13 +141,17 @@ function love.load(args)
             0, 500, 800, 500,
             800, 800, 0, 800
         }
-        local b = blob.softsurface(world, points, 64, "static")
+        local b = blob.softsurface(world, points, 64, "dynamic")
         table.insert(softbodies, b)
+        b:setJointFrequency(1)
+        b:setJointDamping(.1)
+        --b:setFixtureRestitution(2)
+        -- b:setFixtureFriction(10)
     end
 
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-    loadScriptAndScene('snap')
+   -- loadScriptAndScene('snap')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -244,9 +248,11 @@ function love.update(dt)
 
     local scaled_dt = dt * worldState.speedMultiplier
     if not worldState.paused then
-        -- for i, v in ipairs(softbodies) do
-        --     v:update(dt)
-        -- end
+        if playWithSoftbodies then
+         for i, v in ipairs(softbodies) do
+             v:update(scaled_dt)
+         end
+        end
 
         for i = 1, 1 do
             world:update(scaled_dt)

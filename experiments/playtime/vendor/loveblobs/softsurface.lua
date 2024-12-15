@@ -38,7 +38,7 @@ function softsurface:init(world, points, precision, mode)
   self.phys = {}
 
   local last_dx, last_dy = 0
-  local first_dx, first_dy = 0 
+  local first_dx, first_dy = 0
   local prev_base_body = nil
   for i=1,#t,4 do
     local x1,y1 = t[i],t[i+1]
@@ -48,7 +48,7 @@ function softsurface:init(world, points, precision, mode)
     local distance_to   = math.dist(x1, y1, x2, y2)
     local surface_count = math.floor(distance_to / precision)
     local angle_to      = math.atan2(y2 - y1, x2 - x1)
-  
+
     -- offset
     local dx = math.cos(angle_to)
     local dy = math.sin(angle_to)
@@ -67,16 +67,16 @@ function softsurface:init(world, points, precision, mode)
     --base_fixture:setCategory(1, 2)
     base_fixture:setMask(1)
     base_fixture:setUserData("softsurface_base")
-    
+
     local joint_a = nil
     local joint_b = nil
     if prev_base_body then
-      joint_a = physics.newWeldJoint(base_body, prev_base_body, base_body:getX(), base_body:getY(), false)  
+      joint_a = physics.newWeldJoint(base_body, prev_base_body, base_body:getX(), base_body:getY(), false)
     end
 
     if i >= #t-4 then
       prev_base_body = self.phys[1].body
-      joint_b = physics.newWeldJoint(base_body, prev_base_body, base_body:getX(), base_body:getY(), false)  
+      joint_b = physics.newWeldJoint(base_body, prev_base_body, base_body:getX(), base_body:getY(), false)
     end
 
     prev_base_body = base_body
@@ -114,7 +114,7 @@ function softsurface:init(world, points, precision, mode)
         if i > 1 and j == 1 then
           joint_b = physics.newRopeJoint(v.body, body, v.body:getX()+last_dx*(precision/2), v.body:getY()+last_dy*(precision/2),
           x-dx*(precision/2), y-dy*(precision/2), 1, false)
-        else 
+        else
           joint_b = physics.newRopeJoint(v.body, body, v.body:getX()+dx*(precision/2), v.body:getY()+dy*(precision/2),
           x-dx*(precision/2), y-dy*(precision/2), 5, false)
         end
@@ -139,6 +139,39 @@ end
 
 function softsurface:update(dt)
 
+end
+
+function softsurface:setFixtureFriction(friction)
+    for _, phys in ipairs(self.phys) do
+        -- Update joint_a if it supports setFrequency and setDampingRatio
+        if phys.fixture and phys.fixture.setFriction then
+            phys.fixture:setFriction(friction)
+        end
+    end
+end
+function softsurface:setFixtureRestitution(restitution)
+    for _, phys in ipairs(self.phys) do
+        -- Update joint_a if it supports setFrequency and setDampingRatio
+        if phys.fixture and phys.fixture.setRestitution then
+            phys.fixture:setRestitution(restitution)
+        end
+    end
+end
+function softsurface:setJointFrequency(frequency)
+    for _, phys in ipairs(self.phys) do
+        -- Update joint_a if it supports setFrequency and setDampingRatio
+        if phys.joint_a and phys.joint_a.setFrequency then
+            phys.joint_a:setFrequency(frequency)
+        end
+    end
+end
+function softsurface:setJointDamping( damping)
+    for _, phys in ipairs(self.phys) do
+        -- Update joint_a if it supports setFrequency and setDampingRatio
+        if phys.joint_a and  phys.joint_a.setDampingRatio then
+            phys.joint_a:setDampingRatio(damping)
+        end
+    end
 end
 
 function softsurface:draw(debug)
@@ -198,7 +231,7 @@ function softsurface:destroy()
   if self.dead then
     return
   end
-  
+
   for i,v in ipairs(self.phys) do
     v.body:destroy()
   end

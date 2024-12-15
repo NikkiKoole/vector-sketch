@@ -28,6 +28,19 @@ function lib.pointInRect(px, py, rect)
         py >= rect.y and py <= (rect.y + rect.height)
 end
 
+function lib.getBoundingRect(polygon)
+    local min_x, min_y = polygon[1], polygon[2]
+    local max_x, max_y = polygon[1], polygon[2]
+    for i = 3, #polygon, 2 do
+        local x, y = polygon[i], polygon[i + 1]
+        if x < min_x then min_x = x end
+        if y < min_y then min_y = y end
+        if x > max_x then max_x = x end
+        if y > max_y then max_y = y end
+    end
+    return { x = min_x, y = min_y, width = max_x - min_x, height = max_y - min_y }
+end
+
 local function distancePointToSegment(px, py, x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
