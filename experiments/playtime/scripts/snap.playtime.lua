@@ -47,74 +47,84 @@ function calculateDistance(x1, y1, x2, y2)
 end
 
 function s.onSceneLoaded()
+    -- Retrieve all objects labeled with 'havesnap'
     snaps = getObjectsByLabel('havesnap')
-    -- Create snap points on the body of each object
+
+    -- Create snap points on the body of each snap-capable object
     for i = 1, #snaps do
         local it = snaps[i]
+        -- Add a snap point to the right edge
         addSnapPoint(it.body, it.width / 2, 0)
+        -- Add a snap point to the left edge
         addSnapPoint(it.body, -it.width / 2, 0)
     end
 
-    --  print(inspect(registry.joints))
-
-
-    -- print(registry.joints)
+    -- Iterate through all existing joints in the registry
     for k, value in pairs(registry.joints) do
         local ud = value:getUserData()
+
+        -- Check if the joint is a snap-type joint
         if ud and ud.scriptmeta and ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
 
-            local bodyA, bodyB = value:getBodies( )
-            local x1, y1, x2, y2 = value:getAnchors( )
+            -- Get the two bodies connected by the joint
+            local bodyA, bodyB = value:getBodies()
+            -- Get the anchor points of the joint
+            local x1, y1, x2, y2 = value:getAnchors()
+            -- Retrieve unique IDs for both bodies
             local id1 = bodyA:getUserData().thing.id
             local id2 = bodyB:getUserData().thing.id
-            local indx1Options={}
+            -- Tables to store possible snap point indices for each body
+            local indx1Options = {}
             local indx2Options = {}
 
-             for i=1, #snapPoints do
-                 local atId = snapPoints[i].at:getUserData().thing.id
-                 if (atId == id1) then
-                     table.insert(indx1Options,i)
-                 end
-                 if (atId == id2) then
-                      table.insert(indx2Options,i)
-                 end
-             end
+            -- Find all snap points associated with bodyA and bodyB
+            for i = 1, #snapPoints do
+                local atId = snapPoints[i].at:getUserData().thing.id
+                if (atId == id1) then
+                    table.insert(indx1Options, i)
+                end
+                if (atId == id2) then
+                    table.insert(indx2Options, i)
+                end
+            end
 
-             local indx1
-             local indx1dist = math.huge
+            -- Initialize variables to find the closest snap point for bodyA
+            local indx1
+            local indx1dist = math.huge
 
-             for i = 1, #indx1Options do
-                 local index = indx1Options[i]
-                  local wx,wy = snapPoints[index].at:getLocalPoint(x1,y1)
+            -- Determine the closest snap point for bodyA to the joint's first anchor
+            for i = 1, #indx1Options do
+                local index = indx1Options[i]
+                local wx, wy = snapPoints[index].at:getLocalPoint(x1, y1)
+                local distance = calculateDistance(snapPoints[index].xOffset, snapPoints[index].yOffset, wx, wy)
+                if distance < indx1dist then
+                    indx1dist = distance
+                    indx1 = index
+                end
+            end
 
-                 local distance = calculateDistance(snapPoints[index].xOffset, snapPoints[index].yOffset, wx, wy)
-                 if distance < indx1dist then
-                 indx1dist = distance
-                 indx1 = index
-                 end
-             end
+            -- Initialize variables to find the closest snap point for bodyB
+            local indx2
+            local indx2dist = math.huge
 
-             local indx2
-             local indx2dist = math.huge
-             for i = 1, #indx2Options do
-                 local index = indx2Options[i]
-                  local wx,wy = snapPoints[index].at:getLocalPoint(x2,y2)
-                 local distance = calculateDistance(snapPoints[index].xOffset, snapPoints[index].yOffset, wx, wy)
-                 if distance < indx2dist then
-                 indx2dist = distance
-                 indx2 = index
-                 end
-             end
+            -- Determine the closest snap point for bodyB to the joint's second anchor
+            for i = 1, #indx2Options do
+                local index = indx2Options[i]
+                local wx, wy = snapPoints[index].at:getLocalPoint(x2, y2)
+                local distance = calculateDistance(snapPoints[index].xOffset, snapPoints[index].yOffset, wx, wy)
+                if distance < indx2dist then
+                    indx2dist = distance
+                    indx2 = index
+                end
+            end
 
-           -- local index1 = ud.scriptmeta.index1
-           -- local index2 = ud.scriptmeta.index2
-           -- print(indx1, indx2,index1, index2)
+            -- Link the two closest snap points by setting their 'to' references
             snapPoints[indx1].to = snapPoints[indx2].at
             snapPoints[indx2].to = snapPoints[indx1].at
 
+            -- Add the joint to the list of active snap joints
             table.insert(mySnapJoints, value)
         end
-        --   print(inspect(ud))
     end
 end
 
