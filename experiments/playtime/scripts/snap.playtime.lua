@@ -40,6 +40,11 @@ function s.onSceneUnload()
     snaps = {}
     snapPoints = {}
 end
+function calculateDistance(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
 
 function s.onSceneLoaded()
     snaps = getObjectsByLabel('havesnap')
@@ -57,11 +62,55 @@ function s.onSceneLoaded()
     for k, value in pairs(registry.joints) do
         local ud = value:getUserData()
         if ud and ud.scriptmeta and ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
-            local index1 = ud.scriptmeta.index1
-            local index2 = ud.scriptmeta.index2
 
-            snapPoints[index1].to = snapPoints[index2].at
-            snapPoints[index2].to = snapPoints[index1].at
+            local bodyA, bodyB = value:getBodies( )
+            local x1, y1, x2, y2 = value:getAnchors( )
+            local id1 = bodyA:getUserData().thing.id
+            local id2 = bodyB:getUserData().thing.id
+            local indx1Options={}
+            local indx2Options = {}
+
+             for i=1, #snapPoints do
+                 local atId = snapPoints[i].at:getUserData().thing.id
+                 if (atId == id1) then
+                     table.insert(indx1Options,i)
+                 end
+                 if (atId == id2) then
+                      table.insert(indx2Options,i)
+                 end
+             end
+
+             local indx1
+             local indx1dist = math.huge
+
+             for i = 1, #indx1Options do
+                 local index = indx1Options[i]
+                  local wx,wy = snapPoints[index].at:getLocalPoint(x1,y1)
+
+                 local distance = calculateDistance(snapPoints[index].xOffset, snapPoints[index].yOffset, wx, wy)
+                 if distance < indx1dist then
+                 indx1dist = distance
+                 indx1 = index
+                 end
+             end
+
+             local indx2
+             local indx2dist = math.huge
+             for i = 1, #indx2Options do
+                 local index = indx2Options[i]
+                  local wx,wy = snapPoints[index].at:getLocalPoint(x2,y2)
+                 local distance = calculateDistance(snapPoints[index].xOffset, snapPoints[index].yOffset, wx, wy)
+                 if distance < indx2dist then
+                 indx2dist = distance
+                 indx2 = index
+                 end
+             end
+
+           -- local index1 = ud.scriptmeta.index1
+           -- local index2 = ud.scriptmeta.index2
+           -- print(indx1, indx2,index1, index2)
+            snapPoints[indx1].to = snapPoints[indx2].at
+            snapPoints[indx2].to = snapPoints[indx1].at
 
             table.insert(mySnapJoints, value)
         end
@@ -70,7 +119,7 @@ function s.onSceneLoaded()
 end
 
 function s.onStart()
-    print(inspect(registry.joints))
+    --print(inspect(registry.joints))
     snaps = getObjectsByLabel('havesnap')
     -- Create snap points on the body of each object
     for i = 1, #snaps do
@@ -128,7 +177,8 @@ function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
     local id = generateID()
     -- print(id)
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
-    joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
+     joint:setUserData({ id = id, scriptmeta = { type = 'snap' } })
+  --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
     table.insert(mySnapJoints, joint)
 end
 

@@ -1,14 +1,15 @@
 --script.lua
 local script = {}
 local inspect = require 'vendor.inspect'
-local cam = require('lib.cameraBase').getInstance()
+local camera = require 'src.camera'
+local cam = camera.getInstance()
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local shapes = require 'src.shapes'
 local ui = require 'src.ui-all'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local uuid = require 'src.uuid'
-
+local registry = require 'src.registry'
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
     local objects = {}
@@ -51,7 +52,8 @@ local scriptEnv = {
     mouseWorldPos            = mouseWorldPos,
     worldState               = worldState,
     unpack                   = unpack,
-    getmetatable             = getmetatable
+    getmetatable             = getmetatable,
+    registry                 = registry
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

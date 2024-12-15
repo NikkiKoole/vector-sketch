@@ -1,9 +1,7 @@
 -- main.lua
-package.path = package.path .. ";../../?.lua"
 
--- todo extract jsut the camera stuff i need nowadasy from these files and wrap it in one package
-local cam = require('lib.cameraBase').getInstance()
-local camera = require 'lib.camera'
+local camera = require 'src.camera'
+local cam = camera.getInstance()
 
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
@@ -16,8 +14,8 @@ local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
 mathutils = require 'src.math-utils'
-local utils = require 'src.utils'
 
+local utils = require 'src.utils'
 local box2dDraw = require 'src.box2d-draw'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 
@@ -36,10 +34,6 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
-
-
-
-
 
 function love.load(args)
     -- Load and set the font
@@ -217,18 +211,12 @@ function getFiledata(filename)
 end
 
 function loadAndRunScript(name)
-    print('load and run script')
     local data = getFiledata(name):getString()
-    script.setEnv({ registry = registry, bodies = registry.bodies, joints = registry.joints, world = world, worldState =
-    worldState })
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
 
     script.call('onUnload')
     script.call('onStart')
-    --if sceneScript and sceneScript.onStart then
-    --    sceneScript.onStart()
-    --end
 
     lastModTime = getFileModificationTime(name)
 end
@@ -251,6 +239,7 @@ function maybeHotReload(dt)
 end
 
 function love.update(dt)
+
     maybeHotReload(dt)
 
     local scaled_dt = dt * worldState.speedMultiplier
@@ -981,6 +970,7 @@ function love.draw()
 
     drawUI()
     script.call('drawUI')
+
     if uiState.maybeHideSelectedPanel then
         if not (ui.activeElementID or ui.focusedTextInputID) then
             uiState.selectedObj = nil
@@ -1047,7 +1037,6 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.filedropped(file)
-    print('file droped')
     local name = file:getFilename()
     if string.find(name, '.playtime.json') then
         script.call('onSceneUnload')
@@ -1273,9 +1262,7 @@ local function handlePointer(x, y, id, action)
                     return thing
                 end)
                 script.call('onPressed', newHitted)
-                -- if sceneScript and sceneScript.onPressed then
-                --     sceneScript.onPressed(newHitted)
-                -- end
+
             end
         else
             uiState.maybeHideSelectedPanel = true
@@ -1287,10 +1274,7 @@ local function handlePointer(x, y, id, action)
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)
-            -- if sceneScript and sceneScript.onReleased then
-            --     local newReleased = utils.map(releasedObjs, function(h) return h:getUserData().thing end)
-            --     sceneScript.onReleased(newReleased)
-            -- end
+
         end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)
