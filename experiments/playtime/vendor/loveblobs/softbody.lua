@@ -28,11 +28,13 @@ function softbody:init(world, x, y, r, s, t, reinit)
     self.centerBody:setAngularDamping(300);
 
     --create 'nodes' (outer bodies) & connect to center body
-    self.nodeShape = physics.newCircleShape(r / 8);
+   -- self.nodeShape = physics.newCircleShape(r / 8);
+   local nodeRadius = r/4
+     self.nodeShape = physics.newCircleShape(nodeRadius);
     self.nodes = {};
 
     --  local nodes = r / 2
-    local nodes = r / 2
+    local nodes = r / 4
     for node = 1, nodes do
         local angle = (2 * math.pi) / nodes * node;
 
@@ -51,6 +53,9 @@ function softbody:init(world, x, y, r, s, t, reinit)
         local j = physics.newDistanceJoint(self.centerBody, b, posx, posy, posx, posy, false);
         j:setDampingRatio(0.2);
         j:setFrequency(0.8);
+
+        -- Calculate the offset positions for the outer ring
+
 
         table.insert(self.nodes, { body = b, fixture = f, joint = j });
     end
@@ -137,6 +142,45 @@ end
 function softbody:getPoints()
     return self.tess[#self.tess];
 end
+
+function softbody:getPoly()
+      local t = {{}, {}}
+    local outerPositions = {}
+    local centerX, centerY = self.centerBody:getPosition()
+
+    for _, node in ipairs(self.nodes) do
+        local nodeX, nodeY = node.body:getPosition()
+
+        -- Calculate the vector from center to node
+        local dx = nodeX - centerX
+        local dy = nodeY - centerY
+
+        -- Calculate the current angle using atan2
+        local angle = math.atan2(dy, dx)
+
+        -- Calculate the outer position by offsetting by node radius
+        local outer_x = nodeX + self.nodeShape:getRadius() * math.cos(angle)
+        local outer_y = nodeY + self.nodeShape:getRadius() * math.sin(angle)
+         table.insert(t[1], outer_x)
+         table.insert(t[1], outer_y)
+       -- table.insert(outerPositions, { x = outer_x, y = outer_y })
+    end
+
+    return t[1]
+end
+-- function softbody:getPoly()
+--      local t = {{}, {}}
+--     for i, v in ipairs(self.nodes) do
+--         --graphics.setColor(255, 255, 255)
+--         --graphics.circle("line", v.body:getX(), v.body:getY(), self.nodeShape:getRadius());
+--       --  table.insert(t[1], v.body:getX()+v.offset_x)
+--       --  table.insert(t[1], v.body:getY()+v.offset_y)
+--     end
+
+
+--     --print(inspect(t[1]), inspect(t[2]))
+--     return t[1]
+-- end
 
 function softbody:draw(type, debug)
     if self.dead then

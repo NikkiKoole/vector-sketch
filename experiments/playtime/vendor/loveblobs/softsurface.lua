@@ -174,6 +174,18 @@ function softsurface:setJointDamping( damping)
     end
 end
 
+function softsurface:getPoly()
+    local t = {{}, {}}
+    for i,v in ipairs(self.phys) do
+      if v.body and v.fixture:getUserData() == "softsurface" then
+        table.insert(t[1], v.body:getX())
+        table.insert(t[1], v.body:getY())
+      end
+    end
+    --print(inspect(t[1]), inspect(t[2]))
+    return t[1]
+end
+
 function softsurface:draw(debug)
   if self.dead then
     return
@@ -207,7 +219,7 @@ function softsurface:draw(debug)
         table.insert(t[1], v.body:getY())
       end
     end
-
+    print(inspect(t[1]), inspect(t[2]))
     graphics.setLineWidth(10)
     tessellate(t[1], t[2]);
 

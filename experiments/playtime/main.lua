@@ -8,13 +8,14 @@ inspect = require 'vendor.inspect'
 
 local ui = require 'src.ui-all'
 local joint = require 'src.joints'
+local shapes = require 'src.shapes'
 local selectrect = require 'src.selection-rect'
 local eio = require 'src.io'
 local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
 mathutils = require 'src.math-utils'
-
+ProFi                 = require 'vendor.ProFi'
 local utils = require 'src.utils'
 local box2dDraw = require 'src.box2d-draw'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
@@ -27,13 +28,6 @@ function waitForEvent()
 end
 
 waitForEvent()
-function shallowCopy(original)
-    local copy = {}
-    for key, value in pairs(original) do
-        copy[key] = value
-    end
-    return copy
-end
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
@@ -42,13 +36,6 @@ local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
-local function flatToPoints(flat)
-    local result = {}
-    for i = 1, #flat, 2 do
-        result[(i + 1) / 2] = { x = flat[i], y = flat[i + 1] }
-    end
-    return result
-end
 
 function love.load(args)
     -- Load and set the font
@@ -97,6 +84,7 @@ function love.load(args)
     }
 
     worldState = {
+        profiling = false,
         meter = 100,
         paused = true,
         gravity = 9.80,
@@ -144,52 +132,31 @@ function love.load(args)
     }
     objectManager.addThing('custom', 500, 500, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
     softbodies = {}
-    playWithSoftbodies = false
+    playWithSoftbodies = true
     if playWithSoftbodies then
-        local b = blob.softbody(world, 500, 0, 102, 2, 4)
-        b:setFrequency(1)
+        local b = blob.softbody(world, 500, 0, 102, 1,1)
+        b:setFrequency(3)
         b:setDamping(0.1)
-        b:setFriction(1)
+        --b:setFriction(1)
 
         table.insert(softbodies, b)
         local points = {
             0, 500, 800, 500,
             800, 800, 0, 800
         }
-        local b = blob.softsurface(world, points, 64, "dynamic")
+        local b = blob.softsurface(world, points, 120, "dynamic")
         table.insert(softbodies, b)
-        b:setJointFrequency(1)
+        b:setJointFrequency(2)
         b:setJointDamping(.1)
         --b:setFixtureRestitution(2)
         -- b:setFixtureFriction(10)
     end
 
 
-    polygon = {
-        100, 100,
-        300, 100,
-        200, 200,
-        100, 200,
-    }
-
-    polygon = {
-        100, 100,
-        -300, 300,
-        300, 300,
-
-    }
-
-    -- Define slicing points
-    local p1 = { x = -5000, y = 150 }
-    local p2 = { x = 5000, y = 150 }
-
-    -- Slice the polygon
-    slicedPolygons = mathutils.slicePolygon(shallowCopy(polygon), p1, p2)
-   --print(inspect(slicedPolygons))
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
-  -- loadScriptAndScene('water')
+ -- loadScriptAndScene('straight')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -256,7 +223,7 @@ function loadAndRunScript(name)
     local data = getFiledata(name):getString()
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
-    script.setEnv({worldState=worldState})
+    script.setEnv({worldState=worldState, world=world})
     script.call('onUnload')
     script.call('onStart')
 
@@ -740,7 +707,7 @@ function drawUI()
 
         local buttonSpacing = BUTTON_SPACING
         local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-        local panelHeight = titleHeight + titleHeight + (6 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+        local panelHeight = titleHeight + titleHeight + (7 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
         ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
             local layout = ui.createLayout({
                 type = 'columns',
@@ -794,6 +761,18 @@ function drawUI()
 
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
             ui.label(x, y, registry.print())
+
+             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+            if ui.button(x,y,ROW_WIDTH, worldState.profiling and 'profiling' or 'profile') then
+                if worldState.profiling then
+                    ProFi:stop()
+                    ProFi:writeReport('profilingReport.txt')
+                    worldState.profiling  = false
+                        else
+                    ProFi:start()
+                    worldState.profiling = true
+                end
+            end
             -- local t = ui.textinput('worldText', x, y, 280, 70, 'add text...', uiState.worldText)
             -- if t then
             --     uiState.worldText = t
@@ -938,16 +917,6 @@ function love.draw()
 
     script.call('draw')
 
-   -- print(inspect(polygon))
-      -- love.graphics.polygon("line", polygon)
-               -- end
-               --  end
-                for i =1 , #slicedPolygons do
-                    love.graphics.polygon("line", slicedPolygons[i])
-                end
-    -- if sceneScript and sceneScript.draw then
-    --     sceneScript.draw()
-    -- end
 
     if uiState.selectedJoint and not uiState.selectedJoint:isDestroyed() then
         local x1, y1, x2, y2 = uiState.selectedJoint:getAnchors()
@@ -960,9 +929,22 @@ function love.draw()
     for i, v in ipairs(softbodies) do
         love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
         if (tostring(v) == "softbody") then
-            v:draw("fill", false)
+             love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
+            --v:draw("fill", false)
+             love.graphics.setColor(50 * i / 255, 255 / 255, 200 * i / 255, .8)
+            local polygon =  v:getPoly()
+            local tris = shapes.makeTrianglesFromPolygon(polygon)
+            for i =1,#tris do
+                love.graphics.polygon('fill', tris[i])
+            end
         else
-            v:draw(false)
+            --v:draw(false)
+           local polygon =  v:getPoly()
+           local tris = shapes.makeTrianglesFromPolygon(polygon)
+           for i =1,#tris do
+               love.graphics.polygon('fill', tris[i])
+           end
+          -- print(inspect(polygon), inspect(tris))
         end
     end
     love.graphics.setLineWidth(lw)
@@ -1373,10 +1355,11 @@ function love.mousepressed(x, y, button, istouch)
 
     if playWithSoftbodies and button == 2 then
         local cx, cy = cam:getWorldCoordinates(x, y)
-        local b = blob.softbody(world, cx, cy, 102, 2, 4)
-        b:setFrequency(1)
+
+
+        local b = blob.softbody(world, cx, cy, 102, 1,1)
+        b:setFrequency(3)
         b:setDamping(0.1)
-        b:setFriction(1)
 
         table.insert(softbodies, b)
     end

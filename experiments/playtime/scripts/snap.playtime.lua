@@ -53,6 +53,7 @@ function s.onSceneLoaded()
     -- Create snap points on the body of each snap-capable object
     for i = 1, #snaps do
         local it = snaps[i]
+        it.body:setBullet(true)
         -- Add a snap point to the right edge
         addSnapPoint(it.body, it.width / 2, 0)
         -- Add a snap point to the left edge
@@ -126,6 +127,7 @@ function s.onSceneLoaded()
             table.insert(mySnapJoints, value)
         end
     end
+
 end
 
 function s.onStart()

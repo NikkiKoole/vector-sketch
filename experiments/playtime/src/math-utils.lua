@@ -312,7 +312,7 @@ function lib.decompose(poly, result)
 
     -- Process only the first intersection to avoid redundant splits
     local intersection = intersections[1]
-    print(inspect(poly), inspect(intersection))
+    --print(inspect(poly), inspect(intersection))
     local p1, p2 = lib.splitPoly(poly, intersection)
 
     -- Recursively decompose the resulting polygons
@@ -345,52 +345,7 @@ function intersection(cp1, cp2, s, e)
     local y = (n1 * dpy - n2 * dcy) * n3
     return { x = x, y = y }
 end
--- function lib.polygonClip2(subjectPolygon, clipPolygon)
---     local outputList = {}
---     -- Convert flat array to table of points
---     local subj = {}
---     for i = 1, #subjectPolygon, 2 do
---         table.insert(subj, { x = subjectPolygon[i], y = subjectPolygon[i + 1] })
---     end
 
---     local clip = {}
---     for i = 1, #clipPolygon, 2 do
---         table.insert(clip, { x = clipPolygon[i], y = clipPolygon[i + 1] })
---     end
-
---     local cp1 = clip[#clip]
---     for i, cp2 in ipairs(clip) do
---         local inputList = outputList
---         if #inputList == 0 then
---             inputList = subj
---         end
---         outputList = {}
---         local s = inputList[#inputList]
-
---         for j, e in ipairs(inputList) do
---             if inside(e, cp1, cp2) then
---                 if not inside(s, cp1, cp2) then
---                     local inter = intersection(cp1, cp2, s, e)
---                     if inter then table.insert(outputList, inter) end
---                 end
---                 table.insert(outputList, e)
---             elseif inside(s, cp1, cp2) then
---                 local inter = intersection(cp1, cp2, s, e)
---                 if inter then table.insert(outputList, inter) end
---             end
---             s = e
---         end
---         cp1 = cp2
---     end
-
---     -- Convert back to flat array
---     local flat = {}
---     for _, point in ipairs(outputList) do
---         table.insert(flat, point.x)
---         table.insert(flat, point.y)
---     end
---     return flat
--- end
 function lib.polygonClip(subjectPolygon, clipPolygon)
     local outputList = subjectPolygon
     local cp1 = clipPolygon[#clipPolygon]
@@ -449,7 +404,8 @@ function lib.findIntersections(polygon, line)
 
     return intersections
 end
--- Function to split a polygon into two at a given intersection point.
+-- Function to split a polygon into two at a single given intersection point.
+-- this is used to fix self-intersecting polygons
  function lib.splitPoly(poly, intersection)
     local function getIndices()
         local biggestIndex = math.max(intersection.i1, intersection.i2)
@@ -491,8 +447,58 @@ end
 end
 
 -- Add or replace this function in your existing math-utils.lua
-
 -- Function to slice a polygon with a line defined by points p1 and p2
+
+-- polygon = {
+--         100, 100,
+--         300, 100,
+--         200, 200,
+--         100, 200,
+--     }
+
+--     polygon = {
+--         100, 100,
+--         -300, 300,
+--         300, 300,
+--     }
+
+--     polygon = {
+--         100, 100, -- Vertex 1
+--         200, 100, -- Vertex 2
+--         200, 150, -- Vertex 3
+--         150, 150, -- Vertex 4 (inward dent)
+--         150, 200, -- Vertex 5
+--         100, 200, -- Vertex 6
+--     }
+
+    -- Define slicing points (horizontal line at y = 150)
+
+    -- Define slicing points
+    -- local p1 = { x = -5000, y = 150 }
+    -- local p2 = { x = 5000, y = 150 }
+
+
+    -- polygon = {
+    --     0, -100,    -- Vertex 1
+    --     23, -30,    -- Vertex 2
+    --     100, -30,   -- Vertex 3
+    --     38, 10,     -- Vertex 4
+    --     59, 80,     -- Vertex 5
+    --     0, 40,      -- Vertex 6
+    --     -59, 80,    -- Vertex 7
+    --     -38, 10,    -- Vertex 8
+    --     -100, -30,  -- Vertex 9
+    --     -23, -30,   -- Vertex 10
+    -- }
+
+    -- -- Define slicing points (diagonal line)
+    -- local p1 = { x = -150, y = 150 }
+    -- local p2 = { x = 150, y = -150 }
+
+
+    -- -- Slice the polygon
+    -- slicedPolygons = mathutils.slicePolygon(polygon, p1, p2)
+    -- print(inspect(slicedPolygons))
 function lib.slicePolygon(polygon, p1, p2)
     -- p1 and p2 define the slicing line: {x = ..., y = ...}
 
@@ -628,4 +634,5 @@ function lib.slicePolygon(polygon, p1, p2)
 
     return { poly1, poly2 }
 end
+
 return lib
