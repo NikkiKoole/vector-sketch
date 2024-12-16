@@ -28,9 +28,8 @@ function softbody:init(world, x, y, r, s, t, reinit)
     self.centerBody:setAngularDamping(300);
 
     --create 'nodes' (outer bodies) & connect to center body
-   -- self.nodeShape = physics.newCircleShape(r / 8);
    local nodeRadius = r/4
-     self.nodeShape = physics.newCircleShape(nodeRadius);
+    self.nodeShape = physics.newCircleShape(nodeRadius);
     self.nodes = {};
 
     --  local nodes = r / 2

@@ -132,7 +132,7 @@ function love.load(args)
     }
     objectManager.addThing('custom', 500, 500, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
     softbodies = {}
-    playWithSoftbodies = true
+    playWithSoftbodies = false
     if playWithSoftbodies then
         local b = blob.softbody(world, 500, 0, 102, 1,1)
         b:setFrequency(3)
@@ -156,7 +156,7 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
- -- loadScriptAndScene('straight')
+  loadScriptAndScene('straight')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -842,6 +842,30 @@ function drawUI()
                 uiState.selectedBodies = nil
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+
+                local fb = uiState.selectedBodies[1].body
+                local fixtures = fb:getFixtures( )
+                local ff = fixtures[1]
+                local groupIndex = ff:getGroupIndex()
+                local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 200, -32768, 32767, groupIndex)
+                if groupIndexSlider then
+                    local value = math.floor(groupIndexSlider)
+                    local count = 0
+                    for i = 1, #uiState.selectedBodies do
+                        local b = uiState.selectedBodies[i].body
+                        local fixtures =  b:getFixtures( )
+                        for j = 1, #fixtures do
+                            fixtures[j]:setGroupIndex(value)
+                            count = count +1
+                        end
+                    end
+                    print('changed ',count,' fixtures to groupindex', value)
+
+                end
+           -- end
+           --
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         end)
     end
 
@@ -1088,8 +1112,18 @@ end
 
 function finalizePolygon()
     if #uiState.polyVerts >= 6 then
+        if love.keyboard.isDown('b') then
+            local points = uiState.polyVerts
+            local b = blob.softsurface(world, points, 120, "dynamic")
+            table.insert(softbodies, b)
+            b:setJointFrequency(10)
+            b:setJointDamping(10)
+
+            print('blob surface wanted instead?')
+        else
         local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
         objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
+        end
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")

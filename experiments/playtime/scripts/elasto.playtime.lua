@@ -3,8 +3,8 @@ local s = {}
 local freq = 5.0
 local damp = 0.3
 local linkdensity = 10
-local count = 2
-local length = 10
+local count = 20
+local length = 200
 
 function createElasticChain(startNode, endNode, linkCount, length)
     local links = {}

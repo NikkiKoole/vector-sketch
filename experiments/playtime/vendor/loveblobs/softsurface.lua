@@ -163,6 +163,9 @@ function softsurface:setJointFrequency(frequency)
         if phys.joint_a and phys.joint_a.setFrequency then
             phys.joint_a:setFrequency(frequency)
         end
+        if phys.joint_b and  phys.joint_b.setFrequency then
+            phys.joint_b:setFrequency(frequency)
+        end
     end
 end
 function softsurface:setJointDamping( damping)
@@ -170,6 +173,9 @@ function softsurface:setJointDamping( damping)
         -- Update joint_a if it supports setFrequency and setDampingRatio
         if phys.joint_a and  phys.joint_a.setDampingRatio then
             phys.joint_a:setDampingRatio(damping)
+        end
+        if phys.joint_b and  phys.joint_b.setDampingRatio then
+            phys.joint_b:setDampingRatio(damping)
         end
     end
 end
