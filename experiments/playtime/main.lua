@@ -156,7 +156,7 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
-  loadScriptAndScene('straight')
+ -- loadScriptAndScene('straight')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -843,7 +843,7 @@ function drawUI()
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
-
+            if uiState.selectedBodies and #uiState.selectedBodies > 0 then
                 local fb = uiState.selectedBodies[1].body
                 local fixtures = fb:getFixtures( )
                 local ff = fixtures[1]
@@ -860,9 +860,9 @@ function drawUI()
                             count = count +1
                         end
                     end
-                    print('changed ',count,' fixtures to groupindex', value)
+                  --  print('changed ',count,' fixtures to groupindex', value)
 
-                end
+                end end
            -- end
            --
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
