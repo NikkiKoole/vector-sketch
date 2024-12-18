@@ -943,10 +943,7 @@ function love.draw()
 
 
     if uiState.selectedJoint and not uiState.selectedJoint:isDestroyed() then
-        local x1, y1, x2, y2 = uiState.selectedJoint:getAnchors()
-        love.graphics.circle('line', x1, y1, 10)
-        love.graphics.line(x2 - 10, y2, x2 + 10, y2)
-        love.graphics.line(x2, y2 - 10, x2, y2 + 10)
+        box2dDraw.drawJointAnchors(uiState.selectedJoint)
     end
 
     local lw = love.graphics.getLineWidth()

@@ -1,14 +1,24 @@
 local lib = {}
 
+
+local pal = {
+    ['orange'] = {242/255,133/255,0},        --#F28500  tangerine orange
+    ['rust']   = {183/255,64/255,13/255 },   --#b7410e  rust otange
+    ['avocado']= {106/255,144/255,32/255 },  --#568203  avocado graan
+    ['gold']   = {219/255, 145/255,0},        --#da9100  harvest gold
+    ['lime']   = {69/255, 205/255,50/255},    --#32CD32  lime green
+    ['creamy']  = {245/255, 245/255,220/255}, --#F5F5DC Creamy White:
+}
+
 local function getBodyColor(body)
     if body:getType() == 'kinematic' then
-        return { 1, 0, 0, 1 } --palette[colors.peach]
+         return  pal.rust
     end
     if body:getType() == 'dynamic' then
-        return { 0, 1, 0, 1 } --palette[colors.blue]
+            return  pal.avocado
     end
     if body:getType() == 'static' then
-        return { 1, 1, 0, 1 } --palette[colors.green]
+            return  pal.gold
     end
 end
 
@@ -24,7 +34,6 @@ function lib.drawWorld(world)
     love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
-    -- love.graphics.setLineWidth(1)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -41,7 +50,8 @@ function lib.drawWorld(world)
                     end
                 end
                 love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
-                love.graphics.setColor(1, 1, 1, alpha)
+                local color = pal.creamy
+                love.graphics.setColor(color[1], color[2], color[3], alpha)
                 if (fixture:getUserData()) then
                     if fixture:getUserData().bodyType == "connector" then
                         love.graphics.setColor(1, 0, 0, alpha)
@@ -62,7 +72,9 @@ function lib.drawWorld(world)
                 local color = getBodyColor(body)
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
                 love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, 360)
-                love.graphics.setColor(1, 1, 1, alpha)
+
+                local color = pal.creamy
+                love.graphics.setColor(color[1], color[2], color[3], alpha)
                 love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360)
             end
         end
@@ -75,10 +87,13 @@ function lib.drawWorld(world)
         local x1, y1, x2, y2 = joint:getAnchors()
 
         if (x1 and y1 and x2 and y2) then
-            love.graphics.setColor(1, 1, 1, alpha)
+            local color = pal.creamy
+            love.graphics.setColor(color[1], color[2], color[3], alpha)
             love.graphics.line(x1, y1, x2, y2)
         end
-        love.graphics.setColor(1, 0, 0, alpha)
+        local color = pal.orange
+        love.graphics.setColor(color[1], color[2], color[3], alpha)
+
         love.graphics.setLineJoin("miter")
         if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
         if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
@@ -144,6 +159,15 @@ function lib.drawWorld(world)
     love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
     --   love.graphics.setLineWidth(1)
+end
+
+function lib.drawJointAnchors(joint)
+    local color = pal.creamy
+    love.graphics.setColor(color[1], color[2], color[3], 1)
+     local x1, y1, x2, y2 = joint:getAnchors()
+     love.graphics.circle('line', x1, y1, 10)
+     love.graphics.line(x2 - 10, y2, x2 + 10, y2)
+     love.graphics.line(x2, y2 - 10, x2, y2 + 10)
 end
 
 function lib.drawBodies(bodies)

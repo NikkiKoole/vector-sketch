@@ -3,14 +3,15 @@ local ui = {}
 
 require('src.ui-textinput')(ui)
 
+local creamy  = {245/255, 245/255,220/255} --#F5F5DC Creamy White:
 -- Theme Configuration
 local theme = {
     button = {
         default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
         hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
         pressed = { 217 / 255, 189 / 255, 197 / 255 },   -- Pressed fill color
-        outline = { 1, 1, 1 },                           -- Outline color
-        text_default = { 1, 1, 1 },                      -- Default text color
+        outline = creamy,                           -- Outline color
+        text_default = creamy,                      -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
         height = 34
@@ -29,7 +30,7 @@ local theme = {
     slider = {
         track = { 0.5, 0.5, 0.5 }, -- Slider track color
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
-        outline = { 1, 1, 1 },
+        outline = creamy,
         track_radius = 2,
         height = 32
     },
@@ -37,17 +38,17 @@ local theme = {
         fill = { 1, 1, 1 }, -- Color of the dragged element
     },
     general = {
-        text = { 1, 1, 1 }, -- General text color
+        text = creamy, -- General text color
     },
     panel = {
         background = { 50 / 255, 50 / 255, 50 / 255 }, -- Panel background color
-        outline = { 1, 1, 1 },                         -- Panel outline color
+        outline = creamy,                         -- Panel outline color
         label = { 1, 1, 1 },                           -- Panel label text color
     },
     textinput = {
         background = { 0.1, 0.1, 0.1 },                          -- Background color of the TextInput
-        outline = { 1, 1, 1 },                                   -- Default outline color
-        text = { 1, 1, 1 },                                      -- Text color
+        outline = creamy,                                   -- Default outline color
+        text = creamy,                                      -- Text color
         placeholder = { 0.5, 0.5, 0.5 },                         -- Placeholder text color
         cursor = { 1, 1, 1 },                                    -- Cursor color
         focusedBorderColor = { 244 / 255, 189 / 255, 94 / 255 }, -- Border color when focused
