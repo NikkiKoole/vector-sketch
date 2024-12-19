@@ -795,13 +795,22 @@ function drawUI()
         end)
     end
 
+    -- "Add Joint" Button
+    if ui.button(440, 20, 200, 'add fixture') then
+        uiState.addFixtureOpened = not uiState.addFixtureOpened
+    end
+
+    if uiState.addFixtureOpened then
+
+    end
+
     -- "World Settings" Button
-    if ui.button(440, 20, 300, 'world settings') then
+    if ui.button(650, 20, 200, 'settings') then
         uiState.worldSettingsOpened = not uiState.worldSettingsOpened
     end
 
     if uiState.worldSettingsOpened then
-        local startX = 440
+        local startX = 650
         local startY = 70
         local panelWidth = PANEL_WIDTH
         --local panelHeight = 255
@@ -883,7 +892,7 @@ function drawUI()
     end
 
     -- Play/Pause Button
-    if ui.button(750, 20, 150, worldState.paused and 'play' or 'pause') then
+    if ui.button(860, 20, 150, worldState.paused and 'play' or 'pause') then
         worldState.paused = not worldState.paused
     end
 
