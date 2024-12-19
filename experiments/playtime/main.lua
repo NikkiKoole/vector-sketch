@@ -19,6 +19,7 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 
+
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -35,6 +36,9 @@ local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
+
+-- todo what todo with this?!!!
+local snapPoints = {}
 
 function love.load(args)
 
@@ -53,6 +57,7 @@ function love.load(args)
         nextType = 'dynamic',
         addShapeOpened = false,
         addJointOpened = false,
+
         worldSettingsOpened = false,
         maybeHideSelectedPanel = false,
         selectedJoint = nil,
@@ -292,9 +297,23 @@ function love.update(dt)
         end
     end
 end
-
+local function rect(w, h, x, y)
+    return {
+        x - w / 2, y - h / 2,
+        x + w / 2, y - h / 2,
+        x + w / 2, y + h / 2,
+        x - w / 2, y + h / 2
+    }
+end
+function addSnapPoint(body, x, y)
+    -- Create a tiny rectangle fixture to represent the snap point
+    local shape = love.physics.newPolygonShape(rect(20, 20, x, y))
+    local fixture = love.physics.newFixture(body, shape)
+    fixture:setSensor(true) -- Sensor so it doesn't collide
+    table.insert(snapPoints, { type = "snapPoint", fixture = fixture, xOffset = x, yOffset = y, at = body, to = nil })
+end
 local function drawAddShapeUI()
-    local shapeTypes = { 'circle', 'triangle', 'itriangle', 'capsule', 'trapezium', 'rectangle', 'pentagon',
+    local shapeTypes = {'rectangle', 'circle', 'triangle', 'itriangle', 'capsule', 'trapezium', 'pentagon',
         'hexagon',
         'heptagon',
         'octagon' }
@@ -304,7 +323,7 @@ local function drawAddShapeUI()
     local panelWidth = 200
     local buttonSpacing = BUTTON_SPACING
     local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 3) * (buttonHeight + buttonSpacing)) + buttonSpacing
+    local panelHeight = titleHeight + ((#shapeTypes + 4) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
     ui.panel(startX, startY, panelWidth, panelHeight, '', function()
         local layout = ui.createLayout({
@@ -315,21 +334,12 @@ local function drawAddShapeUI()
         })
 
         local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-        local bodyTypes = { 'dynamic', 'kinematic', 'static' }
-        if ui.button(x, y, 180, uiState.nextType) then
-            local index = -1
-            for i, v in ipairs(bodyTypes) do
-                if uiState.nextType == v then
-                    index = i
-                end
-            end
-            uiState.nextType = bodyTypes[index % #bodyTypes + 1]
-        end
+
 
         for _, shape in ipairs(shapeTypes) do
             local width = panelWidth - 20
             local height = buttonHeight
-            x, y = ui.nextLayoutPosition(layout, width, height)
+
             local _, pressed, released = ui.button(x, y, width, shape)
             if pressed then
                 ui.draggingActive = ui.activeElementID
@@ -340,7 +350,9 @@ local function drawAddShapeUI()
             if released then
                 ui.draggingActive = nil
             end
+             x, y = ui.nextLayoutPosition(layout, width, height)
         end
+        love.graphics.line(x-20,y+20,x+panelWidth+20,y+20)
 
         local width = panelWidth - 20
         local height = buttonHeight
@@ -365,13 +377,43 @@ local function drawAddShapeUI()
             uiState.polyVerts = {}
             uiState.lastPolyPt = nil
         end
+
+        x, y = ui.nextLayoutPosition(layout, width, height)
+        local width = panelWidth - 20
+        local height = buttonHeight
+
+        local _, pressed, released = ui.button(x, y, width, 'fixture')
+        if pressed then
+            ui.draggingActive = ui.activeElementID
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+
+
+          --  uiState.draggingObj = {}
+            uiState.offsetDragging = { 0, 0 }
+            --objectManager.startSpawn('fixture', wx, wy)
+        end
+        if released then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not worldState.paused)
+            print('need to fix me an fixture at a body. if possible')
+            if (#hitted > 0 ) then
+                local body = hitted[#hitted]:getBody()
+                local localX, localY = body:getLocalPoint( wx, wy )
+                print(localX, localY)
+                addSnapPoint(body, localX, localY)
+            end
+            ui.draggingActive = nil
+        end
+         x, y = ui.nextLayoutPosition(layout, width, height)
     end)
 end
 
 -- Define a table to keep track of accordion states
 local accordionStates = {
     transform = true,
-    fixture = false,
+    physics = false,
     motion = false,
     joints = false
 }
@@ -414,7 +456,7 @@ local function drawUpdateSelectedObjectUI()
         local function drawAccordion(key, contentFunc)
             -- Draw the accordion header
 
-            local clicked = ui.header_button(x, y, PANEL_WIDTH-40, (accordionStates[key] and "∞" or " •")..' '..key, accordionStates[key])
+            local clicked = ui.header_button(x, y, PANEL_WIDTH-40, (accordionStates[key] and " ÷  " or " •")..' '..key, accordionStates[key])
             if clicked then
                 accordionStates[key] = not accordionStates[key]
             end
@@ -597,7 +639,7 @@ local function drawUpdateSelectedObjectUI()
 
                 end)
              nextRow()
-            drawAccordion("fixture", function()
+            drawAccordion("physics", function()
                 local fixtures = body:getFixtures()
                 if #fixtures >= 1 then
                     local density = fixtures[1]:getDensity()
@@ -795,22 +837,15 @@ function drawUI()
         end)
     end
 
-    -- "Add Joint" Button
-    if ui.button(440, 20, 200, 'add fixture') then
-        uiState.addFixtureOpened = not uiState.addFixtureOpened
-    end
 
-    if uiState.addFixtureOpened then
-
-    end
 
     -- "World Settings" Button
-    if ui.button(650, 20, 200, 'settings') then
+    if ui.button(440, 20, 200, 'settings') then
         uiState.worldSettingsOpened = not uiState.worldSettingsOpened
     end
 
     if uiState.worldSettingsOpened then
-        local startX = 650
+        local startX = 440
         local startY = 70
         local panelWidth = PANEL_WIDTH
         --local panelHeight = 255
@@ -892,7 +927,7 @@ function drawUI()
     end
 
     -- Play/Pause Button
-    if ui.button(860, 20, 150, worldState.paused and 'play' or 'pause') then
+    if ui.button(650, 20, 150, worldState.paused and 'play' or 'pause') then
         worldState.paused = not worldState.paused
     end
 
@@ -1455,6 +1490,7 @@ local function handlePointer(x, y, id, action)
 
             end
         else
+
             uiState.maybeHideSelectedPanel = true
         end
     elseif action == "released" then
