@@ -5,34 +5,6 @@ local Kp           = 25 -- Proportional gain
 local Kd           = .5 -- Derivative gain
 
 
-function rotateToHorizontalPD(body, desiredAngle, Kp, Kd, dt)
-    -- Normalize angle to range [-pi, pi]
-    local function normalizeAngle(angle)
-        angle = math.fmod(angle + math.pi, 2 * math.pi)
-        if angle < 0 then
-            angle = angle + (2 * math.pi)
-        end
-        return angle - math.pi
-    end
-
-    -- Get current state
-    local currentAngle = body:getAngle()
-    local angularVelocity = body:getAngularVelocity()
-    local inertia = body:getInertia()
-
-    -- Calculate angle error
-    local angleError = normalizeAngle(desiredAngle - currentAngle)
-
-    -- PD Controller: Proportional term + Derivative term
-    local proportional = Kp * angleError
-    local derivative = Kd * angularVelocity
-    local controlSignal = proportional - derivative
-
-    -- Calculate torque: Torque = Inertia * Control Signal
-    local torque = (inertia) * controlSignal
-    -- Apply torque to the body
-    body:applyTorque(torque)
-end
 function rotateToHorizontalAdjusted(body, desiredAngle, divider, smarter, dt)
     local function normalizeAngle(angle)
         angle = math.fmod(angle + math.pi, 2 * math.pi)
@@ -70,6 +42,34 @@ end
 
 
 
+function rotateToHorizontalPD(body, desiredAngle, Kp, Kd, dt)
+    -- Normalize angle to range [-pi, pi]
+    local function normalizeAngle(angle)
+        angle = math.fmod(angle + math.pi, 2 * math.pi)
+        if angle < 0 then
+            angle = angle + (2 * math.pi)
+        end
+        return angle - math.pi
+    end
+
+    -- Get current state
+    local currentAngle = body:getAngle()
+    local angularVelocity = body:getAngularVelocity()
+    local inertia = body:getInertia()
+
+    -- Calculate angle error
+    local angleError = normalizeAngle(desiredAngle - currentAngle)
+
+    -- PD Controller: Proportional term + Derivative term
+    local proportional = Kp * angleError
+    local derivative = Kd * angularVelocity
+    local controlSignal = proportional - derivative
+
+    -- Calculate torque: Torque = Inertia * Control Signal
+    local torque = (inertia) * controlSignal
+    -- Apply torque to the body
+    body:applyTorque(torque)
+end
 function rotateToHorizontalScaledPD(body, desiredAngle, omega_n, zeta, dt)
     -- Normalize angle to range [-pi, pi]
     local function normalizeAngle(angle)
@@ -109,7 +109,6 @@ function rotateToHorizontalScaledPD(body, desiredAngle, omega_n, zeta, dt)
     -- Apply torque to the body
     body:applyTorque(totalTorque)
 end
-
 local feedforwardFactor = 1
 function rotateToHorizontalPDFeedforward(body, desiredAngle, omega_n, zeta, dt)
     -- Normalize angle to range [-pi, pi]
@@ -166,8 +165,8 @@ end
 
 function s.update(dt)
     for i = 1, #keepStraights do
-        --rotateToHorizontalAdjusted(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-       rotateToHorizontalScaledPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
+        rotateToHorizontalAdjusted(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
+       --rotateToHorizontalScaledPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
        --rotateToHorizontalPDFeedforward(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
         --rotateToHorizontalPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
     end

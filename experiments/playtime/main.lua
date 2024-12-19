@@ -1,8 +1,5 @@
 -- main.lua
 
-local camera = require 'src.camera'
-local cam = camera.getInstance()
-
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
 
@@ -14,11 +11,13 @@ local eio = require 'src.io'
 local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
-mathutils = require 'src.math-utils'
-ProFi                 = require 'vendor.ProFi'
+local mathutils = require 'src.math-utils'
+local ProFi = require 'vendor.ProFi'
 local utils = require 'src.utils'
 local box2dDraw = require 'src.box2d-draw'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
+local camera = require 'src.camera'
+local cam = camera.getInstance()
 
 function waitForEvent()
     local a, b, c, d, e
@@ -38,12 +37,11 @@ local TICKRATE = 1 / 60
 
 
 function love.load(args)
-    -- Load and set the font
+
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 
-    -- Initialize UI
     ui.init(font)
 
     uiState = {
@@ -92,7 +90,6 @@ function love.load(args)
         mouseDamping = 0.5,
         speedMultiplier = 1.0
     }
-
 
     sceneScript = nil
     scriptPath = nil
@@ -156,7 +153,7 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
- -- loadScriptAndScene('straight')
+  loadScriptAndScene('straight')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -646,7 +643,8 @@ end
 function drawUI()
     ui.startFrame()
     local w, h = love.graphics.getDimensions()
-    if worldState.paused then love.graphics.setColor(.7, .7, .5) else love.graphics.setColor(1, 1, 1) end
+    if worldState.paused then love.graphics.setColor({244/255, 164/255,97/255}) else love.graphics.setColor({245/255, 245/255,220/255}) end
+
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
     love.graphics.setColor(1, 1, 1)
 
@@ -811,6 +809,10 @@ function drawUI()
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'finalize') then
                 finalizePolygon()
+            end
+             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if ui.button(x, y, 260, 'soft-surface') then
+                finalizePolygonAsSoftSurface()
             end
         end)
     end
@@ -1107,20 +1109,29 @@ function love.textinput(t)
     ui.handleTextInput(t)
 end
 
+function finalizePolygonAsSoftSurface()
+    if #uiState.polyVerts >= 6 then
+    local points = uiState.polyVerts
+    local b = blob.softsurface(world, points, 120, "dynamic")
+    table.insert(softbodies, b)
+    b:setJointFrequency(10)
+    b:setJointDamping(10)
+    end
+    print('blob surface wanted instead?')
+    -- Reset the drawing state
+    uiState.drawClickPoly = false
+    uiState.drawFreePoly = false
+    uiState.capturingPoly = false
+    uiState.polyVerts = {}
+    uiState.lastPolyPt = nil
+end
+
 function finalizePolygon()
     if #uiState.polyVerts >= 6 then
-        if love.keyboard.isDown('b') then
-            local points = uiState.polyVerts
-            local b = blob.softsurface(world, points, 120, "dynamic")
-            table.insert(softbodies, b)
-            b:setJointFrequency(10)
-            b:setJointDamping(10)
 
-            print('blob surface wanted instead?')
-        else
         local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
         objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
-        end
+
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")

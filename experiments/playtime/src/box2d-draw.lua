@@ -3,22 +3,26 @@ local lib = {}
 
 local pal = {
     ['orange'] = {242/255,133/255,0},        --#F28500  tangerine orange
+    ['sun'] = {253/255,215/255,4/255},        --#FFD700  sunshine yellow
     ['rust']   = {183/255,64/255,13/255 },   --#b7410e  rust otange
     ['avocado']= {106/255,144/255,32/255 },  --#568203  avocado graan
     ['gold']   = {219/255, 145/255,0},        --#da9100  harvest gold
     ['lime']   = {69/255, 205/255,50/255},    --#32CD32  lime green
     ['creamy']  = {245/255, 245/255,220/255}, --#F5F5DC Creamy White:
+    ['choco']   = {123/255, 64/255,0},        --#7B3F00 Chocolate Brown:
+    ['beige']   = {244/255, 164/255,97/255},  --#F4A460 Sand Beige:
+    ['red']     = {217/255, 73/255,56/255},  --#D94A38 Adobe Red:
 }
 
 local function getBodyColor(body)
     if body:getType() == 'kinematic' then
-         return  pal.rust
+         return  pal.red
     end
     if body:getType() == 'dynamic' then
-            return  pal.avocado
+            return  pal.lime
     end
     if body:getType() == 'static' then
-            return  pal.gold
+            return  pal.sun
     end
 end
 
