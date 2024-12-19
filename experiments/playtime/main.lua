@@ -153,7 +153,7 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
-  loadScriptAndScene('straight')
+  --loadScriptAndScene('snap')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -368,6 +368,14 @@ local function drawAddShapeUI()
     end)
 end
 
+-- Define a table to keep track of accordion states
+local accordionStates = {
+    transform = true,
+    fixture = false,
+    motion = false,
+    joints = false
+}
+
 local function drawUpdateSelectedObjectUI()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -402,13 +410,44 @@ local function drawUpdateSelectedObjectUI()
         -- Add a button to toggle the body type
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
+        -- Function to create an accordion
+        local function drawAccordion(key, contentFunc)
+            -- Draw the accordion header
+
+            local clicked = ui.header_button(x, y, PANEL_WIDTH-40, (accordionStates[key] and "∞" or " •")..' '..key, accordionStates[key])
+            if clicked then
+                accordionStates[key] = not accordionStates[key]
+            end
+            y = y + BUTTON_HEIGHT + BUTTON_SPACING
+
+            -- If the accordion is expanded, draw the content
+            if accordionStates[key] then
+                contentFunc(clicked)
+            end
+        end
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         end
+
+        if ui.button(x, y, 100, 'clone') then
+                    --print(uiState.selectedObj)
+                    uiState.selectedBodies = { uiState.selectedObj}
+                    local cloned = eio.cloneSelection( uiState.selectedBodies)
+                    uiState.selectedBodies = cloned
+                    uiState.selectedObj = nil
+                end
+
+                if ui.button(x+120, y, 140, 'destroy') then
+                    objectManager.destroyBody(body)
+                    uiState.selectedObj = nil
+                end
+                   nextRow()
+
         if ui.button(x, y, 260, currentBodyType) then
             body:setType(nextBodyType)
             body:setAwake(true)
         end
+        nextRow()
 
         local userData = body:getUserData()
         local thing = userData and userData.thing
@@ -423,17 +462,6 @@ local function drawUpdateSelectedObjectUI()
             -- Shape Properties
             local shapeType = thing.shapeType
 
-            -- Label Editor
-            nextRow()
-            if ui.button(x, y, 120, 'flipX') then
-                uiState.selectedObj = objectManager.flipThing(thing, 'x', true)
-                dirtyBodyChange = true
-            end
-            if ui.button(x + 140, y, 120, 'flipY') then
-                uiState.selectedObj = objectManager.flipThing(thing, 'y', true)
-                dirtyBodyChange = true
-            end
-            nextRow()
             local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", thing.label)
             if newLabel and newLabel ~= thing.label then
                 thing.label = newLabel -- Update the label
@@ -441,176 +469,252 @@ local function drawUpdateSelectedObjectUI()
 
             nextRow()
 
-            if shapeType == 'circle' then
-                -- Show radius control for circles
-                nextRow()
 
-                local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
-                ui.label(x, y, ' radius')
-                if newRadius and newRadius ~= thing.radius then
-                    uiState.selectedObj = objectManager.recreateThingFromBody(body,
-                        { shapeType = "circle", radius = newRadius })
-                    uiState.lastUsedRadius = newRadius
-                    body = uiState.selectedObj.body
+  nextRow()
+            drawAccordion("transform", function(clicked)
+                 nextRow()
+
+                if ui.button(x, y, 120, 'flipX') then
+                    uiState.selectedObj = objectManager.flipThing(thing, 'x', true)
+                    dirtyBodyChange = true
                 end
-            elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
-                -- Show width and height controls for these shapes
-                nextRow()
-
-                local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                ui.label(x, y, ' width')
-                nextRow()
-
-                local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                ui.label(x, y, ' height')
-
-                if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
-                    uiState.lastUsedWidth = newWidth
-                    uiState.lastUsedHeight = newHeight
-                    uiState.selectedObj = objectManager.recreateThingFromBody(body, {
-                        shapeType = shapeType,
-                        width = newWidth or thing.width,
-                        height = newHeight or thing.height,
-                    })
-                    body = uiState.selectedObj.body
+                if ui.button(x + 140, y, 120, 'flipY') then
+                    uiState.selectedObj = objectManager.flipThing(thing, 'y', true)
+                    dirtyBodyChange = true
                 end
-            else
-                -- For polygonal or other custom shapes, only allow radius control if applicable
-                if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
-                    shapeType == 'heptagon' or shapeType == 'octagon' then
+                nextRow()
+                local value = thing.body:getX()
+                local numericInputText, dirty = ui.textinput(myID .. 'x', x , y, 120, 40, ".", "" .. value,true,clicked or not worldState.paused or uiState.draggingObj)
+                if (dirty) then
+
+                    local numericPosX = tonumber(numericInputText)
+                    if numericPosX then
+                        thing.body:setX(numericPosX)
+                    else
+                        -- Handle invalid input, e.g., reset to previous value or show an error
+                        print("Invalid X position input!")
+                    end
+
+
+                end
+                local value = thing.body:getY()
+                local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140 , y, 120, 40, ".", "" .. value,true,clicked or not worldState.paused or uiState.draggingObj)
+                if (dirty) then
+                    local numericPosY = tonumber(numericInputText)
+                    if numericPosY then
+                        thing.body:setY(numericPosY)
+                    else
+                        -- Handle invalid input, e.g., reset to previous value or show an error
+                        print("Invalid Y position input!")
+                    end
+
+                end
+
+
+                  nextRow()
+                  if shapeType == 'circle' then
+                      -- Show radius control for circles
+
+
+                      local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
+                      ui.label(x, y, ' radius')
+                      if newRadius and newRadius ~= thing.radius then
+                          uiState.selectedObj = objectManager.recreateThingFromBody(body,
+                              { shapeType = "circle", radius = newRadius })
+                          uiState.lastUsedRadius = newRadius
+                          body = uiState.selectedObj.body
+                      end
+                  elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
+                      -- Show width and height controls for these shapes
+
+
+                      local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                      ui.label(x, y, ' width')
+                      nextRow()
+
+                      local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                      ui.label(x, y, ' height')
+
+                      if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
+                          uiState.lastUsedWidth = newWidth
+                          uiState.lastUsedHeight = newHeight
+                          uiState.selectedObj = objectManager.recreateThingFromBody(body, {
+                              shapeType = shapeType,
+                              width = newWidth or thing.width,
+                              height = newHeight or thing.height,
+                          })
+                          body = uiState.selectedObj.body
+                      end
+                  else
+                      -- For polygonal or other custom shapes, only allow radius control if applicable
+                      if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
+                          shapeType == 'heptagon' or shapeType == 'octagon' then
+                          nextRow()
+
+                          local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
+                              dirtyBodyChange)
+                          ui.label(x, y, ' radius')
+                          if newRadius and newRadius ~= thing.radius then
+                              uiState.selectedObj = objectManager.recreateThingFromBody(body,
+                                  { shapeType = shapeType, radius = newRadius })
+                              uiState.lastUsedRadius = newRadius
+                              body = uiState.selectedObj.body
+                          end
+                      else
+                          -- No UI controls for custom or unsupported shapes
+                          --ui.label(x, y, 'custom')
+                          if ui.button(x, y, 260, uiState.polyLockedVerts and 'verts locked' or 'verts unlocked') then
+                              uiState.polyLockedVerts = not uiState.polyLockedVerts
+                              if uiState.polyLockedVerts == false then
+                                  uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
+                                  local cx, cy = mathutils.computeCentroid(uiState.selectedObj.vertices)
+                                  uiState.polyCentroid = { x = cx, y = cy }
+                              else
+                                  uiState.polyTempVerts = nil
+                                  uiState.polyCentroid = nil
+                              end
+                          end
+                      end
+                  end
+                      nextRow()
+
+                      local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
+                      if dirty then
+                          body:setFixedRotation(not body:isFixedRotation())
+                      end
+
+                      -- Angle Slider
+                      nextRow()
+
+                      local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
+                          (body:getAngle() * 180 / math.pi),
+                          (body:isAwake() and not worldState.paused) or dirtyBodyChange)
+                      if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
+                          body:setAngle(newAngle * math.pi / 180)
+                      end
+                      ui.label(x, y, ' angle')
+                       nextRow()
+
+                end)
+             nextRow()
+            drawAccordion("fixture", function()
+                local fixtures = body:getFixtures()
+                if #fixtures >= 1 then
+                    local density = fixtures[1]:getDensity()
+
+                     nextRow()
+                    local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
+                    if newDensity and density ~= newDensity then
+                        for i = 1, #fixtures do
+                            fixtures[i]:setDensity(newDensity)
+                        end
+                    end
+                    ui.label(x, y, ' density')
+
+                    -- Bounciness Slider
+                    local bounciness = fixtures[1]:getRestitution()
                     nextRow()
 
-                    local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
-                        dirtyBodyChange)
-                    ui.label(x, y, ' radius')
-                    if newRadius and newRadius ~= thing.radius then
-                        uiState.selectedObj = objectManager.recreateThingFromBody(body,
-                            { shapeType = shapeType, radius = newRadius })
-                        uiState.lastUsedRadius = newRadius
-                        body = uiState.selectedObj.body
-                    end
-                else
-                    -- No UI controls for custom or unsupported shapes
-                    --ui.label(x, y, 'custom')
-                    if ui.button(x, y, 260, uiState.polyLockedVerts and 'verts locked' or 'verts unlocked') then
-                        uiState.polyLockedVerts = not uiState.polyLockedVerts
-                        if uiState.polyLockedVerts == false then
-                            uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
-                            local cx, cy = mathutils.computeCentroid(uiState.selectedObj.vertices)
-                            uiState.polyCentroid = { x = cx, y = cy }
-                        else
-                            uiState.polyTempVerts = nil
-                            uiState.polyCentroid = nil
+                    local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
+                    if newBounce and bounciness ~= newBounce then
+                        for i = 1, #fixtures do
+                            fixtures[i]:setRestitution(newBounce)
                         end
                     end
+                    ui.label(x, y, ' bounce')
+
+                    -- Friction Slider
+                    local friction = fixtures[1]:getFriction()
+                    nextRow()
+
+                    local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
+                    if newFriction and friction ~= newFriction then
+                        for i = 1, #fixtures do
+                            fixtures[i]:setFriction(newFriction)
+                        end
+                    end
+                    ui.label(x, y, ' friction')
+                    nextRow()
+
+
+                    local fb = thing.body
+                    local fixtures = fb:getFixtures( )
+                    local ff = fixtures[1]
+                    local groupIndex = ff:getGroupIndex()
+                    local groupIndexSlider = ui.sliderWithInput(myID ..'groupIndex', x, y, 160, -32768, 32767, groupIndex)
+                    ui.label(x, y, ' groupid')
+                    if groupIndexSlider then
+                        local value = math.floor(groupIndexSlider)
+                        local count = 0
+
+                            local b = thing.body
+                            local fixtures =  b:getFixtures( )
+                            for j = 1, #fixtures do
+                                fixtures[j]:setGroupIndex(value)
+                                count = count +1
+                            end
+
+                    end
+
                 end
-            end
-        end
-        nextRow()
+                 nextRow()
 
-        local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
-        if dirty then
-            body:setFixedRotation(not body:isFixedRotation())
-        end
-
-        -- Angle Slider
-        nextRow()
-
-        local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
-            (body:getAngle() * 180 / math.pi),
-            (body:isAwake() and not worldState.paused) or dirtyBodyChange)
-        if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
-            body:setAngle(newAngle * math.pi / 180)
-        end
-        ui.label(x, y, ' angle')
-
-        -- Density Slider
-        local fixtures = body:getFixtures()
-        if #fixtures >= 1 then
-            local density = fixtures[1]:getDensity()
+                end)
             nextRow()
+             drawAccordion("motion", function()
+                 -- set sleeping allowed
+                  nextRow()
+                 local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
+                 if dirty then
+                     body:setSleepingAllowed(not body:isSleepingAllowed())
+                 end
+                 nextRow()
+                 -- angukar veloicity
+                 local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
+                 if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
+                 local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
+                     body:isAwake() and not worldState.paused)
+                 if newAngle and angleDegrees ~= newAngle then
+                     body:setAngularVelocity(math.rad(newAngle))
+                 end
+                 ui.label(x, y, ' ang-vel')
 
-            local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
-            if newDensity and density ~= newDensity then
-                for i = 1, #fixtures do
-                    fixtures[i]:setDensity(newDensity)
-                end
+                 nextRow()
             end
-            ui.label(x, y, ' density')
+             )
+              nextRow()
+              if not body:isDestroyed() then
+                  local attachedJoints = body:getJoints()
+                  if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
+                  drawAccordion("joints", function()
+                      for _, joint in ipairs(attachedJoints) do
+                          -- Display joint type and unique identifier for identification
+                          local jointType = joint:getType()
+                          local jointID = tostring(joint)
 
-            -- Bounciness Slider
-            local bounciness = fixtures[1]:getRestitution()
-            nextRow()
+                          if (jointType ~= 'mouse') then
+                              -- Display joint button
+                              x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
+                              local jointLabel = string.format("%s %s", jointType, string.sub(joint:getUserData().id, 1, 3))
 
-            local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
-            if newBounce and bounciness ~= newBounce then
-                for i = 1, #fixtures do
-                    fixtures[i]:setRestitution(newBounce)
-                end
-            end
-            ui.label(x, y, ' bounce')
+                              if ui.button(x, y,260, jointLabel) then
+                                  uiState.selectedJoint = joint
+                                  uiState.selectedObj = nil
+                              end
+                          end
+                      end
+                       nextRow()
+                      end)
+                  end
+              end
 
-            -- Friction Slider
-            local friction = fixtures[1]:getFriction()
-            nextRow()
-
-            local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
-            if newFriction and friction ~= newFriction then
-                for i = 1, #fixtures do
-                    fixtures[i]:setFriction(newFriction)
-                end
-            end
-            ui.label(x, y, ' friction')
         end
         nextRow()
-        -- set sleeping allowed
-        local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
-        if dirty then
-            body:setSleepingAllowed(not body:isSleepingAllowed())
-        end
-        nextRow()
-        -- angukar veloicity
-        local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
-        if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
-        local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
-            body:isAwake() and not worldState.paused)
-        if newAngle and angleDegrees ~= newAngle then
-            body:setAngularVelocity(math.rad(newAngle))
-        end
-        ui.label(x, y, ' ang-vel')
 
-        nextRow()
-        if ui.button(x, y, 260, 'destroy') then
-            objectManager.destroyBody(body)
 
-            uiState.selectedObj = nil
-        end
 
         -- List Attached Joints Using Body:getJoints()
-        if not body:isDestroyed() then
-            local attachedJoints = body:getJoints()
-            if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
-                ui.label(x, y + 60, '∞ joints ∞')
-                nextRow()
-                -- layout:nextRow()
 
-                for _, joint in ipairs(attachedJoints) do
-                    -- Display joint type and unique identifier for identification
-                    local jointType = joint:getType()
-                    local jointID = tostring(joint)
-                    if (jointType ~= 'mouse') then
-                        -- Display joint button
-                        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
-                        local jointLabel = string.format("%s", jointType)
-
-                        if ui.button(x, y, ROW_WIDTH, jointLabel) then
-                            uiState.selectedJoint = joint
-                            uiState.selectedObj = nil
-                        end
-                    end
-                end
-            end
-        end
     end)
 end
 
@@ -850,7 +954,8 @@ function drawUI()
                 local fixtures = fb:getFixtures( )
                 local ff = fixtures[1]
                 local groupIndex = ff:getGroupIndex()
-                local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 200, -32768, 32767, groupIndex)
+                local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex)
+                ui.label(x, y, ' groupid')
                 if groupIndexSlider then
                     local value = math.floor(groupIndexSlider)
                     local count = 0
@@ -862,9 +967,9 @@ function drawUI()
                             count = count +1
                         end
                     end
-                  --  print('changed ',count,' fixtures to groupindex', value)
 
-                end end
+                end
+            end
            -- end
            --
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)

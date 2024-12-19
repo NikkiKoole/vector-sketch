@@ -18,7 +18,6 @@ local function rect(w, h, x, y)
     }
 end
 
-
 local function oneOfThemIsInteractedWith(b1, b2, list)
     for i = 1, #list do
         if list[i] == b1 or list[i] == b2 then
@@ -27,12 +26,12 @@ local function oneOfThemIsInteractedWith(b1, b2, list)
     end
     return false
 end
+
 function addSnapPoint(body, x, y)
     -- Create a tiny rectangle fixture to represent the snap point
     local shape = love.physics.newPolygonShape(rect(20, 20, x, y))
     local fixture = love.physics.newFixture(body, shape)
     fixture:setSensor(true) -- Sensor so it doesn't collide
-    --fixture:setUserData()
     table.insert(snapPoints, { type = "snapPoint", fixture = fixture, xOffset = x, yOffset = y, at = body, to = nil })
 end
 
@@ -40,6 +39,7 @@ function s.onSceneUnload()
     snaps = {}
     snapPoints = {}
 end
+
 function calculateDistance(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1

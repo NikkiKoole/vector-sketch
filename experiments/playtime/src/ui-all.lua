@@ -269,6 +269,64 @@ function ui.toggleButton(x, y, width, height, labelOn, labelOff, isToggled)
 end
 
 --- Creates a button.
+function ui.header_button(x, y, width, label, opened)
+    -- header button doenst have a button radius (its rectangular, and the lanbel is not centered..)
+    local height = theme.button.height
+
+    local id = ui.generateID() -- Generate unique ID
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
+        ui.mouseY >= y and ui.mouseY <= y + height
+    local pressed = isHover and ui.mousePressed
+
+    if pressed then
+        ui.activeElementID = id
+    end
+    -- Draw the button with state-based colors
+    if ui.activeElementID == id then
+        love.graphics.setColor(theme.button.pressed) -- Pressed state
+    elseif isHover then
+        love.graphics.setColor(theme.button.hover)   -- Hover state
+    else
+        love.graphics.setColor(theme.button.default) -- Default state
+    end
+    local rxry = 0
+    if opened then
+            love.graphics.setColor(theme.button.hover)
+    end
+    love.graphics.rectangle("fill", x, y, width, height, rxry, rxry)
+
+    -- Draw button outline
+    love.graphics.setColor(theme.button.outline) -- Outline color
+    love.graphics.setLineWidth(theme.lineWidth)
+    love.graphics.rectangle("line", x, y, width, height, rxry, rxry)
+
+    -- Draw button label with state-based color
+    if isHover then
+        love.graphics.setColor(theme.button.text_hover)   -- Text color on hover
+    else
+        love.graphics.setColor(theme.button.text_default) -- Default text color
+    end
+    local textHeight = ui.font:getHeight()
+    love.graphics.print(label, x, y + (height - textHeight) / 2)
+   -- love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
+
+    -- Reset color
+    love.graphics.setColor(1, 1, 1)
+
+    local clicked = false
+    local released = ui.mouseReleased and ui.activeElementID == id
+
+    if ui.activeElementID == id and released and isHover then
+        clicked = true
+    end
+    if released then
+        -- Reset the active element ID
+        ui.activeElementID = nil
+    end
+    return clicked, pressed, released
+end
+
+--- Creates a button.
 function ui.button(x, y, width, label, optionalHeight)
     local height = optionalHeight and optionalHeight or theme.button.height
 
