@@ -210,23 +210,74 @@ local function collectBodies(thing, collected)
     return collected
 end
 
--- Function to calculate centroid
-local function calculateCentroid(thing)
-    local bodies = collectBodies(thing)
-    local totalMass = 0
-    local sumX, sumY = 0, 0
-    for id, body in pairs(bodies) do
-        local mass = body:getMass()
-        local x, y = body:getPosition()
-        sumX = sumX + x * mass
-        sumY = sumY + y * mass
-        totalMass = totalMass + mass
-    end
-    if totalMass == 0 then
-        return 0, 0 -- Avoid division by zero
-    end
-    return sumX / totalMass, sumY / totalMass
+-- -- Function to calculate centroid
+-- local function calculateCentroid(thing)
+--     local bodies = collectBodies(thing)
+--     local totalMass = 0
+--     local sumX, sumY = 0, 0
+--     for id, body in pairs(bodies) do
+--         local mass = body:getMass()
+--         local x, y = body:getPosition()
+--         sumX = sumX + x * mass
+--         sumY = sumY + y * mass
+--         totalMass = totalMass + mass
+--     end
+--     if totalMass == 0 then
+--         return 0, 0 -- Avoid division by zero
+--     end
+--     return sumX / totalMass, sumY / totalMass
+-- end
+
+-- local function calculateCentroidAll(thing)
+--     local bodies = collectBodies(thing)
+--     local totalMass = 0
+--     local sumX, sumY = 0, 0
+--     for id, body in pairs(bodies) do
+--         local mass = body:getMass()
+--         local x, y = body:getPosition()
+--         sumX = sumX + x * mass
+--         sumY = sumY + y * mass
+--         totalMass = totalMass + mass
+--     end
+--     if totalMass == 0 then
+--         return 0, 0 -- Avoid division by zero
+--     end
+--     return sumX / totalMass, sumY / totalMass
+-- end
+
+local function calculateCentroidAll(thing)
+     local sumX, sumY = 0, 0
+     local bodies = collectBodies(thing)
+     local count = 0
+     for id, body in pairs(bodies) do
+          local x, y = body:getPosition()
+          sumX = sumX + x
+          sumY = sumY + y
+          count = count + 1
+     end
+    -- print(sumX, sumY, #bodies)
+     return sumX / count, sumY / count
 end
+
+
+-- Helper function to collect all connected bodies
+local function collectBodies(thing, collected)
+    collected = collected or {}
+    if not thing or not thing.body or collected[thing.id] then
+        return collected
+    end
+    collected[thing.id] = thing.body
+    for _, joint in ipairs(thing.body:getJoints()) do
+        local bodyA, bodyB = joint:getBodies()
+        local otherBody = (bodyA == thing.body) and bodyB or bodyA
+        local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
+        if otherThing then
+            collectBodies(otherThing, collected)
+        end
+    end
+    return collected
+end
+
 
 function lib.flipThing(thing, axis, recursive)
     -- Validate input
@@ -244,9 +295,15 @@ function lib.flipThing(thing, axis, recursive)
     local processedBodies = {}
     local processedJoints = {}
     local toBeProcessedJoints = {}
-    local centroidX, centroidY = calculateCentroid(thing)
+    local centroidX, centroidY = thing.body:getPosition()
 
+    -- if thing.vertices then
+    -- local cx,cy = mathutils.getCenterOfPoints(thing.vertices)
+    -- centroidX =  cx
+    -- centroidY = cy
+    -- end
 
+    --print('calculating centroid')
     -- Phase 1: Flip All Bodies
     local function flipBody(currentThing)
 
@@ -259,6 +316,7 @@ function lib.flipThing(thing, axis, recursive)
 
         -- Get current position and angle
         local currentX, currentY = currentBody:getPosition()
+
         local currentAngle = currentBody:getAngle()
 
         -- Calculate relative position to centroid
@@ -283,7 +341,7 @@ function lib.flipThing(thing, axis, recursive)
         elseif axis == 'y' then
             newAngle = -currentAngle
         end
-
+        print(currentThing.body, newX, newY)
         -- Update body's position and angle
         currentThing.body:setPosition(newX, newY)
         currentThing.body:setAngle(newAngle)
@@ -441,5 +499,9 @@ function lib.flipThing(thing, axis, recursive)
     --print('************* Flip Completed *************')
     return thing
 end
+
+
+
+
 
 return lib
