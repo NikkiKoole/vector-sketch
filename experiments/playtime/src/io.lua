@@ -10,6 +10,7 @@ local jointHandlers = require 'src.joint-handlers'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 local jointslib = require 'src.joints'
+local fixtures = require 'src.fixtures'
 
 function lib.load(data, world)
     local jsonData, pos, err = json.decode(data, 1, nil)
@@ -33,7 +34,7 @@ function lib.load(data, world)
     local idMap = {}
     local function getNewId(oldId)
         if idMap[oldId] == nil then
-            --  print(oldId, idMap)
+
             idMap[oldId] = uuid.generateID()
         end
         return idMap[oldId]
@@ -129,7 +130,7 @@ function lib.load(data, world)
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
             elseif jointData.type == "revolute" then
-                --print(inspect(anchorA), inspect(anchorB))
+
                 joint = love.physics.newRevoluteJoint(
                     bodyA, bodyB,
                     anchorA[1], anchorA[2],
@@ -245,7 +246,7 @@ function lib.load(data, world)
                     offsetB = { x = fxb, y = fyb }
                 }
                 if jointData.scriptmeta then ud.scriptmeta = jointData.scriptmeta end
-                --print('hello loading a joint ', inspect(ud))
+
                 joint:setUserData(ud)
 
                 -- Register the joint in the registry
@@ -455,32 +456,7 @@ function lib.save(world, worldState, filename)
 end
 
 
-local function hasFixturesWithUserDataAtBeginning(fixtures)
 
-  -- first we will start looking from beginning untill we no longer find userdata on fixtures
-  -- then we will start looking fom that index on and expect not to found any more userdata
-    local found = true
-    local index = 0
-    for i =1, #fixtures do
-        if found then
-            if fixtures[i]:getUserData() then
-                print('expected')
-                index = i
-            else
-                found = false
-            end
-        end
-        if not found then
-             if fixtures[i]:getUserData() then
-                 print('not ok!')
-                 return false, -1
-             else
-                -- expected
-             end
-        end
-    end
-    return true, index
-end
 function lib.cloneSelection(selectedBodies)
     -- Mapping from original body IDs to cloned body instances
     local clonedBodiesMap = {}
@@ -515,12 +491,12 @@ function lib.cloneSelection(selectedBodies)
 
 
 
-            local ok, offset = hasFixturesWithUserDataAtBeginning(oldFixtures)
-            --print(#oldFixtures, #newShapeList, 'offset',offset)
+            local ok, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
+
             if ok and offset > -1 then
 
                 for i = 1+offset, #oldFixtures do
-                    --print('normla', i)
+
                     local oldF = oldFixtures[i]
                     local newFixture = love.physics.newFixture(newBody, newShapeList[i-(offset)], oldF:getDensity())
                     newFixture:setRestitution(oldF:getRestitution())
@@ -529,15 +505,16 @@ function lib.cloneSelection(selectedBodies)
                 if offset > 0 then
                     -- here we should recreate the special fixtures..
                     for i = 1, offset do
-                        --print(originalBody:getWorldPoints(oldFixtures[i]:getShape()))
-                        --print(oldFixtures[i]:getShape())
-                        --print(inspect(oldFixtures[i]:getUserData()))
+
                         local oldF = oldFixtures[i]
+                        local shape = oldF:getShape():getPoints()
+                        --print(inspect(getCentroidOfFixture(originalBody, oldF)))
+
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
                         newFixture:setUserData(utils.shallowCopy(  oldF:getUserData()))
-                        --print(i, inspect(getmetatable(oldFixtures[i])))
+
                     end
                 end
             end

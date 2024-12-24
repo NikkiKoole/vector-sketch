@@ -7,6 +7,9 @@ local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
 local inspect = require 'vendor.inspect'
 local utils = require 'src.utils'
+local mathutils = require 'src.math-utils'
+
+local fixtures = require 'src.fixtures'
 
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
@@ -86,6 +89,8 @@ function lib.addThing(shapeType, x, y, bodyType, radius, width, height, label, o
     return thing
 end
 
+
+
 function lib.recreateThingFromBody(body, newSettings)
     if body:isDestroyed() then
         print("The body is already destroyed.")
@@ -105,10 +110,9 @@ function lib.recreateThingFromBody(body, newSettings)
     local fixedRotation = body:isFixedRotation() -- Capture fixed angle state
     -- Get the original `thing` for shape info
 
+    local oldFixtures = body:getFixtures()
 
     local jointData = joints.extractJoints(body)
-    -- Destroy the old body
-    body:destroy()
 
     -- Create new body
     local newBody = love.physics.newBody(world, x, y, bodyType)
@@ -126,12 +130,34 @@ function lib.recreateThingFromBody(body, newSettings)
         newSettings.optionalVertices
     )
 
+
+
+    local ok, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
+
     for _, shape in ipairs(shapeList) do
         local fixture = love.physics.newFixture(newBody, shape, 1)
         fixture:setRestitution(newSettings.restitution or restitution)
         fixture:setFriction(newSettings.friction or friction)
     end
 
+    if offset > 0 then
+        -- here we should recreate the special fixtures..
+        for i = 1, offset do
+
+            local oldF = oldFixtures[i]
+            local shape = oldF:getShape():getPoints()
+            --print(inspect(fixtures/fixturesgetCentroidOfFixture(originalBody, oldF)))
+
+            local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
+            newFixture:setRestitution(oldF:getRestitution())
+            newFixture:setFriction(oldF:getFriction())
+            newFixture:setUserData(utils.shallowCopy(  oldF:getUserData()))
+
+        end
+    end
+
+    -- Destroy the old body
+    body:destroy()
 
 
     -- Update the `thing` table
@@ -223,7 +249,7 @@ function lib.flipThing(thing, axis, recursive)
 
     -- Phase 1: Flip All Bodies
     local function flipBody(currentThing)
-        --print('called flipbody')
+
         local currentBody = currentThing.body
         if not currentBody or processedBodies[currentThing.id] then
             return
@@ -264,7 +290,7 @@ function lib.flipThing(thing, axis, recursive)
 
 
         if currentThing.vertices then
-            --print('jojjo!')
+
             local flippedVertices = utils.shallowCopy(currentThing.vertices)
             for i = 1, #currentThing.vertices, 2 do
                 if axis == 'x' then
@@ -277,9 +303,9 @@ function lib.flipThing(thing, axis, recursive)
         end
 
         -- Flip each fixture's shape
-        for _, fixture in ipairs(currentBody:getFixtures()) do
-            print(_, fixture:getUserData() ~= nil)
-        end
+        -- for _, fixture in ipairs(currentBody:getFixtures()) do
+        --     print(_, fixture:getUserData() ~= nil)
+        -- end
         local fixtures = currentBody:getFixtures()
         -- if i do this backwards the fixtures end up being in the same order... !!
         for i=#fixtures, 1, -1 do
@@ -321,9 +347,9 @@ function lib.flipThing(thing, axis, recursive)
                 -- If the circle has user data affecting orientation, handle it here
             end
         end
-        for _, fixture in ipairs(currentBody:getFixtures()) do
-            print(_, fixture:getUserData() ~= nil)
-        end
+        -- for _, fixture in ipairs(currentBody:getFixtures()) do
+        --     print(_, fixture:getUserData() ~= nil)
+        -- end
         -- Determine new angle based on flip axis
 
         -- If recursive, flip connected bodies first

@@ -2,7 +2,22 @@
 local lib = {}
 
 
-
+function lib.getCenterOfPoints(points)
+    local tlx = math.huge
+    local tly = math.huge
+    local brx = -math.huge
+    local bry = -math.huge
+    for ip = 1, #points, 2 do
+        if points[ip + 0] < tlx then tlx = points[ip + 0] end
+        if points[ip + 1] < tly then tly = points[ip + 1] end
+        if points[ip + 0] > brx then brx = points[ip + 0] end
+        if points[ip + 1] > bry then bry = points[ip + 1] end
+    end
+    --return tlx, tly, brx, bry
+    local w = brx - tlx
+    local h = bry - tly
+    return tlx + w / 2, tly + h / 2
+end
 -- Utility function to check if a point is inside a polygon.
 -- Implements the ray-casting algorithm.
 local function pointInPath(x, y, poly)
