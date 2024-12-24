@@ -310,6 +310,7 @@ function addSnapPoint(body, x, y)
     local shape = love.physics.newPolygonShape(rect(20, 20, x, y))
     local fixture = love.physics.newFixture(body, shape)
     fixture:setSensor(true) -- Sensor so it doesn't collide
+    fixture:setUserData({type = "snapPoint"})
     table.insert(snapPoints, { type = "snapPoint", fixture = fixture, xOffset = x, yOffset = y, at = body, to = nil })
 end
 local function drawAddShapeUI()
@@ -482,6 +483,7 @@ local function drawUpdateSelectedObjectUI()
                 if ui.button(x+120, y, 140, 'destroy') then
                     objectManager.destroyBody(body)
                     uiState.selectedObj = nil
+                    return
                 end
                    nextRow()
 

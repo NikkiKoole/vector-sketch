@@ -278,6 +278,13 @@ function lib.flipThing(thing, axis, recursive)
 
         -- Flip each fixture's shape
         for _, fixture in ipairs(currentBody:getFixtures()) do
+            print(_, fixture:getUserData() ~= nil)
+        end
+        local fixtures = currentBody:getFixtures()
+        -- if i do this backwards the fixtures end up being in the same order... !!
+        for i=#fixtures, 1, -1 do
+       -- for _, fixture in ipairs(currentBody:getFixtures()) do
+        local fixture = fixtures[i]
             local shape = fixture:getShape()
             if shape:typeOf("PolygonShape") then
                 local points = { shape:getPoints() }
@@ -303,6 +310,9 @@ function lib.flipThing(thing, axis, recursive)
                     local newFixture = love.physics.newFixture(currentBody, newShape, density)
                     newFixture:setFriction(friction)
                     newFixture:setRestitution(restitution)
+                    if (fixture:getUserData()) then
+                        newFixture:setUserData(utils.shallowCopy(fixture:getUserData()))
+                    end
                     fixture:destroy()
                 end
             elseif shape:typeOf("CircleShape") then
@@ -311,7 +321,9 @@ function lib.flipThing(thing, axis, recursive)
                 -- If the circle has user data affecting orientation, handle it here
             end
         end
-
+        for _, fixture in ipairs(currentBody:getFixtures()) do
+            print(_, fixture:getUserData() ~= nil)
+        end
         -- Determine new angle based on flip axis
 
         -- If recursive, flip connected bodies first

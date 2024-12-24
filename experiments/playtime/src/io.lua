@@ -454,6 +454,33 @@ function lib.save(world, worldState, filename)
     love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
 end
 
+
+local function hasFixturesWithUserDataAtBeginning(fixtures)
+
+  -- first we will start looking from beginning untill we no longer find userdata on fixtures
+  -- then we will start looking fom that index on and expect not to found any more userdata
+    local found = true
+    local index = 0
+    for i =1, #fixtures do
+        if found then
+            if fixtures[i]:getUserData() then
+                print('expected')
+                index = i
+            else
+                found = false
+            end
+        end
+        if not found then
+             if fixtures[i]:getUserData() then
+                 print('not ok!')
+                 return false, -1
+             else
+                -- expected
+             end
+        end
+    end
+    return true, index
+end
 function lib.cloneSelection(selectedBodies)
     -- Mapping from original body IDs to cloned body instances
     local clonedBodiesMap = {}
@@ -485,14 +512,37 @@ function lib.cloneSelection(selectedBodies)
 
 
             local oldFixtures = originalBody:getFixtures()
-            --print(#oldFixtures, #newShapeList, inspect(originalThing.vertices))
 
-            for i = 1, #oldFixtures do
-                local oldF = oldFixtures[i]
-                local newFixture = love.physics.newFixture(newBody, newShapeList[i], oldF:getDensity())
-                newFixture:setRestitution(oldF:getRestitution())
-                newFixture:setFriction(oldF:getFriction())
+
+
+            local ok, offset = hasFixturesWithUserDataAtBeginning(oldFixtures)
+            --print(#oldFixtures, #newShapeList, 'offset',offset)
+            if ok and offset > -1 then
+
+                for i = 1+offset, #oldFixtures do
+                    --print('normla', i)
+                    local oldF = oldFixtures[i]
+                    local newFixture = love.physics.newFixture(newBody, newShapeList[i-(offset)], oldF:getDensity())
+                    newFixture:setRestitution(oldF:getRestitution())
+                    newFixture:setFriction(oldF:getFriction())
+                end
+                if offset > 0 then
+                    -- here we should recreate the special fixtures..
+                    for i = 1, offset do
+                        --print(originalBody:getWorldPoints(oldFixtures[i]:getShape()))
+                        --print(oldFixtures[i]:getShape())
+                        --print(inspect(oldFixtures[i]:getUserData()))
+                        local oldF = oldFixtures[i]
+                        local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
+                        newFixture:setRestitution(oldF:getRestitution())
+                        newFixture:setFriction(oldF:getFriction())
+                        newFixture:setUserData(utils.shallowCopy(  oldF:getUserData()))
+                        --print(i, inspect(getmetatable(oldFixtures[i])))
+                    end
+                end
             end
+
+
             -- Clone fixture
             --local newFixture = love.physics.newFixture(newBody, newShape, originalThing.fixture:getDensity())
             --newFixture:setRestitution(originalThing.fixture:getRestitution())
