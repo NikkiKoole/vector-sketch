@@ -13,7 +13,7 @@ local cam = camera.getInstance()
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local utils = require 'src.utils'
 local ProFi = require 'vendor.ProFi'
-
+local fixtures = require 'src.fixtures'
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
@@ -1117,9 +1117,24 @@ function lib.drawUpdateSelectedObjectUI()
                                 end
                             end
                         end
-                        nextRow()
                     end)
+                    nextRow()
                 end
+            end
+            local myfixtures = body:getFixtures()
+            local ok, index  = fixtures.hasFixturesWithUserDataAtBeginning(myfixtures)
+            if ok and index > 0 then
+                drawAccordion("sfixtures", function()
+                    for i = 1, index do
+                        nextRow()
+                        if ui.button(x, y, 260, 'sfixture' .. i) then
+                            uiState.selectedJoint = nil
+                            uiState.selectedObj = nil
+                            uiState.selectedSFixture = myfixtures[i]
+                        end
+                    end
+                end)
+                nextRow()
             end
         end
         nextRow()

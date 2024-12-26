@@ -60,6 +60,7 @@ function love.load(args)
         selectedJoint = nil,
         setOffsetAFunc = nil,
         setOffsetBFunc = nil,
+        selectedSFixture = nil,
         selectedObj = nil,
         draggingObj = nil,
         offsetDragging = { nil, nil },
