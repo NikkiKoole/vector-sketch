@@ -1,4 +1,4 @@
--- src/registry.lua
+-- registry.lua
 local utils = require 'src.utils'
 
 local registry = {

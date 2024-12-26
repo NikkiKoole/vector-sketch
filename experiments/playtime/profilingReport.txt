@@ -1,90 +1,90 @@
 ###############################################################################################################
-#####  ProFi, a lua profiler. This profile was generated on: Wed Dec 18 08:31:37 2024
+#####  ProFi, a lua profiler. This profile was generated on: Thu Dec 26 06:26:25 2024
 #####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
 #####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
 #####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
 ###############################################################################################################
 
 
-| TOTAL TIME = 0.406526
+| TOTAL TIME = 0.196052
 | FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
-| src/ui-all.lua                                    : button                                  :  272                : 0.358       : 88.02%      :     361     |
-| main.lua                                          : draw                                    :  933                : 0.271       : 66.66%      :     174     |
-| src/ui-all.lua                                    : panel                                   :  154                : 0.162       : 39.95%      :     174     |
-| main.lua                                          : update                                  :  250                : 0.037       : 9.16%       :       3     |
-| main.lua                                          : maybeHotReload                          :  233                : 0.037       : 9.13%       :       3     |
-| src/ui-all.lua                                    : nextLayoutPosition                      :  109                : 0.006       : 1.51%       :      10     |
-| src/script.lua                                    : call                                    :   69                : 0.001       : 0.35%       :     348     |
-| main.lua                                          : handlePointer                           : 1237                : 0.001       : 0.14%       :       2     |
-| main.lua                                          : anonymous                               : 1376                : 0.001       : 0.14%       :       1     |
-| vendor/brady.lua                                  : getWorldCoordinates                     :  109                : 0.000       : 0.04%       :       1     |
-| src/box2d-pointerjoints.lua                       : handlePointerPressed                    :  141                : 0.000       : 0.03%       :       1     |
-| vendor/brady.lua                                  : rotateAboutPoint                        :   27                : 0.000       : 0.02%       :       1     |
-| src/box2d-pointerjoints.lua                       : handlePointerUpdate                     :   72                : 0.000       : 0.02%       :       5     |
-| main.lua                                          : anonymous                               : 1404                : 0.000       : 0.01%       :       1     |
-| vendor/brady.lua                                  : getLayer                                :  103                : 0.000       : 0.01%       :       1     |
-| src/box2d-pointerjoints.lua                       : removeDeadPointerJoints                 :   61                : 0.000       : 0.01%       :       5     |
-| main.lua                                          : anonymous                               : 1060                : 0.000       : 0.00%       :       1     |
-| src/box2d-pointerjoints.lua                       : handlePointerReleased                   :  123                : 0.000       : 0.00%       :       1     |
-| src/box2d-pointerjoints.lua                       : killMouseJointIfPossible                :   42                : 0.000       : 0.00%       :       2     |
+| main.lua                                          : draw                                    :  487                : 0.117       : 59.86%      :     105     |
+| src/ui-all.lua                                    : panel                                   :  154                : 0.066       : 33.63%      :     105     |
+| src/ui-all.lua                                    : checkbox                                :  193                : 0.022       : 11.10%      :      12     |
+| src/ui-all.lua                                    : button                                  :  330                : 0.021       : 10.52%      :     242     |
+| src/playtime-ui.lua                               : drawWorldSettingsUI                     :  636                : 0.008       : 4.31%       :      12     |
+| src/playtime-ui.lua                               : drawFunc                                :  646                : 0.008       : 4.13%       :     105     |
+| src/ui-all.lua                                    : nextLayoutPosition                      :  109                : 0.004       : 2.29%       :      12     |
+| src/script.lua                                    : call                                    :   69                : 0.001       : 0.27%       :     210     |
+| main.lua                                          : anonymous                               :  938                : 0.000       : 0.16%       :       1     |
+| main.lua                                          : handlePointer                           :  801                : 0.000       : 0.16%       :       2     |
+| src/box2d-pointerjoints.lua                       : handlePointerPressed                    :  142                : 0.000       : 0.07%       :       1     |
+| main.lua                                          : anonymous                               :  966                : 0.000       : 0.04%       :       1     |
+| main.lua                                          : update                                  :  252                : 0.000       : 0.03%       :       2     |
+| vendor/brady.lua                                  : getWorldCoordinates                     :  109                : 0.000       : 0.02%       :       1     |
+| src/box2d-pointerjoints.lua                       : handlePointerUpdate                     :   73                : 0.000       : 0.02%       :       3     |
+| vendor/brady.lua                                  : rotateAboutPoint                        :   27                : 0.000       : 0.01%       :       1     |
+| src/box2d-pointerjoints.lua                       : removeDeadPointerJoints                 :   62                : 0.000       : 0.01%       :       3     |
+| src/box2d-pointerjoints.lua                       : handlePointerReleased                   :  124                : 0.000       : 0.00%       :       1     |
+| main.lua                                          : maybeHotReload                          :  235                : 0.000       : 0.00%       :       2     |
+| src/box2d-pointerjoints.lua                       : killMouseJointIfPossible                :   43                : 0.000       : 0.00%       :       2     |
+| vendor/brady.lua                                  : getLayer                                :  103                : 0.000       : 0.00%       :       1     |
 | vendor/ProFi.lua                                  : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
-| [C]                                               : min                                     :   -1                : 0.000       : 0.00%       :     219     |
-| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :     215     |
-| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :     174     |
-| src/ui-all.lua                                    : slider                                  :  329                : 0.000       : 0.00%       :       0     |
-| [C]                                               : getLineWidth                            :   -1                : 0.000       : 0.00%       :     174     |
-| vendor/brady.lua                                  : pop                                     :  108                : 0.000       : 0.00%       :     174     |
-| src/ui-textinput.lua                              : textinput                               :  320                : 0.000       : 0.00%       :     190     |
+| [C]                                               : getLineWidth                            :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :     119     |
+| vendor/brady.lua                                  : pop                                     :  108                : 0.000       : 0.00%       :     105     |
+| [C]                                               : min                                     :   -1                : 0.000       : 0.00%       :     106     |
+| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : circle                                  :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :     105     |
 | vendor/ProFi.lua                                  : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
-| [love "callbacks.lua"]                            : anonymous                               :   46                : 0.000       : 0.00%       :       1     |
-| src/ui-all.lua                                    : sliderWithInput                         :  124                : 0.000       : 0.00%       :      10     |
-| src/ui-all.lua                                    : checkbox                                :  193                : 0.000       : 0.00%       :       0     |
-| [love "callbacks.lua"]                            : anonymous                               :   49                : 0.000       : 0.00%       :       1     |
-| vendor/ProFi.lua                                  : stop                                    :   88                : 0.000       : 0.00%       :       1     |
-| [love "callbacks.lua"]                            : anonymous                               :   43                : 0.000       : 0.00%       :       1     |
-| src/ui-all.lua                                    : startFrame                              :   72                : 0.000       : 0.00%       :       0     |
-| [C]                                               : testPoint                               :   -1                : 0.000       : 0.00%       :       2     |
-| src/box2d-draw.lua                                : drawWorld                               :   34                : 0.000       : 0.00%       :       0     |
-| [C]                                               : isSensor                                :   -1                : 0.000       : 0.00%       :       2     |
-| [C]                                               : cos                                     :   -1                : 0.000       : 0.00%       :       2     |
 | [C]                                               : sin                                     :   -1                : 0.000       : 0.00%       :       2     |
-| [C]                                               : ipairs                                  :   -1                : 0.000       : 0.00%       :     359     |
-| [C]                                               : polygon                                 :   -1                : 0.000       : 0.00%       :     696     |
-| vendor/ProFi.lua                                  : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
-| [C]                                               : format                                  :   -1                : 0.000       : 0.00%       :     174     |
-| main.lua                                          : drawUI                                  :  646                : 0.000       : 0.00%       :       0     |
-| [C]                                               : printf                                  :   -1                : 0.000       : 0.00%       :    1914     |
-| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :    1914     |
-| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :    1275     |
-| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : getHeight                               :   -1                : 0.000       : 0.00%       :    2958     |
-| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :    6786     |
+| [C]                                               : cos                                     :   -1                : 0.000       : 0.00%       :       2     |
+| src/ui-all.lua                                    : slider                                  :  387                : 0.000       : 0.00%       :       0     |
+| [love "callbacks.lua"]                            : anonymous                               :   49                : 0.000       : 0.00%       :       1     |
+| src/ui-textinput.lua                              : textinput                               :  320                : 0.000       : 0.00%       :       4     |
+| vendor/ProFi.lua                                  : stop                                    :   88                : 0.000       : 0.00%       :       1     |
+| [love "callbacks.lua"]                            : anonymous                               :   46                : 0.000       : 0.00%       :       1     |
+| src/ui-all.lua                                    : sliderWithInput                         :  124                : 0.000       : 0.00%       :      12     |
+| [C]                                               : isSensor                                :   -1                : 0.000       : 0.00%       :       2     |
+| src/ui-all.lua                                    : startFrame                              :   72                : 0.000       : 0.00%       :       0     |
+| src/box2d-draw.lua                                : drawWorld                               :   37                : 0.000       : 0.00%       :       0     |
+| [C]                                               : testPoint                               :   -1                : 0.000       : 0.00%       :       2     |
+| [C]                                               : ipairs                                  :   -1                : 0.000       : 0.00%       :     243     |
+| [C]                                               : getWorldPoints                          :   -1                : 0.000       : 0.00%       :     420     |
+| [C]                                               : polygon                                 :   -1                : 0.000       : 0.00%       :     420     |
+| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :    1260     |
+| [C]                                               : format                                  :   -1                : 0.000       : 0.00%       :     105     |
+| main.lua                                          : drawUI                                  :  344                : 0.000       : 0.00%       :       0     |
+| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :     787     |
+| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : printf                                  :   -1                : 0.000       : 0.00%       :    1260     |
+| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :    2205     |
 | vendor/ProFi.lua                                  : start                                   :   70                : 0.000       : 0.00%       :       0     |
-| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :     176     |
-| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :    3480     |
-| main.lua                                          : drawFunc                                :  712                : 0.000       : 0.00%       :       0     |
-| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :   16356     |
-| [C]                                               : setScissor                              :   -1                : 0.000       : 0.00%       :    3132     |
-| [C]                                               : getJoints                               :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :     348     |
-| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :     348     |
-| [C]                                               : getShape                                :   -1                : 0.000       : 0.00%       :    1044     |
-| [C]                                               : getFixtures                             :   -1                : 0.000       : 0.00%       :     350     |
-| [C]                                               : getType                                 :   -1                : 0.000       : 0.00%       :     700     |
-| [C]                                               : getPoints                               :   -1                : 0.000       : 0.00%       :     696     |
-| [C]                                               : getUserData                             :   -1                : 0.000       : 0.00%       :     696     |
-| [C]                                               : getWorldPoints                          :   -1                : 0.000       : 0.00%       :     696     |
-| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :     348     |
-| [C]                                               : getBodies                               :   -1                : 0.000       : 0.00%       :     175     |
-| [C]                                               : getColor                                :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :     348     |
-| [C]                                               : setLineJoin                             :   -1                : 0.000       : 0.00%       :     348     |
-| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :     348     |
-| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :     174     |
-| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :     174     |
+| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :     107     |
+| [C]                                               : getHeight                               :   -1                : 0.000       : 0.00%       :    1995     |
+| [C]                                               : setScissor                              :   -1                : 0.000       : 0.00%       :    1890     |
+| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :    4305     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :   10605     |
+| [C]                                               : getJoints                               :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :     210     |
+| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :     210     |
+| [C]                                               : getType                                 :   -1                : 0.000       : 0.00%       :     424     |
+| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :     210     |
+| [C]                                               : getShape                                :   -1                : 0.000       : 0.00%       :     630     |
+| [C]                                               : getUserData                             :   -1                : 0.000       : 0.00%       :     420     |
+| vendor/ProFi.lua                                  : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
+| [C]                                               : getPoints                               :   -1                : 0.000       : 0.00%       :     420     |
+| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :     210     |
+| [C]                                               : getFixtures                             :   -1                : 0.000       : 0.00%       :     212     |
+| [C]                                               : setLineJoin                             :   -1                : 0.000       : 0.00%       :     210     |
+| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :     210     |
+| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : getBodies                               :   -1                : 0.000       : 0.00%       :     106     |
+| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : getColor                                :   -1                : 0.000       : 0.00%       :     105     |
+| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :     105     |
 | [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |

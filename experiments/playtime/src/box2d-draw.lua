@@ -1,28 +1,30 @@
+--box2d-draw.lua
+
 local lib = {}
 
 
 local pal = {
-    ['orange'] = {242/255,133/255,0},        --#F28500  tangerine orange
-    ['sun'] = {253/255,215/255,4/255},        --#FFD700  sunshine yellow
-    ['rust']   = {183/255,64/255,13/255 },   --#b7410e  rust otange
-    ['avocado']= {106/255,144/255,32/255 },  --#568203  avocado graan
-    ['gold']   = {219/255, 145/255,0},        --#da9100  harvest gold
-    ['lime']   = {69/255, 205/255,50/255},    --#32CD32  lime green
-    ['creamy']  = {245/255, 245/255,220/255}, --#F5F5DC Creamy White:
-    ['choco']   = {123/255, 64/255,0},        --#7B3F00 Chocolate Brown:
-    ['beige']   = {244/255, 164/255,97/255},  --#F4A460 Sand Beige:
-    ['red']     = {217/255, 73/255,56/255},  --#D94A38 Adobe Red:
+    ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
+    ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
+    ['rust']    = { 183 / 255, 64 / 255, 13 / 255 },   --#b7410e  rust otange
+    ['avocado'] = { 106 / 255, 144 / 255, 32 / 255 },  --#568203  avocado graan
+    ['gold']    = { 219 / 255, 145 / 255, 0 },         --#da9100  harvest gold
+    ['lime']    = { 69 / 255, 205 / 255, 50 / 255 },   --#32CD32  lime green
+    ['creamy']  = { 245 / 255, 245 / 255, 220 / 255 }, --#F5F5DC Creamy White:
+    ['choco']   = { 123 / 255, 64 / 255, 0 },          --#7B3F00 Chocolate Brown:
+    ['beige']   = { 244 / 255, 164 / 255, 97 / 255 },  --#F4A460 Sand Beige:
+    ['red']     = { 217 / 255, 73 / 255, 56 / 255 },   --#D94A38 Adobe Red:
 }
 
 local function getBodyColor(body)
     if body:getType() == 'kinematic' then
-         return  pal.red
+        return pal.red
     end
     if body:getType() == 'dynamic' then
-            return  pal.lime
+        return pal.lime
     end
     if body:getType() == 'static' then
-            return  pal.sun
+        return pal.sun
     end
 end
 
@@ -32,7 +34,8 @@ local function getEndpoint(x, y, angle, length)
     return endX, endY
 end
 
-function lib.drawWorld(world)
+function lib.drawWorld(world, drawOutline)
+    if drawOutline == nil then drawOutline = true end
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8
     love.graphics.setLineJoin("none")
@@ -62,7 +65,7 @@ function lib.drawWorld(world)
                     end
                     --  print(inspect(fixture:getUserData() ))
                 end
-                love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
+                if drawOutline then love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints())) end
             elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
                 love.graphics.setColor(0, 1, 1, alpha)
                 local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
@@ -79,7 +82,7 @@ function lib.drawWorld(world)
 
                 local color = pal.creamy
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
-                love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360)
+                if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360) end
             end
         end
     end
@@ -168,10 +171,10 @@ end
 function lib.drawJointAnchors(joint)
     local color = pal.creamy
     love.graphics.setColor(color[1], color[2], color[3], 1)
-     local x1, y1, x2, y2 = joint:getAnchors()
-     love.graphics.circle('line', x1, y1, 10)
-     love.graphics.line(x2 - 10, y2, x2 + 10, y2)
-     love.graphics.line(x2, y2 - 10, x2, y2 + 10)
+    local x1, y1, x2, y2 = joint:getAnchors()
+    love.graphics.circle('line', x1, y1, 10)
+    love.graphics.line(x2 - 10, y2, x2 + 10, y2)
+    love.graphics.line(x2, y2 - 10, x2, y2 + 10)
 end
 
 function lib.drawBodies(bodies)

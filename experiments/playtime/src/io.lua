@@ -34,7 +34,6 @@ function lib.load(data, world)
     local idMap = {}
     local function getNewId(oldId)
         if idMap[oldId] == nil then
-
             idMap[oldId] = uuid.generateID()
         end
         return idMap[oldId]
@@ -56,8 +55,9 @@ function lib.load(data, world)
         body:setFixedRotation(bodyData.fixedRotation)
 
         local shared = bodyData.sharedFixtureData
-        -- Iterate through fixtures and recreate shapes
-        for _, fixtureData in ipairs(bodyData.fixtures) do
+
+        for i = #bodyData.fixtures, 1, -1 do -- doing this backwards keeps order intact
+            local fixtureData = bodyData.fixtures[i]
             local shape
             if shared.shapeType == "circle" then
                 shape = love.physics.newCircleShape(fixtureData.radius)
@@ -81,10 +81,16 @@ function lib.load(data, world)
                 print("Unsupported shape type:", fixtureData.shapeType)
             end
 
+
             if shape then
                 local fixture = love.physics.newFixture(body, shape, shared.density)
                 fixture:setFriction(shared.friction)
                 fixture:setRestitution(shared.restitution)
+
+                if fixtureData.userData then
+                    fixture:setUserData(utils.shallowCopy(fixtureData.userData))
+                    --print(inspect(utils.shallowCopy(fixture:getUserData())))
+                end
             end
         end
 
@@ -130,7 +136,6 @@ function lib.load(data, world)
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
             elseif jointData.type == "revolute" then
-
                 joint = love.physics.newRevoluteJoint(
                     bodyA, bodyB,
                     anchorA[1], anchorA[2],
@@ -331,6 +336,10 @@ function lib.save(world, worldState, filename)
                     fixtureData.shapeType = "unknown"
                 end
 
+                if fixture:getUserData() then
+                    fixtureData.userData = utils.shallowCopy(fixture:getUserData())
+                    --print(inspect(utils.shallowCopy(fixture:getUserData())))
+                end
                 table.insert(bodyData.fixtures, fixtureData)
             end
 
@@ -455,8 +464,6 @@ function lib.save(world, worldState, filename)
     love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
 end
 
-
-
 function lib.cloneSelection(selectedBodies)
     -- Mapping from original body IDs to cloned body instances
     local clonedBodiesMap = {}
@@ -492,20 +499,20 @@ function lib.cloneSelection(selectedBodies)
 
 
             local ok, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
-
+            if not ok then
+                print('some how the userdata fixtures arent at the beginning!')
+            end
             if ok and offset > -1 then
-
-                for i = 1+offset, #oldFixtures do
-
+                print(ok, offset)
+                for i = 1 + offset, #oldFixtures do
                     local oldF = oldFixtures[i]
-                    local newFixture = love.physics.newFixture(newBody, newShapeList[i-(offset)], oldF:getDensity())
+                    local newFixture = love.physics.newFixture(newBody, newShapeList[i - (offset)], oldF:getDensity())
                     newFixture:setRestitution(oldF:getRestitution())
                     newFixture:setFriction(oldF:getFriction())
                 end
                 if offset > 0 then
                     -- here we should recreate the special fixtures..
                     for i = 1, offset do
-
                         local oldF = oldFixtures[i]
                         local shape = oldF:getShape():getPoints()
                         --print(inspect(getCentroidOfFixture(originalBody, oldF)))
@@ -513,8 +520,7 @@ function lib.cloneSelection(selectedBodies)
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
-                        newFixture:setUserData(utils.shallowCopy(  oldF:getUserData()))
-
+                        newFixture:setUserData(utils.shallowCopy(oldF:getUserData()))
                     end
                 end
             end

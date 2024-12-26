@@ -1,4 +1,4 @@
--- jointHandlers.lua (Create a separate module for better organization)
+-- joint-handlers.lua
 local jointHandlers = {}
 
 jointHandlers["distance"] = {

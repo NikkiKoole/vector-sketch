@@ -3,16 +3,15 @@
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
 
+
 local ui = require 'src.ui-all'
-local joint = require 'src.joints'
+local playtimeui = require 'src.playtime-ui'
 local shapes = require 'src.shapes'
 local selectrect = require 'src.selection-rect'
 local eio = require 'src.io'
-local registry = require 'src.registry'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
 local mathutils = require 'src.math-utils'
-local ProFi = require 'vendor.ProFi'
 local utils = require 'src.utils'
 local box2dDraw = require 'src.box2d-draw'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
@@ -36,12 +35,10 @@ local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
-
 -- todo what todo with this?!!!
 local snapPoints = {}
 
 function love.load(args)
-
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
@@ -87,6 +84,7 @@ function love.load(args)
     }
 
     worldState = {
+        debugDrawMode = true,
         profiling = false,
         meter = 100,
         paused = true,
@@ -136,7 +134,7 @@ function love.load(args)
     softbodies = {}
     playWithSoftbodies = false
     if playWithSoftbodies then
-        local b = blob.softbody(world, 500, 0, 102, 1,1)
+        local b = blob.softbody(world, 500, 0, 102, 1, 1)
         b:setFrequency(3)
         b:setDamping(0.1)
         --b:setFriction(1)
@@ -158,7 +156,7 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
-  --loadScriptAndScene('snap')
+    --loadScriptAndScene('snap')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -225,7 +223,7 @@ function loadAndRunScript(name)
     local data = getFiledata(name):getString()
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
-    script.setEnv({worldState=worldState, world=world})
+    script.setEnv({ worldState = worldState, world = world })
     script.call('onUnload')
     script.call('onStart')
 
@@ -250,15 +248,14 @@ function maybeHotReload(dt)
 end
 
 function love.update(dt)
-
     maybeHotReload(dt)
 
     local scaled_dt = dt * worldState.speedMultiplier
     if not worldState.paused then
         if playWithSoftbodies then
-         for i, v in ipairs(softbodies) do
-             v:update(scaled_dt)
-         end
+            for i, v in ipairs(softbodies) do
+                v:update(scaled_dt)
+            end
         end
 
         for i = 1, 1 do
@@ -297,470 +294,6 @@ function love.update(dt)
         end
     end
 end
-local function rect(w, h, x, y)
-    return {
-        x - w / 2, y - h / 2,
-        x + w / 2, y - h / 2,
-        x + w / 2, y + h / 2,
-        x - w / 2, y + h / 2
-    }
-end
-function addSnapPoint(body, x, y)
-    -- Create a tiny rectangle fixture to represent the snap point
-    local shape = love.physics.newPolygonShape(rect(20, 20, x, y))
-    local fixture = love.physics.newFixture(body, shape)
-    fixture:setSensor(true) -- Sensor so it doesn't collide
-    fixture:setUserData({type = "snapPoint"})
-    table.insert(snapPoints, { type = "snapPoint", fixture = fixture, xOffset = x, yOffset = y, at = body, to = nil })
-end
-local function drawAddShapeUI()
-    local shapeTypes = {'rectangle', 'circle', 'triangle', 'itriangle', 'capsule', 'trapezium', 'pentagon',
-        'hexagon',
-        'heptagon',
-        'octagon' }
-    local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local startX = 20
-    local startY = 70
-    local panelWidth = 200
-    local buttonSpacing = BUTTON_SPACING
-    local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 4) * (buttonHeight + buttonSpacing)) + buttonSpacing
-
-    ui.panel(startX, startY, panelWidth, panelHeight, '', function()
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = BUTTON_SPACING,
-            startX = startX + BUTTON_SPACING,
-            startY = startY + BUTTON_SPACING
-        })
-
-        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-
-
-        for _, shape in ipairs(shapeTypes) do
-            local width = panelWidth - 20
-            local height = buttonHeight
-
-            local _, pressed, released = ui.button(x, y, width, shape)
-            if pressed then
-                ui.draggingActive = ui.activeElementID
-                local mx, my = love.mouse.getPosition()
-                local wx, wy = cam:getWorldCoordinates(mx, my)
-                objectManager.startSpawn(shape, wx, wy)
-            end
-            if released then
-                ui.draggingActive = nil
-            end
-             x, y = ui.nextLayoutPosition(layout, width, height)
-        end
-        love.graphics.line(x-20,y+20,x+panelWidth+20,y+20)
-
-        local width = panelWidth - 20
-        local height = buttonHeight
-        x, y = ui.nextLayoutPosition(layout, width, height)
-        local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150, uiState.minPointDistance or 10)
-        ui.label(x, y, 'dis')
-        if minDist then
-            uiState.minPointDistance = minDist
-        end
-
-        -- Add a button for custom polygon
-        x, y = ui.nextLayoutPosition(layout, width, height)
-        if ui.button(x, y, width, 'freeform') then
-            uiState.drawFreePoly = true
-            uiState.polyVerts = {}
-            uiState.lastPolyPt = nil
-        end
-
-        x, y = ui.nextLayoutPosition(layout, width, height)
-        if ui.button(x, y, width, 'click') then
-            uiState.drawClickPoly = true
-            uiState.polyVerts = {}
-            uiState.lastPolyPt = nil
-        end
-
-        x, y = ui.nextLayoutPosition(layout, width, height)
-        local width = panelWidth - 20
-        local height = buttonHeight
-
-        local _, pressed, released = ui.button(x, y, width, 'fixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-
-          --  uiState.draggingObj = {}
-            uiState.offsetDragging = { 0, 0 }
-            --objectManager.startSpawn('fixture', wx, wy)
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not worldState.paused)
-            print('need to fix me an fixture at a body. if possible')
-            if (#hitted > 0 ) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint( wx, wy )
-                print(localX, localY)
-                addSnapPoint(body, localX, localY)
-            end
-            ui.draggingActive = nil
-        end
-         x, y = ui.nextLayoutPosition(layout, width, height)
-    end)
-end
-
--- Define a table to keep track of accordion states
-local accordionStates = {
-    transform = true,
-    physics = false,
-    motion = false,
-    joints = false
-}
-
-local function drawUpdateSelectedObjectUI()
-    local panelWidth = PANEL_WIDTH
-    local w, h = love.graphics.getDimensions()
-    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
-        local body = uiState.selectedObj.body
-        -- local angleDegrees = body:getAngle() * 180 / math.pi
-        local myID = uiState.selectedObj.id
-
-        -- Initialize Layout
-        local padding = BUTTON_SPACING
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = BUTTON_SPACING,
-            startX = w - panelWidth,
-            startY = 100 + padding
-        })
-
-        -- Toggle Body Type Button
-        -- Retrieve the current body type
-        local currentBodyType = body:getType() -- 'static', 'dynamic', or 'kinematic'
-
-        -- Determine the next body type in the cycle
-        local nextBodyType
-        if currentBodyType == 'static' then
-            nextBodyType = 'dynamic'
-        elseif currentBodyType == 'dynamic' then
-            nextBodyType = 'kinematic'
-        elseif currentBodyType == 'kinematic' then
-            nextBodyType = 'static'
-        end
-
-        -- Add a button to toggle the body type
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-
-        -- Function to create an accordion
-        local function drawAccordion(key, contentFunc)
-            -- Draw the accordion header
-
-            local clicked = ui.header_button(x, y, PANEL_WIDTH-40, (accordionStates[key] and " ÷  " or " •")..' '..key, accordionStates[key])
-            if clicked then
-                accordionStates[key] = not accordionStates[key]
-            end
-            y = y + BUTTON_HEIGHT + BUTTON_SPACING
-
-            -- If the accordion is expanded, draw the content
-            if accordionStates[key] then
-                contentFunc(clicked)
-            end
-        end
-        local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-        end
-
-        if ui.button(x, y, 100, 'clone') then
-                    --print(uiState.selectedObj)
-                    uiState.selectedBodies = { uiState.selectedObj}
-                    local cloned = eio.cloneSelection( uiState.selectedBodies)
-                    uiState.selectedBodies = cloned
-                    uiState.selectedObj = nil
-                end
-
-                if ui.button(x+120, y, 140, 'destroy') then
-                    objectManager.destroyBody(body)
-                    uiState.selectedObj = nil
-                    return
-                end
-                   nextRow()
-
-        if ui.button(x, y, 260, currentBodyType) then
-            body:setType(nextBodyType)
-            body:setAwake(true)
-        end
-        nextRow()
-
-        local userData = body:getUserData()
-        local thing = userData and userData.thing
-
-        local dirtyBodyChange = false
-        if (uiState.lastSelectedBody ~= body) then
-            dirtyBodyChange = true
-            uiState.lastSelectedBody = body
-        end
-
-        if thing then
-            -- Shape Properties
-            local shapeType = thing.shapeType
-
-            local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", thing.label)
-            if newLabel and newLabel ~= thing.label then
-                thing.label = newLabel -- Update the label
-            end
-
-            nextRow()
-
-
-  nextRow()
-            drawAccordion("transform", function(clicked)
-                 nextRow()
-
-                if ui.button(x, y, 120, 'flipX') then
-                    uiState.selectedObj = objectManager.flipThing(thing, 'x', true)
-                    dirtyBodyChange = true
-                end
-                if ui.button(x + 140, y, 120, 'flipY') then
-                    uiState.selectedObj = objectManager.flipThing(thing, 'y', true)
-                    dirtyBodyChange = true
-                end
-                nextRow()
-                local value = thing.body:getX()
-                local numericInputText, dirty = ui.textinput(myID .. 'x', x , y, 120, 40, ".", "" .. value,true,clicked or not worldState.paused or uiState.draggingObj)
-                if (dirty) then
-
-                    local numericPosX = tonumber(numericInputText)
-                    if numericPosX then
-                        thing.body:setX(numericPosX)
-                    else
-                        -- Handle invalid input, e.g., reset to previous value or show an error
-                        print("Invalid X position input!")
-                    end
-
-
-                end
-                local value = thing.body:getY()
-                local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140 , y, 120, 40, ".", "" .. value,true,clicked or not worldState.paused or uiState.draggingObj)
-                if (dirty) then
-                    local numericPosY = tonumber(numericInputText)
-                    if numericPosY then
-                        thing.body:setY(numericPosY)
-                    else
-                        -- Handle invalid input, e.g., reset to previous value or show an error
-                        print("Invalid Y position input!")
-                    end
-
-                end
-
-
-                  nextRow()
-                  if shapeType == 'circle' then
-                      -- Show radius control for circles
-
-
-                      local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
-                      ui.label(x, y, ' radius')
-                      if newRadius and newRadius ~= thing.radius then
-                          uiState.selectedObj = objectManager.recreateThingFromBody(body,
-                              { shapeType = "circle", radius = newRadius })
-                          uiState.lastUsedRadius = newRadius
-                          body = uiState.selectedObj.body
-                      end
-                  elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
-                      -- Show width and height controls for these shapes
-
-
-                      local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                      ui.label(x, y, ' width')
-                      nextRow()
-
-                      local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                      ui.label(x, y, ' height')
-
-                      if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
-                          uiState.lastUsedWidth = newWidth
-                          uiState.lastUsedHeight = newHeight
-                          uiState.selectedObj = objectManager.recreateThingFromBody(body, {
-                              shapeType = shapeType,
-                              width = newWidth or thing.width,
-                              height = newHeight or thing.height,
-                          })
-                          body = uiState.selectedObj.body
-                      end
-                  else
-                      -- For polygonal or other custom shapes, only allow radius control if applicable
-                      if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
-                          shapeType == 'heptagon' or shapeType == 'octagon' then
-                          nextRow()
-
-                          local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
-                              dirtyBodyChange)
-                          ui.label(x, y, ' radius')
-                          if newRadius and newRadius ~= thing.radius then
-                              uiState.selectedObj = objectManager.recreateThingFromBody(body,
-                                  { shapeType = shapeType, radius = newRadius })
-                              uiState.lastUsedRadius = newRadius
-                              body = uiState.selectedObj.body
-                          end
-                      else
-                          -- No UI controls for custom or unsupported shapes
-                          --ui.label(x, y, 'custom')
-                          if ui.button(x, y, 260, uiState.polyLockedVerts and 'verts locked' or 'verts unlocked') then
-                              uiState.polyLockedVerts = not uiState.polyLockedVerts
-                              if uiState.polyLockedVerts == false then
-                                  uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
-                                  local cx, cy = mathutils.computeCentroid(uiState.selectedObj.vertices)
-                                  uiState.polyCentroid = { x = cx, y = cy }
-                              else
-                                  uiState.polyTempVerts = nil
-                                  uiState.polyCentroid = nil
-                              end
-                          end
-                      end
-                  end
-                      nextRow()
-
-                      local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
-                      if dirty then
-                          body:setFixedRotation(not body:isFixedRotation())
-                      end
-
-                      -- Angle Slider
-                      nextRow()
-
-                      local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
-                          (body:getAngle() * 180 / math.pi),
-                          (body:isAwake() and not worldState.paused) or dirtyBodyChange)
-                      if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
-                          body:setAngle(newAngle * math.pi / 180)
-                      end
-                      ui.label(x, y, ' angle')
-                       nextRow()
-
-                end)
-             nextRow()
-            drawAccordion("physics", function()
-                local fixtures = body:getFixtures()
-                if #fixtures >= 1 then
-                    local density = fixtures[1]:getDensity()
-
-                     nextRow()
-                    local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
-                    if newDensity and density ~= newDensity then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setDensity(newDensity)
-                        end
-                    end
-                    ui.label(x, y, ' density')
-
-                    -- Bounciness Slider
-                    local bounciness = fixtures[1]:getRestitution()
-                    nextRow()
-
-                    local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
-                    if newBounce and bounciness ~= newBounce then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setRestitution(newBounce)
-                        end
-                    end
-                    ui.label(x, y, ' bounce')
-
-                    -- Friction Slider
-                    local friction = fixtures[1]:getFriction()
-                    nextRow()
-
-                    local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
-                    if newFriction and friction ~= newFriction then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setFriction(newFriction)
-                        end
-                    end
-                    ui.label(x, y, ' friction')
-                    nextRow()
-
-
-                    local fb = thing.body
-                    local fixtures = fb:getFixtures( )
-                    local ff = fixtures[1]
-                    local groupIndex = ff:getGroupIndex()
-                    local groupIndexSlider = ui.sliderWithInput(myID ..'groupIndex', x, y, 160, -32768, 32767, groupIndex)
-                    ui.label(x, y, ' groupid')
-                    if groupIndexSlider then
-                        local value = math.floor(groupIndexSlider)
-                        local count = 0
-
-                            local b = thing.body
-                            local fixtures =  b:getFixtures( )
-                            for j = 1, #fixtures do
-                                fixtures[j]:setGroupIndex(value)
-                                count = count +1
-                            end
-
-                    end
-
-                end
-                 nextRow()
-
-                end)
-            nextRow()
-             drawAccordion("motion", function()
-                 -- set sleeping allowed
-                  nextRow()
-                 local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
-                 if dirty then
-                     body:setSleepingAllowed(not body:isSleepingAllowed())
-                 end
-                 nextRow()
-                 -- angukar veloicity
-                 local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
-                 if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
-                 local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
-                     body:isAwake() and not worldState.paused)
-                 if newAngle and angleDegrees ~= newAngle then
-                     body:setAngularVelocity(math.rad(newAngle))
-                 end
-                 ui.label(x, y, ' ang-vel')
-
-                 nextRow()
-            end
-             )
-              nextRow()
-              if not body:isDestroyed() then
-                  local attachedJoints = body:getJoints()
-                  if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
-                  drawAccordion("joints", function()
-                      for _, joint in ipairs(attachedJoints) do
-                          -- Display joint type and unique identifier for identification
-                          local jointType = joint:getType()
-                          local jointID = tostring(joint)
-
-                          if (jointType ~= 'mouse') then
-                              -- Display joint button
-                              x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
-                              local jointLabel = string.format("%s %s", jointType, string.sub(joint:getUserData().id, 1, 3))
-
-                              if ui.button(x, y,260, jointLabel) then
-                                  uiState.selectedJoint = joint
-                                  uiState.selectedObj = nil
-                              end
-                          end
-                      end
-                       nextRow()
-                      end)
-                  end
-              end
-
-        end
-        nextRow()
-
-
-
-        -- List Attached Joints Using Body:getJoints()
-
-    end)
-end
 
 local function drawGrid(cam, worldState)
     local lw = love.graphics.getLineWidth()
@@ -791,7 +324,12 @@ end
 function drawUI()
     ui.startFrame()
     local w, h = love.graphics.getDimensions()
-    if worldState.paused then love.graphics.setColor({244/255, 164/255,97/255}) else love.graphics.setColor({245/255, 245/255,220/255}) end
+    if worldState.paused then
+        love.graphics.setColor({ 244 / 255, 164 / 255, 97 / 255 })
+    else
+        love.graphics.setColor({ 245 /
+        255, 245 / 255, 220 / 255 })
+    end
 
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
     love.graphics.setColor(1, 1, 1)
@@ -802,7 +340,7 @@ function drawUI()
     end
 
     if uiState.addShapeOpened then
-        drawAddShapeUI()
+        playtimeui.drawAddShapeUI()
     end
 
     -- "Add Joint" Button
@@ -811,35 +349,8 @@ function drawUI()
     end
 
     if uiState.addJointOpened then
-        local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley', 'friction' }
-        local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-        local startX = 230
-        local startY = 70
-        local panelWidth = 200
-        local buttonSpacing = BUTTON_SPACING
-        local buttonHeight = ui.theme.button.height
-        local panelHeight = (#jointTypes * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
-
-        ui.panel(startX, startY, panelWidth, panelHeight, '', function()
-            local layout = ui.createLayout({
-                type = 'columns',
-                spacing = buttonSpacing,
-                startX = startX + BUTTON_SPACING,
-                startY = startY + BUTTON_SPACING
-            })
-            for _, joint in ipairs(jointTypes) do
-                local width = panelWidth - 20
-                local height = buttonHeight
-                local x, y = ui.nextLayoutPosition(layout, width, height)
-                local jointStarted = ui.button(x, y, width, joint)
-                if jointStarted then
-                    uiState.jointCreationMode = { body1 = nil, body2 = nil, jointType = joint }
-                end
-            end
-        end)
+        playtimeui.drawAddJointUI()
     end
-
-
 
     -- "World Settings" Button
     if ui.button(440, 20, 200, 'settings') then
@@ -847,85 +358,7 @@ function drawUI()
     end
 
     if uiState.worldSettingsOpened then
-        local startX = 440
-        local startY = 70
-        local panelWidth = PANEL_WIDTH
-        --local panelHeight = 255
-        local buttonHeight = ui.theme.button.height
-
-        local buttonSpacing = BUTTON_SPACING
-        local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-        local panelHeight = titleHeight + titleHeight + (7 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
-        ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
-            local layout = ui.createLayout({
-                type = 'columns',
-                spacing = BUTTON_SPACING,
-                startX = startX + BUTTON_SPACING,
-                startY = startY + titleHeight + BUTTON_SPACING
-            })
-            local width = panelWidth - BUTTON_SPACING * 2
-
-            local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-
-            --  x, y = ui.nextLayoutPosition(layout, width, 50)
-            local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, worldState.gravity)
-            if grav then
-                worldState.gravity = grav
-                if world then
-                    world:setGravity(0, worldState.gravity * worldState.meter)
-                end
-            end
-            ui.label(x, y, ' gravity')
-
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            local g, value = ui.checkbox(x, y, uiState.showGrid, 'grid') --showGrid = true,
-            if g then
-                uiState.showGrid = value
-            end
-
-
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, worldState.mouseForce)
-            if mouseForce then
-                worldState.mouseForce = mouseForce
-            end
-            ui.label(x, y, ' mouse F')
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, worldState.mouseDamping)
-            if mouseDamp then
-                worldState.mouseDamping = mouseDamp
-            end
-            ui.label(x, y, ' damp')
-
-
-            -- Add Speed Multiplier Slider
-            local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            local newSpeed = ui.sliderWithInput('speed', x, y, ROW_WIDTH, 0.1, 10.0, worldState.speedMultiplier)
-            if newSpeed then
-                worldState.speedMultiplier = newSpeed
-            end
-            ui.label(x, y, ' speed')
-
-
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            ui.label(x, y, registry.print())
-
-             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-            if ui.button(x,y,ROW_WIDTH, worldState.profiling and 'profiling' or 'profile') then
-                if worldState.profiling then
-                    ProFi:stop()
-                    ProFi:writeReport('profilingReport.txt')
-                    worldState.profiling  = false
-                        else
-                    ProFi:start()
-                    worldState.profiling = true
-                end
-            end
-            -- local t = ui.textinput('worldText', x, y, 280, 70, 'add text...', uiState.worldText)
-            -- if t then
-            --     uiState.worldText = t
-            -- end
-        end)
+        playtimeui.drawWorldSettingsUI()
     end
 
     -- Play/Pause Button
@@ -942,7 +375,7 @@ function drawUI()
     end
 
     if uiState.selectedObj and not uiState.selectedJoint then
-        drawUpdateSelectedObjectUI()
+        playtimeui.drawUpdateSelectedObjectUI()
     end
 
     if uiState.drawClickPoly then
@@ -960,7 +393,7 @@ function drawUI()
             if ui.button(x, y, 260, 'finalize') then
                 finalizePolygon()
             end
-             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'soft-surface') then
                 finalizePolygonAsSoftSurface()
             end
@@ -968,68 +401,17 @@ function drawUI()
     end
 
     if uiState.selectedBodies and #uiState.selectedBodies > 0 then
-        local panelWidth = PANEL_WIDTH
-        local w, h = love.graphics.getDimensions()
-        ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ selection ∞', function()
-            local padding = BUTTON_SPACING
-            local layout = ui.createLayout({
-                type = 'columns',
-                spacing = BUTTON_SPACING,
-                startX = w - panelWidth,
-                startY = 100 + padding
-            })
-
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-
-
-            if ui.button(x, y, 260, 'clone') then
-                local cloned = eio.cloneSelection(uiState.selectedBodies)
-                uiState.selectedBodies = cloned
-            end
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-            if ui.button(x, y, 260, 'destroy') then
-                for i = #uiState.selectedBodies, 1, -1 do
-                    objectManager.destroyBody(uiState.selectedBodies[i].body)
-                end
-                uiState.selectedBodies = nil
-            end
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-
-            if uiState.selectedBodies and #uiState.selectedBodies > 0 then
-                local fb = uiState.selectedBodies[1].body
-                local fixtures = fb:getFixtures( )
-                local ff = fixtures[1]
-                local groupIndex = ff:getGroupIndex()
-                local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex)
-                ui.label(x, y, ' groupid')
-                if groupIndexSlider then
-                    local value = math.floor(groupIndexSlider)
-                    local count = 0
-                    for i = 1, #uiState.selectedBodies do
-                        local b = uiState.selectedBodies[i].body
-                        local fixtures =  b:getFixtures( )
-                        for j = 1, #fixtures do
-                            fixtures[j]:setGroupIndex(value)
-                            count = count +1
-                        end
-                    end
-
-                end
-            end
-           -- end
-           --
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-        end)
+        playtimeui.drawSelectedBodiesUI()
     end
 
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
-        joint.doJointCreateUI(uiState, 500, 100, 400, 150)
+        playtimeui.doJointCreateUI(uiState, 500, 100, 400, 150)
     end
 
     if uiState.selectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
-        joint.doJointUpdateUI(uiState, uiState.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
+        playtimeui.doJointUpdateUI(uiState, uiState.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
     if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
@@ -1090,7 +472,7 @@ function love.draw()
     end
     cam:push()
 
-    box2dDraw.drawWorld(world)
+    box2dDraw.drawWorld(world, worldState.debugDrawMode)
 
     script.call('draw')
 
@@ -1103,22 +485,22 @@ function love.draw()
     for i, v in ipairs(softbodies) do
         love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
         if (tostring(v) == "softbody") then
-             love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
+            love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
             --v:draw("fill", false)
-             love.graphics.setColor(50 * i / 255, 255 / 255, 200 * i / 255, .8)
-            local polygon =  v:getPoly()
+            love.graphics.setColor(50 * i / 255, 255 / 255, 200 * i / 255, .8)
+            local polygon = v:getPoly()
             local tris = shapes.makeTrianglesFromPolygon(polygon)
-            for i =1,#tris do
+            for i = 1, #tris do
                 love.graphics.polygon('fill', tris[i])
             end
         else
             --v:draw(false)
-           local polygon =  v:getPoly()
-           local tris = shapes.makeTrianglesFromPolygon(polygon)
-           for i =1,#tris do
-               love.graphics.polygon('fill', tris[i])
-           end
-          -- print(inspect(polygon), inspect(tris))
+            local polygon = v:getPoly()
+            local tris = shapes.makeTrianglesFromPolygon(polygon)
+            for i = 1, #tris do
+                love.graphics.polygon('fill', tris[i])
+            end
+            -- print(inspect(polygon), inspect(tris))
         end
     end
     love.graphics.setLineWidth(lw)
@@ -1262,11 +644,11 @@ end
 
 function finalizePolygonAsSoftSurface()
     if #uiState.polyVerts >= 6 then
-    local points = uiState.polyVerts
-    local b = blob.softsurface(world, points, 120, "dynamic")
-    table.insert(softbodies, b)
-    b:setJointFrequency(10)
-    b:setJointDamping(10)
+        local points = uiState.polyVerts
+        local b = blob.softsurface(world, points, 120, "dynamic")
+        table.insert(softbodies, b)
+        b:setJointFrequency(10)
+        b:setJointDamping(10)
     end
     print('blob surface wanted instead?')
     -- Reset the drawing state
@@ -1279,10 +661,8 @@ end
 
 function finalizePolygon()
     if #uiState.polyVerts >= 6 then
-
         local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
         objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
-
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")
@@ -1315,12 +695,14 @@ end
 
 local function insertCustomPolygonVertex(x, y)
     local obj = uiState.selectedObj
-    local offx, offy = obj.body:getPosition()
-    local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), uiState.polyCentroid.x,
-        uiState.polyCentroid.y)
-    -- Find the closest edge index
-    local insertAfterVertexIndex = mathutils.findClosestEdge(uiState.polyTempVerts, px, py)
-    mathutils.insertValuesAt(uiState.polyTempVerts, insertAfterVertexIndex * 2 + 1, px, py)
+    if obj then
+        local offx, offy = obj.body:getPosition()
+        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), uiState.polyCentroid.x,
+            uiState.polyCentroid.y)
+        -- Find the closest edge index
+        local insertAfterVertexIndex = mathutils.findClosestEdge(uiState.polyTempVerts, px, py)
+        mathutils.insertValuesAt(uiState.polyTempVerts, insertAfterVertexIndex * 2 + 1, px, py)
+    end
 end
 
 -- Function to remove a custom polygon vertex based on mouse click
@@ -1328,42 +710,43 @@ local function removeCustomPolygonVertex(x, y)
     -- Step 1: Convert world coordinates to local coordinates
 
     local obj = uiState.selectedObj
+    if obj then
+        local offx, offy = obj.body:getPosition()
+        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
+            uiState.polyCentroid.x, uiState.polyCentroid.y)
 
-    local offx, offy = obj.body:getPosition()
-    local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
-        uiState.polyCentroid.x, uiState.polyCentroid.y)
+        -- Step 2: Find the closest vertex index
+        local closestVertexIndex = mathutils.findClosestVertex(uiState.polyTempVerts, px, py)
 
-    -- Step 2: Find the closest vertex index
-    local closestVertexIndex = mathutils.findClosestVertex(uiState.polyTempVerts, px, py)
+        if closestVertexIndex then
+            -- Optional: Define a maximum allowable distance to consider for deletion
+            local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
+            local vx = uiState.polyTempVerts[(closestVertexIndex - 1) * 2 + 1]
+            local vy = uiState.polyTempVerts[(closestVertexIndex - 1) * 2 + 2]
+            local dx = px - vx
+            local dy = py - vy
+            local distSq = dx * dx + dy * dy
+            --print(distSq)
+            if distSq <= maxDeletionDistanceSq then
+                -- Step 3: Remove the vertex from the vertex list
 
-    if closestVertexIndex then
-        -- Optional: Define a maximum allowable distance to consider for deletion
-        local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
-        local vx = uiState.polyTempVerts[(closestVertexIndex - 1) * 2 + 1]
-        local vy = uiState.polyTempVerts[(closestVertexIndex - 1) * 2 + 2]
-        local dx = px - vx
-        local dy = py - vy
-        local distSq = dx * dx + dy * dy
-        --print(distSq)
-        if distSq <= maxDeletionDistanceSq then
-            -- Step 3: Remove the vertex from the vertex list
+                -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
+                if #uiState.polyTempVerts <= 6 then
+                    print("Cannot delete vertex: A polygon must have at least three vertices.")
+                    -- Optionally, you can restore the removed vertex or prevent deletion
+                    return
+                end
+                mathutils.removeVertexAt(uiState.polyTempVerts, closestVertexIndex)
+                maybeUpdateCustomPolygonVertices()
 
-            -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
-            if #uiState.polyTempVerts <= 6 then
-                print("Cannot delete vertex: A polygon must have at least three vertices.")
-                -- Optionally, you can restore the removed vertex or prevent deletion
-                return
+                -- Debugging Output
+                print(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
+            else
+                print("No vertex close enough to delete.")
             end
-            mathutils.removeVertexAt(uiState.polyTempVerts, closestVertexIndex)
-            maybeUpdateCustomPolygonVertices()
-
-            -- Debugging Output
-            print(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
         else
-            print("No vertex close enough to delete.")
+            print("No vertex found to delete.")
         end
-    else
-        print("No vertex found to delete.")
     end
 end
 
@@ -1489,10 +872,8 @@ local function handlePointer(x, y, id, action)
                     return thing
                 end)
                 script.call('onPressed', newHitted)
-
             end
         else
-
             uiState.maybeHideSelectedPanel = true
         end
     elseif action == "released" then
@@ -1502,7 +883,6 @@ local function handlePointer(x, y, id, action)
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)
-
         end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)
@@ -1551,7 +931,7 @@ function love.mousepressed(x, y, button, istouch)
         local cx, cy = cam:getWorldCoordinates(x, y)
 
 
-        local b = blob.softbody(world, cx, cy, 102, 1,1)
+        local b = blob.softbody(world, cx, cy, 102, 1, 1)
         b:setFrequency(3)
         b:setDamping(0.1)
 

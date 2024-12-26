@@ -8,7 +8,6 @@ local jointHandlers = require 'src.joint-handlers'
 local inspect = require 'vendor.inspect'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
-
 local fixtures = require 'src.fixtures'
 
 -- Helper function to create and configure a physics body with shapes
@@ -89,8 +88,6 @@ function lib.addThing(shapeType, x, y, bodyType, radius, width, height, label, o
     return thing
 end
 
-
-
 function lib.recreateThingFromBody(body, newSettings)
     if body:isDestroyed() then
         print("The body is already destroyed.")
@@ -143,7 +140,6 @@ function lib.recreateThingFromBody(body, newSettings)
     if offset > 0 then
         -- here we should recreate the special fixtures..
         for i = 1, offset do
-
             local oldF = oldFixtures[i]
             local shape = oldF:getShape():getPoints()
             --print(inspect(fixtures/fixturesgetCentroidOfFixture(originalBody, oldF)))
@@ -151,8 +147,7 @@ function lib.recreateThingFromBody(body, newSettings)
             local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
             newFixture:setRestitution(oldF:getRestitution())
             newFixture:setFriction(oldF:getFriction())
-            newFixture:setUserData(utils.shallowCopy(  oldF:getUserData()))
-
+            newFixture:setUserData(utils.shallowCopy(oldF:getUserData()))
         end
     end
 
@@ -180,85 +175,17 @@ end
 
 function lib.destroyBody(body)
     local thing = body:getUserData().thing
-    local joints = body:getJoints()
+    local bjoints = body:getJoints()
     for i = 1, #joints do
-        local ud = joints[i]:getUserData()
+        local ud = bjoints[i]:getUserData()
         if ud then
             registry.unregisterJoint(ud.id)
-            joints[i]:destroy()
+            bjoints[i]:destroy()
         end
     end
     registry.unregisterBody(thing.id)
     body:destroy()
 end
-
--- Helper function to collect all connected bodies
-local function collectBodies(thing, collected)
-    collected = collected or {}
-    if not thing or not thing.body or collected[thing.id] then
-        return collected
-    end
-    collected[thing.id] = thing.body
-    for _, joint in ipairs(thing.body:getJoints()) do
-        local bodyA, bodyB = joint:getBodies()
-        local otherBody = (bodyA == thing.body) and bodyB or bodyA
-        local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
-        if otherThing then
-            collectBodies(otherThing, collected)
-        end
-    end
-    return collected
-end
-
--- -- Function to calculate centroid
--- local function calculateCentroid(thing)
---     local bodies = collectBodies(thing)
---     local totalMass = 0
---     local sumX, sumY = 0, 0
---     for id, body in pairs(bodies) do
---         local mass = body:getMass()
---         local x, y = body:getPosition()
---         sumX = sumX + x * mass
---         sumY = sumY + y * mass
---         totalMass = totalMass + mass
---     end
---     if totalMass == 0 then
---         return 0, 0 -- Avoid division by zero
---     end
---     return sumX / totalMass, sumY / totalMass
--- end
-
--- local function calculateCentroidAll(thing)
---     local bodies = collectBodies(thing)
---     local totalMass = 0
---     local sumX, sumY = 0, 0
---     for id, body in pairs(bodies) do
---         local mass = body:getMass()
---         local x, y = body:getPosition()
---         sumX = sumX + x * mass
---         sumY = sumY + y * mass
---         totalMass = totalMass + mass
---     end
---     if totalMass == 0 then
---         return 0, 0 -- Avoid division by zero
---     end
---     return sumX / totalMass, sumY / totalMass
--- end
-
-local function calculateCentroidAll(thing)
-     local sumX, sumY = 0, 0
-     local bodies = collectBodies(thing)
-     local count = 0
-     for id, body in pairs(bodies) do
-          local x, y = body:getPosition()
-          sumX = sumX + x
-          sumY = sumY + y
-          count = count + 1
-     end
-    -- print(sumX, sumY, #bodies)
-     return sumX / count, sumY / count
-end
-
 
 -- Helper function to collect all connected bodies
 local function collectBodies(thing, collected)
@@ -306,7 +233,6 @@ function lib.flipThing(thing, axis, recursive)
     --print('calculating centroid')
     -- Phase 1: Flip All Bodies
     local function flipBody(currentThing)
-
         local currentBody = currentThing.body
         if not currentBody or processedBodies[currentThing.id] then
             return
@@ -348,7 +274,6 @@ function lib.flipThing(thing, axis, recursive)
 
 
         if currentThing.vertices then
-
             local flippedVertices = utils.shallowCopy(currentThing.vertices)
             for i = 1, #currentThing.vertices, 2 do
                 if axis == 'x' then
@@ -366,9 +291,9 @@ function lib.flipThing(thing, axis, recursive)
         -- end
         local fixtures = currentBody:getFixtures()
         -- if i do this backwards the fixtures end up being in the same order... !!
-        for i=#fixtures, 1, -1 do
-       -- for _, fixture in ipairs(currentBody:getFixtures()) do
-        local fixture = fixtures[i]
+        for i = #fixtures, 1, -1 do
+            -- for _, fixture in ipairs(currentBody:getFixtures()) do
+            local fixture = fixtures[i]
             local shape = fixture:getShape()
             if shape:typeOf("PolygonShape") then
                 local points = { shape:getPoints() }
@@ -499,9 +424,5 @@ function lib.flipThing(thing, axis, recursive)
     --print('************* Flip Completed *************')
     return thing
 end
-
-
-
-
 
 return lib

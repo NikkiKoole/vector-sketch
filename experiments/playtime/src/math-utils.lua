@@ -18,6 +18,7 @@ function lib.getCenterOfPoints(points)
     local h = bry - tly
     return tlx + w / 2, tly + h / 2
 end
+
 -- Utility function to check if a point is inside a polygon.
 -- Implements the ray-casting algorithm.
 local function pointInPath(x, y, poly)
@@ -386,10 +387,10 @@ end
 
 function lib.findIntersections(polygon, line)
     local intersections = {}
-    local n = #polygon / 2  -- Number of vertices
+    local n = #polygon / 2 -- Number of vertices
 
     for i = 1, n do
-        local j = (i % n) + 1  -- Next vertex index (wrap around)
+        local j = (i % n) + 1 -- Next vertex index (wrap around)
 
         -- Current edge points
         local x1, y1 = polygon[(i - 1) * 2 + 1], polygon[(i - 1) * 2 + 2]
@@ -412,16 +413,17 @@ function lib.findIntersections(polygon, line)
             end
 
             if not duplicate then
-                table.insert(intersections, { x = Px, y = Py, i1 =i, i2=j})
+                table.insert(intersections, { x = Px, y = Py, i1 = i, i2 = j })
             end
         end
     end
 
     return intersections
 end
+
 -- Function to split a polygon into two at a single given intersection point.
 -- this is used to fix self-intersecting polygons
- function lib.splitPoly(poly, intersection)
+function lib.splitPoly(poly, intersection)
     local function getIndices()
         local biggestIndex = math.max(intersection.i1, intersection.i2)
         local smallestIndex = math.min(intersection.i1, intersection.i2)
@@ -486,34 +488,34 @@ end
 --         100, 200, -- Vertex 6
 --     }
 
-    -- Define slicing points (horizontal line at y = 150)
+-- Define slicing points (horizontal line at y = 150)
 
-    -- Define slicing points
-    -- local p1 = { x = -5000, y = 150 }
-    -- local p2 = { x = 5000, y = 150 }
-
-
-    -- polygon = {
-    --     0, -100,    -- Vertex 1
-    --     23, -30,    -- Vertex 2
-    --     100, -30,   -- Vertex 3
-    --     38, 10,     -- Vertex 4
-    --     59, 80,     -- Vertex 5
-    --     0, 40,      -- Vertex 6
-    --     -59, 80,    -- Vertex 7
-    --     -38, 10,    -- Vertex 8
-    --     -100, -30,  -- Vertex 9
-    --     -23, -30,   -- Vertex 10
-    -- }
-
-    -- -- Define slicing points (diagonal line)
-    -- local p1 = { x = -150, y = 150 }
-    -- local p2 = { x = 150, y = -150 }
+-- Define slicing points
+-- local p1 = { x = -5000, y = 150 }
+-- local p2 = { x = 5000, y = 150 }
 
 
-    -- -- Slice the polygon
-    -- slicedPolygons = mathutils.slicePolygon(polygon, p1, p2)
-    -- print(inspect(slicedPolygons))
+-- polygon = {
+--     0, -100,    -- Vertex 1
+--     23, -30,    -- Vertex 2
+--     100, -30,   -- Vertex 3
+--     38, 10,     -- Vertex 4
+--     59, 80,     -- Vertex 5
+--     0, 40,      -- Vertex 6
+--     -59, 80,    -- Vertex 7
+--     -38, 10,    -- Vertex 8
+--     -100, -30,  -- Vertex 9
+--     -23, -30,   -- Vertex 10
+-- }
+
+-- -- Define slicing points (diagonal line)
+-- local p1 = { x = -150, y = 150 }
+-- local p2 = { x = 150, y = -150 }
+
+
+-- -- Slice the polygon
+-- slicedPolygons = mathutils.slicePolygon(polygon, p1, p2)
+-- print(inspect(slicedPolygons))
 function lib.slicePolygon(polygon, p1, p2)
     -- p1 and p2 define the slicing line: {x = ..., y = ...}
 
@@ -522,14 +524,14 @@ function lib.slicePolygon(polygon, p1, p2)
     local intersections = lib.findIntersections(polygon, sliceLine)
 
     -- Debug: Print found intersections
- --   print("Found Intersections:")
+    --   print("Found Intersections:")
     for _, inter in ipairs(intersections) do
-   --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
+        --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
     end
 
     -- Ensure there are at least two unique intersection points
     if #intersections < 2 then
-   --     print("Slice line does not intersect the polygon twice.")
+        --     print("Slice line does not intersect the polygon twice.")
         return { polygon } -- Return the original polygon as a single-element table
     end
 
