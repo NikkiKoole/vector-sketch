@@ -17,7 +17,7 @@ local box2dDraw = require 'src.box2d-draw'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
-
+local fixtures = require 'src.fixtures'
 
 function waitForEvent()
     local a, b, c, d, e
@@ -57,9 +57,11 @@ function love.load(args)
 
         worldSettingsOpened = false,
         maybeHideSelectedPanel = false,
+
         selectedJoint = nil,
         setOffsetAFunc = nil,
         setOffsetBFunc = nil,
+        setUpdateSFixturePosFunc = nil,
         selectedSFixture = nil,
         selectedObj = nil,
         draggingObj = nil,
@@ -410,9 +412,18 @@ function drawUI()
         playtimeui.doJointCreateUI(uiState, 500, 100, 400, 150)
     end
 
+    if uiState.selectedSFixture then
+        playtimeui.drawSelectedSFixture()
+    end
+
     if uiState.selectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
         playtimeui.doJointUpdateUI(uiState, uiState.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
+    end
+
+    if uiState.setOffsetAFunc or uiState.setOffsetBFunc or uiState.setUpdateSFixturePosFunc then
+        ui.panel(500, 100, 300, 60, '• click point •', function()
+        end)
     end
 
     if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
@@ -477,6 +488,12 @@ function love.draw()
 
     script.call('draw')
 
+    if uiState.selectedSFixture and not uiState.selectedSFixture:isDestroyed() then
+        local body = uiState.selectedSFixture:getBody()
+        local centroid = fixtures.getCentroidOfFixture(body, uiState.selectedSFixture)
+        local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
+        love.graphics.circle('line', x2, y2, 3)
+    end
 
     if uiState.selectedJoint and not uiState.selectedJoint:isDestroyed() then
         box2dDraw.drawJointAnchors(uiState.selectedJoint)
@@ -565,6 +582,7 @@ function love.draw()
     if uiState.maybeHideSelectedPanel then
         if not (ui.activeElementID or ui.focusedTextInputID) then
             uiState.selectedObj = nil
+            uiState.selectedSFixture = nil
             uiState.selectedJoint = nil
         end
         uiState.maybeHideSelectedPanel = false
@@ -784,7 +802,7 @@ local function handlePointer(x, y, id, action)
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if uiState.saveDialogOpened then return end
-        if uiState.selectedJoint or uiState.selectedObj or uiState.selectedBodies or uiState.drawClickPoly then
+        if uiState.selectedJoint or uiState.selectedObj or uiState.selectedSFixture or uiState.selectedBodies or uiState.drawClickPoly then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -826,6 +844,10 @@ local function handlePointer(x, y, id, action)
         if (uiState.setOffsetBFunc) then
             uiState.selectedJoint = uiState.setOffsetBFunc(cx, cy)
             uiState.setOffsetBFunc = nil
+        end
+        if (uiState.setUpdateSFixturePosFunc) then
+            uiState.selectedSFixture = uiState.setUpdateSFixturePosFunc(cx, cy)
+            uiState.setUpdateSFixturePosFunc = nil
         end
 
         local onPressedParams = {

@@ -729,6 +729,67 @@ function lib.drawWorldSettingsUI()
     end)
 end
 
+function lib.drawSelectedSFixture()
+    local panelWidth = PANEL_WIDTH
+    local w, h = love.graphics.getDimensions()
+    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ sfixture ∞', function()
+        local padding = BUTTON_SPACING
+        local layout = ui.createLayout({
+            type = 'columns',
+            spacing = BUTTON_SPACING,
+            startX = w - panelWidth,
+            startY = 100 + padding
+        })
+        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+
+        if ui.button(x, y, 40, '∆') then
+            uiState.setUpdateSFixturePosFunc = function(x, y)
+                local body = uiState.selectedSFixture:getBody()
+                local beforeIndex = 0
+                local myfixtures = body:getFixtures()
+
+                for i = 1, #myfixtures do
+                    if myfixtures[i] == uiState.selectedSFixture then
+                        beforeIndex = i
+                    end
+                end
+                local localX, localY = body:getLocalPoint(x, y)
+
+                uiState.selectedSFixture:destroy()
+
+                local function rect(w, h, x, y)
+                    return {
+                        x - w / 2, y - h / 2,
+                        x + w / 2, y - h / 2,
+                        x + w / 2, y + h / 2,
+                        x - w / 2, y + h / 2
+                    }
+                end
+                local shape = love.physics.newPolygonShape(rect(20, 20, localX, localY))
+                local fixture = love.physics.newFixture(body, shape)
+                fixture:setSensor(true) -- Sensor so it doesn't collide
+                fixture:setUserData({ type = "special", extra = {} })
+                local afterIndex = 0
+                local myfixtures = body:getFixtures()
+                for i = 1, #myfixtures do
+                    if myfixtures[i] == fixture then
+                        afterIndex = i
+                    end
+                end
+                print(beforeIndex, afterIndex)
+
+
+                return fixture
+            end
+        end
+
+
+        -- local mx, my = love.mouse.getPosition()
+        --local wx, wy = cam:getWorldCoordinates(mx, my)
+    end)
+end
+
 function lib.drawSelectedBodiesUI()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
