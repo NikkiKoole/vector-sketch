@@ -1,7 +1,5 @@
 local lib = {}
 
-
-
 local eio = require 'src.io'
 local registry = require 'src.registry'
 local mathutils = require 'src.math-utils'
@@ -14,6 +12,7 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local utils = require 'src.utils'
 local ProFi = require 'vendor.ProFi'
 local fixtures = require 'src.fixtures'
+
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
@@ -36,6 +35,15 @@ local function createCheckbox(labelText, x, y, value, callback)
         callback(newValue)
     end
     return newValue
+end
+
+local function rect(w, h, x, y)
+    return {
+        x - w / 2, y - h / 2,
+        x + w / 2, y - h / 2,
+        x + w / 2, y + h / 2,
+        x - w / 2, y + h / 2
+    }
 end
 
 function lib.doJointCreateUI(uiState, _x, _y, w, h)
@@ -594,19 +602,7 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                --print(localX, localY)
-                --  addSnapPoint(body, localX, localY)
-
-
-                local function rect(w, h, x, y)
-                    return {
-                        x - w / 2, y - h / 2,
-                        x + w / 2, y - h / 2,
-                        x + w / 2, y + h / 2,
-                        x - w / 2, y + h / 2
-                    }
-                end
-                local shape = love.physics.newPolygonShape(rect(20, 20, localX, localY))
+                local shape = love.physics.newPolygonShape(rect(30, 30, localX, localY))
                 local fixture = love.physics.newFixture(body, shape)
                 fixture:setSensor(true) -- Sensor so it doesn't collide
                 fixture:setUserData({ type = "special", extra = {} })
@@ -731,6 +727,55 @@ function lib.drawWorldSettingsUI()
     end)
 end
 
+-- Function to make the polygon relative to its center
+local function makePolygonRelativeToCenter(polygon, centerX, centerY)
+    -- Calculate the center
+
+
+    -- Shift all points to make them relative to the center
+    local relativePolygon = {}
+    for i = 1, #polygon, 2 do
+        local x = polygon[i] - centerX
+        local y = polygon[i + 1] - centerY
+        table.insert(relativePolygon, x)
+        table.insert(relativePolygon, y)
+    end
+
+    return relativePolygon, centerX, centerY
+end
+-- Function to make the polygon absolute given a new center
+local function makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
+    local absolutePolygon = {}
+    for i = 1, #relativePolygon, 2 do
+        local x = relativePolygon[i] + newCenterX
+        local y = relativePolygon[i + 1] + newCenterY
+        table.insert(absolutePolygon, x)
+        table.insert(absolutePolygon, y)
+    end
+    return absolutePolygon
+end
+
+local function getPolygonDimensions(polygon)
+    -- Initialize min and max values
+    local minX, maxX = math.huge, -math.huge
+    local minY, maxY = math.huge, -math.huge
+
+    -- Loop through the polygon's points
+    for i = 1, #polygon, 2 do
+        local x, y = polygon[i], polygon[i + 1]
+        if x < minX then minX = x end
+        if x > maxX then maxX = x end
+        if y < minY then minY = y end
+        if y > maxY then maxY = y end
+    end
+
+    -- Calculate width and height
+    local width = maxX - minX
+    local height = maxY - minY
+
+    return width, height
+end
+
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -757,36 +802,48 @@ function lib.drawSelectedSFixture()
                     end
                 end
                 local localX, localY = body:getLocalPoint(x, y)
+                local points = { uiState.selectedSFixture:getShape():getPoints() }
+                local centerX, centerY = mathutils.getCenterOfPoints(points)
+                local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
+                local newShape = makePolygonAbsolute(relativePoints, localX, localY)
 
                 uiState.selectedSFixture:destroy()
 
-                local function rect(w, h, x, y)
-                    return {
-                        x - w / 2, y - h / 2,
-                        x + w / 2, y - h / 2,
-                        x + w / 2, y + h / 2,
-                        x - w / 2, y + h / 2
-                    }
-                end
-                local shape = love.physics.newPolygonShape(rect(20, 20, localX, localY))
-                local fixture = love.physics.newFixture(body, shape)
-                fixture:setSensor(true) -- Sensor so it doesn't collide
-                fixture:setUserData({ type = "special", extra = {} })
+                local shape = love.physics.newPolygonShape(newShape)
+                local newfixture = love.physics.newFixture(body, shape)
+                newfixture:setSensor(true) -- Sensor so it doesn't collide
+                newfixture:setUserData({ type = "special", extra = {} })
                 local afterIndex = 0
                 local myfixtures = body:getFixtures()
                 for i = 1, #myfixtures do
-                    if myfixtures[i] == fixture then
+                    if myfixtures[i] == newfixture then
                         afterIndex = i
                     end
                 end
-                print(beforeIndex, afterIndex)
+                --print(beforeIndex, afterIndex)
 
 
-                return fixture
+                return newfixture
             end
         end
+        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        local points = { uiState.selectedSFixture:getShape():getPoints() }
+        local dim = getPolygonDimensions(points)
+        local myID = 'THIS_NEEDS_TOBE_A_CUSTOMID'
+        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
+        ui.label(x, y, ' radius')
+        if newRadius and newRadius ~= dim then
+            local body = uiState.selectedSFixture:getBody()
+            uiState.selectedSFixture:destroy()
 
-
+            local centerX, centerY = mathutils.getCenterOfPoints(points)
+            local shape = love.physics.newPolygonShape(rect(newRadius, newRadius, centerX, centerY))
+            local newfixture = love.physics.newFixture(body, shape)
+            newfixture:setSensor(true) -- Sensor so it doesn't collide
+            newfixture:setUserData({ type = "special", extra = {} })
+            uiState.selectedSFixture = newfixture
+            -- uiState.selectedSFixture
+        end
         -- local mx, my = love.mouse.getPosition()
         --local wx, wy = cam:getWorldCoordinates(mx, my)
     end)
@@ -1156,6 +1213,12 @@ function lib.drawUpdateSelectedObjectUI()
                 ui.label(x, y, ' ang-vel')
 
                 nextRow()
+                local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
+                if dirty then
+                    body:setBullet(not body:isBullet())
+                end
+
+                nextRow()
             end
             )
             nextRow()
@@ -1190,7 +1253,6 @@ function lib.drawUpdateSelectedObjectUI()
                 drawAccordion("sfixtures", function()
                     for i = 1, index do
                         nextRow()
-
 
                         local clicked, _, _, isHover = ui.button(x, y, 260, 'sfixture' .. i)
 
