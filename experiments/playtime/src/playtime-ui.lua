@@ -1190,10 +1190,20 @@ function lib.drawUpdateSelectedObjectUI()
                 drawAccordion("sfixtures", function()
                     for i = 1, index do
                         nextRow()
-                        if ui.button(x, y, 260, 'sfixture' .. i) then
+
+
+                        local clicked, _, _, isHover = ui.button(x, y, 260, 'sfixture' .. i)
+
+                        if clicked then
                             uiState.selectedJoint = nil
                             uiState.selectedObj = nil
                             uiState.selectedSFixture = myfixtures[i]
+                        end
+                        if isHover then
+                            local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
+                            local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
+                            local x3, y3 = cam:getScreenCoordinates(x2, y2)
+                            love.graphics.circle('line', x3, y3, 3)
                         end
                     end
                 end)

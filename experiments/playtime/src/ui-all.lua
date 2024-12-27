@@ -3,15 +3,15 @@ local ui = {}
 
 require('src.ui-textinput')(ui)
 
-local creamy  = {245/255, 245/255,220/255} --#F5F5DC Creamy White:
+local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
 -- Theme Configuration
-local theme = {
+local theme  = {
     button = {
         default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
         hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
         pressed = { 217 / 255, 189 / 255, 197 / 255 },   -- Pressed fill color
-        outline = creamy,                           -- Outline color
-        text_default = creamy,                      -- Default text color
+        outline = creamy,                                -- Outline color
+        text_default = creamy,                           -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
         height = 34
@@ -42,13 +42,13 @@ local theme = {
     },
     panel = {
         background = { 50 / 255, 50 / 255, 50 / 255 }, -- Panel background color
-        outline = creamy,                         -- Panel outline color
+        outline = creamy,                              -- Panel outline color
         label = { 1, 1, 1 },                           -- Panel label text color
     },
     textinput = {
         background = { 0.1, 0.1, 0.1 },                          -- Background color of the TextInput
-        outline = creamy,                                   -- Default outline color
-        text = creamy,                                      -- Text color
+        outline = creamy,                                        -- Default outline color
+        text = creamy,                                           -- Text color
         placeholder = { 0.5, 0.5, 0.5 },                         -- Placeholder text color
         cursor = { 1, 1, 1 },                                    -- Cursor color
         focusedBorderColor = { 244 / 255, 189 / 255, 94 / 255 }, -- Border color when focused
@@ -57,7 +57,7 @@ local theme = {
     lineWidth = 3,                                               -- General line width
 }
 
-ui.theme = theme
+ui.theme     = theme
 
 --- Initializes the UI module.
 function ui.init(font)
@@ -291,7 +291,7 @@ function ui.header_button(x, y, width, label, opened)
     end
     local rxry = 0
     if opened then
-            love.graphics.setColor(theme.button.hover)
+        love.graphics.setColor(theme.button.hover)
     end
     love.graphics.rectangle("fill", x, y, width, height, rxry, rxry)
 
@@ -308,7 +308,7 @@ function ui.header_button(x, y, width, label, opened)
     end
     local textHeight = ui.font:getHeight()
     love.graphics.print(label, x, y + (height - textHeight) / 2)
-   -- love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
+    -- love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
     love.graphics.setColor(1, 1, 1)
@@ -380,7 +380,7 @@ function ui.button(x, y, width, label, optionalHeight)
         -- Reset the active element ID
         ui.activeElementID = nil
     end
-    return clicked, pressed, released
+    return clicked, pressed, released, isHover
 end
 
 --- Creates a slider (horizontal or vertical).
