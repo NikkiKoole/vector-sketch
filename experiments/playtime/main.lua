@@ -23,6 +23,7 @@ function waitForEvent()
     local a, b, c, d, e
     repeat
         a, b, c, d, e = love.event.wait()
+        print(a, b, c, d, e)
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 

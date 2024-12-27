@@ -55,6 +55,10 @@ function lib.drawWorld(world, drawOutline)
                     if fixture:getUserData().bodyType == "connector" then
                         love.graphics.setColor(1, 0, 0, alpha)
                     end
+                    if fixture:getUserData().type then
+                        local color = pal.orange
+                        love.graphics.setColor(color[1], color[2], color[3], alpha)
+                    end
                 end
                 love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
                 local color = pal.creamy
