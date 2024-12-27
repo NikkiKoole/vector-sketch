@@ -377,9 +377,7 @@ function drawUI()
         end
     end
 
-    if uiState.selectedObj and not uiState.selectedJoint then
-        playtimeui.drawUpdateSelectedObjectUI()
-    end
+
 
     if uiState.drawClickPoly then
         local panelWidth = PANEL_WIDTH
@@ -403,6 +401,10 @@ function drawUI()
         end)
     end
 
+    if uiState.selectedObj and not uiState.selectedJoint then
+        playtimeui.drawUpdateSelectedObjectUI()
+    end
+
     if uiState.selectedBodies and #uiState.selectedBodies > 0 then
         playtimeui.drawSelectedBodiesUI()
     end
@@ -416,13 +418,13 @@ function drawUI()
         playtimeui.drawSelectedSFixture()
     end
 
-    if uiState.selectedJoint then
+    if uiState.selectedObj and uiState.selectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
         playtimeui.doJointUpdateUI(uiState, uiState.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
     if uiState.setOffsetAFunc or uiState.setOffsetBFunc or uiState.setUpdateSFixturePosFunc then
-        ui.panel(500, 100, 300, 60, '• click point •', function()
+        ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
 
@@ -580,14 +582,30 @@ function love.draw()
     script.call('drawUI')
 
     if uiState.maybeHideSelectedPanel then
-        if not (ui.activeElementID or ui.focusedTextInputID) then
-            uiState.selectedObj = nil
+        if (uiState.selectedSFixture) then
+            local body = uiState.selectedSFixture:getBody()
+            local thing = body:getUserData().thing
+
+            uiState.selectedObj = thing
             uiState.selectedSFixture = nil
+            uiState.maybeHideSelectedPanel = false
+        elseif (uiState.selectedJoint) then
+            --print(uiState.selectedObj)
+            --local bodyA, bodyB = uiState.selectedJoint:getBodies()
+            --local thing = bodyA:getUserData().thing
+            -- uiState.selectedObj = thing
             uiState.selectedJoint = nil
+            uiState.maybeHideSelectedPanel = false
+        else
+            if not (ui.activeElementID or ui.focusedTextInputID) then
+                uiState.selectedObj = nil
+                uiState.selectedSFixture = nil
+                uiState.selectedJoint = nil
+            end
+            uiState.maybeHideSelectedPanel = false
+            uiState.polyTempVerts = nil
+            uiState.polyLockedVerts = true
         end
-        uiState.maybeHideSelectedPanel = false
-        uiState.polyTempVerts = nil
-        uiState.polyLockedVerts = true
     end
 
     if sceneScript and sceneScript.foundError then

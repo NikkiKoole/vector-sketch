@@ -610,6 +610,8 @@ function lib.drawAddShapeUI()
                 local fixture = love.physics.newFixture(body, shape)
                 fixture:setSensor(true) -- Sensor so it doesn't collide
                 fixture:setUserData({ type = "special", extra = {} })
+
+                uiState.selectedSFixture = fixture
             end
             ui.draggingActive = nil
         end
@@ -1174,7 +1176,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                                 if ui.button(x, y, 260, jointLabel) then
                                     uiState.selectedJoint = joint
-                                    uiState.selectedObj = nil
+                                    --  uiState.selectedObj = nil
                                 end
                             end
                         end
