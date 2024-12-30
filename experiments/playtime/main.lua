@@ -990,7 +990,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
         uiState.polyVerts = {}
         uiState.lastPolyPt = nil
     else
-        handlePointer(x, y, 'mouse', 'pressed')
+        handlePointer(x, y, id, 'pressed')
     end
 end
 
