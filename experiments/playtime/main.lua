@@ -402,7 +402,7 @@ function drawUI()
         end)
     end
 
-    if uiState.selectedObj and not uiState.selectedJoint then
+    if uiState.selectedObj and not uiState.selectedJoint and not uiState.selectedSFixture then
         playtimeui.drawUpdateSelectedObjectUI()
     end
 

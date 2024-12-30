@@ -785,7 +785,18 @@ function lib.drawSelectedSFixture()
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
         local myID = uiState.selectedSFixture:getUserData().id
+        local myLabel = uiState.selectedSFixture:getUserData().label or ''
         --print(myID)
+
+        local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", myLabel)
+        if newLabel and newLabel ~= myLabel then
+            local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+            oldUD.label = newLabel
+            uiState.selectedSFixture:setUserData(oldUD)
+        end
+
+        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
         if ui.button(x, y, 40, '∆') then
             uiState.setUpdateSFixturePosFunc = function(x, y)
                 local body = uiState.selectedSFixture:getBody()
@@ -1252,8 +1263,9 @@ function lib.drawUpdateSelectedObjectUI()
                 drawAccordion("sfixtures", function()
                     for i = 1, index do
                         nextRow()
-
-                        local clicked, _, _, isHover = ui.button(x, y, 260, 'sfixture' .. i)
+                        local fixLabel = string.format("%s %s", 'sf',
+                            string.sub(myfixtures[i]:getUserData().id, 1, 3))
+                        local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)
 
                         if clicked then
                             uiState.selectedJoint = nil
