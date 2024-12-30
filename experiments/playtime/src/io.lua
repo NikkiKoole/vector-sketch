@@ -45,6 +45,8 @@ function lib.load(data, world)
         end
         registry.reset()
     end
+
+    local recreatedSFixtures = {}
     -- Iterate through saved bodies and recreate them
     for _, bodyData in ipairs(jsonData.bodies) do
         -- Create a new body
@@ -90,9 +92,11 @@ function lib.load(data, world)
                 if fixtureData.userData then
                     fixture:setSensor(fixtureData.sensor)
                     local oldUD = utils.shallowCopy(fixtureData.userData)
-                    oldUD.id = getNewId(oldUD.id)
+                    oldUD.id = oldUD.id and getNewId(oldUD.id) or uuid.generateID()
 
                     fixture:setUserData(oldUD)
+                    table.insert(recreatedSFixtures, fixture)
+                    registry.registerSFixture(oldUD.id, fixture)
                     --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
             end
@@ -116,6 +120,9 @@ function lib.load(data, world)
         body:setUserData({ thing = thing })
         registry.registerBody(thing.id, body)
     end
+
+    -- todo now we have all the sfixtures and bodies
+    -- only now we can patch up stuff with old ids in extra folder ..
 
     -- Iterate through saved joints and recreate them
     for _, jointData in ipairs(jsonData.joints) do
@@ -508,7 +515,7 @@ function lib.cloneSelection(selectedBodies)
                 print('some how the userdata fixtures arent at the beginning!')
             end
             if ok and offset > -1 then
-                print(ok, offset)
+                -- print(ok, offset)
                 for i = 1 + offset, #oldFixtures do
                     local oldF = oldFixtures[i]
                     local newFixture = love.physics.newFixture(newBody, newShapeList[i - (offset)], oldF:getDensity())
