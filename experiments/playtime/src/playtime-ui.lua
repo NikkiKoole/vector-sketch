@@ -771,9 +771,14 @@ local function getPolygonDimensions(polygon)
     return width, height
 end
 
+local hadBeenDraggingObj = false
+
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
+    if uiState.draggingObj then
+        hadBeenDraggingObj = true
+    end
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ sfixture ∞', function()
         local padding = BUTTON_SPACING
         local layout = ui.createLayout({
@@ -1034,6 +1039,9 @@ function lib.drawUpdateSelectedObjectUI()
                 local value = thing.body:getX()
                 local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, 40, ".", "" .. value, true,
                     clicked or not worldState.paused or uiState.draggingObj)
+                if hadBeenDraggingObj then
+                    dirty = true
+                end
                 if (dirty) then
                     local numericPosX = tonumber(numericInputText)
                     if numericPosX then
@@ -1046,6 +1054,9 @@ function lib.drawUpdateSelectedObjectUI()
                 local value = thing.body:getY()
                 local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, 40, ".", "" .. value, true,
                     clicked or not worldState.paused or uiState.draggingObj)
+                if hadBeenDraggingObj then
+                    dirty = true
+                end
                 if (dirty) then
                     local numericPosY = tonumber(numericInputText)
                     if numericPosY then
@@ -1054,6 +1065,9 @@ function lib.drawUpdateSelectedObjectUI()
                         -- Handle invalid input, e.g., reset to previous value or show an error
                         print("Invalid Y position input!")
                     end
+                end
+                if hadBeenDraggingObj then
+                    hadBeenDraggingObj = false
                 end
 
 
