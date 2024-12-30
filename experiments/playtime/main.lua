@@ -262,7 +262,7 @@ function love.update(dt)
             end
         end
 
-        for i = 1, 1 do
+        for i = 1, 3 do
             world:update(scaled_dt)
         end
         script.call('update', scaled_dt)
@@ -564,7 +564,7 @@ function love.draw()
     end
 
     -- draw temp poly when changing vertices
-    if uiState.polyTempVerts then
+    if uiState.polyTempVerts and uiState.selectedObj then
         local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
             uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
         love.graphics.setColor(1, 0, 0)
@@ -630,6 +630,7 @@ function love.wheelmoved(dx, dy)
 end
 
 function love.mousemoved(x, y, dx, dy)
+    --print('moved')
     if uiState.polyDragIdx and uiState.polyDragIdx > 0 then
         local index = uiState.polyDragIdx
         local obj = uiState.selectedObj
@@ -982,7 +983,15 @@ function love.mousepressed(x, y, button, istouch)
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
-    handlePointer(x, y, id, 'pressed')
+    --handlePointer(x, y, id, 'pressed')
+    if uiState.drawFreePoly then
+        -- Start capturing mouse movement
+        uiState.capturingPoly = true
+        uiState.polyVerts = {}
+        uiState.lastPolyPt = nil
+    else
+        handlePointer(x, y, 'mouse', 'pressed')
+    end
 end
 
 function love.mousereleased(x, y, button, istouch)
@@ -1037,3 +1046,4 @@ if FIXED_TIMESTEP then
         end
     end
 end
+--
