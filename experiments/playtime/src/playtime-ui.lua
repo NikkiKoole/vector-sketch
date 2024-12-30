@@ -784,7 +784,8 @@ function lib.drawSelectedSFixture()
         })
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
-
+        local myID = uiState.selectedSFixture:getUserData().id
+        --print(myID)
         if ui.button(x, y, 40, '∆') then
             uiState.setUpdateSFixturePosFunc = function(x, y)
                 local body = uiState.selectedSFixture:getBody()
@@ -801,13 +802,14 @@ function lib.drawSelectedSFixture()
                 local centerX, centerY = mathutils.getCenterOfPoints(points)
                 local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
                 local newShape = makePolygonAbsolute(relativePoints, localX, localY)
-
+                local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
                 uiState.selectedSFixture:destroy()
 
                 local shape = love.physics.newPolygonShape(newShape)
                 local newfixture = love.physics.newFixture(body, shape)
                 newfixture:setSensor(true) -- Sensor so it doesn't collide
-                newfixture:setUserData({ type = "sfixture", extra = {} })
+
+                newfixture:setUserData(oldUD)
                 local afterIndex = 0
                 local myfixtures = body:getFixtures()
                 for i = 1, #myfixtures do
@@ -824,10 +826,10 @@ function lib.drawSelectedSFixture()
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local points = { uiState.selectedSFixture:getShape():getPoints() }
         local dim = getPolygonDimensions(points)
-        local myID = 'THIS_NEEDS_TOBE_A_CUSTOMID'
         local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
         ui.label(x, y, ' radius')
         if newRadius and newRadius ~= dim then
+            local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             local body = uiState.selectedSFixture:getBody()
             uiState.selectedSFixture:destroy()
 
@@ -835,7 +837,9 @@ function lib.drawSelectedSFixture()
             local shape = love.physics.newPolygonShape(rect(newRadius, newRadius, centerX, centerY))
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
-            newfixture:setUserData({ type = "sfixture", extra = {} })
+
+            newfixture:setUserData(oldUD)
+
             uiState.selectedSFixture = newfixture
             -- uiState.selectedSFixture
         end
