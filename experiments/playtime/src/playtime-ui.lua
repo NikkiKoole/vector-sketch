@@ -589,10 +589,7 @@ function lib.drawAddShapeUI()
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
 
-
-            --  uiState.draggingObj = {}
             uiState.offsetDragging = { 0, 0 }
-            --objectManager.startSpawn('fixture', wx, wy)
         end
         if released then
             local mx, my = love.mouse.getPosition()
@@ -602,10 +599,8 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local shape = love.physics.newPolygonShape(rect(30, 30, localX, localY))
-                local fixture = love.physics.newFixture(body, shape)
-                fixture:setSensor(true) -- Sensor so it doesn't collide
-                fixture:setUserData({ type = "special", extra = {} })
+
+                local fixture = fixtures.createSFixture(body, localX, localY, 30)
 
                 uiState.selectedSFixture = fixture
             end
@@ -812,7 +807,7 @@ function lib.drawSelectedSFixture()
                 local shape = love.physics.newPolygonShape(newShape)
                 local newfixture = love.physics.newFixture(body, shape)
                 newfixture:setSensor(true) -- Sensor so it doesn't collide
-                newfixture:setUserData({ type = "special", extra = {} })
+                newfixture:setUserData({ type = "sfixture", extra = {} })
                 local afterIndex = 0
                 local myfixtures = body:getFixtures()
                 for i = 1, #myfixtures do
@@ -840,7 +835,7 @@ function lib.drawSelectedSFixture()
             local shape = love.physics.newPolygonShape(rect(newRadius, newRadius, centerX, centerY))
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
-            newfixture:setUserData({ type = "special", extra = {} })
+            newfixture:setUserData({ type = "sfixture", extra = {} })
             uiState.selectedSFixture = newfixture
             -- uiState.selectedSFixture
         end

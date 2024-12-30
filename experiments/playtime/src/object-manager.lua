@@ -178,9 +178,17 @@ function lib.destroyBody(body)
     local bjoints = body:getJoints()
     for i = 1, #joints do
         local ud = bjoints[i]:getUserData()
-        if ud then
+        if ud and ud.id then
             registry.unregisterJoint(ud.id)
             bjoints[i]:destroy()
+        end
+    end
+    local bfixtures = body:getFixtures()
+    for i = 1, #bfixtures do
+        local ud = bfixtures[i]:getUserData()
+        if ud and ud.id then
+            registry.unregisterSFixture(ud.id)
+            bfixtures[i]:destroy()
         end
     end
     registry.unregisterBody(thing.id)

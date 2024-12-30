@@ -88,7 +88,11 @@ function lib.load(data, world)
                 fixture:setRestitution(shared.restitution)
 
                 if fixtureData.userData then
-                    fixture:setUserData(utils.shallowCopy(fixtureData.userData))
+                    fixture:setSensor(fixtureData.sensor)
+                    local oldUD = utils.shallowCopy(fixtureData.userData)
+                    oldUD.id = getNewId(oldUD.id)
+
+                    fixture:setUserData(oldUD)
                     --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
             end
@@ -338,6 +342,7 @@ function lib.save(world, worldState, filename)
 
                 if fixture:getUserData() then
                     fixtureData.userData = utils.shallowCopy(fixture:getUserData())
+                    fixtureData.sensor = fixture:isSensor()
                     --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
                 table.insert(bodyData.fixtures, fixtureData)
@@ -520,7 +525,11 @@ function lib.cloneSelection(selectedBodies)
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
-                        newFixture:setUserData(utils.shallowCopy(oldF:getUserData()))
+                        local oldUD = utils.shallowCopy(oldF:getUserData())
+                        oldUD.id = uuid.generateID()
+                        newFixture:setUserData(oldUD)
+                        newFixture:setSensor(oldF:isSensor())
+                        registry.registerSFixture(oldUD.id, newFixture)
                     end
                 end
             end

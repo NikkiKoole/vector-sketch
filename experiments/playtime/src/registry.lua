@@ -4,11 +4,14 @@ local utils = require 'src.utils'
 local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint
+    sfixtures = {},
     -- Add more categories if needed
 }
 
 function registry.print()
-    return '#b:' .. utils.tablelength(registry.bodies) .. ', #j:' .. utils.tablelength(registry.joints)
+    return '#b:' ..
+    utils.tablelength(registry.bodies) ..
+    ', #j:' .. utils.tablelength(registry.joints) .. ' #sf:' .. utils.tablelength(registry.sfixtures)
 end
 
 -- Register a body
@@ -41,10 +44,24 @@ function registry.getJointByID(id)
     return registry.joints[id]
 end
 
+-- sfixtures
+function registry.registerSFixture(id, sfix)
+    registry.sfixtures[id] = sfix
+end
+
+function registry.unregisterSFixture(id)
+    registry.sfixtures[id] = nil
+end
+
+function registry.getSFixtureByID(id)
+    return registry.sfixtures[id]
+end
+
 -- Reset the registry (useful when loading a new world)
 function registry.reset()
     registry.bodies = {}
     registry.joints = {}
+    registry.sfixtures = {}
 end
 
 return registry

@@ -2,7 +2,9 @@
 
 
 local mathutils = require 'src.math-utils'
+local uuid = require 'src.uuid'
 
+local registry = require 'src.registry'
 local lib = {}
 
 
@@ -14,7 +16,6 @@ function lib.hasFixturesWithUserDataAtBeginning(fixtures)
     for i = 1, #fixtures do
         if found then
             if fixtures[i]:getUserData() then
-                --print('expected')
                 index = i
             else
                 found = false
@@ -22,10 +23,9 @@ function lib.hasFixturesWithUserDataAtBeginning(fixtures)
         end
         if not found then
             if fixtures[i]:getUserData() then
-                --print('not ok!')
                 return false, -1
             else
-                -- expected
+
             end
         end
     end
@@ -34,6 +34,25 @@ end
 
 function lib.getCentroidOfFixture(body, fixture)
     return { mathutils.getCenterOfPoints({ fixture:getShape():getPoints() }) }
+end
+
+local function rect(w, h, x, y)
+    return {
+        x - w / 2, y - h / 2,
+        x + w / 2, y - h / 2,
+        x + w / 2, y + h / 2,
+        x - w / 2, y + h / 2
+    }
+end
+function lib.createSFixture(body, localX, localY, radius)
+    local shape = love.physics.newPolygonShape(rect(radius, radius, localX, localY))
+    local fixture = love.physics.newFixture(body, shape)
+    fixture:setSensor(true) -- Sensor so it doesn't collide
+    local setId = uuid.generateID()
+    fixture:setUserData({ type = "sfixture", id = setId, extra = {} })
+
+    registry.registerSFixture(setId, fixture)
+    return fixture
 end
 
 return lib
