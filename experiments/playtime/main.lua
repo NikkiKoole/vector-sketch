@@ -725,9 +725,10 @@ local function maybeUpdateCustomPolygonVertices()
         local dx = nx - ox
         local dy = ny - oy
         local body = uiState.selectedObj.body
+        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, body:getAngle())
         local oldX, oldY = body:getPosition()
         print(dx)
-        body:setPosition(oldX + dx, oldY + dy)
+        body:setPosition(oldX + dx2, oldY + dy2)
         uiState.selectedObj = objectManager.recreateThingFromBody(body,
             { optionalVertices = uiState.polyTempVerts })
 

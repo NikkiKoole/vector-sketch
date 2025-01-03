@@ -972,6 +972,7 @@ end
 
 -- Define a table to keep track of accordion states
 local accordionStates = {
+    position = false,
     transform = true,
     physics = false,
     motion = false,
@@ -1076,17 +1077,7 @@ function lib.drawUpdateSelectedObjectUI()
 
 
             nextRow()
-            drawAccordion("transform", function(clicked)
-                nextRow()
-
-                if ui.button(x, y, 120, 'flipX') then
-                    uiState.selectedObj = objectManager.flipThing(thing, 'x', true)
-                    dirtyBodyChange = true
-                end
-                if ui.button(x + 140, y, 120, 'flipY') then
-                    uiState.selectedObj = objectManager.flipThing(thing, 'y', true)
-                    dirtyBodyChange = true
-                end
+            drawAccordion("position", function(clicked)
                 nextRow()
                 local value = thing.body:getX()
                 local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, 40, ".", "" .. value, true,
@@ -1097,6 +1088,7 @@ function lib.drawUpdateSelectedObjectUI()
                 if (dirty) then
                     local numericPosX = tonumber(numericInputText)
                     if numericPosX then
+                        print('setting x')
                         thing.body:setX(numericPosX)
                     else
                         -- Handle invalid input, e.g., reset to previous value or show an error
@@ -1112,6 +1104,7 @@ function lib.drawUpdateSelectedObjectUI()
                 if (dirty) then
                     local numericPosY = tonumber(numericInputText)
                     if numericPosY then
+                        print('setting y')
                         thing.body:setY(numericPosY)
                     else
                         -- Handle invalid input, e.g., reset to previous value or show an error
@@ -1120,6 +1113,21 @@ function lib.drawUpdateSelectedObjectUI()
                 end
                 if hadBeenDraggingObj then
                     hadBeenDraggingObj = false
+                end
+            end
+            )
+            nextRow()
+
+            drawAccordion("transform", function(clicked)
+                nextRow()
+
+                if ui.button(x, y, 120, 'flipX') then
+                    uiState.selectedObj = objectManager.flipThing(thing, 'x', true)
+                    dirtyBodyChange = true
+                end
+                if ui.button(x + 140, y, 120, 'flipY') then
+                    uiState.selectedObj = objectManager.flipThing(thing, 'y', true)
+                    dirtyBodyChange = true
                 end
 
 
