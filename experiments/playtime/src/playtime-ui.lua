@@ -740,6 +740,7 @@ local function makePolygonRelativeToCenter(polygon, centerX, centerY)
 end
 -- Function to make the polygon absolute given a new center
 local function makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
+    print('makePolygonAbsolute center:', newCenterX, newCenterY)
     local absolutePolygon = {}
     for i = 1, #relativePolygon, 2 do
         local x = relativePolygon[i] + newCenterX
@@ -859,6 +860,57 @@ function lib.drawSelectedSFixture()
             uiState.selectedSFixture = newfixture
             -- uiState.selectedSFixture
         end
+        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+
+        local function handleOffset(xMultiplier, yMultiplier)
+            local body = uiState.selectedSFixture:getBody()
+
+            local parentVerts = body:getUserData().thing.vertices
+            local points = { uiState.selectedSFixture:getShape():getPoints() }
+            local centerX, centerY = mathutils.getCenterOfPoints(points)
+            local bounds = mathutils.getBoundingRect(parentVerts)
+            local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
+
+            local centerPX, centerPY = mathutils.getCenterOfPoints(parentVerts)
+            local relativePPoints = makePolygonRelativeToCenter(parentVerts, centerPX, centerPY)
+            print(inspect(relativePPoints))
+
+            --print(centerX, centerY)
+            --print(inspect(parentVerts), inspect(bounds))
+            print(centerPX, centerPY)
+            local ddx, ddy = body:getLocalCenter()
+            print(ddx, ddy)
+            local newShape = makePolygonAbsolute(relativePoints,
+                ddx + ((bounds.width / 2) * xMultiplier),
+                ddy + ((bounds.height / 2) * yMultiplier))
+            local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+            uiState.selectedSFixture:destroy()
+
+            local shape = love.physics.newPolygonShape(newShape)
+            local newfixture = love.physics.newFixture(body, shape)
+            newfixture:setSensor(true) -- Sensor so it doesn't collide
+
+            newfixture:setUserData(oldUD)
+            uiState.selectedSFixture = newfixture
+        end
+
+        if ui.button(x, y, 40, 'N') then
+            handleOffset(0, -1)
+        end
+        if ui.button(x + 50, y, 40, 'E') then
+            handleOffset(1, 0)
+        end
+        if ui.button(x + 100, y, 40, 'S') then
+            handleOffset(0, 1)
+        end
+        if ui.button(x + 150, y, 40, 'W') then
+            handleOffset(-1, 0)
+        end
+        if ui.button(x + 200, y, 40, 'C') then
+            handleOffset(0, 0)
+        end
+
         -- local mx, my = love.mouse.getPosition()
         --local wx, wy = cam:getWorldCoordinates(mx, my)
     end)

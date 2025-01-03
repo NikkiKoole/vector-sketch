@@ -37,7 +37,7 @@ local FIXED_TIMESTEP = true
 local TICKRATE = 1 / 60
 
 -- todo what todo with this?!!!
-local snapPoints = {}
+--local snapPoints = {}
 
 function love.load(args)
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
@@ -262,7 +262,7 @@ function love.update(dt)
             end
         end
 
-        for i = 1, 3 do
+        for i = 1, 1 do
             world:update(scaled_dt)
         end
         script.call('update', scaled_dt)
@@ -378,8 +378,6 @@ function drawUI()
         end
     end
 
-
-
     if uiState.drawClickPoly then
         local panelWidth = PANEL_WIDTH
         local w, h = love.graphics.getDimensions()
@@ -409,7 +407,6 @@ function drawUI()
     if uiState.selectedBodies and #uiState.selectedBodies > 0 then
         playtimeui.drawSelectedBodiesUI()
     end
-
 
     if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
         playtimeui.doJointCreateUI(uiState, 500, 100, 400, 150)
@@ -591,10 +588,6 @@ function love.draw()
             uiState.selectedSFixture = nil
             uiState.maybeHideSelectedPanel = false
         elseif (uiState.selectedJoint) then
-            --print(uiState.selectedObj)
-            --local bodyA, bodyB = uiState.selectedJoint:getBodies()
-            --local thing = bodyA:getUserData().thing
-            -- uiState.selectedObj = thing
             uiState.selectedJoint = nil
             uiState.maybeHideSelectedPanel = false
         else
@@ -722,6 +715,7 @@ local function maybeUpdateCustomPolygonVertices()
         local dy = ny - oy
         local body = uiState.selectedObj.body
         local oldX, oldY = body:getPosition()
+        print(dx)
         body:setPosition(oldX + dx, oldY + dy)
         uiState.selectedObj = objectManager.recreateThingFromBody(body,
             { optionalVertices = uiState.polyTempVerts })
