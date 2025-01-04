@@ -864,33 +864,31 @@ function lib.drawSelectedSFixture()
 
 
         local function handleOffset(xMultiplier, yMultiplier)
-            local body = uiState.selectedSFixture:getBody()
+            -- todo this algorithm doesntw work correclty with polygons that have
+            -- custom vertices, it sort of almost works a bit, but its not correct
+            -- this isnt the end of the world tough since placing sfixtures at these positions
+            -- is kinda a non usefull feature for these polygons anyway..
 
+
+            local body = uiState.selectedSFixture:getBody()
             local parentVerts = body:getUserData().thing.vertices
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local centerX, centerY = mathutils.getCenterOfPoints(points)
+
             local bounds = mathutils.getBoundingRect(parentVerts)
             local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
-
-            local centerPX, centerPY = mathutils.getCenterOfPoints(parentVerts)
-            local relativePPoints = makePolygonRelativeToCenter(parentVerts, centerPX, centerPY)
-            print(inspect(relativePPoints))
-
-            --print(centerX, centerY)
-            --print(inspect(parentVerts), inspect(bounds))
-            print(centerPX, centerPY)
-            local ddx, ddy = body:getLocalCenter()
-            print(ddx, ddy)
+            --local a, b = mathutils.computeCentroid(parentVerts)
+            --print(a, b, inspect(bounds))
             local newShape = makePolygonAbsolute(relativePoints,
-                ddx + ((bounds.width / 2) * xMultiplier),
-                ddy + ((bounds.height / 2) * yMultiplier))
+                ((bounds.width / 2) * xMultiplier),
+                ((bounds.height / 2) * yMultiplier))
+
             local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             uiState.selectedSFixture:destroy()
 
             local shape = love.physics.newPolygonShape(newShape)
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
-
             newfixture:setUserData(oldUD)
             uiState.selectedSFixture = newfixture
         end
