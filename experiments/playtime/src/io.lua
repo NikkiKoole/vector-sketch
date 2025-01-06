@@ -61,9 +61,11 @@ function lib.load(data, world)
         for i = #bodyData.fixtures, 1, -1 do -- doing this backwards keeps order intact
             local fixtureData = bodyData.fixtures[i]
             local shape
-            if shared.shapeType == "circle" then
+            if (fixtureData.radius) then
+                --if shared.shapeType == "circle" then
                 shape = love.physics.newCircleShape(fixtureData.radius)
-            elseif shared.shapeType == "polygon" then
+            elseif fixtureData.points then
+                --elseif shared.shapeType == "polygon" then
                 local points = {}
                 -- for _, point in ipairs(fixtureData.points) do
                 --     table.insert(points, point.x)
@@ -315,6 +317,9 @@ function lib.save(world, worldState, filename)
                     bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
                     bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
                     bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
+
+                    -- todo this shape type name isnt really used anymore...
+                    -- can we just delete it ?
                     local shape = first:getShape()
                     if shape:typeOf("CircleShape") then
                         bodyData.sharedFixtureData.shapeType = 'circle'

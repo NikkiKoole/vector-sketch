@@ -740,7 +740,7 @@ local function makePolygonRelativeToCenter(polygon, centerX, centerY)
 end
 -- Function to make the polygon absolute given a new center
 local function makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
-    print('makePolygonAbsolute center:', newCenterX, newCenterY)
+    --print('makePolygonAbsolute center:', newCenterX, newCenterY)
     local absolutePolygon = {}
     for i = 1, #relativePolygon, 2 do
         local x = relativePolygon[i] + newCenterX
@@ -748,6 +748,7 @@ local function makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
         table.insert(absolutePolygon, x)
         table.insert(absolutePolygon, y)
     end
+    --  print('resulting absolute poly:', inspect(absolutePolygon))
     return absolutePolygon
 end
 
@@ -863,13 +864,43 @@ function lib.drawSelectedSFixture()
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
         --------
-        local body = uiState.selectedSFixture:getBody()
-        local parentVerts = body:getUserData().thing.vertices
-        if parentVerts then
-            love.graphics.polygon('line', parentVerts)
-            local bounds = mathutils.getBoundingRect(parentVerts)
-            love.graphics.line(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height)
+        -- local body = uiState.selectedSFixture:getBody()
+        -- local parentVerts = body:getUserData().thing.vertices
+        -- if parentVerts then
+        --     love.graphics.polygon('line', parentVerts)
+        --     local bounds = mathutils.getBoundingRect(parentVerts)
+        --     love.graphics.line(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height)
+        -- end
+
+        local function getCenterOfShapeFixtures(fixts)
+            local xmin = math.huge
+            local ymin = math.huge
+            local xmax = -math.huge
+            local ymax = -math.huge
+            for i = 1, #fixts do
+                local it = fixts[i]
+                if it:getUserData() then
+                else
+                    local points = {}
+                    if (it:getShape().getPoints) then
+                        points = { it:getShape():getPoints() }
+                    else
+                        points = { it:getShape():getPoint() }
+                    end
+                    --print(inspect(points))
+                    for j = 1, #points, 2 do
+                        local xx = points[j]
+                        local yy = points[j + 1]
+                        if xx < xmin then xmin = xx end
+                        if xx > xmax then xmax = xx end
+                        if yy < ymin then ymin = yy end
+                        if yy > ymax then ymax = yy end
+                    end
+                end
+            end
+            return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
         end
+
 
         local function handleOffset(xMultiplier, yMultiplier)
             -- todo this algorithm doesntw work correclty with polygons that have
@@ -882,24 +913,35 @@ function lib.drawSelectedSFixture()
 
 
             local body = uiState.selectedSFixture:getBody()
+            -- print('body position:', body:getPosition())
             local parentVerts = body:getUserData().thing.vertices
+
+
+            local allFixtures = body:getUserData().thing.body:getFixtures()
+            local offsetX, offsetY = getCenterOfShapeFixtures(allFixtures)
+            --  local testShape = { allFixtures[2]:getShape():getPoints() }
+            ---  local centerX2, centerY2 = mathutils.getCenterOfPoints(testShape)
+            -- print(inspect(testShape), centerX2, centerY2)
 
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local centerX, centerY = mathutils.getCenterOfPoints(points)
 
+            --print('parentVerts', inspect(parentVerts))
             local bounds = mathutils.getBoundingRect(parentVerts)
             local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
-            --print(inspect(relativePoints))
-            --local a, b = mathutils.computeCentroid(parentVerts)
-            --print(a, b, inspect(bounds))
+            -- print('relativepoinyts, ', inspect(relativePoints))
+            -- local a, b = mathutils.computeCentroid(parentVerts)
+            -- print('centroid:', a, b)
             local newShape = makePolygonAbsolute(relativePoints,
-                ((bounds.width / 2) * xMultiplier),
-                ((bounds.height / 2) * yMultiplier))
+                offsetX + ((bounds.width / 2) * xMultiplier),
+                offsetY + ((bounds.height / 2) * yMultiplier))
 
             local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             uiState.selectedSFixture:destroy()
 
             local shape = love.physics.newPolygonShape(newShape)
+            --  local output = { shape:getPoints() }
+            -- print('o:', inspect(output))
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
             newfixture:setUserData(oldUD)

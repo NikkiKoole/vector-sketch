@@ -1,16 +1,5 @@
 -- main.lua
 
--- broken something between
--- a3a89143276f2385da259ae3e4fe52c089cacc8a
--- cbf8768c6e23d26b71d2098f0575498b265af3cb
-
--- 26 dec 5e7502  kapot
--- 19 dec 9cf4d3ee kapo
--- 19 dec abed5c89d4d kapot
--- 19 dec  3774858036a kapot
--- hier is iets raars gebeurt
--- 19 dec 4d4bf0b5 goed
-
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
 
