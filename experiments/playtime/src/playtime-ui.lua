@@ -773,6 +773,34 @@ local function getPolygonDimensions(polygon)
     return width, height
 end
 
+local function getCenterOfShapeFixtures(fixts)
+    local xmin = math.huge
+    local ymin = math.huge
+    local xmax = -math.huge
+    local ymax = -math.huge
+    for i = 1, #fixts do
+        local it = fixts[i]
+        if it:getUserData() then
+        else
+            local points = {}
+            if (it:getShape().getPoints) then
+                points = { it:getShape():getPoints() }
+            else
+                points = { it:getShape():getPoint() }
+            end
+            --print(inspect(points))
+            for j = 1, #points, 2 do
+                local xx = points[j]
+                local yy = points[j + 1]
+                if xx < xmin then xmin = xx end
+                if xx > xmax then xmax = xx end
+                if yy < ymin then ymin = yy end
+                if yy > ymax then ymax = yy end
+            end
+        end
+    end
+    return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
+end
 local hadBeenDraggingObj = false
 
 function lib.drawSelectedSFixture()
@@ -872,34 +900,7 @@ function lib.drawSelectedSFixture()
         --     love.graphics.line(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height)
         -- end
 
-        local function getCenterOfShapeFixtures(fixts)
-            local xmin = math.huge
-            local ymin = math.huge
-            local xmax = -math.huge
-            local ymax = -math.huge
-            for i = 1, #fixts do
-                local it = fixts[i]
-                if it:getUserData() then
-                else
-                    local points = {}
-                    if (it:getShape().getPoints) then
-                        points = { it:getShape():getPoints() }
-                    else
-                        points = { it:getShape():getPoint() }
-                    end
-                    --print(inspect(points))
-                    for j = 1, #points, 2 do
-                        local xx = points[j]
-                        local yy = points[j + 1]
-                        if xx < xmin then xmin = xx end
-                        if xx > xmax then xmax = xx end
-                        if yy < ymin then ymin = yy end
-                        if yy > ymax then ymax = yy end
-                    end
-                end
-            end
-            return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
-        end
+
 
 
         local function handleOffset(xMultiplier, yMultiplier)
