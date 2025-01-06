@@ -139,13 +139,14 @@ function love.load(args)
 
     -- -- Adding custom polygon
     local customVertices = {
-        0, 0,
-        100, 0,
-        200, 100,
-        50, 500,
+        250, 0,
+        0, 300,
+        500, 300,
+
+
         -- Add more vertices as needed
     }
-    objectManager.addThing('custom', 500, 500, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
+    objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
     softbodies = {}
     playWithSoftbodies = false
     if playWithSoftbodies then

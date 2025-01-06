@@ -862,21 +862,34 @@ function lib.drawSelectedSFixture()
         end
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
+        --------
+        local body = uiState.selectedSFixture:getBody()
+        local parentVerts = body:getUserData().thing.vertices
+        if parentVerts then
+            love.graphics.polygon('line', parentVerts)
+            local bounds = mathutils.getBoundingRect(parentVerts)
+            love.graphics.line(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height)
+        end
 
         local function handleOffset(xMultiplier, yMultiplier)
             -- todo this algorithm doesntw work correclty with polygons that have
-            -- custom vertices, it sort of almost works a bit, but its not correct
+            -- custom vertices, it sort of almost works a bit, but its not correct,
+            -- N E S W offset are off, weirdly enough for the standard (perfectly around 0,0 originated) shapes
+            -- it works correctly
+            -- but i am unable to figure out how to offset it correctly
             -- this isnt the end of the world tough since placing sfixtures at these positions
             -- is kinda a non usefull feature for these polygons anyway..
 
 
             local body = uiState.selectedSFixture:getBody()
             local parentVerts = body:getUserData().thing.vertices
+
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local centerX, centerY = mathutils.getCenterOfPoints(points)
 
             local bounds = mathutils.getBoundingRect(parentVerts)
             local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
+            --print(inspect(relativePoints))
             --local a, b = mathutils.computeCentroid(parentVerts)
             --print(a, b, inspect(bounds))
             local newShape = makePolygonAbsolute(relativePoints,
