@@ -6,6 +6,8 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
+--local registry = require 'src.registry'
+
 --local snapPoints = {}              -- List of all snap points
 
 local snapFixtures = {}
@@ -45,14 +47,22 @@ local function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
     local id = uuid.generateID()
     -- print(id)
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
-    joint:setUserData({ id = id, scriptmeta = { type = 'snap' } })
+
+    local xa, ya = body1:getLocalPoint(x, y)
+    local offsetA = { x = xa, y = ya }
+
+    local xb, yb = body1:getLocalPoint(x2, y2)
+
+    local offsetB = { x = xb, y = yb }
+
+    joint:setUserData({ id = id, offsetA = offsetA, offsetB = offsetB, scriptmeta = { type = 'snap' } })
     --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
     table.insert(mySnapJoints, joint)
 end
 
 local function areBodiesConnected2(body1, body2, snapFixtures)
     for i = 1, #snapFixtures do
-        local it = snapFixtures[i]:getUserData()
+        local it = snapFixtures[i]:getUserData().extra
         if (it.to == body1 and it.at == body2) or (it.to == body2 and it.at == body1) then
             return true
         end
@@ -146,7 +156,7 @@ local function checkForSnaps(interacted, snapFixtures)
 end
 
 
-function lib.collectAndUseSnapList(dt)
+function lib.update(dt)
     --print(count)
     if #snapFixtures > 0 then
         print('amount of snapfixtures: ', #snapFixtures)
@@ -189,6 +199,10 @@ end
 function lib.resetList()
     print('should reset snapjoints array', #mySnapJoints)
     mySnapJoints = {}
+end
+
+function lib.addSnapJoint(j)
+    table.insert(mySnapJoints, j)
 end
 
 function lib.destroySnapJointAboutBody(body)

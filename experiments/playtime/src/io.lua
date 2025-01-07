@@ -623,6 +623,8 @@ function lib.cloneSelection(selectedBodies)
                         local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
                         local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
 
+                        print(inspect(ud))
+
                         -- If both bodies are cloned, proceed to clone the joint
                         if clonedBodyA and clonedBodyB then
                             local newJointData = {
@@ -639,9 +641,18 @@ function lib.cloneSelection(selectedBodies)
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
                             end
-
+                            -- print(inspect(newJointData))
                             local newJoint = jointslib.createJoint(newJointData)
-
+                            -- print(inspect(newJoint:getUserData()))
+                            if ud.scriptmeta then
+                                local newud = newJoint:getUserData()
+                                newud.scriptmeta = utils.shallowCopy(ud.scriptmeta)
+                                newJoint:setUserData(newud)
+                                if ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
+                                    snap.addSnapJoint(newJoint)
+                                end
+                                print('we should add this to snapjoints probably')
+                            end
                             -- Register the new joint
                             registry.registerJoint(newJointData.id, newJoint)
                         end

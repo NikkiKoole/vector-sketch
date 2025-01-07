@@ -273,7 +273,7 @@ function love.update(dt)
         end
         script.call('update', scaled_dt)
 
-        snap.collectAndUseSnapList(scaled_dt)
+        snap.update(scaled_dt)
     end
 
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
