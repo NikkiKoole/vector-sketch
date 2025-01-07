@@ -12,6 +12,7 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local utils = require 'src.utils'
 local ProFi = require 'vendor.ProFi'
 local fixtures = require 'src.fixtures'
+local snap = require 'src.snap'
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
@@ -992,8 +993,10 @@ function lib.drawSelectedBodiesUI()
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         if ui.button(x, y, 260, 'destroy') then
             for i = #uiState.selectedBodies, 1, -1 do
+                snap.destroySnapJointAboutBody(uiState.selectedBodies[i].body)
                 objectManager.destroyBody(uiState.selectedBodies[i].body)
             end
+
             uiState.selectedBodies = nil
         end
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)

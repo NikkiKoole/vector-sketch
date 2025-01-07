@@ -66,7 +66,6 @@ function s.onSceneLoaded()
 
         -- Check if the joint is a snap-type joint
         if ud and ud.scriptmeta and ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
-
             -- Get the two bodies connected by the joint
             local bodyA, bodyB = value:getBodies()
             -- Get the anchor points of the joint
@@ -127,7 +126,6 @@ function s.onSceneLoaded()
             table.insert(mySnapJoints, value)
         end
     end
-
 end
 
 function s.onStart()
@@ -189,8 +187,8 @@ function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
     local id = generateID()
     -- print(id)
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
-     joint:setUserData({ id = id, scriptmeta = { type = 'snap' } })
-  --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
+    joint:setUserData({ id = id, scriptmeta = { type = 'snap' } })
+    --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
     table.insert(mySnapJoints, joint)
 end
 

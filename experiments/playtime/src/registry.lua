@@ -1,6 +1,6 @@
 -- registry.lua
 local utils = require 'src.utils'
-
+local snap = require 'src.snap'
 local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint
@@ -10,8 +10,8 @@ local registry = {
 
 function registry.print()
     return '#b:' ..
-    utils.tablelength(registry.bodies) ..
-    ', #j:' .. utils.tablelength(registry.joints) .. ' #sf:' .. utils.tablelength(registry.sfixtures)
+        utils.tablelength(registry.bodies) ..
+        ', #j:' .. utils.tablelength(registry.joints) .. ' #sf:' .. utils.tablelength(registry.sfixtures)
 end
 
 -- Register a body
@@ -47,10 +47,12 @@ end
 -- sfixtures
 function registry.registerSFixture(id, sfix)
     registry.sfixtures[id] = sfix
+    snap.rebuildSnapFixtures(registry.sfixtures)
 end
 
 function registry.unregisterSFixture(id)
     registry.sfixtures[id] = nil
+    snap.rebuildSnapFixtures(registry.sfixtures)
 end
 
 function registry.getSFixtureByID(id)
@@ -62,6 +64,7 @@ function registry.reset()
     registry.bodies = {}
     registry.joints = {}
     registry.sfixtures = {}
+    snap.rebuildSnapFixtures(registry.sfixtures)
 end
 
 return registry

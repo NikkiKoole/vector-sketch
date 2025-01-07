@@ -89,6 +89,37 @@ function lib.shallowCopy(original)
     return copy
 end
 
+function lib.deepCopy(orig, copies)
+    -- 'copies' table tracks already-copied tables to handle cyclic references.
+    copies = copies or {}
+
+    -- If the value is not a table, return it directly (base case).
+    if type(orig) ~= "table" then
+        return orig
+    end
+
+    -- If we've already copied this table, return the copy to avoid recursion loops.
+    if copies[orig] then
+        return copies[orig]
+    end
+
+    -- Create a new table for the copy and record it in 'copies'.
+    local copy = {}
+    copies[orig] = copy
+
+    -- Recursively copy all keys and values from the original.
+    for key, value in pairs(orig) do
+        local copiedKey = lib.deepCopy(key, copies)
+        local copiedValue = lib.deepCopy(value, copies)
+        copy[copiedKey] = copiedValue
+    end
+
+    -- Preserve the metatable, if any.
+    setmetatable(copy, getmetatable(orig))
+
+    return copy
+end
+
 -- Function to compare two tables for equality (assuming they are arrays of numbers)
 function lib.tablesEqualNumbers(t1, t2)
     -- Check if both tables have the same number of elements

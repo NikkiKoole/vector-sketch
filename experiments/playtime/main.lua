@@ -18,6 +18,7 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local fixtures = require 'src.fixtures'
+local snap = require 'src.snap'
 
 function waitForEvent()
     local a, b, c, d, e
@@ -161,6 +162,9 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
+    local cwd = love.filesystem.getWorkingDirectory()
+    loadScene(cwd .. '/scripts/snap2.playtime.json')
+
     --loadScriptAndScene('snap')
 end
 
@@ -185,6 +189,7 @@ function loadScene(name)
     uiState.selectedJoint = nil
     uiState.selectedObj = nil
     eio.load(data, world)
+
     return data
 end
 
@@ -267,6 +272,8 @@ function love.update(dt)
             world:update(scaled_dt)
         end
         script.call('update', scaled_dt)
+
+        snap.collectAndUseSnapList(scaled_dt)
     end
 
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)

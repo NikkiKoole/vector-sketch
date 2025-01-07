@@ -12,6 +12,8 @@ local utils = require 'src.utils'
 local jointslib = require 'src.joints'
 local fixtures = require 'src.fixtures'
 
+local snap = require 'src.snap'
+
 function lib.load(data, world)
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then
@@ -45,6 +47,8 @@ function lib.load(data, world)
         end
         registry.reset()
     end
+
+    snap.resetList()
 
     local recreatedSFixtures = {}
     -- Iterate through saved bodies and recreate them
@@ -353,7 +357,19 @@ function lib.save(world, worldState, filename)
                 end
 
                 if fixture:getUserData() then
-                    fixtureData.userData = utils.shallowCopy(fixture:getUserData())
+                    if utils.sanitizeString(fixture:getUserData().label) == 'snap' then
+                        local ud             = fixture:getUserData()
+
+                        ud.extra.fixture     = 'fixture'
+                        ud.extra.at          = ud.extra.at and ud.extra.at:getUserData().thing.id
+                        ud.extra.to          = ud.extra.to and ud.extra.to:getUserData().thing.id
+                        fixtureData.userData = utils.shallowCopy(ud)
+                    else
+                        fixtureData.userData = utils.shallowCopy(fixture:getUserData())
+                    end
+
+
+
                     fixtureData.sensor = fixture:isSensor()
                     --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
@@ -537,10 +553,18 @@ function lib.cloneSelection(selectedBodies)
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
-                        local oldUD = utils.shallowCopy(oldF:getUserData())
+                        local oldUD = utils.deepCopy(oldF:getUserData())
                         oldUD.id = uuid.generateID()
+
+                        if utils.sanitizeString(oldUD.label) == 'snap' then
+                            oldUD.extra.at = nil
+                            oldUD.extra.to = nil
+                            oldUD.extra.fixture = nil
+                        end
+                        --print(inspect(oldUD))
                         newFixture:setUserData(oldUD)
                         newFixture:setSensor(oldF:isSensor())
+                        --- print(oldUD.id)
                         registry.registerSFixture(oldUD.id, newFixture)
                     end
                 end
