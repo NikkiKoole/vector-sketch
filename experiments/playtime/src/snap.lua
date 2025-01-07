@@ -160,23 +160,25 @@ function lib.rebuildSnapFixtures(sfix)
     snapFixtures = {}
     local count = 0
     for k, v in pairs(sfix) do
-        local ud = v:getUserData()
-
-        if not v:isDestroyed() and ud and utils.sanitizeString(ud.label) == 'snap' then
-            local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
+        if not v:isDestroyed() then
             local ud = v:getUserData()
-            print(count, ud.extra, v:getBody(), k)
-            ud.extra.xOffset = centroid[1]
-            ud.extra.yOffset = centroid[2]
-            ud.extra.at = v:getBody()
-            ud.extra.fixture = v
-            v:setUserData(ud)
-            table.insert(snapFixtures, v)
-        else
-            --     --print('what is wrong ?', not v:isDestroyed(), ud, ud.label == 'snap',
-            --     --    ud.label)
+
+            if ud and utils.sanitizeString(ud.label) == 'snap' then
+                local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
+                local ud = v:getUserData()
+                print(count, ud.extra, v:getBody(), k)
+                ud.extra.xOffset = centroid[1]
+                ud.extra.yOffset = centroid[2]
+                ud.extra.at = v:getBody()
+                ud.extra.fixture = v
+                v:setUserData(ud)
+                table.insert(snapFixtures, v)
+            else
+                --     --print('what is wrong ?', not v:isDestroyed(), ud, ud.label == 'snap',
+                --     --    ud.label)
+            end
+            count = count + 1
         end
-        count = count + 1
     end
 end
 
