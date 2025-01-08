@@ -49,7 +49,7 @@ function lib.createSFixture(body, localX, localY, radius)
     local fixture = love.physics.newFixture(body, shape)
     fixture:setSensor(true) -- Sensor so it doesn't collide
     local setId = uuid.generateID()
-    fixture:setUserData({ type = "sfixture", id = setId, extra = {} })
+    fixture:setUserData({ type = "sfixture", id = setId, label = 'snap', extra = {} })
 
     registry.registerSFixture(setId, fixture)
     return fixture

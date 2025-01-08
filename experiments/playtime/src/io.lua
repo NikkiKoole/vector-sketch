@@ -279,6 +279,9 @@ function lib.load(data, world)
         end
     end
 
+
+    snap.onSceneLoaded()
+
     print("World successfully loaded")
 end
 

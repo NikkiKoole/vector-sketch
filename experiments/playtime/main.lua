@@ -18,8 +18,9 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local fixtures = require 'src.fixtures'
-local snap = require 'src.snap'
+snap = require 'src.snap'
 
+registry = require 'src.registry'
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -163,7 +164,8 @@ function love.load(args)
 
 
     local cwd = love.filesystem.getWorkingDirectory()
-    loadScene(cwd .. '/scripts/snap2.playtime.json')
+    --loadScene(cwd .. '/scripts/snap2.playtime.json')
+    loadScene(cwd .. '/scripts/snapstatic.playtime.json')
 
     --loadScriptAndScene('snap')
 end

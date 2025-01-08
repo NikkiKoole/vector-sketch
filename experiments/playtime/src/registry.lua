@@ -1,6 +1,6 @@
 -- registry.lua
 local utils = require 'src.utils'
-local snap = require 'src.snap'
+--local snap = require 'src.snap'
 local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint
