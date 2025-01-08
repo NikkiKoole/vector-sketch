@@ -68,6 +68,11 @@ end
 
 
 function checkForJointBreaks(dt, interacted, snapFixtures)
+    print(#mySnapJoints)
+    for k, v in pairs(registry.joints) do
+        print(k, v:isDestroyed())
+    end
+
     for i = #mySnapJoints, 1, -1 do
         local joint = mySnapJoints[i]
 

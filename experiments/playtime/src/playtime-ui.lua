@@ -865,7 +865,7 @@ function lib.drawSelectedSFixture()
                     end
                 end
                 --print(beforeIndex, afterIndex)
-
+                registry.registerSFixture(oldUD.id, newfixture)
 
                 return newfixture
             end
@@ -888,6 +888,9 @@ function lib.drawSelectedSFixture()
             newfixture:setUserData(oldUD)
 
             uiState.selectedSFixture = newfixture
+            --snap.updateFixture(newfixture)
+            registry.registerSFixture(oldUD.id, newfixture)
+            snap.rebuildSnapFixtures(registry.sfixtures)
             -- uiState.selectedSFixture
         end
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
