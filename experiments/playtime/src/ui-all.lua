@@ -43,7 +43,7 @@ local theme  = {
     panel = {
         background = { 50 / 255, 50 / 255, 50 / 255 }, -- Panel background color
         outline = creamy,                              -- Panel outline color
-        label = { 1, 1, 1 },                           -- Panel label text color
+        label = creamy,                                -- Panel label text color
     },
     textinput = {
         background = { 0.1, 0.1, 0.1 },                          -- Background color of the TextInput

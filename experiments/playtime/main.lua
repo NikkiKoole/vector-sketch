@@ -1,5 +1,16 @@
 -- main.lua
 
+
+local old_print = print
+print = function(...)
+    local info = debug.getinfo(2, "Sl")
+    local source = info.source
+    if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
+    if source:sub(1, 1) == "@" then source = source:sub(2) end
+    local msg = ("%s:%i"):format(source, info.currentline)
+    old_print(msg, ...)
+end
+
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
 
@@ -86,6 +97,7 @@ function love.load(args)
         selectedBodies = nil,
         lastSelectedJoint = nil,
         saveDialogOpened = false,
+        quitDialogOpened = false,
         saveName = 'untitled'
     }
 
@@ -478,6 +490,17 @@ function drawUI()
         end)
     end
 
+    if uiState.quitDialogOpened then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+        ui.panel(300, 300, w - 600, h - 600, '»»» really quit ? «««', function()
+            ui.label(400, 400, '[esc] to quit')
+            ui.label(400, 450, '[space] to cancel')
+        end)
+    end
+
+
     if ui.draggingActive then
         love.graphics.setColor(ui.theme.draggedElement.fill)
         local x, y = love.mouse.getPosition()
@@ -797,10 +820,19 @@ end
 function love.keypressed(key)
     ui.handleKeyPress(key)
     if key == 'escape' then
-        love.event.quit()
+        if uiState.quitDialogOpened == true then
+            love.event.quit()
+        end
+        if uiState.quitDialogOpened == false then
+            uiState.quitDialogOpened = true
+        end
     end
     if key == 'space' then
-        worldState.paused = not worldState.paused
+        if uiState.quitDialogOpened == true then
+            uiState.quitDialogOpened = false
+        else
+            worldState.paused = not worldState.paused
+        end
     end
     if key == 'f5' then
         worldState.paused = true

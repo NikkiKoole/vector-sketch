@@ -9,7 +9,7 @@ local inspect = require 'vendor.inspect'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
-
+local snap = require 'src.snap'
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
     -- Initialize default values
@@ -148,11 +148,12 @@ function lib.recreateThingFromBody(body, newSettings)
             newFixture:setRestitution(oldF:getRestitution())
             newFixture:setFriction(oldF:getFriction())
             newFixture:setUserData(utils.shallowCopy(oldF:getUserData()))
+
+            registry.registerSFixture(oldF:getUserData().id, newFixture)
+            snap.rebuildSnapFixtures(registry.sfixtures)
         end
     end
 
-    -- Destroy the old body
-    body:destroy()
 
 
     -- Update the `thing` table
@@ -169,6 +170,11 @@ function lib.recreateThingFromBody(body, newSettings)
     newBody:setUserData({ thing = thing })
 
     joints.reattachJoints(jointData, newBody)
+
+    snap.maybeUpdateSnapJoints(jointData)
+
+    -- Destroy the old body
+    body:destroy()
 
     return thing
 end
@@ -328,8 +334,12 @@ function lib.flipThing(thing, axis, recursive)
                     newFixture:setFriction(friction)
                     newFixture:setRestitution(restitution)
                     if (fixture:getUserData()) then
-                        newFixture:setUserData(utils.shallowCopy(fixture:getUserData()))
+                        newFixture:setUserData(utils.deepCopy(fixture:getUserData()))
+                        registry.registerSFixture(fixture:getUserData().id, newFixture)
+                        snap.maybeUpdateSFixture(newFixture:getUserData().id)
                     end
+
+
                     fixture:destroy()
                 end
             elseif shape:typeOf("CircleShape") then
@@ -416,9 +426,11 @@ function lib.flipThing(thing, axis, recursive)
                 offsetB.y = -offsetB.y
             end
 
-
+            local id = joint:getUserData().id
             joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+            -- print(registry.getJointByID(id):isDestroyed())
 
+            snap.maybeUpdateSnapJointWithId(id)
             ::continue::
         end
     end
@@ -429,6 +441,7 @@ function lib.flipThing(thing, axis, recursive)
     -- Phase 2: Flip All Joints
     flipJoints()
 
+    -- snap.rebuildSnapFixtures(registry.sfixtures)
     --print('************* Flip Completed *************')
     return thing
 end

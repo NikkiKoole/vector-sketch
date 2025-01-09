@@ -367,9 +367,9 @@ function lib.save(world, worldState, filename)
                         ud.extra.fixture     = 'fixture'
                         ud.extra.at          = ud.extra.at and ud.extra.at:getUserData().thing.id
                         ud.extra.to          = ud.extra.to and ud.extra.to:getUserData().thing.id
-                        fixtureData.userData = utils.shallowCopy(ud)
+                        fixtureData.userData = utils.deepCopy(ud)
                     else
-                        fixtureData.userData = utils.shallowCopy(fixture:getUserData())
+                        fixtureData.userData = utils.deepCopy(fixture:getUserData())
                     end
 
 
@@ -627,7 +627,7 @@ function lib.cloneSelection(selectedBodies)
                         local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
                         local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
 
-                        print(inspect(ud))
+                        --print(inspect(ud))
 
                         -- If both bodies are cloned, proceed to clone the joint
                         if clonedBodyA and clonedBodyB then
@@ -655,7 +655,7 @@ function lib.cloneSelection(selectedBodies)
                                 if ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
                                     snap.addSnapJoint(newJoint)
                                 end
-                                print('we should add this to snapjoints probably')
+                                --print('we should add this to snapjoints probably')
                             end
                             -- Register the new joint
                             registry.registerJoint(newJointData.id, newJoint)

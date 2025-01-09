@@ -69,6 +69,12 @@ end
 
 function checkForJointBreaks(dt, interacted, snapFixtures)
     -- print(#mySnapJoints)
+    --for k, v in pairs(registry.joints) do
+    --    print(k, v:isDestroyed())
+    --end
+    --for i = #mySnapJoints, 1, -1 do
+    --    print(i, mySnapJoints[i]:isDestroyed())
+    --end
 
 
     for i = #mySnapJoints, 1, -1 do
@@ -119,6 +125,10 @@ local function checkForSnaps(interacted, snapFixtures)
 
         if it1.to == nil and not isInCooldown(it1.fixture, currentTime) then -- else this snap point is already connected and it cannot be connected more then once
             local body1 = it1.at
+            if not body1 then
+                print('body1 is nil!    ')
+                print(inspect(it1))
+            end
             local x1, y1 = body1:getWorldPoint(it1.xOffset, it1.yOffset)
 
             for j = 1, #snapFixtures do
@@ -164,6 +174,14 @@ function lib.update(dt)
     end
 end
 
+function lib.maybeUpdateSFixture(id)
+    for i = 1, #snapFixtures do
+        if (snapFixtures[i]:isDestroyed() or snapFixtures[i]:getUserData().id == id) then
+            snapFixtures[i] = registry.getSFixtureByID(id)
+        end
+    end
+end
+
 function lib.rebuildSnapFixtures(sfix)
     snapFixtures = {}
     local count = 0
@@ -188,6 +206,7 @@ function lib.rebuildSnapFixtures(sfix)
             count = count + 1
         end
     end
+    print('we now have ', #snapFixtures, 'snapfixtures')
 end
 
 function calculateDistance(x1, y1, x2, y2)
@@ -290,6 +309,31 @@ end
 
 function lib.addSnapJoint(j)
     table.insert(mySnapJoints, j)
+end
+
+function lib.maybeUpdateSnapJoints(joints)
+    for i = 1, #mySnapJoints do
+        local msj = mySnapJoints[i]
+        local lookForId = msj:getUserData().id
+
+        for j = 1, #joints do
+            local newer = joints[j]
+
+            if (lookForId == newer.id) then
+                mySnapJoints[i] = registry.getJointByID(newer.id)
+            end
+        end
+    end
+end
+
+function lib.maybeUpdateSnapJointWithId(id)
+    for i = 1, #mySnapJoints do
+        local msj = mySnapJoints[i]
+        if msj:isDestroyed() or msj:getUserData().id == id then
+            mySnapJoints[i] = registry.getJointByID(id)
+        end
+        --if snap.maybeUpdateSnapJointWithId(id)
+    end
 end
 
 function lib.destroySnapJointAboutBody(body)
