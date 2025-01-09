@@ -8,7 +8,7 @@ local mathutils = require 'src.math-utils'
 local snapFixtures = {}
 local snapDistance = 40            -- Maximum distance to snap
 local mySnapJoints = {}            -- Store created joints
-local jointBreakThreshold = 200000 -- Force threshold for breaking the joint
+local jointBreakThreshold = 100000 -- Force threshold for breaking the joint
 local cooldownTime = .5            -- Time in seconds to prevent immediate reconnection
 local cooldownList = {}            -- Table to track cooldown for each snap point
 local onlyConnectWhenInteracted = true
@@ -68,10 +68,8 @@ end
 
 
 function checkForJointBreaks(dt, interacted, snapFixtures)
-    print(#mySnapJoints)
-    for k, v in pairs(registry.joints) do
-        print(k, v:isDestroyed())
-    end
+    -- print(#mySnapJoints)
+
 
     for i = #mySnapJoints, 1, -1 do
         local joint = mySnapJoints[i]
@@ -300,10 +298,13 @@ function lib.destroySnapJointAboutBody(body)
         local joint = mySnapJoints[i]
         local body1, body2 = joint:getBodies()
         if (body:getUserData().thing.id == body1:getUserData().thing.id) then
+            registry.unregisterJoint(joint:getUserData().id)
             joint:destroy()
             table.remove(mySnapJoints, i)
         end
         if (body:getUserData().thing.id == body2:getUserData().thing.id) then
+            registry.unregisterJoint(joint:getUserData().id)
+
             joint:destroy()
             table.remove(mySnapJoints, i)
         end

@@ -1103,6 +1103,7 @@ function lib.drawUpdateSelectedObjectUI()
         end
 
         if ui.button(x + 120, y, 140, 'destroy') then
+            snap.destroySnapJointAboutBody(body)
             objectManager.destroyBody(body)
             uiState.selectedObj = nil
             return

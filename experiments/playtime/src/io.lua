@@ -267,12 +267,13 @@ function lib.load(data, world)
                     offsetA = { x = fxa, y = fya },
                     offsetB = { x = fxb, y = fyb }
                 }
+
                 if jointData.scriptmeta then ud.scriptmeta = jointData.scriptmeta end
 
                 joint:setUserData(ud)
 
                 -- Register the joint in the registry
-                registry.registerJoint(jointData.id, joint)
+                registry.registerJoint(ud.id, joint)
             end
         else
             print("Failed to find bodies for joint:", jointData.id)

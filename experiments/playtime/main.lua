@@ -662,7 +662,7 @@ function love.mousemoved(x, y, dx, dy)
             table.insert(uiState.polyVerts, wy)
             uiState.lastPolyPt = { x = wx, y = wy }
         end
-    elseif love.mouse.isDown(3) then
+    elseif love.mouse.isDown(3) or love.mouse.isDown(2) then
         local tx, ty = cam:getTranslation()
         cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
     end
