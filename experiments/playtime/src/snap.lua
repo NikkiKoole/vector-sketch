@@ -176,6 +176,7 @@ end
 
 function lib.maybeUpdateSFixture(id)
     for i = 1, #snapFixtures do
+        -- TODO snapFixtures should bbecome a key value map keyed on IDs
         if (snapFixtures[i]:isDestroyed() or snapFixtures[i]:getUserData().id == id) then
             snapFixtures[i] = registry.getSFixtureByID(id)
         end
@@ -329,6 +330,7 @@ end
 function lib.maybeUpdateSnapJointWithId(id)
     for i = 1, #mySnapJoints do
         local msj = mySnapJoints[i]
+        -- TODO mySnapJoints should bbecome a key value map keyed on IDs
         if msj:isDestroyed() or msj:getUserData().id == id then
             mySnapJoints[i] = registry.getJointByID(id)
         end

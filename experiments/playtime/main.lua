@@ -177,7 +177,7 @@ function love.load(args)
 
     local cwd = love.filesystem.getWorkingDirectory()
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
-    loadScene(cwd .. '/scripts/snapstatic.playtime.json')
+    loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('snap')
 end

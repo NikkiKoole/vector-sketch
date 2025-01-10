@@ -288,14 +288,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 
 
                 nextRow()
-                if ui.button(x, y, 40, 'O') then
+                if ui.button(x, y, 40, '∆') then
                     uiState.setOffsetAFunc = function(x, y)
                         local fx, fy = mathutils.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
                         -- print(fx, fy)
                         return updateOffsetA(fx, fy)
                     end
                 end
-                if ui.button(x + 50, y, 40, '+') then
+                if ui.button(x + 50, y, 40, 'b  ') then
                     uiState.setOffsetBFunc = function(x, y)
                         local fx, fy = mathutils.rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
                         -- print(fx, fy)
