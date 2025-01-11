@@ -10,6 +10,7 @@ local ui = require 'src.ui-all'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
+local objectManager = require 'src.object-manager'
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
     local objects = {}
@@ -32,6 +33,7 @@ end
 
 local scriptEnv = {
     generateID               = uuid.generateID,
+    objectManager            = objectManager,
     ui                       = ui,
     cam                      = cam,
     mathutils                = mathutils,

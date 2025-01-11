@@ -175,11 +175,11 @@ function love.load(args)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
-    local cwd = love.filesystem.getWorkingDirectory()
+    --local cwd = love.filesystem.getWorkingDirectory()
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
-    loadScene(cwd .. '/scripts/grow.playtime.json')
+    --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    --loadScriptAndScene('snap')
+    loadScriptAndScene('torso')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
