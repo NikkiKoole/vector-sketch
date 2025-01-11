@@ -84,8 +84,8 @@ local function makeITriangle(w, h, x, y)
 end
 
 function shapes.makeTrianglesFromPolygon(polygon)
- -- when this is true we also solve, self intersecting and everythign
-     local triangles = {}
+    -- when this is true we also solve, self intersecting and everythign
+    local triangles = {}
     local result = {}
     local success, err = pcall(function()
         mathutils.decompose(polygon, result)
@@ -106,7 +106,6 @@ function shapes.makeTrianglesFromPolygon(polygon)
     end
     return triangles
 end
-
 
 local function makeShapeListFromPolygon(polygon)
     local shapesList = {}
@@ -203,28 +202,28 @@ end
 --     return triangles
 -- end
 
-function shapes.createShape(shapeType, radius, width, height, optionalVertices)
+function shapes.createShape(shapeType, settings)
     if (radius == 0) then radius = 1 end
     if (width == 0) then width = 1 end
     if (height == 0) then height = 1 end
 
     local shapesList = {}
     local vertices = nil
-
+    print(inspect(settings))
     if shapeType == 'circle' then
-        vertices = approximateCircle(radius, 0, 0, 20)
-        table.insert(shapesList, love.physics.newCircleShape(radius))
+        vertices = approximateCircle(settings.radius, 0, 0, 20)
+        table.insert(shapesList, love.physics.newCircleShape(settings.radius))
     elseif shapeType == 'rectangle' then
-        vertices = rect(width, height, 0, 0)
-        table.insert(shapesList, love.physics.newRectangleShape(width, height))
+        vertices = rect(settings.width, settings.height, 0, 0)
+        table.insert(shapesList, love.physics.newRectangleShape(settings.width, settings.height))
     elseif shapeType == 'capsule' then
-        vertices = capsuleXY(width, height, width / 5, 0, 0)
+        vertices = capsuleXY(settings.width, settings.height, settings.width / 5, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'trapezium' then
-        vertices = makeTrapezium(width, width * 1.2, height, 0, 0)
+        vertices = makeTrapezium(settings.width, settings.width * 1.2, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'itriangle' then
-        vertices = makeITriangle(width, height, 0, 0)
+        vertices = makeITriangle(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     else
         local sides = ({
@@ -236,11 +235,11 @@ function shapes.createShape(shapeType, radius, width, height, optionalVertices)
         })[shapeType]
 
         if sides then
-            vertices = makePolygonVertices(sides, radius)
+            vertices = makePolygonVertices(sides, settings.radius)
             table.insert(shapesList, love.physics.newPolygonShape(vertices))
         elseif shapeType == 'custom' then
-            if optionalVertices then
-                local polygon = optionalVertices
+            if settings.optionalVertices then
+                local polygon = settings.optionalVertices
                 --print(inspect(polygon))
                 shapesList = makeShapeListFromPolygon(polygon) or {}
                 --print('shapelist size:', #shapesList)

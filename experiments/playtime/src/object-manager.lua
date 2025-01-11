@@ -22,7 +22,13 @@ local function createThing(shapeType, x, y, bodyType, radius, width, height, lab
     -- Create the physics body at the specified world coordinates
     local body = love.physics.newBody(world, x, y, bodyType)
 
-    local shapeList, vertices = shapes.createShape(shapeType, radius, width, height, optionalVertices)
+    local settings = {
+        radius = radius or 20,
+        width = width or radius * 2,
+        height = height or radius * 2,
+        optionalVertices = optionalVertices
+    }
+    local shapeList, vertices = shapes.createShape(shapeType, settings)
 
     if not shapeList then
         print("Failed to create shapes for:", shapeType)
@@ -87,6 +93,8 @@ function lib.addThing(shapeType, x, y, bodyType, radius, width, height, label, o
 
     return thing
 end
+
+-- start experiemnt
 
 function meanValueCoordinates(px, py, poly)
     local n = #poly / 2 -- number of vertices
@@ -387,6 +395,9 @@ local function getCenterOfShapeFixtures(fixts)
     return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
 end
 
+-- end experiemnt
+
+
 function lib.recreateThingFromBody(body, newSettings)
     if body:isDestroyed() then
         print("The body is already destroyed.")
@@ -418,12 +429,16 @@ function lib.recreateThingFromBody(body, newSettings)
     newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
     -- Create a new shape
 
+
+    local settings = {
+        radius = newSettings.radius or thing.radius,
+        width = newSettings.width or thing.width,
+        height = newSettings.height or thing.height,
+        optionalVertices = newSettings.optionalVertices
+    }
     local shapeList, newVertices = shapes.createShape(
         newSettings.shapeType or thing.shapeType,
-        newSettings.radius or thing.radius,
-        newSettings.width or thing.width,
-        newSettings.height or thing.height,
-        newSettings.optionalVertices
+        settings
     )
 
 
@@ -451,9 +466,9 @@ function lib.recreateThingFromBody(body, newSettings)
             local abs = oldF:getShape()
             local centerX, centerY = mathutils.getCenterOfPoints(points)
             if (thing.vertices) then
-                -- local params = closestEdgeParams(centerX, centerY, thing.vertices)
+                local params = closestEdgeParams(centerX, centerY, thing.vertices)
                 --     --  print(inspect(params))
-                -- local new_px, new_py = repositionPointClosestEdge(params, newVertices)
+                local new_px, new_py = repositionPointClosestEdge(params, newVertices)
 
                 --     --local cx, cy = mathutils.computeCentroid(uiState.selectedObj.vertices)
                 --     --print(cx, cy, centerX, centerY)
@@ -462,13 +477,13 @@ function lib.recreateThingFromBody(body, newSettings)
 
                 --     -- local weights = meanValueCoordinates(centerX, centerY, thing.vertices)
                 --     -- local new_px, new_py = repositionPoint(weights, newVertices)
-                local edgeIndex, t = findEdgeAndLerpParam(centerX, centerY, thing.vertices)
+                ---local edgeIndex, t = findEdgeAndLerpParam(centerX, centerY, thing.vertices)
                 --     --print(edgeIndex, t)
-                local new_px, new_py = lerpOnEdge(edgeIndex, t, newVertices)
+                --local new_px, new_py = lerpOnEdge(edgeIndex, t, newVertices)
 
                 local rel = makePolygonRelativeToCenter(points, centerX, centerY)
                 abs = love.physics.newPolygonShape(makePolygonAbsolute(rel, new_px, new_py))
-                print('jo!')
+                --print('jo!')
 
                 --     --print(centerX, centerY, new_px, new_py)
             end

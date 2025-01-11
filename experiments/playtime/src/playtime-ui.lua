@@ -924,6 +924,7 @@ function lib.drawSelectedSFixture()
 
             local allFixtures = body:getUserData().thing.body:getFixtures()
             local offsetX, offsetY = getCenterOfShapeFixtures(allFixtures)
+            print(offsetX, offsetY)
             --  local testShape = { allFixtures[2]:getShape():getPoints() }
             ---  local centerX2, centerY2 = mathutils.getCenterOfPoints(testShape)
             -- print(inspect(testShape), centerX2, centerY2)

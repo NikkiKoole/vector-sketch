@@ -525,10 +525,13 @@ function lib.cloneSelection(selectedBodies)
             newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
 
             -- Clone shape
-
-            local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, originalThing.radius,
-                originalThing.width,
-                originalThing.height, originalThing.vertices)
+            local settings = {
+                radius = originalThing.radius,
+                width = originalThing.width,
+                height = originalThing.height,
+                optionalVertices = originalThing.vertices
+            }
+            local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, settings)
 
 
             local oldFixtures = originalBody:getFixtures()

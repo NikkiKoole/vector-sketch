@@ -147,15 +147,19 @@ function lib.calculateDistance(x1, y1, x2, y2)
 end
 
 function lib.computeCentroid(polygon)
-    local sumX, sumY = 0, 0
-    for i = 1, #polygon, 2 do
-        --for _, vertex in ipairs(vertices) do
-        sumX = sumX + polygon[i]
-        sumY = sumY + polygon[i + 1]
-        -- end
-    end
-    local count = (#polygon / 2)
-    return sumX / count, sumY / count
+    return lib.getCenterOfPoints(polygon)
+
+
+    -- this is not a  correct way of doing it!!!!
+    -- local sumX, sumY = 0, 0
+    -- for i = 1, #polygon, 2 do
+    --     --for _, vertex in ipairs(vertices) do
+    --     sumX = sumX + polygon[i]
+    --     sumY = sumY + polygon[i + 1]
+    --     -- end
+    -- end
+    -- local count = (#polygon / 2)
+    -- return sumX / count, sumY / count
 end
 
 function lib.rotatePoint(x, y, originX, originY, angle)

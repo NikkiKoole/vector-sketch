@@ -207,7 +207,7 @@ function lib.rebuildSnapFixtures(sfix)
             count = count + 1
         end
     end
-    print('we now have ', #snapFixtures, 'snapfixtures')
+    --print('we now have ', #snapFixtures, 'snapfixtures')
 end
 
 function calculateDistance(x1, y1, x2, y2)

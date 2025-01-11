@@ -1,5 +1,15 @@
 -- main.lua
 
+-- TODO
+--
+-- enable more properties for basic shapes
+-- (trapezium width1 & width2 )
+-- capsule rounded porperties
+
+-- ad torso shape
+-- have a look if polygon custom needs to be repositoned after creation..?
+-- i feel shape just needs to have it center to 0,0 always ?
+
 
 local old_print = print
 print = function(...)
@@ -179,7 +189,7 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    loadScriptAndScene('torso')
+    --loadScriptAndScene('torso')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -727,6 +737,7 @@ end
 function finalizePolygon()
     if #uiState.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
+        --local cx, cy = mathutils.getCenterOfPoints(uiState.polyVerts)
         objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
     else
         -- Not enough vertices to form a polygon
