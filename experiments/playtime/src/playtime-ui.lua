@@ -1288,7 +1288,7 @@ function lib.drawUpdateSelectedObjectUI()
                     ui.label(x, y, ' width')
                     nextRow()
 
-                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
+                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, (thing.width2 or 5))
                     ui.label(x, y, ' width2')
                     nextRow()
 
