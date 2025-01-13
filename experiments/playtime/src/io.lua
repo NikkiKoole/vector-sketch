@@ -567,9 +567,11 @@ function lib.cloneSelection(selectedBodies)
                 radius = originalThing.radius,
                 width = originalThing.width,
                 width2 = originalThing.width2,
-
+                width3 = originalThing.width3,
                 height = originalThing.height,
                 height2 = originalThing.height2,
+                height3 = originalThing.height3,
+                height4 = originalThing.height4,
                 optionalVertices = originalThing.vertices
             }
             local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, settings)
@@ -634,7 +636,7 @@ function lib.cloneSelection(selectedBodies)
                 shapeType = originalThing.shapeType,
                 radius = originalThing.radius,
                 width = originalThing.width,
-                width2 = originalThing.width2,
+                width2 = (originalThing.width2 or 1),
                 width3 = originalThing.width3,
                 height = originalThing.height,
                 height2 = originalThing.height2,

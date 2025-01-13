@@ -198,6 +198,7 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('torso')
+    loadScriptAndScene('straight')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)

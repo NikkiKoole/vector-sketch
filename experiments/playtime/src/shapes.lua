@@ -238,7 +238,7 @@ function shapes.createShape(shapeType, settings)
         shapesList = makeShapeListFromPolygon(vertices) or {}
         --table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'capsule' then
-        vertices = capsuleXY(settings.width, settings.height, settings.width / settings.width2, 0, 0)
+        vertices = capsuleXY(settings.width, settings.height, settings.width / (settings.width2 or 1), 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'trapezium' then
         vertices = makeTrapezium(settings.width, settings.width2 or (settings.width * 1.2), settings.height, 0, 0)

@@ -1206,7 +1206,7 @@ function lib.drawUpdateSelectedObjectUI()
                         uiState.lastUsedRadius = newRadius
                         body = uiState.selectedObj.body
                     end
-                elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'itriangle' then
+                elseif shapeType == 'rectangle' or shapeType == 'itriangle' then
                     -- Show width and height controls for these shapes
 
 
@@ -1280,7 +1280,7 @@ function lib.drawUpdateSelectedObjectUI()
                         })
                         body = uiState.selectedObj.body
                     end
-                elseif shapeType == 'trapezium' then
+                elseif shapeType == 'trapezium' or shapeType == 'capsule' then
                     -- Show width and height controls for these shapes
 
 

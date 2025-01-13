@@ -122,7 +122,7 @@ end
 function lib.addThing(shapeType, settings)
     --function lib.addThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
     --local thing = createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
-    print(inspect(settings))
+    --  print(inspect(settings))
     local thing = createThing(shapeType, settings)
     if not thing then
         print("addThing: Failed to create thing.")
