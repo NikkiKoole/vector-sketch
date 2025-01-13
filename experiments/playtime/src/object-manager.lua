@@ -11,11 +11,12 @@ local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 -- Helper function to create and configure a physics body with shapes
-local function createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
+local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
     -- Initialize default values
     bodyType = bodyType or 'dynamic'
     radius = radius or 20         -- Default radius for circular shapes
     width = width or radius * 2   -- Default width for polygonal shapes
+    width2 = width2 or radius * 2 -- Default width for polygonal shapes
     height = height or radius * 2 -- Default height for polygonal shapes
     label = label or ""           -- Default label
 
@@ -25,6 +26,8 @@ local function createThing(shapeType, x, y, bodyType, radius, width, height, lab
     local settings = {
         radius = radius or 20,
         width = width or radius * 2,
+        width2 = width2 or radius * 2,
+
         height = height or radius * 2,
         optionalVertices = optionalVertices
     }
@@ -49,6 +52,7 @@ local function createThing(shapeType, x, y, bodyType, radius, width, height, lab
         shapeType = shapeType,
         radius = radius,
         width = width,
+        width2 = width2,
         height = height,
         label = label,
         body = body,
@@ -68,11 +72,13 @@ end
 
 function lib.startSpawn(shapeType, wx, wy)
     local radius = tonumber(uiState.lastUsedRadius) or 10
-    local width = tonumber(uiState.lastUsedWidth) or radius * 2   -- Default width for polygons
-    local height = tonumber(uiState.lastUsedHeight) or radius * 2 -- Default height for polygons
+    local width = tonumber(uiState.lastUsedWidth) or radius * 2     -- Default width for polygons
+    local width2 = tonumber(uiState.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
+
+    local height = tonumber(uiState.lastUsedHeight) or radius * 2   -- Default height for polygons
 
     local bodyType = uiState.nextType
-    local thing = createThing(shapeType, wx, wy, bodyType, radius, width, height, '')
+    local thing = createThing(shapeType, wx, wy, bodyType, radius, width, width2, height, '')
 
     if not thing then
         print("startSpawn: Failed to create thing.")
@@ -83,8 +89,8 @@ function lib.startSpawn(shapeType, wx, wy)
     uiState.offsetDragging = { 0, 0 }
 end
 
-function lib.addThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
-    local thing = createThing(shapeType, x, y, bodyType, radius, width, height, label, optionalVertices)
+function lib.addThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
+    local thing = createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
 
     if not thing then
         print("addThing: Failed to create thing.")
@@ -433,6 +439,8 @@ function lib.recreateThingFromBody(body, newSettings)
     local settings = {
         radius = newSettings.radius or thing.radius,
         width = newSettings.width or thing.width,
+        width2 = newSettings.width2 or thing.width2,
+
         height = newSettings.height or thing.height,
         optionalVertices = newSettings.optionalVertices
     }
@@ -511,6 +519,7 @@ function lib.recreateThingFromBody(body, newSettings)
 
     thing.radius = newSettings.radius or thing.radius
     thing.width = newSettings.width or thing.width
+    thing.width2 = newSettings.width2 or thing.width2
     thing.height = newSettings.height or thing.height
     thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices

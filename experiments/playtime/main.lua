@@ -72,6 +72,8 @@ function love.load(args)
     uiState = {
         lastUsedRadius = 20,
         lastUsedWidth = 40,
+        lastUsedWidth2 = 50,
+
         lastUsedHeight = 40,
         showGrid = false,
         radiusOfNextSpawn = 100,
@@ -140,7 +142,7 @@ function love.load(args)
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
-    objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400)
+    objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400, 400)
     -- objectManager.addThing('rectangle', 600, 400, 'dynamic', 100)
     -- objectManager.addThing('rectangle', 450, 800, 'kinematic', 200)
     -- objectManager.addThing('rectangle', 850, 800, 'static', 200)
@@ -159,7 +161,7 @@ function love.load(args)
 
         -- Add more vertices as needed
     }
-    objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, 'CustomShape', customVertices)
+    objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
     softbodies = {}
     playWithSoftbodies = false
     if playWithSoftbodies then
@@ -738,7 +740,7 @@ function finalizePolygon()
     if #uiState.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
         --local cx, cy = mathutils.getCenterOfPoints(uiState.polyVerts)
-        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, '', uiState.polyVerts)
+        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, nil, '', uiState.polyVerts)
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")

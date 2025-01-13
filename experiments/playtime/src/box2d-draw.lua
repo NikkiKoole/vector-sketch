@@ -81,12 +81,13 @@ function lib.drawWorld(world, drawOutline)
                 local shape_x, shape_y = fixture:getShape():getPoint()
                 local r = fixture:getShape():getRadius()
                 local color = getBodyColor(body)
+                local segments = 180
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
-                love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, 360)
+                love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, segments)
 
                 local color = pal.creamy
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
-                if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360) end
+                if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, segments) end
             end
         end
     end

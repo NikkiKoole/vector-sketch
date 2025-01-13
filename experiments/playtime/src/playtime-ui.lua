@@ -1206,7 +1206,7 @@ function lib.drawUpdateSelectedObjectUI()
                         uiState.lastUsedRadius = newRadius
                         body = uiState.selectedObj.body
                     end
-                elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'trapezium' or shapeType == 'itriangle' then
+                elseif shapeType == 'rectangle' or shapeType == 'capsule' or shapeType == 'itriangle' then
                     -- Show width and height controls for these shapes
 
 
@@ -1223,6 +1223,35 @@ function lib.drawUpdateSelectedObjectUI()
                         uiState.selectedObj = objectManager.recreateThingFromBody(body, {
                             shapeType = shapeType,
                             width = newWidth or thing.width,
+                            height = newHeight or thing.height,
+                        })
+                        body = uiState.selectedObj.body
+                    end
+                elseif shapeType == 'trapezium' then
+                    -- Show width and height controls for these shapes
+
+
+                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                    ui.label(x, y, ' width')
+                    nextRow()
+
+                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
+                    ui.label(x, y, ' width2')
+                    nextRow()
+
+                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                    ui.label(x, y, ' height')
+
+                    if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
+                        uiState.lastUsedWidth2 = newWidth2
+
+                        uiState.lastUsedWidth = newWidth
+                        uiState.lastUsedHeight = newHeight
+                        uiState.selectedObj = objectManager.recreateThingFromBody(body, {
+                            shapeType = shapeType,
+                            width = newWidth or thing.width,
+                            width2 = newWidth2 or thing.width2,
+
                             height = newHeight or thing.height,
                         })
                         body = uiState.selectedObj.body

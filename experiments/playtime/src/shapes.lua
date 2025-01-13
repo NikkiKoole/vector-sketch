@@ -24,8 +24,8 @@ local function capsuleXY(w, h, cs, x, y)
     local w2 = w / 2
     local h2 = h / 2
 
-    local bt = -h2 + cs
-    local bb = h2 - cs
+    local bt = -h2 + cs --* 2
+    local bb = h2 - cs  --* 2
     local bl = -w2 + cs
     local br = w2 - cs
 
@@ -212,6 +212,7 @@ function shapes.createShape(shapeType, settings)
     print(inspect(settings))
     if shapeType == 'circle' then
         vertices = approximateCircle(settings.radius, 0, 0, 20)
+        --table.insert(shapesList, love.physics.newPolygonShape(vertices))
         table.insert(shapesList, love.physics.newCircleShape(settings.radius))
     elseif shapeType == 'rectangle' then
         vertices = rect(settings.width, settings.height, 0, 0)
@@ -220,7 +221,7 @@ function shapes.createShape(shapeType, settings)
         vertices = capsuleXY(settings.width, settings.height, settings.width / 5, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'trapezium' then
-        vertices = makeTrapezium(settings.width, settings.width * 1.2, settings.height, 0, 0)
+        vertices = makeTrapezium(settings.width, settings.width2 or (settings.width * 1.2), settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'itriangle' then
         vertices = makeITriangle(settings.width, settings.height, 0, 0)

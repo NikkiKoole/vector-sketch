@@ -113,9 +113,11 @@ function lib.load(data, world)
             id = getNewId(bodyData.id),
             label = bodyData.label,
             shapeType = bodyData.shapeType,
-            radius = bodyData.radius,
-            width = bodyData.width,
-            height = bodyData.height,
+            radius = (bodyData.dims and bodyData.dims.radius) or bodyData.radius,
+            width = (bodyData.dims and bodyData.dims.width) or bodyData.width,
+            width2 = (bodyData.dims and bodyData.dims.width2) or bodyData.width2,
+            height = (bodyData.dims and bodyData.dims.height) or bodyData.height,
+
             body = body,
             vertices = bodyData.vertices,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
@@ -286,6 +288,20 @@ function lib.load(data, world)
     print("World successfully loaded")
 end
 
+local function needsDimProperty(prop, shape)
+    print(shape, prop)
+    if prop == 'radius' then
+        return shape == 'triangle' or shape == 'pentagon' or shape == 'hexagon' or
+            shape == 'heptagon' or shape == 'octagon'
+    elseif prop == 'width2' then
+        return shape == 'trapezium'
+    elseif prop == 'width' then
+        return shape ~= 'circle' and shape ~= 'custom'
+    elseif prop == 'height' then
+        return shape ~= 'circle' and shape ~= 'custom'
+    end
+end
+
 function lib.save(world, worldState, filename)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
@@ -302,9 +318,13 @@ function lib.save(world, worldState, filename)
                 id = thing.id, -- Unique identifier
                 label = utils.sanitizeString(thing.label),
                 shapeType = thing.shapeType,
-                radius = thing.radius,
-                width = thing.width,
-                height = thing.height,
+                dims = {
+                    radius = needsDimProperty('radius', thing.shapeType) and thing.radius or nil,
+                    width = needsDimProperty('width', thing.shapeType) and thing.width or nil,
+                    height = needsDimProperty('height', thing.shapeType) and thing.height or nil,
+                    width2 = needsDimProperty('width2', thing.shapeType) and thing.width2 or nil,
+                },
+                --radius = thing.radius,
                 vertices = thing.shapeType == 'custom' and thing.vertices,
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
                 position = { utils.round_to_decimals(body:getX(), 4), utils.round_to_decimals(body:getY(), 4) },
@@ -528,6 +548,8 @@ function lib.cloneSelection(selectedBodies)
             local settings = {
                 radius = originalThing.radius,
                 width = originalThing.width,
+                width2 = originalThing.width2,
+
                 height = originalThing.height,
                 optionalVertices = originalThing.vertices
             }
@@ -593,6 +615,8 @@ function lib.cloneSelection(selectedBodies)
                 shapeType = originalThing.shapeType,
                 radius = originalThing.radius,
                 width = originalThing.width,
+                width2 = originalThing.width2,
+
                 height = originalThing.height,
                 label = originalThing.label,
                 body = newBody,
