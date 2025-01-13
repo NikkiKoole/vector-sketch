@@ -116,8 +116,11 @@ function lib.load(data, world)
             radius = (bodyData.dims and bodyData.dims.radius) or bodyData.radius,
             width = (bodyData.dims and bodyData.dims.width) or bodyData.width,
             width2 = (bodyData.dims and bodyData.dims.width2) or bodyData.width2,
+            width3 = (bodyData.dims and bodyData.dims.width3) or bodyData.width3,
             height = (bodyData.dims and bodyData.dims.height) or bodyData.height,
-
+            height2 = (bodyData.dims and bodyData.dims.height2) or bodyData.height2,
+            height3 = (bodyData.dims and bodyData.dims.height3) or bodyData.height3,
+            height4 = (bodyData.dims and bodyData.dims.height4) or bodyData.height4,
             body = body,
             vertices = bodyData.vertices,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
@@ -290,15 +293,26 @@ end
 
 local function needsDimProperty(prop, shape)
     print(shape, prop)
-    if prop == 'radius' then
+
+    local needsRadius = function(shape)
         return shape == 'triangle' or shape == 'pentagon' or shape == 'hexagon' or
             shape == 'heptagon' or shape == 'octagon'
-    elseif prop == 'width2' then
-        return shape == 'trapezium'
+    end
+
+    if prop == 'radius' then
+        return needsRadius(shape)
     elseif prop == 'width' then
-        return shape ~= 'circle' and shape ~= 'custom'
+        return not needsRadius(shape) and shape ~= 'custom'
     elseif prop == 'height' then
-        return shape ~= 'circle' and shape ~= 'custom'
+        return not needsRadius(shape) and shape ~= 'custom'
+    elseif prop == 'height2' then
+        return shape == 'capsule' or shape == 'torso'
+    elseif prop == 'width2' then
+        return shape == 'trapezium' or shape == 'torso'
+    elseif prop == 'height3' or prop == 'height4' then
+        return shape == 'torso'
+    elseif prop == 'width3' then
+        return shape == 'torso'
     end
 end
 
@@ -321,8 +335,12 @@ function lib.save(world, worldState, filename)
                 dims = {
                     radius = needsDimProperty('radius', thing.shapeType) and thing.radius or nil,
                     width = needsDimProperty('width', thing.shapeType) and thing.width or nil,
-                    height = needsDimProperty('height', thing.shapeType) and thing.height or nil,
                     width2 = needsDimProperty('width2', thing.shapeType) and thing.width2 or nil,
+                    width3 = needsDimProperty('width3', thing.shapeType) and thing.width3 or nil,
+                    height = needsDimProperty('height', thing.shapeType) and thing.height or nil,
+                    height2 = needsDimProperty('height2', thing.shapeType) and thing.height2 or nil,
+                    height3 = needsDimProperty('height3', thing.shapeType) and thing.height3 or nil,
+                    height4 = needsDimProperty('height4', thing.shapeType) and thing.height4 or nil,
                 },
                 --radius = thing.radius,
                 vertices = thing.shapeType == 'custom' and thing.vertices,
@@ -551,6 +569,7 @@ function lib.cloneSelection(selectedBodies)
                 width2 = originalThing.width2,
 
                 height = originalThing.height,
+                height2 = originalThing.height2,
                 optionalVertices = originalThing.vertices
             }
             local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, settings)
@@ -616,8 +635,11 @@ function lib.cloneSelection(selectedBodies)
                 radius = originalThing.radius,
                 width = originalThing.width,
                 width2 = originalThing.width2,
-
+                width3 = originalThing.width3,
                 height = originalThing.height,
+                height2 = originalThing.height2,
+                height3 = originalThing.height3,
+                height4 = originalThing.height4,
                 label = originalThing.label,
                 body = newBody,
                 shapes = newShapeList,

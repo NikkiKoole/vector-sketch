@@ -11,25 +11,30 @@ local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 -- Helper function to create and configure a physics body with shapes
-local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
+local function createThing(shapeType, conf)
+    --local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
     -- Initialize default values
     bodyType = bodyType or 'dynamic'
-    radius = radius or 20         -- Default radius for circular shapes
-    width = width or radius * 2   -- Default width for polygonal shapes
-    width2 = width2 or radius * 2 -- Default width for polygonal shapes
-    height = height or radius * 2 -- Default height for polygonal shapes
-    label = label or ""           -- Default label
+    -- radius = radius or 20         -- Default radius for circular shapes
+    -- width = width or radius * 2   -- Default width for polygonal shapes
+    -- width2 = width2 or radius * 2 -- Default width for polygonal shapes
+    -- height = height or radius * 2 -- Default height for polygonal shapes
+    --label = label or "" -- Default label
 
     -- Create the physics body at the specified world coordinates
-    local body = love.physics.newBody(world, x, y, bodyType)
+    local body = love.physics.newBody(world, conf.x or 0, conf.y or 0, bodyType)
 
     local settings = {
-        radius = radius or 20,
-        width = width or radius * 2,
-        width2 = width2 or radius * 2,
-
-        height = height or radius * 2,
-        optionalVertices = optionalVertices
+        radius = conf.radius,
+        width = conf.width,
+        width2 = conf.width2,
+        width3 = conf.width3,
+        height = conf.height,
+        height2 = conf.height2,
+        height3 = conf.height3,
+        height4 = conf.height4,
+        optionalVertices = conf.vertices or nil, --optionalVertices
+        label = conf.label or ''
     }
     local shapeList, vertices = shapes.createShape(shapeType, settings)
 
@@ -50,11 +55,15 @@ local function createThing(shapeType, x, y, bodyType, radius, width, width2, hei
     -- Create the 'thing' table to store properties
     local thing = {
         shapeType = shapeType,
-        radius = radius,
-        width = width,
-        width2 = width2,
-        height = height,
-        label = label,
+        radius = settings.radius,
+        width = settings.width,
+        width2 = settings.width2,
+        width3 = settings.width3,
+        height = settings.height,
+        height2 = settings.height2,
+        height3 = settings.height3,
+        height4 = settings.height4,
+        label = settings.label,
         body = body,
         shapes = shapeList,
         vertices = vertices, -- Store vertices if needed
@@ -74,11 +83,32 @@ function lib.startSpawn(shapeType, wx, wy)
     local radius = tonumber(uiState.lastUsedRadius) or 10
     local width = tonumber(uiState.lastUsedWidth) or radius * 2     -- Default width for polygons
     local width2 = tonumber(uiState.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
+    local width3 = tonumber(uiState.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
 
     local height = tonumber(uiState.lastUsedHeight) or radius * 2   -- Default height for polygons
+    local height2 = tonumber(uiState.lastUsedHeight2) or radius * 2 -- Default height for polygons
+    local height3 = tonumber(uiState.lastUsedHeight3) or radius * 2 -- Default height for polygons
+
+    local height4 = tonumber(uiState.lastUsedHeight4) or radius * 2 -- Default height for polygons
+
 
     local bodyType = uiState.nextType
-    local thing = createThing(shapeType, wx, wy, bodyType, radius, width, width2, height, '')
+    local settings = {
+        x = wx,
+        y = wy,
+        bodyType = bodyType,
+        radius = radius,
+        width = width,
+        width2 = width2,
+        width3 = width3,
+        height = height,
+        height2 = height2,
+        height3 = height3,
+        height4 = height4,
+        label = ''
+    }
+    print(inspect(settings))
+    local thing = createThing(shapeType, settings)
 
     if not thing then
         print("startSpawn: Failed to create thing.")
@@ -89,9 +119,11 @@ function lib.startSpawn(shapeType, wx, wy)
     uiState.offsetDragging = { 0, 0 }
 end
 
-function lib.addThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
-    local thing = createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
-
+function lib.addThing(shapeType, settings)
+    --function lib.addThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
+    --local thing = createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
+    print(inspect(settings))
+    local thing = createThing(shapeType, settings)
     if not thing then
         print("addThing: Failed to create thing.")
         return nil
@@ -440,8 +472,11 @@ function lib.recreateThingFromBody(body, newSettings)
         radius = newSettings.radius or thing.radius,
         width = newSettings.width or thing.width,
         width2 = newSettings.width2 or thing.width2,
-
+        width3 = newSettings.width3 or thing.width3,
         height = newSettings.height or thing.height,
+        height2 = newSettings.height2 or thing.height2,
+        height3 = newSettings.height3 or thing.height3,
+        height4 = newSettings.height4 or thing.height4,
         optionalVertices = newSettings.optionalVertices
     }
     local shapeList, newVertices = shapes.createShape(
@@ -520,7 +555,11 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.radius = newSettings.radius or thing.radius
     thing.width = newSettings.width or thing.width
     thing.width2 = newSettings.width2 or thing.width2
+    thing.width3 = newSettings.width3 or thing.width3
     thing.height = newSettings.height or thing.height
+    thing.height2 = newSettings.height2 or thing.height2
+    thing.height3 = newSettings.height3 or thing.height3
+    thing.height4 = newSettings.height4 or thing.height4
     thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices
     registry.registerBody(thing.id, thing.body)

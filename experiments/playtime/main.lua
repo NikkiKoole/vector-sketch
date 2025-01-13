@@ -72,9 +72,10 @@ function love.load(args)
     uiState = {
         lastUsedRadius = 20,
         lastUsedWidth = 40,
-        lastUsedWidth2 = 50,
-
+        lastUsedWidth2 = 5,
         lastUsedHeight = 40,
+        lastUsedHeight2 = 40,
+
         showGrid = false,
         radiusOfNextSpawn = 100,
         nextType = 'dynamic',
@@ -142,7 +143,11 @@ function love.load(args)
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
-    objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400, 400)
+
+
+
+    objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
+    -- objectManager.addThing('rectangle', 200, 400, 'dynamic', 100, 400, 400)
     -- objectManager.addThing('rectangle', 600, 400, 'dynamic', 100)
     -- objectManager.addThing('rectangle', 450, 800, 'kinematic', 200)
     -- objectManager.addThing('rectangle', 850, 800, 'static', 200)
@@ -161,7 +166,8 @@ function love.load(args)
 
         -- Add more vertices as needed
     }
-    objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
+    objectManager.addThing('custom', { vertices = customVertices })
+    --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
     softbodies = {}
     playWithSoftbodies = false
     if playWithSoftbodies then
@@ -740,7 +746,9 @@ function finalizePolygon()
     if #uiState.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
         --local cx, cy = mathutils.getCenterOfPoints(uiState.polyVerts)
-        objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, nil, '', uiState.polyVerts)
+        local settings = { x = cx, y = cy, bodyType = uiState.nextType, vertices = uiState.polyVerts }
+        -- objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, nil, '', uiState.polyVerts)
+        objectManager.addThing('custom', settings)
     else
         -- Not enough vertices to form a polygon
         print("Not enough vertices to create a polygon.")

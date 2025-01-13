@@ -515,7 +515,7 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 end
 
 function lib.drawAddShapeUI()
-    local shapeTypes = { 'rectangle', 'circle', 'triangle', 'itriangle', 'capsule', 'trapezium', 'pentagon',
+    local shapeTypes = { 'rectangle', 'circle', 'triangle', 'itriangle', 'capsule', 'torso', 'trapezium', 'pentagon',
         'hexagon',
         'heptagon',
         'octagon' }
@@ -525,7 +525,7 @@ function lib.drawAddShapeUI()
     local panelWidth = 200
     local buttonSpacing = BUTTON_SPACING
     local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 4) * (buttonHeight + buttonSpacing)) + buttonSpacing
+    local panelHeight = titleHeight + ((#shapeTypes + 5) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
     ui.panel(startX, startY, panelWidth, panelHeight, '', function()
         local layout = ui.createLayout({
@@ -1227,6 +1227,59 @@ function lib.drawUpdateSelectedObjectUI()
                         })
                         body = uiState.selectedObj.body
                     end
+                elseif shapeType == 'torso' then
+                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                    ui.label(x, y, ' width')
+                    nextRow()
+
+                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
+                    ui.label(x, y, ' width2')
+                    nextRow()
+
+                    local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
+                    ui.label(x, y, ' width3')
+                    nextRow()
+
+                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                    ui.label(x, y, ' height')
+                    nextRow()
+                    local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
+                    ui.label(x, y, ' height2')
+                    nextRow()
+                    local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
+                    ui.label(x, y, ' height3')
+                    nextRow()
+                    local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
+                    ui.label(x, y, ' height4')
+                    nextRow()
+
+                    if (newWidth and newWidth ~= thing.width) or
+                        (newWidth2 and newWidth2 ~= thing.width2) or
+                        (newWidth3 and newWidth3 ~= thing.width3) or
+                        (newHeight and newHeight ~= thing.height) or
+                        (newHeight2 and newHeight2 ~= thing.height2) or
+                        (newHeight3 and newHeight3 ~= thing.height3) or
+                        (newHeight4 and newHeight4 ~= thing.height4) then
+                        uiState.lastUsedWidth = newWidth
+                        uiState.lastUsedWidth2 = newWidth2
+                        uiState.lastUsedWidth3 = newWidth3
+                        uiState.lastUsedHeight = newHeight
+                        uiState.lastUsedHeight2 = newHeight2
+                        uiState.lastUsedHeight3 = newHeight3
+                        uiState.lastUsedHeight4 = newHeight4
+
+                        uiState.selectedObj = objectManager.recreateThingFromBody(body, {
+                            shapeType = shapeType,
+                            width = newWidth or thing.width,
+                            width2 = newWidth2 or thing.width2,
+                            width3 = newWidth3 or thing.width3,
+                            height = newHeight or thing.height,
+                            height2 = newHeight2 or thing.height2,
+                            height3 = newHeight3 or thing.height3,
+                            height4 = newHeight4 or thing.height4,
+                        })
+                        body = uiState.selectedObj.body
+                    end
                 elseif shapeType == 'trapezium' then
                     -- Show width and height controls for these shapes
 
@@ -1244,7 +1297,6 @@ function lib.drawUpdateSelectedObjectUI()
 
                     if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
                         uiState.lastUsedWidth2 = newWidth2
-
                         uiState.lastUsedWidth = newWidth
                         uiState.lastUsedHeight = newHeight
                         uiState.selectedObj = objectManager.recreateThingFromBody(body, {

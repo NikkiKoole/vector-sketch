@@ -19,15 +19,15 @@ local function makePolygonVertices(sides, radius)
     return vertices
 end
 
-local function capsuleXY(w, h, cs, x, y)
+local function capsuleXY(w, h, csw, x, y)
     -- cs == cornerSize
     local w2 = w / 2
     local h2 = h / 2
 
-    local bt = -h2 + cs --* 2
-    local bb = h2 - cs  --* 2
-    local bl = -w2 + cs
-    local br = w2 - cs
+    local bt = -h2 + csw --* 2
+    local bb = h2 - csw  --* 2
+    local bl = -w2 + csw
+    local br = w2 - csw
 
     return {
         x - w2, y + bt,
@@ -40,6 +40,20 @@ local function capsuleXY(w, h, cs, x, y)
         x - w2, y + bb
     }
 end
+
+local function torso(w1, w2, w3, h1, h2, h3, h4, x, y)
+    return {
+        x, y - h1 - h2,
+        x + w1 / 2, y - h2,
+        x + w2 / 2, y,
+        x + w3 / 2, y + h3,
+        x, y + h3 + h4,
+        x - w3 / 2, y + h3,
+        x - w2 / 2, y,
+        x - w1 / 2, y - h2,
+    }
+end
+
 
 local function approximateCircle(radius, centerX, centerY, segments)
     segments = segments or 32 -- Default to 32 segments if not specified
@@ -203,13 +217,13 @@ end
 -- end
 
 function shapes.createShape(shapeType, settings)
-    if (radius == 0) then radius = 1 end
-    if (width == 0) then width = 1 end
-    if (height == 0) then height = 1 end
+    if (settings.radius == 0) then settings.radius = 1 end
+    if (settings.width == 0) then settings.width = 1 end
+    if (settings.height == 0) then settings.height = 1 end
 
     local shapesList = {}
     local vertices = nil
-    print(inspect(settings))
+
     if shapeType == 'circle' then
         vertices = approximateCircle(settings.radius, 0, 0, 20)
         --table.insert(shapesList, love.physics.newPolygonShape(vertices))
@@ -217,8 +231,14 @@ function shapes.createShape(shapeType, settings)
     elseif shapeType == 'rectangle' then
         vertices = rect(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newRectangleShape(settings.width, settings.height))
+    elseif shapeType == 'torso' then
+        vertices = torso(settings.width, settings.width2, settings.width3, settings.height,
+            settings.height2,
+            settings.height3, settings.height4, 0, 0)
+        shapesList = makeShapeListFromPolygon(vertices) or {}
+        --table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'capsule' then
-        vertices = capsuleXY(settings.width, settings.height, settings.width / 5, 0, 0)
+        vertices = capsuleXY(settings.width, settings.height, settings.width / settings.width2, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'trapezium' then
         vertices = makeTrapezium(settings.width, settings.width2 or (settings.width * 1.2), settings.height, 0, 0)
