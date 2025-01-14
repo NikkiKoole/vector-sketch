@@ -119,6 +119,11 @@ function love.load(args)
         speedMultiplier = 1.0
     }
 
+    tags = {
+        'straighten',
+        'mipo' -- this is my allround character
+    }
+
     sceneScript = nil
     scriptPath = nil
     lastModTime = nil
@@ -192,7 +197,7 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('torso')
-    loadScriptAndScene('straight')
+    -- loadScriptAndScene('water')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
