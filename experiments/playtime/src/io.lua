@@ -288,7 +288,7 @@ function lib.load(data, world)
 
     snap.onSceneLoaded()
 
-    print("World successfully loaded")
+    --print("World successfully loaded")
 end
 
 local function needsDimProperty(prop, shape)

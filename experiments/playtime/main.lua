@@ -1,15 +1,9 @@
 -- main.lua
 
 -- TODO
---
--- enable more properties for basic shapes
--- (trapezium width1 & width2 )
--- capsule rounded porperties
-
--- ad torso shape
--- have a look if polygon custom needs to be repositoned after creation..?
--- i feel shape just needs to have it center to 0,0 always ?
-
+-- build a ui where you can add multiple tags..
+-- have group/collection concept
+-- have a marker/tag/behaviour concept.
 
 local old_print = print
 print = function(...)
@@ -46,7 +40,7 @@ function waitForEvent()
     local a, b, c, d, e
     repeat
         a, b, c, d, e = love.event.wait()
-        print(a, b, c, d, e)
+        --print(a, b, c, d, e)
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
@@ -222,7 +216,7 @@ function loadScene(name)
     uiState.selectedJoint = nil
     uiState.selectedObj = nil
     eio.load(data, world)
-
+    print("Scene loaded: " .. name)
     return data
 end
 

@@ -5,6 +5,7 @@ local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint
     sfixtures = {},
+    groups = {}
     -- Add more categories if needed
 }
 
