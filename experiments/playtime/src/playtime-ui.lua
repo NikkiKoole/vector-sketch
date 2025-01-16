@@ -723,85 +723,6 @@ function lib.drawWorldSettingsUI()
     end)
 end
 
--- Function to make the polygon relative to its center
-local function makePolygonRelativeToCenter(polygon, centerX, centerY)
-    -- Calculate the center
-
-
-    -- Shift all points to make them relative to the center
-    local relativePolygon = {}
-    for i = 1, #polygon, 2 do
-        local x = polygon[i] - centerX
-        local y = polygon[i + 1] - centerY
-        table.insert(relativePolygon, x)
-        table.insert(relativePolygon, y)
-    end
-
-    return relativePolygon, centerX, centerY
-end
--- Function to make the polygon absolute given a new center
-local function makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
-    --print('makePolygonAbsolute center:', newCenterX, newCenterY)
-    local absolutePolygon = {}
-    for i = 1, #relativePolygon, 2 do
-        local x = relativePolygon[i] + newCenterX
-        local y = relativePolygon[i + 1] + newCenterY
-        table.insert(absolutePolygon, x)
-        table.insert(absolutePolygon, y)
-    end
-    --  print('resulting absolute poly:', inspect(absolutePolygon))
-    return absolutePolygon
-end
-
-local function getPolygonDimensions(polygon)
-    -- Initialize min and max values
-    local minX, maxX = math.huge, -math.huge
-    local minY, maxY = math.huge, -math.huge
-
-    -- Loop through the polygon's points
-    for i = 1, #polygon, 2 do
-        local x, y = polygon[i], polygon[i + 1]
-        if x < minX then minX = x end
-        if x > maxX then maxX = x end
-        if y < minY then minY = y end
-        if y > maxY then maxY = y end
-    end
-
-    -- Calculate width and height
-    local width = maxX - minX
-    local height = maxY - minY
-
-    return width, height
-end
-
-local function getCenterOfShapeFixtures(fixts)
-    local xmin = math.huge
-    local ymin = math.huge
-    local xmax = -math.huge
-    local ymax = -math.huge
-    for i = 1, #fixts do
-        local it = fixts[i]
-        if it:getUserData() then
-        else
-            local points = {}
-            if (it:getShape().getPoints) then
-                points = { it:getShape():getPoints() }
-            else
-                points = { it:getShape():getPoint() }
-            end
-            --print(inspect(points))
-            for j = 1, #points, 2 do
-                local xx = points[j]
-                local yy = points[j + 1]
-                if xx < xmin then xmin = xx end
-                if xx > xmax then xmax = xx end
-                if yy < ymin then ymin = yy end
-                if yy > ymax then ymax = yy end
-            end
-        end
-    end
-    return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
-end
 local hadBeenDraggingObj = false
 
 function lib.drawSelectedSFixture()
@@ -847,8 +768,8 @@ function lib.drawSelectedSFixture()
                 local localX, localY = body:getLocalPoint(x, y)
                 local points = { uiState.selectedSFixture:getShape():getPoints() }
                 local centerX, centerY = mathutils.getCenterOfPoints(points)
-                local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
-                local newShape = makePolygonAbsolute(relativePoints, localX, localY)
+                local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                local newShape = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
                 local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
                 uiState.selectedSFixture:destroy()
 
@@ -872,7 +793,7 @@ function lib.drawSelectedSFixture()
         end
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local points = { uiState.selectedSFixture:getShape():getPoints() }
-        local dim = getPolygonDimensions(points)
+        local dim = mathutils.getPolygonDimensions(points)
         local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
         ui.label(x, y, ' radius')
         if newRadius and newRadius ~= dim then
@@ -908,23 +829,14 @@ function lib.drawSelectedSFixture()
 
 
         local function handleOffset(xMultiplier, yMultiplier)
-            -- todo this algorithm doesntw work correclty with polygons that have
-            -- custom vertices, it sort of almost works a bit, but its not correct,
-            -- N E S W offset are off, weirdly enough for the standard (perfectly around 0,0 originated) shapes
-            -- it works correctly
-            -- but i am unable to figure out how to offset it correctly
-            -- this isnt the end of the world tough since placing sfixtures at these positions
-            -- is kinda a non usefull feature for these polygons anyway..
-
-
             local body = uiState.selectedSFixture:getBody()
             -- print('body position:', body:getPosition())
             local parentVerts = body:getUserData().thing.vertices
 
 
             local allFixtures = body:getUserData().thing.body:getFixtures()
-            local offsetX, offsetY = getCenterOfShapeFixtures(allFixtures)
-            print(offsetX, offsetY)
+            --local offsetX, offsetY = getCenterOfShapeFixtures(allFixtures)
+            --  print(offsetX, offsetY)
             --  local testShape = { allFixtures[2]:getShape():getPoints() }
             ---  local centerX2, centerY2 = mathutils.getCenterOfPoints(testShape)
             -- print(inspect(testShape), centerX2, centerY2)
@@ -934,13 +846,13 @@ function lib.drawSelectedSFixture()
 
             --print('parentVerts', inspect(parentVerts))
             local bounds = mathutils.getBoundingRect(parentVerts)
-            local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
+            local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
             -- print('relativepoinyts, ', inspect(relativePoints))
             -- local a, b = mathutils.computeCentroid(parentVerts)
             -- print('centroid:', a, b)
-            local newShape = makePolygonAbsolute(relativePoints,
-                offsetX + ((bounds.width / 2) * xMultiplier),
-                offsetY + ((bounds.height / 2) * yMultiplier))
+            local newShape = mathutils.makePolygonAbsolute(relativePoints,
+                ((bounds.width / 2) * xMultiplier),
+                ((bounds.height / 2) * yMultiplier))
 
             local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             uiState.selectedSFixture:destroy()

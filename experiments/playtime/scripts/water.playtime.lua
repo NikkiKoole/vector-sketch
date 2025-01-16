@@ -99,8 +99,13 @@ function s.update(dt)
     for i = 1, #result do
         local otherPoly = prepareVerticesForClipping(result[i])
         local clip = mathutils.polygonClip(waterPoly, otherPoly)
-        local submergedArea, center = calculatePolygonArea(clip) --local cx, cy = mathutils.computeCentroid(resultpoly)
+        local submergedArea, _ = calculatePolygonArea(clip) --local cx, cy = mathutils.computeCentroid(resultpoly)
+        local center = {}
+        print(inspect(clip))
+        local cx, cy = mathutils.getCenterOfPoints2(clip)
 
+        center.x = cx
+        center.y = cy
         local resultpoly = {}
         for j = 1, #clip do
             table.insert(resultpoly, clip[j].x)
@@ -112,7 +117,6 @@ function s.update(dt)
         local g = worldState.gravity
 
         if resultpoly and #resultpoly >= 6 then
-
             local b = -(g / (m)) * submergedArea * 2 * fluidDensity
 
 
@@ -189,7 +193,7 @@ function s.draw()
     for i = 1, #result do
         local otherPoly = prepareVerticesForClipping(result[i])
         local clip = mathutils.polygonClip(waterPoly, otherPoly)
-        local submergedArea, center = calculatePolygonArea(clip)
+        --local submergedArea, center = calculatePolygonArea(clip)
 
         local resultpoly = {}
         for j = 1, #clip do

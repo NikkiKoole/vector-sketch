@@ -292,7 +292,7 @@ function lib.load(data, world)
 end
 
 local function needsDimProperty(prop, shape)
-    print(shape, prop)
+    -- print(shape, prop)
 
     local needsRadius = function(shape)
         return shape == 'triangle' or shape == 'pentagon' or shape == 'hexagon' or
