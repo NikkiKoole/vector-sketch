@@ -120,8 +120,8 @@ function love.load(args)
     }
 
     tags = {
-        'straighten',
-        'mipo' -- this is my allround character
+        'straight',
+        'snap',
     }
 
     sceneScript = nil
@@ -196,7 +196,7 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    --loadScriptAndScene('torso')
+    --loadScriptAndScene('straight')
     --  loadScriptAndScene('water')
 end
 

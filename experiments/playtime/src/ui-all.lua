@@ -21,11 +21,11 @@ local theme  = {
         label = { 1, 1, 1 }, -- Label text color
     },
     toggleButton = {
-        onFill = { 0.2, 0.8, 0.2 },  -- Green fill when toggled on
-        offFill = { 0.8, 0.2, 0.2 }, -- Red fill when toggled off
-        onText = { 1, 1, 1 },        -- Text color when toggled on
-        offText = { 1, 1, 1 },       -- Text color when toggled off
-        outline = { 1, 1, 1 },       -- Outline color
+        onFill = { 0.1, 0.6, 0.1 },  -- Green fill when toggled on
+        offFill = { 0.6, 0.1, 0.1 }, -- Red fill when toggled off
+        onText = creamy,             -- Text color when toggled on
+        offText = creamy,            -- Text color when toggled off
+        outline = creamy,            -- Outline color
     },
     slider = {
         track = { 0.5, 0.5, 0.5 }, -- Slider track color

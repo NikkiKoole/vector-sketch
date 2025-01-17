@@ -127,7 +127,7 @@ function lib.startSpawn(shapeType, wx, wy)
         height4 = height4,
         label = ''
     }
-    print(inspect(settings))
+    -- print(inspect(settings))
     local thing = createThing(shapeType, settings)
 
     if not thing then

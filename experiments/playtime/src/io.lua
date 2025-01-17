@@ -296,7 +296,7 @@ local function needsDimProperty(prop, shape)
 
     local needsRadius = function(shape)
         return shape == 'triangle' or shape == 'pentagon' or shape == 'hexagon' or
-            shape == 'heptagon' or shape == 'octagon'
+            shape == 'heptagon' or shape == 'octagon' or shape == 'circle'
     end
 
     if prop == 'radius' then

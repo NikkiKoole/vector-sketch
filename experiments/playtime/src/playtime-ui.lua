@@ -945,6 +945,7 @@ end
 
 -- Define a table to keep track of accordion states
 local accordionStates = {
+    tags = false,
     position = false,
     transform = true,
     physics = false,
@@ -1051,6 +1052,15 @@ function lib.drawUpdateSelectedObjectUI()
 
 
             nextRow()
+            if false then
+                drawAccordion("tags", function(clicked)
+                    local w = love.graphics.getFont():getWidth('straight') + 20
+                    -- ui.button(x, y, w, 'straight')
+                    ui.toggleButton(x, y, w, 40, 'straight', 'straight', false)
+                    nextRow()
+                end)
+                nextRow()
+            end
             drawAccordion("position", function(clicked)
                 nextRow()
                 local value = thing.body:getX()
