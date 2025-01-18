@@ -171,7 +171,7 @@ function lib.reattachJoints(jointData, newBody)
     for _, data in ipairs(jointData) do
         local jointType = data.jointType
         local otherBody = data.otherBody
-
+        print(inspect(data))
         if data.originalBodyOrder == "bodyA" then
             data.body1 = newBody
             data.body2 = data.otherBody

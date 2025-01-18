@@ -1390,6 +1390,23 @@ function lib.drawUpdateSelectedObjectUI()
                                     uiState.selectedJoint = joint
                                     --  uiState.selectedObj = nil
                                 end
+
+                                local clicked, _, _, isHover = ui.button(x, y, 260, jointLabel)
+
+                                if clicked then
+                                    uiState.selectedJoint = joint
+                                end
+                                if isHover then
+                                    --print(inspect(joint:getUserData()))
+                                    local ud = joint:getUserData()
+                                    local x1, y1, x2, y2 = joint:getAnchors()
+                                    -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
+                                    --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
+                                    local x3, y3 = cam:getScreenCoordinates(x1, y1)
+                                    love.graphics.circle('line', x3, y3, 3)
+                                    local x3, y3 = cam:getScreenCoordinates(x2, y2)
+                                    love.graphics.circle('line', x3, y3, 3)
+                                end
                             end
                         end
                     end)

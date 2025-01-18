@@ -54,7 +54,8 @@ local function createThing(shapeType, conf)
         height3 = conf.height3,
         height4 = conf.height4,
         optionalVertices = conf.vertices or nil, --optionalVertices
-        label = conf.label or ''
+
+
     }
     local shapeList, vertices = shapes.createShape(shapeType, settings)
 
@@ -83,7 +84,9 @@ local function createThing(shapeType, conf)
         height2 = settings.height2,
         height3 = settings.height3,
         height4 = settings.height4,
-        label = settings.label,
+        label = conf.label or '',
+        mirrorX = conf.mirrorX or 1,
+        mirrorY = conf.mirrorY or 1,
         body = body,
         shapes = shapeList,
         vertices = vertices, -- Store vertices if needed
@@ -371,9 +374,12 @@ function lib.flipThing(thing, axis, recursive)
         local newAngle
         if axis == 'x' then
             newAngle = -currentAngle
+            currentThing.mirrorX = currentThing.mirrorX * -1
         elseif axis == 'y' then
             newAngle = -currentAngle
+            currentThing.mirrorY = currentThing.mirrorY * -1
         end
+        print(inspect(currentThing))
         print(currentThing.body, newX, newY)
         -- Update body's position and angle
         currentThing.body:setPosition(newX, newY)

@@ -122,6 +122,8 @@ function lib.load(data, world)
             height3 = (bodyData.dims and bodyData.dims.height3) or bodyData.height3,
             height4 = (bodyData.dims and bodyData.dims.height4) or bodyData.height4,
             body = body,
+            mirrorX = bodyData.mirrorX or 1,
+            mirrorY = bodyData.mirrorY or 1,
             vertices = bodyData.vertices,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
@@ -342,8 +344,10 @@ function lib.save(world, worldState, filename)
                     height3 = needsDimProperty('height3', thing.shapeType) and thing.height3 or nil,
                     height4 = needsDimProperty('height4', thing.shapeType) and thing.height4 or nil,
                 },
+                mirrorX = thing.mirrorX,
+                mirrorY = thing.mirrorY,
                 --radius = thing.radius,
-                vertices = thing.shapeType == 'custom' and thing.vertices,
+                vertices = thing.vertices,
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
                 position = { utils.round_to_decimals(body:getX(), 4), utils.round_to_decimals(body:getY(), 4) },
                 angle = utils.round_to_decimals(body:getAngle(), 4),
@@ -572,7 +576,8 @@ function lib.cloneSelection(selectedBodies)
                 height2 = originalThing.height2,
                 height3 = originalThing.height3,
                 height4 = originalThing.height4,
-                optionalVertices = originalThing.vertices
+                optionalVertices = originalThing.vertices,
+
             }
             local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, settings)
 
@@ -643,6 +648,8 @@ function lib.cloneSelection(selectedBodies)
                 height3 = originalThing.height3,
                 height4 = originalThing.height4,
                 label = originalThing.label,
+                mirrorX = originalThing.mirrorX,
+                mirrorY = originalThing.mirrorY,
                 body = newBody,
                 shapes = newShapeList,
                 vertices = newVertices,

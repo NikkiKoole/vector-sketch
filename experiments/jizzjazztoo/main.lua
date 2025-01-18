@@ -24,7 +24,7 @@ local audiohelper  = require 'lib.jizzjazz-audiohelper'
 audiohelper.startAudioThread()
 require 'fileBrowser'
 
---luamidi = require "luamidi"
+luamidi = require "luamidi"
 
 local function clear()
     local k = 1
@@ -172,7 +172,7 @@ function love.load()
         audiohelper.prepareSingleSample({ "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
         audiohelper.prepareSingleSample({ "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
         audiohelper.prepareSingleSample({ "oscillators", "100 Void Vertex SCW" }, 'twinkle.wav'),
-        audiohelper.prepareSingleSample({ "legow" }, 'Pinky Flute.wav'),
+        audiohelper.prepareSingleSample({ "legowelt" }, 'Pinky Flute.wav'),
     }
 
     audiohelper.initializeInstruments(samples)
