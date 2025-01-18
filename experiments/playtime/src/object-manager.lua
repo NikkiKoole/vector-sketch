@@ -380,6 +380,8 @@ function lib.flipThing(thing, axis, recursive)
         currentThing.body:setAngle(newAngle)
 
 
+        --currentThing.mirroredX = (currentThing.mirroredX or 1)
+
         if currentThing.vertices then
             local flippedVertices = utils.shallowCopy(currentThing.vertices)
             for i = 1, #currentThing.vertices, 2 do

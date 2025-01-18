@@ -29,6 +29,8 @@ local objectManager = require 'src.object-manager'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 local box2dDraw = require 'src.box2d-draw'
+local box2dDrawTextured = require 'src.box2d-draw-textured'
+
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
@@ -536,7 +538,7 @@ function love.draw()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
-
+    box2dDrawTextured.drawTexturedWorld(world)
     script.call('draw')
 
     if uiState.selectedSFixture and not uiState.selectedSFixture:isDestroyed() then

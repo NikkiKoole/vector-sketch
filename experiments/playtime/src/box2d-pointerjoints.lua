@@ -15,12 +15,14 @@ end
 local function makePrio(fixture)
     local ud = fixture:getUserData()
     if ud and type(ud) == 'table' then
-        if string.match(ud.bodyType, 'hand') then
-            return 3
-        end
+        if ud.bodyType then
+            if string.match(ud.bodyType, 'hand') then
+                return 3
+            end
 
-        if string.match(ud.bodyType, 'arm') then
-            return 2
+            if string.match(ud.bodyType, 'arm') then
+                return 2
+            end
         end
     end
     return 1

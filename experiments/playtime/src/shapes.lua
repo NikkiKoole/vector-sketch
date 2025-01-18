@@ -257,6 +257,9 @@ function shapes.createShape(shapeType, settings)
 
         if sides then
             vertices = makePolygonVertices(sides, settings.radius)
+            local cx, cy = mathutils.getCenterOfPoints(vertices)
+            local rel = mathutils.makePolygonRelativeToCenter(vertices, cx, cy)
+            vertices = mathutils.makePolygonAbsolute(rel, 0, 0)
             table.insert(shapesList, love.physics.newPolygonShape(vertices))
         elseif shapeType == 'custom' then
             if settings.optionalVertices then

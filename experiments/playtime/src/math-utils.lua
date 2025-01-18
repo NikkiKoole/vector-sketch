@@ -45,7 +45,7 @@ function lib.getCenterOfPoints(points)
     --return tlx, tly, brx, bry
     local w = brx - tlx
     local h = bry - tly
-    return tlx + w / 2, tly + h / 2
+    return tlx + w / 2, tly + h / 2, w, h
 end
 
 function lib.getPolygonDimensions(polygon)

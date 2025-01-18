@@ -34,6 +34,8 @@ local function getEndpoint(x, y, angle, length)
     return endX, endY
 end
 
+
+
 function lib.drawWorld(world, drawOutline)
     if drawOutline == nil then drawOutline = true end
     local r, g, b, a = love.graphics.getColor()
