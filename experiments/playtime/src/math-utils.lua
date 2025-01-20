@@ -755,7 +755,7 @@ end
 
 -- start experiemnt with adding joint to edge or something..
 
-function meanValueCoordinates(px, py, poly)
+function lib.getMeanValueCoordinatesWeights(px, py, poly)
     local n = #poly / 2 -- number of vertices
     local weights = {}
     local weightSum = 0
@@ -820,7 +820,7 @@ function meanValueCoordinates(px, py, poly)
     return weights
 end
 
-function repositionPoint(weights, newPolygon)
+function lib.repositionPointUsingWeights(weights, newPolygon)
     local newX, newY = 0, 0
     local n = #newPolygon / 2
     for i = 1, n do

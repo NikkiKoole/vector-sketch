@@ -168,24 +168,45 @@ function lib.recreateJoint(joint, newSettings)
 end
 
 -- this one is only called from recreateThingFromBody
-function lib.reattachJoints(jointData, newBody, oldBody)
+function lib.reattachJoints(jointData, newBody, oldVertices)
     for _, data in ipairs(jointData) do
         local jointType = data.jointType
         local otherBody = data.otherBody
-        print(inspect(data))
+
         if data.originalBodyOrder == "bodyA" then
-            print('jojo!')
             data.body1 = newBody
             data.body2 = data.otherBody
+            --  print(inspect(oldVertices))
+
+
+            if false then
+                print('A before: ', data.offsetA.x, data.offsetA.y)
+                local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
+                local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
+                data.offsetA.x = newx
+                data.offsetA.y = newy
+                print('A after: ', data.offsetA.x, data.offsetA.y)
+            end
+            -- print(inspect(weights))
         else
-            print('not jojo!')
             data.body1 = data.otherBody
             data.body2 = newBody
+            -- print(inspect(oldVertices))
+            if false then
+                print('B before: ', data.offsetB.x, data.offsetB.y)
+                local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
+                local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
+                data.offsetB.x = newx
+                data.offsetB.y = newy
+                print('B after: ', data.offsetB.x, data.offsetB.y)
+            end
+            -- print(inspect(weights))
         end
         print(
             'I should figure out if i want to do something weird with the reattach, think connect to torso logic at edge nr...')
         -- todo figure out how the changes between the old body and the new body will affect the joint..
         --
+
 
 
 

@@ -175,6 +175,7 @@ function lib.recreateThingFromBody(body, newSettings)
     local fixedRotation = body:isFixedRotation() -- Capture fixed angle state
     -- Get the original `thing` for shape info
 
+    local oldVertices = utils.shallowCopy(thing.vertices)
     local oldFixtures = body:getFixtures()
 
     local jointData = joints.extractJoints(body)
@@ -285,7 +286,7 @@ function lib.recreateThingFromBody(body, newSettings)
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 
-    joints.reattachJoints(jointData, newBody, body)
+    joints.reattachJoints(jointData, newBody, oldVertices)
 
     snap.maybeUpdateSnapJoints(jointData)
 
@@ -520,6 +521,9 @@ function lib.flipThing(thing, axis, recursive)
             --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
 
 
+
+
+
             local offsetA = jointUserData.offsetA
             local offsetB = jointUserData.offsetB
             --print('before', inspect(offsetA), inspect(offsetB))
@@ -530,6 +534,9 @@ function lib.flipThing(thing, axis, recursive)
                 offsetA.y = -offsetA.y
                 offsetB.y = -offsetB.y
             end
+
+
+
 
             local id = joint:getUserData().id
             joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
