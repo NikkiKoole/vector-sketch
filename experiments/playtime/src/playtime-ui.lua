@@ -1403,7 +1403,7 @@ function lib.drawUpdateSelectedObjectUI()
                                     -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
                                     --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
                                     local x3, y3 = cam:getScreenCoordinates(x1, y1)
-                                    love.graphics.circle('line', x3, y3, 3)
+                                    love.graphics.circle('line', x3, y3, 6)
                                     local x3, y3 = cam:getScreenCoordinates(x2, y2)
                                     love.graphics.circle('line', x3, y3, 3)
                                 end

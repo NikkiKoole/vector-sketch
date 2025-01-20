@@ -121,6 +121,7 @@ function love.load(args)
         speedMultiplier = 1.0
     }
 
+    -- todo use this maybe..
     tags = {
         'straight',
         'snap',

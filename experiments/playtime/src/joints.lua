@@ -167,18 +167,28 @@ function lib.recreateJoint(joint, newSettings)
     return lib.createJoint(data)
 end
 
-function lib.reattachJoints(jointData, newBody)
+-- this one is only called from recreateThingFromBody
+function lib.reattachJoints(jointData, newBody, oldBody)
     for _, data in ipairs(jointData) do
         local jointType = data.jointType
         local otherBody = data.otherBody
         print(inspect(data))
         if data.originalBodyOrder == "bodyA" then
+            print('jojo!')
             data.body1 = newBody
             data.body2 = data.otherBody
         else
+            print('not jojo!')
             data.body1 = data.otherBody
             data.body2 = newBody
         end
+        print(
+            'I should figure out if i want to do something weird with the reattach, think connect to torso logic at edge nr...')
+        -- todo figure out how the changes between the old body and the new body will affect the joint..
+        --
+
+
+
 
         -- Create the joint using the existing createJoint method
         lib.createJoint(data)

@@ -155,6 +155,7 @@ function lib.addThing(shapeType, settings)
     return thing
 end
 
+-- this one is called when the shape of the body changes, thus, its kinda safe to make weird changes to joints too.
 function lib.recreateThingFromBody(body, newSettings)
     if body:isDestroyed() then
         print("The body is already destroyed.")
@@ -284,7 +285,7 @@ function lib.recreateThingFromBody(body, newSettings)
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 
-    joints.reattachJoints(jointData, newBody)
+    joints.reattachJoints(jointData, newBody, body)
 
     snap.maybeUpdateSnapJoints(jointData)
 
@@ -334,11 +335,7 @@ function lib.flipThing(thing, axis, recursive)
     local toBeProcessedJoints = {}
     local centroidX, centroidY = thing.body:getPosition()
 
-    -- if thing.vertices then
-    -- local cx,cy = mathutils.getCenterOfPoints(thing.vertices)
-    -- centroidX =  cx
-    -- centroidY = cy
-    -- end
+
 
     --print('calculating centroid')
     -- Phase 1: Flip All Bodies
@@ -348,7 +345,7 @@ function lib.flipThing(thing, axis, recursive)
             return
         end
 
-        processedBodies[currentThing.id] = true
+        processedBodies[currentThing.id] = utils.shallowCopy(currentThing.vertices) or true
 
         -- Get current position and angle
         local currentX, currentY = currentBody:getPosition()
@@ -515,6 +512,13 @@ function lib.flipThing(thing, axis, recursive)
                 print("flipThing: One or both connected things are invalid.")
                 goto continue
             end
+
+
+            print(
+                'I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...')
+            --print('old', inspect(processedBodies[thingA.id]), inspect(processedBodies[thingB.id]))
+            --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
+
 
             local offsetA = jointUserData.offsetA
             local offsetB = jointUserData.offsetB

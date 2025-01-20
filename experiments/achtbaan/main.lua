@@ -51,14 +51,16 @@ function Track.new(ground_level)
 end
 
 function Track:addPoint(x, y)
-    table.insert(self.points, {
+    local point = {
         x = x,
         y = y,
         flip = false,
         accelerate = false,
         decelerate = false,
         hoist = false -- Added hoist field
-    })
+    }
+    table.insert(self.points, point)
+    return point
 end
 
 function Track:calculateLengths()
@@ -516,7 +518,19 @@ function love.mousemoved(x, y, dx, dy)
         local last_point = GameState.track.points[#GameState.track.points]
         local dist = distance(last_point.x, last_point.y, x, y)
         if dist >= CONSTANTS.TRACK.MIN_DISTANCE then
-            GameState.track:addPoint(x, y)
+            local p = GameState.track:addPoint(x, y)
+            if love.keyboard.isDown('a') then
+                p.accelerate = true
+            end
+            if love.keyboard.isDown('d') then
+                p.decelerate = true
+            end
+            if love.keyboard.isDown('h') then
+                p.hoist = true
+            end
+            if love.keyboard.isDown('f') then
+                p.flip = true
+            end
         end
     end
 end
@@ -612,4 +626,7 @@ function love.draw()
     love.graphics.setColor(0, 1, 0) -- Green
     love.graphics.line(0, GameState.ground_level, CONSTANTS.WINDOW.WIDTH, GameState.ground_level)
     love.graphics.setColor(1, 1, 1) -- Reset color
+
+    -- local mx, my = love.mouse:getPosition()
+    -- love.graphics.print(mx .. ' , ' .. my, mx + 20, my)
 end
