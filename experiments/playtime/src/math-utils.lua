@@ -925,7 +925,7 @@ function lib.repositionPointClosestEdge(params, newPoly)
     return newX, newY
 end
 
-function findEdgeAndLerpParam(px, py, poly)
+function lib.findEdgeAndLerpParam(px, py, poly)
     local n = #poly / 2
     local best = {
         edgeIndex = nil,
@@ -976,7 +976,7 @@ function findEdgeAndLerpParam(px, py, poly)
     return best.edgeIndex, best.t
 end
 
-function lerpOnEdge(edgeIndex, t, newPoly)
+function lib.lerpOnEdge(edgeIndex, t, newPoly)
     local n = #newPoly / 2
     if not edgeIndex or edgeIndex < 1 or edgeIndex > n then
         return nil, nil

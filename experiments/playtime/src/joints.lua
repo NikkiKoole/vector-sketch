@@ -53,11 +53,20 @@ function lib.createJoint(data)
 
     local x1, y1 = bodyA:getPosition()
     local x2, y2 = bodyB:getPosition()
-    local offsetA = data.offsetA or { x = 0, y = 0 }
+
+
+    if not (jointType == 'rope' or jointType == 'distance') then
+        -- i only want to do the positioning when im a rope joint..!
+        -- that p1 and p2 is set when creating the joint by clicking on the bodies..
+        data.p1 = { 0, 0 }
+        data.p2 = { 0, 0 }
+    end
+
+    local offsetA = data.offsetA or { x = data.p1[1], y = data.p1[2] } or { x = 0, y = 0 }
     local rx, ry = mathutils.rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
     x1, y1 = x1 + rx, y1 + ry
 
-    local offsetB = data.offsetB or { x = 0, y = 0 }
+    local offsetB = data.offsetB or { x = data.p2[1], y = data.p2[2] } or { x = 0, y = 0 }
     local rx, ry = mathutils.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
 
@@ -178,28 +187,58 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             data.body2 = data.otherBody
             --  print(inspect(oldVertices))
 
-
+            print('A before: ', data.offsetA.x, data.offsetA.y)
             if false then
-                print('A before: ', data.offsetA.x, data.offsetA.y)
                 local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
                 local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
                 data.offsetA.x = newx
                 data.offsetA.y = newy
-                print('A after: ', data.offsetA.x, data.offsetA.y)
             end
+
+            if false then
+                local params = mathutils.closestEdgeParams(data.offsetA.x, data.offsetA.y, oldVertices)
+                local newx, newy = mathutils.repositionPointClosestEdge(params, newBody:getUserData().thing.vertices)
+                data.offsetA.x = newx
+                data.offsetA.y = newy
+            end
+
+            if true then
+                local edgeIndex, t = mathutils.findEdgeAndLerpParam(data.offsetA.x, data.offsetA.y, oldVertices)
+                local newx, newy = mathutils.lerpOnEdge(edgeIndex, t, newBody:getUserData().thing.vertices)
+                t = 0.5
+                data.offsetA.x = newx
+                data.offsetA.y = newy
+            end
+            print('A after: ', data.offsetA.x, data.offsetA.y)
             -- print(inspect(weights))
         else
             data.body1 = data.otherBody
             data.body2 = newBody
             -- print(inspect(oldVertices))
+            print('B before: ', data.offsetB.x, data.offsetB.y)
             if false then
-                print('B before: ', data.offsetB.x, data.offsetB.y)
                 local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
                 local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
                 data.offsetB.x = newx
                 data.offsetB.y = newy
-                print('B after: ', data.offsetB.x, data.offsetB.y)
             end
+
+            if false then
+                local params = mathutils.closestEdgeParams(data.offsetB.x, data.offsetB.y, oldVertices)
+                local newx, newy = mathutils.repositionPointClosestEdge(params, newBody:getUserData().thing.vertices)
+                data.offsetB.x = newx
+                data.offsetB.y = newy
+            end
+
+
+            if true then
+                local edgeIndex, t = mathutils.findEdgeAndLerpParam(data.offsetB.x, data.offsetB.y, oldVertices)
+                t = 0.5
+                local newx, newy = mathutils.lerpOnEdge(edgeIndex, t, newBody:getUserData().thing.vertices)
+                data.offsetB.x = newx
+                data.offsetB.y = newy
+            end
+            print('B after: ', data.offsetB.x, data.offsetB.y)
             -- print(inspect(weights))
         end
         print(

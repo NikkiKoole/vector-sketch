@@ -955,9 +955,14 @@ local function handlePointer(x, y, id, action)
             if uiState.jointCreationMode and uiState.selectedObj then
                 if uiState.jointCreationMode.body1 == nil then
                     uiState.jointCreationMode.body1 = uiState.selectedObj.body
+                    local px, py = uiState.jointCreationMode.body1:getLocalPoint(cx, cy)
+                    uiState.jointCreationMode.p1 = { px, py }
                 elseif uiState.jointCreationMode.body2 == nil then
                     if (uiState.selectedObj.body ~= uiState.jointCreationMode.body1) then
                         uiState.jointCreationMode.body2 = uiState.selectedObj.body
+                        local px, py = uiState.jointCreationMode.body2:getLocalPoint(cx, cy)
+                        uiState.jointCreationMode.p2 = { px, py }
+                        --print(uiState.jointCreationMode.body2:getLocalPoint(cx, cy))
                     end
                 end
             end
