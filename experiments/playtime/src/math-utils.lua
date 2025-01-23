@@ -753,13 +753,11 @@ function lib.slicePolygon(polygon, p1, p2)
     return { poly1, poly2 }
 end
 
--- start experiemnt with adding joint to edge or something..
-
 function lib.getMeanValueCoordinatesWeights(px, py, poly)
     local n = #poly / 2 -- number of vertices
     local weights = {}
     local weightSum = 0
-
+    local epsilon = 1e-10
     -- Loop over each vertex of the polygon
     for i = 1, n do
         -- Get current, previous, and next vertex indices (wrapping around)
@@ -783,11 +781,15 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
 
         local dx_prev = xprev - px
         local dy_prev = yprev - py
-        local d_prev = math.sqrt(dx_prev * dx_prev + dy_prev * dy_prev)
+        -- local d_prev = math.sqrt(dx_prev * dx_prev + dy_prev * dy_prev)
 
         local dx_next = xnext - px
         local dy_next = ynext - py
-        local d_next = math.sqrt(dx_next * dx_next + dy_next * dy_next)
+        -- local d_next = math.sqrt(dx_next * dx_next + dy_next * dy_next)
+
+        local d = math.sqrt(dx * dx + dy * dy) + 1e-10
+        local d_prev = math.sqrt(dx_prev * dx_prev + dy_prev * dy_prev) + 1e-10
+        local d_next = math.sqrt(dx_next * dx_next + dy_next * dy_next) + 1e-10
 
         -- Angles between vectors
         local angle_prev = math.acos((dx * dx_prev + dy * dy_prev) / (d * d_prev))

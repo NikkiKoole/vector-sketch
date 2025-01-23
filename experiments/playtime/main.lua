@@ -201,6 +201,7 @@ function love.load(args)
 
     --loadScriptAndScene('straight')
     --  loadScriptAndScene('water')
+    loadScriptAndScene('puppet')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -539,7 +540,7 @@ function love.draw()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
-    box2dDrawTextured.drawTexturedWorld(world)
+    -- box2dDrawTextured.drawTexturedWorld(world)
     script.call('draw')
 
     if uiState.selectedSFixture and not uiState.selectedSFixture:isDestroyed() then

@@ -1098,6 +1098,24 @@ function lib.drawUpdateSelectedObjectUI()
                 if hadBeenDraggingObj then
                     hadBeenDraggingObj = false
                 end
+
+                nextRow()
+
+                local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
+                if dirty then
+                    body:setFixedRotation(not body:isFixedRotation())
+                end
+
+                -- Angle Slider
+                nextRow()
+
+                local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
+                    (body:getAngle() * 180 / math.pi),
+                    (body:isAwake() and not worldState.paused) or dirtyBodyChange)
+                if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
+                    body:setAngle(newAngle * math.pi / 180)
+                end
+                ui.label(x, y, ' angle')
             end
             )
             nextRow()
@@ -1261,23 +1279,7 @@ function lib.drawUpdateSelectedObjectUI()
                         end
                     end
                 end
-                nextRow()
 
-                local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
-                if dirty then
-                    body:setFixedRotation(not body:isFixedRotation())
-                end
-
-                -- Angle Slider
-                nextRow()
-
-                local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
-                    (body:getAngle() * 180 / math.pi),
-                    (body:isAwake() and not worldState.paused) or dirtyBodyChange)
-                if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
-                    body:setAngle(newAngle * math.pi / 180)
-                end
-                ui.label(x, y, ' angle')
                 nextRow()
             end)
             nextRow()
