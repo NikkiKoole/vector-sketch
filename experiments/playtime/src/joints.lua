@@ -178,16 +178,28 @@ end
 
 -- this one is only called from recreateThingFromBody
 
-function moveUntilEnd(from, to, dx, dy, visited)
-    --print(dx, dy, visited[to:getUserData().thing.id], to)
-    local mex, mey = to:getPosition()
 
-    to:setPosition(mex - dx, mey - dy)
-    visited[to:getUserData().thing.id] = true
-    local joints = to:getJoints()
+local function tranlateBody(body, dx, dy)
+    local x, y = body:getPosition()
+    body:setPosition(x + dx, y + dy)
+end
+
+function moveUntilEnd(from, dx, dy, visited)
+    --print(dx, dy, visited[to:getUserData().thing.id], to)
+
+    local joints = from:getJoints()
     for i = 1, #joints do
+        -- local mex, mey = to:getPosition()
+        -- to:setPosition(mex + dx, mey + dy)
+        -- local id = to:getUserData().thing.id
+        -- print(id, 'moved')
+        --
+
+        -- print(#joints)
+        -- print(#from:getJoints())
+
         local bodyA, bodyB = joints[i]:getBodies()
-        local x1, y1, x2, y2 = joints[i]:getAnchors()
+        --local x1, y1, x2, y2 = joints[i]:getAnchors()
         --  print(x1, y1, x2, y2)
         -- print('***')
         -- print(bodyA:getLocalPoint(x1, y1))
@@ -195,21 +207,26 @@ function moveUntilEnd(from, to, dx, dy, visited)
         -- print(inspect(joints[i]:getUserData().offsetA))
         -- print(inspect(joints[i]:getUserData().offsetB))
         if (not visited[bodyB:getUserData().thing.id]) then
-            moveUntilEnd(to, bodyB, dx, dy, visited)
+            tranlateBody(bodyB, -dx, -dy)
+            visited[bodyB:getUserData().thing.id] = true
+            moveUntilEnd(bodyB, dx, dy, visited)
         end
         if (not visited[bodyA:getUserData().thing.id]) then
-            moveUntilEnd(to, bodyA, dx, dy, visited)
+            tranlateBody(bodyA, -dx, -dy)
+            visited[bodyA:getUserData().thing.id] = true
+            moveUntilEnd(bodyA, dx, dy, visited)
         end
     end
 end
 
 function lib.reattachJoints(jointData, newBody, oldVertices)
+    local visited = {}
     for _, data in ipairs(jointData) do
         local jointType = data.jointType
         local otherBody = data.otherBody
 
-        local afterFunc = nil
-        local visited = {}
+
+
         if data.originalBodyOrder == "bodyA" then
             data.body1 = newBody
             data.body2 = data.otherBody
@@ -219,98 +236,63 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             if true then
                 local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
                 local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
-                -- print('??', data.offsetA.x, data.offsetA.y, inspect(oldVertices), inspect(weights), newx, newy)
+
                 data.offsetA.x = newx
                 data.offsetA.y = newy
             end
 
-            -- if false then
-            --     local params = mathutils.closestEdgeParams(data.offsetA.x, data.offsetA.y, oldVertices)
-            --     local newx, newy = mathutils.repositionPointClosestEdge(params, newBody:getUserData().thing.vertices)
-            --     data.offsetA.x = newx
-            --     data.offsetA.y = newy
-            -- end
 
-            -- if false then
-            --     local edgeIndex, t = mathutils.findEdgeAndLerpParam(data.offsetA.x, data.offsetA.y, oldVertices)
-            --     local newx, newy = mathutils.lerpOnEdge(edgeIndex, t, newBody:getUserData().thing.vertices)
-            --     t = 0.5
-            --     data.offsetA.x = newx
-            --     data.offsetA.y = newy
-            -- end
-            -- print('A after: ', data.offsetA.x, data.offsetA.y)
             local after = { x = data.offsetA.x, y = data.offsetA.y }
-
-            afterFunc = function(dx, dy)
-                --    moveUntilEnd(newBody, data.otherBody, dx, dy, visited)
-            end
             local ox, oy = data.otherBody:getPosition()
-            --  print(after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle())
             local rx, ry = mathutils.rotatePoint(
                 after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
             )
-
-            data.otherBody:setPosition(ox + rx, oy + ry)
-            -- print(inspect(weights))
+            local id = data.otherBody:getUserData().thing.id
+            if (not visited[id]) then
+                data.otherBody:setPosition(ox + rx, oy + ry)
+                visited[id] = true
+                print('A', id)
+            end
         else
             data.body1 = data.otherBody
             data.body2 = newBody
-            -- print(inspect(oldVertices))
-            --  print('B before: ', data.offsetB.x, data.offsetB.y)
+
             local before = { x = data.offsetB.x, y = data.offsetB.y }
+
             if true then
                 local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
                 local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
-                --print(newx, newy)
+
                 data.offsetB.x = newx
                 data.offsetB.y = newy
             end
 
-            -- if false then
-            --     local params = mathutils.closestEdgeParams(data.offsetB.x, data.offsetB.y, oldVertices)
-            --     local newx, newy = mathutils.repositionPointClosestEdge(params, newBody:getUserData().thing.vertices)
-            --     data.offsetB.x = newx
-            --     data.offsetB.y = newy
-            -- end
 
-
-            -- if false then
-            --     local edgeIndex, t = mathutils.findEdgeAndLerpParam(data.offsetB.x, data.offsetB.y, oldVertices)
-            --     t = 0.5
-            --     local newx, newy = mathutils.lerpOnEdge(edgeIndex, t, newBody:getUserData().thing.vertices)
-            --     data.offsetB.x = newx
-            --     data.offsetB.y = newy
-            -- end
             local after = { x = data.offsetB.x, y = data.offsetB.y }
-            --local ox, oy = newBody:getPosition()
-            afterFunc = function(dx, dy)
-                -- print(dx, dy)
-                --  moveUntilEnd(newBody, data.otherBody, dx, dy, visited)
-            end
-            --  print('B after: ', data.offsetB.x, data.offsetB.y)
-            -- print(inspect(weights))
 
             local ox, oy = data.otherBody:getPosition()
-            -- data.otherBody:setPosition(ox + after.x - before.x, oy + after.y - before.y)
             local rx, ry = mathutils.rotatePoint(
                 after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
             )
-            -- print(after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle())
-            -- print('?', rx, ry)
-            data.otherBody:setPosition(ox + rx, oy + ry)
+            local id = data.otherBody:getUserData().thing.id
+            if not visited[id] then
+                visited[id] = true
+                data.otherBody:setPosition(ox + rx, oy + ry)
+                print('B', id)
+            end
+
+
+            -- if true then -- this pushes back the other way!
+            --     local rx, ry = mathutils.rotatePoint(
+            --         after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
+            --     )
+
+            --     local nx, ny = newBody:getPosition()
+
+            --     newBody:setPosition(nx - rx, ny - ry)
+            -- end
         end
-        --print(
-        --   'I should figure out if i want to do something weird with the reattach, think connect to torso logic at edge nr...')
-        -- todo figure out how the changes between the old body and the new body will affect the joint..
-        --
 
-
-
-
-
-        -- Create the joint using the existing createJoint method
-        --
-        --- print(inspect(data))
 
         local result = lib.createJoint(data)
     end
