@@ -184,37 +184,26 @@ local function tranlateBody(body, dx, dy)
     body:setPosition(x + dx, y + dy)
 end
 
-function moveUntilEnd(from, dx, dy, visited)
+function moveUntilEnd(from, dx, dy, visited, dir)
     --print(dx, dy, visited[to:getUserData().thing.id], to)
 
     local joints = from:getJoints()
     for i = 1, #joints do
-        -- local mex, mey = to:getPosition()
-        -- to:setPosition(mex + dx, mey + dy)
-        -- local id = to:getUserData().thing.id
-        -- print(id, 'moved')
-        --
-
-        -- print(#joints)
-        -- print(#from:getJoints())
-
         local bodyA, bodyB = joints[i]:getBodies()
-        --local x1, y1, x2, y2 = joints[i]:getAnchors()
-        --  print(x1, y1, x2, y2)
-        -- print('***')
-        -- print(bodyA:getLocalPoint(x1, y1))
-        -- print(bodyB:getLocalPoint(x2, y2))
-        -- print(inspect(joints[i]:getUserData().offsetA))
-        -- print(inspect(joints[i]:getUserData().offsetB))
-        if (not visited[bodyB:getUserData().thing.id]) then
-            tranlateBody(bodyB, -dx, -dy)
-            visited[bodyB:getUserData().thing.id] = true
-            moveUntilEnd(bodyB, dx, dy, visited)
+
+        if (dir == 'A') then
+            if (not visited[bodyB:getUserData().thing.id]) then
+                tranlateBody(bodyB, dx, dy)
+                visited[bodyB:getUserData().thing.id] = true
+                moveUntilEnd(bodyB, dx, dy, visited, dir)
+            end
         end
-        if (not visited[bodyA:getUserData().thing.id]) then
-            tranlateBody(bodyA, -dx, -dy)
-            visited[bodyA:getUserData().thing.id] = true
-            moveUntilEnd(bodyA, dx, dy, visited)
+        if dir == 'B' then
+            if (not visited[bodyA:getUserData().thing.id]) then
+                tranlateBody(bodyA, dx, dy)
+                visited[bodyA:getUserData().thing.id] = true
+                moveUntilEnd(bodyA, dx, dy, visited, dir)
+            end
         end
     end
 end
@@ -243,14 +232,19 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
 
 
             local after = { x = data.offsetA.x, y = data.offsetA.y }
-            local ox, oy = data.otherBody:getPosition()
+
             local rx, ry = mathutils.rotatePoint(
                 after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
             )
             local id = data.otherBody:getUserData().thing.id
             if (not visited[id]) then
-                data.otherBody:setPosition(ox + rx, oy + ry)
+                local ox, oy = data.otherBody:getPosition()
+
+                tranlateBody(data.otherBody, rx, ry)
+                --moveUntilEnd(from, dx, dy, visited)
+                --data.otherBody:setPosition(ox + rx, oy + ry)
                 visited[id] = true
+                moveUntilEnd(data.otherBody, rx, ry, visited, 'A')
                 print('A', id)
             end
         else
@@ -277,8 +271,10 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             local id = data.otherBody:getUserData().thing.id
             if not visited[id] then
                 visited[id] = true
-                data.otherBody:setPosition(ox + rx, oy + ry)
-                print('B', id)
+                tranlateBody(data.otherBody, rx, ry)
+                --data.otherBody:setPosition(ox + rx, oy + ry)
+                moveUntilEnd(data.otherBody, rx, ry, visited, 'B')
+                --print('B', id)
             end
 
 
