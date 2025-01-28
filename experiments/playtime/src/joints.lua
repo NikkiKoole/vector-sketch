@@ -192,11 +192,17 @@ function moveUntilEnd(from, dx, dy, visited, dir)
         local bodyA, bodyB = joints[i]:getBodies()
 
         if (dir == 'A') then
+            print('A')
             if (not visited[bodyB:getUserData().thing.id]) then
                 tranlateBody(bodyB, dx, dy)
                 visited[bodyB:getUserData().thing.id] = true
                 moveUntilEnd(bodyB, dx, dy, visited, dir)
             end
+            -- if (not visited[bodyA:getUserData().thing.id]) then
+            --     tranlateBody(bodyA, -dx, -dy)
+            --     visited[bodyA:getUserData().thing.id] = true
+            --     moveUntilEnd(bodyA, -dx, -dy, visited, dir)
+            -- end
         end
         if dir == 'B' then
             if (not visited[bodyA:getUserData().thing.id]) then
@@ -204,6 +210,11 @@ function moveUntilEnd(from, dx, dy, visited, dir)
                 visited[bodyA:getUserData().thing.id] = true
                 moveUntilEnd(bodyA, dx, dy, visited, dir)
             end
+            -- if (not visited[bodyB:getUserData().thing.id]) then
+            --     tranlateBody(bodyB, dx, dy)
+            --     visited[bodyB:getUserData().thing.id] = true
+            --     moveUntilEnd(bodyB, dx, dy, visited, dir)
+            -- end
         end
     end
 end
