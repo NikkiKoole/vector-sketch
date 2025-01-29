@@ -225,8 +225,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
         local jointType = data.jointType
         local otherBody = data.otherBody
 
-
-
         if data.originalBodyOrder == "bodyA" then
             data.body1 = newBody
             data.body2 = data.otherBody
