@@ -18,7 +18,6 @@ local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
 local Peeker = require 'vendor.peeker'
 
-
 local ui = require 'src.ui-all'
 local playtimeui = require 'src.playtime-ui'
 local shapes = require 'src.shapes'
@@ -36,8 +35,8 @@ local camera = require 'src.camera'
 local cam = camera.getInstance()
 local fixtures = require 'src.fixtures'
 snap = require 'src.snap'
-
 registry = require 'src.registry'
+
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -53,11 +52,8 @@ local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
-local FPS = 30
+local FPS = 60
 local TICKRATE = 1 / FPS
-
--- todo what todo with this?!!!
---local snapPoints = {}
 
 function love.load(args)
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
@@ -628,7 +624,7 @@ function love.draw()
     end
 
     cam:pop()
-
+    Peeker.detach()
     if uiState.startSelection then
         selectrect.draw(uiState.startSelection)
     end
@@ -671,8 +667,6 @@ function love.draw()
     else
         love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
     end
-
-    Peeker.detach()
 end
 
 function love.wheelmoved(dx, dy)
@@ -892,7 +886,7 @@ function love.keypressed(key)
                 --h = 320,   --optional
                 scale = 1, --this overrides w, h above, this is preferred to keep aspect ratio
                 --n_threads = 1,
-                fps = FPS,
+                fps = FPS / 2,
                 out_dir = string.format("awesome_video"), --optional
                 -- format = "mkv", --optional
                 overlay = "circle",                       --or "text"

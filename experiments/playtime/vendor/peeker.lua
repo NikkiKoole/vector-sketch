@@ -277,12 +277,14 @@ end
 function Peeker.detach()
     if not is_recording then return end
     local r, g, b, a = love.graphics.getColor()
+
     love.graphics.pop()
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1)
 
     love.graphics.push()
     love.graphics.scale(OPT.orig_sx, OPT.orig_sy)
+
     love.graphics.draw(canvas)
     love.graphics.pop()
 
