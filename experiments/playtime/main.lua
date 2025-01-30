@@ -2,8 +2,7 @@
 
 -- TODO
 -- build a ui where you can add multiple tags..
--- have group/collection concept
--- have a marker/tag/behaviour concept.
+
 
 local old_print = print
 print = function(...)
@@ -17,6 +16,7 @@ end
 
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
+local Peeker = require 'vendor.peeker'
 
 
 local ui = require 'src.ui-all'
@@ -53,7 +53,8 @@ local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
-local TICKRATE = 1 / 60
+local FPS = 30
+local TICKRATE = 1 / FPS
 
 -- todo what todo with this?!!!
 --local snapPoints = {}
@@ -294,6 +295,7 @@ function maybeHotReload(dt)
 end
 
 function love.update(dt)
+    Peeker.update(dt)
     maybeHotReload(dt)
 
     local scaled_dt = dt * worldState.speedMultiplier
@@ -532,6 +534,7 @@ function drawUI()
 end
 
 function love.draw()
+    Peeker.attach()
     local w, h = love.graphics.getDimensions()
     love.graphics.clear(20 / 255, 5 / 255, 20 / 255)
     if uiState.showGrid then
@@ -668,6 +671,8 @@ function love.draw()
     else
         love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
     end
+
+    Peeker.detach()
 end
 
 function love.wheelmoved(dx, dy)
@@ -876,6 +881,27 @@ function love.keypressed(key)
         local wx, wy = cam:getWorldCoordinates(mx, my)
         removeCustomPolygonVertex(wx, wy)
     end
+
+    if key == "r" then
+        love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+        if Peeker.get_status() then
+            Peeker.stop()
+        else
+            Peeker.start({
+                --w = 320,   --optional
+                --h = 320,   --optional
+                scale = 1, --this overrides w, h above, this is preferred to keep aspect ratio
+                --n_threads = 1,
+                fps = FPS,
+                out_dir = string.format("awesome_video"), --optional
+                -- format = "mkv", --optional
+                overlay = "circle",                       --or "text"
+                post_clean_frames = false,
+                total_frames = 1000,
+            })
+        end
+    end
+
     script.call('onKeyPress', key)
 end
 
