@@ -52,9 +52,10 @@ local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
-local FPS = 60
+local FPS = 30
 local TICKRATE = 1 / FPS
 
+local now = love.timer:getTime()
 function love.load(args)
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
     love.keyboard.setKeyRepeat(true)
@@ -632,6 +633,9 @@ function love.draw()
     end
 
     cam:pop()
+
+    -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
+
     Peeker.detach()
     if uiState.startSelection then
         selectrect.draw(uiState.startSelection)
@@ -884,7 +888,7 @@ function love.keypressed(key)
         removeCustomPolygonVertex(wx, wy)
     end
 
-    if key == "r" then
+    if key == "r" and love.keyboard.isDown("lctrl") then
         love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
         if Peeker.get_status() then
             Peeker.stop()
@@ -894,7 +898,7 @@ function love.keypressed(key)
                 --h = 320,   --optional
                 scale = 1, --this overrides w, h above, this is preferred to keep aspect ratio
                 --n_threads = 1,
-                fps = FPS / 2,
+                fps = FPS,
                 out_dir = string.format("awesome_video"), --optional
                 -- format = "mkv", --optional
                 overlay = "circle",                       --or "text"
