@@ -514,9 +514,17 @@ function drawUI()
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
-        ui.panel(300, 300, w - 600, h - 600, '»»» really quit ? «««', function()
-            ui.label(400, 400, '[esc] to quit')
-            ui.label(400, 450, '[space] to cancel')
+
+        local header = ' » really quit ? « '
+        local minW = ui.font:getWidth(header)
+        local panelW = math.max(minW, w - 600)
+        local panelH = math.max(ui.font:getHeight() * 6, h - 600)
+        local offW = w - panelW
+        local offH = h - panelH
+        local m = panelW - minW
+        ui.panel(offW / 2, offH / 2, panelW, panelH, header, function()
+            ui.label(offW / 2 + 20, offH / 2 + 40, '[esc] to quit')
+            ui.label(offW / 2 + 20, offH / 2 + 80, '[space] to cancel')
         end)
     end
 
@@ -539,7 +547,7 @@ function love.draw()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
-    -- box2dDrawTextured.drawTexturedWorld(world)
+    box2dDrawTextured.drawTexturedWorld(world)
     script.call('draw')
 
     if uiState.selectedSFixture and not uiState.selectedSFixture:isDestroyed() then

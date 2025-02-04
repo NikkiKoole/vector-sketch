@@ -903,7 +903,7 @@ function lib.drawSelectedBodiesUI()
 
 
         if ui.button(x, y, 260, 'clone') then
-            local cloned = eio.cloneSelection(uiState.selectedBodies)
+            local cloned = eio.cloneSelection(uiState.selectedBodies, world)
             uiState.selectedBodies = cloned
         end
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
@@ -1011,7 +1011,7 @@ function lib.drawUpdateSelectedObjectUI()
         if ui.button(x, y, 100, 'clone') then
             --print(uiState.selectedObj)
             uiState.selectedBodies = { uiState.selectedObj }
-            local cloned = eio.cloneSelection(uiState.selectedBodies)
+            local cloned = eio.cloneSelection(uiState.selectedBodies, world)
             uiState.selectedBodies = cloned
             uiState.selectedObj = nil
         end

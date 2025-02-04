@@ -94,7 +94,7 @@ function lib.load(data, world)
                 local fixture = love.physics.newFixture(body, shape, shared.density)
                 fixture:setFriction(shared.friction)
                 fixture:setRestitution(shared.restitution)
-
+                fixture:setGroupIndex(shared.groupIndex or 0)
                 if fixtureData.userData then
                     fixture:setSensor(fixtureData.sensor)
                     local oldUD = utils.shallowCopy(fixtureData.userData)
@@ -367,7 +367,7 @@ function lib.save(world, worldState, filename)
                     bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
                     bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
                     bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
-
+                    bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?
                     local shape = first:getShape()
@@ -543,7 +543,7 @@ function lib.save(world, worldState, filename)
     love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
 end
 
-function lib.cloneSelection(selectedBodies)
+function lib.cloneSelection(selectedBodies, world)
     -- Mapping from original body IDs to cloned body instances
     local clonedBodiesMap = {}
 
@@ -597,6 +597,7 @@ function lib.cloneSelection(selectedBodies)
                     local newFixture = love.physics.newFixture(newBody, newShapeList[i - (offset)], oldF:getDensity())
                     newFixture:setRestitution(oldF:getRestitution())
                     newFixture:setFriction(oldF:getFriction())
+                    newFixture:setGroupIndex(oldF:getGroupIndex())
                 end
                 if offset > 0 then
                     -- here we should recreate the special fixtures..
@@ -608,6 +609,7 @@ function lib.cloneSelection(selectedBodies)
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
+                        newFixture:setGroupIndex(oldF:getGroupIndex())
                         local oldUD = utils.deepCopy(oldF:getUserData())
                         oldUD.id = uuid.generateID()
 
@@ -696,7 +698,7 @@ function lib.cloneSelection(selectedBodies)
                                 collideConnected = originalJoint:getCollideConnected(),
                                 id = uuid.generateID(),
                                 offsetA = { x = ud.offsetA.x, y = ud.offsetA.y },
-                                offsetB = { x = ud.offsetB.x, y = ud.offsetB.x }
+                                offsetB = { x = ud.offsetB.x, y = ud.offsetB.y }
                             }
 
                             -- Include all joint-specific properties

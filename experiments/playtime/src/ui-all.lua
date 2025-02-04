@@ -175,8 +175,9 @@ function ui.panel(x, y, width, height, label, drawFunc)
     end
 
     -- Enable scissor to clip UI elements within the panel
-    love.graphics.setScissor(x, y, width, height)
-
+    if width > 0 and height > 0 then
+        love.graphics.setScissor(x, y, width, height)
+    end
     -- Call the provided draw function to render UI elements inside the panel
     if drawFunc then
         drawFunc()

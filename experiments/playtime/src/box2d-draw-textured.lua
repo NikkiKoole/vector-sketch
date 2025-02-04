@@ -2,7 +2,7 @@ local lib = {}
 
 local mathutils = require 'src.math-utils'
 
-local img = love.graphics.newImage('textures/shapes11.png')
+local img = love.graphics.newImage('textures/leg1.png')
 local imgw, imgh = img:getDimensions()
 
 
