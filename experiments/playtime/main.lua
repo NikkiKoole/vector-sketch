@@ -884,11 +884,12 @@ function love.keypressed(key)
         removeCustomPolygonVertex(wx, wy)
     end
 
-    if key == "r" then
-        love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+    if key == "r" and love.keyboard.isDown('lctrl') then
         if Peeker.get_status() then
+            Peeker.isProcessing = true
             Peeker.stop()
         else
+            Peeker.isProcessing = false
             Peeker.start({
                 --w = 320,   --optional
                 --h = 320,   --optional
@@ -902,6 +903,7 @@ function love.keypressed(key)
                 total_frames = 1000,
             })
         end
+        love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
     end
 
     script.call('onKeyPress', key)
