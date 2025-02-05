@@ -109,6 +109,7 @@ function love.load(args)
 
     worldState = {
         debugDrawMode = true,
+        debugAlpha = 1,
         profiling = false,
         meter = 100,
         paused = true,

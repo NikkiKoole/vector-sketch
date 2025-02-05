@@ -95,6 +95,7 @@ function lib.drawTexturedWorld(world)
         if (ud and ud.thing) then
             local thing = ud.thing
             local vertices = thing.vertices
+
             if thing.textures and thing.textures.bgEnabled then
                 local url = thing.textures.bgURL
                 local img, imgw, imgh = getLoveImage('textures/' .. url)
@@ -105,6 +106,25 @@ function lib.drawTexturedWorld(world)
                         local sx = ww / imgw
                         local sy = hh / imgh
                         local r, g, b, a = hexToColor(thing.textures.bgHex)
+                        love.graphics.setColor(r, g, b, a)
+                        love.graphics.draw(img, body:getX(), body:getY(), body:getAngle(), sx * 1 * thing.mirrorX,
+                            sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
+                    else
+                        print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                    end
+                end
+            end
+
+            if thing.textures and thing.textures.fgEnabled then
+                local url = thing.textures.fgURL
+                local img, imgw, imgh = getLoveImage('textures/' .. url)
+
+                if (img) then
+                    if vertices then
+                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                        local sx = ww / imgw
+                        local sy = hh / imgh
+                        local r, g, b, a = hexToColor(thing.textures.fgHex)
                         love.graphics.setColor(r, g, b, a)
                         love.graphics.draw(img, body:getX(), body:getY(), body:getAngle(), sx * 1 * thing.mirrorX,
                             sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)

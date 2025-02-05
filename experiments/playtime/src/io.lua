@@ -657,6 +657,7 @@ function lib.cloneSelection(selectedBodies, world)
                 body = newBody,
                 shapes = newShapeList,
                 vertices = newVertices,
+                textures = originalThing.textures,
                 id = newID
             }
             newBody:setUserData({ thing = clonedThing })
