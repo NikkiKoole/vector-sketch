@@ -952,6 +952,7 @@ local accordionStates = {
     motion = false,
     joints = false,
     sfixtures = false,
+    textured = false,
 }
 
 function lib.drawUpdateSelectedObjectUI()
@@ -1283,6 +1284,33 @@ function lib.drawUpdateSelectedObjectUI()
                 nextRow()
             end)
             nextRow()
+
+            drawAccordion("textures", function(clicked)
+                nextRow()
+                local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
+                if dirty then
+                    thing.textures.bgEnabled = not thing.textures.bgEnabled
+                end
+                local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
+                if bgURL and bgURL ~= thing.textures.bgURL then
+                    --local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+                    -- oldUD.label = newLabel
+                    -- uiState.selectedSFixture:setUserData(oldUD)
+                    --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
+                    --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
+                    thing.textures.bgURL = bgURL
+                end
+                nextRow()
+                local bgHex = ui.textinput(myID .. ' bgHex', x, y, 260, 40, "", thing.textures.bgHex)
+                if bgHex and bgHex ~= thing.textures.bgHex then
+                    thing.textures.bgHex = bgHex
+                end
+
+
+                nextRow()
+            end)
+            nextRow()
+
             drawAccordion("physics", function()
                 local fixtures = body:getFixtures()
                 if #fixtures >= 1 then
