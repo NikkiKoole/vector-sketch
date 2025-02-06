@@ -52,7 +52,7 @@ local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
-local FPS = 30
+local FPS = 60
 local TICKRATE = 1 / FPS
 
 local now = love.timer:getTime()
@@ -110,6 +110,7 @@ function love.load(args)
 
     worldState = {
         debugDrawMode = true,
+        debugAlpha = 1,
         profiling = false,
         meter = 100,
         paused = true,
@@ -888,11 +889,14 @@ function love.keypressed(key)
         removeCustomPolygonVertex(wx, wy)
     end
 
-    if key == "r" and love.keyboard.isDown("lctrl") then
-        love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+
+
+    if key == "r" and love.keyboard.isDown('lctrl') then
         if Peeker.get_status() then
+            Peeker.isProcessing = true
             Peeker.stop()
         else
+            Peeker.isProcessing = false
             Peeker.start({
                 --w = 320,   --optional
                 --h = 320,   --optional
@@ -906,6 +910,7 @@ function love.keypressed(key)
                 total_frames = 1000,
             })
         end
+        love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
     end
 
     script.call('onKeyPress', key)

@@ -127,6 +127,7 @@ function lib.load(data, world)
             vertices = bodyData.vertices,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
+            textures = bodyData.textures or { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
         }
 
         -- Assign the 'thing' to the body's user data
@@ -344,6 +345,7 @@ function lib.save(world, worldState, filename)
                     height3 = needsDimProperty('height3', thing.shapeType) and thing.height3 or nil,
                     height4 = needsDimProperty('height4', thing.shapeType) and thing.height4 or nil,
                 },
+                textures = thing.textures,
                 mirrorX = thing.mirrorX,
                 mirrorY = thing.mirrorY,
                 --radius = thing.radius,
@@ -655,6 +657,7 @@ function lib.cloneSelection(selectedBodies, world)
                 body = newBody,
                 shapes = newShapeList,
                 vertices = newVertices,
+                textures = originalThing.textures,
                 id = newID
             }
             newBody:setUserData({ thing = clonedThing })

@@ -90,6 +90,7 @@ local function createThing(shapeType, conf)
         body = body,
         shapes = shapeList,
         vertices = vertices, -- Store vertices if needed
+        textures = { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
         id = uuid.generateID(),
     }
 
@@ -283,6 +284,7 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.height4 = newSettings.height4 or thing.height4
     thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices
+
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
 

@@ -39,7 +39,7 @@ end
 function lib.drawWorld(world, drawOutline)
     if drawOutline == nil then drawOutline = true end
     local r, g, b, a = love.graphics.getColor()
-    local alpha = .8
+    local alpha = .8 * worldState.debugAlpha
     love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()

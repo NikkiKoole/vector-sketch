@@ -290,6 +290,7 @@ function Peeker.detach()
 
     if OPT.overlay then
         love.graphics.setColor(1, 0, 0, 1)
+
         if OPT.overlay == "text" then
             love.graphics.print("RECORDING", 4, 4)
         elseif OPT.overlay == "circle" then

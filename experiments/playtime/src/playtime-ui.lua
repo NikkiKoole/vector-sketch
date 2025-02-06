@@ -650,7 +650,7 @@ function lib.drawWorldSettingsUI()
 
     local buttonSpacing = BUTTON_SPACING
     local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local panelHeight = titleHeight + titleHeight + (7 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+    local panelHeight = titleHeight + titleHeight + (9 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
     ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
         local layout = ui.createLayout({
             type = 'columns',
@@ -681,8 +681,15 @@ function lib.drawWorldSettingsUI()
         if g then
             worldState.debugDrawMode = value
         end
+        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
 
 
+        local debugAlpha = ui.sliderWithInput('debugalpha', x, y, ROW_WIDTH, 0, 1, worldState.debugAlpha)
+        if debugAlpha then
+            worldState.debugAlpha = debugAlpha
+        end
+        ui.label(x, y, ' dbgAlpha')
+        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, worldState.mouseForce)
         if mouseForce then
@@ -952,6 +959,7 @@ local accordionStates = {
     motion = false,
     joints = false,
     sfixtures = false,
+    textured = false,
 }
 
 function lib.drawUpdateSelectedObjectUI()
@@ -1283,6 +1291,54 @@ function lib.drawUpdateSelectedObjectUI()
                 nextRow()
             end)
             nextRow()
+
+            drawAccordion("textures", function(clicked)
+                nextRow()
+                local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
+                if dirty then
+                    thing.textures.bgEnabled = not thing.textures.bgEnabled
+                end
+                local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
+                if bgURL and bgURL ~= thing.textures.bgURL then
+                    --local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+                    -- oldUD.label = newLabel
+                    -- uiState.selectedSFixture:setUserData(oldUD)
+                    --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
+                    --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
+                    thing.textures.bgURL = bgURL
+                end
+                nextRow()
+                local bgHex = ui.textinput(myID .. ' bgHex', x, y, 260, 40, "", thing.textures.bgHex)
+                if bgHex and bgHex ~= thing.textures.bgHex then
+                    thing.textures.bgHex = bgHex
+                end
+
+
+                nextRow()
+                local dirty, checked = ui.checkbox(x, y, thing.textures.fgEnabled, '')
+                if dirty then
+                    thing.textures.fgEnabled = not thing.textures.fgEnabled
+                end
+                local fgURL = ui.textinput(myID .. ' fgURL', x + 40, y, 220, 40, "", thing.textures.fgURL)
+                if fgURL and fgURL ~= thing.textures.fgURL then
+                    --local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+                    -- oldUD.label = newLabel
+                    -- uiState.selectedSFixture:setUserData(oldUD)
+                    --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
+                    --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
+                    thing.textures.fgURL = fgURL
+                end
+                nextRow()
+                local fgHex = ui.textinput(myID .. ' fgHex', x, y, 260, 40, "", thing.textures.fgHex)
+                if fgHex and fgHex ~= thing.textures.fgHex then
+                    thing.textures.fgHex = fgHex
+                end
+
+
+                nextRow()
+            end)
+            nextRow()
+
             drawAccordion("physics", function()
                 local fixtures = body:getFixtures()
                 if #fixtures >= 1 then
