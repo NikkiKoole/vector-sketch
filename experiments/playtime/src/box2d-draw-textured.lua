@@ -135,6 +135,7 @@ function lib.drawTexturedWorld(world)
             end
         end
     end
+    --love.graphics.setDepthMode()
 end
 
 return lib
