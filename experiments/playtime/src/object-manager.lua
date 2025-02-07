@@ -91,6 +91,7 @@ local function createThing(shapeType, conf)
         shapes = shapeList,
         vertices = vertices, -- Store vertices if needed
         textures = { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
+        zOffset = 0,
         id = uuid.generateID(),
     }
 

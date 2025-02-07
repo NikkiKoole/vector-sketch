@@ -6,20 +6,9 @@ local mathutils = require 'src.math-utils'
 local tex1 = love.graphics.newImage('textures/pat/type3_.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
-local mask = love.graphics.newImage('textures/shapes6-mask.png')
+local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 --local imgw, imgh = img:getDimensions()
 local imageCache = {}
-function getLoveImage2(path)
-    if not imageCache[path] then
-        -- Load the image and store it in the cache
-        local img = love.graphics.newImage(path)
-        if (img) then
-            local imgw, imgh = img:getDimensions()
-            imageCache[path] = { img = img, imgw = imgw, imgh = imgh }
-        end
-    end
-    return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
-end
 
 function getLoveImage(path)
     if not imageCache[path] then
@@ -40,16 +29,6 @@ function getLoveImage(path)
     else
         return nil, nil, nil
     end
-end
-
-function hexToColor2(hex)
-    hex = hex:gsub("#", "")
-    if #hex == 6 then hex = hex .. "FF" end -- Append alpha if missing
-    local r = tonumber(hex:sub(1, 2), 16) / 255
-    local g = tonumber(hex:sub(3, 4), 16) / 255
-    local b = tonumber(hex:sub(5, 6), 16) / 255
-    local a = tonumber(hex:sub(7, 8), 16) / 255
-    return r, g, b, a
 end
 
 function hexToColor(hex)
@@ -97,50 +76,21 @@ local maskShader = love.graphics.newShader([[
 	uniform Image fill;
     uniform vec4 backgroundColor;
     uniform mat2 uvTransform;
+    uniform vec2 uvTranslation;
 
 	vec4 effect(vec4 color, Image mask, vec2 uv, vec2 fc) {
         vec2 transformedUV = uv * uvTransform;
-
+        transformedUV.x += uvTranslation.x;
+        transformedUV.y += uvTranslation.y;
         vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
-      // multiplying here with backgroundCOlor makes everything transparent....
-      // not exactly what I'm after, but better then nothing. (I suppose)
         return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a  );
 	}
 ]])
 
-function doPatternedCunt(vertices)
-    local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-    print(cx, cy)
-
-    local texRot = 0
-    local texScale = 1
-    local texture2 = tex1
-    -- local mask = mask
-    local color1 = { 1, 0, 0 }
-    local color2 = { 1, 1, 0 }
-    local alpha1 = 1
-    local alpha2 = 1
-
-    love.graphics.setShader(maskShader)
-    local transform = love.math.newTransform()
-    transform:rotate((texRot * math.pi) / 8)
-    transform:scale(texScale, texScale)
-    local m1, m2, _, _, m5, m6 = transform:getMatrix()
-
-    maskShader:send('fill', texture2)
-    maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
-    maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
-    if mask then
-        --local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
-        love.graphics.setColor(color2[1], color2[2], color2[3], alpha2 / 5)
-        love.graphics.draw(mask, 0, 0, 0, 1, 1)
-    end
-    love.graphics.setShader()
-end
-
-local shrinkFactor = 1
+local shrinkFactor = 2
 
 local image = nil
+
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
 end
@@ -180,13 +130,19 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
         if (true) then
             love.graphics.setShader(maskShader)
             local transform = love.math.newTransform()
+
+
             transform:rotate((texRot * math.pi) / 8)
             transform:scale(texScale, texScale)
-            local m1, m2, _, _, m5, m6 = transform:getMatrix()
 
+            local m1, m2, _, _, m5, m6 = transform:getMatrix()
+            local dx = 0 --love.math.random() * .001
+            local dy = love.math.random() * .01
             maskShader:send('fill', texture2)
             maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
             maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
+            maskShader:send('uvTranslation', { dx, dy })
+
             if mask then
                 local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
                 love.graphics.setColor(color2[1], color2[2], color2[3], alpha2 / 5)
@@ -197,32 +153,32 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
 
         -- I want to know If we do this or not..
-        if (renderPatch) then
+        if (false and renderPatch) then
             love.graphics.setColorMask(true, true, true, false)
             for i = 1, #renderPatch do
                 local p = renderPatch[i]
 
-                love.graphics.setColor(1, 1, 1, 1)
-                local image = love.graphics.newImage(p.imageData)
-                local imgw, imgh = image:getDimensions();
-                local xOffset = p.tx * (imgw / 6) * shrinkFactor
-                local yOffset = p.ty * (imgh / 6) * shrinkFactor
-                love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
-                    p.sx * shrinkFactor,
-                    p.sy * shrinkFactor,
-                    imgw / 2, imgh / 2)
+                -- love.graphics.setColor(1, 1, 1, 1)
+                -- local image = love.graphics.newImage(p.imageData)
+                -- local imgw, imgh = image:getDimensions();
+                -- local xOffset = p.tx * (imgw / 6) * shrinkFactor
+                -- local yOffset = p.ty * (imgh / 6) * shrinkFactor
+                -- love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
+                --     p.sx * shrinkFactor,
+                --     p.sy * shrinkFactor,
+                --     imgw / 2, imgh / 2)
                 --print(lw, lh)
-                if false then
-                    local img = love.graphics.newImage('assets/parts/eye4.png')
+                if true then
+                    local img = love.graphics.newImage('textures/eye4.png')
                     --local img = love.graphics.newImage('assets/test1.png')
                     --love.graphics.setBlendMode('subtract')
 
-                    for i = 1, 100 do
+                    for i = 1, 13 do
                         love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
-                        local s = love.math.random() * 3
+                        local s = 3 + love.math.random() * 3
                         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(),
                             love.math.random() * math.pi * 2,
-                            s)
+                            1 / s, 1 / s)
                     end
 
                     --love.graphics.setBlendMode("alpha")
@@ -234,7 +190,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
         love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
         local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
-        print(flipx, flipy, lw, lh, sx, sy, ox, oy)
+        --  print(flipx, flipy, lw, lh, sx, sy, ox, oy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
@@ -265,30 +221,77 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
     -- return nil -- love.image.newImageData(mask)
 end
 
-
-
 function lib.makePatternTexture()
-    local imgd = lib.makeTexturedCanvas(line, mask, tex1, { 1, 1, 1 }, 5, tex1, { 0, 0, 1 }, 5,
-        love.math.random() * 5,
-        4,
-        { 0, 0, 0 },
-        1, 1, 1)
-    img = love.graphics.newImage(imgd)
+    -- You can adjust the parameters as desired.
+    local imgData = lib.makeTexturedCanvas(
+        line,        -- line art
+        maskTex,     -- mask
+        tex1,        -- texture1 (unused in this version)
+        { 1, 0, 1 }, -- color1
+        5,           -- alpha1
+        tex1,        -- texture2 (fill texture)
+        { 0, 0, 1 }, -- color2
+        5,           -- alpha2
+        0,           -- texRot
+        .2,          -- texScale
+        { 0, 0, 0 }, -- lineColor
+        1,           -- lineAlpha
+        1,           -- flipx (normal)
+        1,           -- flipy (normal)
+        { 'jo!' }    -- renderPatch (set to truthy to enable extra patch rendering)
+    )
+    image = love.graphics.newImage(imgData)
+    return image
 end
 
 function lib.drawTexturedWorld(world)
     local bodies = world:getBodies()
+    local drawables = {}
+
     for _, body in ipairs(bodies) do
+        local ud = body:getUserData()
+        if (ud and ud.thing) then
+            local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
+            table.insert(drawables, { z = ud.thing.zOffset, b = body })
+        end
+    end
+    --print(#drawables)
+    table.sort(drawables, function(a, b)
+        return a.z < b.z
+    end)
+
+    --for _, body in ipairs(bodies) do
+    for i = 1, #drawables do
+        local body = drawables[i].b
         local ud = body:getUserData()
         if (ud and ud.thing) then
             local thing = ud.thing
             local vertices = thing.vertices
 
+
+            if (image) then
+                local img = image
+                local imgw, imgh = image:getDimensions()
+                if vertices then
+                    local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                    local sx = ww / imgw
+                    local sy = hh / imgh
+                    local r, g, b, a = hexToColor(thing.textures.bgHex)
+                    love.graphics.setColor(r, g, b, a)
+                    --love.graphics.draw(img, body:getX(), body:getY())
+                    love.graphics.draw(img, body:getX(), body:getY(), body:getAngle(), sx * 1 * thing.mirrorX,
+                        sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
+                else
+                    print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                end
+            end
+
+
             if thing.textures and thing.textures.bgEnabled then
                 local url = thing.textures.bgURL
-                --local img, imgw, imgh = getLoveImage('textures/' .. url)
-                imgw = img:getWidth()
-                imgh = img:getHeight()
+                local img, imgw, imgh = getLoveImage('textures/' .. url)
+                --imgw = img:getWidth()
+                --imgh = img:getHeight()
 
                 if (img) then
                     if vertices then

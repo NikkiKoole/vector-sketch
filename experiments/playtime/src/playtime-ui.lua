@@ -1124,6 +1124,17 @@ function lib.drawUpdateSelectedObjectUI()
                     body:setAngle(newAngle * math.pi / 180)
                 end
                 ui.label(x, y, ' angle')
+
+
+                nextRow()
+
+                local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
+                    math.floor(thing.zOffset),
+                    (body:isAwake() and not worldState.paused) or dirtyBodyChange)
+                if newZOffset and thing.zOffset ~= newZOffset then
+                    thing.zOffset = math.floor(newZOffset)
+                end
+                ui.label(x, y, ' zOffset')
             end
             )
             nextRow()
