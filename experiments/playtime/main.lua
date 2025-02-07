@@ -542,14 +542,18 @@ end
 function love.draw()
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
-    love.graphics.clear(20 / 255, 5 / 255, 20 / 255)
+    love.graphics.clear(120 / 255, 5 / 255, 20 / 255)
     if uiState.showGrid then
         drawGrid(cam, worldState)
     end
+
+    box2dDrawTextured.makePatternTexture()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
     box2dDrawTextured.drawTexturedWorld(world)
+
+
     script.call('draw')
 
     if uiState.selectedSFixture and not uiState.selectedSFixture:isDestroyed() then
