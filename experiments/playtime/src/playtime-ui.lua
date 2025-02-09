@@ -596,13 +596,37 @@ function lib.drawAddShapeUI()
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not worldState.paused)
-            --print('need to fix me an fixture at a body. if possible')
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
+                local fixture = fixtures.createSFixture(body, localX, localY, { label = 'snap', radius = 30 })
+                uiState.selectedSFixture = fixture
+            end
+            ui.draggingActive = nil
+        end
+        x, y = ui.nextLayoutPosition(layout, width, height)
 
-                local fixture = fixtures.createSFixture(body, localX, localY, 30)
+        local _, pressed, released = ui.button(x, y, width, 'texfixture')
+        if pressed then
+            ui.draggingActive = ui.activeElementID
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
 
+            uiState.offsetDragging = { 0, 0 }
+        end
+        if released then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not worldState.paused)
+            if (#hitted > 0) then
+                local body = hitted[#hitted]:getBody()
+
+                local verts = body:getUserData().thing.vertices
+                local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+                print(cx, cy, w, h)
+                local localX, localY = body:getLocalPoint(wx, wy)
+                local fixture = fixtures.createSFixture(body, localX, localY,
+                    { label = 'texfixture', width = w, height = h })
                 uiState.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -738,7 +762,9 @@ function lib.drawSelectedSFixture()
     if uiState.draggingObj then
         hadBeenDraggingObj = true
     end
-    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ sfixture ∞', function()
+    local ud = uiState.selectedSFixture:getUserData()
+    local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
+    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
         local padding = BUTTON_SPACING
         local layout = ui.createLayout({
             type = 'columns',
@@ -756,82 +782,144 @@ function lib.drawSelectedSFixture()
         if newLabel and newLabel ~= myLabel then
             local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             oldUD.label = newLabel
+
             uiState.selectedSFixture:setUserData(oldUD)
         end
-
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
-        if ui.button(x, y, 40, '∆') then
-            uiState.setUpdateSFixturePosFunc = function(x, y)
-                local body = uiState.selectedSFixture:getBody()
-                local beforeIndex = 0
-                local myfixtures = body:getFixtures()
-
-                for i = 1, #myfixtures do
-                    if myfixtures[i] == uiState.selectedSFixture then
-                        beforeIndex = i
-                    end
-                end
-                local localX, localY = body:getLocalPoint(x, y)
-                local points = { uiState.selectedSFixture:getShape():getPoints() }
-                local centerX, centerY = mathutils.getCenterOfPoints(points)
-                local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-                local newShape = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
-                local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
-                uiState.selectedSFixture:destroy()
-
-                local shape = love.physics.newPolygonShape(newShape)
-                local newfixture = love.physics.newFixture(body, shape)
-                newfixture:setSensor(true) -- Sensor so it doesn't collide
-
-                newfixture:setUserData(oldUD)
-                local afterIndex = 0
-                local myfixtures = body:getFixtures()
-                for i = 1, #myfixtures do
-                    if myfixtures[i] == newfixture then
-                        afterIndex = i
-                    end
-                end
-                --print(beforeIndex, afterIndex)
-                registry.registerSFixture(oldUD.id, newfixture)
-
-                return newfixture
-            end
+        if ui.button(x, y, ROW_WIDTH, 'destroy') then
+            fixtures.destroyFixture(uiState.selectedSFixture)
+            uiState.selectedSFixture = nil
+            return
         end
+
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-        local points = { uiState.selectedSFixture:getShape():getPoints() }
-        local dim = mathutils.getPolygonDimensions(points)
-        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
-        ui.label(x, y, ' radius')
-        if newRadius and newRadius ~= dim then
-            local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+
+        local updateSFixturePosFunc = function(x, y)
             local body = uiState.selectedSFixture:getBody()
+            local beforeIndex = 0
+            local myfixtures = body:getFixtures()
+
+            for i = 1, #myfixtures do
+                if myfixtures[i] == uiState.selectedSFixture then
+                    beforeIndex = i
+                end
+            end
+            local localX, localY = body:getLocalPoint(x, y)
+            local points = { uiState.selectedSFixture:getShape():getPoints() }
+            local centerX, centerY = mathutils.getCenterOfPoints(points)
+            local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+            local newShape = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
+            local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             uiState.selectedSFixture:destroy()
 
-            local centerX, centerY = mathutils.getCenterOfPoints(points)
-            local shape = love.physics.newPolygonShape(rect(newRadius, newRadius, centerX, centerY))
+            local shape = love.physics.newPolygonShape(newShape)
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
 
             newfixture:setUserData(oldUD)
-
-            uiState.selectedSFixture = newfixture
-            --snap.updateFixture(newfixture)
+            local afterIndex = 0
+            local myfixtures = body:getFixtures()
+            for i = 1, #myfixtures do
+                if myfixtures[i] == newfixture then
+                    afterIndex = i
+                end
+            end
+            --print(beforeIndex, afterIndex)
             registry.registerSFixture(oldUD.id, newfixture)
-            snap.rebuildSnapFixtures(registry.sfixtures)
-            -- uiState.selectedSFixture
+
+            return newfixture
+        end
+
+
+
+        if ui.button(x, y, 40, '∆') then
+            uiState.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
-        --------
-        -- local body = uiState.selectedSFixture:getBody()
-        -- local parentVerts = body:getUserData().thing.vertices
-        -- if parentVerts then
-        --     love.graphics.polygon('line', parentVerts)
-        --     local bounds = mathutils.getBoundingRect(parentVerts)
-        --     love.graphics.line(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height)
-        -- end
 
+        if sfixtureType == 'texfixture' then
+            local points = { uiState.selectedSFixture:getShape():getPoints() }
+            local w, h   = mathutils.getPolygonDimensions(points)
+            -- print(w, h)
+            --
+
+            if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
+                uiState.showTexFixtureDim = not uiState.showTexFixtureDim
+            end
+            if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+                local body = uiState.selectedSFixture:getBody()
+
+                uiState.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
+            end
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+            if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
+                uiState.texFixtureLockedVerts = not uiState.texFixtureLockedVerts
+                if uiState.texFixtureLockedVerts == false then
+                    uiState.texFixtureTempVerts = utils.shallowCopy(points)
+                    --local cx, cy = mathutils.computeCentroid(points)
+                    --uiState.texFixtureCentroid = { x = cx, y = cy }
+                else
+                    uiState.texFixtureTempVerts = nil
+                    --uiState.polyCentroid = nil
+                end
+            end
+
+            if (uiState.showTexFixtureDim) then
+                local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 1000, w)
+                ui.label(x, y, ' width')
+                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 1000, h)
+                ui.label(x, y, ' height')
+                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            end
+
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            local oldTexFixUD = uiState.selectedSFixture:getUserData()
+
+            local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.bgEnabled, '')
+            if dirty then
+                oldTexFixUD.extra.bgEnabled = not oldTexFixUD.extra.bgEnabled
+                uiState.selectedSFixture:setUserData(oldTexFixUD)
+            end
+            local bgURL = ui.textinput(myID .. ' texfixbgURL', x + 40, y, 220, 40, "", oldTexFixUD.extra.bgURL or '')
+            if bgURL and bgURL ~= oldTexFixUD.extra.bgURL then
+                oldTexFixUD.extra.bgURL = bgURL
+                uiState.selectedSFixture:setUserData(oldTexFixUD)
+            end
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+            local bgHex = ui.textinput(myID .. ' texfixbgHex', x, y, 260, 40, "", oldTexFixUD.extra.bgHex)
+            if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
+                oldTexFixUD.extra.bgHex = bgHex
+            end
+        else
+            local points = { uiState.selectedSFixture:getShape():getPoints() }
+            local dim = mathutils.getPolygonDimensions(points)
+            local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
+            ui.label(x, y, ' radius')
+            if newRadius and newRadius ~= dim then
+                local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+                local body = uiState.selectedSFixture:getBody()
+                uiState.selectedSFixture:destroy()
+
+                local centerX, centerY = mathutils.getCenterOfPoints(points)
+                local shape = love.physics.newPolygonShape(rect(newRadius, newRadius, centerX, centerY))
+                local newfixture = love.physics.newFixture(body, shape)
+                newfixture:setSensor(true) -- Sensor so it doesn't collide
+
+                newfixture:setUserData(oldUD)
+
+                uiState.selectedSFixture = newfixture
+                --snap.updateFixture(newfixture)
+                registry.registerSFixture(oldUD.id, newfixture)
+                snap.rebuildSnapFixtures(registry.sfixtures)
+                -- uiState.selectedSFixture
+            end
+        end
+        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
 
 
@@ -854,9 +942,7 @@ function lib.drawSelectedSFixture()
             --print('parentVerts', inspect(parentVerts))
             local bounds = mathutils.getBoundingRect(parentVerts)
             local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-            -- print('relativepoinyts, ', inspect(relativePoints))
-            -- local a, b = mathutils.computeCentroid(parentVerts)
-            -- print('centroid:', a, b)
+
             local newShape = mathutils.makePolygonAbsolute(relativePoints,
                 ((bounds.width / 2) * xMultiplier),
                 ((bounds.height / 2) * yMultiplier))
@@ -865,30 +951,29 @@ function lib.drawSelectedSFixture()
             uiState.selectedSFixture:destroy()
 
             local shape = love.physics.newPolygonShape(newShape)
-            --  local output = { shape:getPoints() }
-            -- print('o:', inspect(output))
+
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
             newfixture:setUserData(oldUD)
             uiState.selectedSFixture = newfixture
         end
-
-        if ui.button(x, y, 40, 'N') then
-            handleOffset(0, -1)
+        if sfixtureType ~= 'texfixture' then
+            if ui.button(x, y, 40, 'N') then
+                handleOffset(0, -1)
+            end
+            if ui.button(x + 50, y, 40, 'E') then
+                handleOffset(1, 0)
+            end
+            if ui.button(x + 100, y, 40, 'S') then
+                handleOffset(0, 1)
+            end
+            if ui.button(x + 150, y, 40, 'W') then
+                handleOffset(-1, 0)
+            end
+            if ui.button(x + 200, y, 40, 'C') then
+                handleOffset(0, 0)
+            end
         end
-        if ui.button(x + 50, y, 40, 'E') then
-            handleOffset(1, 0)
-        end
-        if ui.button(x + 100, y, 40, 'S') then
-            handleOffset(0, 1)
-        end
-        if ui.button(x + 150, y, 40, 'W') then
-            handleOffset(-1, 0)
-        end
-        if ui.button(x + 200, y, 40, 'C') then
-            handleOffset(0, 0)
-        end
-
         -- local mx, my = love.mouse.getPosition()
         --local wx, wy = cam:getWorldCoordinates(mx, my)
     end)

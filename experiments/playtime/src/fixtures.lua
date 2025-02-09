@@ -44,15 +44,33 @@ local function rect(w, h, x, y)
         x - w / 2, y + h / 2
     }
 end
-function lib.createSFixture(body, localX, localY, radius)
-    local shape = love.physics.newPolygonShape(rect(radius, radius, localX, localY))
-    local fixture = love.physics.newFixture(body, shape)
-    fixture:setSensor(true) -- Sensor so it doesn't collide
-    local setId = uuid.generateID()
-    fixture:setUserData({ type = "sfixture", id = setId, label = 'snap', extra = {} })
 
-    registry.registerSFixture(setId, fixture)
-    return fixture
+
+function lib.destroyFixture(fixture)
+    registry.unregisterSFixture(fixture:getUserData().id)
+    fixture:destroy()
+end
+
+function lib.createSFixture(body, localX, localY, cfg)
+    if (cfg.label == 'snap') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
+    if (cfg.label == 'texfixture') then
+        local shape = love.physics.newPolygonShape(rect(cfg.width, cfg.height, localX, localY))
+        local fixture = love.physics.newFixture(body, shape, 0)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", id = setId, label = '', extra = { type = 'texfixture' } })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
+    print('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!')
 end
 
 return lib

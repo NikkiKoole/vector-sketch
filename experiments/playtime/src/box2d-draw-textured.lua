@@ -87,7 +87,7 @@ local maskShader = love.graphics.newShader([[
 	}
 ]])
 
-local shrinkFactor = 2
+local shrinkFactor = 1
 
 local image = nil
 
@@ -222,25 +222,27 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 end
 
 function lib.makePatternTexture()
-    -- You can adjust the parameters as desired.
-    local imgData = lib.makeTexturedCanvas(
-        line,        -- line art
-        maskTex,     -- mask
-        tex1,        -- texture1 (unused in this version)
-        { 1, 0, 1 }, -- color1
-        5,           -- alpha1
-        tex1,        -- texture2 (fill texture)
-        { 0, 0, 1 }, -- color2
-        5,           -- alpha2
-        0,           -- texRot
-        .2,          -- texScale
-        { 0, 0, 0 }, -- lineColor
-        1,           -- lineAlpha
-        1,           -- flipx (normal)
-        1,           -- flipy (normal)
-        { 'jo!' }    -- renderPatch (set to truthy to enable extra patch rendering)
-    )
-    image = love.graphics.newImage(imgData)
+    if not image then
+        -- You can adjust the parameters as desired.
+        local imgData = lib.makeTexturedCanvas(
+            line,        -- line art
+            maskTex,     -- mask
+            tex1,        -- texture1 (unused in this version)
+            { 1, 0, 1 }, -- color1
+            5,           -- alpha1
+            tex1,        -- texture2 (fill texture)
+            { 0, 0, 1 }, -- color2
+            5,           -- alpha2
+            0,           -- texRot
+            .2,          -- texScale
+            { 0, 0, 0 }, -- lineColor
+            1,           -- lineAlpha
+            1,           -- flipx (normal)
+            1,           -- flipy (normal)
+            { 'jo!' }    -- renderPatch (set to truthy to enable extra patch rendering)
+        )
+        image = love.graphics.newImage(imgData)
+    end
     return image
 end
 
@@ -252,7 +254,15 @@ function lib.drawTexturedWorld(world)
         local ud = body:getUserData()
         if (ud and ud.thing) then
             local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
-            table.insert(drawables, { z = ud.thing.zOffset, b = body })
+            table.insert(drawables, { z = ud.thing.zOffset, body = body, thing = ud.thing })
+        end
+
+        local fixtures = body:getFixtures()
+        for i = 1, #fixtures do
+            local ud = fixtures[i]:getUserData()
+            if (ud and ud.extra and ud.extra.type == 'texfixture') then
+                table.insert(drawables, { z = 0, texfixture = fixtures[i], extra = ud.extra })
+            end
         end
     end
     --print(#drawables)
@@ -262,13 +272,12 @@ function lib.drawTexturedWorld(world)
 
     --for _, body in ipairs(bodies) do
     for i = 1, #drawables do
-        local body = drawables[i].b
-        local ud = body:getUserData()
-        if (ud and ud.thing) then
-            local thing = ud.thing
+        local body = drawables[i].body
+        local thing = drawables[i].thing
+        local texfixture = drawables[i].texfixture
+
+        if thing and body then
             local vertices = thing.vertices
-
-
             if (image) then
                 local img = image
                 local imgw, imgh = image:getDimensions()
@@ -285,7 +294,6 @@ function lib.drawTexturedWorld(world)
                     print('NO VERTICES FOUND, kinda hard ', inspect(thing))
                 end
             end
-
 
             if thing.textures and thing.textures.bgEnabled then
                 local url = thing.textures.bgURL
@@ -325,6 +333,30 @@ function lib.drawTexturedWorld(world)
                     else
                         print('NO VERTICES FOUND, kinda hard ', inspect(thing))
                     end
+                end
+            end
+        end
+        if texfixture then
+            local extra = drawables[i].extra
+            local url = extra.bgURL
+            local img, imgw, imgh = getLoveImage('textures/' .. url)
+            local body = texfixture:getBody()
+            --imgw = img:getWidth()
+            --imgh = img:getHeight()
+            local vertices = { texfixture:getShape():getPoints() }
+            if (img) then
+                if vertices then
+                    local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                    local sx = ww / imgw
+                    local sy = hh / imgh
+                    local r, g, b, a = hexToColor(extra.bgHex)
+                    local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+
+                    love.graphics.setColor(r, g, b, a)
+                    love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
+                        (imgw) / 2, (imgh) / 2)
+                else
+                    print('NO VERTICES FOUND, kinda hard ', inspect(thing))
                 end
             end
         end

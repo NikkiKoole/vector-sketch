@@ -51,7 +51,7 @@ local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
-local FIXED_TIMESTEP = true
+local FIXED_TIMESTEP = false
 local FPS = 60
 local TICKRATE = 1 / FPS
 
@@ -79,6 +79,8 @@ function love.load(args)
         worldSettingsOpened = false,
         maybeHideSelectedPanel = false,
 
+        showTexFixtureDim = false,
+
         selectedJoint = nil,
         setOffsetAFunc = nil,
         setOffsetBFunc = nil,
@@ -93,11 +95,18 @@ function love.load(args)
         drawFreePoly = false,
         drawClickPoly = false,
         capturingPoly = false,
-        polyLockedVerts = true,
+
         polyDragIdx = 0,
+        polyLockedVerts = true,
         polyTempVerts = nil, -- used when dragging a vertex
         polyCentroid = nil,
         polyVerts = {},
+
+        texFixtureDragIdx = 0,
+        texFixtureLockedVerts = true,
+        texFixtureVerts = {},
+
+
         minPointDistance = 50, -- Default minimum distance
         lastPolyPt = nil,
         lastSelectedBody = nil,
@@ -121,10 +130,10 @@ function love.load(args)
     }
 
     -- todo use this maybe..
-    tags = {
-        'straight',
-        'snap',
-    }
+    -- tags = {
+    --     'straight',
+    --     'snap',
+    -- }
 
     sceneScript = nil
     scriptPath = nil
@@ -620,6 +629,29 @@ function love.draw()
     end
 
 
+    if uiState.texFixtureTempVerts and uiState.selectedSFixture and uiState.texFixtureLockedVerts == false then
+        local thing = uiState.selectedSFixture:getBody():getUserData().thing
+        local verts = mathutils.getLocalVerticesForCustomSelected(uiState.texFixtureTempVerts,
+            thing, 0, 0)
+        --local verts = uiState.texFixtureTempVerts
+        local mx, my = love.mouse:getPosition()
+        local cx, cy = cam:getWorldCoordinates(mx, my)
+
+        for i = 1, #verts, 2 do
+            local vx = verts[i]
+            local vy = verts[i + 1]
+            local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+            if dist < 10 then
+                love.graphics.circle('fill', vx, vy, 10)
+            else
+                love.graphics.circle('line', vx, vy, 10)
+            end
+        end
+    end
+
+
+
+
     -- Highlight selected bodies
     if uiState.selectedBodies then
         local bodies = utils.map(uiState.selectedBodies, function(thing)
@@ -704,6 +736,15 @@ function love.mousemoved(x, y, dx, dy)
         dy2 = dy2 / cam.scale
         uiState.polyTempVerts[index] = uiState.polyTempVerts[index] + dx2
         uiState.polyTempVerts[index + 1] = uiState.polyTempVerts[index + 1] + dy2
+    elseif uiState.texFixtureDragIdx and uiState.texFixtureDragIdx > 0 then
+        local index = uiState.texFixtureDragIdx
+        local obj = uiState.selectedSFixture:getBody():getUserData().thing
+        local angle = obj.body:getAngle()
+        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
+        dx2 = dx2 / cam.scale
+        dy2 = dy2 / cam.scale
+        uiState.texFixtureTempVerts[index] = uiState.texFixtureTempVerts[index] + dx2
+        uiState.texFixtureTempVerts[index + 1] = uiState.texFixtureTempVerts[index + 1] + dy2
     elseif uiState.capturingPoly then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
@@ -779,6 +820,29 @@ function finalizePolygon()
     uiState.capturingPoly = false
     uiState.polyVerts = {}
     uiState.lastPolyPt = nil
+end
+
+local function maybeUpdateTexFixtureVertices()
+    --print('we need todo stuff here!')
+    local points = { uiState.selectedSFixture:getShape():getPoints() }
+    --print(inspect(points))
+    --print(inspect(uiState.texFixtureTempVerts))
+
+    local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+    local body = uiState.selectedSFixture:getBody()
+    uiState.selectedSFixture:destroy()
+
+    local centerX, centerY = mathutils.getCenterOfPoints(points)
+    local shape = love.physics.newPolygonShape(uiState.texFixtureTempVerts)
+    local newfixture = love.physics.newFixture(body, shape)
+    newfixture:setSensor(true) -- Sensor so it doesn't collide
+
+    newfixture:setUserData(oldUD)
+
+    uiState.selectedSFixture = newfixture
+    --snap.updateFixture(newfixture)
+    registry.registerSFixture(oldUD.id, newfixture)
+    --snap.rebuildSnapFixtures(registry.sfixtures)
 end
 
 local function maybeUpdateCustomPolygonVertices()
@@ -956,6 +1020,28 @@ local function handlePointer(x, y, id, action)
             end
         end
 
+        if uiState.texFixtureTempVerts and uiState.selectedSFixture and uiState.texFixtureLockedVerts == false then
+            --local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
+            --    uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
+            local thing = uiState.selectedSFixture:getBody():getUserData().thing
+            local verts = mathutils.getLocalVerticesForCustomSelected(uiState.texFixtureTempVerts,
+                thing, 0, 0)
+            --local verts = uiState.texFixtureTempVerts
+            for i = 1, #verts, 2 do
+                local vx = verts[i]
+                local vy = verts[i + 1]
+                local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+                if dist < 10 then
+                    uiState.texFixtureDragIdx = i
+                    return
+                else
+                    uiState.texFixtureDragIdx = 0
+                end
+            end
+        end
+
+
+
         if (uiState.drawClickPoly) then
             table.insert(uiState.polyVerts, cx)
             table.insert(uiState.polyVerts, cy)
@@ -1048,6 +1134,11 @@ local function handlePointer(x, y, id, action)
         if uiState.polyDragIdx > 0 then
             uiState.polyDragIdx = 0
             maybeUpdateCustomPolygonVertices()
+        end
+
+        if uiState.texFixtureDragIdx > 0 then
+            uiState.texFixtureDragIdx = 0
+            maybeUpdateTexFixtureVertices()
         end
 
         if (uiState.startSelection) then
