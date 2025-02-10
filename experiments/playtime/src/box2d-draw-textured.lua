@@ -254,14 +254,15 @@ function lib.drawTexturedWorld(world)
         local ud = body:getUserData()
         if (ud and ud.thing) then
             local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
-            table.insert(drawables, { z = ud.thing.zOffset, body = body, thing = ud.thing })
+            table.insert(drawables, { z = composedZ , body = body, thing = ud.thing })
         end
-
+        -- todo instead of having to check all the fixtures every frame we should mark a thing that has these type of specialfixtures.
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if (ud and ud.extra and ud.extra.type == 'texfixture') then
-                table.insert(drawables, { z = 0, texfixture = fixtures[i], extra = ud.extra })
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                table.insert(drawables, { z = composedZ, texfixture = fixtures[i], extra = ud.extra })
             end
         end
     end

@@ -536,7 +536,9 @@ function lib.drawAddShapeUI()
         })
 
         local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
+        end
 
         for _, shape in ipairs(shapeTypes) do
             local width = panelWidth - 20
@@ -552,13 +554,15 @@ function lib.drawAddShapeUI()
             if released then
                 ui.draggingActive = nil
             end
-            x, y = ui.nextLayoutPosition(layout, width, height)
+            nextRow()
+
         end
         love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
 
         local width = panelWidth - 20
         local height = buttonHeight
-        x, y = ui.nextLayoutPosition(layout, width, height)
+          nextRow()
+
         local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150, uiState.minPointDistance or 10)
         ui.label(x, y, 'dis')
         if minDist then
@@ -566,21 +570,21 @@ function lib.drawAddShapeUI()
         end
 
         -- Add a button for custom polygon
-        x, y = ui.nextLayoutPosition(layout, width, height)
+         nextRow()
         if ui.button(x, y, width, 'freeform') then
             uiState.drawFreePoly = true
             uiState.polyVerts = {}
             uiState.lastPolyPt = nil
         end
+        nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, width, height)
         if ui.button(x, y, width, 'click') then
             uiState.drawClickPoly = true
             uiState.polyVerts = {}
             uiState.lastPolyPt = nil
         end
+        nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, width, height)
         local width = panelWidth - 20
         local height = buttonHeight
 
@@ -604,7 +608,8 @@ function lib.drawAddShapeUI()
             end
             ui.draggingActive = nil
         end
-        x, y = ui.nextLayoutPosition(layout, width, height)
+        nextRow()
+
 
         local _, pressed, released = ui.button(x, y, width, 'texfixture')
         if pressed then
@@ -631,7 +636,7 @@ function lib.drawAddShapeUI()
             end
             ui.draggingActive = nil
         end
-        x, y = ui.nextLayoutPosition(layout, width, height)
+       nextRow()
     end)
 end
 
@@ -685,7 +690,9 @@ function lib.drawWorldSettingsUI()
         local width = panelWidth - BUTTON_SPACING * 2
 
         local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+        end
         --  x, y = ui.nextLayoutPosition(layout, width, 50)
         local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, worldState.gravity)
         if grav then
@@ -695,8 +702,8 @@ function lib.drawWorldSettingsUI()
             end
         end
         ui.label(x, y, ' gravity')
+        nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         local g, value = ui.checkbox(x, y, uiState.showGrid, 'grid') --showGrid = true,
         if g then
             uiState.showGrid = value
@@ -705,7 +712,8 @@ function lib.drawWorldSettingsUI()
         if g then
             worldState.debugDrawMode = value
         end
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+         nextRow()
+
 
 
         local debugAlpha = ui.sliderWithInput('debugalpha', x, y, ROW_WIDTH, 0, 1, worldState.debugAlpha)
@@ -713,14 +721,16 @@ function lib.drawWorldSettingsUI()
             worldState.debugAlpha = debugAlpha
         end
         ui.label(x, y, ' dbgAlpha')
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+         nextRow()
+          nextRow()
+
         local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, worldState.mouseForce)
         if mouseForce then
             worldState.mouseForce = mouseForce
         end
         ui.label(x, y, ' mouse F')
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+         nextRow()
+
         local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, worldState.mouseDamping)
         if mouseDamp then
             worldState.mouseDamping = mouseDamp
@@ -729,18 +739,19 @@ function lib.drawWorldSettingsUI()
 
 
         -- Add Speed Multiplier Slider
-        local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+
+         nextRow()
         local newSpeed = ui.sliderWithInput('speed', x, y, ROW_WIDTH, 0.1, 10.0, worldState.speedMultiplier)
         if newSpeed then
             worldState.speedMultiplier = newSpeed
         end
         ui.label(x, y, ' speed')
 
+         nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         ui.label(x, y, registry.print())
+         nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         if ui.button(x, y, ROW_WIDTH, worldState.profiling and 'profiling' or 'profile') then
             if worldState.profiling then
                 ProFi:stop()
@@ -773,6 +784,9 @@ function lib.drawSelectedSFixture()
             startY = 100 + padding
         })
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        end
 
         local myID = uiState.selectedSFixture:getUserData().id
         local myLabel = uiState.selectedSFixture:getUserData().label or ''
@@ -785,15 +799,16 @@ function lib.drawSelectedSFixture()
 
             uiState.selectedSFixture:setUserData(oldUD)
         end
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        nextRow()
+
 
         if ui.button(x, y, ROW_WIDTH, 'destroy') then
             fixtures.destroyFixture(uiState.selectedSFixture)
             uiState.selectedSFixture = nil
             return
         end
+        nextRow()
 
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
         local updateSFixturePosFunc = function(x, y)
             local body = uiState.selectedSFixture:getBody()
@@ -836,7 +851,7 @@ function lib.drawSelectedSFixture()
         if ui.button(x, y, 40, '∆') then
             uiState.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        nextRow()
 
 
         if sfixtureType == 'texfixture' then
@@ -853,7 +868,7 @@ function lib.drawSelectedSFixture()
 
                 uiState.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
             end
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            nextRow()
 
             if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
                 uiState.texFixtureLockedVerts = not uiState.texFixtureLockedVerts
@@ -870,14 +885,27 @@ function lib.drawSelectedSFixture()
             if (uiState.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 1000, w)
                 ui.label(x, y, ' width')
-                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-                local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 1000, h)
+                nextRow()
+                  local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 1000, h)
                 ui.label(x, y, ' height')
-                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-            end
+                nextRow()
 
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-            local oldTexFixUD = uiState.selectedSFixture:getUserData()
+            end
+            nextRow()
+
+                local oldTexFixUD = uiState.selectedSFixture:getUserData()
+            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                math.floor(oldTexFixUD.extra.zOffset or 0),
+                (not worldState.paused) or dirtyBodyChange)
+            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
+                 oldTexFixUD.extra.zOffset = math.floor(newZOffset)
+            end
+            ui.label(x, y, ' zOffset')
+
+
+             nextRow()
+
+
 
             local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.bgEnabled, '')
             if dirty then
@@ -889,7 +917,7 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.bgURL = bgURL
                 uiState.selectedSFixture:setUserData(oldTexFixUD)
             end
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+             nextRow()
 
             local bgHex = ui.textinput(myID .. ' texfixbgHex', x, y, 260, 40, "", oldTexFixUD.extra.bgHex)
             if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
@@ -919,7 +947,7 @@ function lib.drawSelectedSFixture()
                 -- uiState.selectedSFixture
             end
         end
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+         nextRow()
 
 
 
@@ -992,13 +1020,16 @@ function lib.drawSelectedBodiesUI()
         })
 
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        end
 
         if ui.button(x, y, 260, 'clone') then
             local cloned = eio.cloneSelection(uiState.selectedBodies, world)
             uiState.selectedBodies = cloned
         end
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        nextRow()
+
         if ui.button(x, y, 260, 'destroy') then
             for i = #uiState.selectedBodies, 1, -1 do
                 snap.destroySnapJointAboutBody(uiState.selectedBodies[i].body)
@@ -1007,7 +1038,7 @@ function lib.drawSelectedBodiesUI()
 
             uiState.selectedBodies = nil
         end
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+         nextRow()
 
         if uiState.selectedBodies and #uiState.selectedBodies > 0 then
             local fb = uiState.selectedBodies[1].body
@@ -1030,8 +1061,8 @@ function lib.drawSelectedBodiesUI()
             end
         end
         -- end
-        --
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+         nextRow()
+
     end)
 end
 
@@ -1080,7 +1111,9 @@ function lib.drawUpdateSelectedObjectUI()
 
         -- Add a button to toggle the body type
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        end
         -- Function to create an accordion
         local function drawAccordion(key, contentFunc)
             -- Draw the accordion header
@@ -1097,9 +1130,7 @@ function lib.drawUpdateSelectedObjectUI()
                 contentFunc(clicked)
             end
         end
-        local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-        end
+
 
         if ui.button(x, y, 100, 'clone') then
             --print(uiState.selectedObj)
