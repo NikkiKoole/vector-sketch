@@ -289,6 +289,7 @@ function lib.drawTexturedWorld(world)
             local ud = fixtures[i]:getUserData()
             if (ud and ud.extra and ud.extra.type == 'texfixture') then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                print(inspect(ud.extra))
                 table.insert(drawables, { z = composedZ, texfixture = fixtures[i], extra = ud.extra })
             end
         end
@@ -383,6 +384,36 @@ function lib.drawTexturedWorld(world)
                     local sx = ww / imgw
                     local sy = hh / imgh
                     local r, g, b, a = lib.hexToColor(extra.bgHex)
+                    local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+
+                    love.graphics.setColor(r, g, b, a)
+                    love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                        body:getAngle(), sx * 1, sy * 1,
+                        (imgw) / 2, (imgh) / 2)
+
+                    -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
+                    --     (imgw) / 2, (imgh) / 2)
+                else
+                    print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                end
+            end
+
+            local url = extra.fgURL
+            local img, imgw, imgh = getLoveImage('textures/' .. url)
+            local body = texfixture:getBody()
+
+            local vertices = { texfixture:getShape():getPoints() }
+
+            if (img) then
+                -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
+                -- mesh = love.graphics.newMesh(vert2, "fan")
+                -- mesh:setTexture(img)
+
+                if vertices then
+                    local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                    local sx = ww / imgw
+                    local sy = hh / imgh
+                    local r, g, b, a = lib.hexToColor(extra.fgHex)
                     local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
 
                     love.graphics.setColor(r, g, b, a)
