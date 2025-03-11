@@ -141,6 +141,42 @@ function lib.pointInRect(px, py, rect)
         py >= rect.y and py <= (rect.y + rect.height)
 end
 
+function lib.getCorners(polygon)
+    -- Expecting polygon to be a table with exactly 8 numbers: x1,y1, x2,y2, x3,y3, x4,y4
+    local vertices = {
+        { x = polygon[1], y = polygon[2] },
+        { x = polygon[3], y = polygon[4] },
+        { x = polygon[5], y = polygon[6] },
+        { x = polygon[7], y = polygon[8] }
+    }
+
+    -- Compute the centroid of the 4 vertices.
+    local cx, cy = 0, 0
+    for i = 1, 4 do
+        cx = cx + vertices[i].x
+        cy = cy + vertices[i].y
+    end
+    cx = cx / 4
+    cy = cy / 4
+
+    -- Classify vertices relative to the centroid.
+    local topLeft, topRight, bottomLeft, bottomRight
+    for i = 1, 4 do
+        local v = vertices[i]
+        if v.x < cx and v.y < cy then
+            topLeft = v
+        elseif v.x >= cx and v.y < cy then
+            topRight = v
+        elseif v.x < cx and v.y >= cy then
+            bottomLeft = v
+        elseif v.x >= cx and v.y >= cy then
+            bottomRight = v
+        end
+    end
+
+    return topLeft, topRight, bottomRight, bottomLeft
+end
+
 function lib.getBoundingRect(polygon)
     local min_x, min_y = polygon[1], polygon[2]
     local max_x, max_y = polygon[1], polygon[2]

@@ -40,8 +40,6 @@ function rotateToHorizontalAdjusted(body, desiredAngle, divider, smarter, dt)
     body:applyTorque(torque)
 end
 
-
-
 function rotateToHorizontalPD(body, desiredAngle, Kp, Kd, dt)
     -- Normalize angle to range [-pi, pi]
     local function normalizeAngle(angle)
@@ -70,6 +68,7 @@ function rotateToHorizontalPD(body, desiredAngle, Kp, Kd, dt)
     -- Apply torque to the body
     body:applyTorque(torque)
 end
+
 function rotateToHorizontalScaledPD(body, desiredAngle, omega_n, zeta, dt)
     -- Normalize angle to range [-pi, pi]
     local function normalizeAngle(angle)
@@ -109,6 +108,7 @@ function rotateToHorizontalScaledPD(body, desiredAngle, omega_n, zeta, dt)
     -- Apply torque to the body
     body:applyTorque(totalTorque)
 end
+
 local feedforwardFactor = 1
 function rotateToHorizontalPDFeedforward(body, desiredAngle, omega_n, zeta, dt)
     -- Normalize angle to range [-pi, pi]
@@ -166,8 +166,8 @@ end
 function s.update(dt)
     for i = 1, #keepStraights do
         rotateToHorizontalAdjusted(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-       --rotateToHorizontalScaledPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-       --rotateToHorizontalPDFeedforward(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
+        --rotateToHorizontalScaledPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
+        --rotateToHorizontalPDFeedforward(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
         --rotateToHorizontalPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
     end
 end

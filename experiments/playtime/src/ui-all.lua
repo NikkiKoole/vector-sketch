@@ -312,7 +312,7 @@ function ui.header_button(x, y, width, label, opened)
     -- love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(1, 1, 1, 1)
 
     local clicked = false
     local released = ui.mouseReleased and ui.activeElementID == id
@@ -325,6 +325,34 @@ function ui.header_button(x, y, width, label, opened)
         ui.activeElementID = nil
     end
     return clicked, pressed, released
+end
+
+function ui.coloredRect(x, y, color, size)
+    local id = ui.generateID()
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + size and
+        ui.mouseY >= y and ui.mouseY <= y + size
+    local pressed = isHover and ui.mousePressed
+    love.graphics.setColor(color)
+    love.graphics.rectangle("fill", x, y, size, size)
+    if pressed then
+        ui.activeElementID = id
+    end
+
+    local clicked = false
+    local released = ui.mouseReleased and ui.activeElementID == id
+
+    if ui.activeElementID == id and released and isHover then
+        clicked = true
+    end
+    if released then
+        -- Reset the active element ID
+        ui.activeElementID = nil
+    end
+
+
+
+
+    return clicked, pressed, released, isHover
 end
 
 --- Creates a button.

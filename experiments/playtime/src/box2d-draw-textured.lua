@@ -2,8 +2,35 @@ local lib = {}
 
 local mathutils = require 'src.math-utils'
 
+local base = {
+    '020202', '4f3166', '69445D', '613D41', 'efebd8',
+    '6f323a', '872f44', '8d184c', 'be193b', 'd2453a',
+    'd6642f', 'd98524', 'dca941', 'e6c800', 'f8df00',
+    'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf',
+    '9c9d9f', '938541', '808b1c', '8A934E', '86a542',
+    '57843d', '45783c', '2a5b3e', '1b4141', '1e294b',
+    '0d5f7f', '065966', '1b9079', '3ca37d', '49abac',
+    '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3',
+    '045b9f', '9377b2', '686094', '5f4769', '815562',
+    '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34',
+    'CB433A', 'a95c42', 'c37c61', 'd19150', 'de9832',
+    'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+    '252f38', '42505f', '465059', '57595a', '6e7c8c',
+    '75899c', 'aabdce', '807b7b', '857b7e', '8d7e8a',
+    'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267',
+    'f0644d', 'ff7376', 'd76656', 'b16890', '020202',
+    '333233', '814800', 'efebd8', '1a5f8f', '66a5bc',
+    '87727b', 'a23d7e', 'fa8a00', 'fef1d0', 'ffa8a2',
+    '6e614c', '418090', 'b5d9a4', 'c0b99e', '4D391F',
+    '4B6868', '9F7344', '9D7630', 'D3C281', '8F4839',
+    'EEC488', 'C77D52', 'C2997A', '9C5F43', '9C8D81',
+    '965D64', '798091', '4C5575', '6E4431', '626964',
+}
+lib.palette = base
+
+
 --local img = love.graphics.newImage('textures/leg1.png')
-local tex1 = love.graphics.newImage('textures/pat/type3_.png')
+local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
@@ -14,7 +41,7 @@ function getLoveImage(path)
     if not imageCache[path] then
         local info = love.filesystem.getInfo(path)
         if not info or info.type ~= 'file' then
-            print("Warning: File not found - " .. path)
+            --print("Warning: File not found - " .. path)
             return nil, nil, nil
         end
         local img = love.graphics.newImage(path)
@@ -31,9 +58,9 @@ function getLoveImage(path)
     end
 end
 
-function hexToColor(hex)
+function lib.hexToColor(hex)
     if type(hex) ~= "string" then
-        print("Warning: hexToColor expected a string but got " .. type(hex))
+        -- print("Warning: hexToColor expected a string but got " .. type(hex))
         return 1, 1, 1, 1
     end
 
@@ -53,7 +80,7 @@ function hexToColor(hex)
         -- Append alpha if missing.
         hex = hex .. "FF"
     elseif #hex ~= 8 then
-        print("Warning: invalid hex string length (" .. #hex .. ") for value: " .. hex)
+        -- print("Warning: invalid hex string length (" .. #hex .. ") for value: " .. hex)
         return 1, 1, 1, 1
     end
 
@@ -64,7 +91,7 @@ function hexToColor(hex)
 
     -- If any conversion failed, return white.
     if not (r and g and b and a) then
-        print("Warning: invalid hex color value: " .. hex)
+        -- print("Warning: invalid hex color value: " .. hex)
         return 1, 1, 1, 1
     end
 
@@ -254,7 +281,7 @@ function lib.drawTexturedWorld(world)
         local ud = body:getUserData()
         if (ud and ud.thing) then
             local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
-            table.insert(drawables, { z = composedZ , body = body, thing = ud.thing })
+            table.insert(drawables, { z = composedZ, body = body, thing = ud.thing })
         end
         -- todo instead of having to check all the fixtures every frame we should mark a thing that has these type of specialfixtures.
         local fixtures = body:getFixtures()
@@ -286,7 +313,7 @@ function lib.drawTexturedWorld(world)
                     local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
                     local sx = ww / imgw
                     local sy = hh / imgh
-                    local r, g, b, a = hexToColor(thing.textures.bgHex)
+                    local r, g, b, a = lib.hexToColor(thing.textures.bgHex)
                     love.graphics.setColor(r, g, b, a)
                     --love.graphics.draw(img, body:getX(), body:getY())
                     love.graphics.draw(img, body:getX(), body:getY(), body:getAngle(), sx * 1 * thing.mirrorX,
@@ -307,7 +334,7 @@ function lib.drawTexturedWorld(world)
                         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
                         local sx = ww / imgw
                         local sy = hh / imgh
-                        local r, g, b, a = hexToColor(thing.textures.bgHex)
+                        local r, g, b, a = lib.hexToColor(thing.textures.bgHex)
                         love.graphics.setColor(r, g, b, a)
                         --love.graphics.draw(img, body:getX(), body:getY())
                         love.graphics.draw(img, body:getX(), body:getY(), body:getAngle(), sx * 1 * thing.mirrorX,
@@ -327,7 +354,7 @@ function lib.drawTexturedWorld(world)
                         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
                         local sx = ww / imgw
                         local sy = hh / imgh
-                        local r, g, b, a = hexToColor(thing.textures.fgHex)
+                        local r, g, b, a = lib.hexToColor(thing.textures.fgHex)
                         love.graphics.setColor(r, g, b, a)
                         love.graphics.draw(img, body:getX(), body:getY(), body:getAngle(), sx * 1 * thing.mirrorX,
                             sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
@@ -337,25 +364,34 @@ function lib.drawTexturedWorld(world)
                 end
             end
         end
+
         if texfixture then
             local extra = drawables[i].extra
             local url = extra.bgURL
             local img, imgw, imgh = getLoveImage('textures/' .. url)
             local body = texfixture:getBody()
-            --imgw = img:getWidth()
-            --imgh = img:getHeight()
+
             local vertices = { texfixture:getShape():getPoints() }
+
             if (img) then
+                -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
+                -- mesh = love.graphics.newMesh(vert2, "fan")
+                -- mesh:setTexture(img)
+
                 if vertices then
                     local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
                     local sx = ww / imgw
                     local sy = hh / imgh
-                    local r, g, b, a = hexToColor(extra.bgHex)
+                    local r, g, b, a = lib.hexToColor(extra.bgHex)
                     local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
 
                     love.graphics.setColor(r, g, b, a)
-                    love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
+                    love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                        body:getAngle(), sx * 1, sy * 1,
                         (imgw) / 2, (imgh) / 2)
+
+                    -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
+                    --     (imgw) / 2, (imgh) / 2)
                 else
                     print('NO VERTICES FOUND, kinda hard ', inspect(thing))
                 end

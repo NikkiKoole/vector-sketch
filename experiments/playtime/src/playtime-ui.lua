@@ -20,6 +20,8 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
 local offsetHasChangedViaOutside
+local BGcolorHasChangedViaPalette
+local FGcolorHasChangedViaPalette
 
 local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
     local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
@@ -555,13 +557,12 @@ function lib.drawAddShapeUI()
                 ui.draggingActive = nil
             end
             nextRow()
-
         end
         love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
 
         local width = panelWidth - 20
         local height = buttonHeight
-          nextRow()
+        nextRow()
 
         local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150, uiState.minPointDistance or 10)
         ui.label(x, y, 'dis')
@@ -570,7 +571,7 @@ function lib.drawAddShapeUI()
         end
 
         -- Add a button for custom polygon
-         nextRow()
+        nextRow()
         if ui.button(x, y, width, 'freeform') then
             uiState.drawFreePoly = true
             uiState.polyVerts = {}
@@ -636,7 +637,7 @@ function lib.drawAddShapeUI()
             end
             ui.draggingActive = nil
         end
-       nextRow()
+        nextRow()
     end)
 end
 
@@ -712,7 +713,7 @@ function lib.drawWorldSettingsUI()
         if g then
             worldState.debugDrawMode = value
         end
-         nextRow()
+        nextRow()
 
 
 
@@ -721,15 +722,15 @@ function lib.drawWorldSettingsUI()
             worldState.debugAlpha = debugAlpha
         end
         ui.label(x, y, ' dbgAlpha')
-         nextRow()
-          nextRow()
+        nextRow()
+        nextRow()
 
         local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, worldState.mouseForce)
         if mouseForce then
             worldState.mouseForce = mouseForce
         end
         ui.label(x, y, ' mouse F')
-         nextRow()
+        nextRow()
 
         local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, worldState.mouseDamping)
         if mouseDamp then
@@ -740,17 +741,17 @@ function lib.drawWorldSettingsUI()
 
         -- Add Speed Multiplier Slider
 
-         nextRow()
+        nextRow()
         local newSpeed = ui.sliderWithInput('speed', x, y, ROW_WIDTH, 0.1, 10.0, worldState.speedMultiplier)
         if newSpeed then
             worldState.speedMultiplier = newSpeed
         end
         ui.label(x, y, ' speed')
 
-         nextRow()
+        nextRow()
 
         ui.label(x, y, registry.print())
-         nextRow()
+        nextRow()
 
         if ui.button(x, y, ROW_WIDTH, worldState.profiling and 'profiling' or 'profile') then
             if worldState.profiling then
@@ -809,6 +810,24 @@ function lib.drawSelectedSFixture()
         end
         nextRow()
 
+        local updateSFixtureDimensionsFunc = function(w, h)
+            local points = { uiState.selectedSFixture:getShape():getPoints() }
+            local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+            local body = uiState.selectedSFixture:getBody()
+            uiState.selectedSFixture:destroy()
+
+            local centerX, centerY = mathutils.getCenterOfPoints(points)
+            local shape = love.physics.newPolygonShape(rect(w, h, centerX, centerY))
+            local newfixture = love.physics.newFixture(body, shape)
+            newfixture:setSensor(true) -- Sensor so it doesn't collide
+            newfixture:setUserData(oldUD)
+
+            uiState.selectedSFixture = newfixture
+            --snap.updateFixture(newfixture)
+            registry.registerSFixture(oldUD.id, newfixture)
+
+            return newfixture
+        end
 
         local updateSFixturePosFunc = function(x, y)
             local body = uiState.selectedSFixture:getBody()
@@ -857,9 +876,12 @@ function lib.drawSelectedSFixture()
         if sfixtureType == 'texfixture' then
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
-            -- print(w, h)
+            --            print(w, h)
             --
 
+            if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
+                uiState.showTexFixtureDim = not uiState.showTexFixtureDim
+            end
             if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
                 uiState.showTexFixtureDim = not uiState.showTexFixtureDim
             end
@@ -870,40 +892,46 @@ function lib.drawSelectedSFixture()
             end
             nextRow()
 
-            if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
-                uiState.texFixtureLockedVerts = not uiState.texFixtureLockedVerts
-                if uiState.texFixtureLockedVerts == false then
-                    uiState.texFixtureTempVerts = utils.shallowCopy(points)
-                    --local cx, cy = mathutils.computeCentroid(points)
-                    --uiState.texFixtureCentroid = { x = cx, y = cy }
-                else
-                    uiState.texFixtureTempVerts = nil
-                    --uiState.polyCentroid = nil
-                end
-            end
+            -- if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
+            --     uiState.texFixtureLockedVerts = not uiState.texFixtureLockedVerts
+            --     if uiState.texFixtureLockedVerts == false then
+            --         uiState.texFixtureTempVerts = utils.shallowCopy(points)
+            --     else
+            --         uiState.texFixtureTempVerts = nil
+            --     end
+            -- end
 
             if (uiState.showTexFixtureDim) then
-                local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 1000, w)
+                local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
                 ui.label(x, y, ' width')
                 nextRow()
-                  local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 1000, h)
+
+                local newHeight = ui.sliderWithInput(myID .. ' texfix height', x, y, ROW_WIDTH, 1, 1000, h)
                 ui.label(x, y, ' height')
                 nextRow()
 
+                if newWidth and math.abs(newWidth - w) > 1 then
+                    updateSFixtureDimensionsFunc(newWidth, h)
+                    w, h = mathutils.getPolygonDimensions(points)
+                end
+                if newHeight and math.abs(newHeight - h) > 1 then
+                    updateSFixtureDimensionsFunc(w, newHeight)
+                    w, h = mathutils.getPolygonDimensions(points)
+                end
             end
             nextRow()
 
-                local oldTexFixUD = uiState.selectedSFixture:getUserData()
+            local oldTexFixUD = uiState.selectedSFixture:getUserData()
             local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                 math.floor(oldTexFixUD.extra.zOffset or 0),
                 (not worldState.paused) or dirtyBodyChange)
             if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
-                 oldTexFixUD.extra.zOffset = math.floor(newZOffset)
+                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
             end
             ui.label(x, y, ' zOffset')
 
 
-             nextRow()
+            nextRow()
 
 
 
@@ -917,11 +945,65 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.bgURL = bgURL
                 uiState.selectedSFixture:setUserData(oldTexFixUD)
             end
-             nextRow()
+            nextRow()
 
-            local bgHex = ui.textinput(myID .. ' texfixbgHex', x, y, 260, 40, "", oldTexFixUD.extra.bgHex)
+            local paletteShow = ui.button(x, y, 40, 'p', 40)
+            if paletteShow then
+                if uiState.showPalette then
+                    uiState.showPalette = nil
+                    uiState.showPaletteFunc = nil
+                else
+                    uiState.showPalette = true
+                    uiState.showPaletteFunc = function(color)
+                        oldTexFixUD.extra.bgHex = color
+                        BGcolorHasChangedViaPalette = true
+                    end
+                end
+            end
+
+            local bgHex = ui.textinput(myID .. ' texfixbgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.bgHex, false,
+                BGcolorHasChangedViaPalette)
             if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
                 oldTexFixUD.extra.bgHex = bgHex
+            end
+
+
+            nextRow()
+
+
+
+            local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.fgEnabled, '')
+            if dirty then
+                oldTexFixUD.extra.fgEnabled = not oldTexFixUD.extra.fgEnabled
+                uiState.selectedSFixture:setUserData(oldTexFixUD)
+            end
+            local fgURL = ui.textinput(myID .. ' texfixfgURL', x + 40, y, 220, 40, "", oldTexFixUD.extra.fgURL or '')
+            if fgURL and fgURL ~= oldTexFixUD.extra.fgURL then
+                oldTexFixUD.extra.fgURL = fgURL
+                uiState.selectedSFixture:setUserData(oldTexFixUD)
+            end
+            nextRow()
+
+            local paletteShow = ui.button(x, y, 40, 'p', 40)
+            if paletteShow then
+                if uiState.showPalette then
+                    uiState.showPalette = nil
+                    uiState.showPaletteFunc = nil
+                else
+                    uiState.showPalette = true
+                    uiState.showPaletteFunc = function(color)
+                        oldTexFixUD.extra.fgHex = color
+                        FGcolorHasChangedViaPalette = true
+                    end
+                end
+            end
+
+
+
+            local fgHex = ui.textinput(myID .. ' texfixfgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.fgHex, false,
+                FGcolorHasChangedViaPalette)
+            if fgHex and fgHex ~= oldTexFixUD.extra.fgHex then
+                oldTexFixUD.extra.fgHex = fgHex
             end
         else
             local points = { uiState.selectedSFixture:getShape():getPoints() }
@@ -929,48 +1011,20 @@ function lib.drawSelectedSFixture()
             local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
             ui.label(x, y, ' radius')
             if newRadius and newRadius ~= dim then
-                local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
-                local body = uiState.selectedSFixture:getBody()
-                uiState.selectedSFixture:destroy()
-
-                local centerX, centerY = mathutils.getCenterOfPoints(points)
-                local shape = love.physics.newPolygonShape(rect(newRadius, newRadius, centerX, centerY))
-                local newfixture = love.physics.newFixture(body, shape)
-                newfixture:setSensor(true) -- Sensor so it doesn't collide
-
-                newfixture:setUserData(oldUD)
-
-                uiState.selectedSFixture = newfixture
-                --snap.updateFixture(newfixture)
-                registry.registerSFixture(oldUD.id, newfixture)
+                updateSFixtureDimensionsFunc(newRadius, newRadius)
                 snap.rebuildSnapFixtures(registry.sfixtures)
-                -- uiState.selectedSFixture
             end
         end
-         nextRow()
-
-
+        nextRow()
 
         local function handleOffset(xMultiplier, yMultiplier)
             local body = uiState.selectedSFixture:getBody()
-            -- print('body position:', body:getPosition())
             local parentVerts = body:getUserData().thing.vertices
-
-
             local allFixtures = body:getUserData().thing.body:getFixtures()
-            --local offsetX, offsetY = getCenterOfShapeFixtures(allFixtures)
-            --  print(offsetX, offsetY)
-            --  local testShape = { allFixtures[2]:getShape():getPoints() }
-            ---  local centerX2, centerY2 = mathutils.getCenterOfPoints(testShape)
-            -- print(inspect(testShape), centerX2, centerY2)
-
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local centerX, centerY = mathutils.getCenterOfPoints(points)
-
-            --print('parentVerts', inspect(parentVerts))
             local bounds = mathutils.getBoundingRect(parentVerts)
             local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-
             local newShape = mathutils.makePolygonAbsolute(relativePoints,
                 ((bounds.width / 2) * xMultiplier),
                 ((bounds.height / 2) * yMultiplier))
@@ -979,12 +1033,12 @@ function lib.drawSelectedSFixture()
             uiState.selectedSFixture:destroy()
 
             local shape = love.physics.newPolygonShape(newShape)
-
             local newfixture = love.physics.newFixture(body, shape)
             newfixture:setSensor(true) -- Sensor so it doesn't collide
             newfixture:setUserData(oldUD)
             uiState.selectedSFixture = newfixture
         end
+
         if sfixtureType ~= 'texfixture' then
             if ui.button(x, y, 40, 'N') then
                 handleOffset(0, -1)
@@ -1002,8 +1056,6 @@ function lib.drawSelectedSFixture()
                 handleOffset(0, 0)
             end
         end
-        -- local mx, my = love.mouse.getPosition()
-        --local wx, wy = cam:getWorldCoordinates(mx, my)
     end)
 end
 
@@ -1038,7 +1090,7 @@ function lib.drawSelectedBodiesUI()
 
             uiState.selectedBodies = nil
         end
-         nextRow()
+        nextRow()
 
         if uiState.selectedBodies and #uiState.selectedBodies > 0 then
             local fb = uiState.selectedBodies[1].body
@@ -1061,8 +1113,7 @@ function lib.drawSelectedBodiesUI()
             end
         end
         -- end
-         nextRow()
-
+        nextRow()
     end)
 end
 
@@ -1421,25 +1472,43 @@ function lib.drawUpdateSelectedObjectUI()
 
             drawAccordion("textures", function(clicked)
                 nextRow()
+                ui.label(x, y, 'FG / BG / hex')
+                nextRow()
                 local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
                 if dirty then
                     thing.textures.bgEnabled = not thing.textures.bgEnabled
                 end
                 local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
                 if bgURL and bgURL ~= thing.textures.bgURL then
-                    --local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
-                    -- oldUD.label = newLabel
-                    -- uiState.selectedSFixture:setUserData(oldUD)
-                    --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
-                    --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
                     thing.textures.bgURL = bgURL
                 end
                 nextRow()
-                local bgHex = ui.textinput(myID .. ' bgHex', x, y, 260, 40, "", thing.textures.bgHex)
+
+                local paletteShow = ui.button(x, y, 40, 'p', 40)
+                if paletteShow then
+                    if uiState.showPalette then
+                        uiState.showPalette = nil
+                        uiState.showPaletteFunc = nil
+                    else
+                        uiState.showPalette = true
+                        uiState.showPaletteFunc = function(color)
+                            thing.textures.bgHex = color
+                            BGcolorHasChangedViaPalette = true
+                        end
+                    end
+                end
+                --if not uiState.showPalette then
+                --_id, x, y, width, height, placeholder, currentText, isNumeric, reparse
+
+                local bgHex = ui.textinput(myID .. ' bgHex', x + 50, y, 210, 40, "", thing.textures.bgHex, false,
+                    BGcolorHasChangedViaPalette)
+                if BGcolorHasChangedViaPalette then
+                    BGcolorHasChangedViaPalette = false
+                end
                 if bgHex and bgHex ~= thing.textures.bgHex then
                     thing.textures.bgHex = bgHex
                 end
-
+                --end
 
                 nextRow()
                 local dirty, checked = ui.checkbox(x, y, thing.textures.fgEnabled, '')
@@ -1455,10 +1524,30 @@ function lib.drawUpdateSelectedObjectUI()
                     --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
                     thing.textures.fgURL = fgURL
                 end
+
+
                 nextRow()
-                local fgHex = ui.textinput(myID .. ' fgHex', x, y, 260, 40, "", thing.textures.fgHex)
+                local fgHex = ui.textinput(myID .. ' fgHex', x + 50, y, 210, 40, "", thing.textures.fgHex, false,
+                    FGcolorHasChangedViaPalette)
+                if FGcolorHasChangedViaPalette then
+                    FGcolorHasChangedViaPalette = false
+                end
                 if fgHex and fgHex ~= thing.textures.fgHex then
                     thing.textures.fgHex = fgHex
+                end
+                local paletteShow = ui.button(x, y, 40, 'p', 40)
+                if paletteShow then
+                    if uiState.showPalette then
+                        uiState.showPalette = nil
+                        uiState.showPaletteFunc = nil
+                        --print(thing.textures.bgHex)
+                    else
+                        uiState.showPalette = true
+                        uiState.showPaletteFunc = function(color)
+                            thing.textures.fgHex = color
+                            FGcolorHasChangedViaPalette = true
+                        end
+                    end
                 end
 
 

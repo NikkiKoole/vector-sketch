@@ -51,7 +51,7 @@ local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
-local FIXED_TIMESTEP = false
+local FIXED_TIMESTEP = true
 local FPS = 60
 local TICKRATE = 1 / FPS
 
@@ -106,7 +106,7 @@ function love.load(args)
         texFixtureLockedVerts = true,
         texFixtureVerts = {},
 
-
+        showPalette = nil,
         minPointDistance = 50, -- Default minimum distance
         lastPolyPt = nil,
         lastSelectedBody = nil,
@@ -208,8 +208,8 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('straight')
-    --  loadScriptAndScene('water')
-    loadScriptAndScene('puppet')
+    --loadScriptAndScene('water')
+    --loadScriptAndScene('puppet')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -501,6 +501,33 @@ function drawUI()
         end
     end
 
+    if uiState.showPalette then
+        local w, h = love.graphics.getDimensions()
+        ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
+            --ui.coloredRect()
+            local cellHeight = 50
+            local itemsPerRow = math.floor((w - 300) / cellHeight)
+            local numRows = math.ceil(110 / itemsPerRow)
+            -- assume a similar height for each swatch cell
+            local maxRows = math.floor(400 / cellHeight)
+
+
+
+
+            for i = 1, #box2dDrawTextured.palette do
+                local row = math.floor((i - 1) / itemsPerRow)
+                local column = (i - 1) % itemsPerRow
+                local x = column * cellHeight
+                local y = row * cellHeight
+
+                -- ui.coloredRect(0, 0, { 255, 0, 0 }, 40)
+                if ui.coloredRect(10 + x, h - 300 + y, { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
+                    uiState.showPaletteFunc(box2dDrawTextured.palette[i])
+                end
+            end
+        end)
+    end
+
     if uiState.saveDialogOpened then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
@@ -551,12 +578,12 @@ end
 function love.draw()
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
-    love.graphics.clear(120 / 255, 5 / 255, 20 / 255)
+    love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
     if uiState.showGrid then
         drawGrid(cam, worldState)
     end
 
-    box2dDrawTextured.makePatternTexture()
+    --box2dDrawTextured.makePatternTexture()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
@@ -989,6 +1016,15 @@ local function handlePointer(x, y, id, action)
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if uiState.saveDialogOpened then return end
+        if uiState.showPalette then
+            local w, h = love.graphics.getDimensions()
+            if y < h - 400 or x > w - 300 then
+                uiState.showPalette = nil
+                return
+            else
+                return
+            end
+        end
         if uiState.selectedJoint or uiState.selectedObj or uiState.selectedSFixture or uiState.selectedBodies or uiState.drawClickPoly then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
