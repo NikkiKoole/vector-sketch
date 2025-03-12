@@ -776,6 +776,7 @@ function lib.drawSelectedSFixture()
     end
     local ud = uiState.selectedSFixture:getUserData()
     local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
+
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
         local padding = BUTTON_SPACING
         local layout = ui.createLayout({
@@ -876,19 +877,21 @@ function lib.drawSelectedSFixture()
         if sfixtureType == 'texfixture' then
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
-            --            print(w, h)
-            --
 
             if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
                 uiState.showTexFixtureDim = not uiState.showTexFixtureDim
             end
-            if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
-                uiState.showTexFixtureDim = not uiState.showTexFixtureDim
-            end
+
             if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
                 local body = uiState.selectedSFixture:getBody()
-
                 uiState.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
+            end
+            if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
+                local body = uiState.selectedSFixture:getBody()
+                --print(inspect(body))
+                local verts = body:getUserData().thing.vertices
+                local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+                updateSFixtureDimensionsFunc(w, h)
             end
             nextRow()
 
@@ -961,7 +964,8 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            local bgHex = ui.textinput(myID .. ' texfixbgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.bgHex, false,
+            local bgHex = ui.textinput(myID .. ' texfixbgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.bgHex or '',
+                false,
                 BGcolorHasChangedViaPalette)
             if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
                 oldTexFixUD.extra.bgHex = bgHex
@@ -1295,13 +1299,13 @@ function lib.drawUpdateSelectedObjectUI()
 
                 nextRow()
 
-                local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
-                    math.floor(thing.zOffset),
-                    (body:isAwake() and not worldState.paused) or dirtyBodyChange)
-                if newZOffset and thing.zOffset ~= newZOffset then
-                    thing.zOffset = math.floor(newZOffset)
-                end
-                ui.label(x, y, ' zOffset')
+                -- local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
+                --     math.floor(thing.zOffset),
+                --     (body:isAwake() and not worldState.paused) or dirtyBodyChange)
+                -- if newZOffset and thing.zOffset ~= newZOffset then
+                --     thing.zOffset = math.floor(newZOffset)
+                -- end
+                -- ui.label(x, y, ' zOffset')
             end
             )
             nextRow()
@@ -1468,91 +1472,92 @@ function lib.drawUpdateSelectedObjectUI()
 
                 nextRow()
             end)
-            nextRow()
+            --nextRow()
 
-            drawAccordion("textures", function(clicked)
-                nextRow()
-                ui.label(x, y, 'FG / BG / hex')
-                nextRow()
-                local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
-                if dirty then
-                    thing.textures.bgEnabled = not thing.textures.bgEnabled
-                end
-                local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
-                if bgURL and bgURL ~= thing.textures.bgURL then
-                    thing.textures.bgURL = bgURL
-                end
-                nextRow()
+            -- drawAccordion("textures", function(clicked)
+            --     nextRow()
+            --     ui.label(x, y, 'FG / BG / hex')
+            --     nextRow()
+            --     local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
+            --     if dirty then
+            --         thing.textures.bgEnabled = not thing.textures.bgEnabled
+            --     end
+            --     local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
+            --     if bgURL and bgURL ~= thing.textures.bgURL then
+            --         thing.textures.bgURL = bgURL
+            --     end
+            --     nextRow()
 
-                local paletteShow = ui.button(x, y, 40, 'p', 40)
-                if paletteShow then
-                    if uiState.showPalette then
-                        uiState.showPalette = nil
-                        uiState.showPaletteFunc = nil
-                    else
-                        uiState.showPalette = true
-                        uiState.showPaletteFunc = function(color)
-                            thing.textures.bgHex = color
-                            BGcolorHasChangedViaPalette = true
-                        end
-                    end
-                end
-                --if not uiState.showPalette then
-                --_id, x, y, width, height, placeholder, currentText, isNumeric, reparse
+            --     local paletteShow = ui.button(x, y, 40, 'p', 40)
+            --     if paletteShow then
+            --         if uiState.showPalette then
+            --             uiState.showPalette = nil
+            --             uiState.showPaletteFunc = nil
+            --         else
+            --             uiState.showPalette = true
+            --             uiState.showPaletteFunc = function(color)
+            --                 thing.textures.bgHex = color
+            --                 BGcolorHasChangedViaPalette = true
+            --             end
+            --         end
+            --     end
+            --     --if not uiState.showPalette then
+            --     --_id, x, y, width, height, placeholder, currentText, isNumeric, reparse
 
-                local bgHex = ui.textinput(myID .. ' bgHex', x + 50, y, 210, 40, "", thing.textures.bgHex, false,
-                    BGcolorHasChangedViaPalette)
-                if BGcolorHasChangedViaPalette then
-                    BGcolorHasChangedViaPalette = false
-                end
-                if bgHex and bgHex ~= thing.textures.bgHex then
-                    thing.textures.bgHex = bgHex
-                end
-                --end
+            --     local bgHex = ui.textinput(myID .. ' bgHex', x + 50, y, 210, 40, "", thing.textures.bgHex, false,
+            --         BGcolorHasChangedViaPalette)
+            --     if BGcolorHasChangedViaPalette then
+            --         BGcolorHasChangedViaPalette = false
+            --     end
+            --     if bgHex and bgHex ~= thing.textures.bgHex then
+            --         thing.textures.bgHex = bgHex
+            --     end
+            --     --end
 
-                nextRow()
-                local dirty, checked = ui.checkbox(x, y, thing.textures.fgEnabled, '')
-                if dirty then
-                    thing.textures.fgEnabled = not thing.textures.fgEnabled
-                end
-                local fgURL = ui.textinput(myID .. ' fgURL', x + 40, y, 220, 40, "", thing.textures.fgURL)
-                if fgURL and fgURL ~= thing.textures.fgURL then
-                    --local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
-                    -- oldUD.label = newLabel
-                    -- uiState.selectedSFixture:setUserData(oldUD)
-                    --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
-                    --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
-                    thing.textures.fgURL = fgURL
-                end
-
-
-                nextRow()
-                local fgHex = ui.textinput(myID .. ' fgHex', x + 50, y, 210, 40, "", thing.textures.fgHex, false,
-                    FGcolorHasChangedViaPalette)
-                if FGcolorHasChangedViaPalette then
-                    FGcolorHasChangedViaPalette = false
-                end
-                if fgHex and fgHex ~= thing.textures.fgHex then
-                    thing.textures.fgHex = fgHex
-                end
-                local paletteShow = ui.button(x, y, 40, 'p', 40)
-                if paletteShow then
-                    if uiState.showPalette then
-                        uiState.showPalette = nil
-                        uiState.showPaletteFunc = nil
-                        --print(thing.textures.bgHex)
-                    else
-                        uiState.showPalette = true
-                        uiState.showPaletteFunc = function(color)
-                            thing.textures.fgHex = color
-                            FGcolorHasChangedViaPalette = true
-                        end
-                    end
-                end
+            --     nextRow()
+            --     local dirty, checked = ui.checkbox(x, y, thing.textures.fgEnabled, '')
+            --     if dirty then
+            --         thing.textures.fgEnabled = not thing.textures.fgEnabled
+            --     end
+            --     local fgURL = ui.textinput(myID .. ' fgURL', x + 40, y, 220, 40, "", thing.textures.fgURL)
+            --     if fgURL and fgURL ~= thing.textures.fgURL then
+            --         --local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
+            --         -- oldUD.label = newLabel
+            --         -- uiState.selectedSFixture:setUserData(oldUD)
+            --         --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
+            --         --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
+            --         thing.textures.fgURL = fgURL
+            --     end
 
 
-                nextRow()
-            end)
+            --     nextRow()
+            --     local fgHex = ui.textinput(myID .. ' fgHex', x + 50, y, 210, 40, "", thing.textures.fgHex, false,
+            --         FGcolorHasChangedViaPalette)
+            --     if FGcolorHasChangedViaPalette then
+            --         FGcolorHasChangedViaPalette = false
+            --     end
+            --     if fgHex and fgHex ~= thing.textures.fgHex then
+            --         thing.textures.fgHex = fgHex
+            --     end
+            --     local paletteShow = ui.button(x, y, 40, 'p', 40)
+            --     if paletteShow then
+            --         if uiState.showPalette then
+            --             uiState.showPalette = nil
+            --             uiState.showPaletteFunc = nil
+            --             --print(thing.textures.bgHex)
+            --         else
+            --             uiState.showPalette = true
+            --             uiState.showPaletteFunc = function(color)
+            --                 thing.textures.fgHex = color
+            --                 FGcolorHasChangedViaPalette = true
+            --             end
+            --         end
+            --     end
+
+
+            --     nextRow()
+            -- end)
+
             nextRow()
 
             drawAccordion("physics", function()
