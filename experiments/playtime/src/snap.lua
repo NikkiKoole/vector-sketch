@@ -53,7 +53,6 @@ local function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
     --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
     table.insert(mySnapJoints, joint)
     registry.registerJoint(id, joint)
-    --print('todo save tis joint in registry')
 end
 
 local function areBodiesConnected2(body1, body2, snapFixtures)

@@ -135,6 +135,8 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
+
+
 lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
                                   lineColor, lineAlpha,
                                   flipx, flipy, renderPatch)

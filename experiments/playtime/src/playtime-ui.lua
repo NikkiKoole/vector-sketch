@@ -936,7 +936,7 @@ function lib.drawSelectedSFixture()
 
             nextRow()
 
-
+            --lineart, mask, pattern
 
             local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.bgEnabled, '')
             if dirty then
@@ -1004,7 +1004,8 @@ function lib.drawSelectedSFixture()
 
 
 
-            local fgHex = ui.textinput(myID .. ' texfixfgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.fgHex, false,
+            local fgHex = ui.textinput(myID .. ' texfixfgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.fgHex or '',
+                false,
                 FGcolorHasChangedViaPalette)
             if fgHex and fgHex ~= oldTexFixUD.extra.fgHex then
                 oldTexFixUD.extra.fgHex = fgHex

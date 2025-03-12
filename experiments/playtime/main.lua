@@ -583,7 +583,7 @@ function love.draw()
         drawGrid(cam, worldState)
     end
 
-    --box2dDrawTextured.makePatternTexture()
+    box2dDrawTextured.makePatternTexture()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
@@ -881,8 +881,15 @@ local function maybeUpdateCustomPolygonVertices()
         local body = uiState.selectedObj.body
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, body:getAngle())
         local oldX, oldY = body:getPosition()
-        --print(dx)
+
         body:setPosition(oldX + dx2, oldY + dy2)
+
+        -- todo here we need to fix the positions of texfixtures, if there are any.
+
+
+
+
+
         uiState.selectedObj = objectManager.recreateThingFromBody(body,
             { optionalVertices = uiState.polyTempVerts })
 
