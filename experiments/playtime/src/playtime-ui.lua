@@ -22,6 +22,7 @@ local BUTTON_SPACING = 10
 local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
 local FGcolorHasChangedViaPalette
+local PatternColorHasChangedViaPalette
 
 local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
     local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
@@ -893,6 +894,12 @@ function lib.drawSelectedSFixture()
                 local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
                 updateSFixtureDimensionsFunc(w, h)
             end
+
+            nextRow()
+            local e = uiState.selectedSFixture:getUserData().extra
+            if ui.checkbox(x, y, false, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
+                e.OMP = not e.OMP
+            end
             nextRow()
 
             -- if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
@@ -922,7 +929,7 @@ function lib.drawSelectedSFixture()
                     w, h = mathutils.getPolygonDimensions(points)
                 end
             end
-            nextRow()
+            -- nextRow()
 
             local oldTexFixUD = uiState.selectedSFixture:getUserData()
             local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
@@ -948,6 +955,7 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.bgURL = bgURL
                 uiState.selectedSFixture:setUserData(oldTexFixUD)
             end
+            ui.label(x + 50, y, not e.OMP and ' BG URL' or 'Out URL', { 1, 1, 1, 0.2 })
             nextRow()
 
             local paletteShow = ui.button(x, y, 40, 'p', 40)
@@ -970,6 +978,10 @@ function lib.drawSelectedSFixture()
             if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
                 oldTexFixUD.extra.bgHex = bgHex
             end
+            if BGcolorHasChangedViaPalette then
+                BGcolorHasChangedViaPalette = false
+            end
+            ui.label(x + 50, y, not e.OMP and ' BG HEX' or 'Out HEX', { 1, 1, 1, 0.2 })
 
 
             nextRow()
@@ -986,6 +998,7 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.fgURL = fgURL
                 uiState.selectedSFixture:setUserData(oldTexFixUD)
             end
+            ui.label(x + 50, y, not e.OMP and ' FG URL' or 'Mask URL', { 1, 1, 1, 0.2 })
             nextRow()
 
             local paletteShow = ui.button(x, y, 40, 'p', 40)
@@ -1009,6 +1022,66 @@ function lib.drawSelectedSFixture()
                 FGcolorHasChangedViaPalette)
             if fgHex and fgHex ~= oldTexFixUD.extra.fgHex then
                 oldTexFixUD.extra.fgHex = fgHex
+            end
+            if FGcolorHasChangedViaPalette then
+                FGcolorHasChangedViaPalette = false
+            end
+            ui.label(x + 50, y, not e.OMP and ' FG HEX' or 'Mask HEX', { 1, 1, 1, 0.2 })
+
+            nextRow()
+
+            if e.OMP then
+                local patternURL = ui.textinput(myID .. ' texfixpatternURL', x + 40, y, 220, 40, "",
+                    oldTexFixUD.extra.patternURL or '')
+                if patternURL and patternURL ~= oldTexFixUD.extra.patternURL then
+                    oldTexFixUD.extra.patternURL = patternURL
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
+                end
+                ui.label(x + 50, y, 'Pattern URL', { 1, 1, 1, 0.2 })
+                nextRow()
+
+
+                local paletteShow = ui.button(x, y, 40, 'p', 40)
+                if paletteShow then
+                    if uiState.showPalette then
+                        uiState.showPalette = nil
+                        uiState.showPaletteFunc = nil
+                    else
+                        uiState.showPalette = true
+                        uiState.showPaletteFunc = function(color)
+                            oldTexFixUD.extra.patternHex = color
+                            PatternColorHasChangedViaPalette = true
+                        end
+                    end
+                end
+
+                local patternHex = ui.textinput(myID .. ' texfixpatternHex', x + 50, y, 210, 40, "",
+                    oldTexFixUD.extra.patternHex or '',
+                    false,
+                    PatternColorHasChangedViaPalette)
+                if patternHex and patternHex ~= oldTexFixUD.extra.patternHex then
+                    oldTexFixUD.extra.patternHex = patternHex
+                end
+                if PatternColorHasChangedViaPalette then
+                    PatternColorHasChangedViaPalette = false
+                end
+                ui.label(x + 50, y, 'Pattern HEX', { 1, 1, 1, 0.2 })
+                nextRow()
+
+                local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 1, 200,
+                    oldTexFixUD.extra.texRotation or 0)
+                ui.label(x, y, ' texrot')
+                if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
+                    oldTexFixUD.extra.texRotation = newRotation
+                end
+                nextRow()
+                local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 1, 200,
+                    oldTexFixUD.extra.texScale or 0)
+                ui.label(x, y, ' texscale')
+                if newScale and newScale ~= oldTexFixUD.extra.texScale then
+                    oldTexFixUD.extra.texScale = newScale
+                end
+                nextRow()
             end
         else
             local points = { uiState.selectedSFixture:getShape():getPoints() }

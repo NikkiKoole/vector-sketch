@@ -541,8 +541,8 @@ function ui.centeredLabel(x, y, width, text)
     love.graphics.setColor(1, 1, 1)
 end
 
-function ui.label(x, y, text)
-    love.graphics.setColor(ui.theme.general.text)
+function ui.label(x, y, text, color)
+    love.graphics.setColor(color or ui.theme.general.text)
     love.graphics.print(text, x, y)
     love.graphics.setColor(1, 1, 1)
 end
