@@ -116,7 +116,7 @@ local maskShader = love.graphics.newShader([[
 
 local shrinkFactor = 1
 
-local image = nil
+--local image = nil
 
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
@@ -242,6 +242,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
         canvas:release()
         otherCanvas:release()
+        -- print(imageData)
         return imageData
     end
     -- return lineart:getData()
@@ -290,7 +291,7 @@ function lib.drawTexturedWorld(world)
             if (ud and ud.extra and ud.extra.type == 'texfixture') then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 --print(inspect(ud.extra))
-                table.insert(drawables, { z = composedZ, texfixture = fixtures[i], extra = ud.extra })
+                table.insert(drawables, { z = composedZ, texfixture = fixtures[i], extra = ud.extra, body = body })
             end
         end
     end
@@ -368,46 +369,123 @@ function lib.drawTexturedWorld(world)
 
         if texfixture then
             local extra = drawables[i].extra
-            local url = extra.bgURL
-            local img, imgw, imgh = getLoveImage('textures/' .. url)
-            local body = texfixture:getBody()
 
-            local vertices = { texfixture:getShape():getPoints() }
 
-            if (img) then
-                -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
-                -- mesh = love.graphics.newMesh(vert2, "fan")
-                -- mesh:setTexture(img)
+            if not extra.OMP then -- this is the BG and FG routine
+                local url = extra.bgURL
+                local img, imgw, imgh = getLoveImage('textures/' .. url)
+                local body = texfixture:getBody()
 
-                if vertices then
-                    local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                    local sx = ww / imgw
-                    local sy = hh / imgh
-                    local r, g, b, a = lib.hexToColor(extra.bgHex)
-                    local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+                local vertices = { texfixture:getShape():getPoints() }
 
-                    love.graphics.setColor(r, g, b, a)
-                    love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-                        body:getAngle(), sx * 1, sy * 1,
-                        (imgw) / 2, (imgh) / 2)
+                if (img) then
+                    -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
+                    -- mesh = love.graphics.newMesh(vert2, "fan")
+                    -- mesh:setTexture(img)
 
-                    -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
-                    --     (imgw) / 2, (imgh) / 2)
-                else
-                    print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                    if vertices then
+                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                        local sx = ww / imgw
+                        local sy = hh / imgh
+                        local r, g, b, a = lib.hexToColor(extra.bgHex)
+                        local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+
+                        love.graphics.setColor(r, g, b, a)
+                        love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                            body:getAngle(), sx * 1, sy * 1,
+                            (imgw) / 2, (imgh) / 2)
+
+                        -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
+                        --     (imgw) / 2, (imgh) / 2)
+                    else
+                        print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                    end
+                end
+
+                local url = extra.fgURL
+                local img, imgw, imgh = getLoveImage('textures/' .. url)
+                local body = texfixture:getBody()
+
+                local vertices = { texfixture:getShape():getPoints() }
+
+                if (img) then
+                    if vertices then
+                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                        local sx = ww / imgw
+                        local sy = hh / imgh
+                        local r, g, b, a = lib.hexToColor(extra.fgHex)
+                        local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+
+                        love.graphics.setColor(r, g, b, a)
+                        love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                            body:getAngle(), sx * 1, sy * 1,
+                            (imgw) / 2, (imgh) / 2)
+
+                        -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
+                        --     (imgw) / 2, (imgh) / 2)
+                    else
+                        print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                    end
                 end
             end
 
-            local url = extra.fgURL
-            local img, imgw, imgh = getLoveImage('textures/' .. url)
-            local body = texfixture:getBody()
+            if extra.OMP then
+                local outlineImage = getLoveImage('textures/' .. extra.bgURL)
+                local olr, olg, olb, ola = lib.hexToColor(extra.bgHex)
+                local maskImage = getLoveImage('textures/' .. extra.fgURL)
+                local mr, mg, mb, ma = lib.hexToColor(extra.fgHex)
+                local patternImage = getLoveImage('textures/pat/' .. extra.patternURL)
+                local pr, pg, pb, pa = lib.hexToColor(extra.patternHex)
 
-            local vertices = { texfixture:getShape():getPoints() }
+                --if (outlineImage and maskImage and patternImage) then
+                -- local imgData = lib.makeTexturedCanvas(
+                --     outlineImage,      -- line art
+                --     maskImage,         -- mask
+                --     nil,               -- texture1 (unused in this version)
+                --     { mr, mg, mb },    -- color1
+                --     ma,                -- alpha1
+                --     tex1,              -- texture2 (fill texture)
+                --     { pr, pg, pb },    -- color2
+                --     pa,                -- alpha2
+                --     0,                 -- texRot
+                --     .2,                -- texScale
+                --     { olr, olg, olb }, -- lineColor
+                --     ola,               -- lineAlpha
+                --     1,                 -- flipx (normal)
+                --     1,                 -- flipy (normal)
+                --     { 'jo!' }          -- renderPatch (set to truthy to enable extra patch rendering)
+                -- )
 
-            if (img) then
-                -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
-                -- mesh = love.graphics.newMesh(vert2, "fan")
-                -- mesh:setTexture(img)
+                local imgData = lib.makeTexturedCanvas(
+                    line,        -- line art
+                    maskTex,     -- mask
+                    tex1,        -- texture1 (unused in this version)
+                    { 1, 0, 1 }, -- color1
+                    5,           -- alpha1
+                    tex1,        -- texture2 (fill texture)
+                    { 0, 0, 1 }, -- color2
+                    5,           -- alpha2
+                    0,           -- texRot
+                    .2,          -- texScale
+                    { 0, 0, 0 }, -- lineColor
+                    1,           -- lineAlpha
+                    1,           -- flipx (normal)
+                    1,           -- flipy (normal)
+                    { 'jo!' }    -- renderPatch (set to truthy to enable extra patch rendering)
+                )
+                image = love.graphics.newImage(imgData)
+
+
+                local img, imgw, imgh = getLoveImage('textures/' .. 'shapes6.png')
+                --image = love.graphics.newImage(imgData)
+                local body = texfixture:getBody()
+
+                -- print(inspect(drawables[i]))
+                local vertices = { texfixture:getShape():getPoints() }
+                --print(vertices)
+
+
+
 
                 if vertices then
                     local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
@@ -415,17 +493,15 @@ function lib.drawTexturedWorld(world)
                     local sy = hh / imgh
                     local r, g, b, a = lib.hexToColor(extra.fgHex)
                     local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-
-                    love.graphics.setColor(r, g, b, a)
-                    love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                    print(image, body:getX() + rx, body:getY() + ry,
                         body:getAngle(), sx * 1, sy * 1,
                         (imgw) / 2, (imgh) / 2)
-
-                    -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
-                    --     (imgw) / 2, (imgh) / 2)
-                else
-                    print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                    love.graphics.setColor(r, g, b, a)
+                    love.graphics.draw(image, body:getX() + rx, body:getY() + ry,
+                        body:getAngle(), sx * 1, sy * 1,
+                        (imgw) / 2, (imgh) / 2)
                 end
+                --end
             end
         end
     end

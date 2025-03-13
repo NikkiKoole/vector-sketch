@@ -1092,7 +1092,6 @@ function lib.drawSelectedSFixture()
                 if dirtyY then
                     oldTexFixUD.extra.texFlipY = not not checkedY
                     uiState.selectedSFixture:setUserData(oldTexFixUD)
-                    --uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
 
                 nextRow()
