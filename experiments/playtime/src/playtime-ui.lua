@@ -1082,6 +1082,22 @@ function lib.drawSelectedSFixture()
                     oldTexFixUD.extra.texScale = newScale
                 end
                 nextRow()
+
+                local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX, 'flipx')
+                if dirtyX then
+                    oldTexFixUD.extra.texFlipX = not not checkedX
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
+                end
+                local dirtyY, checkedY = ui.checkbox(x + 150, y, e.texFlipY, 'flipy')
+                if dirtyY then
+                    oldTexFixUD.extra.texFlipY = not not checkedY
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
+                    --uiState.selectedSFixture:setUserData(oldTexFixUD)
+                end
+
+                nextRow()
+
+                -- flip / flop
             end
         else
             local points = { uiState.selectedSFixture:getShape():getPoints() }
