@@ -953,6 +953,7 @@ function lib.drawSelectedSFixture()
             local bgURL = ui.textinput(myID .. ' texfixbgURL', x + 40, y, 220, 40, "", oldTexFixUD.extra.bgURL or '')
             if bgURL and bgURL ~= oldTexFixUD.extra.bgURL then
                 oldTexFixUD.extra.bgURL = bgURL
+                oldTexFixUD.extra.dirty = true
                 uiState.selectedSFixture:setUserData(oldTexFixUD)
             end
             ui.label(x + 50, y, not e.OMP and ' BG URL' or 'Out URL', { 1, 1, 1, 0.2 })
@@ -967,6 +968,7 @@ function lib.drawSelectedSFixture()
                     uiState.showPalette = true
                     uiState.showPaletteFunc = function(color)
                         oldTexFixUD.extra.bgHex = color
+                        oldTexFixUD.extra.dirty = true
                         BGcolorHasChangedViaPalette = true
                     end
                 end
@@ -977,6 +979,7 @@ function lib.drawSelectedSFixture()
                 BGcolorHasChangedViaPalette)
             if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
                 oldTexFixUD.extra.bgHex = bgHex
+                oldTexFixUD.extra.dirty = true
             end
             if BGcolorHasChangedViaPalette then
                 BGcolorHasChangedViaPalette = false
@@ -996,6 +999,7 @@ function lib.drawSelectedSFixture()
             local fgURL = ui.textinput(myID .. ' texfixfgURL', x + 40, y, 220, 40, "", oldTexFixUD.extra.fgURL or '')
             if fgURL and fgURL ~= oldTexFixUD.extra.fgURL then
                 oldTexFixUD.extra.fgURL = fgURL
+                oldTexFixUD.extra.dirty = true
                 uiState.selectedSFixture:setUserData(oldTexFixUD)
             end
             ui.label(x + 50, y, not e.OMP and ' FG URL' or 'Mask URL', { 1, 1, 1, 0.2 })
@@ -1010,6 +1014,7 @@ function lib.drawSelectedSFixture()
                     uiState.showPalette = true
                     uiState.showPaletteFunc = function(color)
                         oldTexFixUD.extra.fgHex = color
+                        oldTexFixUD.extra.dirty = true
                         FGcolorHasChangedViaPalette = true
                     end
                 end
@@ -1022,6 +1027,7 @@ function lib.drawSelectedSFixture()
                 FGcolorHasChangedViaPalette)
             if fgHex and fgHex ~= oldTexFixUD.extra.fgHex then
                 oldTexFixUD.extra.fgHex = fgHex
+                oldTexFixUD.extra.dirty = true
             end
             if FGcolorHasChangedViaPalette then
                 FGcolorHasChangedViaPalette = false
@@ -1035,6 +1041,7 @@ function lib.drawSelectedSFixture()
                     oldTexFixUD.extra.patternURL or '')
                 if patternURL and patternURL ~= oldTexFixUD.extra.patternURL then
                     oldTexFixUD.extra.patternURL = patternURL
+                    oldTexFixUD.extra.dirty = true
                     uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
                 ui.label(x + 50, y, 'Pattern URL', { 1, 1, 1, 0.2 })
@@ -1050,6 +1057,7 @@ function lib.drawSelectedSFixture()
                         uiState.showPalette = true
                         uiState.showPaletteFunc = function(color)
                             oldTexFixUD.extra.patternHex = color
+                            oldTexFixUD.extra.dirty = true
                             PatternColorHasChangedViaPalette = true
                         end
                     end
@@ -1061,6 +1069,7 @@ function lib.drawSelectedSFixture()
                     PatternColorHasChangedViaPalette)
                 if patternHex and patternHex ~= oldTexFixUD.extra.patternHex then
                     oldTexFixUD.extra.patternHex = patternHex
+                    oldTexFixUD.extra.dirty = true
                 end
                 if PatternColorHasChangedViaPalette then
                     PatternColorHasChangedViaPalette = false
@@ -1068,29 +1077,48 @@ function lib.drawSelectedSFixture()
                 ui.label(x + 50, y, 'Pattern HEX', { 1, 1, 1, 0.2 })
                 nextRow()
 
-                local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 1, 200,
+                local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
                     oldTexFixUD.extra.texRotation or 0)
                 ui.label(x, y, ' texrot')
                 if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
                     oldTexFixUD.extra.texRotation = newRotation
+                    oldTexFixUD.extra.dirty = true
                 end
                 nextRow()
-                local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 1, 200,
+                local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 0.01, 3,
                     oldTexFixUD.extra.texScale or 0)
                 ui.label(x, y, ' texscale')
                 if newScale and newScale ~= oldTexFixUD.extra.texScale then
                     oldTexFixUD.extra.texScale = newScale
+                    oldTexFixUD.extra.dirty = true
                 end
                 nextRow()
-
-                local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX, 'flipx')
+                local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
+                    oldTexFixUD.extra.texXOff or 0)
+                ui.label(x, y, ' xoff')
+                if newXOff and newXOff ~= oldTexFixUD.extra.texXOff then
+                    oldTexFixUD.extra.texXOff = newXOff
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+                local newYOff = ui.sliderWithInput(myID .. ' texYOffscale', x, y, ROW_WIDTH, 0, 1,
+                    oldTexFixUD.extra.texYOff or 0)
+                ui.label(x, y, ' yoff')
+                if newYOff and newYOff ~= oldTexFixUD.extra.texYOff then
+                    oldTexFixUD.extra.texYOff = newYOff
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+                local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX == -1, 'flipx')
                 if dirtyX then
-                    oldTexFixUD.extra.texFlipX = not not checkedX
+                    oldTexFixUD.extra.texFlipX = checkedX and -1 or 1
+                    oldTexFixUD.extra.dirty = true
                     uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
-                local dirtyY, checkedY = ui.checkbox(x + 150, y, e.texFlipY, 'flipy')
+                local dirtyY, checkedY = ui.checkbox(x + 150, y, e.texFlipY == -1, 'flipy')
                 if dirtyY then
-                    oldTexFixUD.extra.texFlipY = not not checkedY
+                    oldTexFixUD.extra.texFlipY = checkedY and -1 or 1
+                    oldTexFixUD.extra.dirty = true
                     uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
 

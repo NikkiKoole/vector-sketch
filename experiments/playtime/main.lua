@@ -583,7 +583,8 @@ function love.draw()
         drawGrid(cam, worldState)
     end
 
-    box2dDrawTextured.makePatternTexture()
+
+    box2dDrawTextured.makeCombinedImages()
     cam:push()
 
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
