@@ -57,7 +57,7 @@ local TICKRATE = 1 / FPS
 
 local now = love.timer:getTime()
 function love.load(args)
-    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 30)
+    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 25)
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 

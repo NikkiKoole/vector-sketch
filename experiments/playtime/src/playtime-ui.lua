@@ -15,7 +15,7 @@ local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 
 local PANEL_WIDTH = 300
-local BUTTON_HEIGHT = 40
+local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
@@ -60,9 +60,9 @@ function lib.doJointCreateUI(uiState, _x, _y, w, h)
         })
 
         local width = 180
-        local x, y = ui.nextLayoutPosition(layout, 160, 50)
+        local x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
         local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, 160, 50)
+            x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
         end
         nextRow()
         if ui.button(x, y, width, 'Create') then
@@ -93,10 +93,10 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
             })
             local jointType = j:getType()
             local jointId = joints.getJointId(j)
-            local x, y = ui.nextLayoutPosition(layout, 160, 50)
+            local x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
 
             local nextRow = function()
-                x, y = ui.nextLayoutPosition(layout, 160, 50)
+                x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
             end
             nextRow()
             local width = 280
@@ -291,14 +291,14 @@ function lib.doJointUpdateUI(uiState, j, _x, _y, w, h)
 
 
                 nextRow()
-                if ui.button(x, y, 40, '∆') then
+                if ui.button(x, y, BUTTON_HEIGHT, '∆') then
                     uiState.setOffsetAFunc = function(x, y)
                         local fx, fy = mathutils.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
                         -- print(fx, fy)
                         return updateOffsetA(fx, fy)
                     end
                 end
-                if ui.button(x + 50, y, 40, 'b  ') then
+                if ui.button(x + 50, y, BUTTON_HEIGHT, 'b  ') then
                     uiState.setOffsetBFunc = function(x, y)
                         local fx, fy = mathutils.rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
                         -- print(fx, fy)
@@ -768,7 +768,10 @@ function lib.drawWorldSettingsUI()
 end
 
 local hadBeenDraggingObj = false
-
+local accordionStatesSF = {
+    ['texture'] = true,
+    ['patches'] = false,
+}
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -777,6 +780,27 @@ function lib.drawSelectedSFixture()
     end
     local ud = uiState.selectedSFixture:getUserData()
     local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
+
+    -- Function to create an accordion
+    local function drawAccordion(key, contentFunc)
+        -- Draw the accordion header
+
+        local clicked = ui.header_button(x, y, PANEL_WIDTH - 40, (accordionStatesSF[key] and " ÷  " or " •") ..
+            ' ' .. key, accordionStatesSF[key])
+        if clicked then
+            accordionStatesSF[key] = not accordionStatesSF[key]
+        end
+        y = y + BUTTON_HEIGHT + BUTTON_SPACING
+
+        -- If the accordion is expanded, draw the content
+        -- print(key)
+        --print(inspect(accordionStates))
+        if accordionStatesSF[key] then
+            contentFunc(clicked)
+        end
+    end
+
+
 
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
         local padding = BUTTON_SPACING
@@ -795,7 +819,7 @@ function lib.drawSelectedSFixture()
         local myLabel = uiState.selectedSFixture:getUserData().label or ''
         --print(myID)
 
-        local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", myLabel)
+        local newLabel = ui.textinput(myID .. ' label', x, y, 260, BUTTON_HEIGHT, "", myLabel)
         if newLabel and newLabel ~= myLabel then
             local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
             oldUD.label = newLabel
@@ -869,7 +893,7 @@ function lib.drawSelectedSFixture()
 
 
 
-        if ui.button(x, y, 40, '∆') then
+        if ui.button(x, y, BUTTON_HEIGHT, '∆') then
             uiState.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
         nextRow()
@@ -882,6 +906,10 @@ function lib.drawSelectedSFixture()
             if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
                 uiState.showTexFixtureDim = not uiState.showTexFixtureDim
             end
+
+
+
+
 
             if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
                 local body = uiState.selectedSFixture:getBody()
@@ -896,21 +924,15 @@ function lib.drawSelectedSFixture()
             end
 
             nextRow()
-            local e = uiState.selectedSFixture:getUserData().extra
-            if ui.checkbox(x, y, false, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
-                e.OMP = not e.OMP
+            local oldTexFixUD = uiState.selectedSFixture:getUserData()
+            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                math.floor(oldTexFixUD.extra.zOffset or 0),
+                (not worldState.paused) or dirtyBodyChange)
+            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
+                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
             end
+            ui.label(x, y, ' zOffset')
             nextRow()
-
-            -- if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
-            --     uiState.texFixtureLockedVerts = not uiState.texFixtureLockedVerts
-            --     if uiState.texFixtureLockedVerts == false then
-            --         uiState.texFixtureTempVerts = utils.shallowCopy(points)
-            --     else
-            --         uiState.texFixtureTempVerts = nil
-            --     end
-            -- end
-
             if (uiState.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
                 ui.label(x, y, ' width')
@@ -929,126 +951,46 @@ function lib.drawSelectedSFixture()
                     w, h = mathutils.getPolygonDimensions(points)
                 end
             end
-            -- nextRow()
-
-            local oldTexFixUD = uiState.selectedSFixture:getUserData()
-            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
-                math.floor(oldTexFixUD.extra.zOffset or 0),
-                (not worldState.paused) or dirtyBodyChange)
-            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
-                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
-            end
-            ui.label(x, y, ' zOffset')
-
-
-            nextRow()
-
-            --lineart, mask, pattern
-
-            local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.bgEnabled, '')
-            if dirty then
-                oldTexFixUD.extra.bgEnabled = not oldTexFixUD.extra.bgEnabled
-                uiState.selectedSFixture:setUserData(oldTexFixUD)
-            end
-            local bgURL = ui.textinput(myID .. ' texfixbgURL', x + 40, y, 220, 40, "", oldTexFixUD.extra.bgURL or '')
-            if bgURL and bgURL ~= oldTexFixUD.extra.bgURL then
-                oldTexFixUD.extra.bgURL = bgURL
-                oldTexFixUD.extra.dirty = true
-                uiState.selectedSFixture:setUserData(oldTexFixUD)
-            end
-            ui.label(x + 50, y, not e.OMP and ' BG URL' or 'Out URL', { 1, 1, 1, 0.2 })
-            nextRow()
-
-            local paletteShow = ui.button(x, y, 40, 'p', 40)
-            if paletteShow then
-                if uiState.showPalette then
-                    uiState.showPalette = nil
-                    uiState.showPaletteFunc = nil
-                else
-                    uiState.showPalette = true
-                    uiState.showPaletteFunc = function(color)
-                        oldTexFixUD.extra.bgHex = color
-                        oldTexFixUD.extra.dirty = true
-                        BGcolorHasChangedViaPalette = true
-                    end
+            drawAccordion("texture", function()
+                nextRow()
+                local e = uiState.selectedSFixture:getUserData().extra
+                if ui.checkbox(x, y, false, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
+                    e.OMP = not e.OMP
                 end
-            end
 
-            local bgHex = ui.textinput(myID .. ' texfixbgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.bgHex or '',
-                false,
-                BGcolorHasChangedViaPalette)
-            if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
-                oldTexFixUD.extra.bgHex = bgHex
-                oldTexFixUD.extra.dirty = true
-            end
-            if BGcolorHasChangedViaPalette then
-                BGcolorHasChangedViaPalette = false
-            end
-            ui.label(x + 50, y, not e.OMP and ' BG HEX' or 'Out HEX', { 1, 1, 1, 0.2 })
+                -- if ui.button(x, y, 260, uiState.texFixtureLockedVerts and 'verts locked' or 'verts unlocked') then
+                --     uiState.texFixtureLockedVerts = not uiState.texFixtureLockedVerts
+                --     if uiState.texFixtureLockedVerts == false then
+                --         uiState.texFixtureTempVerts = utils.shallowCopy(points)
+                --     else
+                --         uiState.texFixtureTempVerts = nil
+                --     end
+                -- end
 
 
-            nextRow()
+                -- nextRow()
 
 
+                nextRow()
 
-            local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.fgEnabled, '')
-            if dirty then
-                oldTexFixUD.extra.fgEnabled = not oldTexFixUD.extra.fgEnabled
-                uiState.selectedSFixture:setUserData(oldTexFixUD)
-            end
-            local fgURL = ui.textinput(myID .. ' texfixfgURL', x + 40, y, 220, 40, "", oldTexFixUD.extra.fgURL or '')
-            if fgURL and fgURL ~= oldTexFixUD.extra.fgURL then
-                oldTexFixUD.extra.fgURL = fgURL
-                oldTexFixUD.extra.dirty = true
-                uiState.selectedSFixture:setUserData(oldTexFixUD)
-            end
-            ui.label(x + 50, y, not e.OMP and ' FG URL' or 'Mask URL', { 1, 1, 1, 0.2 })
-            nextRow()
+                --lineart, mask, pattern
 
-            local paletteShow = ui.button(x, y, 40, 'p', 40)
-            if paletteShow then
-                if uiState.showPalette then
-                    uiState.showPalette = nil
-                    uiState.showPaletteFunc = nil
-                else
-                    uiState.showPalette = true
-                    uiState.showPaletteFunc = function(color)
-                        oldTexFixUD.extra.fgHex = color
-                        oldTexFixUD.extra.dirty = true
-                        FGcolorHasChangedViaPalette = true
-                    end
+                local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.bgEnabled, '')
+                if dirty then
+                    oldTexFixUD.extra.bgEnabled = not oldTexFixUD.extra.bgEnabled
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
-            end
-
-
-
-            local fgHex = ui.textinput(myID .. ' texfixfgHex', x + 50, y, 210, 40, "", oldTexFixUD.extra.fgHex or '',
-                false,
-                FGcolorHasChangedViaPalette)
-            if fgHex and fgHex ~= oldTexFixUD.extra.fgHex then
-                oldTexFixUD.extra.fgHex = fgHex
-                oldTexFixUD.extra.dirty = true
-            end
-            if FGcolorHasChangedViaPalette then
-                FGcolorHasChangedViaPalette = false
-            end
-            ui.label(x + 50, y, not e.OMP and ' FG HEX' or 'Mask HEX', { 1, 1, 1, 0.2 })
-
-            nextRow()
-
-            if e.OMP then
-                local patternURL = ui.textinput(myID .. ' texfixpatternURL', x + 40, y, 220, 40, "",
-                    oldTexFixUD.extra.patternURL or '')
-                if patternURL and patternURL ~= oldTexFixUD.extra.patternURL then
-                    oldTexFixUD.extra.patternURL = patternURL
+                local bgURL = ui.textinput(myID .. ' texfixbgURL', x + 40, y, 220, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.bgURL or '')
+                if bgURL and bgURL ~= oldTexFixUD.extra.bgURL then
+                    oldTexFixUD.extra.bgURL = bgURL
                     oldTexFixUD.extra.dirty = true
                     uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
-                ui.label(x + 50, y, 'Pattern URL', { 1, 1, 1, 0.2 })
+                ui.label(x + 50, y, not e.OMP and ' BG URL' or 'Out URL', { 1, 1, 1, 0.2 })
                 nextRow()
 
-
-                local paletteShow = ui.button(x, y, 40, 'p', 40)
+                local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
                 if paletteShow then
                     if uiState.showPalette then
                         uiState.showPalette = nil
@@ -1056,76 +998,171 @@ function lib.drawSelectedSFixture()
                     else
                         uiState.showPalette = true
                         uiState.showPaletteFunc = function(color)
-                            oldTexFixUD.extra.patternHex = color
+                            oldTexFixUD.extra.bgHex = color
                             oldTexFixUD.extra.dirty = true
-                            PatternColorHasChangedViaPalette = true
+                            BGcolorHasChangedViaPalette = true
                         end
                     end
                 end
 
-                local patternHex = ui.textinput(myID .. ' texfixpatternHex', x + 50, y, 210, 40, "",
-                    oldTexFixUD.extra.patternHex or '',
+                local bgHex = ui.textinput(myID .. ' texfixbgHex', x + 50, y, 210, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.bgHex or '',
                     false,
-                    PatternColorHasChangedViaPalette)
-                if patternHex and patternHex ~= oldTexFixUD.extra.patternHex then
-                    oldTexFixUD.extra.patternHex = patternHex
+                    BGcolorHasChangedViaPalette)
+                if bgHex and bgHex ~= oldTexFixUD.extra.bgHex then
+                    oldTexFixUD.extra.bgHex = bgHex
                     oldTexFixUD.extra.dirty = true
                 end
-                if PatternColorHasChangedViaPalette then
-                    PatternColorHasChangedViaPalette = false
+                if BGcolorHasChangedViaPalette then
+                    BGcolorHasChangedViaPalette = false
                 end
-                ui.label(x + 50, y, 'Pattern HEX', { 1, 1, 1, 0.2 })
+                ui.label(x + 50, y, not e.OMP and ' BG HEX' or 'Out HEX', { 1, 1, 1, 0.2 })
+
+
                 nextRow()
 
-                local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
-                    oldTexFixUD.extra.texRotation or 0)
-                ui.label(x, y, ' texrot')
-                if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
-                    oldTexFixUD.extra.texRotation = newRotation
-                    oldTexFixUD.extra.dirty = true
+
+
+                local dirty, checked = ui.checkbox(x, y, oldTexFixUD.extra.fgEnabled, '')
+                if dirty then
+                    oldTexFixUD.extra.fgEnabled = not oldTexFixUD.extra.fgEnabled
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
-                nextRow()
-                local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 0.01, 3,
-                    oldTexFixUD.extra.texScale or 0)
-                ui.label(x, y, ' texscale')
-                if newScale and newScale ~= oldTexFixUD.extra.texScale then
-                    oldTexFixUD.extra.texScale = newScale
-                    oldTexFixUD.extra.dirty = true
-                end
-                nextRow()
-                local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
-                    oldTexFixUD.extra.texXOff or 0)
-                ui.label(x, y, ' xoff')
-                if newXOff and newXOff ~= oldTexFixUD.extra.texXOff then
-                    oldTexFixUD.extra.texXOff = newXOff
-                    oldTexFixUD.extra.dirty = true
-                end
-                nextRow()
-                local newYOff = ui.sliderWithInput(myID .. ' texYOffscale', x, y, ROW_WIDTH, 0, 1,
-                    oldTexFixUD.extra.texYOff or 0)
-                ui.label(x, y, ' yoff')
-                if newYOff and newYOff ~= oldTexFixUD.extra.texYOff then
-                    oldTexFixUD.extra.texYOff = newYOff
-                    oldTexFixUD.extra.dirty = true
-                end
-                nextRow()
-                local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX == -1, 'flipx')
-                if dirtyX then
-                    oldTexFixUD.extra.texFlipX = checkedX and -1 or 1
+                local fgURL = ui.textinput(myID .. ' texfixfgURL', x + 40, y, 220, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.fgURL or '')
+                if fgURL and fgURL ~= oldTexFixUD.extra.fgURL then
+                    oldTexFixUD.extra.fgURL = fgURL
                     oldTexFixUD.extra.dirty = true
                     uiState.selectedSFixture:setUserData(oldTexFixUD)
                 end
-                local dirtyY, checkedY = ui.checkbox(x + 150, y, e.texFlipY == -1, 'flipy')
-                if dirtyY then
-                    oldTexFixUD.extra.texFlipY = checkedY and -1 or 1
-                    oldTexFixUD.extra.dirty = true
-                    uiState.selectedSFixture:setUserData(oldTexFixUD)
+                ui.label(x + 50, y, not e.OMP and ' FG URL' or 'Mask URL', { 1, 1, 1, 0.2 })
+                nextRow()
+
+                local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
+                if paletteShow then
+                    if uiState.showPalette then
+                        uiState.showPalette = nil
+                        uiState.showPaletteFunc = nil
+                    else
+                        uiState.showPalette = true
+                        uiState.showPaletteFunc = function(color)
+                            oldTexFixUD.extra.fgHex = color
+                            oldTexFixUD.extra.dirty = true
+                            FGcolorHasChangedViaPalette = true
+                        end
+                    end
                 end
+
+
+
+                local fgHex = ui.textinput(myID .. ' texfixfgHex', x + 50, y, 210, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.fgHex or '',
+                    false,
+                    FGcolorHasChangedViaPalette)
+                if fgHex and fgHex ~= oldTexFixUD.extra.fgHex then
+                    oldTexFixUD.extra.fgHex = fgHex
+                    oldTexFixUD.extra.dirty = true
+                end
+                if FGcolorHasChangedViaPalette then
+                    FGcolorHasChangedViaPalette = false
+                end
+                ui.label(x + 50, y, not e.OMP and ' FG HEX' or 'Mask HEX', { 1, 1, 1, 0.2 })
 
                 nextRow()
 
-                -- flip / flop
-            end
+                if e.OMP then
+                    local patternURL = ui.textinput(myID .. ' texfixpatternURL', x + 40, y, 220, BUTTON_HEIGHT, "",
+                        oldTexFixUD.extra.patternURL or '')
+                    if patternURL and patternURL ~= oldTexFixUD.extra.patternURL then
+                        oldTexFixUD.extra.patternURL = patternURL
+                        oldTexFixUD.extra.dirty = true
+                        uiState.selectedSFixture:setUserData(oldTexFixUD)
+                    end
+                    ui.label(x + 50, y, 'Pattern URL', { 1, 1, 1, 0.2 })
+                    nextRow()
+
+
+                    local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
+                    if paletteShow then
+                        if uiState.showPalette then
+                            uiState.showPalette = nil
+                            uiState.showPaletteFunc = nil
+                        else
+                            uiState.showPalette = true
+                            uiState.showPaletteFunc = function(color)
+                                oldTexFixUD.extra.patternHex = color
+                                oldTexFixUD.extra.dirty = true
+                                PatternColorHasChangedViaPalette = true
+                            end
+                        end
+                    end
+
+                    local patternHex = ui.textinput(myID .. ' texfixpatternHex', x + 50, y, 210, BUTTON_HEIGHT, "",
+                        oldTexFixUD.extra.patternHex or '',
+                        false,
+                        PatternColorHasChangedViaPalette)
+                    if patternHex and patternHex ~= oldTexFixUD.extra.patternHex then
+                        oldTexFixUD.extra.patternHex = patternHex
+                        oldTexFixUD.extra.dirty = true
+                    end
+                    if PatternColorHasChangedViaPalette then
+                        PatternColorHasChangedViaPalette = false
+                    end
+                    ui.label(x + 50, y, 'Pattern HEX', { 1, 1, 1, 0.2 })
+                    nextRow()
+
+                    local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
+                        oldTexFixUD.extra.texRotation or 0)
+                    ui.label(x, y, ' texrot')
+                    if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
+                        oldTexFixUD.extra.texRotation = newRotation
+                        oldTexFixUD.extra.dirty = true
+                    end
+                    nextRow()
+                    local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 0.01, 3,
+                        oldTexFixUD.extra.texScale or 0)
+                    ui.label(x, y, ' texscale')
+                    if newScale and newScale ~= oldTexFixUD.extra.texScale then
+                        oldTexFixUD.extra.texScale = newScale
+                        oldTexFixUD.extra.dirty = true
+                    end
+                    nextRow()
+                    local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
+                        oldTexFixUD.extra.texXOff or 0)
+                    ui.label(x, y, ' xoff')
+                    if newXOff and newXOff ~= oldTexFixUD.extra.texXOff then
+                        oldTexFixUD.extra.texXOff = newXOff
+                        oldTexFixUD.extra.dirty = true
+                    end
+                    nextRow()
+                    local newYOff = ui.sliderWithInput(myID .. ' texYOffscale', x, y, ROW_WIDTH, 0, 1,
+                        oldTexFixUD.extra.texYOff or 0)
+                    ui.label(x, y, ' yoff')
+                    if newYOff and newYOff ~= oldTexFixUD.extra.texYOff then
+                        oldTexFixUD.extra.texYOff = newYOff
+                        oldTexFixUD.extra.dirty = true
+                    end
+                    nextRow()
+                    local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX == -1, 'flipx')
+                    if dirtyX then
+                        oldTexFixUD.extra.texFlipX = checkedX and -1 or 1
+                        oldTexFixUD.extra.dirty = true
+                        uiState.selectedSFixture:setUserData(oldTexFixUD)
+                    end
+                    local dirtyY, checkedY = ui.checkbox(x + 150, y, e.texFlipY == -1, 'flipy')
+                    if dirtyY then
+                        oldTexFixUD.extra.texFlipY = checkedY and -1 or 1
+                        oldTexFixUD.extra.dirty = true
+                        uiState.selectedSFixture:setUserData(oldTexFixUD)
+                    end
+
+                    nextRow()
+                end
+            end)
+            nextRow()
+            drawAccordion('patches', function()
+
+            end)
         else
             local points = { uiState.selectedSFixture:getShape():getPoints() }
             local dim = mathutils.getPolygonDimensions(points)
@@ -1238,8 +1275,7 @@ function lib.drawSelectedBodiesUI()
     end)
 end
 
--- Define a table to keep track of accordion states
-local accordionStates = {
+local accordionStatesSO = {
     tags = false,
     position = false,
     transform = true,
@@ -1249,8 +1285,10 @@ local accordionStates = {
     sfixtures = false,
     textured = false,
 }
-
 function lib.drawUpdateSelectedObjectUI()
+    -- Define a table to keep track of accordion states
+
+
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
@@ -1290,15 +1328,15 @@ function lib.drawUpdateSelectedObjectUI()
         local function drawAccordion(key, contentFunc)
             -- Draw the accordion header
 
-            local clicked = ui.header_button(x, y, PANEL_WIDTH - 40, (accordionStates[key] and " ÷  " or " •") ..
-                ' ' .. key, accordionStates[key])
+            local clicked = ui.header_button(x, y, PANEL_WIDTH - 40, (accordionStatesSO[key] and " ÷  " or " •") ..
+                ' ' .. key, accordionStatesSO[key])
             if clicked then
-                accordionStates[key] = not accordionStates[key]
+                accordionStatesSO[key] = not accordionStatesSO[key]
             end
             y = y + BUTTON_HEIGHT + BUTTON_SPACING
 
             -- If the accordion is expanded, draw the content
-            if accordionStates[key] then
+            if accordionStatesSO[key] then
                 contentFunc(clicked)
             end
         end
@@ -1339,7 +1377,7 @@ function lib.drawUpdateSelectedObjectUI()
             -- Shape Properties
             local shapeType = thing.shapeType
 
-            local newLabel = ui.textinput(myID .. ' label', x, y, 260, 40, "", thing.label)
+            local newLabel = ui.textinput(myID .. ' label', x, y, 260, BUTTON_HEIGHT, "", thing.label)
             if newLabel and newLabel ~= thing.label then
                 thing.label = newLabel -- Update the label
             end
@@ -1352,7 +1390,7 @@ function lib.drawUpdateSelectedObjectUI()
                 drawAccordion("tags", function(clicked)
                     local w = love.graphics.getFont():getWidth('straight') + 20
                     -- ui.button(x, y, w, 'straight')
-                    ui.toggleButton(x, y, w, 40, 'straight', 'straight', false)
+                    ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
                     nextRow()
                 end)
                 nextRow()
@@ -1360,7 +1398,8 @@ function lib.drawUpdateSelectedObjectUI()
             drawAccordion("position", function(clicked)
                 nextRow()
                 local value = thing.body:getX()
-                local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, 40, ".", "" .. value, true,
+                local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
+                    true,
                     clicked or not worldState.paused or uiState.draggingObj)
                 if hadBeenDraggingObj then
                     dirty = true
@@ -1376,7 +1415,8 @@ function lib.drawUpdateSelectedObjectUI()
                     end
                 end
                 local value = thing.body:getY()
-                local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, 40, ".", "" .. value, true,
+                local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
+                    "" .. value, true,
                     clicked or not worldState.paused or uiState.draggingObj)
                 if hadBeenDraggingObj then
                     dirty = true

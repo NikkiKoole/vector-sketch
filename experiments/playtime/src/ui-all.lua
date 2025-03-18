@@ -6,6 +6,7 @@ require('src.ui-textinput')(ui)
 local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
 -- Theme Configuration
 local theme  = {
+    lineHeight = 30,
     button = {
         default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
         hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
@@ -14,7 +15,7 @@ local theme  = {
         text_default = creamy,                           -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
-        height = 34
+        height = 30
     },
     checkbox = {
         checked = { 1, 1, 1 },
@@ -32,7 +33,7 @@ local theme  = {
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
         outline = creamy,
         track_radius = 2,
-        height = 32
+        height = 24
     },
     draggedElement = {
         fill = { 1, 1, 1 }, -- Color of the dragged element
@@ -136,7 +137,9 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
     local valueChangeFromOutside = valueHasChangedViaSlider or changed
 
     -- TextInput for numeric input
-    local numericInputText, dirty = ui.textinput(_id, x + w + 10, y, 90, 40, "Enter number...", "" .. value,
+    local numericInputText, dirty = ui.textinput(_id, x + w + 10, y + yOffset, 90, ui.theme.slider.height,
+        "Enter number...",
+        "" .. value,
         true, valueChangeFromOutside)
 
 
@@ -543,7 +546,8 @@ end
 
 function ui.label(x, y, text, color)
     love.graphics.setColor(color or ui.theme.general.text)
-    love.graphics.print(text, x, y)
+    local yOffset = 0 --ui.font:getHeight(text) / 2
+    love.graphics.print(text, x, y + yOffset)
     love.graphics.setColor(1, 1, 1)
 end
 

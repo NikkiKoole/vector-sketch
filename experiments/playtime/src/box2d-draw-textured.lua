@@ -342,7 +342,7 @@ function lib.drawTexturedWorld(world)
             local extra = drawables[i].extra
 
 
-            if not extra.OMP then -- this is the BG and FG routine
+            if not extra.OMP and extra.bgURL then -- this is the BG and FG routine
                 local url = extra.bgURL
                 local img, imgw, imgh = getLoveImage('textures/' .. url)
                 local body = texfixture:getBody()
