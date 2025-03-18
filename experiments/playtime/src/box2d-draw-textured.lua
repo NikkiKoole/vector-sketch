@@ -259,7 +259,6 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                print('jojo!')
                 ud.extra.dirty = false
 
                 local outlineImage = getLoveImage('textures/' .. ud.extra.bgURL)

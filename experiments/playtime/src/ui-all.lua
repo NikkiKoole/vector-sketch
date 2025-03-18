@@ -33,7 +33,7 @@ local theme  = {
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
         outline = creamy,
         track_radius = 2,
-        height = 24
+        height = 30
     },
     draggedElement = {
         fill = { 1, 1, 1 }, -- Color of the dragged element
