@@ -363,7 +363,7 @@ function ui.coloredRect(x, y, color, size)
 end
 
 --- Creates a button.
-function ui.button(x, y, width, label, optionalHeight)
+function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
     local height = optionalHeight and optionalHeight or theme.button.height
 
     local id = ui.generateID() -- Generate unique ID
@@ -380,7 +380,11 @@ function ui.button(x, y, width, label, optionalHeight)
     elseif isHover then
         love.graphics.setColor(theme.button.hover)   -- Hover state
     else
-        love.graphics.setColor(theme.button.default) -- Default state
+        if (optionalFillColor) then
+            love.graphics.setColor(optionalFillColor)
+        else
+            love.graphics.setColor(theme.button.default) -- Default state
+        end
     end
     local rxry = 0
     if theme.button.radius > 0 then
