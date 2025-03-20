@@ -23,6 +23,7 @@ local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
 local FGcolorHasChangedViaPalette
 local PatternColorHasChangedViaPalette
+local Patch1ColorHasChangedViaPalette
 
 local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
     local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
@@ -682,7 +683,7 @@ function lib.drawWorldSettingsUI()
     local buttonSpacing = BUTTON_SPACING
     local titleHeight = ui.font:getHeight() + BUTTON_SPACING
     local panelHeight = titleHeight + titleHeight + (9 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
-    ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF world •', function()
+    ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF§ world •', function()
         local layout = ui.createLayout({
             type = 'columns',
             spacing = BUTTON_SPACING,
@@ -770,8 +771,10 @@ end
 local hadBeenDraggingObj = false
 local accordionStatesSF = {
     ['texture'] = true,
-    ['patches'] = false,
+    ['patch1'] = false,
+    ['patch2'] = false,
 }
+
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -896,6 +899,17 @@ function lib.drawSelectedSFixture()
         if ui.button(x, y, BUTTON_HEIGHT, '∆') then
             uiState.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
+        if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+            local body = uiState.selectedSFixture:getBody()
+            uiState.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
+        end
+        if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
+            local body = uiState.selectedSFixture:getBody()
+            --print(inspect(body))
+            local verts = body:getUserData().thing.vertices
+            local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+            updateSFixtureDimensionsFunc(w, h)
+        end
         nextRow()
 
 
@@ -906,32 +920,6 @@ function lib.drawSelectedSFixture()
             if ui.checkbox(x, y, uiState.showTexFixtureDim, 'dims') then
                 uiState.showTexFixtureDim = not uiState.showTexFixtureDim
             end
-
-
-
-
-
-            if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
-                local body = uiState.selectedSFixture:getBody()
-                uiState.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
-            end
-            if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
-                local body = uiState.selectedSFixture:getBody()
-                --print(inspect(body))
-                local verts = body:getUserData().thing.vertices
-                local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
-                updateSFixtureDimensionsFunc(w, h)
-            end
-
-            nextRow()
-            local oldTexFixUD = uiState.selectedSFixture:getUserData()
-            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
-                math.floor(oldTexFixUD.extra.zOffset or 0),
-                (not worldState.paused) or dirtyBodyChange)
-            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
-                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
-            end
-            ui.label(x, y, ' zOffset')
             nextRow()
             if (uiState.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
@@ -951,6 +939,16 @@ function lib.drawSelectedSFixture()
                     w, h = mathutils.getPolygonDimensions(points)
                 end
             end
+            local oldTexFixUD = uiState.selectedSFixture:getUserData()
+            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                math.floor(oldTexFixUD.extra.zOffset or 0),
+                (not worldState.paused) or dirtyBodyChange)
+            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
+                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
+            end
+            ui.label(x, y, ' zOffset')
+            nextRow()
+
             drawAccordion("texture", function()
                 nextRow()
                 local e = uiState.selectedSFixture:getUserData().extra
@@ -1160,8 +1158,166 @@ function lib.drawSelectedSFixture()
                 end
             end)
             nextRow()
-            drawAccordion('patches', function()
+            drawAccordion('patch1', function()
+                -- 2 patches will be made here for now.
+                local patch1URL = ui.textinput(myID .. 'patchURL1', x + 40, y, 220, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.patch1URL or '')
+                if patch1URL and patch1URL ~= oldTexFixUD.extra.patch1URL then
+                    oldTexFixUD.extra.patch1URL = patch1URL
+                    oldTexFixUD.extra.dirty = true
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
+                end
 
+                ui.label(x + 50, y, 'patchURL1', { 1, 1, 1, 0.2 })
+                nextRow()
+                nextRow()
+                local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
+                if paletteShow then
+                    if uiState.showPalette then
+                        uiState.showPalette = nil
+                        uiState.showPaletteFunc = nil
+                    else
+                        uiState.showPalette = true
+                        uiState.showPaletteFunc = function(color)
+                            oldTexFixUD.extra.patch1Hex = color
+                            oldTexFixUD.extra.dirty = true
+                            PatternColorHasChangedViaPalette = true
+                        end
+                    end
+                end
+                local patch1Hex = ui.textinput(myID .. ' patchHex1', x + 50, y, 210, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.patch1Hex or '',
+                    false,
+                    PatternColorHasChangedViaPalette)
+                if patch1Hex and patch1Hex ~= oldTexFixUD.extra.patch1Hex then
+                    oldTexFixUD.extra.patch1Hex = patch1Hex
+                    oldTexFixUD.extra.dirty = true
+                end
+                if PatternColorHasChangedViaPalette then
+                    PatternColorHasChangedViaPalette = false
+                end
+                ui.label(x + 50, y, 'patchHex1', { 1, 1, 1, 0.2 })
+                nextRow()
+
+                local patch1TX = ui.sliderWithInput(myID .. ' patch1TX', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch1TX or 0)
+                ui.label(x, y, ' patch1TX')
+                if patch1TX and patch1TX ~= oldTexFixUD.extra.patch1TX then
+                    oldTexFixUD.extra.patch1TX = patch1TX
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+                local patch1TY = ui.sliderWithInput(myID .. ' patch1TY', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch1TY or 0)
+                ui.label(x, y, ' patch1TY')
+                if patch1TY and patch1TY ~= oldTexFixUD.extra.patch1TY then
+                    oldTexFixUD.extra.patch1TY = patch1TY
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+
+                local patch1SX = ui.sliderWithInput(myID .. ' patch1SX', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch1SX or 1)
+                ui.label(x, y, ' patch1SX')
+                if patch1SX and patch1SX ~= oldTexFixUD.extra.patch1SX then
+                    oldTexFixUD.extra.patch1SX = patch1SX
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+                local patch1SY = ui.sliderWithInput(myID .. ' patch1SY', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch1SY or 1)
+                ui.label(x, y, ' patch1SY')
+                if patch1SY and patch1SY ~= oldTexFixUD.extra.patch1SY then
+                    oldTexFixUD.extra.patch1SY = patch1SY
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+                local patch1r = ui.sliderWithInput(myID .. ' patch1r', x, y, ROW_WIDTH, -math.pi, math.pi,
+                    oldTexFixUD.extra.patch1r or 1)
+                ui.label(x, y, ' patch1r')
+                if patch1r and patch1r ~= oldTexFixUD.extra.patch1r then
+                    oldTexFixUD.extra.patch1r = patch1r
+                    oldTexFixUD.extra.dirty = true
+                end
+                nextRow()
+            end)
+            nextRow()
+            drawAccordion('patch2', function()
+                -- 2 patches will be made here for now.
+                local patchURL2 = ui.textinput(myID .. 'patchURL2', x + 40, y, 220, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.patchURL2 or '')
+                if patchURL2 and patchURL2 ~= oldTexFixUD.extra.patchURL2 then
+                    oldTexFixUD.extra.patchURL1 = patchURL2
+                    oldTexFixUD.extra.dirty = true
+                    uiState.selectedSFixture:setUserData(oldTexFixUD)
+                end
+
+                ui.label(x + 50, y, 'patchURL2', { 1, 1, 1, 0.2 })
+                nextRow()
+                nextRow()
+                local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
+                if paletteShow then
+                    if uiState.showPalette then
+                        uiState.showPalette = nil
+                        uiState.showPaletteFunc = nil
+                    else
+                        uiState.showPalette = true
+                        uiState.showPaletteFunc = function(color)
+                            oldTexFixUD.extra.patchHex2 = color
+                            oldTexFixUD.extra.dirty = true
+                            PatternColorHasChangedViaPalette = true
+                        end
+                    end
+                end
+                local patchHex2 = ui.textinput(myID .. ' patchHex2', x + 50, y, 210, BUTTON_HEIGHT, "",
+                    oldTexFixUD.extra.patchHex2 or '',
+                    false,
+                    PatternColorHasChangedViaPalette)
+                if patchHex2 and patchHex2 ~= oldTexFixUD.extra.patchHex2 then
+                    oldTexFixUD.extra.patchHex2 = patchHex2
+                    oldTexFixUD.extra.dirty = true
+                end
+                if PatternColorHasChangedViaPalette then
+                    PatternColorHasChangedViaPalette = false
+                end
+                ui.label(x + 50, y, 'patchHex2', { 1, 1, 1, 0.2 })
+                nextRow()
+                local patch2TX = ui.sliderWithInput(myID .. ' patch2TX', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch2TX or 0)
+                ui.label(x, y, ' patch2TX')
+                if patch2TX and patch2TX ~= oldTexFixUD.extra.patch2TX then
+                    oldTexFixUD.extra.patch2TX = patch2TX
+                end
+                nextRow()
+                local patch2TY = ui.sliderWithInput(myID .. ' patch2TY', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch2TY or 0)
+                ui.label(x, y, ' patch2TY')
+                if patch2TY and patch2TY ~= oldTexFixUD.extra.patch2TY then
+                    oldTexFixUD.extra.patch2TY = patch2TY
+                end
+
+
+                local patch2SX = ui.sliderWithInput(myID .. ' patch2SX', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch2SX or 1)
+                ui.label(x, y, ' patch2SX')
+                if patch2SX and patch2SX ~= oldTexFixUD.extra.patch2SX then
+                    oldTexFixUD.extra.patch2SX = patch2SX
+                end
+                nextRow()
+                local patch2SY = ui.sliderWithInput(myID .. ' patch2SY', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch2SY or 1)
+                ui.label(x, y, ' patch2SY')
+                if patch2SY and patch2SY ~= oldTexFixUD.extra.patch2SY then
+                    oldTexFixUD.extra.patch2SY = patch2SY
+                end
+                nextRow()
+                local patch2r = ui.sliderWithInput(myID .. ' patch2r', x, y, ROW_WIDTH, -1, 1,
+                    oldTexFixUD.extra.patch2r or 1)
+                ui.label(x, y, ' patch2r')
+                if patch2r and patch2r ~= oldTexFixUD.extra.patch2r then
+                    oldTexFixUD.extra.patch2r = patch2r
+                end
+                nextRow()
             end)
         else
             local points = { uiState.selectedSFixture:getShape():getPoints() }

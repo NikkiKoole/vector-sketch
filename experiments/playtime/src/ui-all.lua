@@ -4,6 +4,7 @@ local ui = {}
 require('src.ui-textinput')(ui)
 
 local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
+local orange = { 242 / 255, 133 / 255, 0 }
 -- Theme Configuration
 local theme  = {
     lineHeight = 30,
@@ -55,7 +56,10 @@ local theme  = {
         focusedBorderColor = { 244 / 255, 189 / 255, 94 / 255 }, -- Border color when focused
         selectionBackground = { 0.2, 0.4, 0.8, 0.5 },            -- Selection highlight color
     },
-    lineWidth = 3,                                               -- General line width
+    header = {
+        active = orange
+    },
+    lineWidth = 3, -- General line width
 }
 
 ui.theme     = theme
@@ -295,7 +299,7 @@ function ui.header_button(x, y, width, label, opened)
     end
     local rxry = 0
     if opened then
-        love.graphics.setColor(theme.button.hover)
+        love.graphics.setColor(theme.header.active)
     end
     love.graphics.rectangle("fill", x, y, width, height, rxry, rxry)
 

@@ -140,7 +140,7 @@ end
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
-                                  flipx, flipy, renderPatch)
+                                  flipx, flipy, patch1)
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
         local lw, lh = lineart:getDimensions()
@@ -179,41 +179,60 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-
-        -- I want to know If we do this or not..
-        if (false and renderPatch) then
+        print(patch1, patch1 and patch1.img)
+        if (patch1 and patch1.img) then
             love.graphics.setColorMask(true, true, true, false)
-            for i = 1, #renderPatch do
-                local p = renderPatch[i]
 
-                -- love.graphics.setColor(1, 1, 1, 1)
-                -- local image = love.graphics.newImage(p.imageData)
-                -- local imgw, imgh = image:getDimensions();
-                -- local xOffset = p.tx * (imgw / 6) * shrinkFactor
-                -- local yOffset = p.ty * (imgh / 6) * shrinkFactor
-                -- love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
-                --     p.sx * shrinkFactor,
-                --     p.sy * shrinkFactor,
-                --     imgw / 2, imgh / 2)
-                --print(lw, lh)
-                if true then
-                    local img = love.graphics.newImage('textures/eye4.png')
-                    --local img = love.graphics.newImage('assets/test1.png')
-                    --love.graphics.setBlendMode('subtract')
+            local r, g, b, a = lib.hexToColor(patch1.hex or 'ffffff')
+            love.graphics.setColor(r, g, b, a)
 
-                    for i = 1, 13 do
-                        love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
-                        local s = 3 + love.math.random() * 3
-                        love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(),
-                            love.math.random() * math.pi * 2,
-                            1 / s, 1 / s)
-                    end
 
-                    --love.graphics.setBlendMode("alpha")
-                end
-            end
+            local image = patch1.img
+            local imgw, imgh = image:getDimensions()
+            local xOffset = (patch1.tx or 0) * (imgw) * shrinkFactor
+            local yOffset = (patch1.ty or 0) * (imgh) * shrinkFactor
+            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch1.r or 0) * ((math.pi * 2) / 16),
+                (patch1.sx or 1) * shrinkFactor,
+                (patch1.sy or 1) * shrinkFactor,
+                imgw / 2, imgh / 2)
+            print('getting in here!')
             love.graphics.setColorMask(true, true, true, true)
         end
+
+        -- I want to know If we do this or not..
+        -- if (true and renderPatch) then
+        --     love.graphics.setColorMask(true, true, true, false)
+        --     -- for i = 1, #renderPatch do
+        --     --     local p = renderPatch[i]
+
+        --     --     love.graphics.setColor(1, 1, 1, 1)
+        --     --     local image = love.graphics.newImage(p.)
+        --     --     local imgw, imgh = image:getDimensions();
+        --     --     local xOffset = p.tx * (imgw / 6) * shrinkFactor
+        --     --     local yOffset = p.ty * (imgh / 6) * shrinkFactor
+        --     --     love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
+        --     --         p.sx * shrinkFactor,
+        --     --         p.sy * shrinkFactor,
+        --     --         imgw / 2, imgh / 2)
+        --     --     --print(lw, lh)
+        --     --     if true then
+        --     --         local img = love.graphics.newImage('textures/eye4.png')
+        --     --         --local img = love.graphics.newImage('assets/test1.png')
+        --     --         --love.graphics.setBlendMode('subtract')
+
+        --     --         for i = 1, 13 do
+        --     --             love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
+        --     --             local s = 3 + love.math.random() * 3
+        --     --             love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(),
+        --     --                 love.math.random() * math.pi * 2,
+        --     --                 1 / s, 1 / s)
+        --     --         end
+
+        --     --         --love.graphics.setBlendMode("alpha")
+        --     --     end
+        --     -- end
+        --     love.graphics.setColorMask(true, true, true, true)
+        -- end
 
 
         love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
@@ -268,6 +287,20 @@ function lib.makeCombinedImages()
                 local patternImage = getLoveImage('textures/pat/' .. ud.extra.patternURL)
                 local pr, pg, pb, pa = lib.hexToColor(ud.extra.patternHex)
 
+                if ud.extra.patch1URL then
+                    print(ud.extra.patch1URL, 'textures/' .. ud.extra.patch1URL)
+                end
+                local patch1 = ud.extra.patch1URL and {
+
+                    img = getLoveImage('textures/' .. ud.extra.patch1URL),
+                    hex = ud.extra.patch1Hex,
+                    tx = ud.extra.patch1TX,
+                    ty = ud.extra.patch1TY,
+                    sx = ud.extra.patch1SX,
+                    sy = ud.extra.patch1SY,
+                    r = ud.extra.patch1r,
+                } or nil
+
                 local imgData = lib.makeTexturedCanvas(
                     line,                      -- line art
                     maskTex,                   -- mask
@@ -285,7 +318,7 @@ function lib.makeCombinedImages()
                     ola * 5,                -- lineAlpha
                     ud.extra.texFlipX or 1, -- flipx (normal)
                     ud.extra.texFlipY or 1, -- flipy (normal)
-                    { 'jo!' }               -- renderPatch (set to truthy to enable extra patch rendering)
+                    patch1                  -- renderPatch (set to truthy to enable extra patch rendering)
                 )
                 image = love.graphics.newImage(imgData)
 
