@@ -1,8 +1,7 @@
--- main.lua
+
 
 -- TODO
 -- build a ui where you can add multiple tags..
-
 
 local old_print = print
 print = function(...)
@@ -264,6 +263,7 @@ local function getFileModificationTime(path)
     return 0
 end
 
+
 function getFiledata(filename)
     local f = io.open(filename, 'r')
     if f then
@@ -352,11 +352,13 @@ function love.update(dt)
     end
 end
 
+
+
 local function drawGrid(cam, worldState)
     local lw = love.graphics.getLineWidth()
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, .1)
-
+    
     local w, h = love.graphics.getDimensions()
     local tlx, tly = cam:getWorldCoordinates(0, 0)
     local brx, bry = cam:getWorldCoordinates(w, h)

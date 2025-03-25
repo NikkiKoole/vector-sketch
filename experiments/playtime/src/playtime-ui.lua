@@ -14,10 +14,11 @@ local ProFi = require 'vendor.ProFi'
 local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 local box2dDrawTextured = require 'src.box2d-draw-textured'
-local PANEL_WIDTH = 300
-local BUTTON_HEIGHT = ui.theme.lineHeight
-local ROW_WIDTH = 160
-local BUTTON_SPACING = 10
+
+    local PANEL_WIDTH = 300
+    local BUTTON_HEIGHT = ui.theme.lineHeight
+    local ROW_WIDTH = 160
+    local BUTTON_SPACING = 10
 
 local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
