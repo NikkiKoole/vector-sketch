@@ -14,11 +14,13 @@ local ProFi = require 'vendor.ProFi'
 local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 local box2dDrawTextured = require 'src.box2d-draw-textured'
+local Peeker = require 'vendor.peeker'
+local recorder = require 'src.recorder'
 
-    local PANEL_WIDTH = 300
-    local BUTTON_HEIGHT = ui.theme.lineHeight
-    local ROW_WIDTH = 160
-    local BUTTON_SPACING = 10
+local PANEL_WIDTH = 300
+local BUTTON_HEIGHT = ui.theme.lineHeight
+local ROW_WIDTH = 160
+local BUTTON_SPACING = 10
 
 local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
@@ -675,6 +677,77 @@ function lib.drawAddJointUI()
             if jointStarted then
                 uiState.jointCreationMode = { body1 = nil, body2 = nil, jointType = joint }
             end
+        end
+    end)
+end
+
+function lib.drawRecordingUI()
+    local startX = 800
+    local startY = 70
+    local panelWidth = PANEL_WIDTH
+    --local panelHeight = 255
+    local buttonHeight = ui.theme.button.height
+
+    local buttonSpacing = BUTTON_SPACING
+    local titleHeight = ui.font:getHeight() + BUTTON_SPACING
+    local panelHeight = titleHeight + titleHeight + (9 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+    ui.panel(startX, startY, panelWidth, panelHeight, '• recording stuff •', function()
+        local layout = ui.createLayout({
+            type = 'columns',
+            spacing = BUTTON_SPACING,
+            startX = startX + BUTTON_SPACING,
+            startY = startY + titleHeight + BUTTON_SPACING
+        })
+        local width = panelWidth - BUTTON_SPACING * 2
+        local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+        end
+
+        local peekerbutton = ui.button(x, y, width, Peeker.get_status() and 'RECORDING video' or 'record video')
+        if peekerbutton then
+            if Peeker.get_status() then
+                Peeker.isProcessing = true
+                Peeker.stop()
+            else
+                Peeker.isProcessing = false
+                Peeker.start({
+                    --w = 320,   --optional
+                    --h = 320,   --optional
+                    scale = 1, --this overrides w, h above, this is preferred to keep aspect ratio
+                    --n_threads = 1,
+                    fps = 60,
+                    out_dir = string.format("awesome_video"), --optional
+                    -- format = "mkv", --optional
+                    overlay = "circle",                       --or "text"
+                    post_clean_frames = false,
+                    total_frames = 1000,
+                })
+            end
+        end
+        nextRow()
+        local saveloc = ui.button(x, y, width, 'open savedir')
+        if saveloc then
+            love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+        end
+
+        nextRow()
+        love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
+        y = y + 40
+        local pointerbutton = ui.button(x, y, width, recorder.isRecording and 'RECORDING gestures' or 'record gestures')
+        if pointerbutton then
+            if recorder.isRecording then
+                recorder:stopRecording()
+            else
+                recorder:startRecording(0)
+            end
+        end
+        nextRow()
+        nextRow()
+        local rewindbutton = ui.button(x, y, width, 'rewind state')
+        if rewindbutton then
+            local cwd = love.filesystem.getWorkingDirectory()
+            loadScene(cwd .. '/scripts/lekker.playtime.json')
         end
     end)
 end

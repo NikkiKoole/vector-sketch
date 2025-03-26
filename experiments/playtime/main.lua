@@ -1,5 +1,3 @@
-
-
 -- TODO
 -- build a ui where you can add multiple tags..
 
@@ -16,6 +14,8 @@ end
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
 local Peeker = require 'vendor.peeker'
+
+local recorder = require 'src.recorder'
 
 local ui = require 'src.ui-all'
 local playtimeui = require 'src.playtime-ui'
@@ -51,7 +51,7 @@ local BUTTON_HEIGHT = 40
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FIXED_TIMESTEP = true
-local FPS = 60
+local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
 local now = love.timer:getTime()
@@ -113,7 +113,8 @@ function love.load(args)
         lastSelectedJoint = nil,
         saveDialogOpened = false,
         quitDialogOpened = false,
-        saveName = 'untitled'
+        saveName = 'untitled',
+        recordingPanelOpened = false,
     }
 
     worldState = {
@@ -121,11 +122,13 @@ function love.load(args)
         debugAlpha = 1,
         profiling = false,
         meter = 100,
+        isRecordingPointers = false,
         paused = true,
         gravity = 9.80,
         mouseForce = 500000,
         mouseDamping = 0.5,
         speedMultiplier = 1.0
+
     }
 
     -- todo use this maybe..
@@ -209,6 +212,8 @@ function love.load(args)
     --loadScriptAndScene('straight')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
+    local cwd = love.filesystem.getWorkingDirectory()
+    loadScene(cwd .. '/scripts/lekker.playtime.json')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -352,13 +357,11 @@ function love.update(dt)
     end
 end
 
-
-
 local function drawGrid(cam, worldState)
     local lw = love.graphics.getLineWidth()
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, .1)
-    
+
     local w, h = love.graphics.getDimensions()
     local tlx, tly = cam:getWorldCoordinates(0, 0)
     local brx, bry = cam:getWorldCoordinates(w, h)
@@ -425,6 +428,13 @@ function drawUI()
         worldState.paused = not worldState.paused
     end
 
+    if ui.button(810, 20, 150, worldState.isRecordingPointers and 'recording' or 'record') then
+        uiState.recordingPanelOpened = not uiState.recordingPanelOpened
+        -- worldState.isRecordingPointers = not worldState.isRecordingPointers
+    end
+    if uiState.recordingPanelOpened then
+        playtimeui.drawRecordingUI()
+    end
     if sceneScript and sceneScript.onStart then
         if ui.button(920, 20, 50, 'R') then
             -- todo actually reread the file itself!
@@ -702,7 +712,7 @@ function love.draw()
     cam:pop()
 
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
-
+    --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
     Peeker.detach()
     if uiState.startSelection then
         selectrect.draw(uiState.startSelection)
@@ -994,30 +1004,6 @@ function love.keypressed(key)
         removeCustomPolygonVertex(wx, wy)
     end
 
-
-
-    if key == "r" and love.keyboard.isDown('lctrl') then
-        if Peeker.get_status() then
-            Peeker.isProcessing = true
-            Peeker.stop()
-        else
-            Peeker.isProcessing = false
-            Peeker.start({
-                --w = 320,   --optional
-                --h = 320,   --optional
-                scale = 1, --this overrides w, h above, this is preferred to keep aspect ratio
-                --n_threads = 1,
-                fps = FPS,
-                out_dir = string.format("awesome_video"), --optional
-                -- format = "mkv", --optional
-                overlay = "circle",                       --or "text"
-                post_clean_frames = false,
-                total_frames = 1000,
-            })
-        end
-        love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
-    end
-
     script.call('onKeyPress', key)
 end
 
@@ -1159,6 +1145,14 @@ local function handlePointer(x, y, id, action)
         else
             uiState.maybeHideSelectedPanel = true
         end
+
+        if recorder.isRecording and #hitted > 0 then
+            local wx, wy = cam:getWorldCoordinates(x, y)
+            local hitObject = hitted[1]:getBody():getUserData().thing
+            local localPointX, localPointY = hitObject.body:getLocalPoint(wx, wy)
+            recorder:recordObjectGrab(hitObject, localPointX, localPointY, worldState.mouseForce, worldState
+                .mouseDamping)
+        end
     elseif action == "released" then
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -1166,6 +1160,14 @@ local function handlePointer(x, y, id, action)
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)
+
+
+            if recorder.isRecording then
+                --local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
+                for _, obj in ipairs(releasedObjs) do
+                    recorder:recordObjectRelease(obj:getUserData().thing)
+                end
+            end
         end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)
