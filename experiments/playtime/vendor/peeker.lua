@@ -28,7 +28,7 @@ local DEF_FPS = 30
 local MAX_N_THREAD = love.system.getProcessorCount()
 local OS = love.system.getOS()
 
-local USE_FRAME_QUEUE = true
+local USE_FRAME_QUEUE = false
 
 local thread_code = [[
 require("love.image")
@@ -205,30 +205,37 @@ function Peeker.updateUsingQueue(dt)
 
     -- Check if there are frames left in the queue
     if #frame_queue == 0 then
-        -- print("All frames processed")
         return
     end
 
-    -- Assign frames to available threads
-    for _, thread in ipairs(threads) do
-        if not thread:isRunning() and #frame_queue > 0 then
-            local frame_number = table.remove(frame_queue, 1) -- Pull frame number from the queue
-            thread:start(image_data, frame_number, OPT.out_dir)
-            -- print("Processing frame:", frame_number)
-        end
+    -- Only process one frame at a time to maintain sequential order
+    local next_frame = frame_queue[1]  -- Look at next frame without removing it
+    local found_thread = false
 
-        local err = thread:getError()
-        if err then
-            print(err)
+    -- Find an available thread
+    for _, thread in ipairs(threads) do
+        if not thread:isRunning() then
+            thread:start(image_data, next_frame, OPT.out_dir)
+            found_thread = true
+            break
         end
     end
 
-    -- Wait for a thread to complete and log its result
-    for _, thread in ipairs(threads) do
-        local status = love.thread.getChannel("status"):pop()
-        if status then
+    -- If no thread was available, wait for one to complete
+    if not found_thread then
+        for _, thread in ipairs(threads) do
+            thread:wait()
+            break
+        end
+    end
+
+    -- Check for completed frames
+    local status = love.thread.getChannel("status"):pop()
+    if status then
+        -- Only remove the frame from queue if it's the next expected frame
+        if status == next_frame then
+            table.remove(frame_queue, 1)
             table.insert(processed_frames, status)
-            --print("Frame completed:", status)
         end
     end
 end

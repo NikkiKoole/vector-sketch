@@ -1,5 +1,6 @@
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local registry = require 'src.registry'
+
 local recorder = {
     isRecording = false,
     isReplaying = false,
@@ -11,20 +12,20 @@ local recorder = {
     objectStates = {} -- Store initial states of objects
 }
 
--- Event structure example:
-local eventExample = {
-    timestamp = 0.5,    -- Time since recording started
-    type = "mouse",     -- "mouse", "touch", "keyboard", "ui"
-    action = "pressed", -- "pressed", "released", "moved", etc.
-    data = {
-        x = 100,
-        y = 200,
-        button = 1,
-        -- Additional event-specific data
-    },
-    uiState = {},   -- Snapshot of relevant UI state
-    worldState = {} -- Snapshot of relevant world state
-}
+-- -- Event structure example:
+-- local eventExample = {
+--     timestamp = 0.5,    -- Time since recording started
+--     type = "mouse",     -- "mouse", "touch", "keyboard", "ui"
+--     action = "pressed", -- "pressed", "released", "moved", etc.
+--     data = {
+--         x = 100,
+--         y = 200,
+--         button = 1,
+--         -- Additional event-specific data
+--     },
+--     uiState = {},   -- Snapshot of relevant UI state
+--     worldState = {} -- Snapshot of relevant world state
+-- }
 
 function recorder:startRecording(layerIndex)
     self.isRecording = true
@@ -58,7 +59,7 @@ function recorder:update(dt)
                 local evt = events[i]
 
                 if evt.timestamp == self.currentTime then
-                    print('event at index ', i)
+                    -- print('event at index ', i)
                     recorder:processEvent(evt)
                 end
             end
@@ -99,7 +100,7 @@ function recorder:recordObjectGrab(object, grabPointX, grabPointY, force, dampin
             damping = damping
         }
     }
-    print(inspect(event))
+    --print(inspect(event))
     table.insert(self.events, event)
 end
 
@@ -117,7 +118,7 @@ function recorder:recordObjectRelease(object)
             finalAngularVelocity = object.body:getAngularVelocity()
         }
     }
-    print(inspect(event))
+    --print(inspect(event))
     table.insert(self.events, event)
 end
 
@@ -132,8 +133,8 @@ end
 
 function recorder:processEvent(event)
     --    print(inspect(event))
-    print(event.data.objectId)
-    print(registry.getBodyByID(event.data.objectId))
+    --print(event.data.objectId)
+    --print(registry.getBodyByID(event.data.objectId))
     if event.type == "object_interaction" then
         local currentObject = self:mapRecordedIdToCurrentObject(event.data.objectId)
         --      print(currentObject)
@@ -164,7 +165,7 @@ function recorder:processEvent(event)
                 )
             end
         elseif event.action == "position" then
-            print(inspect(currentObject))
+            --print(inspect(currentObject))
             currentObject:setPosition(event.data.x, event.data.y)
         else
             -- print('jo got smethign', inspect(event))
