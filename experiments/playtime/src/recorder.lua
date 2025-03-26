@@ -1,5 +1,5 @@
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
-
+local registry = require 'src.registry'
 local recorder = {
     isRecording = false,
     isReplaying = false,
@@ -29,6 +29,7 @@ local eventExample = {
 function recorder:startRecording(layerIndex)
     self.isRecording = true
     self.currentTime = 0
+    self.startTime = love.timer.getTime()
     self.activeLayer = layerIndex or #self.recordings + 1
     self.events = {}
 end
@@ -36,6 +37,7 @@ end
 function recorder:stopRecording()
     self.isRecording = false
     self.recordings[self.activeLayer] = self.events
+    print(#self.recordings, #self.events)
 end
 
 function recorder:startReplay()
@@ -52,9 +54,32 @@ function recorder:update(dt)
     if self.isReplaying then
         -- Process all recordings
         for layerIdx, events in ipairs(self.recordings) do
-            self:processEventsAtCurrentTime(events)
+            for i = 1, #events do
+                local evt = events[i]
+
+                if evt.timestamp == self.currentTime then
+                    print('event at index ', i)
+                    recorder:processEvent(evt)
+                end
+            end
+            -- self:processEventsAtCurrentTime(events)
         end
     end
+end
+
+function recorder:recordObjectSetPosition(bodyId, x, y)
+    local event = {
+        timestamp = self.currentTime,
+        type = "object_interaction",
+        action = "position",
+        data = {
+            objectId = bodyId,
+            x = x,
+            y = y
+        }
+    }
+    print(inspect(event))
+    table.insert(self.events, event)
 end
 
 function recorder:recordObjectGrab(object, grabPointX, grabPointY, force, damping)
@@ -100,12 +125,18 @@ end
 function recorder:mapRecordedIdToCurrentObject(recordedId)
     -- This needs to be implemented based on your object tracking system
     -- Could use position matching, object properties, or maintain an ID mapping
-    return self.objectMapping[recordedId]
+    --return self.objectMapping[recordedId]
+    -- print(recordedId, inspect(registry.bodies))
+    return registry.getBodyByID(recordedId)
 end
 
 function recorder:processEvent(event)
+    --    print(inspect(event))
+    print(event.data.objectId)
+    print(registry.getBodyByID(event.data.objectId))
     if event.type == "object_interaction" then
         local currentObject = self:mapRecordedIdToCurrentObject(event.data.objectId)
+        --      print(currentObject)
         if not currentObject then return end
 
         if event.action == "grab" then
@@ -132,6 +163,11 @@ function recorder:processEvent(event)
                     event.data.finalVelocity.y
                 )
             end
+        elseif event.action == "position" then
+            print(inspect(currentObject))
+            currentObject:setPosition(event.data.x, event.data.y)
+        else
+            -- print('jo got smethign', inspect(event))
         end
     end
 end

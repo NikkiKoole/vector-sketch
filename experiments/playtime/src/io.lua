@@ -14,7 +14,11 @@ local fixtures = require 'src.fixtures'
 
 local snap = require 'src.snap'
 
-function lib.load(data, world)
+function lib.reload(data, world)
+    lib.load(data, world, true)
+end
+
+function lib.load(data, world, reuseOldIds)
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then
         print("Error decoding JSON:", err)
@@ -35,10 +39,14 @@ function lib.load(data, world)
 
     local idMap = {}
     local function getNewId(oldId)
-        if idMap[oldId] == nil then
-            idMap[oldId] = uuid.generateID()
+        if not reuseOldIds then
+            if idMap[oldId] == nil then
+                idMap[oldId] = uuid.generateID()
+            end
+            return idMap[oldId]
+        else
+            return oldId
         end
-        return idMap[oldId]
     end
 
     if true then
@@ -133,6 +141,7 @@ function lib.load(data, world)
 
         -- Assign the 'thing' to the body's user data
         body:setUserData({ thing = thing })
+        print(thing.id, inspect(body:getUserData()))
         registry.registerBody(thing.id, body)
     end
 

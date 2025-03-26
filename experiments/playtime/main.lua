@@ -232,6 +232,16 @@ function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, ta
     script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
+function reloadScene(name)
+    local data = getFiledata(name):getString()
+    uiState.selectedJoint = nil
+    uiState.selectedObj = nil
+    eio.reload(data, world)
+    print("Scene loaded: " .. name)
+    print(inspect(registry.bodies))
+    return data
+end
+
 function loadScene(name)
     local data = getFiledata(name):getString()
     uiState.selectedJoint = nil
@@ -307,6 +317,10 @@ function maybeHotReload(dt)
 end
 
 function love.update(dt)
+    if recorder.isRecording or recorder.isReplaying then
+        recorder:update(dt)
+    end
+
     Peeker.update(dt)
     maybeHotReload(dt)
 
@@ -326,6 +340,9 @@ function love.update(dt)
         snap.update(scaled_dt)
     end
 
+
+
+
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
     --phys.handleUpdate(dt)
 
@@ -337,7 +354,12 @@ function love.update(dt)
         local rx, ry = mathutils.rotatePoint(offx, offy, 0, 0, uiState.draggingObj.body:getAngle())
         local oldPosX, oldPosY = uiState.draggingObj.body:getPosition()
         uiState.draggingObj.body:setPosition(wx + rx, wy + ry)
-
+        if recorder.isRecording then
+            local ud = uiState.draggingObj.body:getUserData()
+            -- print(inspect(uiState.draggingObj))
+            -- print(inspect(ud))
+            recorder:recordObjectSetPosition(uiState.draggingObj.id, wx + rx, wy + ry)
+        end
         -- figure out if we are dragging a group!
         if uiState.selectedBodies then
             for i = 1, #uiState.selectedBodies do
@@ -713,6 +735,8 @@ function love.draw()
 
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
+
+
     Peeker.detach()
     if uiState.startSelection then
         selectrect.draw(uiState.startSelection)
@@ -721,6 +745,13 @@ function love.draw()
 
     drawUI()
     script.call('drawUI')
+
+    if recorder.isRecording then
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.circle('fill', 20, 20, 20)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(string.format("%.1f", love.timer.getTime() - recorder.startTime), 5, 5)
+    end
 
     if uiState.maybeHideSelectedPanel then
         if (uiState.selectedSFixture) then
@@ -1146,13 +1177,13 @@ local function handlePointer(x, y, id, action)
             uiState.maybeHideSelectedPanel = true
         end
 
-        if recorder.isRecording and #hitted > 0 then
-            local wx, wy = cam:getWorldCoordinates(x, y)
-            local hitObject = hitted[1]:getBody():getUserData().thing
-            local localPointX, localPointY = hitObject.body:getLocalPoint(wx, wy)
-            recorder:recordObjectGrab(hitObject, localPointX, localPointY, worldState.mouseForce, worldState
-                .mouseDamping)
-        end
+        -- if recorder.isRecording and #hitted > 0 then
+        --     local wx, wy = cam:getWorldCoordinates(x, y)
+        --     local hitObject = hitted[1]:getBody():getUserData().thing
+        --     local localPointX, localPointY = hitObject.body:getLocalPoint(wx, wy)
+        --     recorder:recordObjectGrab(hitObject, localPointX, localPointY, worldState.mouseForce, worldState
+        --         .mouseDamping)
+        -- end
     elseif action == "released" then
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -1162,12 +1193,12 @@ local function handlePointer(x, y, id, action)
             script.call('onReleased', newReleased)
 
 
-            if recorder.isRecording then
-                --local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
-                for _, obj in ipairs(releasedObjs) do
-                    recorder:recordObjectRelease(obj:getUserData().thing)
-                end
-            end
+            -- if recorder.isRecording then
+            --     --local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
+            --     for _, obj in ipairs(releasedObjs) do
+            --         recorder:recordObjectRelease(obj:getUserData().thing)
+            --     end
+            -- end
         end
         if uiState.draggingObj then
             uiState.draggingObj.body:setAwake(true)

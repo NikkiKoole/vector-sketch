@@ -21,7 +21,7 @@ local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
-
+local FPS = 60
 local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
 local FGcolorHasChangedViaPalette
@@ -716,7 +716,7 @@ function lib.drawRecordingUI()
                     --h = 320,   --optional
                     scale = 1, --this overrides w, h above, this is preferred to keep aspect ratio
                     --n_threads = 1,
-                    fps = 60,
+                    fps = FPS,
                     out_dir = string.format("awesome_video"), --optional
                     -- format = "mkv", --optional
                     overlay = "circle",                       --or "text"
@@ -739,15 +739,22 @@ function lib.drawRecordingUI()
             if recorder.isRecording then
                 recorder:stopRecording()
             else
-                recorder:startRecording(0)
+                recorder:startRecording(1)
             end
         end
         nextRow()
+        -- nextRow()
+        -- local rewindbutton = ui.button(x, y, width, 'rewind state')
+        -- if rewindbutton then
+        --     local cwd = love.filesystem.getWorkingDirectory()
+        --     loadScene(cwd .. '/scripts/lekker.playtime.json')
+        -- end
         nextRow()
-        local rewindbutton = ui.button(x, y, width, 'rewind state')
-        if rewindbutton then
+        local replaybutton = ui.button(x, y, width, 'replay gestures')
+        if replaybutton then
             local cwd = love.filesystem.getWorkingDirectory()
-            loadScene(cwd .. '/scripts/lekker.playtime.json')
+            reloadScene(cwd .. '/scripts/lekker.playtime.json')
+            recorder:startReplay()
         end
     end)
 end
