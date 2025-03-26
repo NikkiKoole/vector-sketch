@@ -213,7 +213,7 @@ function love.load(args)
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
     local cwd = love.filesystem.getWorkingDirectory()
-    loadScene(cwd .. '/scripts/lekker.playtime.json')
+    reloadScene(cwd .. '/scripts/lekker.playtime.json')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)

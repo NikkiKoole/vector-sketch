@@ -38,6 +38,8 @@ function lib.load(data, world, reuseOldIds)
     -- Clear existing world
 
     local idMap = {}
+    -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
+    -- this isnt really used. so we just might as well just always use the oldid....
     local function getNewId(oldId)
         if not reuseOldIds then
             if idMap[oldId] == nil then
