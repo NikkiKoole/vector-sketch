@@ -28,7 +28,7 @@ local function makePrio(fixture)
     return 1
 end
 
-local function makePointerJoint(id, bodyToAttachTo, wx, wy, force, damp)
+function lib.makePointerJoint(id, bodyToAttachTo, wx, wy, force, damp)
     local pointerJoint = {}
     pointerJoint.id = id
     pointerJoint.jointBody = bodyToAttachTo
@@ -185,6 +185,9 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
             end
         end
     end
+
+    local createdmousejointdata = {}
+
     if #temp > 0 then
         table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
         lib.killMouseJointIfPossible(id)
@@ -199,13 +202,24 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
         end
 
         if (allowMouseJointMaking) then
-            table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force, damp))
+            local udID = temp[1].body:getUserData().thing.id
+            createdmousejointdata = {
+                pointerID = temp[1].id,
+                bodyID = udID,
+                --body = temp[1].body,
+                wx = temp[1].wx,
+                wy = temp[1].wy,
+                force = force,
+                damp = damp
+            }
+            table.insert(pointerJoints,
+                lib.makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force, damp))
         end
     end
     -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end
 
-    return #temp > 0, hitted
+    return #temp > 0, hitted, createdmousejointdata
 end
 
 return lib

@@ -18,25 +18,7 @@ function lib.reload(data, world)
     lib.load(data, world, true)
 end
 
-function lib.load(data, world, reuseOldIds)
-    local jsonData, pos, err = json.decode(data, 1, nil)
-    if err then
-        print("Error decoding JSON:", err)
-        return
-    end
-
-    -- Verify version
-    if jsonData then
-        if jsonData.version ~= "1.0" then
-            print("Unsupported save version:", jsonData.version)
-            return
-        end
-    else
-        print('failed loading json')
-        return
-    end
-    -- Clear existing world
-
+function lib.buildWorld(data, world, reuseOldIds)
     local idMap = {}
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well just always use the oldid....
@@ -62,7 +44,7 @@ function lib.load(data, world, reuseOldIds)
 
     local recreatedSFixtures = {}
     -- Iterate through saved bodies and recreate them
-    for _, bodyData in ipairs(jsonData.bodies) do
+    for _, bodyData in ipairs(data.bodies) do
         -- Create a new body
         local body = love.physics.newBody(world, bodyData.position[1], bodyData.position[2], bodyData.bodyType)
         body:setAngle(bodyData.angle)
@@ -151,7 +133,7 @@ function lib.load(data, world, reuseOldIds)
     -- only now we can patch up stuff with old ids in extra folder ..
 
     -- Iterate through saved joints and recreate them
-    for _, jointData in ipairs(jsonData.joints) do
+    for _, jointData in ipairs(data.joints) do
         local bodyA = registry.getBodyByID(getNewId(jointData.bodyA))
         local bodyB = registry.getBodyByID(getNewId(jointData.bodyB))
 
@@ -299,7 +281,27 @@ function lib.load(data, world, reuseOldIds)
             print("Failed to find bodies for joint:", jointData.id)
         end
     end
+end
 
+function lib.load(data, world, reuseOldIds)
+    local jsonData, pos, err = json.decode(data, 1, nil)
+    if err then
+        print("Error decoding JSON:", err)
+        return
+    end
+
+    -- Verify version
+    if jsonData then
+        if jsonData.version ~= "1.0" then
+            print("Unsupported save version:", jsonData.version)
+            return
+        end
+    else
+        print('failed loading json')
+        return
+    end
+    -- Clear existing world
+    lib.buildWorld(jsonData, world, reuseOldIds)
 
     snap.onSceneLoaded()
 
@@ -331,7 +333,8 @@ local function needsDimProperty(prop, shape)
     end
 end
 
-function lib.save(world, worldState, filename)
+
+function lib.gatherSaveData(world, worldState)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
         bodies = {},
@@ -543,7 +546,12 @@ function lib.save(world, worldState, filename)
             end
         end
     end
+    return saveData
+end
+
+function lib.save(world, worldState, filename)
     -- Serialize the data to JSON
+    local saveData = lib.gatherSaveData(world, worldState)
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file

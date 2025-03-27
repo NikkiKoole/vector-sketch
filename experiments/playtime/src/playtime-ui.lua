@@ -704,8 +704,33 @@ function lib.drawRecordingUI()
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         end
 
-        local peekerbutton = ui.button(x, y, width, Peeker.get_status() and 'RECORDING video' or 'record video')
-        if peekerbutton then
+        local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
+        if addcheckpointbutton then
+            local saveData = eio.gatherSaveData(world, worldState)
+            table.insert(checkpoints, { saveData = saveData })
+        end
+        nextRow()
+        local chars = { 'A', 'B', 'C', 'D', 'E', 'F' }
+        for i = 1, #checkpoints do
+            if ui.button(x + (i - 1) * 45, y, 40, chars[i]) then
+                uiState.selectedJoint = nil
+                uiState.selectedObj = nil
+                activeCheckpointIndex = i
+                eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
+            end
+        end
+        y = y + 15
+        love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
+        nextRow()
+
+
+        local function startFromCurrentCheckpoint()
+            uiState.selectedJoint = nil
+            uiState.selectedObj = nil
+            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
+        end
+
+        local function videoing()
             if Peeker.get_status() then
                 Peeker.isProcessing = true
                 Peeker.stop()
@@ -725,37 +750,57 @@ function lib.drawRecordingUI()
                 })
             end
         end
+
+        if activeCheckpointIndex and ((not recorder.isRecording and worldState.paused) or recorder.isRecording) then
+            local pointerbutton = ui.button(x, y, width,
+                recorder.isRecording and 'RECORDING gestures' or 'record gestures')
+            if pointerbutton then
+                if recorder.isRecording then
+                    recorder:stopRecording()
+                else
+                    startFromCurrentCheckpoint()
+                    recorder:startRecording(1)
+                end
+            end
+            nextRow()
+
+            local replaybutton = ui.button(x, y, width, 'replay gestures')
+            if replaybutton then
+                startFromCurrentCheckpoint()
+                recorder:startReplay()
+            end
+        end
+        y = y + 15
+        love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
         nextRow()
+        nextRow()
+
+
+        -- only allowed to start recording from pause
+        if activeCheckpointIndex then
+            local peekerbutton = ui.button(x, y, width,
+                Peeker.get_status() and 'RECORDING gesture video' or 'record gesture video')
+            if peekerbutton then
+                if not Peeker.get_status() then
+                    startFromCurrentCheckpoint()
+                    recorder:startReplay()
+                end
+                videoing()
+            end
+            nextRow()
+        end
         local saveloc = ui.button(x, y, width, 'open savedir')
         if saveloc then
             love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
         end
 
         nextRow()
-        love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
-        y = y + 40
-        local pointerbutton = ui.button(x, y, width, recorder.isRecording and 'RECORDING gestures' or 'record gestures')
-        if pointerbutton then
-            if recorder.isRecording then
-                recorder:stopRecording()
-            else
-                recorder:startRecording(1)
-            end
-        end
-        nextRow()
-        -- nextRow()
-        -- local rewindbutton = ui.button(x, y, width, 'rewind state')
-        -- if rewindbutton then
-        --     local cwd = love.filesystem.getWorkingDirectory()
-        --     loadScene(cwd .. '/scripts/lekker.playtime.json')
+        -- local peekerbutton2 = ui.button(x, y, width,
+        --     Peeker.get_status() and 'RECORDING video' or 'record vanilla video')
+        -- if peekerbutton2 then
+        --     videoing(false)
         -- end
         nextRow()
-        local replaybutton = ui.button(x, y, width, 'replay gestures')
-        if replaybutton then
-            local cwd = love.filesystem.getWorkingDirectory()
-            reloadScene(cwd .. '/scripts/lekker.playtime.json')
-            recorder:startReplay()
-        end
     end)
 end
 

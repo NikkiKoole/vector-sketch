@@ -214,6 +214,9 @@ function love.load(args)
     --loadScriptAndScene('puppet')
     local cwd = love.filesystem.getWorkingDirectory()
     reloadScene(cwd .. '/scripts/lekker.playtime.json')
+
+    checkpoints = {}
+    activeCheckpointIndex = nil
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -339,8 +342,16 @@ function love.update(dt)
 
         snap.update(scaled_dt)
     end
+    function tablelength(T)
+        local count = 0
+        for _ in pairs(T) do count = count + 1 end
+        return count
+    end
 
-
+    if recorder.isRecording and tablelength(recorder.recordingMouseJoints) > 0 then
+        recorder:recordMouseJointUpdates(cam)
+        --print('hwo to record mousejoint movement')
+    end
 
 
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
@@ -1015,6 +1026,7 @@ function love.keypressed(key)
             uiState.quitDialogOpened = false
         else
             worldState.paused = not worldState.paused
+            if recorder.isRecording then recorder:recordPause(worldState.paused) end
         end
     end
     if key == 'f5' then
@@ -1129,7 +1141,8 @@ local function handlePointer(x, y, id, action)
             damp = worldState.mouseDamping
         }
 
-        local _, hitted = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams, not worldState.paused)
+        local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams,
+            not worldState.paused)
 
         if (uiState.selectedBodies and #hitted == 0) then
             uiState.selectedBodies = nil
@@ -1176,7 +1189,11 @@ local function handlePointer(x, y, id, action)
         else
             uiState.maybeHideSelectedPanel = true
         end
-
+        if recorder.isRecording and #hitted > 0 and not worldState.paused and madedata then
+            --madedata.activeLayer = recorder.activeLayer
+            recorder:recordMouseJointStart(madedata)
+            -- print('should record a moujoint creation...', inspect(madedata))
+        end
         -- if recorder.isRecording and #hitted > 0 then
         --     local wx, wy = cam:getWorldCoordinates(x, y)
         --     local hitObject = hitted[1]:getBody():getUserData().thing
@@ -1191,7 +1208,12 @@ local function handlePointer(x, y, id, action)
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)
-
+            if recorder.isRecording and not worldState.paused then
+                for _, obj in ipairs(releasedObjs) do
+                    recorder:recordMouseJointFinish(id, obj:getUserData().thing.id)
+                    --  print('should record a moujoint deletion...', inspect(obj:getUserData().thing.id))
+                end
+            end
 
             -- if recorder.isRecording then
             --     --local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)

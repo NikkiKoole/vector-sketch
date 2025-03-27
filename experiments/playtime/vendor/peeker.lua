@@ -153,7 +153,7 @@ function Peeker.stop(finalize)
     local cmd
     print(path)
     if OPT.format == "mp4" then
-        flags = "-filter:v format=yuv420p -movflags +faststart"
+        flags = "-preset slow -crf 16 -filter:v format=yuv420p -movflags +faststart"
     end
 
     local out_file = string.format("../%s.%s", OPT.out_dir, OPT.format)
