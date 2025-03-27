@@ -783,6 +783,7 @@ function lib.drawRecordingUI()
                 Peeker.get_status() and 'RECORDING gesture video' or 'record gesture video')
             if peekerbutton then
                 if not Peeker.get_status() then
+                    worldState.paused = true -- it starts recording from pause so should start playing like that too
                     startFromCurrentCheckpoint()
                     recorder:startReplay()
                 end
