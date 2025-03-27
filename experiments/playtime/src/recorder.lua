@@ -36,6 +36,9 @@ function recorder:startRecording(layerIndex)
     self.startTime = love.timer.getTime()
     self.activeLayer = layerIndex or #self.recordings + 1
     self.events = {}
+    self.recordings = {}
+    self.recordingMouseJoints = {} -- here we save the mousejoints (or data to recreate them) whilst recording them
+    self.replayingMouseJoints = {} --
 end
 
 function recorder:stopRecording()
@@ -135,7 +138,7 @@ function recorder:recordMouseJointStart(data)
             damp = data.damp
         }
     }
-    --    print(inspect(event))
+    print(inspect(data))
     self.recordingMouseJoints[data.pointerID .. data.bodyID .. self.activeLayer] = event
     table.insert(self.events, event)
 end
@@ -289,7 +292,7 @@ function recorder:processEvent(event)
             -- -- local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
             -- local wx, wy = cam:getWorldCoordinates(mx, my)
             self.replayingMouseJoints[data.pointerId .. data.objectId .. self.activeLayer].joint:setTarget(data.x, data
-            .y)
+                .y)
             -- mj.joint:setTarget(wx, wy)
         elseif event.action == 'mousejoint-end' then
             print('jo got smethign', inspect(event))

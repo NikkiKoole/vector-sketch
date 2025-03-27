@@ -22,6 +22,8 @@ function lib.buildWorld(data, world, reuseOldIds)
     local idMap = {}
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well just always use the oldid....
+
+    print(reuseOldIds)
     local function getNewId(oldId)
         if not reuseOldIds then
             if idMap[oldId] == nil then
@@ -125,7 +127,7 @@ function lib.buildWorld(data, world, reuseOldIds)
 
         -- Assign the 'thing' to the body's user data
         body:setUserData({ thing = thing })
-        print(thing.id, inspect(body:getUserData()))
+        --  print(thing.id, inspect(body:getUserData()))
         registry.registerBody(thing.id, body)
     end
 

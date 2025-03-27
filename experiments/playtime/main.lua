@@ -209,14 +209,14 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    --loadScriptAndScene('straight')
+    loadScriptAndScene('straight')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
-    local cwd = love.filesystem.getWorkingDirectory()
-    reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    --local cwd = love.filesystem.getWorkingDirectory()
+    --reloadScene(cwd .. '/scripts/lekker.playtime.json')
 
     checkpoints = {}
-    activeCheckpointIndex = nil
+    activeCheckpointIndex = 0
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -261,7 +261,7 @@ function loadScriptAndScene(id)
     luainfo = love.filesystem.getInfo(luaPath)
     if (jsoninfo and luainfo) then
         local cwd = love.filesystem.getWorkingDirectory()
-        loadScene(cwd .. jsonPath)
+        reloadScene(cwd .. jsonPath)
         loadAndRunScript(cwd .. luaPath)
     else
         print('issue loading both files.')
@@ -1189,7 +1189,7 @@ local function handlePointer(x, y, id, action)
         else
             uiState.maybeHideSelectedPanel = true
         end
-        if recorder.isRecording and #hitted > 0 and not worldState.paused and madedata then
+        if recorder.isRecording and #hitted > 0 and not worldState.paused and madedata.bodyID then
             --madedata.activeLayer = recorder.activeLayer
             recorder:recordMouseJointStart(madedata)
             -- print('should record a moujoint creation...', inspect(madedata))

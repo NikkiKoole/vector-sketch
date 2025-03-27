@@ -704,6 +704,13 @@ function lib.drawRecordingUI()
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         end
 
+        local function startFromCurrentCheckpoint()
+            uiState.selectedJoint = nil
+            uiState.selectedObj = nil
+            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
+            sceneScript.onStart()
+        end
+
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
         if addcheckpointbutton then
             local saveData = eio.gatherSaveData(world, worldState)
@@ -713,10 +720,8 @@ function lib.drawRecordingUI()
         local chars = { 'A', 'B', 'C', 'D', 'E', 'F' }
         for i = 1, #checkpoints do
             if ui.button(x + (i - 1) * 45, y, 40, chars[i]) then
-                uiState.selectedJoint = nil
-                uiState.selectedObj = nil
                 activeCheckpointIndex = i
-                eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
+                startFromCurrentCheckpoint()
             end
         end
         y = y + 15
@@ -724,11 +729,7 @@ function lib.drawRecordingUI()
         nextRow()
 
 
-        local function startFromCurrentCheckpoint()
-            uiState.selectedJoint = nil
-            uiState.selectedObj = nil
-            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
-        end
+
 
         local function videoing()
             if Peeker.get_status() then
@@ -1505,7 +1506,7 @@ local accordionStatesSO = {
 function lib.drawUpdateSelectedObjectUI()
     -- Define a table to keep track of accordion states
 
-
+    if recorder.isRecording then return end
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
