@@ -280,7 +280,7 @@ function Peeker.detach()
 
     love.graphics.pop()
     love.graphics.setCanvas()
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(1, 1, 1, 1)
 
     love.graphics.push()
     love.graphics.scale(OPT.orig_sx, OPT.orig_sy)

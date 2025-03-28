@@ -707,7 +707,7 @@ function lib.drawRecordingUI()
         local function startFromCurrentCheckpoint()
             uiState.selectedJoint = nil
             uiState.selectedObj = nil
-            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
+            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, cam, true)
             --
 
             if sceneScript then sceneScript.onStart() end
@@ -715,7 +715,7 @@ function lib.drawRecordingUI()
 
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
         if addcheckpointbutton then
-            local saveData = eio.gatherSaveData(world, worldState)
+            local saveData = eio.gatherSaveData(world, cam)
             table.insert(checkpoints, { saveData = saveData, recordings = {} })
         end
         nextRow()

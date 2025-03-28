@@ -14,11 +14,11 @@ local fixtures = require 'src.fixtures'
 
 local snap = require 'src.snap'
 
-function lib.reload(data, world)
-    lib.load(data, world, true)
+function lib.reload(data, world, cam)
+    lib.load(data, world, cam, true)
 end
 
-function lib.buildWorld(data, world, reuseOldIds)
+function lib.buildWorld(data, world, cam, reuseOldIds)
     local idMap = {}
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well just always use the oldid....
@@ -43,6 +43,13 @@ function lib.buildWorld(data, world, reuseOldIds)
     end
 
     snap.resetList()
+
+    if data.camera then
+        cam:setTranslation(data.camera.x, data.camera.y)
+        cam:setScale(data.camera.scale)
+        --print(inspect(cam))
+        --print('camera in saved file found.', data.camera.x, data.camera.y)
+    end
 
     local recreatedSFixtures = {}
     -- Iterate through saved bodies and recreate them
@@ -285,7 +292,7 @@ function lib.buildWorld(data, world, reuseOldIds)
     end
 end
 
-function lib.load(data, world, reuseOldIds)
+function lib.load(data, world, cam, reuseOldIds)
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then
         print("Error decoding JSON:", err)
@@ -303,7 +310,7 @@ function lib.load(data, world, reuseOldIds)
         return
     end
     -- Clear existing world
-    lib.buildWorld(jsonData, world, reuseOldIds)
+    lib.buildWorld(jsonData, world, cam, reuseOldIds)
 
     snap.onSceneLoaded()
 
@@ -336,11 +343,12 @@ local function needsDimProperty(prop, shape)
 end
 
 
-function lib.gatherSaveData(world, worldState)
+function lib.gatherSaveData(world, camera)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
         bodies = {},
-        joints = {}
+        joints = {},
+        camera = {}
     }
     for _, body in pairs(world:getBodies()) do
         local userData = body:getUserData()
@@ -548,12 +556,20 @@ function lib.gatherSaveData(world, worldState)
             end
         end
     end
+
+    local camx, camy = camera:getTranslation()
+    saveData.camera = {
+        rotation = camera:getRotation(),
+        x = camx,
+        y = camy,
+        scale = camera:getScale()
+    }
     return saveData
 end
 
-function lib.save(world, worldState, filename)
+function lib.save(world, camera, filename)
     -- Serialize the data to JSON
-    local saveData = lib.gatherSaveData(world, worldState)
+    local saveData = lib.gatherSaveData(world, camera)
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file

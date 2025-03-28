@@ -249,7 +249,7 @@ function loadScene(name)
     local data = getFiledata(name):getString()
     uiState.selectedJoint = nil
     uiState.selectedObj = nil
-    eio.load(data, world)
+    eio.load(data, world, cam)
     print("Scene loaded: " .. name)
     return data
 end
@@ -584,7 +584,7 @@ function drawUI()
             end
             if ui.button(320, 500, 200, 'save') then
                 uiState.saveDialogOpened = false
-                eio.save(world, worldState, uiState.saveName)
+                eio.save(world, cam, uiState.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
                 uiState.saveDialogOpened = false
@@ -631,7 +631,7 @@ function love.draw()
 
     box2dDrawTextured.makeCombinedImages()
     cam:push()
-
+    love.graphics.setColor(1, 1, 1, 1)
     box2dDraw.drawWorld(world, worldState.debugDrawMode)
     box2dDrawTextured.drawTexturedWorld(world)
 
@@ -1028,6 +1028,9 @@ function love.keypressed(key)
             worldState.paused = not worldState.paused
             if recorder.isRecording then recorder:recordPause(worldState.paused) end
         end
+    end
+    if key == "c" then
+        love.graphics.captureScreenshot(os.time() .. ".png")
     end
     if key == 'f5' then
         worldState.paused = true
