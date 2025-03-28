@@ -1,5 +1,11 @@
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local registry = require 'src.registry'
+local utils = require 'src.utils'
+function tablelength(T)
+    local count = 0
+    for _ in pairs(T) do count = count + 1 end
+    return count
+end
 
 local recorder = {
     isRecording = false,
@@ -11,52 +17,41 @@ local recorder = {
     events = {},               -- Current layer's events
     --objectStates = {},         -- Store initial states of objects
     recordingMouseJoints = {}, -- here we save the mousejoints (or data to recreate them) whilst recording them
-    replayingMouseJoints = {}  -- here we keep the actual mousejoints that have been createdwhile replaying a recording.
-
+    replayingMouseJoints = {}, -- here we keep the actual mousejoints that have been createdwhile replaying a recording.
+    replayIndices = {}
 }
-
--- -- Event structure example:
--- local eventExample = {
---     timestamp = 0.5,    -- Time since recording started
---     type = "mouse",     -- "mouse", "touch", "keyboard", "ui"
---     action = "pressed", -- "pressed", "released", "moved", etc.
---     data = {
---         x = 100,
---         y = 200,
---         button = 1,
---         -- Additional event-specific data
---     },
---     uiState = {},   -- Snapshot of relevant UI state
---     worldState = {} -- Snapshot of relevant world state
--- }
 
 function recorder:startRecording(layerIndex)
     self.isRecording = true
     self.currentTime = 0
     self.startTime = love.timer.getTime()
     self.activeLayer = layerIndex or #self.recordings + 1
-    self.events = {}
-    self.recordings = {}
+    --self.events = {}
+    --self.recordings = {}
+
+    self.replayIndices = {}
     self.recordingMouseJoints = {} -- here we save the mousejoints (or data to recreate them) whilst recording them
     self.replayingMouseJoints = {} --
+
+    print('started recording on layer', self.activeLayer, layerIndex)
 end
 
 function recorder:stopRecording()
     self.isRecording = false
-    self.recordings[self.activeLayer] = self.events
+    self.recordings[self.activeLayer] = utils.deepCopy(self.events)
+    self.events = {}
+    -- self.recordings.layerindex = self.activeLayer
     -- print(#self.recordings, #self.events)
 end
 
 function recorder:startReplay()
     self.isReplaying = true
     self.currentTime = 0
-    -- Save initial world state
-end
 
-function tablelength(T)
-    local count = 0
-    for _ in pairs(T) do count = count + 1 end
-    return count
+    for i = 1, #self.recordings do
+        self.replayIndices[i] = 1
+    end
+    -- Save initial world state
 end
 
 function recorder:update(dt)
@@ -66,13 +61,19 @@ function recorder:update(dt)
 
     if self.isReplaying then
         -- Process all recordings
-        for layerIdx, events in ipairs(self.recordings) do
+        for layerIdx = 1, #self.recordings do
+            local events = self.recordings[layerIdx]
+            --for layerIdx, events in ipairs(self.recordings) do
+            --  local startIdx = self.replayIndices[layerIdx]
+            --  local batchSize = 3
+            -- local endIdx = math.min(startIdx + batchSize, #events)
             for i = 1, #events do
                 local evt = events[i]
                 -- print(evt.timestamp, self.currentTime)
                 if evt.timestamp == self.currentTime then
-                    print('event at index ', i, #events)
-                    recorder:processEvent(evt)
+                    --print('event at index ', i, #events)
+                    recorder:processEvent(evt, layerIdx)
+                    self.replayIndices[layerIdx] = i
                 end
             end
             -- self:processEventsAtCurrentTime(events)
@@ -89,16 +90,8 @@ local function getPointerPosition(id)
 end
 function recorder:recordMouseJointUpdates(cam)
     for k, v in pairs(self.recordingMouseJoints) do
-        --count = count + 1
-
         if v.data.pointerId then
             local x, y = getPointerPosition(v.data.pointerId)
-
-
-            -- local mx = data.x
-            -- local my = data.y
-            --local cam = data.cam
-            -- local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(x, y)
 
             local event = {
@@ -106,25 +99,19 @@ function recorder:recordMouseJointUpdates(cam)
                 timestamp = self.currentTime,
                 action = "mousejoint-update",
                 data = {
-                    --cam = cam,
                     pointerId = v.data.pointerId,
                     objectId = v.data.objectId,
                     x = wx,
                     y = wy
                 }
             }
-            -- print(inspect(event))
+
             table.insert(self.events, event)
         end
     end
 end
 
 function recorder:recordMouseJointStart(data)
-    -- local created = box2dPointerJoints.makePointerJoint(data.id, registry.getBodyByID(data.udID), data.wx, data.wy,
-    --     data.force, data
-    --     .damp)
-    -- print(created)
-
     local event = {
         type = "object_interaction",
         timestamp = self.currentTime,
@@ -138,7 +125,7 @@ function recorder:recordMouseJointStart(data)
             damp = data.damp
         }
     }
-    print(inspect(data))
+    --print(inspect(data))
     self.recordingMouseJoints[data.pointerID .. data.bodyID .. self.activeLayer] = event
     table.insert(self.events, event)
 end
@@ -183,102 +170,30 @@ function recorder:recordObjectSetPosition(bodyId, x, y)
             y = y
         }
     }
-    print(inspect(event))
+    --print(inspect(event))
     table.insert(self.events, event)
 end
 
--- function recorder:recordObjectGrab(object, grabPointX, grabPointY, force, damping)
---     if not self.isRecording then return end
-
---     local event = {
---         timestamp = self.currentTime,
---         type = "object_interaction",
---         action = "grab",
---         data = {
---             objectId = object.id,
---             relativeGrabPoint = {
---                 x = grabPointX,
---                 y = grabPointY
---             },
---             force = force,
---             damping = damping
---         }
---     }
---     --print(inspect(event))
---     table.insert(self.events, event)
--- end
-
--- function recorder:recordObjectRelease(object)
---     if not self.isRecording then return end
-
---     local vx, vy = object.body:getLinearVelocity()
---     local event = {
---         timestamp = self.currentTime,
---         type = "object_interaction",
---         action = "release",
---         data = {
---             objectId = object.id,
---             finalVelocity = { x = vx, y = vy },
---             finalAngularVelocity = object.body:getAngularVelocity()
---         }
---     }
---     --print(inspect(event))
---     table.insert(self.events, event)
--- end
-
 -- During replay, we'll need to map recorded object IDs to current objects
 function recorder:mapRecordedIdToCurrentObject(recordedId)
-    -- This needs to be implemented based on your object tracking system
-    -- Could use position matching, object properties, or maintain an ID mapping
-    --return self.objectMapping[recordedId]
-    -- print(recordedId, inspect(registry.bodies))
     return registry.getBodyByID(recordedId)
 end
 
-function recorder:processEvent(event)
-    --    print(inspect(event))
-    --print(event.data.objectId)
-    --print(registry.getBodyByID(event.data.objectId))
+function recorder:processEvent(event, layerIdx)
     if event.type == "object_interaction" then
         local currentObject = self:mapRecordedIdToCurrentObject(event.data.objectId)
-        --      print(currentObject)
+
         if not currentObject then return end
 
-        -- if event.action == "grab" then
-        --     local grabPoint = {
-        --         x = event.data.relativeGrabPoint.x * currentObject.width,
-        --         y = event.data.relativeGrabPoint.y * currentObject.height
-        --     }
-        --     -- Apply the grab using your existing pointer joint system
-        --     box2dPointerJoints.handlePointerPressed(
-        --         grabPoint.x,
-        --         grabPoint.y,
-        --         'replay',
-        --         {
-        --             pointerForceFunc = function() return event.data.force end,
-        --             damp = event.data.damping
-        --         }
-        --     )
-        -- elseif event.action == "release" then
-        --     box2dPointerJoints.handlePointerReleased(0, 0, 'replay')
-        --     -- Optionally apply recorded velocity
-        --     if event.data.finalVelocity then
-        --         currentObject.body:setLinearVelocity(
-        --             event.data.finalVelocity.x,
-        --             event.data.finalVelocity.y
-        --         )
-        --     end
-        -- else
         if event.action == "position" then
-            --print(inspect(currentObject))
             currentObject:setPosition(event.data.x, event.data.y)
         elseif event.action == 'mousejoint-start' then
             local data = event.data
             local created = box2dPointerJoints.makePointerJoint(
                 data.pointerId, registry.getBodyByID(data.objectId), data.wx, data.wy,
                 data.force, data.damp)
-            print(created)
-            self.replayingMouseJoints[data.pointerId .. data.objectId .. self.activeLayer] =
+            --print(created)
+            self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] =
             {
                 joint = created.joint,
                 body = created.jointBody,
@@ -286,27 +201,18 @@ function recorder:processEvent(event)
             }
         elseif event.action == 'mousejoint-update' then
             local data = event.data
-            -- local mx = data.x
-            -- local my = data.y
-            -- local cam = data.cam
-            -- -- local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
-            -- local wx, wy = cam:getWorldCoordinates(mx, my)
-            self.replayingMouseJoints[data.pointerId .. data.objectId .. self.activeLayer].joint:setTarget(data.x, data
-                .y)
-            -- mj.joint:setTarget(wx, wy)
-        elseif event.action == 'mousejoint-end' then
-            print('jo got smethign', inspect(event))
-            local data = event.data
 
-            local is = self.replayingMouseJoints[data.pointerId .. data.objectId .. self.activeLayer]
+            self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx].joint:setTarget(data.x, data
+                .y)
+        elseif event.action == 'mousejoint-end' then
+            local data = event.data
+            local is = self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx]
 
             if is and is.joint then
                 is.joint:destroy()
             end
 
-            self.replayingMouseJoints[data.pointerId .. data.objectId .. self.activeLayer] = nil
-            print(inspect(self.replayingMouseJoints))
-            print(tablelength(self.replayingMouseJoints))
+            self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] = nil
         else
             print(inspect(event))
         end

@@ -23,7 +23,7 @@ function lib.buildWorld(data, world, reuseOldIds)
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well just always use the oldid....
 
-    print(reuseOldIds)
+    --print(reuseOldIds)
     local function getNewId(oldId)
         if not reuseOldIds then
             if idMap[oldId] == nil then

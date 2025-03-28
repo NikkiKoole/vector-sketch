@@ -708,19 +708,27 @@ function lib.drawRecordingUI()
             uiState.selectedJoint = nil
             uiState.selectedObj = nil
             eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, true)
-            sceneScript.onStart()
+            --
+
+            if sceneScript then sceneScript.onStart() end
         end
 
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
         if addcheckpointbutton then
             local saveData = eio.gatherSaveData(world, worldState)
-            table.insert(checkpoints, { saveData = saveData })
+            table.insert(checkpoints, { saveData = saveData, recordings = {} })
         end
         nextRow()
         local chars = { 'A', 'B', 'C', 'D', 'E', 'F' }
         for i = 1, #checkpoints do
             if ui.button(x + (i - 1) * 45, y, 40, chars[i]) then
+                if activeCheckpointIndex > 0 then
+                    checkpoints[activeCheckpointIndex].recordings = utils.deepCopy(recorder.recordings)
+                end
+
                 activeCheckpointIndex = i
+
+                recorder.recordings = utils.deepCopy(checkpoints[activeCheckpointIndex].recordings)
                 startFromCurrentCheckpoint()
             end
         end
@@ -752,7 +760,7 @@ function lib.drawRecordingUI()
             end
         end
 
-        if activeCheckpointIndex and ((not recorder.isRecording and worldState.paused) or recorder.isRecording) then
+        if activeCheckpointIndex > 0 and ((not recorder.isRecording and worldState.paused) or recorder.isRecording) then
             local pointerbutton = ui.button(x, y, width,
                 recorder.isRecording and 'RECORDING gestures' or 'record gestures')
             if pointerbutton then
@@ -760,15 +768,18 @@ function lib.drawRecordingUI()
                     recorder:stopRecording()
                 else
                     startFromCurrentCheckpoint()
-                    recorder:startRecording(1)
+                    recorder:startRecording()
+                    recorder:startReplay() -- needed to replay earlier recordings if any.
                 end
             end
-            nextRow()
+            if #recorder.recordings > 0 then
+                nextRow()
 
-            local replaybutton = ui.button(x, y, width, 'replay gestures')
-            if replaybutton then
-                startFromCurrentCheckpoint()
-                recorder:startReplay()
+                local replaybutton = ui.button(x, y, width, 'replay gestures')
+                if replaybutton then
+                    startFromCurrentCheckpoint()
+                    recorder:startReplay()
+                end
             end
         end
         y = y + 15
@@ -778,7 +789,7 @@ function lib.drawRecordingUI()
 
 
         -- only allowed to start recording from pause
-        if activeCheckpointIndex then
+        if activeCheckpointIndex > 0 then
             local peekerbutton = ui.button(x, y, width,
                 Peeker.get_status() and 'RECORDING gesture video' or 'record gesture video')
             if peekerbutton then

@@ -209,11 +209,11 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    loadScriptAndScene('straight')
+    --loadScriptAndScene('straight')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    local cwd = love.filesystem.getWorkingDirectory()
+    reloadScene(cwd .. '/scripts/lekker.playtime.json')
 
     checkpoints = {}
     activeCheckpointIndex = 0
