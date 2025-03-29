@@ -1273,34 +1273,36 @@ function lib.drawSelectedSFixture()
                 ui.label(x + 50, y, 'patchHex1', { 1, 1, 1, 0.2 })
                 nextRow()
 
-                local patch1TX = ui.sliderWithInput(myID .. ' patch1TX', x, y, ROW_WIDTH, -1, 1,
+                local patch1TX = ui.sliderWithInput(myID .. ' patch1TX', x, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1TX or 0)
-                ui.label(x, y, ' patch1TX')
+                ui.label(x, y, 'TX')
                 if patch1TX and patch1TX ~= oldTexFixUD.extra.patch1TX then
                     oldTexFixUD.extra.patch1TX = patch1TX
                     oldTexFixUD.extra.dirty = true
                 end
-                nextRow()
-                local patch1TY = ui.sliderWithInput(myID .. ' patch1TY', x, y, ROW_WIDTH, -1, 1,
+                -- nextRow()
+                local patch1TY = ui.sliderWithInput(myID .. ' patch1TY', x + 140, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1TY or 0)
-                ui.label(x, y, ' patch1TY')
+                ui.label(x + 140, y, 'TY')
                 if patch1TY and patch1TY ~= oldTexFixUD.extra.patch1TY then
                     oldTexFixUD.extra.patch1TY = patch1TY
                     oldTexFixUD.extra.dirty = true
                 end
+
+
                 nextRow()
 
-                local patch1SX = ui.sliderWithInput(myID .. ' patch1SX', x, y, ROW_WIDTH, -1, 1,
+                local patch1SX = ui.sliderWithInput(myID .. ' patch1SX', x, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1SX or 1)
-                ui.label(x, y, ' patch1SX')
+                ui.label(x, y, 'SX')
                 if patch1SX and patch1SX ~= oldTexFixUD.extra.patch1SX then
                     oldTexFixUD.extra.patch1SX = patch1SX
                     oldTexFixUD.extra.dirty = true
                 end
-                nextRow()
-                local patch1SY = ui.sliderWithInput(myID .. ' patch1SY', x, y, ROW_WIDTH, -1, 1,
+                -- nextRow()
+                local patch1SY = ui.sliderWithInput(myID .. ' patch1SY', x + 140, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1SY or 1)
-                ui.label(x, y, ' patch1SY')
+                ui.label(x + 140, y, 'SY')
                 if patch1SY and patch1SY ~= oldTexFixUD.extra.patch1SY then
                     oldTexFixUD.extra.patch1SY = patch1SY
                     oldTexFixUD.extra.dirty = true
