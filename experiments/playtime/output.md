@@ -76,7 +76,7 @@ function love.load(args)
     love.physics.setMeter(state.world.meter)
 
 
-    world = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
+    state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
 
 
     local w, h = love.graphics.getDimensions()
@@ -108,7 +108,7 @@ function love.load(args)
     --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
 
     if state.world.playWithSoftbodies then
-        local b = blob.softbody(world, 500, 0, 102, 1, 1)
+        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
         b:setFrequency(3)
         b:setDamping(0.1)
         --b:setFriction(1)
@@ -118,7 +118,7 @@ function love.load(args)
             0, 500, 800, 500,
             800, 800, 0, 800
         }
-        local b = blob.softsurface(world, points, 120, "dynamic")
+        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
         table.insert(state.world.softbodies, b)
         b:setJointFrequency(2)
         b:setJointDamping(.1)
@@ -127,18 +127,18 @@ function love.load(args)
     end
 
 
-    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
     --local cwd = love.filesystem.getWorkingDirectory()
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    --loadScriptAndScene('straight')
+    loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
-    local cwd = love.filesystem.getWorkingDirectory()
-    reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    -- local cwd = love.filesystem.getWorkingDirectory()
+    -- reloadScene(cwd .. '/scripts/lekker.playtime.json')
 
     checkpoints = {}
     activeCheckpointIndex = 0
@@ -164,7 +164,7 @@ function reloadScene(name)
     local data = getFiledata(name):getString()
     state.ui.selectedJoint = nil
     state.ui.selectedObj = nil
-    eio.reload(data, world)
+    eio.reload(data, state.physicsWorld)
     print("Scene loaded: " .. name)
     print(inspect(registry.bodies))
     return data
@@ -174,7 +174,7 @@ function loadScene(name)
     local data = getFiledata(name):getString()
     state.ui.selectedJoint = nil
     state.ui.selectedObj = nil
-    eio.load(data, world, cam)
+    eio.load(data, state.physicsWorld, cam)
     print("Scene loaded: " .. name)
     return data
 end
@@ -220,7 +220,7 @@ function loadAndRunScript(name)
     local data = getFiledata(name):getString()
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
-    script.setEnv({ worldState = state.world, world = world })
+    script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
     script.call('onUnload')
     script.call('onStart')
 
@@ -261,7 +261,7 @@ function love.update(dt)
         end
 
         for i = 1, 1 do
-            world:update(scaled_dt)
+            state.physicsWorld:update(scaled_dt)
         end
         script.call('update', scaled_dt)
 
@@ -480,7 +480,7 @@ function drawUI()
             end
             if ui.button(320, 500, 200, 'save') then
                 state.ui.saveDialogOpened = false
-                eio.save(world, cam, state.ui.saveName)
+                eio.save(state.physicsWorld, cam, state.ui.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
                 state.ui.saveDialogOpened = false
@@ -527,8 +527,8 @@ function love.draw()
     box2dDrawTextured.makeCombinedImages()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
-    box2dDraw.drawWorld(world, state.world.debugDrawMode)
-    box2dDrawTextured.drawTexturedWorld(world)
+    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
 
     script.call('draw')
 
@@ -869,7 +869,7 @@ end
 src/box2d-draw-textured.lua
 ```lua
 local lib = {}
-
+local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 
 local base = {
@@ -1142,7 +1142,7 @@ end
 
 
 function lib.makeCombinedImages()
-    local bodies = world:getBodies()
+    local bodies = state.physicsWorld:getBodies()
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
@@ -1566,7 +1566,7 @@ src/box2d-pointerjoints.lua
 ```lua
 --box2d-pointerjoints.lua
 local lib = {}
-
+local state = require 'src.state'
 local pointerJoints = {}
 
 local function getPointerPosition(id)
@@ -1711,7 +1711,7 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
     -- local wx, wy = cam:getWorldCoordinates(x, y)
     --
 
-    local bodies = world:getBodies()
+    local bodies = state.physicsWorld:getBodies()
     local temp = {}
     local hitted = {}
     for _, body in ipairs(bodies) do
@@ -2154,7 +2154,7 @@ local function handlePointer(x, y, id, action)
             local bry = math.max(state.ui.startSelection.y, y)
             local tlxw, tlyw = cam:getWorldCoordinates(tlx, tly)
             local brxw, bryw = cam:getWorldCoordinates(brx, bry)
-            local selected = selectrect.selectWithin(world,
+            local selected = selectrect.selectWithin(state.physicsWorld,
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
 
             state.ui.selectedBodies = selected
@@ -2211,7 +2211,7 @@ function lib.handleMousePressed(x, y, button, istouch)
         local cx, cy = cam:getWorldCoordinates(x, y)
 
 
-        local b = blob.softbody(world, cx, cy, 102, 1, 1)
+        local b = blob.softbody(state.physicsWorld, cx, cy, 102, 1, 1)
         b:setFrequency(3)
         b:setDamping(0.1)
 
@@ -4633,8 +4633,8 @@ local state = require 'src.state'
 function lib.finalizePolygonAsSoftSurface()
     if #state.ui.polyVerts >= 6 then
         local points = state.ui.polyVerts
-        local b = blob.softsurface(world, points, 120, "dynamic")
-        table.insert(softbodies, b)
+        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
+        table.insert(state.world.softbodies, b)
         b:setJointFrequency(10)
         b:setJointDamping(10)
     end
@@ -4797,7 +4797,7 @@ local function createThing(shapeType, conf)
     --label = label or "" -- Default label
 
     -- Create the physics body at the specified world coordinates
-    local body = love.physics.newBody(world, conf.x or 0, conf.y or 0, bodyType)
+    local body = love.physics.newBody(state.physicsWorld, conf.x or 0, conf.y or 0, bodyType)
 
     local settings = {
         radius = conf.radius,
@@ -4938,7 +4938,7 @@ function lib.recreateThingFromBody(body, newSettings)
     local jointData = joints.extractJoints(body)
 
     -- Create new body
-    local newBody = love.physics.newBody(world, x, y, bodyType)
+    local newBody = love.physics.newBody(state.physicsWorld, x, y, bodyType)
     newBody:setAngle(angle)
     newBody:setLinearVelocity(velocityX, velocityY)
     newBody:setAngularVelocity(angularVelocity)
@@ -6031,7 +6031,7 @@ function lib.drawRecordingUI()
         local function startFromCurrentCheckpoint()
             state.ui.selectedJoint = nil
             state.ui.selectedObj = nil
-            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, world, cam, true)
+            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, state.physicsWorld, cam, true)
             --
 
             if sceneScript then sceneScript.onStart() end
@@ -6039,7 +6039,7 @@ function lib.drawRecordingUI()
 
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
         if addcheckpointbutton then
-            local saveData = eio.gatherSaveData(world, cam)
+            local saveData = eio.gatherSaveData(state.physicsWorld, cam)
             table.insert(checkpoints, { saveData = saveData, recordings = {} })
         end
         nextRow()
@@ -6168,8 +6168,8 @@ function lib.drawWorldSettingsUI()
         local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, state.world.gravity)
         if grav then
             state.world.gravity = grav
-            if world then
-                world:setGravity(0, state.world.gravity * state.world.meter)
+            if state.physicsWorld then
+                state.physicsWorld:setGravity(0, state.world.gravity * state.world.meter)
             end
         end
         ui.label(x, y, ' gravity')
@@ -6791,7 +6791,7 @@ function lib.drawSelectedBodiesUI()
         end
 
         if ui.button(x, y, 260, 'clone') then
-            local cloned = eio.cloneSelection(state.ui.selectedBodies, world)
+            local cloned = eio.cloneSelection(state.ui.selectedBodies, state.physicsWorld)
             state.ui.selectedBodies = cloned
         end
         nextRow()
@@ -6901,7 +6901,7 @@ function lib.drawUpdateSelectedObjectUI()
         if ui.button(x, y, 100, 'clone') then
             --print(state.ui.selectedObj)
             state.ui.selectedBodies = { state.ui.selectedObj }
-            local cloned = eio.cloneSelection(state.ui.selectedBodies, world)
+            local cloned = eio.cloneSelection(state.ui.selectedBodies, state.physicsWorld)
             state.ui.selectedBodies = cloned
             state.ui.selectedObj = nil
         end
@@ -7778,7 +7778,7 @@ local state = require 'src.state'
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
     local objects = {}
-    for _, body in pairs(world:getBodies()) do
+    for _, body in pairs(state.physicsWorld:getBodies()) do
         local userData = body:getUserData()
         if (userData and userData.thing and userData.thing.label == label) then
             table.insert(objects, userData.thing)
@@ -7813,7 +7813,7 @@ local scriptEnv = {
     love                     = love,
     random                   = love.math.random,
     getObjectsByLabel        = getObjectsByLabel,
-    world                    = world,
+    world                    = state.physicsWorld,
     string                   = string,
     mouseWorldPos            = mouseWorldPos,
     worldState               = state.world,
@@ -8713,6 +8713,8 @@ state.world = {
     playWithSoftbodies = false
 
 }
+
+state.physicsWorld = nil
 
 
 
