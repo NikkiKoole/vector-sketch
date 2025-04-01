@@ -1,5 +1,5 @@
 local lib = {}
-
+local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 
 local base = {
@@ -272,7 +272,7 @@ end
 
 
 function lib.makeCombinedImages()
-    local bodies = world:getBodies()
+    local bodies = state.physicsWorld:getBodies()
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do

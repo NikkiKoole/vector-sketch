@@ -12,7 +12,7 @@ function createElasticChain(startNode, endNode, linkCount, length)
     local x, y = startNode:getX(), startNode:getY()
 
     for i = 1, linkCount do
-        local link = love.physics.newBody(world, x + i * length / (linkCount + 1), y, "dynamic")
+        local link = love.physics.newBody(state.physicsWorld, x + i * length / (linkCount + 1), y, "dynamic")
         local shape = love.physics.newRectangleShape(10, 10)
         love.physics.newFixture(link, shape, linkdensity)
 

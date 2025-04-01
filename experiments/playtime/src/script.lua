@@ -11,10 +11,11 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local objectManager = require 'src.object-manager'
+local state = require 'src.state'
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 function getObjectsByLabel(label)
     local objects = {}
-    for _, body in pairs(world:getBodies()) do
+    for _, body in pairs(state.physicsWorld:getBodies()) do
         local userData = body:getUserData()
         if (userData and userData.thing and userData.thing.label == label) then
             table.insert(objects, userData.thing)
@@ -49,10 +50,10 @@ local scriptEnv = {
     love                     = love,
     random                   = love.math.random,
     getObjectsByLabel        = getObjectsByLabel,
-    world                    = world,
+    world                    = state.physicsWorld,
     string                   = string,
     mouseWorldPos            = mouseWorldPos,
-    worldState               = worldState,
+    worldState               = state.world,
     unpack                   = unpack,
     getmetatable             = getmetatable,
     registry                 = registry

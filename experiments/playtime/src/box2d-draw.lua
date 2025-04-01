@@ -2,7 +2,7 @@
 
 local lib = {}
 
-
+local state = require 'src.state'
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -39,7 +39,7 @@ end
 function lib.drawWorld(world, drawOutline)
     if drawOutline == nil then drawOutline = true end
     local r, g, b, a = love.graphics.getColor()
-    local alpha = .8 * worldState.debugAlpha
+    local alpha = .8 * state.world.debugAlpha
     love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
@@ -189,7 +189,7 @@ function lib.drawBodies(bodies)
     love.graphics.setLineWidth(6)
     love.graphics.setColor(1, 0, 1) -- Red outline for selection
     for i = 1, #bodies do
-        --for _, thing in ipairs(uiState.selectedBodies) do
+        --for _, thing in ipairs(state.ui.selectedBodies) do
         --local fixtures = body:getFixtures()
         local body = bodies[i]
         for _, fixture in ipairs(body:getFixtures()) do

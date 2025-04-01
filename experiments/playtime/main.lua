@@ -35,6 +35,8 @@ local cam = camera.getInstance()
 local fixtures = require 'src.fixtures'
 snap = require 'src.snap'
 registry = require 'src.registry'
+local InputManager = require 'src.input-manager'
+local state = require 'src.state'
 
 function waitForEvent()
     local a, b, c, d, e
@@ -55,6 +57,7 @@ local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
 local now = love.timer:getTime()
+
 function love.load(args)
     local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 25)
     love.keyboard.setKeyRepeat(true)
@@ -62,100 +65,21 @@ function love.load(args)
 
     ui.init(font)
 
-    uiState = {
-        lastUsedRadius = 20,
-        lastUsedWidth = 40,
-        lastUsedWidth2 = 5,
-        lastUsedHeight = 40,
-        lastUsedHeight2 = 40,
-
-        showGrid = false,
-        radiusOfNextSpawn = 100,
-        nextType = 'dynamic',
-        addShapeOpened = false,
-        addJointOpened = false,
-
-        worldSettingsOpened = false,
-        maybeHideSelectedPanel = false,
-
-        showTexFixtureDim = false,
-
-        selectedJoint = nil,
-        setOffsetAFunc = nil,
-        setOffsetBFunc = nil,
-        setUpdateSFixturePosFunc = nil,
-        selectedSFixture = nil,
-        selectedObj = nil,
-        draggingObj = nil,
-        offsetDragging = { nil, nil },
-        worldText = '',
-        jointCreationMode = nil,
-        jointUpdateMode = nil,
-        drawFreePoly = false,
-        drawClickPoly = false,
-        capturingPoly = false,
-
-        polyDragIdx = 0,
-        polyLockedVerts = true,
-        polyTempVerts = nil, -- used when dragging a vertex
-        polyCentroid = nil,
-        polyVerts = {},
-
-        texFixtureDragIdx = 0,
-        texFixtureLockedVerts = true,
-        texFixtureVerts = {},
-
-        showPalette = nil,
-        minPointDistance = 50, -- Default minimum distance
-        lastPolyPt = nil,
-        lastSelectedBody = nil,
-        selectedBodies = nil,
-        lastSelectedJoint = nil,
-        saveDialogOpened = false,
-        quitDialogOpened = false,
-        saveName = 'untitled',
-        recordingPanelOpened = false,
-    }
-
-    worldState = {
-        debugDrawMode = true,
-        debugAlpha = 1,
-        profiling = false,
-        meter = 100,
-        isRecordingPointers = false,
-        paused = true,
-        gravity = 9.80,
-        mouseForce = 500000,
-        mouseDamping = 0.5,
-        speedMultiplier = 1.0
-
-    }
-
-    -- todo use this maybe..
-    -- tags = {
-    --     'straight',
-    --     'snap',
-    -- }
-
     sceneScript = nil
     scriptPath = nil
     lastModTime = nil
     hotReloadTimer = 0    -- Accumulates time
     hotReloadInterval = 1 -- Check every 1 second
 
-    love.physics.setMeter(worldState.meter)
+    love.physics.setMeter(state.world.meter)
 
-    --world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
-    --love.physics.setMeter(m)
 
-    world = love.physics.newWorld(0, worldState.gravity * love.physics.getMeter(), true)
-    --phys.setupWorldWithGravity(worldState.meter, worldState.gravity)
+    state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
+
 
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
-
-
 
 
     objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
@@ -180,21 +104,20 @@ function love.load(args)
     }
     objectManager.addThing('custom', { vertices = customVertices })
     --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
-    softbodies = {}
-    playWithSoftbodies = false
-    if playWithSoftbodies then
-        local b = blob.softbody(world, 500, 0, 102, 1, 1)
+
+    if state.world.playWithSoftbodies then
+        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
         b:setFrequency(3)
         b:setDamping(0.1)
         --b:setFriction(1)
 
-        table.insert(softbodies, b)
+        table.insert(state.world.softbodies, b)
         local points = {
             0, 500, 800, 500,
             800, 800, 0, 800
         }
-        local b = blob.softsurface(world, points, 120, "dynamic")
-        table.insert(softbodies, b)
+        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
+        table.insert(state.world.softbodies, b)
         b:setJointFrequency(2)
         b:setJointDamping(.1)
         --b:setFixtureRestitution(2)
@@ -202,18 +125,18 @@ function love.load(args)
     end
 
 
-    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
     --local cwd = love.filesystem.getWorkingDirectory()
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    --loadScriptAndScene('straight')
+    loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
-    local cwd = love.filesystem.getWorkingDirectory()
-    reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    -- local cwd = love.filesystem.getWorkingDirectory()
+    -- reloadScene(cwd .. '/scripts/lekker.playtime.json')
 
     checkpoints = {}
     activeCheckpointIndex = 0
@@ -237,9 +160,9 @@ end
 
 function reloadScene(name)
     local data = getFiledata(name):getString()
-    uiState.selectedJoint = nil
-    uiState.selectedObj = nil
-    eio.reload(data, world)
+    state.ui.selectedJoint = nil
+    state.ui.selectedObj = nil
+    eio.reload(data, state.physicsWorld)
     print("Scene loaded: " .. name)
     print(inspect(registry.bodies))
     return data
@@ -247,9 +170,9 @@ end
 
 function loadScene(name)
     local data = getFiledata(name):getString()
-    uiState.selectedJoint = nil
-    uiState.selectedObj = nil
-    eio.load(data, world, cam)
+    state.ui.selectedJoint = nil
+    state.ui.selectedObj = nil
+    eio.load(data, state.physicsWorld, cam)
     print("Scene loaded: " .. name)
     return data
 end
@@ -295,7 +218,7 @@ function loadAndRunScript(name)
     local data = getFiledata(name):getString()
     sceneScript = script.loadScript(data, name)()
     scriptPath = name
-    script.setEnv({ worldState = worldState, world = world })
+    script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
     script.call('onUnload')
     script.call('onStart')
 
@@ -327,16 +250,16 @@ function love.update(dt)
     Peeker.update(dt)
     maybeHotReload(dt)
 
-    local scaled_dt = dt * worldState.speedMultiplier
-    if not worldState.paused then
-        if playWithSoftbodies then
-            for i, v in ipairs(softbodies) do
+    local scaled_dt = dt * state.world.speedMultiplier
+    if not state.world.paused then
+        if state.world.playWithSoftbodies then
+            for i, v in ipairs(state.world.softbodies) do
                 v:update(scaled_dt)
             end
         end
 
         for i = 1, 1 do
-            world:update(scaled_dt)
+            state.physicsWorld:update(scaled_dt)
         end
         script.call('update', scaled_dt)
 
@@ -353,44 +276,15 @@ function love.update(dt)
         --print('hwo to record mousejoint movement')
     end
 
-
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
     --phys.handleUpdate(dt)
 
-    if uiState.draggingObj then
-        local mx, my = love.mouse.getPosition()
-        local wx, wy = cam:getWorldCoordinates(mx, my)
-        local offx = uiState.offsetDragging[1]
-        local offy = uiState.offsetDragging[2]
-        local rx, ry = mathutils.rotatePoint(offx, offy, 0, 0, uiState.draggingObj.body:getAngle())
-        local oldPosX, oldPosY = uiState.draggingObj.body:getPosition()
-        uiState.draggingObj.body:setPosition(wx + rx, wy + ry)
-        if recorder.isRecording then
-            local ud = uiState.draggingObj.body:getUserData()
-            -- print(inspect(uiState.draggingObj))
-            -- print(inspect(ud))
-            recorder:recordObjectSetPosition(uiState.draggingObj.id, wx + rx, wy + ry)
-        end
-        -- figure out if we are dragging a group!
-        if uiState.selectedBodies then
-            for i = 1, #uiState.selectedBodies do
-                if (uiState.selectedBodies[i] == uiState.draggingObj) then
-                    local newPosX, newPosY = uiState.draggingObj.body:getPosition()
-                    local dx = newPosX - oldPosX
-                    local dy = newPosY - oldPosY
-                    for j = 1, #uiState.selectedBodies do
-                        if (uiState.selectedBodies[j] ~= uiState.draggingObj) then
-                            local oldPosX, oldPosY = uiState.selectedBodies[j].body:getPosition()
-                            uiState.selectedBodies[j].body:setPosition(oldPosX + dx, oldPosY + dy)
-                        end
-                    end
-                end
-            end
-        end
+    if state.ui.draggingObj then
+        InputManager.handleDraggingObj()
     end
 end
 
-local function drawGrid(cam, worldState)
+local function drawGrid(cam)
     local lw = love.graphics.getLineWidth()
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, .1)
@@ -398,7 +292,7 @@ local function drawGrid(cam, worldState)
     local w, h = love.graphics.getDimensions()
     local tlx, tly = cam:getWorldCoordinates(0, 0)
     local brx, bry = cam:getWorldCoordinates(w, h)
-    local step = worldState.meter
+    local step = state.world.meter
     local startX = math.floor(tlx / step) * step
     local endX = math.ceil(brx / step) * step
     local startY = math.floor(tly / step) * step
@@ -419,7 +313,7 @@ end
 function drawUI()
     ui.startFrame()
     local w, h = love.graphics.getDimensions()
-    if worldState.paused then
+    if state.world.paused then
         love.graphics.setColor({ 244 / 255, 164 / 255, 97 / 255 })
     else
         love.graphics.setColor({ 245 /
@@ -431,41 +325,41 @@ function drawUI()
 
     -- "Add Shape" Button
     if ui.button(20, 20, 200, 'add shape') then
-        uiState.addShapeOpened = not uiState.addShapeOpened
+        state.ui.addShapeOpened = not state.ui.addShapeOpened
     end
 
-    if uiState.addShapeOpened then
+    if state.ui.addShapeOpened then
         playtimeui.drawAddShapeUI()
     end
 
     -- "Add Joint" Button
     if ui.button(230, 20, 200, 'add joint') then
-        uiState.addJointOpened = not uiState.addJointOpened
+        state.ui.addJointOpened = not state.ui.addJointOpened
     end
 
-    if uiState.addJointOpened then
+    if state.ui.addJointOpened then
         playtimeui.drawAddJointUI()
     end
 
     -- "World Settings" Button
     if ui.button(440, 20, 200, 'settings') then
-        uiState.worldSettingsOpened = not uiState.worldSettingsOpened
+        state.ui.worldSettingsOpened = not state.ui.worldSettingsOpened
     end
 
-    if uiState.worldSettingsOpened then
+    if state.ui.worldSettingsOpened then
         playtimeui.drawWorldSettingsUI()
     end
 
     -- Play/Pause Button
-    if ui.button(650, 20, 150, worldState.paused and 'play' or 'pause') then
-        worldState.paused = not worldState.paused
+    if ui.button(650, 20, 150, state.world.paused and 'play' or 'pause') then
+        state.world.paused = not state.world.paused
     end
 
-    if ui.button(810, 20, 150, worldState.isRecordingPointers and 'recording' or 'record') then
-        uiState.recordingPanelOpened = not uiState.recordingPanelOpened
-        -- worldState.isRecordingPointers = not worldState.isRecordingPointers
+    if ui.button(810, 20, 150, state.world.isRecordingPointers and 'recording' or 'record') then
+        state.ui.recordingPanelOpened = not state.ui.recordingPanelOpened
+        -- state.world.isRecordingPointers = not state.world.isRecordingPointers
     end
-    if uiState.recordingPanelOpened then
+    if state.ui.recordingPanelOpened then
         playtimeui.drawRecordingUI()
     end
     if sceneScript and sceneScript.onStart then
@@ -476,7 +370,7 @@ function drawUI()
         end
     end
 
-    if uiState.drawClickPoly then
+    if state.ui.drawClickPoly then
         local panelWidth = PANEL_WIDTH
         local w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
@@ -489,64 +383,64 @@ function drawUI()
             })
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'finalize') then
-                finalizePolygon()
+                objectManager.finalizePolygon()
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'soft-surface') then
-                finalizePolygonAsSoftSurface()
+                objectManager.finalizePolygonAsSoftSurface()
             end
         end)
     end
 
-    if uiState.selectedObj and not uiState.selectedJoint and not uiState.selectedSFixture then
+    if state.ui.selectedObj and not state.ui.selectedJoint and not state.ui.selectedSFixture then
         playtimeui.drawUpdateSelectedObjectUI()
     end
 
-    if uiState.selectedBodies and #uiState.selectedBodies > 0 then
+    if state.ui.selectedBodies and #state.ui.selectedBodies > 0 then
         playtimeui.drawSelectedBodiesUI()
     end
 
-    if uiState.jointCreationMode and uiState.jointCreationMode.body1 and uiState.jointCreationMode.body2 then
-        playtimeui.doJointCreateUI(uiState, 500, 100, 400, 150)
+    if state.ui.jointCreationMode and state.ui.jointCreationMode.body1 and state.ui.jointCreationMode.body2 then
+        playtimeui.doJointCreateUI(500, 100, 400, 150)
     end
 
-    if uiState.selectedSFixture then
+    if state.ui.selectedSFixture then
         playtimeui.drawSelectedSFixture()
     end
 
-    if uiState.selectedObj and uiState.selectedJoint then
+    if state.ui.selectedObj and state.ui.selectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
-        playtimeui.doJointUpdateUI(uiState, uiState.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
+        playtimeui.doJointUpdateUI(state.ui.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
-    if uiState.setOffsetAFunc or uiState.setOffsetBFunc or uiState.setUpdateSFixturePosFunc then
+    if state.ui.setOffsetAFunc or state.ui.setOffsetBFunc or state.ui.setUpdateSFixturePosFunc then
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
 
-    if uiState.jointCreationMode and ((uiState.jointCreationMode.body1 == nil) or (uiState.jointCreationMode.body2 == nil)) then
-        if (uiState.jointCreationMode.body1 == nil) then
+    if state.ui.jointCreationMode and ((state.ui.jointCreationMode.body1 == nil) or (state.ui.jointCreationMode.body2 == nil)) then
+        if (state.ui.jointCreationMode.body1 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
                 local x = 510
                 local y = 150
                 local width = 280
                 if ui.button(x, y, width, 'cancel') then
-                    uiState.jointCreationMode = nil
+                    state.ui.jointCreationMode = nil
                 end
             end)
-        elseif (uiState.jointCreationMode.body2 == nil) then
+        elseif (state.ui.jointCreationMode.body2 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 2nd body •', function()
                 local x = 510
                 local y = 150
                 local width = 280
                 if ui.button(x, y, width, 'cancel') then
-                    uiState.jointCreationMode = nil
+                    state.ui.jointCreationMode = nil
                 end
             end)
         end
     end
 
-    if uiState.showPalette then
+    if state.ui.showPalette then
         local w, h = love.graphics.getDimensions()
         ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
             --ui.coloredRect()
@@ -567,33 +461,33 @@ function drawUI()
 
                 -- ui.coloredRect(0, 0, { 255, 0, 0 }, 40)
                 if ui.coloredRect(10 + x, h - 300 + y, { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
-                    uiState.showPaletteFunc(box2dDrawTextured.palette[i])
+                    state.ui.showPaletteFunc(box2dDrawTextured.palette[i])
                 end
             end
         end)
     end
 
-    if uiState.saveDialogOpened then
+    if state.ui.saveDialogOpened then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
         ui.panel(300, 300, w - 600, h - 600, '»»» save «««', function()
-            local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', uiState.saveName)
+            local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', state.ui.saveName)
             if t then
-                uiState.saveName = utils.sanitizeString(t)
+                state.ui.saveName = utils.sanitizeString(t)
             end
             if ui.button(320, 500, 200, 'save') then
-                uiState.saveDialogOpened = false
-                eio.save(world, cam, uiState.saveName)
+                state.ui.saveDialogOpened = false
+                eio.save(state.physicsWorld, cam, state.ui.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
-                uiState.saveDialogOpened = false
+                state.ui.saveDialogOpened = false
                 love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
             end
         end)
     end
 
-    if uiState.quitDialogOpened then
+    if state.ui.quitDialogOpened then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
@@ -624,33 +518,31 @@ function love.draw()
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
     love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
-    if uiState.showGrid then
-        drawGrid(cam, worldState)
+    if state.ui.showGrid then
+        drawGrid(cam, state.world)
     end
-
 
     box2dDrawTextured.makeCombinedImages()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
-    box2dDraw.drawWorld(world, worldState.debugDrawMode)
-    box2dDrawTextured.drawTexturedWorld(world)
-
+    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
 
     script.call('draw')
 
-    if uiState.selectedSFixture and not uiState.selectedSFixture:isDestroyed() then
-        local body = uiState.selectedSFixture:getBody()
-        local centroid = fixtures.getCentroidOfFixture(body, uiState.selectedSFixture)
+    if state.ui.selectedSFixture and not state.ui.selectedSFixture:isDestroyed() then
+        local body = state.ui.selectedSFixture:getBody()
+        local centroid = fixtures.getCentroidOfFixture(body, state.ui.selectedSFixture)
         local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
         love.graphics.circle('line', x2, y2, 3)
     end
 
-    if uiState.selectedJoint and not uiState.selectedJoint:isDestroyed() then
-        box2dDraw.drawJointAnchors(uiState.selectedJoint)
+    if state.ui.selectedJoint and not state.ui.selectedJoint:isDestroyed() then
+        box2dDraw.drawJointAnchors(state.ui.selectedJoint)
     end
 
     local lw = love.graphics.getLineWidth()
-    for i, v in ipairs(softbodies) do
+    for i, v in ipairs(state.world.softbodies) do
         love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
         if (tostring(v) == "softbody") then
             love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
@@ -675,16 +567,16 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
 
     -- draw to be drawn polygon
-    if uiState.drawFreePoly or uiState.drawClickPoly then
-        if (#uiState.polyVerts >= 6) then
-            love.graphics.polygon('line', uiState.polyVerts)
+    if state.ui.drawFreePoly or state.ui.drawClickPoly then
+        if (#state.ui.polyVerts >= 6) then
+            love.graphics.polygon('line', state.ui.polyVerts)
         end
     end
 
     -- draw mousehandlers for dragging vertices
-    if uiState.polyTempVerts and uiState.selectedObj and uiState.selectedObj.shapeType == 'custom' and uiState.polyLockedVerts == false then
-        local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
-            uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
+    if state.ui.polyTempVerts and state.ui.selectedObj and state.ui.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
+            state.ui.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
 
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
@@ -702,11 +594,11 @@ function love.draw()
     end
 
 
-    if uiState.texFixtureTempVerts and uiState.selectedSFixture and uiState.texFixtureLockedVerts == false then
-        local thing = uiState.selectedSFixture:getBody():getUserData().thing
-        local verts = mathutils.getLocalVerticesForCustomSelected(uiState.texFixtureTempVerts,
+    if state.ui.texFixtureTempVerts and state.ui.selectedSFixture and state.ui.texFixtureLockedVerts == false then
+        local thing = state.ui.selectedSFixture:getBody():getUserData().thing
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.texFixtureTempVerts,
             thing, 0, 0)
-        --local verts = uiState.texFixtureTempVerts
+        --local verts = state.ui.texFixtureTempVerts
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
 
@@ -726,17 +618,17 @@ function love.draw()
 
 
     -- Highlight selected bodies
-    if uiState.selectedBodies then
-        local bodies = utils.map(uiState.selectedBodies, function(thing)
+    if state.ui.selectedBodies then
+        local bodies = utils.map(state.ui.selectedBodies, function(thing)
             return thing.body
         end)
         box2dDraw.drawBodies(bodies)
     end
 
     -- draw temp poly when changing vertices
-    if uiState.polyTempVerts and uiState.selectedObj then
-        local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
-            uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
+    if state.ui.polyTempVerts and state.ui.selectedObj then
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
+            state.ui.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
         love.graphics.setColor(1, 0, 0)
         love.graphics.polygon('line', verts)
         love.graphics.setColor(1, 1, 1) -- Rese
@@ -749,8 +641,8 @@ function love.draw()
 
 
     Peeker.detach()
-    if uiState.startSelection then
-        selectrect.draw(uiState.startSelection)
+    if state.ui.startSelection then
+        selectrect.draw(state.ui.startSelection)
     end
 
 
@@ -764,26 +656,26 @@ function love.draw()
         love.graphics.print(string.format("%.1f", love.timer.getTime() - recorder.startTime), 5, 5)
     end
 
-    if uiState.maybeHideSelectedPanel then
-        if (uiState.selectedSFixture) then
-            local body = uiState.selectedSFixture:getBody()
+    if state.ui.maybeHideSelectedPanel then
+        if (state.ui.selectedSFixture) then
+            local body = state.ui.selectedSFixture:getBody()
             local thing = body:getUserData().thing
 
-            uiState.selectedObj = thing
-            uiState.selectedSFixture = nil
-            uiState.maybeHideSelectedPanel = false
-        elseif (uiState.selectedJoint) then
-            uiState.selectedJoint = nil
-            uiState.maybeHideSelectedPanel = false
+            state.ui.selectedObj = thing
+            state.ui.selectedSFixture = nil
+            state.ui.maybeHideSelectedPanel = false
+        elseif (state.ui.selectedJoint) then
+            state.ui.selectedJoint = nil
+            state.ui.maybeHideSelectedPanel = false
         else
             if not (ui.activeElementID or ui.focusedTextInputID) then
-                uiState.selectedObj = nil
-                uiState.selectedSFixture = nil
-                uiState.selectedJoint = nil
+                state.ui.selectedObj = nil
+                state.ui.selectedSFixture = nil
+                state.ui.selectedJoint = nil
             end
-            uiState.maybeHideSelectedPanel = false
-            uiState.polyTempVerts = nil
-            uiState.polyLockedVerts = true
+            state.ui.maybeHideSelectedPanel = false
+            state.ui.polyTempVerts = nil
+            state.ui.polyLockedVerts = true
         end
     end
 
@@ -809,42 +701,42 @@ end
 
 function love.mousemoved(x, y, dx, dy)
     --print('moved')
-    if uiState.polyDragIdx and uiState.polyDragIdx > 0 then
-        local index = uiState.polyDragIdx
-        local obj = uiState.selectedObj
+    if state.ui.polyDragIdx and state.ui.polyDragIdx > 0 then
+        local index = state.ui.polyDragIdx
+        local obj = state.ui.selectedObj
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
-        uiState.polyTempVerts[index] = uiState.polyTempVerts[index] + dx2
-        uiState.polyTempVerts[index + 1] = uiState.polyTempVerts[index + 1] + dy2
-    elseif uiState.texFixtureDragIdx and uiState.texFixtureDragIdx > 0 then
-        local index = uiState.texFixtureDragIdx
-        local obj = uiState.selectedSFixture:getBody():getUserData().thing
+        state.ui.polyTempVerts[index] = state.ui.polyTempVerts[index] + dx2
+        state.ui.polyTempVerts[index + 1] = state.ui.polyTempVerts[index + 1] + dy2
+    elseif state.ui.texFixtureDragIdx and state.ui.texFixtureDragIdx > 0 then
+        local index = state.ui.texFixtureDragIdx
+        local obj = state.ui.selectedSFixture:getBody():getUserData().thing
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
-        uiState.texFixtureTempVerts[index] = uiState.texFixtureTempVerts[index] + dx2
-        uiState.texFixtureTempVerts[index + 1] = uiState.texFixtureTempVerts[index + 1] + dy2
-    elseif uiState.capturingPoly then
+        state.ui.texFixtureTempVerts[index] = state.ui.texFixtureTempVerts[index] + dx2
+        state.ui.texFixtureTempVerts[index + 1] = state.ui.texFixtureTempVerts[index + 1] + dy2
+    elseif state.ui.capturingPoly then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
-        if not uiState.lastPolyPt then
+        if not state.ui.lastPolyPt then
             addPoint = true
         else
-            local lastX, lastY = uiState.lastPolyPt.x, uiState.lastPolyPt.y
+            local lastX, lastY = state.ui.lastPolyPt.x, state.ui.lastPolyPt.y
             local distSq = (wx - lastX) ^ 2 + (wy - lastY) ^ 2
-            if distSq >= (uiState.minPointDistance / cam.scale) ^ 2 then
+            if distSq >= (state.ui.minPointDistance / cam.scale) ^ 2 then
                 addPoint = true
             end
         end
         if addPoint then
-            --table.insert(uiState.polygonVertices, { x = wx, y = wy })
-            table.insert(uiState.polyVerts, wx)
-            table.insert(uiState.polyVerts, wy)
-            uiState.lastPolyPt = { x = wx, y = wy }
+            --table.insert(state.ui.polygonVertices, { x = wx, y = wy })
+            table.insert(state.ui.polyVerts, wx)
+            table.insert(state.ui.polyVerts, wy)
+            state.ui.lastPolyPt = { x = wx, y = wy }
         end
     elseif love.mouse.isDown(3) or love.mouse.isDown(2) then
         local tx, ty = cam:getTranslation()
@@ -868,443 +760,62 @@ function love.textinput(t)
     ui.handleTextInput(t)
 end
 
-function finalizePolygonAsSoftSurface()
-    if #uiState.polyVerts >= 6 then
-        local points = uiState.polyVerts
-        local b = blob.softsurface(world, points, 120, "dynamic")
-        table.insert(softbodies, b)
-        b:setJointFrequency(10)
-        b:setJointDamping(10)
-    end
-    print('blob surface wanted instead?')
-    -- Reset the drawing state
-    uiState.drawClickPoly = false
-    uiState.drawFreePoly = false
-    uiState.capturingPoly = false
-    uiState.polyVerts = {}
-    uiState.lastPolyPt = nil
-end
-
-function finalizePolygon()
-    if #uiState.polyVerts >= 6 then
-        local cx, cy = mathutils.computeCentroid(uiState.polyVerts)
-        --local cx, cy = mathutils.getCenterOfPoints(uiState.polyVerts)
-        local settings = { x = cx, y = cy, bodyType = uiState.nextType, vertices = uiState.polyVerts }
-        -- objectManager.addThing('custom', cx, cy, uiState.nextType, nil, nil, nil, nil, '', uiState.polyVerts)
-        objectManager.addThing('custom', settings)
-    else
-        -- Not enough vertices to form a polygon
-        print("Not enough vertices to create a polygon.")
-    end
-    -- Reset the drawing state
-    uiState.drawClickPoly = false
-    uiState.drawFreePoly = false
-    uiState.capturingPoly = false
-    uiState.polyVerts = {}
-    uiState.lastPolyPt = nil
-end
-
-local function maybeUpdateTexFixtureVertices()
-    --print('we need todo stuff here!')
-    local points = { uiState.selectedSFixture:getShape():getPoints() }
-    --print(inspect(points))
-    --print(inspect(uiState.texFixtureTempVerts))
-
-    local oldUD = utils.shallowCopy(uiState.selectedSFixture:getUserData())
-    local body = uiState.selectedSFixture:getBody()
-    uiState.selectedSFixture:destroy()
-
-    local centerX, centerY = mathutils.getCenterOfPoints(points)
-    local shape = love.physics.newPolygonShape(uiState.texFixtureTempVerts)
-    local newfixture = love.physics.newFixture(body, shape)
-    newfixture:setSensor(true) -- Sensor so it doesn't collide
-
-    newfixture:setUserData(oldUD)
-
-    uiState.selectedSFixture = newfixture
-    --snap.updateFixture(newfixture)
-    registry.registerSFixture(oldUD.id, newfixture)
-    --snap.rebuildSnapFixtures(registry.sfixtures)
-end
-
-local function maybeUpdateCustomPolygonVertices()
-    if not utils.tablesEqualNumbers(uiState.polyTempVerts, uiState.selectedObj.vertices) then
-        local nx, ny = mathutils.computeCentroid(uiState.polyTempVerts)
-        local ox, oy = mathutils.computeCentroid(uiState.selectedObj.vertices)
-        local dx = nx - ox
-        local dy = ny - oy
-        local body = uiState.selectedObj.body
-        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, body:getAngle())
-        local oldX, oldY = body:getPosition()
-
-        body:setPosition(oldX + dx2, oldY + dy2)
-
-        -- todo here we need to fix the positions of texfixtures, if there are any.
-
-
-
-
-
-        uiState.selectedObj = objectManager.recreateThingFromBody(body,
-            { optionalVertices = uiState.polyTempVerts })
-
-        uiState.polyTempVerts = utils.shallowCopy(uiState.selectedObj.vertices)
-        -- uiState.selectedObj.vertices = uiState.polyTempVerts
-        uiState.polyCentroid = { x = nx, y = ny }
-    end
-end
-
-local function insertCustomPolygonVertex(x, y)
-    local obj = uiState.selectedObj
-    if obj then
-        local offx, offy = obj.body:getPosition()
-        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), uiState.polyCentroid.x,
-            uiState.polyCentroid.y)
-        -- Find the closest edge index
-        local insertAfterVertexIndex = mathutils.findClosestEdge(uiState.polyTempVerts, px, py)
-        mathutils.insertValuesAt(uiState.polyTempVerts, insertAfterVertexIndex * 2 + 1, px, py)
-    end
-end
-
--- Function to remove a custom polygon vertex based on mouse click
-local function removeCustomPolygonVertex(x, y)
-    -- Step 1: Convert world coordinates to local coordinates
-
-    local obj = uiState.selectedObj
-    if obj then
-        local offx, offy = obj.body:getPosition()
-        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
-            uiState.polyCentroid.x, uiState.polyCentroid.y)
-
-        -- Step 2: Find the closest vertex index
-        local closestVertexIndex = mathutils.findClosestVertex(uiState.polyTempVerts, px, py)
-
-        if closestVertexIndex then
-            -- Optional: Define a maximum allowable distance to consider for deletion
-            local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
-            local vx = uiState.polyTempVerts[(closestVertexIndex - 1) * 2 + 1]
-            local vy = uiState.polyTempVerts[(closestVertexIndex - 1) * 2 + 2]
-            local dx = px - vx
-            local dy = py - vy
-            local distSq = dx * dx + dy * dy
-            --print(distSq)
-            if distSq <= maxDeletionDistanceSq then
-                -- Step 3: Remove the vertex from the vertex list
-
-                -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
-                if #uiState.polyTempVerts <= 6 then
-                    print("Cannot delete vertex: A polygon must have at least three vertices.")
-                    -- Optionally, you can restore the removed vertex or prevent deletion
-                    return
-                end
-                mathutils.removeVertexAt(uiState.polyTempVerts, closestVertexIndex)
-                maybeUpdateCustomPolygonVertices()
-
-                -- Debugging Output
-                print(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
-            else
-                print("No vertex close enough to delete.")
-            end
-        else
-            print("No vertex found to delete.")
-        end
-    end
-end
-
 function love.keypressed(key)
     ui.handleKeyPress(key)
     if key == 'escape' then
-        if uiState.quitDialogOpened == true then
+        if state.ui.quitDialogOpened == true then
             love.event.quit()
         end
-        if uiState.quitDialogOpened == false then
-            uiState.quitDialogOpened = true
+        if state.ui.quitDialogOpened == false then
+            state.ui.quitDialogOpened = true
         end
     end
     if key == 'space' then
-        if uiState.quitDialogOpened == true then
-            uiState.quitDialogOpened = false
+        if state.ui.quitDialogOpened == true then
+            state.ui.quitDialogOpened = false
         else
-            worldState.paused = not worldState.paused
-            if recorder.isRecording then recorder:recordPause(worldState.paused) end
+            state.world.paused = not state.world.paused
+            if recorder.isRecording then recorder:recordPause(state.world.paused) end
         end
     end
     if key == "c" then
         love.graphics.captureScreenshot(os.time() .. ".png")
     end
     if key == 'f5' then
-        worldState.paused = true
-        uiState.saveDialogOpened = true
+        state.world.paused = true
+        state.ui.saveDialogOpened = true
     end
-    if key == 'i' and uiState.polyTempVerts then
+    if key == 'i' and state.ui.polyTempVerts then
         -- figure out where my mousecursor is, between what nodes?
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
-        insertCustomPolygonVertex(wx, wy)
-        maybeUpdateCustomPolygonVertices()
+        objectManager.insertCustomPolygonVertex(wx, wy)
+        objectManager.maybeUpdateCustomPolygonVertices()
     end
-    if key == 'd' and uiState.polyTempVerts then
+    if key == 'd' and state.ui.polyTempVerts then
         -- Remove a vertex
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
-        removeCustomPolygonVertex(wx, wy)
+        objectManager.removeCustomPolygonVertex(wx, wy)
     end
 
     script.call('onKeyPress', key)
 end
 
-local function handlePointer(x, y, id, action)
-    if action == "pressed" then
-        -- Handle press logig
-        --   -- this will block interacting on bodies when 'roughly' over the opened panel
-        if uiState.saveDialogOpened then return end
-        if uiState.showPalette then
-            local w, h = love.graphics.getDimensions()
-            if y < h - 400 or x > w - 300 then
-                uiState.showPalette = nil
-                return
-            else
-                return
-            end
-        end
-        if uiState.selectedJoint or uiState.selectedObj or uiState.selectedSFixture or uiState.selectedBodies or uiState.drawClickPoly then
-            local w, h = love.graphics.getDimensions()
-            if x > w - 300 then
-                return
-            end
-        end
-
-        local startSelection = love.keyboard.isDown('lshift')
-        if (startSelection) then
-            uiState.startSelection = { x = x, y = y }
-        end
-
-        local cx, cy = cam:getWorldCoordinates(x, y)
-
-        if uiState.polyTempVerts and uiState.selectedObj and uiState.selectedObj.shapeType == 'custom' and uiState.polyLockedVerts == false then
-            local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
-                uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
-            for i = 1, #verts, 2 do
-                local vx = verts[i]
-                local vy = verts[i + 1]
-                local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-                if dist < 10 then
-                    uiState.polyDragIdx = i
-
-                    return
-                else
-                    uiState.polyDragIdx = 0
-                end
-            end
-        end
-
-        if uiState.texFixtureTempVerts and uiState.selectedSFixture and uiState.texFixtureLockedVerts == false then
-            --local verts = mathutils.getLocalVerticesForCustomSelected(uiState.polyTempVerts,
-            --    uiState.selectedObj, uiState.polyCentroid.x, uiState.polyCentroid.y)
-            local thing = uiState.selectedSFixture:getBody():getUserData().thing
-            local verts = mathutils.getLocalVerticesForCustomSelected(uiState.texFixtureTempVerts,
-                thing, 0, 0)
-            --local verts = uiState.texFixtureTempVerts
-            for i = 1, #verts, 2 do
-                local vx = verts[i]
-                local vy = verts[i + 1]
-                local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-                if dist < 10 then
-                    uiState.texFixtureDragIdx = i
-                    return
-                else
-                    uiState.texFixtureDragIdx = 0
-                end
-            end
-        end
-
-
-
-        if (uiState.drawClickPoly) then
-            table.insert(uiState.polyVerts, cx)
-            table.insert(uiState.polyVerts, cy)
-        end
-        if (uiState.setOffsetAFunc) then
-            uiState.selectedJoint = uiState.setOffsetAFunc(cx, cy)
-            uiState.setOffsetAFunc = nil
-        end
-        if (uiState.setOffsetBFunc) then
-            uiState.selectedJoint = uiState.setOffsetBFunc(cx, cy)
-            uiState.setOffsetBFunc = nil
-        end
-        if (uiState.setUpdateSFixturePosFunc) then
-            uiState.selectedSFixture = uiState.setUpdateSFixturePosFunc(cx, cy)
-            uiState.setUpdateSFixturePosFunc = nil
-        end
-
-        local onPressedParams = {
-            pointerForceFunc = function(fixture)
-                return worldState.mouseForce
-            end,
-            damp = worldState.mouseDamping
-        }
-
-        local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams,
-            not worldState.paused)
-
-        if (uiState.selectedBodies and #hitted == 0) then
-            uiState.selectedBodies = nil
-        end
-
-        if #hitted > 0 then
-            local ud = hitted[1]:getBody():getUserData()
-            if ud and ud.thing then
-                uiState.selectedObj = ud.thing
-            end
-            if sceneScript and not worldState.paused and uiState.selectedObj then
-                uiState.selectedObj = nil
-            end
-            if uiState.jointCreationMode and uiState.selectedObj then
-                if uiState.jointCreationMode.body1 == nil then
-                    uiState.jointCreationMode.body1 = uiState.selectedObj.body
-                    local px, py = uiState.jointCreationMode.body1:getLocalPoint(cx, cy)
-                    uiState.jointCreationMode.p1 = { px, py }
-                elseif uiState.jointCreationMode.body2 == nil then
-                    if (uiState.selectedObj.body ~= uiState.jointCreationMode.body1) then
-                        uiState.jointCreationMode.body2 = uiState.selectedObj.body
-                        local px, py = uiState.jointCreationMode.body2:getLocalPoint(cx, cy)
-                        uiState.jointCreationMode.p2 = { px, py }
-                        --print(uiState.jointCreationMode.body2:getLocalPoint(cx, cy))
-                    end
-                end
-            end
-
-            if (worldState.paused) then
-                -- local ud = uiState.currentlySelectedObject:getBody():getUserData()
-                uiState.draggingObj = uiState.selectedObj
-                if uiState.selectedObj then
-                    local offx, offy = uiState.selectedObj.body:getLocalPoint(cx, cy)
-                    uiState.offsetDragging = { -offx, -offy }
-                end
-            else
-                local newHitted = utils.map(hitted, function(h)
-                    local ud = (h:getBody() and h:getBody():getUserData())
-                    local thing = ud and ud.thing
-                    return thing
-                end)
-                script.call('onPressed', newHitted)
-            end
-        else
-            uiState.maybeHideSelectedPanel = true
-        end
-        if recorder.isRecording and #hitted > 0 and not worldState.paused and madedata.bodyID then
-            --madedata.activeLayer = recorder.activeLayer
-            recorder:recordMouseJointStart(madedata)
-            -- print('should record a moujoint creation...', inspect(madedata))
-        end
-        -- if recorder.isRecording and #hitted > 0 then
-        --     local wx, wy = cam:getWorldCoordinates(x, y)
-        --     local hitObject = hitted[1]:getBody():getUserData().thing
-        --     local localPointX, localPointY = hitObject.body:getLocalPoint(wx, wy)
-        --     recorder:recordObjectGrab(hitObject, localPointX, localPointY, worldState.mouseForce, worldState
-        --         .mouseDamping)
-        -- end
-    elseif action == "released" then
-        -- Handle release logic
-        local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
-        if (#releasedObjs > 0) then
-            local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
-
-            script.call('onReleased', newReleased)
-            if recorder.isRecording and not worldState.paused then
-                for _, obj in ipairs(releasedObjs) do
-                    recorder:recordMouseJointFinish(id, obj:getUserData().thing.id)
-                    --  print('should record a moujoint deletion...', inspect(obj:getUserData().thing.id))
-                end
-            end
-
-            -- if recorder.isRecording then
-            --     --local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
-            --     for _, obj in ipairs(releasedObjs) do
-            --         recorder:recordObjectRelease(obj:getUserData().thing)
-            --     end
-            -- end
-        end
-        if uiState.draggingObj then
-            uiState.draggingObj.body:setAwake(true)
-            uiState.selectedObj = uiState.draggingObj
-            uiState.draggingObj = nil
-        end
-
-        if uiState.drawFreePoly then
-            finalizePolygon()
-        end
-
-        if uiState.polyDragIdx > 0 then
-            uiState.polyDragIdx = 0
-            maybeUpdateCustomPolygonVertices()
-        end
-
-        if uiState.texFixtureDragIdx > 0 then
-            uiState.texFixtureDragIdx = 0
-            maybeUpdateTexFixtureVertices()
-        end
-
-        if (uiState.startSelection) then
-            local tlx = math.min(uiState.startSelection.x, x)
-            local tly = math.min(uiState.startSelection.y, y)
-            local brx = math.max(uiState.startSelection.x, x)
-            local bry = math.max(uiState.startSelection.y, y)
-            local tlxw, tlyw = cam:getWorldCoordinates(tlx, tly)
-            local brxw, bryw = cam:getWorldCoordinates(brx, bry)
-            local selected = selectrect.selectWithin(world,
-                { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
-
-            uiState.selectedBodies = selected
-            uiState.startSelection = nil
-        end
-    end
-end
-
 function love.mousepressed(x, y, button, istouch)
-    if not istouch and button == 1 then
-        if uiState.drawFreePoly then
-            -- Start capturing mouse movement
-            uiState.capturingPoly = true
-            uiState.polyVerts = {}
-            uiState.lastPolyPt = nil
-        else
-            handlePointer(x, y, 'mouse', 'pressed')
-        end
-    end
-
-    if playWithSoftbodies and button == 2 then
-        local cx, cy = cam:getWorldCoordinates(x, y)
-
-
-        local b = blob.softbody(world, cx, cy, 102, 1, 1)
-        b:setFrequency(3)
-        b:setDamping(0.1)
-
-        table.insert(softbodies, b)
-    end
+    InputManager.handleMousePressed(x, y, button, istouch)
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
-    --handlePointer(x, y, id, 'pressed')
-    if uiState.drawFreePoly then
-        -- Start capturing mouse movement
-        uiState.capturingPoly = true
-        uiState.polyVerts = {}
-        uiState.lastPolyPt = nil
-    else
-        handlePointer(x, y, id, 'pressed')
-    end
+    InputManager.handleTouchPressed(id, x, y, dx, dy, pressure)
 end
 
 function love.mousereleased(x, y, button, istouch)
-    if not istouch then
-        handlePointer(x, y, 'mouse', 'released')
-    end
+    InputManager.handleMouseReleased(x, y, button, istouch)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
-    handlePointer(x, y, id, 'released')
+    InputManager.handleTouchReleased(id, x, y, dx, dy, pressure)
 end
 
 if FIXED_TIMESTEP then
@@ -1321,7 +832,7 @@ if FIXED_TIMESTEP then
             local current = love.timer.getTime()
             local elapsed = current - previous
             previous = current
-            lag = lag + elapsed * worldState.speedMultiplier
+            lag = lag + elapsed * state.world.speedMultiplier
 
             if love.event then
                 love.event.pump()

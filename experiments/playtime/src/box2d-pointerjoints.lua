@@ -1,7 +1,6 @@
 --box2d-pointerjoints.lua
 local lib = {}
-
-
+local state = require 'src.state'
 local pointerJoints = {}
 
 local function getPointerPosition(id)
@@ -146,7 +145,7 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
     -- local wx, wy = cam:getWorldCoordinates(x, y)
     --
 
-    local bodies = world:getBodies()
+    local bodies = state.physicsWorld:getBodies()
     local temp = {}
     local hitted = {}
     for _, body in ipairs(bodies) do

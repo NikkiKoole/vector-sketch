@@ -107,7 +107,7 @@ function s.onStart()
     bottomchains, topchains = generateChainShapesFromPolygonWithNormals(lverts, 1)
 
     for i = 1, #bottomchains do
-        local body = love.physics.newBody(world, 0, 0)
+        local body = love.physics.newBody(state.physicsWorld, 0, 0)
         local shape = love.physics.newChainShape(false, unpack(removeConsecutiveDuplicates(bottomchains[i])))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true)
@@ -115,7 +115,7 @@ function s.onStart()
     end
 
     for i = 1, #topchains do
-        local body = love.physics.newBody(world, 0, 0)
+        local body = love.physics.newBody(state.physicsWorld, 0, 0)
         local shape = love.physics.newChainShape(false, unpack(removeConsecutiveDuplicates(topchains[i])))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true)

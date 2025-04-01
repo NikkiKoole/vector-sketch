@@ -102,7 +102,15 @@ function lib.buildWorld(data, world, cam, reuseOldIds)
                     oldUD.id = oldUD.id and getNewId(oldUD.id) or uuid.generateID()
 
                     fixture:setUserData(oldUD)
+
+                    -- make it recreate the image!
+                    if oldUD.extra and oldUD.extra.OMP then
+                        oldUD.extra.dirty = true
+                    end
+
                     table.insert(recreatedSFixtures, fixture)
+
+
                     registry.registerSFixture(oldUD.id, fixture)
                     --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
@@ -439,7 +447,11 @@ function lib.gatherSaveData(world, camera)
                         ud.extra.to          = ud.extra.to and ud.extra.to:getUserData().thing.id
                         fixtureData.userData = utils.deepCopy(ud)
                     else
-                        fixtureData.userData = utils.deepCopy(fixture:getUserData())
+                        local ud = fixture:getUserData()
+                        if ud.extra and ud.extra.type == 'texfixture' then
+                            if ud.extra.ompImage then ud.extra.ompImage = nil end
+                        end
+                        fixtureData.userData = utils.deepCopy(ud)
                     end
 
 
@@ -570,6 +582,7 @@ end
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON
     local saveData = lib.gatherSaveData(world, camera)
+    print(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file
@@ -712,7 +725,7 @@ function lib.cloneSelection(selectedBodies, world)
 
     local doneJoints = {}
     -- Step 2: Clone Joints
-    for _, originalThing in ipairs(uiState.selectedBodies) do
+    for _, originalThing in ipairs(state.ui.selectedBodies) do
         local originalBody = originalThing.body
         local joints = originalBody:getJoints()
         for _, originalJoint in ipairs(joints) do
@@ -774,7 +787,7 @@ function lib.cloneSelection(selectedBodies, world)
         table.insert(result, v)
     end
     return result
-    --uiState.selectedBodies = result
+    --state.ui.selectedBodies = result
 end
 
 return lib

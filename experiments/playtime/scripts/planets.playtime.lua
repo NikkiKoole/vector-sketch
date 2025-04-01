@@ -29,8 +29,8 @@ end
 
 function s.onStart()
     -- how to set the gravity.
-    worldState.gravity = 0
-    world:setGravity(0, 0)
+    state.world.gravity = 0
+    state.physicsWorld:setGravity(0, 0)
 
     planets = {}
 
@@ -43,13 +43,13 @@ function s.onStart()
         it.gravity = 100000 + random() * 1000000
     end
 
-    local bodies = world:getBodies()
+    local bodies = state.physicsWorld:getBodies()
     for i = 1, #bodies do
         bodies[i]:setAwake(true)
     end
 
     if false then
-        for _, body in ipairs(world:getBodies()) do
+        for _, body in ipairs(state.physicsWorld:getBodies()) do
             if body:getType() == 'static' then
                 local d = {
                     body = body,
@@ -81,7 +81,7 @@ end
 
 function s.update(dt)
     for _, planet in ipairs(planets) do
-        for _, body in ipairs(world:getBodies()) do
+        for _, body in ipairs(state.physicsWorld:getBodies()) do
             if body:getType() == 'dynamic' then
                 applyGravity(planet, body)
             end

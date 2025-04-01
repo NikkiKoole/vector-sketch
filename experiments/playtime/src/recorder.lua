@@ -1,6 +1,8 @@
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local registry = require 'src.registry'
 local utils = require 'src.utils'
+local state = require 'src.state'
+
 function tablelength(T)
     local count = 0
     for _ in pairs(T) do count = count + 1 end
@@ -219,7 +221,7 @@ function recorder:processEvent(event, layerIdx)
     end
     if event.type == 'world_interaction' then
         if event.action == 'pause' then
-            worldState.paused = event.data.state
+            state.world.paused = event.data.state
         end
     end
 end
