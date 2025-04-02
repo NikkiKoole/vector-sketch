@@ -10,6 +10,7 @@ local selectrect = require 'src.selection-rect'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local blob = require 'vendor.loveblobs'
+local ui = require 'src.ui-all'
 
 local function handlePointer(x, y, id, action)
     if action == "pressed" then
@@ -147,7 +148,8 @@ local function handlePointer(x, y, id, action)
                 script.call('onPressed', newHitted)
             end
         else
-            state.interaction.maybeHideSelectedPanel = true
+            --state.interaction.maybeHideSelectedPanel = true
+            state.interaction.pressMissedEverything = true
         end
         if recorder.isRecording and #hitted > 0 and not state.world.paused and madedata.bodyID then
             --madedata.activeLayer = recorder.activeLayer
@@ -182,6 +184,39 @@ local function handlePointer(x, y, id, action)
             --     end
             -- end
         end
+
+
+        if state.interaction.pressMissedEverything then
+            local wasOverUI = ui.activeElementID or ui.focusedTextInputID
+            if not wasOverUI then
+                print('this was not over UI')
+                -- removed from main!
+                if (state.selection.selectedSFixture) then
+                    local body = state.selection.selectedSFixture:getBody()
+                    local thing = body:getUserData().thing
+
+                    state.selection.selectedObj = thing
+                    state.selection.selectedSFixture = nil
+                    state.interaction.maybeHideSelectedPanel = false
+                elseif (state.selection.selectedJoint) then
+                    state.selection.selectedJoint = nil
+                    state.interaction.maybeHideSelectedPanel = false
+                else
+                    if not (ui.activeElementID or ui.focusedTextInputID) then
+                        state.selection.selectedObj = nil
+                        state.selection.selectedSFixture = nil
+                        state.selection.selectedJoint = nil
+                    end
+                    state.interaction.maybeHideSelectedPanel = false
+                    state.polyEdit.tempVerts = nil
+                    state.polyEdit.lockedVerts = true
+                end
+            else
+                print('this was over UI')
+            end
+        end
+        state.interaction.pressMissedEverything = false
+
         if state.interaction.draggingObj then
             state.interaction.draggingObj.body:setAwake(true)
             state.selection.selectedObj = state.interaction.draggingObj

@@ -658,28 +658,6 @@ function love.draw()
         love.graphics.print(string.format("%.1f", love.timer.getTime() - recorder.startTime), 5, 5)
     end
 
-    if state.interaction.maybeHideSelectedPanel then
-        if (state.selection.selectedSFixture) then
-            local body = state.selection.selectedSFixture:getBody()
-            local thing = body:getUserData().thing
-
-            state.selection.selectedObj = thing
-            state.selection.selectedSFixture = nil
-            state.interaction.maybeHideSelectedPanel = false
-        elseif (state.selection.selectedJoint) then
-            state.selection.selectedJoint = nil
-            state.interaction.maybeHideSelectedPanel = false
-        else
-            if not (ui.activeElementID or ui.focusedTextInputID) then
-                state.selection.selectedObj = nil
-                state.selection.selectedSFixture = nil
-                state.selection.selectedJoint = nil
-            end
-            state.interaction.maybeHideSelectedPanel = false
-            state.polyEdit.tempVerts = nil
-            state.polyEdit.lockedVerts = true
-        end
-    end
 
     if sceneScript and sceneScript.foundError then
         love.graphics.setColor(1, 0, 0)

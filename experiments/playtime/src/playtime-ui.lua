@@ -17,6 +17,7 @@ local box2dDrawTextured = require 'src.box2d-draw-textured'
 local Peeker = require 'vendor.peeker'
 local recorder = require 'src.recorder'
 local state = require 'src.state'
+
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160

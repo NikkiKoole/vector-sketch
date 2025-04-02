@@ -7,8 +7,8 @@ state.selection = {
     selectedSFixture = nil,
     selectedBodies = nil,
     lastSelectedBody = nil, -- Maybe belongs here? Or separate interaction tracker?
-
 }
+
 state.interaction = { -- State directly related to ongoing user actions
     draggingObj = nil,
     offsetDragging = { nil, nil },
@@ -20,7 +20,7 @@ state.interaction = { -- State directly related to ongoing user actions
     setOffsetAFunc = nil,  -- These callback funcs are tricky, maybe replace with mode state
     setOffsetBFunc = nil,
     setUpdateSFixturePosFunc = nil,
-    maybeHideSelectedPanel = false, -- This suggests UI logic leaking into state
+    --maybeHideSelectedPanel = false, -- This suggests UI logic leaking into state
 }
 
 state.panelVisibility = {
