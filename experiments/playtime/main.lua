@@ -132,11 +132,11 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    loadScriptAndScene('elasto')
+    --loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
-    -- local cwd = love.filesystem.getWorkingDirectory()
-    -- reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    local cwd = love.filesystem.getWorkingDirectory()
+    reloadScene(cwd .. '/scripts/lekker.playtime.json')
 
     checkpoints = {}
     activeCheckpointIndex = 0
@@ -160,8 +160,8 @@ end
 
 function reloadScene(name)
     local data = getFiledata(name):getString()
-    state.ui.selectedJoint = nil
-    state.ui.selectedObj = nil
+    state.selection.selectedJoint = nil
+    state.selection.selectedObj = nil
     eio.reload(data, state.physicsWorld)
     print("Scene loaded: " .. name)
     print(inspect(registry.bodies))
@@ -170,8 +170,8 @@ end
 
 function loadScene(name)
     local data = getFiledata(name):getString()
-    state.ui.selectedJoint = nil
-    state.ui.selectedObj = nil
+    state.selection.selectedJoint = nil
+    state.selection.selectedObj = nil
     eio.load(data, state.physicsWorld, cam)
     print("Scene loaded: " .. name)
     return data
@@ -279,7 +279,7 @@ function love.update(dt)
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
     --phys.handleUpdate(dt)
 
-    if state.ui.draggingObj then
+    if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
 end
@@ -325,28 +325,28 @@ function drawUI()
 
     -- "Add Shape" Button
     if ui.button(20, 20, 200, 'add shape') then
-        state.ui.addShapeOpened = not state.ui.addShapeOpened
+        state.panelVisibility.addShapeOpened = not state.panelVisibility.addShapeOpened
     end
 
-    if state.ui.addShapeOpened then
+    if state.panelVisibility.addShapeOpened then
         playtimeui.drawAddShapeUI()
     end
 
     -- "Add Joint" Button
     if ui.button(230, 20, 200, 'add joint') then
-        state.ui.addJointOpened = not state.ui.addJointOpened
+        state.panelVisibility.addJointOpened = not state.panelVisibility.addJointOpened
     end
 
-    if state.ui.addJointOpened then
+    if state.panelVisibility.addJointOpened then
         playtimeui.drawAddJointUI()
     end
 
     -- "World Settings" Button
     if ui.button(440, 20, 200, 'settings') then
-        state.ui.worldSettingsOpened = not state.ui.worldSettingsOpened
+        state.panelVisibility.worldSettingsOpened = not state.panelVisibility.worldSettingsOpened
     end
 
-    if state.ui.worldSettingsOpened then
+    if state.panelVisibility.worldSettingsOpened then
         playtimeui.drawWorldSettingsUI()
     end
 
@@ -356,10 +356,10 @@ function drawUI()
     end
 
     if ui.button(810, 20, 150, state.world.isRecordingPointers and 'recording' or 'record') then
-        state.ui.recordingPanelOpened = not state.ui.recordingPanelOpened
+        state.panelVisibility.recordingPanelOpened = not state.panelVisibility.recordingPanelOpened
         -- state.world.isRecordingPointers = not state.world.isRecordingPointers
     end
-    if state.ui.recordingPanelOpened then
+    if state.panelVisibility.recordingPanelOpened then
         playtimeui.drawRecordingUI()
     end
     if sceneScript and sceneScript.onStart then
@@ -392,11 +392,11 @@ function drawUI()
         end)
     end
 
-    if state.ui.selectedObj and not state.ui.selectedJoint and not state.ui.selectedSFixture then
+    if state.selection.selectedObj and not state.selection.selectedJoint and not state.selection.selectedSFixture then
         playtimeui.drawUpdateSelectedObjectUI()
     end
 
-    if state.ui.selectedBodies and #state.ui.selectedBodies > 0 then
+    if state.selection.selectedBodies and #state.selection.selectedBodies > 0 then
         playtimeui.drawSelectedBodiesUI()
     end
 
@@ -404,16 +404,16 @@ function drawUI()
         playtimeui.doJointCreateUI(500, 100, 400, 150)
     end
 
-    if state.ui.selectedSFixture then
+    if state.selection.selectedSFixture then
         playtimeui.drawSelectedSFixture()
     end
 
-    if state.ui.selectedObj and state.ui.selectedJoint then
+    if state.selection.selectedObj and state.selection.selectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
-        playtimeui.doJointUpdateUI(state.ui.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
+        playtimeui.doJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
-    if state.ui.setOffsetAFunc or state.ui.setOffsetBFunc or state.ui.setUpdateSFixturePosFunc then
+    if state.interaction.setOffsetAFunc or state.interaction.setOffsetBFunc or state.interaction.setUpdateSFixturePosFunc then
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
@@ -440,7 +440,7 @@ function drawUI()
         end
     end
 
-    if state.ui.showPalette then
+    if state.panelVisibility.showPalette then
         local w, h = love.graphics.getDimensions()
         ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
             --ui.coloredRect()
@@ -467,27 +467,27 @@ function drawUI()
         end)
     end
 
-    if state.ui.saveDialogOpened then
+    if state.panelVisibility.saveDialogOpened then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
         ui.panel(300, 300, w - 600, h - 600, '»»» save «««', function()
-            local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', state.ui.saveName)
+            local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', state.editorPreferences.saveName)
             if t then
-                state.ui.saveName = utils.sanitizeString(t)
+                state.editorPreferences.saveName = utils.sanitizeString(t)
             end
             if ui.button(320, 500, 200, 'save') then
-                state.ui.saveDialogOpened = false
-                eio.save(state.physicsWorld, cam, state.ui.saveName)
+                state.panelVisibility.saveDialogOpened = false
+                eio.save(state.physicsWorld, cam, state.editorPreferences.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
-                state.ui.saveDialogOpened = false
+                state.panelVisibility.saveDialogOpened = false
                 love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
             end
         end)
     end
 
-    if state.ui.quitDialogOpened then
+    if state.panelVisibility.quitDialogOpened then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
@@ -518,7 +518,7 @@ function love.draw()
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
     love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
-    if state.ui.showGrid then
+    if state.editorPreferences.showGrid then
         drawGrid(cam, state.world)
     end
 
@@ -530,15 +530,15 @@ function love.draw()
 
     script.call('draw')
 
-    if state.ui.selectedSFixture and not state.ui.selectedSFixture:isDestroyed() then
-        local body = state.ui.selectedSFixture:getBody()
-        local centroid = fixtures.getCentroidOfFixture(body, state.ui.selectedSFixture)
+    if state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed() then
+        local body = state.selection.selectedSFixture:getBody()
+        local centroid = fixtures.getCentroidOfFixture(body, state.selection.selectedSFixture)
         local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
         love.graphics.circle('line', x2, y2, 3)
     end
 
-    if state.ui.selectedJoint and not state.ui.selectedJoint:isDestroyed() then
-        box2dDraw.drawJointAnchors(state.ui.selectedJoint)
+    if state.selection.selectedJoint and not state.selection.selectedJoint:isDestroyed() then
+        box2dDraw.drawJointAnchors(state.selection.selectedJoint)
     end
 
     local lw = love.graphics.getLineWidth()
@@ -568,15 +568,15 @@ function love.draw()
 
     -- draw to be drawn polygon
     if state.ui.drawFreePoly or state.ui.drawClickPoly then
-        if (#state.ui.polyVerts >= 6) then
-            love.graphics.polygon('line', state.ui.polyVerts)
+        if (#state.interaction.polyVerts >= 6) then
+            love.graphics.polygon('line', state.interaction.polyVerts)
         end
     end
 
     -- draw mousehandlers for dragging vertices
-    if state.ui.polyTempVerts and state.ui.selectedObj and state.ui.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
+    if state.ui.polyTempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
         local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-            state.ui.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+            state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
 
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
@@ -594,8 +594,8 @@ function love.draw()
     end
 
 
-    if state.ui.texFixtureTempVerts and state.ui.selectedSFixture and state.ui.texFixtureLockedVerts == false then
-        local thing = state.ui.selectedSFixture:getBody():getUserData().thing
+    if state.ui.texFixtureTempVerts and state.selection.selectedSFixture and state.ui.texFixtureLockedVerts == false then
+        local thing = state.selection.selectedSFixture:getBody():getUserData().thing
         local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.texFixtureTempVerts,
             thing, 0, 0)
         --local verts = state.ui.texFixtureTempVerts
@@ -618,17 +618,17 @@ function love.draw()
 
 
     -- Highlight selected bodies
-    if state.ui.selectedBodies then
-        local bodies = utils.map(state.ui.selectedBodies, function(thing)
+    if state.selection.selectedBodies then
+        local bodies = utils.map(state.selection.selectedBodies, function(thing)
             return thing.body
         end)
         box2dDraw.drawBodies(bodies)
     end
 
     -- draw temp poly when changing vertices
-    if state.ui.polyTempVerts and state.ui.selectedObj then
+    if state.ui.polyTempVerts and state.selection.selectedObj then
         local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-            state.ui.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+            state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
         love.graphics.setColor(1, 0, 0)
         love.graphics.polygon('line', verts)
         love.graphics.setColor(1, 1, 1) -- Rese
@@ -641,8 +641,8 @@ function love.draw()
 
 
     Peeker.detach()
-    if state.ui.startSelection then
-        selectrect.draw(state.ui.startSelection)
+    if state.interaction.startSelection then
+        selectrect.draw(state.interaction.startSelection)
     end
 
 
@@ -656,24 +656,24 @@ function love.draw()
         love.graphics.print(string.format("%.1f", love.timer.getTime() - recorder.startTime), 5, 5)
     end
 
-    if state.ui.maybeHideSelectedPanel then
-        if (state.ui.selectedSFixture) then
-            local body = state.ui.selectedSFixture:getBody()
+    if state.interaction.maybeHideSelectedPanel then
+        if (state.selection.selectedSFixture) then
+            local body = state.selection.selectedSFixture:getBody()
             local thing = body:getUserData().thing
 
-            state.ui.selectedObj = thing
-            state.ui.selectedSFixture = nil
-            state.ui.maybeHideSelectedPanel = false
-        elseif (state.ui.selectedJoint) then
-            state.ui.selectedJoint = nil
-            state.ui.maybeHideSelectedPanel = false
+            state.selection.selectedObj = thing
+            state.selection.selectedSFixture = nil
+            state.interaction.maybeHideSelectedPanel = false
+        elseif (state.selection.selectedJoint) then
+            state.selection.selectedJoint = nil
+            state.interaction.maybeHideSelectedPanel = false
         else
             if not (ui.activeElementID or ui.focusedTextInputID) then
-                state.ui.selectedObj = nil
-                state.ui.selectedSFixture = nil
-                state.ui.selectedJoint = nil
+                state.selection.selectedObj = nil
+                state.selection.selectedSFixture = nil
+                state.selection.selectedJoint = nil
             end
-            state.ui.maybeHideSelectedPanel = false
+            state.interaction.maybeHideSelectedPanel = false
             state.ui.polyTempVerts = nil
             state.ui.polyLockedVerts = true
         end
@@ -703,7 +703,7 @@ function love.mousemoved(x, y, dx, dy)
     --print('moved')
     if state.ui.polyDragIdx and state.ui.polyDragIdx > 0 then
         local index = state.ui.polyDragIdx
-        local obj = state.ui.selectedObj
+        local obj = state.selection.selectedObj
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
@@ -712,31 +712,31 @@ function love.mousemoved(x, y, dx, dy)
         state.ui.polyTempVerts[index + 1] = state.ui.polyTempVerts[index + 1] + dy2
     elseif state.ui.texFixtureDragIdx and state.ui.texFixtureDragIdx > 0 then
         local index = state.ui.texFixtureDragIdx
-        local obj = state.ui.selectedSFixture:getBody():getUserData().thing
+        local obj = state.selection.selectedSFixture:getBody():getUserData().thing
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
         state.ui.texFixtureTempVerts[index] = state.ui.texFixtureTempVerts[index] + dx2
         state.ui.texFixtureTempVerts[index + 1] = state.ui.texFixtureTempVerts[index + 1] + dy2
-    elseif state.ui.capturingPoly then
+    elseif state.interaction.capturingPoly then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
-        if not state.ui.lastPolyPt then
+        if not state.interaction.lastPolyPt then
             addPoint = true
         else
-            local lastX, lastY = state.ui.lastPolyPt.x, state.ui.lastPolyPt.y
+            local lastX, lastY = state.interaction.lastPolyPt.x, state.interaction.lastPolyPt.y
             local distSq = (wx - lastX) ^ 2 + (wy - lastY) ^ 2
-            if distSq >= (state.ui.minPointDistance / cam.scale) ^ 2 then
+            if distSq >= (state.interaction.minPointDistance / cam.scale) ^ 2 then
                 addPoint = true
             end
         end
         if addPoint then
             --table.insert(state.ui.polygonVertices, { x = wx, y = wy })
-            table.insert(state.ui.polyVerts, wx)
-            table.insert(state.ui.polyVerts, wy)
-            state.ui.lastPolyPt = { x = wx, y = wy }
+            table.insert(state.interaction.polyVerts, wx)
+            table.insert(state.interaction.polyVerts, wy)
+            state.interaction.lastPolyPt = { x = wx, y = wy }
         end
     elseif love.mouse.isDown(3) or love.mouse.isDown(2) then
         local tx, ty = cam:getTranslation()
@@ -763,16 +763,16 @@ end
 function love.keypressed(key)
     ui.handleKeyPress(key)
     if key == 'escape' then
-        if state.ui.quitDialogOpened == true then
+        if state.panelVisibility.quitDialogOpened == true then
             love.event.quit()
         end
-        if state.ui.quitDialogOpened == false then
-            state.ui.quitDialogOpened = true
+        if state.panelVisibility.quitDialogOpened == false then
+            state.panelVisibility.quitDialogOpened = true
         end
     end
     if key == 'space' then
-        if state.ui.quitDialogOpened == true then
-            state.ui.quitDialogOpened = false
+        if state.panelVisibility.quitDialogOpened == true then
+            state.panelVisibility.quitDialogOpened = false
         else
             state.world.paused = not state.world.paused
             if recorder.isRecording then recorder:recordPause(state.world.paused) end
@@ -783,7 +783,7 @@ function love.keypressed(key)
     end
     if key == 'f5' then
         state.world.paused = true
-        state.ui.saveDialogOpened = true
+        state.panelVisibility.saveDialogOpened = true
     end
     if key == 'i' and state.ui.polyTempVerts then
         -- figure out where my mousecursor is, between what nodes?

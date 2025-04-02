@@ -15,17 +15,17 @@ local function handlePointer(x, y, id, action)
     if action == "pressed" then
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
-        if state.ui.saveDialogOpened then return end
-        if state.ui.showPalette then
+        if state.panelVisibility.saveDialogOpened then return end
+        if state.panelVisibility.showPalette then
             local w, h = love.graphics.getDimensions()
             if y < h - 400 or x > w - 300 then
-                state.ui.showPalette = nil
+                state.panelVisibility.showPalette = nil
                 return
             else
                 return
             end
         end
-        if state.ui.selectedJoint or state.ui.selectedObj or state.ui.selectedSFixture or state.ui.selectedBodies or state.ui.drawClickPoly then
+        if state.selection.selectedJoint or state.selection.selectedObj or state.selection.selectedSFixture or state.selection.selectedBodies or state.ui.drawClickPoly then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -34,14 +34,14 @@ local function handlePointer(x, y, id, action)
 
         local startSelection = love.keyboard.isDown('lshift')
         if (startSelection) then
-            state.ui.startSelection = { x = x, y = y }
+            state.interaction.startSelection = { x = x, y = y }
         end
 
         local cx, cy = cam:getWorldCoordinates(x, y)
 
-        if state.ui.polyTempVerts and state.ui.selectedObj and state.ui.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
+        if state.ui.polyTempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
             local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-                state.ui.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+                state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
             for i = 1, #verts, 2 do
                 local vx = verts[i]
                 local vy = verts[i + 1]
@@ -56,10 +56,10 @@ local function handlePointer(x, y, id, action)
             end
         end
 
-        if state.ui.texFixtureTempVerts and state.ui.selectedSFixture and state.ui.texFixtureLockedVerts == false then
+        if state.ui.texFixtureTempVerts and state.selection.selectedSFixture and state.ui.texFixtureLockedVerts == false then
             --local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-            --    state.ui.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
-            local thing = state.ui.selectedSFixture:getBody():getUserData().thing
+            --    state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+            local thing = state.selection.selectedSFixture:getBody():getUserData().thing
             local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.texFixtureTempVerts,
                 thing, 0, 0)
             --local verts = state.ui.texFixtureTempVerts
@@ -79,20 +79,20 @@ local function handlePointer(x, y, id, action)
 
 
         if (state.ui.drawClickPoly) then
-            table.insert(state.ui.polyVerts, cx)
-            table.insert(state.ui.polyVerts, cy)
+            table.insert(state.interaction.polyVerts, cx)
+            table.insert(state.interaction.polyVerts, cy)
         end
         if (state.ui.setOffsetAFunc) then
-            state.ui.selectedJoint = state.ui.setOffsetAFunc(cx, cy)
+            state.selection.selectedJoint = state.ui.setOffsetAFunc(cx, cy)
             state.ui.setOffsetAFunc = nil
         end
-        if (state.ui.setOffsetBFunc) then
-            state.ui.selectedJoint = state.ui.setOffsetBFunc(cx, cy)
-            state.ui.setOffsetBFunc = nil
+        if (state.interaction.setOffsetBFunc) then
+            state.selection.selectedJoint = state.interaction.setOffsetBFunc(cx, cy)
+            state.interaction.setOffsetBFunc = nil
         end
-        if (state.ui.setUpdateSFixturePosFunc) then
-            state.ui.selectedSFixture = state.ui.setUpdateSFixturePosFunc(cx, cy)
-            state.ui.setUpdateSFixturePosFunc = nil
+        if (state.interaction.setUpdateSFixturePosFunc) then
+            state.selection.selectedSFixture = state.interaction.setUpdateSFixturePosFunc(cx, cy)
+            state.interaction.setUpdateSFixturePosFunc = nil
         end
 
         local onPressedParams = {
@@ -105,26 +105,26 @@ local function handlePointer(x, y, id, action)
         local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams,
             not state.world.paused)
 
-        if (state.ui.selectedBodies and #hitted == 0) then
-            state.ui.selectedBodies = nil
+        if (state.selection.selectedBodies and #hitted == 0) then
+            state.selection.selectedBodies = nil
         end
 
         if #hitted > 0 then
             local ud = hitted[1]:getBody():getUserData()
             if ud and ud.thing then
-                state.ui.selectedObj = ud.thing
+                state.selection.selectedObj = ud.thing
             end
-            if sceneScript and not state.world.paused and state.ui.selectedObj then
-                state.ui.selectedObj = nil
+            if sceneScript and not state.world.paused and state.selection.selectedObj then
+                state.selection.selectedObj = nil
             end
-            if state.ui.jointCreationMode and state.ui.selectedObj then
+            if state.ui.jointCreationMode and state.selection.selectedObj then
                 if state.ui.jointCreationMode.body1 == nil then
-                    state.ui.jointCreationMode.body1 = state.ui.selectedObj.body
+                    state.ui.jointCreationMode.body1 = state.selection.selectedObj.body
                     local px, py = state.ui.jointCreationMode.body1:getLocalPoint(cx, cy)
                     state.ui.jointCreationMode.p1 = { px, py }
                 elseif state.ui.jointCreationMode.body2 == nil then
-                    if (state.ui.selectedObj.body ~= state.ui.jointCreationMode.body1) then
-                        state.ui.jointCreationMode.body2 = state.ui.selectedObj.body
+                    if (state.selection.selectedObj.body ~= state.ui.jointCreationMode.body1) then
+                        state.ui.jointCreationMode.body2 = state.selection.selectedObj.body
                         local px, py = state.ui.jointCreationMode.body2:getLocalPoint(cx, cy)
                         state.ui.jointCreationMode.p2 = { px, py }
                         --print(state.ui.jointCreationMode.body2:getLocalPoint(cx, cy))
@@ -134,10 +134,10 @@ local function handlePointer(x, y, id, action)
 
             if (state.world.paused) then
                 -- local ud = state.ui.currentlySelectedObject:getBody():getUserData()
-                state.ui.draggingObj = state.ui.selectedObj
-                if state.ui.selectedObj then
-                    local offx, offy = state.ui.selectedObj.body:getLocalPoint(cx, cy)
-                    state.ui.offsetDragging = { -offx, -offy }
+                state.interaction.draggingObj = state.selection.selectedObj
+                if state.selection.selectedObj then
+                    local offx, offy = state.selection.selectedObj.body:getLocalPoint(cx, cy)
+                    state.interaction.offsetDragging = { -offx, -offy }
                 end
             else
                 local newHitted = utils.map(hitted, function(h)
@@ -148,7 +148,7 @@ local function handlePointer(x, y, id, action)
                 script.call('onPressed', newHitted)
             end
         else
-            state.ui.maybeHideSelectedPanel = true
+            state.interaction.maybeHideSelectedPanel = true
         end
         if recorder.isRecording and #hitted > 0 and not state.world.paused and madedata.bodyID then
             --madedata.activeLayer = recorder.activeLayer
@@ -183,10 +183,10 @@ local function handlePointer(x, y, id, action)
             --     end
             -- end
         end
-        if state.ui.draggingObj then
-            state.ui.draggingObj.body:setAwake(true)
-            state.ui.selectedObj = state.ui.draggingObj
-            state.ui.draggingObj = nil
+        if state.interaction.draggingObj then
+            state.interaction.draggingObj.body:setAwake(true)
+            state.selection.selectedObj = state.interaction.draggingObj
+            state.interaction.draggingObj = nil
         end
 
         if state.ui.drawFreePoly then
@@ -203,18 +203,18 @@ local function handlePointer(x, y, id, action)
             objectManager.maybeUpdateTexFixtureVertices()
         end
 
-        if (state.ui.startSelection) then
-            local tlx = math.min(state.ui.startSelection.x, x)
-            local tly = math.min(state.ui.startSelection.y, y)
-            local brx = math.max(state.ui.startSelection.x, x)
-            local bry = math.max(state.ui.startSelection.y, y)
+        if (state.interaction.startSelection) then
+            local tlx = math.min(state.interaction.startSelection.x, x)
+            local tly = math.min(state.interaction.startSelection.y, y)
+            local brx = math.max(state.interaction.startSelection.x, x)
+            local bry = math.max(state.interaction.startSelection.y, y)
             local tlxw, tlyw = cam:getWorldCoordinates(tlx, tly)
             local brxw, bryw = cam:getWorldCoordinates(brx, bry)
             local selected = selectrect.selectWithin(state.physicsWorld,
                 { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
 
-            state.ui.selectedBodies = selected
-            state.ui.startSelection = nil
+            state.selection.selectedBodies = selected
+            state.interaction.startSelection = nil
         end
     end
 end
@@ -222,28 +222,28 @@ end
 function lib.handleDraggingObj()
     local mx, my = love.mouse.getPosition()
     local wx, wy = cam:getWorldCoordinates(mx, my)
-    local offx = state.ui.offsetDragging[1]
-    local offy = state.ui.offsetDragging[2]
-    local rx, ry = mathutils.rotatePoint(offx, offy, 0, 0, state.ui.draggingObj.body:getAngle())
-    local oldPosX, oldPosY = state.ui.draggingObj.body:getPosition()
-    state.ui.draggingObj.body:setPosition(wx + rx, wy + ry)
+    local offx = state.interaction.offsetDragging[1]
+    local offy = state.interaction.offsetDragging[2]
+    local rx, ry = mathutils.rotatePoint(offx, offy, 0, 0, state.interaction.draggingObj.body:getAngle())
+    local oldPosX, oldPosY = state.interaction.draggingObj.body:getPosition()
+    state.interaction.draggingObj.body:setPosition(wx + rx, wy + ry)
     if recorder.isRecording then
-        local ud = state.ui.draggingObj.body:getUserData()
-        -- print(inspect(state.ui.draggingObj))
+        local ud = state.interaction.draggingObj.body:getUserData()
+        -- print(inspect(state.interaction.draggingObj))
         -- print(inspect(ud))
-        recorder:recordObjectSetPosition(state.ui.draggingObj.id, wx + rx, wy + ry)
+        recorder:recordObjectSetPosition(state.interaction.draggingObj.id, wx + rx, wy + ry)
     end
     -- figure out if we are dragging a group!
-    if state.ui.selectedBodies then
-        for i = 1, #state.ui.selectedBodies do
-            if (state.ui.selectedBodies[i] == state.ui.draggingObj) then
-                local newPosX, newPosY = state.ui.draggingObj.body:getPosition()
+    if state.selection.selectedBodies then
+        for i = 1, #state.selection.selectedBodies do
+            if (state.selection.selectedBodies[i] == state.interaction.draggingObj) then
+                local newPosX, newPosY = state.interaction.draggingObj.body:getPosition()
                 local dx = newPosX - oldPosX
                 local dy = newPosY - oldPosY
-                for j = 1, #state.ui.selectedBodies do
-                    if (state.ui.selectedBodies[j] ~= state.ui.draggingObj) then
-                        local oldPosX, oldPosY = state.ui.selectedBodies[j].body:getPosition()
-                        state.ui.selectedBodies[j].body:setPosition(oldPosX + dx, oldPosY + dy)
+                for j = 1, #state.selection.selectedBodies do
+                    if (state.selection.selectedBodies[j] ~= state.interaction.draggingObj) then
+                        local oldPosX, oldPosY = state.selection.selectedBodies[j].body:getPosition()
+                        state.selection.selectedBodies[j].body:setPosition(oldPosX + dx, oldPosY + dy)
                     end
                 end
             end
@@ -255,9 +255,9 @@ function lib.handleMousePressed(x, y, button, istouch)
     if not istouch and button == 1 then
         if state.ui.drawFreePoly then
             -- Start capturing mouse movement
-            state.ui.capturingPoly = true
-            state.ui.polyVerts = {}
-            state.ui.lastPolyPt = nil
+            state.interaction.capturingPoly = true
+            state.interaction.polyVerts = {}
+            state.interaction.lastPolyPt = nil
         else
             handlePointer(x, y, 'mouse', 'pressed')
         end
@@ -279,9 +279,9 @@ function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
     --handlePointer(x, y, id, 'pressed')
     if state.ui.drawFreePoly then
         -- Start capturing mouse movement
-        state.ui.capturingPoly = true
-        state.ui.polyVerts = {}
-        state.ui.lastPolyPt = nil
+        state.interaction.capturingPoly = true
+        state.interaction.polyVerts = {}
+        state.interaction.lastPolyPt = nil
     else
         handlePointer(x, y, id, 'pressed')
     end

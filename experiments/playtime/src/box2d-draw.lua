@@ -189,7 +189,7 @@ function lib.drawBodies(bodies)
     love.graphics.setLineWidth(6)
     love.graphics.setColor(1, 0, 1) -- Red outline for selection
     for i = 1, #bodies do
-        --for _, thing in ipairs(state.ui.selectedBodies) do
+        --for _, thing in ipairs(state.selection.selectedBodies) do
         --local fixtures = body:getFixtures()
         local body = bodies[i]
         for _, fixture in ipairs(body:getFixtures()) do

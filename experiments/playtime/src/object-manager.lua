@@ -14,8 +14,8 @@ local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
 
 function lib.finalizePolygonAsSoftSurface()
-    if #state.ui.polyVerts >= 6 then
-        local points = state.ui.polyVerts
+    if #state.interaction.polyVerts >= 6 then
+        local points = state.interaction.polyVerts
         local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
         table.insert(state.world.softbodies, b)
         b:setJointFrequency(10)
@@ -25,17 +25,23 @@ function lib.finalizePolygonAsSoftSurface()
     -- Reset the drawing state
     state.ui.drawClickPoly = false
     state.ui.drawFreePoly = false
-    state.ui.capturingPoly = false
-    state.ui.polyVerts = {}
-    state.ui.lastPolyPt = nil
+    state.interaction.capturingPoly = false
+    state.interaction.polyVerts = {}
+    state.interaction.lastPolyPt = nil
 end
 
 function lib.finalizePolygon()
-    if #state.ui.polyVerts >= 6 then
-        local cx, cy = mathutils.computeCentroid(state.ui.polyVerts)
-        --local cx, cy = mathutils.getCenterOfPoints(state.ui.polyVerts)
-        local settings = { x = cx, y = cy, bodyType = state.ui.nextType, vertices = state.ui.polyVerts }
-        -- objectManager.addThing('custom', cx, cy, state.ui.nextType, nil, nil, nil, nil, '', state.ui.polyVerts)
+    if #state.interaction.polyVerts >= 6 then
+        local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
+        --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
+        local settings = {
+            x = cx,
+            y = cy,
+            bodyType = state.editorPreferences.nextType,
+            vertices = state.interaction
+                .polyVerts
+        }
+        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
         lib.addThing('custom', settings)
     else
         -- Not enough vertices to form a polygon
@@ -44,13 +50,13 @@ function lib.finalizePolygon()
     -- Reset the drawing state
     state.ui.drawClickPoly = false
     state.ui.drawFreePoly = false
-    state.ui.capturingPoly = false
-    state.ui.polyVerts = {}
-    state.ui.lastPolyPt = nil
+    state.interaction.capturingPoly = false
+    state.interaction.polyVerts = {}
+    state.interaction.lastPolyPt = nil
 end
 
 function lib.insertCustomPolygonVertex(x, y)
-    local obj = state.ui.selectedObj
+    local obj = state.selection.selectedObj
     if obj then
         local offx, offy = obj.body:getPosition()
         local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), state.ui.polyCentroid.x,
@@ -65,7 +71,7 @@ end
 function lib.removeCustomPolygonVertex(x, y)
     -- Step 1: Convert world coordinates to local coordinates
 
-    local obj = state.ui.selectedObj
+    local obj = state.selection.selectedObj
     if obj then
         local offx, offy = obj.body:getPosition()
         local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
@@ -107,35 +113,35 @@ function lib.removeCustomPolygonVertex(x, y)
 end
 
 function lib.maybeUpdateCustomPolygonVertices()
-    if not utils.tablesHaveEqualIntegers(state.ui.polyTempVerts, state.ui.selectedObj.vertices) then
+    if not utils.tablesEqualNumbers(state.ui.polyTempVerts, state.selection.selectedObj.vertices) then
         local nx, ny = mathutils.computeCentroid(state.ui.polyTempVerts)
-        local ox, oy = mathutils.computeCentroid(state.ui.selectedObj.vertices)
+        local ox, oy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
         local dx = nx - ox
         local dy = ny - oy
-        local body = state.ui.selectedObj.body
+        local body = state.selection.selectedObj.body
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, body:getAngle())
         local oldX, oldY = body:getPosition()
 
         body:setPosition(oldX + dx2, oldY + dy2)
 
-        state.ui.selectedObj = lib.recreateThingFromBody(body,
+        state.selection.selectedObj = lib.recreateThingFromBody(body,
             { optionalVertices = state.ui.polyTempVerts })
 
-        state.ui.polyTempVerts = utils.shallowCopy(state.ui.selectedObj.vertices)
-        -- state.ui.selectedObj.vertices = state.ui.polyTempVerts
+        state.ui.polyTempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
+        -- state.selection.selectedObj.vertices = state.ui.polyTempVerts
         state.ui.polyCentroid = { x = nx, y = ny }
     end
 end
 
 function lib.maybeUpdateTexFixtureVertices()
     --print('we need todo stuff here!')
-    local points = { state.ui.selectedSFixture:getShape():getPoints() }
+    local points = { state.selection.selectedSFixture:getShape():getPoints() }
     --print(inspect(points))
     --print(inspect(state.ui.texFixtureTempVerts))
 
-    local oldUD = utils.shallowCopy(state.ui.selectedSFixture:getUserData())
-    local body = state.ui.selectedSFixture:getBody()
-    state.ui.selectedSFixture:destroy()
+    local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
+    local body = state.selection.selectedSFixture:getBody()
+    state.selection.selectedSFixture:destroy()
 
     local centerX, centerY = mathutils.getCenterOfPoints(points)
     local shape = love.physics.newPolygonShape(state.ui.texFixtureTempVerts)
@@ -144,7 +150,7 @@ function lib.maybeUpdateTexFixtureVertices()
 
     newfixture:setUserData(oldUD)
 
-    state.ui.selectedSFixture = newfixture
+    state.selection.selectedSFixture = newfixture
     --snap.updateFixture(newfixture)
     registry.registerSFixture(oldUD.id, newfixture)
     --snap.rebuildSnapFixtures(registry.sfixtures)
@@ -243,19 +249,19 @@ local function createThing(shapeType, conf)
 end
 
 function lib.startSpawn(shapeType, wx, wy)
-    local radius = tonumber(state.ui.lastUsedRadius) or 10
-    local width = tonumber(state.ui.lastUsedWidth) or radius * 2     -- Default width for polygons
-    local width2 = tonumber(state.ui.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
-    local width3 = tonumber(state.ui.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
+    local radius = tonumber(state.editorPreferences.lastUsedRadius) or 10
+    local width = tonumber(state.editorPreferences.lastUsedWidth) or radius * 2     -- Default width for polygons
+    local width2 = tonumber(state.editorPreferences.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
+    local width3 = tonumber(state.editorPreferences.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
 
-    local height = tonumber(state.ui.lastUsedHeight) or radius * 2   -- Default height for polygons
-    local height2 = tonumber(state.ui.lastUsedHeight2) or radius * 2 -- Default height for polygons
-    local height3 = tonumber(state.ui.lastUsedHeight3) or radius * 2 -- Default height for polygons
+    local height = tonumber(state.ui.lastUsedHeight) or radius * 2                  -- Default height for polygons
+    local height2 = tonumber(state.ui.lastUsedHeight2) or radius * 2                -- Default height for polygons
+    local height3 = tonumber(state.ui.lastUsedHeight3) or radius * 2                -- Default height for polygons
 
-    local height4 = tonumber(state.ui.lastUsedHeight4) or radius * 2 -- Default height for polygons
+    local height4 = tonumber(state.ui.lastUsedHeight4) or radius * 2                -- Default height for polygons
 
 
-    local bodyType = state.ui.nextType
+    local bodyType = state.editorPreferences.nextType
     local settings = {
         x = wx,
         y = wy,
@@ -278,8 +284,8 @@ function lib.startSpawn(shapeType, wx, wy)
         return
     end
 
-    state.ui.draggingObj = thing
-    state.ui.offsetDragging = { 0, 0 }
+    state.interaction.draggingObj = thing
+    state.interaction.offsetDragging = { 0, 0 }
 end
 
 function lib.addThing(shapeType, settings)
@@ -374,7 +380,7 @@ function lib.recreateThingFromBody(body, newSettings)
                 --     --  print(inspect(params))
                 local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
-                --     --local cx, cy = mathutils.computeCentroid(state.ui.selectedObj.vertices)
+                --     --local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
                 --     --print(cx, cy, centerX, centerY)
                 --     local allFixtures = body:getUserData().thing.body:getFixtures()
                 --     local offX, offY = getCenterOfShapeFixtures(allFixtures)

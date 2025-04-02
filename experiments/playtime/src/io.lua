@@ -725,7 +725,7 @@ function lib.cloneSelection(selectedBodies, world)
 
     local doneJoints = {}
     -- Step 2: Clone Joints
-    for _, originalThing in ipairs(state.ui.selectedBodies) do
+    for _, originalThing in ipairs(state.selection.selectedBodies) do
         local originalBody = originalThing.body
         local joints = originalBody:getJoints()
         for _, originalJoint in ipairs(joints) do
@@ -787,7 +787,7 @@ function lib.cloneSelection(selectedBodies, world)
         table.insert(result, v)
     end
     return result
-    --state.ui.selectedBodies = result
+    --state.selection.selectedBodies = result
 end
 
 return lib
