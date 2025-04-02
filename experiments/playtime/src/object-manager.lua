@@ -107,7 +107,7 @@ function lib.removeCustomPolygonVertex(x, y)
 end
 
 function lib.maybeUpdateCustomPolygonVertices()
-    if not utils.tablesEqualNumbers(state.ui.polyTempVerts, state.ui.selectedObj.vertices) then
+    if not utils.tablesHaveEqualIntegers(state.ui.polyTempVerts, state.ui.selectedObj.vertices) then
         local nx, ny = mathutils.computeCentroid(state.ui.polyTempVerts)
         local ox, oy = mathutils.computeCentroid(state.ui.selectedObj.vertices)
         local dx = nx - ox

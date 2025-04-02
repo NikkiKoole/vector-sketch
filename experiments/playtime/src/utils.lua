@@ -25,11 +25,19 @@ function lib.trace(...)
     print(table.concat(t, " "))
 end
 
--- Utility function to get the difference between two paths
 function lib.getPathDifference(base, full)
     -- Ensure both inputs are strings
     if type(base) ~= "string" or type(full) ~= "string" then
         error("Both base and full paths must be strings")
+    end
+
+    -- Handle root path explicitly
+    if base == "/" then
+        if full:sub(1, 1) == "/" then
+            return full:sub(2) -- Return path without leading slash
+        else
+            return full        -- Should not happen if full is absolute, but handle anyway
+        end
     end
 
     -- If the paths are identical, return an empty string
@@ -40,11 +48,14 @@ function lib.getPathDifference(base, full)
     -- Check if the base path is a prefix of the full path
     if full:sub(1, #base) == base then
         -- Ensure that the base path ends at a directory boundary
-        -- i.e., the next character should be '/' or the full path should end here
         local nextChar = full:sub(#base + 1, #base + 1)
         if nextChar == "/" then
             -- Extract the remaining part of the path
             return full:sub(#base + 1)
+            -- Check if the base is the entire path except for the final segment without a leading slash
+            -- This case seems less common for absolute paths but might occur.
+        elseif nextChar == "" then
+            return "" -- Or maybe nil depending on desired behavior? Empty seems reasonable.
         end
     end
 
@@ -120,8 +131,9 @@ function lib.deepCopy(orig, copies)
     return copy
 end
 
--- Function to compare two tables for equality (assuming they are arrays of numbers)
-function lib.tablesEqualNumbers(t1, t2)
+function lib.tablesEqualNumbers(t1, t2, tolerance)
+    tolerance = tolerance or 1e-9 -- Default tolerance for floating point
+
     -- Check if both tables have the same number of elements
     if #t1 ~= #t2 then
         return false
@@ -129,7 +141,14 @@ function lib.tablesEqualNumbers(t1, t2)
 
     -- Compare each corresponding element
     for i = 1, #t1 do
-        if t1[i] ~= t2[i] then
+        local v1 = t1[i]
+        local v2 = t2[i]
+        -- Use tolerance check for numbers
+        if type(v1) == 'number' and type(v2) == 'number' then
+            if math.abs(v1 - v2) > tolerance then
+                return false
+            end
+        elseif v1 ~= v2 then -- Use standard comparison for non-numbers
             return false
         end
     end
