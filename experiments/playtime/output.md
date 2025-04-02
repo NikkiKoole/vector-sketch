@@ -134,11 +134,11 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/snap2.playtime.json')
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
-    loadScriptAndScene('elasto')
+    --loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
     --loadScriptAndScene('puppet')
-    -- local cwd = love.filesystem.getWorkingDirectory()
-    -- reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    local cwd = love.filesystem.getWorkingDirectory()
+    reloadScene(cwd .. '/scripts/lekker.playtime.json')
 
     checkpoints = {}
     activeCheckpointIndex = 0
@@ -415,7 +415,7 @@ function drawUI()
         playtimeui.doJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
-    if state.ui.setOffsetAFunc or state.interaction.setOffsetBFunc or state.interaction.setUpdateSFixturePosFunc then
+    if state.interaction.setOffsetAFunc or state.interaction.setOffsetBFunc or state.interaction.setUpdateSFixturePosFunc then
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
@@ -3687,39 +3687,84 @@ function lib.pointInRect(px, py, rect)
 end
 
 function lib.getCorners(polygon)
-    -- Expecting polygon to be a table with exactly 8 numbers: x1,y1, x2,y2, x3,y3, x4,y4
-    local vertices = {
-        { x = polygon[1], y = polygon[2] },
-        { x = polygon[3], y = polygon[4] },
-        { x = polygon[5], y = polygon[6] },
-        { x = polygon[7], y = polygon[8] }
-    }
+    if #polygon ~= 8 then
+        print("getCorners expects a polygon with exactly 4 vertices (8 numbers)")
+        return nil, nil, nil, nil
+    end
 
-    -- Compute the centroid of the 4 vertices.
+    local vertices = {}
+    for i = 1, #polygon, 2 do
+        table.insert(vertices, { x = polygon[i], y = polygon[i + 1], id = (i + 1) / 2 })
+    end
+
     local cx, cy = 0, 0
-    for i = 1, 4 do
+    for i = 1, #vertices do
         cx = cx + vertices[i].x
         cy = cy + vertices[i].y
     end
-    cx = cx / 4
-    cy = cy / 4
+    cx = cx / #vertices
+    cy = cy / #vertices
 
-    -- Classify vertices relative to the centroid.
-    local topLeft, topRight, bottomLeft, bottomRight
-    for i = 1, 4 do
-        local v = vertices[i]
-        if v.x < cx and v.y < cy then
-            topLeft = v
-        elseif v.x >= cx and v.y < cy then
-            topRight = v
-        elseif v.x < cx and v.y >= cy then
-            bottomLeft = v
-        elseif v.x >= cx and v.y >= cy then
-            bottomRight = v
+    local corners = { tl = nil, tr = nil, br = nil, bl = nil }
+
+    for _, v in ipairs(vertices) do
+        local angle = math.atan2(v.y - cy, v.x - cx)
+
+        -- Define angle boundaries for quadrants more cleanly (radians)
+        local pi_2 = math.pi / 2                      -- 90 degrees
+
+        if angle > -math.pi and angle <= -pi_2 then   -- (-180, -90] degrees --> Top-Left Quad III
+            corners.tl = v
+        elseif angle > -pi_2 and angle <= 0 then      -- (-90, 0] degrees --> Top-Right Quad IV
+            corners.tr = v
+        elseif angle > 0 and angle <= pi_2 then       -- (0, 90] degrees --> Bottom-Right Quad I
+            corners.br = v
+        elseif angle > pi_2 and angle <= math.pi then -- (90, 180] degrees --> Bottom-Left Quad II
+            corners.bl = v
+        else
+            -- Should not happen with atan2 range
+            print(string.format("Warning: Vertex angle %.2f rad (%.1f deg) out of expected range (-pi, pi].", angle,
+                math.deg(angle)))
         end
     end
 
-    return topLeft, topRight, bottomRight, bottomLeft
+    -- Debugging
+    -- print("Recalculated Angles & Assignments:")
+    -- for _, v_debug in ipairs(vertices) do print(string.format(" ID %d (%.1f, %.1f) Angle: %.3f rad (%.1f deg)", v_debug.id, v_debug.x, v_debug.y, v_debug.angle or 0, math.deg(v_debug.angle or 0))) end
+    -- print("Assigned TL:", corners.tl and corners.tl.id)
+    -- print("Assigned TR:", corners.tr and corners.tr.id)
+    -- print("Assigned BR:", corners.br and corners.br.id)
+    -- print("Assigned BL:", corners.bl and corners.bl.id)
+
+    -- Check if all corners were assigned (duplicates might overwrite)
+    local assigned_count = 0
+    if corners.tl then assigned_count = assigned_count + 1 end
+    if corners.tr then assigned_count = assigned_count + 1 end
+    if corners.br then assigned_count = assigned_count + 1 end
+    if corners.bl then assigned_count = assigned_count + 1 end
+
+    -- Check for duplicate assignments (same vertex assigned to multiple corners)
+    local assignments = {}
+    local duplicates = false
+    for _, corner_v in pairs(corners) do
+        if corner_v then
+            if assignments[corner_v.id] then
+                duplicates = true
+                print(string.format("Warning: Duplicate assignment for vertex ID %d", corner_v.id))
+                break
+            end
+            assignments[corner_v.id] = true
+        end
+    end
+
+
+    if assigned_count ~= 4 or duplicates then
+        print("Warning: Could not assign all 4 corners uniquely using angle quadrants.")
+        -- This indicates the angle logic is insufficient for the shape/orientation
+        -- A fallback or more complex geometric analysis might be needed.
+    end
+
+    return corners.tl, corners.tr, corners.br, corners.bl
 end
 
 function lib.getBoundingRect(polygon)
@@ -4475,33 +4520,32 @@ end
 function lib.repositionPointClosestEdge(params, newPoly)
     local n = #newPoly / 2
 
-    -- Ensure the edgeIndex is valid
     if not params.edgeIndex or params.edgeIndex < 1 or params.edgeIndex > n then
         return nil, nil
     end
 
     local i = params.edgeIndex
-    local j = (i % n) + 1 -- next vertex index wrapping around
+    local j = (i % n) + 1
 
     local x1, y1 = newPoly[2 * i - 1], newPoly[2 * i]
     local x2, y2 = newPoly[2 * j - 1], newPoly[2 * j]
 
-    -- Compute new point along the edge using t
     local ex = x2 - x1
     local ey = y2 - y1
     local projX = x1 + params.t * ex
     local projY = y1 + params.t * ey
 
-    -- Compute a perpendicular (normal) to the edge
     local length = math.sqrt(ex * ex + ey * ey)
-    -- Avoid division by zero:
     if length == 0 then
         return projX, projY
     end
-    local nx = -ey / length
-    local ny = ex / length
 
-    -- Offset by the stored distance along the normal direction
+    -- Standard OUTWARD normal for CCW polygon: (dy, -dx) / length
+    local nx = ey / length
+    local ny = -ex / length
+
+    -- Apply the formula: Proj + sign * distance * Normal
+    -- The 'sign' from closestEdgeParams directly multiplies the normal offset
     local newX = projX + params.sign * params.distance * nx
     local newY = projY + params.sign * params.distance * ny
 
@@ -4651,7 +4695,13 @@ function lib.finalizePolygon()
     if #state.interaction.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
         --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
-        local settings = { x = cx, y = cy, bodyType = state.editorPreferences.nextType, vertices = state.interaction.polyVerts }
+        local settings = {
+            x = cx,
+            y = cy,
+            bodyType = state.editorPreferences.nextType,
+            vertices = state.interaction
+                .polyVerts
+        }
         -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
         lib.addThing('custom', settings)
     else
@@ -4865,11 +4915,11 @@ function lib.startSpawn(shapeType, wx, wy)
     local width2 = tonumber(state.editorPreferences.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
     local width3 = tonumber(state.editorPreferences.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
 
-    local height = tonumber(state.ui.lastUsedHeight) or radius * 2   -- Default height for polygons
-    local height2 = tonumber(state.ui.lastUsedHeight2) or radius * 2 -- Default height for polygons
-    local height3 = tonumber(state.ui.lastUsedHeight3) or radius * 2 -- Default height for polygons
+    local height = tonumber(state.ui.lastUsedHeight) or radius * 2                  -- Default height for polygons
+    local height2 = tonumber(state.ui.lastUsedHeight2) or radius * 2                -- Default height for polygons
+    local height3 = tonumber(state.ui.lastUsedHeight3) or radius * 2                -- Default height for polygons
 
-    local height4 = tonumber(state.ui.lastUsedHeight4) or radius * 2 -- Default height for polygons
+    local height4 = tonumber(state.ui.lastUsedHeight4) or radius * 2                -- Default height for polygons
 
 
     local bodyType = state.editorPreferences.nextType
@@ -8643,59 +8693,67 @@ src/state.lua
 ```lua
 local state = {}
 
-state.ui = {
+
+state.selection = {
+    selectedObj = nil,
+    selectedJoint = nil,
+    selectedSFixture = nil,
+    selectedBodies = nil,
+    lastSelectedBody = nil, -- Maybe belongs here? Or separate interaction tracker?
+    --state.ui.lastSelectedJoint = nil,
+}
+state.interaction = { -- State directly related to ongoing user actions
+    draggingObj = nil,
+    offsetDragging = { nil, nil },
+    capturingPoly = false, -- Linked to drawing modes
+    polyVerts = {},        -- Temporary vertices while drawing
+    lastPolyPt = nil,
+    minPointDistance = 50, -- Could be editor config
+    startSelection = nil,  -- For selection rect
+    setOffsetAFunc = nil,  -- These callback funcs are tricky, maybe replace with mode state
+    setOffsetBFunc = nil,
+    setUpdateSFixturePosFunc = nil,
+    maybeHideSelectedPanel = false, -- This suggests UI logic leaking into state
+}
+
+state.panelVisibility = {
+    addShapeOpened = false,
+    addJointOpened = false,
+    worldSettingsOpened = false,
+    recordingPanelOpened = false,
+    saveDialogOpened = false,
+    quitDialogOpened = false,
+    showPalette = nil,
+}
+
+state.editorPreferences = { -- Less volatile state
+    showGrid = false,
+    nextType = 'dynamic',
     lastUsedRadius = 20,
     lastUsedWidth = 40,
     lastUsedWidth2 = 5,
     lastUsedHeight = 40,
     lastUsedHeight2 = 40,
+    saveName = 'untitled',
+}
 
-    showGrid = false,
-    radiusOfNextSpawn = 100,
-    nextType = 'dynamic',
-    addShapeOpened = false,
-    addJointOpened = false,
 
-    worldSettingsOpened = false,
-    maybeHideSelectedPanel = false,
-
-    showTexFixtureDim = false,
-
-    selectedJoint = nil,
-    setOffsetAFunc = nil,
-    setOffsetBFunc = nil,
-    setUpdateSFixturePosFunc = nil,
-    selectedSFixture = nil,
-    selectedObj = nil,
-    draggingObj = nil,
-    offsetDragging = { nil, nil },
-    --worldText = '',
+state.ui = {
     jointCreationMode = nil,
     jointUpdateMode = nil,
     drawFreePoly = false,
     drawClickPoly = false,
-    capturingPoly = false,
 
+    showTexFixtureDim = false,
+    --worldText = '',
     polyDragIdx = 0,
     polyLockedVerts = true,
     polyTempVerts = nil, -- used when dragging a vertex
     polyCentroid = nil,
-    polyVerts = {},
-
     texFixtureDragIdx = 0,
     texFixtureLockedVerts = true,
     texFixtureVerts = {},
 
-    showPalette = nil,
-    minPointDistance = 50, -- Default minimum distance
-    lastPolyPt = nil,
-    lastSelectedBody = nil,
-    selectedBodies = nil,
-    lastSelectedJoint = nil,
-    saveDialogOpened = false,
-    quitDialogOpened = false,
-    saveName = 'untitled',
-    recordingPanelOpened = false,
 }
 
 state.world = {
@@ -9823,11 +9881,19 @@ function lib.trace(...)
     print(table.concat(t, " "))
 end
 
--- Utility function to get the difference between two paths
 function lib.getPathDifference(base, full)
     -- Ensure both inputs are strings
     if type(base) ~= "string" or type(full) ~= "string" then
         error("Both base and full paths must be strings")
+    end
+
+    -- Handle root path explicitly
+    if base == "/" then
+        if full:sub(1, 1) == "/" then
+            return full:sub(2) -- Return path without leading slash
+        else
+            return full        -- Should not happen if full is absolute, but handle anyway
+        end
     end
 
     -- If the paths are identical, return an empty string
@@ -9838,11 +9904,14 @@ function lib.getPathDifference(base, full)
     -- Check if the base path is a prefix of the full path
     if full:sub(1, #base) == base then
         -- Ensure that the base path ends at a directory boundary
-        -- i.e., the next character should be '/' or the full path should end here
         local nextChar = full:sub(#base + 1, #base + 1)
         if nextChar == "/" then
             -- Extract the remaining part of the path
             return full:sub(#base + 1)
+            -- Check if the base is the entire path except for the final segment without a leading slash
+            -- This case seems less common for absolute paths but might occur.
+        elseif nextChar == "" then
+            return "" -- Or maybe nil depending on desired behavior? Empty seems reasonable.
         end
     end
 
@@ -9918,8 +9987,9 @@ function lib.deepCopy(orig, copies)
     return copy
 end
 
--- Function to compare two tables for equality (assuming they are arrays of numbers)
-function lib.tablesEqualNumbers(t1, t2)
+function lib.tablesEqualNumbers(t1, t2, tolerance)
+    tolerance = tolerance or 1e-9 -- Default tolerance for floating point
+
     -- Check if both tables have the same number of elements
     if #t1 ~= #t2 then
         return false
@@ -9927,7 +9997,14 @@ function lib.tablesEqualNumbers(t1, t2)
 
     -- Compare each corresponding element
     for i = 1, #t1 do
-        if t1[i] ~= t2[i] then
+        local v1 = t1[i]
+        local v2 = t2[i]
+        -- Use tolerance check for numbers
+        if type(v1) == 'number' and type(v2) == 'number' then
+            if math.abs(v1 - v2) > tolerance then
+                return false
+            end
+        elseif v1 ~= v2 then -- Use standard comparison for non-numbers
             return false
         end
     end
@@ -9990,3 +10067,4 @@ end
 return lib
 
 ```
+

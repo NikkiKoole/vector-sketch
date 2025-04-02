@@ -142,39 +142,84 @@ function lib.pointInRect(px, py, rect)
 end
 
 function lib.getCorners(polygon)
-    -- Expecting polygon to be a table with exactly 8 numbers: x1,y1, x2,y2, x3,y3, x4,y4
-    local vertices = {
-        { x = polygon[1], y = polygon[2] },
-        { x = polygon[3], y = polygon[4] },
-        { x = polygon[5], y = polygon[6] },
-        { x = polygon[7], y = polygon[8] }
-    }
+    if #polygon ~= 8 then
+        print("getCorners expects a polygon with exactly 4 vertices (8 numbers)")
+        return nil, nil, nil, nil
+    end
 
-    -- Compute the centroid of the 4 vertices.
+    local vertices = {}
+    for i = 1, #polygon, 2 do
+        table.insert(vertices, { x = polygon[i], y = polygon[i + 1], id = (i + 1) / 2 })
+    end
+
     local cx, cy = 0, 0
-    for i = 1, 4 do
+    for i = 1, #vertices do
         cx = cx + vertices[i].x
         cy = cy + vertices[i].y
     end
-    cx = cx / 4
-    cy = cy / 4
+    cx = cx / #vertices
+    cy = cy / #vertices
 
-    -- Classify vertices relative to the centroid.
-    local topLeft, topRight, bottomLeft, bottomRight
-    for i = 1, 4 do
-        local v = vertices[i]
-        if v.x < cx and v.y < cy then
-            topLeft = v
-        elseif v.x >= cx and v.y < cy then
-            topRight = v
-        elseif v.x < cx and v.y >= cy then
-            bottomLeft = v
-        elseif v.x >= cx and v.y >= cy then
-            bottomRight = v
+    local corners = { tl = nil, tr = nil, br = nil, bl = nil }
+
+    for _, v in ipairs(vertices) do
+        local angle = math.atan2(v.y - cy, v.x - cx)
+
+        -- Define angle boundaries for quadrants more cleanly (radians)
+        local pi_2 = math.pi / 2                      -- 90 degrees
+
+        if angle > -math.pi and angle <= -pi_2 then   -- (-180, -90] degrees --> Top-Left Quad III
+            corners.tl = v
+        elseif angle > -pi_2 and angle <= 0 then      -- (-90, 0] degrees --> Top-Right Quad IV
+            corners.tr = v
+        elseif angle > 0 and angle <= pi_2 then       -- (0, 90] degrees --> Bottom-Right Quad I
+            corners.br = v
+        elseif angle > pi_2 and angle <= math.pi then -- (90, 180] degrees --> Bottom-Left Quad II
+            corners.bl = v
+        else
+            -- Should not happen with atan2 range
+            print(string.format("Warning: Vertex angle %.2f rad (%.1f deg) out of expected range (-pi, pi].", angle,
+                math.deg(angle)))
         end
     end
 
-    return topLeft, topRight, bottomRight, bottomLeft
+    -- Debugging
+    -- print("Recalculated Angles & Assignments:")
+    -- for _, v_debug in ipairs(vertices) do print(string.format(" ID %d (%.1f, %.1f) Angle: %.3f rad (%.1f deg)", v_debug.id, v_debug.x, v_debug.y, v_debug.angle or 0, math.deg(v_debug.angle or 0))) end
+    -- print("Assigned TL:", corners.tl and corners.tl.id)
+    -- print("Assigned TR:", corners.tr and corners.tr.id)
+    -- print("Assigned BR:", corners.br and corners.br.id)
+    -- print("Assigned BL:", corners.bl and corners.bl.id)
+
+    -- Check if all corners were assigned (duplicates might overwrite)
+    local assigned_count = 0
+    if corners.tl then assigned_count = assigned_count + 1 end
+    if corners.tr then assigned_count = assigned_count + 1 end
+    if corners.br then assigned_count = assigned_count + 1 end
+    if corners.bl then assigned_count = assigned_count + 1 end
+
+    -- Check for duplicate assignments (same vertex assigned to multiple corners)
+    local assignments = {}
+    local duplicates = false
+    for _, corner_v in pairs(corners) do
+        if corner_v then
+            if assignments[corner_v.id] then
+                duplicates = true
+                print(string.format("Warning: Duplicate assignment for vertex ID %d", corner_v.id))
+                break
+            end
+            assignments[corner_v.id] = true
+        end
+    end
+
+
+    if assigned_count ~= 4 or duplicates then
+        print("Warning: Could not assign all 4 corners uniquely using angle quadrants.")
+        -- This indicates the angle logic is insufficient for the shape/orientation
+        -- A fallback or more complex geometric analysis might be needed.
+    end
+
+    return corners.tl, corners.tr, corners.br, corners.bl
 end
 
 function lib.getBoundingRect(polygon)
@@ -930,33 +975,32 @@ end
 function lib.repositionPointClosestEdge(params, newPoly)
     local n = #newPoly / 2
 
-    -- Ensure the edgeIndex is valid
     if not params.edgeIndex or params.edgeIndex < 1 or params.edgeIndex > n then
         return nil, nil
     end
 
     local i = params.edgeIndex
-    local j = (i % n) + 1 -- next vertex index wrapping around
+    local j = (i % n) + 1
 
     local x1, y1 = newPoly[2 * i - 1], newPoly[2 * i]
     local x2, y2 = newPoly[2 * j - 1], newPoly[2 * j]
 
-    -- Compute new point along the edge using t
     local ex = x2 - x1
     local ey = y2 - y1
     local projX = x1 + params.t * ex
     local projY = y1 + params.t * ey
 
-    -- Compute a perpendicular (normal) to the edge
     local length = math.sqrt(ex * ex + ey * ey)
-    -- Avoid division by zero:
     if length == 0 then
         return projX, projY
     end
-    local nx = -ey / length
-    local ny = ex / length
 
-    -- Offset by the stored distance along the normal direction
+    -- Standard OUTWARD normal for CCW polygon: (dy, -dx) / length
+    local nx = ey / length
+    local ny = -ex / length
+
+    -- Apply the formula: Proj + sign * distance * Normal
+    -- The 'sign' from closestEdgeParams directly multiplies the normal offset
     local newX = projX + params.sign * params.distance * nx
     local newY = projY + params.sign * params.distance * ny
 
