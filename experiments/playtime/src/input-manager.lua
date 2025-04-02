@@ -25,7 +25,8 @@ local function handlePointer(x, y, id, action)
                 return
             end
         end
-        if state.selection.selectedJoint or state.selection.selectedObj or state.selection.selectedSFixture or state.selection.selectedBodies or state.ui.drawClickPoly then
+        if state.selection.selectedJoint or state.selection.selectedObj or state.selection.selectedSFixture or state.selection.selectedBodies
+            or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -39,52 +40,52 @@ local function handlePointer(x, y, id, action)
 
         local cx, cy = cam:getWorldCoordinates(x, y)
 
-        if state.ui.polyTempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
-            local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-                state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+        if state.polyEdit.tempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.polyEdit.lockedVerts == false then
+            local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
+                state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
             for i = 1, #verts, 2 do
                 local vx = verts[i]
                 local vy = verts[i + 1]
                 local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
                 if dist < 10 then
-                    state.ui.polyDragIdx = i
+                    state.polyEdit.dragIdx = i
 
                     return
                 else
-                    state.ui.polyDragIdx = 0
+                    state.polyEdit.dragIdx = 0
                 end
             end
         end
 
-        if state.ui.texFixtureTempVerts and state.selection.selectedSFixture and state.ui.texFixtureLockedVerts == false then
-            --local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-            --    state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+        if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture and state.texFixtureEdit.lockedVerts == false then
+            --local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
+            --    state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
             local thing = state.selection.selectedSFixture:getBody():getUserData().thing
-            local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.texFixtureTempVerts,
+            local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
                 thing, 0, 0)
-            --local verts = state.ui.texFixtureTempVerts
+
             for i = 1, #verts, 2 do
                 local vx = verts[i]
                 local vy = verts[i + 1]
                 local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
                 if dist < 10 then
-                    state.ui.texFixtureDragIdx = i
+                    state.texFixtureEdit.dragIdx = i
                     return
                 else
-                    state.ui.texFixtureDragIdx = 0
+                    state.texFixtureEdit.dragIdx = 0
                 end
             end
         end
 
 
 
-        if (state.ui.drawClickPoly) then
+        if (state.currentMode == 'drawClickMode') then
             table.insert(state.interaction.polyVerts, cx)
             table.insert(state.interaction.polyVerts, cy)
         end
-        if (state.ui.setOffsetAFunc) then
-            state.selection.selectedJoint = state.ui.setOffsetAFunc(cx, cy)
-            state.ui.setOffsetAFunc = nil
+        if (state.interaction.setOffsetAFunc) then
+            state.selection.selectedJoint = state.interaction.setOffsetAFunc(cx, cy)
+            state.interaction.setOffsetAFunc = nil
         end
         if (state.interaction.setOffsetBFunc) then
             state.selection.selectedJoint = state.interaction.setOffsetBFunc(cx, cy)
@@ -117,23 +118,21 @@ local function handlePointer(x, y, id, action)
             if sceneScript and not state.world.paused and state.selection.selectedObj then
                 state.selection.selectedObj = nil
             end
-            if state.ui.jointCreationMode and state.selection.selectedObj then
-                if state.ui.jointCreationMode.body1 == nil then
-                    state.ui.jointCreationMode.body1 = state.selection.selectedObj.body
-                    local px, py = state.ui.jointCreationMode.body1:getLocalPoint(cx, cy)
-                    state.ui.jointCreationMode.p1 = { px, py }
-                elseif state.ui.jointCreationMode.body2 == nil then
-                    if (state.selection.selectedObj.body ~= state.ui.jointCreationMode.body1) then
-                        state.ui.jointCreationMode.body2 = state.selection.selectedObj.body
-                        local px, py = state.ui.jointCreationMode.body2:getLocalPoint(cx, cy)
-                        state.ui.jointCreationMode.p2 = { px, py }
-                        --print(state.ui.jointCreationMode.body2:getLocalPoint(cx, cy))
+            if (state.currentMode == 'jointCreationMode') and state.selection.selectedObj then
+                if state.jointParams.body1 == nil then
+                    state.jointParams.body1 = state.selection.selectedObj.body
+                    local px, py = state.jointParams.body1:getLocalPoint(cx, cy)
+                    state.jointParams.p1 = { px, py }
+                elseif state.jointParams.body2 == nil then
+                    if (state.selection.selectedObj.body ~= state.jointParams.body1) then
+                        state.jointParams.body2 = state.selection.selectedObj.body
+                        local px, py = state.jointParams.body2:getLocalPoint(cx, cy)
+                        state.jointParams.p2 = { px, py }
                     end
                 end
             end
 
             if (state.world.paused) then
-                -- local ud = state.ui.currentlySelectedObject:getBody():getUserData()
                 state.interaction.draggingObj = state.selection.selectedObj
                 if state.selection.selectedObj then
                     local offx, offy = state.selection.selectedObj.body:getLocalPoint(cx, cy)
@@ -189,17 +188,17 @@ local function handlePointer(x, y, id, action)
             state.interaction.draggingObj = nil
         end
 
-        if state.ui.drawFreePoly then
+        if state.currentMode == 'drawFreePoly' then
             objectManager.finalizePolygon()
         end
 
-        if state.ui.polyDragIdx > 0 then
-            state.ui.polyDragIdx = 0
+        if state.polyEdit.dragIdx > 0 then
+            state.polyEdit.dragIdx = 0
             objectManager.maybeUpdateCustomPolygonVertices()
         end
 
-        if state.ui.texFixtureDragIdx > 0 then
-            state.ui.texFixtureDragIdx = 0
+        if state.texFixtureEdit.dragIdx > 0 then
+            state.texFixtureEdit.dragIdx = 0
             objectManager.maybeUpdateTexFixtureVertices()
         end
 
@@ -253,9 +252,9 @@ end
 
 function lib.handleMousePressed(x, y, button, istouch)
     if not istouch and button == 1 then
-        if state.ui.drawFreePoly then
+        if state.currentMode == 'drawFreePoly' then
             -- Start capturing mouse movement
-            state.interaction.capturingPoly = true
+            --state.interaction.capturingPoly = true
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         else
@@ -277,9 +276,9 @@ end
 
 function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
     --handlePointer(x, y, id, 'pressed')
-    if state.ui.drawFreePoly then
+    if state.currentMode == 'drawFreePoly' then
         -- Start capturing mouse movement
-        state.interaction.capturingPoly = true
+        --state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
         state.interaction.lastPolyPt = nil
     else

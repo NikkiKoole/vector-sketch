@@ -22,6 +22,8 @@ local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FPS = 60
+
+
 local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
 local FGcolorHasChangedViaPalette
@@ -60,7 +62,7 @@ local function rect(w, h, x, y)
 end
 
 function lib.doJointCreateUI(_x, _y, w, h)
-    ui.panel(_x, _y, w, h, '∞ ' .. state.ui.jointCreationMode.jointType .. ' ∞', function()
+    ui.panel(_x, _y, w, h, '∞ ' .. state.jointParams.jointType .. ' ∞', function()
         local layout = ui.createLayout({
             type = 'columns',
             spacing = 10,
@@ -75,14 +77,16 @@ function lib.doJointCreateUI(_x, _y, w, h)
         end
         nextRow()
         if ui.button(x, y, width, 'Create') then
-            local j = joints.createJoint(state.ui.jointCreationMode)
+            local j = joints.createJoint(state.jointParams)
             state.selection.selectedJoint = j
             state.selection.selectedObject = nil
-            state.ui.jointCreationMode = nil
+            state.jointParams = nil
+            state.currentMode = nil
         end
 
         if ui.button(x + width + 10, y, width, 'Cancel') then
-            state.ui.jointCreationMode = nil
+            state.jointParams = nil
+            state.currentMode = nil
         end
     end)
 end
@@ -91,9 +95,7 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
     if not j:isDestroyed() then
         ui.panel(_x, _y, w, h, '∞ ' .. j:getType() .. ' ∞', function()
             local bodyA, bodyB = j:getBodies()
-            if state.ui.jointUpdateMode == nil then
-                state.ui.jointUpdateMode = { body1 = bodyA, body2 = bodyB, jointType = j:getType() }
-            end
+
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = 10,
@@ -120,9 +122,9 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
 
             local function axisFunctionality(j)
                 local axisEnabled = createCheckbox(' axis', x, y,
-                    state.ui.axisEnabled or false,
+                    state.editorPreferences.axisEnabled or false,
                     function(val)
-                        state.ui.axisEnabled = val
+                        state.editorPreferences.axisEnabled = val
                     end
                 )
 
@@ -301,7 +303,7 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
 
                 nextRow()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-                    state.ui.setOffsetAFunc = function(x, y)
+                    state.interaction.setOffsetAFunc = function(x, y)
                         local fx, fy = mathutils.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
                         -- print(fx, fy)
                         return updateOffsetA(fx, fy)
@@ -372,10 +374,10 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                 local length = createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
-                    state.ui.jointUpdateMode.length or myLength,
+                    state.jointLengthParams.length or myLength,
                     function(val)
                         j:setLength(val)
-                        state.ui.jointUpdateMode.length = val
+                        state.jointLengthParams.length = val
                     end
                 )
                 nextRow()
@@ -419,10 +421,10 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                 local length = createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
-                    state.ui.jointUpdateMode.maxLength or myLength,
+                    state.jointLengthParams.maxLength or myLength,
                     function(val)
                         j:setMaxLength(val)
-                        state.ui.jointUpdateMode.maxLength = val
+                        state.jointLengthParams.maxLength = val
                     end
                 )
                 nextRow()
@@ -583,14 +585,14 @@ function lib.drawAddShapeUI()
         -- Add a button for custom polygon
         nextRow()
         if ui.button(x, y, width, 'freeform') then
-            state.ui.drawFreePoly = true
+            state.currentMode = 'drawFreePoly'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         nextRow()
 
         if ui.button(x, y, width, 'click') then
-            state.ui.drawClickPoly = true
+            state.currentMode = 'drawClickMode'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
@@ -675,7 +677,8 @@ function lib.drawAddJointUI()
             local x, y = ui.nextLayoutPosition(layout, width, height)
             local jointStarted = ui.button(x, y, width, joint)
             if jointStarted then
-                state.ui.jointCreationMode = { body1 = nil, body2 = nil, jointType = joint }
+                state.jointParams = { body1 = nil, body2 = nil, jointType = joint }
+                state.currentMode = 'jointCreationMode'
             end
         end
     end)
@@ -1061,11 +1064,11 @@ function lib.drawSelectedSFixture()
             local points = { state.selection.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
 
-            if ui.checkbox(x, y, state.ui.showTexFixtureDim, 'dims') then
-                state.ui.showTexFixtureDim = not state.ui.showTexFixtureDim
+            if ui.checkbox(x, y, state.editorPreferences.showTexFixtureDim, 'dims') then
+                state.editorPreferences.showTexFixtureDim = not state.editorPreferences.showTexFixtureDim
             end
             nextRow()
-            if (state.ui.showTexFixtureDim) then
+            if (state.editorPreferences.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
                 ui.label(x, y, ' width')
                 nextRow()
@@ -1110,10 +1113,10 @@ function lib.drawSelectedSFixture()
                     if paletteShow then
                         if state.panelVisibility.showPalette then
                             state.panelVisibility.showPalette = nil
-                            state.ui.showPaletteFunc = nil
+                            state.showPaletteFunc = nil
                         else
                             state.panelVisibility.showPalette = true
-                            state.ui.showPaletteFunc = function(color)
+                            state.showPaletteFunc = function(color)
                                 currentHex = color
                                 oldTexFixUD.extra.dirty = true
                                 colorpickers[postFix] = true
@@ -1249,10 +1252,10 @@ function lib.drawSelectedSFixture()
                 if paletteShow then
                     if state.panelVisibility.showPalette then
                         state.panelVisibility.showPalette = nil
-                        state.ui.showPaletteFunc = nil
+                        state.showPaletteFunc = nil
                     else
                         state.panelVisibility.showPalette = true
-                        state.ui.showPaletteFunc = function(color)
+                        state.showPaletteFunc = function(color)
                             oldTexFixUD.extra.patch1Hex = color
                             oldTexFixUD.extra.dirty = true
                             PatternColorHasChangedViaPalette = true
@@ -1335,10 +1338,10 @@ function lib.drawSelectedSFixture()
                 if paletteShow then
                     if state.panelVisibility.showPalette then
                         state.panelVisibility.showPalette = nil
-                        state.ui.showPaletteFunc = nil
+                        state.showPaletteFunc = nil
                     else
                         state.panelVisibility.showPalette = true
-                        state.ui.showPaletteFunc = function(color)
+                        state.showPaletteFunc = function(color)
                             oldTexFixUD.extra.patchHex2 = color
                             oldTexFixUD.extra.dirty = true
                             PatternColorHasChangedViaPalette = true
@@ -1738,7 +1741,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                     if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
                         state.editorPreferences.lastUsedWidth = newWidth
-                        state.ui.lastUsedHeight = newHeight
+                        state.editorPreferences.lastUsedHeight = newHeight
                         state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
                             shapeType = shapeType,
                             width = newWidth or thing.width,
@@ -1782,10 +1785,10 @@ function lib.drawUpdateSelectedObjectUI()
                         state.editorPreferences.lastUsedWidth = newWidth
                         state.editorPreferences.lastUsedWidth2 = newWidth2
                         state.editorPreferences.lastUsedWidth3 = newWidth3
-                        state.ui.lastUsedHeight = newHeight
-                        state.ui.lastUsedHeight2 = newHeight2
-                        state.ui.lastUsedHeight3 = newHeight3
-                        state.ui.lastUsedHeight4 = newHeight4
+                        state.editorPreferences.lastUsedHeight = newHeight
+                        state.editorPreferences.lastUsedHeight2 = newHeight2
+                        state.editorPreferences.lastUsedHeight3 = newHeight3
+                        state.editorPreferences.lastUsedHeight4 = newHeight4
 
                         state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
                             shapeType = shapeType,
@@ -1817,7 +1820,7 @@ function lib.drawUpdateSelectedObjectUI()
                     if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
                         state.editorPreferences.lastUsedWidth2 = newWidth2
                         state.editorPreferences.lastUsedWidth = newWidth
-                        state.ui.lastUsedHeight = newHeight
+                        state.editorPreferences.lastUsedHeight = newHeight
                         state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
                             shapeType = shapeType,
                             width = newWidth or thing.width,
@@ -1845,15 +1848,15 @@ function lib.drawUpdateSelectedObjectUI()
                     else
                         -- No UI controls for custom or unsupported shapes
                         --ui.label(x, y, 'custom')
-                        if ui.button(x, y, 260, state.ui.polyLockedVerts and 'verts locked' or 'verts unlocked') then
-                            state.ui.polyLockedVerts = not state.ui.polyLockedVerts
-                            if state.ui.polyLockedVerts == false then
-                                state.ui.polyTempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
+                        if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                            state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
+                            if state.polyEdit.lockedVerts == false then
+                                state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
                                 local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                                state.ui.polyCentroid = { x = cx, y = cy }
+                                state.polyEdit.centroid = { x = cx, y = cy }
                             else
-                                state.ui.polyTempVerts = nil
-                                state.ui.polyCentroid = nil
+                                state.polyEdit.tempVerts = nil
+                                state.polyEdit.centroid = nil
                             end
                         end
                     end
@@ -1879,14 +1882,7 @@ function lib.drawUpdateSelectedObjectUI()
 
             --     local paletteShow = ui.button(x, y, 40, 'p', 40)
             --     if paletteShow then
-            --         if state.panelVisibility.showPalette then
-            --             state.panelVisibility.showPalette = nil
-            --             state.ui.showPaletteFunc = nil
-            --         else
-            --             state.panelVisibility.showPalette = true
-            --             state.ui.showPaletteFunc = function(color)
-            --                 thing.textures.bgHex = color
-            --                 BGcolorHasChangedViaPalette = true
+
             --             end
             --         end
             --     end
@@ -1930,15 +1926,7 @@ function lib.drawUpdateSelectedObjectUI()
             --     end
             --     local paletteShow = ui.button(x, y, 40, 'p', 40)
             --     if paletteShow then
-            --         if state.panelVisibility.showPalette then
-            --             state.panelVisibility.showPalette = nil
-            --             state.ui.showPaletteFunc = nil
-            --             --print(thing.textures.bgHex)
-            --         else
-            --             state.panelVisibility.showPalette = true
-            --             state.ui.showPaletteFunc = function(color)
-            --                 thing.textures.fgHex = color
-            --                 FGcolorHasChangedViaPalette = true
+
             --             end
             --         end
             --     end

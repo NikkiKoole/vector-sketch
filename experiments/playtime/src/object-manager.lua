@@ -23,9 +23,9 @@ function lib.finalizePolygonAsSoftSurface()
     end
     print('blob surface wanted instead?')
     -- Reset the drawing state
-    state.ui.drawClickPoly = false
-    state.ui.drawFreePoly = false
-    state.interaction.capturingPoly = false
+
+    state.currentMode = nil
+    --state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
 end
@@ -48,9 +48,9 @@ function lib.finalizePolygon()
         print("Not enough vertices to create a polygon.")
     end
     -- Reset the drawing state
-    state.ui.drawClickPoly = false
-    state.ui.drawFreePoly = false
-    state.interaction.capturingPoly = false
+
+    state.currentMode = nil
+    --state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
 end
@@ -59,11 +59,11 @@ function lib.insertCustomPolygonVertex(x, y)
     local obj = state.selection.selectedObj
     if obj then
         local offx, offy = obj.body:getPosition()
-        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), state.ui.polyCentroid.x,
-            state.ui.polyCentroid.y)
+        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), state.polyEdit.centroid.x,
+            state.polyEdit.centroid.y)
         -- Find the closest edge index
-        local insertAfterVertexIndex = mathutils.findClosestEdge(state.ui.polyTempVerts, px, py)
-        mathutils.insertValuesAt(state.ui.polyTempVerts, insertAfterVertexIndex * 2 + 1, px, py)
+        local insertAfterVertexIndex = mathutils.findClosestEdge(state.polyEdit.tempVerts, px, py)
+        mathutils.insertValuesAt(state.polyEdit.tempVerts, insertAfterVertexIndex * 2 + 1, px, py)
     end
 end
 
@@ -75,16 +75,16 @@ function lib.removeCustomPolygonVertex(x, y)
     if obj then
         local offx, offy = obj.body:getPosition()
         local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
-            state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+            state.polyEdit.centroid.x, state.polyEdit.centroid.y)
 
         -- Step 2: Find the closest vertex index
-        local closestVertexIndex = mathutils.findClosestVertex(state.ui.polyTempVerts, px, py)
+        local closestVertexIndex = mathutils.findClosestVertex(state.polyEdit.tempVerts, px, py)
 
         if closestVertexIndex then
             -- Optional: Define a maximum allowable distance to consider for deletion
             local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
-            local vx = state.ui.polyTempVerts[(closestVertexIndex - 1) * 2 + 1]
-            local vy = state.ui.polyTempVerts[(closestVertexIndex - 1) * 2 + 2]
+            local vx = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 1]
+            local vy = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 2]
             local dx = px - vx
             local dy = py - vy
             local distSq = dx * dx + dy * dy
@@ -93,12 +93,12 @@ function lib.removeCustomPolygonVertex(x, y)
                 -- Step 3: Remove the vertex from the vertex list
 
                 -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
-                if #state.ui.polyTempVerts <= 6 then
+                if #state.polyEdit.tempVerts <= 6 then
                     print("Cannot delete vertex: A polygon must have at least three vertices.")
                     -- Optionally, you can restore the removed vertex or prevent deletion
                     return
                 end
-                mathutils.removeVertexAt(state.ui.polyTempVerts, closestVertexIndex)
+                mathutils.removeVertexAt(state.polyEdit.tempVerts, closestVertexIndex)
                 lib.maybeUpdateCustomPolygonVertices()
 
                 -- Debugging Output
@@ -113,8 +113,8 @@ function lib.removeCustomPolygonVertex(x, y)
 end
 
 function lib.maybeUpdateCustomPolygonVertices()
-    if not utils.tablesEqualNumbers(state.ui.polyTempVerts, state.selection.selectedObj.vertices) then
-        local nx, ny = mathutils.computeCentroid(state.ui.polyTempVerts)
+    if not utils.tablesEqualNumbers(state.polyEdit.tempVerts, state.selection.selectedObj.vertices) then
+        local nx, ny = mathutils.computeCentroid(state.polyEdit.tempVerts)
         local ox, oy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
         local dx = nx - ox
         local dy = ny - oy
@@ -125,26 +125,25 @@ function lib.maybeUpdateCustomPolygonVertices()
         body:setPosition(oldX + dx2, oldY + dy2)
 
         state.selection.selectedObj = lib.recreateThingFromBody(body,
-            { optionalVertices = state.ui.polyTempVerts })
+            { optionalVertices = state.polyEdit.tempVerts })
 
-        state.ui.polyTempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
-        -- state.selection.selectedObj.vertices = state.ui.polyTempVerts
-        state.ui.polyCentroid = { x = nx, y = ny }
+        state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
+        -- state.selection.selectedObj.vertices = state.polyEdit.tempVerts
+        state.polyEdit.centroid = { x = nx, y = ny }
     end
 end
 
 function lib.maybeUpdateTexFixtureVertices()
     --print('we need todo stuff here!')
     local points = { state.selection.selectedSFixture:getShape():getPoints() }
-    --print(inspect(points))
-    --print(inspect(state.ui.texFixtureTempVerts))
+
 
     local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
     local body = state.selection.selectedSFixture:getBody()
     state.selection.selectedSFixture:destroy()
 
     local centerX, centerY = mathutils.getCenterOfPoints(points)
-    local shape = love.physics.newPolygonShape(state.ui.texFixtureTempVerts)
+    local shape = love.physics.newPolygonShape(state.texFixtureEdit.tempVerts)
     local newfixture = love.physics.newFixture(body, shape)
     newfixture:setSensor(true) -- Sensor so it doesn't collide
 
@@ -254,11 +253,15 @@ function lib.startSpawn(shapeType, wx, wy)
     local width2 = tonumber(state.editorPreferences.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
     local width3 = tonumber(state.editorPreferences.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
 
-    local height = tonumber(state.ui.lastUsedHeight) or radius * 2                  -- Default height for polygons
-    local height2 = tonumber(state.ui.lastUsedHeight2) or radius * 2                -- Default height for polygons
-    local height3 = tonumber(state.ui.lastUsedHeight3) or radius * 2                -- Default height for polygons
+    local height = tonumber(state.editorPreferences.lastUsedHeight) or
+        radius * 2 -- Default height for polygons
+    local height2 = tonumber(state.editorPreferences.lastUsedHeight2) or
+        radius * 2 -- Default height for polygons
+    local height3 = tonumber(state.editorPreferences.lastUsedHeight3) or
+        radius * 2 -- Default height for polygons
 
-    local height4 = tonumber(state.ui.lastUsedHeight4) or radius * 2                -- Default height for polygons
+    local height4 = tonumber(state.editorPreferences.lastUsedHeight4) or
+        radius * 2 -- Default height for polygons
 
 
     local bodyType = state.editorPreferences.nextType

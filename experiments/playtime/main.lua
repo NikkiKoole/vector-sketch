@@ -370,7 +370,7 @@ function drawUI()
         end
     end
 
-    if state.ui.drawClickPoly then
+    if state.currentMode == 'drawClickMode' then
         local panelWidth = PANEL_WIDTH
         local w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
@@ -400,7 +400,7 @@ function drawUI()
         playtimeui.drawSelectedBodiesUI()
     end
 
-    if state.ui.jointCreationMode and state.ui.jointCreationMode.body1 and state.ui.jointCreationMode.body2 then
+    if (state.currentMode == 'jointCreationMode') and state.jointParams.body1 and state.jointParams.body2 then
         playtimeui.doJointCreateUI(500, 100, 400, 150)
     end
 
@@ -418,23 +418,25 @@ function drawUI()
         end)
     end
 
-    if state.ui.jointCreationMode and ((state.ui.jointCreationMode.body1 == nil) or (state.ui.jointCreationMode.body2 == nil)) then
-        if (state.ui.jointCreationMode.body1 == nil) then
+    if (state.currentMode == 'jointCreationMode') and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
+        if (state.jointParams.body1 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
                 local x = 510
                 local y = 150
                 local width = 280
                 if ui.button(x, y, width, 'cancel') then
-                    state.ui.jointCreationMode = nil
+                    state.jointParams = nil
+                    state.currentMode = nil
                 end
             end)
-        elseif (state.ui.jointCreationMode.body2 == nil) then
+        elseif (state.jointParams.body2 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 2nd body •', function()
                 local x = 510
                 local y = 150
                 local width = 280
                 if ui.button(x, y, width, 'cancel') then
-                    state.ui.jointCreationMode = nil
+                    state.jointParams = nil
+                    state.currentMode = nil
                 end
             end)
         end
@@ -461,7 +463,7 @@ function drawUI()
 
                 -- ui.coloredRect(0, 0, { 255, 0, 0 }, 40)
                 if ui.coloredRect(10 + x, h - 300 + y, { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
-                    state.ui.showPaletteFunc(box2dDrawTextured.palette[i])
+                    state.showPaletteFunc(box2dDrawTextured.palette[i])
                 end
             end
         end)
@@ -567,16 +569,16 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
 
     -- draw to be drawn polygon
-    if state.ui.drawFreePoly or state.ui.drawClickPoly then
+    if state.currentMode == 'drawClickMode' or state.currentMode == 'drawFreePoly' then
         if (#state.interaction.polyVerts >= 6) then
             love.graphics.polygon('line', state.interaction.polyVerts)
         end
     end
 
     -- draw mousehandlers for dragging vertices
-    if state.ui.polyTempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.ui.polyLockedVerts == false then
-        local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-            state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+    if state.polyEdit.tempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.polyEdit.lockedVerts == false then
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
+            state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
 
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
@@ -594,11 +596,11 @@ function love.draw()
     end
 
 
-    if state.ui.texFixtureTempVerts and state.selection.selectedSFixture and state.ui.texFixtureLockedVerts == false then
+    if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture and state.texFixtureEdit.lockedVerts == false then
         local thing = state.selection.selectedSFixture:getBody():getUserData().thing
-        local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.texFixtureTempVerts,
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
             thing, 0, 0)
-        --local verts = state.ui.texFixtureTempVerts
+
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
 
@@ -626,9 +628,9 @@ function love.draw()
     end
 
     -- draw temp poly when changing vertices
-    if state.ui.polyTempVerts and state.selection.selectedObj then
-        local verts = mathutils.getLocalVerticesForCustomSelected(state.ui.polyTempVerts,
-            state.selection.selectedObj, state.ui.polyCentroid.x, state.ui.polyCentroid.y)
+    if state.polyEdit.tempVerts and state.selection.selectedObj then
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
+            state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
         love.graphics.setColor(1, 0, 0)
         love.graphics.polygon('line', verts)
         love.graphics.setColor(1, 1, 1) -- Rese
@@ -674,8 +676,8 @@ function love.draw()
                 state.selection.selectedJoint = nil
             end
             state.interaction.maybeHideSelectedPanel = false
-            state.ui.polyTempVerts = nil
-            state.ui.polyLockedVerts = true
+            state.polyEdit.tempVerts = nil
+            state.polyEdit.lockedVerts = true
         end
     end
 
@@ -701,25 +703,25 @@ end
 
 function love.mousemoved(x, y, dx, dy)
     --print('moved')
-    if state.ui.polyDragIdx and state.ui.polyDragIdx > 0 then
-        local index = state.ui.polyDragIdx
+    if state.polyEdit.dragIdx and state.polyEdit.dragIdx > 0 then
+        local index = state.polyEdit.dragIdx
         local obj = state.selection.selectedObj
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
-        state.ui.polyTempVerts[index] = state.ui.polyTempVerts[index] + dx2
-        state.ui.polyTempVerts[index + 1] = state.ui.polyTempVerts[index + 1] + dy2
-    elseif state.ui.texFixtureDragIdx and state.ui.texFixtureDragIdx > 0 then
-        local index = state.ui.texFixtureDragIdx
+        state.polyEdit.tempVerts[index] = state.polyEdit.tempVerts[index] + dx2
+        state.polyEdit.tempVerts[index + 1] = state.polyEdit.tempVerts[index + 1] + dy2
+    elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
+        local index = state.texFixtureEdit.dragIdx
         local obj = state.selection.selectedSFixture:getBody():getUserData().thing
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
-        state.ui.texFixtureTempVerts[index] = state.ui.texFixtureTempVerts[index] + dx2
-        state.ui.texFixtureTempVerts[index + 1] = state.ui.texFixtureTempVerts[index + 1] + dy2
-    elseif state.interaction.capturingPoly then
+        state.texFixtureEdit.tempVerts[index] = state.texFixtureEdit.tempVerts[index] + dx2
+        state.texFixtureEdit.tempVerts[index + 1] = state.texFixtureEdit.tempVerts[index + 1] + dy2
+    elseif (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
@@ -733,7 +735,6 @@ function love.mousemoved(x, y, dx, dy)
             end
         end
         if addPoint then
-            --table.insert(state.ui.polygonVertices, { x = wx, y = wy })
             table.insert(state.interaction.polyVerts, wx)
             table.insert(state.interaction.polyVerts, wy)
             state.interaction.lastPolyPt = { x = wx, y = wy }
@@ -785,14 +786,14 @@ function love.keypressed(key)
         state.world.paused = true
         state.panelVisibility.saveDialogOpened = true
     end
-    if key == 'i' and state.ui.polyTempVerts then
+    if key == 'i' and state.polyEdit.tempVerts then
         -- figure out where my mousecursor is, between what nodes?
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
         objectManager.insertCustomPolygonVertex(wx, wy)
         objectManager.maybeUpdateCustomPolygonVertices()
     end
-    if key == 'd' and state.ui.polyTempVerts then
+    if key == 'd' and state.polyEdit.tempVerts then
         -- Remove a vertex
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)

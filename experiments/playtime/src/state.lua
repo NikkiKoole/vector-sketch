@@ -7,12 +7,12 @@ state.selection = {
     selectedSFixture = nil,
     selectedBodies = nil,
     lastSelectedBody = nil, -- Maybe belongs here? Or separate interaction tracker?
-    --state.ui.lastSelectedJoint = nil,
+
 }
 state.interaction = { -- State directly related to ongoing user actions
     draggingObj = nil,
     offsetDragging = { nil, nil },
-    capturingPoly = false, -- Linked to drawing modes
+    --capturingPoly = false, -- Linked to drawing modes
     polyVerts = {},        -- Temporary vertices while drawing
     lastPolyPt = nil,
     minPointDistance = 50, -- Could be editor config
@@ -42,26 +42,28 @@ state.editorPreferences = { -- Less volatile state
     lastUsedHeight = 40,
     lastUsedHeight2 = 40,
     saveName = 'untitled',
-}
-
-
-state.ui = {
-    jointCreationMode = nil,
-    jointUpdateMode = nil,
-    drawFreePoly = false,
-    drawClickPoly = false,
-
     showTexFixtureDim = false,
-    --worldText = '',
-    polyDragIdx = 0,
-    polyLockedVerts = true,
-    polyTempVerts = nil, -- used when dragging a vertex
-    polyCentroid = nil,
-    texFixtureDragIdx = 0,
-    texFixtureLockedVerts = true,
-    texFixtureVerts = {},
-
+    axisEnabled = false
 }
+
+state.polyEdit = {
+    dragIdx = 0,
+    tempVerts = nil,
+    lockedVerts = true,
+    centroid = nil
+}
+
+state.texFixtureEdit = {
+    dragIdx = 0,
+    lockedVerts = true,
+    tempVerts = nil,
+    verts = {}
+}
+
+state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly'
+state.jointParams = nil
+state.jointLengthParams = {}
+state.showPaletteFunc = nil
 
 state.world = {
     debugDrawMode = true,
