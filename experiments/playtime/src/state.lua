@@ -46,13 +46,13 @@ state.editorPreferences = { -- Less volatile state
 
 
 state.ui = {
-
-    showTexFixtureDim = false,
-    worldText = '',
     jointCreationMode = nil,
     jointUpdateMode = nil,
     drawFreePoly = false,
     drawClickPoly = false,
+
+    showTexFixtureDim = false,
+    --worldText = '',
     polyDragIdx = 0,
     polyLockedVerts = true,
     polyTempVerts = nil, -- used when dragging a vertex
