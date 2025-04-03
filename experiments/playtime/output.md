@@ -5787,8 +5787,10 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
                     state.currentMode = 'setOffsetA'
                 end
-                if ui.button(x + 50, y, BUTTON_HEIGHT, 'b  ') then
-                    state.currentMode = 'setOffsetB'
+                if jointType ~= 'revolute' then
+                    if ui.button(x + 50, y, BUTTON_HEIGHT, 'b  ') then
+                        state.currentMode = 'setOffsetB'
+                    end
                 end
                 nextRow()
                 if (offsetHasChangedViaOutside) then offsetHasChangedViaOutside = false end
