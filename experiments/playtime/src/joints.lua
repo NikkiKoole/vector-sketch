@@ -6,6 +6,31 @@ local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
 local mathutils = require 'src.math-utils'
 
+
+-- Updates offsetA of a joint based on a new LOCAL point (relative to body A)
+function lib.updateJointOffsetA(joint, localX, localY)
+    if not joint or joint:isDestroyed() then
+        print("WARN: updateJointOffsetA called on invalid joint"); return nil
+    end
+    local offsetA = { x = localX, y = localY }
+    local offsetB = lib.getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 } -- Keep existing offset B
+    print(string.format("Updating Joint %s Offset A to: (%.2f, %.2f)", (joint:getUserData().id or "N/A"), localX, localY))
+    -- Recreate the joint using existing properties but new offset A
+    return lib.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+end
+
+-- Updates offsetB of a joint based on a new LOCAL point (relative to body B)
+function lib.updateJointOffsetB(joint, localX, localY)
+    if not joint or joint:isDestroyed() then
+        print("WARN: updateJointOffsetB called on invalid joint"); return nil
+    end
+    local offsetA = lib.getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 } -- Keep existing offset A
+    local offsetB = { x = localX, y = localY }
+    print(string.format("Updating Joint %s Offset B to: (%.2f, %.2f)", (joint:getUserData().id or "N/A"), localX, localY))
+    -- Recreate the joint using existing properties but new offset B
+    return lib.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+end
+
 function lib.getJointId(joint)
     local ud = joint:getUserData()
     if ud then

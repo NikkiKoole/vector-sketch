@@ -304,18 +304,10 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
 
                 nextRow()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-                    state.interaction.setOffsetAFunc = function(x, y)
-                        local fx, fy = mathutils.rotatePoint(x - bodyA:getX(), y - bodyA:getY(), 0, 0, -bodyA:getAngle())
-                        -- print(fx, fy)
-                        return updateOffsetA(fx, fy)
-                    end
+                    state.currentMode = 'setOffsetA'
                 end
                 if ui.button(x + 50, y, BUTTON_HEIGHT, 'b  ') then
-                    state.interaction.setOffsetBFunc = function(x, y)
-                        local fx, fy = mathutils.rotatePoint(x - bodyB:getX(), y - bodyB:getY(), 0, 0, -bodyB:getAngle())
-                        -- print(fx, fy)
-                        return updateOffsetB(fx, fy)
-                    end
+                    state.currentMode = 'setOffsetB'
                 end
                 nextRow()
                 if (offsetHasChangedViaOutside) then offsetHasChangedViaOutside = false end
@@ -577,10 +569,11 @@ function lib.drawAddShapeUI()
         local height = buttonHeight
         nextRow()
 
-        local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150, state.interaction.minPointDistance or 10)
+        local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150,
+            state.editorPreferences.minPointDistance or 10)
         ui.label(x, y, 'dis')
         if minDist then
-            state.interaction.minPointDistance = minDist
+            state.editorPreferences.minPointDistance = minDist
         end
 
         -- Add a button for custom polygon
@@ -1006,50 +999,17 @@ function lib.drawSelectedSFixture()
             return newfixture
         end
 
-        local updateSFixturePosFunc = function(x, y)
-            local body = state.selection.selectedSFixture:getBody()
-            local beforeIndex = 0
-            local myfixtures = body:getFixtures()
-
-            for i = 1, #myfixtures do
-                if myfixtures[i] == state.selection.selectedSFixture then
-                    beforeIndex = i
-                end
-            end
-            local localX, localY = body:getLocalPoint(x, y)
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
-            local centerX, centerY = mathutils.getCenterOfPoints(points)
-            local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-            local newShape = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
-            local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            state.selection.selectedSFixture:destroy()
-
-            local shape = love.physics.newPolygonShape(newShape)
-            local newfixture = love.physics.newFixture(body, shape)
-            newfixture:setSensor(true) -- Sensor so it doesn't collide
-
-            newfixture:setUserData(oldUD)
-            local afterIndex = 0
-            local myfixtures = body:getFixtures()
-            for i = 1, #myfixtures do
-                if myfixtures[i] == newfixture then
-                    afterIndex = i
-                end
-            end
-            --print(beforeIndex, afterIndex)
-            registry.registerSFixture(oldUD.id, newfixture)
-
-            return newfixture
-        end
-
-
 
         if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-            state.interaction.setUpdateSFixturePosFunc = updateSFixturePosFunc
+            state.currentMode = 'positioningSFixture'
+            --  state.interaction.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
         if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
             local body = state.selection.selectedSFixture:getBody()
-            state.selection.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
+            state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
+                body:getX(), body:getY())
+
+            -- state.selection.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
         end
         if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
             local body = state.selection.selectedSFixture:getBody()

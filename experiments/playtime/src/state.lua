@@ -13,14 +13,11 @@ state.interaction = { -- State directly related to ongoing user actions
     draggingObj = nil,
     offsetDragging = { nil, nil },
     --capturingPoly = false, -- Linked to drawing modes
-    polyVerts = {},        -- Temporary vertices while drawing
+    polyVerts = {}, -- Temporary vertices while drawing
     lastPolyPt = nil,
-    minPointDistance = 50, -- Could be editor config
-    startSelection = nil,  -- For selection rect
-    setOffsetAFunc = nil,  -- These callback funcs are tricky, maybe replace with mode state
-    setOffsetBFunc = nil,
-    setUpdateSFixturePosFunc = nil,
-    --maybeHideSelectedPanel = false, -- This suggests UI logic leaking into state
+
+    startSelection = nil, -- For selection rect
+
 }
 
 state.panelVisibility = {
@@ -43,7 +40,8 @@ state.editorPreferences = { -- Less volatile state
     lastUsedHeight2 = 40,
     saveName = 'untitled',
     showTexFixtureDim = false,
-    axisEnabled = false
+    axisEnabled = false,
+    minPointDistance = 50, -- Could be editor config
 }
 
 state.polyEdit = {
@@ -60,7 +58,7 @@ state.texFixtureEdit = {
     verts = {}
 }
 
-state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly'
+state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB'
 state.jointParams = nil
 state.jointLengthParams = {}
 state.showPaletteFunc = nil

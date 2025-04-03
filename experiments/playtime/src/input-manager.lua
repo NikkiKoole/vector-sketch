@@ -11,6 +11,8 @@ local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local blob = require 'vendor.loveblobs'
 local ui = require 'src.ui-all'
+local fixtures = require 'src.fixtures'
+local joints = require 'src.joints'
 
 local function handlePointer(x, y, id, action)
     if action == "pressed" then
@@ -84,17 +86,30 @@ local function handlePointer(x, y, id, action)
             table.insert(state.interaction.polyVerts, cx)
             table.insert(state.interaction.polyVerts, cy)
         end
-        if (state.interaction.setOffsetAFunc) then
-            state.selection.selectedJoint = state.interaction.setOffsetAFunc(cx, cy)
-            state.interaction.setOffsetAFunc = nil
+
+
+
+        if (state.currentMode == 'setOffsetA') then
+            local bodyA, bodyB = state.selection.selectedJoint:getBodies()
+            local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
+            state.selection.selectedJoint = joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy) --state.interaction.setOffsetAFunc(cx, cy)
+            --state.interaction.setOffsetAFunc = nil
+            state.currentMode = nil
         end
-        if (state.interaction.setOffsetBFunc) then
-            state.selection.selectedJoint = state.interaction.setOffsetBFunc(cx, cy)
-            state.interaction.setOffsetBFunc = nil
+
+        if (state.currentMode == 'setOffsetB') then
+            local bodyA, bodyB = state.selection.selectedJoint:getBodies()
+            local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
+
+            state.selection.selectedJoint = joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy) --state.interaction.setOffsetAFunc(cx, cy)
+            --state.interaction.setOffsetAFunc = nil
+            state.currentMode = nil
         end
-        if (state.interaction.setUpdateSFixturePosFunc) then
-            state.selection.selectedSFixture = state.interaction.setUpdateSFixturePosFunc(cx, cy)
-            state.interaction.setUpdateSFixturePosFunc = nil
+
+
+        if (state.currentMode == 'positioningSFixture') then
+            state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture, cx, cy)
+            state.currentMode = nil
         end
 
         local onPressedParams = {

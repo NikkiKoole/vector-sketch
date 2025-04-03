@@ -5,8 +5,59 @@ local mathutils = require 'src.math-utils'
 local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
+local utils = require 'src.utils' -- Needed for shallowCopy
+
 local lib = {}
 
+
+-- Updates the position of an sfixture based on a new WORLD coordinate click
+function lib.updateSFixturePosition(sfixture, worldX, worldY)
+    if not sfixture or sfixture:isDestroyed() then
+        print("WARN: updateSFixturePosition called on invalid sfixture"); return nil
+    end
+
+    local body = sfixture:getBody()
+    if not body or body:isDestroyed() then
+        print("WARN: updateSFixturePosition called on sfixture with invalid body"); return nil
+    end
+
+    -- Convert world click to body's local coordinates for the new shape center
+    local localX, localY = body:getLocalPoint(worldX, worldY)
+
+    local points = { sfixture:getShape():getPoints() }                                     -- Existing local points
+    local centerX, centerY = mathutils.getCenterOfPoints(points)                           -- Center of existing shape
+    local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY) -- Points relative to old center
+
+    -- Create new absolute points centered at the *new* local click position
+    local newShapePoints = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
+
+    local oldUD = utils.deepCopy(sfixture:getUserData()) -- Use deepCopy if 'extra' might contain tables
+    local fixtureID = oldUD.id                           -- Keep the ID
+    local fixtureDensity = sfixture:getDensity()         -- Keep properties
+    local fixtureFriction = sfixture:getFriction()
+    local fixtureRestitution = sfixture:getRestitution()
+    local fixtureGroupIndex = sfixture:getGroupIndex()
+
+    print(string.format("Updating SFixture %s Position to World(%.2f, %.2f) -> Local(%.2f, %.2f)", fixtureID, worldX,
+        worldY, localX, localY))
+
+    -- Destroy old fixture and unregister
+    sfixture:destroy()
+    registry.unregisterSFixture(fixtureID)
+
+    -- Create the new shape and fixture
+    local shape = love.physics.newPolygonShape(newShapePoints)
+    local newfixture = love.physics.newFixture(body, shape, fixtureDensity)
+    newfixture:setSensor(true) -- Ensure it remains a sensor
+    newfixture:setFriction(fixtureFriction)
+    newfixture:setRestitution(fixtureRestitution)
+    newfixture:setGroupIndex(fixtureGroupIndex)
+    newfixture:setUserData(oldUD)                    -- Reuse the userdata (including the ID)
+
+    registry.registerSFixture(fixtureID, newfixture) -- Register the new fixture with the *same* ID
+
+    return newfixture
+end
 
 function lib.hasFixturesWithUserDataAtBeginning(fixtures)
     -- first we will start looking from beginning untill we no longer find userdata on fixtures

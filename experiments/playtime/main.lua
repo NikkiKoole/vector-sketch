@@ -413,7 +413,7 @@ function drawUI()
         playtimeui.doJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
-    if state.interaction.setOffsetAFunc or state.interaction.setOffsetBFunc or state.interaction.setUpdateSFixturePosFunc then
+    if (state.currentMode == 'setOffsetA') or (state.currentMode == 'setOffsetB') or state.currentMode == 'positioningSFixture' then
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
@@ -708,7 +708,7 @@ function love.mousemoved(x, y, dx, dy)
         else
             local lastX, lastY = state.interaction.lastPolyPt.x, state.interaction.lastPolyPt.y
             local distSq = (wx - lastX) ^ 2 + (wy - lastY) ^ 2
-            if distSq >= (state.interaction.minPointDistance / cam.scale) ^ 2 then
+            if distSq >= (state.editorPreferences.minPointDistance / cam.scale) ^ 2 then
                 addPoint = true
             end
         end
