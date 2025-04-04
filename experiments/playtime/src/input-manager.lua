@@ -171,13 +171,6 @@ local function handlePointer(x, y, id, action)
             recorder:recordMouseJointStart(madedata)
             -- print('should record a moujoint creation...', inspect(madedata))
         end
-        -- if recorder.isRecording and #hitted > 0 then
-        --     local wx, wy = cam:getWorldCoordinates(x, y)
-        --     local hitObject = hitted[1]:getBody():getUserData().thing
-        --     local localPointX, localPointY = hitObject.body:getLocalPoint(wx, wy)
-        --     recorder:recordObjectGrab(hitObject, localPointX, localPointY, state.world.mouseForce, state.world
-        --         .mouseDamping)
-        -- end
     elseif action == "released" then
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -191,13 +184,6 @@ local function handlePointer(x, y, id, action)
                     --  print('should record a moujoint deletion...', inspect(obj:getUserData().thing.id))
                 end
             end
-
-            -- if recorder.isRecording then
-            --     --local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
-            --     for _, obj in ipairs(releasedObjs) do
-            --         recorder:recordObjectRelease(obj:getUserData().thing)
-            --     end
-            -- end
         end
 
 
@@ -342,6 +328,89 @@ end
 
 function lib.handleTouchReleased(id, x, y, dx, dy, pressure)
     handlePointer(x, y, id, 'released')
+end
+
+function lib.handleMouseMoved(x, y, dx, dy)
+    --print('moved')
+    if state.polyEdit.dragIdx and state.polyEdit.dragIdx > 0 then
+        local index = state.polyEdit.dragIdx
+        local obj = state.selection.selectedObj
+        local angle = obj.body:getAngle()
+        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
+        dx2 = dx2 / cam.scale
+        dy2 = dy2 / cam.scale
+        state.polyEdit.tempVerts[index] = state.polyEdit.tempVerts[index] + dx2
+        state.polyEdit.tempVerts[index + 1] = state.polyEdit.tempVerts[index + 1] + dy2
+    elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
+        local index = state.texFixtureEdit.dragIdx
+        local obj = state.selection.selectedSFixture:getBody():getUserData().thing
+        local angle = obj.body:getAngle()
+        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
+        dx2 = dx2 / cam.scale
+        dy2 = dy2 / cam.scale
+        state.texFixtureEdit.tempVerts[index] = state.texFixtureEdit.tempVerts[index] + dx2
+        state.texFixtureEdit.tempVerts[index + 1] = state.texFixtureEdit.tempVerts[index + 1] + dy2
+    elseif (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
+        local wx, wy = cam:getWorldCoordinates(x, y)
+        -- Check if the distance from the last point is greater than minPointDistance
+        local addPoint = false
+        if not state.interaction.lastPolyPt then
+            addPoint = true
+        else
+            local lastX, lastY = state.interaction.lastPolyPt.x, state.interaction.lastPolyPt.y
+            local distSq = (wx - lastX) ^ 2 + (wy - lastY) ^ 2
+            if distSq >= (state.editorPreferences.minPointDistance / cam.scale) ^ 2 then
+                addPoint = true
+            end
+        end
+        if addPoint then
+            table.insert(state.interaction.polyVerts, wx)
+            table.insert(state.interaction.polyVerts, wy)
+            state.interaction.lastPolyPt = { x = wx, y = wy }
+        end
+    elseif love.mouse.isDown(3) or love.mouse.isDown(2) then
+        local tx, ty = cam:getTranslation()
+        cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
+    end
+end
+
+function lib.handleKeyPressed(key)
+    if key == 'escape' then
+        if state.panelVisibility.quitDialogOpened == true then
+            love.event.quit()
+        end
+        if state.panelVisibility.quitDialogOpened == false then
+            state.panelVisibility.quitDialogOpened = true
+        end
+    end
+    if key == 'space' then
+        if state.panelVisibility.quitDialogOpened == true then
+            state.panelVisibility.quitDialogOpened = false
+        else
+            state.world.paused = not state.world.paused
+            if recorder.isRecording then recorder:recordPause(state.world.paused) end
+        end
+    end
+    if key == "c" then
+        love.graphics.captureScreenshot(os.time() .. ".png")
+    end
+    if key == 'f5' then
+        state.world.paused = true
+        state.panelVisibility.saveDialogOpened = true
+    end
+    if key == 'i' and state.polyEdit.tempVerts then
+        -- figure out where my mousecursor is, between what nodes?
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        objectManager.insertCustomPolygonVertex(wx, wy)
+        objectManager.maybeUpdateCustomPolygonVertices()
+    end
+    if key == 'd' and state.polyEdit.tempVerts then
+        -- Remove a vertex
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        objectManager.removeCustomPolygonVertex(wx, wy)
+    end
 end
 
 return lib
