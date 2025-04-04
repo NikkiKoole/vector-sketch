@@ -3,12 +3,6 @@ local registry = require 'src.registry'
 local utils = require 'src.utils'
 local state = require 'src.state'
 
-function tablelength(T)
-    local count = 0
-    for _ in pairs(T) do count = count + 1 end
-    return count
-end
-
 local recorder = {
     isRecording = false,
     isReplaying = false,

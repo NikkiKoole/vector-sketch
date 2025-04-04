@@ -15,40 +15,42 @@ local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 
 function lib.reload(data, world, cam)
-    lib.load(data, world, cam, true)
+    lib.load(data, world, cam)
 end
 
-function lib.buildWorld(data, world, cam, reuseOldIds)
+local function clearWorld(world)
+    for _, body in pairs(world:getBodies()) do
+        body:destroy()
+    end
+    registry.reset()
+end
+
+function lib.buildWorld(data, world, cam)
     local idMap = {}
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well just always use the oldid....
-
     --print(reuseOldIds)
+    -- local function getNewId(oldId)
+    --     if not reuseOldIds then
+    --         if idMap[oldId] == nil then
+    --             idMap[oldId] = uuid.generateID()
+    --         end
+    --         return idMap[oldId]
+    --     else
+    --         return oldId
+    --     end
+    -- end
     local function getNewId(oldId)
-        if not reuseOldIds then
-            if idMap[oldId] == nil then
-                idMap[oldId] = uuid.generateID()
-            end
-            return idMap[oldId]
-        else
-            return oldId
-        end
+        return oldId
     end
-
-    if true then
-        for _, body in pairs(world:getBodies()) do
-            body:destroy()
-        end
-        registry.reset()
-    end
+    -- should we mabe move this out ?
+    clearWorld(world)
 
     snap.resetList()
 
     if data.camera then
         cam:setTranslation(data.camera.x, data.camera.y)
         cam:setScale(data.camera.scale)
-        --print(inspect(cam))
-        --print('camera in saved file found.', data.camera.x, data.camera.y)
     end
 
     local recreatedSFixtures = {}
@@ -300,7 +302,7 @@ function lib.buildWorld(data, world, cam, reuseOldIds)
     end
 end
 
-function lib.load(data, world, cam, reuseOldIds)
+function lib.load(data, world, cam)
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then
         logger:error("Error decoding JSON:", err)

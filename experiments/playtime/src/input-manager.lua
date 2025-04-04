@@ -131,7 +131,7 @@ local function handlePointer(x, y, id, action)
             if ud and ud.thing then
                 state.selection.selectedObj = ud.thing
             end
-            if sceneScript and not state.world.paused and state.selection.selectedObj then
+            if state.scene.sceneScript and not state.world.paused and state.selection.selectedObj then
                 state.selection.selectedObj = nil
             end
             if (state.currentMode == 'jointCreationMode') and state.selection.selectedObj then

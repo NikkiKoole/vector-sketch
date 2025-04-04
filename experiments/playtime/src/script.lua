@@ -70,8 +70,8 @@ function script.setEnv(newEnv)
 end
 
 function script.call(method, ...)
-    if sceneScript and sceneScript[method] then
-        sceneScript[method](...)
+    if state.scene.sceneScript and state.scene.sceneScript[method] then
+        state.scene.sceneScript[method](...)
     end
 end
 

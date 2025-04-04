@@ -1,6 +1,13 @@
 local state = {}
 
 
+state.scene = {
+    sceneScript = nil,
+    scriptPath = nil,
+    checkpoints = {},
+    activeCheckpointIndex = 0
+}
+
 state.selection = {
     selectedObj = nil,
     selectedJoint = nil,
@@ -12,12 +19,9 @@ state.selection = {
 state.interaction = { -- State directly related to ongoing user actions
     draggingObj = nil,
     offsetDragging = { nil, nil },
-    --capturingPoly = false, -- Linked to drawing modes
-    polyVerts = {}, -- Temporary vertices while drawing
+    polyVerts = {},       -- Temporary vertices while drawing
     lastPolyPt = nil,
-
     startSelection = nil, -- For selection rect
-
 }
 
 state.panelVisibility = {

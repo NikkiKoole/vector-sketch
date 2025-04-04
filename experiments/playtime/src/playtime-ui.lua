@@ -17,6 +17,8 @@ local box2dDrawTextured = require 'src.box2d-draw-textured'
 local Peeker = require 'vendor.peeker'
 local recorder = require 'src.recorder'
 local state = require 'src.state'
+local script = require 'src.script'
+local sceneLoader = require 'src.scene-loader'
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -706,28 +708,31 @@ function lib.drawRecordingUI()
         local function startFromCurrentCheckpoint()
             state.selection.selectedJoint = nil
             state.selection.selectedObj = nil
-            eio.buildWorld(checkpoints[activeCheckpointIndex].saveData, state.physicsWorld, cam, true)
+            eio.buildWorld(state.scene.checkpoints[state.scene.activeCheckpointIndex].saveData, state.physicsWorld, cam,
+                true)
             --
 
-            if sceneScript then sceneScript.onStart() end
+            if state.scene.sceneScript then state.scene.sceneScript.onStart() end
         end
 
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
         if addcheckpointbutton then
             local saveData = eio.gatherSaveData(state.physicsWorld, cam)
-            table.insert(checkpoints, { saveData = saveData, recordings = {} })
+            table.insert(state.scene.checkpoints, { saveData = saveData, recordings = {} })
         end
         nextRow()
         local chars = { 'A', 'B', 'C', 'D', 'E', 'F' }
-        for i = 1, #checkpoints do
+        for i = 1, #state.scene.checkpoints do
             if ui.button(x + (i - 1) * 45, y, 40, chars[i]) then
-                if activeCheckpointIndex > 0 then
-                    checkpoints[activeCheckpointIndex].recordings = utils.deepCopy(recorder.recordings)
+                if state.scene.activeCheckpointIndex > 0 then
+                    state.scene.checkpoints[state.scene.activeCheckpointIndex].recordings = utils.deepCopy(recorder
+                        .recordings)
                 end
 
-                activeCheckpointIndex = i
+                state.scene.activeCheckpointIndex = i
 
-                recorder.recordings = utils.deepCopy(checkpoints[activeCheckpointIndex].recordings)
+                recorder.recordings = utils.deepCopy(state.scene.checkpoints[state.scene.activeCheckpointIndex]
+                    .recordings)
                 startFromCurrentCheckpoint()
             end
         end
@@ -759,7 +764,7 @@ function lib.drawRecordingUI()
             end
         end
 
-        if activeCheckpointIndex > 0 and ((not recorder.isRecording and state.world.paused) or recorder.isRecording) then
+        if state.scene.activeCheckpointIndex > 0 and ((not recorder.isRecording and state.world.paused) or recorder.isRecording) then
             local pointerbutton = ui.button(x, y, width,
                 recorder.isRecording and 'RECORDING gestures' or 'record gestures')
             if pointerbutton then
@@ -788,7 +793,7 @@ function lib.drawRecordingUI()
 
 
         -- only allowed to start recording from pause
-        if activeCheckpointIndex > 0 then
+        if state.scene.activeCheckpointIndex > 0 then
             local peekerbutton = ui.button(x, y, width,
                 Peeker.get_status() and 'RECORDING gesture video' or 'record gesture video')
             if peekerbutton then
@@ -2059,6 +2064,213 @@ function lib.drawUpdateSelectedObjectUI()
 
         -- List Attached Joints Using Body:getJoints()
     end)
+end
+
+function lib.drawUI()
+    ui.startFrame()
+    local w, h = love.graphics.getDimensions()
+    if state.world.paused then
+        love.graphics.setColor({ 244 / 255, 164 / 255, 97 / 255 })
+    else
+        love.graphics.setColor({ 245 /
+        255, 245 / 255, 220 / 255 })
+    end
+
+    love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
+    love.graphics.setColor(1, 1, 1)
+
+    -- "Add Shape" Button
+    if ui.button(20, 20, 200, 'add shape') then
+        state.panelVisibility.addShapeOpened = not state.panelVisibility.addShapeOpened
+    end
+
+    if state.panelVisibility.addShapeOpened then
+        lib.drawAddShapeUI()
+    end
+
+    -- "Add Joint" Button
+    if ui.button(230, 20, 200, 'add joint') then
+        state.panelVisibility.addJointOpened = not state.panelVisibility.addJointOpened
+    end
+
+    if state.panelVisibility.addJointOpened then
+        lib.drawAddJointUI()
+    end
+
+    -- "World Settings" Button
+    if ui.button(440, 20, 200, 'settings') then
+        state.panelVisibility.worldSettingsOpened = not state.panelVisibility.worldSettingsOpened
+    end
+
+    if state.panelVisibility.worldSettingsOpened then
+        lib.drawWorldSettingsUI()
+    end
+
+    -- Play/Pause Button
+    if ui.button(650, 20, 150, state.world.paused and 'play' or 'pause') then
+        state.world.paused = not state.world.paused
+    end
+
+    if ui.button(810, 20, 150, state.world.isRecordingPointers and 'recording' or 'record') then
+        state.panelVisibility.recordingPanelOpened = not state.panelVisibility.recordingPanelOpened
+        -- state.world.isRecordingPointers = not state.world.isRecordingPointers
+    end
+    if state.panelVisibility.recordingPanelOpened then
+        lib.drawRecordingUI()
+    end
+
+    if state.scene.sceneScript and state.scene.sceneScript.onStart then
+        if ui.button(920, 20, 50, 'R') then
+            -- todo actually reread the file itself!
+            sceneLoader.loadAndRunScript(state.scene.scriptPath)
+            script.call('onStart') --state.scene.sceneScript.onStart()
+        end
+    end
+
+    if state.currentMode == 'drawClickMode' then
+        local panelWidth = PANEL_WIDTH
+        local w, h = love.graphics.getDimensions()
+        ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
+            local padding = BUTTON_SPACING
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = BUTTON_SPACING,
+                startX = w - panelWidth,
+                startY = 100 + padding
+            })
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if ui.button(x, y, 260, 'finalize') then
+                objectManager.finalizePolygon()
+            end
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if ui.button(x, y, 260, 'soft-surface') then
+                objectManager.finalizePolygonAsSoftSurface()
+            end
+        end)
+    end
+
+    if state.selection.selectedObj and not state.selection.selectedJoint and not state.selection.selectedSFixture then
+        lib.drawUpdateSelectedObjectUI()
+    end
+
+    if state.selection.selectedBodies and #state.selection.selectedBodies > 0 then
+        lib.drawSelectedBodiesUI()
+    end
+
+    if (state.currentMode == 'jointCreationMode') and state.jointParams.body1 and state.jointParams.body2 then
+        lib.doJointCreateUI(500, 100, 400, 150)
+    end
+
+    if state.selection.selectedSFixture then
+        lib.drawSelectedSFixture()
+    end
+
+    if state.selection.selectedObj and state.selection.selectedJoint then
+        -- (w - panelWidth - 20, 20, panelWidth, h - 40
+        lib.doJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
+    end
+
+    if (state.currentMode == 'setOffsetA') or (state.currentMode == 'setOffsetB') or state.currentMode == 'positioningSFixture' then
+        ui.panel(500, 100, 300, 60, '• click point ∆', function()
+        end)
+    end
+
+    if (state.currentMode == 'jointCreationMode') and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
+        if (state.jointParams.body1 == nil) then
+            ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
+                local x = 510
+                local y = 150
+                local width = 280
+                if ui.button(x, y, width, 'cancel') then
+                    state.jointParams = nil
+                    state.currentMode = nil
+                end
+            end)
+        elseif (state.jointParams.body2 == nil) then
+            ui.panel(500, 100, 300, 100, '• pick 2nd body •', function()
+                local x = 510
+                local y = 150
+                local width = 280
+                if ui.button(x, y, width, 'cancel') then
+                    state.jointParams = nil
+                    state.currentMode = nil
+                end
+            end)
+        end
+    end
+
+    if state.panelVisibility.showPalette then
+        local w, h = love.graphics.getDimensions()
+        ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
+            --ui.coloredRect()
+            local cellHeight = 50
+            local itemsPerRow = math.floor((w - 300) / cellHeight)
+            local numRows = math.ceil(110 / itemsPerRow)
+            -- assume a similar height for each swatch cell
+            local maxRows = math.floor(400 / cellHeight)
+
+
+
+
+            for i = 1, #box2dDrawTextured.palette do
+                local row = math.floor((i - 1) / itemsPerRow)
+                local column = (i - 1) % itemsPerRow
+                local x = column * cellHeight
+                local y = row * cellHeight
+
+                -- ui.coloredRect(0, 0, { 255, 0, 0 }, 40)
+                if ui.coloredRect(10 + x, h - 300 + y, { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
+                    state.showPaletteFunc(box2dDrawTextured.palette[i])
+                end
+            end
+        end)
+    end
+
+    if state.panelVisibility.saveDialogOpened then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+        ui.panel(300, 300, w - 600, h - 600, '»»» save «««', function()
+            local t = ui.textinput('savename', 320, 350, w - 640, 40, 'add text...', state.editorPreferences.saveName)
+            if t then
+                state.editorPreferences.saveName = utils.sanitizeString(t)
+            end
+            if ui.button(320, 500, 200, 'save') then
+                state.panelVisibility.saveDialogOpened = false
+                eio.save(state.physicsWorld, cam, state.editorPreferences.saveName)
+            end
+            if ui.button(540, 500, 200, 'cancel') then
+                state.panelVisibility.saveDialogOpened = false
+                love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+            end
+        end)
+    end
+
+    if state.panelVisibility.quitDialogOpened then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+
+        local header = ' » really quit ? « '
+        local minW = ui.font:getWidth(header)
+        local panelW = math.max(minW, w - 600)
+        local panelH = math.max(ui.font:getHeight() * 6, h - 600)
+        local offW = w - panelW
+        local offH = h - panelH
+        local m = panelW - minW
+        ui.panel(offW / 2, offH / 2, panelW, panelH, header, function()
+            ui.label(offW / 2 + 20, offH / 2 + 40, '[esc] to quit')
+            ui.label(offW / 2 + 20, offH / 2 + 80, '[space] to cancel')
+        end)
+    end
+
+
+    if ui.draggingActive then
+        love.graphics.setColor(ui.theme.draggedElement.fill)
+        local x, y = love.mouse.getPosition()
+        love.graphics.circle('fill', x, y, 10)
+        love.graphics.setColor(1, 1, 1)
+    end
 end
 
 return lib
