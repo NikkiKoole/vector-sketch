@@ -129,7 +129,6 @@ function s.onSceneLoaded()
 end
 
 function s.onStart()
-    --print(inspect(registry.joints))
     snaps = getObjectsByLabel('havesnap')
     -- Create snap points on the body of each object
     for i = 1, #snaps do
@@ -154,7 +153,7 @@ function checkForSnaps(interacted)
                         local x2, y2 = body2:getWorldPoint(it2.xOffset, it2.yOffset)
 
                         local distance = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                        -- print(distance, snapDistance)
+
                         if distance <= snapDistance then
                             if (not onlyConnectWhenInteracted or (oneOfThemIsInteractedWith(body1, body2, interacted))) then
                                 if not areBodiesConnected(body1, body2) then -- else these bodies are already connected..
@@ -185,7 +184,7 @@ end
 -- Create a revolute joint between two bodies
 function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
     local id = generateID()
-    -- print(id)
+
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
     joint:setUserData({ id = id, scriptmeta = { type = 'snap' } })
     --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })

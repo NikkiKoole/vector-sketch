@@ -179,7 +179,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-        print(patch1, patch1 and patch1.img)
+        logger:info(patch1, patch1 and patch1.img)
         if (patch1 and patch1.img) then
             love.graphics.setColorMask(true, true, true, false)
 
@@ -195,7 +195,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
                 (patch1.sx or 1) * shrinkFactor,
                 (patch1.sy or 1) * shrinkFactor,
                 imgw / 2, imgh / 2)
-            print('getting in here!')
+            logger:info('getting in here!')
             love.graphics.setColorMask(true, true, true, true)
         end
 
@@ -288,7 +288,7 @@ function lib.makeCombinedImages()
                 local pr, pg, pb, pa = lib.hexToColor(ud.extra.patternHex)
 
                 if ud.extra.patch1URL then
-                    print(ud.extra.patch1URL, 'textures/' .. ud.extra.patch1URL)
+                    logger:info(ud.extra.patch1URL, 'textures/' .. ud.extra.patch1URL)
                 end
                 local patch1 = ud.extra.patch1URL and {
 
@@ -401,7 +401,7 @@ function lib.drawTexturedWorld(world)
                         -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
                         --     (imgw) / 2, (imgh) / 2)
                     else
-                        print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                        logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
                     end
                 end
 
@@ -427,7 +427,7 @@ function lib.drawTexturedWorld(world)
                         -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
                         --     (imgw) / 2, (imgh) / 2)
                     else
-                        print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                        logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
                     end
                 end
             end
@@ -455,7 +455,7 @@ function lib.drawTexturedWorld(world)
                                 sx * 1 * thing.mirrorX,
                                 sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
                         else
-                            print('NO VERTICES FOUND, kinda hard ', inspect(thing))
+                            logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
                         end
                     end
                 end

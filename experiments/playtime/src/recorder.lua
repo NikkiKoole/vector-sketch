@@ -35,15 +35,13 @@ function recorder:startRecording(layerIndex)
     self.recordingMouseJoints = {} -- here we save the mousejoints (or data to recreate them) whilst recording them
     self.replayingMouseJoints = {} --
 
-    print('started recording on layer', self.activeLayer, layerIndex)
+    logger:info('started recording on layer', self.activeLayer, layerIndex)
 end
 
 function recorder:stopRecording()
     self.isRecording = false
     self.recordings[self.activeLayer] = utils.deepCopy(self.events)
     self.events = {}
-    -- self.recordings.layerindex = self.activeLayer
-    -- print(#self.recordings, #self.events)
 end
 
 function recorder:startReplay()
@@ -127,13 +125,12 @@ function recorder:recordMouseJointStart(data)
             damp = data.damp
         }
     }
-    --print(inspect(data))
+
     self.recordingMouseJoints[data.pointerID .. data.bodyID .. self.activeLayer] = event
     table.insert(self.events, event)
 end
 
 function recorder:recordMouseJointFinish(pointerid, bodyid)
-    -- print(inspect(id))
     local event = {
         type = "object_interaction",
         timestamp = self.currentTime,
@@ -194,7 +191,7 @@ function recorder:processEvent(event, layerIdx)
             local created = box2dPointerJoints.makePointerJoint(
                 data.pointerId, registry.getBodyByID(data.objectId), data.wx, data.wy,
                 data.force, data.damp)
-            --print(created)
+
             self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] =
             {
                 joint = created.joint,
@@ -216,7 +213,7 @@ function recorder:processEvent(event, layerIdx)
 
             self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] = nil
         else
-            print(inspect(event))
+            logger:info(inspect(event))
         end
     end
     if event.type == 'world_interaction' then

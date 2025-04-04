@@ -13,12 +13,12 @@ local lib = {}
 -- Updates the position of an sfixture based on a new WORLD coordinate click
 function lib.updateSFixturePosition(sfixture, worldX, worldY)
     if not sfixture or sfixture:isDestroyed() then
-        print("WARN: updateSFixturePosition called on invalid sfixture"); return nil
+        logger:error("WARN: updateSFixturePosition called on invalid sfixture"); return nil
     end
 
     local body = sfixture:getBody()
     if not body or body:isDestroyed() then
-        print("WARN: updateSFixturePosition called on sfixture with invalid body"); return nil
+        logger:error("WARN: updateSFixturePosition called on sfixture with invalid body"); return nil
     end
 
     -- Convert world click to body's local coordinates for the new shape center
@@ -38,7 +38,8 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
     local fixtureRestitution = sfixture:getRestitution()
     local fixtureGroupIndex = sfixture:getGroupIndex()
 
-    print(string.format("Updating SFixture %s Position to World(%.2f, %.2f) -> Local(%.2f, %.2f)", fixtureID, worldX,
+    logger:info(string.format("Updating SFixture %s Position to World(%.2f, %.2f) -> Local(%.2f, %.2f)", fixtureID,
+        worldX,
         worldY, localX, localY))
 
     -- Destroy old fixture and unregister
@@ -121,7 +122,7 @@ function lib.createSFixture(body, localX, localY, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    print('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!')
+    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!')
 end
 
 return lib

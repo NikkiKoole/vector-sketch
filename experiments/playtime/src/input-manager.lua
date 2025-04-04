@@ -204,7 +204,6 @@ local function handlePointer(x, y, id, action)
         if state.interaction.pressMissedEverything then
             local wasOverUI = ui.activeElementID or ui.focusedTextInputID
             if not wasOverUI then
-                print('this was not over UI')
                 -- removed from main!
                 if (state.selection.selectedSFixture) then
                     local body = state.selection.selectedSFixture:getBody()
@@ -227,7 +226,7 @@ local function handlePointer(x, y, id, action)
                     state.polyEdit.lockedVerts = true
                 end
             else
-                print('this was over UI')
+
             end
         end
         state.interaction.pressMissedEverything = false
@@ -278,8 +277,7 @@ function lib.handleDraggingObj()
     state.interaction.draggingObj.body:setPosition(wx + rx, wy + ry)
     if recorder.isRecording then
         local ud = state.interaction.draggingObj.body:getUserData()
-        -- print(inspect(state.interaction.draggingObj))
-        -- print(inspect(ud))
+
         recorder:recordObjectSetPosition(state.interaction.draggingObj.id, wx + rx, wy + ry)
     end
     -- figure out if we are dragging a group!

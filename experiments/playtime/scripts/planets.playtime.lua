@@ -23,7 +23,7 @@ local function applyGravity(planet, body)
     local force = { x = (direction.x / distance) * forceMagnitude, y = (direction.y / distance) * forceMagnitude }
 
     -- Apply force to the center of the body
-    --print(force.x, force.y)
+
     body:applyForce(force.x, force.y)
 end
 

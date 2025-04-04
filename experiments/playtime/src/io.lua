@@ -87,7 +87,7 @@ function lib.buildWorld(data, world, cam, reuseOldIds)
                 --     local y2 = fixtureData.points[2].y
                 --     shape = love.physics.newEdgeShape(x1, y1, x2, y2)
             else
-                print("Unsupported shape type:", fixtureData.shapeType)
+                logger:error("Unsupported shape type:", fixtureData.shapeType)
             end
 
 
@@ -265,7 +265,7 @@ function lib.buildWorld(data, world, cam, reuseOldIds)
                 joint:setMaxTorque(jointData.properties.maxTorque)
             else
                 -- Handle unsupported joint types
-                print("Unsupported joint type during load:", jointData.type)
+                logger:error("Unsupported joint type during load:", jointData.type)
             end
 
             if joint then
@@ -295,7 +295,7 @@ function lib.buildWorld(data, world, cam, reuseOldIds)
                 registry.registerJoint(ud.id, joint)
             end
         else
-            print("Failed to find bodies for joint:", jointData.id)
+            logger:error("Failed to find bodies for joint:", jointData.id)
         end
     end
 end
@@ -303,31 +303,27 @@ end
 function lib.load(data, world, cam, reuseOldIds)
     local jsonData, pos, err = json.decode(data, 1, nil)
     if err then
-        print("Error decoding JSON:", err)
+        logger:error("Error decoding JSON:", err)
         return
     end
 
     -- Verify version
     if jsonData then
         if jsonData.version ~= "1.0" then
-            print("Unsupported save version:", jsonData.version)
+            logger:error("Unsupported save version:", jsonData.version)
             return
         end
     else
-        print('failed loading json')
+        logger:error('failed loading json')
         return
     end
     -- Clear existing world
     lib.buildWorld(jsonData, world, cam, reuseOldIds)
 
     snap.onSceneLoaded()
-
-    --print("World successfully loaded")
 end
 
 local function needsDimProperty(prop, shape)
-    -- print(shape, prop)
-
     local needsRadius = function(shape)
         return shape == 'triangle' or shape == 'pentagon' or shape == 'hexagon' or
             shape == 'heptagon' or shape == 'octagon' or shape == 'circle'
@@ -457,7 +453,6 @@ function lib.gatherSaveData(world, camera)
 
 
                     fixtureData.sensor = fixture:isSensor()
-                    --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
                 table.insert(bodyData.fixtures, fixtureData)
             end
@@ -472,7 +467,7 @@ function lib.gatherSaveData(world, camera)
         local jointID = jointUserData and jointUserData.id
 
         if not jointID then
-            print('what is up with this joint?')
+            logger:debug('what is up with this joint?')
         else
             -- Get connected bodies
             local bodyA, bodyB = joint:getBodies()
@@ -559,12 +554,12 @@ function lib.gatherSaveData(world, camera)
                     jointData.properties.maxTorque = joint:getMaxTorque()
                 else
                     -- Handle unsupported joint types
-                    print("Unsupported joint type during save:", joint:getType())
+                    logger:error("Unsupported joint type during save:", joint:getType())
                 end
 
                 table.insert(saveData.joints, jointData)
             else
-                print("Failed to find bodies for joint:", jointID)
+                logger:error("Failed to find bodies for joint:", jointID)
             end
         end
     end
@@ -582,16 +577,16 @@ end
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON
     local saveData = lib.gatherSaveData(world, camera)
-    print(inspect(saveData))
+    logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file
     local success, message = love.filesystem.write(filename .. '.playtime.json', jsonData)
     if success then
-        print("World successfully saved to " .. filename)
-        print("file://" .. love.filesystem.getSaveDirectory())
+        logger:info("World successfully saved to " .. filename)
+        logger:info("file://" .. love.filesystem.getSaveDirectory())
     else
-        print("Failed to save world:", message)
+        logger:error("Failed to save world:", message)
     end
 
     love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
@@ -642,10 +637,9 @@ function lib.cloneSelection(selectedBodies, world)
 
             local ok, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
             if not ok then
-                print('some how the userdata fixtures arent at the beginning!')
+                logger:error('some how the userdata fixtures arent at the beginning!')
             end
             if ok and offset > -1 then
-                -- print(ok, offset)
                 for i = 1 + offset, #oldFixtures do
                     local oldF = oldFixtures[i]
                     local newFixture = love.physics.newFixture(newBody, newShapeList[i - (offset)], oldF:getDensity())
@@ -658,7 +652,7 @@ function lib.cloneSelection(selectedBodies, world)
                     for i = 1, offset do
                         local oldF = oldFixtures[i]
                         local shape = oldF:getShape():getPoints()
-                        --print(inspect(getCentroidOfFixture(originalBody, oldF)))
+
 
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
                         newFixture:setRestitution(oldF:getRestitution())
@@ -672,10 +666,10 @@ function lib.cloneSelection(selectedBodies, world)
                             oldUD.extra.to = nil
                             oldUD.extra.fixture = nil
                         end
-                        --print(inspect(oldUD))
+
                         newFixture:setUserData(oldUD)
                         newFixture:setSensor(oldF:isSensor())
-                        --- print(oldUD.id)
+
                         registry.registerSFixture(oldUD.id, newFixture)
                     end
                 end
@@ -743,7 +737,7 @@ function lib.cloneSelection(selectedBodies, world)
                         local clonedBodyA = clonedBodiesMap[bodyA:getUserData().thing.id]
                         local clonedBodyB = clonedBodiesMap[bodyB:getUserData().thing.id]
 
-                        --print(inspect(ud))
+
 
                         -- If both bodies are cloned, proceed to clone the joint
                         if clonedBodyA and clonedBodyB then
@@ -761,9 +755,9 @@ function lib.cloneSelection(selectedBodies, world)
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
                             end
-                            -- print(inspect(newJointData))
+
                             local newJoint = jointslib.createJoint(newJointData)
-                            -- print(inspect(newJoint:getUserData()))
+
                             if ud.scriptmeta then
                                 local newud = newJoint:getUserData()
                                 newud.scriptmeta = utils.shallowCopy(ud.scriptmeta)
@@ -771,7 +765,6 @@ function lib.cloneSelection(selectedBodies, world)
                                 if ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
                                     snap.addSnapJoint(newJoint)
                                 end
-                                --print('we should add this to snapjoints probably')
                             end
                             -- Register the new joint
                             registry.registerJoint(newJointData.id, newJoint)

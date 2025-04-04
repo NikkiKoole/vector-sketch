@@ -1,15 +1,15 @@
 -- TODO
 -- build a ui where you can add multiple tags..
-
-local old_print = print
-print = function(...)
-    local info = debug.getinfo(2, "Sl")
-    local source = info.source
-    if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
-    if source:sub(1, 1) == "@" then source = source:sub(2) end
-    local msg = ("%s:%i"):format(source, info.currentline)
-    old_print(msg, ...)
-end
+logger = require 'src.logger'
+-- local old_print = print
+-- print = function(...)
+--     local info = debug.getinfo(2, "Sl")
+--     local source = info.source
+--     if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
+--     if source:sub(1, 1) == "@" then source = source:sub(2) end
+--     local msg = ("%s:%i"):format(source, info.currentline)
+--     old_print(msg, ...)
+-- end
 
 local blob = require 'vendor.loveblobs'
 inspect = require 'vendor.inspect'
@@ -163,8 +163,8 @@ function reloadScene(name)
     state.selection.selectedJoint = nil
     state.selection.selectedObj = nil
     eio.reload(data, state.physicsWorld)
-    print("Scene loaded: " .. name)
-    print(inspect(registry.bodies))
+    logger:info("Scene loaded: " .. name)
+    logger:info(inspect(registry.bodies))
     return data
 end
 
@@ -173,7 +173,7 @@ function loadScene(name)
     state.selection.selectedJoint = nil
     state.selection.selectedObj = nil
     eio.load(data, state.physicsWorld, cam)
-    print("Scene loaded: " .. name)
+    logger:info("Scene loaded: " .. name)
     return data
 end
 
@@ -187,7 +187,7 @@ function loadScriptAndScene(id)
         reloadScene(cwd .. jsonPath)
         loadAndRunScript(cwd .. luaPath)
     else
-        print('issue loading both files.')
+        logger:error('issue loading both files.')
     end
 end
 
@@ -234,7 +234,7 @@ function maybeHotReload(dt)
         if scriptPath then
             local newModeTime = (getFileModificationTime(scriptPath))
             if (newModeTime ~= lastModTime) then
-                print('trying to load file because timestamp differs.')
+                logger:info('trying to load file because timestamp differs.')
                 loadAndRunScript(scriptPath)
             end
             lastModTime = newModeTime
@@ -273,7 +273,6 @@ function love.update(dt)
 
     if recorder.isRecording and tablelength(recorder.recordingMouseJoints) > 0 then
         recorder:recordMouseJointUpdates(cam)
-        --print('hwo to record mousejoint movement')
     end
 
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
@@ -562,7 +561,6 @@ function love.draw()
             for i = 1, #tris do
                 love.graphics.polygon('fill', tris[i])
             end
-            -- print(inspect(polygon), inspect(tris))
         end
     end
     love.graphics.setLineWidth(lw)

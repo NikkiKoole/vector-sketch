@@ -87,7 +87,7 @@ function script.loadScript(data, filePath)
 
     local chunk, err = load(scriptContent, "@" .. filePath, "t", scriptEnv)
     if err then
-        print('error: ' .. err)
+        logger:error('error: ' .. err)
     else
         if not chunk then
             error("Error loading script: " .. err)
@@ -98,7 +98,7 @@ function script.loadScript(data, filePath)
             error("Error executing script: " .. err)
         end
 
-        print("Script loaded: " .. filePath)
+        logger:info("Script loaded: " .. filePath)
         if success then
             return chunk
         end
@@ -106,7 +106,7 @@ function script.loadScript(data, filePath)
 
     return function()
         local s = {}
-        s.onStart = function() print("error: " .. err .. "\nError in script: " .. filePath) end
+        s.onStart = function() logger:error("error: " .. err .. "\nError in script: " .. filePath) end
         s.foundError = err -- utils.insertNewlines(err, 100)
         return s
     end

@@ -43,11 +43,11 @@ local function getShapeWorldPoints(body, shape)
             table.insert(points, { x = worldX, y = worldY })
         end
     elseif shape:typeOf("RectangleShape") then
-        print('NOT HANDLING THIS SHAPE RectangleShape')
+        logger:error('NOT HANDLING THIS SHAPE RectangleShape')
         -- Handle RectangleShape if using a custom shape type
         -- Love2D does not have a native RectangleShape; rectangles are typically PolygonShapes
     else
-        print('NOT HANDLING THIS SHAPE ??')
+        logger:error('NOT HANDLING THIS SHAPE ??')
     end
 
     return points
@@ -61,7 +61,7 @@ function lib.draw(selection)
     local tly = math.min(selection.y, y)
     local brx = math.max(selection.x, x)
     local bry = math.max(selection.y, y)
-    -- print(inspect(selection), x, y)
+
     drawDottedLine(tlx, tly, brx, tly, 5, 10)
     drawDottedLine(brx, tly, brx, bry, 5, 10)
     drawDottedLine(tlx, bry, brx, bry, 5, 10)

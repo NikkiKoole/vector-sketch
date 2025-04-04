@@ -106,7 +106,7 @@ function shapes.makeTrianglesFromPolygon(polygon)
     end)
 
     if not success then
-        print("Error in decompose_complex_poly: " .. err)
+        logger:error("Error in decompose_complex_poly: " .. err)
         return nil -- Exit early if decomposition fails
     end
 
@@ -115,7 +115,7 @@ function shapes.makeTrianglesFromPolygon(polygon)
         if success then
             utils.tableConcat(triangles, tris)
         else
-            print("Failed to triangulate part of the polygon: " .. tris)
+            logger:error("Failed to triangulate part of the polygon: " .. tris)
         end
     end
     return triangles
@@ -146,7 +146,7 @@ local function makeShapeListFromPolygon(polygon)
             end)
 
             if not success then
-                print("Error in decompose_complex_poly: " .. err)
+                logger:error("Error in decompose_complex_poly: " .. err)
                 return nil -- Exit early if decomposition fails
             end
 
@@ -155,7 +155,7 @@ local function makeShapeListFromPolygon(polygon)
                 if success then
                     utils.tableConcat(triangles, tris)
                 else
-                    print("Failed to triangulate part of the polygon: " .. tris)
+                    logger:error("Failed to triangulate part of the polygon: " .. tris)
                 end
             end
         else -- this is a bit of a nono, its no longer really in use and doenst fix all werid cases. faster though.
@@ -163,13 +163,13 @@ local function makeShapeListFromPolygon(polygon)
             if success then
                 triangles = result
             else
-                print("Failed to triangulate polygon: " .. result)
+                logger:error("Failed to triangulate polygon: " .. result)
                 return nil -- Exit early if triangulation fails
             end
         end
 
         if #triangles == 0 then
-            print("No valid triangles were created.")
+            logger:error("No valid triangles were created.")
             return nil
         end
         local centroidX, centroidY = mathutils.computeCentroid(polygon)
@@ -187,7 +187,7 @@ local function makeShapeListFromPolygon(polygon)
             if shapeSuccess then
                 table.insert(shapesList, shape)
             else
-                print("Failed to create shape for triangle: " .. shape)
+                logger:error("Failed to create shape for triangle: " .. shape)
             end
         end
     end
@@ -201,10 +201,7 @@ end
 --         mathutils.decompose(polygon, result)
 --     end)
 
---     if not success then
---         print("Error in decompose_complex_poly: " .. err)
---         return nil -- Exit early if decomposition fails
---     end
+
 --     for i = 1, #result do
 --         local success, tris = pcall(love.math.triangulate, result[i])
 --         if success then
@@ -264,11 +261,10 @@ function shapes.createShape(shapeType, settings)
         elseif shapeType == 'custom' then
             if settings.optionalVertices then
                 local polygon = settings.optionalVertices
-                --print(inspect(polygon))
+
                 shapesList = makeShapeListFromPolygon(polygon) or {}
-                --print('shapelist size:', #shapesList)
+
                 vertices = polygon
-                --print('numvertices', #vertices)
             else
                 error('shapetype custom needs optionalVertices!')
             end

@@ -101,7 +101,7 @@ function s.update(dt)
         local clip = mathutils.polygonClip(waterPoly, otherPoly)
         local submergedArea, _ = calculatePolygonArea(clip) --local cx, cy = mathutils.computeCentroid(resultpoly)
         local center = {}
-        print(inspect(clip))
+
         local cx, cy = mathutils.getCenterOfPoints2(clip)
 
         center.x = cx

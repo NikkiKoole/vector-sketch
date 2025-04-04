@@ -10,11 +10,12 @@ local mathutils = require 'src.math-utils'
 -- Updates offsetA of a joint based on a new LOCAL point (relative to body A)
 function lib.updateJointOffsetA(joint, localX, localY)
     if not joint or joint:isDestroyed() then
-        print("WARN: updateJointOffsetA called on invalid joint"); return nil
+        logger:error("WARN: updateJointOffsetA called on invalid joint"); return nil
     end
     local offsetA = { x = localX, y = localY }
     local offsetB = lib.getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 } -- Keep existing offset B
-    print(string.format("Updating Joint %s Offset A to: (%.2f, %.2f)", (joint:getUserData().id or "N/A"), localX, localY))
+    logger:info(string.format("Updating Joint %s Offset A to: (%.2f, %.2f)", (joint:getUserData().id or "N/A"), localX,
+        localY))
     -- Recreate the joint using existing properties but new offset A
     return lib.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
 end
@@ -22,11 +23,12 @@ end
 -- Updates offsetB of a joint based on a new LOCAL point (relative to body B)
 function lib.updateJointOffsetB(joint, localX, localY)
     if not joint or joint:isDestroyed() then
-        print("WARN: updateJointOffsetB called on invalid joint"); return nil
+        logger:error("WARN: updateJointOffsetB called on invalid joint"); return nil
     end
     local offsetA = lib.getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 } -- Keep existing offset A
     local offsetB = { x = localX, y = localY }
-    print(string.format("Updating Joint %s Offset B to: (%.2f, %.2f)", (joint:getUserData().id or "N/A"), localX, localY))
+    logger:info(string.format("Updating Joint %s Offset B to: (%.2f, %.2f)", (joint:getUserData().id or "N/A"), localX,
+        localY))
     -- Recreate the joint using existing properties but new offset B
     return lib.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
 end
@@ -36,7 +38,7 @@ function lib.getJointId(joint)
     if ud then
         return ud.id
     end
-    print('THIS IS WRONG WHY THIS JOINT HAS NO ID!!', tostring(joint:getType()))
+    logger:error('THIS IS WRONG WHY THIS JOINT HAS NO ID!!', tostring(joint:getType()))
     return nil
 end
 
@@ -64,7 +66,7 @@ function lib.getJointMetaSetting(joint, settingKey)
     if type(ud) == "table" then
         return ud[settingKey] -- Return the specific setting
     else
-        print('could not find meta settting ' .. settingKey .. ' on joint with type ' .. tostring(joint:getType()))
+        logger:error('could not find meta settting ' .. settingKey .. ' on joint with type ' .. tostring(joint:getType()))
         return nil -- Return nil if userdata is not a table or doesn't exist
     end
 end
@@ -100,7 +102,7 @@ function lib.createJoint(data)
     if handler and handler.create then
         joint = handler.create(data, x1, y1, x2, y2)
     else
-        print("Joint type '" .. jointType .. "' is not implemented yet.")
+        logger:error("Joint type '" .. jointType .. "' is not implemented yet.")
         return
     end
 
@@ -135,7 +137,7 @@ function lib.extractJoints(body)
 
         local handler = jointHandlers[jointType]
         if not handler or not handler.extract then
-            print("extract: Unsupported joint type: " .. jointType)
+            logger:error("extract: Unsupported joint type: " .. jointType)
             goto continue
         end
 
@@ -154,7 +156,7 @@ end
 
 function lib.recreateJoint(joint, newSettings)
     if joint:isDestroyed() then
-        print("The joint is already destroyed.")
+        logger:error("The joint is already destroyed.")
         return nil
     end
 
@@ -164,7 +166,7 @@ function lib.recreateJoint(joint, newSettings)
     local id = lib.getJointId(joint)
     local offsetA = lib.getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
     local offsetB = lib.getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
-    --  print(inspect(offsetA), inspect(offsetB))
+
     local data = {
         body1 = bodyA,
         body2 = bodyB,
@@ -183,7 +185,7 @@ function lib.recreateJoint(joint, newSettings)
 
     local handler = jointHandlers[jointType]
     if not handler or not handler.extract then
-        print("recreate extract: Unsupported joint type: " .. jointType)
+        logger:error("recreate extract: Unsupported joint type: " .. jointType)
     end
 
     -- Extract additional data using the handler
@@ -197,7 +199,7 @@ function lib.recreateJoint(joint, newSettings)
     -- Create a new joint with the updated data
     bodyA:setAwake(true)
     bodyB:setAwake(true)
-    --  print(inspect(data))
+
     return lib.createJoint(data)
 end
 
@@ -210,14 +212,11 @@ local function tranlateBody(body, dx, dy)
 end
 
 function moveUntilEnd(from, dx, dy, visited, dir)
-    --print(dx, dy, visited[to:getUserData().thing.id], to)
-
     local joints = from:getJoints()
     for i = 1, #joints do
         local bodyA, bodyB = joints[i]:getBodies()
 
         if (dir == 'A') then
-            print('A')
             if (not visited[bodyB:getUserData().thing.id]) then
                 tranlateBody(bodyB, dx, dy)
                 visited[bodyB:getUserData().thing.id] = true
@@ -253,9 +252,9 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
         if data.originalBodyOrder == "bodyA" then
             data.body1 = newBody
             data.body2 = data.otherBody
-            --  print(inspect(oldVertices))
+
             local before = { x = data.offsetA.x, y = data.offsetA.y }
-            --  print('A before: ', data.offsetA.x, data.offsetA.y)
+
             if true then
                 local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
                 local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
@@ -279,7 +278,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
                 --data.otherBody:setPosition(ox + rx, oy + ry)
                 visited[id] = true
                 moveUntilEnd(data.otherBody, rx, ry, visited, 'A')
-                print('A', id)
             end
         else
             data.body1 = data.otherBody
@@ -308,7 +306,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
                 tranlateBody(data.otherBody, rx, ry)
                 --data.otherBody:setPosition(ox + rx, oy + ry)
                 moveUntilEnd(data.otherBody, rx, ry, visited, 'B')
-                --print('B', id)
             end
 
 

@@ -319,7 +319,7 @@ return function(ui)
 
     function ui.textinput(_id, x, y, width, height, placeholder, currentText, isNumeric, reparse)
         local id = _id or ui.generateID()
-        --print(id, currentText)
+
         -- Initialize state for this TextInput if not already done
         if not ui.textInputs[id] then
             ui.textInputs[id] = {
@@ -388,7 +388,6 @@ return function(ui)
 
         -- Update cursor blinking
         if isFocused then
-            --  print(love.timer.getDelta())
             state.cursorTimer = state.cursorTimer + 1.0 / 90 --love.timer.getDelta()
             if state.cursorTimer >= 0.5 then
                 state.cursorVisible = not state.cursorVisible

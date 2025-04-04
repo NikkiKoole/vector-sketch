@@ -637,7 +637,7 @@ function lib.drawAddShapeUI()
 
                 local verts = body:getUserData().thing.vertices
                 local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
-                print(cx, cy, w, h)
+
                 local localX, localY = body:getLocalPoint(wx, wy)
                 local fixture = fixtures.createSFixture(body, localX, localY,
                     { label = 'texfixture', width = w, height = h })
@@ -938,9 +938,7 @@ function lib.drawSelectedSFixture()
         end
         y = y + BUTTON_HEIGHT + BUTTON_SPACING
 
-        -- If the accordion is expanded, draw the content
-        -- print(key)
-        --print(inspect(accordionStates))
+
         if accordionStatesSF[key] then
             contentFunc(clicked)
         end
@@ -963,7 +961,7 @@ function lib.drawSelectedSFixture()
 
         local myID = state.selection.selectedSFixture:getUserData().id
         local myLabel = state.selection.selectedSFixture:getUserData().label or ''
-        --print(myID)
+
 
         local newLabel = ui.textinput(myID .. ' label', x, y, 260, BUTTON_HEIGHT, "", myLabel)
         if newLabel and newLabel ~= myLabel then
@@ -1015,7 +1013,7 @@ function lib.drawSelectedSFixture()
         end
         if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
             local body = state.selection.selectedSFixture:getBody()
-            --print(inspect(body))
+
             local verts = body:getUserData().thing.vertices
             local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
             updateSFixtureDimensionsFunc(w, h)
@@ -1541,7 +1539,6 @@ function lib.drawUpdateSelectedObjectUI()
 
 
         if ui.button(x, y, 100, 'clone') then
-            --print(state.selection.selectedObj)
             state.selection.selectedBodies = { state.selection.selectedObj }
             local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
             state.selection.selectedBodies = cloned
@@ -1605,11 +1602,10 @@ function lib.drawUpdateSelectedObjectUI()
                 if (dirty) then
                     local numericPosX = tonumber(numericInputText)
                     if numericPosX then
-                        print('setting x')
                         thing.body:setX(numericPosX)
                     else
                         -- Handle invalid input, e.g., reset to previous value or show an error
-                        print("Invalid X position input!")
+                        logger:error("Invalid X position input!")
                     end
                 end
                 local value = thing.body:getY()
@@ -1622,11 +1618,10 @@ function lib.drawUpdateSelectedObjectUI()
                 if (dirty) then
                     local numericPosY = tonumber(numericInputText)
                     if numericPosY then
-                        print('setting y')
                         thing.body:setY(numericPosY)
                     else
                         -- Handle invalid input, e.g., reset to previous value or show an error
-                        print("Invalid Y position input!")
+                        logger:error("Invalid Y position input!")
                     end
                 end
                 if hadBeenDraggingObj then

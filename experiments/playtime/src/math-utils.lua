@@ -19,7 +19,6 @@ function lib.makePolygonRelativeToCenter(polygon, centerX, centerY)
 end
 
 function lib.makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
-    --print('makePolygonAbsolute center:', newCenterX, newCenterY)
     local absolutePolygon = {}
     for i = 1, #relativePolygon, 2 do
         local x = relativePolygon[i] + newCenterX
@@ -27,7 +26,7 @@ function lib.makePolygonAbsolute(relativePolygon, newCenterX, newCenterY)
         table.insert(absolutePolygon, x)
         table.insert(absolutePolygon, y)
     end
-    --  print('resulting absolute poly:', inspect(absolutePolygon))
+
     return absolutePolygon
 end
 
@@ -102,7 +101,7 @@ local function getCenterOfShapeFixtures(fixts)
             else
                 points = { it:getShape():getPoint() }
             end
-            --print(inspect(points))
+
             for j = 1, #points, 2 do
                 local xx = points[j]
                 local yy = points[j + 1]
@@ -143,7 +142,7 @@ end
 
 function lib.getCorners(polygon)
     if #polygon ~= 8 then
-        print("getCorners expects a polygon with exactly 4 vertices (8 numbers)")
+        logger:error("getCorners expects a polygon with exactly 4 vertices (8 numbers)")
         return nil, nil, nil, nil
     end
 
@@ -178,20 +177,13 @@ function lib.getCorners(polygon)
             corners.bl = v
         else
             -- Should not happen with atan2 range
-            print(string.format("Warning: Vertex angle %.2f rad (%.1f deg) out of expected range (-pi, pi].", angle,
+            logger:error(string.format("Warning: Vertex angle %.2f rad (%.1f deg) out of expected range (-pi, pi].",
+                angle,
                 math.deg(angle)))
         end
     end
 
-    -- Debugging
-    -- print("Recalculated Angles & Assignments:")
-    -- for _, v_debug in ipairs(vertices) do print(string.format(" ID %d (%.1f, %.1f) Angle: %.3f rad (%.1f deg)", v_debug.id, v_debug.x, v_debug.y, v_debug.angle or 0, math.deg(v_debug.angle or 0))) end
-    -- print("Assigned TL:", corners.tl and corners.tl.id)
-    -- print("Assigned TR:", corners.tr and corners.tr.id)
-    -- print("Assigned BR:", corners.br and corners.br.id)
-    -- print("Assigned BL:", corners.bl and corners.bl.id)
 
-    -- Check if all corners were assigned (duplicates might overwrite)
     local assigned_count = 0
     if corners.tl then assigned_count = assigned_count + 1 end
     if corners.tr then assigned_count = assigned_count + 1 end
@@ -205,7 +197,7 @@ function lib.getCorners(polygon)
         if corner_v then
             if assignments[corner_v.id] then
                 duplicates = true
-                print(string.format("Warning: Duplicate assignment for vertex ID %d", corner_v.id))
+                logger:error(string.format("Warning: Duplicate assignment for vertex ID %d", corner_v.id))
                 break
             end
             assignments[corner_v.id] = true
@@ -214,7 +206,7 @@ function lib.getCorners(polygon)
 
 
     if assigned_count ~= 4 or duplicates then
-        print("Warning: Could not assign all 4 corners uniquely using angle quadrants.")
+        logger:error("Warning: Could not assign all 4 corners uniquely using angle quadrants.")
         -- This indicates the angle logic is insufficient for the shape/orientation
         -- A fallback or more complex geometric analysis might be needed.
     end
@@ -510,7 +502,7 @@ function lib.decompose(poly, result)
 
     -- Process only the first intersection to avoid redundant splits
     local intersection = intersections[1]
-    --print(inspect(poly), inspect(intersection))
+
     local p1, p2 = lib.splitPoly(poly, intersection)
 
     -- Recursively decompose the resulting polygons
@@ -583,7 +575,7 @@ function lib.findIntersections(polygon, line)
 
         -- Get intersection point
         local Px, Py = getLineIntersection(x1, y1, x2, y2, lx1, ly1, lx2, ly2)
-        --print(Px,Py, x1, y1, x2, y2, lx1, ly1, lx2, ly2)
+
         if Px and Py then
             -- Check for duplicates
             local duplicate = false
@@ -695,9 +687,7 @@ end
 -- local p2 = { x = 150, y = -150 }
 
 
--- -- Slice the polygon
--- slicedPolygons = mathutils.slicePolygon(polygon, p1, p2)
--- print(inspect(slicedPolygons))
+
 function lib.slicePolygon(polygon, p1, p2)
     -- p1 and p2 define the slicing line: {x = ..., y = ...}
 
@@ -705,15 +695,13 @@ function lib.slicePolygon(polygon, p1, p2)
     local sliceLine = { x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y }
     local intersections = lib.findIntersections(polygon, sliceLine)
 
-    -- Debug: Print found intersections
-    --   print("Found Intersections:")
+
     for _, inter in ipairs(intersections) do
         --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
     end
 
     -- Ensure there are at least two unique intersection points
     if #intersections < 2 then
-        --     print("Slice line does not intersect the polygon twice.")
         return { polygon } -- Return the original polygon as a single-element table
     end
 
@@ -745,7 +733,7 @@ function lib.slicePolygon(polygon, p1, p2)
     end
 
     if #uniqueIntersections < 2 then
-        print("Not enough unique intersections to slice the polygon.")
+        logger:error("Not enough unique intersections to slice the polygon.")
         return { polygon }
     end
 
@@ -770,10 +758,6 @@ function lib.slicePolygon(polygon, p1, p2)
     -- Insert inter2 next
     lib.insertValuesAt(polygon, insertPos2 + 1, inter2.x, inter2.y)
 
-    -- Debug: Print polygon after insertions
-    -- print("Polygon after inserting intersection points:")
-    -- print(inspect(polygon))
-
     -- Step 5: Find the new indices of the inserted intersection points
     local function findVertexIndex(x, y)
         for i = 1, #polygon, 2 do
@@ -788,7 +772,7 @@ function lib.slicePolygon(polygon, p1, p2)
     local newInter2Index = findVertexIndex(inter2.x, inter2.y)
 
     if not newInter1Index or not newInter2Index then
-        print("Failed to find the new intersection indices after insertion.")
+        logger:error("Failed to find the new intersection indices after insertion.")
         return { polygon }
     end
 
@@ -824,12 +808,6 @@ function lib.slicePolygon(polygon, p1, p2)
     -- At this point, poly1 and poly2 already include the intersection points
     -- There's no need to append inter1 and inter2 again, as it causes duplication
 
-    -- Debug: Print the resulting polygons
-    -- print("Resulting Polygons:")
-    -- print("Polygon 1:")
-    -- print(inspect(poly1))
-    -- print("Polygon 2:")
-    -- print(inspect(poly2))
 
     return { poly1, poly2 }
 end
@@ -1066,7 +1044,7 @@ function lib.lerpOnEdge(edgeIndex, t, newPoly)
 
     local i = edgeIndex
     local j = (i % n) + 1 -- next vertex index (wrap-around)
-    print(2 * i - 1, 2 * i, 2 * j - 1, 2 * j)
+
     local x1, y1 = newPoly[2 * i - 1], newPoly[2 * i]
     local x2, y2 = newPoly[2 * j - 1], newPoly[2 * j]
 

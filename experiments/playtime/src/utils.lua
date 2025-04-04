@@ -22,7 +22,7 @@ function lib.trace(...)
         end
         t[#t + 1] = tostring(x)
     end
-    print(table.concat(t, " "))
+    logger:info(table.concat(t, " "))
 end
 
 function lib.getPathDifference(base, full)
@@ -81,7 +81,7 @@ end
 
 function lib.printTableKeys(tbl)
     for key, _ in pairs(tbl) do
-        print(key)
+        logger:info(key)
     end
 end
 

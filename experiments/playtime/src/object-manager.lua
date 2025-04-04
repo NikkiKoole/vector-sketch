@@ -21,7 +21,7 @@ function lib.finalizePolygonAsSoftSurface()
         b:setJointFrequency(10)
         b:setJointDamping(10)
     end
-    print('blob surface wanted instead?')
+    logger:warn('blob surface wanted instead?')
     -- Reset the drawing state
 
     state.currentMode = nil
@@ -45,7 +45,7 @@ function lib.finalizePolygon()
         lib.addThing('custom', settings)
     else
         -- Not enough vertices to form a polygon
-        print("Not enough vertices to create a polygon.")
+        logger:error("Not enough vertices to create a polygon.")
     end
     -- Reset the drawing state
 
@@ -88,13 +88,13 @@ function lib.removeCustomPolygonVertex(x, y)
             local dx = px - vx
             local dy = py - vy
             local distSq = dx * dx + dy * dy
-            --print(distSq)
+
             if distSq <= maxDeletionDistanceSq then
                 -- Step 3: Remove the vertex from the vertex list
 
                 -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
                 if #state.polyEdit.tempVerts <= 6 then
-                    print("Cannot delete vertex: A polygon must have at least three vertices.")
+                    logger:error("Cannot delete vertex: A polygon must have at least three vertices.")
                     -- Optionally, you can restore the removed vertex or prevent deletion
                     return
                 end
@@ -102,12 +102,12 @@ function lib.removeCustomPolygonVertex(x, y)
                 lib.maybeUpdateCustomPolygonVertices()
 
                 -- Debugging Output
-                print(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
+                logger:info(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
             else
-                print("No vertex close enough to delete.")
+                logger:error("No vertex close enough to delete.")
             end
         else
-            print("No vertex found to delete.")
+            logger:error("No vertex found to delete.")
         end
     end
 end
@@ -203,7 +203,7 @@ local function createThing(shapeType, conf)
     local shapeList, vertices = shapes.createShape(shapeType, settings)
 
     if not shapeList then
-        print("Failed to create shapes for:", shapeType)
+        logger:error("Failed to create shapes for:", shapeType)
         return nil
     end
 
@@ -279,11 +279,11 @@ function lib.startSpawn(shapeType, wx, wy)
         height4 = height4,
         label = ''
     }
-    -- print(inspect(settings))
+
     local thing = createThing(shapeType, settings)
 
     if not thing then
-        print("startSpawn: Failed to create thing.")
+        logger:info("startSpawn: Failed to create thing.")
         return
     end
 
@@ -297,7 +297,7 @@ function lib.addThing(shapeType, settings)
     --  print(inspect(settings))
     local thing = createThing(shapeType, settings)
     if not thing then
-        print("addThing: Failed to create thing.")
+        logger:error("addThing: Failed to create thing.")
         return nil
     end
 
@@ -307,7 +307,7 @@ end
 -- this one is called when the shape of the body changes, thus, its kinda safe to make weird changes to joints too.
 function lib.recreateThingFromBody(body, newSettings)
     if body:isDestroyed() then
-        print("The body is already destroyed.")
+        logger:error("The body is already destroyed.")
         return nil
     end
     local userData = body:getUserData()
@@ -471,12 +471,12 @@ end
 function lib.flipThing(thing, axis, recursive)
     -- Validate input
     if not thing or not thing.body then
-        print("flipThing: Invalid 'thing' provided.")
+        logger:error("flipThing: Invalid 'thing' provided.")
         return
     end
 
     if axis ~= 'x' and axis ~= 'y' then
-        print("flipThing: Invalid axis. Use 'x' or 'y'.")
+        logger:error("flipThing: Invalid axis. Use 'x' or 'y'.")
         return
     end
 
@@ -527,9 +527,7 @@ function lib.flipThing(thing, axis, recursive)
             newAngle = -currentAngle
             currentThing.mirrorY = currentThing.mirrorY * -1
         end
-        print(inspect(currentThing))
-        print(currentThing.body, newX, newY)
-        -- Update body's position and angle
+
         currentThing.body:setPosition(newX, newY)
         currentThing.body:setAngle(newAngle)
 
@@ -607,7 +605,7 @@ function lib.flipThing(thing, axis, recursive)
             for _, joint in ipairs(currentBody:getJoints()) do
                 local jointUserData = joint:getUserData()
                 if not jointUserData or not jointUserData.id then
-                    print("flipThing: Joint without valid user data encountered.")
+                    logger:error("flipThing: Joint without valid user data encountered.")
                     goto continue
                 end
 
@@ -618,7 +616,7 @@ function lib.flipThing(thing, axis, recursive)
                 local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
 
                 if not otherThing then
-                    print("flipThing: Connected joint's other body is invalid.")
+                    logger:error("flipThing: Connected joint's other body is invalid.")
                     goto continue
                 end
 
@@ -637,7 +635,7 @@ function lib.flipThing(thing, axis, recursive)
             local jointUserData = joint:getUserData()
 
             if not jointUserData or not jointUserData.id then
-                print("flipThing: Joint without valid user data encountered.")
+                logger:error("flipThing: Joint without valid user data encountered.")
                 goto continue
             end
 
@@ -649,7 +647,7 @@ function lib.flipThing(thing, axis, recursive)
             -- Extract joint data using the handler
             local handler = jointHandlers[jointType]
             if not handler or not handler.extract then
-                print("flipThing: No handler found for joint type:", jointType)
+                logger:error("flipThing: No handler found for joint type:", jointType)
                 goto continue
             end
             local jointData = handler.extract(joint)
@@ -660,12 +658,12 @@ function lib.flipThing(thing, axis, recursive)
             local thingB = bodyB:getUserData() and bodyB:getUserData().thing
 
             if not thingA or not thingB then
-                print("flipThing: One or both connected things are invalid.")
+                logger:error("flipThing: One or both connected things are invalid.")
                 goto continue
             end
 
 
-            print(
+            logger:info(
                 'I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...')
             --print('old', inspect(processedBodies[thingA.id]), inspect(processedBodies[thingB.id]))
             --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
@@ -676,7 +674,7 @@ function lib.flipThing(thing, axis, recursive)
 
             local offsetA = jointUserData.offsetA
             local offsetB = jointUserData.offsetB
-            --print('before', inspect(offsetA), inspect(offsetB))
+
             if axis == 'x' then
                 offsetA.x = -offsetA.x
                 offsetB.x = -offsetB.x
@@ -690,7 +688,7 @@ function lib.flipThing(thing, axis, recursive)
 
             local id = joint:getUserData().id
             joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
-            -- print(registry.getJointByID(id):isDestroyed())
+
 
             snap.maybeUpdateSnapJointWithId(id)
             ::continue::

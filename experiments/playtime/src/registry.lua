@@ -38,7 +38,7 @@ end
 -- Unregister a joint
 function registry.unregisterJoint(id)
     if not registry.joints[id] then
-        print('no s joint to unregister here', id)
+        logger:info('no s joint to unregister here', id)
     end
     registry.joints[id] = nil
 end
@@ -56,7 +56,7 @@ end
 
 function registry.unregisterSFixture(id)
     if not registry.sfixtures[id] then
-        print('no s fixture to unregister here')
+        logger:info('no s fixture to unregister here')
     end
     registry.sfixtures[id] = nil
     snap.rebuildSnapFixtures(registry.sfixtures)

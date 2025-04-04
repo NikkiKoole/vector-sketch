@@ -39,7 +39,7 @@ end
 -- Create a revolute joint between two bodies
 local function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
     local id = uuid.generateID()
-    -- print(id)
+
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
 
     local xa, ya = body1:getLocalPoint(x, y)
@@ -67,15 +67,6 @@ end
 
 
 function checkForJointBreaks(dt, interacted, snapFixtures)
-    -- print(#mySnapJoints)
-    --for k, v in pairs(registry.joints) do
-    --    print(k, v:isDestroyed())
-    --end
-    --for i = #mySnapJoints, 1, -1 do
-    --    print(i, mySnapJoints[i]:isDestroyed())
-    --end
-
-
     for i = #mySnapJoints, 1, -1 do
         local joint = mySnapJoints[i]
 
@@ -108,15 +99,12 @@ function checkForJointBreaks(dt, interacted, snapFixtures)
                 joint:destroy()
                 -- Remove the joint from the list of joints
                 table.remove(mySnapJoints, i)
-
-                --print('todo remove joint from registry')
             end
         end
     end
 end
 
 local function checkForSnaps(interacted, snapFixtures)
-    -- print(#interacted, #snapFixtures)
     local currentTime = love.timer.getTime()
 
     for i = 1, #snapFixtures do
@@ -125,8 +113,8 @@ local function checkForSnaps(interacted, snapFixtures)
         if it1.to == nil and not isInCooldown(it1.fixture, currentTime) then -- else this snap point is already connected and it cannot be connected more then once
             local body1 = it1.at
             if not body1 then
-                print('body1 is nil!    ')
-                print(inspect(it1))
+                logger:error('body1 is nil!    ')
+                logger:info(inspect(it1))
             end
             local x1, y1 = body1:getWorldPoint(it1.xOffset, it1.yOffset)
 
@@ -164,7 +152,6 @@ end
 
 
 function lib.update(dt)
-    --print(count)
     if #snapFixtures > 0 then
         --print('amount of snapfixtures: ', #snapFixtures)
         local interacted = box2dPointerJoints.getInteractedWithPointer()
@@ -192,7 +179,7 @@ function lib.rebuildSnapFixtures(sfix)
             if ud and utils.sanitizeString(ud.label) == 'snap' then
                 local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
                 local ud = v:getUserData()
-                --print(count, ud.extra, v:getBody(), k)
+
                 ud.extra.xOffset = centroid[1]
                 ud.extra.yOffset = centroid[2]
                 ud.extra.at = v:getBody()
@@ -239,12 +226,11 @@ function lib.onSceneLoaded()
             local indx1Options = {}
             local indx2Options = {}
 
-            --print(#snapFixtures)
-            -- Find all snap points associated with bodyA and bodyB
+
             for i = 1, #snapFixtures do
                 local extra = snapFixtures[i]:getUserData().extra
                 local atId = extra.at:getUserData().thing.id
-                --print(atId, id1, id2)
+
                 if (atId == id1) then
                     table.insert(indx1Options, i)
                 end
@@ -303,7 +289,6 @@ function lib.onSceneLoaded()
 end
 
 function lib.resetList()
-    -- print('should reset snapjoints array', #mySnapJoints)
     mySnapJoints = {}
 end
 
@@ -338,7 +323,6 @@ function lib.maybeUpdateSnapJointWithId(id)
 end
 
 function lib.destroySnapJointAboutBody(body)
-    --print('should remove things from snapjoints array maybe')
     for i = #mySnapJoints, 1, -1 do
         local joint = mySnapJoints[i]
         local body1, body2 = joint:getBodies()

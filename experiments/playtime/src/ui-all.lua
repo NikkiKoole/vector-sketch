@@ -151,7 +151,7 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
         value = tonumber(numericInputText)
         returnValue = value
     end
-    --print(valueHasChangedViaSlider, changed, dirty)
+
     if returnValue then
         return returnValue
     end
@@ -547,7 +547,7 @@ end
 --- Draws a text label at the specified position.
 function ui.centeredLabel(x, y, width, text)
     love.graphics.setColor(ui.theme.general.text)
-    --  love.graphics.print(text, x, y)
+
     love.graphics.printf(text, x, y, width, "center")
     love.graphics.setColor(1, 1, 1)
 end
