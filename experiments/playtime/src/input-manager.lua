@@ -109,6 +109,8 @@ local function handlePointer(x, y, id, action)
 
         if (state.currentMode == 'positioningSFixture') then
             state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture, cx, cy)
+          local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
             state.currentMode = nil
         end
 
@@ -344,12 +346,23 @@ function lib.handleMouseMoved(x, y, dx, dy)
     elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
         local index = state.texFixtureEdit.dragIdx
         local obj = state.selection.selectedSFixture:getBody():getUserData().thing
+
+
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
         state.texFixtureEdit.tempVerts[index] = state.texFixtureEdit.tempVerts[index] + dx2
         state.texFixtureEdit.tempVerts[index + 1] = state.texFixtureEdit.tempVerts[index + 1] + dy2
+
+        local ud = state.selection.selectedSFixture:getUserData()
+        --logger:info(inspect(ud))
+        ud.extra.vertices[index] =state.texFixtureEdit.tempVerts[index]
+        ud.extra.vertices[index+1] =state.texFixtureEdit.tempVerts[index + 1]
+        state.selection.selectedSFixture:setUserData(ud)
+       -- print(index)
+
+
     elseif (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance

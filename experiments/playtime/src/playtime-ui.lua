@@ -984,24 +984,7 @@ function lib.drawSelectedSFixture()
         end
         nextRow()
 
-        local updateSFixtureDimensionsFunc = function(w, h)
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
-            local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            local body = state.selection.selectedSFixture:getBody()
-            state.selection.selectedSFixture:destroy()
 
-            local centerX, centerY = mathutils.getCenterOfPoints(points)
-            local shape = love.physics.newPolygonShape(rect(w, h, centerX, centerY))
-            local newfixture = love.physics.newFixture(body, shape)
-            newfixture:setSensor(true) -- Sensor so it doesn't collide
-            newfixture:setUserData(oldUD)
-
-            state.selection.selectedSFixture = newfixture
-            --snap.updateFixture(newfixture)
-            registry.registerSFixture(oldUD.id, newfixture)
-
-            return newfixture
-        end
 
 
         if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -1012,54 +995,40 @@ function lib.drawSelectedSFixture()
             local body = state.selection.selectedSFixture:getBody()
             state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                 body:getX(), body:getY())
-
-            -- state.selection.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
         end
         if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
             local body = state.selection.selectedSFixture:getBody()
 
             local verts = body:getUserData().thing.vertices
             local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
-            updateSFixtureDimensionsFunc(w, h)
+            fixtures.updateSFixtureDimensionsFunc(w, h)
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
         end
         nextRow()
 
 
-        local function lerp(v0, v1, t)
-           return v0 * (1 - t) + v1 * t
-        end
-
-
-        --[[
-
-
-
-
-
-        ]]--
-
 
         if sfixtureType == 'texfixture' then
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            local points = oldTexFixUD.extra.vertices or{  state.selection.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
 
             if ui.checkbox(x, y, state.editorPreferences.showTexFixtureDim, 'dims') then
                 state.editorPreferences.showTexFixtureDim = not state.editorPreferences.showTexFixtureDim
             end
             nextRow()
-            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+
             if ui.button(x, y, 200, state.texFixtureEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                  local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                 state.texFixtureEdit.lockedVerts = not state.texFixtureEdit.lockedVerts
 
                 if state.texFixtureEdit.lockedVerts == false then
-                    if #points == 8 then
-                        else
-                    end
-                    state.texFixtureEdit.tempVerts = utils.shallowCopy(points)
-                   -- state.texFixtureEdit.tempVerts[9] = 100
-                   -- state.texFixtureEdit.tempVerts[10] = 100
-                    --local cx, cy = mathutils.computeCentroid(points)
-                    --state.texFixtureEdit.centroid = { x = cx, y = cy }
+
+                    state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+
                 else
                     state.texFixtureEdit.tempVerts = nil
                     state.texFixtureEdit.centroid = nil
@@ -1071,13 +1040,7 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.vertexCount = 8
                  elseif oldTexFixUD.extra.vertexCount == 8 then
                   oldTexFixUD.extra.vertexCount = 4
-                -- oldTexFixUD.extra.vertexCount = 5
-                -- elseif oldTexFixUD.extra.vertexCount == 5 then
-                -- oldTexFixUD.extra.vertexCount = 8
-                -- elseif  oldTexFixUD.extra.vertexCount == 8 then
-                -- oldTexFixUD.extra.vertexCount = 9
-                -- elseif  oldTexFixUD.extra.vertexCount == 9 then
-                -- oldTexFixUD.extra.vertexCount = 4
+
             end
             end
 
