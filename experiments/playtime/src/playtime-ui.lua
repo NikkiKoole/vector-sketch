@@ -26,7 +26,6 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FPS = 60
 
-
 local offsetHasChangedViaOutside
 local BGcolorHasChangedViaPalette
 local FGcolorHasChangedViaPalette
@@ -2120,7 +2119,7 @@ function lib.drawUI()
     end
 
     if state.scene.sceneScript and state.scene.sceneScript.onStart then
-        if ui.button(920, 20, 50, 'R') then
+        if ui.button(970, 20, 50, 'R') then
             -- todo actually reread the file itself!
             sceneLoader.loadAndRunScript(state.scene.scriptPath)
             script.call('onStart') --state.scene.sceneScript.onStart()
