@@ -1025,6 +1025,20 @@ function lib.drawSelectedSFixture()
         nextRow()
 
 
+        local function lerp(v0, v1, t)
+           return v0 * (1 - t) + v1 * t
+        end
+
+
+        --[[
+
+
+
+
+
+        ]]--
+
+
         if sfixtureType == 'texfixture' then
             local points = { state.selection.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
@@ -1033,6 +1047,42 @@ function lib.drawSelectedSFixture()
                 state.editorPreferences.showTexFixtureDim = not state.editorPreferences.showTexFixtureDim
             end
             nextRow()
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            if ui.button(x, y, 200, state.texFixtureEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                state.texFixtureEdit.lockedVerts = not state.texFixtureEdit.lockedVerts
+
+                if state.texFixtureEdit.lockedVerts == false then
+                    if #points == 8 then
+                        else
+                    end
+                    state.texFixtureEdit.tempVerts = utils.shallowCopy(points)
+                   -- state.texFixtureEdit.tempVerts[9] = 100
+                   -- state.texFixtureEdit.tempVerts[10] = 100
+                    --local cx, cy = mathutils.computeCentroid(points)
+                    --state.texFixtureEdit.centroid = { x = cx, y = cy }
+                else
+                    state.texFixtureEdit.tempVerts = nil
+                    state.texFixtureEdit.centroid = nil
+                end
+            end
+
+            if ui.button(x + 220, y,40, oldTexFixUD.extra.vertexCount  ) then
+            if  oldTexFixUD.extra.vertexCount == 4 then
+                oldTexFixUD.extra.vertexCount = 8
+                 elseif oldTexFixUD.extra.vertexCount == 8 then
+                  oldTexFixUD.extra.vertexCount = 4
+                -- oldTexFixUD.extra.vertexCount = 5
+                -- elseif oldTexFixUD.extra.vertexCount == 5 then
+                -- oldTexFixUD.extra.vertexCount = 8
+                -- elseif  oldTexFixUD.extra.vertexCount == 8 then
+                -- oldTexFixUD.extra.vertexCount = 9
+                -- elseif  oldTexFixUD.extra.vertexCount == 9 then
+                -- oldTexFixUD.extra.vertexCount = 4
+            end
+            end
+
+             nextRow()
+
             if (state.editorPreferences.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
                 ui.label(x, y, ' width')
@@ -1051,7 +1101,7 @@ function lib.drawSelectedSFixture()
                     w, h = mathutils.getPolygonDimensions(points)
                 end
             end
-            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+
             local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                 math.floor(oldTexFixUD.extra.zOffset or 0),
                 (not state.world.paused) or dirtyBodyChange)
@@ -1826,76 +1876,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                 nextRow()
             end)
-            --nextRow()
 
-            -- drawAccordion("textures", function(clicked)
-            --     nextRow()
-            --     ui.label(x, y, 'FG / BG / hex')
-            --     nextRow()
-            --     local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
-            --     if dirty then
-            --         thing.textures.bgEnabled = not thing.textures.bgEnabled
-            --     end
-            --     local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
-            --     if bgURL and bgURL ~= thing.textures.bgURL then
-            --         thing.textures.bgURL = bgURL
-            --     end
-            --     nextRow()
-
-            --     local paletteShow = ui.button(x, y, 40, 'p', 40)
-            --     if paletteShow then
-
-            --             end
-            --         end
-            --     end
-            --     --if not state.panelVisibility.showPalette then
-            --     --_id, x, y, width, height, placeholder, currentText, isNumeric, reparse
-
-            --     local bgHex = ui.textinput(myID .. ' bgHex', x + 50, y, 210, 40, "", thing.textures.bgHex, false,
-            --         BGcolorHasChangedViaPalette)
-            --     if BGcolorHasChangedViaPalette then
-            --         BGcolorHasChangedViaPalette = false
-            --     end
-            --     if bgHex and bgHex ~= thing.textures.bgHex then
-            --         thing.textures.bgHex = bgHex
-            --     end
-            --     --end
-
-            --     nextRow()
-            --     local dirty, checked = ui.checkbox(x, y, thing.textures.fgEnabled, '')
-            --     if dirty then
-            --         thing.textures.fgEnabled = not thing.textures.fgEnabled
-            --     end
-            --     local fgURL = ui.textinput(myID .. ' fgURL', x + 40, y, 220, 40, "", thing.textures.fgURL)
-            --     if fgURL and fgURL ~= thing.textures.fgURL then
-            --         --local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            --         -- oldUD.label = newLabel
-            --         -- state.selection.selectedSFixture:setUserData(oldUD)
-            --         --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
-            --         --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
-            --         thing.textures.fgURL = fgURL
-            --     end
-
-
-            --     nextRow()
-            --     local fgHex = ui.textinput(myID .. ' fgHex', x + 50, y, 210, 40, "", thing.textures.fgHex, false,
-            --         FGcolorHasChangedViaPalette)
-            --     if FGcolorHasChangedViaPalette then
-            --         FGcolorHasChangedViaPalette = false
-            --     end
-            --     if fgHex and fgHex ~= thing.textures.fgHex then
-            --         thing.textures.fgHex = fgHex
-            --     end
-            --     local paletteShow = ui.button(x, y, 40, 'p', 40)
-            --     if paletteShow then
-
-            --             end
-            --         end
-            --     end
-
-
-            --     nextRow()
-            -- end)
 
             nextRow()
 

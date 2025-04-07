@@ -97,9 +97,9 @@ function love.load(args)
 
     --loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
-    sceneLoader.loadScriptAndScene('straight')
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    --sceneLoader.loadScriptAndScene('straight')
+    local cwd = love.filesystem.getWorkingDirectory()
+     sceneLoader.loadScene(cwd .. '/scripts/lekker.playtime.json')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -172,10 +172,10 @@ function love.draw()
 
     script.call('draw')
 
-
+    editorRenderer.renderActiveEditorThings()
     cam:pop()
 
-    editorRenderer.renderActiveEditorThings()
+
 
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)

@@ -106,7 +106,7 @@ function lib.renderActiveEditorThings()
         local thing = state.selection.selectedSFixture:getBody():getUserData().thing
         local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
             thing, 0, 0)
-
+        --print(inspect(verts))
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
 

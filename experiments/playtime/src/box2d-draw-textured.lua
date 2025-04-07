@@ -329,6 +329,161 @@ function lib.makeCombinedImages()
     end
 end
 
+
+local function makeSquishableUVsFromPoints(v)
+    local verts = {}
+    if #v == 8 then
+        verts[1] = { v[1], v[2], 0, 0 }
+        verts[2] = { v[3], v[4], 1, 0 }
+        verts[3] = { v[5], v[6], 1, 1 }
+        verts[4] = { v[7], v[8], 0, 1 }
+    end
+    if #v == 10 then
+            verts[1] = { v[1], v[2], 0.5, 0.5 }
+            verts[2] = { v[3], v[4], 0, 0 }
+            verts[3] = { v[5], v[6], 1, 0 }
+            verts[4] = { v[7], v[8], 1, 1 }
+            verts[5] = { v[9], v[10], 0, 1 }
+            verts[6] = { v[3], v[4], 0, 0 } -- this is an extra one to make it go round
+        end
+
+    -- if #v == 8 then
+    --     verts[1] = { v[1], v[2], 0, 0 }
+    --     verts[2] = { v[3], v[4], 1, 0 }
+    --     verts[3] = { v[5], v[6], 1, 1 }
+    --     verts[4] = { v[7], v[8], 0, 1 }
+
+    -- end
+
+    -- if #v == 10 then
+    --         verts[1] = { v[1], v[2], 0.5, 0.5 }
+    --         verts[2] = { v[9], v[10], 0, 0 }
+    --         verts[3] = { v[3], v[4], 1, 0 }
+    --         verts[4] = { v[5], v[6], 1, 1 }
+    --         verts[5] = { v[7], v[8], 0, 1 }
+    --         verts[6] = { v[9], v[10], 0, 0 } -- this is an extra one to make it go round
+    --     end
+    return verts
+end
+
+-- local function getTopLeftIndex(points)
+--     local bestIndex = 1
+--     local bestX,bestY = points[1], points[2]
+--     for i =3, #points,2 do
+--         local x,y = points[i], points[i+1]
+--         if x < bestX and y < bestY then
+--             bestX, bestY = x,y
+--             bestIndex = i
+--         end
+--     end
+--     return bestIndex
+-- end
+
+local function getTopLeftIndexQuadrant(points)
+    local bestIndex = 1
+    local bestScore= -(points[1] + points[2])
+    for i =3, #points,2 do
+        local x,y = points[i], points[i+1]
+        local score = -(x + y)
+        if score > bestScore then
+            bestScore = score
+            bestIndex = i
+        end
+    end
+    return bestIndex
+end
+
+local function rotateToFront(array, index)
+    local result = {}
+    local n = #array
+    for i = 0, n-1 do
+        result[i+1] = array[(index+i -1) % n + 1]
+    end
+    return result
+end
+
+local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
+    -- first get the polygon from the meta object that describes the shape in 8 points
+    -- optionally grow that polygon outwards from the middle
+
+    local p = {}
+    for i = 1, #vertices do
+        p[i] = vertices[i] * growFactor
+    end
+    local tlIndex = getTopLeftIndexQuadrant(p)
+    p = rotateToFront(p, tlIndex)
+
+    table.insert(p,1,0) --y
+    table.insert(p,1,0) --x
+    -- local p = {}
+    -- p[1] = 0
+    -- p[2] = 0
+    -- for i = 1, #vertices do
+    --     p[i+2] = vertices[i] * growFactor
+    -- end
+   --print('before', inspect(p))
+
+  -- print('tlIndex', tlIndex)
+  --  print('after', inspect(p))
+  --   local tlIndexAfter = getTopLeftIndex(p)
+   --   print('tlIndexAfter', tlIndexAfter)
+
+  --  print(inspect(p))
+
+   -- local points = { { 0, 0 }, p[8], p[1], p[2], p[3], p[4], p[5], p[6], p[7] }
+    local uvs = makeSquishableUVsFromPoints(p)
+    --uvs = rotateToFront(uvs, tlIndex)
+    --print(inspect(uvs))
+    local _mesh =  love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
+    local img = img
+    _mesh:setTexture(img)
+
+    love.graphics.draw(_mesh, x, y, r, 1, 1)
+end
+
+
+-- mesh.makeSquishableUVsFromPoints = function(points)
+--     local verts = {}
+
+--     --assert(#points == 4)
+
+--     local v = points
+
+--     if #v == 4 then
+--         verts[1] = { v[1][1], v[1][2], 0, 0 }
+--         verts[2] = { v[2][1], v[2][2], 1, 0 }
+--         verts[3] = { v[3][1], v[3][2], 1, 1 }
+--         verts[4] = { v[4][1], v[4][2], 0, 1 }
+--     end
+--     if #v == 5 then
+--         verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
+--         verts[2] = { v[2][1], v[2][2], 0, 0 }
+--         verts[3] = { v[3][1], v[3][2], 1, 0 }
+--         verts[4] = { v[4][1], v[4][2], 1, 1 }
+--         verts[5] = { v[5][1], v[5][2], 0, 1 }
+--         verts[6] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
+--     end
+
+--     if #v == 9 then
+--         verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
+--         verts[2] = { v[2][1], v[2][2], 0, 0 }
+--         verts[3] = { v[3][1], v[3][2], .5, 0 }
+--         verts[4] = { v[4][1], v[4][2], 1, 0 }
+--         verts[5] = { v[5][1], v[5][2], 1, .5 }
+--         verts[6] = { v[6][1], v[6][2], 1, 1 }
+--         verts[7] = { v[7][1], v[7][2], .5, 1 }
+--         verts[8] = { v[8][1], v[8][2], 0, 1 }
+--         verts[9] = { v[9][1], v[9][2], 0, .5 }
+--         verts[10] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
+--     end
+
+
+
+--     return verts
+-- end
+
+
+
 function lib.drawTexturedWorld(world)
     local bodies = world:getBodies()
     local drawables = {}
@@ -381,7 +536,20 @@ function lib.drawTexturedWorld(world)
 
                 local vertices = { texfixture:getShape():getPoints() }
 
-                if (img) then
+                if extra.vertexCount == 4 then
+                   -- print('you what?')
+                   if (img) then
+                       local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+                       local sx = ww / imgw
+                       local sy = hh / imgh
+                       local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+                        local r, g, b, a = lib.hexToColor(extra.bgHex)
+                      love.graphics.setColor(r, g, b, a)
+                       drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+                   end
+                end
+                if false then
+                if  not extra.vertexCount or extra.vertexCount == 4 and (img) then
                     -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
                     -- mesh = love.graphics.newMesh(vert2, "fan")
                     -- mesh:setTexture(img)
@@ -404,7 +572,7 @@ function lib.drawTexturedWorld(world)
                         logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
                     end
                 end
-
+                end
                 local url = extra.fgURL
                 local img, imgw, imgh = getLoveImage('textures/' .. url)
                 local body = texfixture:getBody()

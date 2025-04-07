@@ -118,7 +118,7 @@ function lib.createSFixture(body, localX, localY, cfg)
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = '', extra = { type = 'texfixture' } })
+        fixture:setUserData({ type = "sfixture", id = setId, label = '', extra = { vertexCount=4, type = 'texfixture' } })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
