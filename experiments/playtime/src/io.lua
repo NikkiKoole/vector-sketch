@@ -82,7 +82,17 @@ function lib.buildWorld(data, world, cam)
                 for _, point in ipairs(fixtureData.points) do
                     table.insert(points, point)
                 end
-                shape = love.physics.newPolygonShape(unpack(points))
+
+                local success, err = pcall(function()
+                    shape = love.physics.newPolygonShape(unpack(points))
+                end)
+                if err then
+                    logger:info('failed creating a polygonshape, will add a circle instead')
+                    shape =nil
+                end
+
+
+
                 -- elseif fixtureData.shapeType == "edge" then
                 --     local x1 = fixtureData.points[1].x
                 --     local y1 = fixtureData.points[1].y

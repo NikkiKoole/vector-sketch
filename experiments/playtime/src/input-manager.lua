@@ -80,18 +80,13 @@ local function handlePointer(x, y, id, action)
             end
         end
 
-
-
         if (state.currentMode == 'drawClickMode' ) then
             local w, h = love.graphics.getDimensions()
             if x < w - 300 then
---            logger:info('adding point to table')
             table.insert(state.interaction.polyVerts, cx)
             table.insert(state.interaction.polyVerts, cy)
             end
         end
-
-
 
         if (state.currentMode == 'setOffsetA') then
             local bodyA, bodyB = state.selection.selectedJoint:getBodies()
