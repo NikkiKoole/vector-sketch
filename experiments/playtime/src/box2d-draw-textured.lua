@@ -364,8 +364,10 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
     -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
     local uvs = makeSquishableUVsFromPoints(p)
 
-    --print(inspect(vertices))
-    table.insert(uvs,1,{0,0, .5,.5}) -- I will just alwasy put a center vertex as the first one
+
+    -- todo maybe parametrize this point so you can make the midle of the fan not be the exact middle of the polygon.
+    local cx, cy, _, _ = mathutils.getCenterOfPoints(vertices)
+    table.insert(uvs,1,{cx,cy, .5,.5}) -- I will just alwasy put a center vertex as the first one
 
     local _mesh =  love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
     local img = img
