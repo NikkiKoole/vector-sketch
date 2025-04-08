@@ -42,11 +42,13 @@ local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
 function love.load(args)
-    --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 20)
-   -- local font = love.graphics.newFont('assets/ComicMonoNFNerdFont-Bold.ttf', 20)
+    --
+
 
    local fontHeight = 25
-   local font = love.graphics.newFont('assets/WindsorBT-Roman.otf', fontHeight)
+   local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
+   --local font = love.graphics.newFont('assets/ComicMonoNFNerdFont-Bold.ttf', fontHeight)
+   --local font = love.graphics.newFont('assets/WindsorBT-Roman.otf', fontHeight)
 
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)

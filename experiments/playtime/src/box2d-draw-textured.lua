@@ -179,7 +179,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-        logger:info(patch1, patch1 and patch1.img)
+      --  logger:info(patch1, patch1 and patch1.img)
         if (patch1 and patch1.img) then
             love.graphics.setColorMask(true, true, true, false)
 
@@ -364,9 +364,10 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
     -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
     local uvs = makeSquishableUVsFromPoints(p)
 
+    --print(inspect(vertices))
     table.insert(uvs,1,{0,0, .5,.5}) -- I will just alwasy put a center vertex as the first one
 
-    local _mesh =  love.graphics.newMesh(uvs, 'fan') --or love.graphics.newMesh(uvs, 'fan')
+    local _mesh =  love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
     local img = img
     _mesh:setTexture(img)
 
@@ -427,7 +428,8 @@ function lib.drawTexturedWorld(world)
             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
             local r, g, b, a = lib.hexToColor(hex)
             love.graphics.setColor(r, g, b, a)
-            drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+          --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+             drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
         end
     end
     local function drawImageLayerVanilla(url, hex, extra, texfixture )
@@ -463,17 +465,18 @@ function lib.drawTexturedWorld(world)
              local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
              --local r, g, b, a = hexToColor(thing.textures.bgHex)
 
-             -- this routine is alos good, but it doenst take in affect the squishyness.
-             love.graphics.setColor(1, 1, 1, 1)
-             love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
-                 sx * 1 * thing.mirrorX,
-                 sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
+             -- this routine is alos good, but it doenst take in affect the squishyness. you cannot deform the rectangle
+             -- love.graphics.setColor(1, 1, 1, 1)
+             -- love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
+             --     sx * 1 * thing.mirrorX,
+             --     sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
 
 
 
              -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
-              love.graphics.setColor(1, 0, 1, .5)
-              drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+              love.graphics.setColor(1, 1, 1, 1)
+              --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+                drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
          end
     end
 
