@@ -7,7 +7,7 @@ local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
 local orange = { 242 / 255, 133 / 255, 0 }
 -- Theme Configuration
 local theme  = {
-    lineHeight = 30,
+    lineHeight = 25,
     button = {
         default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
         hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
@@ -16,7 +16,7 @@ local theme  = {
         text_default = creamy,                           -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
-        height = 30
+        height = 25
     },
     checkbox = {
         checked = { 1, 1, 1 },
@@ -34,7 +34,7 @@ local theme  = {
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
         outline = creamy,
         track_radius = 2,
-        height = 30
+        height = 25
     },
     draggedElement = {
         fill = { 1, 1, 1 }, -- Color of the dragged element
@@ -65,11 +65,12 @@ local theme  = {
 ui.theme     = theme
 
 --- Initializes the UI module.
-function ui.init(font)
+function ui.init(font, fontHeight)
     ui.nextID = 1               -- Unique ID counter
     ui.dragOffset = { x = 0, y = 0 }
     ui.focusedTextInputID = nil -- Tracks the currently focused TextInput
     ui.textInputs = {}
+    ui.fontHeight = fontHeight
     ui.font = font or love.graphics.getFont()
 end
 

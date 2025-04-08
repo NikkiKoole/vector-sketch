@@ -55,7 +55,7 @@ local function createSliderWithId(id, label, x, y, width, min, max, value, callb
     if newValue then
         callback(newValue)
     end
-    ui.label(x, y, label)
+    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), label)
     return newValue
 end
 -- Helper function to create a checkbox with an associated label
@@ -587,7 +587,7 @@ function lib.drawAddShapeUI()
 
         local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150,
             state.editorPreferences.minPointDistance or 10)
-        ui.label(x, y, 'dis')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), '  dis')
         if minDist then
             state.editorPreferences.minPointDistance = minDist
         end
@@ -865,7 +865,7 @@ function lib.drawWorldSettingsUI()
                 state.physicsWorld:setGravity(0, state.world.gravity * state.world.meter)
             end
         end
-        ui.label(x, y, ' gravity')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' gravity')
         nextRow()
 
         local g, value = ui.checkbox(x, y, state.editorPreferences.showGrid, 'grid') --showGrid = true,
@@ -884,7 +884,7 @@ function lib.drawWorldSettingsUI()
         if debugAlpha then
             state.world.debugAlpha = debugAlpha
         end
-        ui.label(x, y, ' dbgAlpha')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' dbgAlpha')
         nextRow()
         nextRow()
 
@@ -892,14 +892,14 @@ function lib.drawWorldSettingsUI()
         if mouseForce then
             state.world.mouseForce = mouseForce
         end
-        ui.label(x, y, ' mouse F')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' mouse F')
         nextRow()
 
         local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, state.world.mouseDamping)
         if mouseDamp then
             state.world.mouseDamping = mouseDamp
         end
-        ui.label(x, y, ' damp')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' damp')
 
 
         -- Add Speed Multiplier Slider
@@ -909,7 +909,7 @@ function lib.drawWorldSettingsUI()
         if newSpeed then
             state.world.speedMultiplier = newSpeed
         end
-        ui.label(x, y, ' speed')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' speed')
 
         nextRow()
 
@@ -1063,11 +1063,11 @@ function lib.drawSelectedSFixture()
 
             if (state.editorPreferences.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
-                ui.label(x, y, ' width')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                 nextRow()
 
                 local newHeight = ui.sliderWithInput(myID .. ' texfix height', x, y, ROW_WIDTH, 1, 1000, h)
-                ui.label(x, y, ' height')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
                 nextRow()
 
                 if newWidth and math.abs(newWidth - w) > 1 then
@@ -1086,7 +1086,7 @@ function lib.drawSelectedSFixture()
             if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
                 oldTexFixUD.extra.zOffset = math.floor(newZOffset)
             end
-            ui.label(x, y, ' zOffset')
+            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' zOffset')
             nextRow()
 
             drawAccordion("texture", function()
@@ -1181,7 +1181,7 @@ function lib.drawSelectedSFixture()
                     -----
                     local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
                         oldTexFixUD.extra.texRotation or 0)
-                    ui.label(x, y, ' texrot')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' texrot')
                     if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
                         oldTexFixUD.extra.texRotation = newRotation
                         oldTexFixUD.extra.dirty = true
@@ -1189,7 +1189,7 @@ function lib.drawSelectedSFixture()
                     nextRow()
                     local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 0.01, 3,
                         oldTexFixUD.extra.texScale or 0)
-                    ui.label(x, y, ' texscale')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' texscale')
                     if newScale and newScale ~= oldTexFixUD.extra.texScale then
                         oldTexFixUD.extra.texScale = newScale
                         oldTexFixUD.extra.dirty = true
@@ -1197,7 +1197,7 @@ function lib.drawSelectedSFixture()
                     nextRow()
                     local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
                         oldTexFixUD.extra.texXOff or 0)
-                    ui.label(x, y, ' xoff')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' xoff')
                     if newXOff and newXOff ~= oldTexFixUD.extra.texXOff then
                         oldTexFixUD.extra.texXOff = newXOff
                         oldTexFixUD.extra.dirty = true
@@ -1205,7 +1205,7 @@ function lib.drawSelectedSFixture()
                     nextRow()
                     local newYOff = ui.sliderWithInput(myID .. ' texYOffscale', x, y, ROW_WIDTH, 0, 1,
                         oldTexFixUD.extra.texYOff or 0)
-                    ui.label(x, y, ' yoff')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' yoff')
                     if newYOff and newYOff ~= oldTexFixUD.extra.texYOff then
                         oldTexFixUD.extra.texYOff = newYOff
                         oldTexFixUD.extra.dirty = true
@@ -1271,7 +1271,7 @@ function lib.drawSelectedSFixture()
 
                 local patch1TX = ui.sliderWithInput(myID .. ' patch1TX', x, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1TX or 0)
-                ui.label(x, y, 'TX')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), 'TX')
                 if patch1TX and patch1TX ~= oldTexFixUD.extra.patch1TX then
                     oldTexFixUD.extra.patch1TX = patch1TX
                     oldTexFixUD.extra.dirty = true
@@ -1279,7 +1279,7 @@ function lib.drawSelectedSFixture()
                 -- nextRow()
                 local patch1TY = ui.sliderWithInput(myID .. ' patch1TY', x + 140, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1TY or 0)
-                ui.label(x + 140, y, 'TY')
+                ui.label(x + 140, y+ (BUTTON_HEIGHT-ui.fontHeight), 'TY')
                 if patch1TY and patch1TY ~= oldTexFixUD.extra.patch1TY then
                     oldTexFixUD.extra.patch1TY = patch1TY
                     oldTexFixUD.extra.dirty = true
@@ -1290,7 +1290,7 @@ function lib.drawSelectedSFixture()
 
                 local patch1SX = ui.sliderWithInput(myID .. ' patch1SX', x, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1SX or 1)
-                ui.label(x, y, 'SX')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), 'SX')
                 if patch1SX and patch1SX ~= oldTexFixUD.extra.patch1SX then
                     oldTexFixUD.extra.patch1SX = patch1SX
                     oldTexFixUD.extra.dirty = true
@@ -1298,7 +1298,7 @@ function lib.drawSelectedSFixture()
                 -- nextRow()
                 local patch1SY = ui.sliderWithInput(myID .. ' patch1SY', x + 140, y, 50, -1, 1,
                     oldTexFixUD.extra.patch1SY or 1)
-                ui.label(x + 140, y, 'SY')
+                ui.label(x + 140, y+ (BUTTON_HEIGHT-ui.fontHeight), 'SY')
                 if patch1SY and patch1SY ~= oldTexFixUD.extra.patch1SY then
                     oldTexFixUD.extra.patch1SY = patch1SY
                     oldTexFixUD.extra.dirty = true
@@ -1306,7 +1306,7 @@ function lib.drawSelectedSFixture()
                 nextRow()
                 local patch1r = ui.sliderWithInput(myID .. ' patch1r', x, y, ROW_WIDTH, -math.pi, math.pi,
                     oldTexFixUD.extra.patch1r or 1)
-                ui.label(x, y, ' patch1r')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' patch1r')
                 if patch1r and patch1r ~= oldTexFixUD.extra.patch1r then
                     oldTexFixUD.extra.patch1r = patch1r
                     oldTexFixUD.extra.dirty = true
@@ -1356,14 +1356,14 @@ function lib.drawSelectedSFixture()
                 nextRow()
                 local patch2TX = ui.sliderWithInput(myID .. ' patch2TX', x, y, ROW_WIDTH, -1, 1,
                     oldTexFixUD.extra.patch2TX or 0)
-                ui.label(x, y, ' patch2TX')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' patch2TX')
                 if patch2TX and patch2TX ~= oldTexFixUD.extra.patch2TX then
                     oldTexFixUD.extra.patch2TX = patch2TX
                 end
                 nextRow()
                 local patch2TY = ui.sliderWithInput(myID .. ' patch2TY', x, y, ROW_WIDTH, -1, 1,
                     oldTexFixUD.extra.patch2TY or 0)
-                ui.label(x, y, ' patch2TY')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' patch2TY')
                 if patch2TY and patch2TY ~= oldTexFixUD.extra.patch2TY then
                     oldTexFixUD.extra.patch2TY = patch2TY
                 end
@@ -1371,21 +1371,21 @@ function lib.drawSelectedSFixture()
 
                 local patch2SX = ui.sliderWithInput(myID .. ' patch2SX', x, y, ROW_WIDTH, -1, 1,
                     oldTexFixUD.extra.patch2SX or 1)
-                ui.label(x, y, ' patch2SX')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' patch2SX')
                 if patch2SX and patch2SX ~= oldTexFixUD.extra.patch2SX then
                     oldTexFixUD.extra.patch2SX = patch2SX
                 end
                 nextRow()
                 local patch2SY = ui.sliderWithInput(myID .. ' patch2SY', x, y, ROW_WIDTH, -1, 1,
                     oldTexFixUD.extra.patch2SY or 1)
-                ui.label(x, y, ' patch2SY')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' patch2SY')
                 if patch2SY and patch2SY ~= oldTexFixUD.extra.patch2SY then
                     oldTexFixUD.extra.patch2SY = patch2SY
                 end
                 nextRow()
                 local patch2r = ui.sliderWithInput(myID .. ' patch2r', x, y, ROW_WIDTH, -1, 1,
                     oldTexFixUD.extra.patch2r or 1)
-                ui.label(x, y, ' patch2r')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' patch2r')
                 if patch2r and patch2r ~= oldTexFixUD.extra.patch2r then
                     oldTexFixUD.extra.patch2r = patch2r
                 end
@@ -1395,7 +1395,7 @@ function lib.drawSelectedSFixture()
             local points = { state.selection.selectedSFixture:getShape():getPoints() }
             local dim = mathutils.getPolygonDimensions(points)
             local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
-            ui.label(x, y, ' radius')
+            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
             if newRadius and newRadius ~= dim then
                 updateSFixtureDimensionsFunc(newRadius, newRadius)
                 snap.rebuildSnapFixtures(registry.sfixtures)
@@ -1484,7 +1484,7 @@ function lib.drawSelectedBodiesUI()
             local ff = fixtures[1]
             local groupIndex = ff:getGroupIndex()
             local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex)
-            ui.label(x, y, ' groupid')
+            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' groupid')
             if groupIndexSlider then
                 local value = math.floor(groupIndexSlider)
                 local count = 0
@@ -1676,7 +1676,7 @@ function lib.drawUpdateSelectedObjectUI()
                 if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
                     body:setAngle(newAngle * math.pi / 180)
                 end
-                ui.label(x, y, ' angle')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' angle')
 
 
                 nextRow()
@@ -1711,7 +1711,7 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
-                    ui.label(x, y, ' radius')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
                     if newRadius and newRadius ~= thing.radius then
                         state.selection.selectedObj = objectManager.recreateThingFromBody(body,
                             { shapeType = "circle", radius = newRadius })
@@ -1723,11 +1723,11 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y, ' width')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                     nextRow()
 
                     local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y, ' height')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
 
                     if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
                         state.editorPreferences.lastUsedWidth = newWidth
@@ -1741,28 +1741,28 @@ function lib.drawUpdateSelectedObjectUI()
                     end
                 elseif shapeType == 'torso' then
                     local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y, ' width')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                     nextRow()
 
                     local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
-                    ui.label(x, y, ' width2')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width2')
                     nextRow()
 
                     local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
-                    ui.label(x, y, ' width3')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width3')
                     nextRow()
 
                     local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y, ' height')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
                     nextRow()
                     local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
-                    ui.label(x, y, ' height2')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height2')
                     nextRow()
                     local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
-                    ui.label(x, y, ' height3')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height3')
                     nextRow()
                     local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
-                    ui.label(x, y, ' height4')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height4')
                     nextRow()
 
                     if (newWidth and newWidth ~= thing.width) or
@@ -1797,15 +1797,15 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y, ' width')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                     nextRow()
 
                     local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, (thing.width2 or 5))
-                    ui.label(x, y, ' width2')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width2')
                     nextRow()
 
                     local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y, ' height')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
 
                     if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
                         state.editorPreferences.lastUsedWidth2 = newWidth2
@@ -1828,7 +1828,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                         local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
                             dirtyBodyChange)
-                        ui.label(x, y, ' radius')
+                        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
                         if newRadius and newRadius ~= thing.radius then
                             state.selection.selectedObj = objectManager.recreateThingFromBody(body,
                                 { shapeType = shapeType, radius = newRadius })
@@ -1837,7 +1837,7 @@ function lib.drawUpdateSelectedObjectUI()
                         end
                     else
                         -- No UI controls for custom or unsupported shapes
-                        --ui.label(x, y, 'custom')
+                        --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
                         if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
                             state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
                             if state.polyEdit.lockedVerts == false then
@@ -1870,7 +1870,7 @@ function lib.drawUpdateSelectedObjectUI()
                             fixtures[i]:setDensity(newDensity)
                         end
                     end
-                    ui.label(x, y, ' density')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' density')
 
                     -- Bounciness Slider
                     local bounciness = fixtures[1]:getRestitution()
@@ -1882,7 +1882,7 @@ function lib.drawUpdateSelectedObjectUI()
                             fixtures[i]:setRestitution(newBounce)
                         end
                     end
-                    ui.label(x, y, ' bounce')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' bounce')
 
                     -- Friction Slider
                     local friction = fixtures[1]:getFriction()
@@ -1894,7 +1894,7 @@ function lib.drawUpdateSelectedObjectUI()
                             fixtures[i]:setFriction(newFriction)
                         end
                     end
-                    ui.label(x, y, ' friction')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' friction')
                     nextRow()
 
 
@@ -1904,7 +1904,7 @@ function lib.drawUpdateSelectedObjectUI()
                     local groupIndex = ff:getGroupIndex()
                     local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
                         groupIndex)
-                    ui.label(x, y, ' groupid')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' groupid')
                     if groupIndexSlider then
                         local value = math.floor(groupIndexSlider)
                         local count = 0
@@ -1936,7 +1936,7 @@ function lib.drawUpdateSelectedObjectUI()
                 if newAngle and angleDegrees ~= newAngle then
                     body:setAngularVelocity(math.rad(newAngle))
                 end
-                ui.label(x, y, ' ang-vel')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' ang-vel')
 
                 nextRow()
                 local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
