@@ -25,7 +25,7 @@ function lib.finalizePolygonAsSoftSurface()
     -- Reset the drawing state
 
     state.currentMode = nil
-    --state.interaction.capturingPoly = false
+    state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
 end
@@ -50,7 +50,7 @@ function lib.finalizePolygon()
     -- Reset the drawing state
 
     state.currentMode = nil
-    --state.interaction.capturingPoly = false
+    state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
 end

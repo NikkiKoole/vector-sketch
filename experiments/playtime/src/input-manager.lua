@@ -82,9 +82,13 @@ local function handlePointer(x, y, id, action)
 
 
 
-        if (state.currentMode == 'drawClickMode') then
+        if (state.currentMode == 'drawClickMode' ) then
+            local w, h = love.graphics.getDimensions()
+            if x < w - 300 then
+--            logger:info('adding point to table')
             table.insert(state.interaction.polyVerts, cx)
             table.insert(state.interaction.polyVerts, cy)
+            end
         end
 
 
@@ -226,6 +230,7 @@ local function handlePointer(x, y, id, action)
         end
 
         if state.currentMode == 'drawFreePoly' then
+             state.interaction.capturingPoly = false
             objectManager.finalizePolygon()
         end
 
@@ -290,7 +295,7 @@ function lib.handleMousePressed(x, y, button, istouch)
     if not istouch and button == 1 then
         if state.currentMode == 'drawFreePoly' then
             -- Start capturing mouse movement
-            --state.interaction.capturingPoly = true
+            state.interaction.capturingPoly = true
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         else
@@ -314,7 +319,7 @@ function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
     --handlePointer(x, y, id, 'pressed')
     if state.currentMode == 'drawFreePoly' then
         -- Start capturing mouse movement
-        --state.interaction.capturingPoly = true
+        state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
         state.interaction.lastPolyPt = nil
     else
@@ -363,7 +368,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
        -- print(index)
 
 
-    elseif (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
+    elseif  state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly'  or state.currentMode == 'drawClickPoly') then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
@@ -377,6 +382,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
             end
         end
         if addPoint then
+
             table.insert(state.interaction.polyVerts, wx)
             table.insert(state.interaction.polyVerts, wy)
             state.interaction.lastPolyPt = { x = wx, y = wy }

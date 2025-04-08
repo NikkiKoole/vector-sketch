@@ -594,7 +594,8 @@ function lib.drawAddShapeUI()
 
         -- Add a button for custom polygon
         nextRow()
-        if ui.button(x, y, width, 'freeform') then
+        local freeformbutton, _, freeformReleased  = ui.button(x, y, width, 'freeform')
+        if freeformReleased then
             state.currentMode = 'drawFreePoly'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
@@ -2097,7 +2098,10 @@ function lib.drawUI()
                 startY = 100 + padding
             })
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+
             if ui.button(x, y, 260, 'finalize') then
+                 logger:info('finalize clicked')
                 objectManager.finalizePolygon()
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)

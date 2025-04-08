@@ -47,7 +47,7 @@ function love.load(args)
 
    local fontHeight = 25
    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
-   --local font = love.graphics.newFont('assets/ComicMonoNFNerdFont-Bold.ttf', fontHeight)
+   --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
    --local font = love.graphics.newFont('assets/WindsorBT-Roman.otf', fontHeight)
 
     love.keyboard.setKeyRepeat(true)
