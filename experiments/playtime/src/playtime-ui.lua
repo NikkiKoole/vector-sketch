@@ -36,6 +36,19 @@ local colorpickers = {
     bg = false
 }
 
+local function getCenterAndDimensions(body)
+       local ud = body:getUserData()
+       local cx, cy, w, h
+    if ud.thing.vertices then
+        local verts = ud.thing.vertices
+        cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+     else -- this is a circle shape..
+        cx, cy = body:getPosition()
+
+        w,h = ud.thing.radius*2, ud.thing.radius*2
+    end
+    return cx,cy,w,h
+end
 
 local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
     local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
@@ -636,8 +649,9 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
 
-                local verts = body:getUserData().thing.vertices
-                local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+
+                local cx,cy,w,h = getCenterAndDimensions(body)
+
 
                 local localX, localY = body:getLocalPoint(wx, wy)
                 local fixture = fixtures.createSFixture(body, localX, localY,
@@ -987,6 +1001,8 @@ function lib.drawSelectedSFixture()
 
 
 
+
+
         if ui.button(x, y, BUTTON_HEIGHT, '∆') then
             state.currentMode = 'positioningSFixture'
             --  state.interaction.setUpdateSFixturePosFunc = updateSFixturePosFunc
@@ -1000,9 +1016,8 @@ function lib.drawSelectedSFixture()
         end
         if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
             local body = state.selection.selectedSFixture:getBody()
+            local cx,cy,w,h = getCenterAndDimensions(body)
 
-            local verts = body:getUserData().thing.vertices
-            local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
             fixtures.updateSFixtureDimensionsFunc(w, h)
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
@@ -2151,9 +2166,6 @@ function lib.drawUI()
             local numRows = math.ceil(110 / itemsPerRow)
             -- assume a similar height for each swatch cell
             local maxRows = math.floor(400 / cellHeight)
-
-
-
 
             for i = 1, #box2dDrawTextured.palette do
                 local row = math.floor((i - 1) / itemsPerRow)

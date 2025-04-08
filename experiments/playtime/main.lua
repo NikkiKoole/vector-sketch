@@ -97,7 +97,7 @@ function love.load(args)
 
     --loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
-    --sceneLoader.loadScriptAndScene('straight')
+    --ceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
      sceneLoader.loadScene(cwd .. '/scripts/lekker.playtime.json')
 end

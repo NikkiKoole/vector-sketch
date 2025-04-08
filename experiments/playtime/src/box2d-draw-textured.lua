@@ -357,18 +357,14 @@ local function makeSquishableUVsFromPoints(v)
 end
 
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
-    -- first get the polygon from the meta object that describes the shape in 8 points
-    -- optionally grow that polygon outwards from the middle
-
-    local p = {}
+     local p = {}
      for i = 1, #vertices do
          p[i] = vertices[i] * growFactor
      end
-
+    -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
     local uvs = makeSquishableUVsFromPoints(p)
 
-
-    table.insert(uvs,1,{0,0, .5,.5}) --
+    table.insert(uvs,1,{0,0, .5,.5}) -- I will just alwasy put a center vertex as the first one
 
     local _mesh =  love.graphics.newMesh(uvs, 'fan') --or love.graphics.newMesh(uvs, 'fan')
     local img = img
@@ -411,115 +407,99 @@ function lib.drawTexturedWorld(world)
         return a.z < b.z
     end)
 
+
+
+
+    -- todo: these3 function look very much alike, we wnat to combine them all in otne,
+    -- another issue here is that i dont really understand how to set the ox and oy correctly, (for the combined Image)
+    -- and there is an issue with the center of the 'fan' mesh, it shouldnt always be 0,0 you can see this when you position the texfxture with the
+    -- onscreen 'd' button quite a distnace out of the actual physics body center.
+    --
+    local function drawImageLayerSquish(url, hex, extra, texfixture )
+        local img, imgw, imgh = getLoveImage('textures/' .. url)
+        local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
+
+        if (vertices and img) then
+           local body = texfixture:getBody()
+            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            local sx = ww / imgw
+            local sy = hh / imgh
+            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+            local r, g, b, a = lib.hexToColor(hex)
+            love.graphics.setColor(r, g, b, a)
+            drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+        end
+    end
+    local function drawImageLayerVanilla(url, hex, extra, texfixture )
+        local img, imgw, imgh = getLoveImage('textures/' .. url)
+        local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
+
+        if (vertices and img) then
+             local body = texfixture:getBody()
+           -- local body = texfixture:getBody()
+            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            local sx = ww / imgw
+            local sy = hh / imgh
+            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+            local r, g, b, a = lib.hexToColor(hex)
+            love.graphics.setColor(r, g, b, a)
+
+            love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                body:getAngle(), sx * 1, sy * 1,
+                (imgw) / 2, (imgh) / 2)
+            --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+        end
+    end
+    local function drawCombinedImageVanilla(ompImage, extra, texfixture, thing)
+         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+         local img = ompImage
+         local imgw, imgh = ompImage:getDimensions()
+
+         if vertices and img then
+             local body = texfixture:getBody()
+             local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+             local sx = ww / imgw
+             local sy = hh / imgh
+             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+             --local r, g, b, a = hexToColor(thing.textures.bgHex)
+
+             -- this routine is alos good, but it doenst take in affect the squishyness.
+             love.graphics.setColor(1, 1, 1, 1)
+             love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
+                 sx * 1 * thing.mirrorX,
+                 sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
+
+
+
+             -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
+              love.graphics.setColor(1, 0, 1, .5)
+              drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+         end
+    end
+
+
     --for _, body in ipairs(bodies) do
     for i = 1, #drawables do
         local body = drawables[i].body
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
-
-
         if texfixture then
             local extra = drawables[i].extra
-
-
-            if not extra.OMP and extra.bgURL then -- this is the BG and FG routine
-                local url = extra.bgURL
-                local img, imgw, imgh = getLoveImage('textures/' .. url)
-                local body = texfixture:getBody()
-
-                local vertices =  extra.vertices
-
-                --if extra.vertexCount == 4 then
-                   -- print('you what?')
-                   if (vertices and img) then
-                       local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                       local sx = ww / imgw
-                       local sy = hh / imgh
-                       local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-                        local r, g, b, a = lib.hexToColor(extra.bgHex)
-                      love.graphics.setColor(r, g, b, a)
-                       drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-                   end
-                   --end
-                if false then
-                if  not extra.vertexCount or extra.vertexCount == 4 and (img) then
-                    -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
-                    -- mesh = love.graphics.newMesh(vert2, "fan")
-                    -- mesh:setTexture(img)
-
-                    if vertices then
-                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                        local sx = ww / imgw
-                        local sy = hh / imgh
-                        local r, g, b, a = lib.hexToColor(extra.bgHex)
-                        local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-
-                        love.graphics.setColor(r, g, b, a)
-                        love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-                            body:getAngle(), sx * 1, sy * 1,
-                            (imgw) / 2, (imgh) / 2)
-
-                        -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
-                        --     (imgw) / 2, (imgh) / 2)
-                    else
-                        logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
-                    end
+            if not extra.OMP then -- this is the BG and FG routine
+                if extra.bgURL then
+                drawImageLayerSquish(extra.bgURL, extra.bgHex, extra,  texfixture )
+                --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
-                end
-                local url = extra.fgURL
-                local img, imgw, imgh = getLoveImage('textures/' .. url)
-                local body = texfixture:getBody()
-
-                local vertices = { texfixture:getShape():getPoints() }
-
-                if (img) then
-                    if vertices then
-                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                        local sx = ww / imgw
-                        local sy = hh / imgh
-                        local r, g, b, a = lib.hexToColor(extra.fgHex)
-                        local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-
-                        love.graphics.setColor(r, g, b, a)
-                        love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-                            body:getAngle(), sx * 1, sy * 1,
-                            (imgw) / 2, (imgh) / 2)
-
-                        -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
-                        --     (imgw) / 2, (imgh) / 2)
-                    else
-                        logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
-                    end
+                if extra.fgURL then
+                drawImageLayerSquish(extra.fgURL, extra.fgHex, extra,  texfixture )
+                --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
             end
 
             if extra.OMP then
                 if (texfixture) then
-                    --local thing = ud.thing
-                    --local vertices = thing.vertices
-                    local vertices = { texfixture:getShape():getPoints() }
-                    image = extra.ompImage --lib.makePatternTexture()
-
-
-                    if (image) then
-                        local img = image
-                        local imgw, imgh = image:getDimensions()
-                        if vertices then
-                            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                            local sx = ww / imgw
-                            local sy = hh / imgh
-                            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-                            --local r, g, b, a = hexToColor(thing.textures.bgHex)
-                            love.graphics.setColor(1, 1, 1, 1)
-                            --love.graphics.draw(img, body:getX(), body:getY())
-                            love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
-                                sx * 1 * thing.mirrorX,
-                                sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
-                        else
-                            logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
-                        end
-                    end
+                    drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
                 --end
             end

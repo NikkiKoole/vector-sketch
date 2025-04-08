@@ -579,7 +579,7 @@ end
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON
     local saveData = lib.gatherSaveData(world, camera)
-    logger:debug(inspect(saveData))
+    --logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file
