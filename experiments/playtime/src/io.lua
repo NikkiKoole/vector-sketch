@@ -11,6 +11,7 @@ local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 local jointslib = require 'src.joints'
 local fixtures = require 'src.fixtures'
+local state = require 'src.state'
 
 local snap = require 'src.snap'
 
