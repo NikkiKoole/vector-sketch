@@ -10,6 +10,17 @@ local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 --local imgw, imgh = img:getDimensions()
 
+local shrinkFactor = 10
+
+--local image = nil
+
+lib.setShrinkFactor = function(value)
+    shrinkFactor = value
+end
+lib.getShrinkFactor = function()
+    return shrinkFactor
+end
+
 local base = {
     '020202', '4f3166', '69445D', '613D41', 'efebd8',
     '6f323a', '872f44', '8d184c', 'be193b', 'd2453a',
@@ -117,16 +128,7 @@ local maskShader = love.graphics.newShader([[
 	}
 ]])
 
-local shrinkFactor = 1
 
---local image = nil
-
-lib.setShrinkFactor = function(value)
-    shrinkFactor = value
-end
-lib.getShrinkFactor = function()
-    return shrinkFactor
-end
 
 local function getDrawParams(flipx, flipy, imgw, imgh)
     local sx = flipx
@@ -311,7 +313,7 @@ function lib.makeCombinedImages()
 
                     { mr, mg, mb },            -- color1
                     ma * 5,                    -- alpha1
-                    tex1,                      -- texture2 (fill texture)
+                   patternImage or  tex1,                      -- texture2 (fill texture)
                     { pr, pg, pb },            -- color2
                     pa * 5,                    -- alpha2
                     ud.extra.texRotation or 0, -- texRot
@@ -507,7 +509,7 @@ function lib.drawTexturedWorld(world)
             end
 
             if extra.OMP then
-                if (texfixture) then
+                if (texfixture and extra.ompImage) then
                     drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
                 --end

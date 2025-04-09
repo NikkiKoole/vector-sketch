@@ -859,14 +859,14 @@ function lib.drawWorldSettingsUI()
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         end
         --  x, y = ui.nextLayoutPosition(layout, width, 50)
-        local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, state.world.gravity)
-        if grav then
-            state.world.gravity = grav
+      --  local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, state.world.gravity)
+        local grav = createSliderWithId('', 'grav', x, y, ROW_WIDTH, -10, 20, state.world.gravity, function(v)
+            state.world.gravity = v
             if state.physicsWorld then
                 state.physicsWorld:setGravity(0, state.world.gravity * state.world.meter)
             end
-        end
-        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' gravity')
+            end)
+
         nextRow()
 
         local g, value = ui.checkbox(x, y, state.editorPreferences.showGrid, 'grid') --showGrid = true,
@@ -880,37 +880,29 @@ function lib.drawWorldSettingsUI()
         nextRow()
 
 
+        local debugAlpha = createSliderWithId('', 'debugalpha', x, y, ROW_WIDTH, 0, 1, state.world.debugAlpha, function(v)
+            state.world.debugAlpha = v
+        end)
 
-        local debugAlpha = ui.sliderWithInput('debugalpha', x, y, ROW_WIDTH, 0, 1, state.world.debugAlpha)
-        if debugAlpha then
-            state.world.debugAlpha = debugAlpha
-        end
-        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' dbgAlpha')
         nextRow()
         nextRow()
 
-        local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, state.world.mouseForce)
-        if mouseForce then
-            state.world.mouseForce = mouseForce
-        end
-        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' mouse F')
+        local debugAlpha = createSliderWithId('', 'mouse F', x, y, ROW_WIDTH, 0, 1000000, state.world.mouseForce, function(v)
+             state.world.mouseForce = v
+            end)
+
         nextRow()
 
-        local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, state.world.mouseDamping)
-        if mouseDamp then
-            state.world.mouseDamping = mouseDamp
-        end
-        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' damp')
-
+          local mouseDamp = createSliderWithId('', 'damp', x, y, ROW_WIDTH,  0.001, 1, state.world.mouseDamping, function(v)
+               state.world.mouseDamping = v
+              end)
 
         -- Add Speed Multiplier Slider
 
         nextRow()
-        local newSpeed = ui.sliderWithInput('speed', x, y, ROW_WIDTH, 0.1, 10.0, state.world.speedMultiplier)
-        if newSpeed then
-            state.world.speedMultiplier = newSpeed
-        end
-        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' speed')
+         local newSpeed = createSliderWithId('', 'speed', x, y, ROW_WIDTH,  0.1, 10.0, state.world.speedMultiplier, function(v)
+             state.world.speedMultiplier = v
+             end)
 
         nextRow()
 
@@ -1000,14 +992,10 @@ function lib.drawSelectedSFixture()
         nextRow()
 
 
-
-
-
-
         if ui.button(x, y, BUTTON_HEIGHT, '∆') then
             state.currentMode = 'positioningSFixture'
-            --  state.interaction.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
+
         if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
             local body = state.selection.selectedSFixture:getBody()
             state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
@@ -1015,10 +1003,10 @@ function lib.drawSelectedSFixture()
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
         end
+
         if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
             local body = state.selection.selectedSFixture:getBody()
             local cx,cy,w,h = getCenterAndDimensions(body)
-
             fixtures.updateSFixtureDimensionsFunc(w, h)
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
@@ -1027,7 +1015,7 @@ function lib.drawSelectedSFixture()
 
         if sfixtureType == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-            local points = oldTexFixUD.extra.vertices or{  state.selection.selectedSFixture:getShape():getPoints() }
+            local points = oldTexFixUD.extra.vertices or {state.selection.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
 
             if ui.checkbox(x, y, state.editorPreferences.showTexFixtureDim, 'dims') then
@@ -1048,12 +1036,11 @@ function lib.drawSelectedSFixture()
             end
 
             if ui.button(x + 220, y,40, oldTexFixUD.extra.vertexCount  ) then
-            if  oldTexFixUD.extra.vertexCount == 4 then
-                oldTexFixUD.extra.vertexCount = 8
-                 elseif oldTexFixUD.extra.vertexCount == 8 then
-                  oldTexFixUD.extra.vertexCount = 4
-
-            end
+                if  oldTexFixUD.extra.vertexCount == 4 then
+                    oldTexFixUD.extra.vertexCount = 8
+                elseif oldTexFixUD.extra.vertexCount == 8 then
+                    oldTexFixUD.extra.vertexCount = 4
+                end
             end
 
              nextRow()
@@ -1068,22 +1055,21 @@ function lib.drawSelectedSFixture()
                 nextRow()
 
                 if newWidth and math.abs(newWidth - w) > 1 then
-                    updateSFixtureDimensionsFunc(newWidth, h)
+                    fixtures.updateSFixtureDimensionsFunc(newWidth, h)
                     w, h = mathutils.getPolygonDimensions(points)
                 end
                 if newHeight and math.abs(newHeight - h) > 1 then
-                    updateSFixtureDimensionsFunc(w, newHeight)
+                    fixtures.updateSFixtureDimensionsFunc(w, newHeight)
                     w, h = mathutils.getPolygonDimensions(points)
                 end
             end
-
-            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+            local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                 math.floor(oldTexFixUD.extra.zOffset or 0),
+                function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                end,
                 (not state.world.paused) or dirtyBodyChange)
-            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
-                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
-            end
-            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' zOffset')
+
             nextRow()
 
             drawAccordion("texture", function()
@@ -1174,8 +1160,6 @@ function lib.drawSelectedSFixture()
                         function(c) oldTexFixUD.extra.fgHex = c end)
                     handleURLInput(myID, 'fgURL', x+130, y,150, oldTexFixUD.extra.fgURL,
                         function(u) oldTexFixUD.extra.fgURL = u end)
-
-
                     nextRow()
                     ---
                     handlePaletteAndHex(myID, 'patternHex', x, y,100, oldTexFixUD.extra.patternHex,
@@ -1202,6 +1186,7 @@ function lib.drawSelectedSFixture()
                         oldTexFixUD.extra.dirty = true
                     end
                     nextRow()
+
                     local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
                         oldTexFixUD.extra.texXOff or 0)
                     ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' xoff')
@@ -1404,7 +1389,7 @@ function lib.drawSelectedSFixture()
             local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
             ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
             if newRadius and newRadius ~= dim then
-                updateSFixtureDimensionsFunc(newRadius, newRadius)
+                fixtures.updateSFixtureDimensionsFunc(newRadius, newRadius)
                 snap.rebuildSnapFixtures(registry.sfixtures)
             end
         end
@@ -1491,7 +1476,7 @@ function lib.drawSelectedBodiesUI()
             local ff = fixtures[1]
             local groupIndex = ff:getGroupIndex()
             local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex)
-            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' groupid')
+
             if groupIndexSlider then
                 local value = math.floor(groupIndexSlider)
                 local count = 0
@@ -1504,6 +1489,7 @@ function lib.drawSelectedBodiesUI()
                     end
                 end
             end
+            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' groupid')
         end
         -- end
         nextRow()
