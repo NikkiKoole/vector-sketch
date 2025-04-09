@@ -2,6 +2,14 @@ local lib = {}
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 
+
+--local img = love.graphics.newImage('textures/leg1.png')
+local tex1 = love.graphics.newImage('textures/pat/type2t.png')
+tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
+local line = love.graphics.newImage('textures/shapes6.png')
+local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
+--local imgw, imgh = img:getDimensions()
+
 local base = {
     '020202', '4f3166', '69445D', '613D41', 'efebd8',
     '6f323a', '872f44', '8d184c', 'be193b', 'd2453a',
@@ -29,12 +37,7 @@ local base = {
 lib.palette = base
 
 
---local img = love.graphics.newImage('textures/leg1.png')
-local tex1 = love.graphics.newImage('textures/pat/type2t.png')
-tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
-local line = love.graphics.newImage('textures/shapes6.png')
-local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
---local imgw, imgh = img:getDimensions()
+
 local imageCache = {}
 
 function getLoveImage(path)
@@ -278,6 +281,7 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
+                 logger:info(inspect(ud.extra))
                 ud.extra.dirty = false
 
                 local outlineImage = getLoveImage('textures/' .. ud.extra.bgURL)
@@ -302,8 +306,8 @@ function lib.makeCombinedImages()
                 } or nil
 
                 local imgData = lib.makeTexturedCanvas(
-                    line,                      -- line art
-                    maskTex,                   -- mask
+                   outlineImage or  line,                      -- line art
+                   maskImage or maskTex,                   -- mask
 
                     { mr, mg, mb },            -- color1
                     ma * 5,                    -- alpha1

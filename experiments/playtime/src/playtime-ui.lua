@@ -1025,8 +1025,6 @@ function lib.drawSelectedSFixture()
         end
         nextRow()
 
-
-
         if sfixtureType == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             local points = oldTexFixUD.extra.vertices or{  state.selection.selectedSFixture:getShape():getPoints() }
@@ -1042,9 +1040,7 @@ function lib.drawSelectedSFixture()
                 state.texFixtureEdit.lockedVerts = not state.texFixtureEdit.lockedVerts
 
                 if state.texFixtureEdit.lockedVerts == false then
-
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-
                 else
                     state.texFixtureEdit.tempVerts = nil
                     state.texFixtureEdit.centroid = nil
@@ -1101,9 +1097,9 @@ function lib.drawSelectedSFixture()
 
                 --lineart, mask, pattern
 
-                function handlePaletteAndHex(idPrefix, postFix, x, y, currentHex, onColorChange)
+                function handlePaletteAndHex(idPrefix, postFix, x, y,width, currentHex, onColorChange)
                     local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
-                    local paletteShow = ui.button(x, y, 40, '', BUTTON_HEIGHT, { r, g, b, a })
+                    local paletteShow = ui.button(x-10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
                     if paletteShow then
                         if state.panelVisibility.showPalette then
                             state.panelVisibility.showPalette = nil
@@ -1118,7 +1114,7 @@ function lib.drawSelectedSFixture()
                             end
                         end
                     end
-                    local hex = ui.textinput(idPrefix .. postFix, x + 50, y, 210, BUTTON_HEIGHT, "", currentHex or '',
+                    local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '',
                         false, colorpickers[postFix])
                     if hex and hex ~= currentHex then
                         currentHex = hex
@@ -1129,12 +1125,16 @@ function lib.drawSelectedSFixture()
                     if colorpickers[postFix] then
                         colorpickers[postFix] = false
                     end
-                    ui.label(x + 50, y, postFix, { 1, 1, 1, 0.2 })
+                    ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
                     return currentHex
                 end
 
-                function handleURLInput(id, labelText, x, y, currentValue, updateCallback)
-                    local newValue = ui.textinput(id .. labelText, x, y, 260, BUTTON_HEIGHT, "", currentValue or '')
+                function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
+                    local urlShow = ui.button(x-10, y, 20, '', BUTTON_HEIGHT, { 1,1,1,0.2 })
+                    if urlShow then
+                    logger:info('show file picker to pick an image')
+                    end
+                    local newValue = ui.textinput(id .. labelText, x+10, y, width, BUTTON_HEIGHT, "", currentValue or '')
                     if newValue and newValue ~= currentValue then
                         updateCallback(newValue)
                         oldTexFixUD.extra.dirty = true
@@ -1145,39 +1145,45 @@ function lib.drawSelectedSFixture()
                 end
 
                 if not e.OMP then
-                    handleURLInput(myID, 'bgURL', x, y, oldTexFixUD.extra.bgURL,
-                        function(u) oldTexFixUD.extra.bgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'bgHex', x, y, oldTexFixUD.extra.bgHex,
+                    handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.bgHex,
                         function(c) oldTexFixUD.extra.bgHex = c end)
+                    handleURLInput(myID, 'bgURL', x+130, y, 150, oldTexFixUD.extra.bgURL,
+                        function(u) oldTexFixUD.extra.bgURL = u
+                            oldTexFixUD.extra.dirty = true
+                        end)
                     nextRow()
-                    handleURLInput(myID, 'fgURL', x, y, oldTexFixUD.extra.fgURL,
-                        function(u) oldTexFixUD.extra.fgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'fgHex', x, y, oldTexFixUD.extra.fgHex,
+
+
+                    handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.fgHex,
                         function(c) oldTexFixUD.extra.fgHex = c end)
+                     handleURLInput(myID, 'fgURL', x+130, y,  150,oldTexFixUD.extra.fgURL,
+                         function(u) oldTexFixUD.extra.fgURL = u end)
+
                     nextRow()
                 end
                 if e.OMP then
-                    handleURLInput(myID, 'bgURL', x, y, oldTexFixUD.extra.bgURL,
-                        function(u) oldTexFixUD.extra.bgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'bgHex', x, y, oldTexFixUD.extra.bgHex,
+                    handlePaletteAndHex(myID, 'bgHex', x, y, 100,oldTexFixUD.extra.bgHex,
                         function(color) oldTexFixUD.extra.bgHex = color end)
+                    handleURLInput(myID, 'bgURL', x+130, y,150, oldTexFixUD.extra.bgURL,
+                        function(u) oldTexFixUD.extra.bgURL = u
+                        oldTexFixUD.extra.dirty = true
+                        end)
+
                     nextRow()
-                    handleURLInput(myID, 'fgURL', x, y, oldTexFixUD.extra.fgURL,
-                        function(u) oldTexFixUD.extra.fgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'fgHex', x, y, oldTexFixUD.extra.fgHex,
+                    handlePaletteAndHex(myID, 'fgHex', x, y,100, oldTexFixUD.extra.fgHex,
                         function(c) oldTexFixUD.extra.fgHex = c end)
+                    handleURLInput(myID, 'fgURL', x+130, y,150, oldTexFixUD.extra.fgURL,
+                        function(u) oldTexFixUD.extra.fgURL = u end)
+
+
                     nextRow()
                     ---
-                    handleURLInput(myID, 'patternURL', x, y, oldTexFixUD.extra.patternURL,
+                    handlePaletteAndHex(myID, 'patternHex', x, y,100, oldTexFixUD.extra.patternHex,
+                        function(color) oldTexFixUD.extra.patternHex = color end)
+                    handleURLInput(myID, 'patternURL', x+130, y,150, oldTexFixUD.extra.patternURL,
                         function(u) oldTexFixUD.extra.patternURL = u end)
                     nextRow()
-                    handlePaletteAndHex(myID, 'patternHex', x, y, oldTexFixUD.extra.patternHex,
-                        function(color) oldTexFixUD.extra.patternHex = color end)
-                    nextRow()
+
 
                     -----
                     local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
