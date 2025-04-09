@@ -10,7 +10,7 @@ local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 --local imgw, imgh = img:getDimensions()
 
-local shrinkFactor = 10
+local shrinkFactor = 1
 
 --local image = nil
 
@@ -142,7 +142,7 @@ end
 
 
 
-lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
+lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX,texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
                                   flipx, flipy, patch1)
@@ -166,7 +166,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
 
 
             transform:rotate(texRot)
-            transform:scale(texScale, texScale)
+            transform:scale(texScaleX, texScaleY)
 
             local m1, m2, _, _, m5, m6 = transform:getMatrix()
             local dx = texOffX --love.math.random() * .001
@@ -317,7 +317,8 @@ function lib.makeCombinedImages()
                     { pr, pg, pb },            -- color2
                     pa * 5,                    -- alpha2
                     ud.extra.texRotation or 0, -- texRot
-                    ud.extra.texScale or 1,    -- texScale
+                    ud.extra.texScaleX or 1,    -- texScale
+                    ud.extra.texScaleY or 1,    -- texScale
                     ud.extra.texXOff or 0,
                     ud.extra.texYOff or 0,
                     { olr, olg, olb },      -- lineColor
@@ -338,16 +339,15 @@ end
 
 local function makeSquishableUVsFromPoints(v)
     local verts = {}
-    if #v == 8 then
+    if #v == 8 then -- has 4 (4*(x,y)) vertices
         verts[1] = { v[1], v[2], 0, 0 }
         verts[2] = { v[3], v[4], 1, 0 }
         verts[3] = { v[5], v[6], 1, 1 }
         verts[4] = { v[7], v[8], 0, 1 }
-         verts[5] = { v[1], v[2], 0, 0 }
+        verts[5] = { v[1], v[2], 0, 0 } -- this is an extra one to make it go round
     end
 
-    if #v == 16 then
-        --verts[1] = { v[1], v[2], 0.5, 0.5 }
+    if #v == 16 then -- has 8 (8*(x,y)) vertices
         verts[1] = { v[1], v[2], 0, 0 }
         verts[2] = { v[3], v[4], .5, 0 }
         verts[3] = { v[5], v[6], 1, 0 }

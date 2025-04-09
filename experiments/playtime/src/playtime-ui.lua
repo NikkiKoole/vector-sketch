@@ -1138,8 +1138,6 @@ function lib.drawSelectedSFixture()
                             oldTexFixUD.extra.dirty = true
                         end)
                     nextRow()
-
-
                     handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.fgHex,
                         function(c) oldTexFixUD.extra.fgHex = c end)
                      handleURLInput(myID, 'fgURL', x+130, y,  150,oldTexFixUD.extra.fgURL,
@@ -1168,40 +1166,40 @@ function lib.drawSelectedSFixture()
                         function(u) oldTexFixUD.extra.patternURL = u end)
                     nextRow()
 
+                  local newRotation =  createSliderWithId(myID, 'texrotation', x, y, ROW_WIDTH, 0, math.pi * 2, oldTexFixUD.extra.texRotation or 0,
+                      function(v)
+                      oldTexFixUD.extra.texRotation = v
+                      oldTexFixUD.extra.dirty = true
+                      end)
 
-                    -----
-                    local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
-                        oldTexFixUD.extra.texRotation or 0)
-                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' texrot')
-                    if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
-                        oldTexFixUD.extra.texRotation = newRotation
-                        oldTexFixUD.extra.dirty = true
-                    end
                     nextRow()
-                    local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 0.01, 3,
-                        oldTexFixUD.extra.texScale or 0)
-                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' texscale')
-                    if newScale and newScale ~= oldTexFixUD.extra.texScale then
-                        oldTexFixUD.extra.texScale = newScale
+                    local newScaleX =  createSliderWithId(myID, 'sx', x, y, 50 ,0.01, 3, oldTexFixUD.extra.texScaleX or 1,
+                        function(v)
+                        oldTexFixUD.extra.texScaleX = v
                         oldTexFixUD.extra.dirty = true
-                    end
-                    nextRow()
+                        end)
 
-                    local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
-                        oldTexFixUD.extra.texXOff or 0)
-                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' xoff')
-                    if newXOff and newXOff ~= oldTexFixUD.extra.texXOff then
-                        oldTexFixUD.extra.texXOff = newXOff
+
+                    local newScaleY =  createSliderWithId(myID, 'sy', x+140, y, 50 ,0.01, 3, oldTexFixUD.extra.texScaleY or 1,
+                        function(v)
+                        oldTexFixUD.extra.texScaleY = v
                         oldTexFixUD.extra.dirty = true
-                    end
+                        end)
+
                     nextRow()
-                    local newYOff = ui.sliderWithInput(myID .. ' texYOffscale', x, y, ROW_WIDTH, 0, 1,
-                        oldTexFixUD.extra.texYOff or 0)
-                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' yoff')
-                    if newYOff and newYOff ~= oldTexFixUD.extra.texYOff then
-                        oldTexFixUD.extra.texYOff = newYOff
-                        oldTexFixUD.extra.dirty = true
-                    end
+                     local newXOff =  createSliderWithId(myID, 'tx', x, y, 50,0, 1,oldTexFixUD.extra.texXOff or 0,
+                         function(v)
+                         oldTexFixUD.extra.texXOff = v
+                         oldTexFixUD.extra.dirty = true
+                         end)
+
+
+                     local newYOff =  createSliderWithId(myID, 'ty', x+140, y, 50,0, 1,oldTexFixUD.extra.texYOff or 0,
+                         function(v)
+                         oldTexFixUD.extra.texYOff = v
+                         oldTexFixUD.extra.dirty = true
+                         end)
+
                     nextRow()
                     local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX == -1, 'flipx')
                     if dirtyX then
