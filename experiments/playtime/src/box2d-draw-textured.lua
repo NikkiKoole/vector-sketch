@@ -286,12 +286,12 @@ function lib.makeCombinedImages()
                  logger:info(inspect(ud.extra))
                 ud.extra.dirty = false
 
-                local outlineImage = getLoveImage('textures/' .. ud.extra.bgURL)
-                local olr, olg, olb, ola = lib.hexToColor(ud.extra.bgHex)
-                local maskImage = getLoveImage('textures/' .. ud.extra.fgURL)
-                local mr, mg, mb, ma = lib.hexToColor(ud.extra.fgHex)
-                local patternImage = getLoveImage('textures/pat/' .. ud.extra.patternURL)
-                local pr, pg, pb, pa = lib.hexToColor(ud.extra.patternHex)
+                local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
+                local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
+                local maskImage = getLoveImage('textures/' .. ud.extra.main.fgURL)
+                local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
+                local patternImage = getLoveImage('textures/pat/' .. ud.extra.main.pURL)
+                local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
 
                 if ud.extra.patch1URL then
                     logger:info(ud.extra.patch1URL, 'textures/' .. ud.extra.patch1URL)
@@ -316,15 +316,15 @@ function lib.makeCombinedImages()
                    patternImage or  tex1,                      -- texture2 (fill texture)
                     { pr, pg, pb },            -- color2
                     pa * 5,                    -- alpha2
-                    ud.extra.texRotation or 0, -- texRot
-                    ud.extra.texScaleX or 1,    -- texScale
-                    ud.extra.texScaleY or 1,    -- texScale
-                    ud.extra.texXOff or 0,
-                    ud.extra.texYOff or 0,
+                    ud.extra.main.pr or 0, -- texRot
+                    ud.extra.main.psx or 1,    -- texScale
+                    ud.extra.main.psy or 1,    -- texScale
+                    ud.extra.main.ptx or 0,
+                    ud.extra.main.pty or 0,
                     { olr, olg, olb },      -- lineColor
                     ola * 5,                -- lineAlpha
-                    ud.extra.texFlipX or 1, -- flipx (normal)
-                    ud.extra.texFlipY or 1, -- flipy (normal)
+                    ud.extra.main.fx or 1, -- flipx (normal)
+                    ud.extra.main.fy or 1, -- flipy (normal)
                     patch1                  -- renderPatch (set to truthy to enable extra patch rendering)
                 )
                 image = love.graphics.newImage(imgData)
@@ -425,6 +425,7 @@ function lib.drawTexturedWorld(world)
     -- onscreen 'd' button quite a distnace out of the actual physics body center.
     --
     local function drawImageLayerSquish(url, hex, extra, texfixture )
+       -- print('jo!')
         local img, imgw, imgh = getLoveImage('textures/' .. url)
         local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
 
@@ -498,12 +499,12 @@ function lib.drawTexturedWorld(world)
         if texfixture then
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
-                if extra.bgURL then
-                drawImageLayerSquish(extra.bgURL, extra.bgHex, extra,  texfixture )
+                if extra.main.bgURL then
+                drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra,  texfixture )
                 --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
-                if extra.fgURL then
-                drawImageLayerSquish(extra.fgURL, extra.fgHex, extra,  texfixture )
+                if extra.main.fgURL then
+                drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra,  texfixture )
                 --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
             end
