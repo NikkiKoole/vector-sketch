@@ -555,7 +555,8 @@ function lib.drawTexturedWorld(world)
 
 
              -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
-              love.graphics.setColor(1, 1, 1, 1)
+                local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
+             love.graphics.setColor(r,g,b,a)
               --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
                 drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
          end

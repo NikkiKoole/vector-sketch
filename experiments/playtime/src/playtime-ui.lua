@@ -1286,6 +1286,11 @@ local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     combineImageUI('main')
                     flipWholeUI('main')
 
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
+                    handlePaletteAndHex(myID, 'maintint', x, y, 100,oldTexFixUD.extra.main.tint,
+                        function(color) oldTexFixUD.extra.main.tint = color end, dirty)
+
+
                 end
             end)
             nextRow()
