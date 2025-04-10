@@ -19,6 +19,7 @@ local recorder = require 'src.recorder'
 local state = require 'src.state'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
+local fileBrowser = require 'src.file-browser'
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -1111,7 +1112,8 @@ local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
                 local urlShow = ui.button(x-10, y, 20, '', BUTTON_HEIGHT, { 1,1,1,0.2 })
                 if urlShow then
-                logger:info('show file picker to pick an image')
+                    fileBrowser:loadFiles('/textures', {includes='-mask'})
+                --fileBrowser:loadFiles('/textures', {excludes='-mask'})
                 end
                 local newValue = ui.textinput(id .. labelText, x+10, y, width, BUTTON_HEIGHT, "", currentValue or '')
                 if newValue and newValue ~= currentValue then
