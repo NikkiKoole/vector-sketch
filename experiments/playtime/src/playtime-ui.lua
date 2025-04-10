@@ -27,10 +27,6 @@ local BUTTON_SPACING = 10
 local FPS = 60
 
 local offsetHasChangedViaOutside
-local BGcolorHasChangedViaPalette
-local FGcolorHasChangedViaPalette
-local PatternColorHasChangedViaPalette
-local Patch1ColorHasChangedViaPalette
 
 local colorpickers = {
     bg = false
@@ -1128,6 +1124,8 @@ local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             end
 
             function patchTransformUI(layer)
+                local oldId = myID
+                myID = myID..':'..layer
                                 local newRotation =  createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2, oldTexFixUD.extra[layer].r or 0,
                                     function(v)
                                     oldTexFixUD.extra[layer].r = v
@@ -1149,23 +1147,26 @@ local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                                 end)
 
                                 nextRow()
-                                local newXOff =  createSliderWithId(myID, 'tx', x, y, 50,0, 1,oldTexFixUD.extra[layer].tx or 0,
+                                local newXOff =  createSliderWithId(myID, 'tx', x, y, 50,-1, 1,oldTexFixUD.extra[layer].tx or 0,
                                         function(v)
                                         oldTexFixUD.extra[layer].tx = v
                                         oldTexFixUD.extra.dirty = true
                                 end)
 
-                                local newYOff =  createSliderWithId(myID, 'ty', x+140, y, 50,0, 1,oldTexFixUD.extra[layer].ty or 0,
+                                local newYOff =  createSliderWithId(myID, 'ty', x+140, y, 50,-1, 1,oldTexFixUD.extra[layer].ty or 0,
                                         function(v)
                                         oldTexFixUD.extra[layer].ty = v
                                         oldTexFixUD.extra.dirty = true
                                 end)
 
                                 nextRow()
+                                myID = oldId
                             end
 
 
                             function combineImageUI(layer)
+                                local oldId = myID
+                                myID = myID..':'..layer
                                 local dirty = function() oldTexFixUD.extra.dirty = true end
                                 handlePaletteAndHex(myID, 'bgHex', x, y, 100,oldTexFixUD.extra[layer].bgHex,
                                     function(color) oldTexFixUD.extra[layer].bgHex = color end, dirty)
@@ -1207,19 +1208,20 @@ local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                                 end)
 
                                 nextRow()
-                                local newXOff =  createSliderWithId(myID, 'ptx', x, y, 50,0, 1,oldTexFixUD.extra[layer].ptx or 0,
+                                local newXOff =  createSliderWithId(myID, 'ptx', x, y, 50,-1, 1,oldTexFixUD.extra[layer].ptx or 0,
                                         function(v)
                                         oldTexFixUD.extra[layer].ptx = v
                                         oldTexFixUD.extra.dirty = true
                                 end)
 
-                                local newYOff =  createSliderWithId(myID, 'pty', x+140, y, 50,0, 1,oldTexFixUD.extra[layer].pty or 0,
+                                local newYOff =  createSliderWithId(myID, 'pty', x+140, y, 50,-1, 1,oldTexFixUD.extra[layer].pty or 0,
                                         function(v)
                                         oldTexFixUD.extra[layer].pty = v
                                         oldTexFixUD.extra.dirty = true
                                 end)
 
                                 nextRow()
+                                myID = oldId
             end
 
             function flipWholeUI(layer)
@@ -1293,10 +1295,13 @@ local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                 oldTexFixUD.extra.patch1= oldTexFixUD.extra.patch1 or {}
                 nextRow()
                 combineImageUI('patch1')
-                 nextRow()
+                nextRow()
                 patchTransformUI('patch1')
-                 flipWholeUI('patch1')
-
+                flipWholeUI('patch1')
+                nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'patch1tint', x, y, 100,oldTexFixUD.extra.patch1.tint,
+                    function(color) oldTexFixUD.extra.patch1.tint = color end, dirty)
 
 
             end)

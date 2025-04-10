@@ -3,12 +3,52 @@ local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 
 
---local img = love.graphics.newImage('textures/leg1.png')
+local img = love.graphics.newImage('textures/leg1.png')
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 --local imgw, imgh = img:getDimensions()
+
+
+local imageCache = {}
+
+function getLoveImage(path, settings)
+    if not imageCache[path] then
+        local info = love.filesystem.getInfo(path)
+        if not info or info.type ~= 'file' then
+            --print("Warning: File not found - " .. path)
+            return nil, nil, nil
+        end
+        local img = love.graphics.newImage(path)
+        if (settings) then
+            if settings.wrapX and settings.wrapY then
+            img:setWrap(settings.wrapX, settings.wrapY)
+            end
+        end
+        if img then
+            local imgw, imgh = img:getDimensions()
+            imageCache[path] = { img = img, imgw = imgw, imgh = imgh }
+        end
+    end
+
+    if imageCache[path] then
+        return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
+    else
+        return nil, nil, nil
+    end
+end
+
+local settings = {wrapX='mirroredrepeat', wrapY='mirroredrepeat'}
+getLoveImage('textures/pat/type0.png', settings)
+getLoveImage('textures/pat/type1.png', settings)
+getLoveImage('textures/pat/type2.png', settings)
+getLoveImage('textures/pat/type3.png', settings)
+getLoveImage('textures/pat/type4.png', settings)
+getLoveImage('textures/pat/type5.png', settings)
+getLoveImage('textures/pat/type6.png', settings)
+getLoveImage('textures/pat/type7.png', settings)
+getLoveImage('textures/pat/type8.png', settings)
 
 local shrinkFactor = 1
 
@@ -49,28 +89,7 @@ lib.palette = base
 
 
 
-local imageCache = {}
 
-function getLoveImage(path)
-    if not imageCache[path] then
-        local info = love.filesystem.getInfo(path)
-        if not info or info.type ~= 'file' then
-            --print("Warning: File not found - " .. path)
-            return nil, nil, nil
-        end
-        local img = love.graphics.newImage(path)
-        if img then
-            local imgw, imgh = img:getDimensions()
-            imageCache[path] = { img = img, imgw = imgw, imgh = imgh }
-        end
-    end
-
-    if imageCache[path] then
-        return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
-    else
-        return nil, nil, nil
-    end
-end
 
 function lib.hexToColor(hex)
     if type(hex) ~= "string" then
@@ -145,7 +164,7 @@ end
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX,texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
-                                  flipx, flipy, patch1)
+                                  flipx, flipy, patch1, patch2)
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
         local lw, lh = lineart:getDimensions()
@@ -171,7 +190,9 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             local m1, m2, _, _, m5, m6 = transform:getMatrix()
             local dx = texOffX --love.math.random() * .001
             local dy = texOffY
+            if texture2 then
             maskShader:send('fill', texture2)
+             end
             maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
             maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
             maskShader:send('uvTranslation', { dx, dy })
@@ -184,14 +205,11 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-      --  logger:info(patch1, patch1 and patch1.img)
+
         if (patch1 and patch1.img) then
             love.graphics.setColorMask(true, true, true, false)
-
-            local r, g, b, a = lib.hexToColor(patch1.hex or 'ffffff')
+            local r, g, b, a = lib.hexToColor(patch1.tint)
             love.graphics.setColor(r, g, b, a)
-
-
             local image = patch1.img
             local imgw, imgh = image:getDimensions()
             local xOffset = (patch1.tx or 0) * (imgw) * shrinkFactor
@@ -200,9 +218,24 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
                 (patch1.sx or 1) * shrinkFactor,
                 (patch1.sy or 1) * shrinkFactor,
                 imgw / 2, imgh / 2)
-            logger:info('getting in here!')
             love.graphics.setColorMask(true, true, true, true)
         end
+
+        if (patch2 and patch2.img) then
+            love.graphics.setColorMask(true, true, true, false)
+            local r, g, b, a = lib.hexToColor(patch2.tint)
+            love.graphics.setColor(r, g, b, a)
+            local image = patch2.img
+            local imgw, imgh = image:getDimensions()
+            local xOffset = (patch2.tx or 0) * (imgw) * shrinkFactor
+            local yOffset = (patch2.ty or 0) * (imgh) * shrinkFactor
+            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch2.r or 0) * ((math.pi * 2) / 16),
+                (patch2.sx or 1) * shrinkFactor,
+                (patch2.sy or 1) * shrinkFactor,
+                imgw / 2, imgh / 2)
+            love.graphics.setColorMask(true, true, true, true)
+        end
+
 
         -- I want to know If we do this or not..
         -- if (true and renderPatch) then
@@ -286,6 +319,58 @@ function lib.makeCombinedImages()
                  logger:info(inspect(ud.extra))
                 ud.extra.dirty = false
 
+
+
+
+
+                function makePatch(name)
+                    local result = nil
+                    if ud.extra[name] and ud.extra[name].bgURL then
+                        local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
+                        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
+                        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
+                        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
+                        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
+                        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
+                        if outlineImage then
+                            local imgData = lib.makeTexturedCanvas(
+                            outlineImage,                      -- line art
+                            maskImage,                   -- mask
+                                { mr, mg, mb },            -- color1
+                                ma * 5,                    -- alpha1
+                                patternImage or  tex1,                      -- texture2 (fill texture)
+                                { pr, pg, pb },            -- color2
+                                pa * 5,                    -- alpha2
+                                ud.extra[name].pr or 0, -- texRot
+                                ud.extra[name].psx or 1,    -- texScale
+                                ud.extra[name].psy or 1,    -- texScale
+                                ud.extra[name].ptx or 0,
+                                ud.extra[name].pty or 0,
+                                { olr, olg, olb },      -- lineColor
+                                ola * 5,                -- lineAlpha
+                                ud.extra[name].fx or 1, -- flipx (normal)
+                                ud.extra[name].fy or 1 -- flipy (normal)
+                            )
+                            result = {
+                                img = love.graphics.newImage(imgData),
+                            --img = getLoveImage('textures/' .. ud.extra.patch1URL),
+                                tint = ud.extra[name].tint or 'ffffff',
+                                tx = ud.extra[name].tx,
+                                ty = ud.extra[name].ty,
+                                sx = ud.extra[name].sx,
+                                sy = ud.extra[name].sy,
+                                r = ud.extra[name].r
+                            }
+                        end
+                        return result
+                    end
+                end
+
+                local patch1 = makePatch('patch1')
+                local patch2 = makePatch('patch2')
+
+
+
                 local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
                 local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
                 local maskImage = getLoveImage('textures/' .. ud.extra.main.fgURL)
@@ -293,20 +378,7 @@ function lib.makeCombinedImages()
                 local patternImage = getLoveImage('textures/pat/' .. ud.extra.main.pURL)
                 local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
 
-                if ud.extra.patch1URL then
-                    logger:info(ud.extra.patch1URL, 'textures/' .. ud.extra.patch1URL)
-                end
-                local patch1 = ud.extra.patch1URL and {
-
-                    img = getLoveImage('textures/' .. ud.extra.patch1URL),
-                    hex = ud.extra.patch1Hex,
-                    tx = ud.extra.patch1TX,
-                    ty = ud.extra.patch1TY,
-                    sx = ud.extra.patch1SX,
-                    sy = ud.extra.patch1SY,
-                    r = ud.extra.patch1r,
-                } or nil
-
+                if outlineImage or line then
                 local imgData = lib.makeTexturedCanvas(
                    outlineImage or  line,                      -- line art
                    maskImage or maskTex,                   -- mask
@@ -325,11 +397,11 @@ function lib.makeCombinedImages()
                     ola * 5,                -- lineAlpha
                     ud.extra.main.fx or 1, -- flipx (normal)
                     ud.extra.main.fy or 1, -- flipy (normal)
-                    patch1                  -- renderPatch (set to truthy to enable extra patch rendering)
+                    patch1 , patch2                 -- renderPatch (set to truthy to enable extra patch rendering)
                 )
                 image = love.graphics.newImage(imgData)
-
                 ud.extra.ompImage = image
+                end
                 fixtures[i]:setUserData(ud)
             end
         end
@@ -499,11 +571,11 @@ function lib.drawTexturedWorld(world)
         if texfixture then
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
-                if extra.main.bgURL then
+                if extra.main and extra.main.bgURL then
                 drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra,  texfixture )
                 --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
-                if extra.main.fgURL then
+                if extra.main and extra.main.fgURL then
                 drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra,  texfixture )
                 --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
