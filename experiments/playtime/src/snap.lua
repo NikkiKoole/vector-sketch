@@ -16,6 +16,10 @@ local onlyBreakWhenInteracted = true
 
 local lib = {}
 
+
+-- todo currently snap is a bit broken.. (snap fixtures dont seem to have the at and to in the xtra data set ?)
+-- the script 'snap.playtime.lua' is wroking investigate this further in the near future
+
 -- Add cooldown to a snap point
 local function addCooldown(fixture)
     local currentTime = love.timer.getTime()
@@ -116,6 +120,9 @@ local function checkForSnaps(interacted, snapFixtures)
                 logger:error('body1 is nil!    ')
                 logger:info(inspect(it1))
             end
+
+            -- todo , src/snap.lua:119: attempt to call method 'getWorldPoint' (a nil value)
+
             local x1, y1 = body1:getWorldPoint(it1.xOffset, it1.yOffset)
 
             for j = 1, #snapFixtures do

@@ -6,7 +6,7 @@ local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
 local utils = require 'src.utils' -- Needed for shallowCopy
-local state= require 'src.state'
+local state = require 'src.state'
 local lib = {}
 
 
@@ -23,9 +23,10 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
 
     -- Convert world click to body's local coordinates for the new shape center
     local localX, localY = body:getLocalPoint(worldX, worldY)
-      local oldUD = utils.deepCopy(sfixture:getUserData())
+    local oldUD = utils.deepCopy(sfixture:getUserData())
     --  logger:info(oldUD.extra.vertices ,  { sfixture:getShape():getPoints() })
-    local points = oldUD.extra.vertices or  { sfixture:getShape():getPoints() }                                     -- Existing local points
+    local points = oldUD.extra.vertices or
+        { sfixture:getShape():getPoints() } -- Existing local points
     local centerX, centerY = mathutils.getCenterOfPoints(points)
 
     local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY) -- Points relative to old center
@@ -33,21 +34,21 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
     -- Create new absolute points centered at the *new* local click position
     local newShapePoints = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
 
-    local dx,dy = centerX-localX, centerY-localY
+    local dx, dy = centerX - localX, centerY - localY
 
-  -- Use deepCopy if 'extra' might contain tables
+    -- Use deepCopy if 'extra' might contain tables
 
     if oldUD.extra and oldUD.extra.vertices then
-       -- logger:info('vertices found, need to adjust all of them:',#oldUD.extra.vertices,dx,dy)
-       -- logger:info(inspect(oldUD.extra.vertices))
-        for i =  1, #oldUD.extra.vertices,2 do
-            oldUD.extra.vertices[i+0] = oldUD.extra.vertices[i+0]-dx
-            oldUD.extra.vertices[i+1] = oldUD.extra.vertices[i+1]-dy
+        -- logger:info('vertices found, need to adjust all of them:',#oldUD.extra.vertices,dx,dy)
+        -- logger:info(inspect(oldUD.extra.vertices))
+        for i = 1, #oldUD.extra.vertices, 2 do
+            oldUD.extra.vertices[i + 0] = oldUD.extra.vertices[i + 0] - dx
+            oldUD.extra.vertices[i + 1] = oldUD.extra.vertices[i + 1] - dy
         end
-      --  logger:info(inspect(oldUD.extra.vertices))
+        --  logger:info(inspect(oldUD.extra.vertices))
     end
-    local fixtureID = oldUD.id                           -- Keep the ID
-    local fixtureDensity = sfixture:getDensity()         -- Keep properties
+    local fixtureID = oldUD.id                   -- Keep the ID
+    local fixtureDensity = sfixture:getDensity() -- Keep properties
     local fixtureFriction = sfixture:getFriction()
     local fixtureRestitution = sfixture:getRestitution()
     local fixtureGroupIndex = sfixture:getGroupIndex()
@@ -114,13 +115,13 @@ end
 local function rect8(w, h, x, y)
     return {
         x - w / 2, y - h / 2,
-        x , y - h / 2,
+        x, y - h / 2,
         x + w / 2, y - h / 2,
-        x + w / 2, y ,
+        x + w / 2, y,
         x + w / 2, y + h / 2,
-        x , y + h / 2,
+        x, y + h / 2,
         x - w / 2, y + h / 2,
-        x - w/2, y ,
+        x - w / 2, y,
     }
 end
 
@@ -151,8 +152,27 @@ function lib.updateSFixtureDimensionsFunc(w, h)
 
     return newfixture
 end
+
 function lib.createSFixture(body, localX, localY, cfg)
     if (cfg.label == 'snap') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
+    if (cfg.label == 'anchor') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
+    if (cfg.label == 'connected-texture') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
@@ -164,17 +184,18 @@ function lib.createSFixture(body, localX, localY, cfg)
     if (cfg.label == 'texfixture') then
         local vertexCount = 4
         --
-        local vv =vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or  rect8(cfg.width, cfg.height, localX, localY)
+        local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
+            rect8(cfg.width, cfg.height, localX, localY)
         local shape = love.physics.newPolygonShape(vv)
 
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = '', extra = { vertexCount=vertexCount, vertices=vv, type = 'texfixture' } })
+        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = { vertexCount = vertexCount, vertices = vv, type = 'texfixture' } })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!')
+    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', cfg.label)
 end
 
 --function lib.createTexFixtureShape(vertexCount)

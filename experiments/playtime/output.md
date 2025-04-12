@@ -44,11 +44,18 @@ local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
 function love.load(args)
-    local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', 25)
+    --
+
+
+   local fontHeight = 25
+   --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
+   --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
+   local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
+
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
 
-    ui.init(font)
+    ui.init(font, fontHeight)
 
     love.physics.setMeter(state.world.meter)
     state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
@@ -99,9 +106,9 @@ function love.load(args)
 
     --loadScriptAndScene('elasto')
     --loadScriptAndScene('water')
-    sceneLoader.loadScriptAndScene('straight')
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --reloadScene(cwd .. '/scripts/lekker.playtime.json')
+    --ceneLoader.loadScriptAndScene('straight')
+    local cwd = love.filesystem.getWorkingDirectory()
+     sceneLoader.loadScene(cwd .. '/scripts/lekker.playtime.json')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -174,10 +181,10 @@ function love.draw()
 
     script.call('draw')
 
-
+    editorRenderer.renderActiveEditorThings()
     cam:pop()
 
-    editorRenderer.renderActiveEditorThings()
+
 
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
@@ -312,6 +319,65 @@ local lib = {}
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 
+
+local img = love.graphics.newImage('textures/leg1.png')
+local tex1 = love.graphics.newImage('textures/pat/type2t.png')
+tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
+local line = love.graphics.newImage('textures/shapes6.png')
+local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
+--local imgw, imgh = img:getDimensions()
+
+
+local imageCache = {}
+
+function getLoveImage(path, settings)
+    if not imageCache[path] then
+        local info = love.filesystem.getInfo(path)
+        if not info or info.type ~= 'file' then
+            --print("Warning: File not found - " .. path)
+            return nil, nil, nil
+        end
+        local img = love.graphics.newImage(path)
+        if (settings) then
+            if settings.wrapX and settings.wrapY then
+            img:setWrap(settings.wrapX, settings.wrapY)
+            end
+        end
+        if img then
+            local imgw, imgh = img:getDimensions()
+            imageCache[path] = { img = img, imgw = imgw, imgh = imgh }
+        end
+    end
+
+    if imageCache[path] then
+        return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
+    else
+        return nil, nil, nil
+    end
+end
+
+local settings = {wrapX='mirroredrepeat', wrapY='mirroredrepeat'}
+getLoveImage('textures/pat/type0.png', settings)
+getLoveImage('textures/pat/type1.png', settings)
+getLoveImage('textures/pat/type2.png', settings)
+getLoveImage('textures/pat/type3.png', settings)
+getLoveImage('textures/pat/type4.png', settings)
+getLoveImage('textures/pat/type5.png', settings)
+getLoveImage('textures/pat/type6.png', settings)
+getLoveImage('textures/pat/type7.png', settings)
+getLoveImage('textures/pat/type8.png', settings)
+
+local shrinkFactor = 1
+
+--local image = nil
+
+lib.setShrinkFactor = function(value)
+    shrinkFactor = value
+end
+lib.getShrinkFactor = function()
+    return shrinkFactor
+end
+
 local base = {
     '020202', '4f3166', '69445D', '613D41', 'efebd8',
     '6f323a', '872f44', '8d184c', 'be193b', 'd2453a',
@@ -339,34 +405,8 @@ local base = {
 lib.palette = base
 
 
---local img = love.graphics.newImage('textures/leg1.png')
-local tex1 = love.graphics.newImage('textures/pat/type2t.png')
-tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
-local line = love.graphics.newImage('textures/shapes6.png')
-local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
---local imgw, imgh = img:getDimensions()
-local imageCache = {}
 
-function getLoveImage(path)
-    if not imageCache[path] then
-        local info = love.filesystem.getInfo(path)
-        if not info or info.type ~= 'file' then
-            --print("Warning: File not found - " .. path)
-            return nil, nil, nil
-        end
-        local img = love.graphics.newImage(path)
-        if img then
-            local imgw, imgh = img:getDimensions()
-            imageCache[path] = { img = img, imgw = imgw, imgh = imgh }
-        end
-    end
 
-    if imageCache[path] then
-        return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
-    else
-        return nil, nil, nil
-    end
-end
 
 function lib.hexToColor(hex)
     if type(hex) ~= "string" then
@@ -424,16 +464,7 @@ local maskShader = love.graphics.newShader([[
 	}
 ]])
 
-local shrinkFactor = 1
 
---local image = nil
-
-lib.setShrinkFactor = function(value)
-    shrinkFactor = value
-end
-lib.getShrinkFactor = function()
-    return shrinkFactor
-end
 
 local function getDrawParams(flipx, flipy, imgw, imgh)
     local sx = flipx
@@ -447,10 +478,10 @@ end
 
 
 
-lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
+lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX,texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
-                                  flipx, flipy, patch1)
+                                  flipx, flipy, patch1, patch2)
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
         local lw, lh = lineart:getDimensions()
@@ -471,12 +502,14 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
 
 
             transform:rotate(texRot)
-            transform:scale(texScale, texScale)
+            transform:scale(texScaleX, texScaleY)
 
             local m1, m2, _, _, m5, m6 = transform:getMatrix()
             local dx = texOffX --love.math.random() * .001
             local dy = texOffY
+            if texture2 then
             maskShader:send('fill', texture2)
+             end
             maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
             maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
             maskShader:send('uvTranslation', { dx, dy })
@@ -489,14 +522,11 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-        logger:info(patch1, patch1 and patch1.img)
+
         if (patch1 and patch1.img) then
             love.graphics.setColorMask(true, true, true, false)
-
-            local r, g, b, a = lib.hexToColor(patch1.hex or 'ffffff')
+            local r, g, b, a = lib.hexToColor(patch1.tint)
             love.graphics.setColor(r, g, b, a)
-
-
             local image = patch1.img
             local imgw, imgh = image:getDimensions()
             local xOffset = (patch1.tx or 0) * (imgw) * shrinkFactor
@@ -505,9 +535,24 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
                 (patch1.sx or 1) * shrinkFactor,
                 (patch1.sy or 1) * shrinkFactor,
                 imgw / 2, imgh / 2)
-            logger:info('getting in here!')
             love.graphics.setColorMask(true, true, true, true)
         end
+
+        if (patch2 and patch2.img) then
+            love.graphics.setColorMask(true, true, true, false)
+            local r, g, b, a = lib.hexToColor(patch2.tint)
+            love.graphics.setColor(r, g, b, a)
+            local image = patch2.img
+            local imgw, imgh = image:getDimensions()
+            local xOffset = (patch2.tx or 0) * (imgw) * shrinkFactor
+            local yOffset = (patch2.ty or 0) * (imgh) * shrinkFactor
+            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch2.r or 0) * ((math.pi * 2) / 16),
+                (patch2.sx or 1) * shrinkFactor,
+                (patch2.sy or 1) * shrinkFactor,
+                imgw / 2, imgh / 2)
+            love.graphics.setColorMask(true, true, true, true)
+        end
+
 
         -- I want to know If we do this or not..
         -- if (true and renderPatch) then
@@ -588,56 +633,144 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
+                 logger:info(inspect(ud.extra))
                 ud.extra.dirty = false
 
-                local outlineImage = getLoveImage('textures/' .. ud.extra.bgURL)
-                local olr, olg, olb, ola = lib.hexToColor(ud.extra.bgHex)
-                local maskImage = getLoveImage('textures/' .. ud.extra.fgURL)
-                local mr, mg, mb, ma = lib.hexToColor(ud.extra.fgHex)
-                local patternImage = getLoveImage('textures/pat/' .. ud.extra.patternURL)
-                local pr, pg, pb, pa = lib.hexToColor(ud.extra.patternHex)
 
-                if ud.extra.patch1URL then
-                    logger:info(ud.extra.patch1URL, 'textures/' .. ud.extra.patch1URL)
+
+
+
+                function makePatch(name)
+                    local result = nil
+                    if ud.extra[name] and ud.extra[name].bgURL then
+                        local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
+                        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
+                        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
+                        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
+                        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
+                        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
+                        if outlineImage then
+                            local imgData = lib.makeTexturedCanvas(
+                            outlineImage,                      -- line art
+                            maskImage,                   -- mask
+                                { mr, mg, mb },            -- color1
+                                ma * 5,                    -- alpha1
+                                patternImage or  tex1,                      -- texture2 (fill texture)
+                                { pr, pg, pb },            -- color2
+                                pa * 5,                    -- alpha2
+                                ud.extra[name].pr or 0, -- texRot
+                                ud.extra[name].psx or 1,    -- texScale
+                                ud.extra[name].psy or 1,    -- texScale
+                                ud.extra[name].ptx or 0,
+                                ud.extra[name].pty or 0,
+                                { olr, olg, olb },      -- lineColor
+                                ola * 5,                -- lineAlpha
+                                ud.extra[name].fx or 1, -- flipx (normal)
+                                ud.extra[name].fy or 1 -- flipy (normal)
+                            )
+                            result = {
+                                img = love.graphics.newImage(imgData),
+                            --img = getLoveImage('textures/' .. ud.extra.patch1URL),
+                                tint = ud.extra[name].tint or 'ffffff',
+                                tx = ud.extra[name].tx,
+                                ty = ud.extra[name].ty,
+                                sx = ud.extra[name].sx,
+                                sy = ud.extra[name].sy,
+                                r = ud.extra[name].r
+                            }
+                        end
+                        return result
+                    end
                 end
-                local patch1 = ud.extra.patch1URL and {
 
-                    img = getLoveImage('textures/' .. ud.extra.patch1URL),
-                    hex = ud.extra.patch1Hex,
-                    tx = ud.extra.patch1TX,
-                    ty = ud.extra.patch1TY,
-                    sx = ud.extra.patch1SX,
-                    sy = ud.extra.patch1SY,
-                    r = ud.extra.patch1r,
-                } or nil
+                local patch1 = makePatch('patch1')
+                local patch2 = makePatch('patch2')
 
+
+
+                local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
+                local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
+                local maskImage = getLoveImage('textures/' .. ud.extra.main.fgURL)
+                local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
+                local patternImage = getLoveImage('textures/pat/' .. ud.extra.main.pURL)
+                local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
+
+                if outlineImage or line then
                 local imgData = lib.makeTexturedCanvas(
-                    line,                      -- line art
-                    maskTex,                   -- mask
+                   outlineImage or  line,                      -- line art
+                   maskImage or maskTex,                   -- mask
 
                     { mr, mg, mb },            -- color1
                     ma * 5,                    -- alpha1
-                    tex1,                      -- texture2 (fill texture)
+                   patternImage or  tex1,                      -- texture2 (fill texture)
                     { pr, pg, pb },            -- color2
                     pa * 5,                    -- alpha2
-                    ud.extra.texRotation or 0, -- texRot
-                    ud.extra.texScale or 1,    -- texScale
-                    ud.extra.texXOff or 0,
-                    ud.extra.texYOff or 0,
+                    ud.extra.main.pr or 0, -- texRot
+                    ud.extra.main.psx or 1,    -- texScale
+                    ud.extra.main.psy or 1,    -- texScale
+                    ud.extra.main.ptx or 0,
+                    ud.extra.main.pty or 0,
                     { olr, olg, olb },      -- lineColor
                     ola * 5,                -- lineAlpha
-                    ud.extra.texFlipX or 1, -- flipx (normal)
-                    ud.extra.texFlipY or 1, -- flipy (normal)
-                    patch1                  -- renderPatch (set to truthy to enable extra patch rendering)
+                    ud.extra.main.fx or 1, -- flipx (normal)
+                    ud.extra.main.fy or 1, -- flipy (normal)
+                    patch1 , patch2                 -- renderPatch (set to truthy to enable extra patch rendering)
                 )
                 image = love.graphics.newImage(imgData)
-
                 ud.extra.ompImage = image
+                end
                 fixtures[i]:setUserData(ud)
             end
         end
     end
 end
+
+
+local function makeSquishableUVsFromPoints(v)
+    local verts = {}
+    if #v == 8 then -- has 4 (4*(x,y)) vertices
+        verts[1] = { v[1], v[2], 0, 0 }
+        verts[2] = { v[3], v[4], 1, 0 }
+        verts[3] = { v[5], v[6], 1, 1 }
+        verts[4] = { v[7], v[8], 0, 1 }
+        verts[5] = { v[1], v[2], 0, 0 } -- this is an extra one to make it go round
+    end
+
+    if #v == 16 then -- has 8 (8*(x,y)) vertices
+        verts[1] = { v[1], v[2], 0, 0 }
+        verts[2] = { v[3], v[4], .5, 0 }
+        verts[3] = { v[5], v[6], 1, 0 }
+        verts[4] = { v[7], v[8], 1, .5 }
+        verts[5] = { v[9], v[10], 1, 1 }
+        verts[6] = { v[11], v[12], .5, 1 }
+        verts[7] = { v[13], v[14], 0, 1 }
+        verts[8] = { v[15], v[16], 0, .5 }
+        verts[9] = { v[1], v[2], 0, 0 } -- this is an extra one to make it go round
+    end
+
+    return verts
+end
+
+local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
+     local p = {}
+     for i = 1, #vertices do
+         p[i] = vertices[i] * growFactor
+     end
+    -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+    local uvs = makeSquishableUVsFromPoints(p)
+
+
+    -- todo maybe parametrize this point so you can make the midle of the fan not be the exact middle of the polygon.
+    local cx, cy, _, _ = mathutils.getCenterOfPoints(vertices)
+    table.insert(uvs,1,{cx,cy, .5,.5}) -- I will just alwasy put a center vertex as the first one
+
+    local _mesh =  love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
+    local img = img
+    _mesh:setTexture(img)
+
+    love.graphics.draw(_mesh, x, y, r, 1, 1)
+end
+
 
 function lib.drawTexturedWorld(world)
     local bodies = world:getBodies()
@@ -672,102 +805,103 @@ function lib.drawTexturedWorld(world)
         return a.z < b.z
     end)
 
+
+
+
+    -- todo: these3 function look very much alike, we wnat to combine them all in otne,
+    -- another issue here is that i dont really understand how to set the ox and oy correctly, (for the combined Image)
+    -- and there is an issue with the center of the 'fan' mesh, it shouldnt always be 0,0 you can see this when you position the texfxture with the
+    -- onscreen 'd' button quite a distnace out of the actual physics body center.
+    --
+    local function drawImageLayerSquish(url, hex, extra, texfixture )
+       -- print('jo!')
+        local img, imgw, imgh = getLoveImage('textures/' .. url)
+        local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
+
+        if (vertices and img) then
+           local body = texfixture:getBody()
+            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            local sx = ww / imgw
+            local sy = hh / imgh
+            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+            local r, g, b, a = lib.hexToColor(hex)
+            love.graphics.setColor(r, g, b, a)
+          --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+             drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
+        end
+    end
+    local function drawImageLayerVanilla(url, hex, extra, texfixture )
+        local img, imgw, imgh = getLoveImage('textures/' .. url)
+        local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
+
+        if (vertices and img) then
+             local body = texfixture:getBody()
+           -- local body = texfixture:getBody()
+            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            local sx = ww / imgw
+            local sy = hh / imgh
+            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+            local r, g, b, a = lib.hexToColor(hex)
+            love.graphics.setColor(r, g, b, a)
+
+            love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+                body:getAngle(), sx * 1, sy * 1,
+                (imgw) / 2, (imgh) / 2)
+            --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+        end
+    end
+    local function drawCombinedImageVanilla(ompImage, extra, texfixture, thing)
+         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+         local img = ompImage
+         local imgw, imgh = ompImage:getDimensions()
+
+         if vertices and img then
+             local body = texfixture:getBody()
+             local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+             local sx = ww / imgw
+             local sy = hh / imgh
+             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+             --local r, g, b, a = hexToColor(thing.textures.bgHex)
+
+             -- this routine is alos good, but it doenst take in affect the squishyness. you cannot deform the rectangle
+             -- love.graphics.setColor(1, 1, 1, 1)
+             -- love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
+             --     sx * 1 * thing.mirrorX,
+             --     sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
+
+
+
+             -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
+                local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
+             love.graphics.setColor(r,g,b,a)
+              --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+                drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
+         end
+    end
+
+
     --for _, body in ipairs(bodies) do
     for i = 1, #drawables do
         local body = drawables[i].body
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
-
-
         if texfixture then
             local extra = drawables[i].extra
-
-
-            if not extra.OMP and extra.bgURL then -- this is the BG and FG routine
-                local url = extra.bgURL
-                local img, imgw, imgh = getLoveImage('textures/' .. url)
-                local body = texfixture:getBody()
-
-                local vertices = { texfixture:getShape():getPoints() }
-
-                if (img) then
-                    -- -- the Mesh DrawMode "fan" works well for 4-vertex Meshes.
-                    -- mesh = love.graphics.newMesh(vert2, "fan")
-                    -- mesh:setTexture(img)
-
-                    if vertices then
-                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                        local sx = ww / imgw
-                        local sy = hh / imgh
-                        local r, g, b, a = lib.hexToColor(extra.bgHex)
-                        local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-
-                        love.graphics.setColor(r, g, b, a)
-                        love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-                            body:getAngle(), sx * 1, sy * 1,
-                            (imgw) / 2, (imgh) / 2)
-
-                        -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
-                        --     (imgw) / 2, (imgh) / 2)
-                    else
-                        logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
-                    end
+            if not extra.OMP then -- this is the BG and FG routine
+                if extra.main and extra.main.bgURL then
+                drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra,  texfixture )
+                --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
-
-                local url = extra.fgURL
-                local img, imgw, imgh = getLoveImage('textures/' .. url)
-                local body = texfixture:getBody()
-
-                local vertices = { texfixture:getShape():getPoints() }
-
-                if (img) then
-                    if vertices then
-                        local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                        local sx = ww / imgw
-                        local sy = hh / imgh
-                        local r, g, b, a = lib.hexToColor(extra.fgHex)
-                        local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-
-                        love.graphics.setColor(r, g, b, a)
-                        love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-                            body:getAngle(), sx * 1, sy * 1,
-                            (imgw) / 2, (imgh) / 2)
-
-                        -- love.graphics.draw(mesh, body:getX() + rx, body:getY() + ry, body:getAngle(), sx * 1, sy * 1,
-                        --     (imgw) / 2, (imgh) / 2)
-                    else
-                        logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
-                    end
+                if extra.main and extra.main.fgURL then
+                drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra,  texfixture )
+                --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
             end
 
             if extra.OMP then
-                if (texfixture) then
-                    --local thing = ud.thing
-                    --local vertices = thing.vertices
-                    local vertices = { texfixture:getShape():getPoints() }
-                    image = extra.ompImage --lib.makePatternTexture()
-
-
-                    if (image) then
-                        local img = image
-                        local imgw, imgh = image:getDimensions()
-                        if vertices then
-                            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-                            local sx = ww / imgw
-                            local sy = hh / imgh
-                            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-                            --local r, g, b, a = hexToColor(thing.textures.bgHex)
-                            love.graphics.setColor(1, 1, 1, 1)
-                            --love.graphics.draw(img, body:getX(), body:getY())
-                            love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
-                                sx * 1 * thing.mirrorX,
-                                sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
-                        else
-                            logger:error('NO VERTICES FOUND, kinda hard ', inspect(thing))
-                        end
-                    end
+                if (texfixture and extra.ompImage) then
+                    drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
                 --end
             end
@@ -1409,7 +1543,7 @@ function lib.renderActiveEditorThings()
         local thing = state.selection.selectedSFixture:getBody():getUserData().thing
         local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
             thing, 0, 0)
-
+        --print(inspect(verts))
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
 
@@ -1447,6 +1581,65 @@ return lib
 
 ```
 
+src/file-browser.lua
+```lua
+-- this thing needs to be able to show files visually, lets start with just showing the filetype im after given a subdir.
+
+local lib = {}
+
+
+function lib:loadFiles(path, filterrules)
+    local all_items = love.filesystem.getDirectoryItems(path)
+    local filtered = {}
+    for _, item in ipairs(all_items) do
+
+        local info = love.filesystem.getInfo(path..'/'..item)
+        if info and (info.type == "file") then
+            local ok = true
+            if filterrules then
+                if filterrules.includes then
+                    local str = item
+                    local index = string.find(str, filterrules.includes)
+                    if not index  then
+                        ok = false
+                    end
+                end
+                if filterrules.excludes then
+                    local str = item
+                    local index = string.find(str, filterrules.excludes)
+                    if index then
+                        ok = false
+                    end
+                end
+            end
+
+            if ok then
+                table.insert(filtered, {info=info, path=path, item=item})
+            end
+
+        end
+       -- count = count + 1
+    end
+
+    for i= 1, #filtered do
+        print(filtered[i].item)
+    end
+
+    logger:info('count:',#filtered)
+    -- Apply current search_query to filter files
+    --self:filterFiles()
+
+    -- Adjust scroll_offset and selected_index if necessary
+    --if self.scroll_offset > 0 and (self.scroll_offset + self.max_display_items) > #self.filtered_files then
+    --    self.scroll_offset = math.max(0, #self.filtered_files - self.max_display_items)
+    --    self.selected_index = math.min(self.selected_index, #self.filtered_files)
+    --end
+end
+
+return lib
+
+```
+
 src/fixtures.lua
 ```lua
 --fixtures.lua
@@ -1457,7 +1650,7 @@ local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
 local utils = require 'src.utils' -- Needed for shallowCopy
-
+local state= require 'src.state'
 local lib = {}
 
 
@@ -1474,24 +1667,38 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
 
     -- Convert world click to body's local coordinates for the new shape center
     local localX, localY = body:getLocalPoint(worldX, worldY)
+      local oldUD = utils.deepCopy(sfixture:getUserData())
+    --  logger:info(oldUD.extra.vertices ,  { sfixture:getShape():getPoints() })
+    local points = oldUD.extra.vertices or  { sfixture:getShape():getPoints() }                                     -- Existing local points
+    local centerX, centerY = mathutils.getCenterOfPoints(points)
 
-    local points = { sfixture:getShape():getPoints() }                                     -- Existing local points
-    local centerX, centerY = mathutils.getCenterOfPoints(points)                           -- Center of existing shape
     local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY) -- Points relative to old center
 
     -- Create new absolute points centered at the *new* local click position
     local newShapePoints = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
 
-    local oldUD = utils.deepCopy(sfixture:getUserData()) -- Use deepCopy if 'extra' might contain tables
+    local dx,dy = centerX-localX, centerY-localY
+
+  -- Use deepCopy if 'extra' might contain tables
+
+    if oldUD.extra and oldUD.extra.vertices then
+       -- logger:info('vertices found, need to adjust all of them:',#oldUD.extra.vertices,dx,dy)
+       -- logger:info(inspect(oldUD.extra.vertices))
+        for i =  1, #oldUD.extra.vertices,2 do
+            oldUD.extra.vertices[i+0] = oldUD.extra.vertices[i+0]-dx
+            oldUD.extra.vertices[i+1] = oldUD.extra.vertices[i+1]-dy
+        end
+      --  logger:info(inspect(oldUD.extra.vertices))
+    end
     local fixtureID = oldUD.id                           -- Keep the ID
     local fixtureDensity = sfixture:getDensity()         -- Keep properties
     local fixtureFriction = sfixture:getFriction()
     local fixtureRestitution = sfixture:getRestitution()
     local fixtureGroupIndex = sfixture:getGroupIndex()
 
-    logger:info(string.format("Updating SFixture %s Position to World(%.2f, %.2f) -> Local(%.2f, %.2f)", fixtureID,
-        worldX,
-        worldY, localX, localY))
+    -- logger:info(string.format("Updating SFixture %s Position to World(%.2f, %.2f) -> Local(%.2f, %.2f)", fixtureID,
+    --     worldX,
+    --     worldY, localX, localY))
 
     -- Destroy old fixture and unregister
     sfixture:destroy()
@@ -1548,12 +1755,46 @@ local function rect(w, h, x, y)
     }
 end
 
+local function rect8(w, h, x, y)
+    return {
+        x - w / 2, y - h / 2,
+        x , y - h / 2,
+        x + w / 2, y - h / 2,
+        x + w / 2, y ,
+        x + w / 2, y + h / 2,
+        x , y + h / 2,
+        x - w / 2, y + h / 2,
+        x - w/2, y ,
+    }
+end
+
+
 
 function lib.destroyFixture(fixture)
     registry.unregisterSFixture(fixture:getUserData().id)
     fixture:destroy()
 end
 
+function lib.updateSFixtureDimensionsFunc(w, h)
+    local points = { state.selection.selectedSFixture:getShape():getPoints() }
+    local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
+    local body = state.selection.selectedSFixture:getBody()
+    state.selection.selectedSFixture:destroy()
+
+    local centerX, centerY = mathutils.getCenterOfPoints(points)
+    local vv = oldUD.extra.vertexCount == 8 and rect8(w, h, centerX, centerY) or rect(w, h, centerX, centerY)
+    local shape = love.physics.newPolygonShape(vv)
+    local newfixture = love.physics.newFixture(body, shape)
+    oldUD.extra.vertices = vv
+    newfixture:setSensor(true) -- Sensor so it doesn't collide
+    newfixture:setUserData(oldUD)
+
+    state.selection.selectedSFixture = newfixture
+    --snap.updateFixture(newfixture)
+    registry.registerSFixture(oldUD.id, newfixture)
+
+    return newfixture
+end
 function lib.createSFixture(body, localX, localY, cfg)
     if (cfg.label == 'snap') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
@@ -1565,16 +1806,22 @@ function lib.createSFixture(body, localX, localY, cfg)
         return fixture
     end
     if (cfg.label == 'texfixture') then
-        local shape = love.physics.newPolygonShape(rect(cfg.width, cfg.height, localX, localY))
+        local vertexCount = 4
+        --
+        local vv =vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or  rect8(cfg.width, cfg.height, localX, localY)
+        local shape = love.physics.newPolygonShape(vv)
+
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = '', extra = { type = 'texfixture' } })
+        fixture:setUserData({ type = "sfixture", id = setId, label = '', extra = { vertexCount=vertexCount, vertices=vv, type = 'texfixture' } })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
     logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!')
 end
+
+--function lib.createTexFixtureShape(vertexCount)
 
 return lib
 
@@ -1664,14 +1911,13 @@ local function handlePointer(x, y, id, action)
             end
         end
 
-
-
-        if (state.currentMode == 'drawClickMode') then
+        if (state.currentMode == 'drawClickMode' ) then
+            local w, h = love.graphics.getDimensions()
+            if x < w - 300 then
             table.insert(state.interaction.polyVerts, cx)
             table.insert(state.interaction.polyVerts, cy)
+            end
         end
-
-
 
         if (state.currentMode == 'setOffsetA') then
             local bodyA, bodyB = state.selection.selectedJoint:getBodies()
@@ -1693,6 +1939,8 @@ local function handlePointer(x, y, id, action)
 
         if (state.currentMode == 'positioningSFixture') then
             state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture, cx, cy)
+          local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
             state.currentMode = nil
         end
 
@@ -1808,6 +2056,7 @@ local function handlePointer(x, y, id, action)
         end
 
         if state.currentMode == 'drawFreePoly' then
+             state.interaction.capturingPoly = false
             objectManager.finalizePolygon()
         end
 
@@ -1872,7 +2121,7 @@ function lib.handleMousePressed(x, y, button, istouch)
     if not istouch and button == 1 then
         if state.currentMode == 'drawFreePoly' then
             -- Start capturing mouse movement
-            --state.interaction.capturingPoly = true
+            state.interaction.capturingPoly = true
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         else
@@ -1896,7 +2145,7 @@ function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
     --handlePointer(x, y, id, 'pressed')
     if state.currentMode == 'drawFreePoly' then
         -- Start capturing mouse movement
-        --state.interaction.capturingPoly = true
+        state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
         state.interaction.lastPolyPt = nil
     else
@@ -1928,13 +2177,24 @@ function lib.handleMouseMoved(x, y, dx, dy)
     elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
         local index = state.texFixtureEdit.dragIdx
         local obj = state.selection.selectedSFixture:getBody():getUserData().thing
+
+
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
         dy2 = dy2 / cam.scale
         state.texFixtureEdit.tempVerts[index] = state.texFixtureEdit.tempVerts[index] + dx2
         state.texFixtureEdit.tempVerts[index + 1] = state.texFixtureEdit.tempVerts[index + 1] + dy2
-    elseif (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
+
+        local ud = state.selection.selectedSFixture:getUserData()
+        --logger:info(inspect(ud))
+        ud.extra.vertices[index] =state.texFixtureEdit.tempVerts[index]
+        ud.extra.vertices[index+1] =state.texFixtureEdit.tempVerts[index + 1]
+        state.selection.selectedSFixture:setUserData(ud)
+       -- print(index)
+
+
+    elseif  state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly'  or state.currentMode == 'drawClickPoly') then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
@@ -1948,6 +2208,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
             end
         end
         if addPoint then
+
             table.insert(state.interaction.polyVerts, wx)
             table.insert(state.interaction.polyVerts, wy)
             state.interaction.lastPolyPt = { x = wx, y = wy }
@@ -2016,6 +2277,7 @@ local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 local jointslib = require 'src.joints'
 local fixtures = require 'src.fixtures'
+local state = require 'src.state'
 
 local snap = require 'src.snap'
 
@@ -2086,7 +2348,17 @@ function lib.buildWorld(data, world, cam)
                 for _, point in ipairs(fixtureData.points) do
                     table.insert(points, point)
                 end
-                shape = love.physics.newPolygonShape(unpack(points))
+
+                local success, err = pcall(function()
+                    shape = love.physics.newPolygonShape(unpack(points))
+                end)
+                if err then
+                    logger:info('failed creating a polygonshape, will add a circle instead')
+                    shape =nil
+                end
+
+
+
                 -- elseif fixtureData.shapeType == "edge" then
                 --     local x1 = fixtureData.points[1].x
                 --     local y1 = fixtureData.points[1].y
@@ -2584,7 +2856,7 @@ end
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON
     local saveData = lib.gatherSaveData(world, camera)
-    logger:debug(inspect(saveData))
+    --logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file
@@ -4486,7 +4758,7 @@ function lib.finalizePolygonAsSoftSurface()
     -- Reset the drawing state
 
     state.currentMode = nil
-    --state.interaction.capturingPoly = false
+    state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
 end
@@ -4511,7 +4783,7 @@ function lib.finalizePolygon()
     -- Reset the drawing state
 
     state.currentMode = nil
-    --state.interaction.capturingPoly = false
+    state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
 end
@@ -5194,6 +5466,7 @@ local recorder = require 'src.recorder'
 local state = require 'src.state'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
+local fileBrowser = require 'src.file-browser'
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -5201,24 +5474,32 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FPS = 60
 
-
 local offsetHasChangedViaOutside
-local BGcolorHasChangedViaPalette
-local FGcolorHasChangedViaPalette
-local PatternColorHasChangedViaPalette
-local Patch1ColorHasChangedViaPalette
 
 local colorpickers = {
     bg = false
 }
 
+local function getCenterAndDimensions(body)
+       local ud = body:getUserData()
+       local cx, cy, w, h
+    if ud.thing.vertices then
+        local verts = ud.thing.vertices
+        cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+     else -- this is a circle shape..
+        cx, cy = body:getPosition()
+
+        w,h = ud.thing.radius*2, ud.thing.radius*2
+    end
+    return cx,cy,w,h
+end
 
 local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
     local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
     if newValue then
         callback(newValue)
     end
-    ui.label(x, y, label)
+    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), label)
     return newValue
 end
 -- Helper function to create a checkbox with an associated label
@@ -5750,14 +6031,15 @@ function lib.drawAddShapeUI()
 
         local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150,
             state.editorPreferences.minPointDistance or 10)
-        ui.label(x, y, 'dis')
+        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), '  dis')
         if minDist then
             state.editorPreferences.minPointDistance = minDist
         end
 
         -- Add a button for custom polygon
         nextRow()
-        if ui.button(x, y, width, 'freeform') then
+        local freeformbutton, _, freeformReleased  = ui.button(x, y, width, 'freeform')
+        if freeformReleased then
             state.currentMode = 'drawFreePoly'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
@@ -5812,8 +6094,9 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
 
-                local verts = body:getUserData().thing.vertices
-                local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+
+                local cx,cy,w,h = getCenterAndDimensions(body)
+
 
                 local localX, localY = body:getLocalPoint(wx, wy)
                 local fixture = fixtures.createSFixture(body, localX, localY,
@@ -6020,14 +6303,14 @@ function lib.drawWorldSettingsUI()
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         end
         --  x, y = ui.nextLayoutPosition(layout, width, 50)
-        local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, state.world.gravity)
-        if grav then
-            state.world.gravity = grav
+      --  local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, state.world.gravity)
+        local grav = createSliderWithId('', 'grav', x, y, ROW_WIDTH, -10, 20, state.world.gravity, function(v)
+            state.world.gravity = v
             if state.physicsWorld then
                 state.physicsWorld:setGravity(0, state.world.gravity * state.world.meter)
             end
-        end
-        ui.label(x, y, ' gravity')
+            end)
+
         nextRow()
 
         local g, value = ui.checkbox(x, y, state.editorPreferences.showGrid, 'grid') --showGrid = true,
@@ -6041,37 +6324,29 @@ function lib.drawWorldSettingsUI()
         nextRow()
 
 
+        local debugAlpha = createSliderWithId('', 'debugalpha', x, y, ROW_WIDTH, 0, 1, state.world.debugAlpha, function(v)
+            state.world.debugAlpha = v
+        end)
 
-        local debugAlpha = ui.sliderWithInput('debugalpha', x, y, ROW_WIDTH, 0, 1, state.world.debugAlpha)
-        if debugAlpha then
-            state.world.debugAlpha = debugAlpha
-        end
-        ui.label(x, y, ' dbgAlpha')
         nextRow()
         nextRow()
 
-        local mouseForce = ui.sliderWithInput(' mouse F', x, y, ROW_WIDTH, 0, 1000000, state.world.mouseForce)
-        if mouseForce then
-            state.world.mouseForce = mouseForce
-        end
-        ui.label(x, y, ' mouse F')
+        local debugAlpha = createSliderWithId('', 'mouse F', x, y, ROW_WIDTH, 0, 1000000, state.world.mouseForce, function(v)
+             state.world.mouseForce = v
+            end)
+
         nextRow()
 
-        local mouseDamp = ui.sliderWithInput(' damp', x, y, ROW_WIDTH, 0.001, 1, state.world.mouseDamping)
-        if mouseDamp then
-            state.world.mouseDamping = mouseDamp
-        end
-        ui.label(x, y, ' damp')
-
+          local mouseDamp = createSliderWithId('', 'damp', x, y, ROW_WIDTH,  0.001, 1, state.world.mouseDamping, function(v)
+               state.world.mouseDamping = v
+              end)
 
         -- Add Speed Multiplier Slider
 
         nextRow()
-        local newSpeed = ui.sliderWithInput('speed', x, y, ROW_WIDTH, 0.1, 10.0, state.world.speedMultiplier)
-        if newSpeed then
-            state.world.speedMultiplier = newSpeed
-        end
-        ui.label(x, y, ' speed')
+         local newSpeed = createSliderWithId('', 'speed', x, y, ROW_WIDTH,  0.1, 10.0, state.world.speedMultiplier, function(v)
+             state.world.speedMultiplier = v
+             end)
 
         nextRow()
 
@@ -6093,6 +6368,7 @@ end
 
 local hadBeenDraggingObj = false
 local accordionStatesSF = {
+     ['position'] = false,
     ['texture'] = true,
     ['patch1'] = false,
     ['patch2'] = false,
@@ -6160,82 +6436,259 @@ function lib.drawSelectedSFixture()
         end
         nextRow()
 
-        local updateSFixtureDimensionsFunc = function(w, h)
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
-            local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            local body = state.selection.selectedSFixture:getBody()
-            state.selection.selectedSFixture:destroy()
-
-            local centerX, centerY = mathutils.getCenterOfPoints(points)
-            local shape = love.physics.newPolygonShape(rect(w, h, centerX, centerY))
-            local newfixture = love.physics.newFixture(body, shape)
-            newfixture:setSensor(true) -- Sensor so it doesn't collide
-            newfixture:setUserData(oldUD)
-
-            state.selection.selectedSFixture = newfixture
-            --snap.updateFixture(newfixture)
-            registry.registerSFixture(oldUD.id, newfixture)
-
-            return newfixture
-        end
-
 
         if ui.button(x, y, BUTTON_HEIGHT, '∆') then
             state.currentMode = 'positioningSFixture'
-            --  state.interaction.setUpdateSFixturePosFunc = updateSFixturePosFunc
         end
-        if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
-            local body = state.selection.selectedSFixture:getBody()
-            state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
-                body:getX(), body:getY())
 
-            -- state.selection.selectedSFixture = updateSFixturePosFunc(body:getX(), body:getY())
-        end
-        if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
-            local body = state.selection.selectedSFixture:getBody()
-
-            local verts = body:getUserData().thing.vertices
-            local cx, cy, w, h = mathutils.getCenterOfPoints(verts)
-            updateSFixtureDimensionsFunc(w, h)
-        end
-        nextRow()
 
 
         if sfixtureType == 'texfixture' then
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
+
+local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            drawAccordion('position', function()
+
+            if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+                local body = state.selection.selectedSFixture:getBody()
+                state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
+                    body:getX(), body:getY())
+                local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+            end
+
+            if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
+                local body = state.selection.selectedSFixture:getBody()
+                local cx,cy,w,h = getCenterAndDimensions(body)
+                fixtures.updateSFixtureDimensionsFunc(w, h)
+                local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+            end
+            nextRow()
+
+
+
+            local points = oldTexFixUD.extra.vertices or {state.selection.selectedSFixture:getShape():getPoints() }
             local w, h   = mathutils.getPolygonDimensions(points)
 
             if ui.checkbox(x, y, state.editorPreferences.showTexFixtureDim, 'dims') then
                 state.editorPreferences.showTexFixtureDim = not state.editorPreferences.showTexFixtureDim
             end
             nextRow()
+
+            if ui.button(x, y, 200, state.texFixtureEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                  local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                state.texFixtureEdit.lockedVerts = not state.texFixtureEdit.lockedVerts
+
+                if state.texFixtureEdit.lockedVerts == false then
+                    state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+                else
+                    state.texFixtureEdit.tempVerts = nil
+                    state.texFixtureEdit.centroid = nil
+                end
+            end
+
+            if ui.button(x + 220, y,40, oldTexFixUD.extra.vertexCount  ) then
+                if  oldTexFixUD.extra.vertexCount == 4 then
+                    oldTexFixUD.extra.vertexCount = 8
+                elseif oldTexFixUD.extra.vertexCount == 8 then
+                    oldTexFixUD.extra.vertexCount = 4
+                end
+            end
+
+             nextRow()
+
             if (state.editorPreferences.showTexFixtureDim) then
                 local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
-                ui.label(x, y, ' width')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                 nextRow()
 
                 local newHeight = ui.sliderWithInput(myID .. ' texfix height', x, y, ROW_WIDTH, 1, 1000, h)
-                ui.label(x, y, ' height')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
                 nextRow()
 
                 if newWidth and math.abs(newWidth - w) > 1 then
-                    updateSFixtureDimensionsFunc(newWidth, h)
+                    fixtures.updateSFixtureDimensionsFunc(newWidth, h)
                     w, h = mathutils.getPolygonDimensions(points)
                 end
                 if newHeight and math.abs(newHeight - h) > 1 then
-                    updateSFixtureDimensionsFunc(w, newHeight)
+                    fixtures.updateSFixtureDimensionsFunc(w, newHeight)
                     w, h = mathutils.getPolygonDimensions(points)
                 end
             end
-            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-            local newZOffset = ui.sliderWithInput(myID .. 'texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+            local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                 math.floor(oldTexFixUD.extra.zOffset or 0),
+                function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                end,
                 (not state.world.paused) or dirtyBodyChange)
-            if newZOffset and oldTexFixUD.extra.zOffset ~= newZOffset then
-                oldTexFixUD.extra.zOffset = math.floor(newZOffset)
-            end
-            ui.label(x, y, ' zOffset')
+            end)
             nextRow()
+
+
+            function handlePaletteAndHex(idPrefix, postFix, x, y,width, currentHex, onColorChange, setDirty)
+                local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
+                local paletteShow = ui.button(x-10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
+                if paletteShow then
+                    if state.panelVisibility.showPalette then
+                        state.panelVisibility.showPalette = nil
+                        state.showPaletteFunc = nil
+                    else
+                        state.panelVisibility.showPalette = true
+                        state.showPaletteFunc = function(color)
+                           setDirty()
+                          --  oldTexFixUD.extra.dirty = true
+                            colorpickers[postFix] = true
+                            onColorChange(color)
+                        end
+                    end
+                end
+                local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '',
+                    false, colorpickers[postFix])
+                if hex and hex ~= currentHex then
+                    --setDirty()
+                    oldTexFixUD.extra.dirty = true
+                    onColorChange(hex)
+                end
+
+                if colorpickers[postFix] then
+                    colorpickers[postFix] = false
+                end
+                ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
+            end
+
+            function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
+                local urlShow = ui.button(x-10, y, 20, '', BUTTON_HEIGHT, { 1,1,1,0.2 })
+                if urlShow then
+                    fileBrowser:loadFiles('/textures', {includes='-mask'})
+                --fileBrowser:loadFiles('/textures', {excludes='-mask'})
+                end
+                local newValue = ui.textinput(id .. labelText, x+10, y, width, BUTTON_HEIGHT, "", currentValue or '')
+                if newValue and newValue ~= currentValue then
+                    updateCallback(newValue)
+                    oldTexFixUD.extra.dirty = true
+                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
+                end
+                ui.label(x, y, labelText, { 1, 1, 1, 0.2 })
+                return newValue or currentValue
+            end
+
+            function patchTransformUI(layer)
+                local oldId = myID
+                myID = myID..':'..layer
+                                local newRotation =  createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2, oldTexFixUD.extra[layer].r or 0,
+                                    function(v)
+                                    oldTexFixUD.extra[layer].r = v
+                                    oldTexFixUD.extra.dirty = true
+                                end)
+
+                                nextRow()
+                                local newScaleX =  createSliderWithId(myID, 'sx', x, y, 50 ,0.01, 3, oldTexFixUD.extra[layer].sx or 1,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].sx = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+
+                                local newScaleY =  createSliderWithId(myID, 'sy', x+140, y, 50 ,0.01, 3, oldTexFixUD.extra[layer].sy or 1,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].sy = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+                                nextRow()
+                                local newXOff =  createSliderWithId(myID, 'tx', x, y, 50,-1, 1,oldTexFixUD.extra[layer].tx or 0,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].tx = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+                                local newYOff =  createSliderWithId(myID, 'ty', x+140, y, 50,-1, 1,oldTexFixUD.extra[layer].ty or 0,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].ty = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+                                nextRow()
+                                myID = oldId
+                            end
+
+
+                            function combineImageUI(layer)
+                                local oldId = myID
+                                myID = myID..':'..layer
+                                local dirty = function() oldTexFixUD.extra.dirty = true end
+                                handlePaletteAndHex(myID, 'bgHex', x, y, 100,oldTexFixUD.extra[layer].bgHex,
+                                    function(color) oldTexFixUD.extra[layer].bgHex = color end, dirty)
+                                handleURLInput(myID, 'bgURL', x+130, y,150, oldTexFixUD.extra[layer].bgURL,
+                                    function(u) oldTexFixUD.extra[layer].bgURL = u
+
+                                    end)
+                                nextRow()
+                                handlePaletteAndHex(myID, 'fgHex', x, y,100, oldTexFixUD.extra[layer].fgHex,
+                                    function(c) oldTexFixUD.extra[layer].fgHex = c end, dirty)
+                                handleURLInput(myID, 'fgURL', x+130, y,150, oldTexFixUD.extra[layer].fgURL,
+                                    function(u) oldTexFixUD.extra[layer].fgURL = u end)
+                                nextRow()
+                                ---
+                                handlePaletteAndHex(myID, 'patternHex', x, y,100, oldTexFixUD.extra[layer].pHex,
+                                    function(color) oldTexFixUD.extra[layer].pHex = color end, dirty)
+                                handleURLInput(myID, 'patternURL', x+130, y,150, oldTexFixUD.extra[layer].pURL,
+                                    function(u) oldTexFixUD.extra[layer].pURL = u end)
+                                nextRow()
+
+                                local newRotation =  createSliderWithId(myID, 'pr', x, y, ROW_WIDTH, 0, math.pi * 2, oldTexFixUD.extra[layer].pr or 0,
+                                    function(v)
+                                    oldTexFixUD.extra[layer].pr = v
+                                    oldTexFixUD.extra.dirty = true
+                                end)
+
+                                nextRow()
+                                local newScaleX =  createSliderWithId(myID, 'psx', x, y, 50 ,0.01, 3, oldTexFixUD.extra[layer].psx or 1,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].psx = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+
+                                local newScaleY =  createSliderWithId(myID, 'psy', x+140, y, 50 ,0.01, 3, oldTexFixUD.extra[layer].psy or 1,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].psy = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+                                nextRow()
+                                local newXOff =  createSliderWithId(myID, 'ptx', x, y, 50,-1, 1,oldTexFixUD.extra[layer].ptx or 0,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].ptx = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+                                local newYOff =  createSliderWithId(myID, 'pty', x+140, y, 50,-1, 1,oldTexFixUD.extra[layer].pty or 0,
+                                        function(v)
+                                        oldTexFixUD.extra[layer].pty = v
+                                        oldTexFixUD.extra.dirty = true
+                                end)
+
+                                nextRow()
+                                myID = oldId
+            end
+
+            function flipWholeUI(layer)
+                local dirtyX, checkedX = ui.checkbox(x, y, oldTexFixUD.extra[layer].fx == -1, 'flipx')
+                if dirtyX then
+                    oldTexFixUD.extra[layer].fx = checkedX and -1 or 1
+                    oldTexFixUD.extra.dirty = true
+                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
+                end
+                local dirtyY, checkedY = ui.checkbox(x + 150, y, oldTexFixUD.extra[layer].fy == -1, 'flipy')
+                if dirtyY then
+                    oldTexFixUD.extra[layer].fy = checkedY and -1 or 1
+                    oldTexFixUD.extra.dirty = true
+                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
+                end
+
+                nextRow()
+            end
 
             drawAccordion("texture", function()
                 nextRow()
@@ -6246,306 +6699,104 @@ function lib.drawSelectedSFixture()
 
                 nextRow()
 
+
+                --main patch1 patch2
                 --lineart, mask, pattern
 
-                function handlePaletteAndHex(idPrefix, postFix, x, y, currentHex, onColorChange)
-                    local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
-                    local paletteShow = ui.button(x, y, 40, '', BUTTON_HEIGHT, { r, g, b, a })
-                    if paletteShow then
-                        if state.panelVisibility.showPalette then
-                            state.panelVisibility.showPalette = nil
-                            state.showPaletteFunc = nil
-                        else
-                            state.panelVisibility.showPalette = true
-                            state.showPaletteFunc = function(color)
-                                currentHex = color
-                                oldTexFixUD.extra.dirty = true
-                                colorpickers[postFix] = true
-                                onColorChange(color)
-                            end
-                        end
-                    end
-                    local hex = ui.textinput(idPrefix .. postFix, x + 50, y, 210, BUTTON_HEIGHT, "", currentHex or '',
-                        false, colorpickers[postFix])
-                    if hex and hex ~= currentHex then
-                        currentHex = hex
-                        onColorChange(hex)
-                        oldTexFixUD.extra.dirty = true
-                    end
 
-                    if colorpickers[postFix] then
-                        colorpickers[postFix] = false
-                    end
-                    ui.label(x + 50, y, postFix, { 1, 1, 1, 0.2 })
-                    return currentHex
-                end
-
-                function handleURLInput(id, labelText, x, y, currentValue, updateCallback)
-                    local newValue = ui.textinput(id .. labelText, x, y, 260, BUTTON_HEIGHT, "", currentValue or '')
-                    if newValue and newValue ~= currentValue then
-                        updateCallback(newValue)
-                        oldTexFixUD.extra.dirty = true
-                        state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                    end
-                    ui.label(x, y, labelText, { 1, 1, 1, 0.2 })
-                    return newValue or currentValue
-                end
 
                 if not e.OMP then
-                    handleURLInput(myID, 'bgURL', x, y, oldTexFixUD.extra.bgURL,
-                        function(u) oldTexFixUD.extra.bgURL = u end)
+                    oldTexFixUD.extra.main= oldTexFixUD.extra.main or {}
+
+                    handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
+                        function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
+                    handleURLInput(myID, 'bgURL', x+130, y, 150, oldTexFixUD.extra.main.bgURL,
+                        function(u)
+                        oldTexFixUD.extra.main.bgURL = u
+
+                        end)
                     nextRow()
-                    handlePaletteAndHex(myID, 'bgHex', x, y, oldTexFixUD.extra.bgHex,
-                        function(c) oldTexFixUD.extra.bgHex = c end)
-                    nextRow()
-                    handleURLInput(myID, 'fgURL', x, y, oldTexFixUD.extra.fgURL,
-                        function(u) oldTexFixUD.extra.fgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'fgHex', x, y, oldTexFixUD.extra.fgHex,
-                        function(c) oldTexFixUD.extra.fgHex = c end)
+                    handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
+                        function(c) oldTexFixUD.extra.main.fgHex = c end,dirty)
+                     handleURLInput(myID, 'fgURL', x+130, y,  150,oldTexFixUD.extra.main.fgURL,
+                         function(u)
+                         oldTexFixUD.extra.main.fgURL = u
+
+
+                         end)
+
                     nextRow()
                 end
+
                 if e.OMP then
-                    handleURLInput(myID, 'bgURL', x, y, oldTexFixUD.extra.bgURL,
-                        function(u) oldTexFixUD.extra.bgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'bgHex', x, y, oldTexFixUD.extra.bgHex,
-                        function(color) oldTexFixUD.extra.bgHex = color end)
-                    nextRow()
-                    handleURLInput(myID, 'fgURL', x, y, oldTexFixUD.extra.fgURL,
-                        function(u) oldTexFixUD.extra.fgURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'fgHex', x, y, oldTexFixUD.extra.fgHex,
-                        function(c) oldTexFixUD.extra.fgHex = c end)
-                    nextRow()
-                    ---
-                    handleURLInput(myID, 'patternURL', x, y, oldTexFixUD.extra.patternURL,
-                        function(u) oldTexFixUD.extra.patternURL = u end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'patternHex', x, y, oldTexFixUD.extra.patternHex,
-                        function(color) oldTexFixUD.extra.patternHex = color end)
-                    nextRow()
 
-                    -----
-                    local newRotation = ui.sliderWithInput(myID .. ' texrotation', x, y, ROW_WIDTH, 0, math.pi * 2,
-                        oldTexFixUD.extra.texRotation or 0)
-                    ui.label(x, y, ' texrot')
-                    if newRotation and newRotation ~= oldTexFixUD.extra.texRotation then
-                        oldTexFixUD.extra.texRotation = newRotation
-                        oldTexFixUD.extra.dirty = true
-                    end
-                    nextRow()
-                    local newScale = ui.sliderWithInput(myID .. ' texscale', x, y, ROW_WIDTH, 0.01, 3,
-                        oldTexFixUD.extra.texScale or 0)
-                    ui.label(x, y, ' texscale')
-                    if newScale and newScale ~= oldTexFixUD.extra.texScale then
-                        oldTexFixUD.extra.texScale = newScale
-                        oldTexFixUD.extra.dirty = true
-                    end
-                    nextRow()
-                    local newXOff = ui.sliderWithInput(myID .. ' texXOffscale', x, y, ROW_WIDTH, 0, 1,
-                        oldTexFixUD.extra.texXOff or 0)
-                    ui.label(x, y, ' xoff')
-                    if newXOff and newXOff ~= oldTexFixUD.extra.texXOff then
-                        oldTexFixUD.extra.texXOff = newXOff
-                        oldTexFixUD.extra.dirty = true
-                    end
-                    nextRow()
-                    local newYOff = ui.sliderWithInput(myID .. ' texYOffscale', x, y, ROW_WIDTH, 0, 1,
-                        oldTexFixUD.extra.texYOff or 0)
-                    ui.label(x, y, ' yoff')
-                    if newYOff and newYOff ~= oldTexFixUD.extra.texYOff then
-                        oldTexFixUD.extra.texYOff = newYOff
-                        oldTexFixUD.extra.dirty = true
-                    end
-                    nextRow()
-                    local dirtyX, checkedX = ui.checkbox(x, y, e.texFlipX == -1, 'flipx')
-                    if dirtyX then
-                        oldTexFixUD.extra.texFlipX = checkedX and -1 or 1
-                        oldTexFixUD.extra.dirty = true
-                        state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                    end
-                    local dirtyY, checkedY = ui.checkbox(x + 150, y, e.texFlipY == -1, 'flipy')
-                    if dirtyY then
-                        oldTexFixUD.extra.texFlipY = checkedY and -1 or 1
-                        oldTexFixUD.extra.dirty = true
-                        state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                    end
+                    oldTexFixUD.extra.main= oldTexFixUD.extra.main or {}
 
-                    nextRow()
+                    combineImageUI('main')
+                    flipWholeUI('main')
+
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
+                    handlePaletteAndHex(myID, 'maintint', x, y, 100,oldTexFixUD.extra.main.tint,
+                        function(color) oldTexFixUD.extra.main.tint = color end, dirty)
+
+
                 end
             end)
             nextRow()
+
             drawAccordion('patch1', function()
-                -- 2 patches will be made here for now.
-                local patch1URL = ui.textinput(myID .. 'patchURL1', x + 40, y, 220, BUTTON_HEIGHT, "",
-                    oldTexFixUD.extra.patch1URL or '')
-                if patch1URL and patch1URL ~= oldTexFixUD.extra.patch1URL then
-                    oldTexFixUD.extra.patch1URL = patch1URL
-                    oldTexFixUD.extra.dirty = true
-                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                end
 
-                ui.label(x + 50, y, 'patchURL1', { 1, 1, 1, 0.2 })
+                oldTexFixUD.extra.patch1= oldTexFixUD.extra.patch1 or {}
                 nextRow()
+                combineImageUI('patch1')
                 nextRow()
-                local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
-                if paletteShow then
-                    if state.panelVisibility.showPalette then
-                        state.panelVisibility.showPalette = nil
-                        state.showPaletteFunc = nil
-                    else
-                        state.panelVisibility.showPalette = true
-                        state.showPaletteFunc = function(color)
-                            oldTexFixUD.extra.patch1Hex = color
-                            oldTexFixUD.extra.dirty = true
-                            PatternColorHasChangedViaPalette = true
-                        end
-                    end
-                end
-                local patch1Hex = ui.textinput(myID .. ' patchHex1', x + 50, y, 210, BUTTON_HEIGHT, "",
-                    oldTexFixUD.extra.patch1Hex or '',
-                    false,
-                    PatternColorHasChangedViaPalette)
-                if patch1Hex and patch1Hex ~= oldTexFixUD.extra.patch1Hex then
-                    oldTexFixUD.extra.patch1Hex = patch1Hex
-                    oldTexFixUD.extra.dirty = true
-                end
-                if PatternColorHasChangedViaPalette then
-                    PatternColorHasChangedViaPalette = false
-                end
-                ui.label(x + 50, y, 'patchHex1', { 1, 1, 1, 0.2 })
+                patchTransformUI('patch1')
+                flipWholeUI('patch1')
                 nextRow()
-
-                local patch1TX = ui.sliderWithInput(myID .. ' patch1TX', x, y, 50, -1, 1,
-                    oldTexFixUD.extra.patch1TX or 0)
-                ui.label(x, y, 'TX')
-                if patch1TX and patch1TX ~= oldTexFixUD.extra.patch1TX then
-                    oldTexFixUD.extra.patch1TX = patch1TX
-                    oldTexFixUD.extra.dirty = true
-                end
-                -- nextRow()
-                local patch1TY = ui.sliderWithInput(myID .. ' patch1TY', x + 140, y, 50, -1, 1,
-                    oldTexFixUD.extra.patch1TY or 0)
-                ui.label(x + 140, y, 'TY')
-                if patch1TY and patch1TY ~= oldTexFixUD.extra.patch1TY then
-                    oldTexFixUD.extra.patch1TY = patch1TY
-                    oldTexFixUD.extra.dirty = true
-                end
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'patch1tint', x, y, 100,oldTexFixUD.extra.patch1.tint,
+                    function(color) oldTexFixUD.extra.patch1.tint = color end, dirty)
 
 
-                nextRow()
-
-                local patch1SX = ui.sliderWithInput(myID .. ' patch1SX', x, y, 50, -1, 1,
-                    oldTexFixUD.extra.patch1SX or 1)
-                ui.label(x, y, 'SX')
-                if patch1SX and patch1SX ~= oldTexFixUD.extra.patch1SX then
-                    oldTexFixUD.extra.patch1SX = patch1SX
-                    oldTexFixUD.extra.dirty = true
-                end
-                -- nextRow()
-                local patch1SY = ui.sliderWithInput(myID .. ' patch1SY', x + 140, y, 50, -1, 1,
-                    oldTexFixUD.extra.patch1SY or 1)
-                ui.label(x + 140, y, 'SY')
-                if patch1SY and patch1SY ~= oldTexFixUD.extra.patch1SY then
-                    oldTexFixUD.extra.patch1SY = patch1SY
-                    oldTexFixUD.extra.dirty = true
-                end
-                nextRow()
-                local patch1r = ui.sliderWithInput(myID .. ' patch1r', x, y, ROW_WIDTH, -math.pi, math.pi,
-                    oldTexFixUD.extra.patch1r or 1)
-                ui.label(x, y, ' patch1r')
-                if patch1r and patch1r ~= oldTexFixUD.extra.patch1r then
-                    oldTexFixUD.extra.patch1r = patch1r
-                    oldTexFixUD.extra.dirty = true
-                end
-                nextRow()
             end)
             nextRow()
             drawAccordion('patch2', function()
-                -- 2 patches will be made here for now.
-                local patchURL2 = ui.textinput(myID .. 'patchURL2', x + 40, y, 220, BUTTON_HEIGHT, "",
-                    oldTexFixUD.extra.patchURL2 or '')
-                if patchURL2 and patchURL2 ~= oldTexFixUD.extra.patchURL2 then
-                    oldTexFixUD.extra.patchURL1 = patchURL2
-                    oldTexFixUD.extra.dirty = true
-                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                end
-
-                ui.label(x + 50, y, 'patchURL2', { 1, 1, 1, 0.2 })
+                oldTexFixUD.extra.patch2= oldTexFixUD.extra.patch2 or {}
                 nextRow()
-                nextRow()
-                local paletteShow = ui.button(x, y, 40, 'p', BUTTON_HEIGHT)
-                if paletteShow then
-                    if state.panelVisibility.showPalette then
-                        state.panelVisibility.showPalette = nil
-                        state.showPaletteFunc = nil
-                    else
-                        state.panelVisibility.showPalette = true
-                        state.showPaletteFunc = function(color)
-                            oldTexFixUD.extra.patchHex2 = color
-                            oldTexFixUD.extra.dirty = true
-                            PatternColorHasChangedViaPalette = true
-                        end
-                    end
-                end
-                local patchHex2 = ui.textinput(myID .. ' patchHex2', x + 50, y, 210, BUTTON_HEIGHT, "",
-                    oldTexFixUD.extra.patchHex2 or '',
-                    false,
-                    PatternColorHasChangedViaPalette)
-                if patchHex2 and patchHex2 ~= oldTexFixUD.extra.patchHex2 then
-                    oldTexFixUD.extra.patchHex2 = patchHex2
-                    oldTexFixUD.extra.dirty = true
-                end
-                if PatternColorHasChangedViaPalette then
-                    PatternColorHasChangedViaPalette = false
-                end
-                ui.label(x + 50, y, 'patchHex2', { 1, 1, 1, 0.2 })
-                nextRow()
-                local patch2TX = ui.sliderWithInput(myID .. ' patch2TX', x, y, ROW_WIDTH, -1, 1,
-                    oldTexFixUD.extra.patch2TX or 0)
-                ui.label(x, y, ' patch2TX')
-                if patch2TX and patch2TX ~= oldTexFixUD.extra.patch2TX then
-                    oldTexFixUD.extra.patch2TX = patch2TX
-                end
-                nextRow()
-                local patch2TY = ui.sliderWithInput(myID .. ' patch2TY', x, y, ROW_WIDTH, -1, 1,
-                    oldTexFixUD.extra.patch2TY or 0)
-                ui.label(x, y, ' patch2TY')
-                if patch2TY and patch2TY ~= oldTexFixUD.extra.patch2TY then
-                    oldTexFixUD.extra.patch2TY = patch2TY
-                end
-
-
-                local patch2SX = ui.sliderWithInput(myID .. ' patch2SX', x, y, ROW_WIDTH, -1, 1,
-                    oldTexFixUD.extra.patch2SX or 1)
-                ui.label(x, y, ' patch2SX')
-                if patch2SX and patch2SX ~= oldTexFixUD.extra.patch2SX then
-                    oldTexFixUD.extra.patch2SX = patch2SX
-                end
-                nextRow()
-                local patch2SY = ui.sliderWithInput(myID .. ' patch2SY', x, y, ROW_WIDTH, -1, 1,
-                    oldTexFixUD.extra.patch2SY or 1)
-                ui.label(x, y, ' patch2SY')
-                if patch2SY and patch2SY ~= oldTexFixUD.extra.patch2SY then
-                    oldTexFixUD.extra.patch2SY = patch2SY
-                end
-                nextRow()
-                local patch2r = ui.sliderWithInput(myID .. ' patch2r', x, y, ROW_WIDTH, -1, 1,
-                    oldTexFixUD.extra.patch2r or 1)
-                ui.label(x, y, ' patch2r')
-                if patch2r and patch2r ~= oldTexFixUD.extra.patch2r then
-                    oldTexFixUD.extra.patch2r = patch2r
-                end
-                nextRow()
+                combineImageUI('patch2')
+                 nextRow()
+                patchTransformUI('patch2')
+                flipWholeUI('patch2')
             end)
         else
+
+
+
+        if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+            local body = state.selection.selectedSFixture:getBody()
+            state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
+                body:getX(), body:getY())
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+        end
+
+        if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
+            local body = state.selection.selectedSFixture:getBody()
+            local cx,cy,w,h = getCenterAndDimensions(body)
+            fixtures.updateSFixtureDimensionsFunc(w, h)
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+        end
+        nextRow()
+
+
+
             local points = { state.selection.selectedSFixture:getShape():getPoints() }
             local dim = mathutils.getPolygonDimensions(points)
             local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
-            ui.label(x, y, ' radius')
+            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
             if newRadius and newRadius ~= dim then
-                updateSFixtureDimensionsFunc(newRadius, newRadius)
+                fixtures.updateSFixtureDimensionsFunc(newRadius, newRadius)
                 snap.rebuildSnapFixtures(registry.sfixtures)
             end
         end
@@ -6632,7 +6883,7 @@ function lib.drawSelectedBodiesUI()
             local ff = fixtures[1]
             local groupIndex = ff:getGroupIndex()
             local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex)
-            ui.label(x, y, ' groupid')
+
             if groupIndexSlider then
                 local value = math.floor(groupIndexSlider)
                 local count = 0
@@ -6645,6 +6896,7 @@ function lib.drawSelectedBodiesUI()
                     end
                 end
             end
+            ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' groupid')
         end
         -- end
         nextRow()
@@ -6824,7 +7076,7 @@ function lib.drawUpdateSelectedObjectUI()
                 if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
                     body:setAngle(newAngle * math.pi / 180)
                 end
-                ui.label(x, y, ' angle')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' angle')
 
 
                 nextRow()
@@ -6859,7 +7111,7 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
-                    ui.label(x, y, ' radius')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
                     if newRadius and newRadius ~= thing.radius then
                         state.selection.selectedObj = objectManager.recreateThingFromBody(body,
                             { shapeType = "circle", radius = newRadius })
@@ -6871,11 +7123,11 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y, ' width')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                     nextRow()
 
                     local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y, ' height')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
 
                     if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
                         state.editorPreferences.lastUsedWidth = newWidth
@@ -6889,28 +7141,28 @@ function lib.drawUpdateSelectedObjectUI()
                     end
                 elseif shapeType == 'torso' then
                     local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y, ' width')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                     nextRow()
 
                     local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
-                    ui.label(x, y, ' width2')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width2')
                     nextRow()
 
                     local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
-                    ui.label(x, y, ' width3')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width3')
                     nextRow()
 
                     local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y, ' height')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
                     nextRow()
                     local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
-                    ui.label(x, y, ' height2')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height2')
                     nextRow()
                     local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
-                    ui.label(x, y, ' height3')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height3')
                     nextRow()
                     local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
-                    ui.label(x, y, ' height4')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height4')
                     nextRow()
 
                     if (newWidth and newWidth ~= thing.width) or
@@ -6945,15 +7197,15 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y, ' width')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width')
                     nextRow()
 
                     local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, (thing.width2 or 5))
-                    ui.label(x, y, ' width2')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' width2')
                     nextRow()
 
                     local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y, ' height')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' height')
 
                     if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
                         state.editorPreferences.lastUsedWidth2 = newWidth2
@@ -6976,7 +7228,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                         local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
                             dirtyBodyChange)
-                        ui.label(x, y, ' radius')
+                        ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' radius')
                         if newRadius and newRadius ~= thing.radius then
                             state.selection.selectedObj = objectManager.recreateThingFromBody(body,
                                 { shapeType = shapeType, radius = newRadius })
@@ -6985,7 +7237,7 @@ function lib.drawUpdateSelectedObjectUI()
                         end
                     else
                         -- No UI controls for custom or unsupported shapes
-                        --ui.label(x, y, 'custom')
+                        --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
                         if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
                             state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
                             if state.polyEdit.lockedVerts == false then
@@ -7002,76 +7254,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                 nextRow()
             end)
-            --nextRow()
 
-            -- drawAccordion("textures", function(clicked)
-            --     nextRow()
-            --     ui.label(x, y, 'FG / BG / hex')
-            --     nextRow()
-            --     local dirty, checked = ui.checkbox(x, y, thing.textures.bgEnabled, '')
-            --     if dirty then
-            --         thing.textures.bgEnabled = not thing.textures.bgEnabled
-            --     end
-            --     local bgURL = ui.textinput(myID .. ' bgURL', x + 40, y, 220, 40, "", thing.textures.bgURL)
-            --     if bgURL and bgURL ~= thing.textures.bgURL then
-            --         thing.textures.bgURL = bgURL
-            --     end
-            --     nextRow()
-
-            --     local paletteShow = ui.button(x, y, 40, 'p', 40)
-            --     if paletteShow then
-
-            --             end
-            --         end
-            --     end
-            --     --if not state.panelVisibility.showPalette then
-            --     --_id, x, y, width, height, placeholder, currentText, isNumeric, reparse
-
-            --     local bgHex = ui.textinput(myID .. ' bgHex', x + 50, y, 210, 40, "", thing.textures.bgHex, false,
-            --         BGcolorHasChangedViaPalette)
-            --     if BGcolorHasChangedViaPalette then
-            --         BGcolorHasChangedViaPalette = false
-            --     end
-            --     if bgHex and bgHex ~= thing.textures.bgHex then
-            --         thing.textures.bgHex = bgHex
-            --     end
-            --     --end
-
-            --     nextRow()
-            --     local dirty, checked = ui.checkbox(x, y, thing.textures.fgEnabled, '')
-            --     if dirty then
-            --         thing.textures.fgEnabled = not thing.textures.fgEnabled
-            --     end
-            --     local fgURL = ui.textinput(myID .. ' fgURL', x + 40, y, 220, 40, "", thing.textures.fgURL)
-            --     if fgURL and fgURL ~= thing.textures.fgURL then
-            --         --local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            --         -- oldUD.label = newLabel
-            --         -- state.selection.selectedSFixture:setUserData(oldUD)
-            --         --local info = love.filesystem.getInfo('textures/' .. thing.textures.bgURL)
-            --         --if (info and info.type == 'file') then else thing.textures.bgEnabled = false end
-            --         thing.textures.fgURL = fgURL
-            --     end
-
-
-            --     nextRow()
-            --     local fgHex = ui.textinput(myID .. ' fgHex', x + 50, y, 210, 40, "", thing.textures.fgHex, false,
-            --         FGcolorHasChangedViaPalette)
-            --     if FGcolorHasChangedViaPalette then
-            --         FGcolorHasChangedViaPalette = false
-            --     end
-            --     if fgHex and fgHex ~= thing.textures.fgHex then
-            --         thing.textures.fgHex = fgHex
-            --     end
-            --     local paletteShow = ui.button(x, y, 40, 'p', 40)
-            --     if paletteShow then
-
-            --             end
-            --         end
-            --     end
-
-
-            --     nextRow()
-            -- end)
 
             nextRow()
 
@@ -7087,7 +7270,7 @@ function lib.drawUpdateSelectedObjectUI()
                             fixtures[i]:setDensity(newDensity)
                         end
                     end
-                    ui.label(x, y, ' density')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' density')
 
                     -- Bounciness Slider
                     local bounciness = fixtures[1]:getRestitution()
@@ -7099,7 +7282,7 @@ function lib.drawUpdateSelectedObjectUI()
                             fixtures[i]:setRestitution(newBounce)
                         end
                     end
-                    ui.label(x, y, ' bounce')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' bounce')
 
                     -- Friction Slider
                     local friction = fixtures[1]:getFriction()
@@ -7111,7 +7294,7 @@ function lib.drawUpdateSelectedObjectUI()
                             fixtures[i]:setFriction(newFriction)
                         end
                     end
-                    ui.label(x, y, ' friction')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' friction')
                     nextRow()
 
 
@@ -7121,7 +7304,7 @@ function lib.drawUpdateSelectedObjectUI()
                     local groupIndex = ff:getGroupIndex()
                     local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
                         groupIndex)
-                    ui.label(x, y, ' groupid')
+                    ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' groupid')
                     if groupIndexSlider then
                         local value = math.floor(groupIndexSlider)
                         local count = 0
@@ -7153,7 +7336,7 @@ function lib.drawUpdateSelectedObjectUI()
                 if newAngle and angleDegrees ~= newAngle then
                     body:setAngularVelocity(math.rad(newAngle))
                 end
-                ui.label(x, y, ' ang-vel')
+                ui.label(x, y+ (BUTTON_HEIGHT-ui.fontHeight), ' ang-vel')
 
                 nextRow()
                 local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
@@ -7295,7 +7478,7 @@ function lib.drawUI()
     end
 
     if state.scene.sceneScript and state.scene.sceneScript.onStart then
-        if ui.button(920, 20, 50, 'R') then
+        if ui.button(970, 20, 50, 'R') then
             -- todo actually reread the file itself!
             sceneLoader.loadAndRunScript(state.scene.scriptPath)
             script.call('onStart') --state.scene.sceneScript.onStart()
@@ -7314,7 +7497,10 @@ function lib.drawUI()
                 startY = 100 + padding
             })
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+
+
             if ui.button(x, y, 260, 'finalize') then
+                 logger:info('finalize clicked')
                 objectManager.finalizePolygon()
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
@@ -7383,9 +7569,6 @@ function lib.drawUI()
             local numRows = math.ceil(110 / itemsPerRow)
             -- assume a similar height for each swatch cell
             local maxRows = math.floor(400 / cellHeight)
-
-
-
 
             for i = 1, #box2dDrawTextured.palette do
                 local row = math.floor((i - 1) / itemsPerRow)
@@ -8819,7 +9002,7 @@ local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
 local orange = { 242 / 255, 133 / 255, 0 }
 -- Theme Configuration
 local theme  = {
-    lineHeight = 30,
+    lineHeight = 25,
     button = {
         default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
         hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
@@ -8828,7 +9011,7 @@ local theme  = {
         text_default = creamy,                           -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
-        height = 30
+        height = 25
     },
     checkbox = {
         checked = { 1, 1, 1 },
@@ -8846,7 +9029,7 @@ local theme  = {
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
         outline = creamy,
         track_radius = 2,
-        height = 30
+        height = 25
     },
     draggedElement = {
         fill = { 1, 1, 1 }, -- Color of the dragged element
@@ -8877,11 +9060,12 @@ local theme  = {
 ui.theme     = theme
 
 --- Initializes the UI module.
-function ui.init(font)
+function ui.init(font, fontHeight)
     ui.nextID = 1               -- Unique ID counter
     ui.dragOffset = { x = 0, y = 0 }
     ui.focusedTextInputID = nil -- Tracks the currently focused TextInput
     ui.textInputs = {}
+    ui.fontHeight = fontHeight
     ui.font = font or love.graphics.getFont()
 end
 

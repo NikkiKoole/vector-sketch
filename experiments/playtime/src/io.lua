@@ -88,7 +88,7 @@ function lib.buildWorld(data, world, cam)
                 end)
                 if err then
                     logger:info('failed creating a polygonshape, will add a circle instead')
-                    shape =nil
+                    shape = nil
                 end
 
 
@@ -452,6 +452,7 @@ function lib.gatherSaveData(world, camera)
                         local ud             = fixture:getUserData()
 
                         ud.extra.fixture     = 'fixture'
+                        -- todo cannot reproduce this one yet.. ?Error: src/io.lua:455: attempt to call method 'getUserData' (a nil value)
                         ud.extra.at          = ud.extra.at and ud.extra.at:getUserData().thing.id
                         ud.extra.to          = ud.extra.to and ud.extra.to:getUserData().thing.id
                         fixtureData.userData = utils.deepCopy(ud)

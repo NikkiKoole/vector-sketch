@@ -45,10 +45,10 @@ function love.load(args)
     --
 
 
-   local fontHeight = 25
-   --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
-   --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
-   local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
+    local fontHeight = 25
+    --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
+    --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
+    local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
 
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
@@ -103,10 +103,10 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('elasto')
-    --loadScriptAndScene('water')
+    sceneLoader.loadScriptAndScene('snap')
     --ceneLoader.loadScriptAndScene('straight')
-    local cwd = love.filesystem.getWorkingDirectory()
-     sceneLoader.loadScene(cwd .. '/scripts/lekker.playtime.json')
+    --local cwd = love.filesystem.getWorkingDirectory()
+    --sceneLoader.loadScene(cwd .. '/scripts/multi.playtime.json')
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
