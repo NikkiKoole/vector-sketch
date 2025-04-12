@@ -1048,15 +1048,16 @@ function lib.drawSelectedSFixture()
         nextRow()
 
 
-        if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-            state.currentMode = 'positioningSFixture'
-        end
 
 
 
         if sfixtureType == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
+                if ui.button(x, y, BUTTON_HEIGHT, '∆') then
+                    state.currentMode = 'positioningSFixture'
+                end
+                nextRow()
                 if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
                     local body = state.selection.selectedSFixture:getBody()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
@@ -1372,75 +1373,81 @@ function lib.drawSelectedSFixture()
                 flipWholeUI('patch2')
             end)
         else
-            if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
-                local body = state.selection.selectedSFixture:getBody()
-                state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
-                    body:getX(), body:getY())
-                local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-            end
+            drawAccordion('position', function()
+                nextRow()
+                if ui.button(x, y, BUTTON_HEIGHT, '∆') then
+                    state.currentMode = 'positioningSFixture'
+                end
 
-            if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
-                local body = state.selection.selectedSFixture:getBody()
-                local cx, cy, w, h = getCenterAndDimensions(body)
-                fixtures.updateSFixtureDimensionsFunc(w, h)
-                local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-            end
-            nextRow()
+                if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+                    local body = state.selection.selectedSFixture:getBody()
+                    state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
+                        body:getX(), body:getY())
+                    local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                    state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+                end
 
+                nextRow()
 
+                local points = { state.selection.selectedSFixture:getShape():getPoints() }
+                local dim = mathutils.getPolygonDimensions(points)
+                local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
+                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
+                if newRadius and newRadius ~= dim then
+                    fixtures.updateSFixtureDimensionsFunc(newRadius, newRadius)
+                    snap.rebuildSnapFixtures(registry.sfixtures)
+                end
 
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
-            local dim = mathutils.getPolygonDimensions(points)
-            local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
-            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
-            if newRadius and newRadius ~= dim then
-                fixtures.updateSFixtureDimensionsFunc(newRadius, newRadius)
-                snap.rebuildSnapFixtures(registry.sfixtures)
+                nextRow()
+                local function handleOffset(xMultiplier, yMultiplier)
+                    local body = state.selection.selectedSFixture:getBody()
+                    local parentVerts = body:getUserData().thing.vertices
+                    local allFixtures = body:getUserData().thing.body:getFixtures()
+                    local points = { state.selection.selectedSFixture:getShape():getPoints() }
+                    local centerX, centerY = mathutils.getCenterOfPoints(points)
+                    local bounds = mathutils.getBoundingRect(parentVerts)
+                    local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                    local newShape = mathutils.makePolygonAbsolute(relativePoints,
+                        ((bounds.width / 2) * xMultiplier),
+                        ((bounds.height / 2) * yMultiplier))
+
+                    local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
+                    state.selection.selectedSFixture:destroy()
+
+                    local shape = love.physics.newPolygonShape(newShape)
+                    local newfixture = love.physics.newFixture(body, shape)
+                    newfixture:setSensor(true) -- Sensor so it doesn't collide
+                    newfixture:setUserData(oldUD)
+                    state.selection.selectedSFixture = newfixture
+                end
+
+                if sfixtureType ~= 'texfixture' then
+                    if ui.button(x, y, 40, 'N') then
+                        handleOffset(0, -1)
+                    end
+                    if ui.button(x + 50, y, 40, 'E') then
+                        handleOffset(1, 0)
+                    end
+                    if ui.button(x + 100, y, 40, 'S') then
+                        handleOffset(0, 1)
+                    end
+                    if ui.button(x + 150, y, 40, 'W') then
+                        handleOffset(-1, 0)
+                    end
+                    if ui.button(x + 200, y, 40, 'C') then
+                        handleOffset(0, 0)
+                    end
+                end
+            end)
+
+            local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
+            if oldUD.label == 'connected-texture' then
+                if ui.button(x, y, ROW_WIDTH, 'add node') then
+                    state.currentMode = 'addNodeToConnectedTexture'
+                end
             end
         end
         nextRow()
-
-        local function handleOffset(xMultiplier, yMultiplier)
-            local body = state.selection.selectedSFixture:getBody()
-            local parentVerts = body:getUserData().thing.vertices
-            local allFixtures = body:getUserData().thing.body:getFixtures()
-            local points = { state.selection.selectedSFixture:getShape():getPoints() }
-            local centerX, centerY = mathutils.getCenterOfPoints(points)
-            local bounds = mathutils.getBoundingRect(parentVerts)
-            local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-            local newShape = mathutils.makePolygonAbsolute(relativePoints,
-                ((bounds.width / 2) * xMultiplier),
-                ((bounds.height / 2) * yMultiplier))
-
-            local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            state.selection.selectedSFixture:destroy()
-
-            local shape = love.physics.newPolygonShape(newShape)
-            local newfixture = love.physics.newFixture(body, shape)
-            newfixture:setSensor(true) -- Sensor so it doesn't collide
-            newfixture:setUserData(oldUD)
-            state.selection.selectedSFixture = newfixture
-        end
-
-        if sfixtureType ~= 'texfixture' then
-            if ui.button(x, y, 40, 'N') then
-                handleOffset(0, -1)
-            end
-            if ui.button(x + 50, y, 40, 'E') then
-                handleOffset(1, 0)
-            end
-            if ui.button(x + 100, y, 40, 'S') then
-                handleOffset(0, 1)
-            end
-            if ui.button(x + 150, y, 40, 'W') then
-                handleOffset(-1, 0)
-            end
-            if ui.button(x + 200, y, 40, 'C') then
-                handleOffset(0, 0)
-            end
-        end
     end)
 end
 
@@ -2136,6 +2143,12 @@ function lib.drawUI()
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
+
+    if (state.currentMode == 'addNodeToConnectedTexture') then
+        ui.panel(500, 100, 400, 60, '• click anchor or joint to add ', function()
+        end)
+    end
+
 
     if (state.currentMode == 'jointCreationMode') and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
         if (state.jointParams.body1 == nil) then

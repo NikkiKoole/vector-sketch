@@ -80,11 +80,11 @@ local function handlePointer(x, y, id, action)
             end
         end
 
-        if (state.currentMode == 'drawClickMode' ) then
+        if (state.currentMode == 'drawClickMode') then
             local w, h = love.graphics.getDimensions()
             if x < w - 300 then
-            table.insert(state.interaction.polyVerts, cx)
-            table.insert(state.interaction.polyVerts, cy)
+                table.insert(state.interaction.polyVerts, cx)
+                table.insert(state.interaction.polyVerts, cy)
             end
         end
 
@@ -108,10 +108,16 @@ local function handlePointer(x, y, id, action)
 
         if (state.currentMode == 'positioningSFixture') then
             state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture, cx, cy)
-          local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-            state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+
+            if (oldTexFixUD.extra.vertices) then
+                state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+            end
             state.currentMode = nil
         end
+
+
+
 
         local onPressedParams = {
             pointerForceFunc = function(fixture)
@@ -126,6 +132,58 @@ local function handlePointer(x, y, id, action)
         if (state.selection.selectedBodies and #hitted == 0) then
             state.selection.selectedBodies = nil
         end
+
+
+        if (state.currentMode == 'addNodeToConnectedTexture') then
+            -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
+            --
+            --
+            --
+            local distanceSquared = function(x1, y1, x2, y2)
+                local dx = x2 - x1
+                local dy = y2 - y1
+                --local distance = math.sqrt(dx * dx + dy * dy)
+                return dx * dx + dy * dy
+            end
+            --
+            --
+            logger:inspect(registry.sfixtures)
+            local closest = nil
+            local closestDistanceSquared = math.huge
+            for _, f in pairs(registry.sfixtures) do
+                local body = f:getBody()
+                local ud = f:getUserData()
+
+                if ud.label == 'anchor' then
+                    -- todo this will find ALL sfitures bot just anchors
+                    local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
+
+                    local d = distanceSquared(centerX, centerY, cx, cy)
+                    if d < closestDistanceSquared then
+                        closestDistanceSquared = d
+                        closest = { type = 'anchor', id = f:getUserData().id }
+                    end
+                end
+            end
+
+            for _, j in pairs(registry.joints) do
+                local x1, y1, x2, y2 = j:getAnchors()
+                local d = distanceSquared(x1, y1, cx, cy)
+                if d < closestDistanceSquared then
+                    closestDistanceSquared = d
+                    closest = { type = 'joint', id = j:getUserData().id }
+                end
+            end
+
+            if math.sqrt(closestDistanceSquared) < 30 then
+                print(logger:info(math.sqrt(closestDistanceSquared)))
+                print(logger:inspect(closest))
+            end
+            state.currentMode = nil
+        end
+
+
+
 
         if #hitted > 0 then
             local ud = hitted[1]:getBody():getUserData()
@@ -225,7 +283,7 @@ local function handlePointer(x, y, id, action)
         end
 
         if state.currentMode == 'drawFreePoly' then
-             state.interaction.capturingPoly = false
+            state.interaction.capturingPoly = false
             objectManager.finalizePolygon()
         end
 
@@ -357,13 +415,11 @@ function lib.handleMouseMoved(x, y, dx, dy)
 
         local ud = state.selection.selectedSFixture:getUserData()
         --logger:info(inspect(ud))
-        ud.extra.vertices[index] =state.texFixtureEdit.tempVerts[index]
-        ud.extra.vertices[index+1] =state.texFixtureEdit.tempVerts[index + 1]
+        ud.extra.vertices[index] = state.texFixtureEdit.tempVerts[index]
+        ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
-       -- print(index)
-
-
-    elseif  state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly'  or state.currentMode == 'drawClickPoly') then
+        -- print(index)
+    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
@@ -377,7 +433,6 @@ function lib.handleMouseMoved(x, y, dx, dy)
             end
         end
         if addPoint then
-
             table.insert(state.interaction.polyVerts, wx)
             table.insert(state.interaction.polyVerts, wy)
             state.interaction.lastPolyPt = { x = wx, y = wy }

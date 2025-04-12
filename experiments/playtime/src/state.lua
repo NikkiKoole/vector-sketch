@@ -62,7 +62,7 @@ state.texFixtureEdit = {
     verts = {}
 }
 
-state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB'
+state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'
 state.jointParams = nil
 state.jointLengthParams = {}
 state.showPaletteFunc = nil

@@ -1,4 +1,6 @@
 -- src/logger.lua
+local inspect = require 'vendor.inspect'
+
 local Logger = {}
 Logger.__index = Logger
 
@@ -33,6 +35,10 @@ end
 
 function Logger:error(...)
     self:_log("ERROR", ...)
+end
+
+function Logger:inspect(...)
+    self:_log("INSPECT", inspect(...))
 end
 
 function Logger:debug(...)
