@@ -449,7 +449,7 @@ end
 function lib.destroyBody(body)
     local thing = body:getUserData().thing
     local bjoints = body:getJoints()
-    for i = 1, #joints do
+    for i = 1, #bjoints do
         local ud = bjoints[i]:getUserData()
         if ud and ud.id then
             registry.unregisterJoint(ud.id)

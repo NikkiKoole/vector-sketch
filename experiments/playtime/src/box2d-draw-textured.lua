@@ -23,7 +23,7 @@ function getLoveImage(path, settings)
         local img = love.graphics.newImage(path)
         if (settings) then
             if settings.wrapX and settings.wrapY then
-            img:setWrap(settings.wrapX, settings.wrapY)
+                img:setWrap(settings.wrapX, settings.wrapY)
             end
         end
         if img then
@@ -39,7 +39,7 @@ function getLoveImage(path, settings)
     end
 end
 
-local settings = {wrapX='mirroredrepeat', wrapY='mirroredrepeat'}
+local settings = { wrapX = 'mirroredrepeat', wrapY = 'mirroredrepeat' }
 getLoveImage('textures/pat/type0.png', settings)
 getLoveImage('textures/pat/type1.png', settings)
 getLoveImage('textures/pat/type2.png', settings)
@@ -161,7 +161,7 @@ end
 
 
 
-lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX,texScaleY,
+lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
                                   flipx, flipy, patch1, patch2)
@@ -191,8 +191,8 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             local dx = texOffX --love.math.random() * .001
             local dy = texOffY
             if texture2 then
-            maskShader:send('fill', texture2)
-             end
+                maskShader:send('fill', texture2)
+            end
             maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
             maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
             maskShader:send('uvTranslation', { dx, dy })
@@ -316,7 +316,7 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                 logger:info(inspect(ud.extra))
+                logger:info(inspect(ud.extra))
                 ud.extra.dirty = false
 
 
@@ -334,26 +334,26 @@ function lib.makeCombinedImages()
                         local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
                         if outlineImage then
                             local imgData = lib.makeTexturedCanvas(
-                            outlineImage,                      -- line art
-                            maskImage,                   -- mask
-                                { mr, mg, mb },            -- color1
-                                ma * 5,                    -- alpha1
-                                patternImage or  tex1,                      -- texture2 (fill texture)
-                                { pr, pg, pb },            -- color2
-                                pa * 5,                    -- alpha2
-                                ud.extra[name].pr or 0, -- texRot
-                                ud.extra[name].psx or 1,    -- texScale
-                                ud.extra[name].psy or 1,    -- texScale
+                                outlineImage,            -- line art
+                                maskImage,               -- mask
+                                { mr, mg, mb },          -- color1
+                                ma * 5,                  -- alpha1
+                                patternImage or tex1,    -- texture2 (fill texture)
+                                { pr, pg, pb },          -- color2
+                                pa * 5,                  -- alpha2
+                                ud.extra[name].pr or 0,  -- texRot
+                                ud.extra[name].psx or 1, -- texScale
+                                ud.extra[name].psy or 1, -- texScale
                                 ud.extra[name].ptx or 0,
                                 ud.extra[name].pty or 0,
                                 { olr, olg, olb },      -- lineColor
                                 ola * 5,                -- lineAlpha
                                 ud.extra[name].fx or 1, -- flipx (normal)
-                                ud.extra[name].fy or 1 -- flipy (normal)
+                                ud.extra[name].fy or 1  -- flipy (normal)
                             )
                             result = {
                                 img = love.graphics.newImage(imgData),
-                            --img = getLoveImage('textures/' .. ud.extra.patch1URL),
+                                --img = getLoveImage('textures/' .. ud.extra.patch1URL),
                                 tint = ud.extra[name].tint or 'ffffff',
                                 tx = ud.extra[name].tx,
                                 ty = ud.extra[name].ty,
@@ -379,35 +379,34 @@ function lib.makeCombinedImages()
                 local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
 
                 if outlineImage or line then
-                local imgData = lib.makeTexturedCanvas(
-                   outlineImage or  line,                      -- line art
-                   maskImage or maskTex,                   -- mask
+                    local imgData = lib.makeTexturedCanvas(
+                        outlineImage or line,   -- line art
+                        maskImage or maskTex,   -- mask
 
-                    { mr, mg, mb },            -- color1
-                    ma * 5,                    -- alpha1
-                   patternImage or  tex1,                      -- texture2 (fill texture)
-                    { pr, pg, pb },            -- color2
-                    pa * 5,                    -- alpha2
-                    ud.extra.main.pr or 0, -- texRot
-                    ud.extra.main.psx or 1,    -- texScale
-                    ud.extra.main.psy or 1,    -- texScale
-                    ud.extra.main.ptx or 0,
-                    ud.extra.main.pty or 0,
-                    { olr, olg, olb },      -- lineColor
-                    ola * 5,                -- lineAlpha
-                    ud.extra.main.fx or 1, -- flipx (normal)
-                    ud.extra.main.fy or 1, -- flipy (normal)
-                    patch1 , patch2                 -- renderPatch (set to truthy to enable extra patch rendering)
-                )
-                image = love.graphics.newImage(imgData)
-                ud.extra.ompImage = image
+                        { mr, mg, mb },         -- color1
+                        ma * 5,                 -- alpha1
+                        patternImage or tex1,   -- texture2 (fill texture)
+                        { pr, pg, pb },         -- color2
+                        pa * 5,                 -- alpha2
+                        ud.extra.main.pr or 0,  -- texRot
+                        ud.extra.main.psx or 1, -- texScale
+                        ud.extra.main.psy or 1, -- texScale
+                        ud.extra.main.ptx or 0,
+                        ud.extra.main.pty or 0,
+                        { olr, olg, olb },     -- lineColor
+                        ola * 5,               -- lineAlpha
+                        ud.extra.main.fx or 1, -- flipx (normal)
+                        ud.extra.main.fy or 1, -- flipy (normal)
+                        patch1, patch2         -- renderPatch (set to truthy to enable extra patch rendering)
+                    )
+                    image = love.graphics.newImage(imgData)
+                    ud.extra.ompImage = image
                 end
                 fixtures[i]:setUserData(ud)
             end
         end
     end
 end
-
 
 local function makeSquishableUVsFromPoints(v)
     local verts = {}
@@ -435,19 +434,19 @@ local function makeSquishableUVsFromPoints(v)
 end
 
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
-     local p = {}
-     for i = 1, #vertices do
-         p[i] = vertices[i] * growFactor
-     end
+    local p = {}
+    for i = 1, #vertices do
+        p[i] = vertices[i] * growFactor
+    end
     -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
     local uvs = makeSquishableUVsFromPoints(p)
 
 
     -- todo maybe parametrize this point so you can make the midle of the fan not be the exact middle of the polygon.
     local cx, cy, _, _ = mathutils.getCenterOfPoints(vertices)
-    table.insert(uvs,1,{cx,cy, .5,.5}) -- I will just alwasy put a center vertex as the first one
+    table.insert(uvs, 1, { cx, cy, .5, .5 }) -- I will just alwasy put a center vertex as the first one
 
-    local _mesh =  love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
+    local _mesh = love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
     local img = img
     _mesh:setTexture(img)
 
@@ -481,6 +480,33 @@ function lib.drawTexturedWorld(world)
                         thing = body:getUserData().thing
                     })
             end
+
+            if ud and ud.label == "connected-texture" and ud.extra.nodes then
+                logger:info('got some new kind of combined drawing todo!')
+                local points = {}
+                for j = 1, #ud.extra.nodes do
+                    local it = ud.extra.nodes[j]
+                    if it.type == 'anchor' then
+                        local f = registry.getSFixtureByID(it.id)
+                        local b = f:getBody()
+                        local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
+                        logger:info(centerX, centerY)
+                        table.insert(points, centerX)
+                        table.insert(points, centerY)
+                    end
+                    if it.type == 'joint' then
+                        local j = registry.getJointByID(it.id)
+                        local x1, y1, _, _ = j:getAnchors()
+
+                        logger:info(x1, y1)
+                        table.insert(points, x1)
+                        table.insert(points, y1)
+                    end
+                end
+                if #points >= 4 then
+                    love.graphics.line(points)
+                end
+            end
         end
     end
     --print(#drawables)
@@ -496,30 +522,30 @@ function lib.drawTexturedWorld(world)
     -- and there is an issue with the center of the 'fan' mesh, it shouldnt always be 0,0 you can see this when you position the texfxture with the
     -- onscreen 'd' button quite a distnace out of the actual physics body center.
     --
-    local function drawImageLayerSquish(url, hex, extra, texfixture )
-       -- print('jo!')
+    local function drawImageLayerSquish(url, hex, extra, texfixture)
+        -- print('jo!')
         local img, imgw, imgh = getLoveImage('textures/' .. url)
-        local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
+        local vertices = extra.vertices or { texfixture:getShape():getPoints() }
 
         if (vertices and img) then
-           local body = texfixture:getBody()
+            local body = texfixture:getBody()
             local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
             local sx = ww / imgw
             local sy = hh / imgh
             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
             local r, g, b, a = lib.hexToColor(hex)
             love.graphics.setColor(r, g, b, a)
-          --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-             drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
+            --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+            drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
     end
-    local function drawImageLayerVanilla(url, hex, extra, texfixture )
+    local function drawImageLayerVanilla(url, hex, extra, texfixture)
         local img, imgw, imgh = getLoveImage('textures/' .. url)
-        local vertices =  extra.vertices or { texfixture:getShape():getPoints() }
+        local vertices = extra.vertices or { texfixture:getShape():getPoints() }
 
         if (vertices and img) then
-             local body = texfixture:getBody()
-           -- local body = texfixture:getBody()
+            local body = texfixture:getBody()
+            -- local body = texfixture:getBody()
             local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
             local sx = ww / imgw
             local sy = hh / imgh
@@ -534,32 +560,32 @@ function lib.drawTexturedWorld(world)
         end
     end
     local function drawCombinedImageVanilla(ompImage, extra, texfixture, thing)
-         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-         local img = ompImage
-         local imgw, imgh = ompImage:getDimensions()
+        local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+        local img = ompImage
+        local imgw, imgh = ompImage:getDimensions()
 
-         if vertices and img then
-             local body = texfixture:getBody()
-             local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-             local sx = ww / imgw
-             local sy = hh / imgh
-             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-             --local r, g, b, a = hexToColor(thing.textures.bgHex)
+        if vertices and img then
+            local body = texfixture:getBody()
+            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            local sx = ww / imgw
+            local sy = hh / imgh
+            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+            --local r, g, b, a = hexToColor(thing.textures.bgHex)
 
-             -- this routine is alos good, but it doenst take in affect the squishyness. you cannot deform the rectangle
-             -- love.graphics.setColor(1, 1, 1, 1)
-             -- love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
-             --     sx * 1 * thing.mirrorX,
-             --     sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
+            -- this routine is alos good, but it doenst take in affect the squishyness. you cannot deform the rectangle
+            -- love.graphics.setColor(1, 1, 1, 1)
+            -- love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
+            --     sx * 1 * thing.mirrorX,
+            --     sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
 
 
 
-             -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
-                local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
-             love.graphics.setColor(r,g,b,a)
-              --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-                drawSquishableHairOver(img, body:getX() , body:getY() , body:getAngle(), sx, sy, 1, vertices)
-         end
+            -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
+            local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
+            love.graphics.setColor(r, g, b, a)
+            --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+            drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
+        end
     end
 
 
@@ -573,12 +599,12 @@ function lib.drawTexturedWorld(world)
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
                 if extra.main and extra.main.bgURL then
-                drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra,  texfixture )
-                --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
+                    drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
+                    --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
                 if extra.main and extra.main.fgURL then
-                drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra,  texfixture )
-                --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
+                    drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
+                    --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
             end
 

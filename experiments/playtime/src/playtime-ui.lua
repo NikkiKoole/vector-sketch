@@ -1445,6 +1445,13 @@ function lib.drawSelectedSFixture()
                 if ui.button(x, y, ROW_WIDTH, 'add node') then
                     state.currentMode = 'addNodeToConnectedTexture'
                 end
+                nextRow()
+                if oldUD.extra.nodes then
+                    for i = 1, #oldUD.extra.nodes do
+                        nextRow()
+                        ui.label(x, y, oldUD.extra.nodes[i].id)
+                    end
+                end
             end
         end
         nextRow()
@@ -1477,6 +1484,7 @@ function lib.drawSelectedBodiesUI()
         if ui.button(x, y, 260, 'destroy') then
             for i = #state.selection.selectedBodies, 1, -1 do
                 snap.destroySnapJointAboutBody(state.selection.selectedBodies[i].body)
+                print('destroybody doesnt destroy the joint on it ?')
                 objectManager.destroyBody(state.selection.selectedBodies[i].body)
             end
 

@@ -145,15 +145,12 @@ local function handlePointer(x, y, id, action)
                 --local distance = math.sqrt(dx * dx + dy * dy)
                 return dx * dx + dy * dy
             end
-            --
-            --
-            logger:inspect(registry.sfixtures)
+
             local closest = nil
             local closestDistanceSquared = math.huge
             for _, f in pairs(registry.sfixtures) do
                 local body = f:getBody()
                 local ud = f:getUserData()
-
                 if ud.label == 'anchor' then
                     -- todo this will find ALL sfitures bot just anchors
                     local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
@@ -175,11 +172,26 @@ local function handlePointer(x, y, id, action)
                 end
             end
 
+
             if math.sqrt(closestDistanceSquared) < 30 then
-                print(logger:info(math.sqrt(closestDistanceSquared)))
-                print(logger:inspect(closest))
+                --print(logger:info(math.sqrt(closestDistanceSquared)))
+
+                local ud = state.selection.selectedSFixture:getUserData()
+                ud.extra.nodes = ud.extra.nodes or {}
+
+                local lastAdded = ud.extra.nodes[#ud.extra.nodes]
+                --                logger:inspect(lastAdded)
+                if (closest and lastAdded and lastAdded.id ~= closest.id) or not lastAdded then
+                    table.insert(ud.extra.nodes, closest)
+                end
+
+                state.selection.selectedSFixture:setUserData(ud)
+                logger:inspect(state.selection.selectedSFixture:getUserData())
+                return
+            else
+                state.currentMode = nil
+                return
             end
-            state.currentMode = nil
         end
 
 
