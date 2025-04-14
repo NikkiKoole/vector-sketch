@@ -8,6 +8,36 @@ local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
+
+local legImg = img
+
+function createTexturedTriangleStrip(image, optionalWidthMultiplier)
+    -- this assumes an strip that is oriented vertically
+    local w, h = image:getDimensions()
+    w = w * (optionalWidthMultiplier or 1)
+
+    local vertices = {}
+    local segments = 11
+    local hPart = h / (segments - 1)
+    local hv = 1 / (segments - 1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+
+    for i = 1, segments do
+        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
+        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
+    end
+
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+    return mesh
+end
+
+local legMesh = createTexturedTriangleStrip(legImg)
 --local imgw, imgh = img:getDimensions()
 
 
@@ -454,6 +484,62 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
 end
 
 
+
+function texturedCurve(curve, image, mesh, dir, scaleW)
+    if not dir then dir = 1 end
+    if not scaleW then scaleW = 1 end
+    local dl = curve:getDerivative()
+
+    for i = 1, 1 do
+        local w, h = image:getDimensions()
+        local count = mesh:getVertexCount()
+
+        for j = 1, count, 2 do
+            local index                  = (j - 1) / (count - 2)
+            local xl, yl                 = curve:evaluate(index)
+            local dx, dy                 = dl:evaluate(index)
+            local a                      = math.atan2(dy, dx) + math.pi / 2
+            local a2                     = math.atan2(dy, dx) - math.pi / 2
+            local line                   = (w * dir) * scaleW --- here we can make the texture wider!!, also flip it
+            local x2                     = xl + line * math.cos(a)
+            local y2                     = yl + line * math.sin(a)
+            local x3                     = xl + line * math.cos(a2)
+            local y3                     = yl + line * math.sin(a2)
+
+            local x, y, u, v, r, g, b, a = mesh:getVertex(j)
+            mesh:setVertex(j, { x2, y2, u, v })
+            x, y, u, v, r, g, b, a = mesh:getVertex(j + 1)
+            mesh:setVertex(j + 1, { x3, y3, u, v })
+        end
+    end
+end
+
+local function doubleControlPoints(points)
+    local result = {}
+
+    -- Sanity check: must be even number of values
+    if #points % 2 ~= 0 then
+        error("Input array must have even number of elements (x, y pairs)")
+    end
+
+    local numPoints = #points / 2
+
+    for i = 1, numPoints do
+        local x = points[(i - 1) * 2 + 1]
+        local y = points[(i - 1) * 2 + 2]
+
+        table.insert(result, x)
+        table.insert(result, y)
+
+        -- Double the point if it's a *middle* point (not first or last)
+        if i > 1 and i < numPoints then
+            table.insert(result, x)
+            table.insert(result, y)
+        end
+    end
+
+    return result
+end
 function lib.drawTexturedWorld(world)
     local bodies = world:getBodies()
     local drawables = {}
@@ -482,7 +568,7 @@ function lib.drawTexturedWorld(world)
             end
 
             if ud and ud.label == "connected-texture" and ud.extra.nodes then
-                logger:info('got some new kind of combined drawing todo!')
+                --logger:info('got some new kind of combined drawing todo!')
                 local points = {}
                 for j = 1, #ud.extra.nodes do
                     local it = ud.extra.nodes[j]
@@ -490,21 +576,24 @@ function lib.drawTexturedWorld(world)
                         local f = registry.getSFixtureByID(it.id)
                         local b = f:getBody()
                         local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
-                        logger:info(centerX, centerY)
                         table.insert(points, centerX)
                         table.insert(points, centerY)
                     end
                     if it.type == 'joint' then
                         local j = registry.getJointByID(it.id)
                         local x1, y1, _, _ = j:getAnchors()
-
-                        logger:info(x1, y1)
                         table.insert(points, x1)
                         table.insert(points, y1)
                     end
                 end
-                if #points >= 4 then
+                if #points >= 6 then
+                    points = doubleControlPoints(points)
+
+                    local curve = love.math.newBezierCurve(points)
+                    love.graphics.line(curve:render())
                     love.graphics.line(points)
+                    texturedCurve(curve, legImg, legMesh)
+                    love.graphics.draw(legMesh)
                 end
             end
         end

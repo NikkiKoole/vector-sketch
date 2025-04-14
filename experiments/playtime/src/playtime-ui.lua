@@ -1932,6 +1932,27 @@ function lib.drawUpdateSelectedObjectUI()
                         end
                     end
                 end
+
+                nextRow()
+                -- body:setAngularDamping(1)
+                -- body:setLinearDamping(1)
+                --
+                local angleDamp = tonumber(body:getAngularDamping())
+                local newAngularDamping = ui.sliderWithInput(myID .. 'angd', x, y, ROW_WIDTH, 0, 10, angleDamp,
+                    body:isAwake() and not state.world.paused)
+                if newAngularDamping and angleDamp ~= newAngularDamping then
+                    body:setAngularDamping(newAngularDamping)
+                end
+                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-damping')
+                nextRow()
+
+                local linDamp = tonumber(body:getLinearDamping())
+                local newLinearDamping = ui.sliderWithInput(myID .. 'lind', x, y, ROW_WIDTH, 0, 10, linDamp,
+                    body:isAwake() and not state.world.paused)
+                if newLinearDamping and linDamp ~= newLinearDamping then
+                    body:setLinearDamping(newLinearDamping)
+                end
+                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' lin-damping')
                 nextRow()
             end)
             nextRow()

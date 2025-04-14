@@ -1,4 +1,7 @@
 -- TODO i'm in the proecss of refactoring, what to clean up first and how'
+-- TODO there is an issue where the .vertices arent populated after load.
+-- TODO snap isnt working vanilla, not the right stuff is saved.
+--
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 
@@ -104,7 +107,7 @@ function love.load(args)
 
     --loadScriptAndScene('elasto')
     -- sceneLoader.loadScriptAndScene('snap')
-    --ceneLoader.loadScriptAndScene('straight')
+    --sceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
     sceneLoader.loadScene(cwd .. '/scripts/multi.playtime.json')
 end

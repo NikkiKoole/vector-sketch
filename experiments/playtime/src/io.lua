@@ -63,6 +63,8 @@ function lib.buildWorld(data, world, cam)
         body:setLinearVelocity(bodyData.linearVelocity[1], bodyData.linearVelocity[2])
         body:setAngularVelocity(bodyData.angularVelocity)
         body:setFixedRotation(bodyData.fixedRotation)
+        body:setLinearDamping(bodyData.linearDamping or 0)
+        body:setAngularDamping(bodyData.angularDamping or 0)
 
         local shared = bodyData.sharedFixtureData
 
@@ -398,6 +400,8 @@ function lib.gatherSaveData(world, camera)
                 angle = utils.round_to_decimals(body:getAngle(), 4),
                 linearVelocity = { lvx, lvy },
                 angularVelocity = utils.round_to_decimals(body:getAngularVelocity(), 4),
+                linearDamping = utils.round_to_decimals(body:getLinearDamping(), 4),
+                angularDamping = utils.round_to_decimals(body:getAngularDamping(), 4),
                 fixedRotation = body:isFixedRotation(),
                 fixtures = {},
                 sharedFixtureData = {}
@@ -610,6 +614,9 @@ function lib.cloneSelection(selectedBodies, world)
     -- Mapping from original body IDs to cloned body instances
     local clonedBodiesMap = {}
 
+    -- mapping from old ids (of bodies and fixtures) to new cloned ids
+    local idMapping = {}
+
     -- Step 1: Clone Bodies
     for _, originals in ipairs(selectedBodies) do
         local originalBody = originals.body
@@ -619,7 +626,7 @@ function lib.cloneSelection(selectedBodies, world)
 
             -- Generate a new unique ID for the cloned body
             local newID = uuid.generateID()
-
+            idMapping[originalThing.id] = newID
             -- Clone body properties
             local newBody = love.physics.newBody(world, originalBody:getX() + 50, originalBody:getY() + 50,
                 originalBody:getType())
@@ -628,7 +635,8 @@ function lib.cloneSelection(selectedBodies, world)
             newBody:setAngularVelocity(originalBody:getAngularVelocity())
             newBody:setFixedRotation(originalBody:isFixedRotation())
             newBody:setSleepingAllowed(originalBody:isSleepingAllowed())
-
+            newBody:setLinearDamping(originalBody:getLinearDamping())
+            newBody:setAngularDamping(originalBody:getAngularDamping())
             -- Clone shape
             local settings = {
                 radius = originalThing.radius,
@@ -673,8 +681,10 @@ function lib.cloneSelection(selectedBodies, world)
                         newFixture:setFriction(oldF:getFriction())
                         newFixture:setGroupIndex(oldF:getGroupIndex())
                         local oldUD = utils.deepCopy(oldF:getUserData())
-                        oldUD.id = uuid.generateID()
+                        local oldid = oldUD.id
 
+                        oldUD.id = uuid.generateID()
+                        idMapping[oldid] = oldUD.id
                         if utils.sanitizeString(oldUD.label) == 'snap' then
                             oldUD.extra.at = nil
                             oldUD.extra.to = nil
@@ -761,10 +771,11 @@ function lib.cloneSelection(selectedBodies, world)
                                 jointType = jointType,
                                 collideConnected = originalJoint:getCollideConnected(),
                                 id = uuid.generateID(),
+
                                 offsetA = { x = ud.offsetA.x, y = ud.offsetA.y },
                                 offsetB = { x = ud.offsetB.x, y = ud.offsetB.y }
                             }
-
+                            idMapping[ud.id] = newJointData.id
                             -- Include all joint-specific properties
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
@@ -788,6 +799,27 @@ function lib.cloneSelection(selectedBodies, world)
             end
         end
     end
+
+    -- at this point everything that is cloned is added into the world
+    logger:inspect(idMapping)
+    -- now we need to figure out if i have any of the connected-texture fixtures with ids in their userdata that needs updating
+    for k, v in pairs(clonedBodiesMap) do
+        local fixtures = v.body:getFixtures()
+        for j = 1, #fixtures do
+            local fixture = fixtures[j]
+            local ud = fixture:getUserData()
+            local oldUD = utils.deepCopy(ud)
+            if oldUD and oldUD.extra and oldUD.extra.nodes then
+                for ni = 1, #oldUD.extra.nodes do
+                    oldUD.extra.nodes[ni].id = idMapping[oldUD.extra.nodes[ni].id]
+                end
+                fixture:setUserData(oldUD)
+            end
+        end
+    end
+
+
+
 
     local result = {}
     for k, v in pairs(clonedBodiesMap) do
