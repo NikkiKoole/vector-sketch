@@ -14,6 +14,13 @@ local ui = require 'src.ui-all'
 local fixtures = require 'src.fixtures'
 local joints = require 'src.joints'
 
+local distanceSquared = function(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    --local distance = math.sqrt(dx * dx + dy * dy)
+    return dx * dx + dy * dy
+end
+
 local function handlePointer(x, y, id, action)
     if action == "pressed" then
         -- Handle press logig
@@ -139,12 +146,7 @@ local function handlePointer(x, y, id, action)
             --
             --
             --
-            local distanceSquared = function(x1, y1, x2, y2)
-                local dx = x2 - x1
-                local dy = y2 - y1
-                --local distance = math.sqrt(dx * dx + dy * dy)
-                return dx * dx + dy * dy
-            end
+
 
             local closest = nil
             local closestDistanceSquared = math.huge
@@ -206,15 +208,40 @@ local function handlePointer(x, y, id, action)
                 state.selection.selectedObj = nil
             end
             if (state.currentMode == 'jointCreationMode') and state.selection.selectedObj then
-                if state.jointParams.body1 == nil then
-                    state.jointParams.body1 = state.selection.selectedObj.body
-                    local px, py = state.jointParams.body1:getLocalPoint(cx, cy)
-                    state.jointParams.p1 = { px, py }
-                elseif state.jointParams.body2 == nil then
-                    if (state.selection.selectedObj.body ~= state.jointParams.body1) then
-                        state.jointParams.body2 = state.selection.selectedObj.body
-                        local px, py = state.jointParams.body2:getLocalPoint(cx, cy)
-                        state.jointParams.p2 = { px, py }
+                if #hitted == 2 and (state.jointParams.body1 == nil) and (state.jointParams.body2 == nil) then
+                    -- if you click exactly where two bodies overlap,
+                    -- picking the one whose center is closest to your click as body1.
+
+                    local b1 = hitted[1]:getBody():getUserData().thing.body
+                    local b2 = hitted[2]:getBody():getUserData().thing.body
+
+                    local b1x, b1y = b1:getLocalPoint(cx, cy)
+                    local b2x, b2y = b2:getLocalPoint(cx, cy)
+                    -- todo i think a good compromise is to pick the body where the cx,cy is closst to its middel as the first,
+                    -- this will result in the most usefull cases i think.
+                    --logger:info('b1', px, py)
+                    if (distanceSquared(b1x, b1y, 0, 0) < distanceSquared(b2x, b2y, 0, 0)) then
+                        state.jointParams.body1 = b1
+                        state.jointParams.body2 = b2
+                        state.jointParams.p1 = { b1x, b1y }
+                        state.jointParams.p2 = { b2x, b2y }
+                    else
+                        state.jointParams.body1 = b2
+                        state.jointParams.body2 = b1
+                        state.jointParams.p1 = { b2x, b2y }
+                        state.jointParams.p2 = { b1x, b1y }
+                    end
+                else
+                    if state.jointParams.body1 == nil then
+                        state.jointParams.body1 = state.selection.selectedObj.body
+                        local px, py = state.jointParams.body1:getLocalPoint(cx, cy)
+                        state.jointParams.p1 = { px, py }
+                    elseif state.jointParams.body2 == nil then
+                        if (state.selection.selectedObj.body ~= state.jointParams.body1) then
+                            state.jointParams.body2 = state.selection.selectedObj.body
+                            local px, py = state.jointParams.body2:getLocalPoint(cx, cy)
+                            state.jointParams.p2 = { px, py }
+                        end
                     end
                 end
             end

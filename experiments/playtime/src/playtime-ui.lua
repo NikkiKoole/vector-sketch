@@ -1137,6 +1137,7 @@ function lib.drawSelectedSFixture()
 
             function handlePaletteAndHex(idPrefix, postFix, x, y, width, currentHex, onColorChange, setDirty)
                 local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
+                local dirty = function() oldTexFixUD.extra.dirty = true end
                 local paletteShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
                 if paletteShow then
                     if state.panelVisibility.showPalette then
@@ -1145,7 +1146,7 @@ function lib.drawSelectedSFixture()
                     else
                         state.panelVisibility.showPalette = true
                         state.showPaletteFunc = function(color)
-                            setDirty()
+                            dirty()
                             --  oldTexFixUD.extra.dirty = true
                             colorpickers[postFix] = true
                             onColorChange(color)
