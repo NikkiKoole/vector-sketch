@@ -1,47 +1,27 @@
+--[[
+TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedTriangleStrip (within drawTexturedWorld) is definitely inefficient. We should absolutely cache these.
+]] --
+
 local lib = {}
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 
-
-local img = love.graphics.newImage('textures/leg1.png')
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 
-local legImg = img
+local imageCache = {}
 
-function createTexturedTriangleStrip(image, optionalWidthMultiplier)
-    -- this assumes an strip that is oriented vertically
-    local w, h = image:getDimensions()
-    w = w * (optionalWidthMultiplier or 1)
+local shrinkFactor = 1
 
-    local vertices = {}
-    local segments = 11
-    local hPart = h / (segments - 1)
-    local hv = 1 / (segments - 1)
-    local runningHV = 0
-    local runningHP = 0
-    local index = 0
-
-    for i = 1, segments do
-        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
-        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
-        runningHV = runningHV + hv
-        runningHP = runningHP + hPart
-        index = index + 2
-    end
-
-    local mesh = love.graphics.newMesh(vertices, "strip")
-    mesh:setTexture(image)
-    return mesh
+lib.setShrinkFactor = function(value)
+    shrinkFactor = value
 end
 
-local legMesh = createTexturedTriangleStrip(legImg)
---local imgw, imgh = img:getDimensions()
-
-
-local imageCache = {}
+lib.getShrinkFactor = function()
+    return shrinkFactor
+end
 
 function getLoveImage(path, settings)
     if not imageCache[path] then
@@ -80,16 +60,7 @@ getLoveImage('textures/pat/type6.png', settings)
 getLoveImage('textures/pat/type7.png', settings)
 getLoveImage('textures/pat/type8.png', settings)
 
-local shrinkFactor = 1
 
---local image = nil
-
-lib.setShrinkFactor = function(value)
-    shrinkFactor = value
-end
-lib.getShrinkFactor = function()
-    return shrinkFactor
-end
 
 local base = {
     '020202', '4f3166', '69445D', '613D41', 'efebd8',
@@ -120,6 +91,33 @@ lib.palette = base
 
 
 
+
+
+function createTexturedTriangleStrip(image, optionalWidthMultiplier)
+    -- this assumes an strip that is oriented vertically
+    local w, h = image:getDimensions()
+    w = w * (optionalWidthMultiplier or 1)
+
+    local vertices = {}
+    local segments = 11
+    local hPart = h / (segments - 1)
+    local hv = 1 / (segments - 1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+
+    for i = 1, segments do
+        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
+        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
+    end
+
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+    return mesh
+end
 
 function lib.hexToColor(hex)
     if type(hex) ~= "string" then
@@ -337,8 +335,6 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
     -- return nil -- love.image.newImageData(mask)
 end
 
-
-
 function lib.makeCombinedImages()
     local bodies = state.physicsWorld:getBodies()
     for _, body in ipairs(bodies) do
@@ -346,11 +342,8 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                logger:info(inspect(ud.extra))
+                --    logger:info(inspect(ud.extra))
                 ud.extra.dirty = false
-
-
-
 
 
                 function makePatch(name)
@@ -483,8 +476,6 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
     love.graphics.draw(_mesh, x, y, r, 1, 1)
 end
 
-
-
 function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 end
@@ -540,6 +531,7 @@ local function doubleControlPoints(points)
 
     return result
 end
+
 function lib.drawTexturedWorld(world)
     local bodies = world:getBodies()
     local drawables = {}
@@ -559,6 +551,7 @@ function lib.drawTexturedWorld(world)
                 --print(inspect(ud.extra))
                 table.insert(drawables,
                     {
+                        type = 'texfixture',
                         z = composedZ,
                         texfixture = fixtures[i],
                         extra = ud.extra,
@@ -589,11 +582,18 @@ function lib.drawTexturedWorld(world)
                 if #points >= 6 then
                     points = doubleControlPoints(points)
 
-                    local curve = love.math.newBezierCurve(points)
-                    love.graphics.line(curve:render())
-                    love.graphics.line(points)
-                    texturedCurve(curve, legImg, legMesh)
-                    love.graphics.draw(legMesh)
+                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                    --print(inspect(ud.extra))
+                    table.insert(drawables,
+                        {
+                            z = composedZ,
+                            type = 'connected-texture',
+                            curve = love.math.newBezierCurve(points),
+                            --texfixture = fixtures[i],
+                            extra = ud.extra,
+                            --body = body,
+                            -- thing = body:getUserData().thing
+                        })
                 end
             end
         end
@@ -702,6 +702,38 @@ function lib.drawTexturedWorld(world)
                     drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
                 --end
+            end
+        end
+        if drawables[i].type == 'connected-texture' then
+            local curve = drawables[i].curve
+            local extra = drawables[i].extra
+            if not extra.OMP then -- this is the BG and FG routine
+                if extra.main and extra.main.bgURL then
+                    local img = getLoveImage('textures/' .. extra.main.bgURL)
+                    if img then
+                        local mesh = createTexturedTriangleStrip(img)
+                        texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                        local olr, olg, olb, ola = lib.hexToColor(extra.main.bgHex)
+                        love.graphics.setColor(olr, olg, olb, ola)
+                        love.graphics.draw(mesh)
+                    end
+                end
+                if extra.main and extra.main.fgURL then
+                    local img = getLoveImage('textures/' .. extra.main.fgURL)
+                    if img then
+                        local mesh = createTexturedTriangleStrip(img)
+                        texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                        local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
+                        love.graphics.setColor(olr, olg, olb, ola)
+                        love.graphics.draw(mesh)
+                    end
+                end
+            end
+            if extra.OMP then
+                local img = extra.ompImage
+                local mesh = createTexturedTriangleStrip(img)
+                texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                love.graphics.draw(mesh)
             end
         end
     end

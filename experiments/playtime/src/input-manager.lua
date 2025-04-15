@@ -188,7 +188,7 @@ local function handlePointer(x, y, id, action)
                 end
 
                 state.selection.selectedSFixture:setUserData(ud)
-                logger:inspect(state.selection.selectedSFixture:getUserData())
+                --logger:inspect(state.selection.selectedSFixture:getUserData())
                 return
             else
                 state.currentMode = nil

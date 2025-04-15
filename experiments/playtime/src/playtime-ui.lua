@@ -1013,6 +1013,7 @@ function lib.drawSelectedSFixture()
 
 
 
+
     ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
         local padding = BUTTON_SPACING
         local layout = ui.createLayout({
@@ -1028,7 +1029,176 @@ function lib.drawSelectedSFixture()
 
         local myID = state.selection.selectedSFixture:getUserData().id
         local myLabel = state.selection.selectedSFixture:getUserData().label or ''
+        local oldTexFixUD = state.selection.selectedSFixture:getUserData()
 
+        function handlePaletteAndHex(idPrefix, postFix, x, y, width, currentHex, onColorChange, setDirty)
+            local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
+            local dirty = function() oldTexFixUD.extra.dirty = true end
+            local paletteShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
+            if paletteShow then
+                if state.panelVisibility.showPalette then
+                    state.panelVisibility.showPalette = nil
+                    state.showPaletteFunc = nil
+                else
+                    state.panelVisibility.showPalette = true
+                    state.showPaletteFunc = function(color)
+                        dirty()
+                        --  oldTexFixUD.extra.dirty = true
+                        colorpickers[postFix] = true
+                        onColorChange(color)
+                    end
+                end
+            end
+            local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '',
+                false, colorpickers[postFix])
+            if hex and hex ~= currentHex then
+                --setDirty()
+                oldTexFixUD.extra.dirty = true
+                onColorChange(hex)
+            end
+
+            if colorpickers[postFix] then
+                colorpickers[postFix] = false
+            end
+            ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
+        end
+
+        function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
+            local urlShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { 1, 1, 1, 0.2 })
+            if urlShow then
+                fileBrowser:loadFiles('/textures', { includes = '-mask' })
+                --fileBrowser:loadFiles('/textures', {excludes='-mask'})
+            end
+            local newValue = ui.textinput(id .. labelText, x + 10, y, width, BUTTON_HEIGHT, "", currentValue or '')
+            if newValue and newValue ~= currentValue then
+                updateCallback(newValue)
+                oldTexFixUD.extra.dirty = true
+                state.selection.selectedSFixture:setUserData(oldTexFixUD)
+            end
+            ui.label(x, y, labelText, { 1, 1, 1, 0.2 })
+            return newValue or currentValue
+        end
+
+        function patchTransformUI(layer)
+            local oldId = myID
+            myID = myID .. ':' .. layer
+            local newRotation = createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2,
+                oldTexFixUD.extra[layer].r or 0,
+                function(v)
+                    oldTexFixUD.extra[layer].r = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            nextRow()
+            local newScaleX = createSliderWithId(myID, 'sx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].sx or 1,
+                function(v)
+                    oldTexFixUD.extra[layer].sx = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+
+            local newScaleY = createSliderWithId(myID, 'sy', x + 140, y, 50, 0.01, 3,
+                oldTexFixUD.extra[layer].sy or 1,
+                function(v)
+                    oldTexFixUD.extra[layer].sy = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            nextRow()
+            local newXOff = createSliderWithId(myID, 'tx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].tx or 0,
+                function(v)
+                    oldTexFixUD.extra[layer].tx = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            local newYOff = createSliderWithId(myID, 'ty', x + 140, y, 50, -1, 1, oldTexFixUD.extra[layer].ty or 0,
+                function(v)
+                    oldTexFixUD.extra[layer].ty = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            nextRow()
+            myID = oldId
+        end
+
+        function combineImageUI(layer)
+            local oldId = myID
+            myID = myID .. ':' .. layer
+            local dirty = function() oldTexFixUD.extra.dirty = true end
+            handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra[layer].bgHex,
+                function(color) oldTexFixUD.extra[layer].bgHex = color end, dirty)
+            handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra[layer].bgURL,
+                function(u)
+                    oldTexFixUD.extra[layer].bgURL = u
+                end)
+            nextRow()
+            handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra[layer].fgHex,
+                function(c) oldTexFixUD.extra[layer].fgHex = c end, dirty)
+            handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra[layer].fgURL,
+                function(u) oldTexFixUD.extra[layer].fgURL = u end)
+            nextRow()
+            ---
+            handlePaletteAndHex(myID, 'patternHex', x, y, 100, oldTexFixUD.extra[layer].pHex,
+                function(color) oldTexFixUD.extra[layer].pHex = color end, dirty)
+            handleURLInput(myID, 'patternURL', x + 130, y, 150, oldTexFixUD.extra[layer].pURL,
+                function(u) oldTexFixUD.extra[layer].pURL = u end)
+            nextRow()
+
+            local newRotation = createSliderWithId(myID, 'pr', x, y, ROW_WIDTH, 0, math.pi * 2,
+                oldTexFixUD.extra[layer].pr or 0,
+                function(v)
+                    oldTexFixUD.extra[layer].pr = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            nextRow()
+            local newScaleX = createSliderWithId(myID, 'psx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].psx or 1,
+                function(v)
+                    oldTexFixUD.extra[layer].psx = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+
+            local newScaleY = createSliderWithId(myID, 'psy', x + 140, y, 50, 0.01, 3,
+                oldTexFixUD.extra[layer].psy or 1,
+                function(v)
+                    oldTexFixUD.extra[layer].psy = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            nextRow()
+            local newXOff = createSliderWithId(myID, 'ptx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].ptx or 0,
+                function(v)
+                    oldTexFixUD.extra[layer].ptx = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            local newYOff = createSliderWithId(myID, 'pty', x + 140, y, 50, -1, 1, oldTexFixUD.extra[layer].pty or 0,
+                function(v)
+                    oldTexFixUD.extra[layer].pty = v
+                    oldTexFixUD.extra.dirty = true
+                end)
+
+            nextRow()
+            myID = oldId
+        end
+
+        function flipWholeUI(layer)
+            local dirtyX, checkedX = ui.checkbox(x, y, oldTexFixUD.extra[layer].fx == -1, 'flipx')
+            if dirtyX then
+                oldTexFixUD.extra[layer].fx = checkedX and -1 or 1
+                oldTexFixUD.extra.dirty = true
+                state.selection.selectedSFixture:setUserData(oldTexFixUD)
+            end
+            local dirtyY, checkedY = ui.checkbox(x + 150, y, oldTexFixUD.extra[layer].fy == -1, 'flipy')
+            if dirtyY then
+                oldTexFixUD.extra[layer].fy = checkedY and -1 or 1
+                oldTexFixUD.extra.dirty = true
+                state.selection.selectedSFixture:setUserData(oldTexFixUD)
+            end
+
+            nextRow()
+        end
 
         local newLabel = ui.textinput(myID .. ' label', x, y, 260, BUTTON_HEIGHT, "", myLabel)
         if newLabel and newLabel ~= myLabel then
@@ -1135,174 +1305,7 @@ function lib.drawSelectedSFixture()
             nextRow()
 
 
-            function handlePaletteAndHex(idPrefix, postFix, x, y, width, currentHex, onColorChange, setDirty)
-                local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
-                local dirty = function() oldTexFixUD.extra.dirty = true end
-                local paletteShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
-                if paletteShow then
-                    if state.panelVisibility.showPalette then
-                        state.panelVisibility.showPalette = nil
-                        state.showPaletteFunc = nil
-                    else
-                        state.panelVisibility.showPalette = true
-                        state.showPaletteFunc = function(color)
-                            dirty()
-                            --  oldTexFixUD.extra.dirty = true
-                            colorpickers[postFix] = true
-                            onColorChange(color)
-                        end
-                    end
-                end
-                local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '',
-                    false, colorpickers[postFix])
-                if hex and hex ~= currentHex then
-                    --setDirty()
-                    oldTexFixUD.extra.dirty = true
-                    onColorChange(hex)
-                end
 
-                if colorpickers[postFix] then
-                    colorpickers[postFix] = false
-                end
-                ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
-            end
-
-            function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
-                local urlShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { 1, 1, 1, 0.2 })
-                if urlShow then
-                    fileBrowser:loadFiles('/textures', { includes = '-mask' })
-                    --fileBrowser:loadFiles('/textures', {excludes='-mask'})
-                end
-                local newValue = ui.textinput(id .. labelText, x + 10, y, width, BUTTON_HEIGHT, "", currentValue or '')
-                if newValue and newValue ~= currentValue then
-                    updateCallback(newValue)
-                    oldTexFixUD.extra.dirty = true
-                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                end
-                ui.label(x, y, labelText, { 1, 1, 1, 0.2 })
-                return newValue or currentValue
-            end
-
-            function patchTransformUI(layer)
-                local oldId = myID
-                myID = myID .. ':' .. layer
-                local newRotation = createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2,
-                    oldTexFixUD.extra[layer].r or 0,
-                    function(v)
-                        oldTexFixUD.extra[layer].r = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                nextRow()
-                local newScaleX = createSliderWithId(myID, 'sx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].sx or 1,
-                    function(v)
-                        oldTexFixUD.extra[layer].sx = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-
-                local newScaleY = createSliderWithId(myID, 'sy', x + 140, y, 50, 0.01, 3,
-                    oldTexFixUD.extra[layer].sy or 1,
-                    function(v)
-                        oldTexFixUD.extra[layer].sy = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                nextRow()
-                local newXOff = createSliderWithId(myID, 'tx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].tx or 0,
-                    function(v)
-                        oldTexFixUD.extra[layer].tx = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                local newYOff = createSliderWithId(myID, 'ty', x + 140, y, 50, -1, 1, oldTexFixUD.extra[layer].ty or 0,
-                    function(v)
-                        oldTexFixUD.extra[layer].ty = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                nextRow()
-                myID = oldId
-            end
-
-            function combineImageUI(layer)
-                local oldId = myID
-                myID = myID .. ':' .. layer
-                local dirty = function() oldTexFixUD.extra.dirty = true end
-                handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra[layer].bgHex,
-                    function(color) oldTexFixUD.extra[layer].bgHex = color end, dirty)
-                handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra[layer].bgURL,
-                    function(u)
-                        oldTexFixUD.extra[layer].bgURL = u
-                    end)
-                nextRow()
-                handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra[layer].fgHex,
-                    function(c) oldTexFixUD.extra[layer].fgHex = c end, dirty)
-                handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra[layer].fgURL,
-                    function(u) oldTexFixUD.extra[layer].fgURL = u end)
-                nextRow()
-                ---
-                handlePaletteAndHex(myID, 'patternHex', x, y, 100, oldTexFixUD.extra[layer].pHex,
-                    function(color) oldTexFixUD.extra[layer].pHex = color end, dirty)
-                handleURLInput(myID, 'patternURL', x + 130, y, 150, oldTexFixUD.extra[layer].pURL,
-                    function(u) oldTexFixUD.extra[layer].pURL = u end)
-                nextRow()
-
-                local newRotation = createSliderWithId(myID, 'pr', x, y, ROW_WIDTH, 0, math.pi * 2,
-                    oldTexFixUD.extra[layer].pr or 0,
-                    function(v)
-                        oldTexFixUD.extra[layer].pr = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                nextRow()
-                local newScaleX = createSliderWithId(myID, 'psx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].psx or 1,
-                    function(v)
-                        oldTexFixUD.extra[layer].psx = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-
-                local newScaleY = createSliderWithId(myID, 'psy', x + 140, y, 50, 0.01, 3,
-                    oldTexFixUD.extra[layer].psy or 1,
-                    function(v)
-                        oldTexFixUD.extra[layer].psy = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                nextRow()
-                local newXOff = createSliderWithId(myID, 'ptx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].ptx or 0,
-                    function(v)
-                        oldTexFixUD.extra[layer].ptx = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                local newYOff = createSliderWithId(myID, 'pty', x + 140, y, 50, -1, 1, oldTexFixUD.extra[layer].pty or 0,
-                    function(v)
-                        oldTexFixUD.extra[layer].pty = v
-                        oldTexFixUD.extra.dirty = true
-                    end)
-
-                nextRow()
-                myID = oldId
-            end
-
-            function flipWholeUI(layer)
-                local dirtyX, checkedX = ui.checkbox(x, y, oldTexFixUD.extra[layer].fx == -1, 'flipx')
-                if dirtyX then
-                    oldTexFixUD.extra[layer].fx = checkedX and -1 or 1
-                    oldTexFixUD.extra.dirty = true
-                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                end
-                local dirtyY, checkedY = ui.checkbox(x + 150, y, oldTexFixUD.extra[layer].fy == -1, 'flipy')
-                if dirtyY then
-                    oldTexFixUD.extra[layer].fy = checkedY and -1 or 1
-                    oldTexFixUD.extra.dirty = true
-                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
-                end
-
-                nextRow()
-            end
 
             drawAccordion("texture", function()
                 nextRow()
@@ -1443,15 +1446,71 @@ function lib.drawSelectedSFixture()
 
             local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
             if oldUD.label == 'connected-texture' then
-                if ui.button(x, y, ROW_WIDTH, 'add node') then
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
                     state.currentMode = 'addNodeToConnectedTexture'
                 end
+
                 nextRow()
-                if oldUD.extra.nodes then
-                    for i = 1, #oldUD.extra.nodes do
-                        nextRow()
-                        ui.label(x, y, oldUD.extra.nodes[i].id)
+
+                nextRow()
+
+                local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                    math.floor(oldTexFixUD.extra.zOffset or 0),
+                    function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                    end,
+                    (not state.world.paused) or dirtyBodyChange)
+                nextRow()
+                nextRow()
+                local e = state.selection.selectedSFixture:getUserData().extra
+                if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
+                    e.OMP = not e.OMP
+                end
+                nextRow()
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                local newWMul = createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
+                    oldTexFixUD.extra.main.wmul or 1,
+                    function(v)
+                        oldTexFixUD.extra.main.wmul = v
+                    end)
+                if ui.checkbox(x, y, (oldTexFixUD.extra.main.dir == nil or oldTexFixUD.extra.main.dir == 1), 'dir') then
+                    if oldTexFixUD.extra.main.dir == nil or oldTexFixUD.extra.main.dir == 1 then
+                        oldTexFixUD.extra.main.dir = -1
+                    else
+                        oldTexFixUD.extra.main.dir = 1
                     end
+                end
+                nextRow()
+
+
+                if not e.OMP then
+                    handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
+                        function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
+                    handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
+                        function(u)
+                            oldTexFixUD.extra.main.bgURL = u
+                        end)
+                    nextRow()
+                    handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
+                        function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
+                    handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
+                        function(u)
+                            oldTexFixUD.extra.main.fgURL = u
+                        end)
+
+                    nextRow()
+                end
+
+                if e.OMP then
+                    oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+
+                    combineImageUI('main')
+                    flipWholeUI('main')
+
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
+                    handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
+                        function(color) oldTexFixUD.extra.main.tint = color end, dirty)
                 end
             end
         end

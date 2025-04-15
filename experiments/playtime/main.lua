@@ -106,7 +106,7 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('elasto')
-    -- sceneLoader.loadScriptAndScene('snap')
+    --  sceneLoader.loadScriptAndScene('snap')
     --sceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
     sceneLoader.loadScene(cwd .. '/scripts/multi.playtime.json')
