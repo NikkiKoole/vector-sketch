@@ -7,17 +7,6 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 
 
--- -- Helper to get neck part name (consistent naming)
--- local function getNeckPartName(index)
---     return 'neck' .. tostring(index)
--- end
-
--- -- Helper to check if a part name is a neck segment
--- local function isNeckPart(partName)
---     return string.match(partName, '^neck(%d+)$')
--- end
-
-
 local function extractNeckIndex(name)
     local index = string.match(name, "^neck(%d+)$")
     return index and tonumber(index) or nil
@@ -302,7 +291,7 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckParts = 13
+            neckParts = 2
         },
         parts = {
             ['torso'] = { dims = { w = 300, w2 = 350, h = 300 }, shape = 'trapezium' },
@@ -321,7 +310,6 @@ local dna = {
             ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
         },
         joints = {
-
             { a = 'torso', b = 'luleg', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
             { a = 'torso', b = 'ruleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
             { a = 'luleg', b = 'llleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
@@ -360,7 +348,6 @@ lib.createCharacter = function(template, x, y)
         if hasNeck and not isPotato then
             for i = 1, (instance.dna.creation.neckParts or 2) do
                 table.insert(ordered, 'neck' .. i)
-
                 instance.dna.parts['neck' .. i] = { dims = { w = 40, w2 = 4, h = 150 }, shape = 'capsule' }
             end
         end
@@ -393,25 +380,11 @@ lib.createCharacter = function(template, x, y)
         end
 
         logger:inspect(ordered)
-        -- -- vanilla humanoid (with 2 neckparts)
-        -- local orderedHumanoid = {
-        --     'torso', 'neck', 'neck1', 'head',
-        --     'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
-        --     'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
-        -- }
-        -- -- potatohead
-        -- local orderedPotatoHead = {
-        --     'torso',
-        --     'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
-        --     'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
-        -- }
-        -- local ordered = orderedHumanoid
-        -- instance.dna.isPotatoHead = true
-        --for partName, partData in pairs(instance.dna.parts) do
+
         for i = 1, #ordered do
             local partName = ordered[i]
             local partData = instance.dna.parts[partName]
-            -- print(partName)
+
             local settings = {
                 x = x,
                 y = y,
@@ -480,7 +453,6 @@ lib.createCharacter = function(template, x, y)
                 end
             end
         end
-        --instance.parts['lfoot'].body:setAngle(math.pi / 2)
     end
 end
 
