@@ -6,19 +6,32 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 
+
+-- -- Helper to get neck part name (consistent naming)
+-- local function getNeckPartName(index)
+--     return 'neck' .. tostring(index)
+-- end
+
+-- -- Helper to check if a part name is a neck segment
+-- local function isNeckPart(partName)
+--     return string.match(partName, '^neck(%d+)$')
+-- end
+
+
+local function extractNeckIndex(name)
+    local index = string.match(name, "^neck(%d+)$")
+    return index and tonumber(index) or nil
+end
+
 local function getParentAndChildrenFromPartName(partName, guy)
     local creation = guy.dna.creation
 
     local map      = {
-        torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
-        neck = { p = 'torso', c = 'neck1' },
-        neck1 = { p = 'neck', c = 'head' },
-        head = { p = 'neck1', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } },
-        hair1 = { p = 'head' },
-        hair2 = { p = 'head' },
-        hair3 = { p = 'head' },
-        hair4 = { p = 'head' },
-        hair5 = { p = 'head' },
+        torso = { c = { 'neck1', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
+        neck1 = { p = 'torso', c = 'neck2' },
+        neck2 = { p = 'neck1', c = 'head' },
+        head = { p = 'neck2', c = { 'lear', 'rear' } },
+
         lear = { p = 'head' },
         rear = { p = 'head' },
         luarm = { p = 'torso', c = 'llarm' },
@@ -36,12 +49,14 @@ local function getParentAndChildrenFromPartName(partName, guy)
         --  butt = {p = 'torso'}
     }
 
+
+
     if creation and partName == 'head' and creation.hasNeck == false then
-        return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
+        return { p = 'torso', c = { 'lear', 'rear', } }
     end
 
     if creation and partName == 'torso' and creation.isPotatoHead then
-        return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
+        return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', } }
     end
     if creation and partName == 'torso' and creation.hasNeck == false then
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
@@ -57,11 +72,11 @@ end
 
 local function getOwnOffset(partName, guy)
     local creation = guy.dna.parts
-    if partName == 'neck' then
-        return 0, -creation.neck.dims.h / 2
-    end
     if partName == 'neck1' then
         return 0, -creation.neck1.dims.h / 2
+    end
+    if partName == 'neck2' then
+        return 0, -creation.neck2.dims.h / 2
     end
     if partName == 'head' then
         return 0, -creation.head.dims.h / 2
@@ -110,16 +125,16 @@ local function getOffsetFromParent(partName, guy)
     local positioners = guy.dna.positioners
     local data        = getParentAndChildrenFromPartName(partName, guy)
 
-    if partName == 'neck' then
-        if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(1, guy)
-        end
+    if partName == 'neck1' then
+        -- if creation.torso.metaPoints then
+        --     return getScaledTorsoMetaPoint(1, guy)
+        -- end
         return 0, -creation.torso.dims.h / 2
-    elseif partName == 'neck1' then
-        if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(1, guy)
-        end
-        return 0, -creation.neck.dims.h / 2
+    elseif partName == 'neck2' then
+        -- if creation.torso.metaPoints then
+        --     return getScaledTorsoMetaPoint(1, guy)
+        -- end
+        return 0, -creation.neck1.dims.h / 2
     elseif partName == 'llarm' then
         return 0, creation.luarm.dims.h / 2
     elseif partName == 'rlarm' then
@@ -176,26 +191,6 @@ local function getOffsetFromParent(partName, guy)
             return rx, ry
         end
         return (creation.torso.dims.w / 2) * (1 - t), creation.torso.dims.h / 2
-    elseif partName == 'hair1' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(3, guy)
-        end
-    elseif partName == 'hair2' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(4, guy)
-        end
-    elseif partName == 'hair3' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(5, guy)
-        end
-    elseif partName == 'hair4' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(6, guy)
-        end
-    elseif partName == 'hair5' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(7, guy)
-        end
     elseif partName == 'lear' then
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
@@ -240,12 +235,16 @@ local function getOffsetFromParent(partName, guy)
         end
         return creation.head.w / 2, -creation.head.h / 2
     elseif (partName == 'head') then
-        -- if creation.hasNeck then
+        --  then
         --     return 0, -creation.neck1.dims.h / 2
         -- else
         --     return 0, -creation.torso.dims.h / 2
         -- end
-        return 0, -creation.neck1.dims.h / 2
+        if not creation.hasNeck then
+            return 0, -creation.torso.dims.h / 2
+        else
+            return 0, -creation.neck2.dims.h / 2
+        end
     else
         if false then
             if (partName == 'head') then
@@ -289,12 +288,13 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            hasNeck = true,
+            hasNeck = false,
+            --neckParts = 0
         },
         parts = {
             ['torso'] = { dims = { w = 300, w2 = 350, h = 300 }, shape = 'trapezium' },
-            ['neck'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule' },
-            ['neck1'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule', },
+            ['neck1'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule' },
+            ['neck2'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule', },
             ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', },
             ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule' },
             ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
@@ -310,10 +310,10 @@ local dna = {
             ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
         },
         joints = {
-            { a = 'torso', b = 'neck',  type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
-            { a = 'neck',  b = 'neck1', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
-            { a = 'neck1', b = 'head',  type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } },
-            --{ a = 'torso', b = 'head',  type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } }, --- noneck
+            { a = 'torso', b = 'neck1', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
+            { a = 'neck1', b = 'neck2', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
+            { a = 'neck2', b = 'head',  type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } },
+            { a = 'torso', b = 'head',  type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } }, --- noneck
             { a = 'torso', b = 'luleg', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
             { a = 'torso', b = 'ruleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
             { a = 'luleg', b = 'llleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
@@ -343,17 +343,16 @@ lib.createCharacter = function(template, x, y)
             -- Add other instance-specific state if needed
         }
 
-
-
         local isPotato = instance.dna.creation.isPotatoHead
-        local hasNeck = instance.dna.creation.hasNeck ~= false
+        local hasNeck = instance.dna.creation.hasNeck --or instance.dna.creation.neckParts > 0
 
         local ordered = {}
         table.insert(ordered, 'torso')
 
         if hasNeck and not isPotato then
-            table.insert(ordered, 'neck')
-            table.insert(ordered, 'neck1')
+            for i = 1, (instance.dna.creation.neckParts or 2) do
+                table.insert(ordered, 'neck' .. i)
+            end
         end
         if not isPotato then
             table.insert(ordered, 'head')
