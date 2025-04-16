@@ -24,13 +24,13 @@ local function extractNeckIndex(name)
 end
 
 local function getParentAndChildrenFromPartName(partName, guy)
-    local creation = guy.dna.creation
+    local creation  = guy.dna.creation
 
-    local map      = {
+    local map       = {
         torso = { c = { 'neck1', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
-        neck1 = { p = 'torso', c = 'neck2' },
-        neck2 = { p = 'neck1', c = 'head' },
-        head = { p = 'neck2', c = { 'lear', 'rear' } },
+        --neck1 = { p = 'torso', c = 'neck2' },
+        -- neck2 = { p = 'neck1', c = 'head' },
+        head = { p = 'neck' .. creation.neckParts, c = { 'lear', 'rear' } },
 
         lear = { p = 'head' },
         rear = { p = 'head' },
@@ -48,17 +48,29 @@ local function getParentAndChildrenFromPartName(partName, guy)
         rfoot = { p = 'rlleg' },
         --  butt = {p = 'torso'}
     }
+    -- print(partName)
+    local neckIndex = extractNeckIndex(partName)
+    if neckIndex then
+        if neckIndex == 1 then
+            map[partName] = { p = 'torso', c = (neckIndex == creation.neckParts) and 'head' or 'neck2' }
+        else
+            map[partName] = {
+                p = 'neck' .. (neckIndex - 1),
+                c = (neckIndex == creation.neckParts) and 'head' or
+                    'neck' .. neckIndex + 1
+            }
+        end
+    end
+    --print(partName)
 
-
-
-    if creation and partName == 'head' and creation.hasNeck == false then
+    if creation and partName == 'head' and (creation.hasNeck == false or creation.neckParts == 0) then
         return { p = 'torso', c = { 'lear', 'rear', } }
     end
 
     if creation and partName == 'torso' and creation.isPotatoHead then
         return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', } }
     end
-    if creation and partName == 'torso' and creation.hasNeck == false then
+    if creation and partName == 'torso' and (creation.hasNeck == false or creation.neckParts == 0) then
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
 
@@ -67,16 +79,14 @@ local function getParentAndChildrenFromPartName(partName, guy)
     if result.p == 'head' and creation.isPotatoHead then
         result.p = 'torso'
     end
+    --logger:info(partName, inspect(map[partName]))
     return map[partName]
 end
 
 local function getOwnOffset(partName, guy)
     local creation = guy.dna.parts
-    if partName == 'neck1' then
-        return 0, -creation.neck1.dims.h / 2
-    end
-    if partName == 'neck2' then
-        return 0, -creation.neck2.dims.h / 2
+    if extractNeckIndex(partName) then
+        return 0, -creation[partName].dims.h / 2
     end
     if partName == 'head' then
         return 0, -creation.head.dims.h / 2
@@ -121,36 +131,35 @@ local function getOwnOffset(partName, guy)
 end
 
 local function getOffsetFromParent(partName, guy)
-    local creation    = guy.dna.parts
+    local parts       = guy.dna.parts
+    local creation    = guy.dna.creation
     local positioners = guy.dna.positioners
     local data        = getParentAndChildrenFromPartName(partName, guy)
 
-    if partName == 'neck1' then
-        -- if creation.torso.metaPoints then
-        --     return getScaledTorsoMetaPoint(1, guy)
-        -- end
-        return 0, -creation.torso.dims.h / 2
-    elseif partName == 'neck2' then
-        -- if creation.torso.metaPoints then
-        --     return getScaledTorsoMetaPoint(1, guy)
-        -- end
-        return 0, -creation.neck1.dims.h / 2
+
+    if extractNeckIndex(partName) then
+        local index = extractNeckIndex(partName)
+        if index == 1 then
+            return 0, -parts.torso.dims.h / 2
+        else
+            return 0, -parts['neck' .. (index - 1)].dims.h / 2
+        end
     elseif partName == 'llarm' then
-        return 0, creation.luarm.dims.h / 2
+        return 0, parts.luarm.dims.h / 2
     elseif partName == 'rlarm' then
-        return 0, creation.ruarm.dims.h / 2
+        return 0, parts.ruarm.dims.h / 2
     elseif partName == 'llleg' then
-        return 0, creation.luleg.dims.h / 2
+        return 0, parts.luleg.dims.h / 2
     elseif partName == 'lfoot' then
-        return 0, creation.llleg.dims.h / 2
+        return 0, parts.llleg.dims.h / 2
     elseif partName == 'rlleg' then
-        return 0, creation.ruleg.dims.h / 2
+        return 0, parts.ruleg.dims.h / 2
     elseif partName == 'rfoot' then
-        return 0, creation.rlleg.dims.h / 2
+        return 0, parts.rlleg.dims.h / 2
     elseif partName == 'rhand' then
-        return 0, creation.rlarm.dims.h / 2
+        return 0, parts.rlarm.dims.h / 2
     elseif partName == 'lhand' then
-        return 0, creation.llarm.dims.h / 2
+        return 0, parts.llarm.dims.h / 2
     elseif partName == 'luarm' then
         -- if creation.isPotatoHead then
         --     if creation.torso.metaPoints then
@@ -161,7 +170,7 @@ local function getOffsetFromParent(partName, guy)
         --         return getScaledTorsoMetaPoint(8, guy)
         --     end
         -- end
-        return -creation.torso.dims.w / 2, -creation.torso.dims.h / 2
+        return -parts.torso.dims.w / 2, -parts.torso.dims.h / 2
     elseif partName == 'ruarm' then
         -- if creation.isPotatoHead then
         --     if creation.torso.metaPoints then
@@ -172,78 +181,83 @@ local function getOffsetFromParent(partName, guy)
         --         return getScaledTorsoMetaPoint(2, guy)
         --     end
         -- end
-        return creation.torso.dims.w / 2, -creation.torso.dims.h / 2
+        return parts.torso.dims.w / 2, -parts.torso.dims.h / 2
     elseif partName == 'luleg' then
         local t = 0.5 --positioners.leg.x
-        if creation.torso.metaPoints then
-            local ax, ay = getScaledTorsoMetaPoint(6, guy)
-            local bx, by = getScaledTorsoMetaPoint(5, guy)
-            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry
-        end
-        return (-creation.torso.dims.w / 2) * (1 - t), creation.torso.dims.h / 2
+        -- if creation.torso.metaPoints then
+        --     local ax, ay = getScaledTorsoMetaPoint(6, guy)
+        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
+        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        --     return rx, ry
+        -- end
+        return (-parts.torso.dims.w / 2) * (1 - t), parts.torso.dims.h / 2
     elseif partName == 'ruleg' then
         local t = 0.5 -- positioners.leg.x
-        if creation.torso.metaPoints then
-            local ax, ay = getScaledTorsoMetaPoint(4, guy)
-            local bx, by = getScaledTorsoMetaPoint(5, guy)
-            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry
-        end
-        return (creation.torso.dims.w / 2) * (1 - t), creation.torso.dims.h / 2
+        -- if creation.torso.metaPoints then
+        --     local ax, ay = getScaledTorsoMetaPoint(4, guy)
+        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
+        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        --     return rx, ry
+        -- end
+        return (parts.torso.dims.w / 2) * (1 - t), parts.torso.dims.h / 2
     elseif partName == 'lear' then
-        if creation.isPotatoHead then
-            if creation.torso.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledTorsoMetaPoint(8, guy)
-                local bx, by = getScaledTorsoMetaPoint(7, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        -- if creation.isPotatoHead then
+        --     if creation.torso.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledTorsoMetaPoint(8, guy)
+        --         local bx, by = getScaledTorsoMetaPoint(7, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry
-            end
-        else
-            if creation.head.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledHeadMetaPoint(8, guy)
-                local bx, by = getScaledHeadMetaPoint(6, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        --         return rx, ry
+        --     end
+        -- else
+        --     if creation.head.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledHeadMetaPoint(8, guy)
+        --         local bx, by = getScaledHeadMetaPoint(6, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry
-            end
-        end
+        --         return rx, ry
+        --     end
+        -- end
 
-        return -creation.head.w / 2, -creation.head.h / 2
+        return -parts.head.w / 2, -parts.head.h / 2
     elseif partName == 'rear' then
-        if creation.isPotatoHead then
-            if creation.torso.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledTorsoMetaPoint(2, guy)
-                local bx, by = getScaledTorsoMetaPoint(3, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        -- if creation.isPotatoHead then
+        --     if creation.torso.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledTorsoMetaPoint(2, guy)
+        --         local bx, by = getScaledTorsoMetaPoint(3, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry
-            end
-        else
-            if creation.head.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledHeadMetaPoint(2, guy)
-                local bx, by = getScaledHeadMetaPoint(4, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        --         return rx, ry
+        --     end
+        -- else
+        --     if creation.head.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledHeadMetaPoint(2, guy)
+        --         local bx, by = getScaledHeadMetaPoint(4, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry
-            end
-        end
-        return creation.head.w / 2, -creation.head.h / 2
+        --         return rx, ry
+        --     end
+        -- end
+        return parts.head.w / 2, -parts.head.h / 2
     elseif (partName == 'head') then
         --  then
         --     return 0, -creation.neck1.dims.h / 2
         -- else
         --     return 0, -creation.torso.dims.h / 2
-        -- end
-        if not creation.hasNeck then
-            return 0, -creation.torso.dims.h / 2
+
+
+
+
+
+        if creation.neckParts == 0 then
+            return 0, -parts.torso.dims.h / 2
         else
-            return 0, -creation.neck2.dims.h / 2
+            local last = 'neck' .. creation.neckParts
+            return 0, -parts[last].dims.h / 2
         end
     else
         if false then
@@ -288,13 +302,10 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            hasNeck = false,
-            --neckParts = 0
+            neckParts = 13
         },
         parts = {
             ['torso'] = { dims = { w = 300, w2 = 350, h = 300 }, shape = 'trapezium' },
-            ['neck1'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule' },
-            ['neck2'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule', },
             ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', },
             ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule' },
             ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
@@ -310,10 +321,7 @@ local dna = {
             ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
         },
         joints = {
-            { a = 'torso', b = 'neck1', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
-            { a = 'neck1', b = 'neck2', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
-            { a = 'neck2', b = 'head',  type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } },
-            { a = 'torso', b = 'head',  type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } }, --- noneck
+
             { a = 'torso', b = 'luleg', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
             { a = 'torso', b = 'ruleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
             { a = 'luleg', b = 'llleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
@@ -344,14 +352,16 @@ lib.createCharacter = function(template, x, y)
         }
 
         local isPotato = instance.dna.creation.isPotatoHead
-        local hasNeck = instance.dna.creation.hasNeck --or instance.dna.creation.neckParts > 0
-
+        local hasNeck = instance.dna.creation.neckParts > 0
         local ordered = {}
+
         table.insert(ordered, 'torso')
 
         if hasNeck and not isPotato then
             for i = 1, (instance.dna.creation.neckParts or 2) do
                 table.insert(ordered, 'neck' .. i)
+
+                instance.dna.parts['neck' .. i] = { dims = { w = 40, w2 = 4, h = 150 }, shape = 'capsule' }
             end
         end
         if not isPotato then
@@ -365,6 +375,24 @@ lib.createCharacter = function(template, x, y)
         for _, part in ipairs(limbs) do table.insert(ordered, part) end
 
 
+        --  ok lets create the correct joints
+        if not hasNeck and not isPotato then
+            table.insert(instance.dna.joints,
+                { a = 'torso', b = 'head', type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } })
+        end
+        if not isPotato and instance.dna.creation.neckParts > 0 then
+            table.insert(instance.dna.joints,
+                { a = 'torso', b = 'neck1', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
+            for i = 1, instance.dna.creation.neckParts - 1 do
+                table.insert(instance.dna.joints,
+                    { a = 'neck' .. i, b = 'neck' .. (i + 1), type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
+            end
+
+            table.insert(instance.dna.joints,
+                { a = 'neck' .. instance.dna.creation.neckParts, b = 'head', type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } })
+        end
+
+        logger:inspect(ordered)
         -- -- vanilla humanoid (with 2 neckparts)
         -- local orderedHumanoid = {
         --     'torso', 'neck', 'neck1', 'head',
