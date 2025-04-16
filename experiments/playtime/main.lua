@@ -109,7 +109,13 @@ function love.load(args)
     --  sceneLoader.loadScriptAndScene('snap')
     --sceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
-    sceneLoader.loadScene(cwd .. '/scripts/multi.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+
+
+    local CharacterManager = require 'src.character-manager'
+
+    -- In love.load or a scene setup function:
+    local humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
