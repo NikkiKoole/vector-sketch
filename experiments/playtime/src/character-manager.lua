@@ -80,6 +80,12 @@ local function getOwnOffset(partName, guy)
     if partName == 'head' then
         return 0, -creation.head.dims.h / 2
     end
+    if partName == 'lear' then
+        return 0, -creation.lear.dims.h / 2
+    end
+    if partName == 'rear' then
+        return 0, -creation.rear.dims.h / 2
+    end
     if partName == 'luleg' then
         return 0, creation.luleg.dims.h / 2
     end
@@ -209,8 +215,11 @@ local function getOffsetFromParent(partName, guy)
         --         return rx, ry
         --     end
         -- end
-
-        return -parts.head.w / 2, -parts.head.h / 2
+        if creation.isPotatoHead then
+            return -parts.torso.dims.w / 2, -parts.torso.dims.h / 2
+        else
+            return -parts.head.dims.w / 2, -parts.head.dims.h / 2
+        end
     elseif partName == 'rear' then
         -- if creation.isPotatoHead then
         --     if creation.torso.metaPoints then
@@ -231,7 +240,11 @@ local function getOffsetFromParent(partName, guy)
         --         return rx, ry
         --     end
         -- end
-        return parts.head.w / 2, -parts.head.h / 2
+        if creation.isPotatoHead then
+            return parts.torso.dims.w / 2, -parts.torso.dims.h / 2
+        else
+            return parts.head.dims.w / 2, -parts.head.dims.h / 2
+        end
     elseif (partName == 'head') then
         --  then
         --     return 0, -creation.neck1.dims.h / 2
@@ -277,11 +290,15 @@ local function getOffsetFromParent(partName, guy)
 end
 
 local function getAngleOffset(partName, guy)
-    local creation = guy.dna.parts
+    local parts = guy.dna.parts
     if partName == 'lfoot' then
         return math.pi / 2
     elseif partName == 'rfoot' then
         return -math.pi / 2
+    elseif partName == 'lear' then
+        return parts.lear.stanceAngle
+    elseif partName == 'rear' then
+        return parts.rear.stanceAngle
     else
         return 0
     end
@@ -290,7 +307,7 @@ end
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = false,
+            isPotatoHead = true,
             neckParts = 2
         },
         parts = {
@@ -308,7 +325,11 @@ local dna = {
             ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', },
             ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
             ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
+            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', stanceAngle = -math.pi / 2 },
+            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', stanceAngle = math.pi / 2 }
         },
+
+
         joints = {
             { a = 'torso', b = 'luleg', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
             { a = 'torso', b = 'ruleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
@@ -358,6 +379,7 @@ lib.createCharacter = function(template, x, y)
         local limbs = {
             'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
             'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
+            'lear', 'rear'
         }
         for _, part in ipairs(limbs) do table.insert(ordered, part) end
 
@@ -378,8 +400,24 @@ lib.createCharacter = function(template, x, y)
             table.insert(instance.dna.joints,
                 { a = 'neck' .. instance.dna.creation.neckParts, b = 'head', type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } })
         end
+        if isPotato then
+            table.insert(instance.dna.joints,
+                { a = 'torso', b = 'lear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
+            table.insert(instance.dna.joints,
+                { a = 'torso', b = 'rear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
+        end
+        if not isPotato then
+            table.insert(instance.dna.joints,
+                { a = 'head', b = 'lear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
+            table.insert(instance.dna.joints,
+                { a = 'head', b = 'rear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
+        end
 
         logger:inspect(ordered)
+
+
+
+
 
         for i = 1, #ordered do
             local partName = ordered[i]
@@ -399,6 +437,16 @@ lib.createCharacter = function(template, x, y)
                 -- Add other physics properties if needed (friction, restitution?)
             }
             --logger:info('getting offset for ', partName)
+
+
+            -- todo the code below should be in a little  function, so i can make/change a single part.
+            -- complex part is about the joints, that is now a separate pass, this should just happen in the same function
+            local function makePart(partName, instance)
+                local values = getParentAndChildrenFromPartName(partName, instance)
+                local parent = values.p
+                logger:info(partName, parent)
+            end
+            makePart(partName, instance)
 
             local prevA = 0
             local data = getParentAndChildrenFromPartName(partName, instance)
