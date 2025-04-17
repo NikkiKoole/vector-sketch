@@ -6,7 +6,6 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 
-
 local function extractNeckIndex(name)
     local index = string.match(name, "^neck(%d+)$")
     return index and tonumber(index) or nil
@@ -19,27 +18,32 @@ end
 
 local function getParentAndChildrenFromPartName(partName, guy)
     local creation      = guy.dna.creation
-    local neckParts     = creation.neckParts or 0
+    local neckSegments  = creation.neckSegments or 0
     local torsoSegments = creation.torsoSegments or 1 -- Default to 1 segment
 
+    -- Define the name of the highest torso segment
+    local highestTorso  = 'torso' .. torsoSegments
+    -- Define the name of the lowest torso segment (always torso1)
+    local lowestTorso   = 'torso1'
+
     local map           = {
-        torso = { c = { 'neck1', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
+        -- torso1 = { c = { 'neck1', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         --neck1 = { p = 'torso', c = 'neck2' },
         -- neck2 = { p = 'neck1', c = 'head' },
-        head = { p = 'neck' .. neckParts, c = { 'lear', 'rear' } },
-
+        --head = { p = 'neck' .. neckSegments, c = { 'lear', 'rear' } },
+        head = { p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso, c = { 'lear', 'rear' } },
         lear = { p = 'head' },
         rear = { p = 'head' },
-        luarm = { p = 'torso', c = 'llarm' },
+        luarm = { p = highestTorso, c = 'llarm' },
         llarm = { p = 'luarm', c = 'lhand' },
         lhand = { p = 'llarm' },
-        ruarm = { p = 'torso', c = 'rlarm' },
+        ruarm = { p = highestTorso, c = 'rlarm' },
         rlarm = { p = 'ruarm', c = 'rhand' },
         rhand = { p = 'rlarm' },
-        luleg = { p = 'torso', c = 'llleg' },
+        luleg = { p = lowestTorso, c = 'llleg' },
         llleg = { p = 'luleg', c = 'lfoot' },
         lfoot = { p = 'llleg' },
-        ruleg = { p = 'torso', c = 'rlleg' },
+        ruleg = { p = lowestTorso, c = 'rlleg' },
         rlleg = { p = 'ruleg', c = 'rfoot' },
         rfoot = { p = 'rlleg' },
         --  butt = {p = 'torso'}
@@ -48,40 +52,96 @@ local function getParentAndChildrenFromPartName(partName, guy)
     local neckIndex     = extractNeckIndex(partName)
     if neckIndex then
         if neckIndex == 1 then
-            map[partName] = { p = 'torso', c = (neckIndex == neckParts) and 'head' or 'neck2' }
+            map[partName] = { p = highestTorso, c = (neckIndex == neckSegments) and 'head' or 'neck2' }
         else
             map[partName] = {
                 p = 'neck' .. (neckIndex - 1),
-                c = (neckIndex == neckParts) and 'head' or
+                c = (neckIndex == neckSegments) and 'head' or
                     'neck' .. neckIndex + 1
             }
         end
     end
-    --print(partName)
 
-    if creation and partName == 'head' and (creation.hasNeck == false or creation.neckParts == 0) then
-        return { p = 'torso', c = { 'lear', 'rear', } }
+    local torsoIndex = extractTorsoIndex(partName)
+    if torsoIndex then
+        logger:info('torsoIndex', torsoIndex)
+        if torsoIndex then
+            local children = {}
+            -- Middle segments connect only to the next torso segment
+            if torsoIndex < torsoSegments then
+                table.insert(children, 'torso' .. (torsoIndex + 1))
+            end
+
+            -- Highest segment connects to arms and neck/head
+            if torsoIndex == torsoSegments then
+                table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
+                table.insert(children, 'luarm')
+                table.insert(children, 'ruarm')
+                if creation.isPotatoHead then -- Potato ears attach to highest torso
+                    table.insert(children, 'lear')
+                    table.insert(children, 'rear')
+                end
+            end
+
+            -- Lowest segment connects to legs
+            if torsoIndex == 1 then
+                table.insert(children, 'luleg')
+                table.insert(children, 'ruleg')
+            end
+
+            if torsoIndex == 1 then
+                map[partName] = { c = children } -- Torso1 has no parent
+            else
+                map[partName] = { p = 'torso' .. (torsoIndex - 1), c = children }
+            end
+        end
     end
 
-    if creation and partName == 'torso' and creation.isPotatoHead then
-        return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', } }
+    -- Overrides for special cases
+
+    -- Head connects directly to highest torso if no neck
+    if partName == 'head' and neckSegments == 0 then
+        map[partName] = { p = highestTorso, c = { 'lear', 'rear' } }
     end
-    if creation and partName == 'torso' and (creation.hasNeck == false or creation.neckParts == 0) then
-        return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
+
+    -- If Potato Head, ears parent is highest torso (head doesn't exist as parent)
+    if creation.isPotatoHead then
+        map['lear'] = { p = highestTorso }
+        map['rear'] = { p = highestTorso }
+        -- Remove head connection if it exists from map
+        map['head'] = nil -- No head part in potato mode
     end
+
+    -- If only one torso segment, it has all children directly
+    if torsoSegments == 1 and partName == 'torso1' then
+        local singleTorsoChildren = {
+            (neckSegments > 0) and 'neck1' or 'head',
+            'luarm', 'ruarm', 'luleg', 'ruleg'
+        }
+        if creation.isPotatoHead then
+            table.insert(singleTorsoChildren, 'lear')
+            table.insert(singleTorsoChildren, 'rear')
+        end
+        map[partName] = { c = singleTorsoChildren }
+    end
+
 
     local result = map[partName]
 
-    if result.p == 'head' and creation.isPotatoHead then
-        result.p = 'torso'
-    end
-    --logger:info(partName, inspect(map[partName]))
-    return map[partName]
+    -- This potato head check might be redundant now given the above logic
+    -- if result and result.p == 'head' and creation.isPotatoHead then
+    --    result.p = highestTorso -- Or torso1 if only one segment
+    -- end
+
+    return result or {} -- Return empty table if partName not found
 end
 
 local function getOwnOffset(partName, guy)
     local creation = guy.dna.parts
     if extractNeckIndex(partName) then
+        return 0, -creation[partName].dims.h / 2
+    end
+    if extractTorsoIndex(partName) then
         return 0, -creation[partName].dims.h / 2
     end
     if partName == 'head' then
@@ -133,18 +193,30 @@ local function getOwnOffset(partName, guy)
 end
 
 local function getOffsetFromParent(partName, guy)
-    local parts       = guy.dna.parts
-    local creation    = guy.dna.creation
-    local positioners = guy.dna.positioners
-    local data        = getParentAndChildrenFromPartName(partName, guy)
+    local parts         = guy.dna.parts
+    local creation      = guy.dna.creation
+    local positioners   = guy.dna.positioners
+    local data          = getParentAndChildrenFromPartName(partName, guy)
+    -- Define the name of the highest torso segment
+    local torsoSegments = creation.torsoSegments or 1
+    local highestTorso  = 'torso' .. torsoSegments
+    -- Define the name of the lowest torso segment (always torso1)
+    local lowestTorso   = 'torso1'
 
 
     if extractNeckIndex(partName) then
         local index = extractNeckIndex(partName)
         if index == 1 then
-            return 0, -parts.torso.dims.h / 2
+            return 0, -parts[highestTorso].dims.h / 2
         else
             return 0, -parts['neck' .. (index - 1)].dims.h / 2
+        end
+    elseif extractTorsoIndex(partName) then
+        local index = extractTorsoIndex(partName)
+        if index == 1 then
+            return 0, 0
+        else
+            return 0, -parts['torso' .. (index - 1)].dims.h / 2
         end
     elseif partName == 'llarm' then
         return 0, parts.luarm.dims.h / 2
@@ -172,7 +244,7 @@ local function getOffsetFromParent(partName, guy)
         --         return getScaledTorsoMetaPoint(8, guy)
         --     end
         -- end
-        return -parts.torso.dims.w / 2, -parts.torso.dims.h / 2
+        return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
     elseif partName == 'ruarm' then
         -- if creation.isPotatoHead then
         --     if creation.torso.metaPoints then
@@ -183,7 +255,7 @@ local function getOffsetFromParent(partName, guy)
         --         return getScaledTorsoMetaPoint(2, guy)
         --     end
         -- end
-        return parts.torso.dims.w / 2, -parts.torso.dims.h / 2
+        return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
     elseif partName == 'luleg' then
         local t = 0.5 --positioners.leg.x
         -- if creation.torso.metaPoints then
@@ -192,7 +264,7 @@ local function getOffsetFromParent(partName, guy)
         --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
         --     return rx, ry
         -- end
-        return (-parts.torso.dims.w / 2) * (1 - t), parts.torso.dims.h / 2
+        return (-parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
     elseif partName == 'ruleg' then
         local t = 0.5 -- positioners.leg.x
         -- if creation.torso.metaPoints then
@@ -201,7 +273,7 @@ local function getOffsetFromParent(partName, guy)
         --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
         --     return rx, ry
         -- end
-        return (parts.torso.dims.w / 2) * (1 - t), parts.torso.dims.h / 2
+        return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
     elseif partName == 'lear' then
         -- if creation.isPotatoHead then
         --     if creation.torso.metaPoints then
@@ -223,7 +295,7 @@ local function getOffsetFromParent(partName, guy)
         --     end
         -- end
         if creation.isPotatoHead then
-            return -parts.torso.dims.w / 2, -parts.torso.dims.h / 2
+            return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
         else
             return -parts.head.dims.w / 2, -parts.head.dims.h / 2
         end
@@ -248,7 +320,7 @@ local function getOffsetFromParent(partName, guy)
         --     end
         -- end
         if creation.isPotatoHead then
-            return parts.torso.dims.w / 2, -parts.torso.dims.h / 2
+            return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
         else
             return parts.head.dims.w / 2, -parts.head.dims.h / 2
         end
@@ -262,36 +334,13 @@ local function getOffsetFromParent(partName, guy)
 
 
 
-        if creation.neckParts == 0 then
-            return 0, -parts.torso.dims.h / 2
+        if creation.neckSegments == 0 then
+            return 0, -parts[highestTorso].dims.h / 2
         else
-            local last = 'neck' .. creation.neckParts
+            local last = 'neck' .. creation.neckSegments
             return 0, -parts[last].dims.h / 2
         end
     else
-        if false then
-            if (partName == 'head') then
-                if creation.hasNeck then
-                    return 0, creation.neck1.h / (creation.neck1.links or 1)
-                else
-                    if creation.torso.metaPoints then
-                        return getScaledTorsoMetaPoint(1, guy)
-                    end
-
-                    return 0, -creation.torso.h / 2
-                end
-            end
-
-            local p = data.p
-            -- now look for the alias of the parent...
-            local temp = getParentAndChildrenFromPartName(p, guy)
-            local part = p
-            --  local s = canvas.getShrinkFactor()
-            -- wscale = wscale * s
-            --  hscale = hscale * s
-            return 0, creation[part].h --/ s
-        end
-
         return 0, 0
     end
 end
@@ -319,13 +368,13 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckParts = 10,
-            torsoSegments = 3
+            neckSegments = 2,
+            torsoSegments = 4
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 300, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
-            ['torso'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'capsule' },
-            ['neck-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
+            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
             ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
             ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
@@ -359,15 +408,38 @@ lib.createCharacter = function(template, x, y)
         }
 
         local isPotato = instance.dna.creation.isPotatoHead
-        local hasNeck = instance.dna.creation.neckParts > 0
+        local hasNeck = instance.dna.creation.neckSegments > 0
         local ordered = {}
 
-        table.insert(ordered, 'torso')
+        -- table.insert(ordered, 'torso1')
+
+        local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
+        -- 1. Add Torso Segments
+        for i = 1, torsoSegments do
+            local partName = 'torso' .. i
+            table.insert(ordered, partName)
+            -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
+            if not instance.dna.parts[partName] then
+                -- Ensure template exists
+                if not instance.dna.parts['torso-segment-template'] then
+                    error("Missing 'torso-segment-template' in DNA for template: " .. template)
+                end
+                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+                -- Optional: Modify dimensions/properties of specific segments here if needed
+                -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
+                -- instance.dna.parts[partName].dims.w = i * 100
+
+                instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
+            end
+        end
+
+
+
 
         if hasNeck and not isPotato then
-            for i = 1, (instance.dna.creation.neckParts or 2) do
+            for i = 1, (instance.dna.creation.neckSegments or 2) do
                 table.insert(ordered, 'neck' .. i)
-                instance.dna.parts['neck' .. i] = instance.dna.parts['neck-template']
+                instance.dna.parts['neck' .. i] = instance.dna.parts['neck-segment-template']
             end
         end
         if not isPotato then
@@ -436,6 +508,10 @@ lib.createCharacter = function(template, x, y)
                 if thing then
                     thing.body:setAngle(prevA + xangle)
                     if extractNeckIndex(partName) then
+                        thing.body:setAngularDamping(10)
+                        thing.body:setLinearDamping(1)
+                    end
+                    if extractTorsoIndex(partName) then
                         thing.body:setAngularDamping(10)
                         thing.body:setLinearDamping(1)
                         local f = thing.body:getFixtures()
