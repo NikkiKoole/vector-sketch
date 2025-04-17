@@ -94,8 +94,14 @@ function lib.renderActiveEditorThings()
             local vy = verts[i + 1]
             local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
             if dist < 10 then
-                love.graphics.circle('fill', vx, vy, 10)
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('fill', vx, vy, 13)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.circle('fill', vx, vy, 11)
             else
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('line', vx, vy, 12)
+                love.graphics.setColor(1, 1, 1)
                 love.graphics.circle('line', vx, vy, 10)
             end
         end

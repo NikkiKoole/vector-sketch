@@ -19,18 +19,13 @@ end
 local function getParentAndChildrenFromPartName(partName, guy)
     local creation      = guy.dna.creation
     local neckSegments  = creation.neckSegments or 0
-    local torsoSegments = creation.torsoSegments or 1 -- Default to 1 segment
+    local torsoSegments = creation.torsoSegments or 1
 
-    -- Define the name of the highest torso segment
     local highestTorso  = 'torso' .. torsoSegments
-    -- Define the name of the lowest torso segment (always torso1)
     local lowestTorso   = 'torso1'
 
     local map           = {
-        -- torso1 = { c = { 'neck1', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
-        --neck1 = { p = 'torso', c = 'neck2' },
-        -- neck2 = { p = 'neck1', c = 'head' },
-        --head = { p = 'neck' .. neckSegments, c = { 'lear', 'rear' } },
+
         head = { p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso, c = { 'lear', 'rear' } },
         lear = { p = 'head' },
         rear = { p = 'head' },
@@ -46,9 +41,9 @@ local function getParentAndChildrenFromPartName(partName, guy)
         ruleg = { p = lowestTorso, c = 'rlleg' },
         rlleg = { p = 'ruleg', c = 'rfoot' },
         rfoot = { p = 'rlleg' },
-        --  butt = {p = 'torso'}
+
     }
-    -- print(partName)
+
     local neckIndex     = extractNeckIndex(partName)
     if neckIndex then
         if neckIndex == 1 then
@@ -128,10 +123,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
     local result = map[partName]
 
-    -- This potato head check might be redundant now given the above logic
-    -- if result and result.p == 'head' and creation.isPotatoHead then
-    --    result.p = highestTorso -- Or torso1 if only one segment
-    -- end
+
 
     return result or {} -- Return empty table if partName not found
 end
