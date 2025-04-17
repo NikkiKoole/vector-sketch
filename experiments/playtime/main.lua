@@ -1,7 +1,7 @@
--- TODO i'm in the proecss of refactoring, what to clean up first and how'
 -- TODO there is an issue where the .vertices arent populated after load.
 -- TODO snap isnt working vanilla, not the right stuff is saved.
---
+-- TODO when we flip something with a joint wiht limits, the limits are gone
+-- DOING playing around with characters, getting htem back in the system
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 

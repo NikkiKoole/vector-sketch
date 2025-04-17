@@ -669,7 +669,7 @@ function lib.flipThing(thing, axis, recursive)
             --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
 
 
-
+            --todo when a joint is flipped i alos need to redo its limits (if applicable)
 
 
             local offsetA = jointUserData.offsetA

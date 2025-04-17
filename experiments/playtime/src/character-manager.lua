@@ -307,43 +307,28 @@ end
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = true,
-            neckParts = 2
+            isPotatoHead = false,
+            neckParts = 10
         },
         parts = {
             ['torso'] = { dims = { w = 300, w2 = 350, h = 300 }, shape = 'trapezium' },
-            ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', },
-            ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule' },
-            ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['llleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['rlleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', },
-            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', },
-            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', },
-            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
-            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', },
-            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', stanceAngle = -math.pi / 2 },
-            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', stanceAngle = math.pi / 2 }
+            ['neck-template'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['llleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['rlleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
+            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
-
-
-        joints = {
-            { a = 'torso', b = 'luleg', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
-            { a = 'torso', b = 'ruleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
-            { a = 'luleg', b = 'llleg', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
-            { a = 'llleg', b = 'lfoot', type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } },
-            { a = 'ruleg', b = 'rlleg', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
-            { a = 'rlleg', b = 'rfoot', type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } },
-            { a = 'torso', b = 'luarm', type = 'revolute', limits = { low = 0, up = math.pi / 2 } },
-            { a = 'torso', b = 'ruarm', type = 'revolute', limits = { low = -math.pi / 2, up = 0 } },
-            { a = 'luarm', b = 'llarm', type = 'revolute', },
-            { a = 'ruarm', b = 'rlarm', type = 'revolute', },
-            { a = 'llarm', b = 'lhand', type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } },
-            { a = 'rlarm', b = 'rhand', type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } },
-        }
     }
 }
 
@@ -369,7 +354,7 @@ lib.createCharacter = function(template, x, y)
         if hasNeck and not isPotato then
             for i = 1, (instance.dna.creation.neckParts or 2) do
                 table.insert(ordered, 'neck' .. i)
-                instance.dna.parts['neck' .. i] = { dims = { w = 40, w2 = 4, h = 150 }, shape = 'capsule' }
+                instance.dna.parts['neck' .. i] = instance.dna.parts['neck-template']
             end
         end
         if not isPotato then
@@ -382,41 +367,6 @@ lib.createCharacter = function(template, x, y)
             'lear', 'rear'
         }
         for _, part in ipairs(limbs) do table.insert(ordered, part) end
-
-
-        --  ok lets create the correct joints
-        if not hasNeck and not isPotato then
-            table.insert(instance.dna.joints,
-                { a = 'torso', b = 'head', type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } })
-        end
-        if not isPotato and instance.dna.creation.neckParts > 0 then
-            table.insert(instance.dna.joints,
-                { a = 'torso', b = 'neck1', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
-            for i = 1, instance.dna.creation.neckParts - 1 do
-                table.insert(instance.dna.joints,
-                    { a = 'neck' .. i, b = 'neck' .. (i + 1), type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
-            end
-
-            table.insert(instance.dna.joints,
-                { a = 'neck' .. instance.dna.creation.neckParts, b = 'head', type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } })
-        end
-        if isPotato then
-            table.insert(instance.dna.joints,
-                { a = 'torso', b = 'lear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
-            table.insert(instance.dna.joints,
-                { a = 'torso', b = 'rear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
-        end
-        if not isPotato then
-            table.insert(instance.dna.joints,
-                { a = 'head', b = 'lear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
-            table.insert(instance.dna.joints,
-                { a = 'head', b = 'rear', type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } })
-        end
-
-        logger:inspect(ordered)
-
-
-
 
 
         for i = 1, #ordered do
@@ -433,73 +383,78 @@ lib.createCharacter = function(template, x, y)
                 radius = partData.dims.r,
                 width = partData.dims.w,
                 width2 = partData.dims.w2,
+                width3 = partData.dims.w2,
                 height = partData.dims.h,
+                height2 = partData.dims.h,
+                height3 = partData.dims.h,
+                height4 = partData.dims.h,
                 -- Add other physics properties if needed (friction, restitution?)
             }
             --logger:info('getting offset for ', partName)
 
 
-            -- todo the code below should be in a little  function, so i can make/change a single part.
-            -- complex part is about the joints, that is now a separate pass, this should just happen in the same function
             local function makePart(partName, instance)
                 local values = getParentAndChildrenFromPartName(partName, instance)
                 local parent = values.p
-                logger:info(partName, parent)
+                -- logger:info(partName, parent)
+
+                local prevA = 0
+
+                if parent then
+                    if instance.parts[parent] then
+                        local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
+                        settings.x = parentPosX
+                        settings.y = parentPosY
+                    end
+                    prevA = instance.parts[parent].body:getAngle()
+                end
+
+                local offX, offY = getOffsetFromParent(partName, instance)
+                settings.x = settings.x + offX
+                settings.y = settings.y + offY
+                local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
+                local xangle = getAngleOffset(partName, instance)
+                local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
+
+                settings.x = settings.x + rx
+                settings.y = settings.y + ry
+                local thing = ObjectManager.addThing(settings.shapeType, settings)
+
+                if thing then
+                    thing.body:setAngle(prevA + xangle)
+                    instance.parts[partName] = thing
+                end
+
+                if parent then
+                    local partA_thing = instance.parts[parent]   --instance.parts[jointData.a]
+                    local partB_thing = instance.parts[partName] --instance.parts[jointData.b]
+                    -- logger:info(partA_thing, partB_thing)
+
+                    if (partA_thing and partB_thing) then
+                        local jointData = instance.dna.parts[partName].j
+                        local jointCreationData = {
+                            body1 = partA_thing.body,
+                            body2 = partB_thing.body,
+                            jointType = jointData.type,
+                            collideConnected = false, -- Default to false
+                            id = uuid.generateID(),
+                            offsetA = { x = 0, y = 0 },
+                            offsetB = { x = 0, y = 0 },
+                        }
+                        local offX, offY = getOffsetFromParent(partName, instance)
+                        jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
+                        jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
+                        local joint = Joints.createJoint(jointCreationData)
+                        local limits = jointData.limits
+
+                        if joint and limits and limits.low and limits.up then
+                            joint:setLimits(limits.low, limits.up)
+                            joint:setLimitsEnabled(true)
+                        end
+                    end
+                end
             end
             makePart(partName, instance)
-
-            local prevA = 0
-            local data = getParentAndChildrenFromPartName(partName, instance)
-            if data.p then
-                if instance.parts[data.p] then
-                    local parentPosX, parentPosY = instance.parts[data.p].body:getPosition()
-                    settings.x = parentPosX
-                    settings.y = parentPosY
-                end
-                prevA = instance.parts[data.p].body:getAngle()
-            end
-
-            local offX, offY = getOffsetFromParent(partName, instance)
-            settings.x = settings.x + offX
-            settings.y = settings.y + offY
-            local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
-            local xangle = getAngleOffset(partName, instance)
-            local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
-
-            settings.x = settings.x + rx
-            settings.y = settings.y + ry
-            local thing = ObjectManager.addThing(settings.shapeType, settings)
-
-            if thing then
-                thing.body:setAngle(prevA + xangle)
-                instance.parts[partName] = thing
-            end
-        end
-
-        for jointName, jointData in pairs(instance.dna.joints) do
-            local partA_thing = instance.parts[jointData.a]
-            local partB_thing = instance.parts[jointData.b]
-            if (partA_thing and partB_thing) then
-                local jointCreationData = {
-                    body1 = partA_thing.body,
-                    body2 = partB_thing.body,
-                    jointType = jointData.type,
-                    collideConnected = false, -- Default to false
-                    id = uuid.generateID(),
-                    offsetA = { x = 0, y = 0 },
-                    offsetB = { x = 0, y = 0 },
-                }
-                local offX, offY = getOffsetFromParent(jointData.b, instance)
-                jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
-                jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
-                local joint = Joints.createJoint(jointCreationData)
-                local limits = jointData.limits
-
-                if joint and limits and limits.low and limits.up then
-                    joint:setLimits(limits.low, limits.up)
-                    joint:setLimitsEnabled(true)
-                end
-            end
         end
     end
 end
