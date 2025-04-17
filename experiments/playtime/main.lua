@@ -98,6 +98,7 @@ function love.load(args)
     end
 
 
+
     state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
@@ -149,9 +150,10 @@ function love.update(dt)
                 v:update(scaled_dt)
             end
         end
-
+        local velocityiterations = 8
+        local positioniterations = 3 -- 3
         for i = 1, 1 do
-            state.physicsWorld:update(scaled_dt)
+            state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
         end
         script.call('update', scaled_dt)
 

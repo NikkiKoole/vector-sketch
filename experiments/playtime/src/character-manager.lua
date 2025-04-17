@@ -12,14 +12,21 @@ local function extractNeckIndex(name)
     return index and tonumber(index) or nil
 end
 
-local function getParentAndChildrenFromPartName(partName, guy)
-    local creation  = guy.dna.creation
+local function extractTorsoIndex(name)
+    local index = string.match(name, "^torso(%d+)$")
+    return index and tonumber(index) or nil
+end
 
-    local map       = {
+local function getParentAndChildrenFromPartName(partName, guy)
+    local creation      = guy.dna.creation
+    local neckParts     = creation.neckParts or 0
+    local torsoSegments = creation.torsoSegments or 1 -- Default to 1 segment
+
+    local map           = {
         torso = { c = { 'neck1', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         --neck1 = { p = 'torso', c = 'neck2' },
         -- neck2 = { p = 'neck1', c = 'head' },
-        head = { p = 'neck' .. creation.neckParts, c = { 'lear', 'rear' } },
+        head = { p = 'neck' .. neckParts, c = { 'lear', 'rear' } },
 
         lear = { p = 'head' },
         rear = { p = 'head' },
@@ -38,14 +45,14 @@ local function getParentAndChildrenFromPartName(partName, guy)
         --  butt = {p = 'torso'}
     }
     -- print(partName)
-    local neckIndex = extractNeckIndex(partName)
+    local neckIndex     = extractNeckIndex(partName)
     if neckIndex then
         if neckIndex == 1 then
-            map[partName] = { p = 'torso', c = (neckIndex == creation.neckParts) and 'head' or 'neck2' }
+            map[partName] = { p = 'torso', c = (neckIndex == neckParts) and 'head' or 'neck2' }
         else
             map[partName] = {
                 p = 'neck' .. (neckIndex - 1),
-                c = (neckIndex == creation.neckParts) and 'head' or
+                c = (neckIndex == neckParts) and 'head' or
                     'neck' .. neckIndex + 1
             }
         end
@@ -304,15 +311,21 @@ local function getAngleOffset(partName, guy)
     end
 end
 
+-- Modify getParentAndChildrenFromPartName to handle torsoN naming and connections. We'll assume torso1 is the lowest segment (pelvis area) and torsoN is the highest (shoulder area). Legs connect to torso1, arms/neck connect to torsoN.
+
+-- Modify getOwnOffset and getOffsetFromParent to handle torsoN.
+
 local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckParts = 10
+            neckParts = 10,
+            torsoSegments = 3
         },
         parts = {
-            ['torso'] = { dims = { w = 300, w2 = 350, h = 300 }, shape = 'trapezium' },
-            ['neck-template'] = { dims = { w = 40, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 300, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            ['torso'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'capsule' },
+            ['neck-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
             ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
             ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
@@ -422,6 +435,14 @@ lib.createCharacter = function(template, x, y)
 
                 if thing then
                     thing.body:setAngle(prevA + xangle)
+                    if extractNeckIndex(partName) then
+                        thing.body:setAngularDamping(10)
+                        thing.body:setLinearDamping(1)
+                        local f = thing.body:getFixtures()
+                        for i = 1, #f do
+                            f[i]:setDensity(1)
+                        end
+                    end
                     instance.parts[partName] = thing
                 end
 
@@ -447,7 +468,7 @@ lib.createCharacter = function(template, x, y)
                         local joint = Joints.createJoint(jointCreationData)
                         local limits = jointData.limits
 
-                        if joint and limits and limits.low and limits.up then
+                        if false and joint and limits and limits.low and limits.up then
                             joint:setLimits(limits.low, limits.up)
                             joint:setLimitsEnabled(true)
                         end
