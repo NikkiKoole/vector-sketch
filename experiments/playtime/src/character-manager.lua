@@ -26,8 +26,8 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 0,
-            torsoSegments = 1
+            neckSegments = 10,
+            torsoSegments = 10
         },
         parts = {
             ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -563,12 +563,12 @@ local function makePart(partName, instance, settings)
     if thing then
         thing.body:setAngle(prevA + xangle)
         if extractNeckIndex(partName) then
-            thing.body:setAngularDamping(1)
-            thing.body:setLinearDamping(1)
+            thing.body:setAngularDamping(.1)
+            thing.body:setLinearDamping(.1)
         end
         if extractTorsoIndex(partName) then
-            thing.body:setAngularDamping(1)
-            thing.body:setLinearDamping(1)
+            thing.body:setAngularDamping(.1)
+            thing.body:setLinearDamping(.1)
             local f = thing.body:getFixtures()
             for i = 1, #f do
                 f[i]:setDensity(1)

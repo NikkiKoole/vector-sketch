@@ -8,8 +8,8 @@ local timeToReachAngle = 0.5 -- Approximate time (in seconds) to rotate towards 
 -- --- Internal Tuning (Less user-facing, find good defaults) ---
 -- These control how "tightly" the body follows its *internal* smoothed target.
 -- They might need less variation across object types now.
-local stiffnessFactor = 5000        -- How strongly it corrects towards the internal target (related to Kp*I)
-local dampingFactor = 50            -- How much it resists angular velocity (related to Kd*I)
+local stiffnessFactor = 1500        -- How strongly it corrects towards the internal target (related to Kp*I)
+local dampingFactor = .5            -- How much it resists angular velocity (related to Kd*I)
 local maxCorrectiveTorque = 1000000 -- Still need a safety cap per body
 ------------------------------------
 
@@ -88,7 +88,52 @@ function s.onStart()
     end
 end
 
+local sign = function(v)
+    if v < 0 then return -1 else return 1 end
+end
+
 function s.update(dt)
+    -- Determine the maximum angular speed based on timeToReachAngle
+    -- Let's define it such that reaching halfway around the circle (pi radians)
+    -- would take approximately timeToReachAngle. Adjust this definition if needed.
+    local maxAngularSpeed = 0
+    if timeToReachAngle > 0.01 then
+        maxAngularSpeed = math.pi / timeToReachAngle -- Radians per second
+    else
+        maxAngularSpeed = math.huge                  -- Effectively infinite speed for near-zero time
+    end
+
+    -- Calculate the maximum angle change allowed in this frame
+    local maxAngleChangeThisFrame = maxAngularSpeed * dt
+
+    for i = 1, #bodiesToStabilize do
+        local data = bodiesToStabilize[i]
+        if data and data.body then
+            -- Calculate the difference to the global target
+            local angleDifference = normalizeAngle(globalDesiredAngle - data.internalAngle)
+
+            -- Determine the actual change for this frame
+            -- It's the smaller of the max allowed change and the remaining difference
+            local actualAngleChange = math.min(maxAngleChangeThisFrame, math.abs(angleDifference))
+
+            -- Apply the change in the correct direction
+            if math.abs(angleDifference) > 0.001 then -- Avoid tiny adjustments if already very close
+                data.internalAngle = normalizeAngle(data.internalAngle + actualAngleChange * sign(angleDifference))
+            else
+                -- Optional: Snap if very close? Or just let it be.
+                data.internalAngle = globalDesiredAngle
+            end
+
+            -- Apply torque to make the body follow its (now updated) internal target angle
+            applyTrackingTorque(data.body, data.internalAngle, stiffnessFactor, dampingFactor, maxCorrectiveTorque, dt)
+        else
+            -- Optional cleanup
+            -- table.remove(bodiesToStabilize, i); i = i - 1
+        end
+    end
+end
+
+function s.updateOLD(dt)
     -- 1. Update the internal target angle for each body, moving it towards the global desired angle
     local smoothingFactor = 0
     if timeToReachAngle > 0.01 then -- Avoid division by zero or excessively fast smoothing
@@ -142,7 +187,7 @@ function s.drawUI()
             globalDesiredAngle = newAngle
         end
         local angleLabelValue = globalDesiredAngle or 0
-        ui.label(x + panelWidth * 0.6 + 5, y + BUTTON_HEIGHT / 4, string.format("%.2f rad", angleLabelValue))
+        --ui.label(x + panelWidth * 0.6 + 5, y + BUTTON_HEIGHT / 4, string.format("%.2f rad", angleLabelValue))
 
         -- Time to Reach Angle Slider
         local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
@@ -154,7 +199,7 @@ function s.drawUI()
             timeToReachAngle = math.max(newTime, 0.01)
         end
         local timeLabelValue = timeToReachAngle or 0.01
-        ui.label(x + panelWidth * 0.6 + 5, y + BUTTON_HEIGHT / 4, string.format("%.2f s", timeLabelValue))
+        --ui.label(x + panelWidth * 0.6 + 5, y + BUTTON_HEIGHT / 4, string.format("%.2f s", timeLabelValue))
 
         -- Optional: Add a button here later to reveal Stiffness/Damping/MaxTorque sliders if needed for advanced tuning
     end)
