@@ -5,6 +5,13 @@ local Joints = require 'src.joints'
 local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
+local function clamp(x, min, max)
+    return x < min and min or (x > max and max or x)
+end
+
+local function lerp(a, b, amount)
+    return a + (b - a) * clamp(amount, 0, 1)
+end
 
 local function extractNeckIndex(name)
     local index = string.match(name, "^neck(%d+)$")
@@ -196,10 +203,28 @@ local function getOffsetFromParent(partName, guy)
     local lowestTorso   = 'torso1'
 
 
+
+    local function getTorsoPart8(index)
+        local vertices = guy.parts[highestTorso].vertices
+        return vertices[(index * 2) - 1], vertices[(index * 2)]
+    end
+    local function hasTorso8()
+        if parts[highestTorso].shape == 'shape8' and creation.torsoSegments == 1 then
+            if guy.parts and guy.parts[highestTorso] then
+                return true
+            end
+        end
+        return false
+    end
+
     if extractNeckIndex(partName) then
         local index = extractNeckIndex(partName)
         if index == 1 then
-            return 0, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                return getTorsoPart8(1)
+            else
+                return 0, -parts[highestTorso].dims.h / 2
+            end
         else
             return 0, -parts['neck' .. (index - 1)].dims.h / 2
         end
@@ -227,45 +252,46 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'lhand' then
         return 0, parts.llarm.dims.h / 2
     elseif partName == 'luarm' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(7, guy)
-        --     end
-        -- else
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(8, guy)
-        --     end
-        -- end
-        return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        if hasTorso8() then
+            if creation.isPotatoHead then
+                return getTorsoPart8(7)
+            else
+                return getTorsoPart8(8)
+            end
+        else
+            return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        end
     elseif partName == 'ruarm' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(3, guy)
-        --     end
-        -- else
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(2, guy)
-        --     end
-        -- end
-        return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        if hasTorso8() then
+            if creation.isPotatoHead then
+                return getTorsoPart8(3)
+            else
+                return getTorsoPart8(2)
+            end
+        else
+            return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        end
     elseif partName == 'luleg' then
         local t = 0.5 --positioners.leg.x
-        -- if creation.torso.metaPoints then
-        --     local ax, ay = getScaledTorsoMetaPoint(6, guy)
-        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
-        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-        --     return rx, ry
-        -- end
-        return (-parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+        if hasTorso8() then
+            local ax, ay = getTorsoPart8(6)
+            local bx, by = getTorsoPart8(5)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry
+        else
+            return (-parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+        end
     elseif partName == 'ruleg' then
         local t = 0.5 -- positioners.leg.x
-        -- if creation.torso.metaPoints then
-        --     local ax, ay = getScaledTorsoMetaPoint(4, guy)
-        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
-        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-        --     return rx, ry
-        -- end
-        return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+
+        if hasTorso8() then
+            local ax, ay = getTorsoPart8(4)
+            local bx, by = getTorsoPart8(5)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry
+        else
+            return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+        end
     elseif partName == 'lear' then
         -- if creation.isPotatoHead then
         --     if creation.torso.metaPoints then
@@ -358,10 +384,12 @@ local dna = {
         creation = {
             isPotatoHead = false,
             neckSegments = 6,
-            torsoSegments = 4
+            torsoSegments = 1
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 30 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+
+            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
             ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -409,6 +437,7 @@ local function makePart(partName, instance, settings)
 
     settings.x = settings.x + rx
     settings.y = settings.y + ry
+
     local thing = ObjectManager.addThing(settings.shapeType, settings)
 
     if thing then
@@ -425,6 +454,7 @@ local function makePart(partName, instance, settings)
                 f[i]:setDensity(1)
             end
         end
+        logger:info('setting', partName)
         instance.parts[partName] = thing
     end
 
@@ -491,7 +521,7 @@ lib.createCharacter = function(template, x, y)
                 -- Optional: Modify dimensions/properties of specific segments here if needed
                 -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
                 instance.dna.parts[partName].dims.w = i * 100
-
+                --logger:inspect(instance.dna.parts[partName])
                 --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
             end
         end
@@ -520,12 +550,13 @@ lib.createCharacter = function(template, x, y)
         for i = 1, #ordered do
             local partName = ordered[i]
             local partData = instance.dna.parts[partName]
-
+            --logger:info(partName, partData.shapeName)
             local settings = {
                 x = x,
                 y = y,
                 bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
                 shapeType = partData.shape, -- Use shape defined in template
+                shape8URL = partData.shape8URL,
                 label = 'straight',         --partName,           -- Use part name as initial label
                 density = partData.density or 1,
                 radius = partData.dims.r,

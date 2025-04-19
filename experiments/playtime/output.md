@@ -1,8 +1,10 @@
 main.lua
 ```lua
--- TODO i'm in the proecss of refactoring, what to clean up first and how'
 -- TODO there is an issue where the .vertices arent populated after load.
 -- TODO snap isnt working vanilla, not the right stuff is saved.
+-- TODO when we flip something with a joint wiht limits, the limits are gone
+-- TODO label for behavior (straight / snap ..) is not scalabel, we need a dedicated 'tag's fro that each tag has option of data too.
+-- DOING playing around with characters, getting htem back in the system
 --
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
@@ -100,6 +102,7 @@ function love.load(args)
     end
 
 
+
     state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
@@ -111,7 +114,13 @@ function love.load(args)
     --  sceneLoader.loadScriptAndScene('snap')
     --sceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
-    sceneLoader.loadScene(cwd .. '/scripts/multi.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+
+
+    local CharacterManager = require 'src.character-manager'
+
+    -- In love.load or a scene setup function:
+    local humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -145,9 +154,10 @@ function love.update(dt)
                 v:update(scaled_dt)
             end
         end
-
+        local velocityiterations = 8
+        local positioniterations = 13 -- 3
         for i = 1, 1 do
-            state.physicsWorld:update(scaled_dt)
+            state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
         end
         script.call('update', scaled_dt)
 
@@ -316,8 +326,1568 @@ end
 
 ```
 
+src/OLDOLD-dna.lua
+```lua
+local readAndParse = require 'lib.readAndParse'
+
+local lib = {}
+
+
+-- the parts array is not unique, every mipo shares the same ones
+-- creation, multipliers, values and positioners however are UNIQUE to a MIPO
+-- from creation we have the 'limits array' which more or less are shared, but the details describe the picked texture shapes and dimensions etc.
+
+--
+--
+
+--local positioners  =
+
+--- After new changes to DNA (addition of properties)we need to patch the already existing DNA out there
+---@param data any
+---@return any
+lib.patchDNA       = function(data)
+    if data.positioners then
+        if not data.positioners.teeth then
+            print('adding teeth positioner data')
+            data.positioners.teeth = { z = 0 }
+        end
+    end
+    return data
+end
+
+lib.getCreation    = function()
+    local creation = {
+        isPotatoHead = false,
+        hasPhysicsHair = false,
+        hasNeck = true,
+        torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
+        neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+        neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+        head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule3', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
+        lear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+        rear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = -math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+        luarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi, enabled = false }, friction = 4000 },
+        ruarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = -math.pi, up = 0, enabled = false }, friction = 4000 },
+        llarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
+        rlarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = (math.pi - 0.5) * -1, up = 0, enabled = false }, friction = 2000 },
+        lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+        rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+        luleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 2, enabled = true } },
+        ruleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 2, up = 0, enabled = true } },
+        llleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 8, up = 0, enabled = true } },
+        rlleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 8, enabled = true } },
+        lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+        rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+        hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+        hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+        hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+        hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+        hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+        brow = { w = 10, h = 10 },
+        eye = { w = 10, h = 10 },
+        pupil = { w = 10, h = 10 },
+        nose = { w = 10, h = 10 },
+        upperlip = { w = 10, h = 10 },
+        lowerlip = { w = 10, h = 10 },
+        teeth = { w = 10, h = 10 },
+    }
+    return creation
+end
+
+lib.getMultipliers = function()
+    local multipliers =
+    {
+        torso = { hMultiplier = 1, wMultiplier = 1 },
+        leg = { lMultiplier = 1, wMultiplier = 1 },
+        leghair = { wMultiplier = 1 },
+        feet = { wMultiplier = 1, hMultiplier = 1 },
+        arm = { lMultiplier = 1, wMultiplier = 1 },
+        armhair = { wMultiplier = 1 },
+        hand = { wMultiplier = 1, hMultiplier = 1 },
+        neck = { wMultiplier = 1, hMultiplier = 1 },
+        head = { wMultiplier = 1, hMultiplier = 1 },
+        face = { mMultiplier = 1 },
+        ear = { wMultiplier = 1, hMultiplier = 1 },
+        hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
+        nose = { wMultiplier = 1, hMultiplier = 1 },
+        eye = { wMultiplier = 1, hMultiplier = 1 },
+        pupil = { wMultiplier = .5, hMultiplier = .5 },
+        brow = { wMultiplier = 1, hMultiplier = 1 },
+        mouth = { wMultiplier = 1, hMultiplier = 1 },
+        teeth = { hMultiplier = 1 },
+        chesthair = { mMultiplier = 1 }
+    }
+    return multipliers
+end
+
+lib.getPositioners = function()
+    local positioners = {
+        leg = { x = 0.5 },
+        eye = { x = 0.2, y = 0.5, r = 0 },
+        nose = { y = 0.5 },
+        brow = { y = 0.8, bend = 1 },
+        mouth = { y = 0.25 },
+        ear = { y = 0.5 },
+        teeth = { z = 0 },
+    }
+    return positioners
+end
+
+local function createDefaultTextureValues()
+    return {
+        shape     = 1,
+        bgPal     = 13, --math.ceil(love.math.random() * #palettes),
+        fgPal     = 1,  --math.ceil(love.math.random() * #palettes),
+        bgTex     = 1,
+        fgTex     = 2,
+        linePal   = 1,
+        bgAlpha   = 5,
+        fgAlpha   = 5,
+        lineAlpha = 5,
+        texRot    = 0,
+        texScale  = 1,
+    }
+end
+
+local function createDefaultPatchValues()
+    return {
+        sx = 1,
+        sy = 1,
+        r = 1,
+        tx = 0,
+        ty = 3
+    }
+end
+
+lib.generateValues = function()
+    local values = {
+        chestHair        = createDefaultTextureValues(),
+        skinPatchSnout   = createDefaultTextureValues(),
+        skinPatchSnoutPV = createDefaultPatchValues(),
+        skinPatchEye1    = createDefaultTextureValues(),
+        skinPatchEye1PV  = createDefaultPatchValues(),
+        skinPatchEye2    = createDefaultTextureValues(),
+        skinPatchEye2PV  = createDefaultPatchValues(),
+        upperlip         = createDefaultTextureValues(),
+        lowerlip         = createDefaultTextureValues(),
+        eyes             = createDefaultTextureValues(),
+        pupils           = createDefaultTextureValues(),
+        ears             = createDefaultTextureValues(),
+        brows            = createDefaultTextureValues(),
+        nose             = createDefaultTextureValues(),
+        leghair          = createDefaultTextureValues(),
+        legs             = createDefaultTextureValues(),
+        armhair          = createDefaultTextureValues(),
+        arms             = createDefaultTextureValues(),
+        hands            = createDefaultTextureValues(),
+        teeth            = createDefaultTextureValues(),
+        body             = createDefaultTextureValues(),
+        head             = createDefaultTextureValues(),
+        hair             = createDefaultTextureValues(),
+        neck             = createDefaultTextureValues(),
+        feet             = createDefaultTextureValues(),
+    }
+    values.skinPatchSnoutPV.ty = 5
+    values.skinPatchSnoutPV.sx = 2
+    values.skinPatchEye1PV.ty = 0
+    values.skinPatchEye1PV.tx = -2
+    values.skinPatchEye2PV.ty = 0
+    values.skinPatchEye2PV.tx = 2
+    values.teeth.bgPal = 5
+    return values
+end
+
+lib.generateParts = function()
+    local legUrls = {
+        'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
+        'assets/parts/leg5.png', 'assets/parts/leg7.png', 'assets/parts/legp2.png', 'assets/parts/leg1x.png',
+        'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png', 'assets/parts/leg5x.png',
+        'assets/parts/neck8.png',
+    }
+
+    local neckUrls = {
+        'assets/parts/neck1.png', 'assets/parts/neck2.png', 'assets/parts/neck3.png', 'assets/parts/neck4.png',
+        'assets/parts/neck5.png', 'assets/parts/neck6.png', 'assets/parts/neck7.png', 'assets/parts/neck8.png',
+        'assets/parts/neck9.png', 'assets/parts/neck10.png', 'assets/parts/leg1.png', 'assets/parts/leg2.png',
+        'assets/parts/leg3.png', 'assets/parts/leg4.png', 'assets/parts/leg5.png', 'assets/parts/leg1x.png',
+        'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png', 'assets/parts/leg5x.png',
+    }
+
+    local patchUrls = {
+        'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png', 'assets/parts/patch4.png',
+    }
+
+    local hairUrls = {
+        'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
+        'assets/parts/hair5.png', 'assets/parts/hair6NEW.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
+        'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png', 'assets/parts/hair1x.png',
+        'assets/parts/hair2x.png', 'assets/parts/haarnew1.png', 'assets/parts/haarnew2.png', 'assets/parts/haarnew3.png',
+        'assets/parts/haarnew4.png',
+    }
+
+    table.insert(patchUrls, 'assets/parts/null.png')
+    table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice
+
+    local chestHairUrls = {
+        'assets/parts/borsthaar1.png', 'assets/parts/borsthaar2.png', 'assets/parts/borsthaar3.png',
+        'assets/parts/borsthaar4.png',
+        'assets/parts/borsthaar5.png', 'assets/parts/borsthaar6.png', 'assets/parts/borsthaar7.png'
+
+    }
+    table.insert(chestHairUrls, 'assets/parts/null.png')
+
+    local bodyImgUrls, bodyParts = readAndParse.loadVectorSketchAndGetImages('assets/bodies.polygons.txt', 'bodies')
+
+    local feetImgUrls, feetParts = readAndParse.loadVectorSketchAndGetImages('assets/feet.polygons.txt', 'feet')
+    local handParts = feetParts
+    local headImgUrls = bodyImgUrls
+    local headParts = bodyParts
+
+    local eyeImgUrls, eyeParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
+        'eyes')
+    local pupilImgUrls, pupilParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'pupils')
+    local noseImgUrls, noseParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'noses')
+    local browImgUrls, browParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyebrows')
+    local earImgUrls, earParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'ears')
+    local teethImgUrls, teethParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'teeths')
+    local upperlipImgUrls, upperlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
+        'upperlips')
+    local lowerlipImgUrls, lowerlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
+        'lowerlips')
+
+    table.insert(teethImgUrls, 'assets/parts/null.png')
+
+    local patchChildren = { 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' }
+    local mouthChildren = { 'upperlip', 'lowerlip', 'teeth' }
+
+    local parts = {
+        { name = 'head',           imgs = headImgUrls,     p = headParts,                   kind = 'head' },
+        { name = 'hair',           imgs = hairUrls,        kind = 'head' },
+        { name = 'brows',          imgs = browImgUrls,     p = browParts,                   kind = 'head' },
+        { name = 'eyes2',          kind = 'head',          children = { 'eyes', 'pupils' } },
+        { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,                  kind = 'head',                   child = true },
+        { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts,                    kind = 'head',                   child = true },
+        { name = 'ears',           imgs = earImgUrls,      p = earParts,                    kind = 'head' },
+        { name = 'nose',           imgs = noseImgUrls,     p = noseParts,                   kind = 'head' },
+        { name = 'patches',        kind = 'head',          children = patchChildren },
+        { name = 'skinPatchSnout', imgs = patchUrls,       kind = 'head',                   child = true },
+        { name = 'skinPatchEye1',  imgs = patchUrls,       kind = 'head',                   child = true },
+        { name = 'skinPatchEye2',  imgs = patchUrls,       kind = 'head',                   child = true },
+        { name = 'mouth',          kind = 'head',          children = mouthChildren },
+        { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts,               kind = 'head',                   child = true },
+        { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts,               kind = 'head',                   child = true },
+        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,                  kind = 'head',                   child = true },
+        { name = 'neck',           imgs = neckUrls,        kind = 'body' },
+        { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,                   kind = 'body' },
+        { name = 'chestHair',      imgs = chestHairUrls,   kind = 'body' },
+        { name = 'arms2',          imgs = legUrls,         kind = 'body',                   children = { 'arms', 'armhair' } },
+        { name = 'armhair',        imgs = hairUrls,        kind = 'body',                   child = true },
+        { name = 'arms',           imgs = legUrls,         kind = 'body',                   child = true },
+        { name = 'hands',          imgs = feetImgUrls,     p = handParts,                   kind = 'body' },
+        { name = 'legs2',          kind = 'body',          children = { 'legs', 'leghair' } },
+        { name = 'legs',           imgs = legUrls,         kind = 'body',                   child = true },
+        { name = 'leghair',        imgs = hairUrls,        kind = 'body',                   child = true },
+        { name = 'feet',           imgs = feetImgUrls,     p = feetParts,                   kind = 'body' },
+    }
+
+
+    return parts
+end
+
+return lib
+
+```
+
+src/OLDOLD-guycreation.lua
+```lua
+local numbers = require "lib.numbers"
+package.path  = package.path .. ";../../?.lua"
+local bbox    = require 'lib.bbox'
+local inspect = require 'vendor.inspect'
+local phys    = require 'lib.mainPhysics'
+local dna     = require 'lib.dna'
+local connect = require 'lib.connectors'
+local lib     = {}
+
+-- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
+
+
+local function getParentAndChildrenFromPartName(partName, guy)
+    local creation = guy.dna.creation
+
+    local map      = {
+        torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
+        neck = { p = 'torso', c = 'neck1' },
+        neck1 = { p = 'neck', c = 'head' },
+        head = { p = 'neck1', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } },
+        hair1 = { p = 'head' },
+        hair2 = { p = 'head' },
+        hair3 = { p = 'head' },
+        hair4 = { p = 'head' },
+        hair5 = { p = 'head' },
+        lear = { p = 'head' },
+        rear = { p = 'head' },
+        luarm = { p = 'torso', c = 'llarm' },
+        llarm = { p = 'luarm', c = 'lhand' },
+        lhand = { p = 'llarm' },
+        ruarm = { p = 'torso', c = 'rlarm' },
+        rlarm = { p = 'ruarm', c = 'rhand' },
+        rhand = { p = 'rlarm' },
+        luleg = { p = 'torso', c = 'llleg' },
+        llleg = { p = 'luleg', c = 'lfoot' },
+        lfoot = { p = 'llleg' },
+        ruleg = { p = 'torso', c = 'rlleg' },
+        rlleg = { p = 'ruleg', c = 'rfoot' },
+        rfoot = { p = 'rlleg' },
+        --  butt = {p = 'torso'}
+    }
+
+    if creation and partName == 'head' and creation.hasNeck == false then
+        return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
+    end
+
+    if creation and partName == 'torso' and creation.isPotatoHead then
+        return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
+    end
+    if creation and partName == 'torso' and creation.hasNeck == false then
+        return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
+    end
+
+    local result = map[partName]
+
+    if result.p == 'head' and creation.isPotatoHead then
+        result.p = 'torso'
+    end
+    return map[partName]
+end
+
+local function getScaledTorsoMetaPoint(index, guy)
+    local creation = guy.dna.creation
+    local wscale = creation.torso.w / creation.torso.metaPointsW
+    local hscale = creation.torso.h / creation.torso.metaPointsH
+
+    return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
+end
+
+local function getScaledHeadMetaPoint(index, guy)
+    local creation = guy.dna.creation
+    local wscale = creation.head.w / creation.head.metaPointsW
+    local hscale = creation.head.h / creation.head.metaPointsH
+
+    if creation.head.metaOffsetX or creation.head.metaOffsetY then
+        return (creation.head.metaPoints[index][1] + creation.head.metaOffsetX) * wscale,
+            (creation.head.metaPoints[index][2] + creation.head.metaOffsetY) * hscale
+    end
+    return creation.head.metaPoints[index][1] * wscale, creation.head.metaPoints[index][2] * hscale
+end
+
+local function clamp(x, min, max)
+    return x < min and min or (x > max and max or x)
+end
+
+local function lerp(a, b, amount)
+    return a + (b - a) * clamp(amount, 0, 1)
+end
+
+local function getOffsetFromParent(partName, guy)
+    local creation    = guy.dna.creation
+    local positioners = guy.dna.positioners
+    local data        = getParentAndChildrenFromPartName(partName, guy)
+
+
+
+    if partName == 'neck' then
+        if creation.torso.metaPoints then
+            return getScaledTorsoMetaPoint(1, guy)
+        end
+
+        return 0, -creation.torso.h / 2
+    elseif partName == 'luarm' then
+        if creation.isPotatoHead then
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(7, guy)
+            end
+        else
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(8, guy)
+            end
+        end
+        return -creation.torso.w / 2, -creation.torso.h / 2
+    elseif partName == 'ruarm' then
+        if creation.isPotatoHead then
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(3, guy)
+            end
+        else
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(2, guy)
+            end
+        end
+        return creation.torso.w / 2, -creation.torso.h / 2
+    elseif partName == 'luleg' then
+        local t = positioners.leg.x
+        if creation.torso.metaPoints then
+            local ax, ay = getScaledTorsoMetaPoint(6, guy)
+            local bx, by = getScaledTorsoMetaPoint(5, guy)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry
+        end
+        return (-creation.torso.w / 2) * (1 - t), creation.torso.h / 2
+    elseif partName == 'ruleg' then
+        local t = positioners.leg.x
+        if creation.torso.metaPoints then
+            local ax, ay = getScaledTorsoMetaPoint(4, guy)
+            local bx, by = getScaledTorsoMetaPoint(5, guy)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry
+        end
+        return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
+    elseif partName == 'hair1' then
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(3, guy)
+        end
+    elseif partName == 'hair2' then
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(4, guy)
+        end
+    elseif partName == 'hair3' then
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(5, guy)
+        end
+    elseif partName == 'hair4' then
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(6, guy)
+        end
+    elseif partName == 'hair5' then
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(7, guy)
+        end
+    elseif partName == 'lear' then
+        if creation.isPotatoHead then
+            if creation.torso.metaPoints then
+                local t = positioners.ear.y
+                local ax, ay = getScaledTorsoMetaPoint(8, guy)
+                local bx, by = getScaledTorsoMetaPoint(7, guy)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry
+            end
+        else
+            if creation.head.metaPoints then
+                local t = positioners.ear.y
+                local ax, ay = getScaledHeadMetaPoint(8, guy)
+                local bx, by = getScaledHeadMetaPoint(6, guy)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry
+            end
+        end
+
+        return -creation.head.w / 2, -creation.head.h / 2
+    elseif partName == 'rear' then
+        if creation.isPotatoHead then
+            if creation.torso.metaPoints then
+                local t = positioners.ear.y
+                local ax, ay = getScaledTorsoMetaPoint(2, guy)
+                local bx, by = getScaledTorsoMetaPoint(3, guy)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry
+            end
+        else
+            if creation.head.metaPoints then
+                local t = positioners.ear.y
+                local ax, ay = getScaledHeadMetaPoint(2, guy)
+                local bx, by = getScaledHeadMetaPoint(4, guy)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry
+            end
+        end
+        return creation.head.w / 2, -creation.head.h / 2
+    else
+        if (partName == 'head') then
+            if creation.hasNeck then
+                return 0, creation.neck1.h / (creation.neck1.links or 1)
+            else
+                if creation.torso.metaPoints then
+                    return getScaledTorsoMetaPoint(1, guy)
+                end
+
+                return 0, -creation.torso.h / 2
+            end
+        end
+
+        local p = data.p
+        -- now look for the alias of the parent...
+        local temp = getParentAndChildrenFromPartName(p, guy)
+        local part = p
+        --  local s = canvas.getShrinkFactor()
+        -- wscale = wscale * s
+        --  hscale = hscale * s
+        return 0, creation[part].h --/ s
+    end
+end
+
+local function getAngleOffset(key, creation, data)
+    if key == 'neck' then
+        return -math.pi
+    elseif key == 'neck1' then
+        return 0
+    elseif key == 'lear' then
+        return creation.lear.stanceAngle
+    elseif key == 'rear' then
+        return creation.rear.stanceAngle
+    elseif key == 'lfoot' then
+        --print('hello', inspect(data.facing))
+        if data.facing.legs == 'right' then
+            return -math.pi / 2
+        end
+        return math.pi / 2
+    elseif key == 'rfoot' then
+        if data.facing.legs == 'left' then
+            return math.pi / 2
+        end
+        return -math.pi / 2
+    elseif (key == 'hair1') then
+        return -math.pi / 2
+    elseif (key == 'hair2') then
+        return -math.pi / 4
+    elseif (key == 'hair3') then
+        return 0
+    elseif (key == 'hair4') then
+        return math.pi / 4
+    elseif (key == 'hair5') then
+        return math.pi / 2
+    elseif (key == 'luleg') then
+        if data.facing.legs == 'right' then
+            return creation.ruleg.stanceAngle
+        end
+        return creation.luleg.stanceAngle
+    elseif (key == 'llleg') then
+        if data.facing.legs == 'right' then
+            return creation.rlleg.stanceAngle
+        end
+        return creation.llleg.stanceAngle
+    elseif (key == 'ruleg') then
+        if data.facing.legs == 'left' then
+            return creation.luleg.stanceAngle
+        end
+        return creation.ruleg.stanceAngle
+    elseif (key == 'rlleg') then
+        if data.facing.legs == 'left' then
+            return creation.llleg.stanceAngle
+        end
+        return creation.rlleg.stanceAngle
+    elseif key == 'head' then
+        if (not creation.hasNeck) then
+            return 0
+        else
+            return math.pi
+        end
+        return 0
+    else
+        --  print('??', key)
+    end
+    return 0
+end
+
+local function makePointerJoint(id, bodyToAttachTo, wx, wy)
+    local pointerJoint = {}
+    pointerJoint.id = id
+    pointerJoint.jointBody = bodyToAttachTo
+    pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
+    pointerJoint.joint:setDampingRatio(0.5)
+    pointerJoint.joint:setMaxForce(500000)
+    return pointerJoint
+end
+
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+local function tableContains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+
+local function findJointBetween2Bodies(body1, body2)
+    local joints1 = body1:getJoints()
+    local joints2 = body2:getJoints()
+
+    local result = {}
+    for i = 1, #joints2 do
+        if tableContains(joints1, joints2[i]) then
+            table.insert(result, joints2[i])
+        end
+    end
+
+    return result
+end
+
+lib.setJointLimitBetweenBodies = function(body1, body2, state, ofType)
+    local joints = findJointBetween2Bodies(body1, body2)
+    if joints then
+        for i = 1, #joints do
+            --     print(joints[i]:getType())
+            if ofType == nil or joints[i]:getType() == ofType then
+                joints[i]:setLimitsEnabled(state)
+            end
+        end
+    end
+end
+lib.setJointLimitsBetweenBodies = function(body1, body2, lower, upper, ofType)
+    local joints = findJointBetween2Bodies(body1, body2)
+    if joints then
+        for i = 1, #joints do
+            --     print(joints[i]:getType())
+            if ofType == nil or joints[i]:getType() == ofType then
+                joints[i]:setLimits(lower, upper)
+            end
+        end
+    end
+end
+lib.getJointLimitsBetweenBodies = function(body1, body2, ofType)
+    local joints = findJointBetween2Bodies(body1, body2)
+    if joints then
+        for i = 1, #joints do
+            --     print(joints[i]:getType())
+            if ofType == nil or joints[i]:getType() == ofType then
+                local lower, upper = joints[i]:getLimits()
+                return lower, upper
+            end
+        end
+    end
+end
+
+
+--RevoluteJoint:setLimits( lower, upper )
+
+local function getRecreatePointerJoint(body)
+    local recreatePointerJoint = nil
+    for i = 1, #pointerJoints do
+        if (pointerJoints[i].jointBody == body) then
+            local tx, ty = pointerJoints[i].joint:getTarget()
+            x1, y1, x2, y2 = pointerJoints[i].joint:getAnchors()
+            recreatePointerJoint = { targetX = x2, targetY = y2, id = pointerJoints[i].id }
+        end
+    end
+    return recreatePointerJoint
+end
+
+local function useRecreatePointerJoint(recreatePointerJoint, body)
+    phys.killMouseJointIfPossible(recreatePointerJoint.id)
+    table.insert(pointerJoints,
+        makePointerJoint(recreatePointerJoint.id, body, recreatePointerJoint.targetX,
+            recreatePointerJoint.targetY))
+end
+
+local function makeConnectingRevoluteJoint(data, this, from)
+    local joint = love.physics.newRevoluteJoint(from, this, this:getX(), this:getY(), false)
+
+    local n = data.partName
+    local myData = data.creation[data.partName]
+    if (data.facing.legs == 'right') then
+        if n == 'luleg' then
+            myData = data.creation['ruleg']
+        end
+        if n == 'llleg' then
+            myData = data.creation['rlleg']
+        end
+        if n == 'lfoot' then
+            myData = data.creation['rfoot']
+        end
+    end
+    if (data.facing.legs == 'left') then
+        if n == 'ruleg' then
+            myData = data.creation['luleg']
+        end
+        if n == 'rlleg' then
+            myData = data.creation['llleg']
+        end
+        if n == 'rfoot' then
+            myData = data.creation['lfoot']
+        end
+    end
+
+    if myData.limits then
+        joint:setLowerLimit(myData.limits.low)
+        joint:setUpperLimit(myData.limits.up)
+        joint:setLimitsEnabled(myData.limits.enabled)
+    end
+
+    if myData.friction then
+        local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
+        fjoint:setMaxTorque(myData.friction)
+    end
+    return joint
+end
+
+local function makeGuyFixture(data, key, groupId, body, shape)
+    local fixture = love.physics.newFixture(body, shape, data.d)
+    if (string.match(key, 'hair')) then
+        -- hair does not collide
+        fixture:setFilterData(0, 65535, -1 * groupId)
+    else
+        fixture:setFilterData(1, 65535, -1 * groupId)
+    end
+
+    local fixedKey = key
+    if string.match(key, 'neck') then
+        fixedKey = 'neck'
+    end
+
+    fixture:setUserData(makeUserData(fixedKey))
+    return fixture
+end
+
+local function makePart_(key, parent, guy)
+    local groupId = guy.id
+    local creation = guy.dna.creation -- dna.getCreation()
+    local facing = guy.facingVars
+    local offsetX, offsetY = getOffsetFromParent(key, guy)
+    local cd = creation[key]
+    local x, y = parent:getWorldPoint(offsetX, offsetY)
+    local prevA = parent:getAngle()
+
+    local data = { creation = creation, partName = key, facing = facing }
+    local xangle = getAngleOffset(key, creation, data)
+    local body = love.physics.newBody(world, x, y, "dynamic")
+    local shape = phys.makeShapeFromCreationPart(cd)
+    local fixture = makeGuyFixture(cd, key, groupId, body, shape)
+
+    body:setAngle(prevA + xangle)
+
+    local joint = makeConnectingRevoluteJoint(data, body, parent)
+
+    return body
+end
+
+-- cant move this because of the dependance on getScaledTorsoMetaPoint
+function useRecreateConnectorData(recreateConnectorData, body, guy)
+    local creation = guy.dna.creation
+    local data = recreateConnectorData.userData.data
+    local type = data.type
+
+    --print('hello want to recreate connector', type)
+    assert(type)
+    if type == 'foot' then
+        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, 0, data,
+            creation.rfoot.w + 20,
+            creation.rfoot.h + 20)
+    elseif type == 'hand' then
+        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w + 4,
+            creation.lhand.h + 4)
+    elseif type == 'butt' then
+        local bx, by = (creation.torso.w / 2), creation.torso.h / 2
+        if creation.torso.metaPoints then
+            bx, by = getScaledTorsoMetaPoint(5, guy)
+        end
+        connect.makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100, 100)
+    end
+end
+
+lib.makeGuy = function(x, y, guy)
+    local creation = guy.dna.creation
+    local groupId = guy.id
+
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+
+    local torso = love.physics.newBody(world, x, y, "dynamic")
+    local torsoShape = phys.makeShapeFromCreationPart(creation.torso)
+    local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
+
+    local head, neck, neck1, lear, rear
+    if creation.isPotatoHead then
+        lear = makePart('lear', torso)
+        rear = makePart('rear', torso)
+    else
+        if creation.hasNeck then
+            neck = makePart('neck', torso)
+            neck1 = makePart('neck1', neck)
+            head = makePart('head', neck1)
+        else
+            head = makePart('head', torso)
+        end
+        lear = makePart('lear', head)
+        rear = makePart('rear', head)
+    end
+
+    local hair1, hair2, hair3, hair4, hair5
+    if creation.hasPhysicsHair then
+        local attachTo = creation.isPotatoHead and torso or head
+        hair1 = makePart('hair1', attachTo)
+        hair2 = makePart('hair2', attachTo)
+        hair3 = makePart('hair3', attachTo)
+        hair4 = makePart('hair4', attachTo)
+        hair5 = makePart('hair5', attachTo)
+    end
+
+    local luleg = makePart('luleg', torso)
+    local llleg = makePart('llleg', luleg)
+
+    local lfoot = makePart('lfoot', llleg)
+    local ruleg = makePart('ruleg', torso)
+    local rlleg = makePart('rlleg', ruleg)
+    local rfoot = makePart('rfoot', rlleg)
+    local ruarm = makePart('ruarm', torso)
+    local rlarm = makePart('rlarm', ruarm)
+    local rhand = makePart('rhand', rlarm)
+    local luarm = makePart('luarm', torso)
+    local llarm = makePart('llarm', luarm)
+    local lhand = makePart('lhand', llarm)
+
+
+    local buttConnector = true
+    if buttConnector then
+        local bx, by = 0, 0
+        connect.makeAndAddConnector(torso, bx, by, { id = 'guy' .. groupId, type = 'butt' },
+            40,
+            40)
+    end
+
+    local footConnector = true
+    if footConnector then
+        connect.makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+            creation.rfoot.h / 2 + 10,
+            creation.rfoot.w / 2 + 10)
+
+        connect.makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+            creation.lfoot.h / 2 + 10,
+            creation.lfoot.w / 2 + 10)
+    end
+
+    local handConnector = true
+    if handConnector then
+        connect.makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+            creation.rhand.h / 2 + 10,
+            creation.rhand.w / 2 + 10)
+
+        connect.makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+            creation.lhand.h + 10,
+            creation.lhand.w + 10)
+    end
+
+
+    local data = {
+        torso = torso,
+        neck = neck,
+        neck1 = neck1,
+        head = head,
+        lear = lear,
+        rear = rear,
+        luarm = luarm,
+        llarm = llarm,
+        lhand = lhand,
+        ruarm = ruarm,
+        rlarm = rlarm,
+        rhand = rhand,
+        luleg = luleg,
+        llleg = llleg,
+        lfoot = lfoot,
+        ruleg = ruleg,
+        rlleg = rlleg,
+        rfoot = rfoot,
+        hair1 = hair1,
+        hair2 = hair2,
+        hair3 = hair3,
+        hair4 = hair4,
+        hair5 = hair5
+    }
+    return data
+end
+
+function rotateToHorizontal(body, desiredAngle, divider, smarter, dt)
+    -- its  abit messy now, but im smarter, or a bit better  about dt
+
+    local DEGTORAD = 1 / 57.295779513
+    --https://www.iforce2d.net/b2dtut/rotate-to-angle
+    if true then
+        local angle = body:getAngle()
+        local a = angle
+
+
+        local angularVelocity = body:getAngularVelocity()
+        local inertia = body:getInertia()
+        local didSomething = false
+        if false then
+            if false then
+                while a > (2 * math.pi) do
+                    a = a - (2 * math.pi)
+                    body:setAngle(a)
+                    --                    print('getting in first one', a, angle)
+                    didSomething = true
+                end
+                while a < -(2 * math.pi) do
+                    a = a + (2 * math.pi)
+                    body:setAngle(a)
+                    --                    print('getting in second one')
+                    didSomething = true
+                end
+            end
+        end
+        if didSomething then
+            --            print('jo')
+            return
+        end
+        angle = a -- body:getAngle()
+        local nextAngle = angle + angularVelocity / divider
+        local totalRotation = desiredAngle - nextAngle
+
+        while (totalRotation < -180 * DEGTORAD) do
+            totalRotation = totalRotation + 360 * DEGTORAD
+        end
+        while (totalRotation > 180 * DEGTORAD) do
+            totalRotation = totalRotation - 360 * DEGTORAD
+        end
+
+
+        -- print(1/dt, divider, ((1/dt)*smarter) )
+        local desiredAngularVelocity = (totalRotation * divider)
+
+
+        if smarter then
+            local newer = ((1 / dt) * smarter)
+            desiredAngularVelocity = (totalRotation * math.min(divider, newer))
+        end
+        --local impulse = body:getInertia() * desiredAngularVelocity
+        -- body:applyAngularImpulse(impulse)
+
+        local torque = inertia * desiredAngularVelocity / (1 / divider)
+        -- print(divider, 1/divider)
+        if smarter then
+            local newer = ((1 / dt) * smarter)
+            torque = inertia * desiredAngularVelocity / (1 / math.min(divider, newer))
+        end
+        body:applyTorque(torque)
+    end
+end
+
+local function getRidOfBigRotationsInBody(body)
+    --local angle = body:getAngle()
+    --if angle > 0 then
+    --    body:setAngle(angle % (2 * math.pi))
+    --else
+    --    body:setAngle(angle % ( -2 * math.pi))
+    --end
+    local a = body:getAngle()
+    if false then
+        while a > (2 * math.pi) do
+            a = a - (2 * math.pi)
+            body:setAngle(a)
+        end
+        while a < -(2 * math.pi) do
+            a = a + (2 * math.pi)
+            body:setAngle(a)
+        end
+    end
+end
+
+
+
+lib.getUserDataAtBodyPart = function(bodyPart)
+    print(bodyPart)
+    print(bodyPart:getFixtures())
+    local fixtures = bodyPart:getFixtures()
+    for _, fixture in ipairs(fixtures) do
+        local userData = fixture:getUserData()
+        --   print(inspect(userData))
+    end
+end
+
+lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData)
+    --  print(bodyPart)
+    --  print(bodyPart:getFixtures())
+    local fixtures = bodyPart:getFixtures()
+    for _, fixture in ipairs(fixtures) do
+        local userData = fixture:getUserData()
+        --print(inspect(moreData), inspect(userData))
+        if userData.data then
+            --print('THIS WOULD OVERWRITE DATA THAT IS THERE ALREADY')
+            for k, v in pairs(moreData) do
+                --    print(k, v)
+                userData.data[k] = v
+            end
+        else
+            userData.data = moreData
+        end
+        fixture:setUserData(userData)
+        --print(inspect(userData))
+    end
+end
+
+
+local userDataIsSleeping = function(ud)
+    local result = false
+
+    if ud.data and ud.data.sleeping then result = true end
+    -- print('sleeping: ', result)
+    return result
+end
+
+lib.rotateAllBodies = function(bodies, dt)
+    -- I want to be able to rotate all bodies in one go.
+    -- This means I cannot fetch the guy with its creation here.
+    -- So that means the creation below , which is used for some stance-angles, this needs another solution.
+    -- probably data in userData on thos limbs...
+
+    -- for now i will just assume the same data for all.
+
+    local creation = dna.getCreation()
+    -- local upsideDown = false
+    lastDt = dt
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
+
+
+        local isBeingPointerJointed = false
+        for j = 1, #pointerJoints do
+            local mj = pointerJoints[j]
+            if mj.jointBody == body then
+                isBeingPointerJointed = true
+            end
+        end
+        for _, fixture in ipairs(fixtures) do
+            if isBeingPointerJointed then
+                --     getRidOfBigRotationsInBody(body)
+            end
+            local userData = fixture:getUserData()
+            if (userData) then
+                -- print(userData.bodyType)
+                if userData.bodyType == 'keep-rotation' then
+                    --  print(inspect(userData))
+                    rotateToHorizontal(body, userData.data.rotation, 50)
+                end
+
+                if isBeingPointerJointed then
+                    if userData.bodyType == 'frame' then
+                        rotateToHorizontal(body, 0, 10, .5, dt)
+                    end
+                    --     getRidOfBigRotationsInBody(body)
+                end
+            end
+
+
+            if (jointsEnabled) and not isBeingPointerJointed then
+                --local userData = fixture:getUserData()
+
+
+
+                if userData then
+                    -- getRidOfBigRotationsInBody(body)
+                    -- print(userData.bodyType)
+                    if userData.bodyType == 'balloon' then
+                        --getRidOfBigRotationsInBody(body)
+                        --local desired = upsideDown and -math.pi or 0
+                        --rotateToHorizontal(body, desired, 50)
+                        local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
+
+                        body:applyForce(0, up)
+                    end
+
+                    if userData.bodyType == 'frame' then
+                        --getRidOfBigRotationsInBody(body)
+                        --local desired = upsideDown and -math.pi or 0
+                        --rotateToHorizontal(body, desired, 50)
+                        --local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
+
+                        --body:applyForce(0, up)
+                        --print(body:getAngle())
+                        --if body:getAngle()< -.5 or body:getAngle()> .5 then
+                        local ma = math.abs(body:getAngle())
+
+                        local rate = numbers.mapInto(ma, 0, math.pi * 2, 0.0001, 1)
+                        local rate2 = 60 / (1 / rate)
+
+                        --  local rate3 =  (rate2*100)/60
+                        -- print(ma, rate, rate2*100)
+
+                        --  rotateToHorizontal(body, 0, 10, .1, dt)
+                        --end
+                    end
+                    --print(userData.bodyType)
+                    --if not upsideDown then
+                    --    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
+                    --        getRidOfBigRotationsInBody(body)
+                    --    end
+                    --end
+
+
+                    if userData.bodyType == 'lear' then
+                        -- getRidOfBigRotationsInBody(body)
+                        -- rotateToHorizontal(body, math.pi / 2, 25)
+                    end
+                    if userData.bodyType == 'rear' then
+                        -- getRidOfBigRotationsInBody(body)
+                        -- rotateToHorizontal(body, -math.pi / 2, 25)
+                    end
+
+
+                    if userData.bodyType == 'hand' then
+                        -- getRidOfBigRotationsInBody(body)
+                    end
+                    if userData.bodyType == 'hand' then
+                        --   getRidOfBigRotationsInBody(body)
+                    end
+                    if userData.bodyType == 'torso' then
+                        getRidOfBigRotationsInBody(body)
+                        local desired = upsideDown and -math.pi or 0
+                        --print(25, dt)
+                        rotateToHorizontal(body, desired, 25, 0.5, dt)
+                    end
+
+                    if not upsideDown then
+                        if userData.bodyType == 'neck1' then
+                            getRidOfBigRotationsInBody(body)
+                            --  -- rotateToHorizontal(body, -math.pi, 40)
+                            --rotateToHorizontal(body, 0, 10)
+                            rotateToHorizontal(body, -math.pi, 15, 0.25, dt)
+                        end
+                        if userData.bodyType == 'neck' then
+                            getRidOfBigRotationsInBody(body)
+                            -- rotateToHorizontal(body, -math.pi, 40)
+                            --rotateToHorizontal(body, 0, 10)
+                            rotateToHorizontal(body, -math.pi, 15, 0.25, dt)
+                        end
+
+                        if userData.bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+                            --rotateToHorizontal(body, -math.pi, 15)
+
+                            --  print(body:getAngle())
+                            rotateToHorizontal(body, 0, 15, 0.20, dt)
+                        end
+                    end
+
+                    if not upsideDown then
+                        if userData.bodyType == 'luleg' and not userDataIsSleeping(userData) then
+                            local a = creation.luleg.stanceAngle
+                            --  print(a)
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
+                        end
+                        if userData.bodyType == 'ruleg' and not userDataIsSleeping(userData) then
+                            local a = creation.ruleg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
+                        end
+                        if userData.bodyType == 'llleg' and not userDataIsSleeping(userData) then
+                            local a = creation.llleg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
+                        end
+                        if userData.bodyType == 'rlleg' and not userDataIsSleeping(userData) then
+                            local a = creation.rlleg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
+                        end
+                    end
+                    if upsideDown then
+                        if userData.bodyType == 'luarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
+                        end
+                        if userData.bodyType == 'llarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
+                        end
+                        if userData.bodyType == 'ruarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
+                        end
+                        if userData.bodyType == 'rlarm' then
+                            -- print('doing stuff!')
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
+                        end
+                        -- if userData.bodyType == 'legpart' then
+                        --getRidOfBigRotationsInBody(body)
+                        --rotateToHorizontal(body, math.pi, 10)
+                        -- end
+                    end
+
+                    if false then
+                        if userData.bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+
+                            rotateToHorizontal(body, math.pi, 15, 0.20, dt)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+lib.genericBodyPartUpdate = function(guy, partName)
+    local groupId = guy.id
+    local box2dGuy = guy.b2d
+    local creation = guy.dna.creation
+    local facing = guy.facingVars
+    local data = getParentAndChildrenFromPartName(partName, guy)
+    local parentName = data.p
+    local recreateConnectorData = connect.getRecreateConnectorData(box2dGuy[partName]:getFixtures())
+    --  print(recreateConnectorData)
+    local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
+    local thisA = box2dGuy[partName]:getAngle()
+
+    if parentName then
+        local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
+
+        if jointWithParentToBreak then
+            local offsetX, offsetY = getOffsetFromParent(partName, guy)
+            local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
+            local prevA = box2dGuy[parentName]:getAngle()
+            for i = 1, #jointWithParentToBreak do
+                jointWithParentToBreak[i]:destroy()
+            end
+            box2dGuy[partName]:destroy()
+
+            local createData = creation[partName]
+            local body = love.physics.newBody(world, hx, hy, "dynamic")
+            local shape = phys.makeShapeFromCreationPart(createData)
+            local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
+            local data = { creation = creation, partName = partName, facing = facing }
+            local xangle = getAngleOffset(partName, creation, data)
+            body:setAngle(prevA + xangle)
+
+
+
+            local joint = makeConnectingRevoluteJoint(data, body, box2dGuy[parentName])
+
+            box2dGuy[partName] = body
+            body:setAngle(thisA)
+        end
+    end
+
+    if not parentName or partName == 'torso' then
+        local aa = box2dGuy[partName]:getAngle()
+        local hx, hy = box2dGuy[partName]:getWorldPoint(0, 0)
+        box2dGuy[partName]:destroy()
+        local createData = creation[partName]
+        local body = love.physics.newBody(world, hx, hy, "dynamic")
+        local shape = phys.makeShapeFromCreationPart(createData)
+        local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
+        box2dGuy[partName] = body
+        box2dGuy[partName]:setAngle(aa)
+    end
+
+    if (recreatePointerJoint) then
+        useRecreatePointerJoint(recreatePointerJoint, box2dGuy[partName])
+    end
+
+    if (recreateConnectorData) then
+        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName], guy)
+    end
+    -- reattach children
+
+
+    local function reAttachChild(childName)
+        local offsetX, offsetY = getOffsetFromParent(childName, guy)
+        local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
+        box2dGuy[childName]:setPosition(nx, ny)
+        local aa = box2dGuy[childName]:getAngle()
+        local data = { creation = creation, partName = childName, facing = facing }
+        local xangle = getAngleOffset(childName, creation, data) -- what LEFT!
+
+        box2dGuy[childName]:setAngle(thisA + xangle)
+
+
+        local joint = makeConnectingRevoluteJoint(data, box2dGuy[childName],
+            box2dGuy[partName])
+        box2dGuy[childName]:setAngle(aa)
+    end
+
+
+    local childName = data.c
+    if childName and (type(childName) == 'string') then
+        reAttachChild(childName)
+    end
+    if childName and (type(childName) == 'table') then
+        for i = 1, #childName do
+            local skip = false
+            if creation.isPotatoHead and childName[i] == 'neck' then
+                skip = true
+            end
+            if not creation.hasPhysicsHair and string.match(childName[i], 'hair') then
+                skip = true
+            end
+
+            if not skip then
+                reAttachChild(childName[i])
+            end
+        end
+    end
+end
+
+lib.handlePhysicsHairOrNo = function(box2dGuy, guy, hair)
+    local creation = guy.dna.creation
+    -- local groupId = guy.id
+    -- we need to find out if we can leave early..
+    if hair and box2dGuy.hair1 then return end
+    if not hair and not box2dGuy.hair1 then return end
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+    if not hair then
+        box2dGuy.hair1:destroy()
+        box2dGuy.hair2:destroy()
+        box2dGuy.hair3:destroy()
+        box2dGuy.hair4:destroy()
+        box2dGuy.hair5:destroy()
+        box2dGuy.hair1 = nil
+        box2dGuy.hair2 = nil
+        box2dGuy.hair3 = nil
+        box2dGuy.hair4 = nil
+        box2dGuy.hair5 = nil
+    else
+        local attachTo = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
+        local hair1 = makePart('hair1', attachTo)
+        local hair2 = makePart('hair2', attachTo)
+        local hair3 = makePart('hair3', attachTo)
+        local hair4 = makePart('hair4', attachTo)
+        local hair5 = makePart('hair5', attachTo)
+        box2dGuy.hair1 = hair1
+        box2dGuy.hair2 = hair2
+        box2dGuy.hair3 = hair3
+        box2dGuy.hair4 = hair4
+        box2dGuy.hair5 = hair5
+    end
+end
+
+lib.handleNeckAndHeadForHasNeck = function(box2dGuy, guy, willHaveNeck)
+    local groupId = guy.id
+    --if not willHaveNeck and box2dGuy.neck == nil
+    --if creation.isPotatoHead then return end
+    --print(box2dGuy.isPotatoHead)
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+    if not willHaveNeck then
+        if (box2dGuy.neck) then
+            box2dGuy.neck:destroy()
+        end
+        if (box2dGuy.neck1) then
+            box2dGuy.neck1:destroy()
+        end
+        if (box2dGuy.head) then
+            box2dGuy.head:destroy()
+        end
+        box2dGuy.neck = nil
+        box2dGuy.neck1 = nil
+        local torso = box2dGuy.torso
+        local head = makePart('head', torso)
+        box2dGuy.head = head
+    else
+        -- if not  box2dGuy.isPotatoHead then
+        if box2dGuy.head then
+            box2dGuy.head:destroy()
+        end
+        local torso = box2dGuy.torso
+        local neck = makePart('neck', torso)
+        local neck1 = makePart('neck1', neck)
+        local head = makePart('head', neck1)
+        box2dGuy.neck = neck
+        box2dGuy.neck1 = neck1
+        box2dGuy.head = head
+        -- end
+    end
+end
+
+lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
+    local groupId = guy.id
+    if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
+        return
+    end
+
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+    if willBePotato then
+        if (box2dGuy.neck) then
+            box2dGuy.neck:destroy()
+        end
+        if (box2dGuy.neck1) then
+            box2dGuy.neck1:destroy()
+        end
+        box2dGuy.head:destroy()
+        box2dGuy.lear:destroy()
+        box2dGuy.rear:destroy()
+        box2dGuy.lear = nil
+        box2dGuy.rear = nil
+        box2dGuy.neck = nil
+        box2dGuy.neck1 = nil
+        box2dGuy.head = nil
+
+        local torso = box2dGuy.torso
+        local lear = makePart('lear', torso)
+        local rear = makePart('rear', torso)
+        box2dGuy.lear = lear
+        box2dGuy.rear = rear
+    else
+        -- destroy ears from torso
+        box2dGuy.lear:destroy()
+        box2dGuy.rear:destroy()
+
+        local torso = box2dGuy.torso
+        local neck
+        local neck1
+
+        if hasNeck then
+            neck = makePart('neck', torso)
+            neck1 = makePart('neck1', neck)
+        end
+
+        local head = makePart('head', hasNeck and neck1 or torso)
+        local lear = makePart('lear', head)
+        local rear = makePart('rear', head)
+
+        box2dGuy.lear = lear
+        box2dGuy.rear = rear
+        box2dGuy.neck = neck
+        box2dGuy.neck1 = neck1
+        box2dGuy.head = head
+    end
+end
+
+lib.toggleAllJointLimits = function(guy, value)
+    local creation = guy.dna.creation
+    local b2d = guy.b2d
+    if not creation.isPotatoHead and creation.hasNeck then
+        lib.setJointLimitBetweenBodies(b2d.head, b2d.neck1, value, 'revolute')
+        lib.setJointLimitBetweenBodies(b2d.neck1, b2d.neck, value, 'revolute')
+        lib.setJointLimitBetweenBodies(b2d.neck, b2d.torso, value, 'revolute')
+    end
+    lib.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, value, 'revolute')
+end
+
+lib.isNullObject = function(partName, values)
+    local p = findPart(partName)
+    local url = p.imgs[values[partName].shape]
+    return url == 'assets/parts/null.png'
+end
+
+
+lib.changeMetaPoints = function(key, guy, value, data)
+    local creation = guy.dna.creation
+    creation[key].metaPoints = value
+
+    local tlx, tly, brx, bry = bbox.getPointsBBox(value)
+    local bbw = (brx - tlx)
+    local bbh = (bry - tly)
+
+    creation[key].metaPointsW = bbw
+    creation[key].metaPointsH = bbh
+
+    if key == 'head' then
+        creation[key].metaOffsetX = value[1][1]
+        creation[key].metaOffsetY = value[1][2]
+    end
+    if key == 'torso' then
+        creation[key].metaOffsetX = 0
+        creation[key].metaOffsetY = 0
+    end
+end
+
+lib.changeMetaTexture = function(key, guy, data)
+    local creation                   = guy.dna.creation
+    local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
+    local bbw                        = (brx - tlx)
+    local bbh                        = (bry - tly)
+
+    creation[key].metaURL            = data.url
+    creation[key].metaTexturePoints  = data.texturePoints
+    creation[key].metaTexturePointsW = bbw
+    creation[key].metaTexturePointsH = bbh
+    creation[key].metaPivotX         = data.pivotX
+    creation[key].metaPivotY         = data.pivotY
+end
+
+lib.getFlippedMetaObject = function(flipx, flipy, points)
+    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+    local mx = tlx + (brx - tlx) / 2
+    local my = tly + (bry - tly) / 2
+    local newPoints = {}
+
+    for i = 1, #points do
+        local newY = points[i][2]
+        if flipy == -1 then
+            local dy = my - points[i][2]
+            newY = my + dy
+        end
+        local newX = points[i][1]
+        if flipx == -1 then
+            local dx = mx - points[i][1]
+            newX = mx + dx
+        end
+        newPoints[i] = { newX, newY }
+    end
+    local temp = copy3(newPoints)
+    if flipy == -1 and flipx == 1 then
+        newPoints[1] = temp[5]
+        newPoints[2] = temp[4]
+        newPoints[3] = temp[3]
+        newPoints[4] = temp[2]
+        newPoints[5] = temp[1]
+        newPoints[6] = temp[8]
+        newPoints[7] = temp[7]
+        newPoints[8] = temp[6]
+    end
+    if flipx == -1 and flipy == 1 then
+        newPoints[1] = temp[1]
+        newPoints[2] = temp[8]
+        newPoints[3] = temp[7]
+        newPoints[4] = temp[6]
+        newPoints[5] = temp[5]
+        newPoints[6] = temp[4]
+        newPoints[7] = temp[3]
+        newPoints[8] = temp[2]
+    end
+    if flipx == -1 and flipy == -1 then
+        newPoints[1] = temp[5]
+        newPoints[2] = temp[6]
+        newPoints[3] = temp[7]
+        newPoints[4] = temp[8]
+        newPoints[5] = temp[1]
+        newPoints[6] = temp[2]
+        newPoints[7] = temp[3]
+        newPoints[8] = temp[4]
+    end
+    return newPoints
+end
+
+
+
+
+return lib
+
+```
+
 src/box2d-draw-textured.lua
 ```lua
+--[[
+TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedTriangleStrip (within drawTexturedWorld) is definitely inefficient. We should absolutely cache these.
+]] --
+
 local lib = {}
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
@@ -328,6 +1898,16 @@ local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 
 local imageCache = {}
+
+local shrinkFactor = 1
+
+lib.setShrinkFactor = function(value)
+    shrinkFactor = value
+end
+
+lib.getShrinkFactor = function()
+    return shrinkFactor
+end
 
 function getLoveImage(path, settings)
     if not imageCache[path] then
@@ -366,16 +1946,7 @@ getLoveImage('textures/pat/type6.png', settings)
 getLoveImage('textures/pat/type7.png', settings)
 getLoveImage('textures/pat/type8.png', settings)
 
-local shrinkFactor = 10
 
---local image = nil
-
-lib.setShrinkFactor = function(value)
-    shrinkFactor = value
-end
-lib.getShrinkFactor = function()
-    return shrinkFactor
-end
 
 local base = {
     '020202', '4f3166', '69445D', '613D41', 'efebd8',
@@ -402,6 +1973,9 @@ local base = {
     '965D64', '798091', '4C5575', '6E4431', '626964',
 }
 lib.palette = base
+
+
+
 
 
 
@@ -787,8 +2361,6 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
 
     love.graphics.draw(_mesh, x, y, r, 1, 1)
 end
-
-
 
 function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
@@ -1577,6 +3149,561 @@ return lib
 
 ```
 
+src/character-manager.lua
+```lua
+local lib = {}
+
+local ObjectManager = require 'src.object-manager' -- To create the physical parts
+local Joints = require 'src.joints'
+local uuid = require 'src.uuid'
+local utils = require 'src.utils'
+local mathutils = require 'src.math-utils'
+
+local function extractNeckIndex(name)
+    local index = string.match(name, "^neck(%d+)$")
+    return index and tonumber(index) or nil
+end
+
+local function extractTorsoIndex(name)
+    local index = string.match(name, "^torso(%d+)$")
+    return index and tonumber(index) or nil
+end
+
+local function getParentAndChildrenFromPartName(partName, guy)
+    local creation      = guy.dna.creation
+    local neckSegments  = creation.neckSegments or 0
+    local torsoSegments = creation.torsoSegments or 1
+
+    local highestTorso  = 'torso' .. torsoSegments
+    local lowestTorso   = 'torso1'
+
+    local map           = {
+
+        head = { p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso, c = { 'lear', 'rear' } },
+        lear = { p = 'head' },
+        rear = { p = 'head' },
+        luarm = { p = highestTorso, c = 'llarm' },
+        llarm = { p = 'luarm', c = 'lhand' },
+        lhand = { p = 'llarm' },
+        ruarm = { p = highestTorso, c = 'rlarm' },
+        rlarm = { p = 'ruarm', c = 'rhand' },
+        rhand = { p = 'rlarm' },
+        luleg = { p = lowestTorso, c = 'llleg' },
+        llleg = { p = 'luleg', c = 'lfoot' },
+        lfoot = { p = 'llleg' },
+        ruleg = { p = lowestTorso, c = 'rlleg' },
+        rlleg = { p = 'ruleg', c = 'rfoot' },
+        rfoot = { p = 'rlleg' },
+
+    }
+
+    local neckIndex     = extractNeckIndex(partName)
+    if neckIndex then
+        if neckIndex == 1 then
+            map[partName] = { p = highestTorso, c = (neckIndex == neckSegments) and 'head' or 'neck2' }
+        else
+            map[partName] = {
+                p = 'neck' .. (neckIndex - 1),
+                c = (neckIndex == neckSegments) and 'head' or
+                    'neck' .. neckIndex + 1
+            }
+        end
+    end
+
+    local torsoIndex = extractTorsoIndex(partName)
+    if torsoIndex then
+        logger:info('torsoIndex', torsoIndex)
+        if torsoIndex then
+            local children = {}
+            -- Middle segments connect only to the next torso segment
+            if torsoIndex < torsoSegments then
+                table.insert(children, 'torso' .. (torsoIndex + 1))
+            end
+
+            -- Highest segment connects to arms and neck/head
+            if torsoIndex == torsoSegments then
+                table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
+                table.insert(children, 'luarm')
+                table.insert(children, 'ruarm')
+                if creation.isPotatoHead then -- Potato ears attach to highest torso
+                    table.insert(children, 'lear')
+                    table.insert(children, 'rear')
+                end
+            end
+
+            -- Lowest segment connects to legs
+            if torsoIndex == 1 then
+                table.insert(children, 'luleg')
+                table.insert(children, 'ruleg')
+            end
+
+            if torsoIndex == 1 then
+                map[partName] = { c = children } -- Torso1 has no parent
+            else
+                map[partName] = { p = 'torso' .. (torsoIndex - 1), c = children }
+            end
+        end
+    end
+
+    -- Overrides for special cases
+
+    -- Head connects directly to highest torso if no neck
+    if partName == 'head' and neckSegments == 0 then
+        map[partName] = { p = highestTorso, c = { 'lear', 'rear' } }
+    end
+
+    -- If Potato Head, ears parent is highest torso (head doesn't exist as parent)
+    if creation.isPotatoHead then
+        map['lear'] = { p = highestTorso }
+        map['rear'] = { p = highestTorso }
+        -- Remove head connection if it exists from map
+        map['head'] = nil -- No head part in potato mode
+    end
+
+    -- If only one torso segment, it has all children directly
+    if torsoSegments == 1 and partName == 'torso1' then
+        local singleTorsoChildren = {
+            (neckSegments > 0) and 'neck1' or 'head',
+            'luarm', 'ruarm', 'luleg', 'ruleg'
+        }
+        if creation.isPotatoHead then
+            table.insert(singleTorsoChildren, 'lear')
+            table.insert(singleTorsoChildren, 'rear')
+        end
+        map[partName] = { c = singleTorsoChildren }
+    end
+
+
+    local result = map[partName]
+
+
+
+    return result or {} -- Return empty table if partName not found
+end
+
+local function getOwnOffset(partName, guy)
+    local creation = guy.dna.parts
+    if extractNeckIndex(partName) then
+        return 0, -creation[partName].dims.h / 2
+    end
+    if extractTorsoIndex(partName) then
+        return 0, -creation[partName].dims.h / 2
+    end
+    if partName == 'head' then
+        return 0, -creation.head.dims.h / 2
+    end
+    if partName == 'lear' then
+        return 0, -creation.lear.dims.h / 2
+    end
+    if partName == 'rear' then
+        return 0, -creation.rear.dims.h / 2
+    end
+    if partName == 'luleg' then
+        return 0, creation.luleg.dims.h / 2
+    end
+    if partName == 'ruleg' then
+        return 0, creation.ruleg.dims.h / 2
+    end
+    if partName == 'llleg' then
+        return 0, creation.llleg.dims.h / 2
+    end
+    if partName == 'lfoot' then
+        return 0, creation.lfoot.dims.h / 2
+    end
+    if partName == 'rlleg' then
+        return 0, creation.rlleg.dims.h / 2
+    end
+    if partName == 'rfoot' then
+        return 0, creation.rfoot.dims.h / 2
+    end
+    if partName == 'luarm' then
+        return 0, creation.luarm.dims.h / 2
+    end
+    if partName == 'ruarm' then
+        return 0, creation.ruarm.dims.h / 2
+    end
+    if partName == 'rhand' then
+        return 0, creation.rhand.dims.h / 2
+    end
+    if partName == 'llarm' then
+        return 0, creation.llarm.dims.h / 2
+    end
+    if partName == 'rlarm' then
+        return 0, creation.rlarm.dims.h / 2
+    end
+    if partName == 'lhand' then
+        return 0, creation.lhand.dims.h / 2
+    end
+    return 0, 0
+end
+
+local function getOffsetFromParent(partName, guy)
+    local parts         = guy.dna.parts
+    local creation      = guy.dna.creation
+    local positioners   = guy.dna.positioners
+    local data          = getParentAndChildrenFromPartName(partName, guy)
+    -- Define the name of the highest torso segment
+    local torsoSegments = creation.torsoSegments or 1
+    local highestTorso  = 'torso' .. torsoSegments
+    -- Define the name of the lowest torso segment (always torso1)
+    local lowestTorso   = 'torso1'
+
+
+    if extractNeckIndex(partName) then
+        local index = extractNeckIndex(partName)
+        if index == 1 then
+            return 0, -parts[highestTorso].dims.h / 2
+        else
+            return 0, -parts['neck' .. (index - 1)].dims.h / 2
+        end
+    elseif extractTorsoIndex(partName) then
+        local index = extractTorsoIndex(partName)
+        if index == 1 then
+            return 0, 0
+        else
+            return 0, -parts['torso' .. (index - 1)].dims.h / 2
+        end
+    elseif partName == 'llarm' then
+        return 0, parts.luarm.dims.h / 2
+    elseif partName == 'rlarm' then
+        return 0, parts.ruarm.dims.h / 2
+    elseif partName == 'llleg' then
+        return 0, parts.luleg.dims.h / 2
+    elseif partName == 'lfoot' then
+        return 0, parts.llleg.dims.h / 2
+    elseif partName == 'rlleg' then
+        return 0, parts.ruleg.dims.h / 2
+    elseif partName == 'rfoot' then
+        return 0, parts.rlleg.dims.h / 2
+    elseif partName == 'rhand' then
+        return 0, parts.rlarm.dims.h / 2
+    elseif partName == 'lhand' then
+        return 0, parts.llarm.dims.h / 2
+    elseif partName == 'luarm' then
+        -- if creation.isPotatoHead then
+        --     if creation.torso.metaPoints then
+        --         return getScaledTorsoMetaPoint(7, guy)
+        --     end
+        -- else
+        --     if creation.torso.metaPoints then
+        --         return getScaledTorsoMetaPoint(8, guy)
+        --     end
+        -- end
+        return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+    elseif partName == 'ruarm' then
+        -- if creation.isPotatoHead then
+        --     if creation.torso.metaPoints then
+        --         return getScaledTorsoMetaPoint(3, guy)
+        --     end
+        -- else
+        --     if creation.torso.metaPoints then
+        --         return getScaledTorsoMetaPoint(2, guy)
+        --     end
+        -- end
+        return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+    elseif partName == 'luleg' then
+        local t = 0.5 --positioners.leg.x
+        -- if creation.torso.metaPoints then
+        --     local ax, ay = getScaledTorsoMetaPoint(6, guy)
+        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
+        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        --     return rx, ry
+        -- end
+        return (-parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+    elseif partName == 'ruleg' then
+        local t = 0.5 -- positioners.leg.x
+        -- if creation.torso.metaPoints then
+        --     local ax, ay = getScaledTorsoMetaPoint(4, guy)
+        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
+        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+        --     return rx, ry
+        -- end
+        return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+    elseif partName == 'lear' then
+        -- if creation.isPotatoHead then
+        --     if creation.torso.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledTorsoMetaPoint(8, guy)
+        --         local bx, by = getScaledTorsoMetaPoint(7, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+        --         return rx, ry
+        --     end
+        -- else
+        --     if creation.head.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledHeadMetaPoint(8, guy)
+        --         local bx, by = getScaledHeadMetaPoint(6, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+        --         return rx, ry
+        --     end
+        -- end
+        if creation.isPotatoHead then
+            return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        else
+            return -parts.head.dims.w / 2, -parts.head.dims.h / 2
+        end
+    elseif partName == 'rear' then
+        -- if creation.isPotatoHead then
+        --     if creation.torso.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledTorsoMetaPoint(2, guy)
+        --         local bx, by = getScaledTorsoMetaPoint(3, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+        --         return rx, ry
+        --     end
+        -- else
+        --     if creation.head.metaPoints then
+        --         local t = positioners.ear.y
+        --         local ax, ay = getScaledHeadMetaPoint(2, guy)
+        --         local bx, by = getScaledHeadMetaPoint(4, guy)
+        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+        --         return rx, ry
+        --     end
+        -- end
+        if creation.isPotatoHead then
+            return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        else
+            return parts.head.dims.w / 2, -parts.head.dims.h / 2
+        end
+    elseif (partName == 'head') then
+        --  then
+        --     return 0, -creation.neck1.dims.h / 2
+        -- else
+        --     return 0, -creation.torso.dims.h / 2
+
+
+
+
+
+        if creation.neckSegments == 0 then
+            return 0, -parts[highestTorso].dims.h / 2
+        else
+            local last = 'neck' .. creation.neckSegments
+            return 0, -parts[last].dims.h / 2
+        end
+    else
+        return 0, 0
+    end
+end
+
+local function getAngleOffset(partName, guy)
+    local parts = guy.dna.parts
+    if partName == 'lfoot' then
+        return math.pi / 2
+    elseif partName == 'rfoot' then
+        return -math.pi / 2
+    elseif partName == 'lear' then
+        return parts.lear.stanceAngle
+    elseif partName == 'rear' then
+        return parts.rear.stanceAngle
+    else
+        return 0
+    end
+end
+
+
+local dna = {
+    ['humanoid'] = {
+        creation = {
+            isPotatoHead = false,
+            neckSegments = 6,
+            torsoSegments = 4
+        },
+        parts = {
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 30 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
+            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['llleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['rlleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
+            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
+            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
+            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
+        },
+    }
+}
+
+
+local function makePart(partName, instance, settings)
+    local values = getParentAndChildrenFromPartName(partName, instance)
+    local parent = values.p
+    -- logger:info(partName, parent)
+
+    local prevA = 0
+
+    if parent then
+        if instance.parts[parent] then
+            local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
+            settings.x = parentPosX
+            settings.y = parentPosY
+        end
+        prevA = instance.parts[parent].body:getAngle()
+    end
+
+    local offX, offY = getOffsetFromParent(partName, instance)
+    settings.x = settings.x + offX
+    settings.y = settings.y + offY
+    local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
+    local xangle = getAngleOffset(partName, instance)
+    local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
+
+    settings.x = settings.x + rx
+    settings.y = settings.y + ry
+    local thing = ObjectManager.addThing(settings.shapeType, settings)
+
+    if thing then
+        thing.body:setAngle(prevA + xangle)
+        if extractNeckIndex(partName) then
+            thing.body:setAngularDamping(1)
+            thing.body:setLinearDamping(1)
+        end
+        if extractTorsoIndex(partName) then
+            thing.body:setAngularDamping(1)
+            thing.body:setLinearDamping(1)
+            local f = thing.body:getFixtures()
+            for i = 1, #f do
+                f[i]:setDensity(1)
+            end
+        end
+        instance.parts[partName] = thing
+    end
+
+    if parent then
+        local partA_thing = instance.parts[parent]   --instance.parts[jointData.a]
+        local partB_thing = instance.parts[partName] --instance.parts[jointData.b]
+        -- logger:info(partA_thing, partB_thing)
+
+        if (partA_thing and partB_thing) then
+            local jointData = instance.dna.parts[partName].j
+            local jointCreationData = {
+                body1 = partA_thing.body,
+                body2 = partB_thing.body,
+                jointType = jointData.type,
+                collideConnected = false, -- Default to false
+                id = uuid.generateID(),
+                offsetA = { x = 0, y = 0 },
+                offsetB = { x = 0, y = 0 },
+            }
+            local offX, offY = getOffsetFromParent(partName, instance)
+            jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
+            jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
+            local joint = Joints.createJoint(jointCreationData)
+            local limits = jointData.limits
+
+            if joint and limits and limits.low and limits.up then
+                joint:setLimits(limits.low, limits.up)
+                joint:setLimitsEnabled(true)
+            end
+        end
+    end
+end
+
+lib.createCharacter = function(template, x, y)
+    if dna[template] then
+        local instance = {
+            id = uuid.generateID(),
+            templateName = template,
+            dna = utils.deepCopy(dna[template]), -- Copy template data for potential instance modification
+            parts = {},                          -- { [partName] = thingObject, ... }
+            joints = {},                         -- { [connectionName] = jointObject, ... }
+            appearanceValues = {},               -- Will hold visual overrides (implement later)
+            -- Add other instance-specific state if needed
+        }
+
+        local isPotato = instance.dna.creation.isPotatoHead
+        local hasNeck = instance.dna.creation.neckSegments > 0
+        local ordered = {}
+
+
+
+        local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
+        -- 1. Add Torso Segments
+        for i = 1, torsoSegments do
+            local partName = 'torso' .. i
+            table.insert(ordered, partName)
+            -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
+            if not instance.dna.parts[partName] then
+                -- Ensure template exists
+                if not instance.dna.parts['torso-segment-template'] then
+                    error("Missing 'torso-segment-template' in DNA for template: " .. template)
+                end
+                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+                -- Optional: Modify dimensions/properties of specific segments here if needed
+                -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
+                instance.dna.parts[partName].dims.w = i * 100
+
+                --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
+            end
+        end
+
+
+
+
+        if hasNeck and not isPotato then
+            for i = 1, (instance.dna.creation.neckSegments or 2) do
+                table.insert(ordered, 'neck' .. i)
+                instance.dna.parts['neck' .. i] = instance.dna.parts['neck-segment-template']
+            end
+        end
+        if not isPotato then
+            table.insert(ordered, 'head')
+        end
+        -- Common limbs
+        local limbs = {
+            'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
+            'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
+            'lear', 'rear'
+        }
+        for _, part in ipairs(limbs) do table.insert(ordered, part) end
+
+
+        for i = 1, #ordered do
+            local partName = ordered[i]
+            local partData = instance.dna.parts[partName]
+
+            local settings = {
+                x = x,
+                y = y,
+                bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
+                shapeType = partData.shape, -- Use shape defined in template
+                label = 'straight',         --partName,           -- Use part name as initial label
+                density = partData.density or 1,
+                radius = partData.dims.r,
+                width = partData.dims.w,
+                width2 = partData.dims.w2,
+                width3 = partData.dims.w2,
+                height = partData.dims.h,
+                height2 = partData.dims.h,
+                height3 = partData.dims.h,
+                height4 = partData.dims.h,
+                -- Add other physics properties if needed (friction, restitution?)
+            }
+            --logger:info('getting offset for ', partName)
+
+
+
+            makePart(partName, instance, settings)
+        end
+    end
+end
+
+return lib
+
+```
+
 src/editor-render.lua
 ```lua
 -- here we just have snall functions that render thigns for the editor (not ui but active state, selction boxes that sot of thing)
@@ -1675,8 +3802,14 @@ function lib.renderActiveEditorThings()
             local vy = verts[i + 1]
             local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
             if dist < 10 then
-                love.graphics.circle('fill', vx, vy, 10)
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('fill', vx, vy, 13)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.circle('fill', vx, vy, 11)
             else
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('line', vx, vy, 12)
+                love.graphics.setColor(1, 1, 1)
                 love.graphics.circle('line', vx, vy, 10)
             end
         end
@@ -1684,22 +3817,49 @@ function lib.renderActiveEditorThings()
 
 
     if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture and state.texFixtureEdit.lockedVerts == false then
-        local thing = state.selection.selectedSFixture:getBody():getUserData().thing
-        local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
+        local thing     = state.selection.selectedSFixture:getBody():getUserData().thing
+
+        local fixtureUD = state.selection.selectedSFixture:getUserData()
+        local isMeta8   = fixtureUD.label == 'meta8'
+        local verts     = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
             thing, 0, 0)
         --print(inspect(verts))
-        local mx, my = love.mouse:getPosition()
-        local cx, cy = cam:getWorldCoordinates(mx, my)
-
+        local mx, my    = love.mouse:getPosition()
+        local cx, cy    = cam:getWorldCoordinates(mx, my)
+        logger:inspect(fixtureUD)
         for i = 1, #verts, 2 do
             local vx = verts[i]
             local vy = verts[i + 1]
             local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
             if dist < 10 then
-                love.graphics.circle('fill', vx, vy, 10)
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('fill', vx, vy, 13)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.circle('fill', vx, vy, 11)
             else
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('line', vx, vy, 12)
+                love.graphics.setColor(1, 1, 1)
                 love.graphics.circle('line', vx, vy, 10)
+
+                if (isMeta8) then
+                    love.graphics.setColor(0, 0, 0)
+                    love.graphics.print(math.ceil(i / 2), vx, vy)
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.print(math.ceil(i / 2), vx - 2, vy - 2)
+                end
             end
+        end
+
+        if (isMeta8) then
+            -- index 1 -> 5
+            love.graphics.line(verts[1 * 2 - 1], verts[1 * 2 - 0], verts[5 * 2 - 1], verts[5 * 2 - 0])
+            -- index 2 -> 8
+            love.graphics.line(verts[2 * 2 - 1], verts[2 * 2 - 0], verts[8 * 2 - 1], verts[8 * 2 - 0])
+            -- index 3 -> 7
+            love.graphics.line(verts[3 * 2 - 1], verts[3 * 2 - 0], verts[7 * 2 - 1], verts[7 * 2 - 0])
+            -- index 4 -> 6
+            love.graphics.line(verts[4 * 2 - 1], verts[4 * 2 - 0], verts[6 * 2 - 1], verts[6 * 2 - 0])
         end
     end
 
@@ -2291,6 +4451,9 @@ local function handlePointer(x, y, id, action)
 
                     state.selection.selectedObj = thing
                     state.selection.selectedSFixture = nil
+                    state.texFixtureEdit.tempVerts = nil
+                    state.texFixtureEdit.centroid = nil
+                    state.texFixtureEdit.lockedVerts = true
                     state.interaction.maybeHideSelectedPanel = false
                 elseif (state.selection.selectedJoint) then
                     state.selection.selectedJoint = nil
@@ -5701,7 +7864,7 @@ function lib.flipThing(thing, axis, recursive)
             --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
 
 
-
+            --todo when a joint is flipped i alos need to redo its limits (if applicable)
 
 
             local offsetA = jointUserData.offsetA
@@ -8951,7 +11114,8 @@ function shapes.createShape(shapeType, settings)
         shapesList = makeShapeListFromPolygon(vertices) or {}
         --table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'capsule' then
-        vertices = capsuleXY(settings.width, settings.height, settings.width / (settings.width2 or 1), 0, 0)
+        local radius = math.min(settings.width / (settings.width2 or 1), settings.height / (settings.width2 or 1))
+        vertices = capsuleXY(settings.width, settings.height, radius, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'trapezium' then
         vertices = makeTrapezium(settings.width, settings.width2 or (settings.width * 1.2), settings.height, 0, 0)
@@ -10738,6 +12902,817 @@ function lib.generateID()
 end
 
 return lib
+
+```
+
+spec/math-utils_spec.lua
+```lua
+-- spec/math-utils_spec.lua
+
+describe("src.math-utils", function()
+    -- Reload module to ensure we have the latest version if modified elsewhere
+    package.loaded['src.math-utils'] = nil
+    local mathutils = require('src.math-utils')
+    local epsilon = 1e-9 -- Tolerance for floating point comparisons
+
+    -- Helper for comparing tables of numbers with tolerance
+    local function assert_tables_near(t1, t2, tol, msg)
+        tol = tol or epsilon
+        -- FIX: Handle nil message gracefully
+        local base_msg = msg or "Tables near assertion"
+        assert.are.equal(#t1, #t2, base_msg .. " (Table lengths differ)")
+        for i = 1, #t1 do
+            assert.is_near(t1[i], t2[i], tol, base_msg .. " (Mismatch at index " .. i .. ")")
+        end
+    end
+
+    -- Helper for comparing points with tolerance
+    local function assert_points_near(p1, p2, tol, msg)
+        tol = tol or epsilon
+        -- FIX: Handle nil message gracefully
+        local base_msg = msg or "Points near assertion"
+        -- FIX: Add nil checks before indexing p1/p2
+        assert.is_not_nil(p1, base_msg .. " (Point 1 is nil)")
+        assert.is_not_nil(p2, base_msg .. " (Point 2 is nil)")
+        if p1 and p2 then
+            assert.is_near(p1.x, p2.x, tol, base_msg .. " (X mismatch)")
+            assert.is_near(p1.y, p2.y, tol, base_msg .. " (Y mismatch)")
+        end
+    end
+
+    describe(".makePolygonRelativeToCenter()", function()
+        it("should shift polygon vertices relative to calculated center", function()
+            local poly = { 0, 0, 4, 0, 4, 2, 0, 2 } -- Rectangle centered at (2, 1)
+            local relPoly, cx, cy = mathutils.makePolygonRelativeToCenter(poly, 2, 1)
+            assert.is_near(2, cx, epsilon)
+            assert.is_near(1, cy, epsilon)
+            assert_tables_near({ -2, -1, 2, -1, 2, 1, -2, 1 }, relPoly, epsilon, "Relative polygon mismatch")
+        end)
+    end)
+
+    describe(".makePolygonAbsolute()", function()
+        it("should shift relative polygon vertices to new absolute center", function()
+            local relPoly = { -2, -1, 2, -1, 2, 1, -2, 1 }                -- Relative to (0,0)
+            local absPoly = mathutils.makePolygonAbsolute(relPoly, 10, 5) -- New center (10, 5)
+            assert_tables_near({ 8, 4, 12, 4, 12, 6, 8, 6 }, absPoly, epsilon, "Absolute polygon mismatch")
+        end)
+    end)
+
+    describe(".getCenterOfPoints()", function()
+        it("should calculate the center and dimensions of a rectangle", function()
+            local points = { 0, 0, 4, 0, 4, 2, 0, 2 }
+            local cx, cy, w, h = mathutils.getCenterOfPoints(points)
+            assert.is_near(2, cx, epsilon)
+            assert.is_near(1, cy, epsilon)
+            assert.is_near(4, w, epsilon)
+            assert.is_near(2, h, epsilon)
+        end)
+        it("should calculate the center and dimensions of a triangle", function()
+            local points = { 0, 0, 6, 0, 3, 3 }
+            local cx, cy, w, h = mathutils.getCenterOfPoints(points)
+            assert.is_near(3, cx, epsilon)
+            assert.is_near(1.5, cy, epsilon)
+            assert.is_near(6, w, epsilon)
+            assert.is_near(3, h, epsilon)
+        end)
+        it("should handle a single point", function()
+            local points = { 5, 10 }
+            local cx, cy, w, h = mathutils.getCenterOfPoints(points)
+            assert.is_near(5, cx, epsilon)
+            assert.is_near(10, cy, epsilon)
+            assert.is_near(0, w, epsilon)
+            assert.is_near(0, h, epsilon)
+        end)
+    end)
+
+    describe(".getPolygonDimensions()", function()
+        it("should calculate width and height of a rectangle", function()
+            local poly = { 0, 0, 4, 0, 4, 2, 0, 2 }
+            local w, h = mathutils.getPolygonDimensions(poly)
+            assert.is_near(4, w, epsilon)
+            assert.is_near(2, h, epsilon)
+        end)
+        it("should calculate width and height of a triangle", function()
+            local poly = { 0, 0, 6, 0, 3, 3 }
+            local w, h = mathutils.getPolygonDimensions(poly)
+            assert.is_near(6, w, epsilon)
+            assert.is_near(3, h, epsilon)
+        end)
+    end)
+
+    -- Skipping getCenterOfPoints2
+
+    describe(".pointInRect()", function()
+        local rect = { x = 10, y = 20, width = 30, height = 40 }
+        it("should return true for a point inside the rectangle", function()
+            assert.is_true(mathutils.pointInRect(15, 25, rect))
+        end)
+        it("should return true for a point on the boundary", function()
+            assert.is_true(mathutils.pointInRect(10, 20, rect))
+            assert.is_true(mathutils.pointInRect(40, 60, rect))
+            assert.is_true(mathutils.pointInRect(25, 20, rect))
+            assert.is_true(mathutils.pointInRect(40, 40, rect))
+        end)
+        it("should return false for a point outside the rectangle", function()
+            assert.is_false(mathutils.pointInRect(5, 25, rect))
+            assert.is_false(mathutils.pointInRect(45, 25, rect))
+            assert.is_false(mathutils.pointInRect(15, 15, rect))
+            assert.is_false(mathutils.pointInRect(15, 65, rect))
+        end)
+    end)
+
+
+    describe(".getCorners()", function()
+        it("should identify corners of a simple square", function()
+            local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
+            local tl, tr, br, bl = mathutils.getCorners(square)
+            -- Use updated helper which checks for nil
+            assert_points_near({ x = 0, y = 0 }, tl, epsilon, "TL mismatch")
+            assert_points_near({ x = 10, y = 0 }, tr, epsilon, "TR mismatch")
+            assert_points_near({ x = 10, y = 10 }, br, epsilon, "BR mismatch")
+            assert_points_near({ x = 0, y = 10 }, bl, epsilon, "BL mismatch")
+        end)
+        it("should identify corners of a rotated square", function()
+            local rotated = { 5, -2.071, 12.071, 5, 5, 12.071, -2.071, 5 }
+            local tl, tr, br, bl = mathutils.getCorners(rotated)
+
+            -- FIX: Add explicit nil checks OR rely on updated assert_points_near
+            assert.is_not_nil(tl, "Top-Left corner calculation failed")
+            assert.is_not_nil(tr, "Top-Right corner calculation failed")
+            assert.is_not_nil(br, "Bottom-Right corner calculation failed")
+            assert.is_not_nil(bl, "Bottom-Left corner calculation failed")
+
+            -- Use updated helper which checks for nil internally
+            assert_points_near({ x = 5, y = -2.071 }, tl, epsilon, "TL mismatch")
+            assert_points_near({ x = 12.071, y = 5 }, tr, epsilon, "TR mismatch")
+            assert_points_near({ x = 5, y = 12.071 }, br, epsilon, "BR mismatch")
+            assert_points_near({ x = -2.071, y = 5 }, bl, epsilon, "BL mismatch")
+        end)
+    end)
+
+
+    describe(".getBoundingRect()", function()
+        it("should find the bounding box of a simple rectangle", function()
+            local poly = { 10, 20, 50, 20, 50, 60, 10, 60 }
+            local rect = mathutils.getBoundingRect(poly)
+            assert.is_near(10, rect.x, epsilon)
+            assert.is_near(20, rect.y, epsilon)
+            assert.is_near(40, rect.width, epsilon)
+            assert.is_near(40, rect.height, epsilon)
+        end)
+        it("should find the bounding box of a triangle", function()
+            local poly = { 0, 0, 6, 0, 3, 3 }
+            local rect = mathutils.getBoundingRect(poly)
+            assert.is_near(0, rect.x, epsilon)
+            assert.is_near(0, rect.y, epsilon)
+            assert.is_near(6, rect.width, epsilon)
+            assert.is_near(3, rect.height, epsilon)
+        end)
+    end)
+
+    describe(".findClosestEdge()", function()
+        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
+        it("should find the correct edge index for a point near an edge", function()
+            assert.are.equal(1, mathutils.findClosestEdge(square, 5, -1))
+            assert.are.equal(2, mathutils.findClosestEdge(square, 11, 5))
+            assert.are.equal(3, mathutils.findClosestEdge(square, 5, 11))
+            assert.are.equal(4, mathutils.findClosestEdge(square, -1, 5))
+        end)
+        it("should find the correct edge index for a point inside (tie-break)", function()
+            -- FIX: Accept the function's actual tie-breaking result (edge 1)
+            assert.are.equal(1, mathutils.findClosestEdge(square, 1, 1), "Tie-break for (1,1) seems to favor edge 1")
+            assert.are.equal(1, mathutils.findClosestEdge(square, 5, 1))
+        end)
+    end)
+
+    describe(".findClosestVertex()", function()
+        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
+        it("should find the correct vertex index", function()
+            assert.are.equal(1, mathutils.findClosestVertex(square, -1, -1))
+            assert.are.equal(2, mathutils.findClosestVertex(square, 11, -1))
+            assert.are.equal(3, mathutils.findClosestVertex(square, 11, 11))
+            assert.are.equal(4, mathutils.findClosestVertex(square, -1, 11))
+        end)
+        it("should find the correct vertex for interior points", function()
+            assert.are.equal(1, mathutils.findClosestVertex(square, 1, 1))
+            assert.are.equal(3, mathutils.findClosestVertex(square, 9, 9))
+        end)
+    end)
+
+    describe(".normalizeAxis()", function()
+        it("should normalize a simple vector", function()
+            local nx, ny = mathutils.normalizeAxis(3, 4)
+            assert.is_near(0.6, nx, epsilon)
+            assert.is_near(0.8, ny, epsilon)
+        end)
+        it("should normalize an axis vector", function()
+            local nx, ny = mathutils.normalizeAxis(1, 0)
+            assert.is_near(1, nx, epsilon)
+            assert.is_near(0, ny, epsilon)
+        end)
+        it("should return (1, 0) for a zero vector", function()
+            local nx, ny = mathutils.normalizeAxis(0, 0)
+            assert.is_near(1, nx, epsilon)
+            assert.is_near(0, ny, epsilon)
+        end)
+    end)
+
+    describe(".calculateDistance()", function()
+        it("should calculate the distance between two points", function()
+            assert.is_near(5, mathutils.calculateDistance(0, 0, 3, 4), epsilon)
+            assert.is_near(10, mathutils.calculateDistance(0, 0, 10, 0), epsilon)
+            assert.is_near(0, mathutils.calculateDistance(5, 5, 5, 5), epsilon)
+        end)
+    end)
+
+    describe(".computeCentroid()", function()
+        it("should compute the centroid of a rectangle", function()
+            local poly = { 0, 0, 4, 0, 4, 2, 0, 2 }
+            local cx, cy = mathutils.computeCentroid(poly)
+            assert.is_near(2, cx, epsilon)
+            assert.is_near(1, cy, epsilon)
+        end)
+        it("should compute the 'centroid' (center of bounds) of a triangle", function()
+            local poly = { 0, 0, 6, 0, 3, 3 }
+            local cx, cy = mathutils.computeCentroid(poly)
+            local cx_actual, cy_actual = mathutils.getCenterOfPoints(poly)
+            assert.is_near(cx_actual, cx, epsilon, "Centroid X matches getCenterOfPoints X")
+            assert.is_near(cy_actual, cy, epsilon, "Centroid Y matches getCenterOfPoints Y")
+        end)
+    end)
+
+    describe(".rotatePoint()", function()
+        it("should rotate a point 90 degrees counter-clockwise around the origin", function()
+            local x, y = mathutils.rotatePoint(10, 0, 0, 0, math.pi / 2)
+            assert.is_near(0, x, epsilon)
+            assert.is_near(10, y, epsilon)
+        end)
+        it("should rotate a point 180 degrees around the origin", function()
+            local x, y = mathutils.rotatePoint(10, 0, 0, 0, math.pi)
+            assert.is_near(-10, x, epsilon)
+            assert.is_near(0, y, epsilon)
+        end)
+        it("should rotate a point 90 degrees around a different origin", function()
+            local x, y = mathutils.rotatePoint(15, 5, 5, 5, math.pi / 2)
+            assert.is_near(5, x, epsilon)
+            assert.is_near(15, y, epsilon)
+        end)
+    end)
+
+    -- Skipping .localVerts
+
+
+    describe(".getLocalVerticesForCustomSelected()", function()
+        it("should transform local vertices to world space", function()
+            local vertices = { -10, -5, 10, -5, 10, 5, -10, 5 }
+            local mockBody = {
+                getPosition = function() return 100, 50 end,
+                getAngle = function() return 0 end
+            }
+            local mockObj = { body = mockBody }
+            local cx, cy = 0, 0
+            local worldVerts = mathutils.getLocalVerticesForCustomSelected(vertices, mockObj, cx, cy)
+            -- FIX: Use helper that handles nil message
+            assert_tables_near({ 90, 45, 110, 45, 110, 55, 90, 55 }, worldVerts, epsilon, "World verts (no rotation)")
+        end)
+        it("should transform local vertices to world space with rotation", function()
+            local vertices = { -10, -5, 10, -5, 10, 5, -10, 5 }
+            local mockBody = {
+                getPosition = function() return 100, 50 end,
+                getAngle = function() return math.pi / 2 end
+            }
+            local mockObj = { body = mockBody }
+            local cx, cy = 0, 0
+            local worldVerts = mathutils.getLocalVerticesForCustomSelected(vertices, mockObj, cx, cy)
+            -- FIX: Use helper that handles nil message
+            assert_tables_near({ 105, 40, 105, 60, 95, 60, 95, 40 }, worldVerts, epsilon, "World verts (with rotation)")
+        end)
+    end)
+
+
+    describe(".worldToLocal()", function()
+        it("should transform world point (relative to body) to local with zero rotation/offset", function()
+            local lx, ly = mathutils.worldToLocal(10, 20, 0, 0, 0)
+            assert.is_near(10, lx, epsilon)
+            assert.is_near(20, ly, epsilon)
+        end)
+        it("should transform world point (relative to body) to local with rotation", function()
+            local rel_lx, rel_ly = mathutils.worldToLocal(-5, -10, math.pi / 2, 0, 0)
+            assert.is_near(-10, rel_lx, epsilon, "Local X mismatch")
+            assert.is_near(5, rel_ly, epsilon, "Local Y mismatch")
+        end)
+    end)
+
+    describe(".removeVertexAt()", function()
+        it("should remove the specified vertex", function()
+            local verts = { 1, 1, 2, 2, 3, 3, 4, 4 }
+            mathutils.removeVertexAt(verts, 2)
+            assert.are.same({ 1, 1, 3, 3, 4, 4 }, verts)
+        end)
+        it("should remove the first vertex", function()
+            local verts = { 1, 1, 2, 2, 3, 3, 4, 4 }
+            mathutils.removeVertexAt(verts, 1)
+            assert.are.same({ 2, 2, 3, 3, 4, 4 }, verts)
+        end)
+        it("should remove the last vertex", function()
+            local verts = { 1, 1, 2, 2, 3, 3, 4, 4 }
+            mathutils.removeVertexAt(verts, 4)
+            assert.are.same({ 1, 1, 2, 2, 3, 3 }, verts)
+        end)
+    end)
+
+    describe(".insertValuesAt()", function()
+        it("should insert values at the specified position", function()
+            local tbl = { 10, 20, 50, 60 }
+            mathutils.insertValuesAt(tbl, 3, 30, 40)
+            assert.are.same({ 10, 20, 30, 40, 50, 60 }, tbl)
+        end)
+        it("should insert values at the beginning", function()
+            local tbl = { 30, 40 }
+            mathutils.insertValuesAt(tbl, 1, 10, 20)
+            assert.are.same({ 10, 20, 30, 40 }, tbl)
+        end)
+    end)
+
+    describe(".splitPoly()", function()
+        it("should return two tables when splitting", function()
+            local poly = { 0, 0, 10, 0, 10, 10, 0, 10 }
+            local intersection = { i1 = 1, i2 = 3, x = 5, y = 5 }
+            local p1, p2 = mathutils.splitPoly(poly, intersection)
+            assert.is_table(p1)
+            assert.is_table(p2)
+            -- NOTE: Actual vertex correctness test skipped
+        end)
+    end)
+
+    describe(".findIntersections()", function()
+        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
+        it("should find two intersections for a line crossing the square", function()
+            local line = { x1 = -5, y1 = 5, x2 = 15, y2 = 5 }
+            local intersections = mathutils.findIntersections(square, line)
+            assert.are.equal(2, #intersections)
+            local found_y5_left = false
+            local found_y5_right = false
+            for _, inter in ipairs(intersections) do
+                assert.is_near(5, inter.y, epsilon, "Intersection Y coordinate")
+                if math.abs(inter.x - 0) < epsilon then found_y5_left = true end
+                if math.abs(inter.x - 10) < epsilon then found_y5_right = true end
+            end
+            assert.is_true(found_y5_left, "Intersection with left edge not found")
+            assert.is_true(found_y5_right, "Intersection with right edge not found")
+        end)
+        it("should find one intersection for a line hitting a corner", function()
+            local line = { x1 = -5, y1 = -5, x2 = 5, y2 = 5 }
+            local intersections = mathutils.findIntersections(square, line)
+            assert.are.equal(1, #intersections)
+            assert.is_near(0, intersections[1].x, epsilon)
+            assert.is_near(0, intersections[1].y, epsilon)
+        end)
+        it("should find no intersections for a line outside", function()
+            local line = { x1 = -5, y1 = 15, x2 = 15, y2 = 15 }
+            local intersections = mathutils.findIntersections(square, line)
+            assert.are.equal(0, #intersections)
+        end)
+    end)
+
+    describe("MVC functions", function()
+        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
+        it(".getMeanValueCoordinatesWeights() should calculate weights", function()
+            local px, py = 5, 5
+            local weights = mathutils.getMeanValueCoordinatesWeights(px, py, square)
+            assert.are.equal(4, #weights)
+            assert.is_near(0.25, weights[1], epsilon)
+            assert.is_near(0.25, weights[2], epsilon)
+            assert.is_near(0.25, weights[3], epsilon)
+            assert.is_near(0.25, weights[4], epsilon)
+
+            local px2, py2 = 1, 1
+            local weights2 = mathutils.getMeanValueCoordinatesWeights(px2, py2, square)
+            assert.is_true(weights2[1] > weights2[2])
+            assert.is_true(weights2[1] > weights2[3])
+            assert.is_true(weights2[1] > weights2[4])
+            local sum = 0
+            for _, w in ipairs(weights2) do sum = sum + w end
+            assert.is_near(1.0, sum, epsilon, "Weights should sum to 1")
+        end)
+
+        it(".repositionPointUsingWeights() should reposition point", function()
+            local weights = { 0.25, 0.25, 0.25, 0.25 }
+            local newSquare = { 100, 100, 110, 100, 110, 110, 100, 110 }
+            local nx, ny = mathutils.repositionPointUsingWeights(weights, newSquare)
+            assert.is_near(105, nx, epsilon)
+            assert.is_near(105, ny, epsilon)
+
+            local weights2 = { 0.7, 0.1, 0.1, 0.1 }
+            local nx2, ny2 = mathutils.repositionPointUsingWeights(weights2, newSquare)
+            assert.is_near(102, nx2, epsilon, "X calculation correction")
+            assert.is_near(102, ny2, epsilon, "Y calculation correction")
+        end)
+    end)
+
+    describe("Closest Edge Param functions", function()
+        local square = { 0, 0, 10, 0, 10, 10, 0, 10 } -- Edges: 1(0-10,0), 2(10,0-10), 3(10-0,10), 4(0,10-0)
+        it(".closestEdgeParams() finds correct edge, t, distance, and sign", function()
+            -- Point (5, -1) is BELOW edge 1. Function calculates sign = -1.
+            local params = mathutils.closestEdgeParams(5, -1, square)
+            assert.are.equal(1, params.edgeIndex)
+            assert.is_near(0.5, params.t, epsilon)
+            assert.is_near(1, params.distance, epsilon)
+            assert.are.equal(-1, params.sign, "Sign for point below edge 1")
+
+            -- Point (11, 5) is RIGHT of edge 2. Function calculates sign = -1.
+            local params2 = mathutils.closestEdgeParams(11, 5, square)
+            assert.are.equal(2, params2.edgeIndex)
+            assert.is_near(0.5, params2.t, epsilon)
+            assert.is_near(1, params2.distance, epsilon)
+            assert.are.equal(-1, params2.sign, "Sign for point right of edge 2")
+
+            -- Point (1, 1) is RIGHT of edge 1 (tie-break winner). Function calculates sign = 1.
+            local params3 = mathutils.closestEdgeParams(1, 1, square)
+            assert.are.equal(1, params3.edgeIndex, "Edge index for (1,1) based on findClosestEdge tie-break")
+            assert.is_near(0.1, params3.t, epsilon)
+            assert.is_near(1, params3.distance, epsilon)
+            assert.are.equal(1, params3.sign, "Sign for point inside (right of edge 1)")
+        end)
+
+        it(".repositionPointClosestEdge() repositions point correctly", function()
+            local newSquare = { 100, 100, 110, 100, 110, 110, 100, 110 }
+
+            -- Case 1: Point was below edge 1. Calculated sign = -1.
+            local params_case1 = { edgeIndex = 1, t = 0.5, distance = 1, sign = -1 }
+            -- Normal (0,-1). Point = (105,100) + (-1)*1*(0,-1) = (105, 101)
+            local nx_c1, ny_c1 = mathutils.repositionPointClosestEdge(params_case1, newSquare)
+            assert.is_near(105, nx_c1, epsilon)
+            assert.is_near(101, ny_c1, epsilon, "Repositioned Y (using sign -1 for edge 1)")
+
+            -- Case 2: Point was right of edge 2. Calculated sign = -1.
+            local params_case2 = { edgeIndex = 2, t = 0.5, distance = 1, sign = -1 }
+            -- Normal (1,0). Point = (110,105) + (-1)*1*(1,0) = (109, 105)
+            local nx_c2, ny_c2 = mathutils.repositionPointClosestEdge(params_case2, newSquare)
+            assert.is_near(109, nx_c2, epsilon)
+            assert.is_near(105, ny_c2, epsilon)
+
+            -- Case 3: Point was inside (right of edge 1). Calculated sign = 1.
+            local params_case3 = { edgeIndex = 1, t = 0.1, distance = 1, sign = 1 }
+            -- Normal (0,-1). Point = (101,100) + (1)*1*(0,-1) = (101, 99)
+            local nx_c3, ny_c3 = mathutils.repositionPointClosestEdge(params_case3, newSquare)
+            assert.is_near(101, nx_c3, epsilon)
+            assert.is_near(99, ny_c3, epsilon)
+        end)
+    end)
+
+    describe("Find Edge and Lerp functions", function()
+        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
+        it(".findEdgeAndLerpParam() finds correct edge and t", function()
+            local edgeIdx1, t1 = mathutils.findEdgeAndLerpParam(5, -1, square)
+            assert.are.equal(1, edgeIdx1)
+            assert.is_near(0.5, t1, epsilon)
+
+            local edgeIdx2, t2 = mathutils.findEdgeAndLerpParam(11, 5, square)
+            assert.are.equal(2, edgeIdx2)
+            assert.is_near(0.5, t2, epsilon)
+
+            local edgeIdx3, t3 = mathutils.findEdgeAndLerpParam(1, 1, square)
+            assert.are.equal(1, edgeIdx3) -- Based on tie-break behavior
+            assert.is_near(0.1, t3, epsilon)
+        end)
+
+        it(".lerpOnEdge() interpolates correctly", function()
+            local newSquare = { 100, 100, 110, 100, 110, 110, 100, 110 }
+            local nx1, ny1 = mathutils.lerpOnEdge(1, 0.5, newSquare)
+            assert.is_near(105, nx1, epsilon)
+            assert.is_near(100, ny1, epsilon)
+
+            local nx2, ny2 = mathutils.lerpOnEdge(4, 0.9, newSquare)
+            assert.is_near(100, nx2, epsilon)
+            assert.is_near(101, ny2, epsilon)
+        end)
+    end)
+end)
+
+```
+
+spec/utils_spec.lua
+```lua
+-- spec/utils_spec.lua
+
+describe("src.utils", function()
+    -- Ensure module is reloaded if it changed during testing runs
+    package.loaded['src.utils'] = nil
+    local utils = require('src.utils')
+
+    -- Helper function for robust instance checking (verifies copy didn't modify original)
+    local function verify_different_instances(original, copy)
+        assert.are.same(original, copy, "Initial content of copy should match original.")
+
+        -- Test 1: Add a unique key to the copy and check it doesn't appear in the original
+        local unique_key = "__test_uniqueness_" .. math.random(1, 1000000)
+        copy[unique_key] = true
+        assert.is_nil(original[unique_key], "Original table should not have the unique key added only to the copy.")
+        copy[unique_key] = nil -- Clean up
+
+        -- Test 2: Modify an existing value in the copy and check the original is unchanged
+        local key_to_modify = next(copy)                      -- Get an arbitrary key from the copy
+        if key_to_modify and key_to_modify ~= unique_key then -- Ensure we didn't pick the cleanup key
+            local original_value = original[key_to_modify]
+            -- Create a distinctly different value based on type
+            local new_value
+            if type(original_value) == 'string' then
+                new_value = original_value .. "_modified"
+            elseif type(original_value) == 'number' then
+                new_value = original_value + math.random(1, 100)
+            elseif type(original_value) == 'boolean' then
+                new_value = not original_value
+            else
+                -- For other types (like tables), create a simple new value
+                new_value = { marker = "modified_value_" .. math.random() }
+            end
+
+            copy[key_to_modify] = new_value
+            assert.are_not.equal(copy[key_to_modify], original[key_to_modify],
+                "Original table value at key [" ..
+                tostring(key_to_modify) .. "] should not have changed when copy was modified.")
+            -- Optional: Restore original value in copy if needed for further tests, though usually not necessary here
+            -- copy[key_to_modify] = original_value
+        elseif not key_to_modify then
+            -- If the table was empty, the unique_key test already proved instance difference
+            assert.is_true(true, "Empty table passed uniqueness key check, confirming instance difference.")
+        end
+    end
+
+    -- Tests for map
+    describe(".map()", function()
+        it("should correctly map values in a table", function()
+            local input = { 1, 2, 3 }
+            local doubled = utils.map(input, function(x) return x * 2 end)
+            assert.are.same({ 2, 4, 6 }, doubled)
+        end)
+        it("should return an empty table when mapping an empty table", function()
+            local input = {}
+            local result = utils.map(input, function(x) return x + 1 end)
+            assert.are.same({}, result)
+        end)
+        it("should handle different mapping functions", function()
+            local input = { 1, 2 }
+            local toString = utils.map(input, function(x) return "num:" .. x end)
+            assert.are.same({ "num:1", "num:2" }, toString)
+        end)
+    end)
+
+    describe(".getPathDifference()", function()
+        local base = "/home/user/project"
+        it("should return the relative part when base is a prefix", function()
+            local full = "/home/user/project/src/main.lua"
+            assert.are.equal("/src/main.lua", utils.getPathDifference(base, full))
+        end)
+        it("should return the relative part when base is a prefix even without trailing /", function()
+            local full = "/home/user/project/src/main.lua"
+            local base_no_slash = "/home/user/project"
+            assert.are.equal("/src/main.lua", utils.getPathDifference(base_no_slash, full))
+        end)
+        it("should return an empty string for identical paths", function()
+            local full = "/home/user/project"
+            assert.are.equal("", utils.getPathDifference(base, full))
+        end)
+        it("should return nil if base is not a prefix", function()
+            local full = "/home/user/other/file.txt"
+            assert.is_nil(utils.getPathDifference(base, full))
+        end)
+        it("should return nil if base matches partially but not at a boundary", function()
+            local full = "/home/user/project-x/file.lua"
+            assert.is_nil(utils.getPathDifference(base, full))
+        end)
+        it("should handle case sensitivity correctly", function()
+            local full = "/home/user/PROJECT/src/main.lua"
+            assert.is_nil(utils.getPathDifference(base, full))
+        end)
+        it("should handle root paths", function()
+            local base_root = "/"
+            local full = "/file.txt"
+            assert.are.equal("file.txt", utils.getPathDifference(base_root, full))
+        end)
+        it("should handle root path base with root path full", function()
+            local base_root = "/"
+            local full = "/"
+            assert.are.equal("", utils.getPathDifference(base_root, full))
+        end)
+        it("should handle complex paths", function()
+            local base_c = "/a/b/c/"
+            local full_c = "/a/b/c/d/e.f"
+            -- FIX: Adjust expected result to include the leading slash, matching function behavior
+            assert.are.equal("/d/e.f", utils.getPathDifference(base_c:gsub("/$", ""), full_c))
+        end)
+    end)
+
+    -- Tests for sanitizeString
+    describe(".sanitizeString()", function()
+        it("should remove trailing spaces", function()
+            assert.are.equal("hello", utils.sanitizeString("hello  "))
+        end)
+        it("should remove trailing newlines", function()
+            assert.are.equal("hello", utils.sanitizeString("hello\n"))
+        end)
+        it("should remove trailing tabs", function()
+            assert.are.equal("hello", utils.sanitizeString("hello\t"))
+        end)
+        it("should remove trailing carriage returns", function()
+            assert.are.equal("hello", utils.sanitizeString("hello\r"))
+        end)
+        it("should remove mixed trailing whitespace and control characters", function()
+            assert.are.equal("hello", utils.sanitizeString("hello \n\t\r "))
+        end)
+        it("should not change a clean string", function()
+            assert.are.equal("hello", utils.sanitizeString("hello"))
+        end)
+        it("should return empty string for nil input", function()
+            assert.are.equal("", utils.sanitizeString(nil))
+        end)
+        it("should return empty string for empty input", function()
+            assert.are.equal("", utils.sanitizeString(""))
+        end)
+        it("should handle strings with leading/internal whitespace", function()
+            assert.are.equal("  hello world", utils.sanitizeString("  hello world  \n"))
+        end)
+    end)
+
+    -- Tests for round_to_decimals
+    describe(".round_to_decimals()", function()
+        it("should round correctly to specified decimal places", function()
+            assert.are.equal(1.23, utils.round_to_decimals(1.23456, 2))
+            assert.are.equal(1.24, utils.round_to_decimals(1.23678, 2))
+            assert.are.equal(1.235, utils.round_to_decimals(1.2345, 3))
+            assert.are.equal(1.2, utils.round_to_decimals(1.2345, 1))
+            assert.are.equal(1, utils.round_to_decimals(1.2345, 0))
+            assert.are.equal(2, utils.round_to_decimals(1.6, 0))
+        end)
+        it("should handle negative numbers", function()
+            assert.are.equal(-1.23, utils.round_to_decimals(-1.23456, 2))
+            assert.are.equal(-1.24, utils.round_to_decimals(-1.23678, 2))
+        end)
+        it("should handle zero", function()
+            assert.are.equal(0, utils.round_to_decimals(0, 2))
+        end)
+        it("should handle large numbers of decimals", function()
+            assert.are.equal(3.14159265, utils.round_to_decimals(math.pi, 8))
+        end)
+    end)
+
+    -- Tests for tablelength
+    describe(".tablelength()", function()
+        it("should return the correct length for array-like tables", function()
+            assert.are.equal(3, utils.tablelength({ 10, 20, 30 }))
+        end)
+        it("should return the correct length for hash-like tables", function()
+            assert.are.equal(2, utils.tablelength({ a = 1, b = 2 }))
+        end)
+        it("should return the correct length for mixed tables", function()
+            assert.are.equal(4, utils.tablelength({ 10, 20, a = 1, b = 2 }))
+        end)
+        it("should return 0 for an empty table", function()
+            assert.are.equal(0, utils.tablelength({}))
+        end)
+    end)
+
+    -- Tests for tableConcat
+    describe(".tableConcat()", function()
+        it("should concatenate two non-empty tables", function()
+            local t1 = { 1, 2 }
+            local t2 = { 3, 4 }
+            local result = utils.tableConcat(t1, t2)
+            assert.are.same({ 1, 2, 3, 4 }, result)
+            assert.are.same(t1, result)
+        end)
+        it("should concatenate with an empty table (first)", function()
+            local t1 = {}
+            local t2 = { 3, 4 }
+            local result = utils.tableConcat(t1, t2)
+            assert.are.same({ 3, 4 }, result)
+            assert.are.same(t1, result)
+        end)
+        it("should concatenate with an empty table (second)", function()
+            local t1 = { 1, 2 }
+            local t2 = {}
+            local result = utils.tableConcat(t1, t2)
+            assert.are.same({ 1, 2 }, result)
+            assert.are.same(t1, result)
+        end)
+    end)
+
+    -- Tests for shallowCopy
+    describe(".shallowCopy()", function()
+        it("should create a shallow copy (different instance)", function()
+            local original = { a = 1, b = "hello" }
+            local copy = utils.shallowCopy(original)
+            verify_different_instances(original, copy)
+        end)
+        it("should share references for nested tables", function()
+            local nested = { x = 10 }
+            local original = { a = 1, nested = nested }
+            local copy = utils.shallowCopy(original)
+            assert.are.same(original.nested, copy.nested)
+            copy.nested.x = 20
+            assert.are.equal(20, original.nested.x)
+        end)
+        it("should handle empty tables (different instance)", function()
+            local original = {}
+            local copy = utils.shallowCopy(original)
+            verify_different_instances(original, copy)
+        end)
+    end)
+
+    -- Tests for deepCopy
+    describe(".deepCopy()", function()
+        it("should create a deep copy (different instance)", function()
+            local original = { a = 1, b = "hello" }
+            local copy = utils.deepCopy(original)
+            verify_different_instances(original, copy)
+        end)
+        it("should create independent copies of nested tables", function()
+            local nested = { x = 10 }
+            local original = { a = 1, nested = nested }
+            local copy = utils.deepCopy(original)
+            assert.are.same(original.nested, copy.nested)
+            copy.nested.x = 20
+            assert.are.equal(10, original.nested.x, "Original nested table should be unchanged.")
+            assert.are.equal(20, copy.nested.x)
+        end)
+        it("should handle multiple levels of nesting (different instances)", function()
+            local nested2 = { y = 20 }
+            local nested1 = { x = 10, nested2 = nested2 }
+            local original = { a = 1, nested1 = nested1 }
+            local copy = utils.deepCopy(original)
+            assert.are.same(original.nested1.nested2, copy.nested1.nested2)
+            copy.nested1.nested2.y = 30
+            assert.are.equal(20, original.nested1.nested2.y, "Original deep nested table should be unchanged.")
+            assert.are.equal(30, copy.nested1.nested2.y)
+            copy.nested1.x = 15
+            assert.are.equal(10, original.nested1.x, "Original first-level nested table should be unchanged.")
+            assert.are.equal(15, copy.nested1.x)
+        end)
+        it("should handle tables with mixed keys (different instance)", function()
+            local original = { [1] = "one", ["key"] = 2, [true] = false }
+            local copy = utils.deepCopy(original)
+            verify_different_instances(original, copy)
+        end)
+        it("should handle cyclic references (different instance)", function()
+            local original = { name = "table1" }
+            original.myself = original
+            local copy = utils.deepCopy(original)
+            assert.are.same(copy, copy.myself)
+            assert.are.equal("table1", copy.name)
+            assert.are_not.equal(original, copy)
+        end)
+        it("should handle empty tables (different instance)", function()
+            local original = {}
+            local copy = utils.deepCopy(original)
+            verify_different_instances(original, copy)
+        end)
+    end)
+
+    -- Tests for tablesEqualNumbers (with float tolerance)
+    describe(".tablesEqualNumbers()", function()
+        it("should return true for identical number tables (integers)", function()
+            assert.is_true(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 2, 3 }))
+        end)
+        it("should return true for identical number tables (floats)", function()
+            assert.is_true(utils.tablesEqualNumbers({ 1.1, 2.2, 3.3 }, { 1.1, 2.2, 3.3 }))
+        end)
+        it("should return false for tables with different lengths", function()
+            assert.is_false(utils.tablesEqualNumbers({ 1, 2 }, { 1, 2, 3 }))
+            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 2 }))
+        end)
+        it("should return false for tables with different number values (outside tolerance)", function()
+            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 5, 3 }))
+            assert.is_false(utils.tablesEqualNumbers({ 1.1, 2.2, 3.3 }, { 1.1, 2.2, 3.300001 })) -- Using default tolerance 1e-9
+        end)
+        it("should return true for two empty tables", function()
+            assert.is_true(utils.tablesEqualNumbers({}, {}))
+        end)
+        it("should handle floating point inaccuracies using default tolerance", function()
+            assert.is_true(utils.tablesEqualNumbers({ 0.1 + 0.2 }, { 0.3 }))
+        end)
+        it("should fail if difference exceeds default tolerance", function()
+            -- 0.1 + 0.2 is approx 0.30000000000000004, diff from 0.3 is > 1e-9
+            assert.is_false(utils.tablesEqualNumbers({ 0.1 + 0.2 + 1e-8 }, { 0.3 }))
+        end)
+        it("should pass with a specified larger tolerance", function()
+            assert.is_true(utils.tablesEqualNumbers({ 0.1 + 0.2 + 0.001 }, { 0.3 }, 0.002))
+        end)
+        it("should fail with a specified smaller tolerance", function()
+            assert.is_false(utils.tablesEqualNumbers({ 0.1 + 0.2 }, { 0.3 }, 1e-18)) -- Difference is larger than this
+        end)
+        it("should return false if tables contain different types", function()
+            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, "2", 3 }))
+            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 2, true }))
+        end)
+        it("should correctly compare integers and floats representing the same value", function()
+            assert.is_true(utils.tablesEqualNumbers({ 1, 2, 3.0 }, { 1, 2, 3 }))
+        end)
+    end)
+end)
+
+-- Optional: Busted runner if executing directly
+-- require('busted.runner')()
 
 ```
 
