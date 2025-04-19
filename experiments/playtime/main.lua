@@ -1,7 +1,9 @@
 -- TODO there is an issue where the .vertices arent populated after load.
 -- TODO snap isnt working vanilla, not the right stuff is saved.
 -- TODO when we flip something with a joint wiht limits, the limits are gone
+-- TODO label for behavior (straight / snap ..) is not scalabel, we need a dedicated 'tag's fro that each tag has option of data too.
 -- DOING playing around with characters, getting htem back in the system
+--
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 
@@ -151,7 +153,7 @@ function love.update(dt)
             end
         end
         local velocityiterations = 8
-        local positioniterations = 3 -- 3
+        local positioniterations = 13 -- 3
         for i = 1, 1 do
             state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
         end

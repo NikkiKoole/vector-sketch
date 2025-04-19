@@ -109,22 +109,49 @@ function lib.renderActiveEditorThings()
 
 
     if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture and state.texFixtureEdit.lockedVerts == false then
-        local thing = state.selection.selectedSFixture:getBody():getUserData().thing
-        local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
+        local thing     = state.selection.selectedSFixture:getBody():getUserData().thing
+
+        local fixtureUD = state.selection.selectedSFixture:getUserData()
+        local isMeta8   = fixtureUD.label == 'meta8'
+        local verts     = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
             thing, 0, 0)
         --print(inspect(verts))
-        local mx, my = love.mouse:getPosition()
-        local cx, cy = cam:getWorldCoordinates(mx, my)
-
+        local mx, my    = love.mouse:getPosition()
+        local cx, cy    = cam:getWorldCoordinates(mx, my)
+        logger:inspect(fixtureUD)
         for i = 1, #verts, 2 do
             local vx = verts[i]
             local vy = verts[i + 1]
             local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
             if dist < 10 then
-                love.graphics.circle('fill', vx, vy, 10)
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('fill', vx, vy, 13)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.circle('fill', vx, vy, 11)
             else
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle('line', vx, vy, 12)
+                love.graphics.setColor(1, 1, 1)
                 love.graphics.circle('line', vx, vy, 10)
+
+                if (isMeta8) then
+                    love.graphics.setColor(0, 0, 0)
+                    love.graphics.print(math.ceil(i / 2), vx, vy)
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.print(math.ceil(i / 2), vx - 2, vy - 2)
+                end
             end
+        end
+
+        if (isMeta8) then
+            -- index 1 -> 5
+            love.graphics.line(verts[1 * 2 - 1], verts[1 * 2 - 0], verts[5 * 2 - 1], verts[5 * 2 - 0])
+            -- index 2 -> 8
+            love.graphics.line(verts[2 * 2 - 1], verts[2 * 2 - 0], verts[8 * 2 - 1], verts[8 * 2 - 0])
+            -- index 3 -> 7
+            love.graphics.line(verts[3 * 2 - 1], verts[3 * 2 - 0], verts[7 * 2 - 1], verts[7 * 2 - 0])
+            -- index 4 -> 6
+            love.graphics.line(verts[4 * 2 - 1], verts[4 * 2 - 0], verts[6 * 2 - 1], verts[6 * 2 - 0])
         end
     end
 

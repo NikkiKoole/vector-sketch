@@ -295,6 +295,9 @@ local function handlePointer(x, y, id, action)
 
                     state.selection.selectedObj = thing
                     state.selection.selectedSFixture = nil
+                    state.texFixtureEdit.tempVerts = nil
+                    state.texFixtureEdit.centroid = nil
+                    state.texFixtureEdit.lockedVerts = true
                     state.interaction.maybeHideSelectedPanel = false
                 elseif (state.selection.selectedJoint) then
                     state.selection.selectedJoint = nil

@@ -352,19 +352,16 @@ local function getAngleOffset(partName, guy)
     end
 end
 
--- Modify getParentAndChildrenFromPartName to handle torsoN naming and connections. We'll assume torso1 is the lowest segment (pelvis area) and torsoN is the highest (shoulder area). Legs connect to torso1, arms/neck connect to torsoN.
-
--- Modify getOwnOffset and getOffsetFromParent to handle torsoN.
 
 local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 2,
+            neckSegments = 6,
             torsoSegments = 4
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 30 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
             ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -372,8 +369,8 @@ local dna = {
             ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
             ['llleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
             ['rlleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
+            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
@@ -386,6 +383,80 @@ local dna = {
     }
 }
 
+
+local function makePart(partName, instance, settings)
+    local values = getParentAndChildrenFromPartName(partName, instance)
+    local parent = values.p
+    -- logger:info(partName, parent)
+
+    local prevA = 0
+
+    if parent then
+        if instance.parts[parent] then
+            local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
+            settings.x = parentPosX
+            settings.y = parentPosY
+        end
+        prevA = instance.parts[parent].body:getAngle()
+    end
+
+    local offX, offY = getOffsetFromParent(partName, instance)
+    settings.x = settings.x + offX
+    settings.y = settings.y + offY
+    local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
+    local xangle = getAngleOffset(partName, instance)
+    local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
+
+    settings.x = settings.x + rx
+    settings.y = settings.y + ry
+    local thing = ObjectManager.addThing(settings.shapeType, settings)
+
+    if thing then
+        thing.body:setAngle(prevA + xangle)
+        if extractNeckIndex(partName) then
+            thing.body:setAngularDamping(1)
+            thing.body:setLinearDamping(1)
+        end
+        if extractTorsoIndex(partName) then
+            thing.body:setAngularDamping(1)
+            thing.body:setLinearDamping(1)
+            local f = thing.body:getFixtures()
+            for i = 1, #f do
+                f[i]:setDensity(1)
+            end
+        end
+        instance.parts[partName] = thing
+    end
+
+    if parent then
+        local partA_thing = instance.parts[parent]   --instance.parts[jointData.a]
+        local partB_thing = instance.parts[partName] --instance.parts[jointData.b]
+        -- logger:info(partA_thing, partB_thing)
+
+        if (partA_thing and partB_thing) then
+            local jointData = instance.dna.parts[partName].j
+            local jointCreationData = {
+                body1 = partA_thing.body,
+                body2 = partB_thing.body,
+                jointType = jointData.type,
+                collideConnected = false, -- Default to false
+                id = uuid.generateID(),
+                offsetA = { x = 0, y = 0 },
+                offsetB = { x = 0, y = 0 },
+            }
+            local offX, offY = getOffsetFromParent(partName, instance)
+            jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
+            jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
+            local joint = Joints.createJoint(jointCreationData)
+            local limits = jointData.limits
+
+            if joint and limits and limits.low and limits.up then
+                joint:setLimits(limits.low, limits.up)
+                joint:setLimitsEnabled(true)
+            end
+        end
+    end
+end
 
 lib.createCharacter = function(template, x, y)
     if dna[template] then
@@ -403,7 +474,7 @@ lib.createCharacter = function(template, x, y)
         local hasNeck = instance.dna.creation.neckSegments > 0
         local ordered = {}
 
-        -- table.insert(ordered, 'torso1')
+
 
         local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
         -- 1. Add Torso Segments
@@ -419,9 +490,9 @@ lib.createCharacter = function(template, x, y)
                 instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
                 -- Optional: Modify dimensions/properties of specific segments here if needed
                 -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
-                -- instance.dna.parts[partName].dims.w = i * 100
+                instance.dna.parts[partName].dims.w = i * 100
 
-                instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
+                --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
             end
         end
 
@@ -455,7 +526,7 @@ lib.createCharacter = function(template, x, y)
                 y = y,
                 bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
                 shapeType = partData.shape, -- Use shape defined in template
-                label = partName,           -- Use part name as initial label
+                label = 'straight',         --partName,           -- Use part name as initial label
                 density = partData.density or 1,
                 radius = partData.dims.r,
                 width = partData.dims.w,
@@ -470,80 +541,8 @@ lib.createCharacter = function(template, x, y)
             --logger:info('getting offset for ', partName)
 
 
-            local function makePart(partName, instance)
-                local values = getParentAndChildrenFromPartName(partName, instance)
-                local parent = values.p
-                -- logger:info(partName, parent)
 
-                local prevA = 0
-
-                if parent then
-                    if instance.parts[parent] then
-                        local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
-                        settings.x = parentPosX
-                        settings.y = parentPosY
-                    end
-                    prevA = instance.parts[parent].body:getAngle()
-                end
-
-                local offX, offY = getOffsetFromParent(partName, instance)
-                settings.x = settings.x + offX
-                settings.y = settings.y + offY
-                local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
-                local xangle = getAngleOffset(partName, instance)
-                local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
-
-                settings.x = settings.x + rx
-                settings.y = settings.y + ry
-                local thing = ObjectManager.addThing(settings.shapeType, settings)
-
-                if thing then
-                    thing.body:setAngle(prevA + xangle)
-                    if extractNeckIndex(partName) then
-                        thing.body:setAngularDamping(10)
-                        thing.body:setLinearDamping(1)
-                    end
-                    if extractTorsoIndex(partName) then
-                        thing.body:setAngularDamping(10)
-                        thing.body:setLinearDamping(1)
-                        local f = thing.body:getFixtures()
-                        for i = 1, #f do
-                            f[i]:setDensity(1)
-                        end
-                    end
-                    instance.parts[partName] = thing
-                end
-
-                if parent then
-                    local partA_thing = instance.parts[parent]   --instance.parts[jointData.a]
-                    local partB_thing = instance.parts[partName] --instance.parts[jointData.b]
-                    -- logger:info(partA_thing, partB_thing)
-
-                    if (partA_thing and partB_thing) then
-                        local jointData = instance.dna.parts[partName].j
-                        local jointCreationData = {
-                            body1 = partA_thing.body,
-                            body2 = partB_thing.body,
-                            jointType = jointData.type,
-                            collideConnected = false, -- Default to false
-                            id = uuid.generateID(),
-                            offsetA = { x = 0, y = 0 },
-                            offsetB = { x = 0, y = 0 },
-                        }
-                        local offX, offY = getOffsetFromParent(partName, instance)
-                        jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
-                        jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
-                        local joint = Joints.createJoint(jointCreationData)
-                        local limits = jointData.limits
-
-                        if false and joint and limits and limits.low and limits.up then
-                            joint:setLimits(limits.low, limits.up)
-                            joint:setLimitsEnabled(true)
-                        end
-                    end
-                end
-            end
-            makePart(partName, instance)
+            makePart(partName, instance, settings)
         end
     end
 end
