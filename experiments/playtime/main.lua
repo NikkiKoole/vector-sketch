@@ -110,9 +110,9 @@ function love.load(args)
 
     --loadScriptAndScene('elasto')
     --  sceneLoader.loadScriptAndScene('snap')
-    --sceneLoader.loadScriptAndScene('straight')
-    local cwd = love.filesystem.getWorkingDirectory()
-    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+    sceneLoader.loadScriptAndScene('straight')
+    --local cwd = love.filesystem.getWorkingDirectory()
+    --sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
 
 
     local CharacterManager = require 'src.character-manager'

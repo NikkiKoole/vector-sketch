@@ -5,6 +5,95 @@ local Joints = require 'src.joints'
 local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
+
+--todo, the data here below sis correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
+-- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
+
+local shape8Dict = {
+    ['shapeA1.png'] = {
+        v = {
+            1.61, -272.46, 112.13, -133.04, 154.81, 76.67, 123.57, 229.44, 1.21, 273.51, -134.54, 225.43, -145.28, 73.64, -91.99, -132.77
+        }
+    },
+    ['shapeA2.png'] = {
+        v = {
+            11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
+
+        }
+    }
+}
+local dna = {
+    ['humanoid'] = {
+        creation = {
+            isPotatoHead = false,
+            neckSegments = 0,
+            torsoSegments = 1
+        },
+        parts = {
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+
+            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
+            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 150 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = -1 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['luleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['ruleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
+            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
+            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
+            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
+        },
+    }
+}
+local function makeTransformedVertices(vertices, scaleX, scaleY)
+    -- Initialize result array
+    local transformedVertices = {}
+    -- Loop through input vertices (stepping by 2)
+    for i = 1, #vertices, 2 do
+        -- Get original x, y
+        local x = vertices[i]
+        local y = vertices[i + 1]
+        -- Calculate transformed x, y (scaling handles flipping)
+        local newX = x * scaleX
+        local newY = y * scaleY
+        -- Add transformed pair to result array
+        table.insert(transformedVertices, newX)
+        table.insert(transformedVertices, newY)
+    end
+    -- Return the new array
+    return transformedVertices
+end
+
+local function getTransformedIndex(index, flipX, flipY)
+    if flipY == -1 and flipX == 1 then
+        local values = { 5, 4, 3, 2, 1, 8, 7, 6 }
+        return values[index]
+    end
+    if flipX == -1 and flipY == 1 then
+        local values = { 1, 8, 7, 6, 5, 4, 3, 2 }
+        return values[index]
+    end
+    if flipX == -1 and flipY == -1 then
+        local values = { 5, 6, 7, 8, 1, 2, 3, 4 }
+        return values[index]
+    end
+    if flipX == 1 and flipY == 1 then
+        local values = { 1, 2, 3, 4, 5, 6, 7, 8 }
+        return values[index]
+    end
+    -- print(index, flipX, flipY)
+    -- logger:warn('why are we getting here?')
+end
+
 local function clamp(x, min, max)
     return x < min and min or (x > max and max or x)
 end
@@ -135,58 +224,98 @@ local function getParentAndChildrenFromPartName(partName, guy)
     return result or {} -- Return empty table if partName not found
 end
 
+local function sign(value)
+    if value < 0 or value == nil then return -1 else return 1 end
+end
+
 local function getOwnOffset(partName, guy)
-    local creation = guy.dna.parts
+    local parts = guy.dna.parts
+
+
+    -- upward
     if extractNeckIndex(partName) then
-        return 0, -creation[partName].dims.h / 2
+        return 0, -parts[partName].dims.h / 2
     end
     if extractTorsoIndex(partName) then
-        return 0, -creation[partName].dims.h / 2
+        if parts[partName].shape == 'shape8' then
+            -- local vertices = shape8Dict[parts[partName].shape8URL].v
+
+            local raw = shape8Dict[parts[partName].shape8URL].v
+            local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
+
+            local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+            local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+
+            return -vertices[(bottomIndex * 2) - 1], vertices[(topIndex * 2)]
+        else
+            return 0, -parts[partName].dims.h / 2
+        end
     end
     if partName == 'head' then
-        return 0, -creation.head.dims.h / 2
+        -- return 0, -parts.head.dims.h / 2
+        if parts[partName].shape == 'shape8' then
+            --local vertices = shape8Dict[parts[partName].shape8URL].v
+
+
+            local raw = shape8Dict[parts[partName].shape8URL].v
+            local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
+
+            --local topIndex = 1
+            --local bottomIndex = 5
+            local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+            local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+
+
+            --return vertices[(index * 2) - 1], vertices[(index * 2)]
+            return -vertices[(bottomIndex * 2) - 1], vertices[(topIndex * 2)]
+        else
+            return 0, -parts[partName].dims.h / 2
+        end
     end
     if partName == 'lear' then
-        return 0, -creation.lear.dims.h / 2
+        return 0, -parts.lear.dims.h / 2
     end
     if partName == 'rear' then
-        return 0, -creation.rear.dims.h / 2
+        return 0, -parts.rear.dims.h / 2
     end
+
+
+    -- downward
     if partName == 'luleg' then
-        return 0, creation.luleg.dims.h / 2
+        return 0, parts.luleg.dims.h / 2
     end
     if partName == 'ruleg' then
-        return 0, creation.ruleg.dims.h / 2
+        return 0, parts.ruleg.dims.h / 2
     end
     if partName == 'llleg' then
-        return 0, creation.llleg.dims.h / 2
+        return 0, parts.llleg.dims.h / 2
     end
     if partName == 'lfoot' then
-        return 0, creation.lfoot.dims.h / 2
+        return 0, parts.lfoot.dims.h / 2
     end
     if partName == 'rlleg' then
-        return 0, creation.rlleg.dims.h / 2
+        return 0, parts.rlleg.dims.h / 2
     end
     if partName == 'rfoot' then
-        return 0, creation.rfoot.dims.h / 2
+        return 0, parts.rfoot.dims.h / 2
     end
     if partName == 'luarm' then
-        return 0, creation.luarm.dims.h / 2
+        return 0, parts.luarm.dims.h / 2
     end
     if partName == 'ruarm' then
-        return 0, creation.ruarm.dims.h / 2
+        return 0, parts.ruarm.dims.h / 2
     end
     if partName == 'rhand' then
-        return 0, creation.rhand.dims.h / 2
+        return 0, parts.rhand.dims.h / 2
     end
     if partName == 'llarm' then
-        return 0, creation.llarm.dims.h / 2
+        return 0, parts.llarm.dims.h / 2
     end
     if partName == 'rlarm' then
-        return 0, creation.rlarm.dims.h / 2
+        return 0, parts.rlarm.dims.h / 2
     end
     if partName == 'lhand' then
-        return 0, creation.lhand.dims.h / 2
+        return 0, parts.lhand.dims.h / 2
     end
     return 0, 0
 end
@@ -205,16 +334,38 @@ local function getOffsetFromParent(partName, guy)
 
 
     local function getTorsoPart8(index)
-        local vertices = guy.parts[highestTorso].vertices
-        return vertices[(index * 2) - 1], vertices[(index * 2)]
+        --local vertices = shape8Dict[parts[highestTorso].shape8URL].v
+
+        local raw = shape8Dict[parts[highestTorso].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts[highestTorso].dims.sx or 1, parts[highestTorso].dims.sy or 1)
+
+        local newIndex = getTransformedIndex(index, sign(parts[highestTorso].dims.sx), sign(parts[highestTorso].dims.sy))
+
+        return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
     end
+
     local function hasTorso8()
-        if parts[highestTorso].shape == 'shape8' and creation.torsoSegments == 1 then
-            if guy.parts and guy.parts[highestTorso] then
-                return true
-            end
+        if parts[highestTorso].shape == 'shape8' then
+            return true
         end
         return false
+    end
+
+    local function hasHead8()
+        if parts['head'].shape == 'shape8' then
+            return true
+        end
+        return false
+    end
+
+    local function getHeadPart8(index)
+        local raw = shape8Dict[parts['head'].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts['head'].dims.sx or 1, parts['head'].dims.sy or 1)
+
+        local newIndex = getTransformedIndex(index, sign(parts['head'].dims.sx), sign(parts['head'].dims.sy))
+
+        -- local vertices = shape8Dict[parts['head'].shape8URL].v
+        return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
     end
 
     if extractNeckIndex(partName) then
@@ -233,7 +384,17 @@ local function getOffsetFromParent(partName, guy)
         if index == 1 then
             return 0, 0
         else
-            return 0, -parts['torso' .. (index - 1)].dims.h / 2
+            if hasTorso8() then
+                --print('getting here')
+
+                return getTorsoPart8(1)
+            else
+                -- return 0, -parts[highestTorso].dims.h / 2
+                return 0, -parts['torso' .. (index - 1)].dims.h / 2
+            end
+
+
+            --return 0, -parts['torso' .. (index - 1)].dims.h / 2
         end
     elseif partName == 'llarm' then
         return 0, parts.luarm.dims.h / 2
@@ -293,67 +454,56 @@ local function getOffsetFromParent(partName, guy)
             return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
         end
     elseif partName == 'lear' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledTorsoMetaPoint(8, guy)
-        --         local bx, by = getScaledTorsoMetaPoint(7, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- else
-        --     if creation.head.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledHeadMetaPoint(8, guy)
-        --         local bx, by = getScaledHeadMetaPoint(6, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- end
         if creation.isPotatoHead then
-            return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                local t = 0.5
+                local ax, ay = getTorsoPart8(8)
+                local bx, by = getTorsoPart8(7)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            end
         else
-            return -parts.head.dims.w / 2, -parts.head.dims.h / 2
+            if hasHead8() then
+                local t = 0.5
+                local ax, ay = getHeadPart8(7)
+                local bx, by = getHeadPart8(8)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return -parts.head.dims.w / 2, -parts.head.dims.h / 2
+            end
         end
     elseif partName == 'rear' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledTorsoMetaPoint(2, guy)
-        --         local bx, by = getScaledTorsoMetaPoint(3, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- else
-        --     if creation.head.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledHeadMetaPoint(2, guy)
-        --         local bx, by = getScaledHeadMetaPoint(4, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- end
         if creation.isPotatoHead then
-            return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                local t = 0.5
+                local ax, ay = getTorsoPart8(2)
+                local bx, by = getTorsoPart8(3)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            end
         else
-            return parts.head.dims.w / 2, -parts.head.dims.h / 2
+            if hasHead8() then
+                local t = 0.5
+                local ax, ay = getHeadPart8(2)
+                local bx, by = getHeadPart8(3)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return parts.head.dims.w / 2, -parts.head.dims.h / 2
+            end
         end
     elseif (partName == 'head') then
-        --  then
-        --     return 0, -creation.neck1.dims.h / 2
-        -- else
-        --     return 0, -creation.torso.dims.h / 2
-
-
-
-
-
         if creation.neckSegments == 0 then
-            return 0, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                return getTorsoPart8(1)
+            else
+                return 0, -parts[highestTorso].dims.h / 2
+            end
         else
             local last = 'neck' .. creation.neckSegments
             return 0, -parts[last].dims.h / 2
@@ -379,37 +529,6 @@ local function getAngleOffset(partName, guy)
 end
 
 
-local dna = {
-    ['humanoid'] = {
-        creation = {
-            isPotatoHead = false,
-            neckSegments = 6,
-            torsoSegments = 1
-        },
-        parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
-
-            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
-            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
-            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
-            ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
-            ['llleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
-            ['rlleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
-            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
-            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
-            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
-        },
-    }
-}
 
 
 local function makePart(partName, instance, settings)
@@ -431,6 +550,7 @@ local function makePart(partName, instance, settings)
     local offX, offY = getOffsetFromParent(partName, instance)
     settings.x = settings.x + offX
     settings.y = settings.y + offY
+    --logger:info(offX, offY)
     local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
     local xangle = getAngleOffset(partName, instance)
     local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
@@ -454,7 +574,7 @@ local function makePart(partName, instance, settings)
                 f[i]:setDensity(1)
             end
         end
-        logger:info('setting', partName)
+        --  logger:info('setting', partName)
         instance.parts[partName] = thing
     end
 
@@ -567,8 +687,18 @@ lib.createCharacter = function(template, x, y)
                 height2 = partData.dims.h,
                 height3 = partData.dims.h,
                 height4 = partData.dims.h,
+
                 -- Add other physics properties if needed (friction, restitution?)
             }
+            if partName == 'lfoot' or partName == 'rfoot' or partName == 'lear' or partName == 'rear' then
+                settings.label = ''
+            end
+            if (partData.shape8URL) then
+                if (shape8Dict[partData.shape8URL]) then
+                    local raw = shape8Dict[partData.shape8URL].v
+                    settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+                end
+            end
             --logger:info('getting offset for ', partName)
 
 
@@ -577,5 +707,6 @@ lib.createCharacter = function(template, x, y)
         end
     end
 end
+
 
 return lib

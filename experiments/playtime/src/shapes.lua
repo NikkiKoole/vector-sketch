@@ -213,6 +213,9 @@ end
 --     return triangles
 -- end
 
+
+
+
 function shapes.createShape(shapeType, settings)
     if (settings.radius == 0) then settings.radius = 1 end
     if (settings.width == 0) then settings.width = 1 end
@@ -245,11 +248,11 @@ function shapes.createShape(shapeType, settings)
         vertices = makeITriangle(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == 'shape8' then
-        vertices = {
-            1.6111207228025, -272.46320946706, 112.13739515677, -133.04736230343, 154.81243200383, 76.67546797624, 123.57197310127, 229.44237907523, 1.2126275206443, 273.51958328075, -134.54456739512, 225.43458339795, -145.2848134598, 73.642793216627, -91.999224252758, -132.77719296536
-        }
+        --local v = makeTransformedVertices(settings.optionalVertices)
+        vertices = settings.optionalVertices
+
         shapesList = makeShapeListFromPolygon(vertices) or {}
-        logger:info('lets start to make a thingie', inspect(settings))
+        -- logger:info('lets start to make a thingie', inspect(settings))
     else
         local sides = ({
             triangle = 3,

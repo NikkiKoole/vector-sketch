@@ -1,218 +1,162 @@
-local s            = {}
+local s = {}
 
-local desiredAngle = 0
-local Kp           = 25 -- Proportional gain
-local Kd           = .5 -- Derivative gain
+-- --- User-Configurable Parameters ---
+local globalDesiredAngle = 0 -- The ultimate angle we want all bodies to reach
+local timeToReachAngle = 0.5 -- Approximate time (in seconds) to rotate towards the target. Smaller = faster.
+------------------------------------
+
+-- --- Internal Tuning (Less user-facing, find good defaults) ---
+-- These control how "tightly" the body follows its *internal* smoothed target.
+-- They might need less variation across object types now.
+local stiffnessFactor = 5000        -- How strongly it corrects towards the internal target (related to Kp*I)
+local dampingFactor = 50            -- How much it resists angular velocity (related to Kd*I)
+local maxCorrectiveTorque = 1000000 -- Still need a safety cap per body
+------------------------------------
 
 
-function rotateToHorizontalAdjusted(body, desiredAngle, divider, smarter, dt)
-    local function normalizeAngle(angle)
-        angle = math.fmod(angle + math.pi, 2 * math.pi)
-        if angle < 0 then
-            angle = angle + (2 * math.pi)
-        end
-        return angle - math.pi
+-- Keep this utility function
+local function normalizeAngle(angle)
+    -- Normalize angle to the range [-pi, pi] for shortest path calculation
+    angle = angle % (2 * math.pi)
+    if angle > math.pi then
+        angle = angle - 2 * math.pi
+    elseif angle <= -math.pi then
+        angle = angle + 2 * math.pi
     end
-
-    local currentAngle = body:getAngle()
-    local angularVelocity = body:getAngularVelocity()
-    local inertia = body:getInertia()
-
-    -- Predict the next angle based on current angular velocity
-    local predictedAngle = currentAngle + angularVelocity / divider
-    local angleDifference = normalizeAngle(desiredAngle - predictedAngle)
-
-    -- Calculate desired angular velocity
-    local desiredAngularVelocity = angleDifference * divider
-    if smarter then
-        local maxAngularVelocity = (1 / dt) * smarter
-        desiredAngularVelocity = angleDifference * math.min(divider, maxAngularVelocity)
-    end
-
-    -- Torque calculation matching the original formula
-    local torque = inertia * desiredAngularVelocity * divider
-
-    if smarter then
-        local maxTorqueDivider = math.min(divider, (1 / dt) * smarter)
-        torque = inertia * desiredAngularVelocity * maxTorqueDivider
-    end
-
-    body:applyTorque(torque)
+    return angle
 end
 
-function rotateToHorizontalPD(body, desiredAngle, Kp, Kd, dt)
-    -- Normalize angle to range [-pi, pi]
-    local function normalizeAngle(angle)
-        angle = math.fmod(angle + math.pi, 2 * math.pi)
-        if angle < 0 then
-            angle = angle + (2 * math.pi)
-        end
-        return angle - math.pi
-    end
-
-    -- Get current state
-    local currentAngle = body:getAngle()
-    local angularVelocity = body:getAngularVelocity()
-    local inertia = body:getInertia()
-
-    -- Calculate angle error
-    local angleError = normalizeAngle(desiredAngle - currentAngle)
-
-    -- PD Controller: Proportional term + Derivative term
-    local proportional = Kp * angleError
-    local derivative = Kd * angularVelocity
-    local controlSignal = proportional - derivative
-
-    -- Calculate torque: Torque = Inertia * Control Signal
-    local torque = (inertia) * controlSignal
-    -- Apply torque to the body
-    body:applyTorque(torque)
+-- Basic interpolation for angles (handles wrapping)
+local function lerpAngle(a, b, t)
+    local diff = normalizeAngle(b - a)
+    return normalizeAngle(a + diff * t)
 end
 
-function rotateToHorizontalScaledPD(body, desiredAngle, omega_n, zeta, dt)
-    -- Normalize angle to range [-pi, pi]
-    local function normalizeAngle(angle)
-        angle = math.fmod(angle + math.pi, 2 * math.pi)
-        if angle < 0 then
-            angle = angle + (2 * math.pi)
-        end
-        return angle - math.pi
-    end
 
-    -- Get current state
+---
+-- Applies torque to make the body track its *current* internal target angle.
+-- This is a simplified stabilizer.
+-- @param body The physics body object.
+-- @param internalTargetAngle The immediate angle this body should aim for.
+-- @param stiffness How strongly to pull towards the target.
+-- @param damping How much to resist current velocity.
+-- @param maxTorque Maximum allowed torque.
+-- @param dt Time step.
+--
+function applyTrackingTorque(body, internalTargetAngle, stiffness, damping, maxTorque, dt)
     local currentAngle = body:getAngle()
     local angularVelocity = body:getAngularVelocity()
     local inertia = body:getInertia()
 
-    -- Calculate angle error
-    local angleError = normalizeAngle(desiredAngle - currentAngle)
+    if inertia <= 0 then return end
 
-    -- Calculate scaled gains based on inertia
-    local Kp = inertia * (omega_n ^ 2)
-    local Kd = 2 * inertia * zeta * omega_n
+    -- Error relative to the *internal* target
+    local angleError = normalizeAngle(internalTargetAngle - currentAngle)
 
-    -- PD Controller: Proportional term + Derivative term
-    local proportional = Kp * angleError
-    local derivative = Kd * angularVelocity
-    local controlSignal = proportional - derivative
+    -- Simplified Scaled PD-like control (using factors instead of omega/zeta)
+    -- Stiffness term (Proportional): Pulls towards target angle
+    local proportionalTorque = inertia * stiffness * angleError
 
-    -- Calculate torque: Torque = Control Signal
-    local totalTorque = controlSignal
-    local maxTorque = 2000000 -- Define based on system limits
+    -- Damping term (Derivative): Resists existing motion
+    local derivativeTorque = inertia * damping * angularVelocity
 
-    if totalTorque > maxTorque then
-        totalTorque = maxTorque
-    elseif totalTorque < -maxTorque then
-        totalTorque = -maxTorque
-    end
-    -- Apply torque to the body
+    -- Total Torque
+    local totalTorque = proportionalTorque - derivativeTorque
+
+    -- Apply torque limits
+    totalTorque = math.max(-maxTorque, math.min(maxTorque, totalTorque))
+
     body:applyTorque(totalTorque)
 end
 
-local feedforwardFactor = 1
-function rotateToHorizontalPDFeedforward(body, desiredAngle, omega_n, zeta, dt)
-    -- Normalize angle to range [-pi, pi]
-    local function normalizeAngle(angle)
-        angle = math.fmod(angle + math.pi, 2 * math.pi)
-        if angle < 0 then
-            angle = angle + (2 * math.pi)
-        end
-        return angle - math.pi
-    end
-
-    -- Get current state
-    local currentAngle = body:getAngle()
-    local angularVelocity = body:getAngularVelocity()
-    local inertia = body:getInertia()
-
-    -- Calculate angle error
-    local angleError = normalizeAngle(desiredAngle - currentAngle)
-
-    -- Calculate scaled gains based on inertia
-    local Kp = inertia * (omega_n ^ 2)
-    local Kd = 2 * inertia * zeta * omega_n
-
-    -- PD Controller: Proportional term + Derivative term
-    local proportional = Kp * angleError
-    local derivative = Kd * angularVelocity
-    local pdControlSignal = proportional - derivative
-
-    -- Angle Prediction: Estimate required angular acceleration
-    local desiredAngularAcceleration = (omega_n ^ 2) * angleError - (2 * zeta * omega_n) * angularVelocity
-
-    -- Feedforward Torque: Torque = I * desired angular acceleration * feedforwardFactor
-    local feedforwardTorque = inertia * desiredAngularAcceleration * feedforwardFactor
-
-    -- Total Torque: PD Control + Feedforward
-    local totalTorque = pdControlSignal + feedforwardTorque
-
-    -- Torque Saturation to prevent excessive torque
-    local maxTorque = 2000000 -- Adjust based on system limits
-    if totalTorque > maxTorque then
-        totalTorque = maxTorque
-    elseif totalTorque < -maxTorque then
-        totalTorque = -maxTorque
-    end
-
-    -- Apply torque to the body
-    body:applyTorque(totalTorque)
-end
+-- Store bodies with their individual state
+-- Format: { { body = body1, internalAngle = angle1 }, { body = body2, internalAngle = angle2 }, ... }
+local bodiesToStabilize = {}
 
 function s.onStart()
-    keepStraights = {}
-    keepStraights = getObjectsByLabel('straight')
+    bodiesToStabilize = {}
+    local foundObjects = getObjectsByLabel('straight') or {}
+    print("Found " .. #foundObjects .. " bodies to stabilize.")
+    for _, obj in ipairs(foundObjects) do
+        if obj and obj.body then
+            -- Initialize internal angle to the body's current angle
+            table.insert(bodiesToStabilize, {
+                body = obj.body,
+                internalAngle = obj.body:getAngle() -- Start at current angle
+            })
+        end
+    end
 end
 
 function s.update(dt)
-    for i = 1, #keepStraights do
-        rotateToHorizontalAdjusted(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-        --rotateToHorizontalScaledPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-        --rotateToHorizontalPDFeedforward(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
-        --rotateToHorizontalPD(keepStraights[i].body, desiredAngle, Kp, Kd, dt)
+    -- 1. Update the internal target angle for each body, moving it towards the global desired angle
+    local smoothingFactor = 0
+    if timeToReachAngle > 0.01 then -- Avoid division by zero or excessively fast smoothing
+        -- Calculate how much to move this frame. Clamp prevents overshooting in one step.
+        smoothingFactor = math.min(dt / timeToReachAngle, 1.0)
+    else
+        smoothingFactor = 1.0 -- If time is near zero, snap instantly
+    end
+
+    for i = 1, #bodiesToStabilize do
+        local data = bodiesToStabilize[i]
+        if data and data.body then
+            -- Smoothly interpolate the internal angle towards the global target
+            data.internalAngle = lerpAngle(data.internalAngle, globalDesiredAngle, smoothingFactor)
+
+            -- 2. Apply torque to make the body follow its (now updated) internal target angle
+            applyTrackingTorque(data.body, data.internalAngle, stiffnessFactor, dampingFactor, maxCorrectiveTorque, dt)
+        else
+            -- Optional cleanup if body becomes invalid
+            -- table.remove(bodiesToStabilize, i); i = i - 1
+        end
     end
 end
 
 function s.drawUI()
+    if not ui then return end
+
     local w, h = love.graphics.getDimensions()
     local BUTTON_SPACING = 10
-    local BUTTON_HEIGHT = 40
+    local BUTTON_HEIGHT = 30
     local margin = 20
+    local panelWidth = 350
+    -- Reduced height: Angle, Time + (maybe hidden advanced later)
+    local panelHeight = BUTTON_HEIGHT * 3 + BUTTON_SPACING * 4
     local startX = margin
-    local panelWidth = 350 --w - margin * 2
-
-    local panelHeight = BUTTON_HEIGHT * 6
     local startY = h - panelHeight - margin
 
-
-    ui.panel(startX, startY, panelWidth, panelHeight, '•• straights ••', function()
+    ui.panel(startX, startY, panelWidth, panelHeight, '•• Simple Stabilization ••', function()
         local layout = ui.createLayout({
             type = 'columns',
             spacing = BUTTON_SPACING,
             startX = startX + BUTTON_SPACING,
-            startY = startY + BUTTON_SPACING
+            startY = startY + BUTTON_SPACING + 15
         })
-        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
-        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
 
-        local newAngle = ui.sliderWithInput(' drag', x, y, 200, -math.pi, math.pi, desiredAngle)
+        -- Desired Angle Slider
+        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
+        local newAngle = ui.sliderWithInput('Target Angle', x, y, panelWidth * 0.6, -math.pi, math.pi,
+            globalDesiredAngle)
         if newAngle then
-            desiredAngle = newAngle
+            globalDesiredAngle = newAngle
         end
-        ui.label(x, y, ' angle')
+        local angleLabelValue = globalDesiredAngle or 0
+        ui.label(x + panelWidth * 0.6 + 5, y + BUTTON_HEIGHT / 4, string.format("%.2f rad", angleLabelValue))
 
+        -- Time to Reach Angle Slider
         local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
-        local newKp = ui.sliderWithInput(' kp', x, y, 200, .01, 30, Kp)
-        if newKp then
-            Kp = newKp
+        -- Range: e.g., 0.1s (fast) to 5s (slow). Adjust as needed.
+        local newTime = ui.sliderWithInput('Reach Time (s)', x, y, panelWidth * 0.6, 0.05, 5.0,
+            timeToReachAngle)
+        if newTime then
+            -- Ensure time doesn't go too close to zero if slider allows it
+            timeToReachAngle = math.max(newTime, 0.01)
         end
-        ui.label(x, y, ' Prop. Gain.')
+        local timeLabelValue = timeToReachAngle or 0.01
+        ui.label(x + panelWidth * 0.6 + 5, y + BUTTON_HEIGHT / 4, string.format("%.2f s", timeLabelValue))
 
-        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, BUTTON_HEIGHT)
-        local newKd = ui.sliderWithInput(' fdensity', x, y, 200, .01, 2, Kd)
-        if newKd then
-            Kd = newKd
-        end
-        ui.label(x, y, ' Der. Gain.')
+        -- Optional: Add a button here later to reveal Stiffness/Damping/MaxTorque sliders if needed for advanced tuning
     end)
 end
 

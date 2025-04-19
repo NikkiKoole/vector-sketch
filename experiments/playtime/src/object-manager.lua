@@ -197,7 +197,7 @@ local function createThing(shapeType, conf)
         height3 = conf.height3,
         height4 = conf.height4,
         optionalVertices = conf.vertices or nil, --optionalVertices
-        shape8URL = conf.shape8URL
+        --shape8URL = conf.shape8URL
 
     }
     local shapeList, vertices = shapes.createShape(shapeType, settings)
