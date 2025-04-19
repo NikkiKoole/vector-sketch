@@ -9,7 +9,7 @@ local timeToReachAngle = 0.5 -- Approximate time (in seconds) to rotate towards 
 -- These control how "tightly" the body follows its *internal* smoothed target.
 -- They might need less variation across object types now.
 local stiffnessFactor = 1500        -- How strongly it corrects towards the internal target (related to Kp*I)
-local dampingFactor = .5            -- How much it resists angular velocity (related to Kd*I)
+local dampingFactor = 5             -- How much it resists angular velocity (related to Kd*I)
 local maxCorrectiveTorque = 1000000 -- Still need a safety cap per body
 ------------------------------------
 
