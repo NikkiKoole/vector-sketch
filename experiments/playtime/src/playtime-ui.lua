@@ -983,6 +983,7 @@ local accordionStatesSF = {
     ['texture'] = true,
     ['patch1'] = false,
     ['patch2'] = false,
+    ['patch3'] = false,
 }
 
 function lib.drawSelectedSFixture()
@@ -1362,7 +1363,7 @@ function lib.drawSelectedSFixture()
                 nextRow()
                 patchTransformUI('patch1')
                 flipWholeUI('patch1')
-                nextRow()
+                --nextRow()
                 local dirty = function() oldTexFixUD.extra.dirty = true end
                 handlePaletteAndHex(myID, 'patch1tint', x, y, 100, oldTexFixUD.extra.patch1.tint,
                     function(color) oldTexFixUD.extra.patch1.tint = color end, dirty)
@@ -1375,6 +1376,23 @@ function lib.drawSelectedSFixture()
                 nextRow()
                 patchTransformUI('patch2')
                 flipWholeUI('patch2')
+                -- nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'patch2tint', x, y, 100, oldTexFixUD.extra.patch2.tint,
+                    function(color) oldTexFixUD.extra.patch2.tint = color end, dirty)
+            end)
+            nextRow()
+            drawAccordion('patch3', function()
+                oldTexFixUD.extra.patch3 = oldTexFixUD.extra.patch3 or {}
+                nextRow()
+                combineImageUI('patch3')
+                nextRow()
+                patchTransformUI('patch3')
+                flipWholeUI('patch3')
+                --nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'patch3tint', x, y, 100, oldTexFixUD.extra.patch3.tint,
+                    function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
         else
             drawAccordion('position', function()

@@ -1,9 +1,13 @@
+-- DOING playing around with characters, getting them back in the system
+
 -- TODO there is an issue where the .vertices arent populated after load.
 -- TODO snap isnt working vanilla, not the right stuff is saved.
 -- TODO when we flip something with a joint wiht limits, the limits are gone
--- TODO label for behavior (straight / snap ..) is not scalabel, we need a dedicated 'tag's fro that each tag has option of data too.
--- DOING playing around with characters, getting htem back in the system
---
+-- TODO label for behavior (straight / snap ..) is not scalable, we need a dedicated 'tag's for that each tag has option of data too.
+-- TODO add some ui to change body properties
+-- TODO swap body parts
+
+
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 
@@ -110,9 +114,9 @@ function love.load(args)
 
     --loadScriptAndScene('elasto')
     --  sceneLoader.loadScriptAndScene('snap')
-    sceneLoader.loadScriptAndScene('straight')
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+    --sceneLoader.loadScriptAndScene('straight')
+    local cwd = love.filesystem.getWorkingDirectory()
+    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
 
 
     local CharacterManager = require 'src.character-manager'

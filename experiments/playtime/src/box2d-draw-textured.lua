@@ -192,7 +192,7 @@ end
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
-                                  flipx, flipy, patch1, patch2)
+                                  flipx, flipy, patches)
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
         local lw, lh = lineart:getDimensions()
@@ -233,36 +233,28 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-
-        if (patch1 and patch1.img) then
-            love.graphics.setColorMask(true, true, true, false)
-            local r, g, b, a = lib.hexToColor(patch1.tint)
-            love.graphics.setColor(r, g, b, a)
-            local image = patch1.img
-            local imgw, imgh = image:getDimensions()
-            local xOffset = (patch1.tx or 0) * (imgw) * shrinkFactor
-            local yOffset = (patch1.ty or 0) * (imgh) * shrinkFactor
-            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch1.r or 0) * ((math.pi * 2) / 16),
-                (patch1.sx or 1) * shrinkFactor,
-                (patch1.sy or 1) * shrinkFactor,
-                imgw / 2, imgh / 2)
-            love.graphics.setColorMask(true, true, true, true)
+        if patches then
+            for i = 1, #patches do
+                local patch = patches[i]
+                if patch and patch.img then
+                    love.graphics.setColorMask(true, true, true, false)
+                    local r, g, b, a = lib.hexToColor(patch.tint)
+                    love.graphics.setColor(r, g, b, a)
+                    local image = patch.img
+                    local imgw, imgh = image:getDimensions()
+                    local xOffset = (patch.tx or 0) * (imgw) * shrinkFactor
+                    local yOffset = (patch.ty or 0) * (imgh) * shrinkFactor
+                    love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset,
+                        (patch.r or 0) * ((math.pi * 2) / 16),
+                        (patch.sx or 1) * shrinkFactor,
+                        (patch.sy or 1) * shrinkFactor,
+                        imgw / 2, imgh / 2)
+                    love.graphics.setColorMask(true, true, true, true)
+                end
+            end
         end
 
-        if (patch2 and patch2.img) then
-            love.graphics.setColorMask(true, true, true, false)
-            local r, g, b, a = lib.hexToColor(patch2.tint)
-            love.graphics.setColor(r, g, b, a)
-            local image = patch2.img
-            local imgw, imgh = image:getDimensions()
-            local xOffset = (patch2.tx or 0) * (imgw) * shrinkFactor
-            local yOffset = (patch2.ty or 0) * (imgh) * shrinkFactor
-            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch2.r or 0) * ((math.pi * 2) / 16),
-                (patch2.sx or 1) * shrinkFactor,
-                (patch2.sy or 1) * shrinkFactor,
-                imgw / 2, imgh / 2)
-            love.graphics.setColorMask(true, true, true, true)
-        end
+
 
 
         -- I want to know If we do this or not..
@@ -387,11 +379,12 @@ function lib.makeCombinedImages()
                         end
                         return result
                     end
+                    return result
                 end
 
                 local patch1 = makePatch('patch1')
                 local patch2 = makePatch('patch2')
-
+                local patch3 = makePatch('patch3')
 
 
                 local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
@@ -416,11 +409,11 @@ function lib.makeCombinedImages()
                         ud.extra.main.psy or 1, -- texScale
                         ud.extra.main.ptx or 0,
                         ud.extra.main.pty or 0,
-                        { olr, olg, olb },     -- lineColor
-                        ola * 5,               -- lineAlpha
-                        ud.extra.main.fx or 1, -- flipx (normal)
-                        ud.extra.main.fy or 1, -- flipy (normal)
-                        patch1, patch2         -- renderPatch (set to truthy to enable extra patch rendering)
+                        { olr, olg, olb },         -- lineColor
+                        ola * 5,                   -- lineAlpha
+                        ud.extra.main.fx or 1,     -- flipx (normal)
+                        ud.extra.main.fy or 1,     -- flipy (normal)
+                        { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
                     )
                     image = love.graphics.newImage(imgData)
                     ud.extra.ompImage = image

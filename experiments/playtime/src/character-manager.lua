@@ -6,9 +6,10 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 
---todo, the data here below sis correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
+-- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
-
+-- todo verts unlocked on torso8 should make them also movable cause why not.
+--
 local shape8Dict = {
     ['shapeA1.png'] = {
         v = {
@@ -25,18 +26,18 @@ local shape8Dict = {
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = false,
+            isPotatoHead = true,
             neckSegments = 0,
             torsoSegments = 1
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = .5, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 3, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
             ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 150 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
-            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = -5 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
             ['luleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
             ['ruleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
             ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },

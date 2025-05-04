@@ -1,11 +1,15 @@
 main.lua
 ```lua
+-- DOING playing around with characters, getting them back in the system
+
 -- TODO there is an issue where the .vertices arent populated after load.
 -- TODO snap isnt working vanilla, not the right stuff is saved.
 -- TODO when we flip something with a joint wiht limits, the limits are gone
--- TODO label for behavior (straight / snap ..) is not scalabel, we need a dedicated 'tag's fro that each tag has option of data too.
--- DOING playing around with characters, getting htem back in the system
---
+-- TODO label for behavior (straight / snap ..) is not scalable, we need a dedicated 'tag's for that each tag has option of data too.
+-- TODO add some ui to change body properties
+-- TODO swap body parts
+
+
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 
@@ -323,1562 +327,6 @@ if FIXED_TIMESTEP then
     end
 end
 --
-
-```
-
-src/OLDOLD-dna.lua
-```lua
-local readAndParse = require 'lib.readAndParse'
-
-local lib = {}
-
-
--- the parts array is not unique, every mipo shares the same ones
--- creation, multipliers, values and positioners however are UNIQUE to a MIPO
--- from creation we have the 'limits array' which more or less are shared, but the details describe the picked texture shapes and dimensions etc.
-
---
---
-
---local positioners  =
-
---- After new changes to DNA (addition of properties)we need to patch the already existing DNA out there
----@param data any
----@return any
-lib.patchDNA       = function(data)
-    if data.positioners then
-        if not data.positioners.teeth then
-            print('adding teeth positioner data')
-            data.positioners.teeth = { z = 0 }
-        end
-    end
-    return data
-end
-
-lib.getCreation    = function()
-    local creation = {
-        isPotatoHead = false,
-        hasPhysicsHair = false,
-        hasNeck = true,
-        torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-        neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-        neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-        head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule3', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
-        lear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-        rear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = -math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-        luarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi, enabled = false }, friction = 4000 },
-        ruarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = -math.pi, up = 0, enabled = false }, friction = 4000 },
-        llarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
-        rlarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = (math.pi - 0.5) * -1, up = 0, enabled = false }, friction = 2000 },
-        lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-        rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-        luleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 2, enabled = true } },
-        ruleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 2, up = 0, enabled = true } },
-        llleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 8, up = 0, enabled = true } },
-        rlleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 8, enabled = true } },
-        lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-        rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-        hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
-        hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-        hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-        hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-        hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
-        brow = { w = 10, h = 10 },
-        eye = { w = 10, h = 10 },
-        pupil = { w = 10, h = 10 },
-        nose = { w = 10, h = 10 },
-        upperlip = { w = 10, h = 10 },
-        lowerlip = { w = 10, h = 10 },
-        teeth = { w = 10, h = 10 },
-    }
-    return creation
-end
-
-lib.getMultipliers = function()
-    local multipliers =
-    {
-        torso = { hMultiplier = 1, wMultiplier = 1 },
-        leg = { lMultiplier = 1, wMultiplier = 1 },
-        leghair = { wMultiplier = 1 },
-        feet = { wMultiplier = 1, hMultiplier = 1 },
-        arm = { lMultiplier = 1, wMultiplier = 1 },
-        armhair = { wMultiplier = 1 },
-        hand = { wMultiplier = 1, hMultiplier = 1 },
-        neck = { wMultiplier = 1, hMultiplier = 1 },
-        head = { wMultiplier = 1, hMultiplier = 1 },
-        face = { mMultiplier = 1 },
-        ear = { wMultiplier = 1, hMultiplier = 1 },
-        hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
-        nose = { wMultiplier = 1, hMultiplier = 1 },
-        eye = { wMultiplier = 1, hMultiplier = 1 },
-        pupil = { wMultiplier = .5, hMultiplier = .5 },
-        brow = { wMultiplier = 1, hMultiplier = 1 },
-        mouth = { wMultiplier = 1, hMultiplier = 1 },
-        teeth = { hMultiplier = 1 },
-        chesthair = { mMultiplier = 1 }
-    }
-    return multipliers
-end
-
-lib.getPositioners = function()
-    local positioners = {
-        leg = { x = 0.5 },
-        eye = { x = 0.2, y = 0.5, r = 0 },
-        nose = { y = 0.5 },
-        brow = { y = 0.8, bend = 1 },
-        mouth = { y = 0.25 },
-        ear = { y = 0.5 },
-        teeth = { z = 0 },
-    }
-    return positioners
-end
-
-local function createDefaultTextureValues()
-    return {
-        shape     = 1,
-        bgPal     = 13, --math.ceil(love.math.random() * #palettes),
-        fgPal     = 1,  --math.ceil(love.math.random() * #palettes),
-        bgTex     = 1,
-        fgTex     = 2,
-        linePal   = 1,
-        bgAlpha   = 5,
-        fgAlpha   = 5,
-        lineAlpha = 5,
-        texRot    = 0,
-        texScale  = 1,
-    }
-end
-
-local function createDefaultPatchValues()
-    return {
-        sx = 1,
-        sy = 1,
-        r = 1,
-        tx = 0,
-        ty = 3
-    }
-end
-
-lib.generateValues = function()
-    local values = {
-        chestHair        = createDefaultTextureValues(),
-        skinPatchSnout   = createDefaultTextureValues(),
-        skinPatchSnoutPV = createDefaultPatchValues(),
-        skinPatchEye1    = createDefaultTextureValues(),
-        skinPatchEye1PV  = createDefaultPatchValues(),
-        skinPatchEye2    = createDefaultTextureValues(),
-        skinPatchEye2PV  = createDefaultPatchValues(),
-        upperlip         = createDefaultTextureValues(),
-        lowerlip         = createDefaultTextureValues(),
-        eyes             = createDefaultTextureValues(),
-        pupils           = createDefaultTextureValues(),
-        ears             = createDefaultTextureValues(),
-        brows            = createDefaultTextureValues(),
-        nose             = createDefaultTextureValues(),
-        leghair          = createDefaultTextureValues(),
-        legs             = createDefaultTextureValues(),
-        armhair          = createDefaultTextureValues(),
-        arms             = createDefaultTextureValues(),
-        hands            = createDefaultTextureValues(),
-        teeth            = createDefaultTextureValues(),
-        body             = createDefaultTextureValues(),
-        head             = createDefaultTextureValues(),
-        hair             = createDefaultTextureValues(),
-        neck             = createDefaultTextureValues(),
-        feet             = createDefaultTextureValues(),
-    }
-    values.skinPatchSnoutPV.ty = 5
-    values.skinPatchSnoutPV.sx = 2
-    values.skinPatchEye1PV.ty = 0
-    values.skinPatchEye1PV.tx = -2
-    values.skinPatchEye2PV.ty = 0
-    values.skinPatchEye2PV.tx = 2
-    values.teeth.bgPal = 5
-    return values
-end
-
-lib.generateParts = function()
-    local legUrls = {
-        'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-        'assets/parts/leg5.png', 'assets/parts/leg7.png', 'assets/parts/legp2.png', 'assets/parts/leg1x.png',
-        'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png', 'assets/parts/leg5x.png',
-        'assets/parts/neck8.png',
-    }
-
-    local neckUrls = {
-        'assets/parts/neck1.png', 'assets/parts/neck2.png', 'assets/parts/neck3.png', 'assets/parts/neck4.png',
-        'assets/parts/neck5.png', 'assets/parts/neck6.png', 'assets/parts/neck7.png', 'assets/parts/neck8.png',
-        'assets/parts/neck9.png', 'assets/parts/neck10.png', 'assets/parts/leg1.png', 'assets/parts/leg2.png',
-        'assets/parts/leg3.png', 'assets/parts/leg4.png', 'assets/parts/leg5.png', 'assets/parts/leg1x.png',
-        'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png', 'assets/parts/leg5x.png',
-    }
-
-    local patchUrls = {
-        'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png', 'assets/parts/patch4.png',
-    }
-
-    local hairUrls = {
-        'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
-        'assets/parts/hair5.png', 'assets/parts/hair6NEW.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
-        'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png', 'assets/parts/hair1x.png',
-        'assets/parts/hair2x.png', 'assets/parts/haarnew1.png', 'assets/parts/haarnew2.png', 'assets/parts/haarnew3.png',
-        'assets/parts/haarnew4.png',
-    }
-
-    table.insert(patchUrls, 'assets/parts/null.png')
-    table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice
-
-    local chestHairUrls = {
-        'assets/parts/borsthaar1.png', 'assets/parts/borsthaar2.png', 'assets/parts/borsthaar3.png',
-        'assets/parts/borsthaar4.png',
-        'assets/parts/borsthaar5.png', 'assets/parts/borsthaar6.png', 'assets/parts/borsthaar7.png'
-
-    }
-    table.insert(chestHairUrls, 'assets/parts/null.png')
-
-    local bodyImgUrls, bodyParts = readAndParse.loadVectorSketchAndGetImages('assets/bodies.polygons.txt', 'bodies')
-
-    local feetImgUrls, feetParts = readAndParse.loadVectorSketchAndGetImages('assets/feet.polygons.txt', 'feet')
-    local handParts = feetParts
-    local headImgUrls = bodyImgUrls
-    local headParts = bodyParts
-
-    local eyeImgUrls, eyeParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
-        'eyes')
-    local pupilImgUrls, pupilParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'pupils')
-    local noseImgUrls, noseParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'noses')
-    local browImgUrls, browParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyebrows')
-    local earImgUrls, earParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'ears')
-    local teethImgUrls, teethParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'teeths')
-    local upperlipImgUrls, upperlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
-        'upperlips')
-    local lowerlipImgUrls, lowerlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
-        'lowerlips')
-
-    table.insert(teethImgUrls, 'assets/parts/null.png')
-
-    local patchChildren = { 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' }
-    local mouthChildren = { 'upperlip', 'lowerlip', 'teeth' }
-
-    local parts = {
-        { name = 'head',           imgs = headImgUrls,     p = headParts,                   kind = 'head' },
-        { name = 'hair',           imgs = hairUrls,        kind = 'head' },
-        { name = 'brows',          imgs = browImgUrls,     p = browParts,                   kind = 'head' },
-        { name = 'eyes2',          kind = 'head',          children = { 'eyes', 'pupils' } },
-        { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,                  kind = 'head',                   child = true },
-        { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts,                    kind = 'head',                   child = true },
-        { name = 'ears',           imgs = earImgUrls,      p = earParts,                    kind = 'head' },
-        { name = 'nose',           imgs = noseImgUrls,     p = noseParts,                   kind = 'head' },
-        { name = 'patches',        kind = 'head',          children = patchChildren },
-        { name = 'skinPatchSnout', imgs = patchUrls,       kind = 'head',                   child = true },
-        { name = 'skinPatchEye1',  imgs = patchUrls,       kind = 'head',                   child = true },
-        { name = 'skinPatchEye2',  imgs = patchUrls,       kind = 'head',                   child = true },
-        { name = 'mouth',          kind = 'head',          children = mouthChildren },
-        { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts,               kind = 'head',                   child = true },
-        { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts,               kind = 'head',                   child = true },
-        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,                  kind = 'head',                   child = true },
-        { name = 'neck',           imgs = neckUrls,        kind = 'body' },
-        { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,                   kind = 'body' },
-        { name = 'chestHair',      imgs = chestHairUrls,   kind = 'body' },
-        { name = 'arms2',          imgs = legUrls,         kind = 'body',                   children = { 'arms', 'armhair' } },
-        { name = 'armhair',        imgs = hairUrls,        kind = 'body',                   child = true },
-        { name = 'arms',           imgs = legUrls,         kind = 'body',                   child = true },
-        { name = 'hands',          imgs = feetImgUrls,     p = handParts,                   kind = 'body' },
-        { name = 'legs2',          kind = 'body',          children = { 'legs', 'leghair' } },
-        { name = 'legs',           imgs = legUrls,         kind = 'body',                   child = true },
-        { name = 'leghair',        imgs = hairUrls,        kind = 'body',                   child = true },
-        { name = 'feet',           imgs = feetImgUrls,     p = feetParts,                   kind = 'body' },
-    }
-
-
-    return parts
-end
-
-return lib
-
-```
-
-src/OLDOLD-guycreation.lua
-```lua
-local numbers = require "lib.numbers"
-package.path  = package.path .. ";../../?.lua"
-local bbox    = require 'lib.bbox'
-local inspect = require 'vendor.inspect'
-local phys    = require 'lib.mainPhysics'
-local dna     = require 'lib.dna'
-local connect = require 'lib.connectors'
-local lib     = {}
-
--- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
-
-
-local function getParentAndChildrenFromPartName(partName, guy)
-    local creation = guy.dna.creation
-
-    local map      = {
-        torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
-        neck = { p = 'torso', c = 'neck1' },
-        neck1 = { p = 'neck', c = 'head' },
-        head = { p = 'neck1', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } },
-        hair1 = { p = 'head' },
-        hair2 = { p = 'head' },
-        hair3 = { p = 'head' },
-        hair4 = { p = 'head' },
-        hair5 = { p = 'head' },
-        lear = { p = 'head' },
-        rear = { p = 'head' },
-        luarm = { p = 'torso', c = 'llarm' },
-        llarm = { p = 'luarm', c = 'lhand' },
-        lhand = { p = 'llarm' },
-        ruarm = { p = 'torso', c = 'rlarm' },
-        rlarm = { p = 'ruarm', c = 'rhand' },
-        rhand = { p = 'rlarm' },
-        luleg = { p = 'torso', c = 'llleg' },
-        llleg = { p = 'luleg', c = 'lfoot' },
-        lfoot = { p = 'llleg' },
-        ruleg = { p = 'torso', c = 'rlleg' },
-        rlleg = { p = 'ruleg', c = 'rfoot' },
-        rfoot = { p = 'rlleg' },
-        --  butt = {p = 'torso'}
-    }
-
-    if creation and partName == 'head' and creation.hasNeck == false then
-        return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
-    end
-
-    if creation and partName == 'torso' and creation.isPotatoHead then
-        return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
-    end
-    if creation and partName == 'torso' and creation.hasNeck == false then
-        return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
-    end
-
-    local result = map[partName]
-
-    if result.p == 'head' and creation.isPotatoHead then
-        result.p = 'torso'
-    end
-    return map[partName]
-end
-
-local function getScaledTorsoMetaPoint(index, guy)
-    local creation = guy.dna.creation
-    local wscale = creation.torso.w / creation.torso.metaPointsW
-    local hscale = creation.torso.h / creation.torso.metaPointsH
-
-    return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
-end
-
-local function getScaledHeadMetaPoint(index, guy)
-    local creation = guy.dna.creation
-    local wscale = creation.head.w / creation.head.metaPointsW
-    local hscale = creation.head.h / creation.head.metaPointsH
-
-    if creation.head.metaOffsetX or creation.head.metaOffsetY then
-        return (creation.head.metaPoints[index][1] + creation.head.metaOffsetX) * wscale,
-            (creation.head.metaPoints[index][2] + creation.head.metaOffsetY) * hscale
-    end
-    return creation.head.metaPoints[index][1] * wscale, creation.head.metaPoints[index][2] * hscale
-end
-
-local function clamp(x, min, max)
-    return x < min and min or (x > max and max or x)
-end
-
-local function lerp(a, b, amount)
-    return a + (b - a) * clamp(amount, 0, 1)
-end
-
-local function getOffsetFromParent(partName, guy)
-    local creation    = guy.dna.creation
-    local positioners = guy.dna.positioners
-    local data        = getParentAndChildrenFromPartName(partName, guy)
-
-
-
-    if partName == 'neck' then
-        if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(1, guy)
-        end
-
-        return 0, -creation.torso.h / 2
-    elseif partName == 'luarm' then
-        if creation.isPotatoHead then
-            if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(7, guy)
-            end
-        else
-            if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(8, guy)
-            end
-        end
-        return -creation.torso.w / 2, -creation.torso.h / 2
-    elseif partName == 'ruarm' then
-        if creation.isPotatoHead then
-            if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(3, guy)
-            end
-        else
-            if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(2, guy)
-            end
-        end
-        return creation.torso.w / 2, -creation.torso.h / 2
-    elseif partName == 'luleg' then
-        local t = positioners.leg.x
-        if creation.torso.metaPoints then
-            local ax, ay = getScaledTorsoMetaPoint(6, guy)
-            local bx, by = getScaledTorsoMetaPoint(5, guy)
-            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry
-        end
-        return (-creation.torso.w / 2) * (1 - t), creation.torso.h / 2
-    elseif partName == 'ruleg' then
-        local t = positioners.leg.x
-        if creation.torso.metaPoints then
-            local ax, ay = getScaledTorsoMetaPoint(4, guy)
-            local bx, by = getScaledTorsoMetaPoint(5, guy)
-            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry
-        end
-        return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
-    elseif partName == 'hair1' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(3, guy)
-        end
-    elseif partName == 'hair2' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(4, guy)
-        end
-    elseif partName == 'hair3' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(5, guy)
-        end
-    elseif partName == 'hair4' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(6, guy)
-        end
-    elseif partName == 'hair5' then
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(7, guy)
-        end
-    elseif partName == 'lear' then
-        if creation.isPotatoHead then
-            if creation.torso.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledTorsoMetaPoint(8, guy)
-                local bx, by = getScaledTorsoMetaPoint(7, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-                return rx, ry
-            end
-        else
-            if creation.head.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledHeadMetaPoint(8, guy)
-                local bx, by = getScaledHeadMetaPoint(6, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-                return rx, ry
-            end
-        end
-
-        return -creation.head.w / 2, -creation.head.h / 2
-    elseif partName == 'rear' then
-        if creation.isPotatoHead then
-            if creation.torso.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledTorsoMetaPoint(2, guy)
-                local bx, by = getScaledTorsoMetaPoint(3, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-                return rx, ry
-            end
-        else
-            if creation.head.metaPoints then
-                local t = positioners.ear.y
-                local ax, ay = getScaledHeadMetaPoint(2, guy)
-                local bx, by = getScaledHeadMetaPoint(4, guy)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-                return rx, ry
-            end
-        end
-        return creation.head.w / 2, -creation.head.h / 2
-    else
-        if (partName == 'head') then
-            if creation.hasNeck then
-                return 0, creation.neck1.h / (creation.neck1.links or 1)
-            else
-                if creation.torso.metaPoints then
-                    return getScaledTorsoMetaPoint(1, guy)
-                end
-
-                return 0, -creation.torso.h / 2
-            end
-        end
-
-        local p = data.p
-        -- now look for the alias of the parent...
-        local temp = getParentAndChildrenFromPartName(p, guy)
-        local part = p
-        --  local s = canvas.getShrinkFactor()
-        -- wscale = wscale * s
-        --  hscale = hscale * s
-        return 0, creation[part].h --/ s
-    end
-end
-
-local function getAngleOffset(key, creation, data)
-    if key == 'neck' then
-        return -math.pi
-    elseif key == 'neck1' then
-        return 0
-    elseif key == 'lear' then
-        return creation.lear.stanceAngle
-    elseif key == 'rear' then
-        return creation.rear.stanceAngle
-    elseif key == 'lfoot' then
-        --print('hello', inspect(data.facing))
-        if data.facing.legs == 'right' then
-            return -math.pi / 2
-        end
-        return math.pi / 2
-    elseif key == 'rfoot' then
-        if data.facing.legs == 'left' then
-            return math.pi / 2
-        end
-        return -math.pi / 2
-    elseif (key == 'hair1') then
-        return -math.pi / 2
-    elseif (key == 'hair2') then
-        return -math.pi / 4
-    elseif (key == 'hair3') then
-        return 0
-    elseif (key == 'hair4') then
-        return math.pi / 4
-    elseif (key == 'hair5') then
-        return math.pi / 2
-    elseif (key == 'luleg') then
-        if data.facing.legs == 'right' then
-            return creation.ruleg.stanceAngle
-        end
-        return creation.luleg.stanceAngle
-    elseif (key == 'llleg') then
-        if data.facing.legs == 'right' then
-            return creation.rlleg.stanceAngle
-        end
-        return creation.llleg.stanceAngle
-    elseif (key == 'ruleg') then
-        if data.facing.legs == 'left' then
-            return creation.luleg.stanceAngle
-        end
-        return creation.ruleg.stanceAngle
-    elseif (key == 'rlleg') then
-        if data.facing.legs == 'left' then
-            return creation.llleg.stanceAngle
-        end
-        return creation.rlleg.stanceAngle
-    elseif key == 'head' then
-        if (not creation.hasNeck) then
-            return 0
-        else
-            return math.pi
-        end
-        return 0
-    else
-        --  print('??', key)
-    end
-    return 0
-end
-
-local function makePointerJoint(id, bodyToAttachTo, wx, wy)
-    local pointerJoint = {}
-    pointerJoint.id = id
-    pointerJoint.jointBody = bodyToAttachTo
-    pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
-    pointerJoint.joint:setDampingRatio(0.5)
-    pointerJoint.joint:setMaxForce(500000)
-    return pointerJoint
-end
-
-local function makeUserData(bodyType, moreData)
-    local result = {
-        bodyType = bodyType,
-    }
-    if moreData then
-        result.data = moreData
-    end
-    return result
-end
-
-local function tableContains(table, element)
-    for _, value in pairs(table) do
-        if value == element then
-            return true
-        end
-    end
-    return false
-end
-
-local function findJointBetween2Bodies(body1, body2)
-    local joints1 = body1:getJoints()
-    local joints2 = body2:getJoints()
-
-    local result = {}
-    for i = 1, #joints2 do
-        if tableContains(joints1, joints2[i]) then
-            table.insert(result, joints2[i])
-        end
-    end
-
-    return result
-end
-
-lib.setJointLimitBetweenBodies = function(body1, body2, state, ofType)
-    local joints = findJointBetween2Bodies(body1, body2)
-    if joints then
-        for i = 1, #joints do
-            --     print(joints[i]:getType())
-            if ofType == nil or joints[i]:getType() == ofType then
-                joints[i]:setLimitsEnabled(state)
-            end
-        end
-    end
-end
-lib.setJointLimitsBetweenBodies = function(body1, body2, lower, upper, ofType)
-    local joints = findJointBetween2Bodies(body1, body2)
-    if joints then
-        for i = 1, #joints do
-            --     print(joints[i]:getType())
-            if ofType == nil or joints[i]:getType() == ofType then
-                joints[i]:setLimits(lower, upper)
-            end
-        end
-    end
-end
-lib.getJointLimitsBetweenBodies = function(body1, body2, ofType)
-    local joints = findJointBetween2Bodies(body1, body2)
-    if joints then
-        for i = 1, #joints do
-            --     print(joints[i]:getType())
-            if ofType == nil or joints[i]:getType() == ofType then
-                local lower, upper = joints[i]:getLimits()
-                return lower, upper
-            end
-        end
-    end
-end
-
-
---RevoluteJoint:setLimits( lower, upper )
-
-local function getRecreatePointerJoint(body)
-    local recreatePointerJoint = nil
-    for i = 1, #pointerJoints do
-        if (pointerJoints[i].jointBody == body) then
-            local tx, ty = pointerJoints[i].joint:getTarget()
-            x1, y1, x2, y2 = pointerJoints[i].joint:getAnchors()
-            recreatePointerJoint = { targetX = x2, targetY = y2, id = pointerJoints[i].id }
-        end
-    end
-    return recreatePointerJoint
-end
-
-local function useRecreatePointerJoint(recreatePointerJoint, body)
-    phys.killMouseJointIfPossible(recreatePointerJoint.id)
-    table.insert(pointerJoints,
-        makePointerJoint(recreatePointerJoint.id, body, recreatePointerJoint.targetX,
-            recreatePointerJoint.targetY))
-end
-
-local function makeConnectingRevoluteJoint(data, this, from)
-    local joint = love.physics.newRevoluteJoint(from, this, this:getX(), this:getY(), false)
-
-    local n = data.partName
-    local myData = data.creation[data.partName]
-    if (data.facing.legs == 'right') then
-        if n == 'luleg' then
-            myData = data.creation['ruleg']
-        end
-        if n == 'llleg' then
-            myData = data.creation['rlleg']
-        end
-        if n == 'lfoot' then
-            myData = data.creation['rfoot']
-        end
-    end
-    if (data.facing.legs == 'left') then
-        if n == 'ruleg' then
-            myData = data.creation['luleg']
-        end
-        if n == 'rlleg' then
-            myData = data.creation['llleg']
-        end
-        if n == 'rfoot' then
-            myData = data.creation['lfoot']
-        end
-    end
-
-    if myData.limits then
-        joint:setLowerLimit(myData.limits.low)
-        joint:setUpperLimit(myData.limits.up)
-        joint:setLimitsEnabled(myData.limits.enabled)
-    end
-
-    if myData.friction then
-        local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
-        fjoint:setMaxTorque(myData.friction)
-    end
-    return joint
-end
-
-local function makeGuyFixture(data, key, groupId, body, shape)
-    local fixture = love.physics.newFixture(body, shape, data.d)
-    if (string.match(key, 'hair')) then
-        -- hair does not collide
-        fixture:setFilterData(0, 65535, -1 * groupId)
-    else
-        fixture:setFilterData(1, 65535, -1 * groupId)
-    end
-
-    local fixedKey = key
-    if string.match(key, 'neck') then
-        fixedKey = 'neck'
-    end
-
-    fixture:setUserData(makeUserData(fixedKey))
-    return fixture
-end
-
-local function makePart_(key, parent, guy)
-    local groupId = guy.id
-    local creation = guy.dna.creation -- dna.getCreation()
-    local facing = guy.facingVars
-    local offsetX, offsetY = getOffsetFromParent(key, guy)
-    local cd = creation[key]
-    local x, y = parent:getWorldPoint(offsetX, offsetY)
-    local prevA = parent:getAngle()
-
-    local data = { creation = creation, partName = key, facing = facing }
-    local xangle = getAngleOffset(key, creation, data)
-    local body = love.physics.newBody(world, x, y, "dynamic")
-    local shape = phys.makeShapeFromCreationPart(cd)
-    local fixture = makeGuyFixture(cd, key, groupId, body, shape)
-
-    body:setAngle(prevA + xangle)
-
-    local joint = makeConnectingRevoluteJoint(data, body, parent)
-
-    return body
-end
-
--- cant move this because of the dependance on getScaledTorsoMetaPoint
-function useRecreateConnectorData(recreateConnectorData, body, guy)
-    local creation = guy.dna.creation
-    local data = recreateConnectorData.userData.data
-    local type = data.type
-
-    --print('hello want to recreate connector', type)
-    assert(type)
-    if type == 'foot' then
-        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, 0, data,
-            creation.rfoot.w + 20,
-            creation.rfoot.h + 20)
-    elseif type == 'hand' then
-        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w + 4,
-            creation.lhand.h + 4)
-    elseif type == 'butt' then
-        local bx, by = (creation.torso.w / 2), creation.torso.h / 2
-        if creation.torso.metaPoints then
-            bx, by = getScaledTorsoMetaPoint(5, guy)
-        end
-        connect.makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100, 100)
-    end
-end
-
-lib.makeGuy = function(x, y, guy)
-    local creation = guy.dna.creation
-    local groupId = guy.id
-
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-
-    local torso = love.physics.newBody(world, x, y, "dynamic")
-    local torsoShape = phys.makeShapeFromCreationPart(creation.torso)
-    local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
-
-    local head, neck, neck1, lear, rear
-    if creation.isPotatoHead then
-        lear = makePart('lear', torso)
-        rear = makePart('rear', torso)
-    else
-        if creation.hasNeck then
-            neck = makePart('neck', torso)
-            neck1 = makePart('neck1', neck)
-            head = makePart('head', neck1)
-        else
-            head = makePart('head', torso)
-        end
-        lear = makePart('lear', head)
-        rear = makePart('rear', head)
-    end
-
-    local hair1, hair2, hair3, hair4, hair5
-    if creation.hasPhysicsHair then
-        local attachTo = creation.isPotatoHead and torso or head
-        hair1 = makePart('hair1', attachTo)
-        hair2 = makePart('hair2', attachTo)
-        hair3 = makePart('hair3', attachTo)
-        hair4 = makePart('hair4', attachTo)
-        hair5 = makePart('hair5', attachTo)
-    end
-
-    local luleg = makePart('luleg', torso)
-    local llleg = makePart('llleg', luleg)
-
-    local lfoot = makePart('lfoot', llleg)
-    local ruleg = makePart('ruleg', torso)
-    local rlleg = makePart('rlleg', ruleg)
-    local rfoot = makePart('rfoot', rlleg)
-    local ruarm = makePart('ruarm', torso)
-    local rlarm = makePart('rlarm', ruarm)
-    local rhand = makePart('rhand', rlarm)
-    local luarm = makePart('luarm', torso)
-    local llarm = makePart('llarm', luarm)
-    local lhand = makePart('lhand', llarm)
-
-
-    local buttConnector = true
-    if buttConnector then
-        local bx, by = 0, 0
-        connect.makeAndAddConnector(torso, bx, by, { id = 'guy' .. groupId, type = 'butt' },
-            40,
-            40)
-    end
-
-    local footConnector = true
-    if footConnector then
-        connect.makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
-            creation.rfoot.h / 2 + 10,
-            creation.rfoot.w / 2 + 10)
-
-        connect.makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
-            creation.lfoot.h / 2 + 10,
-            creation.lfoot.w / 2 + 10)
-    end
-
-    local handConnector = true
-    if handConnector then
-        connect.makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
-            creation.rhand.h / 2 + 10,
-            creation.rhand.w / 2 + 10)
-
-        connect.makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
-            creation.lhand.h + 10,
-            creation.lhand.w + 10)
-    end
-
-
-    local data = {
-        torso = torso,
-        neck = neck,
-        neck1 = neck1,
-        head = head,
-        lear = lear,
-        rear = rear,
-        luarm = luarm,
-        llarm = llarm,
-        lhand = lhand,
-        ruarm = ruarm,
-        rlarm = rlarm,
-        rhand = rhand,
-        luleg = luleg,
-        llleg = llleg,
-        lfoot = lfoot,
-        ruleg = ruleg,
-        rlleg = rlleg,
-        rfoot = rfoot,
-        hair1 = hair1,
-        hair2 = hair2,
-        hair3 = hair3,
-        hair4 = hair4,
-        hair5 = hair5
-    }
-    return data
-end
-
-function rotateToHorizontal(body, desiredAngle, divider, smarter, dt)
-    -- its  abit messy now, but im smarter, or a bit better  about dt
-
-    local DEGTORAD = 1 / 57.295779513
-    --https://www.iforce2d.net/b2dtut/rotate-to-angle
-    if true then
-        local angle = body:getAngle()
-        local a = angle
-
-
-        local angularVelocity = body:getAngularVelocity()
-        local inertia = body:getInertia()
-        local didSomething = false
-        if false then
-            if false then
-                while a > (2 * math.pi) do
-                    a = a - (2 * math.pi)
-                    body:setAngle(a)
-                    --                    print('getting in first one', a, angle)
-                    didSomething = true
-                end
-                while a < -(2 * math.pi) do
-                    a = a + (2 * math.pi)
-                    body:setAngle(a)
-                    --                    print('getting in second one')
-                    didSomething = true
-                end
-            end
-        end
-        if didSomething then
-            --            print('jo')
-            return
-        end
-        angle = a -- body:getAngle()
-        local nextAngle = angle + angularVelocity / divider
-        local totalRotation = desiredAngle - nextAngle
-
-        while (totalRotation < -180 * DEGTORAD) do
-            totalRotation = totalRotation + 360 * DEGTORAD
-        end
-        while (totalRotation > 180 * DEGTORAD) do
-            totalRotation = totalRotation - 360 * DEGTORAD
-        end
-
-
-        -- print(1/dt, divider, ((1/dt)*smarter) )
-        local desiredAngularVelocity = (totalRotation * divider)
-
-
-        if smarter then
-            local newer = ((1 / dt) * smarter)
-            desiredAngularVelocity = (totalRotation * math.min(divider, newer))
-        end
-        --local impulse = body:getInertia() * desiredAngularVelocity
-        -- body:applyAngularImpulse(impulse)
-
-        local torque = inertia * desiredAngularVelocity / (1 / divider)
-        -- print(divider, 1/divider)
-        if smarter then
-            local newer = ((1 / dt) * smarter)
-            torque = inertia * desiredAngularVelocity / (1 / math.min(divider, newer))
-        end
-        body:applyTorque(torque)
-    end
-end
-
-local function getRidOfBigRotationsInBody(body)
-    --local angle = body:getAngle()
-    --if angle > 0 then
-    --    body:setAngle(angle % (2 * math.pi))
-    --else
-    --    body:setAngle(angle % ( -2 * math.pi))
-    --end
-    local a = body:getAngle()
-    if false then
-        while a > (2 * math.pi) do
-            a = a - (2 * math.pi)
-            body:setAngle(a)
-        end
-        while a < -(2 * math.pi) do
-            a = a + (2 * math.pi)
-            body:setAngle(a)
-        end
-    end
-end
-
-
-
-lib.getUserDataAtBodyPart = function(bodyPart)
-    print(bodyPart)
-    print(bodyPart:getFixtures())
-    local fixtures = bodyPart:getFixtures()
-    for _, fixture in ipairs(fixtures) do
-        local userData = fixture:getUserData()
-        --   print(inspect(userData))
-    end
-end
-
-lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData)
-    --  print(bodyPart)
-    --  print(bodyPart:getFixtures())
-    local fixtures = bodyPart:getFixtures()
-    for _, fixture in ipairs(fixtures) do
-        local userData = fixture:getUserData()
-        --print(inspect(moreData), inspect(userData))
-        if userData.data then
-            --print('THIS WOULD OVERWRITE DATA THAT IS THERE ALREADY')
-            for k, v in pairs(moreData) do
-                --    print(k, v)
-                userData.data[k] = v
-            end
-        else
-            userData.data = moreData
-        end
-        fixture:setUserData(userData)
-        --print(inspect(userData))
-    end
-end
-
-
-local userDataIsSleeping = function(ud)
-    local result = false
-
-    if ud.data and ud.data.sleeping then result = true end
-    -- print('sleeping: ', result)
-    return result
-end
-
-lib.rotateAllBodies = function(bodies, dt)
-    -- I want to be able to rotate all bodies in one go.
-    -- This means I cannot fetch the guy with its creation here.
-    -- So that means the creation below , which is used for some stance-angles, this needs another solution.
-    -- probably data in userData on thos limbs...
-
-    -- for now i will just assume the same data for all.
-
-    local creation = dna.getCreation()
-    -- local upsideDown = false
-    lastDt = dt
-    for _, body in ipairs(bodies) do
-        local fixtures = body:getFixtures()
-
-
-        local isBeingPointerJointed = false
-        for j = 1, #pointerJoints do
-            local mj = pointerJoints[j]
-            if mj.jointBody == body then
-                isBeingPointerJointed = true
-            end
-        end
-        for _, fixture in ipairs(fixtures) do
-            if isBeingPointerJointed then
-                --     getRidOfBigRotationsInBody(body)
-            end
-            local userData = fixture:getUserData()
-            if (userData) then
-                -- print(userData.bodyType)
-                if userData.bodyType == 'keep-rotation' then
-                    --  print(inspect(userData))
-                    rotateToHorizontal(body, userData.data.rotation, 50)
-                end
-
-                if isBeingPointerJointed then
-                    if userData.bodyType == 'frame' then
-                        rotateToHorizontal(body, 0, 10, .5, dt)
-                    end
-                    --     getRidOfBigRotationsInBody(body)
-                end
-            end
-
-
-            if (jointsEnabled) and not isBeingPointerJointed then
-                --local userData = fixture:getUserData()
-
-
-
-                if userData then
-                    -- getRidOfBigRotationsInBody(body)
-                    -- print(userData.bodyType)
-                    if userData.bodyType == 'balloon' then
-                        --getRidOfBigRotationsInBody(body)
-                        --local desired = upsideDown and -math.pi or 0
-                        --rotateToHorizontal(body, desired, 50)
-                        local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
-
-                        body:applyForce(0, up)
-                    end
-
-                    if userData.bodyType == 'frame' then
-                        --getRidOfBigRotationsInBody(body)
-                        --local desired = upsideDown and -math.pi or 0
-                        --rotateToHorizontal(body, desired, 50)
-                        --local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
-
-                        --body:applyForce(0, up)
-                        --print(body:getAngle())
-                        --if body:getAngle()< -.5 or body:getAngle()> .5 then
-                        local ma = math.abs(body:getAngle())
-
-                        local rate = numbers.mapInto(ma, 0, math.pi * 2, 0.0001, 1)
-                        local rate2 = 60 / (1 / rate)
-
-                        --  local rate3 =  (rate2*100)/60
-                        -- print(ma, rate, rate2*100)
-
-                        --  rotateToHorizontal(body, 0, 10, .1, dt)
-                        --end
-                    end
-                    --print(userData.bodyType)
-                    --if not upsideDown then
-                    --    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
-                    --        getRidOfBigRotationsInBody(body)
-                    --    end
-                    --end
-
-
-                    if userData.bodyType == 'lear' then
-                        -- getRidOfBigRotationsInBody(body)
-                        -- rotateToHorizontal(body, math.pi / 2, 25)
-                    end
-                    if userData.bodyType == 'rear' then
-                        -- getRidOfBigRotationsInBody(body)
-                        -- rotateToHorizontal(body, -math.pi / 2, 25)
-                    end
-
-
-                    if userData.bodyType == 'hand' then
-                        -- getRidOfBigRotationsInBody(body)
-                    end
-                    if userData.bodyType == 'hand' then
-                        --   getRidOfBigRotationsInBody(body)
-                    end
-                    if userData.bodyType == 'torso' then
-                        getRidOfBigRotationsInBody(body)
-                        local desired = upsideDown and -math.pi or 0
-                        --print(25, dt)
-                        rotateToHorizontal(body, desired, 25, 0.5, dt)
-                    end
-
-                    if not upsideDown then
-                        if userData.bodyType == 'neck1' then
-                            getRidOfBigRotationsInBody(body)
-                            --  -- rotateToHorizontal(body, -math.pi, 40)
-                            --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15, 0.25, dt)
-                        end
-                        if userData.bodyType == 'neck' then
-                            getRidOfBigRotationsInBody(body)
-                            -- rotateToHorizontal(body, -math.pi, 40)
-                            --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15, 0.25, dt)
-                        end
-
-                        if userData.bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
-                            --rotateToHorizontal(body, -math.pi, 15)
-
-                            --  print(body:getAngle())
-                            rotateToHorizontal(body, 0, 15, 0.20, dt)
-                        end
-                    end
-
-                    if not upsideDown then
-                        if userData.bodyType == 'luleg' and not userDataIsSleeping(userData) then
-                            local a = creation.luleg.stanceAngle
-                            --  print(a)
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30, 0.5, dt)
-                        end
-                        if userData.bodyType == 'ruleg' and not userDataIsSleeping(userData) then
-                            local a = creation.ruleg.stanceAngle
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30, 0.5, dt)
-                        end
-                        if userData.bodyType == 'llleg' and not userDataIsSleeping(userData) then
-                            local a = creation.llleg.stanceAngle
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30, 0.5, dt)
-                        end
-                        if userData.bodyType == 'rlleg' and not userDataIsSleeping(userData) then
-                            local a = creation.rlleg.stanceAngle
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30, 0.5, dt)
-                        end
-                    end
-                    if upsideDown then
-                        if userData.bodyType == 'luarm' then
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30, 0.5, dt)
-                        end
-                        if userData.bodyType == 'llarm' then
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30, 0.5, dt)
-                        end
-                        if userData.bodyType == 'ruarm' then
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30, 0.5, dt)
-                        end
-                        if userData.bodyType == 'rlarm' then
-                            -- print('doing stuff!')
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30, 0.5, dt)
-                        end
-                        -- if userData.bodyType == 'legpart' then
-                        --getRidOfBigRotationsInBody(body)
-                        --rotateToHorizontal(body, math.pi, 10)
-                        -- end
-                    end
-
-                    if false then
-                        if userData.bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
-
-                            rotateToHorizontal(body, math.pi, 15, 0.20, dt)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-lib.genericBodyPartUpdate = function(guy, partName)
-    local groupId = guy.id
-    local box2dGuy = guy.b2d
-    local creation = guy.dna.creation
-    local facing = guy.facingVars
-    local data = getParentAndChildrenFromPartName(partName, guy)
-    local parentName = data.p
-    local recreateConnectorData = connect.getRecreateConnectorData(box2dGuy[partName]:getFixtures())
-    --  print(recreateConnectorData)
-    local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
-    local thisA = box2dGuy[partName]:getAngle()
-
-    if parentName then
-        local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
-
-        if jointWithParentToBreak then
-            local offsetX, offsetY = getOffsetFromParent(partName, guy)
-            local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
-            local prevA = box2dGuy[parentName]:getAngle()
-            for i = 1, #jointWithParentToBreak do
-                jointWithParentToBreak[i]:destroy()
-            end
-            box2dGuy[partName]:destroy()
-
-            local createData = creation[partName]
-            local body = love.physics.newBody(world, hx, hy, "dynamic")
-            local shape = phys.makeShapeFromCreationPart(createData)
-            local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-            local data = { creation = creation, partName = partName, facing = facing }
-            local xangle = getAngleOffset(partName, creation, data)
-            body:setAngle(prevA + xangle)
-
-
-
-            local joint = makeConnectingRevoluteJoint(data, body, box2dGuy[parentName])
-
-            box2dGuy[partName] = body
-            body:setAngle(thisA)
-        end
-    end
-
-    if not parentName or partName == 'torso' then
-        local aa = box2dGuy[partName]:getAngle()
-        local hx, hy = box2dGuy[partName]:getWorldPoint(0, 0)
-        box2dGuy[partName]:destroy()
-        local createData = creation[partName]
-        local body = love.physics.newBody(world, hx, hy, "dynamic")
-        local shape = phys.makeShapeFromCreationPart(createData)
-        local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-        box2dGuy[partName] = body
-        box2dGuy[partName]:setAngle(aa)
-    end
-
-    if (recreatePointerJoint) then
-        useRecreatePointerJoint(recreatePointerJoint, box2dGuy[partName])
-    end
-
-    if (recreateConnectorData) then
-        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName], guy)
-    end
-    -- reattach children
-
-
-    local function reAttachChild(childName)
-        local offsetX, offsetY = getOffsetFromParent(childName, guy)
-        local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-        box2dGuy[childName]:setPosition(nx, ny)
-        local aa = box2dGuy[childName]:getAngle()
-        local data = { creation = creation, partName = childName, facing = facing }
-        local xangle = getAngleOffset(childName, creation, data) -- what LEFT!
-
-        box2dGuy[childName]:setAngle(thisA + xangle)
-
-
-        local joint = makeConnectingRevoluteJoint(data, box2dGuy[childName],
-            box2dGuy[partName])
-        box2dGuy[childName]:setAngle(aa)
-    end
-
-
-    local childName = data.c
-    if childName and (type(childName) == 'string') then
-        reAttachChild(childName)
-    end
-    if childName and (type(childName) == 'table') then
-        for i = 1, #childName do
-            local skip = false
-            if creation.isPotatoHead and childName[i] == 'neck' then
-                skip = true
-            end
-            if not creation.hasPhysicsHair and string.match(childName[i], 'hair') then
-                skip = true
-            end
-
-            if not skip then
-                reAttachChild(childName[i])
-            end
-        end
-    end
-end
-
-lib.handlePhysicsHairOrNo = function(box2dGuy, guy, hair)
-    local creation = guy.dna.creation
-    -- local groupId = guy.id
-    -- we need to find out if we can leave early..
-    if hair and box2dGuy.hair1 then return end
-    if not hair and not box2dGuy.hair1 then return end
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-    if not hair then
-        box2dGuy.hair1:destroy()
-        box2dGuy.hair2:destroy()
-        box2dGuy.hair3:destroy()
-        box2dGuy.hair4:destroy()
-        box2dGuy.hair5:destroy()
-        box2dGuy.hair1 = nil
-        box2dGuy.hair2 = nil
-        box2dGuy.hair3 = nil
-        box2dGuy.hair4 = nil
-        box2dGuy.hair5 = nil
-    else
-        local attachTo = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
-        local hair1 = makePart('hair1', attachTo)
-        local hair2 = makePart('hair2', attachTo)
-        local hair3 = makePart('hair3', attachTo)
-        local hair4 = makePart('hair4', attachTo)
-        local hair5 = makePart('hair5', attachTo)
-        box2dGuy.hair1 = hair1
-        box2dGuy.hair2 = hair2
-        box2dGuy.hair3 = hair3
-        box2dGuy.hair4 = hair4
-        box2dGuy.hair5 = hair5
-    end
-end
-
-lib.handleNeckAndHeadForHasNeck = function(box2dGuy, guy, willHaveNeck)
-    local groupId = guy.id
-    --if not willHaveNeck and box2dGuy.neck == nil
-    --if creation.isPotatoHead then return end
-    --print(box2dGuy.isPotatoHead)
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-    if not willHaveNeck then
-        if (box2dGuy.neck) then
-            box2dGuy.neck:destroy()
-        end
-        if (box2dGuy.neck1) then
-            box2dGuy.neck1:destroy()
-        end
-        if (box2dGuy.head) then
-            box2dGuy.head:destroy()
-        end
-        box2dGuy.neck = nil
-        box2dGuy.neck1 = nil
-        local torso = box2dGuy.torso
-        local head = makePart('head', torso)
-        box2dGuy.head = head
-    else
-        -- if not  box2dGuy.isPotatoHead then
-        if box2dGuy.head then
-            box2dGuy.head:destroy()
-        end
-        local torso = box2dGuy.torso
-        local neck = makePart('neck', torso)
-        local neck1 = makePart('neck1', neck)
-        local head = makePart('head', neck1)
-        box2dGuy.neck = neck
-        box2dGuy.neck1 = neck1
-        box2dGuy.head = head
-        -- end
-    end
-end
-
-lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
-    local groupId = guy.id
-    if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
-        return
-    end
-
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-    if willBePotato then
-        if (box2dGuy.neck) then
-            box2dGuy.neck:destroy()
-        end
-        if (box2dGuy.neck1) then
-            box2dGuy.neck1:destroy()
-        end
-        box2dGuy.head:destroy()
-        box2dGuy.lear:destroy()
-        box2dGuy.rear:destroy()
-        box2dGuy.lear = nil
-        box2dGuy.rear = nil
-        box2dGuy.neck = nil
-        box2dGuy.neck1 = nil
-        box2dGuy.head = nil
-
-        local torso = box2dGuy.torso
-        local lear = makePart('lear', torso)
-        local rear = makePart('rear', torso)
-        box2dGuy.lear = lear
-        box2dGuy.rear = rear
-    else
-        -- destroy ears from torso
-        box2dGuy.lear:destroy()
-        box2dGuy.rear:destroy()
-
-        local torso = box2dGuy.torso
-        local neck
-        local neck1
-
-        if hasNeck then
-            neck = makePart('neck', torso)
-            neck1 = makePart('neck1', neck)
-        end
-
-        local head = makePart('head', hasNeck and neck1 or torso)
-        local lear = makePart('lear', head)
-        local rear = makePart('rear', head)
-
-        box2dGuy.lear = lear
-        box2dGuy.rear = rear
-        box2dGuy.neck = neck
-        box2dGuy.neck1 = neck1
-        box2dGuy.head = head
-    end
-end
-
-lib.toggleAllJointLimits = function(guy, value)
-    local creation = guy.dna.creation
-    local b2d = guy.b2d
-    if not creation.isPotatoHead and creation.hasNeck then
-        lib.setJointLimitBetweenBodies(b2d.head, b2d.neck1, value, 'revolute')
-        lib.setJointLimitBetweenBodies(b2d.neck1, b2d.neck, value, 'revolute')
-        lib.setJointLimitBetweenBodies(b2d.neck, b2d.torso, value, 'revolute')
-    end
-    lib.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, value, 'revolute')
-    lib.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, value, 'revolute')
-    lib.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, value, 'revolute')
-    lib.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, value, 'revolute')
-end
-
-lib.isNullObject = function(partName, values)
-    local p = findPart(partName)
-    local url = p.imgs[values[partName].shape]
-    return url == 'assets/parts/null.png'
-end
-
-
-lib.changeMetaPoints = function(key, guy, value, data)
-    local creation = guy.dna.creation
-    creation[key].metaPoints = value
-
-    local tlx, tly, brx, bry = bbox.getPointsBBox(value)
-    local bbw = (brx - tlx)
-    local bbh = (bry - tly)
-
-    creation[key].metaPointsW = bbw
-    creation[key].metaPointsH = bbh
-
-    if key == 'head' then
-        creation[key].metaOffsetX = value[1][1]
-        creation[key].metaOffsetY = value[1][2]
-    end
-    if key == 'torso' then
-        creation[key].metaOffsetX = 0
-        creation[key].metaOffsetY = 0
-    end
-end
-
-lib.changeMetaTexture = function(key, guy, data)
-    local creation                   = guy.dna.creation
-    local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
-    local bbw                        = (brx - tlx)
-    local bbh                        = (bry - tly)
-
-    creation[key].metaURL            = data.url
-    creation[key].metaTexturePoints  = data.texturePoints
-    creation[key].metaTexturePointsW = bbw
-    creation[key].metaTexturePointsH = bbh
-    creation[key].metaPivotX         = data.pivotX
-    creation[key].metaPivotY         = data.pivotY
-end
-
-lib.getFlippedMetaObject = function(flipx, flipy, points)
-    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-    local mx = tlx + (brx - tlx) / 2
-    local my = tly + (bry - tly) / 2
-    local newPoints = {}
-
-    for i = 1, #points do
-        local newY = points[i][2]
-        if flipy == -1 then
-            local dy = my - points[i][2]
-            newY = my + dy
-        end
-        local newX = points[i][1]
-        if flipx == -1 then
-            local dx = mx - points[i][1]
-            newX = mx + dx
-        end
-        newPoints[i] = { newX, newY }
-    end
-    local temp = copy3(newPoints)
-    if flipy == -1 and flipx == 1 then
-        newPoints[1] = temp[5]
-        newPoints[2] = temp[4]
-        newPoints[3] = temp[3]
-        newPoints[4] = temp[2]
-        newPoints[5] = temp[1]
-        newPoints[6] = temp[8]
-        newPoints[7] = temp[7]
-        newPoints[8] = temp[6]
-    end
-    if flipx == -1 and flipy == 1 then
-        newPoints[1] = temp[1]
-        newPoints[2] = temp[8]
-        newPoints[3] = temp[7]
-        newPoints[4] = temp[6]
-        newPoints[5] = temp[5]
-        newPoints[6] = temp[4]
-        newPoints[7] = temp[3]
-        newPoints[8] = temp[2]
-    end
-    if flipx == -1 and flipy == -1 then
-        newPoints[1] = temp[5]
-        newPoints[2] = temp[6]
-        newPoints[3] = temp[7]
-        newPoints[4] = temp[8]
-        newPoints[5] = temp[1]
-        newPoints[6] = temp[2]
-        newPoints[7] = temp[3]
-        newPoints[8] = temp[4]
-    end
-    return newPoints
-end
-
-
-
-
-return lib
 
 ```
 
@@ -3159,6 +1607,102 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 
+--todo, the data here below sis correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
+-- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
+
+local shape8Dict = {
+    ['shapeA1.png'] = {
+        v = {
+            1.61, -272.46, 112.13, -133.04, 154.81, 76.67, 123.57, 229.44, 1.21, 273.51, -134.54, 225.43, -145.28, 73.64, -91.99, -132.77
+        }
+    },
+    ['shapeA2.png'] = {
+        v = {
+            11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
+
+        }
+    }
+}
+local dna = {
+    ['humanoid'] = {
+        creation = {
+            isPotatoHead = false,
+            neckSegments = 0,
+            torsoSegments = 1
+        },
+        parts = {
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = .5, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+
+            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
+            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 150 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = -5 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['luleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['ruleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
+            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
+            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
+            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
+        },
+    }
+}
+local function makeTransformedVertices(vertices, scaleX, scaleY)
+    -- Initialize result array
+    local transformedVertices = {}
+    -- Loop through input vertices (stepping by 2)
+    for i = 1, #vertices, 2 do
+        -- Get original x, y
+        local x = vertices[i]
+        local y = vertices[i + 1]
+        -- Calculate transformed x, y (scaling handles flipping)
+        local newX = x * scaleX
+        local newY = y * scaleY
+        -- Add transformed pair to result array
+        table.insert(transformedVertices, newX)
+        table.insert(transformedVertices, newY)
+    end
+    -- Return the new array
+    return transformedVertices
+end
+
+local function getTransformedIndex(index, flipX, flipY)
+    if flipY == -1 and flipX == 1 then
+        local values = { 5, 4, 3, 2, 1, 8, 7, 6 }
+        return values[index]
+    end
+    if flipX == -1 and flipY == 1 then
+        local values = { 1, 8, 7, 6, 5, 4, 3, 2 }
+        return values[index]
+    end
+    if flipX == -1 and flipY == -1 then
+        local values = { 5, 6, 7, 8, 1, 2, 3, 4 }
+        return values[index]
+    end
+    if flipX == 1 and flipY == 1 then
+        local values = { 1, 2, 3, 4, 5, 6, 7, 8 }
+        return values[index]
+    end
+    -- print(index, flipX, flipY)
+    -- logger:warn('why are we getting here?')
+end
+
+local function clamp(x, min, max)
+    return x < min and min or (x > max and max or x)
+end
+
+local function lerp(a, b, amount)
+    return a + (b - a) * clamp(amount, 0, 1)
+end
+
 local function extractNeckIndex(name)
     local index = string.match(name, "^neck(%d+)$")
     return index and tonumber(index) or nil
@@ -3281,58 +1825,98 @@ local function getParentAndChildrenFromPartName(partName, guy)
     return result or {} -- Return empty table if partName not found
 end
 
+local function sign(value)
+    if value < 0 or value == nil then return -1 else return 1 end
+end
+
 local function getOwnOffset(partName, guy)
-    local creation = guy.dna.parts
+    local parts = guy.dna.parts
+
+
+    -- upward
     if extractNeckIndex(partName) then
-        return 0, -creation[partName].dims.h / 2
+        return 0, -parts[partName].dims.h / 2
     end
     if extractTorsoIndex(partName) then
-        return 0, -creation[partName].dims.h / 2
+        if parts[partName].shape == 'shape8' then
+            -- local vertices = shape8Dict[parts[partName].shape8URL].v
+
+            local raw = shape8Dict[parts[partName].shape8URL].v
+            local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
+
+            local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+            local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+
+            return -vertices[(bottomIndex * 2) - 1], vertices[(topIndex * 2)]
+        else
+            return 0, -parts[partName].dims.h / 2
+        end
     end
     if partName == 'head' then
-        return 0, -creation.head.dims.h / 2
+        -- return 0, -parts.head.dims.h / 2
+        if parts[partName].shape == 'shape8' then
+            --local vertices = shape8Dict[parts[partName].shape8URL].v
+
+
+            local raw = shape8Dict[parts[partName].shape8URL].v
+            local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
+
+            --local topIndex = 1
+            --local bottomIndex = 5
+            local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+            local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
+
+
+            --return vertices[(index * 2) - 1], vertices[(index * 2)]
+            return -vertices[(bottomIndex * 2) - 1], vertices[(topIndex * 2)]
+        else
+            return 0, -parts[partName].dims.h / 2
+        end
     end
     if partName == 'lear' then
-        return 0, -creation.lear.dims.h / 2
+        return 0, -parts.lear.dims.h / 2
     end
     if partName == 'rear' then
-        return 0, -creation.rear.dims.h / 2
+        return 0, -parts.rear.dims.h / 2
     end
+
+
+    -- downward
     if partName == 'luleg' then
-        return 0, creation.luleg.dims.h / 2
+        return 0, parts.luleg.dims.h / 2
     end
     if partName == 'ruleg' then
-        return 0, creation.ruleg.dims.h / 2
+        return 0, parts.ruleg.dims.h / 2
     end
     if partName == 'llleg' then
-        return 0, creation.llleg.dims.h / 2
+        return 0, parts.llleg.dims.h / 2
     end
     if partName == 'lfoot' then
-        return 0, creation.lfoot.dims.h / 2
+        return 0, parts.lfoot.dims.h / 2
     end
     if partName == 'rlleg' then
-        return 0, creation.rlleg.dims.h / 2
+        return 0, parts.rlleg.dims.h / 2
     end
     if partName == 'rfoot' then
-        return 0, creation.rfoot.dims.h / 2
+        return 0, parts.rfoot.dims.h / 2
     end
     if partName == 'luarm' then
-        return 0, creation.luarm.dims.h / 2
+        return 0, parts.luarm.dims.h / 2
     end
     if partName == 'ruarm' then
-        return 0, creation.ruarm.dims.h / 2
+        return 0, parts.ruarm.dims.h / 2
     end
     if partName == 'rhand' then
-        return 0, creation.rhand.dims.h / 2
+        return 0, parts.rhand.dims.h / 2
     end
     if partName == 'llarm' then
-        return 0, creation.llarm.dims.h / 2
+        return 0, parts.llarm.dims.h / 2
     end
     if partName == 'rlarm' then
-        return 0, creation.rlarm.dims.h / 2
+        return 0, parts.rlarm.dims.h / 2
     end
     if partName == 'lhand' then
-        return 0, creation.lhand.dims.h / 2
+        return 0, parts.lhand.dims.h / 2
     end
     return 0, 0
 end
@@ -3349,10 +1933,50 @@ local function getOffsetFromParent(partName, guy)
     local lowestTorso   = 'torso1'
 
 
+
+    local function getTorsoPart8(index)
+        --local vertices = shape8Dict[parts[highestTorso].shape8URL].v
+
+        local raw = shape8Dict[parts[highestTorso].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts[highestTorso].dims.sx or 1, parts[highestTorso].dims.sy or 1)
+
+        local newIndex = getTransformedIndex(index, sign(parts[highestTorso].dims.sx), sign(parts[highestTorso].dims.sy))
+
+        return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
+    end
+
+    local function hasTorso8()
+        if parts[highestTorso].shape == 'shape8' then
+            return true
+        end
+        return false
+    end
+
+    local function hasHead8()
+        if parts['head'].shape == 'shape8' then
+            return true
+        end
+        return false
+    end
+
+    local function getHeadPart8(index)
+        local raw = shape8Dict[parts['head'].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts['head'].dims.sx or 1, parts['head'].dims.sy or 1)
+
+        local newIndex = getTransformedIndex(index, sign(parts['head'].dims.sx), sign(parts['head'].dims.sy))
+
+        -- local vertices = shape8Dict[parts['head'].shape8URL].v
+        return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
+    end
+
     if extractNeckIndex(partName) then
         local index = extractNeckIndex(partName)
         if index == 1 then
-            return 0, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                return getTorsoPart8(1)
+            else
+                return 0, -parts[highestTorso].dims.h / 2
+            end
         else
             return 0, -parts['neck' .. (index - 1)].dims.h / 2
         end
@@ -3361,7 +1985,17 @@ local function getOffsetFromParent(partName, guy)
         if index == 1 then
             return 0, 0
         else
-            return 0, -parts['torso' .. (index - 1)].dims.h / 2
+            if hasTorso8() then
+                --print('getting here')
+
+                return getTorsoPart8(1)
+            else
+                -- return 0, -parts[highestTorso].dims.h / 2
+                return 0, -parts['torso' .. (index - 1)].dims.h / 2
+            end
+
+
+            --return 0, -parts['torso' .. (index - 1)].dims.h / 2
         end
     elseif partName == 'llarm' then
         return 0, parts.luarm.dims.h / 2
@@ -3380,107 +2014,97 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'lhand' then
         return 0, parts.llarm.dims.h / 2
     elseif partName == 'luarm' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(7, guy)
-        --     end
-        -- else
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(8, guy)
-        --     end
-        -- end
-        return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        if hasTorso8() then
+            if creation.isPotatoHead then
+                return getTorsoPart8(7)
+            else
+                return getTorsoPart8(8)
+            end
+        else
+            return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        end
     elseif partName == 'ruarm' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(3, guy)
-        --     end
-        -- else
-        --     if creation.torso.metaPoints then
-        --         return getScaledTorsoMetaPoint(2, guy)
-        --     end
-        -- end
-        return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        if hasTorso8() then
+            if creation.isPotatoHead then
+                return getTorsoPart8(3)
+            else
+                return getTorsoPart8(2)
+            end
+        else
+            return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        end
     elseif partName == 'luleg' then
         local t = 0.5 --positioners.leg.x
-        -- if creation.torso.metaPoints then
-        --     local ax, ay = getScaledTorsoMetaPoint(6, guy)
-        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
-        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-        --     return rx, ry
-        -- end
-        return (-parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+        if hasTorso8() then
+            local ax, ay = getTorsoPart8(6)
+            local bx, by = getTorsoPart8(5)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry
+        else
+            return (-parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+        end
     elseif partName == 'ruleg' then
         local t = 0.5 -- positioners.leg.x
-        -- if creation.torso.metaPoints then
-        --     local ax, ay = getScaledTorsoMetaPoint(4, guy)
-        --     local bx, by = getScaledTorsoMetaPoint(5, guy)
-        --     local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-        --     return rx, ry
-        -- end
-        return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
-    elseif partName == 'lear' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledTorsoMetaPoint(8, guy)
-        --         local bx, by = getScaledTorsoMetaPoint(7, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-        --         return rx, ry
-        --     end
-        -- else
-        --     if creation.head.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledHeadMetaPoint(8, guy)
-        --         local bx, by = getScaledHeadMetaPoint(6, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- end
-        if creation.isPotatoHead then
-            return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+        if hasTorso8() then
+            local ax, ay = getTorsoPart8(4)
+            local bx, by = getTorsoPart8(5)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry
         else
-            return -parts.head.dims.w / 2, -parts.head.dims.h / 2
+            return (parts[lowestTorso].dims.w / 2) * (1 - t), parts[lowestTorso].dims.h / 2
+        end
+    elseif partName == 'lear' then
+        if creation.isPotatoHead then
+            if hasTorso8() then
+                local t = 0.5
+                local ax, ay = getTorsoPart8(8)
+                local bx, by = getTorsoPart8(7)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            end
+        else
+            if hasHead8() then
+                local t = 0.5
+                local ax, ay = getHeadPart8(7)
+                local bx, by = getHeadPart8(8)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return -parts.head.dims.w / 2, -parts.head.dims.h / 2
+            end
         end
     elseif partName == 'rear' then
-        -- if creation.isPotatoHead then
-        --     if creation.torso.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledTorsoMetaPoint(2, guy)
-        --         local bx, by = getScaledTorsoMetaPoint(3, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- else
-        --     if creation.head.metaPoints then
-        --         local t = positioners.ear.y
-        --         local ax, ay = getScaledHeadMetaPoint(2, guy)
-        --         local bx, by = getScaledHeadMetaPoint(4, guy)
-        --         local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-
-        --         return rx, ry
-        --     end
-        -- end
         if creation.isPotatoHead then
-            return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                local t = 0.5
+                local ax, ay = getTorsoPart8(2)
+                local bx, by = getTorsoPart8(3)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
+            end
         else
-            return parts.head.dims.w / 2, -parts.head.dims.h / 2
+            if hasHead8() then
+                local t = 0.5
+                local ax, ay = getHeadPart8(2)
+                local bx, by = getHeadPart8(3)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                return rx, ry
+            else
+                return parts.head.dims.w / 2, -parts.head.dims.h / 2
+            end
         end
     elseif (partName == 'head') then
-        --  then
-        --     return 0, -creation.neck1.dims.h / 2
-        -- else
-        --     return 0, -creation.torso.dims.h / 2
-
-
-
-
-
         if creation.neckSegments == 0 then
-            return 0, -parts[highestTorso].dims.h / 2
+            if hasTorso8() then
+                return getTorsoPart8(1)
+            else
+                return 0, -parts[highestTorso].dims.h / 2
+            end
         else
             local last = 'neck' .. creation.neckSegments
             return 0, -parts[last].dims.h / 2
@@ -3506,35 +2130,6 @@ local function getAngleOffset(partName, guy)
 end
 
 
-local dna = {
-    ['humanoid'] = {
-        creation = {
-            isPotatoHead = false,
-            neckSegments = 6,
-            torsoSegments = 4
-        },
-        parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 30 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
-            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
-            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 50 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
-            ['luleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['ruleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
-            ['llleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
-            ['rlleg'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
-            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
-            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
-            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
-        },
-    }
-}
 
 
 local function makePart(partName, instance, settings)
@@ -3556,28 +2151,31 @@ local function makePart(partName, instance, settings)
     local offX, offY = getOffsetFromParent(partName, instance)
     settings.x = settings.x + offX
     settings.y = settings.y + offY
+    --logger:info(offX, offY)
     local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
     local xangle = getAngleOffset(partName, instance)
     local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
 
     settings.x = settings.x + rx
     settings.y = settings.y + ry
+
     local thing = ObjectManager.addThing(settings.shapeType, settings)
 
     if thing then
         thing.body:setAngle(prevA + xangle)
         if extractNeckIndex(partName) then
-            thing.body:setAngularDamping(1)
-            thing.body:setLinearDamping(1)
+            thing.body:setAngularDamping(.1)
+            thing.body:setLinearDamping(.1)
         end
         if extractTorsoIndex(partName) then
-            thing.body:setAngularDamping(1)
-            thing.body:setLinearDamping(1)
+            thing.body:setAngularDamping(.1)
+            thing.body:setLinearDamping(.1)
             local f = thing.body:getFixtures()
             for i = 1, #f do
                 f[i]:setDensity(1)
             end
         end
+        --  logger:info('setting', partName)
         instance.parts[partName] = thing
     end
 
@@ -3644,7 +2242,7 @@ lib.createCharacter = function(template, x, y)
                 -- Optional: Modify dimensions/properties of specific segments here if needed
                 -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
                 instance.dna.parts[partName].dims.w = i * 100
-
+                --logger:inspect(instance.dna.parts[partName])
                 --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
             end
         end
@@ -3673,12 +2271,13 @@ lib.createCharacter = function(template, x, y)
         for i = 1, #ordered do
             local partName = ordered[i]
             local partData = instance.dna.parts[partName]
-
+            --logger:info(partName, partData.shapeName)
             local settings = {
                 x = x,
                 y = y,
                 bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
                 shapeType = partData.shape, -- Use shape defined in template
+                shape8URL = partData.shape8URL,
                 label = 'straight',         --partName,           -- Use part name as initial label
                 density = partData.density or 1,
                 radius = partData.dims.r,
@@ -3689,8 +2288,18 @@ lib.createCharacter = function(template, x, y)
                 height2 = partData.dims.h,
                 height3 = partData.dims.h,
                 height4 = partData.dims.h,
+
                 -- Add other physics properties if needed (friction, restitution?)
             }
+            if partName == 'lfoot' or partName == 'rfoot' or partName == 'lear' or partName == 'rear' then
+                settings.label = ''
+            end
+            if (partData.shape8URL) then
+                if (shape8Dict[partData.shape8URL]) then
+                    local raw = shape8Dict[partData.shape8URL].v
+                    settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+                end
+            end
             --logger:info('getting offset for ', partName)
 
 
@@ -3699,6 +2308,7 @@ lib.createCharacter = function(template, x, y)
         end
     end
 end
+
 
 return lib
 
@@ -7392,7 +6002,7 @@ local function createThing(shapeType, conf)
         height3 = conf.height3,
         height4 = conf.height4,
         optionalVertices = conf.vertices or nil, --optionalVertices
-
+        --shape8URL = conf.shape8URL
 
     }
     local shapeList, vertices = shapes.createShape(shapeType, settings)
@@ -11092,6 +9702,9 @@ end
 --     return triangles
 -- end
 
+
+
+
 function shapes.createShape(shapeType, settings)
     if (settings.radius == 0) then settings.radius = 1 end
     if (settings.width == 0) then settings.width = 1 end
@@ -11123,6 +9736,12 @@ function shapes.createShape(shapeType, settings)
     elseif shapeType == 'itriangle' then
         vertices = makeITriangle(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
+    elseif shapeType == 'shape8' then
+        --local v = makeTransformedVertices(settings.optionalVertices)
+        vertices = settings.optionalVertices
+
+        shapesList = makeShapeListFromPolygon(vertices) or {}
+        -- logger:info('lets start to make a thingie', inspect(settings))
     else
         local sides = ({
             triangle = 3,
@@ -11591,7 +10210,7 @@ state.world = {
     debugDrawMode = true,
     debugAlpha = 1,
     profiling = false,
-    meter = 100,
+    meter = 500,
     isRecordingPointers = false,
     paused = true,
     gravity = 9.80,
