@@ -136,7 +136,7 @@ ui._scrollers = {}
 
 function ui.scrollableList(id, x, y, w, h, drawFunc)
     local scrollY = ui._scrollers[id] or { value = 0 }
-    ui.panel(x, y, w, h, id .. 'panel', function()
+    ui.panel(x, y, w + 20, h, '', function()
         local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, drawFunc) --  drawFunc(x, y, w, h, -scrollY.value)
         --  print(contentHeight)
 
@@ -164,9 +164,9 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
         local contentHeight = maxContentY
         scrollY.value = math.max(0, scrollY.value - ui.mouseWheelDy * 20)
         scrollY.value = math.min(scrollY.value, contentHeight - h)
-        --print(scrollY.value)
         ui.mouseWheelDy = 0
     end
+    scrollY.value = math.max(0, math.min(scrollY.value, maxContentY - h))
     love.graphics.setScissor()
     return maxContentY
     -- -- love.graphics.pop()
