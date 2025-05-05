@@ -8,8 +8,7 @@ local mathutils = require 'src.math-utils'
 
 -- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
--- todo verts unlocked on torso8 should make them also movable cause why not.
---
+
 local shape8Dict = {
     ['shapeA1.png'] = {
         v = {

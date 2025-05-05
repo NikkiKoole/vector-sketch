@@ -1931,15 +1931,17 @@ function lib.drawUpdateSelectedObjectUI()
                     else
                         -- No UI controls for custom or unsupported shapes
                         --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
-                        if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
-                            state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
-                            if state.polyEdit.lockedVerts == false then
-                                state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
-                                local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                                state.polyEdit.centroid = { x = cx, y = cy }
-                            else
-                                state.polyEdit.tempVerts = nil
-                                state.polyEdit.centroid = nil
+                        if state.selection.selectedObj.shapeType == 'custom' then
+                            if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                                state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
+                                if state.polyEdit.lockedVerts == false then
+                                    state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
+                                    local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
+                                    state.polyEdit.centroid = { x = cx, y = cy }
+                                else
+                                    state.polyEdit.tempVerts = nil
+                                    state.polyEdit.centroid = nil
+                                end
                             end
                         end
                     end

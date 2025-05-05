@@ -81,6 +81,7 @@ function lib.renderActiveEditorThings()
         end
     end
 
+
     -- draw mousehandlers for dragging vertices
     if state.polyEdit.tempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.polyEdit.lockedVerts == false then
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
