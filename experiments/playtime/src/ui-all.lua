@@ -72,6 +72,9 @@ function ui.init(font, fontHeight)
     ui.textInputs = {}
     ui.fontHeight = fontHeight
     ui.font = font or love.graphics.getFont()
+    ui.mouseWheelDy = 0
+    ui.mouseWheelDx = 0
+    ui.overPanel = false
 end
 
 --- Resets UI state at the start of each frame.
@@ -91,6 +94,8 @@ function ui.startFrame()
     ui.mouseIsDown = down
 
     ui.mouseX, ui.mouseY = love.mouse.getPosition()
+    --  print('setting to false')
+    ui.overPanel = false
 end
 
 function ui.generateID()
@@ -124,6 +129,73 @@ function ui.nextLayoutPosition(layout, elementWidth, elementHeight)
     end
 
     return x, y
+end
+
+ui._scrollers = ui._scrollers or {}
+
+function ui.getScroller(id)
+    ui._scrollers[id] = ui._scrollers[id] or { value = 0 }
+    return ui._scrollers[id]
+end
+
+function ui.drawScrollablePanel(opts)
+    local id      = opts.id
+    local x, y    = opts.x, opts.y
+    local w, h    = opts.width, opts.height
+
+    local render  = opts.render
+    local scrollY = ui.getScroller(id)
+    -- print(scrollY.value)
+    ui.panel(x, y, w, h, id, function()
+        local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, function(offsetY)
+            return render(x, y, w, h, offsetY)
+        end)
+
+        if contentHeight > h then
+            local result = ui.slider(
+                x + w, y, h, 20, 'vertical',
+                contentHeight - h, 0,
+                scrollY.value,
+                id .. 'scrollbutton'
+            )
+            if result then
+                scrollY.value = result
+            end
+        end
+    end)
+    ui._scrollers[id] = scrollY
+    -- return scrollY
+end
+
+function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + w and
+        ui.mouseY >= y and ui.mouseY <= y + h
+
+
+
+
+    love.graphics.setScissor(x, y, w, h)
+    -- love.graphics.push()
+    -- love.graphics.translate(0, -scrollY.value)
+
+    --drawFunc(-scrollY.value) -- all UI inside
+    local maxContentY = drawFunc(-scrollY.value)
+    --print(maxContentY)
+    --if maxContentY then
+    -- scrollY.value = math.min(scrollY.value, contentHeight - h)
+    --end
+
+
+    if isHover and maxContentY > h and ui.mouseWheelDy ~= 0 then
+        local contentHeight = maxContentY
+        scrollY.value = math.max(0, scrollY.value - ui.mouseWheelDy * 20)
+        scrollY.value = math.min(scrollY.value, contentHeight - h)
+        --print(scrollY.value)
+        ui.mouseWheelDy = 0
+    end
+    love.graphics.setScissor()
+    return maxContentY
+    -- -- love.graphics.pop()
 end
 
 --- Creates a horizontal slider with a numeric input field.
@@ -162,7 +234,11 @@ end
 function ui.panel(x, y, width, height, label, drawFunc)
     -- Draw panel background
     --
-    --
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
+        ui.mouseY >= y and ui.mouseY <= y + height
+    if isHover then
+        ui.overPanel = true
+    end
     local rxry = 0
     if theme.button.radius > 0 then
         rxry = math.min(width / 6, height / 6) / theme.button.radius
@@ -184,7 +260,7 @@ function ui.panel(x, y, width, height, label, drawFunc)
 
     -- Enable scissor to clip UI elements within the panel
     if width > 0 and height > 0 then
-        love.graphics.setScissor(x, y, width, height)
+        --  love.graphics.setScissor(x, y, width, height)
     end
     -- Call the provided draw function to render UI elements inside the panel
     if drawFunc then
@@ -192,7 +268,7 @@ function ui.panel(x, y, width, height, label, drawFunc)
     end
 
     -- Disable scissor
-    love.graphics.setScissor()
+    -- love.graphics.setScissor()
 
     -- Reset color to white
     love.graphics.setColor(1, 1, 1)
@@ -374,6 +450,7 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
 
     if pressed then
         ui.activeElementID = id
+        print("Button pressed" .. id)
     end
     -- Draw the button with state-based colors
     if ui.activeElementID == id then

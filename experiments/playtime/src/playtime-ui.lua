@@ -1704,10 +1704,14 @@ function lib.drawUpdateSelectedObjectUI()
 
             nextRow()
 
+            -- here we add the BEHAVIORS, it should open another panel alltogether.
+
+
+
 
             nextRow()
             if false then
-                drawAccordion("tags", function(clicked)
+                drawAccordion("behaviors", function(clicked)
                     local w = love.graphics.getFont():getWidth('straight') + 20
                     -- ui.button(x, y, w, 'straight')
                     ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
@@ -2201,6 +2205,61 @@ function lib.drawUI()
             script.call('onStart') --state.scene.sceneScript.onStart()
         end
     end
+
+
+
+    function UIisVisible(y, h, scrollY, viewY, viewH)
+        local localY = y - scrollY
+        return localY + h >= viewY and localY <= viewY + viewH
+    end
+
+    ui.drawScrollablePanel({
+        id = 'testscroll',
+        x = 100,
+        y = 100,
+        width = PANEL_WIDTH,
+        height = 200,
+        render = function(baseX, baseY, w, h, offsetY)
+            local maxY = 0
+            local lineHeight = 40
+            for i = 1, 60 do
+                local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                if elementY + lineHeight < baseY then
+                elseif elementY > baseY + h then
+                else
+                    ui.button(baseX, elementY, 100, 'test1' .. i)
+                end
+                maxY = maxY + lineHeight
+            end
+            return maxY -- this becomes contentHeight
+        end
+    })
+
+
+    ui.drawScrollablePanel({
+        id = 'testscroll2',
+        x = 400,
+        y = 400,
+        width = PANEL_WIDTH,
+        height = 200,
+        render = function(baseX, baseY, w, h, offsetY)
+            local maxY = 0
+            local lineHeight = 40
+            for i = 1, 18 do
+                local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                if elementY + lineHeight < baseY then
+                elseif elementY > baseY + h then
+                else
+                    ui.button(baseX, elementY, 100, 'test1' .. i)
+                end
+                maxY = maxY + lineHeight
+            end
+            return maxY -- this becomes contentHeight
+        end
+    })
+
+
+
 
     if state.currentMode == 'drawClickMode' then
         local panelWidth = PANEL_WIDTH
