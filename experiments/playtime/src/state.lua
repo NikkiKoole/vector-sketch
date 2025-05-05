@@ -62,7 +62,7 @@ state.texFixtureEdit = {
     verts = {}
 }
 
-
+--state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
 state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'
 state.jointParams = nil

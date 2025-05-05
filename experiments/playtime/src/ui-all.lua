@@ -131,60 +131,34 @@ function ui.nextLayoutPosition(layout, elementWidth, elementHeight)
     return x, y
 end
 
-ui._scrollers = ui._scrollers or {}
+ui._scrollers = {}
 
-function ui.getScroller(id)
-    ui._scrollers[id] = ui._scrollers[id] or { value = 0 }
-    return ui._scrollers[id]
-end
 
-function ui.drawScrollablePanel(opts)
-    local id      = opts.id
-    local x, y    = opts.x, opts.y
-    local w, h    = opts.width, opts.height
-
-    local render  = opts.render
-    local scrollY = ui.getScroller(id)
-    -- print(scrollY.value)
-    ui.panel(x, y, w, h, id, function()
-        local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, function(offsetY)
-            return render(x, y, w, h, offsetY)
-        end)
+function ui.scrollableList(id, x, y, w, h, drawFunc)
+    local scrollY = ui._scrollers[id] or { value = 0 }
+    ui.panel(x, y, w, h, id .. 'panel', function()
+        local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, drawFunc) --  drawFunc(x, y, w, h, -scrollY.value)
+        --  print(contentHeight)
 
         if contentHeight > h then
-            local result = ui.slider(
-                x + w, y, h, 20, 'vertical',
-                contentHeight - h, 0,
-                scrollY.value,
-                id .. 'scrollbutton'
-            )
+            local result = ui.slider(x + w, y, h, 20, 'vertical', (contentHeight) - h, 0, scrollY
+                .value,
+                id)
             if result then
                 scrollY.value = result
             end
+            ui._scrollers[id] = scrollY
         end
     end)
-    ui._scrollers[id] = scrollY
-    -- return scrollY
 end
 
 function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
     local isHover = ui.mouseX >= x and ui.mouseX <= x + w and
         ui.mouseY >= y and ui.mouseY <= y + h
 
-
-
-
     love.graphics.setScissor(x, y, w, h)
-    -- love.graphics.push()
-    -- love.graphics.translate(0, -scrollY.value)
 
-    --drawFunc(-scrollY.value) -- all UI inside
-    local maxContentY = drawFunc(-scrollY.value)
-    --print(maxContentY)
-    --if maxContentY then
-    -- scrollY.value = math.min(scrollY.value, contentHeight - h)
-    --end
-
+    local maxContentY = drawFunc(x, y, w, h, -scrollY.value)
 
     if isHover and maxContentY > h and ui.mouseWheelDy ~= 0 then
         local contentHeight = maxContentY

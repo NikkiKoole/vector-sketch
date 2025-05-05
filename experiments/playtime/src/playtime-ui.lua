@@ -2207,56 +2207,56 @@ function lib.drawUI()
     end
 
 
-
-    function UIisVisible(y, h, scrollY, viewY, viewH)
-        local localY = y - scrollY
-        return localY + h >= viewY and localY <= viewY + viewH
-    end
-
-    ui.drawScrollablePanel({
-        id = 'testscroll',
-        x = 100,
-        y = 100,
-        width = PANEL_WIDTH,
-        height = 200,
-        render = function(baseX, baseY, w, h, offsetY)
+    ui.scrollableList('check1', 100, 100, 100, 200,
+        function(baseX, baseY, w, h, offsetY)
             local maxY = 0
             local lineHeight = 40
-            for i = 1, 60 do
+            for i = 1, 28 do
                 local elementY = (baseY + offsetY) + (i - 1) * lineHeight
                 if elementY + lineHeight < baseY then
                 elseif elementY > baseY + h then
                 else
-                    ui.button(baseX, elementY, 100, 'test1' .. i)
+                    ui.button(baseX, elementY, 100, 'test2' .. i)
                 end
                 maxY = maxY + lineHeight
             end
-            return maxY -- this becomes contentHeight
+
+            return maxY
         end
-    })
+    )
 
+    ui.panel(400, 400, PANEL_WIDTH, 200, 'check2', function()
+        local padding = BUTTON_SPACING
+        local scrollY = ui._scrollers['testscroll2'] or { value = 0 }
 
-    ui.drawScrollablePanel({
-        id = 'testscroll2',
-        x = 400,
-        y = 400,
-        width = PANEL_WIDTH,
-        height = 200,
-        render = function(baseX, baseY, w, h, offsetY)
-            local maxY = 0
-            local lineHeight = 40
-            for i = 1, 18 do
-                local elementY = (baseY + offsetY) + (i - 1) * lineHeight
-                if elementY + lineHeight < baseY then
-                elseif elementY > baseY + h then
-                else
-                    ui.button(baseX, elementY, 100, 'test1' .. i)
+        local contentHeight = ui.scrollArea('testscroll2', 400, 400, PANEL_WIDTH, 200, scrollY,
+            function(baseX, baseY, w, h, offsetY)
+                local maxY = 0
+
+                local lineHeight = 40
+                for i = 1, 28 do
+                    local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                    if elementY + lineHeight < baseY then
+                    elseif elementY > baseY + h then
+                    else
+                        ui.button(baseX, elementY, 100, 'test2' .. i)
+                    end
+                    maxY = maxY + lineHeight
                 end
-                maxY = maxY + lineHeight
+
+                return maxY
+            end)
+
+        if contentHeight > 200 then
+            local result = ui.slider(400 + PANEL_WIDTH, 400, 200, 20, 'vertical', (contentHeight) - 200, 0, scrollY
+                .value,
+                'testscroll2')
+            if result then
+                scrollY.value = result
             end
-            return maxY -- this becomes contentHeight
         end
-    })
+        ui._scrollers['testscroll2'] = scrollY
+    end)
 
 
 
