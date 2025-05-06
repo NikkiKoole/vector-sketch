@@ -286,7 +286,7 @@ local function handlePointer(x, y, id, action)
 
 
         if state.interaction.pressMissedEverything then
-            local wasOverUI = ui.activeElementID or ui.focusedTextInputID
+            local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
             if not wasOverUI then
                 -- removed from main!
                 if (state.selection.selectedSFixture) then

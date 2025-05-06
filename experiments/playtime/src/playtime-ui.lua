@@ -1597,9 +1597,9 @@ function lib.drawSelectedBodiesUI()
 end
 
 local accordionStatesSO = {
-    tags = false,
+    behaviors = false,
     position = false,
-    transform = true,
+    transform = false,
     physics = false,
     motion = false,
     joints = false,
@@ -1708,17 +1708,36 @@ function lib.drawUpdateSelectedObjectUI()
 
 
 
-
             nextRow()
-            if false then
-                drawAccordion("behaviors", function(clicked)
-                    local w = love.graphics.getFont():getWidth('straight') + 20
-                    -- ui.button(x, y, w, 'straight')
-                    ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
-                    nextRow()
-                end)
+
+            drawAccordion("behaviors", function(clicked)
+                --local w = love.graphics.getFont():getWidth('straight') + 20
+                -- ui.button(x, y, w, 'straight')
+                --ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
+
+                -- what behaviors do i have ?
+                -- KEEP_ANGLE
+                -- LIMB_HUB
+                -- HUB_PRESETS = {
+                --   humanoid = {
+                --     allowed = { "left_arm", "right_arm", "left_leg", "right_leg", "neck" }
+                --   },
+                --   upper_torso = {
+                --     allowed = { "left_arm", "right_arm", "neck" }
+                --   },
+                --   lower_torso = {
+                --     allowed = { "left_leg", "right_leg" }
+                --   },
+                --   potatohead = {
+                --     allowed = { "limb1", "limb2", "limb3", "limb4" }
+                --   }
+                -- }
+
+
                 nextRow()
-            end
+            end)
+            nextRow()
+
             drawAccordion("position", function(clicked)
                 nextRow()
                 local value = thing.body:getX()
@@ -2225,38 +2244,6 @@ function lib.drawUI()
         end
     )
 
-    ui.panel(400, 400, PANEL_WIDTH, 200, 'check2', function()
-        local padding = BUTTON_SPACING
-        local scrollY = ui._scrollers['testscroll2'] or { value = 0 }
-
-        local contentHeight = ui.scrollArea('testscroll2', 400, 400, PANEL_WIDTH, 200, scrollY,
-            function(baseX, baseY, w, h, offsetY)
-                local maxY = 0
-
-                local lineHeight = 40
-                for i = 1, 28 do
-                    local elementY = (baseY + offsetY) + (i - 1) * lineHeight
-                    if elementY + lineHeight < baseY then
-                    elseif elementY > baseY + h then
-                    else
-                        ui.button(baseX, elementY, 100, 'test2' .. i)
-                    end
-                    maxY = maxY + lineHeight
-                end
-
-                return maxY
-            end)
-
-        if contentHeight > 200 then
-            local result = ui.slider(400 + PANEL_WIDTH, 400, 200, 20, 'vertical', (contentHeight) - 200, 0, scrollY
-                .value,
-                'testscroll2')
-            if result then
-                scrollY.value = result
-            end
-        end
-        ui._scrollers['testscroll2'] = scrollY
-    end)
 
 
 
