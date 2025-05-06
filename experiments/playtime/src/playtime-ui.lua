@@ -1735,13 +1735,23 @@ function lib.drawUpdateSelectedObjectUI()
 
                             local behavior = userData.behaviors[i]
                             local w = love.graphics.getFont():getWidth(behavior.name) + 20
-                            ui.button(x, y, w, behavior.name)
+                            if ui.button(x, y, w, behavior.name) then
+                                if (state.panelVisibility.customBehavior) then
+                                    state.panelVisibility.customBehavior = false
+                                else
+                                    state.panelVisibility.customBehavior = { body = body, name = behavior.name }
+                                end
+                            end
                         end
                     end
 
                     nextRow()
                     if ui.button(x, y, 260, 'add behavior') then
-                        state.panelVisibility.addBehavior = { body = body }
+                        if (state.panelVisibility.addBehavior) then
+                            state.panelVisibility.addBehavior = false
+                        else
+                            state.panelVisibility.addBehavior = { body = body }
+                        end
                     end
 
                     --nextRow()
@@ -2247,23 +2257,7 @@ function lib.drawUI()
     end
 
 
-    ui.scrollableList('check1', 100, 100, 100, 200,
-        function(baseX, baseY, w, h, offsetY)
-            local maxY = 0
-            local lineHeight = 40
-            for i = 1, 28 do
-                local elementY = (baseY + offsetY) + (i - 1) * lineHeight
-                if elementY + lineHeight < baseY then
-                elseif elementY > baseY + h then
-                else
-                    ui.button(baseX, elementY, 100, 'test2' .. i)
-                end
-                maxY = maxY + lineHeight
-            end
 
-            return maxY
-        end
-    )
 
 
 
@@ -2410,6 +2404,35 @@ function lib.drawUI()
             ui.label(offW / 2 + 20, offH / 2 + 40, '[esc] to quit')
             ui.label(offW / 2 + 20, offH / 2 + 80, '[space] to cancel')
         end)
+    end
+
+    --state.panelVisibility.customBehavior = { body = body, name = behavior.name }
+    if state.panelVisibility.customBehavior then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+
+        ui.panel(50, 50, 300, 300, state.panelVisibility.customBehavior.name,
+            function()
+                ui.scrollableList('custombehaviors', 50, 100, 280, 250,
+                    function(baseX, baseY, w, h, offsetY)
+                        local maxY = 0
+                        local lineHeight = 40
+                        for i = 1, 28 do
+                            local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                            if elementY + lineHeight < baseY then
+                            elseif elementY > baseY + h then
+                            else
+                                ui.button(baseX, elementY, 100, 'test2' .. i)
+                            end
+                            maxY = maxY + lineHeight
+                        end
+
+                        return maxY
+                    end
+                )
+            end
+        )
     end
 
     if state.panelVisibility.addBehavior then

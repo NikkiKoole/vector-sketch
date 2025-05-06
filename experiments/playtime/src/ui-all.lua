@@ -139,7 +139,7 @@ function ui.scrollableList(id, x, y, w, h, drawFunc)
     ui.panel(x, y, w + 20, h, '', function()
         local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, drawFunc) --  drawFunc(x, y, w, h, -scrollY.value)
         --  print(contentHeight)
-
+        --print(id)
         if contentHeight > h then
             local result = ui.slider(x + w, y, h, 20, 'vertical', (contentHeight) - h, 0, scrollY
                 .value,
@@ -478,9 +478,12 @@ end
 --- Creates a slider (horizontal or vertical).
 function ui.slider(x, y, length, thickness, orientation, min, max, value, extraId)
     local inValue = value
-    local sliderID = ui.generateID()
+
+    local sliderID
     if (extraId) then
-        sliderID = sliderID .. extraId
+        sliderID = extraId
+    else
+        sliderID = ui.generateID()
     end
     local isHorizontal = orientation == 'horizontal'
 
@@ -535,6 +538,7 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
     -- local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
 
     -- Handle dragging
+    --  logger:info(ui.draggingSliderID)
     if pressed then
         ui.draggingSliderID = sliderID
         -- Calculate and store the offset
