@@ -1729,11 +1729,11 @@ function lib.drawUpdateSelectedObjectUI()
                     --   }
                     -- }
                     -- print(inspect(userData))
-                    if userData.behaviors then
-                        for i = 1, #userData.behaviors do
+                    if thing.behaviors then
+                        for i = 1, #thing.behaviors do
                             nextRow()
 
-                            local behavior = userData.behaviors[i]
+                            local behavior = thing.behaviors[i]
                             local w = love.graphics.getFont():getWidth(behavior.name) + 20
                             if ui.button(x, y, w, behavior.name) then
                                 if (state.panelVisibility.customBehavior) then
@@ -2446,7 +2446,8 @@ function lib.drawUI()
         }
 
         local myUD = utils.deepCopy(state.panelVisibility.addBehavior.body:getUserData())
-        local myBehaviors = myUD.behaviors or {}
+        --logger:inspect(myUD)
+        local myBehaviors = myUD.thing.behaviors or {}
 
         local function updatePossibleOptions()
             local possible_options = {}
@@ -2472,10 +2473,10 @@ function lib.drawUI()
                 for i, option in ipairs(possible_options) do
                     if ui.button(50, 100 + (i - 1) * 40, 200, option) then
                         --local newUD = utils.deepCopy(myUD)
-                        if not myUD.behaviors then
-                            myUD.behaviors = {}
+                        if not myUD.thing.behaviors then
+                            myUD.thing.behaviors = {}
                         end
-                        table.insert(myUD.behaviors, { name = option })
+                        table.insert(myUD.thing.behaviors, { name = option })
                         state.panelVisibility.addBehavior.body:setUserData(myUD)
                         state.panelVisibility.addBehavior = false
                         --table.insert(myBehaviors, {name = option})

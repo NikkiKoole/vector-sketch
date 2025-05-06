@@ -6,7 +6,7 @@
 -- TODO add some ui to change body properties
 -- TODO swap body parts
 -- TODO src/object-manager.lua:666:	I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...
-
+-- TODO look for : destroybody doesnt destroy the joint on it ?
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 

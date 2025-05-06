@@ -312,8 +312,14 @@ local function handlePointer(x, y, id, action)
                     state.polyEdit.tempVerts = nil
                     state.polyEdit.lockedVerts = true
                 end
+                -- todo this is dumb..
                 state.panelVisibility.addBehavior = false
                 state.panelVisibility.customBehavior = false
+                state.panelVisibility.addJointOpened = false
+                state.panelVisibility.addShapeOpened = false
+                state.panelVisibility.worldSettingsOpened = false
+                state.panelVisibility.recordingPanelOpened = false
+                state.panelVisibility.showPalette = false
             else
 
             end

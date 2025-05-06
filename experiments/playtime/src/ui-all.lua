@@ -424,7 +424,7 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
 
     if pressed then
         ui.activeElementID = id
-        print("Button pressed" .. id)
+        --print("Button pressed" .. id)
     end
     -- Draw the button with state-based colors
     if ui.activeElementID == id then

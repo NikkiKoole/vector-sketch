@@ -149,6 +149,7 @@ function lib.buildWorld(data, world, cam)
             mirrorX = bodyData.mirrorX or 1,
             mirrorY = bodyData.mirrorY or 1,
             vertices = bodyData.vertices,
+            behaviors = bodyData.behaviors,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
             -- textures = bodyData.textures or { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
@@ -404,7 +405,8 @@ function lib.gatherSaveData(world, camera)
                 angularDamping = utils.round_to_decimals(body:getAngularDamping(), 4),
                 fixedRotation = body:isFixedRotation(),
                 fixtures = {},
-                sharedFixtureData = {}
+                sharedFixtureData = {},
+                behaviors = thing.behaviors
             }
             -- Iterate through all fixtures of the body
 
