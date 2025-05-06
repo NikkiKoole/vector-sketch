@@ -1662,7 +1662,6 @@ function lib.drawUpdateSelectedObjectUI()
             end
         end
 
-
         if ui.button(x, y, 100, 'clone') then
             state.selection.selectedBodies = { state.selection.selectedObj }
             local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
@@ -1704,8 +1703,6 @@ function lib.drawUpdateSelectedObjectUI()
 
             nextRow()
 
-            -- here we add the BEHAVIORS, it should open another panel alltogether.
-
             nextRow()
 
             drawAccordion("behaviors",
@@ -1731,10 +1728,23 @@ function lib.drawUpdateSelectedObjectUI()
                     --     allowed = { "limb1", "limb2", "limb3", "limb4" }
                     --   }
                     -- }
+                    -- print(inspect(userData))
+                    if userData.behaviors then
+                        for i = 1, #userData.behaviors do
+                            nextRow()
 
-
+                            local behavior = userData.behaviors[i]
+                            local w = love.graphics.getFont():getWidth(behavior.name) + 20
+                            ui.button(x, y, w, behavior.name)
+                        end
+                    end
 
                     nextRow()
+                    if ui.button(x, y, 260, 'add behavior') then
+                        state.panelVisibility.addBehavior = { body = body }
+                    end
+
+                    --nextRow()
                 end)
             nextRow()
 
@@ -2106,7 +2116,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                                 if (jointType ~= 'mouse') then
                                     -- Display joint button
-                                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
+                                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
                                     local jointLabel = string.format("%s %s", jointType,
                                         string.sub(joint:getUserData().id, 1, 3))
 
@@ -2402,6 +2412,55 @@ function lib.drawUI()
         end)
     end
 
+    if state.panelVisibility.addBehavior then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+
+        local all_options = {
+            'KEEP_ANGLE',
+            'LIMB_HUB'
+        }
+
+        local myUD = utils.deepCopy(state.panelVisibility.addBehavior.body:getUserData())
+        local myBehaviors = myUD.behaviors or {}
+
+        local function updatePossibleOptions()
+            local possible_options = {}
+            for _, behavior in ipairs(all_options) do
+                local isIn = false
+                for j = 1, #myBehaviors do
+                    if myBehaviors[j].name == behavior then
+                        isIn = true
+                        break
+                    end
+                end
+                if not isIn then
+                    table.insert(possible_options, behavior)
+                end
+            end
+            return possible_options
+        end
+
+        local possible_options = updatePossibleOptions()
+
+        ui.panel(50, 50, 300, 300, 'add behavior',
+            function()
+                for i, option in ipairs(possible_options) do
+                    if ui.button(50, 100 + (i - 1) * 40, 200, option) then
+                        --local newUD = utils.deepCopy(myUD)
+                        if not myUD.behaviors then
+                            myUD.behaviors = {}
+                        end
+                        table.insert(myUD.behaviors, { name = option })
+                        state.panelVisibility.addBehavior.body:setUserData(myUD)
+                        state.panelVisibility.addBehavior = false
+                        --table.insert(myBehaviors, {name = option})
+                    end
+                end
+            end
+        )
+    end
 
     if ui.draggingActive then
         love.graphics.setColor(ui.theme.draggedElement.fill)
