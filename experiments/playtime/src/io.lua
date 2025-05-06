@@ -726,6 +726,7 @@ function lib.cloneSelection(selectedBodies, world)
                 label = originalThing.label,
                 mirrorX = originalThing.mirrorX,
                 mirrorY = originalThing.mirrorY,
+                behaviors = originalThing.behaviors,
                 body = newBody,
                 shapes = newShapeList,
                 vertices = newVertices,
