@@ -1706,459 +1706,470 @@ function lib.drawUpdateSelectedObjectUI()
 
             -- here we add the BEHAVIORS, it should open another panel alltogether.
 
-
-
             nextRow()
 
-            drawAccordion("behaviors", function(clicked)
-                --local w = love.graphics.getFont():getWidth('straight') + 20
-                -- ui.button(x, y, w, 'straight')
-                --ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
+            drawAccordion("behaviors",
+                function(clicked)
+                    --local w = love.graphics.getFont():getWidth('straight') + 20
+                    -- ui.button(x, y, w, 'straight')
+                    --ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
 
-                -- what behaviors do i have ?
-                -- KEEP_ANGLE
-                -- LIMB_HUB
-                -- HUB_PRESETS = {
-                --   humanoid = {
-                --     allowed = { "left_arm", "right_arm", "left_leg", "right_leg", "neck" }
-                --   },
-                --   upper_torso = {
-                --     allowed = { "left_arm", "right_arm", "neck" }
-                --   },
-                --   lower_torso = {
-                --     allowed = { "left_leg", "right_leg" }
-                --   },
-                --   potatohead = {
-                --     allowed = { "limb1", "limb2", "limb3", "limb4" }
-                --   }
-                -- }
+                    -- what behaviors do i have ?
+                    -- KEEP_ANGLE
+                    -- LIMB_HUB
+                    -- HUB_PRESETS = {
+                    --   humanoid = {
+                    --     allowed = { "left_arm", "right_arm", "left_leg", "right_leg", "neck" }
+                    --   },
+                    --   upper_torso = {
+                    --     allowed = { "left_arm", "right_arm", "neck" }
+                    --   },
+                    --   lower_torso = {
+                    --     allowed = { "left_leg", "right_leg" }
+                    --   },
+                    --   potatohead = {
+                    --     allowed = { "limb1", "limb2", "limb3", "limb4" }
+                    --   }
+                    -- }
 
 
-                nextRow()
-            end)
+
+                    nextRow()
+                end)
             nextRow()
 
-            drawAccordion("position", function(clicked)
-                nextRow()
-                local value = thing.body:getX()
-                local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
-                    true,
-                    clicked or not state.world.paused or state.interaction.draggingObj)
-                if hadBeenDraggingObj then
-                    dirty = true
-                end
-                if (dirty) then
-                    local numericPosX = tonumber(numericInputText)
-                    if numericPosX then
-                        thing.body:setX(numericPosX)
-                    else
-                        -- Handle invalid input, e.g., reset to previous value or show an error
-                        logger:error("Invalid X position input!")
+            drawAccordion("position",
+                function(clicked)
+                    nextRow()
+                    local value = thing.body:getX()
+                    local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
+                        true,
+                        clicked or not state.world.paused or state.interaction.draggingObj)
+                    if hadBeenDraggingObj then
+                        dirty = true
                     end
-                end
-                local value = thing.body:getY()
-                local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
-                    "" .. value, true,
-                    clicked or not state.world.paused or state.interaction.draggingObj)
-                if hadBeenDraggingObj then
-                    dirty = true
-                end
-                if (dirty) then
-                    local numericPosY = tonumber(numericInputText)
-                    if numericPosY then
-                        thing.body:setY(numericPosY)
-                    else
-                        -- Handle invalid input, e.g., reset to previous value or show an error
-                        logger:error("Invalid Y position input!")
+                    if (dirty) then
+                        local numericPosX = tonumber(numericInputText)
+                        if numericPosX then
+                            thing.body:setX(numericPosX)
+                        else
+                            -- Handle invalid input, e.g., reset to previous value or show an error
+                            logger:error("Invalid X position input!")
+                        end
                     end
+                    local value = thing.body:getY()
+                    local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
+                        "" .. value, true,
+                        clicked or not state.world.paused or state.interaction.draggingObj)
+                    if hadBeenDraggingObj then
+                        dirty = true
+                    end
+                    if (dirty) then
+                        local numericPosY = tonumber(numericInputText)
+                        if numericPosY then
+                            thing.body:setY(numericPosY)
+                        else
+                            -- Handle invalid input, e.g., reset to previous value or show an error
+                            logger:error("Invalid Y position input!")
+                        end
+                    end
+                    if hadBeenDraggingObj then
+                        hadBeenDraggingObj = false
+                    end
+
+                    nextRow()
+
+                    local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
+                    if dirty then
+                        body:setFixedRotation(not body:isFixedRotation())
+                    end
+
+                    -- Angle Slider
+                    nextRow()
+
+                    local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
+                        (body:getAngle() * 180 / math.pi),
+                        (body:isAwake() and not state.world.paused) or dirtyBodyChange)
+                    if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
+                        body:setAngle(newAngle * math.pi / 180)
+                    end
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' angle')
+
+
+                    nextRow()
+
+                    -- local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
+                    --     math.floor(thing.zOffset),
+                    --     (body:isAwake() and not state.world.paused) or dirtyBodyChange)
+                    -- if newZOffset and thing.zOffset ~= newZOffset then
+                    --     thing.zOffset = math.floor(newZOffset)
+                    -- end
+                    -- ui.label(x, y, ' zOffset')
                 end
-                if hadBeenDraggingObj then
-                    hadBeenDraggingObj = false
-                end
-
-                nextRow()
-
-                local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
-                if dirty then
-                    body:setFixedRotation(not body:isFixedRotation())
-                end
-
-                -- Angle Slider
-                nextRow()
-
-                local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
-                    (body:getAngle() * 180 / math.pi),
-                    (body:isAwake() and not state.world.paused) or dirtyBodyChange)
-                if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
-                    body:setAngle(newAngle * math.pi / 180)
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' angle')
-
-
-                nextRow()
-
-                -- local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
-                --     math.floor(thing.zOffset),
-                --     (body:isAwake() and not state.world.paused) or dirtyBodyChange)
-                -- if newZOffset and thing.zOffset ~= newZOffset then
-                --     thing.zOffset = math.floor(newZOffset)
-                -- end
-                -- ui.label(x, y, ' zOffset')
-            end
             )
             nextRow()
 
-            drawAccordion("transform", function(clicked)
-                nextRow()
+            drawAccordion("transform",
+                function(clicked)
+                    nextRow()
 
-                if ui.button(x, y, 120, 'flipX') then
-                    state.selection.selectedObj = objectManager.flipThing(thing, 'x', true)
-                    dirtyBodyChange = true
-                end
-                if ui.button(x + 140, y, 120, 'flipY') then
-                    state.selection.selectedObj = objectManager.flipThing(thing, 'y', true)
-                    dirtyBodyChange = true
-                end
-
-
-                nextRow()
-                if shapeType == 'circle' then
-                    -- Show radius control for circles
-
-
-                    local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
-                    if newRadius and newRadius ~= thing.radius then
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body,
-                            { shapeType = "circle", radius = newRadius })
-                        state.editorPreferences.lastUsedRadius = newRadius
-                        body = state.selection.selectedObj.body
+                    if ui.button(x, y, 120, 'flipX') then
+                        state.selection.selectedObj = objectManager.flipThing(thing, 'x', true)
+                        dirtyBodyChange = true
                     end
-                elseif shapeType == 'rectangle' or shapeType == 'itriangle' then
-                    -- Show width and height controls for these shapes
-
-
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
-
-                    if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
-                        state.editorPreferences.lastUsedWidth = newWidth
-                        state.editorPreferences.lastUsedHeight = newHeight
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            height = newHeight or thing.height,
-                        })
-                        body = state.selection.selectedObj.body
+                    if ui.button(x + 140, y, 120, 'flipY') then
+                        state.selection.selectedObj = objectManager.flipThing(thing, 'y', true)
+                        dirtyBodyChange = true
                     end
-                elseif shapeType == 'torso' then
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+
+
                     nextRow()
-
-                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
-                    nextRow()
-
-                    local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width3')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
-                    nextRow()
-                    local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height2')
-                    nextRow()
-                    local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height3')
-                    nextRow()
-                    local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height4')
-                    nextRow()
-
-                    if (newWidth and newWidth ~= thing.width) or
-                        (newWidth2 and newWidth2 ~= thing.width2) or
-                        (newWidth3 and newWidth3 ~= thing.width3) or
-                        (newHeight and newHeight ~= thing.height) or
-                        (newHeight2 and newHeight2 ~= thing.height2) or
-                        (newHeight3 and newHeight3 ~= thing.height3) or
-                        (newHeight4 and newHeight4 ~= thing.height4) then
-                        state.editorPreferences.lastUsedWidth = newWidth
-                        state.editorPreferences.lastUsedWidth2 = newWidth2
-                        state.editorPreferences.lastUsedWidth3 = newWidth3
-                        state.editorPreferences.lastUsedHeight = newHeight
-                        state.editorPreferences.lastUsedHeight2 = newHeight2
-                        state.editorPreferences.lastUsedHeight3 = newHeight3
-                        state.editorPreferences.lastUsedHeight4 = newHeight4
-
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            width2 = newWidth2 or thing.width2,
-                            width3 = newWidth3 or thing.width3,
-                            height = newHeight or thing.height,
-                            height2 = newHeight2 or thing.height2,
-                            height3 = newHeight3 or thing.height3,
-                            height4 = newHeight4 or thing.height4,
-                        })
-                        body = state.selection.selectedObj.body
-                    end
-                elseif shapeType == 'trapezium' or shapeType == 'capsule' then
-                    -- Show width and height controls for these shapes
+                    if shapeType == 'circle' then
+                        -- Show radius control for circles
 
 
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
-                    nextRow()
-
-                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, (thing.width2 or 5))
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
-
-                    if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
-                        state.editorPreferences.lastUsedWidth2 = newWidth2
-                        state.editorPreferences.lastUsedWidth = newWidth
-                        state.editorPreferences.lastUsedHeight = newHeight
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            width2 = newWidth2 or thing.width2,
-
-                            height = newHeight or thing.height,
-                        })
-                        body = state.selection.selectedObj.body
-                    end
-                else
-                    -- For polygonal or other custom shapes, only allow radius control if applicable
-                    if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
-                        shapeType == 'heptagon' or shapeType == 'octagon' then
-                        nextRow()
-
-                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
-                            dirtyBodyChange)
+                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
                         ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
                         if newRadius and newRadius ~= thing.radius then
                             state.selection.selectedObj = objectManager.recreateThingFromBody(body,
-                                { shapeType = shapeType, radius = newRadius })
+                                { shapeType = "circle", radius = newRadius })
                             state.editorPreferences.lastUsedRadius = newRadius
                             body = state.selection.selectedObj.body
                         end
+                    elseif shapeType == 'rectangle' or shapeType == 'itriangle' then
+                        -- Show width and height controls for these shapes
+
+
+                        local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+                        nextRow()
+
+                        local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
+
+                        if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
+                            state.editorPreferences.lastUsedWidth = newWidth
+                            state.editorPreferences.lastUsedHeight = newHeight
+                            state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
+                                shapeType = shapeType,
+                                width = newWidth or thing.width,
+                                height = newHeight or thing.height,
+                            })
+                            body = state.selection.selectedObj.body
+                        end
+                    elseif shapeType == 'torso' then
+                        local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+                        nextRow()
+
+                        local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
+                        nextRow()
+
+                        local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width3')
+                        nextRow()
+
+                        local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
+                        nextRow()
+                        local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height2')
+                        nextRow()
+                        local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height3')
+                        nextRow()
+                        local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height4')
+                        nextRow()
+
+                        if (newWidth and newWidth ~= thing.width) or
+                            (newWidth2 and newWidth2 ~= thing.width2) or
+                            (newWidth3 and newWidth3 ~= thing.width3) or
+                            (newHeight and newHeight ~= thing.height) or
+                            (newHeight2 and newHeight2 ~= thing.height2) or
+                            (newHeight3 and newHeight3 ~= thing.height3) or
+                            (newHeight4 and newHeight4 ~= thing.height4) then
+                            state.editorPreferences.lastUsedWidth = newWidth
+                            state.editorPreferences.lastUsedWidth2 = newWidth2
+                            state.editorPreferences.lastUsedWidth3 = newWidth3
+                            state.editorPreferences.lastUsedHeight = newHeight
+                            state.editorPreferences.lastUsedHeight2 = newHeight2
+                            state.editorPreferences.lastUsedHeight3 = newHeight3
+                            state.editorPreferences.lastUsedHeight4 = newHeight4
+
+                            state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
+                                shapeType = shapeType,
+                                width = newWidth or thing.width,
+                                width2 = newWidth2 or thing.width2,
+                                width3 = newWidth3 or thing.width3,
+                                height = newHeight or thing.height,
+                                height2 = newHeight2 or thing.height2,
+                                height3 = newHeight3 or thing.height3,
+                                height4 = newHeight4 or thing.height4,
+                            })
+                            body = state.selection.selectedObj.body
+                        end
+                    elseif shapeType == 'trapezium' or shapeType == 'capsule' then
+                        -- Show width and height controls for these shapes
+
+
+                        local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+                        nextRow()
+
+                        local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800,
+                            (thing.width2 or 5))
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
+                        nextRow()
+
+                        local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
+
+                        if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
+                            state.editorPreferences.lastUsedWidth2 = newWidth2
+                            state.editorPreferences.lastUsedWidth = newWidth
+                            state.editorPreferences.lastUsedHeight = newHeight
+                            state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
+                                shapeType = shapeType,
+                                width = newWidth or thing.width,
+                                width2 = newWidth2 or thing.width2,
+
+                                height = newHeight or thing.height,
+                            })
+                            body = state.selection.selectedObj.body
+                        end
                     else
-                        -- No UI controls for custom or unsupported shapes
-                        --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
-                        if state.selection.selectedObj.shapeType == 'custom' then
-                            if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
-                                state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
-                                if state.polyEdit.lockedVerts == false then
-                                    state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
-                                    local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                                    state.polyEdit.centroid = { x = cx, y = cy }
-                                else
-                                    state.polyEdit.tempVerts = nil
-                                    state.polyEdit.centroid = nil
+                        -- For polygonal or other custom shapes, only allow radius control if applicable
+                        if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
+                            shapeType == 'heptagon' or shapeType == 'octagon' then
+                            nextRow()
+
+                            local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing
+                                .radius,
+                                dirtyBodyChange)
+                            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
+                            if newRadius and newRadius ~= thing.radius then
+                                state.selection.selectedObj = objectManager.recreateThingFromBody(body,
+                                    { shapeType = shapeType, radius = newRadius })
+                                state.editorPreferences.lastUsedRadius = newRadius
+                                body = state.selection.selectedObj.body
+                            end
+                        else
+                            -- No UI controls for custom or unsupported shapes
+                            --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
+                            if state.selection.selectedObj.shapeType == 'custom' then
+                                if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                                    state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
+                                    if state.polyEdit.lockedVerts == false then
+                                        state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj
+                                            .vertices)
+                                        local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
+                                        state.polyEdit.centroid = { x = cx, y = cy }
+                                    else
+                                        state.polyEdit.tempVerts = nil
+                                        state.polyEdit.centroid = nil
+                                    end
                                 end
                             end
                         end
                     end
-                end
 
-                nextRow()
-            end)
-
-
+                    nextRow()
+                end)
             nextRow()
 
-            drawAccordion("physics", function()
-                local fixtures = body:getFixtures()
-                if #fixtures >= 1 then
-                    local density = fixtures[1]:getDensity()
+            drawAccordion("physics",
+                function()
+                    local fixtures = body:getFixtures()
+                    if #fixtures >= 1 then
+                        local density = fixtures[1]:getDensity()
 
-                    nextRow()
-                    local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
-                    if newDensity and density ~= newDensity then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setDensity(newDensity)
+                        nextRow()
+                        local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
+                        if newDensity and density ~= newDensity then
+                            for i = 1, #fixtures do
+                                fixtures[i]:setDensity(newDensity)
+                            end
+                        end
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' density')
+
+                        -- Bounciness Slider
+                        local bounciness = fixtures[1]:getRestitution()
+                        nextRow()
+
+                        local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
+                        if newBounce and bounciness ~= newBounce then
+                            for i = 1, #fixtures do
+                                fixtures[i]:setRestitution(newBounce)
+                            end
+                        end
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' bounce')
+
+                        -- Friction Slider
+                        local friction = fixtures[1]:getFriction()
+                        nextRow()
+
+                        local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
+                        if newFriction and friction ~= newFriction then
+                            for i = 1, #fixtures do
+                                fixtures[i]:setFriction(newFriction)
+                            end
+                        end
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' friction')
+                        nextRow()
+
+
+                        local fb = thing.body
+                        local fixtures = fb:getFixtures()
+                        local ff = fixtures[1]
+                        local groupIndex = ff:getGroupIndex()
+                        local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
+                            groupIndex)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' groupid')
+                        if groupIndexSlider then
+                            local value = math.floor(groupIndexSlider)
+                            local count = 0
+
+                            local b = thing.body
+                            local fixtures = b:getFixtures()
+                            for j = 1, #fixtures do
+                                fixtures[j]:setGroupIndex(value)
+                                count = count + 1
+                            end
                         end
                     end
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' density')
 
-                    -- Bounciness Slider
-                    local bounciness = fixtures[1]:getRestitution()
+                    nextRow()
+                    -- body:setAngularDamping(1)
+                    -- body:setLinearDamping(1)
+                    --
+                    local angleDamp = tonumber(body:getAngularDamping())
+                    local newAngularDamping = ui.sliderWithInput(myID .. 'angd', x, y, ROW_WIDTH, 0, 10, angleDamp,
+                        body:isAwake() and not state.world.paused)
+                    if newAngularDamping and angleDamp ~= newAngularDamping then
+                        body:setAngularDamping(newAngularDamping)
+                    end
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-damping')
                     nextRow()
 
-                    local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
-                    if newBounce and bounciness ~= newBounce then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setRestitution(newBounce)
-                        end
+                    local linDamp = tonumber(body:getLinearDamping())
+                    local newLinearDamping = ui.sliderWithInput(myID .. 'lind', x, y, ROW_WIDTH, 0, 10, linDamp,
+                        body:isAwake() and not state.world.paused)
+                    if newLinearDamping and linDamp ~= newLinearDamping then
+                        body:setLinearDamping(newLinearDamping)
                     end
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' bounce')
-
-                    -- Friction Slider
-                    local friction = fixtures[1]:getFriction()
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' lin-damping')
                     nextRow()
-
-                    local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
-                    if newFriction and friction ~= newFriction then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setFriction(newFriction)
-                        end
-                    end
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' friction')
-                    nextRow()
-
-
-                    local fb = thing.body
-                    local fixtures = fb:getFixtures()
-                    local ff = fixtures[1]
-                    local groupIndex = ff:getGroupIndex()
-                    local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
-                        groupIndex)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' groupid')
-                    if groupIndexSlider then
-                        local value = math.floor(groupIndexSlider)
-                        local count = 0
-
-                        local b = thing.body
-                        local fixtures = b:getFixtures()
-                        for j = 1, #fixtures do
-                            fixtures[j]:setGroupIndex(value)
-                            count = count + 1
-                        end
-                    end
-                end
-
-                nextRow()
-                -- body:setAngularDamping(1)
-                -- body:setLinearDamping(1)
-                --
-                local angleDamp = tonumber(body:getAngularDamping())
-                local newAngularDamping = ui.sliderWithInput(myID .. 'angd', x, y, ROW_WIDTH, 0, 10, angleDamp,
-                    body:isAwake() and not state.world.paused)
-                if newAngularDamping and angleDamp ~= newAngularDamping then
-                    body:setAngularDamping(newAngularDamping)
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-damping')
-                nextRow()
-
-                local linDamp = tonumber(body:getLinearDamping())
-                local newLinearDamping = ui.sliderWithInput(myID .. 'lind', x, y, ROW_WIDTH, 0, 10, linDamp,
-                    body:isAwake() and not state.world.paused)
-                if newLinearDamping and linDamp ~= newLinearDamping then
-                    body:setLinearDamping(newLinearDamping)
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' lin-damping')
-                nextRow()
-            end)
+                end)
             nextRow()
-            drawAccordion("motion", function()
-                -- set sleeping allowed
-                nextRow()
-                local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
-                if dirty then
-                    body:setSleepingAllowed(not body:isSleepingAllowed())
-                end
-                nextRow()
-                -- angukar veloicity
-                local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
-                if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
-                local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
-                    body:isAwake() and not state.world.paused)
-                if newAngle and angleDegrees ~= newAngle then
-                    body:setAngularVelocity(math.rad(newAngle))
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-vel')
 
-                nextRow()
-                local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
-                if dirty then
-                    body:setBullet(not body:isBullet())
-                end
+            drawAccordion("motion",
+                function()
+                    -- set sleeping allowed
+                    nextRow()
+                    local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
+                    if dirty then
+                        body:setSleepingAllowed(not body:isSleepingAllowed())
+                    end
+                    nextRow()
+                    -- angukar veloicity
+                    local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
+                    if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
+                    local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
+                        body:isAwake() and not state.world.paused)
+                    if newAngle and angleDegrees ~= newAngle then
+                        body:setAngularVelocity(math.rad(newAngle))
+                    end
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-vel')
 
-                nextRow()
-            end
+                    nextRow()
+                    local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
+                    if dirty then
+                        body:setBullet(not body:isBullet())
+                    end
+
+                    nextRow()
+                end
             )
             nextRow()
+
             if not body:isDestroyed() then
                 local attachedJoints = body:getJoints()
                 if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
-                    drawAccordion("joints", function()
-                        for _, joint in ipairs(attachedJoints) do
-                            -- Display joint type and unique identifier for identification
-                            local jointType = joint:getType()
-                            local jointID = tostring(joint)
+                    drawAccordion("joints",
+                        function()
+                            for _, joint in ipairs(attachedJoints) do
+                                -- Display joint type and unique identifier for identification
+                                local jointType = joint:getType()
+                                local jointID = tostring(joint)
 
-                            if (jointType ~= 'mouse') then
-                                -- Display joint button
-                                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
-                                local jointLabel = string.format("%s %s", jointType,
-                                    string.sub(joint:getUserData().id, 1, 3))
+                                if (jointType ~= 'mouse') then
+                                    -- Display joint button
+                                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
+                                    local jointLabel = string.format("%s %s", jointType,
+                                        string.sub(joint:getUserData().id, 1, 3))
 
-                                if ui.button(x, y, 260, jointLabel) then
-                                    state.selection.selectedJoint = joint
-                                    --  state.selection.selectedObj = nil
-                                end
+                                    if ui.button(x, y, 260, jointLabel) then
+                                        state.selection.selectedJoint = joint
+                                        --  state.selection.selectedObj = nil
+                                    end
 
-                                local clicked, _, _, isHover = ui.button(x, y, 260, jointLabel)
+                                    local clicked, _, _, isHover = ui.button(x, y, 260, jointLabel)
 
-                                if clicked then
-                                    state.selection.selectedJoint = joint
-                                end
-                                if isHover then
-                                    --print(inspect(joint:getUserData()))
-                                    local ud = joint:getUserData()
-                                    local x1, y1, x2, y2 = joint:getAnchors()
-                                    -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
-                                    --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
-                                    local x3, y3 = cam:getScreenCoordinates(x1, y1)
-                                    love.graphics.circle('line', x3, y3, 6)
-                                    local x3, y3 = cam:getScreenCoordinates(x2, y2)
-                                    love.graphics.circle('line', x3, y3, 3)
+                                    if clicked then
+                                        state.selection.selectedJoint = joint
+                                    end
+                                    if isHover then
+                                        --print(inspect(joint:getUserData()))
+                                        local ud = joint:getUserData()
+                                        local x1, y1, x2, y2 = joint:getAnchors()
+                                        -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
+                                        --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
+                                        local x3, y3 = cam:getScreenCoordinates(x1, y1)
+                                        love.graphics.circle('line', x3, y3, 6)
+                                        local x3, y3 = cam:getScreenCoordinates(x2, y2)
+                                        love.graphics.circle('line', x3, y3, 3)
+                                    end
                                 end
                             end
-                        end
-                    end)
+                        end)
                     nextRow()
                 end
             end
+
             local myfixtures = body:getFixtures()
             local ok, index  = fixtures.hasFixturesWithUserDataAtBeginning(myfixtures)
             if ok and index > 0 then
-                drawAccordion("sfixtures", function()
-                    for i = 1, index do
-                        nextRow()
-                        local prefix = (string.sub(myfixtures[i]:getUserData().label, 1, 3))
-                        local fixLabel = string.format("%s %s", prefix,
-                            string.sub(myfixtures[i]:getUserData().id, 1, 3))
-                        local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)
+                drawAccordion("sfixtures",
+                    function()
+                        for i = 1, index do
+                            nextRow()
+                            local prefix = (string.sub(myfixtures[i]:getUserData().label, 1, 3))
+                            local fixLabel = string.format("%s %s", prefix,
+                                string.sub(myfixtures[i]:getUserData().id, 1, 3))
+                            local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)
 
-                        if clicked then
-                            state.selection.selectedJoint = nil
-                            state.selection.selectedObj = nil
-                            state.selection.selectedSFixture = myfixtures[i]
+                            if clicked then
+                                state.selection.selectedJoint = nil
+                                state.selection.selectedObj = nil
+                                state.selection.selectedSFixture = myfixtures[i]
+                            end
+
+                            if isHover then
+                                local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
+                                local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
+                                local x3, y3 = cam:getScreenCoordinates(x2, y2)
+                                love.graphics.circle('line', x3, y3, 3)
+                            end
                         end
-                        if isHover then
-                            local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
-                            local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
-                            local x3, y3 = cam:getScreenCoordinates(x2, y2)
-                            love.graphics.circle('line', x3, y3, 3)
-                        end
-                    end
-                end)
+                    end)
+
                 nextRow()
             end
         end
+
         nextRow()
-
-
 
         -- List Attached Joints Using Body:getJoints()
     end)

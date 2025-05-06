@@ -2,7 +2,7 @@
 -- TODO there is an issue where the .vertices arent populated after load.
 -- TODO snap isnt working vanilla, not the right stuff is saved.
 -- TODO when we flip something with a joint wiht limits, the limits are gone
--- TODO label for behavior (straight / snap ..) is not scalable, we need a dedicated 'tag's for that each tag has option of data too.
+-- TODO label for behavior (straight / snap ..) is not scalable, we need a dedicated 'tag's for that each tag has option of data too.  BEHAVIORS
 -- TODO add some ui to change body properties
 -- TODO swap body parts
 -- TODO src/object-manager.lua:666:	I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...
