@@ -1735,7 +1735,7 @@ function lib.drawUpdateSelectedObjectUI()
 
                             local behavior = thing.behaviors[i]
                             local w = love.graphics.getFont():getWidth(behavior.name) + 20
-                            if ui.button(x, y, w, behavior.name) then
+                            if ui.button(x, y, w, behavior.name, BUTTON_HEIGHT, { 0.4, 0.4, 0.8 }) then
                                 if (state.panelVisibility.customBehavior) then
                                     state.panelVisibility.customBehavior = false
                                 else
