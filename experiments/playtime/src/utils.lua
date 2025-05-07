@@ -137,6 +137,22 @@ function lib.deepCopy(orig, copies)
     return copy
 end
 
+function lib.findByField(array, field, target)
+    for _, element in ipairs(array) do
+        local value = element[field]
+        if type(value) == "string" and value == target then
+            return element
+        elseif type(value) == "table" then
+            for _, v in ipairs(value) do
+                if v == target then
+                    return element
+                end
+            end
+        end
+    end
+    return nil -- not found
+end
+
 function lib.tablesEqualNumbers(t1, t2, tolerance)
     tolerance = tolerance or 1e-9 -- Default tolerance for floating point
 

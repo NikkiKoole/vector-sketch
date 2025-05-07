@@ -682,10 +682,10 @@ function lib.flipThing(thing, axis, recursive)
             end
             if axis == 'y' then
                 -- as long as you build your joints in the right order this just works like this.
-                -- the reason is quite subtle (before we did llowerlimit  +math.pi anf higherlimit + math.pi), but
+                -- the reason is quite subtle (before we did lowerlimit  +math.pi and higherlimit + math.pi), but
                 -- because the axis is flipped , the order between the joint becomes flipped too, which offsets that math.pi back to 0
 
-
+                -- TLDR dont make the joints in the wrong order, then everything works great!
                 newJoint:setLimits(-upper, -lower)
                 newJoint:setLimitsEnabled(limitsEnabled)
             end

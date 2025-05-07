@@ -1,12 +1,14 @@
--- DOING playing around with characters, getting them back in the system
+-- NOTE MAKE REVOLUTE JOINTS ALWAYS FROM PARENT TO CHILD!!!!!!!!
+
 -- TODO there is an issue where the .vertices arent populated after load.
--- TODO swap body parts
--- TODO add some ui to change body properties
 -- TODO src/object-manager.lua:666:	I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...
 -- TODO look for : destroybody doesnt destroy the joint on it ?
 -- TODO dirty list for textures that need to be remade, (box2d-draw-textured)
---
--- DOING snap isnt working vanilla, not the right stuff is saved.
+
+-- DOING playing around with characters, getting them back in the system
+-- TODO swap body parts
+-- TODO add some ui to change body properties
+
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 

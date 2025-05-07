@@ -158,7 +158,7 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
 
     love.graphics.setScissor(x, y, w, h)
 
-    local maxContentY = drawFunc(x, y, w, h, -scrollY.value)
+    local maxContentY = drawFunc(x, y, w, h, -scrollY.value) or 0
 
     if isHover and maxContentY > h and ui.mouseWheelDy ~= 0 then
         local contentHeight = maxContentY

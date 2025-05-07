@@ -32,6 +32,9 @@ state.panelVisibility = {
     saveDialogOpened = false,
     quitDialogOpened = false,
     showPalette = nil,
+    addBehavior = false,
+    customBehavior = false,
+    customBehaviorDescription = false,
 }
 
 state.editorPreferences = { -- Less volatile state

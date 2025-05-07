@@ -20,7 +20,7 @@ local state = require 'src.state'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
 local fileBrowser = require 'src.file-browser'
-
+local behaviors = require 'src.behaviors'
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
@@ -2407,43 +2407,71 @@ function lib.drawUI()
     end
 
     --state.panelVisibility.customBehavior = { body = body, name = behavior.name }
+
+
+
     if state.panelVisibility.customBehavior then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
 
         ui.panel(50, 50, 300, 300, state.panelVisibility.customBehavior.name,
+
             function()
+                local lookedup = utils.findByField(behaviors.allBehaviors, 'name',
+                    state.panelVisibility.customBehavior.name)
+                --print(inspect(lookedup))
+                if lookedup then
+                    if ui.button(50, 50, 50, '?') then
+                        if state.panelVisibility.customBehaviorDescription then
+                            state.panelVisibility.customBehaviorDescription = false
+                        else
+                            state.panelVisibility.customBehaviorDescription = lookedup.description
+                        end
+                    end
+                end
+
+
                 ui.scrollableList('custombehaviors', 50, 100, 280, 250,
                     function(baseX, baseY, w, h, offsetY)
-                        local maxY = 0
-                        local lineHeight = 40
-                        for i = 1, 28 do
-                            local elementY = (baseY + offsetY) + (i - 1) * lineHeight
-                            if elementY + lineHeight < baseY then
-                            elseif elementY > baseY + h then
-                            else
-                                ui.button(baseX, elementY, 100, 'test2' .. i)
-                            end
-                            maxY = maxY + lineHeight
-                        end
+                        -- local maxY = 0
+                        -- local lineHeight = 40
+                        -- for i = 1, 28 do
+                        --     local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                        --     if elementY + lineHeight < baseY then
+                        --     elseif elementY > baseY + h then
+                        --     else
+                        --         ui.button(baseX, elementY, 100, 'test2' .. i)
+                        --     end
+                        --     maxY = maxY + lineHeight
+                        -- end
 
-                        return maxY
+                        -- return maxY
                     end
                 )
             end
         )
     end
 
+    if state.panelVisibility.customBehaviorDescription then
+        ui.panel(100, 50, 300, 300, '', function()
+            love.graphics.printf(state.panelVisibility.customBehaviorDescription, 110, 100, 280)
+        end)
+    end
+
+
     if state.panelVisibility.addBehavior then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
 
-        local all_options = {
-            'KEEP_ANGLE',
-            'LIMB_HUB'
-        }
+        -- local all_options = {
+        --     'KEEP_ANGLE',
+        --     'LIMB_HUB'
+        -- }
+
+
+
 
         local myUD = utils.deepCopy(state.panelVisibility.addBehavior.body:getUserData())
         --logger:inspect(myUD)
@@ -2451,16 +2479,16 @@ function lib.drawUI()
 
         local function updatePossibleOptions()
             local possible_options = {}
-            for _, behavior in ipairs(all_options) do
+            for _, behavior in ipairs(behaviors.allBehaviors) do
                 local isIn = false
                 for j = 1, #myBehaviors do
-                    if myBehaviors[j].name == behavior then
+                    if myBehaviors[j].name == behavior.name then
                         isIn = true
                         break
                     end
                 end
                 if not isIn then
-                    table.insert(possible_options, behavior)
+                    table.insert(possible_options, behavior.name)
                 end
             end
             return possible_options
