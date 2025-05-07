@@ -785,10 +785,13 @@ function lib.cloneSelection(selectedBodies, world)
                             end
                             local limitsEnabled = originalJoint:areLimitsEnabled()
                             local lower, upper = originalJoint:getLimits()
-
+                            local oldRef = originalJoint:getReferenceAngle()
                             local newJoint = jointslib.createJoint(newJointData)
-                            newJoint:setUpperLimit(upper)
-                            newJoint:setLowerLimit(lower)
+                            local newRef = originalJoint:getReferenceAngle()
+                            logger:info(oldRef, newRef)
+                            newJoint:setLimits(lower, upper)
+                            --newJoint:setUpperLimit(upper)
+                            --newJoint:setLowerLimit(lower)
                             newJoint:setLimitsEnabled(limitsEnabled)
 
                             if ud.scriptmeta then

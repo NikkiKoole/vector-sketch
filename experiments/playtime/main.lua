@@ -1,15 +1,12 @@
 -- DOING playing around with characters, getting them back in the system
 -- TODO there is an issue where the .vertices arent populated after load.
--- TODO snap isnt working vanilla, not the right stuff is saved.
--- TODO label for behavior (straight / snap ..) is not scalable, we need a dedicated 'tag's for that each tag has option of data too.  BEHAVIORS
 -- TODO swap body parts
 -- TODO add some ui to change body properties
 -- TODO src/object-manager.lua:666:	I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...
 -- TODO look for : destroybody doesnt destroy the joint on it ?
-
--- DOING when we flip something with a joint wiht limits, the limits are gone
-
-
+-- TODO dirty list for textures that need to be remade, (box2d-draw-textured)
+--
+-- DOING snap isnt working vanilla, not the right stuff is saved.
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 
@@ -120,7 +117,8 @@ function love.load(args)
     --sceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
     sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
-    --sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
+    -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
+    --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
 
     local CharacterManager = require 'src.character-manager'

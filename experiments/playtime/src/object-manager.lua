@@ -671,6 +671,8 @@ function lib.flipThing(thing, axis, recursive)
 
             local limitsEnabled = joint:areLimitsEnabled()
             local lower, upper = joint:getLimits()
+
+
             local id = joint:getUserData().id
             local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
 
@@ -679,7 +681,12 @@ function lib.flipThing(thing, axis, recursive)
                 newJoint:setLimitsEnabled(limitsEnabled)
             end
             if axis == 'y' then
-                newJoint:setLimits(-upper + math.pi, -lower + math.pi)
+                -- as long as you build your joints in the right order this just works like this.
+                -- the reason is quite subtle (before we did llowerlimit  +math.pi anf higherlimit + math.pi), but
+                -- because the axis is flipped , the order between the joint becomes flipped too, which offsets that math.pi back to 0
+
+
+                newJoint:setLimits(-upper, -lower)
                 newJoint:setLimitsEnabled(limitsEnabled)
             end
             snap.maybeUpdateSnapJointWithId(id)

@@ -135,29 +135,35 @@ function lib.drawWorld(world, drawOutline)
             end
             love.graphics.setColor(1, 1, 1) -- Reset
         end
-        if jointType == 'revolute' then
-            if joint:areLimitsEnabled() then
-                local lower = joint:getLowerLimit()
-                local upper = joint:getUpperLimit()
+        if jointType == 'revolute' and joint:areLimitsEnabled() then
+            local lower = joint:getLowerLimit()
+            local upper = joint:getUpperLimit()
+            local referenceAngle = joint:getReferenceAngle()
 
-                local bodyA, bodyB = joint:getBodies()
-                local b1A = bodyA:getAngle()
+            local bodyA, bodyB = joint:getBodies()
+            local angleA = bodyA:getAngle()
+            local angleB = bodyB:getAngle()
 
-                love.graphics.setColor(1, 1, 1, alpha)
-                love.graphics.setLineJoin("miter")
-                love.graphics.arc('line', x1, y1, 15, math.pi / 2 + b1A + lower, math.pi / 2 + b1A + upper)
-                love.graphics.setLineJoin("none")
+            -- Use the joint's reference frame to compute world-space zero angle
+            local zeroAngle = angleA + referenceAngle
 
-
-                local b1B = bodyB:getAngle()
-
-                local angleBetween = b1A - b1B
-
-                local endX, endY = getEndpoint(x1, y1, (b1B + math.pi / 2), 15)
-
-                love.graphics.setColor(0.5, 0.5, 0.5, alpha)
-                love.graphics.line(x1, y1, endX, endY)
+            local startAngle = zeroAngle + lower
+            local endAngle = zeroAngle + upper
+            if endAngle < startAngle then
+                endAngle = endAngle + 2 * math.pi
             end
+
+            love.graphics.setColor(1, 1, 1, alpha)
+            love.graphics.setLineJoin("miter")
+            love.graphics.arc('line', x1, y1, 15, startAngle, endAngle)
+            love.graphics.setLineJoin("none")
+
+            -- draw current angle of bodyB relative to bodyA (via reference frame)
+            local currentRelative = angleB - zeroAngle
+            local dirAngle = zeroAngle + currentRelative
+            local endX, endY = getEndpoint(x1, y1, dirAngle, 15)
+            love.graphics.setColor(0.5, 0.5, 0.5, alpha)
+            love.graphics.line(x1, y1, endX, endY)
         end
         if jointType == 'wheel' then
             -- Draw wheel joint axis

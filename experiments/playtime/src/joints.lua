@@ -154,18 +154,21 @@ function lib.extractJoints(body)
     return jointData
 end
 
-function lib.recreateJoint(joint, newSettings)
+function lib.recreateJoint(joint, newSettings, swapBodies)
     if joint:isDestroyed() then
         logger:error("The joint is already destroyed.")
         return nil
     end
 
     local bodyA, bodyB = joint:getBodies()
+
     local jointType = joint:getType()
 
     local id = lib.getJointId(joint)
     local offsetA = lib.getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
     local offsetB = lib.getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
+
+
 
     local data = {
         body1 = bodyA,
