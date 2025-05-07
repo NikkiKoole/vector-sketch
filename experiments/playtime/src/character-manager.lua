@@ -542,25 +542,33 @@ local function makePart(partName, instance, settings)
 
     local prevA = 0
 
+
     if parent then
         if instance.parts[parent] then
             local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
-            settings.x = parentPosX
-            settings.y = parentPosY
+
+            prevA = instance.parts[parent].body:getAngle()
+
+            local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
+            local px, py = instance.parts[parent].body:getWorldPoint(parentOffsetX, parentOffsetY)
+            settings.x = px
+            settings.y = py
         end
-        prevA = instance.parts[parent].body:getAngle()
     end
 
-    local offX, offY = getOffsetFromParent(partName, instance)
-    settings.x = settings.x + offX
-    settings.y = settings.y + offY
-    --logger:info(offX, offY)
-    local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
-    local xangle = getAngleOffset(partName, instance)
-    local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
 
-    settings.x = settings.x + rx
-    settings.y = settings.y + ry
+    --local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
+    local ownOffsetX, ownOffsetY = getOwnOffset(partName, instance)
+    local xangle = getAngleOffset(partName, instance)
+
+    -- Rotate own offset into parent space
+    local rotatedOwnX, rotatedOwnY = mathutils.rotatePoint(ownOffsetX, ownOffsetY, 0, 0, prevA + xangle)
+
+    settings.x = settings.x + rotatedOwnX
+    settings.y = settings.y + rotatedOwnY
+
+    -- logger:info(partName, prevA, xangle)
+
 
     local thing = ObjectManager.addThing(settings.shapeType, settings)
 
@@ -616,40 +624,90 @@ end
 lib.updatePart = function(partName, data, instance)
     local poseCache = {}
 
+    -- filling the cache
     for partName, part in pairs(instance.parts) do
         local body = part.body
+        local groupIndex = body:getFixtures()[1]:getGroupIndex()
         poseCache[partName] = {
             pos = { body:getPosition() },
             angle = body:getAngle(),
             linearVelocity = { body:getLinearVelocity() },
-            angularVelocity = body:getAngularVelocity()
+            angularVelocity = body:getAngularVelocity(),
+            groupIndex = groupIndex or 0
         }
     end
+
+    -- update the thing
     lib.updateSinglePart(partName, data, instance)
 
+    -- using the cache
     for partName, pose in pairs(poseCache) do
         if instance.parts[partName] and pose then
             local body = instance.parts[partName].body
-            body:setPosition(pose.pos[1], pose.pos[2])
+            -- body:setPosition(pose.pos[1], pose.pos[2])
             body:setAngle(pose.angle)
             body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
             body:setAngularVelocity(pose.angularVelocity)
+
+            local fixtures = body:getFixtures()
+            for j = 1, #fixtures do
+                fixtures[j]:setGroupIndex(pose.groupIndex)
+            end
         end
     end
 end
 
 lib.updateSinglePart = function(partName, data, instance)
-    print(partName)
-    logger:inspect(instance.dna.parts[partName])
-    logger:inspect(instance.parts[partName])
+    --print(partName)
+    --logger:inspect(instance.dna.parts[partName])
+    --logger:inspect(instance.parts[partName])
 
     local partData = instance.dna.parts[partName]
     if not partData then return end
 
+    -- to figure out the offset for the torso after a dim change i need some shape8 magic
+    local oldVertices, newVertices, oldBBox, newBBox
+    if partData.shape == 'shape8' then
+        if partData.shape8URL and shape8Dict[partData.shape8URL] then
+            local raw = shape8Dict[partData.shape8URL].v
+            oldVertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+            oldBBox = mathutils.getBoundingRect(oldVertices)
+            --logger:inspect(partData.dims.sy, old)
+            --logger:inspect(old)
+        end
+    end
+
+
+
     -- Apply dimension updates
     for k, v in pairs(data) do
+        --print(k, v)
         partData.dims[k] = v
     end
+
+
+    if partData.shape == 'shape8' then
+        if partData.shape8URL and shape8Dict[partData.shape8URL] then
+            local raw = shape8Dict[partData.shape8URL].v
+            newVertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+            newBBox = mathutils.getBoundingRect(newVertices)
+            --logger:inspect(partData.dims.sy, new)
+            --logger:inspect(new)
+        end
+    end
+
+    local weirdYOffsetForTorso = 0
+    if oldBBox and newBBox then
+        --logger:inspect(oldBBox)
+        --logger:inspect(newBBox)
+        local off1 = (oldBBox.y + oldBBox.height) - (newBBox.y + newBBox.height)
+        --local off2 = newBBox.height - oldBBox.height
+        --logger:info('weirdYOffsetForTorso', off1, off2)
+        weirdYOffsetForTorso = off1 * 2 -- off2
+        print(weirdYOffsetForTorso)
+    end
+
+
 
     -- Remove old body
 
@@ -668,7 +726,7 @@ lib.updateSinglePart = function(partName, data, instance)
     -- Recreate the part
     local settings = {
         x = oldPosX,
-        y = oldPosY,
+        y = oldPosY - weirdYOffsetForTorso,
         bodyType = 'dynamic',
         shapeType = partData.shape,
         shape8URL = partData.shape8URL,
@@ -690,7 +748,7 @@ lib.updateSinglePart = function(partName, data, instance)
     end
 
     local children = getParentAndChildrenFromPartName(partName, instance).c or {}
-    logger:inspect(children)
+    -- logger:inspect(children)
     if type(children) == 'string' then
         children = { children }
     end
