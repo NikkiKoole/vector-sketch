@@ -1628,6 +1628,7 @@ function lib.drawUpdateSelectedObjectUI()
 
         -- Toggle Body Type Button
         -- Retrieve the current body type
+        if body:isDestroyed() then return end
         local currentBodyType = body:getType() -- 'static', 'dynamic', or 'kinematic'
 
         -- Determine the next body type in the cycle

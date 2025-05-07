@@ -37,6 +37,7 @@ local InputManager = require 'src.input-manager'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
+local CharacterManager = require 'src.character-manager'
 
 function waitForEvent()
     local a
@@ -123,10 +124,14 @@ function love.load(args)
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
 
-    local CharacterManager = require 'src.character-manager'
 
-    -- In love.load or a scene setup function:
-    local humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
+
+
+    --CharacterManager.updateSinglePart('luleg', { h = 300 }, humanoidInstance)
+    --CharacterManager.updateSinglePart('ruleg', { h = 300 }, humanoidInstance)
+
+    -- logger:inspect(humanoidInstance.dna)
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
@@ -268,6 +273,13 @@ function love.keypressed(key)
     ui.handleKeyPress(key)
     InputManager.handleKeyPressed(key)
     script.call('onKeyPress', key)
+
+    if key == 'r' then
+        --  CharacterManager.updatePart('torso1', { sy = love.math.random() * 10 }, humanoidInstance)
+        --CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
+
+        CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+    end
 end
 
 function love.mousemoved(x, y, dx, dy)

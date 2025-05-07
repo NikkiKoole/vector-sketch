@@ -30,7 +30,7 @@ local shape8Dict = {
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = true,
+            isPotatoHead = false,
             neckSegments = 0,
             torsoSegments = 1
         },
@@ -157,10 +157,11 @@ local function getParentAndChildrenFromPartName(partName, guy)
             }
         end
     end
-
+    --print(partName)
     local torsoIndex = extractTorsoIndex(partName)
+    --logger:info('torsoIndex', torsoIndex)
     if torsoIndex then
-        logger:info('torsoIndex', torsoIndex)
+        -- logger:info('torsoIndex', torsoIndex)
         if torsoIndex then
             local children = {}
             -- Middle segments connect only to the next torso segment
@@ -611,6 +612,102 @@ local function makePart(partName, instance, settings)
     end
 end
 
+
+lib.updatePart = function(partName, data, instance)
+    local poseCache = {}
+
+    for partName, part in pairs(instance.parts) do
+        local body = part.body
+        poseCache[partName] = {
+            pos = { body:getPosition() },
+            angle = body:getAngle(),
+            linearVelocity = { body:getLinearVelocity() },
+            angularVelocity = body:getAngularVelocity()
+        }
+    end
+    lib.updateSinglePart(partName, data, instance)
+
+    for partName, pose in pairs(poseCache) do
+        if instance.parts[partName] and pose then
+            local body = instance.parts[partName].body
+            body:setPosition(pose.pos[1], pose.pos[2])
+            body:setAngle(pose.angle)
+            body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
+            body:setAngularVelocity(pose.angularVelocity)
+        end
+    end
+end
+
+lib.updateSinglePart = function(partName, data, instance)
+    print(partName)
+    logger:inspect(instance.dna.parts[partName])
+    logger:inspect(instance.parts[partName])
+
+    local partData = instance.dna.parts[partName]
+    if not partData then return end
+
+    -- Apply dimension updates
+    for k, v in pairs(data) do
+        partData.dims[k] = v
+    end
+
+    -- Remove old body
+
+    local oldBody = instance.parts[partName].body
+    local oldPosX, oldPosY = oldBody:getPosition()
+    --local oldAngle = oldBody:getAngle()
+
+
+    if instance.parts[partName] then
+        ObjectManager.destroyBody(instance.parts[partName].body)
+
+        -- instance.parts[partName].body:destroy()
+        instance.parts[partName] = nil
+    end
+
+    -- Recreate the part
+    local settings = {
+        x = oldPosX,
+        y = oldPosY,
+        bodyType = 'dynamic',
+        shapeType = partData.shape,
+        shape8URL = partData.shape8URL,
+        label = partName,
+        density = partData.density or 1,
+        radius = partData.dims.r,
+        width = partData.dims.w,
+        width2 = partData.dims.w2,
+        width3 = partData.dims.w2,
+        height = partData.dims.h,
+        height2 = partData.dims.h,
+        height3 = partData.dims.h,
+        height4 = partData.dims.h,
+    }
+
+    if partData.shape8URL and shape8Dict[partData.shape8URL] then
+        local raw = shape8Dict[partData.shape8URL].v
+        settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+    end
+
+    local children = getParentAndChildrenFromPartName(partName, instance).c or {}
+    logger:inspect(children)
+    if type(children) == 'string' then
+        children = { children }
+    end
+    makePart(partName, instance, settings)
+
+    --instance.parts[partName].body:setPosition(oldPosX, oldPosY)
+    --instance.parts[partName].body:setAngle(oldAngle)
+
+
+    for _, childName in ipairs(children) do
+        local childData = instance.dna.parts[childName]
+        if childData then
+            lib.updateSinglePart(childName, {}, instance) -- trigger rebuild
+        end
+    end
+end
+
 lib.createCharacter = function(template, x, y)
     if dna[template] then
         local instance = {
@@ -648,9 +745,6 @@ lib.createCharacter = function(template, x, y)
                 --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
             end
         end
-
-
-
 
         if hasNeck and not isPotato then
             for i = 1, (instance.dna.creation.neckSegments or 2) do
@@ -706,6 +800,7 @@ lib.createCharacter = function(template, x, y)
 
             makePart(partName, instance, settings)
         end
+        return instance
     end
 end
 
