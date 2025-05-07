@@ -783,8 +783,13 @@ function lib.cloneSelection(selectedBodies, world)
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
                             end
+                            local limitsEnabled = originalJoint:areLimitsEnabled()
+                            local lower, upper = originalJoint:getLimits()
 
                             local newJoint = jointslib.createJoint(newJointData)
+                            newJoint:setUpperLimit(upper)
+                            newJoint:setLowerLimit(lower)
+                            newJoint:setLimitsEnabled(limitsEnabled)
 
                             if ud.scriptmeta then
                                 local newud = newJoint:getUserData()

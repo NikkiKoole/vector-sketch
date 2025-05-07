@@ -311,8 +311,8 @@ function lib.recreateThingFromBody(body, newSettings)
         return nil
     end
     local userData = body:getUserData()
-    local thing = userData and userData.thing
-    -- Extract current properties
+    local thing = userData and userData.thing -- Extract current properties
+
     local x, y = body:getPosition()
     local angle = body:getAngle()
     local velocityX, velocityY = body:getLinearVelocity()
@@ -369,40 +369,24 @@ function lib.recreateThingFromBody(body, newSettings)
         for i = 1, offset do
             local oldF = oldFixtures[i]
             local points = { oldF:getShape():getPoints() }
-            -- so maybe we can figure out between which 2 vertices i am, or closest too
-            -- and then reposition myself in the same way to those 2 vertices.
-            --
-            -- goal would be to for example remain in place when growing a leg.. ?
-            -- oh maybe its better to also use fixtures for this behaviour but not snap, but boneconnect or something.
-            --
-            --print(inspect(fixtures/fixturesgetCentroidOfFixture(originalBody, oldF)))
+
             local abs = oldF:getShape()
             local centerX, centerY = mathutils.getCenterOfPoints(points)
             if (thing.vertices) then
-                local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
-                --     --  print(inspect(params))
-                local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
+                -- we are repositioning special fixtures (anchors, snappoints) and doing our best to set them at a decent position.
+                -- this is fine for all sort of editor made things,
+                -- todo specific positioning for mipo on behavors
+                -- but for mipos character we might just want to be very precise and dending on behaviors and tags and dedicated rules.
 
-                --     --local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                --     --print(cx, cy, centerX, centerY)
-                --     local allFixtures = body:getUserData().thing.body:getFixtures()
-                --     local offX, offY = getCenterOfShapeFixtures(allFixtures)
+                --local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
+                --local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
-                --     -- local weights = meanValueCoordinates(centerX, centerY, thing.vertices)
-                --     -- local new_px, new_py = repositionPoint(weights, newVertices)
-                ---local edgeIndex, t = findEdgeAndLerpParam(centerX, centerY, thing.vertices)
-                --     --print(edgeIndex, t)
-                --local new_px, new_py = lerpOnEdge(edgeIndex, t, newVertices)
+                local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
+                local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
 
                 local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
                 abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
-                --print('jo!')
-
-                --     --print(centerX, centerY, new_px, new_py)
             end
-            --local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
-            -- local newShape = makePolygonAbsolute(relativePoints, localX, localY)
-
 
 
             local newFixture = love.physics.newFixture(newBody, abs, oldF:getDensity())
@@ -432,6 +416,8 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.height4 = newSettings.height4 or thing.height4
     thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices
+    thing.behaviors = newSettings.behaviors or thing.behaviors
+
 
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
@@ -683,13 +669,19 @@ function lib.flipThing(thing, axis, recursive)
                 offsetB.y = -offsetB.y
             end
 
-
-
-
+            local limitsEnabled = joint:areLimitsEnabled()
+            local lower, upper = joint:getLimits()
             local id = joint:getUserData().id
-            joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+            local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
 
-
+            if axis == 'x' then
+                newJoint:setLimits(-upper, -lower)
+                newJoint:setLimitsEnabled(limitsEnabled)
+            end
+            if axis == 'y' then
+                newJoint:setLimits(-upper + math.pi, -lower + math.pi)
+                newJoint:setLimitsEnabled(limitsEnabled)
+            end
             snap.maybeUpdateSnapJointWithId(id)
             ::continue::
         end
