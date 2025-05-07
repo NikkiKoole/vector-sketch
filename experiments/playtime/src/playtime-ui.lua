@@ -2418,15 +2418,15 @@ function lib.drawUI()
         ui.panel(50, 50, 300, 300, state.panelVisibility.customBehavior.name,
 
             function()
-                local lookedup = utils.findByField(behaviors.allBehaviors, 'name',
+                local lookup = utils.findByField(behaviors.allBehaviors, 'name',
                     state.panelVisibility.customBehavior.name)
                 --print(inspect(lookedup))
-                if lookedup then
+                if lookup then
                     if ui.button(50, 50, 50, '?') then
                         if state.panelVisibility.customBehaviorDescription then
                             state.panelVisibility.customBehaviorDescription = false
                         else
-                            state.panelVisibility.customBehaviorDescription = lookedup.description
+                            state.panelVisibility.customBehaviorDescription = lookup.description
                         end
                     end
                 end
@@ -2434,6 +2434,31 @@ function lib.drawUI()
 
                 ui.scrollableList('custombehaviors', 50, 100, 280, 250,
                     function(baseX, baseY, w, h, offsetY)
+                        if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
+                            -- we can assume all these type of other things are attached via revolute joints
+                            local me = state.panelVisibility.customBehavior.body
+                            local joints = me:getJoints()
+                            local names = {}
+                            for i = 1, #joints do
+                                local bodyA, bodyB = joints[i]:getBodies()
+                                local otherBody = bodyA == me and bodyB or bodyA
+                                --print(inspect(otherBody:getUserData().thing.label))
+                                table.insert(names, otherBody:getUserData().thing.label)
+                            end
+
+                            local maxY = 0
+                            local lineHeight = 30
+                            for i = 1, #names do
+                                local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                                ui.button(baseX, elementY, 100, names[i])
+                                local newValue = ui.textinput('limb_hub_vertexpicker' .. names[i], baseX + 100, elementY,
+                                    50, BUTTON_HEIGHT, "vertex", 0)
+                                -- _id, x, y, width, height, placeholder, currentText
+                                --  ui.textinput()
+                                maxY = maxY + lineHeight
+                            end
+                            return maxY
+                        end
                         -- local maxY = 0
                         -- local lineHeight = 40
                         -- for i = 1, 28 do
@@ -2456,7 +2481,7 @@ function lib.drawUI()
     if state.panelVisibility.customBehaviorDescription then
         ui.panel(100, 50, 300, 300, '', function()
             love.graphics.printf(state.panelVisibility.customBehaviorDescription, 110, 100, 280)
-        end)
+        end, { .5, .5, .9 })
     end
 
 

@@ -20,6 +20,11 @@ local shape8Dict = {
             11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
 
         }
+    },
+    ['shapeA3.png'] = {
+        v = {
+            -6.62, -189.25, 135.88, -69.67, 160.54, 45.82, 123.85, 154.90, -6.37, 189.25, -92.40, 153.92, -164.61, 53.37, -155.10, -67.94
+        }
     }
 }
 local dna = {
@@ -30,7 +35,7 @@ local dna = {
             torsoSegments = 1
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 3, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
@@ -529,8 +534,6 @@ local function getAngleOffset(partName, guy)
 end
 
 
-
-
 local function makePart(partName, instance, settings)
     local values = getParentAndChildrenFromPartName(partName, instance)
     local parent = values.p
@@ -677,7 +680,7 @@ lib.createCharacter = function(template, x, y)
                 bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
                 shapeType = partData.shape, -- Use shape defined in template
                 shape8URL = partData.shape8URL,
-                label = 'straight',         --partName,           -- Use part name as initial label
+                label = partName,           --partName,           -- Use part name as initial label
                 density = partData.density or 1,
                 radius = partData.dims.r,
                 width = partData.dims.w,
@@ -690,9 +693,7 @@ lib.createCharacter = function(template, x, y)
 
                 -- Add other physics properties if needed (friction, restitution?)
             }
-            if partName == 'lfoot' or partName == 'rfoot' or partName == 'lear' or partName == 'rear' then
-                settings.label = ''
-            end
+
             if (partData.shape8URL) then
                 if (shape8Dict[partData.shape8URL]) then
                     local raw = shape8Dict[partData.shape8URL].v

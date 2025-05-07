@@ -4,7 +4,7 @@
 -- TODO src/object-manager.lua:666:	I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...
 -- TODO look for : destroybody doesnt destroy the joint on it ?
 -- TODO dirty list for textures that need to be remade, (box2d-draw-textured)
-
+-- TODO in character manager, the w and h arent used when we have a shape 8 i prbaly want to calculate sx and sy depending on w and h instead of not using them
 -- DOING playing around with characters, getting them back in the system
 -- TODO swap body parts
 -- TODO add some ui to change body properties

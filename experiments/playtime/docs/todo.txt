@@ -1,0 +1,40 @@
+Idea for a script
+
+🧠 4. Inverse Kinematics (IK) for Dragging or Control
+If you want more natural-looking control when dragging a hand or foot (rather than pulling the whole ragdoll), IK solves this better than forcing Box2D joints.
+
+🤓 How It Works:
+You compute what the angles of each joint should be to reach a goal (e.g., mouse position). Then, either:
+
+Apply torques to joints, or
+
+Override body positions if you allow a non-physical solution
+
+🛠️ Example (2-bone limb):
+Use FABRIK or CCD algorithm:
+
+FABRIK: Moves end-effector toward goal, then solves joint angles backward
+
+CCD: Iteratively rotates each joint to reduce distance to goal
+
+You can find Love2D IK libraries or write a simple one like this:
+
+lua
+Copy
+Edit
+-- CCD for a two-link chain
+-- Not real code; just logic:
+for i = 1, numIterations do
+  for joint = shoulder to hand do
+    -- rotate joint to minimize distance from hand to mouse
+  end
+end
+✅ Benefits:
+Very smooth dragging
+
+You can mix physical simulation with procedural posing
+
+⚠️ Pitfalls:
+You must override Box2D’s pose (or use torque)
+
+Can break physics realism unless blended carefully

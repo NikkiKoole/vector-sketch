@@ -205,7 +205,7 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
 end
 
 --- Draws a panel with optional label and content.
-function ui.panel(x, y, width, height, label, drawFunc)
+function ui.panel(x, y, width, height, label, drawFunc, optionalFillColor)
     -- Draw panel background
     --
     local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
@@ -217,7 +217,7 @@ function ui.panel(x, y, width, height, label, drawFunc)
     if theme.button.radius > 0 then
         rxry = math.min(width / 6, height / 6) / theme.button.radius
     end
-    love.graphics.setColor(theme.panel.background)
+    love.graphics.setColor(optionalFillColor or theme.panel.background)
     love.graphics.rectangle("fill", x, y, width, height, rxry, rxry)
 
     -- Draw panel outline
