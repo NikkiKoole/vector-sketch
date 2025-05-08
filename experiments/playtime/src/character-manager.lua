@@ -32,7 +32,7 @@ local dna = {
         creation = {
             isPotatoHead = false,
             neckSegments = 0,
-            torsoSegments = 1
+            torsoSegments = 10
         },
         parts = {
             ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -561,6 +561,8 @@ local function makePart(partName, instance, settings)
 
             local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
             local px, py = instance.parts[parent].body:getWorldPoint(parentOffsetX, parentOffsetY)
+
+
             settings.x = px
             settings.y = py
         end
@@ -584,6 +586,7 @@ local function makePart(partName, instance, settings)
 
     if thing then
         thing.body:setAngle(prevA + xangle)
+
         if extractNeckIndex(partName) then
             thing.body:setAngularDamping(.1)
             thing.body:setLinearDamping(.1)
@@ -635,11 +638,11 @@ lib.updatePart = function(partName, data, instance)
     local poseCache = {}
 
     local positionTorso = nil
-    --local oldAngle = 0
+    local oldAngle = 0
     if partName == 'torso1' then
         positionTorso = { instance.parts[partName].body:getPosition() }
         --logger:inspect(positionTorso)
-        --oldAngle = instance.parts[partName].body:getPosition():getAngle()
+        oldAngle = instance.parts[partName].body:getAngle()
     end
 
     -- filling the cache
@@ -662,7 +665,7 @@ lib.updatePart = function(partName, data, instance)
     for partName, pose in pairs(poseCache) do
         if instance.parts[partName] and pose then
             local body = instance.parts[partName].body
-            -- body:setPosition(pose.pos[1], pose.pos[2])
+            --body:setPosition(pose.pos[1], pose.pos[2])
             body:setAngle(pose.angle)
             body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
             body:setAngularVelocity(pose.angularVelocity)
@@ -674,12 +677,29 @@ lib.updatePart = function(partName, data, instance)
         end
     end
 
+
+
+    -- this routine is to fix the drift we get .
     if positionTorso then
         local newPosX, newPosY = instance.parts[partName].body:getPosition()
+        local newAngle = instance.parts[partName].body:getAngle()
+
+        --local dx = oldPosX - newPosX
+
         local dx = positionTorso[1] - newPosX
         local dy = positionTorso[2] - newPosY
+        --local da = oldAngle - newAngle
+
+        --local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -newAngle)
 
         for _, part in pairs(instance.parts) do
+            -- local px, py = part.body:getPosition()
+            --local cx, cy = mathutils.rotatePoint(px, py, newPosX, newPosY, da)
+
+
+            --   part.body:setPosition(cx + dx, cy + dy)
+            --  part.body:setAngle(part.body:getAngle() + da)
+
             local bx, by = part.body:getPosition()
 
             part.body:setPosition(bx + dx, by + dy)
@@ -706,7 +726,7 @@ lib.updateSinglePart = function(partName, data, instance)
     --print(partName)
     local oldBody = instance.parts[partName].body
     local oldPosX, oldPosY = oldBody:getPosition()
-
+    local oldAngle = oldBody:getAngle()
 
     -- Remove old body
 
@@ -746,8 +766,9 @@ lib.updateSinglePart = function(partName, data, instance)
     end
     makePart(partName, instance, settings)
 
-    --instance.parts[partName].body:setPosition(oldPosX, oldPosY)
-    --instance.parts[partName].body:setAngle(oldAngle)
+
+    -- after making a part set it to its angle so the children will be using that angle in tehir calculations.
+    instance.parts[partName].body:setAngle(oldAngle)
 
 
     for _, childName in ipairs(children) do
