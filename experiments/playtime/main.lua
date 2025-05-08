@@ -276,8 +276,11 @@ function love.keypressed(key)
 
     if key == 'r' then
         CharacterManager.updatePart('torso1', { sy = love.math.random() * 10 }, humanoidInstance)
+        CharacterManager.updatePart('torso2', { sy = love.math.random() * 10 }, humanoidInstance)
+        CharacterManager.updatePart('torso3', { sy = love.math.random() * 10 }, humanoidInstance)
+        CharacterManager.updatePart('torso4', { sy = love.math.random() * 10 }, humanoidInstance)
         --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
-        --  CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+        --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
     end
 end
 

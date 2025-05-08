@@ -31,8 +31,8 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 0,
-            torsoSegments = 1
+            neckSegments = 4,
+            torsoSegments = 4
         },
         parts = {
             ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -186,6 +186,8 @@ local function getParentAndChildrenFromPartName(partName, guy)
                 table.insert(children, 'ruleg')
             end
 
+
+
             if torsoIndex == 1 then
                 map[partName] = { c = children } -- Torso1 has no parent
             else
@@ -211,15 +213,14 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
     -- If only one torso segment, it has all children directly
     if torsoSegments == 1 and partName == 'torso1' then
-        local singleTorsoChildren = {
-            (neckSegments > 0) and 'neck1' or 'head',
-            'luarm', 'ruarm', 'luleg', 'ruleg'
-        }
+        local children = {}
         if creation.isPotatoHead then
-            table.insert(singleTorsoChildren, 'lear')
-            table.insert(singleTorsoChildren, 'rear')
+            children = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear' }
+        else
+            children = { (neckSegments > 0) and 'neck1' or 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' }
         end
-        map[partName] = { c = singleTorsoChildren }
+
+        map[partName] = { c = children }
     end
 
 
@@ -624,6 +625,12 @@ end
 lib.updatePart = function(partName, data, instance)
     local poseCache = {}
 
+    local positionTorso = nil
+    if partName == 'torso1' then
+        positionTorso = { instance.parts[partName].body:getPosition() }
+        logger:inspect(positionTorso)
+    end
+
     -- filling the cache
     for partName, part in pairs(instance.parts) do
         local body = part.body
@@ -655,7 +662,23 @@ lib.updatePart = function(partName, data, instance)
             end
         end
     end
+
+    if positionTorso then
+        local newPosX, newPosY = instance.parts[partName].body:getPosition()
+        local dx = positionTorso[1] - newPosX
+        local dy = positionTorso[2] - newPosY
+
+        for _, part in pairs(instance.parts) do
+            local bx, by = part.body:getPosition()
+            part.body:setPosition(bx + dx, by + dy)
+        end
+
+
+        --instance.parts[partName].body:setPosition(positionTorso[1], positionTorso[2])
+    end
 end
+
+
 
 lib.updateSinglePart = function(partName, data, instance)
     --print(partName)
@@ -665,68 +688,28 @@ lib.updateSinglePart = function(partName, data, instance)
     local partData = instance.dna.parts[partName]
     if not partData then return end
 
-    -- to figure out the offset for the torso after a dim change i need some shape8 magic
-    local oldVertices, newVertices, oldBBox, newBBox
-    if partData.shape == 'shape8' then
-        if partData.shape8URL and shape8Dict[partData.shape8URL] then
-            local raw = shape8Dict[partData.shape8URL].v
-            oldVertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
-            oldBBox = mathutils.getBoundingRect(oldVertices)
-            --logger:inspect(partData.dims.sy, old)
-            --logger:inspect(old)
-        end
-    end
-
-
-
     -- Apply dimension updates
     for k, v in pairs(data) do
         --print(k, v)
         partData.dims[k] = v
     end
 
-
-    if partData.shape == 'shape8' then
-        if partData.shape8URL and shape8Dict[partData.shape8URL] then
-            local raw = shape8Dict[partData.shape8URL].v
-            newVertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
-            newBBox = mathutils.getBoundingRect(newVertices)
-            --logger:inspect(partData.dims.sy, new)
-            --logger:inspect(new)
-        end
-    end
-
-    local weirdYOffsetForTorso = 0
-    if oldBBox and newBBox then
-        --logger:inspect(oldBBox)
-        --logger:inspect(newBBox)
-        local off1 = (oldBBox.y + oldBBox.height) - (newBBox.y + newBBox.height)
-        --local off2 = newBBox.height - oldBBox.height
-        --logger:info('weirdYOffsetForTorso', off1, off2)
-        weirdYOffsetForTorso = off1 * 2 -- off2
-        print(weirdYOffsetForTorso)
-    end
-
+    print(partName)
+    local oldBody = instance.parts[partName].body
+    local oldPosX, oldPosY = oldBody:getPosition()
 
 
     -- Remove old body
 
-    local oldBody = instance.parts[partName].body
-    local oldPosX, oldPosY = oldBody:getPosition()
-    --local oldAngle = oldBody:getAngle()
-
-
     if instance.parts[partName] then
         ObjectManager.destroyBody(instance.parts[partName].body)
-
-        -- instance.parts[partName].body:destroy()
         instance.parts[partName] = nil
     end
 
     -- Recreate the part
     local settings = {
         x = oldPosX,
-        y = oldPosY - weirdYOffsetForTorso,
+        y = oldPosY,
         bodyType = 'dynamic',
         shapeType = partData.shape,
         shape8URL = partData.shape8URL,
@@ -748,7 +731,7 @@ lib.updateSinglePart = function(partName, data, instance)
     end
 
     local children = getParentAndChildrenFromPartName(partName, instance).c or {}
-    -- logger:inspect(children)
+    logger:inspect(children)
     if type(children) == 'string' then
         children = { children }
     end
