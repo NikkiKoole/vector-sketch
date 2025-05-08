@@ -31,8 +31,8 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 4,
-            torsoSegments = 4
+            neckSegments = 0,
+            torsoSegments = 1
         },
         parts = {
             ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -339,17 +339,26 @@ local function getOffsetFromParent(partName, guy)
     local lowestTorso   = 'torso1'
 
 
-
-    local function getTorsoPart8(index)
+    local function getTorsoPart8FromSpecificTorso(index, torsoIndex)
         --local vertices = shape8Dict[parts[highestTorso].shape8URL].v
 
-        local raw = shape8Dict[parts[highestTorso].shape8URL].v
-        local vertices = makeTransformedVertices(raw, parts[highestTorso].dims.sx or 1, parts[highestTorso].dims.sy or 1)
+        local torso = 'torso' .. torsoIndex
 
-        local newIndex = getTransformedIndex(index, sign(parts[highestTorso].dims.sx), sign(parts[highestTorso].dims.sy))
-
+        local raw = shape8Dict[parts[torso].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
+        local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
         return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
     end
+
+    local function getTorsoPart8FromHighest(index)
+        return getTorsoPart8FromSpecificTorso(index, torsoSegments)
+    end
+
+    local function getTorsoPart8FromLowest(index)
+        return getTorsoPart8FromSpecificTorso(index, 1)
+    end
+
+
 
     local function hasTorso8()
         if parts[highestTorso].shape == 'shape8' then
@@ -379,7 +388,7 @@ local function getOffsetFromParent(partName, guy)
         local index = extractNeckIndex(partName)
         if index == 1 then
             if hasTorso8() then
-                return getTorsoPart8(1)
+                return getTorsoPart8FromHighest(1)
             else
                 return 0, -parts[highestTorso].dims.h / 2
             end
@@ -393,8 +402,8 @@ local function getOffsetFromParent(partName, guy)
         else
             if hasTorso8() then
                 --print('getting here')
-
-                return getTorsoPart8(1)
+                return getTorsoPart8FromSpecificTorso(1, index - 1)
+                -- return getTorsoPart8(1)
             else
                 -- return 0, -parts[highestTorso].dims.h / 2
                 return 0, -parts['torso' .. (index - 1)].dims.h / 2
@@ -422,9 +431,9 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'luarm' then
         if hasTorso8() then
             if creation.isPotatoHead then
-                return getTorsoPart8(7)
+                return getTorsoPart8FromHighest(7)
             else
-                return getTorsoPart8(8)
+                return getTorsoPart8FromHighest(8)
             end
         else
             return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
@@ -432,9 +441,9 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'ruarm' then
         if hasTorso8() then
             if creation.isPotatoHead then
-                return getTorsoPart8(3)
+                return getTorsoPart8FromHighest(3)
             else
-                return getTorsoPart8(2)
+                return getTorsoPart8FromHighest(2)
             end
         else
             return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
@@ -442,8 +451,8 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'luleg' then
         local t = 0.5 --positioners.leg.x
         if hasTorso8() then
-            local ax, ay = getTorsoPart8(6)
-            local bx, by = getTorsoPart8(5)
+            local ax, ay = getTorsoPart8FromLowest(6)
+            local bx, by = getTorsoPart8FromLowest(5)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
             return rx, ry
         else
@@ -453,8 +462,8 @@ local function getOffsetFromParent(partName, guy)
         local t = 0.5 -- positioners.leg.x
 
         if hasTorso8() then
-            local ax, ay = getTorsoPart8(4)
-            local bx, by = getTorsoPart8(5)
+            local ax, ay = getTorsoPart8FromLowest(4)
+            local bx, by = getTorsoPart8FromLowest(5)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
             return rx, ry
         else
@@ -464,8 +473,8 @@ local function getOffsetFromParent(partName, guy)
         if creation.isPotatoHead then
             if hasTorso8() then
                 local t = 0.5
-                local ax, ay = getTorsoPart8(8)
-                local bx, by = getTorsoPart8(7)
+                local ax, ay = getTorsoPart8FromHighest(8)
+                local bx, by = getTorsoPart8FromHighest(7)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -486,8 +495,8 @@ local function getOffsetFromParent(partName, guy)
         if creation.isPotatoHead then
             if hasTorso8() then
                 local t = 0.5
-                local ax, ay = getTorsoPart8(2)
-                local bx, by = getTorsoPart8(3)
+                local ax, ay = getTorsoPart8FromHighest(2)
+                local bx, by = getTorsoPart8FromHighest(3)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -507,7 +516,7 @@ local function getOffsetFromParent(partName, guy)
     elseif (partName == 'head') then
         if creation.neckSegments == 0 then
             if hasTorso8() then
-                return getTorsoPart8(1)
+                return getTorsoPart8FromHighest(1)
             else
                 return 0, -parts[highestTorso].dims.h / 2
             end
@@ -626,9 +635,11 @@ lib.updatePart = function(partName, data, instance)
     local poseCache = {}
 
     local positionTorso = nil
+    --local oldAngle = 0
     if partName == 'torso1' then
         positionTorso = { instance.parts[partName].body:getPosition() }
-        logger:inspect(positionTorso)
+        --logger:inspect(positionTorso)
+        --oldAngle = instance.parts[partName].body:getPosition():getAngle()
     end
 
     -- filling the cache
@@ -670,11 +681,9 @@ lib.updatePart = function(partName, data, instance)
 
         for _, part in pairs(instance.parts) do
             local bx, by = part.body:getPosition()
+
             part.body:setPosition(bx + dx, by + dy)
         end
-
-
-        --instance.parts[partName].body:setPosition(positionTorso[1], positionTorso[2])
     end
 end
 
@@ -694,7 +703,7 @@ lib.updateSinglePart = function(partName, data, instance)
         partData.dims[k] = v
     end
 
-    print(partName)
+    --print(partName)
     local oldBody = instance.parts[partName].body
     local oldPosX, oldPosY = oldBody:getPosition()
 
@@ -731,7 +740,7 @@ lib.updateSinglePart = function(partName, data, instance)
     end
 
     local children = getParentAndChildrenFromPartName(partName, instance).c or {}
-    logger:inspect(children)
+    --logger:inspect(children)
     if type(children) == 'string' then
         children = { children }
     end
