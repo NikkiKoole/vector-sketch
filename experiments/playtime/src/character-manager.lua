@@ -9,6 +9,22 @@ local mathutils = require 'src.math-utils'
 -- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
 
+
+-- reproduce = 'press c press r'
+-- todo :
+-- 2. Don't Forget to Invalidate Custom Parts
+-- When reducing torsoSegments from 4 → 1, clean up torso2, torso3, torso4 in dna.parts. You can prune:
+
+-- for name in pairs(instance.dna.parts) do
+--     if string.match(name, "^torso(%d+)$") then
+--         local i = tonumber(string.match(name, "%d+"))
+--         if i > instance.dna.creation.torsoSegments then
+--             instance.dna.parts[name] = nil
+--         end
+--     end
+-- end
+
+
 local shape8Dict = {
     ['shapeA1.png'] = {
         v = {
@@ -633,19 +649,8 @@ local function makePart(partName, instance, settings)
     end
 end
 
-
-lib.updatePart = function(partName, data, instance)
+local function getPoseCache(instance)
     local poseCache = {}
-
-    local positionTorso = nil
-    local oldAngle = 0
-    if partName == 'torso1' then
-        positionTorso = { instance.parts[partName].body:getPosition() }
-        --logger:inspect(positionTorso)
-        oldAngle = instance.parts[partName].body:getAngle()
-    end
-
-    -- filling the cache
     for partName, part in pairs(instance.parts) do
         local body = part.body
         local groupIndex = body:getFixtures()[1]:getGroupIndex()
@@ -657,10 +662,9 @@ lib.updatePart = function(partName, data, instance)
             groupIndex = groupIndex or 0
         }
     end
-
-    -- update the thing
-    lib.updateSinglePart(partName, data, instance)
-
+    return poseCache
+end
+local function applyPoseCache(instance, poseCache)
     -- using the cache
     for partName, pose in pairs(poseCache) do
         if instance.parts[partName] and pose then
@@ -676,13 +680,13 @@ lib.updatePart = function(partName, data, instance)
             end
         end
     end
+end
 
-
-
+local function fixDrift(positionTorso, instance)
     -- this routine is to fix the drift we get .
     if positionTorso then
-        local newPosX, newPosY = instance.parts[partName].body:getPosition()
-        local newAngle = instance.parts[partName].body:getAngle()
+        local newPosX, newPosY = instance.parts['torso1'].body:getPosition()
+        local newAngle = instance.parts['torso1'].body:getAngle()
 
         --local dx = oldPosX - newPosX
 
@@ -695,25 +699,28 @@ lib.updatePart = function(partName, data, instance)
         for _, part in pairs(instance.parts) do
             -- local px, py = part.body:getPosition()
             --local cx, cy = mathutils.rotatePoint(px, py, newPosX, newPosY, da)
-
-
             --   part.body:setPosition(cx + dx, cy + dy)
             --  part.body:setAngle(part.body:getAngle() + da)
 
             local bx, by = part.body:getPosition()
-
             part.body:setPosition(bx + dx, by + dy)
         end
     end
 end
 
 
+local function safeAllExtras(body)
+    -- this could hhave special type of fixtures attached, if so we want to keep them
+    local fixtures = body:getFixtures()
+    for i = 1, #fixtures do
+        local f = fixtures[i]
+        if f:getUserData() then
+            logger:inspect(f:getUserData())
+        end
+    end
+end
 
-lib.updateSinglePart = function(partName, data, instance)
-    --print(partName)
-    --logger:inspect(instance.dna.parts[partName])
-    --logger:inspect(instance.parts[partName])
-
+local function updateSinglePart(partName, data, instance)
     local partData = instance.dna.parts[partName]
     if not partData then return end
 
@@ -723,15 +730,18 @@ lib.updateSinglePart = function(partName, data, instance)
         partData.dims[k] = v
     end
 
-    --print(partName)
+    print(partName, instance.parts[partName])
     local oldBody = instance.parts[partName].body
     local oldPosX, oldPosY = oldBody:getPosition()
     local oldAngle = oldBody:getAngle()
 
     -- Remove old body
 
+    local extras = {}
     if instance.parts[partName] then
-        ObjectManager.destroyBody(instance.parts[partName].body)
+        local body = instance.parts[partName].body
+        extras = safeAllExtras(body)
+        ObjectManager.destroyBody(body)
         instance.parts[partName] = nil
     end
 
@@ -774,12 +784,147 @@ lib.updateSinglePart = function(partName, data, instance)
     for _, childName in ipairs(children) do
         local childData = instance.dna.parts[childName]
         if childData then
-            lib.updateSinglePart(childName, {}, instance) -- trigger rebuild
+            updateSinglePart(childName, {}, instance) -- trigger rebuild
         end
     end
 end
 
-lib.createCharacter = function(template, x, y)
+-- update part
+function lib.updatePart(partName, data, instance)
+    local positionTorso = nil
+    local oldAngle = 0
+    if partName == 'torso1' then
+        positionTorso = { instance.parts['torso1'].body:getPosition() }
+    end
+
+    -- filling the cache
+    local poseCache = getPoseCache(instance)
+
+    -- update the thing
+    updateSinglePart(partName, data, instance)
+
+    applyPoseCache(instance, poseCache)
+
+    if positionTorso then fixDrift(positionTorso, instance) end
+end
+
+-- given an instance with dna and a new creation, this function is made to change a creation of a humanoid during runtime.
+-- its alos used by initially creating a character.
+function lib.rebuildFromCreation(instance, newCreation)
+    -- Step 1: Update the creation settings
+    for k, v in pairs(newCreation) do
+        instance.dna.creation[k] = v
+    end
+
+    local torsoX, torsoY = instance.parts['torso1'].body:getPosition()
+    local torsoAngle = instance.parts['torso1'].body:getAngle()
+
+    local poseCache = getPoseCache(instance)
+
+    local positionTorso = { instance.parts['torso1'].body:getPosition() }
+
+
+    -- Step 2: Remove all existing parts
+    for _, part in pairs(instance.parts) do
+        ObjectManager.destroyBody(part.body)
+    end
+    instance.parts = {}
+
+    lib.createCharacterFromExistingDNA(instance, torsoX, torsoY, torsoAngle)
+
+    applyPoseCache(instance, poseCache)
+    if positionTorso then fixDrift(positionTorso, instance) end
+end
+
+function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
+    -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
+    -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
+    --
+    local isPotato = instance.dna.creation.isPotatoHead
+    local hasNeck = instance.dna.creation.neckSegments > 0
+    local ordered = {}
+
+    local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
+    -- 1. Add Torso Segments
+    for i = 1, torsoSegments do
+        local partName = 'torso' .. i
+        table.insert(ordered, partName)
+        -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
+        if not instance.dna.parts[partName] then
+            -- Ensure template exists
+            if not instance.dna.parts['torso-segment-template'] then
+                error("Missing 'torso-segment-template' in DNA for template: " .. template)
+            end
+            instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+            -- Optional: Modify dimensions/properties of specific segments here if needed
+            -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
+            --instance.dna.parts[partName].dims.w = i * 100
+            --logger:inspect(instance.dna.parts[partName])
+            --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
+        end
+    end
+
+    if hasNeck and not isPotato then
+        for i = 1, (instance.dna.creation.neckSegments or 2) do
+            table.insert(ordered, 'neck' .. i)
+            instance.dna.parts['neck' .. i] = instance.dna.parts['neck-segment-template']
+        end
+    end
+    if not isPotato then
+        table.insert(ordered, 'head')
+    end
+    -- Common limbs
+    local limbs = {
+        'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
+        'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
+        'lear', 'rear'
+    }
+    for _, part in ipairs(limbs) do table.insert(ordered, part) end
+
+
+    for i = 1, #ordered do
+        local partName = ordered[i]
+        local partData = instance.dna.parts[partName]
+        --logger:info(partName, partData.shapeName)
+        local settings = {
+            x = x,
+            y = y,
+            bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
+            shapeType = partData.shape, -- Use shape defined in template
+            shape8URL = partData.shape8URL,
+            label = partName,           --partName,           -- Use part name as initial label
+            density = partData.density or 1,
+            radius = partData.dims.r,
+            width = partData.dims.w,
+            width2 = partData.dims.w2,
+            width3 = partData.dims.w2,
+            height = partData.dims.h,
+            height2 = partData.dims.h,
+            height3 = partData.dims.h,
+            height4 = partData.dims.h,
+
+            -- Add other physics properties if needed (friction, restitution?)
+        }
+
+        if (partData.shape8URL) then
+            if (shape8Dict[partData.shape8URL]) then
+                local raw = shape8Dict[partData.shape8URL].v
+                settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+            end
+        end
+        --logger:info('getting offset for ', partName)
+
+
+
+        makePart(partName, instance, settings)
+        if optionalTorsoAngle and partName == 'torso1' then
+            instance.parts['torso1'].body:setAngle(optionalTorsoAngle)
+        end
+    end
+    return instance
+end
+
+function lib.createCharacter(template, x, y)
     if dna[template] then
         local instance = {
             id = uuid.generateID(),
@@ -791,89 +936,9 @@ lib.createCharacter = function(template, x, y)
             -- Add other instance-specific state if needed
         }
 
-        local isPotato = instance.dna.creation.isPotatoHead
-        local hasNeck = instance.dna.creation.neckSegments > 0
-        local ordered = {}
 
-
-
-        local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
-        -- 1. Add Torso Segments
-        for i = 1, torsoSegments do
-            local partName = 'torso' .. i
-            table.insert(ordered, partName)
-            -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
-            if not instance.dna.parts[partName] then
-                -- Ensure template exists
-                if not instance.dna.parts['torso-segment-template'] then
-                    error("Missing 'torso-segment-template' in DNA for template: " .. template)
-                end
-                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
-                -- Optional: Modify dimensions/properties of specific segments here if needed
-                -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
-                instance.dna.parts[partName].dims.w = i * 100
-                --logger:inspect(instance.dna.parts[partName])
-                --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
-            end
-        end
-
-        if hasNeck and not isPotato then
-            for i = 1, (instance.dna.creation.neckSegments or 2) do
-                table.insert(ordered, 'neck' .. i)
-                instance.dna.parts['neck' .. i] = instance.dna.parts['neck-segment-template']
-            end
-        end
-        if not isPotato then
-            table.insert(ordered, 'head')
-        end
-        -- Common limbs
-        local limbs = {
-            'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
-            'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
-            'lear', 'rear'
-        }
-        for _, part in ipairs(limbs) do table.insert(ordered, part) end
-
-
-        for i = 1, #ordered do
-            local partName = ordered[i]
-            local partData = instance.dna.parts[partName]
-            --logger:info(partName, partData.shapeName)
-            local settings = {
-                x = x,
-                y = y,
-                bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
-                shapeType = partData.shape, -- Use shape defined in template
-                shape8URL = partData.shape8URL,
-                label = partName,           --partName,           -- Use part name as initial label
-                density = partData.density or 1,
-                radius = partData.dims.r,
-                width = partData.dims.w,
-                width2 = partData.dims.w2,
-                width3 = partData.dims.w2,
-                height = partData.dims.h,
-                height2 = partData.dims.h,
-                height3 = partData.dims.h,
-                height4 = partData.dims.h,
-
-                -- Add other physics properties if needed (friction, restitution?)
-            }
-
-            if (partData.shape8URL) then
-                if (shape8Dict[partData.shape8URL]) then
-                    local raw = shape8Dict[partData.shape8URL].v
-                    settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
-                end
-            end
-            --logger:info('getting offset for ', partName)
-
-
-
-            makePart(partName, instance, settings)
-        end
-        return instance
+        return lib.createCharacterFromExistingDNA(instance, x, y)
     end
 end
-
 
 return lib

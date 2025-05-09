@@ -150,6 +150,30 @@ function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, ta
     script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
+-- this is quite the fix, a bit janky, but i fixes all the issues where bodies and joints 'break' and freak out
+-- we do need some sesible expectedDitsance
+function correctJoint(joint)
+    local expectedDistance = 10
+    local bodyA, bodyB = joint:getBodies()
+    local anchorAx, anchorAy, anchorBx, anchorBy = joint:getAnchors()
+    local maxDist = 1.5 * expectedDistance -- use your rig specs
+
+    local dx, dy = anchorBx - anchorAx, anchorBy - anchorAy
+    local dist = math.sqrt(dx * dx + dy * dy)
+    if bodyB then
+        if dist > maxDist then
+            -- Optionally move B toward A
+            local fixX = anchorAx + dx * expectedDistance / dist
+            local fixY = anchorAy + dy * expectedDistance / dist
+            bodyB:setTransform(fixX, fixY, bodyB:getAngle())
+
+            -- Optional: reset velocity
+            bodyB:setLinearVelocity(0, 0)
+            bodyB:setAngularVelocity(0)
+        end
+    end
+end
+
 function love.update(dt)
     if recorder.isRecording or recorder.isReplaying then
         recorder:update(dt)
@@ -171,7 +195,10 @@ function love.update(dt)
             state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
         end
         script.call('update', scaled_dt)
-
+        local joints = state.physicsWorld:getJoints()
+        for i = 1, #joints do
+            correctJoint(joints[i])
+        end
         snap.update(scaled_dt)
     end
 
@@ -283,6 +310,12 @@ function love.keypressed(key)
         --     humanoidInstance)
         --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
         --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+    end
+    if key == 'c' then
+        local oldCreation = humanoidInstance.dna.creation
+        logger:inspect(humanoidInstance.dna.creation)
+        CharacterManager.rebuildFromCreation(humanoidInstance,
+            { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
     end
 end
 

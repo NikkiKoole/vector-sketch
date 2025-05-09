@@ -992,6 +992,7 @@ function lib.drawSelectedSFixture()
     if state.interaction.draggingObj then
         hadBeenDraggingObj = true
     end
+    if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
     local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
 

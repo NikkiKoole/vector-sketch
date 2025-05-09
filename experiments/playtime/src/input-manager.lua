@@ -289,7 +289,7 @@ local function handlePointer(x, y, id, action)
             local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
             if not wasOverUI then
                 -- removed from main!
-                if (state.selection.selectedSFixture) then
+                if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then
                     local body = state.selection.selectedSFixture:getBody()
                     local thing = body:getUserData().thing
 
