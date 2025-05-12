@@ -861,7 +861,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     if hasNeck and not isPotato then
         for i = 1, (instance.dna.creation.neckSegments or 2) do
             table.insert(ordered, 'neck' .. i)
-            instance.dna.parts['neck' .. i] = instance.dna.parts['neck-segment-template']
+            instance.dna.parts['neck' .. i] = utils.deepCopy(instance.dna.parts['neck-segment-template'])
         end
     end
     if not isPotato then

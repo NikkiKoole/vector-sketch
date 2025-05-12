@@ -321,6 +321,33 @@ function love.keypressed(key)
         --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
     end
 
+
+    if key == 'n' then
+        logger:inspect(humanoidInstance.dna.creation)
+
+        local oldCreation = humanoidInstance.dna.creation
+        logger:inspect(humanoidInstance.dna.creation)
+        CharacterManager.rebuildFromCreation(humanoidInstance,
+            { neckSegments = math.ceil(love.math.random() * 25) })
+
+        local parts = humanoidInstance.dna.creation.neckSegments
+        for i = 1, parts do
+            --local urlIndex = math.ceil(math.random() * 3)
+            -- local urls = { 'shapeA3.png', 'shapeA2.png', 'shapeA1.png' }
+            -- local url = urls[urlIndex]
+            -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
+            CharacterManager.updatePart('neck' .. i,
+                { h = 50 + love.math.random() * 220 },
+                humanoidInstance)
+        end
+        -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
+        -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
+        -- CharacterManager.updatePart('torso4', { sy = love.math.random() * 2, sx = love.math.random() * 12 },
+        --     humanoidInstance)
+        --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
+        --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+    end
+
     if key == 'l' then
         local lowerleglength = 20 + love.math.random() * 1400
         CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
