@@ -116,7 +116,7 @@ function love.load(args)
     --loadScene(cwd .. '/scripts/grow.playtime.json')
 
     --loadScriptAndScene('elasto')
-    --  sceneLoader.loadScriptAndScene('snap')
+    --sceneLoader.loadScriptAndScene('water')
     --sceneLoader.loadScriptAndScene('straight')
     local cwd = love.filesystem.getWorkingDirectory()
     sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
@@ -197,7 +197,7 @@ function love.update(dt)
         script.call('update', scaled_dt)
         local joints = state.physicsWorld:getJoints()
         for i = 1, #joints do
-            correctJoint(joints[i])
+            --correctJoint(joints[i])
         end
         snap.update(scaled_dt)
     end
@@ -302,14 +302,31 @@ function love.keypressed(key)
     script.call('onKeyPress', key)
 
     if key == 'r' then
-        CharacterManager.updatePart('torso1', { sy = love.math.random() * 2, sx = love.math.random() * 12 },
-            humanoidInstance)
+        logger:inspect(humanoidInstance.dna.creation)
+        local parts = humanoidInstance.dna.creation.torsoSegments
+        for i = 1, parts do
+            local urlIndex = math.ceil(math.random() * 3)
+            local urls = { 'shapeA3.png', 'shapeA2.png', 'shapeA1.png' }
+            local url = urls[urlIndex]
+            -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
+            CharacterManager.updatePart('torso' .. i,
+                { shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 },
+                humanoidInstance)
+        end
         -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
         -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
         -- CharacterManager.updatePart('torso4', { sy = love.math.random() * 2, sx = love.math.random() * 12 },
         --     humanoidInstance)
         --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
         --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+    end
+
+    if key == 'l' then
+        local lowerleglength = 20 + love.math.random() * 1400
+        CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
+        CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
+        CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
+        CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
     end
     if key == 'c' then
         local oldCreation = humanoidInstance.dna.creation

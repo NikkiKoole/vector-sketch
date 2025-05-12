@@ -10,19 +10,6 @@ local mathutils = require 'src.math-utils'
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
 
 
--- reproduce = 'press c press r'
--- todo :
--- 2. Don't Forget to Invalidate Custom Parts
--- When reducing torsoSegments from 4 → 1, clean up torso2, torso3, torso4 in dna.parts. You can prune:
-
--- for name in pairs(instance.dna.parts) do
---     if string.match(name, "^torso(%d+)$") then
---         local i = tonumber(string.match(name, "%d+"))
---         if i > instance.dna.creation.torsoSegments then
---             instance.dna.parts[name] = nil
---         end
---     end
--- end
 
 
 local shape8Dict = {
@@ -47,8 +34,8 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 0,
-            torsoSegments = 10
+            neckSegments = 1,
+            torsoSegments = 1
         },
         parts = {
             ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
@@ -187,7 +174,9 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
             -- Highest segment connects to arms and neck/head
             if torsoIndex == torsoSegments then
-                table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
+                if not creation.isPotatoHead then
+                    table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
+                end
                 table.insert(children, 'luarm')
                 table.insert(children, 'ruarm')
                 if creation.isPotatoHead then -- Potato ears attach to highest torso
@@ -725,12 +714,17 @@ local function updateSinglePart(partName, data, instance)
     if not partData then return end
 
     -- Apply dimension updates
+    logger:inspect(data)
     for k, v in pairs(data) do
-        --print(k, v)
-        partData.dims[k] = v
+        --logger:info(k, v)
+        if (partData.dims[k]) then
+            partData.dims[k] = v
+        elseif partData[k] then
+            partData[k] = v
+        end
     end
 
-    print(partName, instance.parts[partName])
+    print(partName, instance.parts[partName], inspect(instance.dna.creation))
     local oldBody = instance.parts[partName].body
     local oldPosX, oldPosY = oldBody:getPosition()
     local oldAngle = oldBody:getAngle()
