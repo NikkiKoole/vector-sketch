@@ -40,6 +40,7 @@ function registry.unregisterJoint(id)
     if not registry.joints[id] then
         logger:info('no s joint to unregister here', id)
     end
+    logger:info('unregistering joit ', id)
     registry.joints[id] = nil
 end
 

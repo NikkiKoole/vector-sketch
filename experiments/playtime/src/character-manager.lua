@@ -9,6 +9,16 @@ local mathutils = require 'src.math-utils'
 -- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
 
+--todo have something that understands connected-textures and texture fixtures and leaves them intact when changing bodyparts.
+
+--todo
+-- Yes, you're completely correct: destroying bodies incrementally breaks cross-body fixture consistency. The best fix is:
+
+-- Preserve all special fixtures before any body is destroyed, and resolve them globally.
+
+-- After rebuild, recreate them by resolving logical joint/body names into new physical references.
+
+-- This lets your system rebuild characters in a state-aware, safe way — and keeps your textured attachments consistent across dynamic runtime changes.
 
 
 
@@ -33,8 +43,8 @@ local shape8Dict = {
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = false,
-            neckSegments = 1,
+            isPotatoHead = true,
+            neckSegments = 10,
             torsoSegments = 1
         },
         parts = {
@@ -701,10 +711,23 @@ end
 local function safeAllExtras(body)
     -- this could hhave special type of fixtures attached, if so we want to keep them
     local fixtures = body:getFixtures()
+    print(inspect(registry.joints))
     for i = 1, #fixtures do
         local f = fixtures[i]
-        if f:getUserData() then
-            logger:inspect(f:getUserData())
+        local ud = f:getUserData()
+        if ud then
+            logger:inspect(ud)
+            if ud.extra and ud.extra.nodes then
+                for j = 1, #ud.extra.nodes do
+                    local n = ud.extra.nodes[j]
+                    print(n.id)
+                    local jo = registry.getJointByID(n.id)
+                    local a, b = jo:getBodies()
+
+                    logger:inspect(a:getUserData())
+                    logger:inspect(b:getUserData())
+                end
+            end
         end
     end
 end
@@ -714,7 +737,7 @@ local function updateSinglePart(partName, data, instance)
     if not partData then return end
 
     -- Apply dimension updates
-    logger:inspect(data)
+    -- logger:inspect(data)
     for k, v in pairs(data) do
         --logger:info(k, v)
         if (partData.dims[k]) then
@@ -724,7 +747,7 @@ local function updateSinglePart(partName, data, instance)
         end
     end
 
-    print(partName, instance.parts[partName], inspect(instance.dna.creation))
+    -- print(partName, instance.parts[partName], inspect(instance.dna.creation))
     local oldBody = instance.parts[partName].body
     local oldPosX, oldPosY = oldBody:getPosition()
     local oldAngle = oldBody:getAngle()

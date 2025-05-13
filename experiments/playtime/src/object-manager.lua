@@ -438,6 +438,7 @@ function lib.destroyBody(body)
     for i = 1, #bjoints do
         local ud = bjoints[i]:getUserData()
         if ud and ud.id then
+            logger:trace(ud.id)
             registry.unregisterJoint(ud.id)
             bjoints[i]:destroy()
         end

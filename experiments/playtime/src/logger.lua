@@ -25,6 +25,12 @@ function Logger:_log(level, ...)
 end
 
 -- Specific level methods
+--
+--
+function Logger:trace(...)
+    self:_log("TRACE", debug.traceback(), ...)
+end
+
 function Logger:info(...)
     self:_log("INFO", ...)
 end
