@@ -859,7 +859,7 @@ function lib.addTextureFixturesFromInstance(instance)
         local it = instance.textures[i]
         if it.type == 'sfixture' then
             if it.label == 'connected-texture' then
-                print('got some stuff todo')
+                --print('got some stuff todo')
                 local body = instance.parts[it.attachTo].body
 
                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
@@ -867,7 +867,11 @@ function lib.addTextureFixturesFromInstance(instance)
                 for fi = #allFixtures, 1, -1 do -- backwards to safely remove
                     local f = allFixtures[fi]
                     local ud = f:getUserData()
-                    if ud and ud.label == 'connected-texture' then
+                    --  if ud then
+                    --     logger:info(ud.label == 'connected-texture', ud.extra.OMP == it.OMP)
+                    -- end
+                    if ud and ud.label == 'connected-texture' and ud.extra.OMP == it.OMP then
+                        -- logger:info('destroying fixture')
                         fixtures.destroyFixture(f)
                     end
                 end
@@ -879,6 +883,7 @@ function lib.addTextureFixturesFromInstance(instance)
                     OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
                     dirty = true,                   -- because the rendered needs to pick this up.
                     main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
+                    zOffset = it.zOffset or 0,
                     nodes = {
 
                     }
@@ -887,7 +892,7 @@ function lib.addTextureFixturesFromInstance(instance)
                 for j = 1, #it.jointLabels do
                     local jointID = it.jointLabels[j]
                     ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
-                    print(instance.joints[jointID])
+                    --print(instance.joints[jointID])
                 end
             end
         end
@@ -902,14 +907,16 @@ local function randomHexColor()
 
     return string.format("%02X%02X%02X%02X", r, g, b, a)
 end
+
 function defaultSetupTextures(instance)
     table.insert(instance.textures, {
         label = 'connected-texture',
         type = 'sfixture',
         OMP = true,
+        group = 'leftLegSkin',
         main = {
-            bgURL = 'leg1.png',
-            fgURL = 'leg1-mask.png',
+            bgURL = 'line.png',
+            fgURL = 'line1-mask.png',
             pURL = '',
             bgHex = randomHexColor(),
             fgHex = randomHexColor(),
@@ -921,7 +928,24 @@ function defaultSetupTextures(instance)
     table.insert(instance.textures, {
         label = 'connected-texture',
         type = 'sfixture',
+        OMP = false,
+        zOffset = 40,
+        group = 'leftLegHair',
+        main = {
+            bgURL = 'hair10.png',
+            fgURL = '',
+            pURL = '',
+            bgHex = '000000ff',
+
+        },
+        jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
+        attachTo = 'luleg',
+    })
+    table.insert(instance.textures, {
+        label = 'connected-texture',
+        type = 'sfixture',
         OMP = true,
+        group = 'rightLegSkin',
         main = {
             bgURL = 'leg1.png',
             fgURL = 'leg1-mask.png',
@@ -933,6 +957,32 @@ function defaultSetupTextures(instance)
         jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
         attachTo = 'ruleg',
     })
+    table.insert(instance.textures, {
+        label = 'connected-texture',
+        type = 'sfixture',
+        OMP = false,
+        zOffset = 40,
+        group = 'rightLegHair',
+        main = {
+            bgURL = 'hair10.png',
+            fgURL = '',
+            pURL = '',
+            bgHex = '000000ff',
+
+        },
+        jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
+        attachTo = 'ruleg',
+    })
+end
+
+function lib.updateTextureGroupValue(instance, group, key, value)
+    for i = 1, #instance.textures do
+        local t = instance.textures[i]
+        if t.group == group and t.main then
+            t.main[key] = value
+            logger:info('setting', key, value)
+        end
+    end
 end
 
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)

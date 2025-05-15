@@ -273,6 +273,7 @@ local function handlePointer(x, y, id, action)
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
+            -- todo this line below can be erroring, i ve had it happen when dragging a chacter nd pressing N
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)

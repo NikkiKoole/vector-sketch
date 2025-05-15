@@ -295,6 +295,14 @@ function love.textinput(t)
     ui.handleTextInput(t)
 end
 
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
 function love.keypressed(key)
     ui.handleKeyPress(key)
     InputManager.handleKeyPressed(key)
@@ -350,9 +358,15 @@ function love.keypressed(key)
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
         if key == 'c' then
-            local oldCreation = humanoidInstance.dna.creation
-            CharacterManager.rebuildFromCreation(humanoidInstance,
-                { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
+            local bgColor = '000000ff'
+            local fgColor = randomHexColor()
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'bgHex', bgColor)
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'fgHex', fgColor)
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'fgHex', fgColor)
+            -- local oldCreation = humanoidInstance.dna.creation
+            -- CharacterManager.rebuildFromCreation(humanoidInstance,
+            --     { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
 
 
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
