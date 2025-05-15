@@ -130,7 +130,6 @@ function love.load(args)
 
     --CharacterManager.updateSinglePart('luleg', { h = 300 }, humanoidInstance)
     --CharacterManager.updateSinglePart('ruleg', { h = 300 }, humanoidInstance)
-
     -- logger:inspect(humanoidInstance.dna)
 end
 
@@ -312,6 +311,7 @@ function love.keypressed(key)
                 CharacterManager.updatePart('torso' .. i,
                     { shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 },
                     humanoidInstance)
+                CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
             end
             -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
             -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
@@ -337,19 +337,25 @@ function love.keypressed(key)
                         humanoidInstance)
                 end
             end
+            CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
 
         if key == 'l' then
             local lowerleglength = 20 + love.math.random() * 1400
             CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
-            -- CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
-            -- CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
-            -- CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
+            CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
+            CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
+            CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
+
+            CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
         if key == 'c' then
             local oldCreation = humanoidInstance.dna.creation
             CharacterManager.rebuildFromCreation(humanoidInstance,
                 { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
+
+
+            CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
     end
 end

@@ -5,6 +5,7 @@ local Joints = require 'src.joints'
 local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
+local fixtures = require 'src.fixtures'
 
 -- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
@@ -634,6 +635,10 @@ local function makePart(partName, instance, settings)
                 offsetA = { x = 0, y = 0 },
                 offsetB = { x = 0, y = 0 },
             }
+            --logger:info('joint:', parent, partName)
+            -- todo we dont really need this yet...
+            instance.joints[parent .. '->' .. partName] = jointCreationData.id
+
             local offX, offY = getOffsetFromParent(partName, instance)
             jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
             jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
@@ -708,29 +713,7 @@ local function fixDrift(positionTorso, instance)
 end
 
 
-local function safeAllExtras(body)
-    -- this could hhave special type of fixtures attached, if so we want to keep them
-    local fixtures = body:getFixtures()
-    print(inspect(registry.joints))
-    for i = 1, #fixtures do
-        local f = fixtures[i]
-        local ud = f:getUserData()
-        if ud then
-            logger:inspect(ud)
-            if ud.extra and ud.extra.nodes then
-                for j = 1, #ud.extra.nodes do
-                    local n = ud.extra.nodes[j]
-                    print(n.id)
-                    local jo = registry.getJointByID(n.id)
-                    local a, b = jo:getBodies()
 
-                    logger:inspect(a:getUserData())
-                    logger:inspect(b:getUserData())
-                end
-            end
-        end
-    end
-end
 
 local function updateSinglePart(partName, data, instance)
     local partData = instance.dna.parts[partName]
@@ -757,7 +740,7 @@ local function updateSinglePart(partName, data, instance)
     local extras = {}
     if instance.parts[partName] then
         local body = instance.parts[partName].body
-        extras = safeAllExtras(body)
+        --extras = safeAllExtras(body)
         ObjectManager.destroyBody(body)
         instance.parts[partName] = nil
     end
@@ -806,8 +789,20 @@ local function updateSinglePart(partName, data, instance)
     end
 end
 
+function preserveAllSpecialFixtures(instance)
+    logger:info('preserve')
+    -- logger:inspect(instance)
+    -- we might have a couple of special fixtures, what do we have to know about each?
+    -- snap, anchor, texturefixture, connectedtexture
+end
+
+function restoreAllSpecialFixtures()
+    logger:info('restore')
+end
+
 -- update part
 function lib.updatePart(partName, data, instance)
+    --  preserveAllSpecialFixtures(instance)
     local positionTorso = nil
     local oldAngle = 0
     if partName == 'torso1' then
@@ -821,13 +816,15 @@ function lib.updatePart(partName, data, instance)
     updateSinglePart(partName, data, instance)
 
     applyPoseCache(instance, poseCache)
-
+    --addTextufeFixturesFromInstance(instance)
     if positionTorso then fixDrift(positionTorso, instance) end
+    -- restoreAllSpecialFixtures()
 end
 
 -- given an instance with dna and a new creation, this function is made to change a creation of a humanoid during runtime.
 -- its alos used by initially creating a character.
 function lib.rebuildFromCreation(instance, newCreation)
+    preserveAllSpecialFixtures()
     -- Step 1: Update the creation settings
     for k, v in pairs(newCreation) do
         instance.dna.creation[k] = v
@@ -845,12 +842,97 @@ function lib.rebuildFromCreation(instance, newCreation)
     for _, part in pairs(instance.parts) do
         ObjectManager.destroyBody(part.body)
     end
+
     instance.parts = {}
+    instance.joints = {}
+    instance.textures = {}
 
     lib.createCharacterFromExistingDNA(instance, torsoX, torsoY, torsoAngle)
 
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
+    restoreAllSpecialFixtures()
+end
+
+function lib.addTextureFixturesFromInstance(instance)
+    for i = 1, #instance.textures do
+        local it = instance.textures[i]
+        if it.type == 'sfixture' then
+            if it.label == 'connected-texture' then
+                print('got some stuff todo')
+                local body = instance.parts[it.attachTo].body
+
+                -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
+                local allFixtures = body:getFixtures()
+                for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+                    local f = allFixtures[fi]
+                    local ud = f:getUserData()
+                    if ud and ud.label == 'connected-texture' then
+                        fixtures.destroyFixture(f)
+                    end
+                end
+
+
+                local fixture = fixtures.createSFixture(body, 0, 0, { label = 'connected-texture', radius = 30 })
+                local ud = fixture:getUserData()
+                ud.extra = {
+                    OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
+                    dirty = true,                   -- because the rendered needs to pick this up.
+                    main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
+                    nodes = {
+
+                    }
+
+                }
+                for j = 1, #it.jointLabels do
+                    local jointID = it.jointLabels[j]
+                    ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+                    print(instance.joints[jointID])
+                end
+            end
+        end
+    end
+end
+
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
+function defaultSetupTextures(instance)
+    table.insert(instance.textures, {
+        label = 'connected-texture',
+        type = 'sfixture',
+        OMP = true,
+        main = {
+            bgURL = 'leg1.png',
+            fgURL = 'leg1-mask.png',
+            pURL = '',
+            bgHex = randomHexColor(),
+            fgHex = randomHexColor(),
+            pHex = randomHexColor()
+        },
+        jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
+        attachTo = 'luleg',
+    })
+    table.insert(instance.textures, {
+        label = 'connected-texture',
+        type = 'sfixture',
+        OMP = true,
+        main = {
+            bgURL = 'leg1.png',
+            fgURL = 'leg1-mask.png',
+            pURL = '',
+            bgHex = randomHexColor(),
+            fgHex = randomHexColor(),
+            pHex = randomHexColor()
+        },
+        jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
+        attachTo = 'ruleg',
+    })
 end
 
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
@@ -938,6 +1020,12 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             instance.parts['torso1'].body:setAngle(optionalTorsoAngle)
         end
     end
+
+
+    -- here we will build up the sfixtures we need.
+
+    defaultSetupTextures(instance)
+    lib.addTextureFixturesFromInstance(instance)
     return instance
 end
 
@@ -948,10 +1036,13 @@ function lib.createCharacter(template, x, y)
             templateName = template,
             dna = utils.deepCopy(dna[template]), -- Copy template data for potential instance modification
             parts = {},                          -- { [partName] = thingObject, ... }
-            joints = {},                         -- { [connectionName] = jointObject, ... }
-            appearanceValues = {},               -- Will hold visual overrides (implement later)
+            joints = {},                         -- unused...{ [connectionName] = jointObject, ... }
+            --appearanceValues = {},               -- Will hold visual overrides (implement later)
             -- Add other instance-specific state if needed
+            textures = {},   -- here we will keep the data about what texture will go where (simple textures and connected textures)
+            positioners = {} -- here we will have some lerp values describing how things are positioned..
         }
+
 
 
         return lib.createCharacterFromExistingDNA(instance, x, y)
