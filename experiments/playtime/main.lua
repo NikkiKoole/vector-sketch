@@ -234,8 +234,6 @@ function love.draw()
     editorRenderer.renderActiveEditorThings()
     cam:pop()
 
-
-
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
 
@@ -313,12 +311,18 @@ function love.keypressed(key)
             local parts = humanoidInstance.dna.creation.torsoSegments
             for i = 1, parts do
                 local urlIndex = math.ceil(math.random() * 3)
-                local urls = { 'shapeA3.png', 'shapeA2.png', 'shapeA1.png' }
+                local urls = { 'shapeA3', 'shapeA2', 'shapeA1' }
                 local url = urls[urlIndex]
                 -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
                 CharacterManager.updatePart('torso' .. i,
-                    { shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 },
+                    { shape8URL = url .. '.png', sy = love.math.random() * 2, sx = love.math.random() * 12 },
                     humanoidInstance)
+
+                print(url)
+                CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
+                CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
+                CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
+                    url .. '.png')
                 CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
             end
             -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
@@ -360,10 +364,14 @@ function love.keypressed(key)
         if key == 'c' then
             local bgColor = '000000ff'
             local fgColor = randomHexColor()
+            local pColor = randomHexColor()
             CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'bgHex', bgColor)
-            CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
             CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'fgHex', fgColor)
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'pHex', pColor)
+
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
             CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'fgHex', fgColor)
+            CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'pHex', pColor)
             -- local oldCreation = humanoidInstance.dna.creation
             -- CharacterManager.rebuildFromCreation(humanoidInstance,
             --     { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })

@@ -7,20 +7,17 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 
+
+
+-- todo,
+-- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
+-- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
+-- next the chesthair
+
+
+
 -- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
 -- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
-
---todo have something that understands connected-textures and texture fixtures and leaves them intact when changing bodyparts.
-
---todo
--- Yes, you're completely correct: destroying bodies incrementally breaks cross-body fixture consistency. The best fix is:
-
--- Preserve all special fixtures before any body is destroyed, and resolve them globally.
-
--- After rebuild, recreate them by resolving logical joint/body names into new physical references.
-
--- This lets your system rebuild characters in a state-aware, safe way — and keeps your textured attachments consistent across dynamic runtime changes.
-
 
 
 local shape8Dict = {
@@ -73,6 +70,136 @@ local dna = {
         },
     }
 }
+
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
+
+function defaultSetupTextures(instance)
+    -- take note: right leg has flippedX.
+
+    table.insert(instance.textures, {
+        label = 'texfixture',
+        type = 'sfixture',
+        OMP = true,
+        group = 'torso1Skin',
+        main = {
+            bgURL = 'shapeA3.png',
+            fgURL = 'shapeA3-mask.png',
+            pURL = '',
+            bgHex = '000000ff',
+            fgHex = randomHexColor(),
+            pHex = randomHexColor()
+        },
+        attachTo = 'torso1',
+    })
+    table.insert(instance.textures, {
+        label = 'texfixture',
+        type = 'sfixture',
+        OMP = false,
+        group = 'torso1Hair',
+        followShape8 = 'shapeA3.png',
+        main = {
+            bgURL = 'borsthaar3.png',
+            fgURL = '',
+            pURL = '',
+            bgHex = '000000ff',
+            fgHex = randomHexColor(),
+            pHex = randomHexColor()
+        },
+        attachTo = 'torso1',
+    })
+    if true then
+        table.insert(instance.textures, {
+            label = 'connected-texture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'leftLegSkin',
+            main = {
+                bgURL = 'leg5.png',
+                fgURL = 'leg5-mask.png',
+                pURL = '',
+                bgHex = '000000ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor()
+            },
+            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
+            attachTo = 'luleg',
+        })
+        table.insert(instance.textures, {
+            label = 'connected-texture',
+            type = 'sfixture',
+            OMP = false,
+            zOffset = 40,
+            group = 'leftLegHair',
+            main = {
+                bgURL = 'hair10.png',
+                fgURL = '',
+                pURL = '',
+                bgHex = '000000ff',
+
+            },
+            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
+            attachTo = 'luleg',
+        })
+        table.insert(instance.textures, {
+            label = 'connected-texture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'rightLegSkin',
+            main = {
+                bgURL = 'leg5.png',
+                fgURL = 'leg5-mask.png',
+                pURL = '',
+                bgHex = '000000ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor(),
+                fx = -1
+            },
+            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
+            attachTo = 'ruleg',
+        })
+        table.insert(instance.textures, {
+            label = 'connected-texture',
+            type = 'sfixture',
+            OMP = false,
+            zOffset = 40,
+            group = 'rightLegHair',
+            main = {
+                bgURL = 'hair10.png',
+                fgURL = '',
+                pURL = '',
+                bgHex = '000000ff',
+                fx = -1
+
+            },
+            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
+            attachTo = 'ruleg',
+        })
+    end
+end
+
+-- copy pasted form playtime-ui.lua
+local function getCenterAndDimensions(body)
+    local ud = body:getUserData()
+    local cx, cy, w, h
+    if ud.thing.vertices then
+        local verts = ud.thing.vertices
+        cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+    else -- this is a circle shape..
+        cx, cy = body:getPosition()
+
+        w, h = ud.thing.radius * 2, ud.thing.radius * 2
+    end
+    return cx, cy, w, h
+end
+
+
 local function makeTransformedVertices(vertices, scaleX, scaleY)
     -- Initialize result array
     local transformedVertices = {}
@@ -855,27 +982,63 @@ function lib.rebuildFromCreation(instance, newCreation)
 end
 
 function lib.addTextureFixturesFromInstance(instance)
+    function removeSimilarFixture(body, it)
+        local allFixtures = body:getFixtures()
+        for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+            local f = allFixtures[fi]
+            local ud = f:getUserData()
+            --  logger:inspect(ud)
+            if ud and ud.label == it.label and ud.extra.OMP == it.OMP then
+                -- logger:info('destroying fixture')
+                fixtures.destroyFixture(f)
+            end
+        end
+    end
+
     for i = 1, #instance.textures do
         local it = instance.textures[i]
         if it.type == 'sfixture' then
+            if it.label == 'texfixture' then
+                local body = instance.parts[it.attachTo].body
+                removeSimilarFixture(body, it)
+                print("body angle at texture creation:", body:getAngle())
+                local cx, cy, w, h = getCenterAndDimensions(body)
+                -- local localX, localY = body:getLocalPoint(wx, wy)
+                local fixture = fixtures.createSFixture(body, 0, 0,
+                    { label = 'texfixture', width = w * 1.2, height = h * 1.2 })
+                local ud = fixture:getUserData()
+                ud.extra.OMP = it.OMP
+                ud.extra.dirty = true
+                ud.extra.main = utils.deepCopy(it.main)
+                ud.extra.zOffset = it.zOffset or 0
+
+                if it.followShape8 then
+                    ud.extra.followShape8 = it.followShape8
+                    logger:inspect(ud.extra)
+                    local raw = shape8Dict[it.followShape8].v
+                    local partData = instance.dna.parts[it.attachTo]
+                    local growfactor = 1.5
+                    local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
+                        (partData.dims.sy or 1) * growfactor)
+
+
+                    ud.extra.vertices = vertices
+                    ud.extra.vertexCount = #vertices / 2
+                    logger:info('found a follo8')
+                    logger:inspect(ud.extra)
+                end
+                -- followShape8 = 'shapeA3.png',
+
+
+                --logger:info('texgisture to add:')
+            end
+
             if it.label == 'connected-texture' then
                 --print('got some stuff todo')
                 local body = instance.parts[it.attachTo].body
 
                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
-                local allFixtures = body:getFixtures()
-                for fi = #allFixtures, 1, -1 do -- backwards to safely remove
-                    local f = allFixtures[fi]
-                    local ud = f:getUserData()
-                    --  if ud then
-                    --     logger:info(ud.label == 'connected-texture', ud.extra.OMP == it.OMP)
-                    -- end
-                    if ud and ud.label == 'connected-texture' and ud.extra.OMP == it.OMP then
-                        -- logger:info('destroying fixture')
-                        fixtures.destroyFixture(f)
-                    end
-                end
-
+                removeSimilarFixture(body, it)
 
                 local fixture = fixtures.createSFixture(body, 0, 0, { label = 'connected-texture', radius = 30 })
                 local ud = fixture:getUserData()
@@ -899,87 +1062,21 @@ function lib.addTextureFixturesFromInstance(instance)
     end
 end
 
-local function randomHexColor()
-    local r = math.random(0, 255)
-    local g = math.random(0, 255)
-    local b = math.random(0, 255)
-    local a = 255 -- fully opaque, or adjust if you want random alpha
-
-    return string.format("%02X%02X%02X%02X", r, g, b, a)
-end
-
-function defaultSetupTextures(instance)
-    table.insert(instance.textures, {
-        label = 'connected-texture',
-        type = 'sfixture',
-        OMP = true,
-        group = 'leftLegSkin',
-        main = {
-            bgURL = 'line.png',
-            fgURL = 'line1-mask.png',
-            pURL = '',
-            bgHex = randomHexColor(),
-            fgHex = randomHexColor(),
-            pHex = randomHexColor()
-        },
-        jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
-        attachTo = 'luleg',
-    })
-    table.insert(instance.textures, {
-        label = 'connected-texture',
-        type = 'sfixture',
-        OMP = false,
-        zOffset = 40,
-        group = 'leftLegHair',
-        main = {
-            bgURL = 'hair10.png',
-            fgURL = '',
-            pURL = '',
-            bgHex = '000000ff',
-
-        },
-        jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
-        attachTo = 'luleg',
-    })
-    table.insert(instance.textures, {
-        label = 'connected-texture',
-        type = 'sfixture',
-        OMP = true,
-        group = 'rightLegSkin',
-        main = {
-            bgURL = 'leg1.png',
-            fgURL = 'leg1-mask.png',
-            pURL = '',
-            bgHex = randomHexColor(),
-            fgHex = randomHexColor(),
-            pHex = randomHexColor()
-        },
-        jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
-        attachTo = 'ruleg',
-    })
-    table.insert(instance.textures, {
-        label = 'connected-texture',
-        type = 'sfixture',
-        OMP = false,
-        zOffset = 40,
-        group = 'rightLegHair',
-        main = {
-            bgURL = 'hair10.png',
-            fgURL = '',
-            pURL = '',
-            bgHex = '000000ff',
-
-        },
-        jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
-        attachTo = 'ruleg',
-    })
-end
-
 function lib.updateTextureGroupValue(instance, group, key, value)
     for i = 1, #instance.textures do
         local t = instance.textures[i]
         if t.group == group and t.main then
             t.main[key] = value
+            logger:info('setting', key, value)
+        end
+    end
+end
+
+function lib.updateTextureGroupValueInRoot(instance, group, key, value)
+    for i = 1, #instance.textures do
+        local t = instance.textures[i]
+        if t.group == group then
+            t[key] = value
             logger:info('setting', key, value)
         end
     end

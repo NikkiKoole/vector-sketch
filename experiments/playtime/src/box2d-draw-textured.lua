@@ -498,7 +498,7 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
     end
 end
 
-local function doubleControlPoints(points)
+local function doubleControlPoints(points, duplications)
     local result = {}
 
     -- Sanity check: must be even number of values
@@ -517,8 +517,10 @@ local function doubleControlPoints(points)
 
         -- Double the point if it's a *middle* point (not first or last)
         if i > 1 and i < numPoints then
-            table.insert(result, x)
-            table.insert(result, y)
+            for j = 1, duplications do
+                table.insert(result, x)
+                table.insert(result, y)
+            end
         end
     end
 
@@ -573,7 +575,20 @@ function lib.drawTexturedWorld(world)
                     end
                 end
                 if #points >= 6 then
-                    points = doubleControlPoints(points)
+                    -- todo here we might want to grow the curve... so it will stick a little bit from the sides
+                    local function growLine(p1, p2, length)
+                        local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
+                        local new_x = p1[1] + length * math.cos(angle)
+                        local new_y = p1[2] + length * math.sin(angle)
+                        return new_x, new_y
+                    end
+                    local growLength = 0
+                    points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
+                    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+
+
+                    points = doubleControlPoints(points, 2)
+
 
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     --print(inspect(ud.extra))
@@ -697,6 +712,40 @@ function lib.drawTexturedWorld(world)
                 --end
             end
         end
+
+
+        -- local function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, dir, wmultiplier)
+        --     local ax, ay = box2dGuy[p1]:getPosition()
+        --     local bx, by = box2dGuy[p2]:getPosition()
+        --     local cx, cy = box2dGuy[p3]:getPosition()
+
+        --     ax, ay = growLine({ ax, ay }, { bx, by }, growLength)
+        --     cx, cy = growLine({ cx, cy }, { bx, by }, growLength)
+
+        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+
+        --     if (dir ~= nil or wmultiplier ~= nil) then
+        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
+        --     else
+        --         texturedCurve(curve, canvas, mesh)
+        --     end
+        -- end
+
+        -- local function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
+        --     local ax, ay = box2dGuy[p1]:getPosition()
+        --     local bx, by = box2dGuy[p2]:getPosition()
+        --     local cx, cy = box2dGuy[p3]:getPosition()
+        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+
+        --     if (dir ~= nil or wmultiplier ~= nil) then
+        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
+        --     else
+        --         texturedCurve(curve, canvas, mesh)
+        --     end
+        -- end
+
+
+
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
             local extra = drawables[i].extra

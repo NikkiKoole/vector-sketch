@@ -465,7 +465,12 @@ function lib.gatherSaveData(world, camera)
                     else
                         local ud = fixture:getUserData()
                         if ud.extra and ud.extra.type == 'texfixture' then
+                            ud.extra.dirty = true
                             if ud.extra.ompImage then ud.extra.ompImage = nil end
+                        end
+                        if ud.extra and ud.extra.ompImage then
+                            ud.extra.dirty = true
+                            ud.extra.ompImage = nil
                         end
                         fixtureData.userData = utils.deepCopy(ud)
                     end
@@ -597,7 +602,7 @@ end
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON
     local saveData = lib.gatherSaveData(world, camera)
-    --logger:debug(inspect(saveData))
+    logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file

@@ -182,6 +182,7 @@ function lib.createSFixture(body, localX, localY, cfg)
         return fixture
     end
     if (cfg.label == 'texfixture') then
+        logger:info('well hello!')
         local vertexCount = 4
         --
         local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or

@@ -33,6 +33,7 @@ local colorpickers = {
     bg = false
 }
 
+-- todo move this somewhere sensible , i also need it in character manager
 local function getCenterAndDimensions(body)
     local ud = body:getUserData()
     local cx, cy, w, h
@@ -1269,7 +1270,7 @@ function lib.drawSelectedSFixture()
                     end
                 end
 
-                if ui.button(x + 220, y, 40, oldTexFixUD.extra.vertexCount) then
+                if ui.button(x + 220, y, 40, oldTexFixUD.extra.vertexCount or '') then
                     if oldTexFixUD.extra.vertexCount == 4 then
                         oldTexFixUD.extra.vertexCount = 8
                     elseif oldTexFixUD.extra.vertexCount == 8 then
