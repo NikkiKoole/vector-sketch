@@ -12,7 +12,7 @@ local fixtures = require 'src.fixtures'
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
--- next the chesthair
+-- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
 
 
 
@@ -61,10 +61,16 @@ local dna = {
             ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lfoot'] = { dims = { w = 80, h = 150, sx = .1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150, sx = -.1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
+            -- ['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- TODo same kind of weirdness for the hands!
+            --   ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --  ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
             ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
@@ -442,23 +448,50 @@ local function getOwnOffset(partName, guy)
     if partName == 'llleg' then
         return 0, parts.llleg.dims.h / 2
     end
-    if partName == 'lfoot' then
-        return 0, parts.lfoot.dims.h / 2
+    if partName == 'lfoot' or partName == 'rfoot' then
+        -- return 0, parts.lfoot.dims.h / 2
+
+
+        local part = parts[partName]
+        if part.shape == 'shape8' then
+            local raw = shape8Dict[part.shape8URL].v
+
+            local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
+            --logger:info(part.dims.sx, part.dims.sy)
+            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
+
+            -- todo like the grow offsets this too should be parametrized
+            local footOffset = -100
+            return vertices[(index * 2) - 1], -vertices[(index * 2)] + footOffset
+        else
+            return 0, part.dims.h / 2
+        end
     end
     if partName == 'rlleg' then
         return 0, parts.rlleg.dims.h / 2
     end
-    if partName == 'rfoot' then
-        return 0, parts.rfoot.dims.h / 2
-    end
+    -- if partName == 'rfoot' then
+    --     return 0, parts.rfoot.dims.h / 2
+    -- end
     if partName == 'luarm' then
         return 0, parts.luarm.dims.h / 2
     end
     if partName == 'ruarm' then
         return 0, parts.ruarm.dims.h / 2
     end
-    if partName == 'rhand' then
-        return 0, parts.rhand.dims.h / 2
+    if partName == 'rhand' or partName == 'lhand' then
+        --return 0, parts.rhand.dims.h / 2
+        local part = parts[partName]
+        if part.shape == 'shape8' then
+            local raw = shape8Dict[part.shape8URL].v
+
+            local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
+            --logger:info(part.dims.sx, part.dims.sy)
+            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
+            return vertices[(index * 2) - 1], -vertices[(index * 2)]
+        else
+            return 0, part.dims.h / 2
+        end
     end
     if partName == 'llarm' then
         return 0, parts.llarm.dims.h / 2
@@ -466,9 +499,9 @@ local function getOwnOffset(partName, guy)
     if partName == 'rlarm' then
         return 0, parts.rlarm.dims.h / 2
     end
-    if partName == 'lhand' then
-        return 0, parts.lhand.dims.h / 2
-    end
+    --if partName == 'lhand' then
+    --    return 0, parts.lhand.dims.h / 2
+    --end
     return 0, 0
 end
 

@@ -793,7 +793,7 @@ function lib.cloneSelection(selectedBodies, world)
                             local oldRef = originalJoint:getReferenceAngle()
                             local newJoint = jointslib.createJoint(newJointData)
                             local newRef = originalJoint:getReferenceAngle()
-                            logger:info(oldRef, newRef)
+                            --  logger:info(oldRef, newRef)
                             newJoint:setLimits(lower, upper)
                             --newJoint:setUpperLimit(upper)
                             --newJoint:setLowerLimit(lower)
@@ -817,7 +817,7 @@ function lib.cloneSelection(selectedBodies, world)
     end
 
     -- at this point everything that is cloned is added into the world
-    logger:inspect(idMapping)
+    -- logger:inspect(idMapping)
     -- now we need to figure out if i have any of the connected-texture fixtures with ids in their userdata that needs updating
     for k, v in pairs(clonedBodiesMap) do
         local fixtures = v.body:getFixtures()

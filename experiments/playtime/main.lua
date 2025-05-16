@@ -372,9 +372,9 @@ function love.keypressed(key)
             CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
             CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'fgHex', fgColor)
             CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'pHex', pColor)
-            -- local oldCreation = humanoidInstance.dna.creation
-            -- CharacterManager.rebuildFromCreation(humanoidInstance,
-            --     { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
+            local oldCreation = humanoidInstance.dna.creation
+            CharacterManager.rebuildFromCreation(humanoidInstance,
+                { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
 
             logger:info(fgColor, pColor)
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
