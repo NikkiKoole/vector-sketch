@@ -376,7 +376,7 @@ function love.keypressed(key)
             -- CharacterManager.rebuildFromCreation(humanoidInstance,
             --     { isPotatoHead = not oldCreation.isPotatoHead, torsoSegments = math.ceil(love.math.random() * 5) })
 
-
+            logger:info(fgColor, pColor)
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
     end

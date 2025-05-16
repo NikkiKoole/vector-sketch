@@ -221,6 +221,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             if texture2 then
                 maskShader:send('fill', texture2)
             end
+
             maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
             maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
             maskShader:send('uvTranslation', { dx, dy })
@@ -233,27 +234,28 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-        if patches then
-            for i = 1, #patches do
-                local patch = patches[i]
-                if patch and patch.img then
-                    love.graphics.setColorMask(true, true, true, false)
-                    local r, g, b, a = lib.hexToColor(patch.tint)
-                    love.graphics.setColor(r, g, b, a)
-                    local image = patch.img
-                    local imgw, imgh = image:getDimensions()
-                    local xOffset = (patch.tx or 0) * (imgw) * shrinkFactor
-                    local yOffset = (patch.ty or 0) * (imgh) * shrinkFactor
-                    love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset,
-                        (patch.r or 0) * ((math.pi * 2) / 16),
-                        (patch.sx or 1) * shrinkFactor,
-                        (patch.sy or 1) * shrinkFactor,
-                        imgw / 2, imgh / 2)
-                    love.graphics.setColorMask(true, true, true, true)
+        if false then
+            if patches then
+                for i = 1, #patches do
+                    local patch = patches[i]
+                    if patch and patch.img then
+                        love.graphics.setColorMask(true, true, true, false)
+                        local r, g, b, a = lib.hexToColor(patch.tint)
+                        love.graphics.setColor(r, g, b, a)
+                        local image = patch.img
+                        local imgw, imgh = image:getDimensions()
+                        local xOffset = (patch.tx or 0) * (imgw) * shrinkFactor
+                        local yOffset = (patch.ty or 0) * (imgh) * shrinkFactor
+                        love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset,
+                            (patch.r or 0) * ((math.pi * 2) / 16),
+                            (patch.sx or 1) * shrinkFactor,
+                            (patch.sy or 1) * shrinkFactor,
+                            imgw / 2, imgh / 2)
+                        love.graphics.setColorMask(true, true, true, true)
+                    end
                 end
             end
         end
-
 
 
 
@@ -774,7 +776,9 @@ function lib.drawTexturedWorld(world)
             if extra.OMP then
                 local img = extra.ompImage
                 local mesh = createTexturedTriangleStrip(img)
+
                 texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.draw(mesh)
             end
         end

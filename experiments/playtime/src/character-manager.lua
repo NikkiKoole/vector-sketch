@@ -41,12 +41,12 @@ local shape8Dict = {
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = true,
-            neckSegments = 10,
+            isPotatoHead = false,
+            neckSegments = 0,
             torsoSegments = 1
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
@@ -82,38 +82,40 @@ end
 
 function defaultSetupTextures(instance)
     -- take note: right leg has flippedX.
-
-    table.insert(instance.textures, {
-        label = 'texfixture',
-        type = 'sfixture',
-        OMP = true,
-        group = 'torso1Skin',
-        main = {
-            bgURL = 'shapeA3.png',
-            fgURL = 'shapeA3-mask.png',
-            pURL = '',
-            bgHex = '000000ff',
-            fgHex = randomHexColor(),
-            pHex = randomHexColor()
-        },
-        attachTo = 'torso1',
-    })
-    table.insert(instance.textures, {
-        label = 'texfixture',
-        type = 'sfixture',
-        OMP = false,
-        group = 'torso1Hair',
-        followShape8 = 'shapeA3.png',
-        main = {
-            bgURL = 'borsthaar3.png',
-            fgURL = '',
-            pURL = '',
-            bgHex = '000000ff',
-            fgHex = randomHexColor(),
-            pHex = randomHexColor()
-        },
-        attachTo = 'torso1',
-    })
+    if true then
+        table.insert(instance.textures, {
+            label = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'torso1Skin',
+            main = {
+                bgURL = 'shapeA3.png',
+                fgURL = 'shapeA3-mask.png',
+                pURL = '',
+                bgHex = '020202ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor()
+            },
+            attachTo = 'torso1',
+        })
+        table.insert(instance.textures, {
+            label = 'texfixture',
+            type = 'sfixture',
+            OMP = false,
+            group = 'torso1Hair',
+            zOffset = 40,
+            followShape8 = 'shapeA3.png',
+            main = {
+                bgURL = 'borsthaar3.png',
+                fgURL = '',
+                pURL = '',
+                bgHex = '020202ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor()
+            },
+            attachTo = 'torso1',
+        })
+    end
     if true then
         table.insert(instance.textures, {
             label = 'connected-texture',
@@ -124,7 +126,7 @@ function defaultSetupTextures(instance)
                 bgURL = 'leg5.png',
                 fgURL = 'leg5-mask.png',
                 pURL = '',
-                bgHex = '000000ff',
+                bgHex = '020202ff',
                 fgHex = randomHexColor(),
                 pHex = randomHexColor()
             },
@@ -141,7 +143,7 @@ function defaultSetupTextures(instance)
                 bgURL = 'hair10.png',
                 fgURL = '',
                 pURL = '',
-                bgHex = '000000ff',
+                bgHex = '020202ff',
 
             },
             jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
@@ -156,7 +158,7 @@ function defaultSetupTextures(instance)
                 bgURL = 'leg5.png',
                 fgURL = 'leg5-mask.png',
                 pURL = '',
-                bgHex = '000000ff',
+                bgHex = '020202ff',
                 fgHex = randomHexColor(),
                 pHex = randomHexColor(),
                 fx = -1
@@ -1001,20 +1003,22 @@ function lib.addTextureFixturesFromInstance(instance)
             if it.label == 'texfixture' then
                 local body = instance.parts[it.attachTo].body
                 removeSimilarFixture(body, it)
-                print("body angle at texture creation:", body:getAngle())
+                --print("body angle at texture creation:", body:getAngle())
                 local cx, cy, w, h = getCenterAndDimensions(body)
                 -- local localX, localY = body:getLocalPoint(wx, wy)
+                local growfactor = 1.1
                 local fixture = fixtures.createSFixture(body, 0, 0,
-                    { label = 'texfixture', width = w * 1.2, height = h * 1.2 })
+                    { label = 'texfixture', width = w * growfactor, height = h * growfactor })
                 local ud = fixture:getUserData()
                 ud.extra.OMP = it.OMP
                 ud.extra.dirty = true
                 ud.extra.main = utils.deepCopy(it.main)
                 ud.extra.zOffset = it.zOffset or 0
+                ud.extra.attachTo = it.attachTo
 
                 if it.followShape8 then
                     ud.extra.followShape8 = it.followShape8
-                    logger:inspect(ud.extra)
+                    -- logger:inspect(ud.extra)
                     local raw = shape8Dict[it.followShape8].v
                     local partData = instance.dna.parts[it.attachTo]
                     local growfactor = 1.5
@@ -1024,8 +1028,8 @@ function lib.addTextureFixturesFromInstance(instance)
 
                     ud.extra.vertices = vertices
                     ud.extra.vertexCount = #vertices / 2
-                    logger:info('found a follo8')
-                    logger:inspect(ud.extra)
+                    -- logger:info('found a follo8')
+                    --  logger:inspect(ud.extra)
                 end
                 -- followShape8 = 'shapeA3.png',
 
@@ -1043,6 +1047,7 @@ function lib.addTextureFixturesFromInstance(instance)
                 local fixture = fixtures.createSFixture(body, 0, 0, { label = 'connected-texture', radius = 30 })
                 local ud = fixture:getUserData()
                 ud.extra = {
+                    attachTo = it.attachTo,
                     OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
                     dirty = true,                   -- because the rendered needs to pick this up.
                     main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
