@@ -310,12 +310,16 @@ function love.keypressed(key)
             logger:inspect(humanoidInstance.dna.creation)
             local parts = humanoidInstance.dna.creation.torsoSegments
             for i = 1, parts do
-                local urlIndex = math.ceil(math.random() * 3)
-                local urls = { 'shapeA3', 'shapeA2', 'shapeA1' }
+                local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
+                    'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
+                local urlIndex = math.ceil(math.random() * #urls)
                 local url = urls[urlIndex]
+                print(url)
+                local s = .5 + love.math.random() * 2
+                local sign = math.random() < .5 and -1 or 1
                 -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
                 CharacterManager.updatePart('torso' .. i,
-                    { shape8URL = url .. '.png', sy = love.math.random() * 2, sx = love.math.random() * 12 },
+                    { shape8URL = url .. '.png', sy = s * sign, sx = s },
                     humanoidInstance)
 
                 print(url)
@@ -339,13 +343,13 @@ function love.keypressed(key)
             local oldCreation = humanoidInstance.dna.creation
             --logger:inspect(humanoidInstance.dna.creation)
             CharacterManager.rebuildFromCreation(humanoidInstance,
-                { neckSegments = math.ceil(love.math.random() * 25) })
+                { neckSegments = math.ceil(1 + love.math.random() * 5) })
 
             local parts = humanoidInstance.dna.creation.neckSegments
             if (not humanoidInstance.dna.creation.isPotatoHead) then
                 for i = 1, parts do
                     CharacterManager.updatePart('neck' .. i,
-                        { h = 50 + love.math.random() * 220 },
+                        { h = 100 },
                         humanoidInstance)
                 end
             end
@@ -361,7 +365,7 @@ function love.keypressed(key)
 
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
-        if key == 'c' then
+        if key == 'p' then
             local bgColor = '000000ff'
             local fgColor = randomHexColor()
             local pColor = randomHexColor()

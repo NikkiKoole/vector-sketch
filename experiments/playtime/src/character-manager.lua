@@ -15,11 +15,6 @@ local fixtures = require 'src.fixtures'
 -- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
 
 
-
--- todo, the data here below is correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
--- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
-
-
 local shape8Dict = {
     ['shapeA1.png'] = {
         v = {
@@ -36,13 +31,119 @@ local shape8Dict = {
         v = {
             -6.62, -189.25, 135.88, -69.67, 160.54, 45.82, 123.85, 154.90, -6.37, 189.25, -92.40, 153.92, -164.61, 53.37, -155.10, -67.94
         }
-    }
+    },
+    ['shapeA4.png'] = {
+        v = {
+            7.91, -194.17, 133.01, -56.57, 126.54, 45.82, 101.32, 190.94, -6.99, 195.81, -129.67, 185.05, -134.73, 40.26, -110.48, -66.30
+
+        }
+    },
+
+
+    ['shapes1.png'] = {
+        v = {
+            10.53, -244.02, 133.00, -56.57, 135.72, 48.44, 124.93, 221.11, -0.43, 231.23, -128.36, 215.22, -138.66, 41.58, -134.09, -62.36
+
+        }
+    },
+    ['shapes2.png'] = {
+        v = {
+            -3.37, -223.15, 74.58, -78.83, 89.81, 51.22, 104.06, 196.07, -0.43, 231.23, -92.19, 202.70, -94.15, 54.10, -61.75, -80.45
+        }
+    },
+    ['shapes3.png'] = {
+        v = {
+            -3.37, -206.98, 132.81, -137.06, 148.04, 12.40, 110.53, 186.37, -6.90, 216.67, -97.04, 192.99, -149.14, 7.194, -141.01, -141.91
+        }
+    },
+    ['shapes4.png'] = {
+        v = {
+            0.52, -123.04, 164.04, -98.02, 148.04, 12.40, 157.384, 112.19, -1.05, 117.121, -149.75, 105.159, -149.14, 7.19, -168.33, -87.25
+        }
+    },
+    ['shapes5.png'] = {
+        v = {
+            0.52, -162.14, 74.68, -132.92, 78.23, -4.34, 73.61, 148.49, -2.44, 156.21, -81.33, 142.85, -84.921, 1.609, -87.35, -126.353,
+
+        }
+    },
+    ['shapes6.png'] = {
+        v = {
+            3.17, -178.04, 77.33, -118.34, 92.815, -0.36, 93.491, 143.19, -2.44, 160.19, -85.314, 141.53, -92.87, 0.28, -67.478, -119.727
+        }
+    },
+    ['shapes7.png'] = {
+        v = {
+            -3.26, -452.74, 127.787, -245.570, 305.58, 19.37, 247.03, 384.48, -2.448, 451.92, -276.14, 378.42, -283.70, 15.63, -207.86, -238.17
+
+        }
+    },
+    ['shapes8.png'] = {
+        v = {
+            3.90, -154.02, 271.18, -307.71, 341.43, 26.54, 89.31, 298.45, -9.62, 332.43, -166.22, 299.56, -302.83, 34.76, -238.93, -319.43
+
+        }
+    },
+    ['shapes9.png'] = {
+        v = {
+            -0.56, -236.64, 233.22, -191.59, 198.53, 24.31, 174.16, 206.90, -18.55, 216.32, -226.51, 205.78, -233.61, 19.13, -234.46, -198.85
+
+
+        }
+    },
+    ['shapes10.png'] = {
+        v = {
+            4.96, -407.86, 166.94, -232.10, 231.67, 24.31, 141.02, 344.99, -16.71, 418.85, -186.00, 332.82, -233.61, 19.13, -182.91, -233.83
+        }
+    },
+    ['shapes11.png'] = {
+        v = {
+            4.96, -451.24, 110.80, -405.62, 195.94, 6.45, 306.89, 408.78, 13.91, 436.71, -277.86, 417.03, -205.54, -3.84, -114.01, -417.56
+        }
+    },
+    ['shapes12.png'] = {
+        v = {
+            17.22, -129.91, 208.91, -76.93, 249.91, 11.35, 191.60, 109.52, 9.01, 142.36, -228.81, 103.06, -247.24, -1.39, -175.34, -91.32
+        }
+    },
+    ['shapes13.png'] = {
+        v = {
+            22.72, -239.92, 175.91, -101.68, 197.65, 11.35, 177.85, 219.53, 14.51, 260.62, -168.30, 210.32, -156.48, 12.37, -125.83, -105.07
+        }
+    },
+
+
+    ['feet2.png'] = {
+        v = {
+
+            -- 197.92951957406, -17.817718028013, 170.28347402696, 84.883981989375, 104.3382073697, 106.29365560207, -139.66342189896, 114.08328408959, -165.65174171676, -8.6379557618171, -123.63314042073, -45.112484801676, 86.784081767721, -100.15140769724, 155.71079120581, -103.47476376929
+
+
+            22.724588666593, -239.91966159884, 175.91013654, -101.67978777203, 197.65083381201, 11.351997784339, 177.84539019051, 219.53355732218, 14.507790801039, 260.6223497519, -168.29987466902, 210.31594772675, -156.47637293323, 12.365272224268, -125.83138609296, -105.07368014657
+
+        }
+    },
+
+    ['feet2r.png'] = {
+        v = {
+
+            -- 197.92951957406, -17.817718028013, 170.28347402696, 84.883981989375, 104.3382073697, 106.29365560207, -139.66342189896, 114.08328408959, -165.65174171676, -8.6379557618171, -123.63314042073, -45.112484801676, 86.784081767721, -100.15140769724, 155.71079120581, -103.47476376929
+
+            46.990907603994, -189.52773689109, 96.489192783945, -184.68643013375, 131.34012844459, 48.508703705155, 109.48859096573, 180.93295171947, 45.027594164554, 234.39907734869, -15.618229361652, 176.92515604219, -70.173442070241, 53.300130131955, -87.304763540911, -193.80518221938
+
+
+        }
+    },
+
+
+
+
 }
 local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 0,
+            neckSegments = 5,
             torsoSegments = 1
         },
         parts = {
@@ -61,16 +162,16 @@ local dna = {
             ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150, sx = .1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150, sx = -.1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lfoot'] = { dims = { w = 80, h = 150, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150, sx = -1, sy = 1 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
             -- ['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .1 }, shape = 'shape8', shape8URL = 'shapeA1.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40, sx = -.5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- TODo same kind of weirdness for the hands!
-            --   ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            --  ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
             ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
@@ -88,7 +189,9 @@ end
 
 function defaultSetupTextures(instance)
     -- take note: right leg has flippedX.
-    if true then
+
+    -- torso
+    if false then
         table.insert(instance.textures, {
             label = 'texfixture',
             type = 'sfixture',
@@ -122,7 +225,9 @@ function defaultSetupTextures(instance)
             attachTo = 'torso1',
         })
     end
-    if true then
+
+    -- legs
+    if false then
         table.insert(instance.textures, {
             label = 'connected-texture',
             type = 'sfixture',
@@ -189,6 +294,171 @@ function defaultSetupTextures(instance)
             jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
             attachTo = 'ruleg',
         })
+    end
+
+    --feet
+    if true then
+        table.insert(instance.textures, {
+            label = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'lfootSkin',
+            main = {
+                bgURL = 'feet2r.png',
+                fgURL = 'feet2r-mask.png',
+                pURL = '',
+                bgHex = '020202ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor()
+            },
+            attachTo = 'lfoot',
+        })
+        table.insert(instance.textures, {
+            label = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'rfootSkin',
+            main = {
+                bgURL = 'feet2r.png',
+                fgURL = 'feet2r-mask.png',
+                pURL = '',
+                bgHex = '020202ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor(),
+                fx = -1,
+            },
+            attachTo = 'rfoot',
+        })
+    end
+
+
+    --hand
+    if true then
+        table.insert(instance.textures, {
+            label = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'lhandSkin',
+            main = {
+                bgURL = 'feet2r.png',
+                fgURL = 'feet2r-mask.png',
+                pURL = '',
+                bgHex = '020202ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor()
+            },
+            attachTo = 'lhand',
+        })
+        table.insert(instance.textures, {
+            label = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'rhandSkin',
+            main = {
+                bgURL = 'feet2r.png',
+                fgURL = 'feet2r-mask.png',
+                pURL = '',
+                bgHex = '020202ff',
+                fgHex = randomHexColor(),
+                pHex = randomHexColor()
+            },
+            attachTo = 'rhand',
+        })
+    end
+    -- neck
+    if true then
+        -- Assume neckSegments and torsoSegments are available
+        local creation = instance.dna.creation
+        local neckSegments = creation.neckSegments or 0
+        local torsoSegments = creation.torsoSegments or 1
+
+        local jointLabels = {}
+        local previous = 'torso' .. torsoSegments
+
+        for i = 1, neckSegments do
+            local current = 'neck' .. i
+            table.insert(jointLabels, previous .. '->' .. current)
+            previous = current
+        end
+
+        -- Final connection to head
+        table.insert(jointLabels, previous .. '->head')
+
+        logger:inspect(jointLabels)
+        if neckSegments > 0 and not creation.isPotatoHead then
+            table.insert(instance.textures, {
+                label = 'connected-texture',
+                type = 'sfixture',
+                OMP = true,
+                group = 'neckSkin',
+                main = {
+                    bgURL = 'leg5.png',
+                    fgURL = 'leg5-mask.png',
+                    pURL = '',
+                    bgHex = '020202ff',
+                    fgHex = randomHexColor(),
+                    pHex = randomHexColor()
+                },
+                jointLabels = jointLabels,
+                attachTo = 'neck1',
+            })
+            table.insert(instance.textures, {
+                label = 'connected-texture',
+                type = 'sfixture',
+                OMP = false,
+                zOffset = 40,
+                group = 'neckHair',
+                main = {
+                    bgURL = 'hair10.png',
+                    fgURL = '',
+                    pURL = '',
+                    bgHex = '000000ff',
+                    fx = -1
+
+                },
+                jointLabels = jointLabels,
+                attachTo = 'neck1',
+            })
+        end
+    end
+
+    -- head
+    if true then
+        local creation = instance.dna.creation
+        if not creation.isPotatoHead then
+            table.insert(instance.textures, {
+                label = 'texfixture',
+                type = 'sfixture',
+                OMP = true,
+                group = 'headSkin',
+                main = {
+                    bgURL = 'shapeA2.png',
+                    fgURL = 'shapeA2-mask.png',
+                    pURL = '',
+                    bgHex = '020202ff',
+                    fgHex = randomHexColor(),
+                    pHex = randomHexColor()
+                },
+                attachTo = 'head',
+            })
+            -- table.insert(instance.textures, {
+            --     label = 'texfixture',
+            --     type = 'sfixture',
+            --     OMP = false,
+            --     group = 'headHair',
+            --     zOffset = 40,
+            --     followShape8 = 'shapeA2.png',
+            --     main = {
+            --         bgURL = 'borsthaar3.png',
+            --         fgURL = '',
+            --         pURL = '',
+            --         bgHex = '020202ff',
+            --         fgHex = randomHexColor(),
+            --         pHex = randomHexColor()
+            --     },
+            --     attachTo = 'head',
+            -- })
+        end
     end
 end
 
@@ -461,7 +731,7 @@ local function getOwnOffset(partName, guy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
             -- todo like the grow offsets this too should be parametrized
-            local footOffset = -100
+            local footOffset = 0
             return vertices[(index * 2) - 1], -vertices[(index * 2)] + footOffset
         else
             return 0, part.dims.h / 2
@@ -951,17 +1221,6 @@ local function updateSinglePart(partName, data, instance)
     end
 end
 
-function preserveAllSpecialFixtures(instance)
-    logger:info('preserve')
-    -- logger:inspect(instance)
-    -- we might have a couple of special fixtures, what do we have to know about each?
-    -- snap, anchor, texturefixture, connectedtexture
-end
-
-function restoreAllSpecialFixtures()
-    logger:info('restore')
-end
-
 -- update part
 function lib.updatePart(partName, data, instance)
     --  preserveAllSpecialFixtures(instance)
@@ -986,7 +1245,6 @@ end
 -- given an instance with dna and a new creation, this function is made to change a creation of a humanoid during runtime.
 -- its alos used by initially creating a character.
 function lib.rebuildFromCreation(instance, newCreation)
-    preserveAllSpecialFixtures()
     -- Step 1: Update the creation settings
     for k, v in pairs(newCreation) do
         instance.dna.creation[k] = v
@@ -1013,7 +1271,6 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
-    restoreAllSpecialFixtures()
 end
 
 function lib.addTextureFixturesFromInstance(instance)
@@ -1048,7 +1305,17 @@ function lib.addTextureFixturesFromInstance(instance)
                 ud.extra.main = utils.deepCopy(it.main)
                 ud.extra.zOffset = it.zOffset or 0
                 ud.extra.attachTo = it.attachTo
-
+                local partData = instance.dna.parts[it.attachTo]
+                if partData.dims.sy < 0 then
+                    -- logger:inspect(ud.extra.main)
+                    ud.extra.main.fy = -1
+                    -- logger:info('should flip texture')
+                end
+                if partData.dims.sx < 0 then
+                    -- logger:inspect(ud.extra.main)
+                    ud.extra.main.fx = -1
+                    -- logger:info('should flip texture')
+                end
                 if it.followShape8 then
                     ud.extra.followShape8 = it.followShape8
                     -- logger:inspect(ud.extra)
@@ -1072,6 +1339,7 @@ function lib.addTextureFixturesFromInstance(instance)
 
             if it.label == 'connected-texture' then
                 --print('got some stuff todo')
+                print(it.attachTo)
                 local body = instance.parts[it.attachTo].body
 
                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST

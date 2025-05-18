@@ -576,6 +576,25 @@ function lib.drawTexturedWorld(world)
                         table.insert(points, y1)
                     end
                 end
+
+                if #points == 4 then
+                    -- here we will just introduce a little midle thingie
+                    -- -- becaue i cannot draw a curve of 2 points
+                    function addMidpoint(points)
+                        if #points ~= 4 then
+                            error("Expected array of exactly 2 points (4 numbers)")
+                        end
+
+                        local x1, y1, x2, y2 = points[1], points[2], points[3], points[4]
+                        local midX = (x1 + x2) / 2
+                        local midY = (y1 + y2) / 2
+
+                        return { x1, y1, midX, midY, x2, y2 }
+                    end
+
+                    points = addMidpoint(points)
+                end
+
                 if #points >= 6 then
                     -- todo here we might want to grow the curve... so it will stick a little bit from the sides
                     local function growLine(p1, p2, length)
