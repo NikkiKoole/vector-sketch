@@ -187,12 +187,60 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
+local function buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
+                        texOffX, texOffY,
+                        lineColor, lineAlpha,
+                        flipx, flipy, patches)
+    local function toStr(v)
+        if type(v) == "number" then
+            return string.format("%.3f", v)
+        elseif type(v) == "table" then
+            return table.concat(v, ",")
+        elseif type(v) == "boolean" then
+            return v and "1" or "0"
+        elseif type(v) == "userdata" and v.typeOf and v:typeOf("Image") then
+            return tostring(v):match("Image: (.+)") or "image"
+        else
+            return tostring(v)
+        end
+    end
 
+    local keyParts = {
+        toStr(lineart),
+        toStr(mask),
+        toStr(color1), alpha1,
+        toStr(texture2), toStr(color2), alpha2,
+        texRot, texScaleX, texScaleY,
+        texOffX, texOffY,
+        toStr(lineColor), lineAlpha,
+        flipx, flipy
+    }
+
+    if patches then
+        for _, p in ipairs(patches) do
+            table.insert(keyParts, toStr(p.img))
+            table.insert(keyParts, p.tx or 0)
+            table.insert(keyParts, p.ty or 0)
+            table.insert(keyParts, p.r or 0)
+            table.insert(keyParts, p.sx or 1)
+            table.insert(keyParts, p.sy or 1)
+            table.insert(keyParts, p.tint or "ffffff")
+        end
+    end
+
+    return table.concat(keyParts, "|")
+end
 
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
                                   flipx, flipy, patches)
+    local key = buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
+        texOffX, texOffY,
+        lineColor, lineAlpha,
+        flipx, flipy, patches)
+    logger:info(key)
+
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
         local lw, lh = lineart:getDimensions()
@@ -234,7 +282,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-        if false then
+        if true then
             if patches then
                 for i = 1, #patches do
                     local patch = patches[i]
@@ -328,6 +376,49 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
     -- return lineart:getData()
     -- return nil -- love.image.newImageData(mask)
 end
+function makePatch(name, ud)
+    local result = nil
+    if ud.extra[name] and ud.extra[name].bgURL then
+        local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
+        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
+        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
+        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
+        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
+        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
+        if outlineImage then
+            local imgData = lib.makeTexturedCanvas(
+                outlineImage,            -- line art
+                maskImage,               -- mask
+                { mr, mg, mb },          -- color1
+                ma * 5,                  -- alpha1
+                patternImage or tex1,    -- texture2 (fill texture)
+                { pr, pg, pb },          -- color2
+                pa * 5,                  -- alpha2
+                ud.extra[name].pr or 0,  -- texRot
+                ud.extra[name].psx or 1, -- texScale
+                ud.extra[name].psy or 1, -- texScale
+                ud.extra[name].ptx or 0,
+                ud.extra[name].pty or 0,
+                { olr, olg, olb },      -- lineColor
+                ola * 5,                -- lineAlpha
+                ud.extra[name].fx or 1, -- flipx (normal)
+                ud.extra[name].fy or 1  -- flipy (normal)
+            )
+            result = {
+                img = love.graphics.newImage(imgData),
+                --img = getLoveImage('textures/' .. ud.extra.patch1URL),
+                tint = ud.extra[name].tint or 'ffffff',
+                tx = ud.extra[name].tx,
+                ty = ud.extra[name].ty,
+                sx = ud.extra[name].sx,
+                sy = ud.extra[name].sy,
+                r = ud.extra[name].r
+            }
+        end
+        return result
+    end
+    return result
+end
 
 function lib.makeCombinedImages()
     local bodies = state.physicsWorld:getBodies()
@@ -336,58 +427,9 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                --    logger:info(inspect(ud.extra))
-                ud.extra.dirty = false
-
-
-                function makePatch(name)
-                    local result = nil
-                    if ud.extra[name] and ud.extra[name].bgURL then
-                        local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
-                        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
-                        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
-                        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
-                        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
-                        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
-                        if outlineImage then
-                            local imgData = lib.makeTexturedCanvas(
-                                outlineImage,            -- line art
-                                maskImage,               -- mask
-                                { mr, mg, mb },          -- color1
-                                ma * 5,                  -- alpha1
-                                patternImage or tex1,    -- texture2 (fill texture)
-                                { pr, pg, pb },          -- color2
-                                pa * 5,                  -- alpha2
-                                ud.extra[name].pr or 0,  -- texRot
-                                ud.extra[name].psx or 1, -- texScale
-                                ud.extra[name].psy or 1, -- texScale
-                                ud.extra[name].ptx or 0,
-                                ud.extra[name].pty or 0,
-                                { olr, olg, olb },      -- lineColor
-                                ola * 5,                -- lineAlpha
-                                ud.extra[name].fx or 1, -- flipx (normal)
-                                ud.extra[name].fy or 1  -- flipy (normal)
-                            )
-                            result = {
-                                img = love.graphics.newImage(imgData),
-                                --img = getLoveImage('textures/' .. ud.extra.patch1URL),
-                                tint = ud.extra[name].tint or 'ffffff',
-                                tx = ud.extra[name].tx,
-                                ty = ud.extra[name].ty,
-                                sx = ud.extra[name].sx,
-                                sy = ud.extra[name].sy,
-                                r = ud.extra[name].r
-                            }
-                        end
-                        return result
-                    end
-                    return result
-                end
-
-                local patch1 = makePatch('patch1')
-                local patch2 = makePatch('patch2')
-                local patch3 = makePatch('patch3')
-
+                local patch1 = makePatch('patch1', ud)
+                local patch2 = makePatch('patch2', ud)
+                local patch3 = makePatch('patch3', ud)
 
                 local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
                 local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
@@ -400,7 +442,6 @@ function lib.makeCombinedImages()
                     local imgData = lib.makeTexturedCanvas(
                         outlineImage or line,   -- line art
                         maskImage or maskTex,   -- mask
-
                         { mr, mg, mb },         -- color1
                         ma * 5,                 -- alpha1
                         patternImage or tex1,   -- texture2 (fill texture)
@@ -421,6 +462,8 @@ function lib.makeCombinedImages()
                     ud.extra.ompImage = image
                 end
                 fixtures[i]:setUserData(ud)
+
+                ud.extra.dirty = false
             end
         end
     end

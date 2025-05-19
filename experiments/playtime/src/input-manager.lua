@@ -333,7 +333,8 @@ local function handlePointer(x, y, id, action)
             state.interaction.draggingObj = nil
         end
 
-        if state.currentMode == 'drawFreePoly' then
+        -- if we have released a mousebutton but it isnt nr1, then we keep on drawing free polygon
+        if state.currentMode == 'drawFreePoly' and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
             objectManager.finalizePolygon()
         end
@@ -470,7 +471,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
         -- print(index)
-    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
+    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false

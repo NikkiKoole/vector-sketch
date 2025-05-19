@@ -9,6 +9,10 @@
 -- TODO swap body parts
 -- TODO add some ui to change body properties
 
+
+-- BUG press R and then N , torso hair is not positioned correctly, also the wrong texture is displayed for a torso
+-- also
+
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 
@@ -106,8 +110,6 @@ function love.load(args)
         -- b:setFixtureFriction(10)
     end
 
-
-
     state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
@@ -118,15 +120,14 @@ function love.load(args)
     --loadScriptAndScene('elasto')
     --sceneLoader.loadScriptAndScene('water')
     --sceneLoader.loadScriptAndScene('straight')
+
     local cwd = love.filesystem.getWorkingDirectory()
     sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
-
-
     humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
-
 
     --CharacterManager.updateSinglePart('luleg', { h = 300 }, humanoidInstance)
     --CharacterManager.updateSinglePart('ruleg', { h = 300 }, humanoidInstance)
@@ -339,8 +340,8 @@ function love.keypressed(key)
 
 
         if key == 'n' then
-            logger:inspect(humanoidInstance.dna.creation)
-            local oldCreation = humanoidInstance.dna.creation
+            --logger:inspect(humanoidInstance.dna.creation)
+            --local oldCreation = humanoidInstance.dna.creation
             --logger:inspect(humanoidInstance.dna.creation)
             CharacterManager.rebuildFromCreation(humanoidInstance,
                 { neckSegments = math.ceil(1 + love.math.random() * 5) })

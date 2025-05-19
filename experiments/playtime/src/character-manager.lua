@@ -14,6 +14,8 @@ local fixtures = require 'src.fixtures'
 -- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
 
+-- flpping leghair is not yet working
+
 
 local shape8Dict = {
     ['shapeA1.png'] = {
@@ -191,7 +193,7 @@ function defaultSetupTextures(instance)
     -- take note: right leg has flippedX.
 
     -- torso
-    if false then
+    if true then
         table.insert(instance.textures, {
             label = 'texfixture',
             type = 'sfixture',
@@ -215,7 +217,7 @@ function defaultSetupTextures(instance)
             zOffset = 40,
             followShape8 = 'shapeA3.png',
             main = {
-                bgURL = 'borsthaar3.png',
+                bgURL = 'borsthaar4.png',
                 fgURL = '',
                 pURL = '',
                 bgHex = '020202ff',
@@ -227,7 +229,7 @@ function defaultSetupTextures(instance)
     end
 
     -- legs
-    if false then
+    if true then
         table.insert(instance.textures, {
             label = 'connected-texture',
             type = 'sfixture',
@@ -251,11 +253,11 @@ function defaultSetupTextures(instance)
             zOffset = 40,
             group = 'leftLegHair',
             main = {
-                bgURL = 'hair10.png',
+                bgURL = 'hair7.png',
                 fgURL = '',
                 pURL = '',
                 bgHex = '020202ff',
-
+                dir = -1,
             },
             jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
             attachTo = 'luleg',
@@ -284,7 +286,7 @@ function defaultSetupTextures(instance)
             zOffset = 40,
             group = 'rightLegHair',
             main = {
-                bgURL = 'hair10.png',
+                bgURL = 'hair7.png',
                 fgURL = '',
                 pURL = '',
                 bgHex = '000000ff',
@@ -295,6 +297,7 @@ function defaultSetupTextures(instance)
             attachTo = 'ruleg',
         })
     end
+
 
     --feet
     if true then
@@ -365,6 +368,7 @@ function defaultSetupTextures(instance)
             attachTo = 'rhand',
         })
     end
+
     -- neck
     if true then
         -- Assume neckSegments and torsoSegments are available
@@ -1307,18 +1311,15 @@ function lib.addTextureFixturesFromInstance(instance)
                 ud.extra.attachTo = it.attachTo
                 local partData = instance.dna.parts[it.attachTo]
                 if partData.dims.sy < 0 then
-                    -- logger:inspect(ud.extra.main)
                     ud.extra.main.fy = -1
-                    -- logger:info('should flip texture')
                 end
                 if partData.dims.sx < 0 then
-                    -- logger:inspect(ud.extra.main)
                     ud.extra.main.fx = -1
-                    -- logger:info('should flip texture')
                 end
                 if it.followShape8 then
                     ud.extra.followShape8 = it.followShape8
                     -- logger:inspect(ud.extra)
+                    logger:inspect(it.followShape8)
                     local raw = shape8Dict[it.followShape8].v
                     local partData = instance.dna.parts[it.attachTo]
                     local growfactor = 1.5
