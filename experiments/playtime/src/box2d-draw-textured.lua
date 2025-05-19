@@ -614,9 +614,11 @@ function lib.drawTexturedWorld(world)
                     end
                     if it.type == 'joint' then
                         local j = registry.getJointByID(it.id)
-                        local x1, y1, _, _ = j:getAnchors()
-                        table.insert(points, x1)
-                        table.insert(points, y1)
+                        if j and not j:isDestroyed() then
+                            local x1, y1, _, _ = j:getAnchors()
+                            table.insert(points, x1)
+                            table.insert(points, y1)
+                        end
                     end
                 end
 

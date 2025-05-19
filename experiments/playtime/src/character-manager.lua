@@ -189,41 +189,52 @@ local function randomHexColor()
     return string.format("%02X%02X%02X%02X", r, g, b, a)
 end
 
+
+
+function createDefaultTextureDNABlock(shape, skipFG)
+    return {
+        bgURL = shape .. '.png',
+        fgURL = skipFG and '' or shape .. '-mask.png',
+        pURL = '',
+        bgHex = '020202ff',
+        fgHex = skipFG and '' or 'ff0000ff',
+        pHex = 'ffff00ff',
+
+    }
+end
+
+function addMore(block, values)
+    for k, v in pairs(values) do
+        block[k] = v
+    end
+    return block
+end
+
 function defaultSetupTextures(instance)
     -- take note: right leg has flippedX.
-
     -- torso
+
     if true then
         table.insert(instance.textures, {
             label = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'torso1Skin',
-            main = {
-                bgURL = 'shapeA3.png',
-                fgURL = 'shapeA3-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor()
-            },
+            main = createDefaultTextureDNABlock('shapeA3'),
+            patch1 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0.3, ty = 0.3 }),
+            patch2 = addMore(createDefaultTextureDNABlock('patch1'), { tx = -0.3, ty = 0.3 }),
+            patch3 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0, ty = -0.3 }),
             attachTo = 'torso1',
         })
+
         table.insert(instance.textures, {
             label = 'texfixture',
             type = 'sfixture',
             OMP = false,
             group = 'torso1Hair',
             zOffset = 40,
-            followShape8 = 'shapeA3.png',
-            main = {
-                bgURL = 'borsthaar4.png',
-                fgURL = '',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor()
-            },
+            followShape8 = 'shapeA3.png', -- get this from my main above..
+            main = createDefaultTextureDNABlock('borsthaar4', true),
             attachTo = 'torso1',
         })
     end
@@ -235,14 +246,7 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'leftLegSkin',
-            main = {
-                bgURL = 'leg5.png',
-                fgURL = 'leg5-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor()
-            },
+            main = createDefaultTextureDNABlock('leg5'),
             jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
             attachTo = 'luleg',
         })
@@ -252,13 +256,7 @@ function defaultSetupTextures(instance)
             OMP = false,
             zOffset = 40,
             group = 'leftLegHair',
-            main = {
-                bgURL = 'hair7.png',
-                fgURL = '',
-                pURL = '',
-                bgHex = '020202ff',
-                dir = -1,
-            },
+            main = addMore(createDefaultTextureDNABlock('hair7', true), { dir = -1 }), --???
             jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
             attachTo = 'luleg',
         })
@@ -267,15 +265,7 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'rightLegSkin',
-            main = {
-                bgURL = 'leg5.png',
-                fgURL = 'leg5-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor(),
-                fx = -1
-            },
+            main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
             jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
             attachTo = 'ruleg',
         })
@@ -285,14 +275,7 @@ function defaultSetupTextures(instance)
             OMP = false,
             zOffset = 40,
             group = 'rightLegHair',
-            main = {
-                bgURL = 'hair7.png',
-                fgURL = '',
-                pURL = '',
-                bgHex = '000000ff',
-                fx = -1
-
-            },
+            main = addMore(createDefaultTextureDNABlock('hair7', true), {}), --??
             jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
             attachTo = 'ruleg',
         })
@@ -306,30 +289,16 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'lfootSkin',
-            main = {
-                bgURL = 'feet2r.png',
-                fgURL = 'feet2r-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor()
-            },
+            main = createDefaultTextureDNABlock('feet2r'),
             attachTo = 'lfoot',
         })
+
         table.insert(instance.textures, {
             label = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'rfootSkin',
-            main = {
-                bgURL = 'feet2r.png',
-                fgURL = 'feet2r-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor(),
-                fx = -1,
-            },
+            main = addMore(createDefaultTextureDNABlock('feet2r'), { fx = -1 }),
             attachTo = 'rfoot',
         })
     end
@@ -342,14 +311,7 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'lhandSkin',
-            main = {
-                bgURL = 'feet2r.png',
-                fgURL = 'feet2r-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor()
-            },
+            main = createDefaultTextureDNABlock('feet2r'),
             attachTo = 'lhand',
         })
         table.insert(instance.textures, {
@@ -357,14 +319,7 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'rhandSkin',
-            main = {
-                bgURL = 'feet2r.png',
-                fgURL = 'feet2r-mask.png',
-                pURL = '',
-                bgHex = '020202ff',
-                fgHex = randomHexColor(),
-                pHex = randomHexColor()
-            },
+            main = createDefaultTextureDNABlock('feet2r'),
             attachTo = 'rhand',
         })
     end
@@ -395,14 +350,7 @@ function defaultSetupTextures(instance)
                 type = 'sfixture',
                 OMP = true,
                 group = 'neckSkin',
-                main = {
-                    bgURL = 'leg5.png',
-                    fgURL = 'leg5-mask.png',
-                    pURL = '',
-                    bgHex = '020202ff',
-                    fgHex = randomHexColor(),
-                    pHex = randomHexColor()
-                },
+                main = createDefaultTextureDNABlock('leg5'),
                 jointLabels = jointLabels,
                 attachTo = 'neck1',
             })
@@ -412,14 +360,7 @@ function defaultSetupTextures(instance)
                 OMP = false,
                 zOffset = 40,
                 group = 'neckHair',
-                main = {
-                    bgURL = 'hair10.png',
-                    fgURL = '',
-                    pURL = '',
-                    bgHex = '000000ff',
-                    fx = -1
-
-                },
+                main = addMore(createDefaultTextureDNABlock('hair10', true), { fx = -1 }),
                 jointLabels = jointLabels,
                 attachTo = 'neck1',
             })
@@ -435,14 +376,7 @@ function defaultSetupTextures(instance)
                 type = 'sfixture',
                 OMP = true,
                 group = 'headSkin',
-                main = {
-                    bgURL = 'shapeA2.png',
-                    fgURL = 'shapeA2-mask.png',
-                    pURL = '',
-                    bgHex = '020202ff',
-                    fgHex = randomHexColor(),
-                    pHex = randomHexColor()
-                },
+                main = createDefaultTextureDNABlock('shapeA2'),
                 attachTo = 'head',
             })
             -- table.insert(instance.textures, {
@@ -1307,14 +1241,27 @@ function lib.addTextureFixturesFromInstance(instance)
                 ud.extra.OMP = it.OMP
                 ud.extra.dirty = true
                 ud.extra.main = utils.deepCopy(it.main)
+
                 ud.extra.zOffset = it.zOffset or 0
                 ud.extra.attachTo = it.attachTo
                 local partData = instance.dna.parts[it.attachTo]
+
+                -- todo we probably also need to flip the other ones (patch1..3) but not sure..
                 if partData.dims.sy < 0 then
                     ud.extra.main.fy = -1
                 end
                 if partData.dims.sx < 0 then
                     ud.extra.main.fx = -1
+                end
+
+                if it.patch1 then
+                    ud.extra.patch1 = utils.deepCopy(it.patch1)
+                end
+                if it.patch2 then
+                    ud.extra.patch2 = utils.deepCopy(it.patch2)
+                end
+                if it.patch3 then
+                    ud.extra.patch3 = utils.deepCopy(it.patch3)
                 end
                 if it.followShape8 then
                     ud.extra.followShape8 = it.followShape8
