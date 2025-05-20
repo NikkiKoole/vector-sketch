@@ -136,6 +136,12 @@ local shape8Dict = {
 
         }
     },
+    ['feet6r.png'] = {
+        v = {
+            -26.163452363425, -287.93776875202, 45.977848996918, -180.33200394521, 110.43888273961, 42.412507041203, 116.65637069995, 166.59739225104, -6.9388089085194, 273.82186588688, -108.79936590647, 268.31434765346, -110.23416300478, 47.203933468003, -102.10981258194, -181.61278889148
+        }
+    }
+
 
 
 
@@ -164,8 +170,8 @@ local dna = {
             ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150, sx = -1, sy = 1 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lfoot'] = { dims = { w = 80, h = 150, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150, sx = -1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
             -- ['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
@@ -289,7 +295,7 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'lfootSkin',
-            main = createDefaultTextureDNABlock('feet2r'),
+            main = createDefaultTextureDNABlock('feet6r'),
             attachTo = 'lfoot',
         })
 
@@ -298,7 +304,7 @@ function defaultSetupTextures(instance)
             type = 'sfixture',
             OMP = true,
             group = 'rfootSkin',
-            main = addMore(createDefaultTextureDNABlock('feet2r'), { fx = -1 }),
+            main = addMore(createDefaultTextureDNABlock('feet6r'), { fx = -1 }),
             attachTo = 'rfoot',
         })
     end
