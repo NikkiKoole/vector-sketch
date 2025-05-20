@@ -8,11 +8,10 @@ local mathutils = require 'src.math-utils'
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
+
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
-
 local imageCache = {}
-
 local shrinkFactor = 1
 
 lib.setShrinkFactor = function(value)
@@ -586,7 +585,7 @@ function lib.drawTexturedWorld(world)
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
-            if (ud and ud.extra and ud.extra.type == 'texfixture') then
+            if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 --print(inspect(ud.extra))
                 table.insert(drawables,
@@ -600,7 +599,8 @@ function lib.drawTexturedWorld(world)
                     })
             end
 
-            if ud and ud.label == "connected-texture" and ud.extra.nodes then
+            if ud and (ud.label == "connected-texture" or ud.subtype == 'connected-texture') and ud.extra.nodes then
+                -- logger:inspect(ud)
                 --logger:info('got some new kind of combined drawing todo!')
                 local points = {}
                 for j = 1, #ud.extra.nodes do

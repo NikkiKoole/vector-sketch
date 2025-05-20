@@ -153,8 +153,8 @@ function lib.updateSFixtureDimensionsFunc(w, h)
     return newfixture
 end
 
-function lib.createSFixture(body, localX, localY, cfg)
-    if (cfg.label == 'snap') then
+function lib.createSFixture(body, localX, localY, subtype, cfg)
+    if (subtype == 'snap') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius * 5, cfg.radius * 5, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
@@ -163,7 +163,7 @@ function lib.createSFixture(body, localX, localY, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (cfg.label == 'anchor') then
+    if (subtype == 'anchor') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
@@ -172,17 +172,18 @@ function lib.createSFixture(body, localX, localY, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (cfg.label == 'connected-texture') then
+    if (subtype == 'connected-texture') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'connected-texture', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (cfg.label == 'texfixture') then
-        logger:info('well hello!')
+
+    if (subtype == 'texfixture') then
+        --logger:info('well hello!')
         local vertexCount = 4
         --
         local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
@@ -192,11 +193,11 @@ function lib.createSFixture(body, localX, localY, cfg)
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = { vertexCount = vertexCount, vertices = vv, type = 'texfixture' } })
+        fixture:setUserData({ type = "sfixture", id = setId, subtype = 'texfixture', label = '', extra = { vertexCount = vertexCount, vertices = vv } })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', cfg.label)
+    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', inspect(cfg))
 end
 
 --function lib.createTexFixtureShape(vertexCount)

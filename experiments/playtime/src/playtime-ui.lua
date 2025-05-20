@@ -637,7 +637,7 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, { label = 'snap', radius = 30 })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'snap', { radius = 30 })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -660,7 +660,7 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, { label = 'anchor', radius = 30 })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'anchor', { radius = 30 })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -684,8 +684,8 @@ function lib.drawAddShapeUI()
                 local body = hitted[#hitted]:getBody()
                 local cx, cy, w, h = getCenterAndDimensions(body)
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY,
-                    { label = 'texfixture', width = w, height = h })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'texfixture',
+                    { width = w, height = h })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -708,8 +708,8 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY,
-                    { label = 'connected-texture', radius = 30 })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'connected-texture',
+                    { radius = 30 })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -1224,7 +1224,7 @@ function lib.drawSelectedSFixture()
 
 
 
-        if sfixtureType == 'texfixture' then
+        if ud.subtype == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -1445,7 +1445,7 @@ function lib.drawSelectedSFixture()
                     state.selection.selectedSFixture = newfixture
                 end
 
-                if sfixtureType ~= 'texfixture' then
+                if state.selection.selectedSFixture:getUserData().subtype ~= 'texfixture' then
                     if ui.button(x, y, 40, 'N') then
                         handleOffset(0, -1)
                     end
@@ -1465,7 +1465,7 @@ function lib.drawSelectedSFixture()
             end)
 
             local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            if oldUD.label == 'connected-texture' then
+            if oldUD.label == 'connected-texture' or oldUD.subtype == 'connected-texture' then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
                     state.currentMode = 'addNodeToConnectedTexture'

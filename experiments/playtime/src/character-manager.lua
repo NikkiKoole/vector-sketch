@@ -222,7 +222,7 @@ function defaultSetupTextures(instance)
 
     if true then
         table.insert(instance.textures, {
-            label = 'texfixture',
+            subtype = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'torso1Skin',
@@ -234,7 +234,7 @@ function defaultSetupTextures(instance)
         })
 
         table.insert(instance.textures, {
-            label = 'texfixture',
+            subtype = 'texfixture',
             type = 'sfixture',
             OMP = false,
             group = 'torso1Hair',
@@ -248,7 +248,7 @@ function defaultSetupTextures(instance)
     -- legs
     if true then
         table.insert(instance.textures, {
-            label = 'connected-texture',
+            subtype = 'connected-texture',
             type = 'sfixture',
             OMP = true,
             group = 'leftLegSkin',
@@ -257,7 +257,7 @@ function defaultSetupTextures(instance)
             attachTo = 'luleg',
         })
         table.insert(instance.textures, {
-            label = 'connected-texture',
+            subtype = 'connected-texture',
             type = 'sfixture',
             OMP = false,
             zOffset = 40,
@@ -267,7 +267,7 @@ function defaultSetupTextures(instance)
             attachTo = 'luleg',
         })
         table.insert(instance.textures, {
-            label = 'connected-texture',
+            subtype = 'connected-texture',
             type = 'sfixture',
             OMP = true,
             group = 'rightLegSkin',
@@ -276,7 +276,7 @@ function defaultSetupTextures(instance)
             attachTo = 'ruleg',
         })
         table.insert(instance.textures, {
-            label = 'connected-texture',
+            subtype = 'connected-texture',
             type = 'sfixture',
             OMP = false,
             zOffset = 40,
@@ -291,7 +291,7 @@ function defaultSetupTextures(instance)
     --feet
     if true then
         table.insert(instance.textures, {
-            label = 'texfixture',
+            subtype = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'lfootSkin',
@@ -300,7 +300,7 @@ function defaultSetupTextures(instance)
         })
 
         table.insert(instance.textures, {
-            label = 'texfixture',
+            subtype = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'rfootSkin',
@@ -313,7 +313,7 @@ function defaultSetupTextures(instance)
     --hand
     if true then
         table.insert(instance.textures, {
-            label = 'texfixture',
+            subtype = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'lhandSkin',
@@ -321,7 +321,7 @@ function defaultSetupTextures(instance)
             attachTo = 'lhand',
         })
         table.insert(instance.textures, {
-            label = 'texfixture',
+            subtype = 'texfixture',
             type = 'sfixture',
             OMP = true,
             group = 'rhandSkin',
@@ -352,7 +352,7 @@ function defaultSetupTextures(instance)
         logger:inspect(jointLabels)
         if neckSegments > 0 and not creation.isPotatoHead then
             table.insert(instance.textures, {
-                label = 'connected-texture',
+                subtype = 'connected-texture',
                 type = 'sfixture',
                 OMP = true,
                 group = 'neckSkin',
@@ -361,7 +361,7 @@ function defaultSetupTextures(instance)
                 attachTo = 'neck1',
             })
             table.insert(instance.textures, {
-                label = 'connected-texture',
+                subtype = 'connected-texture',
                 type = 'sfixture',
                 OMP = false,
                 zOffset = 40,
@@ -378,7 +378,7 @@ function defaultSetupTextures(instance)
         local creation = instance.dna.creation
         if not creation.isPotatoHead then
             table.insert(instance.textures, {
-                label = 'texfixture',
+                subtype = 'texfixture',
                 type = 'sfixture',
                 OMP = true,
                 group = 'headSkin',
@@ -1234,15 +1234,15 @@ function lib.addTextureFixturesFromInstance(instance)
     for i = 1, #instance.textures do
         local it = instance.textures[i]
         if it.type == 'sfixture' then
-            if it.label == 'texfixture' then
+            if it.subtype == 'texfixture' then
                 local body = instance.parts[it.attachTo].body
                 removeSimilarFixture(body, it)
                 --print("body angle at texture creation:", body:getAngle())
                 local cx, cy, w, h = getCenterAndDimensions(body)
                 -- local localX, localY = body:getLocalPoint(wx, wy)
                 local growfactor = 1.1
-                local fixture = fixtures.createSFixture(body, 0, 0,
-                    { label = 'texfixture', width = w * growfactor, height = h * growfactor })
+                local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                    { width = w * growfactor, height = h * growfactor })
                 local ud = fixture:getUserData()
                 ud.extra.OMP = it.OMP
                 ud.extra.dirty = true
@@ -1291,7 +1291,7 @@ function lib.addTextureFixturesFromInstance(instance)
                 --logger:info('texgisture to add:')
             end
 
-            if it.label == 'connected-texture' then
+            if it.subtype == 'connected-texture' then
                 --print('got some stuff todo')
                 print(it.attachTo)
                 local body = instance.parts[it.attachTo].body
@@ -1299,7 +1299,8 @@ function lib.addTextureFixturesFromInstance(instance)
                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
                 removeSimilarFixture(body, it)
 
-                local fixture = fixtures.createSFixture(body, 0, 0, { label = 'connected-texture', radius = 30 })
+                local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+                    { radius = 30 })
                 local ud = fixture:getUserData()
                 ud.extra = {
                     attachTo = it.attachTo,
