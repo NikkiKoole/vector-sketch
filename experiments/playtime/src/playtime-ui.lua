@@ -995,8 +995,8 @@ function lib.drawSelectedSFixture()
     end
     if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
-    local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
-
+    --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
+    local sfixtureType = ud.type .. ' ' .. (ud.subtype and ud.subtype or '')
     -- Function to create an accordion
     local function drawAccordion(key, contentFunc)
         -- Draw the accordion header
@@ -2168,7 +2168,7 @@ function lib.drawUpdateSelectedObjectUI()
                     function()
                         for i = 1, index do
                             nextRow()
-                            local prefix = (string.sub(myfixtures[i]:getUserData().label, 1, 3))
+                            local prefix = (string.sub(myfixtures[i]:getUserData().subtype, 1, 3))
                             local fixLabel = string.format("%s %s", prefix,
                                 string.sub(myfixtures[i]:getUserData().id, 1, 3))
                             local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)

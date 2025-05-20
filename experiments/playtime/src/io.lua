@@ -454,7 +454,7 @@ function lib.gatherSaveData(world, camera)
                 end
 
                 if fixture:getUserData() then
-                    if utils.sanitizeString(fixture:getUserData().label) == 'snap' then
+                    if utils.sanitizeString(fixture:getUserData().label) == 'snap' or fixture:getUserData().subtype == 'snap' then
                         local ud             = fixture:getUserData()
 
                         ud.extra.fixture     = 'fixture'
@@ -692,7 +692,7 @@ function lib.cloneSelection(selectedBodies, world)
 
                         oldUD.id = uuid.generateID()
                         idMapping[oldid] = oldUD.id
-                        if utils.sanitizeString(oldUD.label) == 'snap' then
+                        if utils.sanitizeString(oldUD.label) == 'snap' or oldUD.subtype == 'snap' then
                             oldUD.extra.at = nil
                             oldUD.extra.to = nil
                             oldUD.extra.fixture = nil

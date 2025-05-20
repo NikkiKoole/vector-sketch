@@ -155,11 +155,11 @@ end
 
 function lib.createSFixture(body, localX, localY, cfg)
     if (cfg.label == 'snap') then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local shape = love.physics.newPolygonShape(rect(cfg.radius * 5, cfg.radius * 5, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'snap', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
@@ -168,7 +168,7 @@ function lib.createSFixture(body, localX, localY, cfg)
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'anchor', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end

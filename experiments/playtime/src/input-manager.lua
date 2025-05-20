@@ -153,7 +153,7 @@ local function handlePointer(x, y, id, action)
             for _, f in pairs(registry.sfixtures) do
                 local body = f:getBody()
                 local ud = f:getUserData()
-                if ud.label == 'anchor' then
+                if ud.label == 'anchor' or ud.subtype == 'anchor' then
                     -- todo this will find ALL sfitures bot just anchors
                     local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
 

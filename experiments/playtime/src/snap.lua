@@ -6,7 +6,7 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
 
 local snapFixtures = {}
-local snapDistance = 40            -- Maximum distance to snap
+local snapDistance = 140           -- Maximum distance to snap
 local mySnapJoints = {}            -- Store created joints
 local jointBreakThreshold = 100000 -- Force threshold for breaking the joint
 local cooldownTime = .5            -- Time in seconds to prevent immediate reconnection
@@ -182,8 +182,8 @@ function lib.rebuildSnapFixtures(sfix)
     for k, v in pairs(sfix) do
         if not v:isDestroyed() then
             local ud = v:getUserData()
-
-            if ud and utils.sanitizeString(ud.label) == 'snap' then
+            logger:inspect(ud)
+            if ud and utils.sanitizeString(ud.subtype) == 'snap' then
                 local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
                 local ud = v:getUserData()
 
