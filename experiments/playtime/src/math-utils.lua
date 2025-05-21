@@ -132,6 +132,8 @@ local function GetSplinePos(tab, percent, tension) --returns the position at 'pe
     end
 end
 
+
+
 lib.unloosenVanillaline = function(points, tension, spacing)
     local work = unpackNodePoints(points, true)
     local output = {}
@@ -156,7 +158,6 @@ lib.unloosenVanillaline = function(points, tension, spacing)
     table.remove(output, #output)
     return output
 end
-
 
 
 

@@ -1560,7 +1560,9 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 oldTexFixUD.extra.startIndex = oldTexFixUD.extra.startIndex or 1
                 oldTexFixUD.extra.endIndex = oldTexFixUD.extra.endIndex or 1
-
+                oldTexFixUD.extra.tension = oldTexFixUD.extra.tension or .05
+                oldTexFixUD.extra.spacing = oldTexFixUD.extra.spacing or 10
+                oldTexFixUD.extra.width = oldTexFixUD.extra.width or 100
                 local body = state.selection.selectedSFixture:getBody()
                 local parentVerts = body:getUserData().thing.vertices
                 --print(#parentVerts)
@@ -1583,9 +1585,24 @@ function lib.drawSelectedSFixture()
                 ui.label(x + 130, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.endIndex)
 
                 nextRow()
-
+                local tensionSlider = createSliderWithId(myID, 'tension', x, y, 160, 0.01,
+                    0.5,
+                    oldTexFixUD.extra.tension, function(v)
+                        oldTexFixUD.extra.tension = v
+                    end)
                 nextRow()
-
+                local spacingSlider = createSliderWithId(myID, 'spacing', x, y, 160, 1,
+                    100,
+                    oldTexFixUD.extra.spacing, function(v)
+                        oldTexFixUD.extra.spacing = v
+                    end)
+                nextRow()
+                local widthSlider = createSliderWithId(myID, 'width', x, y, 160, 1,
+                    1000,
+                    oldTexFixUD.extra.width, function(v)
+                        oldTexFixUD.extra.width = v
+                    end)
+                nextRow()
                 local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)

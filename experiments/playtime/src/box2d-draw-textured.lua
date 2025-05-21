@@ -909,23 +909,28 @@ function lib.drawTexturedWorld(world)
 
             if #points >= 2 then
                 --love.graphics.line(pointsflat)
-                local img = getLoveImage('textures/' .. 'hair6.png')
+                --if drawables[i].extra.main.bgURL
+                local img = getLoveImage('textures/' .. (drawables[i].extra.main.bgURL))
+                if not img then
+                    img = getLoveImage('textures/' .. 'hair7.png')
+                end
+
                 local w, h = img:getDimensions()
 
-                local hairTension = .02
-                local spacing = 10 --* multipliers.hair.sMultiplier
+                local hairTension = drawables[i].extra.tension or .02 -- love.math.random() --.02
+                local spacing = drawables[i].extra.spacing or 5
+                -- 5                                                    --* multipliers.hair.sMultiplier
                 local coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
                 -- logger:info('check these below')
                 -- logger:inspect(points)
                 -- logger:inspect(coords)
                 local length = mathutils.getLengthOfPath(points)
 
-                local factor = (length / h)
-                local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
-                local width = 130             --(w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
+                --local factor = (length / h)
+                --local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
+                local width = drawables[i].extra.width or 100 -- 100 --(w * factor) / 2
+                --2                         -- 100             (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
                 local verts, indices, draw_mode = polyline.render('miter', coords, width)
-
-
 
                 local cx, cy = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
                 for i = 1, #verts do
