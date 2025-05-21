@@ -714,6 +714,28 @@ function lib.drawAddShapeUI()
             end
             ui.draggingActive = nil
         end
+
+        local _, pressed, released = ui.button(x, y, width, 'trace-vertices')
+        if pressed then
+            ui.draggingActive = ui.activeElementID
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+
+            state.interaction.offsetDragging = { 0, 0 }
+        end
+        if released then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
+            if (#hitted > 0) then
+                local body = hitted[#hitted]:getBody()
+                local localX, localY = body:getLocalPoint(wx, wy)
+                local fixture = fixtures.createSFixture(body, localX, localY, 'trace-vertices',
+                    { radius = 30 })
+                state.selection.selectedSFixture = fixture
+            end
+            ui.draggingActive = nil
+        end
         nextRow()
     end)
 end
@@ -1470,6 +1492,95 @@ function lib.drawSelectedSFixture()
                 if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
                     state.currentMode = 'addNodeToConnectedTexture'
                 end
+
+                nextRow()
+
+                nextRow()
+
+                local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                    math.floor(oldTexFixUD.extra.zOffset or 0),
+                    function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                    end,
+                    (not state.world.paused) or dirtyBodyChange)
+                nextRow()
+                nextRow()
+                local e = state.selection.selectedSFixture:getUserData().extra
+                if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
+                    e.OMP = not e.OMP
+                end
+                nextRow()
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                local newWMul = createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
+                    oldTexFixUD.extra.main.wmul or 1,
+                    function(v)
+                        oldTexFixUD.extra.main.wmul = v
+                    end)
+                if ui.checkbox(x, y, (oldTexFixUD.extra.main.dir == nil or oldTexFixUD.extra.main.dir == 1), 'dir') then
+                    if oldTexFixUD.extra.main.dir == nil or oldTexFixUD.extra.main.dir == 1 then
+                        oldTexFixUD.extra.main.dir = -1
+                    else
+                        oldTexFixUD.extra.main.dir = 1
+                    end
+                end
+                nextRow()
+
+
+                if not e.OMP then
+                    handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
+                        function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
+                    handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
+                        function(u)
+                            oldTexFixUD.extra.main.bgURL = u
+                        end)
+                    nextRow()
+                    handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
+                        function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
+                    handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
+                        function(u)
+                            oldTexFixUD.extra.main.fgURL = u
+                        end)
+
+                    nextRow()
+                end
+
+                if e.OMP then
+                    oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+
+                    combineImageUI('main')
+                    flipWholeUI('main')
+
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
+                    handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
+                        function(color) oldTexFixUD.extra.main.tint = color end, dirty)
+                end
+            end
+
+            if oldUD.subtype == 'trace-vertices' then
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                oldTexFixUD.extra.startIndex = oldTexFixUD.extra.startIndex or 1
+                oldTexFixUD.extra.endIndex = oldTexFixUD.extra.endIndex or 1
+
+                local body = state.selection.selectedSFixture:getBody()
+                local parentVerts = body:getUserData().thing.vertices
+                --print(#parentVerts)
+                nextRow()
+                nextRow()
+                local startIndexSlider = createSliderWithId(myID, 'startIndex', x, y, 160, -(#parentVerts / 2),
+                    (#parentVerts / 2),
+                    oldTexFixUD.extra.startIndex, function(v)
+                        oldTexFixUD.extra.startIndex = math.floor(v + 0)
+                    end)
+
+                ui.label(x + 130, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.startIndex)
+                nextRow()
+                local endIndexSlider = createSliderWithId(myID, 'endIndex', x, y, 160, -(#parentVerts / 2),
+                    (#parentVerts / 2),
+                    oldTexFixUD.extra.endIndex, function(v)
+                        oldTexFixUD.extra.endIndex = math.floor(v + 0)
+                    end)
+
+                ui.label(x + 130, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.endIndex)
 
                 nextRow()
 

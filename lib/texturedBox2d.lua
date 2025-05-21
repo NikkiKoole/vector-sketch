@@ -7,6 +7,7 @@ local cam              = require('lib.cameraBase').getInstance()
 local canvas           = require 'lib.canvas'
 local text             = require 'lib.text'
 local box2dGuyCreation = require 'lib.box2dGuyCreation'
+local mathutils        = require 'src.math-utils'
 
 local lib              = {}
 
@@ -313,7 +314,7 @@ local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, 
             local spacing = 10 * multipliers.hair.sMultiplier
             local coords
 
-            coords = border.unloosenVanillaline(points, hairTension, spacing)
+            coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
 
             local length = getLengthOfPath(hairLine)
             local factor = (length / h)

@@ -1293,7 +1293,7 @@ function lib.addTextureFixturesFromInstance(instance)
 
             if it.subtype == 'connected-texture' then
                 --print('got some stuff todo')
-                print(it.attachTo)
+                -- print(it.attachTo)
                 local body = instance.parts[it.attachTo].body
 
                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST

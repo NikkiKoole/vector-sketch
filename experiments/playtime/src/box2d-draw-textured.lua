@@ -5,6 +5,7 @@ TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedT
 local lib = {}
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
+local polyline = require 'src.polyline'
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
@@ -230,6 +231,8 @@ local function buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2,
     return table.concat(keyParts, "|")
 end
 
+local testCache = {}
+
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
@@ -238,6 +241,11 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         texOffX, texOffY,
         lineColor, lineAlpha,
         flipx, flipy, patches)
+
+    if testCache[key] == true then
+        --    logger:info('double?', key)
+    end
+    testCache[key] = true
     logger:info(key)
 
     if true then
@@ -493,6 +501,54 @@ local function makeSquishableUVsFromPoints(v)
     return verts
 end
 
+
+local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
+    local canvasCache = guy.canvasCache
+    local dpi = 1 --love.graphics.getDPIScale()
+    local shrink = canvas.getShrinkFactor()
+    if true then
+        if true or box2dGuy.hairNeedsRedo then
+            local img = canvasCache.hairCanvas
+            local w, h = img:getDimensions()
+            local f = faceData.metaPoints
+            -- todo parameter hair (beard, only top hair, sidehair)
+            --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
+            local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+            -- local hairLine = { f[8], f[1], f[2] }
+            -- print(inspect(hairLine))
+            --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+            local points = hairLine
+            local hairTension = .02
+            local spacing = 10 * multipliers.hair.sMultiplier
+            local coords
+
+            coords = border.unloosenVanillaline(points, hairTension, spacing)
+
+            local length = getLengthOfPath(hairLine)
+            local factor = (length / h)
+            local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
+            local width = (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
+            local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
+            local vertsWithUVs = {}
+
+            for i = 1, #verts do
+                local u = (i % 2 == 1) and 0 or 1
+                local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+                vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+            end
+
+            local vertices = vertsWithUVs
+            local m = love.graphics.newMesh(vertices, "strip")
+            m:setTexture(img)
+            love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx * (dpi / shrink), sy * (dpi / shrink))
+        end
+    end
+end
+
+
+
+
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
     local p = {}
     for i = 1, #vertices do
@@ -585,6 +641,23 @@ function lib.drawTexturedWorld(world)
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
+
+            if ud and ud.subtype == 'trace-vertices' then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                --print('jozers!')
+
+                --logger:inspect(body:getUserData().thing)
+                table.insert(drawables, {
+                    type = 'trace-vertices',
+                    z = composedZ,
+                    --curve = love.math.newBezierCurve(points),
+                    --texfixture = fixtures[i],
+                    extra = ud.extra,
+                    thing = body:getUserData().thing
+                })
+            end
+
+
             if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 --print(inspect(ud.extra))
@@ -758,7 +831,8 @@ function lib.drawTexturedWorld(world)
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
-        if texfixture then
+        if drawables[i].type == 'texfixture' then
+            --if texfixture then
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
                 if extra.main and extra.main.bgURL then
@@ -778,39 +852,6 @@ function lib.drawTexturedWorld(world)
                 --end
             end
         end
-
-
-        -- local function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, dir, wmultiplier)
-        --     local ax, ay = box2dGuy[p1]:getPosition()
-        --     local bx, by = box2dGuy[p2]:getPosition()
-        --     local cx, cy = box2dGuy[p3]:getPosition()
-
-        --     ax, ay = growLine({ ax, ay }, { bx, by }, growLength)
-        --     cx, cy = growLine({ cx, cy }, { bx, by }, growLength)
-
-        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-
-        --     if (dir ~= nil or wmultiplier ~= nil) then
-        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
-        --     else
-        --         texturedCurve(curve, canvas, mesh)
-        --     end
-        -- end
-
-        -- local function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
-        --     local ax, ay = box2dGuy[p1]:getPosition()
-        --     local bx, by = box2dGuy[p2]:getPosition()
-        --     local cx, cy = box2dGuy[p3]:getPosition()
-        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-
-        --     if (dir ~= nil or wmultiplier ~= nil) then
-        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
-        --     else
-        --         texturedCurve(curve, canvas, mesh)
-        --     end
-        -- end
-
-
 
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
@@ -846,8 +887,96 @@ function lib.drawTexturedWorld(world)
                 love.graphics.draw(mesh)
             end
         end
+
+        if drawables[i].type == 'trace-vertices' then
+            local length = (#drawables[i].thing.vertices) / 2
+            local startIndex = drawables[i].extra.startIndex
+            local endIndex = drawables[i].extra.endIndex
+            local indices = getIndices(length, startIndex, endIndex)
+            local points = {}
+            local pointsflat = {}
+            -- logger:info(length)
+            -- logger:inspect(indices)
+            for j = 1, #indices do
+                --local index = indices[j]
+                local x = drawables[i].thing.vertices[indices[j] * 2 + 1]
+                local y = drawables[i].thing.vertices[indices[j] * 2 + 2]
+                table.insert(points, { x, y })
+                table.insert(pointsflat, x)
+                table.insert(pointsflat, y)
+            end
+
+
+            if #points >= 2 then
+                --love.graphics.line(pointsflat)
+                local img = getLoveImage('textures/' .. 'hair6.png')
+                local w, h = img:getDimensions()
+
+                local hairTension = .02
+                local spacing = 10 --* multipliers.hair.sMultiplier
+                local coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
+                -- logger:info('check these below')
+                -- logger:inspect(points)
+                -- logger:inspect(coords)
+                local length = mathutils.getLengthOfPath(points)
+
+                local factor = (length / h)
+                local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
+                local width = 130             --(w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
+                local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
+
+
+                local cx, cy = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
+                for i = 1, #verts do
+                    verts[i][1] = verts[i][1] - cx
+                    verts[i][2] = verts[i][2] - cy
+                end
+
+                local vertsWithUVs = {}
+
+                for i = 1, #verts do
+                    local u = (i % 2 == 1) and 0 or 1
+                    local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+                    vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+                end
+
+                local vertices = vertsWithUVs
+
+
+                local m = love.graphics.newMesh(vertices, "strip")
+                m:setTexture(img)
+                local body = drawables[i].thing.body
+                --local cx, cy, ww, hh = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
+                love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
+            end
+            --logger:inspect(points)
+            --logger:inspect()
+        end
     end
     --love.graphics.setDepthMode()
+end
+
+function resolveIndex(index, length)
+    return (index < 0) and ((length + index) % length) or (index % length)
+end
+
+function getIndices(length, startIdx, endIdx, allowFullLoop)
+    local start = resolveIndex(startIdx, length)
+    local ending = resolveIndex(endIdx, length)
+    local result = {}
+
+    local i = start
+    repeat
+        table.insert(result, i)
+        i = (i + 1) % length
+    until i == ending and (not allowFullLoop or i == start)
+
+    if i == ending then
+        table.insert(result, i)
+    end
+
+    return result
 end
 
 return lib

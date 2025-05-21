@@ -182,7 +182,7 @@ function lib.rebuildSnapFixtures(sfix)
     for k, v in pairs(sfix) do
         if not v:isDestroyed() then
             local ud = v:getUserData()
-            logger:inspect(ud)
+            --logger:inspect(ud)
             if ud and utils.sanitizeString(ud.subtype) == 'snap' then
                 local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
                 local ud = v:getUserData()

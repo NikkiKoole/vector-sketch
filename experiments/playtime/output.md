@@ -1,332 +1,15 @@
-main.lua
+src/behaviors.lua
 ```lua
--- DOING playing around with characters, getting them back in the system
+local lib = {}
 
--- TODO there is an issue where the .vertices arent populated after load.
--- TODO snap isnt working vanilla, not the right stuff is saved.
--- TODO when we flip something with a joint wiht limits, the limits are gone
--- TODO label for behavior (straight / snap ..) is not scalable, we need a dedicated 'tag's for that each tag has option of data too.
--- TODO add some ui to change body properties
--- TODO swap body parts
 
+lib.allBehaviors = {
+    { name = 'KEEP_ANGLE', description = 'keep a body at a certain angle, still not completely settled on the other variables. Kp*I etc.' },
+    { name = 'LIMB_HUB',   description = 'a polygon that has things attached, the location where is defined in here, by its edge number and a lerp between vertex -1 and vertex.' }
+}
 
-logger = require 'src.logger'
-inspect = require 'vendor.inspect'
 
-local blob = require 'vendor.loveblobs'
-local Peeker = require 'vendor.peeker'
-local recorder = require 'src.recorder'
-local ui = require 'src.ui-all'
-local playtimeui = require 'src.playtime-ui'
-
-local selectrect = require 'src.selection-rect'
-local script = require 'src.script'
-local objectManager = require 'src.object-manager'
-
-local utils = require 'src.utils'
-local box2dDraw = require 'src.box2d-draw'
-local box2dDrawTextured = require 'src.box2d-draw-textured'
-local box2dPointerJoints = require 'src.box2d-pointerjoints'
-local camera = require 'src.camera'
-local cam = camera.getInstance()
-
-
-snap = require 'src.snap'
-registry = require 'src.registry'
-
-local InputManager = require 'src.input-manager'
-local state = require 'src.state'
-local sceneLoader = require 'src.scene-loader'
-local editorRenderer = require 'src.editor-render'
-
-function waitForEvent()
-    local a
-    repeat
-        a = love.event.wait()
-    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
-end
-
-waitForEvent()
-
-local FIXED_TIMESTEP = true
-local FPS = 60 -- in platime ui we also have a fps
-local TICKRATE = 1 / FPS
-
-function love.load(args)
-    --
-
-
-    local fontHeight = 25
-    --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
-    --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
-    local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
-
-    love.keyboard.setKeyRepeat(true)
-    love.graphics.setFont(font)
-
-    ui.init(font, fontHeight)
-
-    love.physics.setMeter(state.world.meter)
-    state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
-
-    local w, h = love.graphics.getDimensions()
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(325, 325, 2000, 2000)
-
-    objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
-
-    -- -- Adding custom polygon
-    local customVertices = {
-        250, 0,
-        0, 300,
-        500, 300,
-        -- Add more vertices as needed
-    }
-
-    objectManager.addThing('custom', { vertices = customVertices })
-    --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
-
-    if state.world.playWithSoftbodies then
-        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
-        b:setFrequency(3)
-        b:setDamping(0.1)
-        --b:setFriction(1)
-
-        table.insert(state.world.softbodies, b)
-        local points = {
-            0, 500, 800, 500,
-            800, 800, 0, 800
-        }
-        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
-        table.insert(state.world.softbodies, b)
-        b:setJointFrequency(2)
-        b:setJointDamping(.1)
-        --b:setFixtureRestitution(2)
-        -- b:setFixtureFriction(10)
-    end
-
-
-
-    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
-
-
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --loadScene(cwd .. '/scripts/snap2.playtime.json')
-    --loadScene(cwd .. '/scripts/grow.playtime.json')
-
-    --loadScriptAndScene('elasto')
-    --  sceneLoader.loadScriptAndScene('snap')
-    --sceneLoader.loadScriptAndScene('straight')
-    local cwd = love.filesystem.getWorkingDirectory()
-    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
-
-
-    local CharacterManager = require 'src.character-manager'
-
-    -- In love.load or a scene setup function:
-    local humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
-end
-
-function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-    script.call('beginContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-end
-
-function endContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-    script.call('endContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-end
-
-function preSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-    script.call('preSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-end
-
-function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-    script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-end
-
-function love.update(dt)
-    if recorder.isRecording or recorder.isReplaying then
-        recorder:update(dt)
-    end
-
-    Peeker.update(dt)
-    sceneLoader.maybeHotReload(dt)
-
-    local scaled_dt = dt * state.world.speedMultiplier
-    if not state.world.paused then
-        if state.world.playWithSoftbodies then
-            for i, v in ipairs(state.world.softbodies) do
-                v:update(scaled_dt)
-            end
-        end
-        local velocityiterations = 8
-        local positioniterations = 13 -- 3
-        for i = 1, 1 do
-            state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
-        end
-        script.call('update', scaled_dt)
-
-        snap.update(scaled_dt)
-    end
-
-
-    if recorder.isRecording and utils.tablelength(recorder.recordingMouseJoints) > 0 then
-        recorder:recordMouseJointUpdates(cam)
-    end
-
-    box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
-    --phys.handleUpdate(dt)
-
-    if state.interaction.draggingObj then
-        InputManager.handleDraggingObj()
-    end
-end
-
-function love.draw()
-    Peeker.attach()
-    local w, h = love.graphics.getDimensions()
-    love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
-
-    if state.editorPreferences.showGrid then
-        editorRenderer.drawGrid()
-    end
-
-    box2dDrawTextured.makeCombinedImages()
-    cam:push()
-    love.graphics.setColor(1, 1, 1, 1)
-    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
-    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
-
-    script.call('draw')
-
-    editorRenderer.renderActiveEditorThings()
-    cam:pop()
-
-
-
-    -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
-    --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
-
-    Peeker.detach()
-    if state.interaction.startSelection then
-        selectrect.draw(state.interaction.startSelection)
-    end
-
-
-    playtimeui.drawUI()
-    script.call('drawUI')
-
-    if recorder.isRecording then
-        love.graphics.setColor(1, 0, 0)
-        love.graphics.circle('fill', 20, 20, 20)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.print(string.format("%.1f", love.timer.getTime() - recorder.startTime), 5, 5)
-    end
-
-    if state.scene.sceneScript and state.scene.sceneScript.foundError then
-        love.graphics.setColor(1, 0, 0)
-        love.graphics.print(state.scene.sceneScript.foundError, 0, h / 2)
-        love.graphics.setColor(1, 1, 1)
-    end
-
-    if FIXED_TIMESTEP then
-        love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
-    else
-        love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
-    end
-end
-
-function love.wheelmoved(dx, dy)
-    local newScale = cam.scale * (1 + dy / 10)
-    if newScale > 0.01 and newScale < 50 then
-        cam:scaleToPoint(1 + dy / 10)
-    end
-end
-
-function love.filedropped(file)
-    local name = file:getFilename()
-    if string.find(name, '.playtime.json') then
-        script.call('onSceneUnload')
-        sceneLoader.loadScene(name)
-        script.call('onSceneLoaded')
-    end
-    if string.find(name, '.playtime.lua') then
-        sceneLoader.loadAndRunScript(name)
-    end
-end
-
-function love.textinput(t)
-    ui.handleTextInput(t)
-end
-
-function love.keypressed(key)
-    ui.handleKeyPress(key)
-    InputManager.handleKeyPressed(key)
-    script.call('onKeyPress', key)
-end
-
-function love.mousemoved(x, y, dx, dy)
-    InputManager.handleMouseMoved(x, y, dx, dy)
-end
-
-function love.mousepressed(x, y, button, istouch)
-    InputManager.handleMousePressed(x, y, button, istouch)
-end
-
-function love.touchpressed(id, x, y, dx, dy, pressure)
-    InputManager.handleTouchPressed(id, x, y, dx, dy, pressure)
-end
-
-function love.mousereleased(x, y, button, istouch)
-    InputManager.handleMouseReleased(x, y, button, istouch)
-end
-
-function love.touchreleased(id, x, y, dx, dy, pressure)
-    InputManager.handleTouchReleased(id, x, y, dx, dy, pressure)
-end
-
-if FIXED_TIMESTEP then
-    function love.run()
-        if love.math then
-            love.math.setRandomSeed(os.time())
-        end
-
-        if love.load then love.load(arg) end
-
-        local previous = love.timer.getTime()
-        local lag = 0.0
-        while true do
-            local current = love.timer.getTime()
-            local elapsed = current - previous
-            previous = current
-            lag = lag + elapsed * state.world.speedMultiplier
-
-            if love.event then
-                love.event.pump()
-                for name, a, b, c, d, e, f in love.event.poll() do
-                    if name == "quit" then
-                        if not love.quit or not love.quit() then
-                            return a
-                        end
-                    end
-                    love.handlers[name](a, b, c, d, e, f)
-                end
-            end
-
-            while lag >= TICKRATE do
-                if love.update then love.update(TICKRATE) end
-                lag = lag - TICKRATE
-            end
-
-            if love.graphics and love.graphics.isActive() then
-                love.graphics.clear(love.graphics.getBackgroundColor())
-                love.graphics.origin()
-                if love.draw then love.draw(lag / TICKRATE) end
-                love.graphics.present()
-            end
-        end
-    end
-end
---
+return lib
 
 ```
 
@@ -342,11 +25,10 @@ local mathutils = require 'src.math-utils'
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
+
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
-
 local imageCache = {}
-
 local shrinkFactor = 1
 
 lib.setShrinkFactor = function(value)
@@ -521,12 +203,67 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
+local function buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
+                        texOffX, texOffY,
+                        lineColor, lineAlpha,
+                        flipx, flipy, patches)
+    local function toStr(v)
+        if type(v) == "number" then
+            return string.format("%.3f", v)
+        elseif type(v) == "table" then
+            return table.concat(v, ",")
+        elseif type(v) == "boolean" then
+            return v and "1" or "0"
+        elseif type(v) == "userdata" and v.typeOf and v:typeOf("Image") then
+            return tostring(v):match("Image: (.+)") or "image"
+        else
+            return tostring(v)
+        end
+    end
 
+    local keyParts = {
+        toStr(lineart),
+        toStr(mask),
+        toStr(color1), alpha1,
+        toStr(texture2), toStr(color2), alpha2,
+        texRot, texScaleX, texScaleY,
+        texOffX, texOffY,
+        toStr(lineColor), lineAlpha,
+        flipx, flipy
+    }
+
+    if patches then
+        for _, p in ipairs(patches) do
+            table.insert(keyParts, toStr(p.img))
+            table.insert(keyParts, p.tx or 0)
+            table.insert(keyParts, p.ty or 0)
+            table.insert(keyParts, p.r or 0)
+            table.insert(keyParts, p.sx or 1)
+            table.insert(keyParts, p.sy or 1)
+            table.insert(keyParts, p.tint or "ffffff")
+        end
+    end
+
+    return table.concat(keyParts, "|")
+end
+
+local testCache = {}
 
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
-                                  flipx, flipy, patch1, patch2)
+                                  flipx, flipy, patches)
+    local key = buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
+        texOffX, texOffY,
+        lineColor, lineAlpha,
+        flipx, flipy, patches)
+
+    if testCache[key] == true then
+        --    logger:info('double?', key)
+    end
+    testCache[key] = true
+    logger:info(key)
+
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
         local lw, lh = lineart:getDimensions()
@@ -555,6 +292,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             if texture2 then
                 maskShader:send('fill', texture2)
             end
+
             maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
             maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
             maskShader:send('uvTranslation', { dx, dy })
@@ -567,36 +305,29 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader()
         end
 
-
-        if (patch1 and patch1.img) then
-            love.graphics.setColorMask(true, true, true, false)
-            local r, g, b, a = lib.hexToColor(patch1.tint)
-            love.graphics.setColor(r, g, b, a)
-            local image = patch1.img
-            local imgw, imgh = image:getDimensions()
-            local xOffset = (patch1.tx or 0) * (imgw) * shrinkFactor
-            local yOffset = (patch1.ty or 0) * (imgh) * shrinkFactor
-            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch1.r or 0) * ((math.pi * 2) / 16),
-                (patch1.sx or 1) * shrinkFactor,
-                (patch1.sy or 1) * shrinkFactor,
-                imgw / 2, imgh / 2)
-            love.graphics.setColorMask(true, true, true, true)
+        if true then
+            if patches then
+                for i = 1, #patches do
+                    local patch = patches[i]
+                    if patch and patch.img then
+                        love.graphics.setColorMask(true, true, true, false)
+                        local r, g, b, a = lib.hexToColor(patch.tint)
+                        love.graphics.setColor(r, g, b, a)
+                        local image = patch.img
+                        local imgw, imgh = image:getDimensions()
+                        local xOffset = (patch.tx or 0) * (imgw) * shrinkFactor
+                        local yOffset = (patch.ty or 0) * (imgh) * shrinkFactor
+                        love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset,
+                            (patch.r or 0) * ((math.pi * 2) / 16),
+                            (patch.sx or 1) * shrinkFactor,
+                            (patch.sy or 1) * shrinkFactor,
+                            imgw / 2, imgh / 2)
+                        love.graphics.setColorMask(true, true, true, true)
+                    end
+                end
+            end
         end
 
-        if (patch2 and patch2.img) then
-            love.graphics.setColorMask(true, true, true, false)
-            local r, g, b, a = lib.hexToColor(patch2.tint)
-            love.graphics.setColor(r, g, b, a)
-            local image = patch2.img
-            local imgw, imgh = image:getDimensions()
-            local xOffset = (patch2.tx or 0) * (imgw) * shrinkFactor
-            local yOffset = (patch2.ty or 0) * (imgh) * shrinkFactor
-            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, (patch2.r or 0) * ((math.pi * 2) / 16),
-                (patch2.sx or 1) * shrinkFactor,
-                (patch2.sy or 1) * shrinkFactor,
-                imgw / 2, imgh / 2)
-            love.graphics.setColorMask(true, true, true, true)
-        end
 
 
         -- I want to know If we do this or not..
@@ -668,6 +399,49 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
     -- return lineart:getData()
     -- return nil -- love.image.newImageData(mask)
 end
+function makePatch(name, ud)
+    local result = nil
+    if ud.extra[name] and ud.extra[name].bgURL then
+        local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
+        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
+        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
+        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
+        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
+        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
+        if outlineImage then
+            local imgData = lib.makeTexturedCanvas(
+                outlineImage,            -- line art
+                maskImage,               -- mask
+                { mr, mg, mb },          -- color1
+                ma * 5,                  -- alpha1
+                patternImage or tex1,    -- texture2 (fill texture)
+                { pr, pg, pb },          -- color2
+                pa * 5,                  -- alpha2
+                ud.extra[name].pr or 0,  -- texRot
+                ud.extra[name].psx or 1, -- texScale
+                ud.extra[name].psy or 1, -- texScale
+                ud.extra[name].ptx or 0,
+                ud.extra[name].pty or 0,
+                { olr, olg, olb },      -- lineColor
+                ola * 5,                -- lineAlpha
+                ud.extra[name].fx or 1, -- flipx (normal)
+                ud.extra[name].fy or 1  -- flipy (normal)
+            )
+            result = {
+                img = love.graphics.newImage(imgData),
+                --img = getLoveImage('textures/' .. ud.extra.patch1URL),
+                tint = ud.extra[name].tint or 'ffffff',
+                tx = ud.extra[name].tx,
+                ty = ud.extra[name].ty,
+                sx = ud.extra[name].sx,
+                sy = ud.extra[name].sy,
+                r = ud.extra[name].r
+            }
+        end
+        return result
+    end
+    return result
+end
 
 function lib.makeCombinedImages()
     local bodies = state.physicsWorld:getBodies()
@@ -676,57 +450,9 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                --    logger:info(inspect(ud.extra))
-                ud.extra.dirty = false
-
-
-                function makePatch(name)
-                    local result = nil
-                    if ud.extra[name] and ud.extra[name].bgURL then
-                        local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
-                        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
-                        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
-                        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
-                        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
-                        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
-                        if outlineImage then
-                            local imgData = lib.makeTexturedCanvas(
-                                outlineImage,            -- line art
-                                maskImage,               -- mask
-                                { mr, mg, mb },          -- color1
-                                ma * 5,                  -- alpha1
-                                patternImage or tex1,    -- texture2 (fill texture)
-                                { pr, pg, pb },          -- color2
-                                pa * 5,                  -- alpha2
-                                ud.extra[name].pr or 0,  -- texRot
-                                ud.extra[name].psx or 1, -- texScale
-                                ud.extra[name].psy or 1, -- texScale
-                                ud.extra[name].ptx or 0,
-                                ud.extra[name].pty or 0,
-                                { olr, olg, olb },      -- lineColor
-                                ola * 5,                -- lineAlpha
-                                ud.extra[name].fx or 1, -- flipx (normal)
-                                ud.extra[name].fy or 1  -- flipy (normal)
-                            )
-                            result = {
-                                img = love.graphics.newImage(imgData),
-                                --img = getLoveImage('textures/' .. ud.extra.patch1URL),
-                                tint = ud.extra[name].tint or 'ffffff',
-                                tx = ud.extra[name].tx,
-                                ty = ud.extra[name].ty,
-                                sx = ud.extra[name].sx,
-                                sy = ud.extra[name].sy,
-                                r = ud.extra[name].r
-                            }
-                        end
-                        return result
-                    end
-                end
-
-                local patch1 = makePatch('patch1')
-                local patch2 = makePatch('patch2')
-
-
+                local patch1 = makePatch('patch1', ud)
+                local patch2 = makePatch('patch2', ud)
+                local patch3 = makePatch('patch3', ud)
 
                 local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
                 local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
@@ -739,7 +465,6 @@ function lib.makeCombinedImages()
                     local imgData = lib.makeTexturedCanvas(
                         outlineImage or line,   -- line art
                         maskImage or maskTex,   -- mask
-
                         { mr, mg, mb },         -- color1
                         ma * 5,                 -- alpha1
                         patternImage or tex1,   -- texture2 (fill texture)
@@ -750,16 +475,18 @@ function lib.makeCombinedImages()
                         ud.extra.main.psy or 1, -- texScale
                         ud.extra.main.ptx or 0,
                         ud.extra.main.pty or 0,
-                        { olr, olg, olb },     -- lineColor
-                        ola * 5,               -- lineAlpha
-                        ud.extra.main.fx or 1, -- flipx (normal)
-                        ud.extra.main.fy or 1, -- flipy (normal)
-                        patch1, patch2         -- renderPatch (set to truthy to enable extra patch rendering)
+                        { olr, olg, olb },         -- lineColor
+                        ola * 5,                   -- lineAlpha
+                        ud.extra.main.fx or 1,     -- flipx (normal)
+                        ud.extra.main.fy or 1,     -- flipy (normal)
+                        { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
                     )
                     image = love.graphics.newImage(imgData)
                     ud.extra.ompImage = image
                 end
                 fixtures[i]:setUserData(ud)
+
+                ud.extra.dirty = false
             end
         end
     end
@@ -789,6 +516,54 @@ local function makeSquishableUVsFromPoints(v)
 
     return verts
 end
+
+
+local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
+    local canvasCache = guy.canvasCache
+    local dpi = 1 --love.graphics.getDPIScale()
+    local shrink = canvas.getShrinkFactor()
+    if true then
+        if true or box2dGuy.hairNeedsRedo then
+            local img = canvasCache.hairCanvas
+            local w, h = img:getDimensions()
+            local f = faceData.metaPoints
+            -- todo parameter hair (beard, only top hair, sidehair)
+            --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
+            local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+            -- local hairLine = { f[8], f[1], f[2] }
+            -- print(inspect(hairLine))
+            --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+            local points = hairLine
+            local hairTension = .02
+            local spacing = 10 * multipliers.hair.sMultiplier
+            local coords
+
+            coords = border.unloosenVanillaline(points, hairTension, spacing)
+
+            local length = getLengthOfPath(hairLine)
+            local factor = (length / h)
+            local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
+            local width = (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
+            local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
+            local vertsWithUVs = {}
+
+            for i = 1, #verts do
+                local u = (i % 2 == 1) and 0 or 1
+                local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+                vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+            end
+
+            local vertices = vertsWithUVs
+            local m = love.graphics.newMesh(vertices, "strip")
+            m:setTexture(img)
+            love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx * (dpi / shrink), sy * (dpi / shrink))
+        end
+    end
+end
+
+
+
 
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
     local p = {}
@@ -839,7 +614,7 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
     end
 end
 
-local function doubleControlPoints(points)
+local function doubleControlPoints(points, duplications)
     local result = {}
 
     -- Sanity check: must be even number of values
@@ -858,8 +633,10 @@ local function doubleControlPoints(points)
 
         -- Double the point if it's a *middle* point (not first or last)
         if i > 1 and i < numPoints then
-            table.insert(result, x)
-            table.insert(result, y)
+            for j = 1, duplications do
+                table.insert(result, x)
+                table.insert(result, y)
+            end
         end
     end
 
@@ -880,7 +657,7 @@ function lib.drawTexturedWorld(world)
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
-            if (ud and ud.extra and ud.extra.type == 'texfixture') then
+            if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 --print(inspect(ud.extra))
                 table.insert(drawables,
@@ -894,7 +671,8 @@ function lib.drawTexturedWorld(world)
                     })
             end
 
-            if ud and ud.label == "connected-texture" and ud.extra.nodes then
+            if ud and (ud.label == "connected-texture" or ud.subtype == 'connected-texture') and ud.extra.nodes then
+                -- logger:inspect(ud)
                 --logger:info('got some new kind of combined drawing todo!')
                 local points = {}
                 for j = 1, #ud.extra.nodes do
@@ -908,13 +686,47 @@ function lib.drawTexturedWorld(world)
                     end
                     if it.type == 'joint' then
                         local j = registry.getJointByID(it.id)
-                        local x1, y1, _, _ = j:getAnchors()
-                        table.insert(points, x1)
-                        table.insert(points, y1)
+                        if j and not j:isDestroyed() then
+                            local x1, y1, _, _ = j:getAnchors()
+                            table.insert(points, x1)
+                            table.insert(points, y1)
+                        end
                     end
                 end
+
+                if #points == 4 then
+                    -- here we will just introduce a little midle thingie
+                    -- -- becaue i cannot draw a curve of 2 points
+                    function addMidpoint(points)
+                        if #points ~= 4 then
+                            error("Expected array of exactly 2 points (4 numbers)")
+                        end
+
+                        local x1, y1, x2, y2 = points[1], points[2], points[3], points[4]
+                        local midX = (x1 + x2) / 2
+                        local midY = (y1 + y2) / 2
+
+                        return { x1, y1, midX, midY, x2, y2 }
+                    end
+
+                    points = addMidpoint(points)
+                end
+
                 if #points >= 6 then
-                    points = doubleControlPoints(points)
+                    -- todo here we might want to grow the curve... so it will stick a little bit from the sides
+                    local function growLine(p1, p2, length)
+                        local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
+                        local new_x = p1[1] + length * math.cos(angle)
+                        local new_y = p1[2] + length * math.sin(angle)
+                        return new_x, new_y
+                    end
+                    local growLength = 0
+                    points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
+                    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+
+
+                    points = doubleControlPoints(points, 2)
+
 
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     --print(inspect(ud.extra))
@@ -1038,6 +850,40 @@ function lib.drawTexturedWorld(world)
                 --end
             end
         end
+
+
+        -- local function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, dir, wmultiplier)
+        --     local ax, ay = box2dGuy[p1]:getPosition()
+        --     local bx, by = box2dGuy[p2]:getPosition()
+        --     local cx, cy = box2dGuy[p3]:getPosition()
+
+        --     ax, ay = growLine({ ax, ay }, { bx, by }, growLength)
+        --     cx, cy = growLine({ cx, cy }, { bx, by }, growLength)
+
+        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+
+        --     if (dir ~= nil or wmultiplier ~= nil) then
+        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
+        --     else
+        --         texturedCurve(curve, canvas, mesh)
+        --     end
+        -- end
+
+        -- local function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
+        --     local ax, ay = box2dGuy[p1]:getPosition()
+        --     local bx, by = box2dGuy[p2]:getPosition()
+        --     local cx, cy = box2dGuy[p3]:getPosition()
+        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+
+        --     if (dir ~= nil or wmultiplier ~= nil) then
+        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
+        --     else
+        --         texturedCurve(curve, canvas, mesh)
+        --     end
+        -- end
+
+
+
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
             local extra = drawables[i].extra
@@ -1066,7 +912,9 @@ function lib.drawTexturedWorld(world)
             if extra.OMP then
                 local img = extra.ompImage
                 local mesh = createTexturedTriangleStrip(img)
+
                 texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.draw(mesh)
             end
         end
@@ -1217,29 +1065,35 @@ function lib.drawWorld(world, drawOutline)
             end
             love.graphics.setColor(1, 1, 1) -- Reset
         end
-        if jointType == 'revolute' then
-            if joint:areLimitsEnabled() then
-                local lower = joint:getLowerLimit()
-                local upper = joint:getUpperLimit()
+        if jointType == 'revolute' and joint:areLimitsEnabled() then
+            local lower = joint:getLowerLimit()
+            local upper = joint:getUpperLimit()
+            local referenceAngle = joint:getReferenceAngle()
 
-                local bodyA, bodyB = joint:getBodies()
-                local b1A = bodyA:getAngle()
+            local bodyA, bodyB = joint:getBodies()
+            local angleA = bodyA:getAngle()
+            local angleB = bodyB:getAngle()
 
-                love.graphics.setColor(1, 1, 1, alpha)
-                love.graphics.setLineJoin("miter")
-                love.graphics.arc('line', x1, y1, 15, math.pi / 2 + b1A + lower, math.pi / 2 + b1A + upper)
-                love.graphics.setLineJoin("none")
+            -- Use the joint's reference frame to compute world-space zero angle
+            local zeroAngle = angleA + referenceAngle
 
-
-                local b1B = bodyB:getAngle()
-
-                local angleBetween = b1A - b1B
-
-                local endX, endY = getEndpoint(x1, y1, (b1B + math.pi / 2), 15)
-
-                love.graphics.setColor(0.5, 0.5, 0.5, alpha)
-                love.graphics.line(x1, y1, endX, endY)
+            local startAngle = zeroAngle + lower
+            local endAngle = zeroAngle + upper
+            if endAngle < startAngle then
+                endAngle = endAngle + 2 * math.pi
             end
+
+            love.graphics.setColor(1, 1, 1, alpha)
+            love.graphics.setLineJoin("miter")
+            love.graphics.arc('line', x1, y1, 15, startAngle, endAngle)
+            love.graphics.setLineJoin("none")
+
+            -- draw current angle of bodyB relative to bodyA (via reference frame)
+            local currentRelative = angleB - zeroAngle
+            local dirAngle = zeroAngle + currentRelative
+            local endX, endY = getEndpoint(x1, y1, dirAngle, 15)
+            love.graphics.setColor(0.5, 0.5, 0.5, alpha)
+            love.graphics.line(x1, y1, endX, endY)
         end
         if jointType == 'wheel' then
             -- Draw wheel joint axis
@@ -1606,9 +1460,17 @@ local Joints = require 'src.joints'
 local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
+local fixtures = require 'src.fixtures'
 
---todo, the data here below sis correctly set to the texturefixture, i will kinda need those dimenions too, to figure out
--- how to scale that fixture, we need the actual textures to be a tad bit bigger then the polygon, how much is the question.
+
+
+-- todo,
+-- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
+-- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
+-- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
+
+-- flpping leghair is not yet working
+
 
 local shape8Dict = {
     ['shapeA1.png'] = {
@@ -1621,23 +1483,140 @@ local shape8Dict = {
             11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
 
         }
+    },
+    ['shapeA3.png'] = {
+        v = {
+            -6.62, -189.25, 135.88, -69.67, 160.54, 45.82, 123.85, 154.90, -6.37, 189.25, -92.40, 153.92, -164.61, 53.37, -155.10, -67.94
+        }
+    },
+    ['shapeA4.png'] = {
+        v = {
+            7.91, -194.17, 133.01, -56.57, 126.54, 45.82, 101.32, 190.94, -6.99, 195.81, -129.67, 185.05, -134.73, 40.26, -110.48, -66.30
+
+        }
+    },
+
+
+    ['shapes1.png'] = {
+        v = {
+            10.53, -244.02, 133.00, -56.57, 135.72, 48.44, 124.93, 221.11, -0.43, 231.23, -128.36, 215.22, -138.66, 41.58, -134.09, -62.36
+
+        }
+    },
+    ['shapes2.png'] = {
+        v = {
+            -3.37, -223.15, 74.58, -78.83, 89.81, 51.22, 104.06, 196.07, -0.43, 231.23, -92.19, 202.70, -94.15, 54.10, -61.75, -80.45
+        }
+    },
+    ['shapes3.png'] = {
+        v = {
+            -3.37, -206.98, 132.81, -137.06, 148.04, 12.40, 110.53, 186.37, -6.90, 216.67, -97.04, 192.99, -149.14, 7.194, -141.01, -141.91
+        }
+    },
+    ['shapes4.png'] = {
+        v = {
+            0.52, -123.04, 164.04, -98.02, 148.04, 12.40, 157.384, 112.19, -1.05, 117.121, -149.75, 105.159, -149.14, 7.19, -168.33, -87.25
+        }
+    },
+    ['shapes5.png'] = {
+        v = {
+            0.52, -162.14, 74.68, -132.92, 78.23, -4.34, 73.61, 148.49, -2.44, 156.21, -81.33, 142.85, -84.921, 1.609, -87.35, -126.353,
+
+        }
+    },
+    ['shapes6.png'] = {
+        v = {
+            3.17, -178.04, 77.33, -118.34, 92.815, -0.36, 93.491, 143.19, -2.44, 160.19, -85.314, 141.53, -92.87, 0.28, -67.478, -119.727
+        }
+    },
+    ['shapes7.png'] = {
+        v = {
+            -3.26, -452.74, 127.787, -245.570, 305.58, 19.37, 247.03, 384.48, -2.448, 451.92, -276.14, 378.42, -283.70, 15.63, -207.86, -238.17
+
+        }
+    },
+    ['shapes8.png'] = {
+        v = {
+            3.90, -154.02, 271.18, -307.71, 341.43, 26.54, 89.31, 298.45, -9.62, 332.43, -166.22, 299.56, -302.83, 34.76, -238.93, -319.43
+
+        }
+    },
+    ['shapes9.png'] = {
+        v = {
+            -0.56, -236.64, 233.22, -191.59, 198.53, 24.31, 174.16, 206.90, -18.55, 216.32, -226.51, 205.78, -233.61, 19.13, -234.46, -198.85
+
+
+        }
+    },
+    ['shapes10.png'] = {
+        v = {
+            4.96, -407.86, 166.94, -232.10, 231.67, 24.31, 141.02, 344.99, -16.71, 418.85, -186.00, 332.82, -233.61, 19.13, -182.91, -233.83
+        }
+    },
+    ['shapes11.png'] = {
+        v = {
+            4.96, -451.24, 110.80, -405.62, 195.94, 6.45, 306.89, 408.78, 13.91, 436.71, -277.86, 417.03, -205.54, -3.84, -114.01, -417.56
+        }
+    },
+    ['shapes12.png'] = {
+        v = {
+            17.22, -129.91, 208.91, -76.93, 249.91, 11.35, 191.60, 109.52, 9.01, 142.36, -228.81, 103.06, -247.24, -1.39, -175.34, -91.32
+        }
+    },
+    ['shapes13.png'] = {
+        v = {
+            22.72, -239.92, 175.91, -101.68, 197.65, 11.35, 177.85, 219.53, 14.51, 260.62, -168.30, 210.32, -156.48, 12.37, -125.83, -105.07
+        }
+    },
+
+
+    ['feet2.png'] = {
+        v = {
+
+            -- 197.92951957406, -17.817718028013, 170.28347402696, 84.883981989375, 104.3382073697, 106.29365560207, -139.66342189896, 114.08328408959, -165.65174171676, -8.6379557618171, -123.63314042073, -45.112484801676, 86.784081767721, -100.15140769724, 155.71079120581, -103.47476376929
+
+
+            22.724588666593, -239.91966159884, 175.91013654, -101.67978777203, 197.65083381201, 11.351997784339, 177.84539019051, 219.53355732218, 14.507790801039, 260.6223497519, -168.29987466902, 210.31594772675, -156.47637293323, 12.365272224268, -125.83138609296, -105.07368014657
+
+        }
+    },
+
+    ['feet2r.png'] = {
+        v = {
+
+            -- 197.92951957406, -17.817718028013, 170.28347402696, 84.883981989375, 104.3382073697, 106.29365560207, -139.66342189896, 114.08328408959, -165.65174171676, -8.6379557618171, -123.63314042073, -45.112484801676, 86.784081767721, -100.15140769724, 155.71079120581, -103.47476376929
+
+            46.990907603994, -189.52773689109, 96.489192783945, -184.68643013375, 131.34012844459, 48.508703705155, 109.48859096573, 180.93295171947, 45.027594164554, 234.39907734869, -15.618229361652, 176.92515604219, -70.173442070241, 53.300130131955, -87.304763540911, -193.80518221938
+
+
+        }
+    },
+    ['feet6r.png'] = {
+        v = {
+            -26.163452363425, -287.93776875202, 45.977848996918, -180.33200394521, 110.43888273961, 42.412507041203, 116.65637069995, 166.59739225104, -6.9388089085194, 273.82186588688, -108.79936590647, 268.31434765346, -110.23416300478, 47.203933468003, -102.10981258194, -181.61278889148
+        }
     }
+
+
+
+
+
 }
 local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 0,
+            neckSegments = 5,
             torsoSegments = 1
         },
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = .5, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
             ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 150 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
-            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = -5 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
             ['luleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
             ['ruleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
             ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
@@ -1646,15 +1625,258 @@ local dna = {
             ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rhand'] = { dims = { w = 40, h = 40 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lfoot'] = { dims = { w = 80, h = 150, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rfoot'] = { dims = { w = 80, h = 150, sx = -1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
+            -- ['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['rhand'] = { dims = { w = 40, h = 40, sx = -.5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- TODo same kind of weirdness for the hands!
+            -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
             ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
     }
 }
+
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
+
+
+
+function createDefaultTextureDNABlock(shape, skipFG)
+    return {
+        bgURL = shape .. '.png',
+        fgURL = skipFG and '' or shape .. '-mask.png',
+        pURL = '',
+        bgHex = '020202ff',
+        fgHex = skipFG and '' or 'ff0000ff',
+        pHex = 'ffff00ff',
+
+    }
+end
+
+function addMore(block, values)
+    for k, v in pairs(values) do
+        block[k] = v
+    end
+    return block
+end
+
+function defaultSetupTextures(instance)
+    -- take note: right leg has flippedX.
+    -- torso
+
+    if true then
+        table.insert(instance.textures, {
+            subtype = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'torso1Skin',
+            main = createDefaultTextureDNABlock('shapeA3'),
+            patch1 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0.3, ty = 0.3 }),
+            patch2 = addMore(createDefaultTextureDNABlock('patch1'), { tx = -0.3, ty = 0.3 }),
+            patch3 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0, ty = -0.3 }),
+            attachTo = 'torso1',
+        })
+
+        table.insert(instance.textures, {
+            subtype = 'texfixture',
+            type = 'sfixture',
+            OMP = false,
+            group = 'torso1Hair',
+            zOffset = 40,
+            followShape8 = 'shapeA3.png', -- get this from my main above..
+            main = createDefaultTextureDNABlock('borsthaar4', true),
+            attachTo = 'torso1',
+        })
+    end
+
+    -- legs
+    if true then
+        table.insert(instance.textures, {
+            subtype = 'connected-texture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'leftLegSkin',
+            main = createDefaultTextureDNABlock('leg5'),
+            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
+            attachTo = 'luleg',
+        })
+        table.insert(instance.textures, {
+            subtype = 'connected-texture',
+            type = 'sfixture',
+            OMP = false,
+            zOffset = 40,
+            group = 'leftLegHair',
+            main = addMore(createDefaultTextureDNABlock('hair7', true), { dir = -1 }), --???
+            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
+            attachTo = 'luleg',
+        })
+        table.insert(instance.textures, {
+            subtype = 'connected-texture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'rightLegSkin',
+            main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
+            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
+            attachTo = 'ruleg',
+        })
+        table.insert(instance.textures, {
+            subtype = 'connected-texture',
+            type = 'sfixture',
+            OMP = false,
+            zOffset = 40,
+            group = 'rightLegHair',
+            main = addMore(createDefaultTextureDNABlock('hair7', true), {}), --??
+            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
+            attachTo = 'ruleg',
+        })
+    end
+
+
+    --feet
+    if true then
+        table.insert(instance.textures, {
+            subtype = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'lfootSkin',
+            main = createDefaultTextureDNABlock('feet6r'),
+            attachTo = 'lfoot',
+        })
+
+        table.insert(instance.textures, {
+            subtype = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'rfootSkin',
+            main = addMore(createDefaultTextureDNABlock('feet6r'), { fx = -1 }),
+            attachTo = 'rfoot',
+        })
+    end
+
+
+    --hand
+    if true then
+        table.insert(instance.textures, {
+            subtype = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'lhandSkin',
+            main = createDefaultTextureDNABlock('feet2r'),
+            attachTo = 'lhand',
+        })
+        table.insert(instance.textures, {
+            subtype = 'texfixture',
+            type = 'sfixture',
+            OMP = true,
+            group = 'rhandSkin',
+            main = createDefaultTextureDNABlock('feet2r'),
+            attachTo = 'rhand',
+        })
+    end
+
+    -- neck
+    if true then
+        -- Assume neckSegments and torsoSegments are available
+        local creation = instance.dna.creation
+        local neckSegments = creation.neckSegments or 0
+        local torsoSegments = creation.torsoSegments or 1
+
+        local jointLabels = {}
+        local previous = 'torso' .. torsoSegments
+
+        for i = 1, neckSegments do
+            local current = 'neck' .. i
+            table.insert(jointLabels, previous .. '->' .. current)
+            previous = current
+        end
+
+        -- Final connection to head
+        table.insert(jointLabels, previous .. '->head')
+
+        logger:inspect(jointLabels)
+        if neckSegments > 0 and not creation.isPotatoHead then
+            table.insert(instance.textures, {
+                subtype = 'connected-texture',
+                type = 'sfixture',
+                OMP = true,
+                group = 'neckSkin',
+                main = createDefaultTextureDNABlock('leg5'),
+                jointLabels = jointLabels,
+                attachTo = 'neck1',
+            })
+            table.insert(instance.textures, {
+                subtype = 'connected-texture',
+                type = 'sfixture',
+                OMP = false,
+                zOffset = 40,
+                group = 'neckHair',
+                main = addMore(createDefaultTextureDNABlock('hair10', true), { fx = -1 }),
+                jointLabels = jointLabels,
+                attachTo = 'neck1',
+            })
+        end
+    end
+
+    -- head
+    if true then
+        local creation = instance.dna.creation
+        if not creation.isPotatoHead then
+            table.insert(instance.textures, {
+                subtype = 'texfixture',
+                type = 'sfixture',
+                OMP = true,
+                group = 'headSkin',
+                main = createDefaultTextureDNABlock('shapeA2'),
+                attachTo = 'head',
+            })
+            -- table.insert(instance.textures, {
+            --     label = 'texfixture',
+            --     type = 'sfixture',
+            --     OMP = false,
+            --     group = 'headHair',
+            --     zOffset = 40,
+            --     followShape8 = 'shapeA2.png',
+            --     main = {
+            --         bgURL = 'borsthaar3.png',
+            --         fgURL = '',
+            --         pURL = '',
+            --         bgHex = '020202ff',
+            --         fgHex = randomHexColor(),
+            --         pHex = randomHexColor()
+            --     },
+            --     attachTo = 'head',
+            -- })
+        end
+    end
+end
+
+-- copy pasted form playtime-ui.lua
+local function getCenterAndDimensions(body)
+    local ud = body:getUserData()
+    local cx, cy, w, h
+    if ud.thing.vertices then
+        local verts = ud.thing.vertices
+        cx, cy, w, h = mathutils.getCenterOfPoints(verts)
+    else -- this is a circle shape..
+        cx, cy = body:getPosition()
+
+        w, h = ud.thing.radius * 2, ud.thing.radius * 2
+    end
+    return cx, cy, w, h
+end
+
+
 local function makeTransformedVertices(vertices, scaleX, scaleY)
     -- Initialize result array
     local transformedVertices = {}
@@ -1753,10 +1975,11 @@ local function getParentAndChildrenFromPartName(partName, guy)
             }
         end
     end
-
+    --print(partName)
     local torsoIndex = extractTorsoIndex(partName)
+    --logger:info('torsoIndex', torsoIndex)
     if torsoIndex then
-        logger:info('torsoIndex', torsoIndex)
+        -- logger:info('torsoIndex', torsoIndex)
         if torsoIndex then
             local children = {}
             -- Middle segments connect only to the next torso segment
@@ -1766,7 +1989,9 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
             -- Highest segment connects to arms and neck/head
             if torsoIndex == torsoSegments then
-                table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
+                if not creation.isPotatoHead then
+                    table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
+                end
                 table.insert(children, 'luarm')
                 table.insert(children, 'ruarm')
                 if creation.isPotatoHead then -- Potato ears attach to highest torso
@@ -1780,6 +2005,8 @@ local function getParentAndChildrenFromPartName(partName, guy)
                 table.insert(children, 'luleg')
                 table.insert(children, 'ruleg')
             end
+
+
 
             if torsoIndex == 1 then
                 map[partName] = { c = children } -- Torso1 has no parent
@@ -1806,15 +2033,14 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
     -- If only one torso segment, it has all children directly
     if torsoSegments == 1 and partName == 'torso1' then
-        local singleTorsoChildren = {
-            (neckSegments > 0) and 'neck1' or 'head',
-            'luarm', 'ruarm', 'luleg', 'ruleg'
-        }
+        local children = {}
         if creation.isPotatoHead then
-            table.insert(singleTorsoChildren, 'lear')
-            table.insert(singleTorsoChildren, 'rear')
+            children = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear' }
+        else
+            children = { (neckSegments > 0) and 'neck1' or 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' }
         end
-        map[partName] = { c = singleTorsoChildren }
+
+        map[partName] = { c = children }
     end
 
 
@@ -1891,23 +2117,50 @@ local function getOwnOffset(partName, guy)
     if partName == 'llleg' then
         return 0, parts.llleg.dims.h / 2
     end
-    if partName == 'lfoot' then
-        return 0, parts.lfoot.dims.h / 2
+    if partName == 'lfoot' or partName == 'rfoot' then
+        -- return 0, parts.lfoot.dims.h / 2
+
+
+        local part = parts[partName]
+        if part.shape == 'shape8' then
+            local raw = shape8Dict[part.shape8URL].v
+
+            local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
+            --logger:info(part.dims.sx, part.dims.sy)
+            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
+
+            -- todo like the grow offsets this too should be parametrized
+            local footOffset = 0
+            return vertices[(index * 2) - 1], -vertices[(index * 2)] + footOffset
+        else
+            return 0, part.dims.h / 2
+        end
     end
     if partName == 'rlleg' then
         return 0, parts.rlleg.dims.h / 2
     end
-    if partName == 'rfoot' then
-        return 0, parts.rfoot.dims.h / 2
-    end
+    -- if partName == 'rfoot' then
+    --     return 0, parts.rfoot.dims.h / 2
+    -- end
     if partName == 'luarm' then
         return 0, parts.luarm.dims.h / 2
     end
     if partName == 'ruarm' then
         return 0, parts.ruarm.dims.h / 2
     end
-    if partName == 'rhand' then
-        return 0, parts.rhand.dims.h / 2
+    if partName == 'rhand' or partName == 'lhand' then
+        --return 0, parts.rhand.dims.h / 2
+        local part = parts[partName]
+        if part.shape == 'shape8' then
+            local raw = shape8Dict[part.shape8URL].v
+
+            local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
+            --logger:info(part.dims.sx, part.dims.sy)
+            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
+            return vertices[(index * 2) - 1], -vertices[(index * 2)]
+        else
+            return 0, part.dims.h / 2
+        end
     end
     if partName == 'llarm' then
         return 0, parts.llarm.dims.h / 2
@@ -1915,9 +2168,9 @@ local function getOwnOffset(partName, guy)
     if partName == 'rlarm' then
         return 0, parts.rlarm.dims.h / 2
     end
-    if partName == 'lhand' then
-        return 0, parts.lhand.dims.h / 2
-    end
+    --if partName == 'lhand' then
+    --    return 0, parts.lhand.dims.h / 2
+    --end
     return 0, 0
 end
 
@@ -1933,17 +2186,26 @@ local function getOffsetFromParent(partName, guy)
     local lowestTorso   = 'torso1'
 
 
-
-    local function getTorsoPart8(index)
+    local function getTorsoPart8FromSpecificTorso(index, torsoIndex)
         --local vertices = shape8Dict[parts[highestTorso].shape8URL].v
 
-        local raw = shape8Dict[parts[highestTorso].shape8URL].v
-        local vertices = makeTransformedVertices(raw, parts[highestTorso].dims.sx or 1, parts[highestTorso].dims.sy or 1)
+        local torso = 'torso' .. torsoIndex
 
-        local newIndex = getTransformedIndex(index, sign(parts[highestTorso].dims.sx), sign(parts[highestTorso].dims.sy))
-
+        local raw = shape8Dict[parts[torso].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
+        local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
         return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
     end
+
+    local function getTorsoPart8FromHighest(index)
+        return getTorsoPart8FromSpecificTorso(index, torsoSegments)
+    end
+
+    local function getTorsoPart8FromLowest(index)
+        return getTorsoPart8FromSpecificTorso(index, 1)
+    end
+
+
 
     local function hasTorso8()
         if parts[highestTorso].shape == 'shape8' then
@@ -1973,7 +2235,7 @@ local function getOffsetFromParent(partName, guy)
         local index = extractNeckIndex(partName)
         if index == 1 then
             if hasTorso8() then
-                return getTorsoPart8(1)
+                return getTorsoPart8FromHighest(1)
             else
                 return 0, -parts[highestTorso].dims.h / 2
             end
@@ -1987,8 +2249,8 @@ local function getOffsetFromParent(partName, guy)
         else
             if hasTorso8() then
                 --print('getting here')
-
-                return getTorsoPart8(1)
+                return getTorsoPart8FromSpecificTorso(1, index - 1)
+                -- return getTorsoPart8(1)
             else
                 -- return 0, -parts[highestTorso].dims.h / 2
                 return 0, -parts['torso' .. (index - 1)].dims.h / 2
@@ -2016,9 +2278,9 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'luarm' then
         if hasTorso8() then
             if creation.isPotatoHead then
-                return getTorsoPart8(7)
+                return getTorsoPart8FromHighest(7)
             else
-                return getTorsoPart8(8)
+                return getTorsoPart8FromHighest(8)
             end
         else
             return -parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
@@ -2026,9 +2288,9 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'ruarm' then
         if hasTorso8() then
             if creation.isPotatoHead then
-                return getTorsoPart8(3)
+                return getTorsoPart8FromHighest(3)
             else
-                return getTorsoPart8(2)
+                return getTorsoPart8FromHighest(2)
             end
         else
             return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
@@ -2036,8 +2298,8 @@ local function getOffsetFromParent(partName, guy)
     elseif partName == 'luleg' then
         local t = 0.5 --positioners.leg.x
         if hasTorso8() then
-            local ax, ay = getTorsoPart8(6)
-            local bx, by = getTorsoPart8(5)
+            local ax, ay = getTorsoPart8FromLowest(6)
+            local bx, by = getTorsoPart8FromLowest(5)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
             return rx, ry
         else
@@ -2047,8 +2309,8 @@ local function getOffsetFromParent(partName, guy)
         local t = 0.5 -- positioners.leg.x
 
         if hasTorso8() then
-            local ax, ay = getTorsoPart8(4)
-            local bx, by = getTorsoPart8(5)
+            local ax, ay = getTorsoPart8FromLowest(4)
+            local bx, by = getTorsoPart8FromLowest(5)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
             return rx, ry
         else
@@ -2058,8 +2320,8 @@ local function getOffsetFromParent(partName, guy)
         if creation.isPotatoHead then
             if hasTorso8() then
                 local t = 0.5
-                local ax, ay = getTorsoPart8(8)
-                local bx, by = getTorsoPart8(7)
+                local ax, ay = getTorsoPart8FromHighest(8)
+                local bx, by = getTorsoPart8FromHighest(7)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -2080,8 +2342,8 @@ local function getOffsetFromParent(partName, guy)
         if creation.isPotatoHead then
             if hasTorso8() then
                 local t = 0.5
-                local ax, ay = getTorsoPart8(2)
-                local bx, by = getTorsoPart8(3)
+                local ax, ay = getTorsoPart8FromHighest(2)
+                local bx, by = getTorsoPart8FromHighest(3)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -2101,7 +2363,7 @@ local function getOffsetFromParent(partName, guy)
     elseif (partName == 'head') then
         if creation.neckSegments == 0 then
             if hasTorso8() then
-                return getTorsoPart8(1)
+                return getTorsoPart8FromHighest(1)
             else
                 return 0, -parts[highestTorso].dims.h / 2
             end
@@ -2130,8 +2392,6 @@ local function getAngleOffset(partName, guy)
 end
 
 
-
-
 local function makePart(partName, instance, settings)
     local values = getParentAndChildrenFromPartName(partName, instance)
     local parent = values.p
@@ -2139,30 +2399,41 @@ local function makePart(partName, instance, settings)
 
     local prevA = 0
 
+
     if parent then
         if instance.parts[parent] then
             local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
-            settings.x = parentPosX
-            settings.y = parentPosY
+
+            prevA = instance.parts[parent].body:getAngle()
+
+            local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
+            local px, py = instance.parts[parent].body:getWorldPoint(parentOffsetX, parentOffsetY)
+
+
+            settings.x = px
+            settings.y = py
         end
-        prevA = instance.parts[parent].body:getAngle()
     end
 
-    local offX, offY = getOffsetFromParent(partName, instance)
-    settings.x = settings.x + offX
-    settings.y = settings.y + offY
-    --logger:info(offX, offY)
-    local offX, offY = getOwnOffset(partName, instance) -- because all shapes are drawn from their center it needs extra offsetting
-    local xangle = getAngleOffset(partName, instance)
-    local rx, ry = mathutils.rotatePoint(offX, offY, 0, 0, xangle)
 
-    settings.x = settings.x + rx
-    settings.y = settings.y + ry
+    --local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
+    local ownOffsetX, ownOffsetY = getOwnOffset(partName, instance)
+    local xangle = getAngleOffset(partName, instance)
+
+    -- Rotate own offset into parent space
+    local rotatedOwnX, rotatedOwnY = mathutils.rotatePoint(ownOffsetX, ownOffsetY, 0, 0, prevA + xangle)
+
+    settings.x = settings.x + rotatedOwnX
+    settings.y = settings.y + rotatedOwnY
+
+    -- logger:info(partName, prevA, xangle)
+
 
     local thing = ObjectManager.addThing(settings.shapeType, settings)
 
     if thing then
         thing.body:setAngle(prevA + xangle)
+
         if extractNeckIndex(partName) then
             thing.body:setAngularDamping(.1)
             thing.body:setLinearDamping(.1)
@@ -2195,6 +2466,10 @@ local function makePart(partName, instance, settings)
                 offsetA = { x = 0, y = 0 },
                 offsetB = { x = 0, y = 0 },
             }
+            --logger:info('joint:', parent, partName)
+            -- todo we dont really need this yet...
+            instance.joints[parent .. '->' .. partName] = jointCreationData.id
+
             local offX, offY = getOffsetFromParent(partName, instance)
             jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
             jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
@@ -2209,106 +2484,433 @@ local function makePart(partName, instance, settings)
     end
 end
 
-lib.createCharacter = function(template, x, y)
+local function getPoseCache(instance)
+    local poseCache = {}
+    for partName, part in pairs(instance.parts) do
+        local body = part.body
+        local groupIndex = body:getFixtures()[1]:getGroupIndex()
+        poseCache[partName] = {
+            pos = { body:getPosition() },
+            angle = body:getAngle(),
+            linearVelocity = { body:getLinearVelocity() },
+            angularVelocity = body:getAngularVelocity(),
+            groupIndex = groupIndex or 0
+        }
+    end
+    return poseCache
+end
+local function applyPoseCache(instance, poseCache)
+    -- using the cache
+    for partName, pose in pairs(poseCache) do
+        if instance.parts[partName] and pose then
+            local body = instance.parts[partName].body
+            --body:setPosition(pose.pos[1], pose.pos[2])
+            body:setAngle(pose.angle)
+            body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
+            body:setAngularVelocity(pose.angularVelocity)
+
+            local fixtures = body:getFixtures()
+            for j = 1, #fixtures do
+                fixtures[j]:setGroupIndex(pose.groupIndex)
+            end
+        end
+    end
+end
+
+local function fixDrift(positionTorso, instance)
+    -- this routine is to fix the drift we get .
+    if positionTorso then
+        local newPosX, newPosY = instance.parts['torso1'].body:getPosition()
+        local newAngle = instance.parts['torso1'].body:getAngle()
+
+        --local dx = oldPosX - newPosX
+
+        local dx = positionTorso[1] - newPosX
+        local dy = positionTorso[2] - newPosY
+        --local da = oldAngle - newAngle
+
+        --local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -newAngle)
+
+        for _, part in pairs(instance.parts) do
+            -- local px, py = part.body:getPosition()
+            --local cx, cy = mathutils.rotatePoint(px, py, newPosX, newPosY, da)
+            --   part.body:setPosition(cx + dx, cy + dy)
+            --  part.body:setAngle(part.body:getAngle() + da)
+
+            local bx, by = part.body:getPosition()
+            part.body:setPosition(bx + dx, by + dy)
+        end
+    end
+end
+
+
+
+
+local function updateSinglePart(partName, data, instance)
+    local partData = instance.dna.parts[partName]
+    if not partData then return end
+
+    -- Apply dimension updates
+    -- logger:inspect(data)
+    for k, v in pairs(data) do
+        --logger:info(k, v)
+        if (partData.dims[k]) then
+            partData.dims[k] = v
+        elseif partData[k] then
+            partData[k] = v
+        end
+    end
+
+    -- print(partName, instance.parts[partName], inspect(instance.dna.creation))
+    local oldBody = instance.parts[partName].body
+    local oldPosX, oldPosY = oldBody:getPosition()
+    local oldAngle = oldBody:getAngle()
+
+    -- Remove old body
+
+    local extras = {}
+    if instance.parts[partName] then
+        local body = instance.parts[partName].body
+        --extras = safeAllExtras(body)
+        ObjectManager.destroyBody(body)
+        instance.parts[partName] = nil
+    end
+
+    -- Recreate the part
+    local settings = {
+        x = oldPosX,
+        y = oldPosY,
+        bodyType = 'dynamic',
+        shapeType = partData.shape,
+        shape8URL = partData.shape8URL,
+        label = partName,
+        density = partData.density or 1,
+        radius = partData.dims.r,
+        width = partData.dims.w,
+        width2 = partData.dims.w2,
+        width3 = partData.dims.w2,
+        height = partData.dims.h,
+        height2 = partData.dims.h,
+        height3 = partData.dims.h,
+        height4 = partData.dims.h,
+    }
+
+    if partData.shape8URL and shape8Dict[partData.shape8URL] then
+        local raw = shape8Dict[partData.shape8URL].v
+        settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+    end
+
+    local children = getParentAndChildrenFromPartName(partName, instance).c or {}
+    --logger:inspect(children)
+    if type(children) == 'string' then
+        children = { children }
+    end
+    makePart(partName, instance, settings)
+
+
+    -- after making a part set it to its angle so the children will be using that angle in tehir calculations.
+    instance.parts[partName].body:setAngle(oldAngle)
+
+
+    for _, childName in ipairs(children) do
+        local childData = instance.dna.parts[childName]
+        if childData then
+            updateSinglePart(childName, {}, instance) -- trigger rebuild
+        end
+    end
+end
+
+-- update part
+function lib.updatePart(partName, data, instance)
+    --  preserveAllSpecialFixtures(instance)
+    local positionTorso = nil
+    local oldAngle = 0
+    if partName == 'torso1' then
+        positionTorso = { instance.parts['torso1'].body:getPosition() }
+    end
+
+    -- filling the cache
+    local poseCache = getPoseCache(instance)
+
+    -- update the thing
+    updateSinglePart(partName, data, instance)
+
+    applyPoseCache(instance, poseCache)
+    --addTextufeFixturesFromInstance(instance)
+    if positionTorso then fixDrift(positionTorso, instance) end
+    -- restoreAllSpecialFixtures()
+end
+
+-- given an instance with dna and a new creation, this function is made to change a creation of a humanoid during runtime.
+-- its alos used by initially creating a character.
+function lib.rebuildFromCreation(instance, newCreation)
+    -- Step 1: Update the creation settings
+    for k, v in pairs(newCreation) do
+        instance.dna.creation[k] = v
+    end
+
+    local torsoX, torsoY = instance.parts['torso1'].body:getPosition()
+    local torsoAngle = instance.parts['torso1'].body:getAngle()
+
+    local poseCache = getPoseCache(instance)
+
+    local positionTorso = { instance.parts['torso1'].body:getPosition() }
+
+
+    -- Step 2: Remove all existing parts
+    for _, part in pairs(instance.parts) do
+        ObjectManager.destroyBody(part.body)
+    end
+
+    instance.parts = {}
+    instance.joints = {}
+    instance.textures = {}
+
+    lib.createCharacterFromExistingDNA(instance, torsoX, torsoY, torsoAngle)
+
+    applyPoseCache(instance, poseCache)
+    if positionTorso then fixDrift(positionTorso, instance) end
+end
+
+function lib.addTextureFixturesFromInstance(instance)
+    function removeSimilarFixture(body, it)
+        local allFixtures = body:getFixtures()
+        for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+            local f = allFixtures[fi]
+            local ud = f:getUserData()
+            --  logger:inspect(ud)
+            if ud and ud.label == it.label and ud.extra.OMP == it.OMP then
+                -- logger:info('destroying fixture')
+                fixtures.destroyFixture(f)
+            end
+        end
+    end
+
+    for i = 1, #instance.textures do
+        local it = instance.textures[i]
+        if it.type == 'sfixture' then
+            if it.subtype == 'texfixture' then
+                local body = instance.parts[it.attachTo].body
+                removeSimilarFixture(body, it)
+                --print("body angle at texture creation:", body:getAngle())
+                local cx, cy, w, h = getCenterAndDimensions(body)
+                -- local localX, localY = body:getLocalPoint(wx, wy)
+                local growfactor = 1.1
+                local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                    { width = w * growfactor, height = h * growfactor })
+                local ud = fixture:getUserData()
+                ud.extra.OMP = it.OMP
+                ud.extra.dirty = true
+                ud.extra.main = utils.deepCopy(it.main)
+
+                ud.extra.zOffset = it.zOffset or 0
+                ud.extra.attachTo = it.attachTo
+                local partData = instance.dna.parts[it.attachTo]
+
+                -- todo we probably also need to flip the other ones (patch1..3) but not sure..
+                if partData.dims.sy < 0 then
+                    ud.extra.main.fy = -1
+                end
+                if partData.dims.sx < 0 then
+                    ud.extra.main.fx = -1
+                end
+
+                if it.patch1 then
+                    ud.extra.patch1 = utils.deepCopy(it.patch1)
+                end
+                if it.patch2 then
+                    ud.extra.patch2 = utils.deepCopy(it.patch2)
+                end
+                if it.patch3 then
+                    ud.extra.patch3 = utils.deepCopy(it.patch3)
+                end
+                if it.followShape8 then
+                    ud.extra.followShape8 = it.followShape8
+                    -- logger:inspect(ud.extra)
+                    logger:inspect(it.followShape8)
+                    local raw = shape8Dict[it.followShape8].v
+                    local partData = instance.dna.parts[it.attachTo]
+                    local growfactor = 1.5
+                    local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
+                        (partData.dims.sy or 1) * growfactor)
+
+
+                    ud.extra.vertices = vertices
+                    ud.extra.vertexCount = #vertices / 2
+                    -- logger:info('found a follo8')
+                    --  logger:inspect(ud.extra)
+                end
+                -- followShape8 = 'shapeA3.png',
+
+
+                --logger:info('texgisture to add:')
+            end
+
+            if it.subtype == 'connected-texture' then
+                --print('got some stuff todo')
+                -- print(it.attachTo)
+                local body = instance.parts[it.attachTo].body
+
+                -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
+                removeSimilarFixture(body, it)
+
+                local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+                    { radius = 30 })
+                local ud = fixture:getUserData()
+                ud.extra = {
+                    attachTo = it.attachTo,
+                    OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
+                    dirty = true,                   -- because the rendered needs to pick this up.
+                    main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
+                    zOffset = it.zOffset or 0,
+                    nodes = {
+
+                    }
+
+                }
+                for j = 1, #it.jointLabels do
+                    local jointID = it.jointLabels[j]
+                    ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+                    --print(instance.joints[jointID])
+                end
+            end
+        end
+    end
+end
+
+function lib.updateTextureGroupValue(instance, group, key, value)
+    for i = 1, #instance.textures do
+        local t = instance.textures[i]
+        if t.group == group and t.main then
+            t.main[key] = value
+            logger:info('setting', key, value)
+        end
+    end
+end
+
+function lib.updateTextureGroupValueInRoot(instance, group, key, value)
+    for i = 1, #instance.textures do
+        local t = instance.textures[i]
+        if t.group == group then
+            t[key] = value
+            logger:info('setting', key, value)
+        end
+    end
+end
+
+function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
+    -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
+    -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
+    --
+    local isPotato = instance.dna.creation.isPotatoHead
+    local hasNeck = instance.dna.creation.neckSegments > 0
+    local ordered = {}
+
+    local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
+    -- 1. Add Torso Segments
+    for i = 1, torsoSegments do
+        local partName = 'torso' .. i
+        table.insert(ordered, partName)
+        -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
+        if not instance.dna.parts[partName] then
+            -- Ensure template exists
+            if not instance.dna.parts['torso-segment-template'] then
+                error("Missing 'torso-segment-template' in DNA for template: " .. template)
+            end
+            instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+            -- Optional: Modify dimensions/properties of specific segments here if needed
+            -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
+            --instance.dna.parts[partName].dims.w = i * 100
+            --logger:inspect(instance.dna.parts[partName])
+            --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
+        end
+    end
+
+    if hasNeck and not isPotato then
+        for i = 1, (instance.dna.creation.neckSegments or 2) do
+            table.insert(ordered, 'neck' .. i)
+            instance.dna.parts['neck' .. i] = utils.deepCopy(instance.dna.parts['neck-segment-template'])
+        end
+    end
+    if not isPotato then
+        table.insert(ordered, 'head')
+    end
+    -- Common limbs
+    local limbs = {
+        'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
+        'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
+        'lear', 'rear'
+    }
+    for _, part in ipairs(limbs) do table.insert(ordered, part) end
+
+
+    for i = 1, #ordered do
+        local partName = ordered[i]
+        local partData = instance.dna.parts[partName]
+        --logger:info(partName, partData.shapeName)
+        local settings = {
+            x = x,
+            y = y,
+            bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
+            shapeType = partData.shape, -- Use shape defined in template
+            shape8URL = partData.shape8URL,
+            label = partName,           --partName,           -- Use part name as initial label
+            density = partData.density or 1,
+            radius = partData.dims.r,
+            width = partData.dims.w,
+            width2 = partData.dims.w2,
+            width3 = partData.dims.w2,
+            height = partData.dims.h,
+            height2 = partData.dims.h,
+            height3 = partData.dims.h,
+            height4 = partData.dims.h,
+
+            -- Add other physics properties if needed (friction, restitution?)
+        }
+
+        if (partData.shape8URL) then
+            if (shape8Dict[partData.shape8URL]) then
+                local raw = shape8Dict[partData.shape8URL].v
+                settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
+            end
+        end
+        --logger:info('getting offset for ', partName)
+
+
+
+        makePart(partName, instance, settings)
+        if optionalTorsoAngle and partName == 'torso1' then
+            instance.parts['torso1'].body:setAngle(optionalTorsoAngle)
+        end
+    end
+
+
+    -- here we will build up the sfixtures we need.
+
+    defaultSetupTextures(instance)
+    lib.addTextureFixturesFromInstance(instance)
+    return instance
+end
+
+function lib.createCharacter(template, x, y)
     if dna[template] then
         local instance = {
             id = uuid.generateID(),
             templateName = template,
             dna = utils.deepCopy(dna[template]), -- Copy template data for potential instance modification
             parts = {},                          -- { [partName] = thingObject, ... }
-            joints = {},                         -- { [connectionName] = jointObject, ... }
-            appearanceValues = {},               -- Will hold visual overrides (implement later)
+            joints = {},                         -- unused...{ [connectionName] = jointObject, ... }
+            --appearanceValues = {},               -- Will hold visual overrides (implement later)
             -- Add other instance-specific state if needed
+            textures = {},   -- here we will keep the data about what texture will go where (simple textures and connected textures)
+            positioners = {} -- here we will have some lerp values describing how things are positioned..
         }
 
-        local isPotato = instance.dna.creation.isPotatoHead
-        local hasNeck = instance.dna.creation.neckSegments > 0
-        local ordered = {}
 
 
-
-        local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
-        -- 1. Add Torso Segments
-        for i = 1, torsoSegments do
-            local partName = 'torso' .. i
-            table.insert(ordered, partName)
-            -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
-            if not instance.dna.parts[partName] then
-                -- Ensure template exists
-                if not instance.dna.parts['torso-segment-template'] then
-                    error("Missing 'torso-segment-template' in DNA for template: " .. template)
-                end
-                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
-                -- Optional: Modify dimensions/properties of specific segments here if needed
-                -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
-                instance.dna.parts[partName].dims.w = i * 100
-                --logger:inspect(instance.dna.parts[partName])
-                --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
-            end
-        end
-
-
-
-
-        if hasNeck and not isPotato then
-            for i = 1, (instance.dna.creation.neckSegments or 2) do
-                table.insert(ordered, 'neck' .. i)
-                instance.dna.parts['neck' .. i] = instance.dna.parts['neck-segment-template']
-            end
-        end
-        if not isPotato then
-            table.insert(ordered, 'head')
-        end
-        -- Common limbs
-        local limbs = {
-            'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
-            'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
-            'lear', 'rear'
-        }
-        for _, part in ipairs(limbs) do table.insert(ordered, part) end
-
-
-        for i = 1, #ordered do
-            local partName = ordered[i]
-            local partData = instance.dna.parts[partName]
-            --logger:info(partName, partData.shapeName)
-            local settings = {
-                x = x,
-                y = y,
-                bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
-                shapeType = partData.shape, -- Use shape defined in template
-                shape8URL = partData.shape8URL,
-                label = 'straight',         --partName,           -- Use part name as initial label
-                density = partData.density or 1,
-                radius = partData.dims.r,
-                width = partData.dims.w,
-                width2 = partData.dims.w2,
-                width3 = partData.dims.w2,
-                height = partData.dims.h,
-                height2 = partData.dims.h,
-                height3 = partData.dims.h,
-                height4 = partData.dims.h,
-
-                -- Add other physics properties if needed (friction, restitution?)
-            }
-            if partName == 'lfoot' or partName == 'rfoot' or partName == 'lear' or partName == 'rear' then
-                settings.label = ''
-            end
-            if (partData.shape8URL) then
-                if (shape8Dict[partData.shape8URL]) then
-                    local raw = shape8Dict[partData.shape8URL].v
-                    settings.vertices = makeTransformedVertices(raw, partData.dims.sx or 1, partData.dims.sy or 1)
-                end
-            end
-            --logger:info('getting offset for ', partName)
-
-
-
-            makePart(partName, instance, settings)
-        end
+        return lib.createCharacterFromExistingDNA(instance, x, y)
     end
 end
-
 
 return lib
 
@@ -2398,6 +3000,7 @@ function lib.renderActiveEditorThings()
             love.graphics.polygon('line', state.interaction.polyVerts)
         end
     end
+
 
     -- draw mousehandlers for dragging vertices
     if state.polyEdit.tempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.polyEdit.lockedVerts == false then
@@ -2711,49 +3314,56 @@ function lib.updateSFixtureDimensionsFunc(w, h)
     return newfixture
 end
 
-function lib.createSFixture(body, localX, localY, cfg)
-    if (cfg.label == 'snap') then
+function lib.createSFixture(body, localX, localY, subtype, cfg)
+    if (subtype == 'snap') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius * 5, cfg.radius * 5, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", subtype = 'snap', id = setId, label = '', extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
+    if (subtype == 'anchor') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'anchor', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (cfg.label == 'anchor') then
+    if (subtype == 'connected-texture') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'connected-texture', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (cfg.label == 'connected-texture') then
+    if (subtype == 'trace-vertices') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'trace-vertices', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (cfg.label == 'texfixture') then
+    if (subtype == 'texfixture') then
         local vertexCount = 4
-        --
         local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
             rect8(cfg.width, cfg.height, localX, localY)
         local shape = love.physics.newPolygonShape(vv)
-
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, label = cfg.label, extra = { vertexCount = vertexCount, vertices = vv, type = 'texfixture' } })
+        fixture:setUserData({ type = "sfixture", id = setId, subtype = 'texfixture', label = '', extra = { vertexCount = vertexCount, vertices = vv } })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', cfg.label)
+    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', inspect(cfg))
 end
 
 --function lib.createTexFixtureShape(vertexCount)
@@ -2919,7 +3529,7 @@ local function handlePointer(x, y, id, action)
             for _, f in pairs(registry.sfixtures) do
                 local body = f:getBody()
                 local ud = f:getUserData()
-                if ud.label == 'anchor' then
+                if ud.label == 'anchor' or ud.subtype == 'anchor' then
                     -- todo this will find ALL sfitures bot just anchors
                     local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
 
@@ -3039,6 +3649,7 @@ local function handlePointer(x, y, id, action)
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
+            -- todo this line below can be erroring, i ve had it happen when dragging a chacter nd pressing N
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
             script.call('onReleased', newReleased)
@@ -3052,10 +3663,10 @@ local function handlePointer(x, y, id, action)
 
 
         if state.interaction.pressMissedEverything then
-            local wasOverUI = ui.activeElementID or ui.focusedTextInputID
+            local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
             if not wasOverUI then
                 -- removed from main!
-                if (state.selection.selectedSFixture) then
+                if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then
                     local body = state.selection.selectedSFixture:getBody()
                     local thing = body:getUserData().thing
 
@@ -3078,6 +3689,14 @@ local function handlePointer(x, y, id, action)
                     state.polyEdit.tempVerts = nil
                     state.polyEdit.lockedVerts = true
                 end
+                -- todo this is dumb..
+                state.panelVisibility.addBehavior = false
+                state.panelVisibility.customBehavior = false
+                state.panelVisibility.addJointOpened = false
+                state.panelVisibility.addShapeOpened = false
+                state.panelVisibility.worldSettingsOpened = false
+                state.panelVisibility.recordingPanelOpened = false
+                state.panelVisibility.showPalette = false
             else
 
             end
@@ -3090,7 +3709,8 @@ local function handlePointer(x, y, id, action)
             state.interaction.draggingObj = nil
         end
 
-        if state.currentMode == 'drawFreePoly' then
+        -- if we have released a mousebutton but it isnt nr1, then we keep on drawing free polygon
+        if state.currentMode == 'drawFreePoly' and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
             objectManager.finalizePolygon()
         end
@@ -3227,7 +3847,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
         -- print(index)
-    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') then
+    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false
@@ -3447,6 +4067,7 @@ function lib.buildWorld(data, world, cam)
             mirrorX = bodyData.mirrorX or 1,
             mirrorY = bodyData.mirrorY or 1,
             vertices = bodyData.vertices,
+            behaviors = bodyData.behaviors,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
             -- textures = bodyData.textures or { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
@@ -3702,7 +4323,8 @@ function lib.gatherSaveData(world, camera)
                 angularDamping = utils.round_to_decimals(body:getAngularDamping(), 4),
                 fixedRotation = body:isFixedRotation(),
                 fixtures = {},
-                sharedFixtureData = {}
+                sharedFixtureData = {},
+                behaviors = thing.behaviors
             }
             -- Iterate through all fixtures of the body
 
@@ -3750,7 +4372,7 @@ function lib.gatherSaveData(world, camera)
                 end
 
                 if fixture:getUserData() then
-                    if utils.sanitizeString(fixture:getUserData().label) == 'snap' then
+                    if utils.sanitizeString(fixture:getUserData().label) == 'snap' or fixture:getUserData().subtype == 'snap' then
                         local ud             = fixture:getUserData()
 
                         ud.extra.fixture     = 'fixture'
@@ -3760,8 +4382,13 @@ function lib.gatherSaveData(world, camera)
                         fixtureData.userData = utils.deepCopy(ud)
                     else
                         local ud = fixture:getUserData()
-                        if ud.extra and ud.extra.type == 'texfixture' then
+                        if ud.extra and ud.extra.type == 'texfixture' or ud.subtype == 'texfixture' then
+                            ud.extra.dirty = true
                             if ud.extra.ompImage then ud.extra.ompImage = nil end
+                        end
+                        if ud.extra and ud.extra.ompImage then
+                            ud.extra.dirty = true
+                            ud.extra.ompImage = nil
                         end
                         fixtureData.userData = utils.deepCopy(ud)
                     end
@@ -3893,7 +4520,7 @@ end
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON
     local saveData = lib.gatherSaveData(world, camera)
-    --logger:debug(inspect(saveData))
+    logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file
@@ -3983,7 +4610,7 @@ function lib.cloneSelection(selectedBodies, world)
 
                         oldUD.id = uuid.generateID()
                         idMapping[oldid] = oldUD.id
-                        if utils.sanitizeString(oldUD.label) == 'snap' then
+                        if utils.sanitizeString(oldUD.label) == 'snap' or oldUD.subtype == 'snap' then
                             oldUD.extra.at = nil
                             oldUD.extra.to = nil
                             oldUD.extra.fixture = nil
@@ -4022,6 +4649,7 @@ function lib.cloneSelection(selectedBodies, world)
                 label = originalThing.label,
                 mirrorX = originalThing.mirrorX,
                 mirrorY = originalThing.mirrorY,
+                behaviors = originalThing.behaviors,
                 body = newBody,
                 shapes = newShapeList,
                 vertices = newVertices,
@@ -4078,8 +4706,16 @@ function lib.cloneSelection(selectedBodies, world)
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
                             end
-
+                            local limitsEnabled = originalJoint:areLimitsEnabled()
+                            local lower, upper = originalJoint:getLimits()
+                            local oldRef = originalJoint:getReferenceAngle()
                             local newJoint = jointslib.createJoint(newJointData)
+                            local newRef = originalJoint:getReferenceAngle()
+                            --  logger:info(oldRef, newRef)
+                            newJoint:setLimits(lower, upper)
+                            --newJoint:setUpperLimit(upper)
+                            --newJoint:setLowerLimit(lower)
+                            newJoint:setLimitsEnabled(limitsEnabled)
 
                             if ud.scriptmeta then
                                 local newud = newJoint:getUserData()
@@ -4099,7 +4735,7 @@ function lib.cloneSelection(selectedBodies, world)
     end
 
     -- at this point everything that is cloned is added into the world
-    logger:inspect(idMapping)
+    -- logger:inspect(idMapping)
     -- now we need to figure out if i have any of the connected-texture fixtures with ids in their userdata that needs updating
     for k, v in pairs(clonedBodiesMap) do
         local fixtures = v.body:getFixtures()
@@ -4476,18 +5112,21 @@ function lib.extractJoints(body)
     return jointData
 end
 
-function lib.recreateJoint(joint, newSettings)
+function lib.recreateJoint(joint, newSettings, swapBodies)
     if joint:isDestroyed() then
         logger:error("The joint is already destroyed.")
         return nil
     end
 
     local bodyA, bodyB = joint:getBodies()
+
     local jointType = joint:getType()
 
     local id = lib.getJointId(joint)
     local offsetA = lib.getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
     local offsetB = lib.getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
+
+
 
     local data = {
         body1 = bodyA,
@@ -4680,6 +5319,12 @@ function Logger:_log(level, ...)
 end
 
 -- Specific level methods
+--
+--
+function Logger:trace(...)
+    self:_log("TRACE", debug.traceback(), ...)
+end
+
 function Logger:info(...)
     self:_log("INFO", ...)
 end
@@ -4711,6 +5356,165 @@ src/math-utils.lua
 ```lua
 --math-utils.lua
 local lib = {}
+
+
+
+local function unpackNodePointsLoop(points)
+    local unpacked = {}
+
+    for i = 0, #points do
+        local nxt = i == #points and 1 or i + 1
+        unpacked[1 + (i * 2)] = points[nxt][1]
+        unpacked[2 + (i * 2)] = points[nxt][2]
+    end
+
+    for i = 0, #points do
+        local nxt = i == #points and 1 or i + 1
+        unpacked[(#points * 2) + 1 + (i * 2)] = points[nxt][1]
+        unpacked[(#points * 2) + 2 + (i * 2)] = points[nxt][2]
+    end
+
+    return unpacked
+end
+
+local function unpackNodePoints(points, noloop)
+    local unpacked = {}
+    if #points >= 1 then
+        for i = 0, #points - 1 do
+            unpacked[1 + (i * 2)] = points[i + 1][1]
+            unpacked[2 + (i * 2)] = points[i + 1][2]
+        end
+
+        -- make it go round
+        if noloop == nil then
+            unpacked[(#points * 2) + 1] = points[1][1]
+            unpacked[(#points * 2) + 2] = points[1][2]
+        end
+    end
+
+    return unpacked
+end
+
+function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+local function getDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+
+    return distance
+end
+
+local function getLengthOfPath(path)
+    local result = 0
+    for i = 1, #path - 1 do
+        local a = path[i]
+        local b = path[i + 1]
+        result = result + getDistance(a[1], a[2], b[1], b[2])
+    end
+    return result
+end
+
+local function evenlySpreadPath(result, path, index, running, spacing)
+    local here = path[index]
+    if index == #path then return end
+
+    local nextIndex = index + 1
+    local there = path[nextIndex]
+    local d = getDistance(here[1], here[2], there[1], there[2])
+    if (d + running) < spacing then
+        running = running + d
+        return evenlySpreadPath(result, path, index + 1, running, spacing)
+    else
+        if running >= d then
+            --print('missing one here i think', running/d)
+            local x = lerp(here[1], there[1], 1 or running / d)
+            local y = lerp(here[2], there[2], 1 or running / d)
+            --if index < #path-2 then
+            table.insert(result, { x, y, { 1, 0, 0 } })
+            --end
+            --running = d
+        end
+
+        while running <= d do
+            local x = lerp(here[1], there[1], running / d)
+            local y = lerp(here[2], there[2], running / d)
+            table.insert(result, { x, y, { 1, 0, 1 } })
+
+            running = running + spacing
+        end
+
+        if running >= d then
+            running = running - d
+            return evenlySpreadPath(result, path, index + 1, running, spacing)
+        end
+    end
+end
+--https://love2d.org/forums/viewtopic.php?t=1401
+local function GetSplinePos(tab, percent, tension) --returns the position at 'percent' distance along the spline.
+    if (tab and (#tab >= 4)) then
+        local pos = (((#tab) / 2) - 1) * percent
+        local lowpnt, percent_2 = math.modf(pos)
+
+        local i = (1 + lowpnt * 2)
+        local p1x = tab[i]
+        local p1y = tab[i + 1]
+        local p2x = tab[i + 2]
+        local p2y = tab[i + 3]
+
+        local p0x = tab[i - 2]
+        local p0y = tab[i - 1]
+        local p3x = tab[i + 4]
+        local p3y = tab[i + 5]
+
+        local tension = tension or .5
+        local t1x = 0
+        local t1y = 0
+        if (p0x and p0y) then
+            t1x = (1.0 - tension) * (p2x - p0x)
+            t1y = (1.0 - tension) * (p2y - p0y)
+        end
+        local t2x = 0
+        local t2y = 0
+        if (p3x and p3y) then
+            t2x = (1.0 - tension) * (p3x - p1x)
+            t2y = (1.0 - tension) * (p3y - p1y)
+        end
+
+        local s = percent_2
+        local s2 = s * s
+        local s3 = s * s * s
+        local h1 = 2 * s3 - 3 * s2 + 1
+        local h2 = -2 * s3 + 3 * s2
+        local h3 = s3 - 2 * s2 + s
+        local h4 = s3 - s2
+        local px = (h1 * p1x) + (h2 * p2x) + (h3 * t1x) + (h4 * t2x)
+        local py = (h1 * p1y) + (h2 * p2y) + (h3 * t1y) + (h4 * t2y)
+
+        return px, py
+    end
+end
+
+lib.unloosenVanillaline = function(points, tension, spacing)
+    local work = unpackNodePoints(points, true)
+    local output = {}
+    local amt = 10
+    for i = 0, amt do
+        local t = (i / amt)
+        if t >= 1 then t = 0.99999999 end
+        local x, y = GetSplinePos(work, t, tension)
+        table.insert(output, { x, y })
+    end
+    local rrr = {}
+    local r2 = evenlySpreadPath(rrr, output, 1, 0, spacing)
+    output = unpackNodePoints(rrr)
+    return output
+end
+
+
+
 
 
 function lib.makePolygonRelativeToCenter(polygon, centerX, centerY)
@@ -6116,8 +6920,8 @@ function lib.recreateThingFromBody(body, newSettings)
         return nil
     end
     local userData = body:getUserData()
-    local thing = userData and userData.thing
-    -- Extract current properties
+    local thing = userData and userData.thing -- Extract current properties
+
     local x, y = body:getPosition()
     local angle = body:getAngle()
     local velocityX, velocityY = body:getLinearVelocity()
@@ -6174,40 +6978,24 @@ function lib.recreateThingFromBody(body, newSettings)
         for i = 1, offset do
             local oldF = oldFixtures[i]
             local points = { oldF:getShape():getPoints() }
-            -- so maybe we can figure out between which 2 vertices i am, or closest too
-            -- and then reposition myself in the same way to those 2 vertices.
-            --
-            -- goal would be to for example remain in place when growing a leg.. ?
-            -- oh maybe its better to also use fixtures for this behaviour but not snap, but boneconnect or something.
-            --
-            --print(inspect(fixtures/fixturesgetCentroidOfFixture(originalBody, oldF)))
+
             local abs = oldF:getShape()
             local centerX, centerY = mathutils.getCenterOfPoints(points)
             if (thing.vertices) then
-                local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
-                --     --  print(inspect(params))
-                local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
+                -- we are repositioning special fixtures (anchors, snappoints) and doing our best to set them at a decent position.
+                -- this is fine for all sort of editor made things,
+                -- todo specific positioning for mipo on behavors
+                -- but for mipos character we might just want to be very precise and dending on behaviors and tags and dedicated rules.
 
-                --     --local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                --     --print(cx, cy, centerX, centerY)
-                --     local allFixtures = body:getUserData().thing.body:getFixtures()
-                --     local offX, offY = getCenterOfShapeFixtures(allFixtures)
+                --local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
+                --local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
-                --     -- local weights = meanValueCoordinates(centerX, centerY, thing.vertices)
-                --     -- local new_px, new_py = repositionPoint(weights, newVertices)
-                ---local edgeIndex, t = findEdgeAndLerpParam(centerX, centerY, thing.vertices)
-                --     --print(edgeIndex, t)
-                --local new_px, new_py = lerpOnEdge(edgeIndex, t, newVertices)
+                local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
+                local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
 
                 local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
                 abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
-                --print('jo!')
-
-                --     --print(centerX, centerY, new_px, new_py)
             end
-            --local relativePoints = makePolygonRelativeToCenter(points, centerX, centerY)
-            -- local newShape = makePolygonAbsolute(relativePoints, localX, localY)
-
 
 
             local newFixture = love.physics.newFixture(newBody, abs, oldF:getDensity())
@@ -6237,6 +7025,8 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.height4 = newSettings.height4 or thing.height4
     thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices
+    thing.behaviors = newSettings.behaviors or thing.behaviors
+
 
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
@@ -6257,6 +7047,7 @@ function lib.destroyBody(body)
     for i = 1, #bjoints do
         local ud = bjoints[i]:getUserData()
         if ud and ud.id then
+            --  logger:trace(ud.id)
             registry.unregisterJoint(ud.id)
             bjoints[i]:destroy()
         end
@@ -6488,13 +7279,26 @@ function lib.flipThing(thing, axis, recursive)
                 offsetB.y = -offsetB.y
             end
 
-
+            local limitsEnabled = joint:areLimitsEnabled()
+            local lower, upper = joint:getLimits()
 
 
             local id = joint:getUserData().id
-            joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+            local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
 
+            if axis == 'x' then
+                newJoint:setLimits(-upper, -lower)
+                newJoint:setLimitsEnabled(limitsEnabled)
+            end
+            if axis == 'y' then
+                -- as long as you build your joints in the right order this just works like this.
+                -- the reason is quite subtle (before we did lowerlimit  +math.pi and higherlimit + math.pi), but
+                -- because the axis is flipped , the order between the joint becomes flipped too, which offsets that math.pi back to 0
 
+                -- TLDR dont make the joints in the wrong order, then everything works great!
+                newJoint:setLimits(-upper, -lower)
+                newJoint:setLimitsEnabled(limitsEnabled)
+            end
             snap.maybeUpdateSnapJointWithId(id)
             ::continue::
         end
@@ -6539,7 +7343,7 @@ local state = require 'src.state'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
 local fileBrowser = require 'src.file-browser'
-
+local behaviors = require 'src.behaviors'
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
@@ -6552,6 +7356,7 @@ local colorpickers = {
     bg = false
 }
 
+-- todo move this somewhere sensible , i also need it in character manager
 local function getCenterAndDimensions(body)
     local ud = body:getUserData()
     local cx, cy, w, h
@@ -7155,7 +7960,7 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, { label = 'snap', radius = 30 })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'snap', { radius = 30 })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -7178,7 +7983,7 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, { label = 'anchor', radius = 30 })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'anchor', { radius = 30 })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -7202,8 +8007,8 @@ function lib.drawAddShapeUI()
                 local body = hitted[#hitted]:getBody()
                 local cx, cy, w, h = getCenterAndDimensions(body)
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY,
-                    { label = 'texfixture', width = w, height = h })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'texfixture',
+                    { width = w, height = h })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -7226,8 +8031,30 @@ function lib.drawAddShapeUI()
             if (#hitted > 0) then
                 local body = hitted[#hitted]:getBody()
                 local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY,
-                    { label = 'connected-texture', radius = 30 })
+                local fixture = fixtures.createSFixture(body, localX, localY, 'connected-texture',
+                    { radius = 30 })
+                state.selection.selectedSFixture = fixture
+            end
+            ui.draggingActive = nil
+        end
+
+        local _, pressed, released = ui.button(x, y, width, 'trace-vertices')
+        if pressed then
+            ui.draggingActive = ui.activeElementID
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+
+            state.interaction.offsetDragging = { 0, 0 }
+        end
+        if released then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
+            if (#hitted > 0) then
+                local body = hitted[#hitted]:getBody()
+                local localX, localY = body:getLocalPoint(wx, wy)
+                local fixture = fixtures.createSFixture(body, localX, localY, 'trace-vertices',
+                    { radius = 30 })
                 state.selection.selectedSFixture = fixture
             end
             ui.draggingActive = nil
@@ -7502,6 +8329,7 @@ local accordionStatesSF = {
     ['texture'] = true,
     ['patch1'] = false,
     ['patch2'] = false,
+    ['patch3'] = false,
 }
 
 function lib.drawSelectedSFixture()
@@ -7510,9 +8338,10 @@ function lib.drawSelectedSFixture()
     if state.interaction.draggingObj then
         hadBeenDraggingObj = true
     end
+    if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
-    local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
-
+    --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
+    local sfixtureType = ud.type .. ' ' .. (ud.subtype and ud.subtype or '')
     -- Function to create an accordion
     local function drawAccordion(key, contentFunc)
         -- Draw the accordion header
@@ -7740,7 +8569,7 @@ function lib.drawSelectedSFixture()
 
 
 
-        if sfixtureType == 'texfixture' then
+        if ud.subtype == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -7786,7 +8615,7 @@ function lib.drawSelectedSFixture()
                     end
                 end
 
-                if ui.button(x + 220, y, 40, oldTexFixUD.extra.vertexCount) then
+                if ui.button(x + 220, y, 40, oldTexFixUD.extra.vertexCount or '') then
                     if oldTexFixUD.extra.vertexCount == 4 then
                         oldTexFixUD.extra.vertexCount = 8
                     elseif oldTexFixUD.extra.vertexCount == 8 then
@@ -7881,7 +8710,7 @@ function lib.drawSelectedSFixture()
                 nextRow()
                 patchTransformUI('patch1')
                 flipWholeUI('patch1')
-                nextRow()
+                --nextRow()
                 local dirty = function() oldTexFixUD.extra.dirty = true end
                 handlePaletteAndHex(myID, 'patch1tint', x, y, 100, oldTexFixUD.extra.patch1.tint,
                     function(color) oldTexFixUD.extra.patch1.tint = color end, dirty)
@@ -7894,6 +8723,23 @@ function lib.drawSelectedSFixture()
                 nextRow()
                 patchTransformUI('patch2')
                 flipWholeUI('patch2')
+                -- nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'patch2tint', x, y, 100, oldTexFixUD.extra.patch2.tint,
+                    function(color) oldTexFixUD.extra.patch2.tint = color end, dirty)
+            end)
+            nextRow()
+            drawAccordion('patch3', function()
+                oldTexFixUD.extra.patch3 = oldTexFixUD.extra.patch3 or {}
+                nextRow()
+                combineImageUI('patch3')
+                nextRow()
+                patchTransformUI('patch3')
+                flipWholeUI('patch3')
+                --nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'patch3tint', x, y, 100, oldTexFixUD.extra.patch3.tint,
+                    function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
         else
             drawAccordion('position', function()
@@ -7944,7 +8790,7 @@ function lib.drawSelectedSFixture()
                     state.selection.selectedSFixture = newfixture
                 end
 
-                if sfixtureType ~= 'texfixture' then
+                if state.selection.selectedSFixture:getUserData().subtype ~= 'texfixture' then
                     if ui.button(x, y, 40, 'N') then
                         handleOffset(0, -1)
                     end
@@ -7964,11 +8810,100 @@ function lib.drawSelectedSFixture()
             end)
 
             local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            if oldUD.label == 'connected-texture' then
+            if oldUD.label == 'connected-texture' or oldUD.subtype == 'connected-texture' then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
                     state.currentMode = 'addNodeToConnectedTexture'
                 end
+
+                nextRow()
+
+                nextRow()
+
+                local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                    math.floor(oldTexFixUD.extra.zOffset or 0),
+                    function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                    end,
+                    (not state.world.paused) or dirtyBodyChange)
+                nextRow()
+                nextRow()
+                local e = state.selection.selectedSFixture:getUserData().extra
+                if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
+                    e.OMP = not e.OMP
+                end
+                nextRow()
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                local newWMul = createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
+                    oldTexFixUD.extra.main.wmul or 1,
+                    function(v)
+                        oldTexFixUD.extra.main.wmul = v
+                    end)
+                if ui.checkbox(x, y, (oldTexFixUD.extra.main.dir == nil or oldTexFixUD.extra.main.dir == 1), 'dir') then
+                    if oldTexFixUD.extra.main.dir == nil or oldTexFixUD.extra.main.dir == 1 then
+                        oldTexFixUD.extra.main.dir = -1
+                    else
+                        oldTexFixUD.extra.main.dir = 1
+                    end
+                end
+                nextRow()
+
+
+                if not e.OMP then
+                    handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
+                        function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
+                    handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
+                        function(u)
+                            oldTexFixUD.extra.main.bgURL = u
+                        end)
+                    nextRow()
+                    handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
+                        function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
+                    handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
+                        function(u)
+                            oldTexFixUD.extra.main.fgURL = u
+                        end)
+
+                    nextRow()
+                end
+
+                if e.OMP then
+                    oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+
+                    combineImageUI('main')
+                    flipWholeUI('main')
+
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
+                    handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
+                        function(color) oldTexFixUD.extra.main.tint = color end, dirty)
+                end
+            end
+
+            if oldUD.subtype == 'trace-vertices' then
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                oldTexFixUD.extra.startIndex = oldTexFixUD.extra.startIndex or 1
+                oldTexFixUD.extra.endIndex = oldTexFixUD.extra.endIndex or 1
+
+                local body = state.selection.selectedSFixture:getBody()
+                local parentVerts = body:getUserData().thing.vertices
+                --print(#parentVerts)
+                nextRow()
+                nextRow()
+                local startIndexSlider = createSliderWithId(myID, 'startIndex', x, y, 160, -(#parentVerts / 2),
+                    (#parentVerts / 2),
+                    oldTexFixUD.extra.startIndex, function(v)
+                        oldTexFixUD.extra.startIndex = math.floor(v + 0)
+                    end)
+
+                ui.label(x + 50, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.startIndex)
+                nextRow()
+                local endIndexSlider = createSliderWithId(myID, 'endIndex', x, y, 160, -(#parentVerts / 2),
+                    (#parentVerts / 2),
+                    oldTexFixUD.extra.endIndex, function(v)
+                        oldTexFixUD.extra.endIndex = math.floor(v + 0)
+                    end)
+
+                ui.label(x + 50, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.endIndex)
 
                 nextRow()
 
@@ -8098,9 +9033,9 @@ function lib.drawSelectedBodiesUI()
 end
 
 local accordionStatesSO = {
-    tags = false,
+    behaviors = false,
     position = false,
-    transform = true,
+    transform = false,
     physics = false,
     motion = false,
     joints = false,
@@ -8129,6 +9064,7 @@ function lib.drawUpdateSelectedObjectUI()
 
         -- Toggle Body Type Button
         -- Retrieve the current body type
+        if body:isDestroyed() then return end
         local currentBodyType = body:getType() -- 'static', 'dynamic', or 'kinematic'
 
         -- Determine the next body type in the cycle
@@ -8162,7 +9098,6 @@ function lib.drawUpdateSelectedObjectUI()
                 contentFunc(clicked)
             end
         end
-
 
         if ui.button(x, y, 100, 'clone') then
             state.selection.selectedBodies = { state.selection.selectedObj }
@@ -8205,436 +9140,493 @@ function lib.drawUpdateSelectedObjectUI()
 
             nextRow()
 
-
             nextRow()
-            if false then
-                drawAccordion("tags", function(clicked)
-                    local w = love.graphics.getFont():getWidth('straight') + 20
+
+            drawAccordion("behaviors",
+                function(clicked)
+                    --local w = love.graphics.getFont():getWidth('straight') + 20
                     -- ui.button(x, y, w, 'straight')
-                    ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
+                    --ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
+
+                    -- what behaviors do i have ?
+                    -- KEEP_ANGLE
+                    -- LIMB_HUB
+                    -- HUB_PRESETS = {
+                    --   humanoid = {
+                    --     allowed = { "left_arm", "right_arm", "left_leg", "right_leg", "neck" }
+                    --   },
+                    --   upper_torso = {
+                    --     allowed = { "left_arm", "right_arm", "neck" }
+                    --   },
+                    --   lower_torso = {
+                    --     allowed = { "left_leg", "right_leg" }
+                    --   },
+                    --   potatohead = {
+                    --     allowed = { "limb1", "limb2", "limb3", "limb4" }
+                    --   }
+                    -- }
+                    -- print(inspect(userData))
+                    if thing.behaviors then
+                        for i = 1, #thing.behaviors do
+                            nextRow()
+
+                            local behavior = thing.behaviors[i]
+                            local w = love.graphics.getFont():getWidth(behavior.name) + 20
+                            if ui.button(x, y, w, behavior.name, BUTTON_HEIGHT, { 0.4, 0.4, 0.8 }) then
+                                if (state.panelVisibility.customBehavior) then
+                                    state.panelVisibility.customBehavior = false
+                                else
+                                    state.panelVisibility.customBehavior = { body = body, name = behavior.name }
+                                end
+                            end
+                        end
+                    end
+
                     nextRow()
+                    if ui.button(x, y, 260, 'add behavior') then
+                        if (state.panelVisibility.addBehavior) then
+                            state.panelVisibility.addBehavior = false
+                        else
+                            state.panelVisibility.addBehavior = { body = body }
+                        end
+                    end
+
+                    --nextRow()
                 end)
-                nextRow()
-            end
-            drawAccordion("position", function(clicked)
-                nextRow()
-                local value = thing.body:getX()
-                local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
-                    true,
-                    clicked or not state.world.paused or state.interaction.draggingObj)
-                if hadBeenDraggingObj then
-                    dirty = true
-                end
-                if (dirty) then
-                    local numericPosX = tonumber(numericInputText)
-                    if numericPosX then
-                        thing.body:setX(numericPosX)
-                    else
-                        -- Handle invalid input, e.g., reset to previous value or show an error
-                        logger:error("Invalid X position input!")
+            nextRow()
+
+            drawAccordion("position",
+                function(clicked)
+                    nextRow()
+                    local value = thing.body:getX()
+                    local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
+                        true,
+                        clicked or not state.world.paused or state.interaction.draggingObj)
+                    if hadBeenDraggingObj then
+                        dirty = true
                     end
-                end
-                local value = thing.body:getY()
-                local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
-                    "" .. value, true,
-                    clicked or not state.world.paused or state.interaction.draggingObj)
-                if hadBeenDraggingObj then
-                    dirty = true
-                end
-                if (dirty) then
-                    local numericPosY = tonumber(numericInputText)
-                    if numericPosY then
-                        thing.body:setY(numericPosY)
-                    else
-                        -- Handle invalid input, e.g., reset to previous value or show an error
-                        logger:error("Invalid Y position input!")
+                    if (dirty) then
+                        local numericPosX = tonumber(numericInputText)
+                        if numericPosX then
+                            thing.body:setX(numericPosX)
+                        else
+                            -- Handle invalid input, e.g., reset to previous value or show an error
+                            logger:error("Invalid X position input!")
+                        end
                     end
+                    local value = thing.body:getY()
+                    local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
+                        "" .. value, true,
+                        clicked or not state.world.paused or state.interaction.draggingObj)
+                    if hadBeenDraggingObj then
+                        dirty = true
+                    end
+                    if (dirty) then
+                        local numericPosY = tonumber(numericInputText)
+                        if numericPosY then
+                            thing.body:setY(numericPosY)
+                        else
+                            -- Handle invalid input, e.g., reset to previous value or show an error
+                            logger:error("Invalid Y position input!")
+                        end
+                    end
+                    if hadBeenDraggingObj then
+                        hadBeenDraggingObj = false
+                    end
+
+                    nextRow()
+
+                    local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
+                    if dirty then
+                        body:setFixedRotation(not body:isFixedRotation())
+                    end
+
+                    -- Angle Slider
+                    nextRow()
+
+                    local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
+                        (body:getAngle() * 180 / math.pi),
+                        (body:isAwake() and not state.world.paused) or dirtyBodyChange)
+                    if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
+                        body:setAngle(newAngle * math.pi / 180)
+                    end
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' angle')
+
+
+                    nextRow()
+
+                    -- local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
+                    --     math.floor(thing.zOffset),
+                    --     (body:isAwake() and not state.world.paused) or dirtyBodyChange)
+                    -- if newZOffset and thing.zOffset ~= newZOffset then
+                    --     thing.zOffset = math.floor(newZOffset)
+                    -- end
+                    -- ui.label(x, y, ' zOffset')
                 end
-                if hadBeenDraggingObj then
-                    hadBeenDraggingObj = false
-                end
-
-                nextRow()
-
-                local dirty, checked = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
-                if dirty then
-                    body:setFixedRotation(not body:isFixedRotation())
-                end
-
-                -- Angle Slider
-                nextRow()
-
-                local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
-                    (body:getAngle() * 180 / math.pi),
-                    (body:isAwake() and not state.world.paused) or dirtyBodyChange)
-                if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
-                    body:setAngle(newAngle * math.pi / 180)
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' angle')
-
-
-                nextRow()
-
-                -- local newZOffset = ui.sliderWithInput(myID .. 'zOffset', x, y, ROW_WIDTH, -180, 180,
-                --     math.floor(thing.zOffset),
-                --     (body:isAwake() and not state.world.paused) or dirtyBodyChange)
-                -- if newZOffset and thing.zOffset ~= newZOffset then
-                --     thing.zOffset = math.floor(newZOffset)
-                -- end
-                -- ui.label(x, y, ' zOffset')
-            end
             )
             nextRow()
 
-            drawAccordion("transform", function(clicked)
-                nextRow()
+            drawAccordion("transform",
+                function(clicked)
+                    nextRow()
 
-                if ui.button(x, y, 120, 'flipX') then
-                    state.selection.selectedObj = objectManager.flipThing(thing, 'x', true)
-                    dirtyBodyChange = true
-                end
-                if ui.button(x + 140, y, 120, 'flipY') then
-                    state.selection.selectedObj = objectManager.flipThing(thing, 'y', true)
-                    dirtyBodyChange = true
-                end
-
-
-                nextRow()
-                if shapeType == 'circle' then
-                    -- Show radius control for circles
-
-
-                    local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
-                    if newRadius and newRadius ~= thing.radius then
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body,
-                            { shapeType = "circle", radius = newRadius })
-                        state.editorPreferences.lastUsedRadius = newRadius
-                        body = state.selection.selectedObj.body
+                    if ui.button(x, y, 120, 'flipX') then
+                        state.selection.selectedObj = objectManager.flipThing(thing, 'x', true)
+                        dirtyBodyChange = true
                     end
-                elseif shapeType == 'rectangle' or shapeType == 'itriangle' then
-                    -- Show width and height controls for these shapes
-
-
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
-
-                    if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
-                        state.editorPreferences.lastUsedWidth = newWidth
-                        state.editorPreferences.lastUsedHeight = newHeight
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            height = newHeight or thing.height,
-                        })
-                        body = state.selection.selectedObj.body
+                    if ui.button(x + 140, y, 120, 'flipY') then
+                        state.selection.selectedObj = objectManager.flipThing(thing, 'y', true)
+                        dirtyBodyChange = true
                     end
-                elseif shapeType == 'torso' then
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+
+
                     nextRow()
-
-                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
-                    nextRow()
-
-                    local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width3')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
-                    nextRow()
-                    local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height2')
-                    nextRow()
-                    local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height3')
-                    nextRow()
-                    local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height4')
-                    nextRow()
-
-                    if (newWidth and newWidth ~= thing.width) or
-                        (newWidth2 and newWidth2 ~= thing.width2) or
-                        (newWidth3 and newWidth3 ~= thing.width3) or
-                        (newHeight and newHeight ~= thing.height) or
-                        (newHeight2 and newHeight2 ~= thing.height2) or
-                        (newHeight3 and newHeight3 ~= thing.height3) or
-                        (newHeight4 and newHeight4 ~= thing.height4) then
-                        state.editorPreferences.lastUsedWidth = newWidth
-                        state.editorPreferences.lastUsedWidth2 = newWidth2
-                        state.editorPreferences.lastUsedWidth3 = newWidth3
-                        state.editorPreferences.lastUsedHeight = newHeight
-                        state.editorPreferences.lastUsedHeight2 = newHeight2
-                        state.editorPreferences.lastUsedHeight3 = newHeight3
-                        state.editorPreferences.lastUsedHeight4 = newHeight4
-
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            width2 = newWidth2 or thing.width2,
-                            width3 = newWidth3 or thing.width3,
-                            height = newHeight or thing.height,
-                            height2 = newHeight2 or thing.height2,
-                            height3 = newHeight3 or thing.height3,
-                            height4 = newHeight4 or thing.height4,
-                        })
-                        body = state.selection.selectedObj.body
-                    end
-                elseif shapeType == 'trapezium' or shapeType == 'capsule' then
-                    -- Show width and height controls for these shapes
+                    if shapeType == 'circle' then
+                        -- Show radius control for circles
 
 
-                    local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
-                    nextRow()
-
-                    local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, (thing.width2 or 5))
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
-
-                    if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
-                        state.editorPreferences.lastUsedWidth2 = newWidth2
-                        state.editorPreferences.lastUsedWidth = newWidth
-                        state.editorPreferences.lastUsedHeight = newHeight
-                        state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
-                            shapeType = shapeType,
-                            width = newWidth or thing.width,
-                            width2 = newWidth2 or thing.width2,
-
-                            height = newHeight or thing.height,
-                        })
-                        body = state.selection.selectedObj.body
-                    end
-                else
-                    -- For polygonal or other custom shapes, only allow radius control if applicable
-                    if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
-                        shapeType == 'heptagon' or shapeType == 'octagon' then
-                        nextRow()
-
-                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius,
-                            dirtyBodyChange)
+                        local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing.radius)
                         ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
                         if newRadius and newRadius ~= thing.radius then
                             state.selection.selectedObj = objectManager.recreateThingFromBody(body,
-                                { shapeType = shapeType, radius = newRadius })
+                                { shapeType = "circle", radius = newRadius })
                             state.editorPreferences.lastUsedRadius = newRadius
                             body = state.selection.selectedObj.body
                         end
+                    elseif shapeType == 'rectangle' or shapeType == 'itriangle' then
+                        -- Show width and height controls for these shapes
+
+
+                        local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+                        nextRow()
+
+                        local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
+
+                        if (newWidth and newWidth ~= thing.width) or (newHeight and newHeight ~= thing.height) then
+                            state.editorPreferences.lastUsedWidth = newWidth
+                            state.editorPreferences.lastUsedHeight = newHeight
+                            state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
+                                shapeType = shapeType,
+                                width = newWidth or thing.width,
+                                height = newHeight or thing.height,
+                            })
+                            body = state.selection.selectedObj.body
+                        end
+                    elseif shapeType == 'torso' then
+                        local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+                        nextRow()
+
+                        local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
+                        nextRow()
+
+                        local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width3')
+                        nextRow()
+
+                        local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
+                        nextRow()
+                        local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height2')
+                        nextRow()
+                        local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height3')
+                        nextRow()
+                        local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height4')
+                        nextRow()
+
+                        if (newWidth and newWidth ~= thing.width) or
+                            (newWidth2 and newWidth2 ~= thing.width2) or
+                            (newWidth3 and newWidth3 ~= thing.width3) or
+                            (newHeight and newHeight ~= thing.height) or
+                            (newHeight2 and newHeight2 ~= thing.height2) or
+                            (newHeight3 and newHeight3 ~= thing.height3) or
+                            (newHeight4 and newHeight4 ~= thing.height4) then
+                            state.editorPreferences.lastUsedWidth = newWidth
+                            state.editorPreferences.lastUsedWidth2 = newWidth2
+                            state.editorPreferences.lastUsedWidth3 = newWidth3
+                            state.editorPreferences.lastUsedHeight = newHeight
+                            state.editorPreferences.lastUsedHeight2 = newHeight2
+                            state.editorPreferences.lastUsedHeight3 = newHeight3
+                            state.editorPreferences.lastUsedHeight4 = newHeight4
+
+                            state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
+                                shapeType = shapeType,
+                                width = newWidth or thing.width,
+                                width2 = newWidth2 or thing.width2,
+                                width3 = newWidth3 or thing.width3,
+                                height = newHeight or thing.height,
+                                height2 = newHeight2 or thing.height2,
+                                height3 = newHeight3 or thing.height3,
+                                height4 = newHeight4 or thing.height4,
+                            })
+                            body = state.selection.selectedObj.body
+                        end
+                    elseif shapeType == 'trapezium' or shapeType == 'capsule' then
+                        -- Show width and height controls for these shapes
+
+
+                        local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width')
+                        nextRow()
+
+                        local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800,
+                            (thing.width2 or 5))
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' width2')
+                        nextRow()
+
+                        local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' height')
+
+                        if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
+                            state.editorPreferences.lastUsedWidth2 = newWidth2
+                            state.editorPreferences.lastUsedWidth = newWidth
+                            state.editorPreferences.lastUsedHeight = newHeight
+                            state.selection.selectedObj = objectManager.recreateThingFromBody(body, {
+                                shapeType = shapeType,
+                                width = newWidth or thing.width,
+                                width2 = newWidth2 or thing.width2,
+
+                                height = newHeight or thing.height,
+                            })
+                            body = state.selection.selectedObj.body
+                        end
                     else
-                        -- No UI controls for custom or unsupported shapes
-                        --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
-                        if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
-                            state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
-                            if state.polyEdit.lockedVerts == false then
-                                state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
-                                local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                                state.polyEdit.centroid = { x = cx, y = cy }
-                            else
-                                state.polyEdit.tempVerts = nil
-                                state.polyEdit.centroid = nil
+                        -- For polygonal or other custom shapes, only allow radius control if applicable
+                        if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
+                            shapeType == 'heptagon' or shapeType == 'octagon' then
+                            nextRow()
+
+                            local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing
+                                .radius,
+                                dirtyBodyChange)
+                            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
+                            if newRadius and newRadius ~= thing.radius then
+                                state.selection.selectedObj = objectManager.recreateThingFromBody(body,
+                                    { shapeType = shapeType, radius = newRadius })
+                                state.editorPreferences.lastUsedRadius = newRadius
+                                body = state.selection.selectedObj.body
+                            end
+                        else
+                            -- No UI controls for custom or unsupported shapes
+                            --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
+                            if state.selection.selectedObj.shapeType == 'custom' then
+                                if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                                    state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
+                                    if state.polyEdit.lockedVerts == false then
+                                        state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj
+                                            .vertices)
+                                        local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
+                                        state.polyEdit.centroid = { x = cx, y = cy }
+                                    else
+                                        state.polyEdit.tempVerts = nil
+                                        state.polyEdit.centroid = nil
+                                    end
+                                end
                             end
                         end
                     end
-                end
 
-                nextRow()
-            end)
-
-
+                    nextRow()
+                end)
             nextRow()
 
-            drawAccordion("physics", function()
-                local fixtures = body:getFixtures()
-                if #fixtures >= 1 then
-                    local density = fixtures[1]:getDensity()
+            drawAccordion("physics",
+                function()
+                    local fixtures = body:getFixtures()
+                    if #fixtures >= 1 then
+                        local density = fixtures[1]:getDensity()
 
-                    nextRow()
-                    local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
-                    if newDensity and density ~= newDensity then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setDensity(newDensity)
+                        nextRow()
+                        local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
+                        if newDensity and density ~= newDensity then
+                            for i = 1, #fixtures do
+                                fixtures[i]:setDensity(newDensity)
+                            end
+                        end
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' density')
+
+                        -- Bounciness Slider
+                        local bounciness = fixtures[1]:getRestitution()
+                        nextRow()
+
+                        local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
+                        if newBounce and bounciness ~= newBounce then
+                            for i = 1, #fixtures do
+                                fixtures[i]:setRestitution(newBounce)
+                            end
+                        end
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' bounce')
+
+                        -- Friction Slider
+                        local friction = fixtures[1]:getFriction()
+                        nextRow()
+
+                        local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
+                        if newFriction and friction ~= newFriction then
+                            for i = 1, #fixtures do
+                                fixtures[i]:setFriction(newFriction)
+                            end
+                        end
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' friction')
+                        nextRow()
+
+
+                        local fb = thing.body
+                        local fixtures = fb:getFixtures()
+                        local ff = fixtures[1]
+                        local groupIndex = ff:getGroupIndex()
+                        local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
+                            groupIndex)
+                        ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' groupid')
+                        if groupIndexSlider then
+                            local value = math.floor(groupIndexSlider)
+                            local count = 0
+
+                            local b = thing.body
+                            local fixtures = b:getFixtures()
+                            for j = 1, #fixtures do
+                                fixtures[j]:setGroupIndex(value)
+                                count = count + 1
+                            end
                         end
                     end
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' density')
 
-                    -- Bounciness Slider
-                    local bounciness = fixtures[1]:getRestitution()
+                    nextRow()
+                    -- body:setAngularDamping(1)
+                    -- body:setLinearDamping(1)
+                    --
+                    local angleDamp = tonumber(body:getAngularDamping())
+                    local newAngularDamping = ui.sliderWithInput(myID .. 'angd', x, y, ROW_WIDTH, 0, 10, angleDamp,
+                        body:isAwake() and not state.world.paused)
+                    if newAngularDamping and angleDamp ~= newAngularDamping then
+                        body:setAngularDamping(newAngularDamping)
+                    end
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-damping')
                     nextRow()
 
-                    local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
-                    if newBounce and bounciness ~= newBounce then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setRestitution(newBounce)
-                        end
+                    local linDamp = tonumber(body:getLinearDamping())
+                    local newLinearDamping = ui.sliderWithInput(myID .. 'lind', x, y, ROW_WIDTH, 0, 10, linDamp,
+                        body:isAwake() and not state.world.paused)
+                    if newLinearDamping and linDamp ~= newLinearDamping then
+                        body:setLinearDamping(newLinearDamping)
                     end
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' bounce')
-
-                    -- Friction Slider
-                    local friction = fixtures[1]:getFriction()
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' lin-damping')
                     nextRow()
-
-                    local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
-                    if newFriction and friction ~= newFriction then
-                        for i = 1, #fixtures do
-                            fixtures[i]:setFriction(newFriction)
-                        end
-                    end
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' friction')
-                    nextRow()
-
-
-                    local fb = thing.body
-                    local fixtures = fb:getFixtures()
-                    local ff = fixtures[1]
-                    local groupIndex = ff:getGroupIndex()
-                    local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
-                        groupIndex)
-                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' groupid')
-                    if groupIndexSlider then
-                        local value = math.floor(groupIndexSlider)
-                        local count = 0
-
-                        local b = thing.body
-                        local fixtures = b:getFixtures()
-                        for j = 1, #fixtures do
-                            fixtures[j]:setGroupIndex(value)
-                            count = count + 1
-                        end
-                    end
-                end
-
-                nextRow()
-                -- body:setAngularDamping(1)
-                -- body:setLinearDamping(1)
-                --
-                local angleDamp = tonumber(body:getAngularDamping())
-                local newAngularDamping = ui.sliderWithInput(myID .. 'angd', x, y, ROW_WIDTH, 0, 10, angleDamp,
-                    body:isAwake() and not state.world.paused)
-                if newAngularDamping and angleDamp ~= newAngularDamping then
-                    body:setAngularDamping(newAngularDamping)
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-damping')
-                nextRow()
-
-                local linDamp = tonumber(body:getLinearDamping())
-                local newLinearDamping = ui.sliderWithInput(myID .. 'lind', x, y, ROW_WIDTH, 0, 10, linDamp,
-                    body:isAwake() and not state.world.paused)
-                if newLinearDamping and linDamp ~= newLinearDamping then
-                    body:setLinearDamping(newLinearDamping)
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' lin-damping')
-                nextRow()
-            end)
+                end)
             nextRow()
-            drawAccordion("motion", function()
-                -- set sleeping allowed
-                nextRow()
-                local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
-                if dirty then
-                    body:setSleepingAllowed(not body:isSleepingAllowed())
-                end
-                nextRow()
-                -- angukar veloicity
-                local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
-                if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
-                local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
-                    body:isAwake() and not state.world.paused)
-                if newAngle and angleDegrees ~= newAngle then
-                    body:setAngularVelocity(math.rad(newAngle))
-                end
-                ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-vel')
 
-                nextRow()
-                local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
-                if dirty then
-                    body:setBullet(not body:isBullet())
-                end
+            drawAccordion("motion",
+                function()
+                    -- set sleeping allowed
+                    nextRow()
+                    local dirty, checked = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
+                    if dirty then
+                        body:setSleepingAllowed(not body:isSleepingAllowed())
+                    end
+                    nextRow()
+                    -- angukar veloicity
+                    local angleDegrees = tonumber(math.deg(body:getAngularVelocity()))
+                    if math.abs(angleDegrees) < 0.001 then angleDegrees = 0 end
+                    local newAngle = ui.sliderWithInput(myID .. 'angv', x, y, ROW_WIDTH, -180, 180, angleDegrees,
+                        body:isAwake() and not state.world.paused)
+                    if newAngle and angleDegrees ~= newAngle then
+                        body:setAngularVelocity(math.rad(newAngle))
+                    end
+                    ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-vel')
 
-                nextRow()
-            end
+                    nextRow()
+                    local dirty, checked = ui.checkbox(x, y, body:isBullet(), 'bullet')
+                    if dirty then
+                        body:setBullet(not body:isBullet())
+                    end
+
+                    nextRow()
+                end
             )
             nextRow()
+
             if not body:isDestroyed() then
                 local attachedJoints = body:getJoints()
                 if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
-                    drawAccordion("joints", function()
-                        for _, joint in ipairs(attachedJoints) do
-                            -- Display joint type and unique identifier for identification
-                            local jointType = joint:getType()
-                            local jointID = tostring(joint)
+                    drawAccordion("joints",
+                        function()
+                            for _, joint in ipairs(attachedJoints) do
+                                -- Display joint type and unique identifier for identification
+                                local jointType = joint:getType()
+                                local jointID = tostring(joint)
 
-                            if (jointType ~= 'mouse') then
-                                -- Display joint button
-                                x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT - 10)
-                                local jointLabel = string.format("%s %s", jointType,
-                                    string.sub(joint:getUserData().id, 1, 3))
+                                if (jointType ~= 'mouse') then
+                                    -- Display joint button
+                                    x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+                                    local jointLabel = string.format("%s %s", jointType,
+                                        string.sub(joint:getUserData().id, 1, 3))
 
-                                if ui.button(x, y, 260, jointLabel) then
-                                    state.selection.selectedJoint = joint
-                                    --  state.selection.selectedObj = nil
-                                end
+                                    if ui.button(x, y, 260, jointLabel) then
+                                        state.selection.selectedJoint = joint
+                                        --  state.selection.selectedObj = nil
+                                    end
 
-                                local clicked, _, _, isHover = ui.button(x, y, 260, jointLabel)
+                                    local clicked, _, _, isHover = ui.button(x, y, 260, jointLabel)
 
-                                if clicked then
-                                    state.selection.selectedJoint = joint
-                                end
-                                if isHover then
-                                    --print(inspect(joint:getUserData()))
-                                    local ud = joint:getUserData()
-                                    local x1, y1, x2, y2 = joint:getAnchors()
-                                    -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
-                                    --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
-                                    local x3, y3 = cam:getScreenCoordinates(x1, y1)
-                                    love.graphics.circle('line', x3, y3, 6)
-                                    local x3, y3 = cam:getScreenCoordinates(x2, y2)
-                                    love.graphics.circle('line', x3, y3, 3)
+                                    if clicked then
+                                        state.selection.selectedJoint = joint
+                                    end
+                                    if isHover then
+                                        --print(inspect(joint:getUserData()))
+                                        local ud = joint:getUserData()
+                                        local x1, y1, x2, y2 = joint:getAnchors()
+                                        -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
+                                        --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
+                                        local x3, y3 = cam:getScreenCoordinates(x1, y1)
+                                        love.graphics.circle('line', x3, y3, 6)
+                                        local x3, y3 = cam:getScreenCoordinates(x2, y2)
+                                        love.graphics.circle('line', x3, y3, 3)
+                                    end
                                 end
                             end
-                        end
-                    end)
+                        end)
                     nextRow()
                 end
             end
+
             local myfixtures = body:getFixtures()
             local ok, index  = fixtures.hasFixturesWithUserDataAtBeginning(myfixtures)
             if ok and index > 0 then
-                drawAccordion("sfixtures", function()
-                    for i = 1, index do
-                        nextRow()
-                        local prefix = (string.sub(myfixtures[i]:getUserData().label, 1, 3))
-                        local fixLabel = string.format("%s %s", prefix,
-                            string.sub(myfixtures[i]:getUserData().id, 1, 3))
-                        local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)
+                drawAccordion("sfixtures",
+                    function()
+                        for i = 1, index do
+                            nextRow()
+                            local prefix = (string.sub(myfixtures[i]:getUserData().subtype, 1, 3))
+                            local fixLabel = string.format("%s %s", prefix,
+                                string.sub(myfixtures[i]:getUserData().id, 1, 3))
+                            local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)
 
-                        if clicked then
-                            state.selection.selectedJoint = nil
-                            state.selection.selectedObj = nil
-                            state.selection.selectedSFixture = myfixtures[i]
+                            if clicked then
+                                state.selection.selectedJoint = nil
+                                state.selection.selectedObj = nil
+                                state.selection.selectedSFixture = myfixtures[i]
+                            end
+
+                            if isHover then
+                                local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
+                                local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
+                                local x3, y3 = cam:getScreenCoordinates(x2, y2)
+                                love.graphics.circle('line', x3, y3, 3)
+                            end
                         end
-                        if isHover then
-                            local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
-                            local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
-                            local x3, y3 = cam:getScreenCoordinates(x2, y2)
-                            love.graphics.circle('line', x3, y3, 3)
-                        end
-                    end
-                end)
+                    end)
+
                 nextRow()
             end
         end
+
         nextRow()
-
-
 
         -- List Attached Joints Using Body:getJoints()
     end)
@@ -8700,6 +9692,13 @@ function lib.drawUI()
             script.call('onStart') --state.scene.sceneScript.onStart()
         end
     end
+
+
+
+
+
+
+
 
     if state.currentMode == 'drawClickMode' then
         local panelWidth = PANEL_WIDTH
@@ -8844,6 +9843,138 @@ function lib.drawUI()
         end)
     end
 
+    --state.panelVisibility.customBehavior = { body = body, name = behavior.name }
+
+
+
+    if state.panelVisibility.customBehavior then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+
+        ui.panel(50, 50, 300, 300, state.panelVisibility.customBehavior.name,
+
+            function()
+                local lookup = utils.findByField(behaviors.allBehaviors, 'name',
+                    state.panelVisibility.customBehavior.name)
+                --print(inspect(lookedup))
+                if lookup then
+                    if ui.button(50, 50, 50, '?') then
+                        if state.panelVisibility.customBehaviorDescription then
+                            state.panelVisibility.customBehaviorDescription = false
+                        else
+                            state.panelVisibility.customBehaviorDescription = lookup.description
+                        end
+                    end
+                end
+
+
+                ui.scrollableList('custombehaviors', 50, 100, 280, 250,
+                    function(baseX, baseY, w, h, offsetY)
+                        if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
+                            -- we can assume all these type of other things are attached via revolute joints
+                            local me = state.panelVisibility.customBehavior.body
+                            local joints = me:getJoints()
+                            local names = {}
+                            for i = 1, #joints do
+                                local bodyA, bodyB = joints[i]:getBodies()
+                                local otherBody = bodyA == me and bodyB or bodyA
+                                --print(inspect(otherBody:getUserData().thing.label))
+                                table.insert(names, otherBody:getUserData().thing.label)
+                            end
+
+                            local maxY = 0
+                            local lineHeight = 30
+                            for i = 1, #names do
+                                local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                                ui.button(baseX, elementY, 100, names[i])
+                                local newValue = ui.textinput('limb_hub_vertexpicker' .. names[i], baseX + 100, elementY,
+                                    50, BUTTON_HEIGHT, "vertex", 0)
+                                -- _id, x, y, width, height, placeholder, currentText
+                                --  ui.textinput()
+                                maxY = maxY + lineHeight
+                            end
+                            return maxY
+                        end
+                        -- local maxY = 0
+                        -- local lineHeight = 40
+                        -- for i = 1, 28 do
+                        --     local elementY = (baseY + offsetY) + (i - 1) * lineHeight
+                        --     if elementY + lineHeight < baseY then
+                        --     elseif elementY > baseY + h then
+                        --     else
+                        --         ui.button(baseX, elementY, 100, 'test2' .. i)
+                        --     end
+                        --     maxY = maxY + lineHeight
+                        -- end
+
+                        -- return maxY
+                    end
+                )
+            end
+        )
+    end
+
+    if state.panelVisibility.customBehaviorDescription then
+        ui.panel(100, 50, 300, 300, '', function()
+            love.graphics.printf(state.panelVisibility.customBehaviorDescription, 110, 100, 280)
+        end, { .5, .5, .9 })
+    end
+
+
+    if state.panelVisibility.addBehavior then
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle('fill', 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1)
+
+        -- local all_options = {
+        --     'KEEP_ANGLE',
+        --     'LIMB_HUB'
+        -- }
+
+
+
+
+        local myUD = utils.deepCopy(state.panelVisibility.addBehavior.body:getUserData())
+        --logger:inspect(myUD)
+        local myBehaviors = myUD.thing.behaviors or {}
+
+        local function updatePossibleOptions()
+            local possible_options = {}
+            for _, behavior in ipairs(behaviors.allBehaviors) do
+                local isIn = false
+                for j = 1, #myBehaviors do
+                    if myBehaviors[j].name == behavior.name then
+                        isIn = true
+                        break
+                    end
+                end
+                if not isIn then
+                    table.insert(possible_options, behavior.name)
+                end
+            end
+            return possible_options
+        end
+
+        local possible_options = updatePossibleOptions()
+
+        ui.panel(50, 50, 300, 300, 'add behavior',
+            function()
+                for i, option in ipairs(possible_options) do
+                    if ui.button(50, 100 + (i - 1) * 40, 200, option) then
+                        --local newUD = utils.deepCopy(myUD)
+                        if not myUD.thing.behaviors then
+                            myUD.thing.behaviors = {}
+                        end
+                        table.insert(myUD.thing.behaviors, { name = option })
+                        state.panelVisibility.addBehavior.body:setUserData(myUD)
+                        state.panelVisibility.addBehavior = false
+                        --table.insert(myBehaviors, {name = option})
+                    end
+                end
+            end
+        )
+    end
 
     if ui.draggingActive then
         love.graphics.setColor(ui.theme.draggedElement.fill)
@@ -8854,6 +9985,377 @@ function lib.drawUI()
 end
 
 return lib
+
+```
+
+src/polyline.lua
+```lua
+local polyline = {}
+
+local LINES_PARALLEL_EPS = 0.05;
+
+local function Vector(x, y)
+    if y then
+        return { x = x, y = y }
+    else -- clone vector
+        return { x = x.x, y = x.y }
+    end
+end
+
+local function length(vector)
+    return math.sqrt(vector.x * vector.x + vector.y * vector.y)
+end
+
+local function normal(out, vector, scale)
+    out.x = -vector.y * scale
+    out.y = vector.x * scale
+    return out
+end
+
+local function cross(x1, y1, x2, y2)
+    return x1 * y2 - y1 * x2
+end
+
+local function renderEdgeNone(anchors, normals, s, len_s, ns, q, r, hw)
+    table.insert(anchors, Vector(q))
+    table.insert(anchors, Vector(q))
+    table.insert(normals, Vector(ns))
+    table.insert(normals, Vector(-ns.x, -ns.y))
+
+    s.x, s.y = r.x - q.x, r.y - q.y
+    len_s = length(s)
+    normal(ns, s, hw / len_s)
+
+    table.insert(anchors, Vector(q))
+    table.insert(anchors, Vector(q))
+    table.insert(normals, Vector(-ns.x, -ns.y))
+    table.insert(normals, Vector(ns))
+
+    return len_s
+end
+
+local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
+    local tx, ty = r.x - q.x, r.y - q.y
+    local len_t = math.sqrt(tx * tx + ty * ty)
+    local ntx, nty = -ty * (hw / len_t), tx * (hw / len_t)
+
+    table.insert(anchors, Vector(q))
+    table.insert(anchors, Vector(q))
+
+    local det = cross(s.x, s.y, tx, ty)
+    if (math.abs(det) / (len_s * len_t) < LINES_PARALLEL_EPS) and (s.x * tx + s.y * ty > 0) then
+        -- lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
+        table.insert(normals, Vector(ns))
+        table.insert(normals, Vector(-ns.x, -ns.y))
+    else
+        -- cramers rule
+        local nx, ny = ntx - ns.x, nty - ns.y
+        local lambda = cross(nx, ny, tx, ty) / det
+        local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
+        --print('craners', dx,dy)
+        --if dx > math.pi*2 then dx = math.pi*2 end
+        --if dx < -math.pi*2 then dx = -math.pi*2 end
+        --if dy > math.pi*2 then dy = math.pi*2 end
+        --if dy < -math.pi*2 then dy = -math.pi*2 end
+
+        table.insert(normals, Vector(dx, dy))
+        table.insert(normals, Vector(-dx, -dy))
+    end
+
+    s.x, s.y = tx, ty
+    ns.x, ns.y = ntx, nty
+    return len_t
+end
+
+local function renderEdgeBevel(anchors, normals, s, len_s, ns, q, r, hw)
+    local tx, ty = r.x - q.x, r.y - q.y
+    local len_t = math.sqrt(tx * tx + ty * ty)
+    local ntx, nty = -ty * (hw / len_t), tx * (hw / len_t)
+
+    local det = cross(s.x, s.y, tx, ty)
+    if (math.abs(det) / (len_s * len_t) < LINES_PARALLEL_EPS) and (s.x * tx + s.y * ty > 0) then
+        -- lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
+        table.insert(anchors, Vector(q))
+        table.insert(anchors, Vector(q))
+        table.insert(normals, Vector(ntx, nty))
+        table.insert(normals, Vector(-ntx, -nty))
+
+        s.x, s.y = tx, ty
+        return len_t -- early out
+    end
+
+    -- cramers rule
+    local nx, ny = ntx - ns.x, nty - ns.y
+    local lambda = cross(nx, ny, tx, ty) / det
+    local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
+
+    table.insert(anchors, Vector(q))
+    table.insert(anchors, Vector(q))
+    table.insert(anchors, Vector(q))
+    table.insert(anchors, Vector(q))
+    if det > 0 then -- 'left' turn
+        table.insert(normals, Vector(dx, dy))
+        table.insert(normals, Vector(-ns.x, -ns.y))
+        table.insert(normals, Vector(dx, dy))
+        table.insert(normals, Vector(-ntx, -nty))
+    else
+        table.insert(normals, Vector(ns.x, ns.y))
+        table.insert(normals, Vector(-dx, -dy))
+        table.insert(normals, Vector(ntx, nty))
+        table.insert(normals, Vector(-dx, -dy))
+    end
+
+    s.x, s.y = tx, ty
+    ns.x, ns.y = ntx, nty
+    return len_t
+end
+
+local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
+    for i = 1, vertex_count, 2 do
+        vertices[i + offset] = { vertices[i][1], vertices[i][2] }
+        local length = length(normals[i])
+        vertices[i + offset + 1] = {
+            vertices[i][1] + normals[i].x * (pixel_size / length),
+            vertices[i][2] + normals[i].y * (pixel_size / length)
+        }
+    end
+
+    for i = 1, vertex_count, 2 do
+        local k = vertex_count - i + 1
+        vertices[offset + vertex_count + i] = { vertices[k][1], vertices[k][2] }
+        local length = length(normals[i])
+        vertices[offset + vertex_count + i + 1] = {
+            vertices[k][1] + normals[k].x * (pixel_size / length),
+            vertices[k][2] + normals[k].y * (pixel_size / length)
+        }
+    end
+
+    if not is_looping then
+        local spacerx, spacery = vertices[offset + 1][1] - vertices[offset + 3][1],
+            vertices[offset + 1][2] - vertices[offset + 3][2]
+        local spacer_length = math.sqrt(spacerx * spacerx + spacery * spacery)
+        spacerx, spacery = spacerx * (pixel_size / spacer_length), spacery * (pixel_size / spacer_length)
+        vertices[offset + 2][1], vertices[offset + 2][2] = vertices[offset + 2][1] + spacerx,
+            vertices[offset + 2][2] + spacery
+        vertices[offset + overdraw_vertex_count - 2][1] = vertices[offset + overdraw_vertex_count - 2][1] + spacerx
+        vertices[offset + overdraw_vertex_count - 2][2] = vertices[offset + overdraw_vertex_count - 2][2] + spacery
+
+        spacerx = vertices[offset + vertex_count - 0][1] - vertices[offset + vertex_count - 2][1]
+        spacery = vertices[offset + vertex_count - 0][2] - vertices[offset + vertex_count - 2][2]
+        spacer_length = math.sqrt(spacerx * spacerx + spacery * spacery)
+        spacerx, spacery = spacerx * (pixel_size / spacer_length), spacery * (pixel_size / spacer_length)
+        vertices[offset + vertex_count][1] = vertices[offset + vertex_count][1] + spacerx
+        vertices[offset + vertex_count][2] = vertices[offset + vertex_count][2] + spacery
+        vertices[offset + vertex_count + 2][1] = vertices[offset + vertex_count + 2][1] + spacerx
+        vertices[offset + vertex_count + 2][2] = vertices[offset + vertex_count + 2][2] + spacery
+
+        vertices[offset + overdraw_vertex_count - 1] = vertices[offset + 1]
+        vertices[offset + overdraw_vertex_count - 0] = vertices[offset + 2]
+    end
+end
+
+local function renderOverdrawNone(vertices, offset, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
+    for i = 1, vertex_count - 1, 4 do
+        local sx, sy = vertices[i][1] - vertices[i + 3][1], vertices[i][2] - vertices[i + 3][2]
+        local tx, ty = vertices[i][1] - vertices[i + 1][1], vertices[i][2] - vertices[i + 1][2]
+        local sl = math.sqrt(sx * sx + sy * sy)
+        local tl = math.sqrt(tx * tx + ty * ty)
+        sx, sy = sx * (pixel_size / sl), sy * (pixel_size / sl)
+        tx, ty = tx * (pixel_size / tl), ty * (pixel_size / tl)
+
+        local k = 4 * (i - 1) + 1 + offset
+        vertices[k + 00] = { vertices[i + 0][1], vertices[i + 0][2] }
+        vertices[k + 01] = { vertices[i + 0][1] + sx + tx, vertices[i + 0][2] + sy + ty }
+        vertices[k + 02] = { vertices[i + 1][1] + sx - tx, vertices[i + 1][2] + sy - ty }
+        vertices[k + 03] = { vertices[i + 1][1], vertices[i + 1][2] }
+
+        vertices[k + 04] = { vertices[i + 1][1], vertices[i + 1][2] }
+        vertices[k + 05] = { vertices[i + 1][1] + sx - tx, vertices[i + 1][2] + sy - ty }
+        vertices[k + 06] = { vertices[i + 2][1] - sx - tx, vertices[i + 2][2] - sy - ty }
+        vertices[k + 07] = { vertices[i + 2][1], vertices[i + 2][2] }
+
+        vertices[k + 08] = { vertices[i + 2][1], vertices[i + 2][2] }
+        vertices[k + 09] = { vertices[i + 2][1] - sx - tx, vertices[i + 2][2] - sy - ty }
+        vertices[k + 10] = { vertices[i + 3][1] - sx + tx, vertices[i + 3][2] - sy + ty }
+        vertices[k + 11] = { vertices[i + 3][1], vertices[i + 3][2] }
+
+        vertices[k + 12] = { vertices[i + 3][1], vertices[i + 3][2] }
+        vertices[k + 13] = { vertices[i + 3][1] - sx + tx, vertices[i + 3][2] - sy + ty }
+        vertices[k + 14] = { vertices[i + 0][1] + sx + tx, vertices[i + 0][2] + sy + ty }
+        vertices[k + 15] = { vertices[i + 0][1], vertices[i + 0][2] }
+    end
+end
+
+local JOIN_TYPES = {
+    miter = renderEdgeMiter,
+    none = renderEdgeNone,
+    bevel = renderEdgeBevel,
+}
+
+polyline.render = function(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+    local renderEdge = JOIN_TYPES[join_type]
+    assert(renderEdge, join_type .. ' is not a valid line join type.')
+
+    local anchors = {}
+    local normals = {}
+
+    local is_looping = (coords[1] == coords[#coords - 1]) and (coords[2] == coords[#coords])
+    local s
+    if is_looping then
+        s = Vector(coords[1] - coords[#coords - 3], coords[2] - coords[#coords - 2])
+    else
+        s = Vector(coords[3] - coords[1], coords[4] - coords[2])
+    end
+
+    local len_s = length(s)
+    local thick_index = 1
+    --  print(inspect(half_width))
+    local function getHalfWidth(index)
+        --print(index, inspect(half_width))
+        if type(half_width) == "table" then
+            if index > #half_width then return half_width[#half_width] end
+
+            return half_width[index]
+        else
+            return half_width
+        end
+    end
+
+    local ns = normal({}, s, getHalfWidth(thick_index) / len_s)
+
+    local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
+    for i = 1, #coords - 2, 2 do
+        if draw_overdraw then
+            half_width[thick_index] = getHalfWidth(thick_index) - pixel_size * 0.3
+        end
+
+        q.x, q.y = r.x, r.y
+        r.x, r.y = coords[i + 2], coords[i + 3]
+        ns = normal({}, s, getHalfWidth(thick_index) / len_s)
+        len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, getHalfWidth(thick_index))
+        thick_index = thick_index + 1
+    end
+
+    q.x, q.y = r.x, r.y
+    if is_looping then
+        r.x, r.y = coords[3], coords[4]
+    else
+        r.x, r.y = r.x + s.x, r.y + s.y
+    end
+
+    -- 'fix', when you havent added enough thicknesses (1 more then lengths) just use the last one
+    --hal_widthgetHalfWidth(thick_index)
+    --if thick_index > #half_width then half_width[thick_index] = half_width[#half_width] end
+    ns = normal({}, s, getHalfWidth(thick_index) / len_s)
+    len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, getHalfWidth(thick_index))
+
+
+    local vertices = {}
+    local indices = nil
+    local draw_mode = 'strip'
+    local vertex_count = #normals
+
+    local extra_vertices = 0
+    local overdraw_vertex_count = 0
+    if draw_overdraw then
+        if join_type == 'none' then
+            overdraw_vertex_count = 4 * (vertex_count - 4 - 1)
+        else
+            overdraw_vertex_count = 2 * vertex_count
+            if not is_looping then overdraw_vertex_count = overdraw_vertex_count + 2 end
+            extra_vertices = 2
+        end
+    end
+
+    if join_type == 'none' then
+        vertex_count = vertex_count - 4
+        for i = 3, #normals - 2 do
+            table.insert(vertices, {
+                anchors[i].x + normals[i].x,
+                anchors[i].y + normals[i].y,
+                0, 0, 255, 255, 255, 255
+            })
+        end
+        draw_mode = 'triangles'
+    else
+        local firstR
+        -- love.math.setRandomSeed(1 )  -- i cant do this it breaks surrounding code that relies on rand
+        for i = 1, vertex_count do
+            local r = 1
+            if rndMultiplier ~= nil then
+                r = love.math.random() * 4
+                if i == 1 then
+                    firstR = r
+                end
+                if i == vertex_count then
+                    r = firstR
+                end
+                -- end
+                r = 5 * rndMultiplier + (love.math.random() * rndMultiplier)
+            end
+
+            --if rndMultiplier ~= 0 then
+            table.insert(vertices, {
+                anchors[i].x + normals[i].x * (r),
+                anchors[i].y + normals[i].y * (r),
+
+            })
+        end
+        -- for i=1,vertex_count do
+        --   table.insert(vertices, {
+        --     anchors[i].x + normals[i].x,
+        --     anchors[i].y + normals[i].y,
+        --     0, 0, 255, 255, 255, 255
+        --   })
+        -- end
+    end
+
+    if draw_overdraw then
+        if join_type == 'none' then
+            renderOverdrawNone(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals,
+                pixel_size, is_looping)
+            for i = vertex_count + 1 + extra_vertices, #vertices do
+                if ((i % 4) < 2) then
+                    vertices[i][8] = 255
+                else
+                    vertices[i][8] = 0
+                end
+            end
+        else
+            renderOverdraw(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals,
+                pixel_size,
+                is_looping)
+            for i = vertex_count + 1 + extra_vertices, #vertices do
+                vertices[i][8] = 255 * (i % 2) -- alpha
+            end
+        end
+    end
+
+    if extra_vertices > 0 then
+        vertices[vertex_count + 1] = { vertices[vertex_count][1], vertices[vertex_count][2] }
+        vertices[vertex_count + 2] = { vertices[vertex_count + 3][1], vertices[vertex_count + 3][2] }
+    end
+
+    if draw_mode == 'triangles' then
+        indices = {}
+        local num_indices = (vertex_count + extra_vertices + overdraw_vertex_count) / 4
+        for i = 0, num_indices - 1 do
+            -- First triangle.
+            table.insert(indices, i * 4 + 0 + 1)
+            table.insert(indices, i * 4 + 1 + 1)
+            table.insert(indices, i * 4 + 2 + 1)
+
+            -- Second triangle.
+            table.insert(indices, i * 4 + 0 + 1)
+            table.insert(indices, i * 4 + 2 + 1)
+            table.insert(indices, i * 4 + 3 + 1)
+        end
+    end
+
+    return vertices, indices, draw_mode
+end
+
+return polyline
 
 ```
 
@@ -9126,6 +10628,7 @@ function registry.unregisterJoint(id)
     if not registry.joints[id] then
         logger:info('no s joint to unregister here', id)
     end
+    --logger:info('unregistering joit ', id)
     registry.joints[id] = nil
 end
 
@@ -9789,7 +11292,7 @@ local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
 
 local snapFixtures = {}
-local snapDistance = 40            -- Maximum distance to snap
+local snapDistance = 140           -- Maximum distance to snap
 local mySnapJoints = {}            -- Store created joints
 local jointBreakThreshold = 100000 -- Force threshold for breaking the joint
 local cooldownTime = .5            -- Time in seconds to prevent immediate reconnection
@@ -9965,8 +11468,8 @@ function lib.rebuildSnapFixtures(sfix)
     for k, v in pairs(sfix) do
         if not v:isDestroyed() then
             local ud = v:getUserData()
-
-            if ud and utils.sanitizeString(ud.label) == 'snap' then
+            --logger:inspect(ud)
+            if ud and utils.sanitizeString(ud.subtype) == 'snap' then
                 local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
                 local ud = v:getUserData()
 
@@ -10171,6 +11674,9 @@ state.panelVisibility = {
     saveDialogOpened = false,
     quitDialogOpened = false,
     showPalette = nil,
+    addBehavior = false,
+    customBehavior = false,
+    customBehaviorDescription = false,
 }
 
 state.editorPreferences = { -- Less volatile state
@@ -10200,6 +11706,8 @@ state.texFixtureEdit = {
     tempVerts = nil,
     verts = {}
 }
+
+--state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
 state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'
 state.jointParams = nil
@@ -10306,6 +11814,9 @@ function ui.init(font, fontHeight)
     ui.textInputs = {}
     ui.fontHeight = fontHeight
     ui.font = font or love.graphics.getFont()
+    ui.mouseWheelDy = 0
+    ui.mouseWheelDx = 0
+    ui.overPanel = false
 end
 
 --- Resets UI state at the start of each frame.
@@ -10325,6 +11836,8 @@ function ui.startFrame()
     ui.mouseIsDown = down
 
     ui.mouseX, ui.mouseY = love.mouse.getPosition()
+    --  print('setting to false')
+    ui.overPanel = false
 end
 
 function ui.generateID()
@@ -10360,6 +11873,47 @@ function ui.nextLayoutPosition(layout, elementWidth, elementHeight)
     return x, y
 end
 
+ui._scrollers = {}
+
+
+function ui.scrollableList(id, x, y, w, h, drawFunc)
+    local scrollY = ui._scrollers[id] or { value = 0 }
+    ui.panel(x, y, w + 20, h, '', function()
+        local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, drawFunc) --  drawFunc(x, y, w, h, -scrollY.value)
+        --  print(contentHeight)
+        --print(id)
+        if contentHeight > h then
+            local result = ui.slider(x + w, y, h, 20, 'vertical', (contentHeight) - h, 0, scrollY
+                .value,
+                id)
+            if result then
+                scrollY.value = result
+            end
+            ui._scrollers[id] = scrollY
+        end
+    end)
+end
+
+function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + w and
+        ui.mouseY >= y and ui.mouseY <= y + h
+
+    love.graphics.setScissor(x, y, w, h)
+
+    local maxContentY = drawFunc(x, y, w, h, -scrollY.value) or 0
+
+    if isHover and maxContentY > h and ui.mouseWheelDy ~= 0 then
+        local contentHeight = maxContentY
+        scrollY.value = math.max(0, scrollY.value - ui.mouseWheelDy * 20)
+        scrollY.value = math.min(scrollY.value, contentHeight - h)
+        ui.mouseWheelDy = 0
+    end
+    scrollY.value = math.max(0, math.min(scrollY.value, maxContentY - h))
+    love.graphics.setScissor()
+    return maxContentY
+    -- -- love.graphics.pop()
+end
+
 --- Creates a horizontal slider with a numeric input field.
 function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
     local yOffset = (40 - theme.slider.height) / 2
@@ -10393,15 +11947,19 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
 end
 
 --- Draws a panel with optional label and content.
-function ui.panel(x, y, width, height, label, drawFunc)
+function ui.panel(x, y, width, height, label, drawFunc, optionalFillColor)
     -- Draw panel background
     --
-    --
+    local isHover = ui.mouseX >= x and ui.mouseX <= x + width and
+        ui.mouseY >= y and ui.mouseY <= y + height
+    if isHover then
+        ui.overPanel = true
+    end
     local rxry = 0
     if theme.button.radius > 0 then
         rxry = math.min(width / 6, height / 6) / theme.button.radius
     end
-    love.graphics.setColor(theme.panel.background)
+    love.graphics.setColor(optionalFillColor or theme.panel.background)
     love.graphics.rectangle("fill", x, y, width, height, rxry, rxry)
 
     -- Draw panel outline
@@ -10418,7 +11976,7 @@ function ui.panel(x, y, width, height, label, drawFunc)
 
     -- Enable scissor to clip UI elements within the panel
     if width > 0 and height > 0 then
-        love.graphics.setScissor(x, y, width, height)
+        --  love.graphics.setScissor(x, y, width, height)
     end
     -- Call the provided draw function to render UI elements inside the panel
     if drawFunc then
@@ -10426,7 +11984,7 @@ function ui.panel(x, y, width, height, label, drawFunc)
     end
 
     -- Disable scissor
-    love.graphics.setScissor()
+    -- love.graphics.setScissor()
 
     -- Reset color to white
     love.graphics.setColor(1, 1, 1)
@@ -10608,6 +12166,7 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
 
     if pressed then
         ui.activeElementID = id
+        --print("Button pressed" .. id)
     end
     -- Draw the button with state-based colors
     if ui.activeElementID == id then
@@ -10661,9 +12220,12 @@ end
 --- Creates a slider (horizontal or vertical).
 function ui.slider(x, y, length, thickness, orientation, min, max, value, extraId)
     local inValue = value
-    local sliderID = ui.generateID()
+
+    local sliderID
     if (extraId) then
-        sliderID = sliderID .. extraId
+        sliderID = extraId
+    else
+        sliderID = ui.generateID()
     end
     local isHorizontal = orientation == 'horizontal'
 
@@ -10718,6 +12280,7 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
     -- local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
 
     -- Handle dragging
+    --  logger:info(ui.draggingSliderID)
     if pressed then
         ui.draggingSliderID = sliderID
         -- Calculate and store the offset
@@ -11443,6 +13006,22 @@ function lib.deepCopy(orig, copies)
     return copy
 end
 
+function lib.findByField(array, field, target)
+    for _, element in ipairs(array) do
+        local value = element[field]
+        if type(value) == "string" and value == target then
+            return element
+        elseif type(value) == "table" then
+            for _, v in ipairs(value) do
+                if v == target then
+                    return element
+                end
+            end
+        end
+    end
+    return nil -- not found
+end
+
 function lib.tablesEqualNumbers(t1, t2, tolerance)
     tolerance = tolerance or 1e-9 -- Default tolerance for floating point
 
@@ -11521,817 +13100,6 @@ function lib.generateID()
 end
 
 return lib
-
-```
-
-spec/math-utils_spec.lua
-```lua
--- spec/math-utils_spec.lua
-
-describe("src.math-utils", function()
-    -- Reload module to ensure we have the latest version if modified elsewhere
-    package.loaded['src.math-utils'] = nil
-    local mathutils = require('src.math-utils')
-    local epsilon = 1e-9 -- Tolerance for floating point comparisons
-
-    -- Helper for comparing tables of numbers with tolerance
-    local function assert_tables_near(t1, t2, tol, msg)
-        tol = tol or epsilon
-        -- FIX: Handle nil message gracefully
-        local base_msg = msg or "Tables near assertion"
-        assert.are.equal(#t1, #t2, base_msg .. " (Table lengths differ)")
-        for i = 1, #t1 do
-            assert.is_near(t1[i], t2[i], tol, base_msg .. " (Mismatch at index " .. i .. ")")
-        end
-    end
-
-    -- Helper for comparing points with tolerance
-    local function assert_points_near(p1, p2, tol, msg)
-        tol = tol or epsilon
-        -- FIX: Handle nil message gracefully
-        local base_msg = msg or "Points near assertion"
-        -- FIX: Add nil checks before indexing p1/p2
-        assert.is_not_nil(p1, base_msg .. " (Point 1 is nil)")
-        assert.is_not_nil(p2, base_msg .. " (Point 2 is nil)")
-        if p1 and p2 then
-            assert.is_near(p1.x, p2.x, tol, base_msg .. " (X mismatch)")
-            assert.is_near(p1.y, p2.y, tol, base_msg .. " (Y mismatch)")
-        end
-    end
-
-    describe(".makePolygonRelativeToCenter()", function()
-        it("should shift polygon vertices relative to calculated center", function()
-            local poly = { 0, 0, 4, 0, 4, 2, 0, 2 } -- Rectangle centered at (2, 1)
-            local relPoly, cx, cy = mathutils.makePolygonRelativeToCenter(poly, 2, 1)
-            assert.is_near(2, cx, epsilon)
-            assert.is_near(1, cy, epsilon)
-            assert_tables_near({ -2, -1, 2, -1, 2, 1, -2, 1 }, relPoly, epsilon, "Relative polygon mismatch")
-        end)
-    end)
-
-    describe(".makePolygonAbsolute()", function()
-        it("should shift relative polygon vertices to new absolute center", function()
-            local relPoly = { -2, -1, 2, -1, 2, 1, -2, 1 }                -- Relative to (0,0)
-            local absPoly = mathutils.makePolygonAbsolute(relPoly, 10, 5) -- New center (10, 5)
-            assert_tables_near({ 8, 4, 12, 4, 12, 6, 8, 6 }, absPoly, epsilon, "Absolute polygon mismatch")
-        end)
-    end)
-
-    describe(".getCenterOfPoints()", function()
-        it("should calculate the center and dimensions of a rectangle", function()
-            local points = { 0, 0, 4, 0, 4, 2, 0, 2 }
-            local cx, cy, w, h = mathutils.getCenterOfPoints(points)
-            assert.is_near(2, cx, epsilon)
-            assert.is_near(1, cy, epsilon)
-            assert.is_near(4, w, epsilon)
-            assert.is_near(2, h, epsilon)
-        end)
-        it("should calculate the center and dimensions of a triangle", function()
-            local points = { 0, 0, 6, 0, 3, 3 }
-            local cx, cy, w, h = mathutils.getCenterOfPoints(points)
-            assert.is_near(3, cx, epsilon)
-            assert.is_near(1.5, cy, epsilon)
-            assert.is_near(6, w, epsilon)
-            assert.is_near(3, h, epsilon)
-        end)
-        it("should handle a single point", function()
-            local points = { 5, 10 }
-            local cx, cy, w, h = mathutils.getCenterOfPoints(points)
-            assert.is_near(5, cx, epsilon)
-            assert.is_near(10, cy, epsilon)
-            assert.is_near(0, w, epsilon)
-            assert.is_near(0, h, epsilon)
-        end)
-    end)
-
-    describe(".getPolygonDimensions()", function()
-        it("should calculate width and height of a rectangle", function()
-            local poly = { 0, 0, 4, 0, 4, 2, 0, 2 }
-            local w, h = mathutils.getPolygonDimensions(poly)
-            assert.is_near(4, w, epsilon)
-            assert.is_near(2, h, epsilon)
-        end)
-        it("should calculate width and height of a triangle", function()
-            local poly = { 0, 0, 6, 0, 3, 3 }
-            local w, h = mathutils.getPolygonDimensions(poly)
-            assert.is_near(6, w, epsilon)
-            assert.is_near(3, h, epsilon)
-        end)
-    end)
-
-    -- Skipping getCenterOfPoints2
-
-    describe(".pointInRect()", function()
-        local rect = { x = 10, y = 20, width = 30, height = 40 }
-        it("should return true for a point inside the rectangle", function()
-            assert.is_true(mathutils.pointInRect(15, 25, rect))
-        end)
-        it("should return true for a point on the boundary", function()
-            assert.is_true(mathutils.pointInRect(10, 20, rect))
-            assert.is_true(mathutils.pointInRect(40, 60, rect))
-            assert.is_true(mathutils.pointInRect(25, 20, rect))
-            assert.is_true(mathutils.pointInRect(40, 40, rect))
-        end)
-        it("should return false for a point outside the rectangle", function()
-            assert.is_false(mathutils.pointInRect(5, 25, rect))
-            assert.is_false(mathutils.pointInRect(45, 25, rect))
-            assert.is_false(mathutils.pointInRect(15, 15, rect))
-            assert.is_false(mathutils.pointInRect(15, 65, rect))
-        end)
-    end)
-
-
-    describe(".getCorners()", function()
-        it("should identify corners of a simple square", function()
-            local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-            local tl, tr, br, bl = mathutils.getCorners(square)
-            -- Use updated helper which checks for nil
-            assert_points_near({ x = 0, y = 0 }, tl, epsilon, "TL mismatch")
-            assert_points_near({ x = 10, y = 0 }, tr, epsilon, "TR mismatch")
-            assert_points_near({ x = 10, y = 10 }, br, epsilon, "BR mismatch")
-            assert_points_near({ x = 0, y = 10 }, bl, epsilon, "BL mismatch")
-        end)
-        it("should identify corners of a rotated square", function()
-            local rotated = { 5, -2.071, 12.071, 5, 5, 12.071, -2.071, 5 }
-            local tl, tr, br, bl = mathutils.getCorners(rotated)
-
-            -- FIX: Add explicit nil checks OR rely on updated assert_points_near
-            assert.is_not_nil(tl, "Top-Left corner calculation failed")
-            assert.is_not_nil(tr, "Top-Right corner calculation failed")
-            assert.is_not_nil(br, "Bottom-Right corner calculation failed")
-            assert.is_not_nil(bl, "Bottom-Left corner calculation failed")
-
-            -- Use updated helper which checks for nil internally
-            assert_points_near({ x = 5, y = -2.071 }, tl, epsilon, "TL mismatch")
-            assert_points_near({ x = 12.071, y = 5 }, tr, epsilon, "TR mismatch")
-            assert_points_near({ x = 5, y = 12.071 }, br, epsilon, "BR mismatch")
-            assert_points_near({ x = -2.071, y = 5 }, bl, epsilon, "BL mismatch")
-        end)
-    end)
-
-
-    describe(".getBoundingRect()", function()
-        it("should find the bounding box of a simple rectangle", function()
-            local poly = { 10, 20, 50, 20, 50, 60, 10, 60 }
-            local rect = mathutils.getBoundingRect(poly)
-            assert.is_near(10, rect.x, epsilon)
-            assert.is_near(20, rect.y, epsilon)
-            assert.is_near(40, rect.width, epsilon)
-            assert.is_near(40, rect.height, epsilon)
-        end)
-        it("should find the bounding box of a triangle", function()
-            local poly = { 0, 0, 6, 0, 3, 3 }
-            local rect = mathutils.getBoundingRect(poly)
-            assert.is_near(0, rect.x, epsilon)
-            assert.is_near(0, rect.y, epsilon)
-            assert.is_near(6, rect.width, epsilon)
-            assert.is_near(3, rect.height, epsilon)
-        end)
-    end)
-
-    describe(".findClosestEdge()", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-        it("should find the correct edge index for a point near an edge", function()
-            assert.are.equal(1, mathutils.findClosestEdge(square, 5, -1))
-            assert.are.equal(2, mathutils.findClosestEdge(square, 11, 5))
-            assert.are.equal(3, mathutils.findClosestEdge(square, 5, 11))
-            assert.are.equal(4, mathutils.findClosestEdge(square, -1, 5))
-        end)
-        it("should find the correct edge index for a point inside (tie-break)", function()
-            -- FIX: Accept the function's actual tie-breaking result (edge 1)
-            assert.are.equal(1, mathutils.findClosestEdge(square, 1, 1), "Tie-break for (1,1) seems to favor edge 1")
-            assert.are.equal(1, mathutils.findClosestEdge(square, 5, 1))
-        end)
-    end)
-
-    describe(".findClosestVertex()", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-        it("should find the correct vertex index", function()
-            assert.are.equal(1, mathutils.findClosestVertex(square, -1, -1))
-            assert.are.equal(2, mathutils.findClosestVertex(square, 11, -1))
-            assert.are.equal(3, mathutils.findClosestVertex(square, 11, 11))
-            assert.are.equal(4, mathutils.findClosestVertex(square, -1, 11))
-        end)
-        it("should find the correct vertex for interior points", function()
-            assert.are.equal(1, mathutils.findClosestVertex(square, 1, 1))
-            assert.are.equal(3, mathutils.findClosestVertex(square, 9, 9))
-        end)
-    end)
-
-    describe(".normalizeAxis()", function()
-        it("should normalize a simple vector", function()
-            local nx, ny = mathutils.normalizeAxis(3, 4)
-            assert.is_near(0.6, nx, epsilon)
-            assert.is_near(0.8, ny, epsilon)
-        end)
-        it("should normalize an axis vector", function()
-            local nx, ny = mathutils.normalizeAxis(1, 0)
-            assert.is_near(1, nx, epsilon)
-            assert.is_near(0, ny, epsilon)
-        end)
-        it("should return (1, 0) for a zero vector", function()
-            local nx, ny = mathutils.normalizeAxis(0, 0)
-            assert.is_near(1, nx, epsilon)
-            assert.is_near(0, ny, epsilon)
-        end)
-    end)
-
-    describe(".calculateDistance()", function()
-        it("should calculate the distance between two points", function()
-            assert.is_near(5, mathutils.calculateDistance(0, 0, 3, 4), epsilon)
-            assert.is_near(10, mathutils.calculateDistance(0, 0, 10, 0), epsilon)
-            assert.is_near(0, mathutils.calculateDistance(5, 5, 5, 5), epsilon)
-        end)
-    end)
-
-    describe(".computeCentroid()", function()
-        it("should compute the centroid of a rectangle", function()
-            local poly = { 0, 0, 4, 0, 4, 2, 0, 2 }
-            local cx, cy = mathutils.computeCentroid(poly)
-            assert.is_near(2, cx, epsilon)
-            assert.is_near(1, cy, epsilon)
-        end)
-        it("should compute the 'centroid' (center of bounds) of a triangle", function()
-            local poly = { 0, 0, 6, 0, 3, 3 }
-            local cx, cy = mathutils.computeCentroid(poly)
-            local cx_actual, cy_actual = mathutils.getCenterOfPoints(poly)
-            assert.is_near(cx_actual, cx, epsilon, "Centroid X matches getCenterOfPoints X")
-            assert.is_near(cy_actual, cy, epsilon, "Centroid Y matches getCenterOfPoints Y")
-        end)
-    end)
-
-    describe(".rotatePoint()", function()
-        it("should rotate a point 90 degrees counter-clockwise around the origin", function()
-            local x, y = mathutils.rotatePoint(10, 0, 0, 0, math.pi / 2)
-            assert.is_near(0, x, epsilon)
-            assert.is_near(10, y, epsilon)
-        end)
-        it("should rotate a point 180 degrees around the origin", function()
-            local x, y = mathutils.rotatePoint(10, 0, 0, 0, math.pi)
-            assert.is_near(-10, x, epsilon)
-            assert.is_near(0, y, epsilon)
-        end)
-        it("should rotate a point 90 degrees around a different origin", function()
-            local x, y = mathutils.rotatePoint(15, 5, 5, 5, math.pi / 2)
-            assert.is_near(5, x, epsilon)
-            assert.is_near(15, y, epsilon)
-        end)
-    end)
-
-    -- Skipping .localVerts
-
-
-    describe(".getLocalVerticesForCustomSelected()", function()
-        it("should transform local vertices to world space", function()
-            local vertices = { -10, -5, 10, -5, 10, 5, -10, 5 }
-            local mockBody = {
-                getPosition = function() return 100, 50 end,
-                getAngle = function() return 0 end
-            }
-            local mockObj = { body = mockBody }
-            local cx, cy = 0, 0
-            local worldVerts = mathutils.getLocalVerticesForCustomSelected(vertices, mockObj, cx, cy)
-            -- FIX: Use helper that handles nil message
-            assert_tables_near({ 90, 45, 110, 45, 110, 55, 90, 55 }, worldVerts, epsilon, "World verts (no rotation)")
-        end)
-        it("should transform local vertices to world space with rotation", function()
-            local vertices = { -10, -5, 10, -5, 10, 5, -10, 5 }
-            local mockBody = {
-                getPosition = function() return 100, 50 end,
-                getAngle = function() return math.pi / 2 end
-            }
-            local mockObj = { body = mockBody }
-            local cx, cy = 0, 0
-            local worldVerts = mathutils.getLocalVerticesForCustomSelected(vertices, mockObj, cx, cy)
-            -- FIX: Use helper that handles nil message
-            assert_tables_near({ 105, 40, 105, 60, 95, 60, 95, 40 }, worldVerts, epsilon, "World verts (with rotation)")
-        end)
-    end)
-
-
-    describe(".worldToLocal()", function()
-        it("should transform world point (relative to body) to local with zero rotation/offset", function()
-            local lx, ly = mathutils.worldToLocal(10, 20, 0, 0, 0)
-            assert.is_near(10, lx, epsilon)
-            assert.is_near(20, ly, epsilon)
-        end)
-        it("should transform world point (relative to body) to local with rotation", function()
-            local rel_lx, rel_ly = mathutils.worldToLocal(-5, -10, math.pi / 2, 0, 0)
-            assert.is_near(-10, rel_lx, epsilon, "Local X mismatch")
-            assert.is_near(5, rel_ly, epsilon, "Local Y mismatch")
-        end)
-    end)
-
-    describe(".removeVertexAt()", function()
-        it("should remove the specified vertex", function()
-            local verts = { 1, 1, 2, 2, 3, 3, 4, 4 }
-            mathutils.removeVertexAt(verts, 2)
-            assert.are.same({ 1, 1, 3, 3, 4, 4 }, verts)
-        end)
-        it("should remove the first vertex", function()
-            local verts = { 1, 1, 2, 2, 3, 3, 4, 4 }
-            mathutils.removeVertexAt(verts, 1)
-            assert.are.same({ 2, 2, 3, 3, 4, 4 }, verts)
-        end)
-        it("should remove the last vertex", function()
-            local verts = { 1, 1, 2, 2, 3, 3, 4, 4 }
-            mathutils.removeVertexAt(verts, 4)
-            assert.are.same({ 1, 1, 2, 2, 3, 3 }, verts)
-        end)
-    end)
-
-    describe(".insertValuesAt()", function()
-        it("should insert values at the specified position", function()
-            local tbl = { 10, 20, 50, 60 }
-            mathutils.insertValuesAt(tbl, 3, 30, 40)
-            assert.are.same({ 10, 20, 30, 40, 50, 60 }, tbl)
-        end)
-        it("should insert values at the beginning", function()
-            local tbl = { 30, 40 }
-            mathutils.insertValuesAt(tbl, 1, 10, 20)
-            assert.are.same({ 10, 20, 30, 40 }, tbl)
-        end)
-    end)
-
-    describe(".splitPoly()", function()
-        it("should return two tables when splitting", function()
-            local poly = { 0, 0, 10, 0, 10, 10, 0, 10 }
-            local intersection = { i1 = 1, i2 = 3, x = 5, y = 5 }
-            local p1, p2 = mathutils.splitPoly(poly, intersection)
-            assert.is_table(p1)
-            assert.is_table(p2)
-            -- NOTE: Actual vertex correctness test skipped
-        end)
-    end)
-
-    describe(".findIntersections()", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-        it("should find two intersections for a line crossing the square", function()
-            local line = { x1 = -5, y1 = 5, x2 = 15, y2 = 5 }
-            local intersections = mathutils.findIntersections(square, line)
-            assert.are.equal(2, #intersections)
-            local found_y5_left = false
-            local found_y5_right = false
-            for _, inter in ipairs(intersections) do
-                assert.is_near(5, inter.y, epsilon, "Intersection Y coordinate")
-                if math.abs(inter.x - 0) < epsilon then found_y5_left = true end
-                if math.abs(inter.x - 10) < epsilon then found_y5_right = true end
-            end
-            assert.is_true(found_y5_left, "Intersection with left edge not found")
-            assert.is_true(found_y5_right, "Intersection with right edge not found")
-        end)
-        it("should find one intersection for a line hitting a corner", function()
-            local line = { x1 = -5, y1 = -5, x2 = 5, y2 = 5 }
-            local intersections = mathutils.findIntersections(square, line)
-            assert.are.equal(1, #intersections)
-            assert.is_near(0, intersections[1].x, epsilon)
-            assert.is_near(0, intersections[1].y, epsilon)
-        end)
-        it("should find no intersections for a line outside", function()
-            local line = { x1 = -5, y1 = 15, x2 = 15, y2 = 15 }
-            local intersections = mathutils.findIntersections(square, line)
-            assert.are.equal(0, #intersections)
-        end)
-    end)
-
-    describe("MVC functions", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-        it(".getMeanValueCoordinatesWeights() should calculate weights", function()
-            local px, py = 5, 5
-            local weights = mathutils.getMeanValueCoordinatesWeights(px, py, square)
-            assert.are.equal(4, #weights)
-            assert.is_near(0.25, weights[1], epsilon)
-            assert.is_near(0.25, weights[2], epsilon)
-            assert.is_near(0.25, weights[3], epsilon)
-            assert.is_near(0.25, weights[4], epsilon)
-
-            local px2, py2 = 1, 1
-            local weights2 = mathutils.getMeanValueCoordinatesWeights(px2, py2, square)
-            assert.is_true(weights2[1] > weights2[2])
-            assert.is_true(weights2[1] > weights2[3])
-            assert.is_true(weights2[1] > weights2[4])
-            local sum = 0
-            for _, w in ipairs(weights2) do sum = sum + w end
-            assert.is_near(1.0, sum, epsilon, "Weights should sum to 1")
-        end)
-
-        it(".repositionPointUsingWeights() should reposition point", function()
-            local weights = { 0.25, 0.25, 0.25, 0.25 }
-            local newSquare = { 100, 100, 110, 100, 110, 110, 100, 110 }
-            local nx, ny = mathutils.repositionPointUsingWeights(weights, newSquare)
-            assert.is_near(105, nx, epsilon)
-            assert.is_near(105, ny, epsilon)
-
-            local weights2 = { 0.7, 0.1, 0.1, 0.1 }
-            local nx2, ny2 = mathutils.repositionPointUsingWeights(weights2, newSquare)
-            assert.is_near(102, nx2, epsilon, "X calculation correction")
-            assert.is_near(102, ny2, epsilon, "Y calculation correction")
-        end)
-    end)
-
-    describe("Closest Edge Param functions", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 } -- Edges: 1(0-10,0), 2(10,0-10), 3(10-0,10), 4(0,10-0)
-        it(".closestEdgeParams() finds correct edge, t, distance, and sign", function()
-            -- Point (5, -1) is BELOW edge 1. Function calculates sign = -1.
-            local params = mathutils.closestEdgeParams(5, -1, square)
-            assert.are.equal(1, params.edgeIndex)
-            assert.is_near(0.5, params.t, epsilon)
-            assert.is_near(1, params.distance, epsilon)
-            assert.are.equal(-1, params.sign, "Sign for point below edge 1")
-
-            -- Point (11, 5) is RIGHT of edge 2. Function calculates sign = -1.
-            local params2 = mathutils.closestEdgeParams(11, 5, square)
-            assert.are.equal(2, params2.edgeIndex)
-            assert.is_near(0.5, params2.t, epsilon)
-            assert.is_near(1, params2.distance, epsilon)
-            assert.are.equal(-1, params2.sign, "Sign for point right of edge 2")
-
-            -- Point (1, 1) is RIGHT of edge 1 (tie-break winner). Function calculates sign = 1.
-            local params3 = mathutils.closestEdgeParams(1, 1, square)
-            assert.are.equal(1, params3.edgeIndex, "Edge index for (1,1) based on findClosestEdge tie-break")
-            assert.is_near(0.1, params3.t, epsilon)
-            assert.is_near(1, params3.distance, epsilon)
-            assert.are.equal(1, params3.sign, "Sign for point inside (right of edge 1)")
-        end)
-
-        it(".repositionPointClosestEdge() repositions point correctly", function()
-            local newSquare = { 100, 100, 110, 100, 110, 110, 100, 110 }
-
-            -- Case 1: Point was below edge 1. Calculated sign = -1.
-            local params_case1 = { edgeIndex = 1, t = 0.5, distance = 1, sign = -1 }
-            -- Normal (0,-1). Point = (105,100) + (-1)*1*(0,-1) = (105, 101)
-            local nx_c1, ny_c1 = mathutils.repositionPointClosestEdge(params_case1, newSquare)
-            assert.is_near(105, nx_c1, epsilon)
-            assert.is_near(101, ny_c1, epsilon, "Repositioned Y (using sign -1 for edge 1)")
-
-            -- Case 2: Point was right of edge 2. Calculated sign = -1.
-            local params_case2 = { edgeIndex = 2, t = 0.5, distance = 1, sign = -1 }
-            -- Normal (1,0). Point = (110,105) + (-1)*1*(1,0) = (109, 105)
-            local nx_c2, ny_c2 = mathutils.repositionPointClosestEdge(params_case2, newSquare)
-            assert.is_near(109, nx_c2, epsilon)
-            assert.is_near(105, ny_c2, epsilon)
-
-            -- Case 3: Point was inside (right of edge 1). Calculated sign = 1.
-            local params_case3 = { edgeIndex = 1, t = 0.1, distance = 1, sign = 1 }
-            -- Normal (0,-1). Point = (101,100) + (1)*1*(0,-1) = (101, 99)
-            local nx_c3, ny_c3 = mathutils.repositionPointClosestEdge(params_case3, newSquare)
-            assert.is_near(101, nx_c3, epsilon)
-            assert.is_near(99, ny_c3, epsilon)
-        end)
-    end)
-
-    describe("Find Edge and Lerp functions", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-        it(".findEdgeAndLerpParam() finds correct edge and t", function()
-            local edgeIdx1, t1 = mathutils.findEdgeAndLerpParam(5, -1, square)
-            assert.are.equal(1, edgeIdx1)
-            assert.is_near(0.5, t1, epsilon)
-
-            local edgeIdx2, t2 = mathutils.findEdgeAndLerpParam(11, 5, square)
-            assert.are.equal(2, edgeIdx2)
-            assert.is_near(0.5, t2, epsilon)
-
-            local edgeIdx3, t3 = mathutils.findEdgeAndLerpParam(1, 1, square)
-            assert.are.equal(1, edgeIdx3) -- Based on tie-break behavior
-            assert.is_near(0.1, t3, epsilon)
-        end)
-
-        it(".lerpOnEdge() interpolates correctly", function()
-            local newSquare = { 100, 100, 110, 100, 110, 110, 100, 110 }
-            local nx1, ny1 = mathutils.lerpOnEdge(1, 0.5, newSquare)
-            assert.is_near(105, nx1, epsilon)
-            assert.is_near(100, ny1, epsilon)
-
-            local nx2, ny2 = mathutils.lerpOnEdge(4, 0.9, newSquare)
-            assert.is_near(100, nx2, epsilon)
-            assert.is_near(101, ny2, epsilon)
-        end)
-    end)
-end)
-
-```
-
-spec/utils_spec.lua
-```lua
--- spec/utils_spec.lua
-
-describe("src.utils", function()
-    -- Ensure module is reloaded if it changed during testing runs
-    package.loaded['src.utils'] = nil
-    local utils = require('src.utils')
-
-    -- Helper function for robust instance checking (verifies copy didn't modify original)
-    local function verify_different_instances(original, copy)
-        assert.are.same(original, copy, "Initial content of copy should match original.")
-
-        -- Test 1: Add a unique key to the copy and check it doesn't appear in the original
-        local unique_key = "__test_uniqueness_" .. math.random(1, 1000000)
-        copy[unique_key] = true
-        assert.is_nil(original[unique_key], "Original table should not have the unique key added only to the copy.")
-        copy[unique_key] = nil -- Clean up
-
-        -- Test 2: Modify an existing value in the copy and check the original is unchanged
-        local key_to_modify = next(copy)                      -- Get an arbitrary key from the copy
-        if key_to_modify and key_to_modify ~= unique_key then -- Ensure we didn't pick the cleanup key
-            local original_value = original[key_to_modify]
-            -- Create a distinctly different value based on type
-            local new_value
-            if type(original_value) == 'string' then
-                new_value = original_value .. "_modified"
-            elseif type(original_value) == 'number' then
-                new_value = original_value + math.random(1, 100)
-            elseif type(original_value) == 'boolean' then
-                new_value = not original_value
-            else
-                -- For other types (like tables), create a simple new value
-                new_value = { marker = "modified_value_" .. math.random() }
-            end
-
-            copy[key_to_modify] = new_value
-            assert.are_not.equal(copy[key_to_modify], original[key_to_modify],
-                "Original table value at key [" ..
-                tostring(key_to_modify) .. "] should not have changed when copy was modified.")
-            -- Optional: Restore original value in copy if needed for further tests, though usually not necessary here
-            -- copy[key_to_modify] = original_value
-        elseif not key_to_modify then
-            -- If the table was empty, the unique_key test already proved instance difference
-            assert.is_true(true, "Empty table passed uniqueness key check, confirming instance difference.")
-        end
-    end
-
-    -- Tests for map
-    describe(".map()", function()
-        it("should correctly map values in a table", function()
-            local input = { 1, 2, 3 }
-            local doubled = utils.map(input, function(x) return x * 2 end)
-            assert.are.same({ 2, 4, 6 }, doubled)
-        end)
-        it("should return an empty table when mapping an empty table", function()
-            local input = {}
-            local result = utils.map(input, function(x) return x + 1 end)
-            assert.are.same({}, result)
-        end)
-        it("should handle different mapping functions", function()
-            local input = { 1, 2 }
-            local toString = utils.map(input, function(x) return "num:" .. x end)
-            assert.are.same({ "num:1", "num:2" }, toString)
-        end)
-    end)
-
-    describe(".getPathDifference()", function()
-        local base = "/home/user/project"
-        it("should return the relative part when base is a prefix", function()
-            local full = "/home/user/project/src/main.lua"
-            assert.are.equal("/src/main.lua", utils.getPathDifference(base, full))
-        end)
-        it("should return the relative part when base is a prefix even without trailing /", function()
-            local full = "/home/user/project/src/main.lua"
-            local base_no_slash = "/home/user/project"
-            assert.are.equal("/src/main.lua", utils.getPathDifference(base_no_slash, full))
-        end)
-        it("should return an empty string for identical paths", function()
-            local full = "/home/user/project"
-            assert.are.equal("", utils.getPathDifference(base, full))
-        end)
-        it("should return nil if base is not a prefix", function()
-            local full = "/home/user/other/file.txt"
-            assert.is_nil(utils.getPathDifference(base, full))
-        end)
-        it("should return nil if base matches partially but not at a boundary", function()
-            local full = "/home/user/project-x/file.lua"
-            assert.is_nil(utils.getPathDifference(base, full))
-        end)
-        it("should handle case sensitivity correctly", function()
-            local full = "/home/user/PROJECT/src/main.lua"
-            assert.is_nil(utils.getPathDifference(base, full))
-        end)
-        it("should handle root paths", function()
-            local base_root = "/"
-            local full = "/file.txt"
-            assert.are.equal("file.txt", utils.getPathDifference(base_root, full))
-        end)
-        it("should handle root path base with root path full", function()
-            local base_root = "/"
-            local full = "/"
-            assert.are.equal("", utils.getPathDifference(base_root, full))
-        end)
-        it("should handle complex paths", function()
-            local base_c = "/a/b/c/"
-            local full_c = "/a/b/c/d/e.f"
-            -- FIX: Adjust expected result to include the leading slash, matching function behavior
-            assert.are.equal("/d/e.f", utils.getPathDifference(base_c:gsub("/$", ""), full_c))
-        end)
-    end)
-
-    -- Tests for sanitizeString
-    describe(".sanitizeString()", function()
-        it("should remove trailing spaces", function()
-            assert.are.equal("hello", utils.sanitizeString("hello  "))
-        end)
-        it("should remove trailing newlines", function()
-            assert.are.equal("hello", utils.sanitizeString("hello\n"))
-        end)
-        it("should remove trailing tabs", function()
-            assert.are.equal("hello", utils.sanitizeString("hello\t"))
-        end)
-        it("should remove trailing carriage returns", function()
-            assert.are.equal("hello", utils.sanitizeString("hello\r"))
-        end)
-        it("should remove mixed trailing whitespace and control characters", function()
-            assert.are.equal("hello", utils.sanitizeString("hello \n\t\r "))
-        end)
-        it("should not change a clean string", function()
-            assert.are.equal("hello", utils.sanitizeString("hello"))
-        end)
-        it("should return empty string for nil input", function()
-            assert.are.equal("", utils.sanitizeString(nil))
-        end)
-        it("should return empty string for empty input", function()
-            assert.are.equal("", utils.sanitizeString(""))
-        end)
-        it("should handle strings with leading/internal whitespace", function()
-            assert.are.equal("  hello world", utils.sanitizeString("  hello world  \n"))
-        end)
-    end)
-
-    -- Tests for round_to_decimals
-    describe(".round_to_decimals()", function()
-        it("should round correctly to specified decimal places", function()
-            assert.are.equal(1.23, utils.round_to_decimals(1.23456, 2))
-            assert.are.equal(1.24, utils.round_to_decimals(1.23678, 2))
-            assert.are.equal(1.235, utils.round_to_decimals(1.2345, 3))
-            assert.are.equal(1.2, utils.round_to_decimals(1.2345, 1))
-            assert.are.equal(1, utils.round_to_decimals(1.2345, 0))
-            assert.are.equal(2, utils.round_to_decimals(1.6, 0))
-        end)
-        it("should handle negative numbers", function()
-            assert.are.equal(-1.23, utils.round_to_decimals(-1.23456, 2))
-            assert.are.equal(-1.24, utils.round_to_decimals(-1.23678, 2))
-        end)
-        it("should handle zero", function()
-            assert.are.equal(0, utils.round_to_decimals(0, 2))
-        end)
-        it("should handle large numbers of decimals", function()
-            assert.are.equal(3.14159265, utils.round_to_decimals(math.pi, 8))
-        end)
-    end)
-
-    -- Tests for tablelength
-    describe(".tablelength()", function()
-        it("should return the correct length for array-like tables", function()
-            assert.are.equal(3, utils.tablelength({ 10, 20, 30 }))
-        end)
-        it("should return the correct length for hash-like tables", function()
-            assert.are.equal(2, utils.tablelength({ a = 1, b = 2 }))
-        end)
-        it("should return the correct length for mixed tables", function()
-            assert.are.equal(4, utils.tablelength({ 10, 20, a = 1, b = 2 }))
-        end)
-        it("should return 0 for an empty table", function()
-            assert.are.equal(0, utils.tablelength({}))
-        end)
-    end)
-
-    -- Tests for tableConcat
-    describe(".tableConcat()", function()
-        it("should concatenate two non-empty tables", function()
-            local t1 = { 1, 2 }
-            local t2 = { 3, 4 }
-            local result = utils.tableConcat(t1, t2)
-            assert.are.same({ 1, 2, 3, 4 }, result)
-            assert.are.same(t1, result)
-        end)
-        it("should concatenate with an empty table (first)", function()
-            local t1 = {}
-            local t2 = { 3, 4 }
-            local result = utils.tableConcat(t1, t2)
-            assert.are.same({ 3, 4 }, result)
-            assert.are.same(t1, result)
-        end)
-        it("should concatenate with an empty table (second)", function()
-            local t1 = { 1, 2 }
-            local t2 = {}
-            local result = utils.tableConcat(t1, t2)
-            assert.are.same({ 1, 2 }, result)
-            assert.are.same(t1, result)
-        end)
-    end)
-
-    -- Tests for shallowCopy
-    describe(".shallowCopy()", function()
-        it("should create a shallow copy (different instance)", function()
-            local original = { a = 1, b = "hello" }
-            local copy = utils.shallowCopy(original)
-            verify_different_instances(original, copy)
-        end)
-        it("should share references for nested tables", function()
-            local nested = { x = 10 }
-            local original = { a = 1, nested = nested }
-            local copy = utils.shallowCopy(original)
-            assert.are.same(original.nested, copy.nested)
-            copy.nested.x = 20
-            assert.are.equal(20, original.nested.x)
-        end)
-        it("should handle empty tables (different instance)", function()
-            local original = {}
-            local copy = utils.shallowCopy(original)
-            verify_different_instances(original, copy)
-        end)
-    end)
-
-    -- Tests for deepCopy
-    describe(".deepCopy()", function()
-        it("should create a deep copy (different instance)", function()
-            local original = { a = 1, b = "hello" }
-            local copy = utils.deepCopy(original)
-            verify_different_instances(original, copy)
-        end)
-        it("should create independent copies of nested tables", function()
-            local nested = { x = 10 }
-            local original = { a = 1, nested = nested }
-            local copy = utils.deepCopy(original)
-            assert.are.same(original.nested, copy.nested)
-            copy.nested.x = 20
-            assert.are.equal(10, original.nested.x, "Original nested table should be unchanged.")
-            assert.are.equal(20, copy.nested.x)
-        end)
-        it("should handle multiple levels of nesting (different instances)", function()
-            local nested2 = { y = 20 }
-            local nested1 = { x = 10, nested2 = nested2 }
-            local original = { a = 1, nested1 = nested1 }
-            local copy = utils.deepCopy(original)
-            assert.are.same(original.nested1.nested2, copy.nested1.nested2)
-            copy.nested1.nested2.y = 30
-            assert.are.equal(20, original.nested1.nested2.y, "Original deep nested table should be unchanged.")
-            assert.are.equal(30, copy.nested1.nested2.y)
-            copy.nested1.x = 15
-            assert.are.equal(10, original.nested1.x, "Original first-level nested table should be unchanged.")
-            assert.are.equal(15, copy.nested1.x)
-        end)
-        it("should handle tables with mixed keys (different instance)", function()
-            local original = { [1] = "one", ["key"] = 2, [true] = false }
-            local copy = utils.deepCopy(original)
-            verify_different_instances(original, copy)
-        end)
-        it("should handle cyclic references (different instance)", function()
-            local original = { name = "table1" }
-            original.myself = original
-            local copy = utils.deepCopy(original)
-            assert.are.same(copy, copy.myself)
-            assert.are.equal("table1", copy.name)
-            assert.are_not.equal(original, copy)
-        end)
-        it("should handle empty tables (different instance)", function()
-            local original = {}
-            local copy = utils.deepCopy(original)
-            verify_different_instances(original, copy)
-        end)
-    end)
-
-    -- Tests for tablesEqualNumbers (with float tolerance)
-    describe(".tablesEqualNumbers()", function()
-        it("should return true for identical number tables (integers)", function()
-            assert.is_true(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 2, 3 }))
-        end)
-        it("should return true for identical number tables (floats)", function()
-            assert.is_true(utils.tablesEqualNumbers({ 1.1, 2.2, 3.3 }, { 1.1, 2.2, 3.3 }))
-        end)
-        it("should return false for tables with different lengths", function()
-            assert.is_false(utils.tablesEqualNumbers({ 1, 2 }, { 1, 2, 3 }))
-            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 2 }))
-        end)
-        it("should return false for tables with different number values (outside tolerance)", function()
-            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 5, 3 }))
-            assert.is_false(utils.tablesEqualNumbers({ 1.1, 2.2, 3.3 }, { 1.1, 2.2, 3.300001 })) -- Using default tolerance 1e-9
-        end)
-        it("should return true for two empty tables", function()
-            assert.is_true(utils.tablesEqualNumbers({}, {}))
-        end)
-        it("should handle floating point inaccuracies using default tolerance", function()
-            assert.is_true(utils.tablesEqualNumbers({ 0.1 + 0.2 }, { 0.3 }))
-        end)
-        it("should fail if difference exceeds default tolerance", function()
-            -- 0.1 + 0.2 is approx 0.30000000000000004, diff from 0.3 is > 1e-9
-            assert.is_false(utils.tablesEqualNumbers({ 0.1 + 0.2 + 1e-8 }, { 0.3 }))
-        end)
-        it("should pass with a specified larger tolerance", function()
-            assert.is_true(utils.tablesEqualNumbers({ 0.1 + 0.2 + 0.001 }, { 0.3 }, 0.002))
-        end)
-        it("should fail with a specified smaller tolerance", function()
-            assert.is_false(utils.tablesEqualNumbers({ 0.1 + 0.2 }, { 0.3 }, 1e-18)) -- Difference is larger than this
-        end)
-        it("should return false if tables contain different types", function()
-            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, "2", 3 }))
-            assert.is_false(utils.tablesEqualNumbers({ 1, 2, 3 }, { 1, 2, true }))
-        end)
-        it("should correctly compare integers and floats representing the same value", function()
-            assert.is_true(utils.tablesEqualNumbers({ 1, 2, 3.0 }, { 1, 2, 3 }))
-        end)
-    end)
-end)
-
--- Optional: Busted runner if executing directly
--- require('busted.runner')()
 
 ```
 

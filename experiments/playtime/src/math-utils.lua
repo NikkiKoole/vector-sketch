@@ -2,6 +2,165 @@
 local lib = {}
 
 
+
+local function unpackNodePointsLoop(points)
+    local unpacked = {}
+
+    for i = 0, #points do
+        local nxt = i == #points and 1 or i + 1
+        unpacked[1 + (i * 2)] = points[nxt][1]
+        unpacked[2 + (i * 2)] = points[nxt][2]
+    end
+
+    for i = 0, #points do
+        local nxt = i == #points and 1 or i + 1
+        unpacked[(#points * 2) + 1 + (i * 2)] = points[nxt][1]
+        unpacked[(#points * 2) + 2 + (i * 2)] = points[nxt][2]
+    end
+
+    return unpacked
+end
+
+local function unpackNodePoints(points, noloop)
+    local unpacked = {}
+    if #points >= 1 then
+        for i = 0, #points - 1 do
+            unpacked[1 + (i * 2)] = points[i + 1][1]
+            unpacked[2 + (i * 2)] = points[i + 1][2]
+        end
+
+        -- make it go round
+        if noloop == nil then
+            unpacked[(#points * 2) + 1] = points[1][1]
+            unpacked[(#points * 2) + 2] = points[1][2]
+        end
+    end
+
+    return unpacked
+end
+
+function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+local function getDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+
+    return distance
+end
+
+function lib.getLengthOfPath(path)
+    local result = 0
+    for i = 1, #path - 1 do
+        local a = path[i]
+        local b = path[i + 1]
+        result = result + getDistance(a[1], a[2], b[1], b[2])
+    end
+    return result
+end
+
+local function evenlySpreadPath(result, path, index, running, spacing)
+    -- Stop if there's no next segment
+    if index >= #path then return end
+
+    local here = path[index]
+    local there = path[index + 1]
+
+    local d = getDistance(here[1], here[2], there[1], there[2])
+
+    -- Handle degenerate segment (zero length)
+    if d == 0 then
+        return evenlySpreadPath(result, path, index + 1, running, spacing)
+    end
+
+    while running < d do
+        local t = running / d
+        local x = lerp(here[1], there[1], t)
+        local y = lerp(here[2], there[2], t)
+        table.insert(result, { x, y, { 1, 0, 1 } })
+        running = running + spacing
+    end
+
+    -- Carry leftover distance into next segment
+    return evenlySpreadPath(result, path, index + 1, running - d, spacing)
+end
+
+--https://love2d.org/forums/viewtopic.php?t=1401
+local function GetSplinePos(tab, percent, tension) --returns the position at 'percent' distance along the spline.
+    if (tab and (#tab >= 4)) then
+        local pos = (((#tab) / 2) - 1) * percent
+        local lowpnt, percent_2 = math.modf(pos)
+
+        local i = (1 + lowpnt * 2)
+        local p1x = tab[i]
+        local p1y = tab[i + 1]
+        local p2x = tab[i + 2]
+        local p2y = tab[i + 3]
+
+        local p0x = tab[i - 2]
+        local p0y = tab[i - 1]
+        local p3x = tab[i + 4]
+        local p3y = tab[i + 5]
+
+        local tension = tension or .5
+        local t1x = 0
+        local t1y = 0
+        if (p0x and p0y) then
+            t1x = (1.0 - tension) * (p2x - p0x)
+            t1y = (1.0 - tension) * (p2y - p0y)
+        end
+        local t2x = 0
+        local t2y = 0
+        if (p3x and p3y) then
+            t2x = (1.0 - tension) * (p3x - p1x)
+            t2y = (1.0 - tension) * (p3y - p1y)
+        end
+
+        local s = percent_2
+        local s2 = s * s
+        local s3 = s * s * s
+        local h1 = 2 * s3 - 3 * s2 + 1
+        local h2 = -2 * s3 + 3 * s2
+        local h3 = s3 - 2 * s2 + s
+        local h4 = s3 - s2
+        local px = (h1 * p1x) + (h2 * p2x) + (h3 * t1x) + (h4 * t2x)
+        local py = (h1 * p1y) + (h2 * p2y) + (h3 * t1y) + (h4 * t2y)
+
+        return px, py
+    end
+end
+
+lib.unloosenVanillaline = function(points, tension, spacing)
+    local work = unpackNodePoints(points, true)
+    local output = {}
+    local amt = #points * 2
+    for i = 0, amt do
+        local t = (i / amt)
+        if t >= 1 then t = 0.99999999 end
+        if t == 0 then t = 0.00000001 end
+
+        local x, y = GetSplinePos(work, t, tension)
+        table.insert(output, { x, y })
+    end
+    --logger:inspect(output)
+    local rrr = {}
+    local r2 = evenlySpreadPath(rrr, output, 1, 0, spacing)
+
+    output = unpackNodePoints(rrr)
+
+    -- what a hack ! the end is not good it looped back and i dont know how to solve it
+    -- in evenlyspreadpath....
+    table.remove(output, #output)
+    table.remove(output, #output)
+    return output
+end
+
+
+
+
+
 function lib.makePolygonRelativeToCenter(polygon, centerX, centerY)
     -- Calculate the center
 

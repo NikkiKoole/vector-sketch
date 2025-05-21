@@ -181,15 +181,20 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-
+    if (subtype == 'trace-vertices') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", subtype = 'trace-vertices', id = setId, label = '', extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
     if (subtype == 'texfixture') then
-        --logger:info('well hello!')
         local vertexCount = 4
-        --
         local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
             rect8(cfg.width, cfg.height, localX, localY)
         local shape = love.physics.newPolygonShape(vv)
-
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
