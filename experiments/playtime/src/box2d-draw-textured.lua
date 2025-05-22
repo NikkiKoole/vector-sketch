@@ -897,7 +897,7 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'tile-repeat' then
             local vertices = drawables[i].thing.vertices
             local tris = shapes.makeTrianglesFromPolygon(vertices)
-            local img = getLoveImage('textures/pat/pattern2.png')
+            local img = getLoveImage('textures/pat/lijnen.png')
             img:setWrap("repeat", "repeat")
             local texW, texH = img:getWidth(), img:getHeight()
             local centroidX, centroidY = mathutils.computeCentroid(vertices)
