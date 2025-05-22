@@ -621,122 +621,42 @@ function lib.drawAddShapeUI()
             return nil
         end
 
+        local function handleFixtureButton(x, y, width, label, shapeType, extraDataFunc)
+            local _, pressed, released = ui.button(x, y, width, label)
 
-        local _, pressed, released = ui.button(x, y, width, 'snapfixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'snap', { radius = 30 })
-                state.selection.selectedSFixture = fixture
+            if pressed then
+                ui.draggingActive = ui.activeElementID
+                local mx, my = love.mouse.getPosition()
+                local wx, wy = cam:getWorldCoordinates(mx, my)
+                state.interaction.offsetDragging = { 0, 0 }
             end
-            ui.draggingActive = nil
-        end
-        nextRow()
 
-
-        local _, pressed, released = ui.button(x, y, width, 'anchorfixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'anchor', { radius = 30 })
-                state.selection.selectedSFixture = fixture
+            if released then
+                local mx, my = love.mouse.getPosition()
+                local wx, wy = cam:getWorldCoordinates(mx, my)
+                local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
+                if #hitted > 0 then
+                    local body = hitted[#hitted]:getBody()
+                    local localX, localY = body:getLocalPoint(wx, wy)
+                    local extraData = extraDataFunc and extraDataFunc(body, localX, localY) or { radius = 30 }
+                    local fixture = fixtures.createSFixture(body, localX, localY, shapeType, extraData)
+                    state.selection.selectedSFixture = fixture
+                end
+                ui.draggingActive = nil
             end
-            ui.draggingActive = nil
-        end
-        nextRow()
 
-
-
-        local _, pressed, released = ui.button(x, y, width, 'texturefixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local cx, cy, w, h = getCenterAndDimensions(body)
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'texfixture',
-                    { width = w, height = h })
-                state.selection.selectedSFixture = fixture
-            end
-            ui.draggingActive = nil
-        end
-        nextRow()
-
-
-        local _, pressed, released = ui.button(x, y, width, 'connectedtexture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'connected-texture',
-                    { radius = 30 })
-                state.selection.selectedSFixture = fixture
-            end
-            ui.draggingActive = nil
+            nextRow()
         end
 
-        local _, pressed, released = ui.button(x, y, width, 'trace-vertices')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'trace-vertices',
-                    { radius = 30 })
-                state.selection.selectedSFixture = fixture
-            end
-            ui.draggingActive = nil
-        end
-        nextRow()
+        handleFixtureButton(x, y, width, 'snapfixture', 'snap')
+        handleFixtureButton(x, y, width, 'anchorfixture', 'anchor')
+        handleFixtureButton(x, y, width, 'texturefixture', 'texfixture', function(body, localX, localY)
+            local cx, cy, w, h = getCenterAndDimensions(body)
+            return { width = w, height = h }
+        end)
+        handleFixtureButton(x, y, width, 'connectedtexture', 'connected-texture')
+        handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
+        handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
     end)
 end
 
@@ -1555,6 +1475,34 @@ function lib.drawSelectedSFixture()
                         function(color) oldTexFixUD.extra.main.tint = color end, dirty)
                 end
             end
+
+            if oldUD.subtype == 'tile-repeat' then
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                oldTexFixUD.extra.tileWidthM = oldTexFixUD.extra.tileWidthM or 1
+                oldTexFixUD.extra.tileHeightM = oldTexFixUD.extra.tileHeightM or 1
+                oldTexFixUD.extra.tileRotation = oldTexFixUD.extra.tileRotation or 0
+                local twm = createSliderWithId(myID, 'twm', x, y, 160, 0.01,
+                    100,
+                    oldTexFixUD.extra.tileWidthM, function(v)
+                        oldTexFixUD.extra.tileWidthM = v
+                    end)
+                nextRow()
+                nextRow()
+                local thm = createSliderWithId(myID, 'thm', x, y, 160, 0.01,
+                    100,
+                    oldTexFixUD.extra.tileHeightM, function(v)
+                        oldTexFixUD.extra.tileHeightM = v
+                    end)
+                nextRow()
+
+                local tr = createSliderWithId(myID, 'tr', x, y, 160, 0,
+                    2 * math.pi,
+                    oldTexFixUD.extra.tileRotation, function(v)
+                        oldTexFixUD.extra.tileRotation = v
+                    end)
+            end
+
+
 
             if oldUD.subtype == 'trace-vertices' then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}

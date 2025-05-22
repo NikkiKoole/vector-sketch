@@ -190,6 +190,15 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
+    if (subtype == 'tile-repeat') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", subtype = 'tile-repeat', id = setId, label = '', extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
     if (subtype == 'texfixture') then
         local vertexCount = 4
         local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or

@@ -5,13 +5,12 @@
 -- TODO look for : destroybody doesnt destroy the joint on it ?
 -- TODO dirty list for textures that need to be remade, (box2d-draw-textured)
 -- TODO in character manager, the w and h arent used when we have a shape 8 i prbaly want to calculate sx and sy depending on w and h instead of not using them
--- DOING playing around with characters, getting them back in the system
 -- TODO swap body parts
 -- TODO add some ui to change body properties
-
+-- TODO make tiled texture fixture!!!!!
 
 -- BUG press R and then N , torso hair is not positioned correctly, also the wrong texture is displayed for a torso
--- also
+-- also, this is because we do naot have a real DNA yet
 
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
