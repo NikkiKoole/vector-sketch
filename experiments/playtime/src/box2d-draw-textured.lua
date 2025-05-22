@@ -897,78 +897,84 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'tile-repeat' then
             local vertices = drawables[i].thing.vertices
             local tris = shapes.makeTrianglesFromPolygon(vertices)
-            local img = getLoveImage('textures/pat/pattern2.png')
-            img:setWrap("repeat", "repeat")
-            local texW, texH = img:getWidth(), img:getHeight()
-            local centroidX, centroidY = mathutils.computeCentroid(vertices)
-            local meshVertices = {}
+            local img = getLoveImage('textures/' .. drawables[i].extra.main.bgURL)
+            if img then
+                img:setWrap("repeat", "repeat")
+                local texW, texH = img:getWidth(), img:getHeight()
+                local centroidX, centroidY = mathutils.computeCentroid(vertices)
+                local meshVertices = {}
 
-            local twm = drawables[i].extra.tileWidthM
-            local thm = drawables[i].extra.tileHeightM
-            local tr = drawables[i].extra.tileRotation
+                local twm = drawables[i].extra.tileWidthM
+                local thm = drawables[i].extra.tileHeightM
+                local tr = drawables[i].extra.tileRotation
 
-            local bb = mathutils.getBoundingRect(vertices)
-            -- bb.width and bb.height
-            local uvParams = {
-                tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
-                tileHeight = texH * thm, --bb.height,  -- world units per tile vertically
-                rotate = tr,             -- radians
-                offsetX = 0,             -- offset in world units
-                offsetY = 0,
-                scaleX = 1,              -- scale texture space (can be 1 / repeatX)
-                scaleY = 1,
-                anchor = "center",       -- or "top-left"
-                keepAspect = false       -- optional flag to preserve aspect ratio
-            }
+                local bb = mathutils.getBoundingRect(vertices)
+                -- bb.width and bb.height
+                local uvParams = {
+                    tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
+                    tileHeight = texH * thm, --bb.height,  -- world units per tile vertically
+                    rotate = tr,             -- radians
+                    offsetX = 0,             -- offset in world units
+                    offsetY = 0,
+                    scaleX = 1,              -- scale texture space (can be 1 / repeatX)
+                    scaleY = 1,
+                    anchor = "center",       -- or "top-left"
+                    keepAspect = false       -- optional flag to preserve aspect ratio
+                }
 
-            local function transformUV(x, y, cx, cy, opts)
-                -- Translate point to origin (centroid or top-left)
-                local dx = x - cx + opts.offsetX
-                local dy = y - cy + opts.offsetY
+                local function transformUV(x, y, cx, cy, opts)
+                    -- Translate point to origin (centroid or top-left)
+                    local dx = x - cx + opts.offsetX
+                    local dy = y - cy + opts.offsetY
 
-                -- Rotate
-                local cosA = math.cos(opts.rotate or 0)
-                local sinA = math.sin(opts.rotate or 0)
-                local rx = dx * cosA - dy * sinA
-                local ry = dx * sinA + dy * cosA
+                    -- Rotate
+                    local cosA = math.cos(opts.rotate or 0)
+                    local sinA = math.sin(opts.rotate or 0)
+                    local rx = dx * cosA - dy * sinA
+                    local ry = dx * sinA + dy * cosA
 
-                -- Scale to UV space
-                local tileW = opts.tileWidth or 64
-                local tileH = opts.tileHeight or 64
-                local u = rx / tileW
-                local v = ry / tileH
+                    -- Scale to UV space
+                    local tileW = opts.tileWidth or 64
+                    local tileH = opts.tileHeight or 64
+                    local u = rx / tileW
+                    local v = ry / tileH
 
-                return u * (opts.scaleX or 1), v * (opts.scaleY or 1)
-            end
-
-
-
-            for j = 1, #tris do
-                local tri = tris[j]
-                for k = 0, 2 do
-                    local x = tri[k * 2 + 1]
-                    local y = tri[k * 2 + 2]
-                    local u, v = transformUV(x, y, centroidX, centroidY, uvParams)
-                    table.insert(meshVertices, {
-                        x - centroidX, y - centroidY,
-                        u, v,
-                        255, 255, 255, 255
-                    })
+                    return u * (opts.scaleX or 1), v * (opts.scaleY or 1)
                 end
+
+
+
+                for j = 1, #tris do
+                    local tri = tris[j]
+                    for k = 0, 2 do
+                        local x = tri[k * 2 + 1]
+                        local y = tri[k * 2 + 2]
+                        local u, v = transformUV(x, y, centroidX, centroidY, uvParams)
+                        table.insert(meshVertices, {
+                            x - centroidX, y - centroidY,
+                            u, v,
+                            255, 255, 255, 255
+                        })
+                    end
+                end
+
+                local vertexFormat = {
+                    { "VertexPosition", "float", 2 },
+                    { "VertexTexCoord", "float", 2 },
+                    { "VertexColor",    "byte",  4 },
+                }
+
+                local mesh = love.graphics.newMesh(vertexFormat, meshVertices, "triangles")
+                mesh:setTexture(img)
+
+                --love.graphics.setColor(1, 1, 1, 1)
+
+                local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
+                love.graphics.setColor(r, g, b, a)
+
+                local body = drawables[i].thing.body
+                love.graphics.draw(mesh, body:getX(), body:getY(), body:getAngle())
             end
-
-            local vertexFormat = {
-                { "VertexPosition", "float", 2 },
-                { "VertexTexCoord", "float", 2 },
-                { "VertexColor",    "byte",  4 },
-            }
-
-            local mesh = love.graphics.newMesh(vertexFormat, meshVertices, "triangles")
-            mesh:setTexture(img)
-
-            love.graphics.setColor(1, 1, 1, 1)
-            local body = drawables[i].thing.body
-            love.graphics.draw(mesh, body:getX(), body:getY(), body:getAngle())
         end
 
 

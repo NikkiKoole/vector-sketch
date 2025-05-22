@@ -1514,6 +1514,16 @@ function lib.drawSelectedSFixture()
                         oldTexFixUD.extra.zOffset = math.floor(v)
                     end,
                     (not state.world.paused) or dirtyBodyChange)
+
+                nextRow()
+                handleURLInput(myID, 'bgURL', x, y, 150, oldTexFixUD.extra.main.bgURL,
+                    function(u)
+                        oldTexFixUD.extra.main.bgURL = u
+                    end)
+                nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
+                    function(color) oldTexFixUD.extra.main.tint = color end, dirty)
             end
 
 
