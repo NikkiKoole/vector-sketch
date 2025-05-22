@@ -111,6 +111,7 @@ function lib.buildWorld(data, world, cam)
                 fixture:setFriction(shared.friction)
                 fixture:setRestitution(shared.restitution)
                 fixture:setGroupIndex(shared.groupIndex or 0)
+                fixture:setSensor(shared.sensor or false)
                 if fixtureData.userData then
                     fixture:setSensor(fixtureData.sensor)
                     local oldUD = utils.shallowCopy(fixtureData.userData)
@@ -419,6 +420,24 @@ function lib.gatherSaveData(world, camera)
                     bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
                     bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
                     bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
+
+
+                    -- local fixtures = fb:getFixtures()
+                    -- local ff = fixtures[1]
+                    local firstNonUserdataFixture = bodyFixtures[1]
+                    for k = 1, #bodyFixtures do
+                        local fixture = bodyFixtures[k]
+                        if fixture:getUserData() == nil then
+                            firstNonUserdataFixture = fixture
+                            break
+                        end
+                    end
+
+
+
+
+
+                    bodyData.sharedFixtureData.sensor = firstNonUserdataFixture:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?
                     local shape = first:getShape()
@@ -675,6 +694,7 @@ function lib.cloneSelection(selectedBodies, world)
                     newFixture:setRestitution(oldF:getRestitution())
                     newFixture:setFriction(oldF:getFriction())
                     newFixture:setGroupIndex(oldF:getGroupIndex())
+                    newFixture:setSensor(oldF:isSensor())
                 end
                 if offset > 0 then
                     -- here we should recreate the special fixtures..
@@ -687,6 +707,7 @@ function lib.cloneSelection(selectedBodies, world)
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
                         newFixture:setGroupIndex(oldF:getGroupIndex())
+
                         local oldUD = utils.deepCopy(oldF:getUserData())
                         local oldid = oldUD.id
 

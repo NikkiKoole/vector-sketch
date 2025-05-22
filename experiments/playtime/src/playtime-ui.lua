@@ -917,6 +917,11 @@ function lib.drawWorldSettingsUI()
                 state.world.profiling = true
             end
         end
+        nextRow()
+
+
+        ui.label(x, y, string.format("%.2f", love.graphics.getStats().texturememory / 1000000) .. ' MB')
+        ui.label(x + 150, y, love.graphics.getStats().drawcallsbatched .. 'batched')
     end)
 end
 
@@ -1500,6 +1505,15 @@ function lib.drawSelectedSFixture()
                     oldTexFixUD.extra.tileRotation, function(v)
                         oldTexFixUD.extra.tileRotation = v
                     end)
+
+                nextRow()
+
+                local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                    math.floor(oldTexFixUD.extra.zOffset or 0),
+                    function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                    end,
+                    (not state.world.paused) or dirtyBodyChange)
             end
 
 
@@ -2122,6 +2136,14 @@ function lib.drawUpdateSelectedObjectUI()
                         local fb = thing.body
                         local fixtures = fb:getFixtures()
                         local ff = fixtures[1]
+                        local firstNonUserdataFixture = ff
+                        for k = 1, #fixtures do
+                            local fixture = fixtures[k]
+                            if fixture:getUserData() == nil then
+                                firstNonUserdataFixture = fixture
+                                break
+                            end
+                        end
                         local groupIndex = ff:getGroupIndex()
                         local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
                             groupIndex)
@@ -2135,6 +2157,18 @@ function lib.drawUpdateSelectedObjectUI()
                             for j = 1, #fixtures do
                                 fixtures[j]:setGroupIndex(value)
                                 count = count + 1
+                            end
+                        end
+                        nextRow()
+                        if ui.checkbox(x, y, firstNonUserdataFixture:isSensor(), 'sensor') then
+                            -- ff:setSensor(not ff:isSensor())
+                            local b = thing.body
+                            local fixtures = b:getFixtures()
+                            local value = not firstNonUserdataFixture:isSensor()
+                            for j = 1, #fixtures do
+                                if not fixtures[j]:getUserData() then
+                                    fixtures[j]:setSensor(value)
+                                end
                             end
                         end
                     end

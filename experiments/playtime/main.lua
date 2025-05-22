@@ -127,10 +127,18 @@ function love.load(args)
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
     humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
-
-    --CharacterManager.updateSinglePart('luleg', { h = 300 }, humanoidInstance)
-    --CharacterManager.updateSinglePart('ruleg', { h = 300 }, humanoidInstance)
-    -- logger:inspect(humanoidInstance.dna)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1100, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1300, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1500, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1700, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1900, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2100, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2300, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2500, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2700, 300)
 end
 
 function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)

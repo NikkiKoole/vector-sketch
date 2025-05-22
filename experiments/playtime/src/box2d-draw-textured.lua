@@ -655,7 +655,7 @@ function lib.drawTexturedWorld(world)
             end
 
             if ud and ud.subtype == 'tile-repeat' then
-                local composedZ = 1000 --((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
                 table.insert(drawables, {
                     type = 'tile-repeat',
@@ -897,7 +897,7 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'tile-repeat' then
             local vertices = drawables[i].thing.vertices
             local tris = shapes.makeTrianglesFromPolygon(vertices)
-            local img = getLoveImage('textures/pat/lijnen.png')
+            local img = getLoveImage('textures/pat/pattern2.png')
             img:setWrap("repeat", "repeat")
             local texW, texH = img:getWidth(), img:getHeight()
             local centroidX, centroidY = mathutils.computeCentroid(vertices)
