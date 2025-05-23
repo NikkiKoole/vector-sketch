@@ -25,6 +25,10 @@ local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
 local objectManager = require 'src.object-manager'
 
+
+local moonshine = require 'moonshine'
+
+
 local utils = require 'src.utils'
 local box2dDraw = require 'src.box2d-draw'
 local box2dDrawTextured = require 'src.box2d-draw-textured'
@@ -41,6 +45,8 @@ local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
 local CharacterManager = require 'src.character-manager'
+
+
 
 function waitForEvent()
     local a
@@ -109,6 +115,10 @@ function love.load(args)
         -- b:setFixtureFriction(10)
     end
 
+    effect = moonshine(moonshine.effects.dmg)
+    --.chain(moonshine.effects.vignette)
+    --effect.filmgrain.size = 2
+
     state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
@@ -126,7 +136,7 @@ function love.load(args)
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
-    --humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
@@ -225,6 +235,7 @@ end
 function love.draw()
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
+
     love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
 
     if state.editorPreferences.showGrid then
@@ -232,16 +243,18 @@ function love.draw()
     end
 
     box2dDrawTextured.makeCombinedImages()
-    cam:push()
-    love.graphics.setColor(1, 1, 1, 1)
-    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
-    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+    effect(function()
+        cam:push()
+        love.graphics.setColor(1, 1, 1, 1)
+        box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
-    script.call('draw')
+        box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
 
-    editorRenderer.renderActiveEditorThings()
-    cam:pop()
+        script.call('draw')
 
+        editorRenderer.renderActiveEditorThings()
+        cam:pop()
+    end)
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
 
@@ -309,6 +322,11 @@ local function randomHexColor()
 
     return string.format("%02X%02X%02X%02X", r, g, b, a)
 end
+
+function love.resize(w, h)
+    effect.resize(w, h)
+end
+
 function love.keypressed(key)
     ui.handleKeyPress(key)
     InputManager.handleKeyPressed(key)
