@@ -1,4 +1,4 @@
-src/behaviors.lua
+src//behaviors.lua
 ```lua
 local lib = {}
 
@@ -13,7 +13,7 @@ return lib
 
 ```
 
-src/box2d-draw-textured.lua
+src//box2d-draw-textured.lua
 ```lua
 --[[
 TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedTriangleStrip (within drawTexturedWorld) is definitely inefficient. We should absolutely cache these.
@@ -22,6 +22,8 @@ TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedT
 local lib = {}
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
+local polyline = require 'src.polyline'
+local shapes = require 'src.shapes'
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
@@ -657,9 +659,31 @@ function lib.drawTexturedWorld(world)
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
+
+            if ud and ud.subtype == 'trace-vertices' then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+
+                table.insert(drawables, {
+                    type = 'trace-vertices',
+                    z = composedZ,
+                    extra = ud.extra,
+                    thing = body:getUserData().thing
+                })
+            end
+
+            if ud and ud.subtype == 'tile-repeat' then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+
+                table.insert(drawables, {
+                    type = 'tile-repeat',
+                    z = composedZ,
+                    extra = ud.extra,
+                    thing = body:getUserData().thing
+                })
+            end
+
             if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                --print(inspect(ud.extra))
                 table.insert(drawables,
                     {
                         type = 'texfixture',
@@ -830,7 +854,8 @@ function lib.drawTexturedWorld(world)
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
-        if texfixture then
+        if drawables[i].type == 'texfixture' then
+            --if texfixture then
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
                 if extra.main and extra.main.bgURL then
@@ -850,39 +875,6 @@ function lib.drawTexturedWorld(world)
                 --end
             end
         end
-
-
-        -- local function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, dir, wmultiplier)
-        --     local ax, ay = box2dGuy[p1]:getPosition()
-        --     local bx, by = box2dGuy[p2]:getPosition()
-        --     local cx, cy = box2dGuy[p3]:getPosition()
-
-        --     ax, ay = growLine({ ax, ay }, { bx, by }, growLength)
-        --     cx, cy = growLine({ cx, cy }, { bx, by }, growLength)
-
-        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-
-        --     if (dir ~= nil or wmultiplier ~= nil) then
-        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
-        --     else
-        --         texturedCurve(curve, canvas, mesh)
-        --     end
-        -- end
-
-        -- local function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
-        --     local ax, ay = box2dGuy[p1]:getPosition()
-        --     local bx, by = box2dGuy[p2]:getPosition()
-        --     local cx, cy = box2dGuy[p3]:getPosition()
-        --     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-
-        --     if (dir ~= nil or wmultiplier ~= nil) then
-        --         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
-        --     else
-        --         texturedCurve(curve, canvas, mesh)
-        --     end
-        -- end
-
-
 
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
@@ -918,15 +910,192 @@ function lib.drawTexturedWorld(world)
                 love.graphics.draw(mesh)
             end
         end
+
+        if drawables[i].type == 'tile-repeat' then
+            local vertices = drawables[i].thing.vertices
+            local tris = shapes.makeTrianglesFromPolygon(vertices)
+            local img = getLoveImage('textures/' .. drawables[i].extra.main.bgURL)
+            if img then
+                img:setWrap("repeat", "repeat")
+                local texW, texH = img:getWidth(), img:getHeight()
+                local centroidX, centroidY = mathutils.computeCentroid(vertices)
+                local meshVertices = {}
+
+                local twm = drawables[i].extra.tileWidthM
+                local thm = drawables[i].extra.tileHeightM
+                local tr = drawables[i].extra.tileRotation
+
+                local bb = mathutils.getBoundingRect(vertices)
+                -- bb.width and bb.height
+                local uvParams = {
+                    tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
+                    tileHeight = texH * thm, --bb.height,  -- world units per tile vertically
+                    rotate = tr,             -- radians
+                    offsetX = 0,             -- offset in world units
+                    offsetY = 0,
+                    scaleX = 1,              -- scale texture space (can be 1 / repeatX)
+                    scaleY = 1,
+                    anchor = "center",       -- or "top-left"
+                    keepAspect = false       -- optional flag to preserve aspect ratio
+                }
+
+                local function transformUV(x, y, cx, cy, opts)
+                    -- Translate point to origin (centroid or top-left)
+                    local dx = x - cx + opts.offsetX
+                    local dy = y - cy + opts.offsetY
+
+                    -- Rotate
+                    local cosA = math.cos(opts.rotate or 0)
+                    local sinA = math.sin(opts.rotate or 0)
+                    local rx = dx * cosA - dy * sinA
+                    local ry = dx * sinA + dy * cosA
+
+                    -- Scale to UV space
+                    local tileW = opts.tileWidth or 64
+                    local tileH = opts.tileHeight or 64
+                    local u = rx / tileW
+                    local v = ry / tileH
+
+                    return u * (opts.scaleX or 1), v * (opts.scaleY or 1)
+                end
+
+
+
+                for j = 1, #tris do
+                    local tri = tris[j]
+                    for k = 0, 2 do
+                        local x = tri[k * 2 + 1]
+                        local y = tri[k * 2 + 2]
+                        local u, v = transformUV(x, y, centroidX, centroidY, uvParams)
+                        table.insert(meshVertices, {
+                            x - centroidX, y - centroidY,
+                            u, v,
+                            255, 255, 255, 255
+                        })
+                    end
+                end
+
+                local vertexFormat = {
+                    { "VertexPosition", "float", 2 },
+                    { "VertexTexCoord", "float", 2 },
+                    { "VertexColor",    "byte",  4 },
+                }
+
+                local mesh = love.graphics.newMesh(vertexFormat, meshVertices, "triangles")
+                mesh:setTexture(img)
+
+                --love.graphics.setColor(1, 1, 1, 1)
+
+                local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
+                love.graphics.setColor(r, g, b, a)
+
+                local body = drawables[i].thing.body
+                love.graphics.draw(mesh, body:getX(), body:getY(), body:getAngle())
+            end
+        end
+
+
+        if drawables[i].type == 'trace-vertices' then
+            local length = (#drawables[i].thing.vertices) / 2
+            local startIndex = drawables[i].extra.startIndex
+            local endIndex = drawables[i].extra.endIndex
+            local indices = getIndices(length, startIndex, endIndex)
+            local points = {}
+            local pointsflat = {}
+            -- logger:info(length)
+            -- logger:inspect(indices)
+            for j = 1, #indices do
+                --local index = indices[j]
+                local x = drawables[i].thing.vertices[indices[j] * 2 + 1]
+                local y = drawables[i].thing.vertices[indices[j] * 2 + 2]
+                table.insert(points, { x, y })
+                table.insert(pointsflat, x)
+                table.insert(pointsflat, y)
+            end
+
+
+            if #points >= 2 then
+                --love.graphics.line(pointsflat)
+                --if drawables[i].extra.main.bgURL
+                local img = getLoveImage('textures/' .. (drawables[i].extra.main.bgURL))
+                if not img then
+                    img = getLoveImage('textures/' .. 'hair7.png')
+                end
+
+                local w, h = img:getDimensions()
+
+                local hairTension = drawables[i].extra.tension or .02 -- love.math.random() --.02
+                local spacing = drawables[i].extra.spacing or 5
+                -- 5                                                    --* multipliers.hair.sMultiplier
+                local coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
+                -- logger:info('check these below')
+                -- logger:inspect(points)
+                -- logger:inspect(coords)
+                local length = mathutils.getLengthOfPath(points)
+
+                --local factor = (length / h)
+                --local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
+                local width = drawables[i].extra.width or 100 -- 100 --(w * factor) / 2
+                --2                         -- 100             (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
+                local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
+                local cx, cy = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
+                for i = 1, #verts do
+                    verts[i][1] = verts[i][1] - cx
+                    verts[i][2] = verts[i][2] - cy
+                end
+
+                local vertsWithUVs = {}
+
+                for i = 1, #verts do
+                    local u = (i % 2 == 1) and 0 or 1
+                    local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+                    vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+                end
+
+                local vertices = vertsWithUVs
+
+
+                local m = love.graphics.newMesh(vertices, "strip")
+                m:setTexture(img)
+                local body = drawables[i].thing.body
+                --local cx, cy, ww, hh = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
+                love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
+            end
+            --logger:inspect(points)
+            --logger:inspect()
+        end
     end
     --love.graphics.setDepthMode()
+end
+
+function resolveIndex(index, length)
+    return (index < 0) and ((length + index) % length) or (index % length)
+end
+
+function getIndices(length, startIdx, endIdx, allowFullLoop)
+    local start = resolveIndex(startIdx, length)
+    local ending = resolveIndex(endIdx, length)
+    local result = {}
+
+    local i = start
+    repeat
+        table.insert(result, i)
+        i = (i + 1) % length
+    until i == ending and (not allowFullLoop or i == start)
+
+    if i == ending then
+        table.insert(result, i)
+    end
+
+    return result
 end
 
 return lib
 
 ```
 
-src/box2d-draw.lua
+src//box2d-draw.lua
 ```lua
 --box2d-draw.lua
 
@@ -1154,7 +1323,7 @@ return lib
 
 ```
 
-src/box2d-pointerjoints.lua
+src//box2d-pointerjoints.lua
 ```lua
 --box2d-pointerjoints.lua
 local lib = {}
@@ -1383,7 +1552,7 @@ return lib
 
 ```
 
-src/camera.lua
+src//camera.lua
 ```lua
 --camera.lua
 local Camera = require 'vendor.brady'
@@ -1451,7 +1620,7 @@ return lib
 
 ```
 
-src/character-manager.lua
+src//character-manager.lua
 ```lua
 local lib = {}
 
@@ -1701,7 +1870,7 @@ function defaultSetupTextures(instance)
     end
 
     -- legs
-    if true then
+    if false then
         table.insert(instance.textures, {
             subtype = 'connected-texture',
             type = 'sfixture',
@@ -1744,7 +1913,7 @@ function defaultSetupTextures(instance)
 
 
     --feet
-    if true then
+    if false then
         table.insert(instance.textures, {
             subtype = 'texfixture',
             type = 'sfixture',
@@ -1766,7 +1935,7 @@ function defaultSetupTextures(instance)
 
 
     --hand
-    if true then
+    if false then
         table.insert(instance.textures, {
             subtype = 'texfixture',
             type = 'sfixture',
@@ -1786,7 +1955,7 @@ function defaultSetupTextures(instance)
     end
 
     -- neck
-    if true then
+    if false then
         -- Assume neckSegments and torsoSegments are available
         local creation = instance.dna.creation
         local neckSegments = creation.neckSegments or 0
@@ -1829,7 +1998,7 @@ function defaultSetupTextures(instance)
     end
 
     -- head
-    if true then
+    if false then
         local creation = instance.dna.creation
         if not creation.isPotatoHead then
             table.insert(instance.textures, {
@@ -2916,7 +3085,7 @@ return lib
 
 ```
 
-src/editor-render.lua
+src//editor-render.lua
 ```lua
 -- here we just have snall functions that render thigns for the editor (not ui but active state, selction boxes that sot of thing)
 --
@@ -3098,7 +3267,7 @@ return lib
 
 ```
 
-src/file-browser.lua
+src//file-browser.lua
 ```lua
 -- this thing needs to be able to show files visually, lets start with just showing the filetype im after given a subdir.
 
@@ -3157,7 +3326,7 @@ return lib
 
 ```
 
-src/fixtures.lua
+src//fixtures.lua
 ```lua
 --fixtures.lua
 
@@ -3351,13 +3520,22 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
+    if (subtype == 'tile-repeat') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", subtype = 'tile-repeat', id = setId, label = '', extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
     if (subtype == 'texfixture') then
         local vertexCount = 4
         local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
             rect8(cfg.width, cfg.height, localX, localY)
         local shape = love.physics.newPolygonShape(vv)
         local fixture = love.physics.newFixture(body, shape, 0)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
+        fixture:setSensor(true)  -- Sensor so it doesn't collide
         local setId = uuid.generateID()
         fixture:setUserData({ type = "sfixture", id = setId, subtype = 'texfixture', label = '', extra = { vertexCount = vertexCount, vertices = vv } })
         registry.registerSFixture(setId, fixture)
@@ -3372,7 +3550,7 @@ return lib
 
 ```
 
-src/input-manager.lua
+src//input-manager.lua
 ```lua
 local lib = {}
 local camera = require 'src.camera'
@@ -3914,7 +4092,7 @@ return lib
 
 ```
 
-src/io.lua
+src//io.lua
 ```lua
 --io.lua
 local lib = {}
@@ -4029,6 +4207,7 @@ function lib.buildWorld(data, world, cam)
                 fixture:setFriction(shared.friction)
                 fixture:setRestitution(shared.restitution)
                 fixture:setGroupIndex(shared.groupIndex or 0)
+                fixture:setSensor(shared.sensor or false)
                 if fixtureData.userData then
                     fixture:setSensor(fixtureData.sensor)
                     local oldUD = utils.shallowCopy(fixtureData.userData)
@@ -4337,6 +4516,24 @@ function lib.gatherSaveData(world, camera)
                     bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
                     bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
                     bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
+
+
+                    -- local fixtures = fb:getFixtures()
+                    -- local ff = fixtures[1]
+                    local firstNonUserdataFixture = bodyFixtures[1]
+                    for k = 1, #bodyFixtures do
+                        local fixture = bodyFixtures[k]
+                        if fixture:getUserData() == nil then
+                            firstNonUserdataFixture = fixture
+                            break
+                        end
+                    end
+
+
+
+
+
+                    bodyData.sharedFixtureData.sensor = firstNonUserdataFixture:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?
                     local shape = first:getShape()
@@ -4593,6 +4790,7 @@ function lib.cloneSelection(selectedBodies, world)
                     newFixture:setRestitution(oldF:getRestitution())
                     newFixture:setFriction(oldF:getFriction())
                     newFixture:setGroupIndex(oldF:getGroupIndex())
+                    newFixture:setSensor(oldF:isSensor())
                 end
                 if offset > 0 then
                     -- here we should recreate the special fixtures..
@@ -4605,6 +4803,7 @@ function lib.cloneSelection(selectedBodies, world)
                         newFixture:setRestitution(oldF:getRestitution())
                         newFixture:setFriction(oldF:getFriction())
                         newFixture:setGroupIndex(oldF:getGroupIndex())
+
                         local oldUD = utils.deepCopy(oldF:getUserData())
                         local oldid = oldUD.id
 
@@ -4767,7 +4966,7 @@ return lib
 
 ```
 
-src/joint-handlers.lua
+src//joint-handlers.lua
 ```lua
 -- joint-handlers.lua
 local jointHandlers = {}
@@ -4954,7 +5153,7 @@ return jointHandlers
 
 ```
 
-src/joints.lua
+src//joints.lua
 ```lua
 --joints.lua
 
@@ -5290,7 +5489,7 @@ return lib
 
 ```
 
-src/logger.lua
+src//logger.lua
 ```lua
 -- src/logger.lua
 local inspect = require 'vendor.inspect'
@@ -5352,7 +5551,7 @@ return Logger
 
 ```
 
-src/math-utils.lua
+src//math-utils.lua
 ```lua
 --math-utils.lua
 local lib = {}
@@ -5407,7 +5606,7 @@ local function getDistance(x1, y1, x2, y2)
     return distance
 end
 
-local function getLengthOfPath(path)
+function lib.getLengthOfPath(path)
     local result = 0
     for i = 1, #path - 1 do
         local a = path[i]
@@ -5418,40 +5617,31 @@ local function getLengthOfPath(path)
 end
 
 local function evenlySpreadPath(result, path, index, running, spacing)
+    -- Stop if there's no next segment
+    if index >= #path then return end
+
     local here = path[index]
-    if index == #path then return end
+    local there = path[index + 1]
 
-    local nextIndex = index + 1
-    local there = path[nextIndex]
     local d = getDistance(here[1], here[2], there[1], there[2])
-    if (d + running) < spacing then
-        running = running + d
+
+    -- Handle degenerate segment (zero length)
+    if d == 0 then
         return evenlySpreadPath(result, path, index + 1, running, spacing)
-    else
-        if running >= d then
-            --print('missing one here i think', running/d)
-            local x = lerp(here[1], there[1], 1 or running / d)
-            local y = lerp(here[2], there[2], 1 or running / d)
-            --if index < #path-2 then
-            table.insert(result, { x, y, { 1, 0, 0 } })
-            --end
-            --running = d
-        end
-
-        while running <= d do
-            local x = lerp(here[1], there[1], running / d)
-            local y = lerp(here[2], there[2], running / d)
-            table.insert(result, { x, y, { 1, 0, 1 } })
-
-            running = running + spacing
-        end
-
-        if running >= d then
-            running = running - d
-            return evenlySpreadPath(result, path, index + 1, running, spacing)
-        end
     end
+
+    while running < d do
+        local t = running / d
+        local x = lerp(here[1], there[1], t)
+        local y = lerp(here[2], there[2], t)
+        table.insert(result, { x, y, { 1, 0, 1 } })
+        running = running + spacing
+    end
+
+    -- Carry leftover distance into next segment
+    return evenlySpreadPath(result, path, index + 1, running - d, spacing)
 end
+
 --https://love2d.org/forums/viewtopic.php?t=1401
 local function GetSplinePos(tab, percent, tension) --returns the position at 'percent' distance along the spline.
     if (tab and (#tab >= 4)) then
@@ -5497,22 +5687,32 @@ local function GetSplinePos(tab, percent, tension) --returns the position at 'pe
     end
 end
 
+
+
 lib.unloosenVanillaline = function(points, tension, spacing)
     local work = unpackNodePoints(points, true)
     local output = {}
-    local amt = 10
+    local amt = #points * 2
     for i = 0, amt do
         local t = (i / amt)
         if t >= 1 then t = 0.99999999 end
+        if t == 0 then t = 0.00000001 end
+
         local x, y = GetSplinePos(work, t, tension)
         table.insert(output, { x, y })
     end
+    --logger:inspect(output)
     local rrr = {}
     local r2 = evenlySpreadPath(rrr, output, 1, 0, spacing)
+
     output = unpackNodePoints(rrr)
+
+    -- what a hack ! the end is not good it looped back and i dont know how to solve it
+    -- in evenlyspreadpath....
+    table.remove(output, #output)
+    table.remove(output, #output)
     return output
 end
-
 
 
 
@@ -6605,7 +6805,7 @@ return lib
 
 ```
 
-src/object-manager.lua
+src//object-manager.lua
 ```lua
 -- object-manager.lua
 local lib = {}
@@ -7319,7 +7519,7 @@ return lib
 
 ```
 
-src/playtime-ui.lua
+src//playtime-ui.lua
 ```lua
 local lib = {}
 
@@ -7944,122 +8144,42 @@ function lib.drawAddShapeUI()
             return nil
         end
 
+        local function handleFixtureButton(x, y, width, label, shapeType, extraDataFunc)
+            local _, pressed, released = ui.button(x, y, width, label)
 
-        local _, pressed, released = ui.button(x, y, width, 'snapfixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'snap', { radius = 30 })
-                state.selection.selectedSFixture = fixture
+            if pressed then
+                ui.draggingActive = ui.activeElementID
+                local mx, my = love.mouse.getPosition()
+                local wx, wy = cam:getWorldCoordinates(mx, my)
+                state.interaction.offsetDragging = { 0, 0 }
             end
-            ui.draggingActive = nil
-        end
-        nextRow()
 
-
-        local _, pressed, released = ui.button(x, y, width, 'anchorfixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'anchor', { radius = 30 })
-                state.selection.selectedSFixture = fixture
+            if released then
+                local mx, my = love.mouse.getPosition()
+                local wx, wy = cam:getWorldCoordinates(mx, my)
+                local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
+                if #hitted > 0 then
+                    local body = hitted[#hitted]:getBody()
+                    local localX, localY = body:getLocalPoint(wx, wy)
+                    local extraData = extraDataFunc and extraDataFunc(body, localX, localY) or { radius = 30 }
+                    local fixture = fixtures.createSFixture(body, localX, localY, shapeType, extraData)
+                    state.selection.selectedSFixture = fixture
+                end
+                ui.draggingActive = nil
             end
-            ui.draggingActive = nil
-        end
-        nextRow()
 
-
-
-        local _, pressed, released = ui.button(x, y, width, 'texturefixture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local cx, cy, w, h = getCenterAndDimensions(body)
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'texfixture',
-                    { width = w, height = h })
-                state.selection.selectedSFixture = fixture
-            end
-            ui.draggingActive = nil
-        end
-        nextRow()
-
-
-        local _, pressed, released = ui.button(x, y, width, 'connectedtexture')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'connected-texture',
-                    { radius = 30 })
-                state.selection.selectedSFixture = fixture
-            end
-            ui.draggingActive = nil
+            nextRow()
         end
 
-        local _, pressed, released = ui.button(x, y, width, 'trace-vertices')
-        if pressed then
-            ui.draggingActive = ui.activeElementID
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-
-            state.interaction.offsetDragging = { 0, 0 }
-        end
-        if released then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-            if (#hitted > 0) then
-                local body = hitted[#hitted]:getBody()
-                local localX, localY = body:getLocalPoint(wx, wy)
-                local fixture = fixtures.createSFixture(body, localX, localY, 'trace-vertices',
-                    { radius = 30 })
-                state.selection.selectedSFixture = fixture
-            end
-            ui.draggingActive = nil
-        end
-        nextRow()
+        handleFixtureButton(x, y, width, 'snapfixture', 'snap')
+        handleFixtureButton(x, y, width, 'anchorfixture', 'anchor')
+        handleFixtureButton(x, y, width, 'texturefixture', 'texfixture', function(body, localX, localY)
+            local cx, cy, w, h = getCenterAndDimensions(body)
+            return { width = w, height = h }
+        end)
+        handleFixtureButton(x, y, width, 'connectedtexture', 'connected-texture')
+        handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
+        handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
     end)
 end
 
@@ -8320,6 +8440,11 @@ function lib.drawWorldSettingsUI()
                 state.world.profiling = true
             end
         end
+        nextRow()
+
+
+        ui.label(x, y, string.format("%.2f", love.graphics.getStats().texturememory / 1000000) .. ' MB')
+        ui.label(x + 150, y, love.graphics.getStats().drawcallsbatched .. 'batched')
     end)
 end
 
@@ -8879,11 +9004,60 @@ function lib.drawSelectedSFixture()
                 end
             end
 
+            if oldUD.subtype == 'tile-repeat' then
+                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                oldTexFixUD.extra.tileWidthM = oldTexFixUD.extra.tileWidthM or 1
+                oldTexFixUD.extra.tileHeightM = oldTexFixUD.extra.tileHeightM or 1
+                oldTexFixUD.extra.tileRotation = oldTexFixUD.extra.tileRotation or 0
+                local twm = createSliderWithId(myID, 'twm', x, y, 160, 0.01,
+                    100,
+                    oldTexFixUD.extra.tileWidthM, function(v)
+                        oldTexFixUD.extra.tileWidthM = v
+                    end)
+                nextRow()
+                nextRow()
+                local thm = createSliderWithId(myID, 'thm', x, y, 160, 0.01,
+                    100,
+                    oldTexFixUD.extra.tileHeightM, function(v)
+                        oldTexFixUD.extra.tileHeightM = v
+                    end)
+                nextRow()
+
+                local tr = createSliderWithId(myID, 'tr', x, y, 160, 0,
+                    2 * math.pi,
+                    oldTexFixUD.extra.tileRotation, function(v)
+                        oldTexFixUD.extra.tileRotation = v
+                    end)
+
+                nextRow()
+
+                local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                    math.floor(oldTexFixUD.extra.zOffset or 0),
+                    function(v)
+                        oldTexFixUD.extra.zOffset = math.floor(v)
+                    end,
+                    (not state.world.paused) or dirtyBodyChange)
+
+                nextRow()
+                handleURLInput(myID, 'bgURL', x, y, 150, oldTexFixUD.extra.main.bgURL,
+                    function(u)
+                        oldTexFixUD.extra.main.bgURL = u
+                    end)
+                nextRow()
+                local dirty = function() oldTexFixUD.extra.dirty = true end
+                handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
+                    function(color) oldTexFixUD.extra.main.tint = color end, dirty)
+            end
+
+
+
             if oldUD.subtype == 'trace-vertices' then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 oldTexFixUD.extra.startIndex = oldTexFixUD.extra.startIndex or 1
                 oldTexFixUD.extra.endIndex = oldTexFixUD.extra.endIndex or 1
-
+                oldTexFixUD.extra.tension = oldTexFixUD.extra.tension or .05
+                oldTexFixUD.extra.spacing = oldTexFixUD.extra.spacing or 10
+                oldTexFixUD.extra.width = oldTexFixUD.extra.width or 100
                 local body = state.selection.selectedSFixture:getBody()
                 local parentVerts = body:getUserData().thing.vertices
                 --print(#parentVerts)
@@ -8895,7 +9069,7 @@ function lib.drawSelectedSFixture()
                         oldTexFixUD.extra.startIndex = math.floor(v + 0)
                     end)
 
-                ui.label(x + 50, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.startIndex)
+                ui.label(x + 130, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.startIndex)
                 nextRow()
                 local endIndexSlider = createSliderWithId(myID, 'endIndex', x, y, 160, -(#parentVerts / 2),
                     (#parentVerts / 2),
@@ -8903,12 +9077,27 @@ function lib.drawSelectedSFixture()
                         oldTexFixUD.extra.endIndex = math.floor(v + 0)
                     end)
 
-                ui.label(x + 50, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.endIndex)
+                ui.label(x + 130, y + (BUTTON_HEIGHT - ui.fontHeight), oldTexFixUD.extra.endIndex)
 
                 nextRow()
-
+                local tensionSlider = createSliderWithId(myID, 'tension', x, y, 160, 0.01,
+                    0.5,
+                    oldTexFixUD.extra.tension, function(v)
+                        oldTexFixUD.extra.tension = v
+                    end)
                 nextRow()
-
+                local spacingSlider = createSliderWithId(myID, 'spacing', x, y, 160, 1,
+                    100,
+                    oldTexFixUD.extra.spacing, function(v)
+                        oldTexFixUD.extra.spacing = v
+                    end)
+                nextRow()
+                local widthSlider = createSliderWithId(myID, 'width', x, y, 160, 1,
+                    1000,
+                    oldTexFixUD.extra.width, function(v)
+                        oldTexFixUD.extra.width = v
+                    end)
+                nextRow()
                 local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
@@ -9480,6 +9669,14 @@ function lib.drawUpdateSelectedObjectUI()
                         local fb = thing.body
                         local fixtures = fb:getFixtures()
                         local ff = fixtures[1]
+                        local firstNonUserdataFixture = ff
+                        for k = 1, #fixtures do
+                            local fixture = fixtures[k]
+                            if fixture:getUserData() == nil then
+                                firstNonUserdataFixture = fixture
+                                break
+                            end
+                        end
                         local groupIndex = ff:getGroupIndex()
                         local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
                             groupIndex)
@@ -9493,6 +9690,18 @@ function lib.drawUpdateSelectedObjectUI()
                             for j = 1, #fixtures do
                                 fixtures[j]:setGroupIndex(value)
                                 count = count + 1
+                            end
+                        end
+                        nextRow()
+                        if ui.checkbox(x, y, firstNonUserdataFixture:isSensor(), 'sensor') then
+                            -- ff:setSensor(not ff:isSensor())
+                            local b = thing.body
+                            local fixtures = b:getFixtures()
+                            local value = not firstNonUserdataFixture:isSensor()
+                            for j = 1, #fixtures do
+                                if not fixtures[j]:getUserData() then
+                                    fixtures[j]:setSensor(value)
+                                end
                             end
                         end
                     end
@@ -9988,7 +10197,7 @@ return lib
 
 ```
 
-src/polyline.lua
+src//polyline.lua
 ```lua
 local polyline = {}
 
@@ -10359,7 +10568,7 @@ return polyline
 
 ```
 
-src/recorder.lua
+src//recorder.lua
 ```lua
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local registry = require 'src.registry'
@@ -10584,7 +10793,7 @@ return recorder
 
 ```
 
-src/registry.lua
+src//registry.lua
 ```lua
 -- registry.lua
 local utils = require 'src.utils'
@@ -10667,7 +10876,7 @@ return registry
 
 ```
 
-src/scene-loader.lua
+src//scene-loader.lua
 ```lua
 local lib = {}
 local state = require 'src.state'
@@ -10761,7 +10970,7 @@ return lib
 
 ```
 
-src/script.lua
+src//script.lua
 ```lua
 --script.lua
 local script = {}
@@ -10881,7 +11090,7 @@ return script
 
 ```
 
-src/selection-rect.lua
+src//selection-rect.lua
 ```lua
 --selection-rect.lua
 local lib = {}
@@ -10988,7 +11197,7 @@ return lib
 
 ```
 
-src/shapes.lua
+src//shapes.lua
 ```lua
 -- shapes.lua
 
@@ -11282,7 +11491,7 @@ return shapes
 
 ```
 
-src/snap.lua
+src//snap.lua
 ```lua
 -- general usage snap logic
 --
@@ -11638,7 +11847,7 @@ return lib
 
 ```
 
-src/state.lua
+src//state.lua
 ```lua
 local state = {}
 
@@ -11738,7 +11947,7 @@ return state
 
 ```
 
-src/ui-all.lua
+src//ui-all.lua
 ```lua
 -- ui-all.lua
 local ui = {}
@@ -12390,7 +12599,7 @@ return ui
 
 ```
 
-src/ui-textinput.lua
+src//ui-textinput.lua
 ```lua
 --ui-text-input.lua
 return function(ui)
@@ -12865,7 +13074,7 @@ end
 
 ```
 
-src/utils.lua
+src//utils.lua
 ```lua
 --utils.lua
 
@@ -13051,7 +13260,7 @@ return lib
 
 ```
 
-src/uuid.lua
+src//uuid.lua
 ```lua
 --uuid.lua
 local random = love.math.random

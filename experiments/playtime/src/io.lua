@@ -62,7 +62,7 @@ function lib.buildWorld(data, world, cam)
         body:setAngle(bodyData.angle)
         body:setLinearVelocity(bodyData.linearVelocity[1], bodyData.linearVelocity[2])
         body:setAngularVelocity(bodyData.angularVelocity)
-        body:setFixedRotation(bodyData.fixedRotation)
+        body:setFixedRotation(bodyData.fixedRotation or false)
         body:setLinearDamping(bodyData.linearDamping or 0)
         body:setAngularDamping(bodyData.angularDamping or 0)
 
@@ -415,29 +415,26 @@ function lib.gatherSaveData(world, camera)
             local bodyFixtures = body:getFixtures()
             if #bodyFixtures >= 1 then
                 if #bodyFixtures >= 1 then
-                    local first = bodyFixtures[1]
-                    bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
-                    bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
-                    bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
-                    bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
-
-
                     -- local fixtures = fb:getFixtures()
                     -- local ff = fixtures[1]
-                    local firstNonUserdataFixture = bodyFixtures[1]
+                    local first = bodyFixtures[1]
+
                     for k = 1, #bodyFixtures do
                         local fixture = bodyFixtures[k]
                         if fixture:getUserData() == nil then
-                            firstNonUserdataFixture = fixture
+                            first = fixture
                             break
                         end
                     end
 
 
+                    bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
+                    bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
+                    bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
+                    bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
 
+                    bodyData.sharedFixtureData.sensor = first:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
 
-                    -- does this cause the r
-                    bodyData.sharedFixtureData.sensor = firstNonUserdataFixture:isSensor()  -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?
                     local shape = first:getShape()
