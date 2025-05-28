@@ -434,6 +434,7 @@ function lib.gatherSaveData(world, camera)
                     bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
 
                     bodyData.sharedFixtureData.sensor = first:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
+
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?
                     local shape = first:getShape()

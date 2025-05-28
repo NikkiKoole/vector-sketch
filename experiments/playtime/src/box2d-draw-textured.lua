@@ -16,6 +16,26 @@ local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 local imageCache = {}
 local shrinkFactor = 1
 
+
+-- local shaderCode = love.filesystem.read("shaders/offset-halftone.glsl")
+-- local halttoneShader = love.graphics.newShader(shaderCode)
+
+
+-- --local shaderCode2   = love.filesystem.read("shaders/chromasep.glsl")
+-- local chromaShader  = love.graphics.newShader [[
+-- extern vec2 direction;
+-- vec4 effect(vec4 color, Image texture, vec2 tc, vec2 _)
+-- {
+--   return color * vec4(
+--     Texel(texture, tc - direction).r,
+--     Texel(texture, tc).g,
+--     Texel(texture, tc + direction).b,
+--     1.0);
+-- }]]
+
+local moonshine     = require 'moonshine'
+local effect        = moonshine(moonshine.effects.shadow)
+
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
 end
@@ -830,8 +850,11 @@ function lib.drawTexturedWorld(world)
         end
     end
 
-
+    --love.graphics.setShader(chromaShader)
+    --chromaShader:send("direction", { 10 * love.math.random(), 10 })
     --for _, body in ipairs(bodies) do
+
+    --effect(function()
     for i = 1, #drawables do
         local body = drawables[i].body
         local thing = drawables[i].thing
@@ -840,7 +863,7 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'texfixture' then
             --if texfixture then
             local extra = drawables[i].extra
-            if not extra.OMP then -- this is the BG and FG routine
+            if not extra.OMP then     -- this is the BG and FG routine
                 if extra.main and extra.main.bgURL then
                     drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
                     --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
@@ -862,7 +885,7 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
             local extra = drawables[i].extra
-            if not extra.OMP then -- this is the BG and FG routine
+            if not extra.OMP then     -- this is the BG and FG routine
                 if extra.main and extra.main.bgURL then
                     local img = getLoveImage('textures/' .. extra.main.bgURL)
                     if img then
@@ -911,15 +934,15 @@ function lib.drawTexturedWorld(world)
                 local bb = mathutils.getBoundingRect(vertices)
                 -- bb.width and bb.height
                 local uvParams = {
-                    tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
-                    tileHeight = texH * thm, --bb.height,  -- world units per tile vertically
-                    rotate = tr,             -- radians
-                    offsetX = 0,             -- offset in world units
+                    tileWidth = texW * twm,      --bb.width,    -- world units per tile horizontally
+                    tileHeight = texH * thm,     --bb.height,  -- world units per tile vertically
+                    rotate = tr,                 -- radians
+                    offsetX = 0,                 -- offset in world units
                     offsetY = 0,
-                    scaleX = 1,              -- scale texture space (can be 1 / repeatX)
+                    scaleX = 1,                  -- scale texture space (can be 1 / repeatX)
                     scaleY = 1,
-                    anchor = "center",       -- or "top-left"
-                    keepAspect = false       -- optional flag to preserve aspect ratio
+                    anchor = "center",           -- or "top-left"
+                    keepAspect = false           -- optional flag to preserve aspect ratio
                 }
 
                 local function transformUV(x, y, cx, cy, opts)
@@ -1007,7 +1030,7 @@ function lib.drawTexturedWorld(world)
 
                 local w, h = img:getDimensions()
 
-                local hairTension = drawables[i].extra.tension or .02 -- love.math.random() --.02
+                local hairTension = drawables[i].extra.tension or .02     -- love.math.random() --.02
                 local spacing = drawables[i].extra.spacing or 5
                 -- 5                                                    --* multipliers.hair.sMultiplier
                 local coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
@@ -1018,7 +1041,7 @@ function lib.drawTexturedWorld(world)
 
                 --local factor = (length / h)
                 --local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
-                local width = drawables[i].extra.width or 100 -- 100 --(w * factor) / 2
+                local width = drawables[i].extra.width or 100     -- 100 --(w * factor) / 2
                 --2                         -- 100             (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
                 local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
@@ -1049,6 +1072,8 @@ function lib.drawTexturedWorld(world)
             --logger:inspect()
         end
     end
+    --  end)
+    --love.graphics.setShader()
     --love.graphics.setDepthMode()
 end
 
