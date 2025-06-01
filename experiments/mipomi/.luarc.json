@@ -1,0 +1,13 @@
+{
+  "runtime": {
+    "version": "LuaJIT"
+  },
+  "workspace": {
+    "library": ["./love2d/library"],
+    "checkThirdParty": false
+  },
+  "diagnostics": {
+    "disable": ["lowercase-global", "duplicate-set-field", "undefined-global"],
+    "globals": ["jit", "love"]
+  }
+}

@@ -7,7 +7,7 @@ local cam              = require('lib.cameraBase').getInstance()
 local canvas           = require 'lib.canvas'
 local text             = require 'lib.text'
 local box2dGuyCreation = require 'lib.box2dGuyCreation'
-local mathutils        = require 'src.math-utils'
+local mathutils        = require 'lib.math-utils'
 
 local lib              = {}
 

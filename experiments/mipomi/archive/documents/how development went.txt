@@ -1,0 +1,196 @@
+Hi hello there.
+
+today we make a little language, and have our little mipos speak it too!
+
+this started with existing app. show
+
+mathematical bezier line upperlip lowerlip
+
+realise lip syncing, shapes of mouths.
+
+think aha, what if my language is specifically easy to lipsync
+
+so alway start with consonat and then vowel.
+
+then i figure hey they are called mipo, that should mean something, mi means I or Me that makes sense and then po menas to give
+
+ok lets make a full table of consonant  i want to use, that start the syllabels M,B,P,F,K,L,T,J,N,D,S,H,W
+and we have these vowels after them, A I O
+that gives a totla of 39 syllables.
+
+i was feeling wild so at this point i also added U/OE and AI  (so i could have my company name mi-po-lai) mean something
+combinattional explosion 13 * 5 = 65 samples to record. a messy categoru and lots of weird overlaps.
+
+
+```
+Group (Theme)	Syllable	Meaning
+🧍 M-group (Self, Emotion, Body)	ma	nurture, care
+mo	touch, feel
+mi	me, self
+mu	inside, stillness
+mai	joy, delight
+👥 B-group (Social, Relationships)	ba	child, little one
+bo	friend, companion
+bi	other, different
+bu	play, fun
+bai	bond, togetherness
+🏃 P-group (Action, Flow)	pa	start, spark
+po	give, offer
+pi	go, move forward
+pu	push, jump
+pai	throw, launch
+🌿 F-group (Nature, Elements)	fa	fire, heat, urgency
+fo	air, breath
+fi	leaf, plant
+fu	water, liquid
+fai	wind, freshness
+🏠 K-group (Objects, Places)	ka	object, structure
+ko	field, area, container
+ki	tool, mechanism
+ku	room, space
+kai	land, machine
+🎨 L-group (Beauty, Form, Aesthetic)	la	light, elegance
+lo	shape, soft form
+li	small, fine detail
+lu	music, rhythm
+lai	beauty, harmony
+🕰 T-group (Time, Cause, Pattern)	ta	past, before
+to	future, after
+ti	now, present
+tu	repeat, again, start
+tai	purpose, goal
+📣 J-group (Speech, Sound, Expression)	ja	call, name
+jo	voice, hearing
+ji	speak, word, language
+ju	sing, shout, perform
+jai	express, story
+🚫 N-group (Negation, Rest, Need)	na	without, empty
+no	no, stop
+ni	need, hunger
+nu	sleep, stillness
+nai	end, vanish
+🧻 D-group (Body, Instinct, Rawness)	da	eat, take in
+do	poop, dump
+di	pee, drip
+du	fart, release gas
+dai	hunger, craving
+```
+
+so i decide to trim, you have to kill your darlings.
+the AI and OE sounds had to go.
+
+the broot syllables specificallyaboutpooping adn farting also needed to go (who knows they might come back)
+
+we are left with just 13 * 3 syllabels = 39 much easier to sample and reaosn about and oversee :
+```
++--------------------------+--------------------------+------------------------------+------------------------------+
+| category              X  |   A                      |   I                          |   O                          |
++--------------------------+--------------------------+------------------------------+------------------------------+
+|self / feeling         M  |MA (nurture 🤱🌼)         |MI ( I 🧍)                   |MO (love / feel ❤️🤏)         |
+|living beings          B  |BA (life / child 🌱🧒)    |BI (peer / kin 🧑‍🤝‍🧑)           |BO (animal 🐾🐶)              |
+|possession / transfer  P  |PA ( keep / hold 📚👐)    |PI (take / receive 📥✋)     |PO (give 🎁🤲)                |
+|nature / element       F  |FA (fire / heat 🔥🌞)     |FI (earth / soil 🌎🪴)       |FO (sky / air 💨☁️)           |
+|thing / place          K  |KA (object / stuff 📦🎒)  |KI ( tool / device 🛠️🔧)     |KO (place / container 📍🏠)   |
+|beauty / design        L  |LA ( light / good ✨💡)   |LI (fine / detail 🧩🎨)      |LO (shape / form 🔷🖼️)        |
+|time / goal	        T  |TA (past ⏮️📜)            |TI (now ⏰🕰️)                |TO (future ⏭️🚀)              |
+|voice / story          J  |JA (speak 🗣️💬)           |JI (name / identity 📖🆔)    |JO (you / listener 👉🫵)      |
+|negation / rest	    N  |NA (none / absence 🚫)    |NI (rest / sleep 😴🛌)       |NO (end / negate ⛔🔚)        |
+|body / substance       D  |DA (body / flesh 🧍🫀)    |DI (eat / drink 🍽️🥤)        |DO (stone / rock 🪨🧱)        |
+|mind / pattern         S  |SA (idea 💭🧠)            |SI (sign / tag 🏷️📛)         |SO (pattern / structure 🌀📐) |
+|action / control       H  |HA (start ⚡🔛)           |HI (go / act 🚶🏃)           |HO (stop / halt ✋🛑)         |
+| water / qualities     W  |WA (water / flow 💧🌊)    |WI ( cold / ice ❄️🧊)        |WO (round / solid 🧸⚪)       |
++--------------------------+--------------------------+------------------------------+------------------------------+
+```
+
+ok now we have a basic idea and a bunch of syllabels, lets record a few and see if i can get some sound fron the computer
+
+
+- play a singel sample on a keypress
+
+- have a say('') function where i can type something that will be said.
+'mi-po pi-pi'
+
+we are monophonic so you just say one tyhing after another.
+little pause between syllables, bigger pause between words, add a rest ','
+think about ? that pitches up,
+words usually have ephasize on some part, usuallyth efirst, so i need to be able to say a syllable emphasized and not emphasized
+
+ ok so lets do
+ CAPS for emphasized parts like 'MI-po'
+ then i figured we might also want some singing
+ so you can add a note arker before the thing liek:
+
+ '[c3]MI-po'
+
+ play frere jaques
+
+ what is left, vibrato, picthing up pitching dowmn, oh yes reusing the bezier curves knowledge, use a bezier curve as a picth curvature for a syllabels
+
+ a little preset config object talking about the root note of a said thing, that enables notes to also be defined relative in semitones:
+ '[-1]MI-po' or fracyional even todo microtonal things: '[-.5]MI-po'
+
+ in that same config object we can do some randomizers, so we can type '{rnd=3} mi mi mi' asn say mi three times with a radnomizer that goes up and down 3 semitone, so every mi can sound differnt higher/lower.
+
+
+ legato, stress,
+
+ thinking more baout notation:
+ ```
+
+-- ma     = normal
+-- MA     = emphasized
+-- ma!    = louder (1.25)
+-- ma!!   = very loud (1.5)
+-- ma<    = soft (0.75)
+-- ma<<   = whisper (0.5)
+-- Marker	Effect
+-- !	Loud
+-- !!	Very Loud
+-- <	Soft
+-- <<	Whisper
+-- ~	Legato glide
+-- '	Clipped / Glottal / Cutoff
+-- -	(Stutter / pre-played repeat?)
+-- ?	Question rise
+-- MA	Emphasis
+-- Ma/mA	Tone direction
+ ```
+
+ doing more on the language itself, being tempted to add the 'oe' sound, because it sounds so great when toddlers do it .
+
+ but not usefull..
+
+ ```
+ 🔤 Expanded Language Matrix with U Column
+Category (C)	A (origin)	I (internal)	O (relational)	U (expressive)
+M (self / feeling)	MA = nurture 🤱🌼	MI = I / ego 🧍	MO = love / feel ❤️🤏	MU = mood / emotion wave 😢😋
+B (living beings)	BA = life / child 🌱🧒	BI = peer / kin 🧑‍🤝‍🧑	BO = animal 🐾🐶	BU = silly creature / plushie 🤪🧸
+P (transfer)	PA = keep / hold 📚👐	PI = take / receive 📥✋	PO = give 🎁🤲	PU = throw / expel 💨📤
+F (elements)	FA = fire / heat 🔥🌞	FI = earth / soil 🌎🪴	FO = sky / air 💨☁️	FU = forceful wind / blast 🌬️💨
+K (things/places)	KA = object / stuff 📦🎒	KI = tool / device 🛠️🔧	KO = place / container 📍🏠	KU = blob / toy / soft thing 🧸🧼
+L (beauty/design)	LA = light / good ✨💡	LI = fine / detail 🧩🎨	LO = shape / form 🔷🖼️	LU = cute / squishy aesthetic 🌸🫧
+T (time/goal)	TA = past ⏮️📜	TI = now ⏰🕰️	TO = future ⏭️🚀	TU = linger / echo / drag 🌀🕓
+J (voice/story)	JA = speak 🗣️💬	JI = name / identity 📖🆔	JO = you / listener 👉🫵	JU = babble / silly talk 🥴📣
+N (negation/rest)	NA = none / absence 🚫	NI = rest / sleep 😴🛌	NO = end / negate ⛔🔚	NU = drain / empty / let go 💨🕳️
+D (body/substance)	DA = body / flesh 🧍🫀	DI = eat / drink 🍽️🥤	DO = stone / rock 🪨🧱	DU = mush / squish / poop 💩🥣
+S (mind/pattern)	SA = idea 💭🧠	SI = sign / tag 🏷️📛	SO = pattern / structure 🌀📐	SU = swirl / loop / reverie 🔄🌪️
+H (action/control)	HA = start ⚡🔛	HI = go / act 🚶🏃	HO = stop / halt ✋🛑	HU = bounce / tumble 🤸🪀
+W (water/quality)	WA = water / flow 💧🌊	WI = cold / ice ❄️🧊	WO = round / solid ⚪🧸	WU = wet / gooey 💦🪱
+
+ ```
+
+ things can be described without it, and you know keep it simple stupid!
+
+
+thinking about the issue with recorded syllabels, being not of the same note, they need to be offsetted.
+also thining about dirrent elongated sounds like miiiiii-po or mi-poooo etc, also thinkinga bout whispering and shouting to be separate recorded samples with their own timbre.
+
+combinationbal explosion incoming again.
+
+i need to see if i can separate the consonatnt from the voewels, record tehm separately and mix or something.
+
+ok to be coninued
+
+
+A O I
+M,B,P,F,K,L,T,J,N,D,S,H,W
