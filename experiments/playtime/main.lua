@@ -115,7 +115,7 @@ function love.load(args)
         -- b:setFixtureFriction(10)
     end
 
-    effect = moonshine(moonshine.effects.dmg)
+    --effect = moonshine(moonshine.effects.dmg)
     --.chain(moonshine.effects.vignette)
     --effect.filmgrain.size = 2
 
@@ -243,18 +243,18 @@ function love.draw()
     end
 
     box2dDrawTextured.makeCombinedImages()
-    effect(function()
-        cam:push()
-        love.graphics.setColor(1, 1, 1, 1)
-        box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+    --effect(function()
+    cam:push()
+    love.graphics.setColor(1, 1, 1, 1)
+    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
-        box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
 
-        script.call('draw')
+    script.call('draw')
 
-        editorRenderer.renderActiveEditorThings()
-        cam:pop()
-    end)
+    editorRenderer.renderActiveEditorThings()
+    cam:pop()
+    -- end)
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
 
@@ -324,7 +324,7 @@ local function randomHexColor()
 end
 
 function love.resize(w, h)
-    effect.resize(w, h)
+    --   effect.resize(w, h)
 end
 
 function love.keypressed(key)

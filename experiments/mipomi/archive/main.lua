@@ -154,6 +154,9 @@ function love.keypressed(key)
             -- while i'm typing this i also am thinking of some marker that goes before a word or syllable to offset the picth
             -- maybe just reuse [] but instead of a absolute value it has a relative offset? like  [+1]
         end,
+        ['x'] = function()
+            say('{root=c4} ?mi-mi-mi?')
+        end,
         ['escape'] = function() love.event.quit() end,
     }
     if keymap[key] then keymap[key]() end
@@ -340,7 +343,7 @@ end
 
 function randomSayableString()
     local endings = { '', '', '', '?' }
-    local output = { '{root=c4 rnd=15}' }
+    local output = { '{root=c4 rnd=1}' }
 
     for _ = 1, 4 do
         local syllCount = love.math.random(1, 3)
@@ -555,7 +558,7 @@ end
 pitchCurves = {
     ['neutral'] = { 0.0, 1.0, 0.3, 0.98, 0.6, 1.02, 1.0, 1.0 },
     ['emphasis-first'] = { 0.0, 1.3, 0.3, 1.1, 0.6, 1.0, 1.0, 1.0 },
-    ['question-tone'] = { 0.0, 1.0, 0.5, 1.05, 0.8, 1.1, 1.0, 1.25 },
+    ['question-tone'] = { 0.0, 1.0, 0.5, 1.05, 0.8, 1.1, 1.0, 2.25 },
     -- ['excited-bounce'] = { 0.0, 1.8, 0.3, 1.5, 0.5, 1.8, 0.8, 1.1, 1.0, 0.8 },
     -- ['bounce'] = { 0.0, 1.0, 0.2, 1.3, 0.4, 0.9, 0.8, 1.2, 1.0, 1.0 },
     -- ['drop'] = { 0, 1, 0.3, 1, 1.0, 0.9 },
