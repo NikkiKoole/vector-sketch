@@ -77,6 +77,7 @@
 
 function love.load()
     keys = { 'ma', 'mi', 'mo', 'ba', 'bi', 'bo', 'fa', 'fi', 'fo', 'pa', 'pi', 'po', 'ka', 'ki', 'ko' }
+    keys = { 'simple' }
     --keys = { 'to3', 'ja3', 'ni3' }
     syllables = {}
     for _, key in ipairs(keys) do
@@ -137,9 +138,10 @@ function love.keypressed(key)
         ['7'] = function() say('?MI-po? [c5]?MI-po? [c2]?MI-po?') end,
         ['8'] = function() say('[c4]mi [d4]mi [e4]mi') end,
         ['9'] = function()
-            local s = randomSayableString()
+            say('simple? simple')
+            -- local s = randomSayableString()
             -- print(s)
-            say(s)
+            -- say(s)
         end,
         ['0'] = function()
             --  say('[d#4]ma [d4]ma [db4]ma')
@@ -200,6 +202,7 @@ function playSyllable(syllableData)
     if not syllables[sKey] then
         print('SYLLABLE DOENST EXIST:', sKey)
     end
+    print(syllableData.curveName or 'neutral')
     local pitchCurve = love.math.newBezierCurve(pitchCurves[syllableData.curveName or 'neutral'])
     local activeSource = {
         emphasized = syllableData.emphasized,
@@ -432,6 +435,7 @@ function say(text)
 
             if currentWord:sub(-1) == '?' then
                 currentPitchCurveName = 'question-tone'
+
                 currentWord = currentWord:sub(1, -2)
             end
 
@@ -520,6 +524,8 @@ function say(text)
                         --local stutterPitch = finalPitchTargetRatio * (2 ^ (melodyOffset / 12))
                         --local stutterPitch = finalPitchTargetRatio * (2 ^ (((j - 1) * 1) / 12))   -- ascending
                         --local stutterPitch = finalPitchTargetRatio * (2 ^ (((1 - j) * 1) / 12))   -- descending
+
+
                         table.insert(sayQueue, {
                             name = sData.name,
                             emphasized = sData.emphasized,
@@ -533,7 +539,8 @@ function say(text)
                     end
                 end
 
-
+                -- print(currentPitchCurveName,
+                --     currentPitchCurveName or (sData.emphasized and 'emphasis-first') or 'neutral')
                 table.insert(sayQueue, {
                     name = sData.name,
                     emphasized = sData.emphasized,
