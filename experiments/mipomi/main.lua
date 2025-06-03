@@ -85,8 +85,10 @@ local inspect = require 'inspect'
 -- say mipo??     more extreme
 -- say mi-po_    opposite
 -- say(?mi-po-po-po) -- global rise
--- add paues with ,
-
+-- say(_mi-po-po) -- global fall
+-- add pauses with , also always put extra space aroudn to make typing less error prone
+-- start with notes like [c4] == default, [c3] octave down, [c5] octave up
+-- also use relative notes and '[c3]mi [-1]mi [-2]mi' will start at c3 then go to b3 then a3
 
 
 function love.load()
@@ -109,7 +111,8 @@ end
 
 function love.keypressed(key)
     local keymap = {
-        ['q'] = function() say('{root=g3} _MI-mi-MI,_MI-mi-MI ,') end,
+        ['q2'] = function() say('{root=g3} _MI-mi-MI, ?MI-mi-MI ,') end,
+        ['q'] = function() say('[c3]mi [-1]mi [-2]mi') end,
         ['a'] = function() say('{root=g4} MI-po? PI-MO ?ka-ka-ka ja-ja ki-ka ko-ko?') end,
         ['b'] = function() say('?mi-mi? MI-mi? MI-mi-mi-[+2]mi') end,
         ['c'] = function() say('mi-mi-mi-mi-mi-mi-mi?') end,
@@ -619,7 +622,11 @@ pitchCurves = {
     ['neutral'] = { 0.0, 1.0, 0.3, 0.98, 0.6, 1.02, 1.0, 1.0 },
     ['emphasis-first'] = { 0.0, 1.3, 0.3, 1.1, 0.6, 1.0, 1.0, 1.0 },
     ['question-tone'] = { 0.0, 1.0, 0.5, 1.05, 0.8, 1.1, 1.0, 1.75 },
-    ['question-strong'] = { 0.0, 1.0, 0.5, 1.05, 0.8, 1.5, 1.0, 2.5 },
+    ['question-strong'] = {
+        0.0, 1.0,
+        0.5, 1.05,
+        0.8, 1.5,
+        1.0, 2.5 },
     ['falling-tone'] = { 0.0, 1.0, 0.5, 1.05, 0.8, 1.1, 1.0, 0.15 },
     -- ['excited-bounce'] = { 0.0, 1.8, 0.3, 1.5, 0.5, 1.8, 0.8, 1.1, 1.0, 0.8 },
     -- ['bounce'] = { 0.0, 1.0, 0.2, 1.3, 0.4, 0.9, 0.8, 1.2, 1.0, 1.0 },
