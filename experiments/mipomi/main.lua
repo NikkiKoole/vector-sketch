@@ -4,12 +4,8 @@ local inspect = require 'inspect'
 -- add extra markers like (breathout) (sign) (tsk) (ooof) (ough) etc.
 -- Allow speaker-specific variation (some Mipos always end high, some stutter, some have deep voices).
 -- Try combining pitch with timing (e.g. slower syllable = sadder).
--- lets just get rid of the dash between syllables
 -- make the code testable, for that we need to unroll the bezier to pure code.
--- Allow default curves by word function (e.g., questions = rising).
 -- Or define speaker personalities that bias pitch/timing differently?
--- 3. 🫨 Stutter (Pre-decided syllable repetition)
---Yes, this is more complex — but you’re right to think "decide before queueing".
 -- another thing i want is emotion that sort of decide on the gap length
 -- another though would be volume markers!
 
@@ -112,7 +108,10 @@ end
 function love.keypressed(key)
     local keymap = {
         ['q2'] = function() say('{root=g3} _MI-mi-MI, ?MI-mi-MI ,') end,
-        ['q'] = function() say('[c3]mi [-1]mi [-2]mi') end,
+        ['q3'] = function() say('[c3]mi [-1]mi [-2]mi') end,
+        ['q'] = function() say('{root=c5} mi-mi-mi [-4]mi-[c5]mi [+3]mi') end, -- mario theme!
+
+
         ['a'] = function() say('{root=g4} MI-po? PI-MO ?ka-ka-ka ja-ja ki-ka ko-ko?') end,
         ['b'] = function() say('?mi-mi? MI-mi? MI-mi-mi-[+2]mi') end,
         ['c'] = function() say('mi-mi-mi-mi-mi-mi-mi?') end,
