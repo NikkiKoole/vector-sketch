@@ -1,6 +1,6 @@
 -- Love2D prototype: 5-way emotional blend with relative phoneme overlay
 -- Uses normalized [-1, 1] shape data, scaled by mouth bounds and phoneme settings
-
+local inspect = require 'inspect'
 function love.load()
     numPoints = 8
 
@@ -15,7 +15,7 @@ function love.load()
             { x = 0.75, y = 0.5 }, { x = 0.0, y = 0.3 }, { x = -0.75, y = 0.5 },
         },
         happy = {
-            { x = -1.0, y = -0.5 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = -0.2 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = -0.5 },
+            { x = -1.0, y = -0.3 }, { x = -0.5, y = -0.3 }, { x = 0.0, y = -0.3 }, { x = 0.5, y = -0.3 }, { x = 1.0, y = -0.3 },
             { x = 0.75, y = 0.6 }, { x = 0.0, y = 0.8 }, { x = -0.75, y = 0.6 },
         },
         angry = {
@@ -38,8 +38,8 @@ function love.load()
             { x = 0.5,  y = 0 }, { x = 0.0, y = 0.05 }, { x = -0.5, y = 0 },
         },
         happy = {
-            { x = -1.0, y = -0.5 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = -0.2 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = -0.5 },
-            { x = 0.5,  y = -0.2 }, { x = 0.0, y = -0.2 }, { x = -0.5, y = -0.2 },
+            { x = -1.0, y = -0.3 }, { x = -0.5, y = -0 }, { x = 0.0, y = -0 }, { x = 0.5, y = -0 }, { x = 1.0, y = -0.3 },
+            { x = 0.5,  y = -0 }, { x = 0.0, y = -0 }, { x = -0.5, y = -0 },
         },
         angry = {
             { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.2 }, { x = 0.0, y = -0.3 }, { x = 0.75, y = -0.2 }, { x = 1.0, y = 0.0 },
@@ -55,10 +55,23 @@ function love.load()
 
     mouthBounds = {
         width = 80,
-        height = 80
+        height = 180
     }
 
-    mouthShapes = {
+    teethParams = {
+        width = 0.5,    -- percentage of mouthBounds.width
+        height = 0.08,  -- percentage of mouthBounds.height
+        yOffset = -0.05 -- offset factor to pull toward lips
+    }
+
+    tongueParams = {
+        width = 0.35,         -- percentage of mouthBounds.width
+        height = 0.06,        -- percentage of mouthBounds.height
+        baseOffset = 0.06,    -- from point 7
+        stickOutOffset = 0.10 -- extra for TH and L
+    }
+
+    mouthShapesOLD = {
         ['A_I'] = { width = 1.2, jawDrop = 0.8 },
         ['OU_W_Q'] = { width = 0.4, jawDrop = 0.2 },
         ['CDEGK_NRS'] = { width = 1.0, jawDrop = 0.3 },
@@ -71,6 +84,87 @@ function love.load()
         ['MMM'] = { width = 0.8, jawDrop = 0 },
         ['CLOSED'] = { width = 1.0, jawDrop = 0 },
     }
+
+    mouthShapes = {
+        ['A_I'] = {
+            width = 1.2,
+            height = 0.8,
+            topTeeth = true,
+            bottomTeeth = true,
+            tongue = false
+        },
+        ['OU_W_Q'] = {
+            width = 0.4,
+            height = 0.4,
+            topTeeth = false,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['CDEGK_NRS'] = {
+            width = 1.0,
+            height = 0.4,
+            topTeeth = true,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['TH_L'] = {
+            width = 0.8,
+            height = 0.5,
+            topTeeth = true,
+            bottomTeeth = false,
+            tongue = true
+        },
+        ['F_V'] = {
+            width = 1.0,
+            height = 0.3,
+            topTeeth = true,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['L_OU'] = {
+            width = 0.5,
+            height = 0.6,
+            topTeeth = true,
+            bottomTeeth = false,
+            tongue = true
+        },
+        ['O_U_AGH'] = {
+            width = 0.7,
+            height = 0.7,
+            topTeeth = false,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['UGH'] = {
+            width = 1.1,
+            height = 0.7,
+            topTeeth = false,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['M_B_P'] = {
+            width = 0.9,
+            height = 0.15,
+            topTeeth = false,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['MMM'] = {
+            width = 0.9,
+            height = 0.1,
+            topTeeth = false,
+            bottomTeeth = false,
+            tongue = false
+        },
+        ['CLOSED'] = {
+            width = 1.0,
+            height = 0.05,
+            topTeeth = false,
+            bottomTeeth = false,
+            tongue = false
+        },
+    }
+
 
     phonemeKeys = { 'CLOSED', 'A_I', 'OU_W_Q', 'CDEGK_NRS', 'TH_L', 'F_V', 'L_OU', 'O_U_AGH', 'UGH', 'M_B_P', 'MMM' }
     currentPhoneme = nil
@@ -136,7 +230,7 @@ end
 function applyPhoneme(shape, phoneme, closed)
     if not phoneme then return shape end
     local width = phoneme.width or 1.0
-    local jaw = phoneme.jawDrop or 0.0
+    local jaw = phoneme.height or 0.0
     local result = {}
 
     for i, pt in ipairs(shape) do
@@ -182,7 +276,78 @@ function love.keypressed(key)
         currentPhoneme = mouthShapes[phonemeKeys[11]]
         currentKey = phonemeKeys[11]
     end
-    print(currentPhoneme)
+    --print(currentPhoneme)
+end
+
+function drawTopTeeth(s)
+    local a, b, c = s[2], s[3], s[4]
+    local tx = (a.x + b.x + c.x) / 3
+    local ty = (a.y + b.y + c.y) / 3 - mouthBounds.height * teethParams.yOffset
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle(
+        "fill",
+        tx - (mouthBounds.width * teethParams.width * 0.5),
+        ty - (mouthBounds.height * teethParams.height * 0.5),
+        mouthBounds.width * teethParams.width,
+        mouthBounds.height * teethParams.height,
+        4, 4
+    )
+end
+
+function drawBottomTeeth(s)
+    local a, b, c = s[8], s[7], s[6]
+    local tx = (a.x + b.x + c.x) / 3
+    local ty = (a.y + b.y + c.y) / 3 + mouthBounds.height * teethParams.yOffset
+
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle(
+        "fill",
+        tx - (mouthBounds.width * teethParams.width * 0.5),
+        ty - (mouthBounds.height * teethParams.height * 0.5),
+        mouthBounds.width * teethParams.width,
+        mouthBounds.height * teethParams.height,
+        4, 4
+    )
+end
+
+function drawTongue(s, currentKey)
+    local t = s[7]
+    local out = tongueParams.baseOffset
+
+    if currentKey == "TH_L" or currentKey == "L_OU" then
+        out = out + tongueParams.stickOutOffset
+    end
+
+    love.graphics.setColor(1, 0.3, 0.4)
+    love.graphics.ellipse(
+        "fill",
+        t.x,
+        t.y + mouthBounds.height * out,
+        mouthBounds.width * tongueParams.width * 0.5,
+        mouthBounds.height * tongueParams.height * 0.5
+    )
+end
+
+function drawMouthFill(vertices)
+    local cx, cy = 0, 0
+    for i = 1, #vertices, 2 do
+        cx = cx + vertices[i]
+        cy = cy + vertices[i + 1]
+    end
+    cx = cx / (#vertices / 2)
+    cy = cy / (#vertices / 2)
+
+    local fan = { cx, cy }
+    for i = 1, #vertices, 2 do
+        table.insert(fan, vertices[i])
+        table.insert(fan, vertices[i + 1])
+    end
+    -- close the loop
+    table.insert(fan, vertices[1])
+    table.insert(fan, vertices[2])
+
+    love.graphics.polygon("fill", fan)
 end
 
 function love.draw()
@@ -205,19 +370,65 @@ function love.draw()
     local down = { s[5].x, s[5].y, s[6].x, s[6].y, s[6].x, s[6].y, s[7].x, s[7].y, s[7].x, s[7].y, s[8].x, s[8].y, s[8]
         .x, s[8].y, s[1].x, s[1].y }
     love.graphics.setLineWidth(1)
-    for i = 1, numPoints do
-        local a = s[i]
-        local b = s[(i % numPoints) + 1]
-        love.graphics.line(a.x, a.y, b.x, b.y)
+    -- for i = 1, numPoints do
+    --     local a = s[i]
+    --     local b = s[(i % numPoints) + 1]
+    --     love.graphics.line(a.x, a.y, b.x, b.y)
+    -- end
+
+    -- for _, p in ipairs(s) do
+    --     love.graphics.circle("fill", p.x, p.y, 3)
+    -- end
+
+
+    local verticesOLD = { s[1].x, s[1].y, s[2].x, s[2].y, s[3].x, s[3].y, s[4].x, s[4].y, s[5].x, s[5].y, s[6].x, s[6].y,
+        s[7].x, s[7].y, s[8].x, s[8].y }
+
+
+    local upCurve = love.math.newBezierCurve(up)
+    local downCurve = love.math.newBezierCurve(down)
+    local upPoints = upCurve:render(3)
+    local downPoints = downCurve:render(3)
+
+    for i = #downPoints - 1, 1, -2 do
+        table.insert(upPoints, downPoints[i])
+        table.insert(upPoints, downPoints[i + 1])
     end
 
-    for _, p in ipairs(s) do
-        love.graphics.circle("fill", p.x, p.y, 3)
+    local vertices = upPoints
+
+
+    local stencilFunction = function()
+        --drawMouthFill(vertices)
+        love.graphics.polygon("fill", vertices)
+    end
+
+    -- Apply the stencil. Everything drawn inside this block is masked by the stencil.
+    if not closed then
+        love.graphics.stencil(stencilFunction, "replace", 1)
+        love.graphics.setStencilTest("equal", 1)
+        love.graphics.setColor(0.2, 0.1, 1)
+
+        love.graphics.polygon("fill", vertices)
+        --drawMouthFill(vertices)
+    end
+
+
+
+    if currentPhoneme then
+        --drawTopTeeth(s)
+        if currentPhoneme.topTeeth then drawTopTeeth(s) end
+        ---if currentPhoneme.bottomTeeth then drawBottomTeeth(s) end
+        --if currentPhoneme.tongue then drawTongue(s, currentKey) end
+    end
+    if not closed then
+        love.graphics.setStencilTest()
     end
     love.graphics.setColor(1, 0, 0)
     love.graphics.setLineWidth(5)
-    love.graphics.line(love.math.newBezierCurve(up):render())
-    love.graphics.line(love.math.newBezierCurve(down):render())
+
+    love.graphics.line(upCurve:render())
+    love.graphics.line(downCurve:render())
     love.graphics.pop()
     love.graphics.setLineWidth(5)
     love.graphics.setColor(1, 1, 1)
