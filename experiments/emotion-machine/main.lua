@@ -5,26 +5,49 @@ function love.load()
     numPoints = 8
 
     -- Shapes now defined with normalized coordinates (-1 to 1)
-    shapes = {
+    shapesOpen = {
         neutral = {
-            { x = -1.0, y = -0.0 }, { x = -0.5, y = -0.1 }, { x = 0.0, y = -0.1 }, { x = 0.5, y = -0.1 }, { x = 1.0, y = 0.0 },
-            { x = 0.75, y = 0.2 }, { x = 0.0, y = 0.2 }, { x = -0.75, y = 0.2 },
+            { x = -1.0, y = 0.0 }, { x = -0.5, y = -0.25 }, { x = 0.0, y = -0.5 }, { x = 0.5, y = -0.25 }, { x = 1.0, y = 0.0 },
+            { x = 0.5,  y = 0.25 }, { x = 0.0, y = 0.5 }, { x = -0.5, y = 0.25 },
         },
         sad = {
-            { x = -1.0, y = 0.2 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = 0.1 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = 0.2 },
-            { x = 0.75, y = 0.5 }, { x = 0.0, y = 0.6 }, { x = -0.75, y = 0.5 },
+            { x = -1.0, y = 0.5 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = 0.1 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = 0.5 },
+            { x = 0.75, y = 0.5 }, { x = 0.0, y = 0.3 }, { x = -0.75, y = 0.5 },
         },
         happy = {
-            { x = -1.0, y = 0.2 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = -0.4 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = 0.2 },
+            { x = -1.0, y = -0.5 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = -0.2 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = -0.5 },
             { x = 0.75, y = 0.6 }, { x = 0.0, y = 0.8 }, { x = -0.75, y = 0.6 },
         },
+        angry = {
+            { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.3 }, { x = 0.0, y = -0.3 }, { x = 0.75, y = -0.3 }, { x = 1.0, y = 0.0 },
+            { x = 0.75, y = 0.7 }, { x = 0.0, y = 0.8 }, { x = -0.75, y = 0.7 },
+        },
         surprised = {
-            { x = -1.0, y = 0.2 }, { x = -0.5, y = -0.1 }, { x = 0.0, y = -0.3 }, { x = 0.5, y = -0.1 }, { x = 1.0, y = 0.2 },
-            { x = 0.5,  y = 0.7 }, { x = 0.0, y = 0.8 }, { x = -0.5, y = 0.7 },
+            { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.2 }, { x = 0.0, y = -0.6 }, { x = 0.75, y = -0.2 }, { x = 1.0, y = 0.0 },
+            { x = 0.75, y = 0.25 }, { x = 0.0, y = 0.5 }, { x = -0.75, y = 0.25 },
+        },
+    }
+
+    shapesClosed = {
+        neutral = {
+            { x = -0.7, y = 0.0 }, { x = -0.5, y = -0 }, { x = 0.0, y = -0 }, { x = 0.5, y = -0 }, { x = 0.7, y = 0.0 },
+            { x = 0.5,  y = 0 }, { x = 0.0, y = 0 }, { x = -0.5, y = 0 },
+        },
+        sad = {
+            { x = -1.0, y = 0.25 }, { x = -0.5, y = -0 }, { x = 0.0, y = -0.05 }, { x = 0.5, y = -0 }, { x = 1.0, y = 0.25 },
+            { x = 0.5,  y = 0 }, { x = 0.0, y = 0.05 }, { x = -0.5, y = 0 },
+        },
+        happy = {
+            { x = -1.0, y = -0.5 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = -0.2 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = -0.5 },
+            { x = 0.5,  y = -0.2 }, { x = 0.0, y = -0.2 }, { x = -0.5, y = -0.2 },
         },
         angry = {
-            { x = -1.0, y = 0.2 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = -0.3 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = 0.2 },
-            { x = 0.75, y = 0.5 }, { x = 0.0, y = 0.7 }, { x = -0.75, y = 0.5 },
+            { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.2 }, { x = 0.0, y = -0.3 }, { x = 0.75, y = -0.2 }, { x = 1.0, y = 0.0 },
+            { x = 0.75, y = -0.2 }, { x = 0.0, y = -0.3 }, { x = -0.75, y = -0.2 },
+        },
+        surprised = {
+            { x = -1.0, y = -0.2 }, { x = -0.75, y = -0 }, { x = 0.0, y = 0 }, { x = 0.75, y = -0 }, { x = 1.0, y = -0.2 },
+            { x = 0.75, y = 0 }, { x = 0.0, y = 0 }, { x = -0.75, y = 0 },
         },
     }
 
@@ -44,13 +67,12 @@ function love.load()
         ['L_OU'] = { width = 0.5, jawDrop = 0.6 },
         ['O_U_AGH'] = { width = 0.7, jawDrop = 0.7 },
         ['UGH'] = { width = 1.1, jawDrop = 0.7 },
-        ['M_B_P'] = { width = 0.9, jawDrop = 0.0 },
-        ['MMM'] = { width = 0.9, jawDrop = 0.0 },
-        ['CLOSED'] = { width = 1.0, jawDrop = 0.1 },
+        ['M_B_P'] = { width = 0.9, jawDrop = 0.1 },
+        ['MMM'] = { width = 0.8, jawDrop = 0 },
+        ['CLOSED'] = { width = 1.0, jawDrop = 0 },
     }
 
-    phonemeKeys = { 'CLOSED', 'A_I', 'OU_W_Q', 'CDEGK_NRS', 'TH_L', 'F_V', 'L_OU', 'O_U_AGH', 'UGH', 'M_B_P', 'MMM',
-        'CLOSED' }
+    phonemeKeys = { 'CLOSED', 'A_I', 'OU_W_Q', 'CDEGK_NRS', 'TH_L', 'F_V', 'L_OU', 'O_U_AGH', 'UGH', 'M_B_P', 'MMM' }
     currentPhoneme = nil
     currentKey = nil
 end
@@ -111,7 +133,7 @@ function blend5(shapes, x, y)
     return lerpShape(top, bot, newY)
 end
 
-function applyPhoneme(shape, phoneme)
+function applyPhoneme(shape, phoneme, closed)
     if not phoneme then return shape end
     local width = phoneme.width or 1.0
     local jaw = phoneme.jawDrop or 0.0
@@ -120,9 +142,10 @@ function applyPhoneme(shape, phoneme)
     for i, pt in ipairs(shape) do
         table.insert(result, {
             x = pt.x * mouthBounds.width * width,
-            y = pt.y * mouthBounds.height * jaw
+            y = pt.y * mouthBounds.height * (closed and 1 or jaw)
         })
     end
+
     return result
 end
 
@@ -151,6 +174,15 @@ function love.keypressed(key)
         currentPhoneme = mouthShapes[phonemeKeys[idx]]
         currentKey = phonemeKeys[idx]
     end
+    if (key == '0') then
+        currentPhoneme = mouthShapes[phonemeKeys[10]]
+        currentKey = phonemeKeys[10]
+    end
+    if (key == '-') then
+        currentPhoneme = mouthShapes[phonemeKeys[11]]
+        currentKey = phonemeKeys[11]
+    end
+    print(currentPhoneme)
 end
 
 function love.draw()
@@ -161,8 +193,11 @@ function love.draw()
     love.graphics.translate(400, 300)
     love.graphics.setColor(1, 1, 1)
 
+    local closed = (currentKey == 'MMM' or currentKey == 'CLOSED')
+    local shapes = closed and shapesClosed or shapesOpen
+
     local emotionShape = blend5(shapes, emotionDot.x, emotionDot.y)
-    local s = applyPhoneme(emotionShape, currentPhoneme)
+    local s = applyPhoneme(emotionShape, currentPhoneme, closed)
 
 
     local up = { s[1].x, s[1].y, s[2].x, s[2].y, s[2].x, s[2].y, s[3].x, s[3].y, s[3].x, s[3].y, s[4].x, s[4].y, s[4].x,

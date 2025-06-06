@@ -90,7 +90,7 @@ local inspect = require 'inspect'
 --- new lipsync fun:
 -- 1. Data representation of the mouth shapes from your image.
 -- (This table remains the same, it's our library of shapes)
-local mouthShapesOLD = {
+local mouthShapesOld = {
     ['A_I'] = { width = 1.2, height = 0.8, teethVisible = true, tongueVisible = true },
     ['OU_W_Q'] = { width = 0.4, height = 0.4, teethVisible = false, tongueVisible = false },
     ['CDEGK_NRS'] = { width = 1.0, height = 0.4, teethVisible = true, tongueVisible = false },
@@ -325,7 +325,7 @@ function renderMouth2(state)
     love.graphics.setColor(1, 1, 1) -- Reset color
 end
 
-function renderMouth1(state)
+function renderMouthVanilla(state)
     local x, y = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
     local baseWidth, baseHeight = 100, 80
 
