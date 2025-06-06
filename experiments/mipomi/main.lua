@@ -87,6 +87,86 @@ local inspect = require 'inspect'
 -- also use relative notes and '[c3]mi [-1]mi [-2]mi' will start at c3 then go to b3 then a3
 
 
+--- new lipsync fun:
+-- 1. Data representation of the mouth shapes from your image.
+-- (This table remains the same, it's our library of shapes)
+local mouthShapesOLD = {
+    ['A_I'] = { width = 1.2, height = 0.8, teethVisible = true, tongueVisible = true },
+    ['OU_W_Q'] = { width = 0.4, height = 0.4, teethVisible = false, tongueVisible = false },
+    ['CDEGK_NRS'] = { width = 1.0, height = 0.4, teethVisible = true, tongueVisible = false },
+    ['TH_L'] = { width = 0.8, height = 0.5, teethVisible = true, tongueVisible = true },
+    ['F_V'] = { width = 1.0, height = 0.3, teethVisible = true, tongueVisible = false },
+    ['L_OU'] = { width = 0.5, height = 0.6, teethVisible = true, tongueVisible = true },
+    ['O_U_AGH'] = { width = 0.7, height = 0.7, teethVisible = false, tongueVisible = false },
+    ['UGH'] = { width = 1.1, height = 0.7, teethVisible = false, tongueVisible = false },
+    ['M_B_P'] = { width = 0.9, height = 0.15, teethVisible = false, tongueVisible = false },
+    ['MMM'] = { width = 0.9, height = 0.1, teethVisible = false, tongueVisible = false },
+    ['CLOSED'] = { width = 1.0, height = 0.05, teethVisible = false, tongueVisible = false },
+}
+
+-- NEW DATA STRUCTURE with Jaw and TeethMode
+local mouthShapes = {
+    ['A_I'] = { width = 1.2, jawDrop = 0.8, teethMode = "apart" },
+    ['OU_W_Q'] = { width = 0.4, jawDrop = 0.2, teethMode = "none" },
+    ['CDEGK_NRS'] = { width = 1.0, jawDrop = 0.3, teethMode = "apart" },
+    ['TH_L'] = { width = 0.8, jawDrop = 0.4, teethMode = "upper", tongueVisible = true },
+    ['F_V'] = { width = 1.0, jawDrop = 0.1, teethMode = "upper" },
+    ['L_OU'] = { width = 0.5, jawDrop = 0.6, teethMode = "apart", tongueVisible = true },
+    ['O_U_AGH'] = { width = 0.7, jawDrop = 0.7, teethMode = "none" },
+    ['UGH'] = { width = 1.1, jawDrop = 0.7, teethMode = "none" },
+    ['M_B_P'] = { width = 0.9, jawDrop = 0.0, teethMode = "none" },
+    ['MMM'] = { width = 0.9, jawDrop = 0.0, teethMode = "none" },
+    ['CLOSED'] = { width = 1.0, jawDrop = 0.0, teethMode = "none" },
+}
+-- 2. REFINED reverse map for YOUR specific phonemes.
+local phonemeToShape = {
+    -- Consonants from your list
+    m = 'M_B_P',
+    b = 'M_B_P',
+    p = 'M_B_P',
+    f = 'F_V',
+    k = 'CDEGK_NRS',
+
+    -- Vowels from your list
+    a = 'A_I',
+    i = 'CDEGK_NRS', -- The wide, teeth-showing shape fits the 'ee' sound well.
+    o = 'OU_W_Q',
+}
+
+-- 3. A helper to parse syllables into consonant and vowel.
+-- (This remains the same and works perfectly for your C+V syllables)
+local function parseSyllable(syllableName)
+    if #syllableName < 2 then return nil, syllableName:sub(1, 1) end
+    return syllableName:sub(1, 1), syllableName:sub(2, 2)
+end
+
+-- 4. Global variable to hold the current state for the rendering function.
+local currentMouthState = { shape = mouthShapes['CLOSED'] }
+local CONSONANT_DURATION = 0.3 -- 30% of the syllable time is for the consonant
+
+-- =================================================================
+-- EMOTION-AWARE LIP-SYNC CODE
+-- =================================================================
+
+-- This data from our previous attempt is still perfect.
+local emotionStyles = {
+    neutral   = { scale = 1.0, cornerYOffset = 0.0, lipCurveFactor = 1.0 },
+    happy     = { scale = 1.1, cornerYOffset = -0.3, lipCurveFactor = 1.2 }, -- Corners go UP
+    sad       = { scale = 0.9, cornerYOffset = 0.25, lipCurveFactor = 1.2 }, -- Corners go DOWN
+    angry     = { scale = 1.3, cornerYOffset = -0.5, lipCurveFactor = 0.8 }, -- Tense, flatter curve
+    surprised = { scale = 1.4, cornerYOffset = 0.0, lipCurveFactor = 1.5 },  -- Very round
+}
+
+local currentEmotion = "neutral"
+
+-- Global variable to hold the character's current emotion
+local currentEmotion = "neutral"
+
+
+-- end lipsync fun
+
+
+
 function love.load()
     keys = { 'ma', 'mi', 'mo', 'ba', 'bi', 'bo', 'fa', 'fi', 'fo', 'pa', 'pi', 'po', 'ka', 'ki', 'ko' }
     syllables = {}
@@ -101,11 +181,382 @@ function love.load()
     legatoFadeRate = .3
 end
 
+function renderMouthOLD(state)
+    local x, y = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+    local baseWidth, baseHeight = 100, 80 -- The base size of the mouth in pixels
+
+    local shape = state.shape
+
+    -- Calculate the final dimensions
+    local mouthWidth = baseWidth * shape.width
+    local mouthHeight = baseHeight * shape.height
+
+    -- 1. Draw the outer lips (a pink ellipse)
+    love.graphics.setColor(220 / 255, 100 / 255, 100 / 255)
+    love.graphics.ellipse("fill", x, y, mouthWidth / 2 + 5, mouthHeight / 2 + 10)
+
+    -- 2. Draw the inner mouth opening (a black ellipse)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.ellipse("fill", x, y, mouthWidth / 2, mouthHeight / 2)
+
+    -- 3. Conditionally draw teeth
+    if shape.teethVisible then
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.rectangle("fill", x - mouthWidth / 2.2, y - mouthHeight / 2.5, mouthWidth * 0.9, 10)
+        love.graphics.rectangle("fill", x - mouthWidth / 2.2, y + mouthHeight / 2.5 - 10, mouthWidth * 0.9, 10)
+    end
+
+    -- 4. Conditionally draw the tongue
+    if shape.tongueVisible then
+        love.graphics.setColor(240 / 255, 150 / 255, 150 / 255)
+        love.graphics.ellipse("fill", x, y + mouthHeight * 0.1, 30, 20)
+    end
+
+    love.graphics.setColor(1, 1, 1) -- Reset color
+end
+
+function renderMouth2(state)
+    local x, y = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+    local baseWidth, baseHeight = 100, 80
+
+    -- Get the base phonetic shape and the current emotional style
+    local phoneticShape = state.shape
+    local emoStyle = emotionStyles[currentEmotion] or emotionStyles.neutral
+
+    -- 1. APPLY EMOTIONAL MODIFIERS
+    local scale = emoStyle.scale
+    local mouthWidth = baseWidth * phoneticShape.width * scale
+    local mouthHeight = baseHeight * phoneticShape.height * scale
+
+    -- Prevent mouth from fully closing to maintain a visible line
+    if mouthHeight < 2 then mouthHeight = 2 end
+
+    -- 2. CALCULATE KEY ANCHOR POINTS FOR THE MOUTH
+
+    -- The corners of the mouth are our primary anchors.
+    local cornerLeft = { x = x - mouthWidth / 2, y = y }
+    local cornerRight = { x = x + mouthWidth / 2, y = y }
+
+    -- Apply the emotional offset to the corners to make them smile or frown.
+    local cornerYOffset = mouthWidth * emoStyle.cornerYOffset
+    cornerLeft.y = y + cornerYOffset
+    cornerRight.y = y + cornerYOffset
+
+    -- The top and bottom center points of the inner mouth (the black part).
+    local topCenter = { x = x, y = y - mouthHeight / 2 }
+    local bottomCenter = { x = x, y = y + mouthHeight / 2 }
+
+    -- 3. CALCULATE THE CONTROL POINTS FOR THE BÉZIER CURVES
+
+    -- The control points determine the curvature of the lips.
+    -- We'll base them on the center points and the emotional `lipCurveFactor`.
+    local upperControlPoint = {
+        x = x,
+        y = topCenter.y - (mouthHeight * emoStyle.lipCurveFactor * 0.5)
+    }
+    local lowerControlPoint = {
+        x = x,
+        y = bottomCenter.y + (mouthHeight * emoStyle.lipCurveFactor * 0.5)
+    }
+
+    -- 4. DRAW THE MOUTH
+
+    -- First, create a polygon for the inner mouth shape to fill it with black.
+    -- We can approximate the curves with a series of vertices.
+    local vertices = {}
+    local steps = 20 -- More steps = smoother curve
+    -- Generate vertices for the upper lip curve
+    --
+    local upperlip = {}
+    for i = 0, steps do
+        local t = i / steps
+        local px, py = love.math.newBezierCurve(cornerLeft.x, cornerLeft.y, upperControlPoint.x, upperControlPoint.y,
+            cornerRight.x, cornerRight.y):evaluate(t)
+        table.insert(vertices, px)
+        table.insert(vertices, py)
+
+        table.insert(upperlip, px)
+        table.insert(upperlip, py)
+    end
+    -- Generate vertices for the lower lip curve (in reverse to close the polygon)
+    local lowerlip = {}
+    for i = steps, 0, -1 do
+        local t = i / steps
+        local px, py = love.math.newBezierCurve(cornerLeft.x, cornerLeft.y, lowerControlPoint.x, lowerControlPoint.y,
+            cornerRight.x, cornerRight.y):evaluate(t)
+        table.insert(vertices, px)
+        table.insert(vertices, py)
+
+        table.insert(lowerlip, px)
+        table.insert(lowerlip, py)
+    end
+
+    love.graphics.setColor(0.2, 0.1, 0.1)
+    love.graphics.polygon("fill", vertices)
+
+    -- Now, draw the colored lips themselves as thick lines on top.
+    love.graphics.setColor(220 / 255, 100 / 255, 100 / 255)
+    love.graphics.setLineWidth(15 * scale)
+
+    -- Draw the upper and lower lip curves
+    local upper = love.math.newBezierCurve(upperlip)
+    love.graphics.line(upper:render())
+
+    local lower = love.math.newBezierCurve(lowerlip)
+    love.graphics.line(lower:render())
+
+
+    love.graphics.setLineWidth(1) -- Reset line width
+
+    -- 5. DRAW TEETH AND TONGUE (conditionally, on top of the black)
+
+    if phoneticShape.teethVisible then
+        love.graphics.setColor(1, 1, 1)
+        -- We can place the teeth more intelligently now, relative to the center
+        local teethHeight = 12 * scale
+        love.graphics.rectangle("fill", x - mouthWidth / 2.2, y - teethHeight / 2, mouthWidth * 0.9, teethHeight)
+    end
+
+    if phoneticShape.tongueVisible then
+        love.graphics.setColor(240 / 255, 150 / 255, 150 / 255)
+        love.graphics.ellipse("fill", x, y + mouthHeight * 0.2, 30 * scale, 20 * scale)
+    end
+
+    love.graphics.setColor(1, 1, 1) -- Reset color
+end
+
+function renderMouth1(state)
+    local x, y = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+    local baseWidth, baseHeight = 100, 80
+
+    -- Get the base phonetic shape and the current emotional style
+    local phoneticShape = state.shape
+    local emoStyle = emotionStyles[currentEmotion] or emotionStyles.neutral
+
+    -- 1. APPLY EMOTIONAL MODIFIERS (No changes here)
+    local scale = emoStyle.scale
+    local mouthWidth = baseWidth * phoneticShape.width * scale
+    local mouthHeight = baseHeight * phoneticShape.height * scale
+    if mouthHeight < 2 then mouthHeight = 2 end
+
+    -- 2. CALCULATE KEY ANCHOR POINTS FOR THE MOUTH (No changes here)
+    local cornerLeft = { x = x - mouthWidth / 2, y = y }
+    local cornerRight = { x = x + mouthWidth / 2, y = y }
+    local cornerYOffset = mouthWidth * emoStyle.cornerYOffset
+    cornerLeft.y = y + cornerYOffset
+    cornerRight.y = y + cornerYOffset
+    local topCenter = { x = x, y = y - mouthHeight / 2 }
+    local bottomCenter = { x = x, y = y + mouthHeight / 2 }
+
+    -- 3. CALCULATE THE CONTROL POINTS FOR THE BÉZIER CURVES (No changes here)
+    local upperControlPoint = { x = x, y = topCenter.y - (mouthHeight * emoStyle.lipCurveFactor * 0.5) }
+    local lowerControlPoint = { x = x, y = bottomCenter.y + (mouthHeight * emoStyle.lipCurveFactor * 0.5) }
+
+    -- 4. GENERATE THE MOUTH POLYGON (No changes here)
+    local vertices = {}
+    local steps = 20
+    local upperlip_points = {}
+    local lowerlip_points = {}
+
+    local upper_curve = love.math.newBezierCurve(
+        cornerLeft.x, cornerLeft.y,
+        upperControlPoint.x, upperControlPoint.y,
+        cornerRight.x, cornerRight.y)
+    local lower_curve = love.math.newBezierCurve(
+        cornerLeft.x, cornerLeft.y,
+        lowerControlPoint.x, lowerControlPoint.y,
+        cornerRight.x, cornerRight.y)
+
+    for i = 0, steps do
+        local t = i / steps
+        local px, py = upper_curve:evaluate(t)
+        table.insert(vertices, px)
+        table.insert(vertices, py)
+        table.insert(upperlip_points, px)
+        table.insert(upperlip_points, py)
+    end
+    for i = steps, 0, -1 do
+        local t = i / steps
+        local px, py = lower_curve:evaluate(t)
+        table.insert(vertices, px)
+        table.insert(vertices, py)
+        table.insert(lowerlip_points, px)
+        table.insert(lowerlip_points, py)
+    end
+
+    local upperCurve = love.math.newBezierCurve(upperlip_points)
+    local lowerCurve = love.math.newBezierCurve(lowerlip_points)
+    local _, ucY = upperCurve:evaluate(0.5)
+    local _, lcY = lowerCurve:evaluate(0.5)
+
+    -- 5. DRAW THE MOUTH USING A STENCIL FOR SMART TEETH PLACEMENT
+
+    -- Define the stencil function. This draws our mouth shape into the stencil buffer.
+    local stencilFunction = function()
+        love.graphics.polygon("fill", vertices)
+    end
+
+    -- Apply the stencil. Everything drawn inside this block is masked by the stencil.
+    love.graphics.stencil(stencilFunction, "replace", 1)
+    love.graphics.setStencilTest("equal", 1)
+
+    -- BEGIN STENCILLED DRAWING --
+
+    -- Draw the black background of the mouth. This will fill the stencil shape.
+    love.graphics.setColor(0.1, 0, 0)
+    love.graphics.polygon("fill", vertices)
+
+    -- Draw the tongue (if visible)
+    if phoneticShape.tongueVisible then
+        love.graphics.setColor(240 / 255, 150 / 255, 150 / 255)
+        love.graphics.ellipse("fill", x, y + mouthHeight * 0.2, 30 * scale, 20 * scale)
+    end
+
+    if phoneticShape.teethVisible then
+        love.graphics.setColor(1, 1, 1)
+        -- Draw two LARGE rectangles for the teeth. They will be automatically
+        -- clipped by the mouth shape we drew to the stencil.
+        local teethHeight = baseHeight * .2 -- A portion of the mouth's height
+
+        -- Top teeth are anchored to the top lip's curve
+        love.graphics.rectangle("fill", cornerLeft.x, ucY, mouthWidth, teethHeight)
+        -- Bottom teeth are anchored to the bottom lip's curve
+
+        love.graphics.rectangle("fill", cornerLeft.x, lcY - teethHeight / 2, mouthWidth, teethHeight)
+
+        -- Draw the gap between the teeth
+    end
+
+    -- END STENCILLED DRAWING --
+
+    -- Stop using the stencil for subsequent drawing operations.
+    love.graphics.setStencilTest()
+
+    -- Now, draw the non-stencilled elements on top.
+
+
+
+    -- Finally, draw the colored lips themselves as thick lines.
+    love.graphics.setColor(220 / 255, 100 / 255, 100 / 255)
+    love.graphics.setLineWidth(15 * scale)
+    love.graphics.line(upperCurve:render())
+    love.graphics.line(lowerCurve:render())
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setColor(1, 1, 1) -- Reset color
+end
+
+function renderMouth(state)
+    local x, y = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2 - 20 -- Move the whole mouth up a bit
+    local baseWidth, baseJawRange = 100,
+        80                                                                        -- baseJawRange is now the max drop distance
+
+    local phoneticShape = state.shape
+    local emoStyle = emotionStyles[currentEmotion] or emotionStyles.neutral
+    local scale = emoStyle.scale
+
+    -- 1. CALCULATE JAW AND LIP POSITIONS
+    local mouthWidth = baseWidth * phoneticShape.width * scale
+
+    -- The jaw's vertical position is the primary driver of mouth opening
+    local jawY = y + (baseJawRange * phoneticShape.jawDrop * scale)
+
+    -- Mouth corners are affected by emotion (smile/frown)
+    local cornerYOffset = mouthWidth * emoStyle.cornerYOffset
+    local cornerLeft = { x = x - mouthWidth / 2, y = y + cornerYOffset }
+    local cornerRight = { x = x + mouthWidth / 2, y = y + cornerYOffset }
+
+    -- Upper lip is relatively static (anchored to y)
+    local upperControlPoint = { x = x, y = y - (20 * emoStyle.lipCurveFactor * scale) }
+
+    -- Lower lip moves with the jaw
+    local lowerLipCenterY = jawY
+    local lowerControlPoint = { x = x, y = lowerLipCenterY + (20 * emoStyle.lipCurveFactor * scale) }
+
+    -- Define the curves
+    local upper_curve = love.math.newBezierCurve(cornerLeft.x, cornerLeft.y, upperControlPoint.x, upperControlPoint.y,
+        cornerRight.x, cornerRight.y)
+    local lower_curve = love.math.newBezierCurve(cornerLeft.x, lowerLipCenterY, lowerControlPoint.x, lowerControlPoint.y,
+        cornerRight.x, lowerLipCenterY)
+
+    -- 2. GENERATE POLYGON FOR STENCIL
+    local vertices, upperlip_points, lowerlip_points = {}, {}, {}
+    -- (This part of the code is largely the same, just generating vertices from the new curves)
+    local steps = 20
+    for i = 0, steps do
+        local t = i / steps
+        local px, py = upper_curve:evaluate(t)
+        table.insert(vertices, px)
+        table.insert(vertices, py)
+        table.insert(upperlip_points, px)
+        table.insert(upperlip_points, py)
+    end
+    for i = steps, 0, -1 do
+        local t = i / steps
+        local px, py = lower_curve:evaluate(t)
+        table.insert(vertices, px)
+        table.insert(vertices, py)
+        table.insert(lowerlip_points, px)
+        table.insert(lowerlip_points, py)
+    end
+
+    -- 3. DRAW WITH STENCIL
+    love.graphics.stencil(function() love.graphics.polygon("fill", vertices) end, "replace", 1)
+    love.graphics.setStencilTest("equal", 1)
+
+    -- BEGIN STENCILLED DRAWING --
+    love.graphics.setColor(0.1, 0, 0)
+    love.graphics.polygon("fill", vertices)
+
+    if phoneticShape.tongueVisible then
+        love.graphics.setColor(240 / 255, 150 / 255, 150 / 255)
+        love.graphics.ellipse("fill", x, jawY - 10, 30 * scale, 30 * scale)
+    end
+
+    -- NEW: Granular teeth drawing based on teethMode
+    local teethMode = phoneticShape.teethMode or "none"
+    local teethHeight = 20 * scale
+    love.graphics.setColor(1, 1, 1)
+
+    if teethMode == "apart" then
+        -- Draw top teeth, anchored to the upper part of the mouth
+        love.graphics.rectangle("fill", x - mouthWidth / 2, y - 5, mouthWidth, teethHeight)
+        -- Draw bottom teeth, anchored to the jaw
+        love.graphics.rectangle("fill", x - mouthWidth / 2, jawY - teethHeight + 5, mouthWidth, teethHeight)
+    elseif teethMode == "upper" then
+        -- Only draw the top teeth
+        love.graphics.rectangle("fill", x - mouthWidth / 2, y - 5, mouthWidth, teethHeight)
+    elseif teethMode == "lower" then
+        -- Only draw the bottom teeth (less common, but possible)
+        love.graphics.rectangle("fill", x - mouthWidth / 2, jawY - teethHeight + 5, mouthWidth, teethHeight)
+    end
+    -- END STENCILLED DRAWING --
+
+    love.graphics.setStencilTest()
+
+    -- 4. DRAW LIPS ON TOP
+    love.graphics.setColor(220 / 255, 100 / 255, 100 / 255)
+    love.graphics.setLineWidth(15 * scale)
+    love.graphics.line(upperlip_points)
+    love.graphics.line(lowerlip_points)
+    love.graphics.setLineWidth(1)
+
+    love.graphics.setColor(1, 1, 1)
+end
+
 function love.draw()
     love.graphics.print('Press 1–7 for syllables, 8–0 for phrases\nActive: ' .. #activeSources)
+    love.graphics.print('Emotion (F1-F5): ' .. currentEmotion, 10, 40)
+    renderMouth(currentMouthState)
 end
 
 function love.keypressed(key)
+    if key == "f1" then currentEmotion = "neutral" end
+    if key == "f2" then currentEmotion = "happy" end
+    if key == "f3" then currentEmotion = "sad" end
+    if key == "f4" then currentEmotion = "angry" end
+    if key == "f5" then currentEmotion = "surprised" end
+
     local keymap = {
         ['q2'] = function() say('{root=g3} _MI-mi-MI, ?MI-mi-MI ,') end,
         ['q3'] = function() say('[c3]mi [-1]mi [-2]mi') end,
@@ -172,7 +623,7 @@ function love.keypressed(key)
             -- maybe just reuse [] but instead of a absolute value it has a relative offset? like  [+1]
         end,
         ['x'] = function()
-            say('{root=c4} ?mi-mi-mi?')
+            say('{root=c6} ?mi-mi-mi? mo-mo?')
         end,
         ['escape'] = function() love.event.quit() end,
     }
@@ -180,6 +631,11 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
+    -- Assume closed mouth if nothing is being said
+    if #activeSources == 0 then
+        currentMouthState = { shape = mouthShapes['CLOSED'] }
+    end
+
     for i = #activeSources, 1, -1 do
         local src = activeSources[i]
         if not src.source:isPlaying() then
@@ -189,6 +645,24 @@ function love.update(dt)
             local tNorm = src.source:tell() / src.source:getDuration()
             updatePitch(src, tNorm)
             updateVolume(src, tNorm)
+
+
+            -- lipsync fun:
+            --
+            -- LIP-SYNC LOGIC
+            local phoneme_to_show
+            if tNorm < CONSONANT_DURATION and src.consonant then
+                phoneme_to_show = src.consonant
+            else
+                phoneme_to_show = src.vowel
+            end
+
+            local shapeName = phonemeToShape[phoneme_to_show]
+            if shapeName and mouthShapes[shapeName] then
+                currentMouthState = { shape = mouthShapes[shapeName] }
+            else
+                currentMouthState = { shape = mouthShapes['CLOSED'] }
+            end
         end
     end
 
@@ -220,6 +694,12 @@ function playSyllable(syllableData)
     if not syllables[sKey] then
         print('SYLLABLE DOENST EXIST:', sKey)
     end
+
+
+    -- NEW: Parse the syllable to get phonemes for lip-sync
+    local consonant, vowel = parseSyllable(sKey)
+
+
     --print(inspect(syllableData))
     --print(syllableData.pitchCurveName or 'neutral')
     local pitchCurve = love.math.newBezierCurve(pitchCurves[syllableData.pitchCurveName or 'neutral'])
@@ -231,7 +711,11 @@ function playSyllable(syllableData)
         riseOffset = syllableData.riseOffset or 0,
         previousPitch = lastPitch, -- global
         isStutter = syllableData.isStutter,
-        stutterCutoff = syllableData.stutterCutoff or 1
+        stutterCutoff = syllableData.stutterCutoff or 1,
+
+        -- NEW: Add the visual data
+        consonant = consonant,
+        vowel = vowel
         -- here we could now add these bad boys too
         -- volumeFactor = 0.9,
         --   fadeType = "chaotic",
