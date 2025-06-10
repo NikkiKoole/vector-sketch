@@ -1,439 +1,618 @@
--- Love2D prototype: 5-way emotional blend with relative phoneme overlay
--- Uses normalized [-1, 1] shape data, scaled by mouth bounds and phoneme settings
+-- things todo, there should mybe be an extra y offset that makes certain mouths hapes move more down (or up)
+-- look at teeth.
+
 local inspect = require 'inspect'
-function love.load()
-    numPoints = 8
+local mathutils = require 'math-utils'
+local shapes = {}
+local draggingShape, draggingIndex = nil, nil
+local offsetX, offsetY = 0, 0
+currentShape = nil
+targetShape = nil
+tweenTime = 0
+tweenDuration = 0.3
 
-    -- Shapes now defined with normalized coordinates (-1 to 1)
-    shapesOpen = {
-        neutral = {
-            { x = -1.0, y = 0.0 }, { x = -0.5, y = -0.25 }, { x = 0.0, y = -0.5 }, { x = 0.5, y = -0.25 }, { x = 1.0, y = 0.0 },
-            { x = 0.5,  y = 0.25 }, { x = 0.0, y = 0.5 }, { x = -0.5, y = 0.25 },
-        },
-        sad = {
-            { x = -1.0, y = 0.5 }, { x = -0.5, y = -0.2 }, { x = 0.0, y = 0.1 }, { x = 0.5, y = -0.2 }, { x = 1.0, y = 0.5 },
-            { x = 0.75, y = 0.5 }, { x = 0.0, y = 0.3 }, { x = -0.75, y = 0.5 },
-        },
-        happy = {
-            { x = -1.0, y = -0.3 }, { x = -0.5, y = -0.3 }, { x = 0.0, y = -0.3 }, { x = 0.5, y = -0.3 }, { x = 1.0, y = -0.3 },
-            { x = 0.75, y = 0.6 }, { x = 0.0, y = 0.8 }, { x = -0.75, y = 0.6 },
-        },
-        angry = {
-            { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.3 }, { x = 0.0, y = -0.3 }, { x = 0.75, y = -0.3 }, { x = 1.0, y = 0.0 },
-            { x = 0.75, y = 0.7 }, { x = 0.0, y = 0.8 }, { x = -0.75, y = 0.7 },
-        },
-        surprised = {
-            { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.2 }, { x = 0.0, y = -0.6 }, { x = 0.75, y = -0.2 }, { x = 1.0, y = 0.0 },
-            { x = 0.75, y = 0.25 }, { x = 0.0, y = 0.5 }, { x = -0.75, y = 0.25 },
-        },
-    }
-
-    shapesClosed = {
-        neutral = {
-            { x = -0.7, y = 0.0 }, { x = -0.5, y = -0 }, { x = 0.0, y = -0 }, { x = 0.5, y = -0 }, { x = 0.7, y = 0.0 },
-            { x = 0.5,  y = 0 }, { x = 0.0, y = 0 }, { x = -0.5, y = 0 },
-        },
-        sad = {
-            { x = -1.0, y = 0.25 }, { x = -0.5, y = -0 }, { x = 0.0, y = -0.05 }, { x = 0.5, y = -0 }, { x = 1.0, y = 0.25 },
-            { x = 0.5,  y = 0 }, { x = 0.0, y = 0.05 }, { x = -0.5, y = 0 },
-        },
-        happy = {
-            { x = -1.0, y = -0.3 }, { x = -0.5, y = -0 }, { x = 0.0, y = -0 }, { x = 0.5, y = -0 }, { x = 1.0, y = -0.3 },
-            { x = 0.5,  y = -0 }, { x = 0.0, y = -0 }, { x = -0.5, y = -0 },
-        },
-        angry = {
-            { x = -1.0, y = 0.0 }, { x = -0.75, y = -0.2 }, { x = 0.0, y = -0.3 }, { x = 0.75, y = -0.2 }, { x = 1.0, y = 0.0 },
-            { x = 0.75, y = -0.2 }, { x = 0.0, y = -0.3 }, { x = -0.75, y = -0.2 },
-        },
-        surprised = {
-            { x = -1.0, y = -0.2 }, { x = -0.75, y = -0 }, { x = 0.0, y = 0 }, { x = 0.75, y = -0 }, { x = 1.0, y = -0.2 },
-            { x = 0.75, y = 0 }, { x = 0.0, y = 0 }, { x = -0.75, y = 0 },
-        },
-    }
-
-    emotionDot = { x = 0.5, y = 0.5 }
-
-    mouthBounds = {
-        width = 80,
-        height = 180
-    }
-
-    teethParams = {
-        width = 0.5,    -- percentage of mouthBounds.width
-        height = 0.08,  -- percentage of mouthBounds.height
-        yOffset = -0.05 -- offset factor to pull toward lips
-    }
-
-    tongueParams = {
-        width = 0.35,         -- percentage of mouthBounds.width
-        height = 0.06,        -- percentage of mouthBounds.height
-        baseOffset = 0.06,    -- from point 7
-        stickOutOffset = 0.10 -- extra for TH and L
-    }
-
-    mouthShapesOLD = {
-        ['A_I'] = { width = 1.2, jawDrop = 0.8 },
-        ['OU_W_Q'] = { width = 0.4, jawDrop = 0.2 },
-        ['CDEGK_NRS'] = { width = 1.0, jawDrop = 0.3 },
-        ['TH_L'] = { width = 0.8, jawDrop = 0.4 },
-        ['F_V'] = { width = 1.0, jawDrop = 0.1 },
-        ['L_OU'] = { width = 0.5, jawDrop = 0.6 },
-        ['O_U_AGH'] = { width = 0.7, jawDrop = 0.7 },
-        ['UGH'] = { width = 1.1, jawDrop = 0.7 },
-        ['M_B_P'] = { width = 0.9, jawDrop = 0.1 },
-        ['MMM'] = { width = 0.8, jawDrop = 0 },
-        ['CLOSED'] = { width = 1.0, jawDrop = 0 },
-    }
-
-    mouthShapes = {
-        ['A_I'] = {
-            width = 1.2,
-            height = 0.8,
-            topTeeth = true,
-            bottomTeeth = true,
-            tongue = false
-        },
-        ['OU_W_Q'] = {
-            width = 0.4,
-            height = 0.4,
-            topTeeth = false,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['CDEGK_NRS'] = {
-            width = 1.0,
-            height = 0.4,
-            topTeeth = true,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['TH_L'] = {
-            width = 0.8,
-            height = 0.5,
-            topTeeth = true,
-            bottomTeeth = false,
-            tongue = true
-        },
-        ['F_V'] = {
-            width = 1.0,
-            height = 0.3,
-            topTeeth = true,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['L_OU'] = {
-            width = 0.5,
-            height = 0.6,
-            topTeeth = true,
-            bottomTeeth = false,
-            tongue = true
-        },
-        ['O_U_AGH'] = {
-            width = 0.7,
-            height = 0.7,
-            topTeeth = false,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['UGH'] = {
-            width = 1.1,
-            height = 0.7,
-            topTeeth = false,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['M_B_P'] = {
-            width = 0.9,
-            height = 0.15,
-            topTeeth = false,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['MMM'] = {
-            width = 0.9,
-            height = 0.1,
-            topTeeth = false,
-            bottomTeeth = false,
-            tongue = false
-        },
-        ['CLOSED'] = {
-            width = 1.0,
-            height = 0.05,
-            topTeeth = false,
-            bottomTeeth = false,
-            tongue = false
-        },
-    }
-
-
-    phonemeKeys = { 'CLOSED', 'A_I', 'OU_W_Q', 'CDEGK_NRS', 'TH_L', 'F_V', 'L_OU', 'O_U_AGH', 'UGH', 'M_B_P', 'MMM' }
-    currentPhoneme = nil
-    currentKey = nil
+local function getMidpoint(points)
+    -- local mid = #points / 4 -- halfway into the top lip (2 control points)
+    local sumX, sumY = 0, 0
+    local count = 0
+    for i = 1, #points, 2 do
+        sumX = sumX + points[i]
+        sumY = sumY + points[i + 1]
+        count = count + 1
+    end
+    return sumX / count, sumY / count
 end
 
-function lerpShape(a, b, t)
-    local out = {}
-    for i = 1, #a do
-        local ax, ay = a[i].x, a[i].y
-        local bx, by = b[i].x, b[i].y
-        table.insert(out, {
-            x = ax + (bx - ax) * t,
-            y = ay + (by - ay) * t
-        })
+function shallowCopy(original)
+    local copy = {}
+    for key, value in pairs(original) do
+        copy[key] = value
     end
-    return out
+    return copy
 end
 
-function blend5(shapes, x, y)
-    if math.abs(x - 0.5) < 0.001 and math.abs(y - 0.5) < 0.001 then
-        return shapes.neutral
+function tableConcat(t1, t2)
+    for i = 1, #t2 do
+        table.insert(t1, t2[i])
     end
-
-    local tl, tr, bl, br, center = nil, nil, nil, nil, shapes.neutral
-    local newX, newY
-
-    if x < 0.5 and y < 0.5 then
-        tl = shapes.sad
-        tr = lerpShape(shapes.sad, shapes.happy, 0.5)
-        bl = lerpShape(shapes.sad, shapes.angry, 0.5)
-        br = center
-        newX = x * 2
-        newY = y * 2
-    elseif x >= 0.5 and y < 0.5 then
-        tl = lerpShape(shapes.sad, shapes.happy, 0.5)
-        tr = shapes.happy
-        bl = center
-        br = lerpShape(shapes.happy, shapes.surprised, 0.5)
-        newX = (x - 0.5) * 2
-        newY = y * 2
-    elseif x < 0.5 and y >= 0.5 then
-        tl = lerpShape(shapes.sad, shapes.angry, 0.5)
-        tr = center
-        bl = shapes.angry
-        br = lerpShape(shapes.angry, shapes.surprised, 0.5)
-        newX = x * 2
-        newY = (y - 0.5) * 2
-    else
-        tl = center
-        tr = lerpShape(shapes.happy, shapes.surprised, 0.5)
-        bl = lerpShape(shapes.angry, shapes.surprised, 0.5)
-        br = shapes.surprised
-        newX = (x - 0.5) * 2
-        newY = (y - 0.5) * 2
-    end
-
-    local top = lerpShape(tl, tr, newX)
-    local bot = lerpShape(bl, br, newX)
-    return lerpShape(top, bot, newY)
+    return t1
 end
 
-function applyPhoneme(shape, phoneme, closed)
-    if not phoneme then return shape end
-    local width = phoneme.width or 1.0
-    local jaw = phoneme.height or 0.0
+function makeTrianglesFromPolygon(polygon)
+    -- when this is true we also solve, self intersecting and everythign
+    local triangles = {}
+    local result = {}
+    local success, err = pcall(function()
+        mathutils.decompose(polygon, result)
+    end)
+
+    if not success then
+        --logger:error("Error in decompose_complex_poly: " .. err)
+        return nil -- Exit early if decomposition fails
+    end
+
+    for i = 1, #result do
+        local success, tris = pcall(love.math.triangulate, result[i])
+        if success then
+            tableConcat(triangles, tris)
+        else
+            --logger:error("Failed to triangulate part of the polygon: " .. tris)
+        end
+    end
+    return triangles
+end
+
+local function removeConsecutiveDuplicates(poly, epsilon)
+    epsilon = epsilon or 1
     local result = {}
 
-    for i, pt in ipairs(shape) do
-        table.insert(result, {
-            x = pt.x * mouthBounds.width * width,
-            y = pt.y * mouthBounds.height * (closed and 1 or jaw)
-        })
+    local function isClose(a, b)
+        return math.abs(a - b) < epsilon
+    end
+
+    local prevX, prevY = nil, nil
+    for i = 1, #poly - 1, 2 do
+        local x, y = poly[i], poly[i + 1]
+        if not (prevX and isClose(x, prevX) and isClose(y, prevY)) then
+            table.insert(result, x)
+            table.insert(result, y)
+            prevX, prevY = x, y
+        end
     end
 
     return result
 end
 
-function love.update(dt)
-    local speed = 0.5
-    if love.keyboard.isDown("left") then emotionDot.x = math.max(0, emotionDot.x - dt * speed) end
-    if love.keyboard.isDown("right") then emotionDot.x = math.min(1, emotionDot.x + dt * speed) end
-    if love.keyboard.isDown("up") then emotionDot.y = math.max(0, emotionDot.y - dt * speed) end
-    if love.keyboard.isDown("down") then emotionDot.y = math.min(1, emotionDot.y + dt * speed) end
+local function lerp(a, b, t)
+    return a + (b - a) * t
+end
 
-    if love.mouse.isDown(1) then
-        local x, y = love.mouse.getPosition()
-        if x > 50 and y > 50 and x < 250 and y < 250 then
-            local nx = (x - 50) / 200
-            local ny = (y - 50) / 200
+function createTexturedTriangleStrip(image)
+    local w, h = image:getDimensions()
+    local vertices = {}
+    local segments = 20
+    local hPart = h / (segments - 1)
+    local hv = 1 / (segments - 1)
+    local runningHV, runningHP = 0, 0
 
-            emotionDot.x = nx
-            emotionDot.y = ny
+    for i = 1, segments do
+        table.insert(vertices, { w / 2, runningHP, 0, runningHV })
+        table.insert(vertices, { -w / 2, runningHP, 1, runningHV })
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+    end
+
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+    return mesh
+end
+
+function texturedCurve(curve, image, mesh, dir, scaleW, offset)
+    dir = dir or 1
+    scaleW = scaleW or 1
+    offset = offset or 0
+    local dl = curve:getDerivative()
+    local w = image:getWidth()
+    local count = mesh:getVertexCount()
+
+    for j = 1, count, 2 do
+        local t = (j - 1) / (count - 2)
+        local xl, yl = curve:evaluate(t)
+        local dx, dy = dl:evaluate(t)
+        local angle = math.atan2(dy, dx)
+        local a = angle + math.pi / 2
+        local a2 = angle - math.pi / 2
+        local line = w * dir * scaleW
+
+        local x2 = xl + line * math.cos(a)
+        local y2 = yl + line * math.sin(a) + offset
+        local x3 = xl + line * math.cos(a2)
+        local y3 = yl + line * math.sin(a2) + offset
+
+        local _, _, u1, v1 = mesh:getVertex(j)
+        local _, _, u2, v2 = mesh:getVertex(j + 1)
+        mesh:setVertex(j, { x2, y2, u1, v1 })
+        mesh:setVertex(j + 1, { x3, y3, u2, v2 })
+    end
+end
+
+function normalizeShapesByUpperLip(shapes)
+    local function getLipCenters(points)
+        local upX, upY, downX, downY = 0, 0, 0, 0
+        local half = #points / 2
+
+        for i = 1, half, 2 do
+            upX = upX + points[i]
+            upY = upY + points[i + 1]
         end
+        for i = half + 1, #points, 2 do
+            downX = downX + points[i]
+            downY = downY + points[i + 1]
+        end
+
+        local count = half / 2
+        return upX / count, upY / count, downX / count, downY / count
+    end
+
+    local normalized = {}
+
+    for j, shape in ipairs(shapes) do
+        local upX, upY, downX, downY = getLipCenters(shape.points)
+
+        -- Define anchor as upper lip center (we freeze this) and shift all points relative to it
+        local anchorX = upX
+        local anchorY = upY
+
+        local newShape = { points = {} }
+        for i = 1, #shape.points, 2 do
+            local x = shape.points[i] - anchorX
+            local y = shape.points[i + 1] - anchorY
+
+            table.insert(newShape.points, x)
+            table.insert(newShape.points, y)
+        end
+        if shape.data then
+            newShape.data = shallowCopy(shape.data)
+        end
+        table.insert(normalized, newShape)
+    end
+
+    return normalized
+end
+
+function normalizeShapesToCenter(shapes)
+    local function getBBox(points)
+        local minX, minY = points[1], points[2]
+        local maxX, maxY = points[1], points[2]
+        for i = 3, #points, 2 do
+            local x, y = points[i], points[i + 1]
+            if x < minX then minX = x end
+            if y < minY then minY = y end
+            if x > maxX then maxX = x end
+            if y > maxY then maxY = y end
+        end
+        return minX, minY, maxX, maxY
+    end
+
+    -- Step 1: find largest bbox
+    local maxW, maxH = 0, 0
+    --local refCx, refCy = 0, 0
+
+    for _, shape in ipairs(shapes) do
+        local minX, minY, maxX, maxY = getBBox(shape.points)
+        local w, h = maxX - minX, maxY - minY
+        if w * h > maxW * maxH then
+            maxW, maxH = w, h
+            --refCx = (minX + maxX) / 2
+            --refCy = (minY + maxY) / 2
+        end
+    end
+
+    -- Step 2: create normalized copies
+    local normalized = {}
+
+    for _, shape in ipairs(shapes) do
+        local minX, minY, maxX, maxY = getBBox(shape.points)
+        local cx = (minX + maxX) / 2
+        local cy = (minY + maxY) / 2
+        --local w = maxX - minX
+        --local h = maxY - minY
+
+
+        local newShape = { points = {} }
+
+        for i = 1, #shape.points, 2 do
+            local x = (shape.points[i] - cx)     --+ refCx
+            local y = (shape.points[i + 1] - cy) --+ refCy
+            table.insert(newShape.points, x)
+            table.insert(newShape.points, y)
+        end
+
+        table.insert(normalized, newShape)
+    end
+    print('largets bbox found', maxW, maxH)
+    return normalized
+end
+
+function getMaxBoundingBoxDimensions(shapes)
+    if #shapes == 0 then return 0, 0, 0, 0 end
+
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+
+    for _, shape in ipairs(shapes) do
+        local pts = shape.points
+        for i = 1, #pts, 2 do
+            local x, y = pts[i], pts[i + 1]
+            if x < minX then minX = x end
+            if y < minY then minY = y end
+            if x > maxX then maxX = x end
+            if y > maxY then maxY = y end
+        end
+    end
+
+    return maxX - minX, maxY - minY
+end
+
+function love.load()
+    love.window.setMode(1600, 1024)
+    aardman = love.graphics.newImage('aardman.jpg')
+    love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
+    lips = {
+        love.graphics.newImage('line1.png'),
+        love.graphics.newImage('line2.png'),
+        love.graphics.newImage('upperlip2.png'),
+        love.graphics.newImage('upperlip3.png'),
+        love.graphics.newImage('upperlipx.png')
+    }
+    font = love.graphics.getFont()
+    bigfont = love.graphics.newFont('VoltaT-Regu.ttf', 24)
+
+    lipindex, lipoffset = 1, 0
+    lip = lips[lipindex]
+
+    shapes = {
+        [1] = {
+            data = { upperteeth = true },
+            points = { 46, 111, 70, 68, 153, 111, 224, 68, 254, 110, 223, 172, 156, 205, 70, 153 }
+        },
+        [2] = {
+
+            points = { 615, 657, 631, 651, 739, 649, 852, 645, 862, 665, 841, 670, 739, 670, 628, 674 }
+        },
+        [3] = {
+
+            points = { 758, 300, 790, 277, 848, 316, 899, 268, 932, 296, 926, 333, 847, 355, 762, 338 }
+        },
+        [4] = {
+
+            points = { 529, 484, 545, 476, 601, 530, 666, 478, 688, 490, 669, 522, 605, 531, 533, 520 }
+        },
+        [5] = {
+
+            points = { 508, 313, 570, 256, 610, 249, 669, 262, 715, 315, 697, 365, 615, 329, 541, 370 }
+        },
+        [6] = {
+
+            points = { 540, 98, 561, 59, 601, 47, 643, 65, 661, 93, 639, 126, 597, 139, 564, 130 }
+        },
+        [7] = {
+
+            points = { 355, 122, 363, 98, 388, 85, 411, 96, 421, 122, 411, 146, 388, 160, 366, 145 }
+        },
+        [8] = {
+
+            points = { 762, 104, 772, 68, 835, 76, 914, 72, 930, 101, 915, 138, 827, 144, 770, 140 }
+        },
+        [9] = {
+
+            points = { 770, 506, 794, 486, 853, 491, 906, 486, 927, 512, 908, 521, 846, 515, 792, 521 }
+        },
+        [10] = {
+            data = { upperteeth = true },
+
+            points = { 265, 315, 285, 285, 348, 271, 420, 289, 429, 320, 413, 368, 341, 367, 281, 345 }
+        },
+        [11] = {
+            data = { upperteeth = true },
+            points = { 323, 583, 334, 546, 385, 519, 435, 543, 443, 580, 424, 608, 384, 638, 337, 614 }
+        },
+        [12] =
+        {
+            data = { upperteeth = true },
+            points = { 80, 444, 101, 408, 165, 391, 231, 404, 248, 450, 231, 478, 163, 500, 84, 478 }
+        },
+        [13] =
+        {
+            data = { upperteeth = true },
+            points = { 86, 643, 113, 611, 177, 647, 239, 616, 265, 659, 231, 701, 162, 702, 96, 692 }
+        },
+        [14] = {
+
+            points = { 1036, 556, 1056, 534, 1129, 496, 1226, 538, 1218, 566, 1204, 573, 1128, 518, 1051, 576 }
+        }
+    }
+    --normalizedshapes = normalizeShapesByUpperLip(shapes)
+    normalizedshapes = normalizeShapesByUpperLip(shapes)
+    maxw, maxh = getMaxBoundingBoxDimensions(normalizedshapes)
+    teeth = love.graphics.newImage('teeth5.png')
+    tw, th = teeth:getDimensions()
+    teethScale = maxw / tw
+
+
+    renderShapeIndex = 1
+    currentShape = { points = {} }
+    for _, v in ipairs(normalizedshapes[renderShapeIndex].points) do
+        table.insert(currentShape.points, v)
+    end
+    if (normalizedshapes[renderShapeIndex].data) then
+        currentShape.data = shallowCopy(normalizedshapes[renderShapeIndex].data)
     end
 end
 
 function love.keypressed(key)
-    local idx = tonumber(key)
-    if idx and idx >= 1 and idx <= #phonemeKeys then
-        currentPhoneme = mouthShapes[phonemeKeys[idx]]
-        currentKey = phonemeKeys[idx]
+    if key == 'space' then
+        lipindex = lipindex % #lips + 1
+        lip = lips[lipindex]
+    elseif key == 'r' then
+        renderShapeIndex = renderShapeIndex + 1
+        if renderShapeIndex > #normalizedshapes then renderShapeIndex = 1 end
+        -- Copy target
+        targetShape = normalizedshapes[renderShapeIndex]
+        tweenTime = 0
+    elseif key == 'e' then
+        renderShapeIndex = renderShapeIndex - 1
+        if renderShapeIndex < 1 then renderShapeIndex = #normalizedshapes end
+
+        -- Copy target
+        targetShape = normalizedshapes[renderShapeIndex]
+        tweenTime = 0
+    elseif key == 'escape' then
+        love.event.quit()
     end
-    if (key == '0') then
-        currentPhoneme = mouthShapes[phonemeKeys[10]]
-        currentKey = phonemeKeys[10]
-    end
-    if (key == '-') then
-        currentPhoneme = mouthShapes[phonemeKeys[11]]
-        currentKey = phonemeKeys[11]
-    end
-    --print(currentPhoneme)
 end
 
-function drawTopTeeth(s)
-    local a, b, c = s[2], s[3], s[4]
-    local tx = (a.x + b.x + c.x) / 3
-    local ty = (a.y + b.y + c.y) / 3 - mouthBounds.height * teethParams.yOffset
+function love.update()
+    if love.keyboard.isDown('left') then lipoffset = lipoffset - 1 end
+    if love.keyboard.isDown('right') then lipoffset = lipoffset + 1 end
 
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.rectangle(
-        "fill",
-        tx - (mouthBounds.width * teethParams.width * 0.5),
-        ty - (mouthBounds.height * teethParams.height * 0.5),
-        mouthBounds.width * teethParams.width,
-        mouthBounds.height * teethParams.height,
-        4, 4
-    )
+    if targetShape and tweenTime < tweenDuration then
+        tweenTime = tweenTime + love.timer.getDelta()
+        local t = math.min(tweenTime / tweenDuration, 1)
+
+        for i = 1, #currentShape.points do
+            local a = currentShape.points[i]
+            local b = targetShape.points[i]
+            currentShape.points[i] = lerp(a, b, t)
+        end
+        -- if t >= .5 then
+        if (targetShape.data and t > .1) then
+            currentShape.data = shallowCopy(targetShape.data)
+        elseif not (targetShape.data) then
+            currentShape.data = nil
+        end
+        --  end
+        -- Done tweening
+        if t >= 1 then
+            targetShape = nil
+        end
+    end
 end
 
-function drawBottomTeeth(s)
-    local a, b, c = s[8], s[7], s[6]
-    local tx = (a.x + b.x + c.x) / 3
-    local ty = (a.y + b.y + c.y) / 3 + mouthBounds.height * teethParams.yOffset
-
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.rectangle(
-        "fill",
-        tx - (mouthBounds.width * teethParams.width * 0.5),
-        ty - (mouthBounds.height * teethParams.height * 0.5),
-        mouthBounds.width * teethParams.width,
-        mouthBounds.height * teethParams.height,
-        4, 4
-    )
+function getBoundingBoxCenter(points)
+    if #points < 2 then return 0, 0 end
+    local minX, minY = points[1], points[2]
+    local maxX, maxY = points[1], points[2]
+    for i = 3, #points, 2 do
+        local x, y = points[i], points[i + 1]
+        if x < minX then minX = x end
+        if y < minY then minY = y end
+        if x > maxX then maxX = x end
+        if y > maxY then maxY = y end
+    end
+    return (minX + maxX) / 2, (minY + maxY) / 2
 end
 
-function drawTongue(s, currentKey)
-    local t = s[7]
-    local out = tongueParams.baseOffset
-
-    if currentKey == "TH_L" or currentKey == "L_OU" then
-        out = out + tongueParams.stickOutOffset
+function createShape(x, y, radius, count)
+    local shape = { points = {} }
+    for i = 1, count do
+        local angle = (i - 1) / count * 2 * math.pi + math.pi
+        local px = x + radius * math.cos(angle)
+        local py = y + radius * math.sin(angle)
+        table.insert(shape.points, px)
+        table.insert(shape.points, py)
     end
-
-    love.graphics.setColor(1, 0.3, 0.4)
-    love.graphics.ellipse(
-        "fill",
-        t.x,
-        t.y + mouthBounds.height * out,
-        mouthBounds.width * tongueParams.width * 0.5,
-        mouthBounds.height * tongueParams.height * 0.5
-    )
+    return shape
 end
 
-function drawMouthFill(vertices)
-    local cx, cy = 0, 0
-    for i = 1, #vertices, 2 do
-        cx = cx + vertices[i]
-        cy = cy + vertices[i + 1]
-    end
-    cx = cx / (#vertices / 2)
-    cy = cy / (#vertices / 2)
+function drawShape(shape, scaleX, scaleY)
+    local s = shape.points
+    local scaleX = scaleX or 1
+    local scaleY = scaleY or 1
+    --normalizedshapes[1].points
+    -- local up = { s[1], s[2], s[3], s[4], s[3], s[4], s[5], s[6], s[5], s[6], s[7], s[8], s[7], s[8], s[9], s[10] }
+    -- local down = { s[9], s[10], s[11], s[12], s[11], s[12], s[13], s[14], s[13], s[14], s[15], s[16], s[15], s[16], s
+    --     [1], s[2] }
 
-    local fan = { cx, cy }
-    for i = 1, #vertices, 2 do
-        table.insert(fan, vertices[i])
-        table.insert(fan, vertices[i + 1])
-    end
-    -- close the loop
-    table.insert(fan, vertices[1])
-    table.insert(fan, vertices[2])
-
-    love.graphics.polygon("fill", fan)
-end
-
-function love.draw()
-    if currentKey then
-        love.graphics.print(currentKey)
-    end
-    love.graphics.push()
-    love.graphics.translate(400, 300)
-    love.graphics.setColor(1, 1, 1)
-
-    local closed = (currentKey == 'MMM' or currentKey == 'CLOSED')
-    local shapes = closed and shapesClosed or shapesOpen
-
-    local emotionShape = blend5(shapes, emotionDot.x, emotionDot.y)
-    local s = applyPhoneme(emotionShape, currentPhoneme, closed)
-
-
-    local up = { s[1].x, s[1].y, s[2].x, s[2].y, s[2].x, s[2].y, s[3].x, s[3].y, s[3].x, s[3].y, s[4].x, s[4].y, s[4].x,
-        s[4].y, s[5].x, s[5].y }
-    local down = { s[5].x, s[5].y, s[6].x, s[6].y, s[6].x, s[6].y, s[7].x, s[7].y, s[7].x, s[7].y, s[8].x, s[8].y, s[8]
-        .x, s[8].y, s[1].x, s[1].y }
-    love.graphics.setLineWidth(1)
-    -- for i = 1, numPoints do
-    --     local a = s[i]
-    --     local b = s[(i % numPoints) + 1]
-    --     love.graphics.line(a.x, a.y, b.x, b.y)
-    -- end
-
-    -- for _, p in ipairs(s) do
-    --     love.graphics.circle("fill", p.x, p.y, 3)
-    -- end
-
-
-    local verticesOLD = { s[1].x, s[1].y, s[2].x, s[2].y, s[3].x, s[3].y, s[4].x, s[4].y, s[5].x, s[5].y, s[6].x, s[6].y,
-        s[7].x, s[7].y, s[8].x, s[8].y }
+    local up = {
+        s[1] * scaleX, s[2] * scaleY, s[3] * scaleX, s[4] * scaleY,
+        s[3] * scaleX, s[4] * scaleY, s[5] * scaleX, s[6] * scaleY,
+        s[5] * scaleX, s[6] * scaleY, s[7] * scaleX, s[8] * scaleY,
+        s[7] * scaleX, s[8] * scaleY, s[9] * scaleX, s[10] * scaleY
+    }
+    local down = {
+        s[9] * scaleX, s[10] * scaleY, s[11] * scaleX, s[12] * scaleY,
+        s[11] * scaleX, s[12] * scaleY, s[13] * scaleX, s[14] * scaleY,
+        s[13] * scaleX, s[14] * scaleY, s[15] * scaleX, s[16] * scaleY,
+        s[15] * scaleX, s[16] * scaleY, s[1] * scaleX, s[2] * scaleY
+    }
 
 
     local upCurve = love.math.newBezierCurve(up)
     local downCurve = love.math.newBezierCurve(down)
-    local upPoints = upCurve:render(3)
-    local downPoints = downCurve:render(3)
 
-    for i = #downPoints - 1, 1, -2 do
+    local upPoints = upCurve:render(1)
+    local downPoints = downCurve:render(1)
+    for i = 1, #downPoints, 2 do
         table.insert(upPoints, downPoints[i])
         table.insert(upPoints, downPoints[i + 1])
     end
-
-    local vertices = upPoints
-
+    local vertices = removeConsecutiveDuplicates(upPoints)
+    local tris = makeTrianglesFromPolygon(vertices)
 
     local stencilFunction = function()
-        --drawMouthFill(vertices)
-        love.graphics.polygon("fill", vertices)
+        for i = 1, #tris do
+            love.graphics.polygon("fill", tris[i])
+        end
     end
 
-    -- Apply the stencil. Everything drawn inside this block is masked by the stencil.
-    if not closed then
-        love.graphics.stencil(stencilFunction, "replace", 1)
-        love.graphics.setStencilTest("equal", 1)
-        love.graphics.setColor(0.2, 0.1, 1)
-
-        love.graphics.polygon("fill", vertices)
-        --drawMouthFill(vertices)
+    love.graphics.stencil(stencilFunction, "replace", 1)
+    love.graphics.setStencilTest("equal", 1)
+    love.graphics.setColor(0, 0, 0, 1)
+    for i = 1, #tris do
+        love.graphics.polygon("fill", tris[i])
     end
 
-
-
-    if currentPhoneme then
-        --drawTopTeeth(s)
-        if currentPhoneme.topTeeth then drawTopTeeth(s) end
-        ---if currentPhoneme.bottomTeeth then drawBottomTeeth(s) end
-        --if currentPhoneme.tongue then drawTongue(s, currentKey) end
-    end
-    if not closed then
-        love.graphics.setStencilTest()
-    end
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.setLineWidth(5)
-
-    love.graphics.line(upCurve:render())
-    love.graphics.line(downCurve:render())
-    love.graphics.pop()
-    love.graphics.setLineWidth(5)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.rectangle("line", 50, 50, 200, 200)
-    love.graphics.circle("fill", 50 + emotionDot.x * 200, 50 + emotionDot.y * 200, 4)
-    love.graphics.print("Use arrow keys to move the emotion dot", 50, 270)
-    love.graphics.print("Press 1-9 to select phoneme", 50, 290)
+
+    love.graphics.setStencilTest()
+    if shape.data and shape.data.upperteeth then
+        local umx, umy = getMidpoint(up)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(teeth, umx, umy, 0, teethScale / 2, teethScale / 2, tw / 2)
+    end
+    -- love.graphics.setColor(1, 0, 0)
+    -- love.graphics.setLineWidth(5)
+    -- love.graphics.line(upCurve:render())
+    --  love.graphics.line(downCurve:render())
+
+    love.graphics.setColor(1, 0, 0, 1)
+    local m1 = createTexturedTriangleStrip(lip)
+    texturedCurve(upCurve, lip, m1, -1, 0.3, lipoffset)
+    love.graphics.draw(m1)
+
+    local m2 = createTexturedTriangleStrip(lip)
+    texturedCurve(downCurve, lip, m2, -1, 0.3, -lipoffset)
+    love.graphics.draw(m2)
+end
+
+function love.mousepressed(x, y, button)
+    if button == 1 then
+        for i, shape in ipairs(shapes) do
+            for j = 1, #shape.points, 2 do
+                local px, py = shape.points[j], shape.points[j + 1]
+                local dx, dy = x - px, y - py
+                if dx * dx + dy * dy <= 64 then
+                    draggingShape = shape
+                    draggingIndex = j
+                    offsetX = dx
+                    offsetY = dy
+                    print(i)
+                    return
+                end
+            end
+        end
+    elseif button == 2 then
+        table.insert(shapes, createShape(x, y, 30, 8))
+    end
+end
+
+function love.mousereleased(x, y, button)
+    if button == 1 then
+        if draggingShape then
+            for i = 1, #draggingShape.points do
+                draggingShape.points[i] = math.floor(draggingShape.points[i] + .5)
+            end
+            print(inspect(draggingShape))
+        end
+        draggingShape, draggingIndex = nil, nil
+    end
+end
+
+function love.mousemoved(x, y)
+    if draggingShape and draggingIndex then
+        draggingShape.points[draggingIndex] = x - offsetX
+        draggingShape.points[draggingIndex + 1] = y - offsetY
+    end
+end
+
+function love.draw()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(aardman, 0, 0, 0, 2, 2)
+
+    for i, shape in ipairs(shapes) do
+        local s = shape.points
+
+        for j = 1, #s, 2 do
+            local x1, y1 = s[j], s[j + 1]
+            local next = ((j + 2) > #s) and 1 or j + 2
+            local x2, y2 = s[next], s[next + 1]
+            love.graphics.setColor(0.8, 0.8, 0.8)
+            love.graphics.line(x1, y1, x2, y2)
+        end
+
+        for j = 1, #s, 2 do
+            love.graphics.setColor(1, 0.5, 0.2)
+            love.graphics.circle("fill", s[j], s[j + 1], 6)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(math.ceil(j / 2), s[j] + 8, s[j + 1] - 8)
+        end
+        scale = scale or 1
+        -- local up = { s[1], s[2], s[3], s[4], s[3], s[4], s[5], s[6], s[5], s[6], s[7], s[8], s[7], s[8], s[9], s[10] }
+        -- local down = { s[9], s[10], s[11], s[12], s[11], s[12], s[13], s[14], s[13], s[14], s[15], s[16], s[15], s[16], s
+        --     [1], s[2] }
+
+        local up = {
+            s[1] * scale, s[2] * scale, s[3] * scale, s[4] * scale,
+            s[3] * scale, s[4] * scale, s[5] * scale, s[6] * scale,
+            s[5] * scale, s[6] * scale, s[7] * scale, s[8] * scale,
+            s[7] * scale, s[8] * scale, s[9] * scale, s[10] * scale
+        }
+        local down = {
+            s[9] * scale, s[10] * scale, s[11] * scale, s[12] * scale,
+            s[11] * scale, s[12] * scale, s[13] * scale, s[14] * scale,
+            s[13] * scale, s[14] * scale, s[15] * scale, s[16] * scale,
+            s[15] * scale, s[16] * scale, s[1] * scale, s[2] * scale
+        }
+
+
+        local umx, umy = getMidpoint(up)
+
+        love.graphics.draw(teeth, umx, umy, 0, teethScale / 2, teethScale / 2, tw / 2)
+        local dmx, dmy = getMidpoint(down)
+        love.graphics.draw(teeth, dmx, dmy, 0, teethScale / 2, -teethScale / 2, tw / 2)
+        local upCurve = love.math.newBezierCurve(up)
+        local downCurve = love.math.newBezierCurve(down)
+
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.setLineWidth(5)
+        love.graphics.line(upCurve:render())
+        love.graphics.line(downCurve:render())
+
+        love.graphics.setColor(1, 0, 1, 0.8)
+        local m1 = createTexturedTriangleStrip(lip)
+        texturedCurve(upCurve, lip, m1, -1, 0.3, lipoffset)
+        love.graphics.draw(m1)
+
+        local m2 = createTexturedTriangleStrip(lip)
+        texturedCurve(downCurve, lip, m2, -1, 0.3, -lipoffset)
+        love.graphics.draw(m2)
+
+        love.graphics.setFont(bigfont)
+        local cx, cy = getBoundingBoxCenter(s)
+        love.graphics.setColor(1, 1, 0)
+        love.graphics.print(i, cx, cy)
+        love.graphics.setFont(font)
+    end
+
+    love.graphics.push()
+    love.graphics.translate(1400, 200)
+    love.graphics.ellipse('fill', 25, -50, 150, 200)
+    drawShape(currentShape, 1, 1)
+    --drawShape(normalizedshapes[renderShapeIndex])
+
+    love.graphics.pop()
+
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print('R/E toggle mouthshapes, space textures, left/right offset')
 end
