@@ -256,17 +256,22 @@ end
 
 function love.load()
     love.window.setMode(1600, 1024)
-    aardman = love.graphics.newImage('aardman.jpg')
+    aardman = love.graphics.newImage('assets/aardman.jpg')
     love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
     lips = {
-        love.graphics.newImage('line1.png'),
-        love.graphics.newImage('line2.png'),
-        love.graphics.newImage('upperlip2.png'),
-        love.graphics.newImage('upperlip3.png'),
-        love.graphics.newImage('upperlipx.png')
+        love.graphics.newImage('assets/line1.png'),
+        love.graphics.newImage('assets/line2.png'),
+        love.graphics.newImage('assets/upperlip2.png'),
+        love.graphics.newImage('assets/upperlip3.png'),
+        love.graphics.newImage('assets/upperlipx.png'),
+        love.graphics.newImage('assets/lowerlip4.png')
     }
+    teeth = love.graphics.newImage('assets/teeth5.png')
+    tw, th = teeth:getDimensions()
+
+
     font = love.graphics.getFont()
-    bigfont = love.graphics.newFont('VoltaT-Regu.ttf', 24)
+    bigfont = love.graphics.newFont('assets/VoltaT-Regu.ttf', 24)
 
     lipindex, lipoffset = 1, 0
     lip = lips[lipindex]
@@ -335,10 +340,7 @@ function love.load()
     --normalizedshapes = normalizeShapesByUpperLip(shapes)
     normalizedshapes = normalizeShapesByUpperLip(shapes)
     maxw, maxh = getMaxBoundingBoxDimensions(normalizedshapes)
-    teeth = love.graphics.newImage('teeth5.png')
-    tw, th = teeth:getDimensions()
     teethScale = maxw / tw
-
 
     renderShapeIndex = 1
     currentShape = { points = {} }
@@ -608,7 +610,7 @@ function love.draw()
     love.graphics.push()
     love.graphics.translate(1400, 200)
     love.graphics.ellipse('fill', 25, -50, 150, 200)
-    drawShape(currentShape, 1, 1)
+    drawShape(currentShape, 2, 1)
     --drawShape(normalizedshapes[renderShapeIndex])
 
     love.graphics.pop()
