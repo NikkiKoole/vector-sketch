@@ -1,7 +1,7 @@
 local lib = {}
-local inspect = require 'inspect'
+--local inspect = require 'inspect'
 local aardman = love.graphics.newImage('assets/aardman.jpg')
-local shapes = require('mouth-shapes')
+--local shapes = require('mouth-shapes')
 local mouthRenderer = require 'mouth-renderer'
 
 local draggingShape, draggingIndex = nil, nil
@@ -34,7 +34,7 @@ local function getMidpoint(points)
 end
 
 function lib.drawEditableOverlay()
-    for i, shape in ipairs(shapes.raw) do
+    for i, shape in ipairs(mouthRenderer.shapes.raw) do
         local s = shape.points
 
         for j = 1, #s, 2 do
@@ -101,7 +101,7 @@ end
 function lib.mousepressed(x, y, button)
     -- start dragging
     if button == 1 then
-        for i, shape in ipairs(shapes.raw) do
+        for i, shape in ipairs(mouthRenderer.shapes.raw) do
             for j = 1, #shape.points, 2 do
                 local px, py = shape.points[j], shape.points[j + 1]
                 local dx, dy = x - px, y - py
