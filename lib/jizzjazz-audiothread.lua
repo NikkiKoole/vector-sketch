@@ -459,99 +459,100 @@ function doHandleDrumNotes(beat, tick, bpm)
                     --print(drumkit, drumkit[key], key)
                     if (drumkit[key] == nil) then
                         print(key)
-                    end
-                    local source = drumkit[key].source:clone()
-                    local cellVolume = (cell.volume or 1) *
-                        (mixerDataDrums and mixerDataDrums[i] and mixerDataDrums[i].volume or 1)
-                    local gate = cell.gate or 1
-                    local allDrumsVolume = (uiData and uiData.drumVolume or 1)
-                    local volume = cellVolume * allDrumsVolume
-                    local semitoneOffset = math.ceil((uiData and uiData.allDrumSemitoneOffset or 0))
+                    else
+                        local source = drumkit[key].source:clone()
+                        local cellVolume = (cell.volume or 1) *
+                            (mixerDataDrums and mixerDataDrums[i] and mixerDataDrums[i].volume or 1)
+                        local gate = cell.gate or 1
+                        local allDrumsVolume = (uiData and uiData.drumVolume or 1)
+                        local volume = cellVolume * allDrumsVolume
+                        local semitoneOffset = math.ceil((uiData and uiData.allDrumSemitoneOffset or 0))
 
-                    if cell.useRndP then
-                        local pentaMinor = { 0, 3, 5, 7, 10 }
+                        if cell.useRndP then
+                            local pentaMinor = { 0, 3, 5, 7, 10 }
 
-                        local scaleToPickFrom = {}
-                        for si = cell.rndPOctMin or 0, cell.rndPOctMax or 0 do
-                            if (cell.useRndPPentatonic) then
-                                for j = 1, #pentaMinor do
-                                    local o = pentaMinor[j] + (12 * si)
-                                    table.insert(scaleToPickFrom, o)
-                                end
-                            else
-                                for j = 0, 11 do
-                                    local o = j + (12 * si)
-                                    table.insert(scaleToPickFrom, o)
+                            local scaleToPickFrom = {}
+                            for si = cell.rndPOctMin or 0, cell.rndPOctMax or 0 do
+                                if (cell.useRndPPentatonic) then
+                                    for j = 1, #pentaMinor do
+                                        local o = pentaMinor[j] + (12 * si)
+                                        table.insert(scaleToPickFrom, o)
+                                    end
+                                else
+                                    for j = 0, 11 do
+                                        local o = j + (12 * si)
+                                        table.insert(scaleToPickFrom, o)
+                                    end
                                 end
                             end
+                            local picked = scaleToPickFrom[math.ceil(math.random() * #scaleToPickFrom)]
+                            semitoneOffset = semitoneOffset + picked
+                            -- print(#scaleToPickFrom)
                         end
-                        local picked = scaleToPickFrom[math.ceil(math.random() * #scaleToPickFrom)]
-                        semitoneOffset = semitoneOffset + picked
-                        -- print(#scaleToPickFrom)
-                    end
 
-                    local afterOffset = getUntunedPitch(60 + semitoneOffset + (cell and cell.semitoneOffset or 0))
-                    local pitch = afterOffset
+                        local afterOffset = getUntunedPitch(60 + semitoneOffset + (cell and cell.semitoneOffset or 0))
+                        local pitch = afterOffset
 
-                    local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
-                        bpm, beat, tick, gate)
+                        local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
+                            bpm, beat, tick, gate)
 
-                    if source:getChannelCount() == 1 then
-                        source:setPosition(cell.pan or 0, 0, 0)
-                    else
-                        print(key .. ' isnt MONO, so it cant be panned')
-                    end
+                        if source:getChannelCount() == 1 then
+                            source:setPosition(cell.pan or 0, 0, 0)
+                        else
+                            print(key .. ' isnt MONO, so it cant be panned')
+                        end
 
-                    source:setVolume(volume)
-                    source:setPitch(pitch)
+                        source:setVolume(volume)
+                        source:setPitch(pitch)
 
-                    if cell.delay and cell.delay > 0 then
-                        --print('DO NOT PLAY DIRECTLY BUT DELAY ')
-                        --print(cell.delay * PPQN)
-                        local future = createFutureDrumNote(beat, tick, math.ceil(cell.delay * 24),
-                            source, pitch,
-                            volume, gate, bpm)
-                        table.insert(futureDrumNotes, future)
-                    else
-                        source:play()
-                        table.insert(playingDrumSounds, {
-                            source = source,
-                            pitch = pitch,
-                            timeOn = love.timer.getTime(),
-                            beatOn = beat,
-                            tickOn = tick,
-                            drumIndex = i,
-                            gateCloseBeat = gateCloseBeat,
-                            gateCloseTick = gateCloseTick,
-                            volume = volume
-                        })
-                    end
-
-
-                    if drumgrid[k][column + 1][i].flam == true then
-                        local flamRepeat = 1
-                        for j = 1, flamRepeat do
-                            local future = createFutureDrumNote(beat, tick, (12 / flamRepeat),
-                                drumkit[key].source:clone(), pitch,
+                        if cell.delay and cell.delay > 0 then
+                            --print('DO NOT PLAY DIRECTLY BUT DELAY ')
+                            --print(cell.delay * PPQN)
+                            local future = createFutureDrumNote(beat, tick, math.ceil(cell.delay * 24),
+                                source, pitch,
                                 volume, gate, bpm)
-
-
                             table.insert(futureDrumNotes, future)
+                        else
+                            source:play()
+                            table.insert(playingDrumSounds, {
+                                source = source,
+                                pitch = pitch,
+                                timeOn = love.timer.getTime(),
+                                beatOn = beat,
+                                tickOn = tick,
+                                drumIndex = i,
+                                gateCloseBeat = gateCloseBeat,
+                                gateCloseTick = gateCloseTick,
+                                volume = volume
+                            })
                         end
-                    end
-                    --local echo = true
-                    if cell.echo and cell.echo > 0 then
-                        local volume = 0.75
-                        local echoRepeats = cell.echo
-                        local startDelay = 33
 
-                        for k = 1, echoRepeats do
-                            local delay = startDelay * k
-                            local future = createFutureDrumNote(beat, tick, startDelay * k,
-                                drumkit[key].source:clone(), pitch,
-                                volume / k, gate, bpm)
 
-                            table.insert(futureDrumNotes, future)
+                        if drumgrid[k][column + 1][i].flam == true then
+                            local flamRepeat = 1
+                            for j = 1, flamRepeat do
+                                local future = createFutureDrumNote(beat, tick, (12 / flamRepeat),
+                                    drumkit[key].source:clone(), pitch,
+                                    volume, gate, bpm)
+
+
+                                table.insert(futureDrumNotes, future)
+                            end
+                        end
+                        --local echo = true
+                        if cell.echo and cell.echo > 0 then
+                            local volume = 0.75
+                            local echoRepeats = cell.echo
+                            local startDelay = 33
+
+                            for k = 1, echoRepeats do
+                                local delay = startDelay * k
+                                local future = createFutureDrumNote(beat, tick, startDelay * k,
+                                    drumkit[key].source:clone(), pitch,
+                                    volume / k, gate, bpm)
+
+                                table.insert(futureDrumNotes, future)
+                            end
                         end
                     end
                 end

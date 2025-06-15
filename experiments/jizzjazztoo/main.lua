@@ -1232,6 +1232,38 @@ function drawADSRForActiveInstrument(x, y)
     end
 end
 
+function displayPianoRollForClip(clip)
+    --print(inspect(clip))
+    local w, h = love.graphics.getDimensions()
+    local beatLength = math.floor(w / clip.meta.loopRounder) -- pixels per beat
+    local tickPerBeat = 96                                   -- your resolution
+    local tickLength = beatLength / tickPerBeat
+    local semitoneHeight = 8                                 -- pixels per semitone
+    local pianoRollHeight = 128                              -- range of pitches to draw (e.g. from C1=36 to C6=84)
+    local minPitch = 36
+    local maxPitch = 84
+
+    local function noteToRect(note)
+        print(inspect(note))
+        local x = ((note.beat * tickPerBeat) * tickLength) + note.tick * tickLength
+        local width = note.duration * tickLength
+        local y = (maxPitch - note.semitone) * semitoneHeight
+        local height = semitoneHeight
+        return x, y, width, height
+    end
+    for beat = 0, clip.meta.loopRounder do
+        local x = beat * beatLength
+        love.graphics.line(x, h - 100, x, h)
+    end
+    for _, note in ipairs(clip) do
+        local x, y, w, h = noteToRect(note)
+        local velocity = note.velocity / 127
+        love.graphics.setColor(1, velocity, 0) -- brighter = louder
+        love.graphics.rectangle("fill", x, y, w, h)
+    end
+    --love.graphics.rectangle('fill', 0, h - 100, w, 100)
+end
+
 function drawInstrumentBanks(x, y)
     local font = smallfont
     love.graphics.setFont(font)
@@ -1285,13 +1317,31 @@ function drawInstrumentBanks(x, y)
                 end
             end
 
-            if false then
+            if true then
                 if #audiohelper.recordedClips[i].clips > 0 and instrumentIndex == i then
                     local buttonw = font:getWidth('edit clips')
                     local buttonh = rowHeight / 2
                     local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
                     if labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false).clicked == true then
                         print('gonna do the clip')
+                        local allClips = audiohelper.recordedClips[i].clips
+
+
+
+                        for j = 1, #allClips do
+                            local clip = allClips[j]
+                            if clip.meta.isSelected then
+                                local myBeat = audiohelper.myBeat
+                                local myBeatInMeasure = audiohelper.myBeatInMeasure
+                                print(myBeat, myBeatInMeasure)
+                                --print(inspect(clip))
+                                if pianoRollClip == clip then
+                                    pianoRollClip = nil
+                                else
+                                    pianoRollClip = clip
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -1400,7 +1450,9 @@ function love.draw()
     drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
 
     love.graphics.setColor(1, 1, 1)
-
+    if pianoRollClip then
+        displayPianoRollForClip(pianoRollClip)
+    end
 
     if fileBrowserForSound then
         if fileBrowserForSound.type == 'instrument' then
