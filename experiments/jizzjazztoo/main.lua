@@ -158,6 +158,12 @@ function love.load()
 
     pressedKeys = {}
 
+    pianoRollStuff = {
+        clip = nil,
+        selectedNote = nil,
+        dragMode = nil, -- "move", "resize-start", "resize-end"
+        dragOffset = 0, -- in ticks
+    }
     audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
     browser             = fileBrowser("samples", {}, { "wav", "WAV" })
@@ -594,6 +600,54 @@ function love.update(dt)
     updateMessage()
     audiohelper.pumpAudioThread()
     handleMIDIInput()
+
+
+    if pianoRollStuff.selectedNote and love.mouse.isDown(1) then
+        local note = pianoRollStuff.selectedNote
+        local mouseX = love.mouse.getX()
+        local w = love.graphics.getWidth()
+        local tickPerBeat = 96
+        local beatLength = math.floor(w / pianoRollStuff.clip.meta.loopRounder)
+        local tickLength = beatLength / tickPerBeat
+        local newTick = mouseX / tickLength
+
+        local function updateNoteEnd(note)
+            local startTick = note.beat * tickPerBeat + note.tick
+            local endTick = startTick + note.duration
+            note.beatOff = math.floor(endTick / tickPerBeat)
+            note.tickOff = endTick % tickPerBeat
+        end
+
+        if pianoRollStuff.dragMode == "move" then
+            local semitoneHeight = 8    -- pixels per semitone
+            local maxPitch = 84
+            local pianoRollHeight = 128 -- range of pitches to draw (e.g. from C1=36 to C6=84)
+            local minPitch = 36
+
+            local dy = love.mouse.getY() - pianoRollStuff.mouseStartY
+            local semitoneDelta = math.floor(dy / semitoneHeight + 0.5) -- snap to nearest semitone
+            note.semitone = pianoRollStuff.originalSemitone - semitoneDelta
+            note.semitone = math.max(minPitch, math.min(maxPitch, note.semitone))
+
+            local snapped = math.floor(newTick - pianoRollStuff.dragOffset + 0.5)
+            note.beat = math.floor(snapped / tickPerBeat)
+            note.tick = snapped % tickPerBeat
+            updateNoteEnd(note)
+        elseif pianoRollStuff.dragMode == "resize-start" then
+            local snapped = math.floor(newTick + 0.5)
+            local endTick = note.beat * tickPerBeat + note.tick + note.duration
+            local clamped = math.min(endTick - 1, snapped)
+            note.beat = math.floor(clamped / tickPerBeat)
+            note.tick = clamped % tickPerBeat
+            note.duration = endTick - clamped
+            updateNoteEnd(note)
+        elseif pianoRollStuff.dragMode == "resize-end" then
+            local snapped = math.floor(newTick + 0.5)
+            local startTick = note.beat * tickPerBeat + note.tick
+            note.duration = math.max(1, snapped - startTick)
+            updateNoteEnd(note)
+        end
+    end
 end
 
 function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
@@ -972,65 +1026,95 @@ function love.wheelmoved(a, b)
 end
 
 function love.mousepressed(x, y, button)
-    if fileBrowserForSound then
-        local bclicked, path = handleBrowserClick(browser, x, y, smallfont)
+    if pianoRollStuff.clip == nil then
+        if fileBrowserForSound then
+            local bclicked, path = handleBrowserClick(browser, x, y, smallfont)
 
-        if bclicked then
-            mouseState.clickedSomething = true
-            browserClicked = true
+            if bclicked then
+                mouseState.clickedSomething = true
+                browserClicked = true
 
-            if bclicked == 'directory' then
-                browser = fileBrowser(browser.root, browser.subdirs,
-                    browser.allowedExtensions)
-            else
-                --print(inspect(browser.subdirs), path)
-                local sample = audiohelper.prepareSingleSample(browser.subdirs, path)
-                if sample then
-                    if fileBrowserForSound.type == 'instrument' then
-                        audiohelper.instruments[instrumentIndex].sample = sample
-                        audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
-                    end
-                    if fileBrowserForSound.type == 'drum' then
-                        local key = audiohelper.drumkit.order[drumIndex]
-                        print(key, sample, drumIndex)
-                        audiohelper.drumkit[key] = sample
-                        audiohelper.updateDrumKitData()
+                if bclicked == 'directory' then
+                    browser = fileBrowser(browser.root, browser.subdirs,
+                        browser.allowedExtensions)
+                else
+                    --print(inspect(browser.subdirs), path)
+                    local sample = audiohelper.prepareSingleSample(browser.subdirs, path)
+                    if sample then
+                        if fileBrowserForSound.type == 'instrument' then
+                            audiohelper.instruments[instrumentIndex].sample = sample
+                            audiohelper.sendMessageToAudioThread({ type = "instruments", data = audiohelper.instruments })
+                        end
+                        if fileBrowserForSound.type == 'drum' then
+                            local key = audiohelper.drumkit.order[drumIndex]
+                            print(key, sample, drumIndex)
+                            audiohelper.drumkit[key] = sample
+                            audiohelper.updateDrumKitData()
+                        end
                     end
                 end
             end
         end
-    end
-    if browserClicked then return end
+        if browserClicked then return end
 
-    if drumIndex <= 0 then
-        local cx, cy = getCellUnderPosition(x, y)
-        if cx >= 0 and cy >= 0 then
-            local k = 1
-            audiohelper.drumgrid[k][cx][cy] = {
-                on = not audiohelper.drumgrid[k][cx][cy].on,
-                flam = love.keyboard.isDown(
-                    '.')
-            }
-            audiohelper.updateDrumKitData()
-        end
-    else
-        if drumIndex > 0 then
-            local k = 1
+        if drumIndex <= 0 then
             local cx, cy = getCellUnderPosition(x, y)
-
-            if cx >= 0 and cy == 1 then
-                audiohelper.drumgrid[k][cx][drumIndex] = {
-                    on = not audiohelper.drumgrid[k][cx][drumIndex].on,
-                    flam = love.keyboard.isDown('.')
+            if cx >= 0 and cy >= 0 then
+                local k = 1
+                audiohelper.drumgrid[k][cx][cy] = {
+                    on = not audiohelper.drumgrid[k][cx][cy].on,
+                    flam = love.keyboard.isDown(
+                        '.')
                 }
                 audiohelper.updateDrumKitData()
             end
+        else
+            if drumIndex > 0 then
+                local k = 1
+                local cx, cy = getCellUnderPosition(x, y)
+
+                if cx >= 0 and cy == 1 then
+                    audiohelper.drumgrid[k][cx][drumIndex] = {
+                        on = not audiohelper.drumgrid[k][cx][drumIndex].on,
+                        flam = love.keyboard.isDown('.')
+                    }
+                    audiohelper.updateDrumKitData()
+                end
+            end
+        end
+    end
+
+    if pianoRollStuff.clip and button == 1 then
+        local i, mode = getNoteUnderMouse(pianoRollStuff.clip, x, y)
+        if i then
+            local w, h = love.graphics.getDimensions()
+            local tickPerBeat = 96
+            local beatLength = math.floor(w / pianoRollStuff.clip.meta.loopRounder) -- pixels per beat
+            local tickLength = beatLength / tickPerBeat
+
+            pianoRollStuff.selectedNote = pianoRollStuff.clip[i]
+            pianoRollStuff.dragMode = mode
+
+            pianoRollStuff.mouseStartY = y
+            pianoRollStuff.originalSemitone = pianoRollStuff.selectedNote.semitone
+
+            print(inspect(pianoRollStuff.clip[i]))
+            -- calculate dragOffset in ticks
+            local clickTick = x / tickLength
+            local noteStartTick = pianoRollStuff.selectedNote.beat * tickPerBeat + pianoRollStuff.selectedNote.tick
+            pianoRollStuff.dragOffset = clickTick - noteStartTick
         end
     end
 end
 
 function love.mousereleased()
     lastDraggedElement = nil
+
+    if (pianoRollStuff.selectedNote) then
+        audiohelper.sendMessageToAudioThread({ type = "clips", data = audiohelper.recordedClips })
+    end
+    pianoRollStuff.selectedNote = nil
+    pianoRollStuff.dragMode = nil
 end
 
 function drawDrumParts(x, y)
@@ -1232,6 +1316,36 @@ function drawADSRForActiveInstrument(x, y)
     end
 end
 
+function getNoteUnderMouse(clip, mouseX, mouseY)
+    local w, h = love.graphics.getDimensions()
+    local tickPerBeat = 96
+    local beatLength = math.floor(w / clip.meta.loopRounder) -- pixels per beat
+    local tickLength = beatLength / tickPerBeat
+    local semitoneHeight = 8                                 -- pixels per semitone
+    local maxPitch = 84
+
+    for i, note in ipairs(clip) do
+        local x = ((note.beat * tickPerBeat) + note.tick) * tickLength
+        local width = note.duration * tickLength
+        local y = (maxPitch - note.semitone) * semitoneHeight
+        local height = semitoneHeight
+
+        if mouseY > y and mouseY < y + height then
+            if mouseX > x and mouseX < x + width then
+                local localX = mouseX - x
+                if localX < 8 then
+                    return i, "resize-start"
+                elseif localX > width - 8 then
+                    return i, "resize-end"
+                else
+                    return i, "move"
+                end
+            end
+        end
+    end
+    return nil
+end
+
 function displayPianoRollForClip(clip)
     --print(inspect(clip))
     local w, h = love.graphics.getDimensions()
@@ -1260,6 +1374,23 @@ function displayPianoRollForClip(clip)
         local velocity = note.velocity / 127
         love.graphics.setColor(1, velocity, 0) -- brighter = louder
         love.graphics.rectangle("fill", x, y, w, h)
+    end
+
+    if playing or recording then
+        local tickPerBeat = 96
+        local totalClipTicks = clip.meta.loopRounder * tickPerBeat
+        local currentTicks = (audiohelper.myBeat * tickPerBeat) + audiohelper.myTick
+        local loopedTicks = currentTicks % totalClipTicks
+        local playheadX = loopedTicks * tickLength
+
+        love.graphics.setColor(1, 1, 1, 0.6)
+        love.graphics.setLineWidth(2)
+        love.graphics.line(playheadX, 0, playheadX, h)
+        love.graphics.setLineWidth(1)
+    end
+
+    if labelbutton('close', w - 100, 0, 100, 40).clicked then
+        pianoRollStuff.clip = nil
     end
     --love.graphics.rectangle('fill', 0, h - 100, w, 100)
 end
@@ -1335,10 +1466,10 @@ function drawInstrumentBanks(x, y)
                                 local myBeatInMeasure = audiohelper.myBeatInMeasure
                                 print(myBeat, myBeatInMeasure)
                                 --print(inspect(clip))
-                                if pianoRollClip == clip then
-                                    pianoRollClip = nil
+                                if pianoRollStuff.clip == clip then
+                                    pianoRollStuff.clip = nil
                                 else
-                                    pianoRollClip = clip
+                                    pianoRollStuff.clip = clip
                                 end
                             end
                         end
@@ -1426,131 +1557,131 @@ function love.draw()
     handleMouseClickStart()
 
     love.graphics.setColor(1, 1, 1)
+    if pianoRollStuff.clip then
+        displayPianoRollForClip(pianoRollStuff.clip)
+    else
+        drawDrumParts(100, 0)
 
-    drawDrumParts(100, 0)
-
-    if drumIndex <= 0 then
-        drawDrumMachine()
-        drawMouseOverGrid()
-    end
-
-    if drumIndex > 0 then
-        drawMoreInfoForInstrument()
-        drawMouseOverMoreInfo()
-        if playing then
-            drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns, 0)
+        if drumIndex <= 0 then
+            drawDrumMachine()
+            drawMouseOverGrid()
         end
-    end
 
-    love.graphics.setColor(1, 1, 1)
-    drawMeasureCounter(w / 2, 20)
-
-    drawInstrumentBanks((w / 2) + 32, 120)
-
-    drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
-
-    love.graphics.setColor(1, 1, 1)
-    if pianoRollClip then
-        displayPianoRollForClip(pianoRollClip)
-    end
-
-    if fileBrowserForSound then
-        if fileBrowserForSound.type == 'instrument' then
-            if labelbutton('ok', (w / 2) + 64, 90, 100, 30, false).clicked == true then
-                fileBrowserForSound = nil
+        if drumIndex > 0 then
+            drawMoreInfoForInstrument()
+            drawMouseOverMoreInfo()
+            if playing then
+                drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns, 0)
             end
-
-            renderBrowser(browser, (w / 2) + 64, 120, (w / 2) - 128, h - 240, smallfont)
         end
-    end
-    if fileBrowserForSound then
-        if fileBrowserForSound.type == 'drum' then
-            if labelbutton('ok', 64, 90, 100, 30, false).clicked == true then
-                fileBrowserForSound = nil
+
+        love.graphics.setColor(1, 1, 1)
+        drawMeasureCounter(w / 2, 20)
+
+        drawInstrumentBanks((w / 2) + 32, 120)
+
+        drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
+
+        love.graphics.setColor(1, 1, 1)
+
+
+        if fileBrowserForSound then
+            if fileBrowserForSound.type == 'instrument' then
+                if labelbutton('ok', (w / 2) + 64, 90, 100, 30, false).clicked == true then
+                    fileBrowserForSound = nil
+                end
+
+                renderBrowser(browser, (w / 2) + 64, 120, (w / 2) - 128, h - 240, smallfont)
             end
+        end
+        if fileBrowserForSound then
+            if fileBrowserForSound.type == 'drum' then
+                if labelbutton('ok', 64, 90, 100, 30, false).clicked == true then
+                    fileBrowserForSound = nil
+                end
 
-            renderBrowser(browser, 64, 120, (w / 2) - 128, h - 240, smallfont)
+                renderBrowser(browser, 64, 120, (w / 2) - 128, h - 240, smallfont)
+            end
+        end
+
+        love.graphics.setFont(bigfont)
+        love.graphics.setColor(1, 1, 1, 0.08)
+        love.graphics.print('  ' .. title, 100, 10)
+
+        local font = smallfont
+        love.graphics.setFont(font)
+
+        local stats = love.graphics.getStats()
+        local memavg = collectgarbage("count") / 1000
+        local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+        local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+        local fps = string.format("%03i", love.timer.getFPS()) .. 'fps'
+        local draws = stats.drawcalls .. 'draws'
+        local countNotes = string.format("%02i", audiohelper.myNumPlayingSounds)
+        local debugstring = mem ..
+            '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes .. ' ' .. love.audio.getActiveSourceCount()
+        love.graphics.setColor(1, 1, 1, .5)
+        love.graphics.print(debugstring, 0, h - font:getHeight())
+
+        if msg then
+            love.graphics.setColor(1, 1, 1, messageAlpha)
+            love.graphics.print(msg, w - font:getWidth(msg), h - font:getHeight())
+        end
+
+        if labelbutton('trigger', 0, 0, font:getWidth('trigger'), font:getHeight(), waitingForTriggerToStartRecording).clicked then
+            waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
+        end
+        if labelbutton('mixer', 0, font:getHeight(), font:getWidth('trigger'), font:getHeight(), showMixer).clicked then
+            showMixer = not showMixer
+        end
+        if labelbutton(drumPatternName, 0, 32 + font:getHeight(), font:getWidth(drumPatternName),
+                font:getHeight()).clicked then
+            showDrumPatternPicker = not showDrumPatternPicker
+        end
+        if (showDrumPatternPicker) then
+            drawDrumPatternPicker(drummPatternPickData, w / 2)
+        end
+
+        local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 1
+        local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)
+        if v.value then
+            drawLabel(string.format("%.0i", v.value), bx, by, 1)
+            uiData.bpm = v.value
+            audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        end
+
+        local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 3
+        local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 80)
+        if v.value then
+            drawLabel(string.format("%.0i", v.value), bx, by, 1)
+            uiData.swing = v.value
+            audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        end
+
+        local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 5
+        local v = drawLabelledKnob('drums', bx, by, uiData.drumVolume, 0.01, 1)
+        if v.value then
+            drawLabel(string.format("%02.1f", v.value), bx, by, 1)
+            uiData.drumVolume = v.value
+            audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        end
+
+        local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 7
+        local v = drawLabelledKnob('instr', bx, by, uiData.instrumentsVolume, 0.01, 1)
+        if v.value then
+            drawLabel(string.format("%02.1f", v.value), bx, by, 1)
+            uiData.instrumentsVolume = v.value
+            audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+        end
+
+        local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 9
+        local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -72, 48)
+        if v.value then
+            drawLabel(string.format("%02.1i", v.value), bx, by, 1)
+            uiData.allDrumSemitoneOffset = v.value
+            audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
         end
     end
-
-    love.graphics.setFont(bigfont)
-    love.graphics.setColor(1, 1, 1, 0.08)
-    love.graphics.print('  ' .. title, 100, 10)
-
-    local font = smallfont
-    love.graphics.setFont(font)
-
-    local stats = love.graphics.getStats()
-    local memavg = collectgarbage("count") / 1000
-    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
-    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
-    local fps = string.format("%03i", love.timer.getFPS()) .. 'fps'
-    local draws = stats.drawcalls .. 'draws'
-    local countNotes = string.format("%02i", audiohelper.myNumPlayingSounds)
-    local debugstring = mem ..
-        '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes .. ' ' .. love.audio.getActiveSourceCount()
-    love.graphics.setColor(1, 1, 1, .5)
-    love.graphics.print(debugstring, 0, h - font:getHeight())
-
-    if msg then
-        love.graphics.setColor(1, 1, 1, messageAlpha)
-        love.graphics.print(msg, w - font:getWidth(msg), h - font:getHeight())
-    end
-
-    if labelbutton('trigger', 0, 0, font:getWidth('trigger'), font:getHeight(), waitingForTriggerToStartRecording).clicked then
-        waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
-    end
-    if labelbutton('mixer', 0, font:getHeight(), font:getWidth('trigger'), font:getHeight(), showMixer).clicked then
-        showMixer = not showMixer
-    end
-    if labelbutton(drumPatternName, 0, 32 + font:getHeight(), font:getWidth(drumPatternName),
-            font:getHeight()).clicked then
-        showDrumPatternPicker = not showDrumPatternPicker
-    end
-    if (showDrumPatternPicker) then
-        drawDrumPatternPicker(drummPatternPickData, w / 2)
-    end
-
-    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 1
-    local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)
-    if v.value then
-        drawLabel(string.format("%.0i", v.value), bx, by, 1)
-        uiData.bpm = v.value
-        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-    end
-
-    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 3
-    local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 80)
-    if v.value then
-        drawLabel(string.format("%.0i", v.value), bx, by, 1)
-        uiData.swing = v.value
-        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-    end
-
-    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 5
-    local v = drawLabelledKnob('drums', bx, by, uiData.drumVolume, 0.01, 1)
-    if v.value then
-        drawLabel(string.format("%02.1f", v.value), bx, by, 1)
-        uiData.drumVolume = v.value
-        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-    end
-
-    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 7
-    local v = drawLabelledKnob('instr', bx, by, uiData.instrumentsVolume, 0.01, 1)
-    if v.value then
-        drawLabel(string.format("%02.1f", v.value), bx, by, 1)
-        uiData.instrumentsVolume = v.value
-        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-    end
-
-    local bx, by = grid.startX + grid.cellW * (audiohelper.columns + 5), grid.startY + grid.cellH * 9
-    local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -72, 48)
-    if v.value then
-        drawLabel(string.format("%02.1i", v.value), bx, by, 1)
-        uiData.allDrumSemitoneOffset = v.value
-        audiohelper.sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
-    end
-
     browserClicked = false
 end
 
