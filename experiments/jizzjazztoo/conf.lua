@@ -4,7 +4,7 @@ function love.conf(t)
     t.window.height = 800
 
     t.window.title = "JizzJazzToo"
-    --   t.window.icon = "icoon.png"
+    t.window.icon = "quack.png"
     -- t.window.resizable = true
     --t.window.msaa = 4
     t.window.highdpi = true

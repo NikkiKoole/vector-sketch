@@ -1,5 +1,5 @@
 local inspect      = require 'vendor.inspect'
-
+local sone         = require 'vendor.sone'
 local _thread
 local channel      = {};
 channel.audio2main = love.thread.getChannel("audio2main")
@@ -66,6 +66,57 @@ lib.drumgrid              = {}
 lib.columns               = nil
 lib.labels                = nil
 
+lib.eq                    = { bass = 0, mid = 0, treble = 0 }
+
+function lib.setEQ(eq)
+    lib.eq = eq
+
+    for k, v in pairs(lib.drumkit) do
+        local thing = v -- lib.drumkit[i]
+        if thing.path then
+            local soundData = love.sound.newSoundData(thing.path)
+            sone.filter(soundData, {
+                type = "lowshelf",
+                frequency = 150,      -- target lows
+                gain = eq.bass * 100, -- boost
+            })
+
+            sone.filter(soundData, {
+                type = "peakeq",
+                frequency = 1200,
+                gain = eq.mid * 100,
+                Q = 1.0, -- control width
+            })
+
+            sone.filter(soundData, {
+                type = "highshelf",
+                frequency = 6000,
+                gain = eq.treble * 100,
+            })
+
+            lib.drumkit[k].source = love.audio.newSource(soundData)
+        else
+            --print(k, 'no')
+        end
+        --§ print('before', thing.source)
+        -- sone.filter(thing.soundData, {
+        --     type = "lowpass",
+        --     frequency = 150,
+        -- })
+        -- sone.filter(thing.soundData, {
+        --     type = "peakeq",
+        --     frequency = 1000,
+        --     gain = 100,
+        -- })
+        --   thing.source = love.audio.newSource(thing.soundData)
+        --  print('after', thing.source)
+        --source = love.audio.newSource(soundData),
+        --soundDataOriginal
+    end
+    lib.updateDrumKitData()
+    --  print(inspect(lib.drumkit))
+end
+
 function lib.setColumns(v) lib.columns = v end
 
 function lib.setLabels(v) lib.labels = v end
@@ -85,6 +136,20 @@ function lib.initializeMixer()
     for i = 1, 5 do
         lib.mixDataInstruments[i] = { volume = 1 }
     end
+end
+
+function lib.cloneDrumgrid(grid)
+    local copy = {}
+    for x = 1, #grid do
+        copy[x] = {}
+        for y = 1, #grid[x] do
+            copy[x][y] = {}
+            for k, v in pairs(grid[x][y]) do
+                copy[x][y][k] = v
+            end
+        end
+    end
+    return copy
 end
 
 function lib.initializeDrumgrid(optionalColumns)
@@ -247,11 +312,32 @@ function lib.prepareDrumkit(drumkitFiles)
             local info = love.filesystem.getInfo(fullPath)
             if info then
                 local soundData = love.sound.newSoundData(fullPath)
+
+
+                -- -- -- Filter out all sounds above 150Hz.
+                -- sone.filter(soundData, {
+                --     type = "lowpass",
+                --     frequency = 150,
+                -- })
+
+                -- sone.filter(soundData, {
+                --     type = "lowshelf",
+                --     frequency = 150,
+                --     gain = 160,
+                -- })
+                -- -- Boost sound at 1000Hz
+                -- sone.filter(soundData, {
+                --     type = "peakeq",
+                --     frequency = 1000,
+                --     gain = 100,
+                -- })
+                --sone.filter(soundData, { type = 'highpass', frequency = 100 })
                 --print(k)
                 result[k] = {
                     name = name,
                     source = love.audio.newSource(soundData),
-                    soundData = soundData,
+                    -- soundDataOriginal = soundData,
+                    -- soundData = soundData,
                     cycle = false,
                     path = fullPath,
                     pathParts = { root = root, pathArray = pathArray, filePath = filePath }
@@ -338,10 +424,10 @@ local function shallowcopy(orig)
     return copy
 end
 
-function lib.saveJizzJazzFile()
-    local str               = os.date("%Y%m%d%H%M")
-    local path              = str .. '.jizzjazz2.txt'
-
+function lib.saveJizzJazzFile(allDrumParts)
+    local str  = os.date("%Y%m%d%H%M")
+    local path = str .. '.jizzjazz2.txt'
+    print('tod save all the various drumparts if available ', #allDrumParts)
     local simplifiedDrumkit = {}
     for k, v in pairs(lib.drumkit) do
         if k == 'order' then

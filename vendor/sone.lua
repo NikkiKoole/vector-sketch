@@ -281,6 +281,7 @@ local function biquadFilter(sound, parameters)
     local sr = sound:getSampleRate()
     local ch = sound:getChannelCount()
     -- Center frequency
+
     assert(parameters.frequency, "Frequency must be specified for filter")
     local freq = clamp(parameters.frequency, 0, sr / 2)
     -- Resonance / quality factor
@@ -298,7 +299,7 @@ local function biquadFilter(sound, parameters)
     local alpha = sin(w0) / (2 * Q)
     local cos_w0 = cos(w0)
     local A = 10 ^ (gain / 40)
-    local resonance = clamp(parameters.resonance or 1, 0.1, 10) -- Resonance parameter
+
     local function process(x0)
         y2, y1 = y1, y0
         y0 = (b0 / a0) * x0 + (b1 / a0) * x1 + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2
@@ -306,30 +307,27 @@ local function biquadFilter(sound, parameters)
         return y0
     end
 
-
-
-
     if type == "lowpass" then
         b0 = (1 - cos_w0) / 2
         b1 = 1 - cos_w0
         b2 = (1 - cos_w0) / 2
-        a0 = 1 + alpha / resonance
+        a0 = 1 + alpha
         a1 = -2 * cos_w0
-        a2 = 1 - alpha / resonance
+        a2 = 1 - alpha
     elseif type == "highpass" then
         b0 = (1 + cos_w0) / 2
         b1 = -(1 + cos_w0)
         b2 = (1 + cos_w0) / 2
-        a0 = 1 + alpha / resonance
+        a0 = 1 + alpha
         a1 = -2 * cos_w0
-        a2 = 1 - alpha / resonance
+        a2 = 1 - alpha
     elseif type == "bandpass" then
         b0 = Q * alpha
         b1 = 0
-        b2 = -Q * alpha
-        a0 = 1 + alpha / resonance
+        b2 = Q * alpha
+        a0 = 1 + alpha
         a1 = -2 * cos_w0
-        a2 = 1 - alpha / resonance
+        a2 = 1 - alpha
     elseif type == "notch" then
         b0 = 1
         b1 = -2 * cos_w0
@@ -628,12 +626,6 @@ end
         type = "peakeq",
         frequency = 1000,
         gain = 9,
-    })
-
-    -- Filter out all sounds above 150Hz.
-    sone.filter(sound, {
-        type = "lowpass",
-        frequency = 150,
     })
 
     -- Boost everything below 150Hz by 6dB

@@ -230,6 +230,14 @@ function love.load()
         --columns = 16,
         --labels = audiohelper.drumkit.order
     }
+
+    allDrumParts = {}
+
+    for i = 1, 6 do
+        allDrumParts[i] = nil -- gets filled when used
+    end
+
+
     audiohelper.setColumns(16)
     audiohelper.setLabels(audiohelper.drumkit.order)
 
@@ -315,6 +323,22 @@ function love.load()
         ['\\'] = 11,
     }
     usingMap = mapToOffsetBlackAndWhite
+end
+
+function setActiveDrumPart(i)
+    -- save the current part
+    allDrumParts[activeDrumPart] = audiohelper.cloneDrumgrid(audiohelper.drumgrid[1])
+
+    -- update to new part
+    activeDrumPart = i
+
+    if allDrumParts[i] then
+        audiohelper.drumgrid[1] = audiohelper.cloneDrumgrid(allDrumParts[i])
+    else
+        audiohelper.initializeDrumgrid() -- start empty for new part
+    end
+
+    audiohelper.updateDrumKitData()
 end
 
 function mapOffsetToNeareastScaleOffset(o, scale)
@@ -484,6 +508,11 @@ function love.keypressed(k)
         audiohelper.updateDrumKitData()
     end
 
+
+    if tonumber(k) and tonumber(k) >= 1 and tonumber(k) <= 6 then
+        setActiveDrumPart(tonumber(k))
+    end
+
     if (usingMap[k] ~= nil) then
         if (waitingForTriggerToStartRecording) then
             waitingForTriggerToStartRecording = false
@@ -576,7 +605,7 @@ function love.keypressed(k)
         end
     end
     if k == 'f5' then
-        audiohelper.saveJizzJazzFile()
+        audiohelper.saveJizzJazzFile(allDrumParts)
     end
     if k == 'return' then
         recording = not recording
@@ -785,6 +814,43 @@ function drawDrumMachine()
     if playing or recording then
         drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, audiohelper.columns,
             #audiohelper.labels - 1)
+    end
+
+    local x = grid.startX
+    local y = grid.startY + grid.cellH * #audiohelper.labels
+    love.graphics.setColor(1, 0, 0, 0.3)
+    love.graphics.rectangle('fill', x - 100, y, 400, 100)
+    love.graphics.setColor(1, 1, 1)
+
+    local eq = audiohelper.eq
+    local bx, by = x, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('bass', bx, by, eq.bass, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.bass = v.value
+        -- print(inspect(eq))
+        audiohelper.setEQ(eq)
+    end
+
+    local bx, by = x + 100, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('mid', bx, by, eq.mid, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.mid = v.value
+        -- print(inspect(eq))
+        audiohelper.setEQ(eq)
+    end
+
+    local bx, by = x + 200, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('treble', bx, by, eq.treble, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.treble = v.value
+        -- print(inspect(eq))
+        audiohelper.setEQ(eq)
     end
 end
 
@@ -1047,9 +1113,11 @@ function love.mousepressed(x, y, button)
                         end
                         if fileBrowserForSound.type == 'drum' then
                             local key = audiohelper.drumkit.order[drumIndex]
-                            print(key, sample, drumIndex)
-                            audiohelper.drumkit[key] = sample
-                            audiohelper.updateDrumKitData()
+                            if key then
+                                print(key, sample, drumIndex)
+                                audiohelper.drumkit[key] = sample
+                                audiohelper.updateDrumKitData()
+                            end
                         end
                     end
                 end
@@ -1098,7 +1166,7 @@ function love.mousepressed(x, y, button)
             pianoRollStuff.mouseStartY = y
             pianoRollStuff.originalSemitone = pianoRollStuff.selectedNote.semitone
 
-            print(inspect(pianoRollStuff.clip[i]))
+            --print(inspect(pianoRollStuff.clip[i]))
             -- calculate dragOffset in ticks
             local clickTick = x / tickLength
             local noteStartTick = pianoRollStuff.selectedNote.beat * tickPerBeat + pianoRollStuff.selectedNote.tick
@@ -1130,7 +1198,6 @@ function drawDrumParts(x, y)
     love.graphics.setLineWidth(4)
 
 
-
     for i = 1, 3 do
         local myX = xOff + x + w * (i - 1)
         local myY = y
@@ -1141,8 +1208,10 @@ function drawDrumParts(x, y)
         end
         local r = getUIRect(myX, myY, w, h)
         if r then
-            activeDrumPart = i
+            -- activeDrumPart = i
+            setActiveDrumPart(i)
         end
+
         love.graphics.print(labels[i], myX, myY)
     end
     for i = 4, 6 do
@@ -1155,7 +1224,8 @@ function drawDrumParts(x, y)
         end
         local r = getUIRect(myX, myY, w, h)
         if r then
-            activeDrumPart = i
+            -- activeDrumPart = i
+            setActiveDrumPart(i)
         end
         love.graphics.print(labels[i], myX, myY)
     end
@@ -1358,7 +1428,7 @@ function displayPianoRollForClip(clip)
     local maxPitch = 84
 
     local function noteToRect(note)
-        print(inspect(note))
+        --print(inspect(note))
         local x = ((note.beat * tickPerBeat) * tickLength) + note.tick * tickLength
         local width = note.duration * tickLength
         local y = (maxPitch - note.semitone) * semitoneHeight
@@ -1367,7 +1437,7 @@ function displayPianoRollForClip(clip)
     end
     for beat = 0, clip.meta.loopRounder do
         local x = beat * beatLength
-        love.graphics.line(x, h - 100, x, h)
+        love.graphics.line(x, 0, x, h)
     end
     for _, note in ipairs(clip) do
         local x, y, w, h = noteToRect(note)
@@ -1392,7 +1462,40 @@ function displayPianoRollForClip(clip)
     if labelbutton('close', w - 100, 0, 100, 40).clicked then
         pianoRollStuff.clip = nil
     end
+    if labelbutton('remove measure', 0, 0, 200, 40).clicked then
+        pianoRollStuff = removeFirstMeasureFromClip(pianoRollStuff.clip)
+        audiohelper.sendMessageToAudioThread({ type = "clips", data = audiohelper.recordedClips })
+    end
     --love.graphics.rectangle('fill', 0, h - 100, w, 100)
+end
+
+function removeFirstMeasureFromClip(clip)
+    local beatsToRemove = 4
+    local ticksPerBeat = 96
+    local ticksToRemove = beatsToRemove * ticksPerBeat
+
+    -- Remove notes that end before the first measure ends
+    local filtered = {}
+    for _, note in ipairs(clip) do
+        local startTick = note.beat * ticksPerBeat + note.tick
+        local endTick = startTick + note.duration
+        if endTick > ticksToRemove then
+            -- Shift surviving notes backwards
+            local newStartTick = startTick - ticksToRemove
+            note.beat = math.floor(newStartTick / ticksPerBeat)
+            note.tick = newStartTick % ticksPerBeat
+
+            -- Recalculate beatOff and tickOff if needed
+            local newEndTick = newStartTick + note.duration
+            note.beatOff = math.floor(newEndTick / ticksPerBeat)
+            note.tickOff = newEndTick % ticksPerBeat
+
+            table.insert(filtered, note)
+        end
+    end
+
+    clip.meta.loopRounder = clip.meta.loopRounder - beatsToRemove
+    return filtered
 end
 
 function drawInstrumentBanks(x, y)
