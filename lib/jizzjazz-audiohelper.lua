@@ -71,6 +71,35 @@ lib.eq                    = { bass = 0, mid = 0, treble = 0 }
 function lib.setEQ(eq)
     lib.eq = eq
 
+    for i = 1, #lib.instruments do
+        local thing = lib.instruments[i].sample
+        -- print(inspect(thing))
+        if thing.path then
+            local soundData = love.sound.newSoundData(thing.path)
+            sone.filter(soundData, {
+                type = "lowshelf",
+                frequency = 150,      -- target lows
+                gain = eq.bass * 100, -- boost
+            })
+
+            sone.filter(soundData, {
+                type = "peakeq",
+                frequency = 1200,
+                gain = eq.mid * 100,
+                Q = 1.0, -- control width
+            })
+
+            sone.filter(soundData, {
+                type = "highshelf",
+                frequency = 6000,
+                gain = eq.treble * 100,
+            })
+            print(i)
+            lib.instruments[i].sample.source = love.audio.newSource(soundData)
+        end
+    end
+    --lib.instruments[i]
+
     for k, v in pairs(lib.drumkit) do
         local thing = v -- lib.drumkit[i]
         if thing.path then
@@ -113,6 +142,7 @@ function lib.setEQ(eq)
         --source = love.audio.newSource(soundData),
         --soundDataOriginal
     end
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
     lib.updateDrumKitData()
     --  print(inspect(lib.drumkit))
 end
@@ -164,7 +194,7 @@ function lib.initializeDrumgrid(optionalColumns)
 end
 
 function lib.drumPatternFill(pattern, part)
-    print(inspect(pattern), inspect(part))
+    -- print(inspect(pattern), inspect(part))
     local hasEveryThingNeeded = true
     for k, v in pairs(part.grid) do
         if not lib.drumkit[k] then
@@ -223,15 +253,17 @@ end
 
 function lib.changeSingleInstrumentsAtIndex(sample, index)
     -- im assuming we alkready have an instrument here and wetype want to keep adsr as is
-    print(index)
+    -- print(inspect(sample))
     lib.instruments[index].sample = sample
     lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
 end
 
 function lib.initializeInstruments(samples)
     for i = 1, 5 do
+        --print(inspect(samples[i]))
         lib.instruments[i] = {
             --sampleIndex = 1,
+
             sample = samples[i],
             tuning = 0,
             realtimeTuning = 0,
