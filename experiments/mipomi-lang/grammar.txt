@@ -1,0 +1,317 @@
+1) Lore-at-a-glance (4 short paragraphs)
+The Mipo World feels like someone doodled a physics textbook in a 1970-s children’s encyclopedia, then blew life into the margins. Everything is hand-drawn and slightly rubbery: clouds bounce, shadows wiggle, and “gravity” is more of a polite suggestion than a rule. Mipos—semi-sentient, potato-head collage-creatures—are the stars of this squishy pocket-universe. They come apart, snap together, stretch, repaint, or sprout new gadgets at the player’s whim, and each new combination might unlock a fresh ability or a slapstick disaster.
+
+Across seven headline regions the tone stays playful: MipoTown’s toaster-houses and dancing doors act as the social hub; The Playground is a build-your-own Rube-Goldberg of trampolines and cannons; the Forest of Limbs is a wardrobe made of living body parts; Wobbly Hills turn walking into bowling; the Sky-Sketch Isles host toast-gliders and spaghetti-copters; the newly unearthed Burrow Below is a tinkerer’s maze of scrap; and Busybody Bay parodies grown-up jobs with earnest nonsense (the sandwich-elevator clock-tower, the trampoline-inspector’s office, etc.).
+
+Mipos themselves are open-hearted slapstick inventors. Their emotions broadcast physically—eyes balloon when startled, limbs pop off when annoyed, whole bodies bounce with joy. They spend their days glue-crafting improbable machines, bartering poems for flying fish, and trying (often failing) to keep their own parts attached. Their myths are equally silly: a giggle-powered sun, a sleepy moon that sneezed the world into being, and a legendary Big Box toy store where perfect Mipos are displayed forever.
+
+The world’s design philosophy is “serious nonsense”: gentle satire, physics that favour fun over realism, and a collage aesthetic that invites endless player creativity—build it, break it, laugh, and remix. Underneath the chaos are clear themes: modular identity, expressive emotion, discovery through tinkering, and cooperation born of comedic failure.
+
+2) Complete Mipomi mini-dictionary
+Format: English | Mipomi | Breakdown (roots and gloss)
+
+Tables are grouped by the semantic fields you outlined.
+A “·” separates multiple identical roots (e.g. LA·LA).
+Repeated syllables indicate intensity.
+
+
++--------------------------+--------------------------+------------------------------+------------------------------+
+| category              X  |   A                      |   I                          |   O                          |
++--------------------------+--------------------------+------------------------------+------------------------------+
+|self / feeling         M  |MA (nurture 🤱🌼)         |MI ( I 🧍)                   |MO (love / feel ❤️🤏)         |
+|living beings          B  |BA (life / child 🌱🧒)    |BI (peer / kin 🧑‍🤝‍🧑)           |BO (animal 🐾🐶)              |
+|possession / transfer  P  |PA ( keep / hold 📚👐)    |PI (take / receive 📥✋)     |PO (give 🎁🤲)                |
+|nature / element       F  |FA (fire / heat 🔥🌞)     |FI (earth / soil 🌎🪴)       |FO (sky / air 💨☁️)           |
+|thing / place          K  |KA (object / stuff 📦🎒)  |KI ( tool / device 🛠️🔧)     |KO (place / container 📍🏠)   |
+|beauty / design        L  |LA ( light / good ✨💡)   |LI (fine / detail 🧩🎨)      |LO (shape / form 🔷🖼️)        |
+|time / goal	        T  |TA (past ⏮️📜)            |TI (now ⏰🕰️)                |TO (future ⏭️🚀)              |
+|voice / story          J  |JA (speak 🗣️💬)           |JI (name / identity 📖🆔)    |JO (you / listener 👉🫵)      |
+|negation / rest	    N  |NA (none / absence 🚫)    |NI (rest / sleep 😴🛌)       |NO (end / negate ⛔🔚)        |
+|body / substance       D  |DA (body / flesh 🧍🫀)    |DI (eat / drink 🍽️🥤)        |DO (stone / rock 🪨🧱)        |
+|mind / pattern         S  |SA (idea 💭🧠)            |SI (sign / tag 🏷️📛)         |SO (pattern / structure 🌀📐) |
+|action / control       H  |HA (start ⚡🔛)           |HI (go / act 🚶🏃)           |HO (stop / halt ✋🛑)         |
+| water / qualities     W  |WA (water / flow 💧🌊)    |WI ( cold / ice ❄️🧊)        |WO (round / solid 🧸⚪)       |
++--------------------------+--------------------------+------------------------------+------------------------------+
+
+0. Core CV roots
+English scope	a-root	i-root	o-root
+self / feeling	MA nurture	MI self	MO feel / love
+living beings	BA life	BI kin	BO creature
+possession / transfer	PA keep	PI take	PO give
+nature / element	FA fire	FI earth	FO sky / air
+thing / place	KA object	KI tool	KO place / container
+beauty / design	LA light / good	LI detail	LO shape / form
+time / goal	TA past	TI now	TO future
+voice / story	JA speak	JI name / ID	JO you / listener
+negation / rest	NA none	NI rest	NO end / negate
+body / substance	DA body	DI eat / drink	DO stone
+mind / pattern	SA idea	SI sign	SO structure
+action / control	HA start	HI go / act	HO stop
+water / qualities	WA water / flow	WI cold / ice	WO round / solid
+
+1. Spatial Concepts
+English	Mipomi	Breakdown
+here	KOTI	KO place + TI now
+there	KOTO	KO place + TO future
+up	FOKO	FO sky + KO place
+down	FIKO	FI earth + KO place
+inside	KOKO	KO + KO
+outside	KOFO	KO + FO
+near	TITI / HITI	TI + TI · HI go + TI
+far	TOTO / HOTO	TO + TO · HO stop + TO
+
+2. Size & Physical Quality
+English	Mipomi	Breakdown
+big / heavy	DOKA	DO stone + KA object
+small / tiny	LILI	LI + LI
+lightweight	WALA	WA flow + LA light
+
+3. Emotion & Feeling
+English	Mipomi	Breakdown
+love	MOMO	MO + MO
+joy	MOLA	MO feel + LA light
+sad	MINO	MI self + NO negate
+fear / anxious	FOWA	FO sky + WA flow
+anger	FAHO	FA fire + HO stop
+excited	MOLAFO	MO + LA + FO sky
+bored	NINI	NI + NI
+embarrassed	MISOFO	MI + SO structure + FO
+proud	MOKIHA	MO + KI tool + HA start
+surprised	MOJA	MO + JA speak
+giggling (verb)	HOMO	HO stop + MO feel
+
+4. Cognition & Mind
+English	Mipomi	Breakdown
+understand / learn	SAPI	SA idea + PI receive
+memory	TADI	TA past + DI eat
+idea / insight	SALA	SA + LA
+confusion	SOSI	SO pattern + SI tag
+desire / want	MOKI	MO + KI
+dream	NISA	NI rest + SA idea
+doubt	SAJO	SA + JO
+motivation	HIMO	HI go + MO
+goal / aspiration	TOLA	TO future + LA light
+focus / truth	JILA	JI ID + LA light
+false	JINO	JI + NO
+
+5. Good / Bad & Clean / Dirty
+English	Mipomi	Breakdown
+good	LALA	LA + LA
+bad	LANA	LA + NA
+not good	NALA	NA + LA
+ugly	LONO	LO form + NO
+clean	WALA	WA + LA
+dirty	WAFI / DIFI	WA + FI · DI + FI
+safe	KOLA	KO place + LA
+dangerous	FAHO / NAKO	FA + HO · NA + KO
+beautiful	LALI	LA + LI
+
+6. Function words (grammar)
+English	Mipomi	Breakdown
+I / me	mi	root
+be (is/are)	e	particle
+go / move	a	particle
+do / act	o	particle
+
+7. Creature Anatomy & Modularity
+English	Mipomi	Breakdown
+arm	DAKA	DA body + KA object
+leg	DAPA	DA + PA keep
+neck	DATI	DA + TI now
+head	DAJO	DA + JO
+eye	JIKI	JI ID + KI tool
+mouth	JAJO	JA speak + JO
+hat	KOPA	KO place + PA keep
+tail	DONO	DO stone + NO end
+plug	KOPA	KO + PA
+socket	KOPO	KO + PO give
+attach / stick	HAPA	HA start + PA
+detach	HOKO	HO stop + KO
+wobble	FOKO	FO sky + KO
+
+8. Movement & Physics
+English	Mipomi	Breakdown
+jump	HAFA	HA start + FA fire
+run	HIHI	HI × HI
+trip	HOHI	HO stop + HI
+slide	FALA	FA + LA
+tumble	FOWO	FO + WO round
+spin	SOSO	SO × SO
+catch	PAKI	PA hold + KI
+push	FAHA	FA + HA
+pull	PIFO	PI take + FO
+lift	WALA	WA flow + LA
+fall	DOKO	DO stone + KO
+
+9. Places & Environments
+English	Mipomi	Breakdown
+bridge	KOTI	KO + TI
+tunnel / cave	FIKO	FI earth + KO
+hill	DOFI	DO + FI
+ramp	KOFA	KO + FA
+tower	TOKOTO	TO + KO + TO
+pit / hole	KONO	KO + NO
+edge / cliff	HOKO	HO + KO
+floating island	FOKOFO	FO + KO + FO
+
+10. Crafting, Tools & Invention
+English	Mipomi	Breakdown
+screw / bolt	KIKIPI	KI + KI + PI
+wire	FIKI	FI + KI
+engine / motor	KIHAHA	KI + HA + HA
+paint	LIKI	LI + KI
+blueprint	SALAKI	SA idea + LA + KI
+machine	KIKIFO	KI + KI + FO
+lever	KIKAHO	KI + KA + HO
+knob	KOKOKI	KO + KO + KI
+switch	HOKOHA	HO + KO + HA
+jar / container	KOKOKA	KO + KO + KA
+
+11. Professions & Play Roles
+English	Mipomi	Breakdown
+doctor / healer	BIHOFA	BI kin + HO stop + FA fire
+painter	LIKIHA	LI + KI + HA
+musician	JILAFO	JI voice + LA + FO
+builder	HOBOKA	HO act + BO creature + KA
+tinkerer	KIBOSA	KI tool + BO + SA idea
+teacher	BIMOSI	BI + MO feel + SI sign
+gardener	BIFIFA	BI + FI earth + FA
+pilot / flyer	FOKOPI	FO sky + KO place + PI take
+cleaner	WALAFO	WA + LA + FO
+inventor	SAHOPI	SA idea + HO act + PI
+performer / dancer	MOHIHI	MO feel + HI go + HI
+
+12. Time & Weather
+English	Mipomi	Breakdown
+night	WINA	WI cold + NA none
+afternoon	TALA	TA past + LA
+rain	WAWA	WA + WA
+storm	FAWA	FA + WA
+rainbow	LAFOKO	LA + FO + KO
+windy	FOWA	FO + WA
+sunrise	FALATI	FA + LA + TI
+sunset	FONO	FO + NO
+cloudy	FOKO	FO + KO
+clock	TOKOKA	TO + KO + KA
+
+13. Objects & Toys
+English	Mipomi	Breakdown
+ball	WOBO	WO round + BO
+fan	FOHI	FO + HI
+box / cup	KOKA	KO + KA
+ladder	TOKIKA	TO + KI + KA
+cart	KOPA	KO + PA
+crayon	LIKISA	LI + KI + SA
+book	JIKI	JI + KI
+brush	LIKIKA	LI + KI + KA
+mirror	LOJO	LO form + JO
+pillow	NIFA	NI rest + FA warm
+
+14. Speech, Sounds & Communication
+English	Mipomi	Breakdown
+yell	JAHO	JA speak + HO stop
+cry	MISO	MI + SO
+hum / sing	JOJO	JO + JO
+laugh	MOWA	MO + WA
+murmur	HIJI	HI + JI
+narrate	JASAJO	JA + SA idea + JO
+silence	NOJA	NO + JA
+gesture	JAHA	JA + HA
+wave (hand)	PAHI	PA hold + HI
+
+15. Mythology & Lore
+English	Mipomi	Breakdown
+moon (Sleepy)	NISA	NI rest + SA idea
+sun (Giggle-sun)	FALA	FA fire + LA
+Big Box	KOKOKA	KO + KO + KA
+toy (artifact)	KAPIBO	KA object + PI take + BO
+spirit	WAJO	WA flow + JO
+wish	TOMOJO	TO future + MO feel + JO
+giggle (power)	MOMO	MO + MO
+doodle / drawing	LOLISA	LO form + LI detail + SA
+sneeze (creation)	HOFA	HO stop + FA fire
+
+Tiny “paragrammar” consonant cues
+These single consonants can be whispered after a sentence for extra emotion (e.g., “mi e momo… m.”):
+
+Consonant	Feeling / Function
+M	comfort, warmth
+P	readiness, tension
+T	urgency
+H	sigh, awe
+F	frustration
+B	affectionate “aww”
+N	negation
+D	firm closure
+
+
+Word	Base root	Proposed gloss	Why it fits
+po-po	PO “give”	“give again, share freely”	Reduplication → iterative / distributive sense → re-give, give all around.
+ma-ma	MA “nurture”	“nurture deeply, motherly”	Doubling amplifies care → mother-like warmth.
+ta-ta	TA “past”	“long ago, deep past”	Repetition stretches the time span backward.
+ja-ja	JA “speak”	“keep talking, storytelling”	Sustained speech, rhythm of narration.
+fi-fi	FI “earth”	“deep earth, grounding”	Echo evokes depth/solidity.
+si-si	SI “sign / tag”	“label things carefully”	Emphasises precision, multiple tags.
+ni-ni	NI “rest / sleep”	“very sleepy, deep rest”	Lulls into longer, heavier sleep.
+
+
+✨ Aspect-Chain “Bare Vowel” Grammar ✨
+(the i a o system we just chose)
+
+Particle	Core idea	Typical uses	Quick mnemonic
+i	STATE / BE – something simply is	identity, description, location, possession, emotion that is already present	high, steady vowel ⇒ stable
+a	BECOME / MOVE / BEGIN – entering a new state or heading toward a goal	start, change, motion, inchoative (“get-”, “become-”)	mouth opens as you “step forward”
+o	DO / ACT / AFFECT – deliberate, ongoing action	create, use, manipulate, perform, experience actively	round, forceful sound ⇒ energy
+(optional) u	WITH / TOGETHER / BY-MEANS-OF (comitative / instrumental)	companionship or tool marker	lips meet → “together”
+
+Position.
+Place the particle right after the subject (or topic) and before the main predicate chunk.
+You can chain several particles inside one clause for layered meaning.
+
+css
+Copy
+Edit
+mi  i  momo           I am (full of) love.
+mi  a  fowa          I became afraid.
+mi  o  ki  hoka     I do build with a tool.
+mi  i  mokI  o  di  widi
+I (in a state of) wanting → do eat ice-cream.
+Other handy bits
+
+Reduplication intensifies or makes something iterative (miso miso = sob hard / keep sobbing).
+
+Paragrammar consonants (m, t, h, …) can be whispered after the clause for extra mood.
+
+Word order is still loose S-V-O, but the aspect vowel anchors the clause core.
+
+Negation slots right before the aspect particle: mi NA i lala → “I am not good.”
+
+📚 10 Quick Example Sentences
+English	Mipomi (aspect chain)	Word-for-word
+1. I am happy.	mi i mola.	I • BE • joy
+2. The box is here.	koka i koti.	box • BE • here
+3. It starts raining.	wawa a fala.	rain • BECOME • fall-water
+4. I go there.	mi a koto.	I • MOVE • there
+5. The creature runs (actively).	bo o hihi.	creature • DO • run
+6. I want to eat ice-cream.	mi i moki o di widi.	I • BE-want → DO-eat • ice-treat
+7. I build a bridge with a friend.	mi o hoka u bi i koti.	I • DO-build • WITH friend • AT here
+8. I am not sleepy.	mi na i nini.	I • NOT • BE • very-sleepy
+9. She became angry and shouted.	jo a faho, jo o jaho.	she • BECOME-anger, she • DO-yell
+10. Let’s keep talking!	jojo o jaja h!	you+I • DO • talk-talk • (soft sigh)
+
+🛠️ Building your own
+Choose the root(s).
+HAFA = jump, MOMO = love, KOKA = box …
+
+Pick the aspect.
+i if it simply is, a if it’s about to happen/become, o if someone is making it happen.
+
+Add extras.
+u companion/tool, reduplication for intensity, paragrammar consonant for tone.
+
+Template:
+(Subject) (NEG?) (Aspect vowel) (Predicate roots) (u + instrument/companion) (location/time) (paragram-consonant)
+
+Play with it, sing it, mash roots together — the chain is flexible but stays crystal clear once your ear catches the three key vowels. When you need more nuance (tense, evidential, etc.) we can still layer little particles after the vowel without breaking the core rhythm.
+
+Enjoy speaking Mipomi! 🎈

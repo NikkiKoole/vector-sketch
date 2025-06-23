@@ -1,3 +1,15 @@
+-- todo:
+--
+--
+-- multiple rhythms (1-6) are not yet  saved and loaded.
+-- the bass/mid/treble settings are not saving, also figure out if we want it per instrument, per rhytm etc.
+-- song mode.
+-- maybe introduce a notion of real instruments, they can have multiple samples (think piano with multiple wavs)
+-- and the can be transposed/tuned
+-- also layered intruments, so always play a piano + string or etc.
+-- also investigate if we can do something cool using mutable instruments source code.
+
+
 function waitForEvent()
     local a, b, c, d, e
     repeat
@@ -96,6 +108,7 @@ function love.filedropped(file)
         local data = file:read()
         local obj = (loadstring("return " .. data)())
         audiohelper.loadJizzJazzFile(obj, filename)
+        print(filename)
         -- print(inspect(obj))
         -- file:close()
     end
@@ -166,7 +179,7 @@ function love.load()
     }
     audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
-    browser             = fileBrowser("samples", {}, { "wav", "WAV" })
+    browser             = fileBrowser("samples", {}, { "wav", "WAV", "OGG", "ogg" })
     browserClicked      = false
     fileBrowserForSound = nil
 

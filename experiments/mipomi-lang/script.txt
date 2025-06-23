@@ -1,0 +1,401 @@
+    - Hi there.
+    See these guys?
+    I made them, they are in an app you can download for free, it doenst even have adds, its called mipo puppetmaker.
+    BUt anyway, this inst an add for that app, this is just a good place to start...
+
+    See how they are talking? They just say their own name, over and over again, Quite the narcissists if you ask me.
+    Reminds me of many people , so pretty good really, BUT i want to improve this.
+
+
+    I want to ... build a mouth-system, working mouths with lipsync and generated speech and well let's design alanguage tOO!
+
+
+    Lets start with a simple mouth like thing that can move, makes for a better video if you can see things.
+    we will use 8 points, split in 2 lips, add a bit of bezier curves and use a lerp to animate between these great shapes i found.
+
+    Using this mouth of ours we can make it basically do everything, evey pose, every sounds, but that , we don't.
+    Keeping a focus on the end goal is , important, and having limitations too. this is for these creates rememeber?
+
+    What would they need? what are they takling about with each other? do they speak english ? nope.
+    they have there own little language i thought
+    with meaning, and simple toddler syllables.
+    here we go.
+
+    this is something for another video, and quite a nice little project of its own, but i feel its safe to say, i turned a bit into a
+    language nerd, i rememeber learnig about Tolkien bakc in the day and how hey designed his own languagegs and thinking , what a nerd,
+    here we are.
+
+    So, now, we have mouth, because without it you cant speak
+    and we have a lnagugae, because without it you just have sound.
+
+    So finally we can get started with this video of ours.
+
+
+
+    Lets satrt with the basics,
+    record some samples, play them when you click a button.
+
+    BUt you cant say two things at once, you have to put them after each other, yeah we go deep here.
+    And as soon after you can put things after each other, I start to question.
+    Oh wait what i meantt to say was, do you know how questioning sounds like ? ? ?
+    right, pitches, we want to picth certain syllables.
+    we want to emphasize other syllables.
+    we want to write that in a simple string.
+    Emphasize and pitch curving for quetsions is nice, but pitching all over the place is even better, random pitch, ratios like on a piano,
+    All that jazz, swing oh wait not yet .
+    Pitch and volume , that is all i can do with these samples really.
+    but changuin the pitch in a wave while playing a sample gives us vibrato, and changing the pitch depending on what wa played before gives us legato.
+
+    nice
+
+    So yes, swing thats also something that separates us humans and creative little creatures from robots and boring stuff.
+    You know what swing is? Swing is cool ! Swing is life.
+    and technically its just about delaying every other sylable,
+
+    And you know what isnt swing?
+    stress.
+    but it builds character, or something, is what ive heard.
+    In our little system its just about auto emphasizing every nth syllabel,
+
+    KLEMtoon klemTOON you know.
+
+    swing-stress, well we are alomst done now.
+    Some people don't just swing-stress talk there way through life though, they breath too!
+    or stutter, or ..... have way too long pauses everywhere.
+    So lets add all of that stuff too!
+
+    Ok, lets have a look at the result !
+
+    4 heads having a discussion.
+
+
+
+script 2
+
+Hi, i'm in need of a talking mouth
+so i'm building one
+Using 8 points to make a polygon
+We deisgn a couple of shapes using these 8 points
+and then its just interpolated or changing between these shapes
+
+next up the language, its beatiful (i think), it's very small, it just has 39 sounds with meaning.
+and you can stitch these sounds together to make more complex words.
+i'm recording al the these sounds, these syllabels.
+then we can string them together
+into words and sentences
+
+without intotnation everything is bland
+what happens if you do'nt know something??
+and what happens if you want to EMPHAsize SOMTHIN else ?
+
+and some people are more melodic when they speak, some even sing their words in notes.
+vibrato is a thing, if we're playing with picth, and so is legato
+
+we've got some good stuff here now
+but we're not done
+
+(snips finger)
+swing, like jazz. its about delaying certain syllabels.
+and something not so singing sounding? stress..
+they do say its build character though,
+it's about emphasizing certain syllabels.
+
+now we've got swing
+and we've got stress
+you also need to breath
+and some people do stutter sometimes, thats ok, no worries.
+and then we want a little pause
+
+HI great that you stayd untill the end !,
+I've been building this thing as a new part or component to my upcoming app,
+its going to be a  follow up from mipo-puppetmaker (whcih you can download for free, no adds, no microtransactions), the mipos do talk, but a bit more primitive,
+to be honest they just say mi-po a lot ;)
+so thats why i built this code.
+anyway, hope you enjoyed, have agood day!
+
+
+ai-end
+
+Hi.
+I'm in need of a programmable talking mouth. arent we all ?
+So... I'm building one.
+
+We start by placing 8 points to make a polygon.
+with those 8 points we design a few differnt shapes
+and then we interpolate —
+moving from one shape to another.
+
+But a mouth needs more then just moving.
+It needs sounds, lets call it a language.
+It’s a small one — just 39 sounds.
+And It’s pretty beautiful. (I think.)
+I'll tell you more about it another time.
+
+NOw i can  record all these 39 sounds — these syllables.
+Once we have them,
+we can string them together into words and sentences.
+
+But without intonation?
+Everything sounds bland.
+
+So we add rising and falling intonations, or random jittery pitches here and there.
+
+What happens if you don’t know something??
+Or if you want to EMPHAsize someTHING else?
+
+Some people are more melodic when they speak —
+some even sing their words in notes.
+
+Vibrato becomes a thing.
+And since we’re playing with pitch,
+adding legato makes sense too.
+
+We’ve got some good stuff now —
+but we’re not done.
+
+(snaps fingers)
+Swing.
+Like jazz.
+It’s about delaying certain syllables — just enough to feel right.
+
+And for contrast?
+Something less musical: stress.
+
+They say it builds character.
+We'll see.
+It’s about emphasizing specific syllables in a phrase.
+Like KLEMtoon... not just klemtoon.
+
+Anyway Now we've got the swing.
+and sometimes We've got some stress.
+Don't forget to breathe.
+
+Some people stutter sometimes — that’s okay.
+No worries.
+
+And then sometimes, just to have a thought and a look...
+we need some pause.
+
+Hi! Great that you stayed until the end.
+I've been building this code as a component for my upcoming app.
+
+It’s a follow-up to Mipo Puppetmaker —
+(which, by the way, you can download for free: no ads, no microtransactions , and its quite stylish i think).
+
+The Mipos do talk —
+but it's kind of primitive.
+
+To be honest...
+they mostly just say mi-po.
+A lot. 😉
+
+So that’s why I built this code.
+
+Anyway —
+hope you enjoyed it.
+Have a good day!
+
+
+edit2:
+Hi.
+I'm in need of a  talking mouth.
+Aren’t we all?
+
+So... I’m building one.
+
+We start by placing 8 points to make a polygon.
+With those 8 points, we design a few different shapes —
+then we interpolate between them,
+moving from one shape to another.
+
+But a mouth needs more than just movement.
+It needs sound.
+Let’s call the sounds a language.
+
+It’s a small one — just 39 sounds. or syllabels.
+And it’s pretty beautiful. (I think.)
+I'll tell you more about it another time.
+
+For now, I can record all these 39 sounds
+And Once we have them,
+we can start stringing them together into words and sentences.
+
+Next up intonation, without it,
+Everything sounds bland.
+
+So we add rising and falling tones —
+or random jittery pitch variations here and there.
+
+What happens when you don’t know something??
+Or if you want to EMPHAsize someTHING else?
+
+Some people are more melodic when they speak —
+some even sing their words in notes.
+
+Vibrato why not?
+And since we're playing with pitch,
+we'll do  legato as well.
+
+Got some good stuff now —
+but we’re not done.
+
+(snaps fingers)
+Swing.
+Like jazz.
+It’s about waiting and delaying certain syllables — just enough to make it feel right.
+
+And for contrast?
+Something that sounds like the opposite of swing, : stress.
+
+They say it builds character.
+It’s about emphasizing certain syllables in a phrase.
+Like KLEMtoon... not just klemtoon.
+
+Anyway.
+Now we’ve got swing.
+And sometimes we’ve got some stress.
+
+Don’t forget to breathe.
+
+And Some people stutter sometimes — that’s okay.
+No worries.
+
+And then after all that
+you just need to have a little rest and a thought and a look…
+we need a pause.
+
+Hi! Great that you stayed until the end.
+I’ve been building this whole system as a component for my upcoming app.
+
+It’s a follow-up to Mipo Puppetmaker —
+(which, by the way, you can download for free: no ads, no microtransactions… and honestly, it’s pretty good if i may say so.)
+
+In that app, the Mipos also talk —
+but it’s kind of primitive.
+they just say mi-po mi-po mi-po.
+Over and over. 😉
+
+So that’s why I built this system —
+for the upcoming app.
+
+
+I hope you enjoyed the video
+and have a good day!
+bye
+
+
+final:
+
+Hi.
+I'm in need of a talking mouth.
+Aren’t we all?
+
+So... I’m building one.
+
+We start by placing 8 points to make a polygon.
+With those 8 points, we design a few different shapes —
+then we interpolate between them,
+moving from one shape to another.
+
+* oh that Moves very smooth
+
+But a mouth needs more than just smooth movement.
+It needs sound.
+Let’s call those sounds a language.
+
+This language is a small one — just 39 sounds, or syllables.
+And it’s pretty beautiful. (I think.)
+I'll tell you more about it another time.
+
+For now, I’m recording all these 39 sounds.
+And once we have them,
+we can start stringing them together into words and even sentences.
+
+* right, like that!, a first sentence!
+
+Next up: intonation.
+Because without it,
+everything sounds bland.
+
+We add rising and falling tones —
+
+* yeah like that
+
+or random pitch variations here and there.
+
+* nice
+
+What happens when you don’t know something??
+Or if you want to EMPHAsize someTHING else?
+
+* thats is, much better
+
+Some people are more melodic when they speak —
+some even sing their words in notes.
+
+* nice!
+
+Vibrato — why not?
+And since we’re playing with pitch,
+we’ll do legato as well.
+
+* When will we stop?, feature creep galore!
+
+We’ve got some good stuff now —
+but we’re not done.
+
+(snaps fingers)
+Swing.
+Like jazz.
+It’s about waiting, and delaying certain syllables —
+just enough to make it feel right.
+
+* ooh yeah, it does sound much better
+
+And for contrast?
+Something that sounds like the opposite of swing: stress.
+
+They say it builds character.
+It’s about emphasizing certain syllables in a phrase.
+Like KLEMtoon... not just klemtoon.
+
+* i see i see
+
+Anyway.
+Now we’ve got swing.
+And sometimes we’ve got some stress.
+
+Don’t forget to breathe.
+
+* oooofgh
+
+And some people stutter sometimes — that’s okay.
+No worries.
+
+
+And then after all that,
+you just need to have a little rest,
+a thought,
+a look…
+
+We need a pause.
+
+
+Hi! Great that you stayed until the end.
+I’ve been building this whole system as a component for my upcoming app.
+
+It’s a follow-up to Mipo Puppetmaker —
+(which, by the way, you can download right now for free: no ads, no microtransactions…
+and honestly, it’s pretty good, if I may say so.)
+
+In that app, the Mipos talk too  —
+but it’s kind of primitive.
+They just say mi and po and  pi and mo and  mi-po.
+Over and over. 😉
+
+So that’s why I built this system —
+for the upcoming app.
+
+I hope you enjoyed the video.
+And have a good day!
+Bye.

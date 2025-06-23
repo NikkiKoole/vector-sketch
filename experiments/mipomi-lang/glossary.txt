@@ -1,0 +1,597 @@
++--------------------------+--------------------------+------------------------------+------------------------------+
+| category              X  |   A                      |   I                          |   O                          |
++--------------------------+--------------------------+------------------------------+------------------------------+
+|self / feeling         M  |MA (nurture 🤱🌼)         |MI ( I 🧍)                   |MO (love / feel ❤️🤏)         |
+|living beings          B  |BA (life / child 🌱🧒)    |BI (peer / kin 🧑‍🤝‍🧑)           |BO (animal 🐾🐶)              |
+|possession / transfer  P  |PA ( keep / hold 📚👐)    |PI (take / receive 📥✋)     |PO (give 🎁🤲)                |
+|nature / element       F  |FA (fire / heat 🔥🌞)     |FI (earth / soil 🌎🪴)       |FO (sky / air 💨☁️)           |
+|thing / place          K  |KA (object / stuff 📦🎒)  |KI ( tool / device 🛠️🔧)     |KO (place / container 📍🏠)   |
+|beauty / design        L  |LA ( light / good ✨💡)   |LI (fine / detail 🧩🎨)      |LO (shape / form 🔷🖼️)        |
+|time / goal	        T  |TA (past ⏮️📜)            |TI (now ⏰🕰️)                |TO (future ⏭️🚀)              |
+|voice / story          J  |JA (speak 🗣️💬)           |JI (name / identity 📖🆔)    |JO (you / listener 👉🫵)      |
+|negation / rest	    N  |NA (none / absence 🚫)    |NI (rest / sleep 😴🛌)       |NO (end / negate ⛔🔚)        |
+|body / substance       D  |DA (body / flesh 🧍🫀)    |DI (eat / drink 🍽️🥤)        |DO (stone / rock 🪨🧱)        |
+|mind / pattern         S  |SA (idea 💭🧠)            |SI (sign / tag 🏷️📛)         |SO (pattern / structure 🌀📐) |
+|action / control       H  |HA (start ⚡🔛)           |HI (go / act 🚶🏃)           |HO (stop / halt ✋🛑)         |
+| water / qualities     W  |WA (water / flow 💧🌊)    |WI ( cold / ice ❄️🧊)        |WO (round / solid 🧸⚪)       |
++--------------------------+--------------------------+------------------------------+------------------------------+
+Core CV roots
+English scope	a-root	i-root	o-root
+self / feeling	MA nurture	MI self	MO feel / love
+living beings	BA life	BI kin	BO creature
+possession / transfer	PA keep	PI take	PO give
+nature / element	FA fire	FI earth	FO sky / air
+thing / place	KA object	KI tool	KO place / container
+beauty / design	LA light / good	LI detail	LO shape / form
+time / goal	TA past	TI now	TO future
+voice / story	JA speak	JI name / ID	JO you / listener
+negation / rest	NA none	NI rest	NO end / negate
+body / substance	DA body	DI eat / drink	DO stone
+mind / pattern	SA idea	SI sign	SO structure
+action / control	HA start	HI go / act	HO stop
+water / qualities	WA water / flow	WI cold / ice	WO round / solid
+Spatial Concepts
+English	Mipomi	Breakdown
+here	KOTI	KO place + TI now
+there	KOTO	KO place + TO future
+up	FOKO	FO sky + KO place
+down	FIKO	FI earth + KO place
+inside	KOKO	KO + KO
+outside	KOFO	KO + FO
+near	TITI / HITI	TI + TI · HI go + TI
+far	TOTO / HOTO	TO + TO · HO stop + TO
+Size & Physical Quality
+English	Mipomi	Breakdown
+big / heavy	DOKA	DO stone + KA object
+small / tiny	LILI	LI + LI
+lightweight	WALA	WA flow + LA light
+Emotion & Feeling
+English	Mipomi	Breakdown
+love	MOMO	MO + MO
+joy	MOLA	MO feel + LA light
+sad	MINO	MI self + NO negate
+fear / anxious	FOWA	FO sky + WA flow
+anger	FAHO	FA fire + HO stop
+excited	MOLAFO	MO + LA + FO sky
+bored	NINI	NI + NI
+embarrassed	MISOFO	MI + SO structure + FO
+proud	MOKIHA	MO + KI tool + HA start
+surprised	MOJA	MO + JA speak
+giggling (verb)	HOMO	HO stop + MO feel
+Cognition & Mind
+English	Mipomi	Breakdown
+understand / learn	SAPI	SA idea + PI receive
+memory	TADI	TA past + DI eat
+idea / insight	SALA	SA + LA
+confusion	SOSI	SO pattern + SI tag
+desire / want	MOKI	MO + KI
+dream	NISA	NI rest + SA idea
+doubt	SAJO	SA + JO
+motivation	HIMO	HI go + MO
+goal / aspiration	TOLA	TO future + LA light
+focus / truth	JILA	JI ID + LA light
+false	JINO	JI + NO
+Good / Bad & Clean / Dirty
+English	Mipomi	Breakdown
+good	LALA	LA + LA
+bad	LANA	LA + NA
+not good	NALA	NA + LA
+ugly	LONO	LO form + NO
+clean	WALA	WA + LA
+dirty	WAFI / DIFI	WA + FI · DI + FI
+safe	KOLA	KO place + LA
+dangerous	FAHO / NAKO	FA + HO · NA + KO
+beautiful	LALI	LA + LI
+Function words (grammar)
+English	Mipomi	Breakdown
+I / me	mi	root
+be (is/are)	e	particle
+go / move	a	particle
+do / act	o	particle
+Creature Anatomy & Modularity
+English	Mipomi	Breakdown
+arm	DAKA	DA body + KA object
+leg	DAPA	DA + PA keep
+neck	DATI	DA + TI now
+head	DAJO	DA + JO
+eye	JIKI	JI ID + KI tool
+mouth	JAJO	JA speak + JO
+hat	KOPA	KO place + PA keep
+tail	DONO	DO stone + NO end
+plug	KOPA	KO + PA
+socket	KOPO	KO + PO give
+attach / stick	HAPA	HA start + PA
+detach	HOKO	HO stop + KO
+wobble	FOKO	FO sky + KO
+Movement & Physics
+English	Mipomi	Breakdown
+jump	HAFA	HA start + FA fire
+run	HIHI	HI × HI
+trip	HOHI	HO stop + HI
+slide	FALA	FA + LA
+tumble	FOWO	FO + WO round
+spin	SOSO	SO × SO
+catch	PAKI	PA hold + KI
+push	FAHA	FA + HA
+pull	PIFO	PI take + FO
+lift	WALA	WA flow + LA
+fall	DOKO	DO stone + KO
+Places & Environments
+English	Mipomi	Breakdown
+bridge	KOTI	KO + TI
+tunnel / cave	FIKO	FI earth + KO
+hill	DOFI	DO + FI
+ramp	KOFA	KO + FA
+tower	TOKOTO	TO + KO + TO
+pit / hole	KONO	KO + NO
+edge / cliff	HOKO	HO + KO
+floating island	FOKOFO	FO + KO + FO
+Crafting, Tools & Invention
+English	Mipomi	Breakdown
+screw / bolt	KIKIPI	KI + KI + PI
+wire	FIKI	FI + KI
+engine / motor	KIHAHA	KI + HA + HA
+paint	LIKI	LI + KI
+blueprint	SALAKI	SA idea + LA + KI
+machine	KIKIFO	KI + KI + FO
+lever	KIKAHO	KI + KA + HO
+knob	KOKOKI	KO + KO + KI
+switch	HOKOHA	HO + KO + HA
+jar / container	KOKOKA	KO + KO + KA
+Professions & Play Roles
+English	Mipomi	Breakdown
+doctor / healer	BIHOFA	BI kin + HO stop + FA fire
+painter	LIKIHA	LI + KI + HA
+musician	JILAFO	JI voice + LA + FO
+builder	HOBOKA	HO act + BO creature + KA
+tinkerer	KIBOSA	KI tool + BO + SA idea
+teacher	BIMOSI	BI + MO feel + SI sign
+gardener	BIFIFA	BI + FI earth + FA
+pilot / flyer	FOKOPI	FO sky + KO place + PI take
+cleaner	WALAFO	WA + LA + FO
+inventor	SAHOPI	SA idea + HO act + PI
+performer / dancer	MOHIHI	MO feel + HI go + HI
+Time & Weather
+English	Mipomi	Breakdown
+night	WINA	WI cold + NA none
+afternoon	TALA	TA past + LA
+rain	WAWA	WA + WA
+storm	FAWA	FA + WA
+rainbow	LAFOKO	LA + FO + KO
+windy	FOWA	FO + WA
+sunrise	FALATI	FA + LA + TI
+sunset	FONO	FO + NO
+cloudy	FOKO	FO + KO
+clock	TOKOKA	TO + KO + KA
+Objects & Toys
+English	Mipomi	Breakdown
+ball	WOBO	WO round + BO
+fan	FOHI	FO + HI
+box / cup	KOKA	KO + KA
+ladder	TOKIKA	TO + KI + KA
+cart	KOPA	KO + PA
+crayon	LIKISA	LI + KI + SA
+book	JIKI	JI + KI
+brush	LIKIKA	LI + KI + KA
+mirror	LOJO	LO form + JO
+pillow	NIFA	NI rest + FA warm
+Speech, Sounds & Communication
+English	Mipomi	Breakdown
+yell	JAHO	JA speak + HO stop
+cry	MISO	MI + SO
+hum / sing	JOJO	JO + JO
+laugh	MOWA	MO + WA
+murmur	HIJI	HI + JI
+narrate	JASAJO	JA + SA idea + JO
+silence	NOJA	NO + JA
+gesture	JAHA	JA + HA
+wave (hand)	PAHI	PA hold + HI
+Mythology & Lore
+English	Mipomi	Breakdown
+moon (Sleepy)	NISA	NI rest + SA idea
+sun (Giggle-sun)	FALA	FA fire + LA
+Big Box	KOKOKA	KO + KO + KA
+toy (artifact)	KAPIBO	KA object + PI take + BO
+spirit	WAJO	WA flow + JO
+wish	TOMOJO	TO future + MO feel + JO
+giggle (power)	MOMO	MO + MO
+doodle / drawing	LOLISA	LO form + LI detail + SA
+sneeze (creation)	HOFA	HO stop + FA fire
+
+
+
+Plants (using BA - life/child as a primary root)
+Flower
+Mipomi: BALA
+Breakdown: BA (life) + LA (light / good / beauty)
+Tree
+Mipomi: BAFI
+Breakdown: BA (life) + FI (earth / soil)
+Grass / Moss
+Mipomi: BILI
+Breakdown: BA (life) + LI (fine / detail)
+Fruit (edible plant part)
+Mipomi: BADI
+Breakdown: BA (life) + DI (eat / drink)
+Root / Tuber
+Mipomi: FIPA
+Breakdown: FI (earth) + PA (keep / hold - holds plant in earth, or kept for food)
+Leaf
+Mipomi: BALO
+Breakdown: BA (life) + LO (shape / form)
+Mushroom / Fungus
+Mipomi: FIBA (alternate: BADO if seen as 'life from stone/decay')
+Breakdown: FI (earth / soil) + BA (life)
+Vine / Creeper
+Mipomi: BAHI
+Breakdown: BA (life) + HI (go / act - describes its spreading movement)
+Animals (using BO - animal as a primary root)
+Bird / Flying Creature
+Mipomi: BOFO
+Breakdown: BO (animal) + FO (sky / air)
+Fish / Aquatic Creature
+Mipomi: BOWA
+Breakdown: BO (animal) + WA (water / flow)
+Insect / Small Bug
+Mipomi: BOLI (alternate: BOBA - animal + child/life implying small)
+Breakdown: BO (animal) + LI (fine / detail - for its small, detailed nature)
+Mammal (general land creature, like a dog/cat)
+Mipomi: BOFI
+Breakdown: BO (animal) + FI (earth / soil - lives on land)
+Snake / Worm (slithering creature)
+Mipomi: BOHI
+Breakdown: BO (animal) + HI (go / act - describes its movement)
+Herbivore (plant-eating animal)
+Mipomi: BODI (using BA as the implied food DI acts upon)
+Breakdown: BO (animal) + DI (eat / drink [plants])
+Pet / Companion Animal
+Mipomi: BOBI
+Breakdown: BO (animal) + BI (peer / kin)
+Running / Racing
+Mipomi: HIHI
+Breakdown: HI ( go/act ) + HI ( go/act ) - already in your list, very fitting!
+Swimming
+Mipomi: WAHI
+Breakdown: WA (water / flow) + HI (go / act)
+Ball Game (general, like tag with a ball)
+Mipomi: KAHI
+Breakdown: KA (object / stuff - the ball) + HI (go / act)
+Football / Soccer (kicking ball to a place/goal)
+Mipomi: WOKOHI
+Breakdown: WO (round / solid - the ball) + KO (place / container - the goal) + HI (go / act)
+Basketball (putting a ball into a container)
+Mipomi: WOPOKO
+Breakdown: WO (round / solid - the ball) + PO (give / put) + KO (place / container - the hoop)
+Climbing (up earth/rock)
+Mipomi: HIFI
+Breakdown: HI (go / act) + FI (earth / soil)
+Cycling (tool-based movement)
+Mipomi: KIHIHI
+Breakdown: KI (tool / device - the bicycle) + HI (go / act) + HI (go / act)
+Skiing / Snowboarding (movement on cold/ice)
+Mipomi: WIHI
+Breakdown: WI (cold / ice) + HI (go / act)
+Weightlifting (taking/holding heavy things)
+Mipomi: DOKAPI
+Breakdown: DO (stone / rock - implying heavy) + KA (object) + PI (take / receive)
+Archery / Target Shooting (tool for a future point)
+Mipomi: KITOPI
+Breakdown: KI (tool / device) + TO (future / goal - the target) + PI (take / receive - hitting the target)
+Rowing / Paddling
+Mipomi: WAKIHI
+Breakdown: WA (water / flow) + KI (tool / device - oar/paddle) + HI (go / act)
+Gymnastics / Acrobatics (body form in action)
+Mipomi: DALOHI
+Breakdown: DA (body / flesh) + LO (shape / form) + HI (go / act)
+Surfing (riding water flow)
+Mipomi: WAHIPI
+Breakdown: WA (water / flow) + HI (go / act) + PI (take / receive - as in 'catching' a wave)
+Fencing / Sword Fighting (tool-based controlled action)
+Mipomi: KIHOHI
+Breakdown: KI (tool / device - sword) + HO (stop / halt - implying control/points) + HI (go / act)
+Volleyball (ball over a structure/pattern)
+Mipomi: WOHISO
+Breakdown: WO (round / solid - the ball) + HI (go / act) + SO (pattern / structure - the net)
+Car / Land Vehicle
+Mipomi: KIFIHI
+Breakdown: KI (tool / device) + FI (earth / soil) + HI (go / act)
+Boat / Ship
+Mipomi: KIWAHI
+Breakdown: KI (tool / device) + WA (water / flow) + HI (go / act)
+Airplane / Flying Vehicle
+Mipomi: KIFOHI
+Breakdown: KI (tool / device) + FO (sky / air) + HI (go / act)
+Train
+Mipomi: SOKIHI
+Breakdown: SO (pattern / structure - for tracks) + KI (tool / device) + HI (go / act)
+Bicycle
+Mipomi: KILIHI
+Breakdown: KI (tool / device) + LI (fine / detail - implying personal, smaller effort) + HI (go / act)
+Bus (Carries Kin)
+Mipomi: KIBIHI
+Breakdown: KI (tool / device) + BI (peer / kin) + HI (go / act)
+Truck (Carries Objects)
+Mipomi: KIKAHI
+Breakdown: KI (tool / device) + KA (object / stuff) + HI (go / act)
+Rocket / Spaceship
+Mipomi: KIFOTO
+Breakdown: KI (tool / device) + FO (sky / air) + TO (future / goal - implying long distance/destination)
+Submarine
+Mipomi: KIWAFI
+Breakdown: KI (tool / device) + WA (water / flow) + FI (earth / soil - implying going under/deep)
+Motorcycle
+Mipomi: FAKIHI
+Breakdown: FA (fire / heat - for engine) + KI (tool / device) + HI (go / act)
+Skateboard / Rollerskates
+Mipomi: FIWOHI
+Breakdown: FI (earth / soil) + WO (round / solid - wheels) + HI (go / act)
+Helicopter
+Mipomi: FOKISOHI
+Breakdown: FO (sky / air) + KI (tool / device) + SO (pattern / structure - rotors spinning) + HI (go / act)
+Hot Air Balloon
+Mipomi: FAKOFOHI
+Breakdown: FA (fire / heat) + KO (place / container - the basket/envelope) + FO (sky / air) + HI (go / act)
+Cart / Wagon (pulled/pushed)
+Mipomi: KAPAHI
+Breakdown: KA (object / stuff - the cart itself) + PA (keep / hold - being moved) + HI (go / act)
+Sled / Sleigh (moves on ice/snow)
+Mipomi: KIWIHI
+Breakdown: KI (tool / device) + WI (cold / ice) + HI (go / act)
+Computer
+Mipomi: SAKISO
+Breakdown: SA (idea / mind) + KI (tool / device) + SO (pattern / structure)
+Washing Machine
+Mipomi: WAKIKAHA
+Breakdown: WA (water / flow) + KI (tool / device) + KA (object / stuff - clothes) + HA (start - action of washing)
+Refrigerator
+Mipomi: WIKIKO
+Breakdown: WI (cold / ice) + KI (tool / device) + KO (place / container)
+Engine / Motor
+Mipomi: KIHAHA
+Breakdown: KI (tool / device) + HA (start) + HA (start) - from your list
+Printer
+Mipomi: SIKIPO
+Breakdown: SI (sign / tag) + KI (tool / device) + PO (give)
+Clock
+Mipomi: TOKOKA
+Breakdown: TO (future/time) + KO (place/container) + KA (object) - from your list
+Camera
+Mipomi: LOKIPI
+Breakdown: LO (shape / form) + KI (tool / device) + PI (take / receive)
+Drill
+Mipomi: KIKIWOHA
+Breakdown: KI (tool) + KI (tool - intense tool) + WO (round / solid - the bit action) + HA (start)
+Generator (makes power/fire)
+Mipomi: FAKIHA
+Breakdown: FA (fire / heat) + KI (tool / device) + HA (start)
+Fan
+Mipomi: FOHIKI
+Breakdown: FO (sky / air) + HI (go / act) + KI (tool / device)
+Pump (moves liquid/air)
+Mipomi: WAPIKI
+Breakdown: WA (water / flow) + PI (take / receive) + KI (tool / device)
+Crane (lifting machine)
+Mipomi: DOKAPIKI
+Breakdown: DO (stone / rock - heavy) + KA (object / stuff) + PI (take / receive) + KI (tool / device)
+Vending Machine
+Mipomi: KAPOKI
+Breakdown: KA (object / stuff) + PO (give) + KI (tool / device)
+Robot (acting machine)
+Mipomi: KIHIKA
+Breakdown: KI (tool / device) + HI (go / act) + KA (object / stuff - acts like an entity)
+Loom / Weaving Machine
+Mipomi: SOKIPA
+Breakdown: SO (pattern / structure) + KI (tool / device) + PA (keep / hold - creates and holds pattern)
+Hammer
+Mipomi: KIDO
+Breakdown: KI (tool / device) + DO (stone / rock - for impact)
+Screwdriver
+Mipomi: KILIPI
+Breakdown: KI (tool / device) + LI (fine / detail) + PI (take / receive - turns/takes screw)
+Wrench
+Mipomi: KIPAWO
+Breakdown: KI (tool / device) + PA (keep / hold) + WO (round / solid - grips round things)
+Knife / Blade
+Mipomi: KILIKA
+Breakdown: KI (tool / device) + LI (fine / detail) + KA (object / stuff - for cutting objects)
+Saw
+Mipomi: KISOKA
+Breakdown: KI (tool / device) + SO (pattern / structure - creates a cut/pattern) + KA (object / stuff)
+Shovel / Spade
+Mipomi: KIFIPI
+Breakdown: KI (tool / device) + FI (earth / soil) + PI (take / receive)
+Needle
+Mipomi: KILIWO (tool + detail + round hole) or simply LIKI (detail + tool, but LIKI is paint) - Better: LIKIDA (detail + tool + body - for sewing cloth/skin)
+Mipomi: KILISO
+Breakdown: KI (tool / device) + LI (fine / detail) + SO (pattern / structure - for making stitches)
+Pen / Pencil
+Mipomi: SIKILI
+Breakdown: SI (sign / tag) + KI (tool / device) + LI (fine / detail)
+Scissors
+Mipomi: KIPIKI
+Breakdown: KI (tool) + PI (take/cut) + KI (tool) - two tool parts taking/cutting
+Measuring Tape / Ruler
+Mipomi: SOKILO
+Breakdown: SO (pattern / structure) + KI (tool / device) + LO (shape / form - measures form)
+Axe
+Mipomi: KIDOFA
+Breakdown: KI (tool / device) + DO (stone / rock - for heavy splitting) + FA (fire / heat - implies forceful action)
+Pliers
+Mipomi: KIPAHA
+Breakdown: KI (tool / device) + PA (keep / hold) + HA (start - to initiate grip)
+Brush (for cleaning/painting)
+Mipomi: LIKIKA
+Breakdown: LI (fine / detail) + KI (tool / device) + KA (object / stuff) - from your list
+File (tool for smoothing)
+Mipomi: KILOKA
+Breakdown: KI (tool / device) + LO (shape / form) + KA (object / stuff - shapes objects)
+Magnifying Glass
+Mipomi: LAPIKI
+Breakdown: LA (light / good) + PI (take / receive) + KI (tool / device)
+House / Home
+Mipomi: KOBIPA
+Breakdown: KO (place / container) + BI (peer / kin) + PA (keep / hold - where kin are kept/stay)
+Nest (bird)
+Mipomi: KOBOFO
+Breakdown: KO (place / container) + BO (animal) + FO (sky / air - for flying animals)
+Cave
+Mipomi: FIKO
+Breakdown: FI (earth / soil) + KO (place / container) - from your list
+Burrow (animal underground)
+Mipomi: KOBOFI
+Breakdown: KO (place / container) + BO (animal) + FI (earth / soil)
+Forest / Woods
+Mipomi: KOBAFI
+Breakdown: KO (place / container) + BA (life / child - many plants) + FI (earth / soil)
+Ocean / Sea
+Mipomi: KOWABO
+Breakdown: KO (place / container) + WA (water / flow) + BO (animal - implies habitat for aquatic animals)
+Desert
+Mipomi: KOFAWA
+Breakdown: KO (place / container) + FA (fire / heat) + NA (none / absence - often of water) - KOFANAWA (KO+FA+NA+WA)
+Simpler: KOFA (place of heat)
+Mountain
+Mipomi: DOFOKO
+Breakdown: DO (stone / rock) + FO (sky / air - high place) + KO (place / container)
+City / Town
+Mipomi: KOBISO
+Breakdown: KO (place / container) + BI (peer / kin) + SO (pattern / structure - structured place for many kin)
+Hive (bees/insects)
+Mipomi: KOBOLI
+Breakdown: KO (place / container) + BO (animal) + LI (fine / detail - many small animals)
+Swamp / Marsh
+Mipomi: KOWAFI
+Breakdown: KO (place / container) + WA (water / flow) + FI (earth / soil)
+Arctic / Icy Region
+Mipomi: KOWI
+Breakdown: KO (place / container) + WI (cold / ice)
+Floating Island (fantasy habitat)
+Mipomi: FOKOFO
+Breakdown: FO (sky / air) + KO (place / container) + FO (sky / air) - from your list
+Shell (as a home for a creature)
+Mipomi: KABOWO
+Breakdown: KA (object / stuff - the shell itself) + BO (animal) + WO (round / solid - its form as a home)
+Garden (cultivated place)
+Mipomi: KOBAPA
+Breakdown: KO (place / container) + BA (life / child - plants) + PA (keep / hold - cultivated/kept)
+Red:
+Mipomi: FAFA
+Breakdown: FA (fire/heat) + FA (fire/heat) - The quintessential color of fire.
+Alternative: FAMO (fire-feel) for a passionate red.
+Orange:
+Mipomi: FALA (if it's distinct from 'sun' as an object)
+Breakdown: FA (fire/heat) + LA (light/good) - Fire with light, like a bright ember or sunset. (Note: FALA is currently "sun," so this might be "sun-colored").
+Alternative: FAWO (fire-round, thinking of an orange fruit).
+Yellow:
+Mipomi: LALA (if not solely "good")
+Breakdown: LA (light/good) + LA (light/good) - Pure light, the brightest. (Note: LALA is "good," so this could be "good-colored" or "bright as good").
+Alternative: LAFA (light-fire), a lighter, brighter fire.
+Green:
+Mipomi: BAFI (if it's distinct from 'tree')
+Breakdown: BA (life/child) + FI (earth/soil) - The color of plant life on earth. (Note: BAFI is "tree," so "tree-colored").
+Alternative: BALI (life-detail), the detailed green of leaves.
+Blue (Sky Blue):
+Mipomi: FOFO
+Breakdown: FO (sky/air) + FO (sky/air) - The color of the clear sky.
+Blue (Water Blue):
+Mipomi: WAWA
+Breakdown: WA (water/flow) + WA (water/flow) - The color of deep or plentiful water. (Note: WAWA is "rain," so "rain-colored").
+Purple/Violet:
+Mipomi: FAFO
+Breakdown: FA (fire/heat) + FO (sky/air) - Colors of a sunset where red fire meets the blue sky.
+Alternative: MOWI (love/feel + cold), a cooler, perhaps more "royal" purple.
+Pink (Light Red):
+Mipomi: FALI
+Breakdown: FA (fire/heat) + LI (fine/detail) - A fine, delicate red.
+Alternative: MALA (nurture-light), a gentle, light color.
+Brown:
+Mipomi: FIFI
+Breakdown: FI (earth/soil) + FI (earth/soil) - The deep color of soil.
+Alternative: DOFI (stone-earth), also "hill," but could be "earth-stone color."
+Black:
+Mipomi: NANA
+Breakdown: NA (none/absence) + NA (none/absence) - Total absence of light/color.
+Alternative: WINA (cold-none), also "night," implying darkness.
+White:
+Mipomi: WILA
+Breakdown: WI (cold/ice) + LA (light/good) - The bright white of snow or ice.
+Alternative: LALA (light-light), if it can mean pure bright white. Or FOLA (sky-light, like a white cloud).
+Grey:
+Mipomi: DONA
+Breakdown: DO (stone/rock) + NA (none/absence) - The color of unlit stone, or stone without vibrant color.
+Alternative: NALA (none-light), also "not good," but could be "lacking light/color."
+
+
+
+🧪 Examples Using SI:
+Color	Word	Breakdown
+Red	SIFA	sign-of-fire
+Orange	SILA	sign-of-light
+Yellow	SITA	sign-of-past/sun
+Green	SIFI	sign-of-earth
+Blue (sky)	SIFO	sign-of-sky
+Blue (water)	SIWA	sign-of-water
+Purple	SIFAFO	sign-of-fire+sky
+Pink	SIMA	sign-of-nurture
+Brown	SIDO	sign-of-stone
+Black	SINA	sign-of-absence
+White	SIWI	sign-of-cold
+Grey	SIDO or SINAWI	stone/absence combo
+
+
+
+
+Hair (general, on head):
+Mipomi: DAJOFI
+Breakdown: DA (body/flesh) + JO (you/listener - often associated with the head/face) + FI (earth/soil - grows from, or covers like foliage)
+Alternative for "strand of hair": DALIKA (DA body + LI fine/detail + KA object)
+Hairdo / Hairstyle:
+Mipomi: DAJOLO
+Breakdown: DAJOFI (hair on head) + LO (shape/form)
+Hairy Chest:
+Mipomi: DAKOLI (Body-container-detail, chest as a container for organs, with detailed covering)
+Breakdown: DA (body/flesh) + KO (place/container - for the chest area) + LI (fine/detail - representing the hair)
+Eyebrow:
+Mipomi: DAJIKI (Body-ID-tool-covering)
+Breakdown: DA (body/flesh) + JI (name/ID - above the identifying eye) + KI (tool/device - like a tool framing the eye, could also be KA object)
+Simpler: DAJILA (Body-ID-light, as it frames the 'light' of the eye)
+Arm Hair:
+Mipomi: DAKALI
+Breakdown: DA (body/flesh) + KA (object/stuff - arm is an object-like limb) + LI (fine/detail - the hair)
+Torso & Head Shapes (using DA - body, LO - shape/form, and specific body part roots)
+Torso Shape (general):
+Mipomi: DALOKO
+Breakdown: DA (body/flesh) + LO (shape/form) + KO (place/container - the torso as a container)
+Head Shape (general):
+Mipomi: DAJOLO (same as hairdo, context would differentiate. Or use DAJO (head) + LO)
+Mipomi: DALOJO (if DAJO is specifically "head")
+Breakdown: DA (body/flesh) + LO (shape/form) + JO (you/listener - associated with head)
+Long Neck:
+Mipomi: DATITO
+Breakdown: DA (body/flesh) + TI (now/present - the neck) + TO (future/goal - implies extension, length)
+Short Neck:
+Mipomi: DATITA
+Breakdown: DA (body/flesh) + TI (now/present - the neck) + TA (past/previous - implies less extension, shorter)
+Alternative: DATILI (DA+TI+LI detail/small)
+Thin Torso:
+Mipomi: DAKOLI (if DAKOLI isn't hairy chest)
+Breakdown: DA (body/flesh) + KO (place/container - torso) + LI (fine/detail - implying thinness)
+Thick Torso:
+Mipomi: DAKODO
+Breakdown: DA (body/flesh) + KO (place/container - torso) + DO (stone/rock - implying solidity, thickness)
+Height (General Body Shape/Form)
+Tall:
+Mipomi: DALOFO
+Breakdown: DA (body/flesh) + LO (shape/form) + FO (sky/air - reaching towards the sky)
+Alternative: DATO (body + future/goal - implying extended upwards)
+Short:
+Mipomi: DALOFI
+Breakdown: DA (body/flesh) + LO (shape/form) + FI (earth/soil - closer to the earth)
+Alternative: DATA (body + past - implying less extension)
+Additional related concepts based on the request:
+Beard / Facial Hair (not eyebrow):
+Mipomi: DAJALI
+Breakdown: DA (body/flesh) + JA (speak - mouth area) + LI (fine/detail - the hair)
+Body Shape (general):
+Mipomi: DALO
+Breakdown: DA (body/flesh) + LO (shape/form)
