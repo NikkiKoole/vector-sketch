@@ -404,7 +404,7 @@ function love.keypressed(key)
             local s = 1 + math.random() * 1
             for i = 1, count do
                 CharacterManager.updatePart('torso' .. i,
-                    { shape8URL = url .. '.png', sy = s, sx = s / 3 },
+                    { shape8URL = url .. '.png', sy = s, sx = s },
                     humanoidInstance)
 
 
@@ -472,11 +472,12 @@ function love.keypressed(key)
 
 
             local oldCreation = humanoidInstance.dna.creation
-            local segments = 1 + math.ceil(love.math.random() * 15)
+            local segments = 1 + math.ceil(love.math.random() * 5)
 
 
             local url = humanoidInstance.dna.parts['torso1'].shape8URL
-
+            local sx = humanoidInstance.dna.parts['torso1'].dims.sx
+            local sy = humanoidInstance.dna.parts['torso1'].dims.sy
 
 
 
@@ -487,11 +488,17 @@ function love.keypressed(key)
             -- end
 
             --  print(url)
+
+            logger:info(oldCreation.torsoSegments, segments)
+
             CharacterManager.rebuildFromCreation(humanoidInstance,
                 { torsoSegments = segments })
-
-
             for i = 1, segments do
+                CharacterManager.updatePart('torso' .. i,
+                    { shape8URL = url, sy = sx, sx = sy },
+                    humanoidInstance)
+                -- CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+
                 local partName = 'torso' .. i
                 local group = partName .. 'Skin'
                 local hair = partName .. 'Hair'
@@ -502,6 +509,8 @@ function love.keypressed(key)
 
                 CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url)
             end
+
+
 
             -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'bgHex', bgColor)
             -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'fgHex', fgColor)

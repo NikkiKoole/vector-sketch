@@ -268,7 +268,7 @@ function defaultSetupTextures(instance)
         end
     end
 
-    if true then
+    if false then
         -- arms
         if true then
             local creation      = instance.dna.creation
@@ -685,7 +685,7 @@ local function getOwnOffset(partName, guy)
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
             -- local vertices = shape8Dict[parts[partName].shape8URL].v
-            -- print(partName)
+            --print(partName, parts[partName].shape8URL)
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
 
@@ -1167,7 +1167,7 @@ end
 
 local function updateSinglePart(partName, data, instance)
     local partData = instance.dna.parts[partName]
-    --print(partName, inspect(data))
+
     if not partData then return end
 
     -- Apply dimension updates
@@ -1181,15 +1181,21 @@ local function updateSinglePart(partName, data, instance)
         end
     end
 
-    -- print(partName, instance.parts[partName], inspect(instance.dna.creation))
-    local oldBody = instance.parts[partName].body
-    local oldPosX, oldPosY = oldBody:getPosition()
-    local oldAngle = oldBody:getAngle()
+
+    local oldBody = nil
+    local oldPosX, oldPosY = 0, 0
+    local oldAngle = 0
+
+
 
     -- Remove old body
 
     local extras = {}
     if instance.parts[partName] then
+        oldBody = instance.parts[partName].body
+        oldPosX, oldPosY = oldBody:getPosition()
+        oldAngle = oldBody:getAngle()
+
         local body = instance.parts[partName].body
         --extras = safeAllExtras(body)
         ObjectManager.destroyBody(body)
