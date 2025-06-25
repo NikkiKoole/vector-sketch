@@ -236,40 +236,53 @@ function defaultSetupTextures(instance)
         local torsoshape8URL = 'shapeA2.png' --instance.dna.parts.torso1.shape8URL
         --logger:info(instance.dna.parts['torso-segment-template'].shape8URL)
         --logger:info('torso shape 8', instance.dna.parts.torso1.shape8URL)
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'torso1Skin',
-            main = createDefaultTextureDNABlock(torsoshape8URL),
-            patch1 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0.3, ty = 0.3 }),
-            patch2 = addMore(createDefaultTextureDNABlock('patch1'), { tx = -0.3, ty = 0.3 }),
-            patch3 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0, ty = -0.3 }),
-            attachTo = 'torso1',
-        })
+        --
+        local creation       = instance.dna.creation
+        local torsoSegments  = creation.torsoSegments or 1
 
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = false,
-            group = 'torso1Hair',
-            zOffset = 40,
-            followShape8 = torsoshape8URL, -- get this from my main above..
-            main = createDefaultTextureDNABlock('borsthaar4', true),
-            attachTo = 'torso1',
-        })
+        for i = 1, torsoSegments do
+            local name = 'torso' .. i
+            table.insert(instance.textures, {
+                subtype = 'texfixture',
+                type = 'sfixture',
+                OMP = true,
+                group = name .. 'Skin',
+                main = createDefaultTextureDNABlock(torsoshape8URL),
+                patch1 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0.3, ty = 0.3 }),
+                patch2 = addMore(createDefaultTextureDNABlock('patch1'), { tx = -0.3, ty = 0.3 }),
+                patch3 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0, ty = -0.3 }),
+                attachTo = name,
+            })
+
+            table.insert(instance.textures, {
+                subtype = 'texfixture',
+                type = 'sfixture',
+                OMP = false,
+                group = name .. 'Hair',
+                zOffset = 40,
+                followShape8 = torsoshape8URL, -- get this from my main above..
+                main = createDefaultTextureDNABlock('borsthaar4', true),
+                attachTo = name,
+            })
+        end
     end
 
     if true then
         -- arms
         if true then
+            local creation      = instance.dna.creation
+
+            local torsoSegments = creation.torsoSegments or 1
+            local highestTorso  = 'torso' .. torsoSegments
+            local torsoNode     = highestTorso
+
             table.insert(instance.textures, {
                 subtype = 'connected-texture',
                 type = 'sfixture',
                 OMP = true,
                 group = 'leftArmSkin',
                 main = createDefaultTextureDNABlock('leg5'),
-                jointLabels = { "torso1->luarm", "luarm->llarm", "llarm->lhand" },
+                jointLabels = { torsoNode .. "->luarm", "luarm->llarm", "llarm->lhand" },
                 attachTo = 'luarm',
             })
             table.insert(instance.textures, {
@@ -279,7 +292,7 @@ function defaultSetupTextures(instance)
                 zOffset = 40,
                 group = 'leftArmHair',
                 main = addMore(createDefaultTextureDNABlock('hair10', true), { dir = -1 }), --???
-                jointLabels = { "torso1->luarm", "luarm->llarm", "llarm->lhand" },
+                jointLabels = { torsoNode .. "->luarm", "luarm->llarm", "llarm->lhand" },
                 attachTo = 'luarm',
             })
             table.insert(instance.textures, {
@@ -288,7 +301,7 @@ function defaultSetupTextures(instance)
                 OMP = true,
                 group = 'rightArmSkin',
                 main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
-                jointLabels = { "torso1->ruarm", "ruarm->rlarm", "rlarm->rhand" },
+                jointLabels = { torsoNode .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" },
                 attachTo = 'ruarm',
             })
             table.insert(instance.textures, {
@@ -298,7 +311,7 @@ function defaultSetupTextures(instance)
                 zOffset = 40,
                 group = 'rightArmHair',
                 main = addMore(createDefaultTextureDNABlock('hair10', true), {}), --??
-                jointLabels = { "torso1->ruarm", "ruarm->rlarm", "rlarm->rhand" },
+                jointLabels = { torsoNode .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" },
                 attachTo = 'ruarm',
             })
         end
@@ -1071,7 +1084,7 @@ local function makePart(partName, instance, settings)
                 offsetA = { x = 0, y = 0 },
                 offsetB = { x = 0, y = 0 },
             }
-            --logger:info('joint:', parent, partName)
+            logger:info('joint:', parent, partName)
             -- todo we dont really need this yet...
             instance.joints[parent .. '->' .. partName] = jointCreationData.id
 
@@ -1380,6 +1393,7 @@ function lib.addTextureFixturesFromInstance(instance)
                 }
                 for j = 1, #it.jointLabels do
                     local jointID = it.jointLabels[j]
+                    -- print(jointID)
                     ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
                     --print(instance.joints[jointID])
                 end
