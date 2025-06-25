@@ -13,8 +13,9 @@ local fixtures = require 'src.fixtures'
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
-
 -- flpping leghair is not yet working
+
+
 
 
 local shape8Dict = {
@@ -167,8 +168,8 @@ local dna = {
             ['lfoot'] = { dims = { w = 80, h = 150, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['rfoot'] = { dims = { w = 80, h = 150, sx = -1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
-            -- ['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            -- ['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['rhand'] = { dims = { w = 40, h = 40, sx = -.5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- TODo same kind of weirdness for the hands!
@@ -220,7 +221,7 @@ function lib.updateShape8(instance, partName, newShape8Name)
     lib.updateTextureGroupValueInRoot(instance, partName .. 'Hair', 'followShape8', newShape8Name .. '.png')
 
     -- Recreate the actual texture fixtures
-    lib.addTextureFixturesFromInstance(instance)
+    --   lib.addTextureFixturesFromInstance(instance)
 end
 
 -- function lib.refreshTextures(humanoidInstance)
@@ -334,7 +335,7 @@ function defaultSetupTextures(instance)
                 OMP = false,
                 zOffset = 40,
                 group = 'leftLegHair',
-                main = addMore(createDefaultTextureDNABlock('hair7', true), { dir = -1 }), --???
+                main = addMore(createDefaultTextureDNABlock('hair10', true), { dir = -1 }), --???
                 jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
                 attachTo = 'luleg',
             })
@@ -353,7 +354,7 @@ function defaultSetupTextures(instance)
                 OMP = false,
                 zOffset = 40,
                 group = 'rightLegHair',
-                main = addMore(createDefaultTextureDNABlock('hair7', true), {}), --??
+                main = addMore(createDefaultTextureDNABlock('hair10', true), {}), --??
                 jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
                 attachTo = 'ruleg',
             })
@@ -684,7 +685,7 @@ local function getOwnOffset(partName, guy)
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
             -- local vertices = shape8Dict[parts[partName].shape8URL].v
-
+            print(partName)
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
 
@@ -1084,7 +1085,7 @@ local function makePart(partName, instance, settings)
                 offsetA = { x = 0, y = 0 },
                 offsetB = { x = 0, y = 0 },
             }
-            logger:info('joint:', parent, partName)
+            -- logger:info('joint:', parent, partName)
             -- todo we dont really need this yet...
             instance.joints[parent .. '->' .. partName] = jointCreationData.id
 
@@ -1331,10 +1332,10 @@ function lib.addTextureFixturesFromInstance(instance)
                 local partData = instance.dna.parts[it.attachTo]
 
                 -- todo we probably also need to flip the other ones (patch1..3) but not sure..
-                if partData.dims.sy < 0 then
+                if partData.dims.sy ~= nil and partData.dims.sy < 0 then
                     ud.extra.main.fy = -1
                 end
-                if partData.dims.sx < 0 then
+                if partData.dims.sx ~= nil and partData.dims.sx < 0 then
                     ud.extra.main.fx = -1
                 end
 
@@ -1350,7 +1351,8 @@ function lib.addTextureFixturesFromInstance(instance)
                 if it.followShape8 then
                     ud.extra.followShape8 = it.followShape8
                     -- logger:inspect(ud.extra)
-                    logger:inspect(it.followShape8)
+                    --  logger:inspect(it.followShape8)
+                    print(it.followShape8)
                     local raw = shape8Dict[it.followShape8].v
                     local partData = instance.dna.parts[it.attachTo]
                     local growfactor = 1.5
@@ -1407,7 +1409,7 @@ function lib.updateTextureGroupValue(instance, group, key, value)
         local t = instance.textures[i]
         if t.group == group and t.main then
             t.main[key] = value
-            logger:info('setting', key, value)
+            --logger:info('setting', key, value)
         end
     end
 end
