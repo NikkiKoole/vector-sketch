@@ -401,7 +401,13 @@ function love.keypressed(key)
             local creation = humanoidInstance.dna.creation
             --print(inspect(creation))
             local count = creation.torsoSegments
+            local s = 1 + math.random() * 1
             for i = 1, count do
+                CharacterManager.updatePart('torso' .. i,
+                    { shape8URL = url .. '.png', sy = s, sx = s / 3 },
+                    humanoidInstance)
+
+
                 CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
             end
             CharacterManager.rebuildFromCreation(humanoidInstance,
@@ -448,6 +454,14 @@ function love.keypressed(key)
             CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
             CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
             CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
+
+
+            local lowerarmlength = 120 + love.math.random() * 1400
+            CharacterManager.updatePart('luarm', { h = lowerarmlength }, humanoidInstance)
+            CharacterManager.updatePart('ruarm', { h = lowerarmlength }, humanoidInstance)
+            CharacterManager.updatePart('llarm', { h = lowerarmlength }, humanoidInstance)
+            CharacterManager.updatePart('rlarm', { h = lowerarmlength }, humanoidInstance)
+
 
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end

@@ -685,7 +685,7 @@ local function getOwnOffset(partName, guy)
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
             -- local vertices = shape8Dict[parts[partName].shape8URL].v
-            print(partName)
+            -- print(partName)
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
 
@@ -1352,7 +1352,7 @@ function lib.addTextureFixturesFromInstance(instance)
                     ud.extra.followShape8 = it.followShape8
                     -- logger:inspect(ud.extra)
                     --  logger:inspect(it.followShape8)
-                    print(it.followShape8)
+                    --print(it.followShape8)
                     local raw = shape8Dict[it.followShape8].v
                     local partData = instance.dna.parts[it.attachTo]
                     local growfactor = 1.5
@@ -1419,7 +1419,7 @@ function lib.updateTextureGroupValueInRoot(instance, group, key, value)
         local t = instance.textures[i]
         if t.group == group then
             t[key] = value
-            logger:info('setting', key, value)
+            -- logger:info('setting', key, value)
         end
     end
 end
