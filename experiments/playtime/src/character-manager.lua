@@ -261,6 +261,49 @@ function defaultSetupTextures(instance)
     end
 
     if true then
+        -- arms
+        if true then
+            table.insert(instance.textures, {
+                subtype = 'connected-texture',
+                type = 'sfixture',
+                OMP = true,
+                group = 'leftArmSkin',
+                main = createDefaultTextureDNABlock('leg5'),
+                jointLabels = { "torso1->luarm", "luarm->llarm", "llarm->lhand" },
+                attachTo = 'luarm',
+            })
+            table.insert(instance.textures, {
+                subtype = 'connected-texture',
+                type = 'sfixture',
+                OMP = false,
+                zOffset = 40,
+                group = 'leftArmHair',
+                main = addMore(createDefaultTextureDNABlock('hair10', true), { dir = -1 }), --???
+                jointLabels = { "torso1->luarm", "luarm->llarm", "llarm->lhand" },
+                attachTo = 'luarm',
+            })
+            table.insert(instance.textures, {
+                subtype = 'connected-texture',
+                type = 'sfixture',
+                OMP = true,
+                group = 'rightArmSkin',
+                main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
+                jointLabels = { "torso1->ruarm", "ruarm->rlarm", "rlarm->rhand" },
+                attachTo = 'ruarm',
+            })
+            table.insert(instance.textures, {
+                subtype = 'connected-texture',
+                type = 'sfixture',
+                OMP = false,
+                zOffset = 40,
+                group = 'rightArmHair',
+                main = addMore(createDefaultTextureDNABlock('hair10', true), {}), --??
+                jointLabels = { "torso1->ruarm", "ruarm->rlarm", "rlarm->rhand" },
+                attachTo = 'ruarm',
+            })
+        end
+
+
         -- legs
         if true then
             table.insert(instance.textures, {
