@@ -377,15 +377,20 @@ function lib.recreateThingFromBody(body, newSettings)
                 -- this is fine for all sort of editor made things,
                 -- todo specific positioning for mipo on behavors
                 -- but for mipos character we might just want to be very precise and dending on behaviors and tags and dedicated rules.
-
                 --local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
                 --local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
-                local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
-                local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
+                if (#thing.vertices == #newVertices) then -- this general case isn working when the amount of points change. (and im not sure if it wise otherwise)
+                    local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
+                    local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
 
-                local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-                abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
+                    local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                    abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
+                else
+                    local new_px, new_py = centerX, centerY
+                    local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                    abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, 0, 0))
+                end
             end
 
 
@@ -444,11 +449,14 @@ function lib.destroyBody(body)
         end
     end
     local bfixtures = body:getFixtures()
+    ---print(#bfixtures)
     for i = 1, #bfixtures do
-        local ud = bfixtures[i]:getUserData()
+        local f = bfixtures[i]
+        local ud = f:getUserData()
         if ud and ud.id then
-            registry.unregisterSFixture(ud.id)
-            bfixtures[i]:destroy()
+            fixtures.destroyFixture(f)
+            --registry.unregisterSFixture(ud.id)
+            --bfixtures[i]:destroy()
         end
     end
     registry.unregisterBody(thing.id)

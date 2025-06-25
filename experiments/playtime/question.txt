@@ -1,0 +1,22 @@
+HI, a bit of backstory:
+
+I'm an artist-developer dad, with a dayjob and have been making an app (and working on the followup)
+That first app I put on the appstore about 1.5 years ago, and it roughly have almost 2 downloads per day.
+That isn't much , but a lot more then 0 ;)
+
+I do understand marketing is needed, but because i'm mostly a developer first I love making new things and am a bit scared of marketing. So i've just been postponing marketing and been  fiddling with new features and experimenting.
+
+Eventually I figured just starting a youtube channel to build a community of interested people might be good start, There is one video on that youtube channel right now (the channel is 3 days old), its a sort of devlog , feature build, combined with some animaton and my own music. I was building a speech-synth and little own cute language for my game, It felt like a good subject for a first video. I'm kinda happy with the video and it has about 200 views.
+
+My plan for the next steps is to build out another feature (lipsyncing my characters), and make a video of that process. also improve small video things i learned, At this point i have a working physics based character, that has a woking mouth and a cute langage in which it can speak and sing.
+
+The plan i have, is to make some short videos at that point showcasing my characters saying short humoristic sententences and have things happen in their world.
+
+anyway: my question:
+Should i be making these videos already if its just about something you cannot download right now ?
+I mean i have an app you can download right now, but the things i'm showing are for the next one ?
+
+And am i sort of approaching this marketing just like another way procratinate and to fiddle and build new features (in this case videos)
+At the end of the day the goals would be to drive a reasonable amount of people to my next app which i will be trying to sell for a small amount.
+
+are there simpler thing i can do to improve traffic and grow a community, things i'm missing?

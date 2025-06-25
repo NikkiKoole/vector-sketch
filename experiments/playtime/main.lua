@@ -7,10 +7,12 @@
 -- TODO in character manager, the w and h arent used when we have a shape 8 i prbaly want to calculate sx and sy depending on w and h instead of not using them
 -- TODO swap body parts
 -- TODO add some ui to change body properties
--- TODO make tiled texture fixture!!!!!
 
 -- BUG press R and then N , torso hair is not positioned correctly, also the wrong texture is displayed for a torso
--- also, this is because we do naot have a real DNA yet
+-- also, this is because we do naot have a real DNA yet, i think what i mean with a real dns is a lookup table that tells me all the
+-- decisions we need, now we have some stuff in the instance.textures but we do not 'know' why.
+-- i alway see th etorso shape pop back to a circle
+-- BUG , when preseing R, N, L you can see he specia fixtures grow too big
 
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
@@ -137,7 +139,7 @@ function love.load(args)
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
     humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
+    --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1100, 300)
@@ -331,6 +333,7 @@ function love.keypressed(key)
     ui.handleKeyPress(key)
     InputManager.handleKeyPressed(key)
     script.call('onKeyPress', key)
+
     if not ui.focusedTextInputID then
         if key == 'r' then
             logger:inspect(humanoidInstance.dna.creation)
@@ -340,7 +343,7 @@ function love.keypressed(key)
                     'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
                 local urlIndex = math.ceil(math.random() * #urls)
                 local url = urls[urlIndex]
-                print(url)
+                --print(url)
                 local s = .5 + love.math.random() * 2
                 local sign = math.random() < .5 and -1 or 1
                 -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
@@ -348,7 +351,7 @@ function love.keypressed(key)
                     { shape8URL = url .. '.png', sy = s * sign, sx = s },
                     humanoidInstance)
 
-                print(url)
+                -- print(url)
                 CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
                 CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
                 CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
@@ -368,18 +371,48 @@ function love.keypressed(key)
             --logger:inspect(humanoidInstance.dna.creation)
             --local oldCreation = humanoidInstance.dna.creation
             --logger:inspect(humanoidInstance.dna.creation)
-            CharacterManager.rebuildFromCreation(humanoidInstance,
-                { neckSegments = math.ceil(1 + love.math.random() * 5) })
 
-            local parts = humanoidInstance.dna.creation.neckSegments
-            if (not humanoidInstance.dna.creation.isPotatoHead) then
-                for i = 1, parts do
-                    CharacterManager.updatePart('neck' .. i,
-                        { h = 100 },
-                        humanoidInstance)
-                end
-            end
+            --  CharacterManager.rebuildFromCreation(humanoidInstance,
+            --      { neckSegments = math.ceil(1 + love.math.random() * 5) })
+            CharacterManager.rebuildFromCreation(humanoidInstance,
+                {})
+
+            CharacterManager.refreshTextures(humanoidInstance)
+            --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
             CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
+            -- local parts = humanoidInstance.dna.creation.neckSegments
+            -- if (not humanoidInstance.dna.creation.isPotatoHead) then
+            --     for i = 1, parts do
+            --         CharacterManager.updatePart('neck' .. i,
+            --             { h = 100 },
+            --             humanoidInstance)
+            --     end
+            -- end
+            -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
+        end
+        if key == 'x' then
+            local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
+                'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
+            local urlIndex = math.ceil(math.random() * #urls)
+            local url = urls[urlIndex]
+
+
+            CharacterManager.updateShape8(humanoidInstance, 'torso1', url)
+            -- -- print('x')
+            -- -- print("BEFORE", humanoidInstance.dna.parts['torso1'].shape8URL)
+            -- CharacterManager.updatePart('torso1', { shape8URL = url .. '.png' }, humanoidInstance)
+
+            -- CharacterManager.rebuildFromCreation(humanoidInstance, {})
+
+
+            -- --   CharacterManager.refreshTextures(humanoidInstance)
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
+            -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
+            --     url .. '.png')
+
+            -- --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
+            -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
 
         if key == 'l' then
