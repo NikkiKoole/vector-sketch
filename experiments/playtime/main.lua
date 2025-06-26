@@ -411,7 +411,7 @@ function love.keypressed(key)
                 CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
             end
             CharacterManager.rebuildFromCreation(humanoidInstance,
-                { torsoSegments = count })
+                { torsoSegments = count, isPotatoHead = not creation.isPotatoHead })
 
 
 
