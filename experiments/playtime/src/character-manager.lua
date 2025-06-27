@@ -18,6 +18,43 @@ local fixtures = require 'src.fixtures'
 
 
 
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
+
+function createDefaultTextureDNABlock(shape, skipFG)
+    return {
+        bgURL = shape .. '.png',
+        fgURL = skipFG and '' or shape .. '-mask.png',
+        pURL = '',
+        bgHex = '020202ff',
+        fgHex = skipFG and '' or 'ff0000ff',
+        pHex = 'ffff00ff',
+    }
+end
+
+function initOMPBlock()
+    return {
+        bgURL = '',
+        fgURL = '',
+        pURL = '',
+        bgHex = randomHexColor(),
+        fgHex = randomHexColor(),
+        pHex = randomHexColor(),
+    }
+end
+
+function addMore(block, values)
+    for k, v in pairs(values) do
+        block[k] = v
+    end
+    return block
+end
+
 local shape8Dict = {
     ['shapeA1.png'] = {
         v = {
@@ -149,8 +186,16 @@ local dna = {
             neckSegments = 5,
             torsoSegments = 1
         },
+
+
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA1.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['torso-segment-template'] = {
+                appearance = { ['skin'] = { main = initOMPBlock() } },
+                dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
+                shape8URL = 'shapeA1.png',
+                shape = 'shape8',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
@@ -178,35 +223,11 @@ local dna = {
             ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
             ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
+
     }
 }
 
-local function randomHexColor()
-    local r = math.random(0, 255)
-    local g = math.random(0, 255)
-    local b = math.random(0, 255)
-    local a = 255 -- fully opaque, or adjust if you want random alpha
-    return string.format("%02X%02X%02X%02X", r, g, b, a)
-end
 
-function createDefaultTextureDNABlock(shape, skipFG)
-    return {
-        bgURL = shape .. '.png',
-        fgURL = skipFG and '' or shape .. '-mask.png',
-        pURL = '',
-        bgHex = '020202ff',
-        fgHex = skipFG and '' or 'ff0000ff',
-        pHex = 'ffff00ff',
-
-    }
-end
-
-function addMore(block, values)
-    for k, v in pairs(values) do
-        block[k] = v
-    end
-    return block
-end
 
 function lib.updateShape8(instance, partName, newShape8Name)
     -- Update the physics part
@@ -233,13 +254,13 @@ function defaultSetupTextures(instance)
     -- take note: right leg has flippedX.
     -- torso
 
-    if true then
+    if false then
         local torsoshape8URL = 'shapeA2.png' --instance.dna.parts.torso1.shape8URL
         --logger:info(instance.dna.parts['torso-segment-template'].shape8URL)
         --logger:info('torso shape 8', instance.dna.parts.torso1.shape8URL)
-        --
-        local creation       = instance.dna.creation
-        local torsoSegments  = creation.torsoSegments or 1
+        logger:info('jojojo')
+        local creation      = instance.dna.creation
+        local torsoSegments = creation.torsoSegments or 1
 
         for i = 1, torsoSegments do
             local name = 'torso' .. i
@@ -1298,6 +1319,28 @@ function lib.rebuildFromCreation(instance, newCreation)
     if positionTorso then fixDrift(positionTorso, instance) end
 end
 
+function lib.addTexturesFromInstance2(instance)
+    -- for k, v in pairs(instance.parts) do
+    --     local part = v
+    --     print(inspect(v))
+    --     if part.appearance then
+    --         print(k)
+    --     end
+    -- end
+    for k, v in pairs(instance.dna.parts) do
+        if v.appearance then
+            print(k .. ' has appearance')
+            if (instance.parts[k]) then
+                print('relevant real thing found')
+                logger:inspect(v.appearance)
+                -- here we do stuff.
+                -- i think we should haev some kind of helper function that know depending on what the body tye is how we will add
+                -- sfiuxture or connected fixture etc..
+            end
+        end
+    end
+end
+
 function lib.addTextureFixturesFromInstance(instance)
     function removeSimilarFixture(body, it)
         local allFixtures = body:getFixtures()
@@ -1523,6 +1566,9 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     --logger:info('calling defaultSetupTextures')
     defaultSetupTextures(instance)
     lib.addTextureFixturesFromInstance(instance)
+
+
+    lib.addTexturesFromInstance2(instance)
     --logger:info('calling addTextureFixturesFromInstance')
     return instance
 end
