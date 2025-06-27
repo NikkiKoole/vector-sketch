@@ -7,16 +7,10 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 
-
-
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
--- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
--- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
--- flpping leghair is not yet working
-
-
-
+-- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
+-- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
 
 local shape8Dict = {
     ['shapeA1.png'] = {
@@ -224,11 +218,6 @@ function lib.updateShape8(instance, partName, newShape8Name)
     --   lib.addTextureFixturesFromInstance(instance)
 end
 
--- function lib.refreshTextures(humanoidInstance)
---     humanoidInstance.textures = {}
---     defaultSetupTextures(humanoidInstance)
--- end
-
 function defaultSetupTextures(instance)
     -- take note: right leg has flippedX.
     -- torso
@@ -242,6 +231,7 @@ function defaultSetupTextures(instance)
         local torsoSegments  = creation.torsoSegments or 1
 
         for i = 1, torsoSegments do
+            --   logger:trace('setting up torso texture', i)
             local name = 'torso' .. i
             table.insert(instance.textures, {
                 subtype = 'texfixture',
@@ -268,7 +258,7 @@ function defaultSetupTextures(instance)
         end
     end
 
-    if false then
+    if true then
         -- arms
         if true then
             local creation      = instance.dna.creation
@@ -480,7 +470,7 @@ function defaultSetupTextures(instance)
     end
 end
 
--- copy pasted form playtime-ui.lua
+-- copy pasted from playtime-ui.lua
 local function getCenterAndDimensions(body)
     local ud = body:getUserData()
     local cx, cy, w, h
