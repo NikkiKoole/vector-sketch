@@ -1,0 +1,341 @@
+Tips for Your Video Process
+The Hook (0-3 seconds): Start with a quick clip of the actual person doing their signature thing (e.g., Salt Bae sprinkling salt). Then, hard cut to your blank canvas (a gray Mipo model or a blank page).
+The Process (5-15 seconds): A fast-paced timelapse of you creating the Mipo.
+Modeling/Drawing: Show the sculpting, drawing, or rigging.
+Sound is Key: Use audio clips of the influencer as your soundtrack. Have Gordon Ramsay yelling while you sculpt his angry face. Play Mac DeMarco's music while you design his frog shirt.
+The Reveal (3-5 seconds): Show the final, animated Mipo doing the person's signature action. Make it a loop. The Salt Bae Mipo (Sapo Bae) should be sprinkling salt. The Marc Rebillet Mipo (Mako Rebo) should be dancing in a robe.
+Exaggerate the Essence: The key to Mipo-fication is caricature. If they're loud, make the Mipo's mouth huge. If they have a signature prop, make the prop part of their body. If they have a catchphrase, make the Mipo only say that.
+
+
+
+Welcome to Mipomi Valley: A Busytown for the Digital Age
+The Core Concept:
+Mipomi Valley isn't a place you can find on a map. It’s a sentient idea-space, a parallel dimension powered by human creativity, passion, and online influence. When a person, character, or concept on Earth reaches a certain "critical mass" of cultural energy, a Mipo version of them spontaneously manifests in the Valley.
+Their purpose in the Valley is to live out their core essence, endlessly and joyfully. It’s a world where everyone's very specific, niche "job" is also their entire identity.
+The Geography of Mipomi Valley
+The Valley is divided into districts that flow into one another, each tailored to the needs and vibes of its inhabitants.
+1. The Maker's Mesa:
+A vast, high-tech plateau constantly buzzing with the sound of welders, 3D printers, and occasional, good-natured explosions. Here, the Builders & Makers (like Colin Furze and Simone Giertz) work on their wild contraptions. Jet-powered bicycles zip past self-solving Rubik's Cubes, and the rivers are filled with tiny, homemade submarines. It's a landscape of glorious, half-finished projects.
+2. The Food Court & Fields:
+This district is a perpetual, chaotic food festival. On one side, the Food & Chaos Mipos (like Matty Matheson) have stalls with flaming grills and booming music. On the other, the Green Thumb & Grower Mipos cultivate fantastical crops. The Beard Meats Food Mipo sits calmly at an endless buffet, while the Gordon Ramsay Mipo storms between stalls, critiquing everyone's work.
+3. The Gilded District:
+Polished, shiny, and loud. This is the home of Finance & Hustle Culture, Beauty & Glam, and anyone with a powerful personal brand. The streets are paved with something that looks like crypto charts. "Crypto Bro" Mipos ride rocket emojis down the boulevards, past the salon where the NikkieTutorials Mipo gives another Mipo a hyper-glam makeover. Everything is for sale, especially as an NFT.
+4. The Agora & The Forum:
+An area of open-air amphitheaters and endless rows of podiums where the Thinkers, Provocateurs, and Activists hold court. A debate between the Jordan Peterson Mipo and the Hasan Piker Mipo creates a literal swirling cloud of colorful, argumentative energy above their heads. The air hums with the sound of fast-talking and declarative statements.
+5. The Glitch Swamps & The Dream Lofts:
+The laws of physics are merely suggestions here. This is where the Surreal & Weird Mipos reside. David Lynch Mipos whisper cryptic clues from behind velvet curtains, while Salad Fingers Mipos gently poke at rusty spoons. The landscape shifts constantly, and the sky often looks like a buffering video.
+6. The Nursery:
+A soft, brightly-colored, bouncy landscape of primary colors and rounded edges. Here, the Toddler Whisperers live in perfect harmony. The Blippi Mipo endlessly explores a playground that builds itself, while the Ms. Rachel Mipo sings to flowers, teaching them how to say "hello." It's the safest, most hypnotic, and most repetitive place in the Valley.
+7. The Sensory Gardens:
+A quiet, peaceful zone of deep focus and calm. In the bubbling streams of the gardens, the Restoration & Revival Mipos gently scrub rust off of old tools. Under the whispering trees, the ASMR Mipos tap quietly on everything, creating a gentle, tingling soundscape. This is where Mipos go to recharge.
+How Life Works in Mipomi Valley
+Interaction is Key: The magic of the Valley comes from the interactions. The LA Beast Mipo might try to eat one of the Colin Furze Mipo's inventions, while the Casey Lab Mipo takes notes on the results. A Marie Kondo Mipo might follow a HowToBasic Mipo, neatly folding the debris left in its wake.
+Collaboration and Conflict: Mipos with similar energies team up. Mark Rober and Michael Reeves might build a robot that politely electrocutes package thieves. Mipos with opposing energies create fascinating chaos. A "Crypto Bro" Mipo trying to explain blockchains to the Monty Don Mipo, who is far more interested in the quality of the soil.
+A Living System: The Valley is interconnected. The Builders need materials from the Collectors. The Chefs need ingredients from the Growers. The Thinkers need an audience. Everyone is performing their function, contributing to the beautiful, nonsensical, and utterly human ecosystem of Mipomi Valley.
+
+
+Tier 1: Perfect Fit for a Physics Playground
+These districts are practically begging to be built in Box2D. Their core identity is physical interaction, cause-and-effect, and complex mechanical setups.
+1. 🔧 The Maker's Mesa
+This should be your number one priority. It is the ultimate sandbox for demonstrating everything Box2D can do.
+Why it's perfect:
+Complex Contraptions: Rube Goldberg machines are the ultimate test of stacking, levers, pulleys, and chain reactions.
+Joints & Constraints: You can build vehicles with wheels (revolute joints), catapults (hinge joints), and pistons. This is where Mipos like Colin Furze and Simone Giertz shine.
+Forces & Explosions: Rocket-powered Mipos, glitter bombs (Mark Rober), and things that are designed to fail spectacularly (I Did a Thing) are all about applying forces.
+Stacking & Stability: Building towers, testing structures, and seeing them collapse is fundamental physics fun.
+First things to build:
+A simple catapult that a Michael Reeves Mipo can launch other Mipos from.
+A set of dominoes and basic levers for a Joseph's Machines setup.
+A simple car with wheel joints for a Casey Neistat Mipo to ride.
+2. 🧑‍🍳 The Food Court & Fields
+This is a close second. It's less about complex machinery and more about chaotic, projectile-based physics.
+Why it's perfect:
+Projectile Physics: The entire district can be a massive food fight. Mipos throwing food, launching ingredients, and making a mess is pure Box2D.
+Object Properties: Different foods can have different physics properties (bouncy tomatoes, heavy watermelons, sticky sauce).
+Destructible Environments: Stalls and tables can be knocked over. A HowToBasic Mipo could be a walking "explosion" force that sends eggs flying everywhere.
+Character Interaction: An LA Beast Mipo could have a "sensor" body that "eats" (deletes) any food object it touches.
+First things to build:
+A "food cannon" that shoots various physics objects.
+A stack of plates and cups that can be knocked over.
+A Mipo that leaves a trail of messy particle effects.
+Tier 2: Good Potential with Some Abstraction
+These districts have strong physical elements, but you might need to get more creative to represent their core theme.
+3. 👶 The Nursery
+This is essentially "Physics Playground 101." It's a great place to test your core mechanics in a simple, clean environment.
+Why it works well:
+Basic Shapes: Stacking blocks, rolling balls, simple see-saws.
+Pendulum Physics: Mipos on swings.
+Bouncy Surfaces: A landscape made of soft, high-restitution materials.
+Simple Puzzles: A Blippi Mipo might need to push a block onto a button to make a toy appear.
+First things to build:
+A simple swing set.
+A collection of basic physics shapes (circles, squares, triangles).
+A "bouncy castle" floor.
+4. 🎭 The Glitch Swamps & Dream Lofts
+This is where you can have fun breaking the physics engine in a controlled way. It's less about simulation and more about chaotic fun.
+Why it works well:
+Dynamic Rule Changes: You can randomly change the gravity, make objects "antigravity," or reverse time for a few seconds.
+Unstable Joints: Create contraptions where the joints randomly break or change their limits.
+Teleportation & Glitches: An Eric Andre Mipo could crash through a wall that wasn't there a second ago.
+First things to build:
+A button that reverses or disables gravity.
+Objects that randomly have their physics properties (friction, density) changed.
+Tier 3: Abstract & Challenging for a Physics Engine
+These districts are defined more by aesthetics, ideas, and social interactions than by physical ones. They should be built after your core physics gameplay is solid.
+📈 The Gilded District / 🗣️ The Agora & The Forum: The core gameplay here is about abstract concepts (finance, debate, ideas). It's very difficult to represent this with a physics engine alone. You would rely more on UI, dialogue systems, and art.
+✨ Restoration & Revival / 🌿 Green Thumbs: These are slow, meticulous processes. While you could make a game out of it, the satisfying part is visual, not physical.
+💄 Beauty & Glam: Purely aesthetic. The "physics" are not the point.
+Recommended Phased Rollout for "Playtime"
+Phase 1: The Core Sandbox (Maker's Mesa): Focus 100% on making the physics feel great. Create a robust set of joints, objects, and forces. This is your engine's showcase.
+Phase 2: Introduce Chaos (Food Court): Build systems for handling many small, fast-moving objects (projectiles). Introduce simple AI behaviors for Mipos who throw things or react to being hit.
+Phase 3: The Introductory Level (The Nursery): Use the robust tools from Phase 1 to create simple, satisfying puzzles and interactions. This is your tutorial area.
+Phase 4: Break the Rules (The Glitch Swamps): Once the rules of your physics world are well-established, create a zone dedicated to breaking them in fun and interesting ways.
+Start with The Maker's Mesa. It aligns perfectly with the strengths of Box2D and will give you the most satisfying and impressive results early on.
+
+
+🧑‍🍳 Food & Chaos: Mipos defined by their relationship with food, from high-energy chaos chefs to calm culinary artists.
+🎸 Music & Vibes: Mipos who are embodiments of a musical genre or aesthetic.
+🤸 Fitness & Strength: Mipos who push the limits of the physical form.
+🧠 Niche Energy & Science: The curious Mipos who explore and explain the world around us.
+🔧 Builders & Makers: Mipos who celebrate creation, invention, and chaotic engineering.
+😂 Commentary & Comedy: Mipos defined by their wit and unique sense of humor.
+💄 Beauty, Fashion & Glam: Mipos made of makeup, high fashion, and the power of a signature look.
+🎮 Gaming Stars & Characters: Iconic video game characters and the legendary streamers who play them.
+🧙 Internet Types & Memes: The native inhabitants of the digital world, from trendsetters to viral memes.
+🔉 ASMR & Sensory: Mipos who create satisfying sounds and visuals to soothe and relax.
+🎭 Surreal & Weird: Mipos who defy logic and operate on their own strange, internal rules.
+🎨 Weird & Surreal Artists: Mipos who don't just create art; they are art.
+🧳 Collectors: Mipos driven by a singular passion to find, categorize, and preserve objects.
+📼 Retro & Nostalgia: Living time capsules of beloved TV shows, cartoons, and past trends.
+🧒 Kids & Family Content: Mipos designed for a younger audience, living in worlds of toys and games.
+⚽ Gen Alpha Icons: The new generation of sports heroes, defined by skill and signature celebrations.
+🎬 Movie Actors: Living embodiments of an actor's most iconic persona.
+🧹 Satisfying & Sorting: Mipos who bring order to chaos with satisfying clicks and scrubs.
+✨ Restoration & Revival: Lore-keepers who find broken things and return them to their former glory.
+🌿 Green Thumbs & Growers: Nurturing beings who speak the language of soil and sunlight.
+🤏 Tiny Worlds & Miniatures: Meticulous Mipos who create entire universes on a tabletop.
+🐾 Animal Whisperers: Mipos with a special connection to the animal kingdom.
+🗣️ Thinkers, Talkers & Provocateurs: Mipos defined by their ideas and often polarizing commentary.
+🗣️ Activists & Advocates: Passionate educators who use their platforms to rally communities.
+👶 Toddler Whisperers: Masters of the toddler mind, operating on a frequency of primary colors and catchy songs.
+🎩 Magic & Deception: Mipos who are all about visual trickery, showmanship, and bending reality.
+📈 Finance & Hustle Culture: Mipos from the visually potent online world of stocks, crypto, and the "grind."
+
+The Complete Mipo Influencer & Character Table
+🧑‍🍳 Food & Chaos
+Matty Matheson (Mati Matiso): Screaming chaos chef energy. Big body, big laughs.
+Action Bronson (Boka Bronso): Rapper-chef who lifts weights and eats weird things.
+Salt Bae (Sapo Bae): Meme-dripping, steak-flinging, fashion-chef.
+Binging with Babish (Bibi Babisho): Calm, precise YouTube chef with a cult fanbase.
+Chef Reactions (Chaho Reka): Deadpan snark reacting to food crimes on TikTok.
+Uncle Roger (Roro Jagga): Food satire + chaotic yelling. 'Haiya!' energy.
+Gordon Ramsay (Goro Ramo): A two-faced Mipo. One side is a 5-star precision chef, the other screams "It's RAW!" and claps two bits of bread on another Mipo's head.
+HowToBasic (Hoto Bako): The most chaotic Mipo. Starts a task calmly, then violently throws eggs and smashes everything. Its hands are a blur of motion. Never speaks.
+Rosanna Pansino (Roso Pano): Nerdy Nummies energy. A super sweet Mipo that bakes everything into cute, nerdy shapes. Covered in sprinkles and has a +10 Charm stat.
+Joshua Weissman (Josho Wiso): "Papa" energy. A perfectionist Mipo with a sharp haircut who whispers "thicc" at bread dough and smacks things with aggressive precision.
+🎸 Music & Vibes
+Mac DeMarco (Mako di Mako): Slacker king of soft indie chaos. Frog shirts and smiles.
+King Krule (Kiko Kuro): Jazz-punk sadboy with haunted London energy.
+Tame Impala (Tamo Ipalo): Dreamy, solo-psych aura. Distant glitter energy.
+Thundercat (Tako Tabo): Bass wizard, anime brain, master of funk.
+Reggie Watts (Roji Watso): Looping sound-shaman. Robe-wearing madness.
+Marc Rebillet (Mako Rebo): Robe wizard of loop funk and joyful madness.
+DJ Spell (Deja Spelo): Scratch DJ, lo-fi aesthetic, mixes vinyl and street style. Underground Mipo beatmaster.
+🤸 Fitness
+JujiMufu (Johi Johiso): Splits, flips, creatine yelling.
+The Liver King (Livo Kinka): Primal barbarian-core meat shouter.
+@StretchyDude (Soto Dudi): Wildly stretchy chill dude on TikTok.
+@nathaniel.nour (Nani Nohu): Calm, precise, beautiful movement work.
+🧠 Niche Energy & Science
+Dr. Becky Smethurst (Beki Smeta): Cool space scientist with a great YouTube vibe.
+Tom Scott (Tomo Sako): British explainer of weird tech, signs, and facts.
+Casey Lab (Kasi Labo): A Mipo that solves mysteries with science. It has oversized goggles, carries a briefcase full of experiments, and explains complex topics with cheerful, hand-drawn diagrams that animate around it.
+SmarterEveryDay (Destin) (Deso Dano): A curious, wide-eyed Mipo with a slow-motion camera for an eye. It asks "What's the physics of that?" before analyzing everything in incredible detail.
+NileRed (Nilo Redo): A chaotic chemist Mipo. Calmly mixes bubbling, colorful liquids that either turn into something amazing or explode, leaving it covered in soot.
+🔧 Builders & Makers
+Joseph’s Machines (Jofo Makiso): Silly, snack-focused Rube Goldberg engineer.
+I Did a Thing (Ida Tino): Aussie chaos engineer who builds dumb but brilliant stuff.
+Mark Rober (Mako Roba): NASA squirrel maze + glitter bomb guy.
+Simone Giertz (Simo Gijo): “Queen of shitty robots” — very Mipo already.
+Stuff Made Here (Suma Heno): Serious tech builder + laser humor.
+Adam Savage (Ada Sava): Maker-mythbuster, full of passion and tools.
+Laura Kampf (Lawa Kamfo): Tough, cool builder with mixed media creations.
+Michael Reeves (Miko Rivo): Builds robots that scream or swear. Zappy chaos.
+William Osman (Wiwa Osamo): Maker chaos gremlin. Laser-cutting, goof energy, burns things.
+Peter Sripol (Peto Sipo): Tiny airplanes, boats, and foam weapons.
+Shop Time (Peter Brown) (Shopa Pebo): Woodturner with resin + calm narration. Warm Mipo craftsman.
+Casey Neistat (Kaso Nito): The cinematic storyteller Mipo. Wears iconic sunglasses that never come off. Travels on a tiny boosted board and is always being followed by a tiny drone Mipo.
+😂 Commentary & Comedy
+Bo Burnham (Bobo Buno): The "Inside" Mipo. Lives in a single dark room, projecting its feelings onto the wall. Sings sad, funny, synth-heavy songs to itself.
+Drew Gooden (Dero Godo): A lanky, fast-talking Mipo that paces around its room, pointing out logical flaws in bad movies. Its catchphrase is a dry "hey guy."
+Cody Ko (Kodo Koko): A chill, sarcastic Mipo that sits on a couch and makes fun of cringe content. Has a tiny "sugar gay" Mipo friend.
+Mr. Bean (Bino Bino): The ultimate silent Mipo. Communicates only in grunts and eyebrow wiggles. Accompanied by a tiny, inanimate bear Mipo (Tedo).
+💄 Beauty, Fashion & Glam
+James Charles (Jamo Chalo): A Mipo made of living makeup palette. Morphs its face into different glam looks and says "Hi Sisters!" in a high-pitched echo.
+NikkieTutorials (Niki Toto): "Power of Makeup" Mipo. One half is bare and simple, the other is hyper-glam and sparkling. A walking before-and-after.
+Wisdom Kaye (Wiso Kayo): The high-fashion model Mipo. Impossibly long legs, changes outfits with a single spin, and can make any absurd combination look cool.
+Rick Owens (Riko Owo): A Mipo of brutalist-goth fashion. Draped in black fabric, lives in a concrete box, and moves with slow, dramatic purpose.
+🎮 Gaming Stars & Characters
+Dr Disrespect (Doko Diso): An 8-foot-tall Mipo built for violence, speed, and momentum. Wears a power mullet, sunglasses, and a tactical vest. It screeches incomprehensibly when it loses.
+Pokimane (Poki Mano): A comfy, cozy Mipo that radiates wholesome energy but has a mischievous side. Surrounded by little snack Mipos and has a very infectious laugh.
+xQc (Xoqo Koko): The juicer Mipo. A being of pure, unrefined energy that speaks a mile a minute in a language only its followers understand. It slams the desk and drinks from a giant jug.
+Jerma985 (Jojo Mapa): Twitch anomaly — already a Mipo.
+Gawr Gura (Gago Gura): Shark-themed VTuber with massive following.
+Ironmouse (Aromo Musi): Gremlin-glam high-energy demon VTuber.
+Minecraft Steve (Mine Stavo): Square-headed building Mipo. Carries blocks and fear of creepers.
+Roblox Avatars (Robo Bako): Blocky, customizable, and always mid-jump. Obby-born Mipo.
+Among Us Crewmate (Amu Guso): Round bean Mipo who might betray you. 'Sus' aura strong.
+Brawl Stars Characters (Brosto Mipo): Bouncy, fighty, power-up Mipo with catchy intro sounds.
+Five Nights at Freddy’s (Fano Fredi): Animatronic fear-Mipo. Creeps quietly, then screams loudly.
+🧙 Internet Types & Memes
+Emma Chamberlain (Emo Chamali): Edited awkwardness, Gen Z internet queen.
+Bretman Rock (Boreto Roka): Glam, fitness, sass, total confidence.
+Ziwe (Ziwa): Satirical interviewer with piercing pink energy.
+Skibidi Toilet (Skibo Toto): Toilet-headed, camera-bodied scream Mipo. Too loud to ignore.
+Talking Ben (Tapo Beni): Old dog Mipo who answers only with 'ehhhhhh'.
+Annoying Orange (Ano Ojo): Floating fruit Mipo who talks way too much and laughs at chaos.
+Beluga (YouTube) (Belo Gaka): Cute cat avatar who lives inside a chatbox. Starts arguments fast.
+Chipi Chipi Chapa Chapa (Chipo Chapo): Repeats a nonsense song forever. Somehow very catchy.
+🔉 ASMR & Sensory
+Gentle Whispering ASMR (Maria) (Maro Wiso): A whispering cloud Mipo. Its hands make soft tapping sounds on everything it touches. Radiates a powerful aura of calm that makes other Mipos sleepy.
+The ASMR Barber (Babo Asamo): A Mipo made of scissors, foam, and brushes. Gives other Mipos relaxing haircuts they don't need, making crisp snipping and shaving sounds.
+🎭 Surreal & Weird
+MrBeast (Mobo Biso): Giant YouTube philanthropist with absurd challenges.
+Frankie McDonald (Fani Makodo): Beloved Canadian amateur weatherman. Pure joy.
+John Wilson (Joho Wilso): Deadpan narrator of life’s awkward edges.
+Eric Andre (Ero Akano): Too much chaos? Mipo-form could be glitchy.
+Limmy (Limo Mimo): Scottish surrealist comedian. Deadpan chaos, digital existentialism.
+Chris Fleming (Kifo Flemo): Chaotic body language, fast-talking emotional spirals. Like a screechy antenna Mipo.
+Eric Wareheim (Ero Waha): Oversized, distorted TV logic. Commercial-parody Mipo overlord.
+Nathan Fielder (Nato Felo): Dry, overplanned, emotionally uncomfortable. A Mipo who interviews itself.
+James Acaster (Jamo Akato): Ranty, confused, tangential. Mipo who has internal monologues out loud.
+Noel Fielding (Nola Fido): Psychedelic fashion goblin Mipo. Feathers, glitter, and mysteries.
+John C. Reilly (Dr. Steve Brule) (Jona Rilo): Delusional and joyful. Mipo of public access and bad advice.
+David Lynch (Davo Linoko): Mipo of dreams, doubles, and whispering lights.
+Salad Fingers (Salo Fingo): Hauntingly polite. Could be the Mipo who speaks to rust.
+GIR (Invader Zim) (Giro Zimo): Unpredictable, bouncy, loud. Mipo who eats spoons for fun.
+Deadpool (Dapo Polo): Breaks reality for fun. Probably knows it’s a Mipo.
+Luna Lovegood (Luno Koko): Sees invisible things. Believes clouds are gossiping.
+🎨 Weird & Surreal Artists
+Uri Tuchman (Uro Tuma): Whimsical occult-woodturning YouTube wizard.
+Bobby Duke Arts (Bobi Duka): Sculptor of surreal, funny, brilliant objects.
+Hew Moran (Hemo Mowa): Surreal meme art and YouTube weirdness.
+David Firth (Davo Foti): Dark surrealism, probably too spooky for kids.
+Jim Woodring (Jimo Wori): Draws universes with silent rules. Mipo who never blinks.
+Felix Colgrave (Feko Cogo): Animation fever dream. Mipo with too many limbs and stories.
+Beeple (Bepo Pilo): Hyperreal digital Mipo with ten eyes and a dashboard stomach.
+🧳 Collectors
+Curiosity Inc (Kuri Inoko): Antique shop owner, restores strange and beautiful things. Lorecore Mipo.
+📼 Retro & Nostalgia
+Pee-wee Herman (Piwa Hama): Surreal manchild in a gray suit. Could be Mipo God.
+Mr. Rogers (Roga Jiso): Soft-voiced kindness. Could teach Mipo values.
+Elvira (Alava Rojo): Campy horror hostess queen. Spooky fun Mipo.
+Steve (Blue’s Clues) (Sito Bluko): Sweet early-2000s learning guy.
+Garfield (Gado Filo): Lazy Mipo who hates Mondays and eats too much.
+Sonic (Soko): Speedy chaos hedgehog. Ring-chaser Mipo.
+MC Hammer (Hamo Makako): Can’t touch this. Neon parachute-pants Mipo.
+Tuxedo Mask (Tuko Mako): Appears, throws a rose, says one sentence, vanishes. Drama Mipo.
+BoJack Horseman (Boja Hoko): Sadhorse Mipo. Tries to be loved. Fails. Still makes jokes.
+Teletubbies (Tubli-Mi): Softloop Hollow creatures. Speak in looped baby-Mipomi.
+Oobi (Oobo): Hands with eyes. Speaks in one-word riddles. Perfect weird Mipo subclass.
+Barney (Bano Dodo): Gigantic purple creature of love and power. Gives hugs too tightly.
+Don’t Hug Me I’m Scared (Duhumi): Puppet Mipos that glitch, sing, and teach unsettling lessons.
+🧒 Kids & Family Content
+Ryan’s World (Rani Woko): Bright, toy-testing, big-eyed Mipo of joy and unboxing.
+Diana and Roma (Dino Ramo): Bright pastel sibling chaos.
+Ninja Kidz (Nika Kido): Martial arts + skits. Power Mipo potential.
+Aphmau (Afomo): Minecraft roleplay queen. Cats + vibes.
+Like Nastya (Nata Nawa): Soft-focus playtime adventures.
+JoJo Siwa (Jowo Siwa): Glitter bomb of bows, pop, and positivity.
+LankyBox (Lako Boki): Loud, screechy, plush-loving duo-Mipo. Constant energy burst.
+FGTeeV (Fago Tivi): Family gaming Mipo chaos. Has energy, volume, and a sandwich.
+Garten of Banban (Gato Banbo): Mascot horror Mipo. Smiles like it knows too much.
+Poppy Playtime (Huggy Wuggy) (Popo Wugo): Tall blue hug Mipo with grabby limbs and too many teeth.
+Choo Choo Charles (Choko Chalo): Train-spider Mipo. Chugs and bites. Nighttime panic energy.
+The Amazing Digital Circus (Diji Circo): Glitchcore puppet-Mipo with existential crisis sparkle.
+⚽ Gen Alpha Icons
+Lionel Messi (Limo Mesi): Humble, magical football hero. The quiet goal-Mipo.
+Cristiano Ronaldo (Rono Dono): Flashy Mipo who screams 'SIUUU!' and backflips into frame.
+Kylian Mbappé (Kilo Mapo): Fast, flashy, Fortnite-speed Mipo with turbo shoes.
+Erling Haaland (Ero Hala): Nordic robot-energy striker Mipo. Glows with lightning.
+🎬 Movie Actors
+Dwayne 'The Rock' Johnson (Doko Raka): Muscle-bound Mipo with a charming grin and an eyebrow that raises mountains.
+Jack Black (Jako Blako): Musical chaos bard Mipo. Sings, kicks, bellyflops into battle.
+Jim Carrey (Jimo Karo): Shapeshifting rubber-faced Mipo who can’t stop morphing into other emotions.
+Danny DeVito (Dano Devu): Gremlin business-Mipo. Small, loud, possibly owns a cursed hot dog cart.
+Keanu Reeves (Keno Rivo): Quiet protector Mipo with deep honor and a puppy in his pocket.
+Ryan Reynolds (Rano Relo): Sarcastic self-aware Mipo. Narrates its own scenes with smug charm.
+Zendaya (Zena Daya): Dreamy, floaty glitch-Mipo who smiles quietly and disappears into mist.
+Pedro Pascal (Pedo Pako): Tired guardian Mipo. Cradles chaos Mipos while making dad jokes.
+Nicolas Cage (Niko Kajo): Unstable energy-core Mipo. Screams at bees, collects antiques, solves riddles.
+Melissa McCarthy (Meli Makati): Slapstick powerhouse Mipo who hugs, tackles, and apologizes loudly.
+Awkwafina (Awo Kwafi): Fast-talking raspy-voiced Mipo who trips over nothing and blames gravity.
+Timothée Chalamet (Timo Chalo): Sad softboy Mipo. Writes poetry in the sand and sighs melodramatically.
+Adam Sandler (Ado Sandu): Mipo who yells like a child, plays basketball like a dad, and wears big shorts.
+🧹 Satisfying & Sorting
+This category is for the Mipos who bring order to chaos, one satisfying click or scrub at a time. They are the enemies of clutter and grime.
+Marie Kondo (Mako Kono): A serene, floating Mipo that glides through messy rooms. It touches a cluttered object, tilts its head, and whispers, "Does this spark joy?" If not, the object neatly folds itself into a tiny, perfect square and vanishes. If yes, the object begins to glow softly.
+Aurikatariina (The Queen of Clean) (Auri Kata): A cheerful warrior Mipo in bright pink armor, armed with a tiny power-washer that shoots soap bubbles. It slides into disastrously dirty spaces, cackles with glee, and restores them to a sparkling shine with joyful, focused energy.
+Restock ASMR (generic) (Reko Asamo): A Mipo made entirely of clear acrylic containers. It moves with a quiet purpose, absorbing messy packaging and dispensing perfectly aligned snacks, grains, and liquids into itself with satisfying clicks, pours, and snaps.
+✨ Restoration & Revival
+These Mipos are lore-keepers and healers. They find broken, forgotten things and, with patience and skill, return them to their former glory.
+TysyTube Restoration (Tiso Tubo): A silent, focused Mipo with one rusty hand and one polished chrome hand. It finds forgotten, decrepit objects and meticulously grinds, oils, and polishes them with its chrome hand until they look brand new. The process is its only language.
+My Mechanics (Miko Mako): A Mipo that resembles a living Swiss Army Knife, with perfectly machined limbs. It moves with extreme precision, emitting satisfying clicks and whirs as it disassembles and reassembles complex mechanical objects. It lives in a workshop so clean it squeaks.
+Baumgartner Restoration (Bamo Gato): A wise, gentle Mipo with the steady hands of a surgeon. It hovers over damaged paintings, carefully dabbing away centuries of grime with a tiny cotton swab to reveal the brilliant colors hidden beneath. It speaks in a calm, hushed whisper.
+🌿 Green Thumbs & Growers
+These Mipos speak the language of soil and sunlight. They are nurturing beings who cultivate life, from tiny succulents to giant pumpkins.
+Epic Gardening (Kevin Espiritu) (Kevo Piri): A fast-talking, high-energy garden gnome Mipo with a GoPro strapped to its head. It zips between raised beds, explaining the science of soil pH and pest control in rapid-fire bursts. It shouts "Let's go!" before planting a seed.
+Monty Don (Monto Dono): A wise, gentle Mipo made of earth and tweed, who is always followed by two golden retriever Mipos. He patrols a vast, beautiful garden, speaking calmly to the plants and offering sage advice on life and pruning.
+Charles Dowding (Chado Dowdi): The "No Dig" Mipo. A practical, serene Mipo that floats just above the ground, refusing to disturb the soil. It creates incredibly lush gardens simply by layering cardboard and compost, smiling knowingly at the worms and mycelium doing all the work.
+🧰 Obsessive Collectors
+These Mipos are driven by a singular passion: to find, categorize, and own all of something. Their lairs are monuments to their dedication.
+Ashens (Asho Seno): A Mipo that is permanently fused to a tatty brown sofa. It reviews terrible, knock-off Mipo toys and expired food with a sigh of deep, sarcastic resignation. Its catchphrase is a dry "Hello!".
+The Completionist (Jirard Khalil) (Jiro Kalo): A Mipo whose body is a living bookshelf overflowing with tiny, detailed video game cases. It has one giant, determined eye that scans for missing titles. When it finds the last one in a set, it lets out a triumphant "AND that's... a completion!"
+Vinyl Community (generic) (Vino Komo): A Mipo whose head is a spinning record on a turntable, playing faint, crackly music. Its long, delicate fingers are made of styluses, and it gently flips through crates of records, hunting for a rare pressing.
+🤏 Tiny Worlds & Miniatures
+Meticulous and patient, these Mipos create entire universes on a tabletop. They are gods of glue, tweezers, and tiny, perfect details.
+Luke Towan (Luko Towo): A quiet, focused Mipo that carries a hyper-realistic, lush diorama on its back like a hermit crab. It uses tweezers for hands to meticulously place single blades of static grass and tiny, weathered rocks into the landscape.
+Hanabira工房 (Hana Kobo): A delicate Mipo that builds impossibly detailed, whimsical miniature rooms inside of everyday objects like teacups and nutshells. It radiates a cozy, magical energy and is often found sleeping in one of its own creations.
+🐾 Animal Whisperers
+These Mipos have a special connection to the animal kingdom, from the cuddly to the creepy-crawly.
+Coyote Peterson (Koyo Peto): An adventurer Mipo covered in colorful (but harmless) bugs and critters. It has a look of pained determination as it willingly gets stung or nipped, letting out a signature yelp of agony before calmly explaining the science behind the pain.
+The Dodo (Dodo Dodi): A brand-based Mipo that is a soft, glowing creature of pure empathy. It finds sad, lonely, or injured animal Mipos, gives them a magical hug that heals them, and helps them find their "forever home," leaving a trail of happy tears and heart emojis.
+🤸 Fitness & Strength
+Chris Bumstead (CBum) (Kibo Bumo): A perfectly sculpted Mipo with an immaculate mustache. It moves with quiet confidence, hitting classic poses that make the ground shake slightly. Its power comes from "the vacuum," sucking in its own energy to become denser and more powerful.
+Sam Sulek (Samo Sulo): A gigantic, mountain-sized Mipo with a surprisingly quiet voice. It spends its time either lifting impossibly heavy objects with no expression or sitting in a tiny car Mipo, calmly eating a gallon of milk and cereal. A Mipo of few words and many calories.
+David Goggins (Davo Gogo): A Mipo forged from pure grit and sweat. It never stops moving, carrying a tiny boat or log on its back while yelling motivational questions at itself. It has no "off" switch; its purpose is to "stay hard."
+Yoga with Adriene (Ado Yogo): A gentle, stretchy Mipo that flows from one pose to another, constantly reminding other Mipos to "find what feels good." It's always followed by a small, sleepy dog Mipo named "Beni" who naps on its mat.
+Richard Simmons (Riko Simo): A retro Mipo made of pure, sparkling joy and sequins. It bounces and dances constantly, radiating an aura of positivity that compels even the laziest Mipos to do jumping jacks. It hugs everyone and cries happy tears.
+🤸 Fitness & Strength
+Chris Bumstead (CBum) (Kibo Bumo): A perfectly sculpted Mipo with an immaculate mustache. It moves with quiet confidence, hitting classic poses that make the ground shake slightly. Its power comes from "the vacuum," sucking in its own energy to become denser and more powerful.
+Sam Sulek (Samo Sulo): A gigantic, mountain-sized Mipo with a surprisingly quiet voice. It spends its time either lifting impossibly heavy objects with no expression or sitting in a tiny car Mipo, calmly eating a gallon of milk and cereal. A Mipo of few words and many calories.
+David Goggins (Davo Gogo): A Mipo forged from pure grit and sweat. It never stops moving, carrying a tiny boat or log on its back while yelling motivational questions at itself. It has no "off" switch; its purpose is to "stay hard."
+Yoga with Adriene (Ado Yogo): A gentle, stretchy Mipo that flows from one pose to another, constantly reminding other Mipos to "find what feels good." It's always followed by a small, sleepy dog Mipo named "Beni" who naps on its mat.
+Richard Simmons (Riko Simo): A retro Mipo made of pure, sparkling joy and sequins. It bounces and dances constantly, radiating an aura of positivity that compels even the laziest Mipos to do jumping jacks. It hugs everyone and cries happy tears.
+New Category: 🗣️ Activists & Advocates
+These Mipos are passionate educators and changemakers. They use their platforms to deconstruct complex social issues, rally their communities, and advocate for a more equitable world. Their power lies in their words, their aesthetic, and their ability to build movements.
+Hasan Piker (HasanAbi) (Haso Piko): A Mipo with a giant, muscular body and a comically tiny head. It sits permanently in front of a green screen that flashes with chaotic news clips, stock charts, and memes. It gestures wildly while passionately breaking down political drama, occasionally getting distracted to praise its dog Mipo, Kaya. Its energy is a mix of righteous anger and laid-back gamer.
+ContraPoints (Natalie Wynn) (Kono Pono): A shapeshifting Mipo of pure aesthetic. It constantly morphs between lavish, theatrical personas to explore complex social and philosophical topics. It lives inside an ornate, softly lit set with candelabras and velvet curtains. Its voice is calm and hypnotic, even when discussing dark or controversial subjects.
+Greta Thunberg (Geta Tuno): A small, serious Mipo with signature braids and a yellow raincoat. It carries a sign that just says "Skolstrejk för Mipomi" (School Strike for Mipos). It speaks with immense, focused power, and its unwavering stare can make corporate Mipos wilt. When it gets angry, its voice echoes with "HOW DARE YOU!" It doesn't care for small talk, only for action.
+The TikTok Explainer (Archetype) (Tiko Tono): This is a common Mipo archetype. It's a very earnest Mipo that floats in the center of the frame, speaking directly to you. As it talks, brightly colored text boxes explaining concepts like "allyship," "privilege," or "gaslighting" pop up around its head. It often ends its message with a gentle but firm, "And that's something we need to unpack."
+"Corporate Ally" Mipo (Archetype) (Kopo Alio): A generic, smooth-edged Mipo that changes its skin to a rainbow pattern for exactly one month a year. It speaks in safe, approved corporate buzzwords like "synergy," "authenticity," and "our commitment to community." It offers no real change, just a limited-edition rainbow-colored product. By the end of the month, it reverts to its standard grey color.
+New Category: 👶 Toddler Whisperers
+These Mipos are masters of the toddler mind. They operate on a frequency of high-energy, bright primary colors, and endlessly repetitive, catchy songs. Their purpose is to educate, entertain, and mesmerize the youngest Mipos into a state of joyful focus.
+Blippi (Bipo Pipi): The Excitable Explorer. A Mipo made of pure, bouncy energy, permanently clad in a blue shirt with orange suspenders and a bow tie that spins when he gets excited. He points at everything with wonder, and his high-pitched "WOOOW!" makes colors in the world slightly brighter. He can summon a tiny Mipo digger or fire truck just by singing a song about it.
+Ms. Rachel (Songs for Littles) (Racho Racho): The First Words Weaver. A gentle, nurturing Mipo in a pink shirt and overalls. Her voice is a soft, sing-song melody that literally teaches baby Mipos how to speak. When she says, "Can you say ball?", a tiny, happy ball Mipo pops into existence. She has two puppet friends, Herbie and Georgie, who live in her pockets and echo her words.
+Ryan's World (Rani Woko): The Surprise Egg King. This Mipo's body is a giant, endlessly regenerating surprise egg. With a shout of excitement, he can crack it open to reveal a new toy Mipo, which he then plays with enthusiastically. He is always surrounded by his smiling family Mipos who join in the fun.
+CoComelon (JJ & Family) (Koko Melo): The Living Lullaby. Not a single Mipo, but a family of them with giant, perfectly round heads and perpetually smiling faces. They exist in a clean, soft world and move in a simple, looping rhythm to a constant soundtrack of nursery rhymes. Their presence is hypnotic, capable of calming even the most chaotic tantrum Mipo.
+Steve (Blue's Clues) (Sito Bluko): The Clue-Finder. A kind, patient Mipo in a permanent green-striped shirt. He speaks directly to the viewer (the void) and waits for an answer with a thoughtful, encouraging expression. He carries a "Handy Dandy Notebook Mipo" that doodles clues all by itself, and his superpower is making other Mipos feel smart and included.
+The Wiggles (Wigo Mipo): The Four-Part Harmony. A single being that can split into four distinct, primary-colored Mipos (Red, Yellow, Blue, Purple). They communicate through simple, catchy songs and synchronized finger-waving dances. They travel in a sentient "Big Red Car Mipo" and can solve any problem with a song about fruit salad or waking up their friend, Jeff.
+Like Nastya (Nata Nawa): The Princess of Play. A Mipo who lives in a world of soft pastels and sparkles. She can transform any mundane location into a magical kingdom simply by putting on a new princess dress. She is always accompanied by her cheerful Dad-Mipo, who helps facilitate her imaginative adventures.
+🎩 Magic & Deception
+This world is tailor-made for Mipos because it's all about visual trickery, showmanship, and bending reality. The props, gestures, and patter are a core part of their identity.
+Penn & Teller (Peno Telo): A duo-Mipo. One is a giant, loud, verbose Mipo, and the other is a small, silent, mischievous Mipo that does all the real work while the big one is talking.
+David Blaine (Davo Bano): The endurance Mipo. A stoic, deadpan Mipo that is perpetually encased in a block of ice or holding its breath, causing the world around it to ripple with strange energy.
+Chris Ramsay (Kiro Ramo): The puzzle-master Mipo. Its body is a complex puzzle box, and its hands are a perpetual blur of elegant card flourishes. It solves problems by rearranging its own form.
+Grand Illusions (Grado Luso): The Toy-Box Mipo. A gentle, grandfatherly Mipo with a kind smile and a twinkle in his eye. His body is a cabinet of curiosities, and he pulls strange and wonderful toy Mipos from its drawers to demonstrate them with childlike wonder. He communicates through quiet, curious questions and his signature, joyful laugh.
+📈 Finance & Hustle Culture
+A massive and visually potent online world. The personas here are extremely strong, often-parodied, and come with a built-in library of symbols, jargon, and aesthetics.
+The "Crypto Bro" (Archetype) (Kipo Boro): A Mipo with glowing laser eyes that is constantly looking at a chart on its phone. It shouts "HODL!" "To the moon!" and "WAGMI!" while riding a tiny rocket emoji.
+Gary Vaynerchuk (Gary Vee) (Gari Veno): The Hustle-Core Mipo. A being of pure, frantic energy that moves at 2x speed, yelling motivational slogans about "the grind" and "crushing it" into a tiny phone it can't put down. It leaves a trail of NFTs in its wake.
+Graham Stephan (Gramo Steno): The Frugal Finance Mipo. A Mipo made of iced coffee and smashed avocado toast. It has a tiny abacus for a heart and meticulously tracks every Mipo-cent it spends, often reacting in horror if another Mipo buys a brand-name item.
