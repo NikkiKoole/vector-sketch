@@ -1171,7 +1171,7 @@ function lib.drawSelectedSFixture()
 
 
 
-        if ud.subtype == 'texfixture' then
+        if ud.subtype == 'texfixture' or ud.extra.type == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -2288,7 +2288,12 @@ function lib.drawUpdateSelectedObjectUI()
                     function()
                         for i = 1, index do
                             nextRow()
-                            local prefix = (string.sub(myfixtures[i]:getUserData().subtype, 1, 3))
+                            logger:inspect(myfixtures[i]:getUserData())
+
+                            local subtype = myfixtures[i]:getUserData().subtype or myfixtures[i]:getUserData().extra
+                                .type
+
+                            local prefix = (string.sub(subtype, 1, 3))
                             local fixLabel = string.format("%s %s", prefix,
                                 string.sub(myfixtures[i]:getUserData().id, 1, 3))
                             local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)
