@@ -356,8 +356,8 @@ function love.keypressed(key)
                 -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
                 -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
                 --     url .. '.png')
-                CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
             end
+            CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
             -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
             -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
             -- CharacterManager.updatePart('torso4', { sy = love.math.random() * 2, sx = love.math.random() * 12 },

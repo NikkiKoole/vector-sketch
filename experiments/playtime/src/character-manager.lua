@@ -31,7 +31,7 @@ function createDefaultTextureDNABlock(shape, skipFG)
     }
 end
 
-function initOMPBlock(url)
+function initBlock(url)
     return {
         bgURL = (url or '') .. '.png',
         fgURL = (url or '') .. '-mask.png',
@@ -42,7 +42,7 @@ function initOMPBlock(url)
     }
 end
 
-function addMore(block, values)
+function add(block, values)
     for k, v in pairs(values) do
         block[k] = v
     end
@@ -193,15 +193,19 @@ local dna = {
                 appearance = {
                     -- this will do the neck texturing (connecting torso and head)
                     ['connected-skin'] = {
-                        main = addMore(initOMPBlock('leg5'), {}),
+                        main = add(initBlock('leg5'), {}),
+                        endNode = 'head'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
                         endNode = 'head'
                     },
                     ['skin'] = {
-                        main = initOMPBlock(),
-                        patch1 = addMore(initOMPBlock('patch1'), { tx = 0.3, ty = 0.3 }),
-                        patch2 = addMore(initOMPBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                        main = initBlock(),
+                        patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
+                        patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     },
-                    ['bodyhair'] = { main = initOMPBlock('borsthaar4') }
+                    ['bodyhair'] = { main = initBlock('borsthaar4') }
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
@@ -221,11 +225,11 @@ local dna = {
             ['head'] = {
                 appearance = {
                     ['skin'] = {
-                        main = initOMPBlock(),
-                        patch1 = addMore(initOMPBlock('patch1'), { tx = 0.3, ty = 0.3 }),
-                        patch2 = addMore(initOMPBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                        main = initBlock(),
+                        patch1 = add(initBlock('patch1'), { tx = 0.3, ty = 0.3 }),
+                        patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     },
-                    ['bodyhair'] = { main = initOMPBlock('borsthaar4') }
+                    ['bodyhair'] = { main = initBlock('borsthaar4') }
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
                 shape = 'shape8',
@@ -235,7 +239,11 @@ local dna = {
             ['luleg'] = {
                 appearance = {
                     ['connected-skin'] = {
-                        main = addMore(initOMPBlock('leg5'), { dir = -1 }),
+                        main = add(initBlock('leg5'), { dir = -1 }),
+                        endNode = 'lfoot'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
                         endNode = 'lfoot'
                     }
                 },
@@ -246,7 +254,11 @@ local dna = {
             ['ruleg'] = {
                 appearance = {
                     ['connected-skin'] = {
-                        main = addMore(initOMPBlock('leg5'), { dir = 1 }),
+                        main = add(initBlock('leg5'), { dir = 1 }),
+                        endNode = 'rfoot'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
                         endNode = 'rfoot'
                     }
                 },
@@ -260,8 +272,12 @@ local dna = {
                 appearance = {
                     ['connected-skin'] = {
                         zOffset = 1,
-                        main = addMore(initOMPBlock('leg5'), { dir = -1 }),
+                        main = add(initBlock('leg5'), { dir = -1 }),
                         endNode = 'lhand'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
+                        endNode = 'lfoot'
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -272,8 +288,12 @@ local dna = {
                 appearance = {
                     ['connected-skin'] = {
                         zOffset = 1,
-                        main = addMore(initOMPBlock('leg5'), { dir = 1 }),
+                        main = add(initBlock('leg5'), { dir = 1 }),
                         endNode = 'rhand'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        endNode = 'lfoot'
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -285,8 +305,9 @@ local dna = {
             ['lfoot'] = {
                 appearance = {
                     ['skin'] = {
-                        main = addMore(initOMPBlock('feet6r'), { dir = -1 }),
+                        main = add(initBlock('feet6r'), { dir = -1 }),
                     },
+
                 },
                 dims = { w = 80, h = 150, sx = .5, sy = 1 },
                 shape = 'shape8',
@@ -296,7 +317,7 @@ local dna = {
             ['rfoot'] = {
                 appearance = {
                     ['skin'] = {
-                        main = addMore(initOMPBlock('feet6r'), { dir = 1 }),
+                        main = add(initBlock('feet6r'), { dir = 1 }),
                     },
                 },
                 dims = { w = 80, h = 150, sx = -.5, sy = 1 },
@@ -310,7 +331,7 @@ local dna = {
             ['lhand'] = {
                 appearance = {
                     ['skin'] = {
-                        main = addMore(initOMPBlock('feet2r'), { dir = -1 }),
+                        main = add(initBlock('feet2r'), { dir = -1 }),
                     },
                 },
                 dims = { w = 40, h = 40, sx = .5, sy = .9 },
@@ -321,7 +342,7 @@ local dna = {
             ['rhand'] = {
                 appearance = {
                     ['skin'] = {
-                        main = addMore(initOMPBlock('feet2r'), {}),
+                        main = add(initBlock('feet2r'), {}),
                     },
                 },
                 dims = { w = 40, h = 40, sx = -.5, sy = .9 },
@@ -355,258 +376,6 @@ function lib.updateShape8(instance, partName, newShape8Name)
 
     -- Recreate the actual texture fixtures
     --   lib.addTextureFixturesFromInstance(instance)
-end
-
-function defaultSetupTextures(instance)
-    -- take note: right leg has flippedX.
-    -- torso
-
-    if false then
-        local torsoshape8URL = 'shapeA2.png' --instance.dna.parts.torso1.shape8URL
-        --logger:info(instance.dna.parts['torso-segment-template'].shape8URL)
-        --logger:info('torso shape 8', instance.dna.parts.torso1.shape8URL)
-        logger:info('jojojo')
-        local creation      = instance.dna.creation
-        local torsoSegments = creation.torsoSegments or 1
-
-        for i = 1, torsoSegments do
-            --   logger:trace('setting up torso texture', i)
-            local name = 'torso' .. i
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = true,
-                group = name .. 'Skin',
-                main = createDefaultTextureDNABlock(torsoshape8URL),
-                patch1 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0.3, ty = 0.3 }),
-                patch2 = addMore(createDefaultTextureDNABlock('patch1'), { tx = -0.3, ty = 0.3 }),
-                patch3 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0, ty = -0.3 }),
-                attachTo = name,
-            })
-
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = false,
-                group = name .. 'Hair',
-                zOffset = 40,
-                followShape8 = torsoshape8URL, -- get this from my main above..
-                main = createDefaultTextureDNABlock('borsthaar4', true),
-                attachTo = name,
-            })
-        end
-    end
-
-    if false then
-        -- arms
-        if true then
-            local creation      = instance.dna.creation
-
-            local torsoSegments = creation.torsoSegments or 1
-            local highestTorso  = 'torso' .. torsoSegments
-            local torsoNode     = highestTorso
-
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'leftArmSkin',
-                main = createDefaultTextureDNABlock('leg5'),
-                jointLabels = { torsoNode .. "->luarm", "luarm->llarm", "llarm->lhand" },
-                attachTo = 'luarm',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = false,
-                zOffset = 40,
-                group = 'leftArmHair',
-                main = addMore(createDefaultTextureDNABlock('hair10', true), { dir = -1 }), --???
-                jointLabels = { torsoNode .. "->luarm", "luarm->llarm", "llarm->lhand" },
-                attachTo = 'luarm',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'rightArmSkin',
-                main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
-                jointLabels = { torsoNode .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" },
-                attachTo = 'ruarm',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = false,
-                zOffset = 40,
-                group = 'rightArmHair',
-                main = addMore(createDefaultTextureDNABlock('hair10', true), {}), --??
-                jointLabels = { torsoNode .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" },
-                attachTo = 'ruarm',
-            })
-        end
-
-
-        -- legs
-        if true then
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'leftLegSkin',
-                main = createDefaultTextureDNABlock('leg5'),
-                jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
-                attachTo = 'luleg',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = false,
-                zOffset = 40,
-                group = 'leftLegHair',
-                main = addMore(createDefaultTextureDNABlock('hair10', true), { dir = -1 }), --???
-                jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
-                attachTo = 'luleg',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'rightLegSkin',
-                main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
-                jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
-                attachTo = 'ruleg',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = false,
-                zOffset = 40,
-                group = 'rightLegHair',
-                main = addMore(createDefaultTextureDNABlock('hair10', true), {}), --??
-                jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
-                attachTo = 'ruleg',
-            })
-        end
-
-
-        --feet
-        if true then
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'lfootSkin',
-                main = createDefaultTextureDNABlock('feet6r'),
-                attachTo = 'lfoot',
-            })
-
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'rfootSkin',
-                main = addMore(createDefaultTextureDNABlock('feet6r'), { fx = -1 }),
-                attachTo = 'rfoot',
-            })
-        end
-
-
-        --hand
-        if true then
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'lhandSkin',
-                main = createDefaultTextureDNABlock('feet2r'),
-                attachTo = 'lhand',
-            })
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'rhandSkin',
-                main = createDefaultTextureDNABlock('feet2r'),
-                attachTo = 'rhand',
-            })
-        end
-
-        -- neck
-        if true then
-            -- Assume neckSegments and torsoSegments are available
-            local creation = instance.dna.creation
-            local neckSegments = creation.neckSegments or 0
-            local torsoSegments = creation.torsoSegments or 1
-
-            local jointLabels = {}
-            local previous = 'torso' .. torsoSegments
-
-            for i = 1, neckSegments do
-                local current = 'neck' .. i
-                table.insert(jointLabels, previous .. '->' .. current)
-                previous = current
-            end
-
-            -- Final connection to head
-            table.insert(jointLabels, previous .. '->head')
-
-            logger:inspect(jointLabels)
-            if neckSegments > 0 and not creation.isPotatoHead then
-                table.insert(instance.textures, {
-                    subtype = 'connected-texture',
-                    type = 'sfixture',
-                    OMP = true,
-                    group = 'neckSkin',
-                    main = createDefaultTextureDNABlock('leg5'),
-                    jointLabels = jointLabels,
-                    attachTo = 'neck1',
-                })
-                table.insert(instance.textures, {
-                    subtype = 'connected-texture',
-                    type = 'sfixture',
-                    OMP = false,
-                    zOffset = 40,
-                    group = 'neckHair',
-                    main = addMore(createDefaultTextureDNABlock('hair10', true), { fx = -1 }),
-                    jointLabels = jointLabels,
-                    attachTo = 'neck1',
-                })
-            end
-        end
-
-        -- head
-        if true then
-            local creation = instance.dna.creation
-            if not creation.isPotatoHead then
-                table.insert(instance.textures, {
-                    subtype = 'texfixture',
-                    type = 'sfixture',
-                    OMP = true,
-                    group = 'headSkin',
-                    main = createDefaultTextureDNABlock('shapeA2'),
-                    attachTo = 'head',
-                })
-                -- table.insert(instance.textures, {
-                --     label = 'texfixture',
-                --     type = 'sfixture',
-                --     OMP = false,
-                --     group = 'headHair',
-                --     zOffset = 40,
-                --     followShape8 = 'shapeA2.png',
-                --     main = {
-                --         bgURL = 'borsthaar3.png',
-                --         fgURL = '',
-                --         pURL = '',
-                --         bgHex = '020202ff',
-                --         fgHex = randomHexColor(),
-                --         pHex = randomHexColor()
-                --     },
-                --     attachTo = 'head',
-                -- })
-            end
-        end
-    end
 end
 
 -- copy pasted from playtime-ui.lua
@@ -1395,7 +1164,7 @@ function lib.addTexturesFromInstance2(instance)
 
                         ud.extra.vertices = vertices
                         ud.extra.vertexCount = #vertices / 2
-                    elseif k2 == 'connected-skin' then
+                    elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
                         local body = relevant.body
                         print(k)
                         --print(k, v2.endNode)
@@ -1410,7 +1179,7 @@ function lib.addTexturesFromInstance2(instance)
 
                         ud.extra = {
                             attachTo = k,
-                            OMP = true,
+                            OMP = (k2 == 'connected-skin'),
                             dirty = true,
                             main = utils.deepCopy(v2.main),
                             zOffset = v2.zOffset or 0,
@@ -1434,6 +1203,7 @@ function lib.addTexturesFromInstance2(instance)
                                 jointLabels = { top .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" }
                             end
                         end
+                        -- we only do neck stuff from the top torso to the head. (other torso segments are ignored)
                         if k == ('torso' .. torsoSegments) and v2.endNode == 'head' then
                             local neckSegments = instance.dna.creation.neckSegments or 0
                             local previous = 'torso' .. torsoSegments
@@ -1620,10 +1390,10 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             -- if we have multiple torso parts i want to remove the data that is about neck.
             -- only the topmost torso may have that data.
 
-            if i ~= torsoSegments then
-                instance.dna.parts[partName].appearance['connected-skin'] = nil
-                print('removed unneeded nexk texture data from a torso segemnt')
-            end
+            -- if i ~= torsoSegments then
+            --     instance.dna.parts[partName].appearance['connected-skin'] = nil
+            --     print('removed unneeded nexk texture data from a torso segemnt')
+            -- end
 
             -- Optional: Modify dimensions/properties of specific segments here if needed
             -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
@@ -1694,8 +1464,8 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     -- here we will build up the sfixtures we need.
     --logger:info('calling defaultSetupTextures')
-    defaultSetupTextures(instance)
-    lib.addTextureFixturesFromInstance(instance)
+
+
     lib.addTexturesFromInstance2(instance)
     --logger:info('calling addTextureFixturesFromInstance')
     return instance
