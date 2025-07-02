@@ -14,7 +14,29 @@ local fixtures = require 'src.fixtures'
 -- the shape98 values in the dict describe a shape, (made in meta file) but it doesntdescribe
 -- how that is offsetted from the texture.
 
+local function getBoundingBox(poly)
+    assert(#poly % 2 == 0, "Polygon must have even number of coordinates")
 
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+
+    for i = 1, #poly, 2 do
+        local x, y = poly[i], poly[i + 1]
+        if x < minX then minX = x end
+        if x > maxX then maxX = x end
+        if y < minY then minY = y end
+        if y > maxY then maxY = y end
+    end
+
+    return {
+        x = minX,
+        y = minY,
+        maxX = maxX,
+        maxY = maxY,
+        width = maxX - minX,
+        height = maxY - minY
+    }
+end
 local function randomHexColor()
     local r = math.random(0, 255)
     local g = math.random(0, 255)
@@ -162,12 +184,12 @@ local shape8Dict = {
         }
     },
     ['feet2r.png'] = { v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
-    ['feet6r.png'] = { v = { -26, -287, 45, -180, 110, 42, 116, 166, -6, 273, -108, 268, -110, 47, -102, -181 } },
+    ['feet6r.png'] = { d = { 293, 612 }, v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
     ['feet5xr.png'] = { v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
     ['feet3xr.png'] = { v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
     ['feet7r.png'] = { v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
     ['feet8r.png'] = { v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { v = { -57, -210, 21, -158, 26, -71, 37, 188, -57, 233, -117, 188, -138, -74, -130, -155 } },
+    ['hand3r.png'] = { d = { 294, 489 }, v = { -57, -210, 21, -158, 26, -71, 37, 188, -57, 233, -117, 188, -138, -74, -130, -155 } },
     ['feet7xr.png'] = { v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
 }
 
@@ -307,7 +329,7 @@ local dna = {
                     },
 
                 },
-                dims = { w = 80, h = 150, sx = .5, sy = 1 },
+                dims = { w = 80, h = 150, sx = 1, sy = 1 },
                 shape = 'shape8',
                 shape8URL = 'feet6r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
@@ -318,7 +340,7 @@ local dna = {
                         main = add(initBlock(), { dir = 1 }),
                     },
                 },
-                dims = { w = 80, h = 150, sx = -.5, sy = 1 },
+                dims = { w = 80, h = 150, sx = -1, sy = 1 },
                 shape = 'shape8',
                 shape8URL = 'feet6r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
@@ -609,10 +631,33 @@ local function getOwnOffset(partName, guy)
             local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
+            logger:info(part.shape8URL)
             -- todo like the grow offsets this too should be parametrized
             local footOffset = 0
+            local d = shape8Dict[part.shape8URL].d
+            --logger:inspect(d)
+            local bbox = getBoundingBox(raw)
+            logger:inspect(bbox)
+            local dx, dy = 0, 0
+            local xoff, yoff = 0, 0
+            if bbox and d then
+                dx = d[1] - bbox.width
+                dy = d[2] - bbox.height
+                xoff = -(d[1] / 2) - bbox.x
+                yoff = -(d[2] / 2) - bbox.y
+            end
+            --   -1*(293/2)
+            --logger:inspect(d)
+
+            --logger:info(xoff, yoff)
+            --print(xoff, yoff)
+            local sxSign = sign(part.dims.sx)
+            --print(sign(part.dims.sx), sign(part.dims.sy))
             --return 100, 0
-            return vertices[(index * 2) - 1], -vertices[(index * 2)]
+            --print(dx, dy)
+            --
+            -- return vertices[(index * 2) - 1], -vertices[(index * 2)]
+            return vertices[(index * 2) - 1] - (yoff * part.dims.sx), -vertices[(index * 2)] + (xoff * part.dims.sy)
         else
             return 0, part.dims.h / 2
         end
@@ -1133,12 +1178,36 @@ function lib.addTexturesFromInstance2(instance)
                     --print(k2)
                     if k2 == 'skin' then
                         local body = relevant.body
+
+
                         local cx, cy, w, h = getCenterAndDimensions(body)
+
+                        local inDocumentOffset = nil
+                        -- if v.shape8URL then
+                        --     if shape8Dict[v.shape8URL] then
+                        --         if shape8Dict[v.shape8URL].d then
+                        --             inDocumentOffset = {}
+
+                        --             inDocumentOffset.w = shape8Dict[v.shape8URL].d[1] * math.abs(v.dims.sx)
+                        --             inDocumentOffset.h = shape8Dict[v.shape8URL].d[2] * math.abs(v.dims.sy)
+                        --             inDocumentOffset.x = (inDocumentOffset.w - w) * (v.dims.sx < 0 and -1 or 1)
+                        --             inDocumentOffset.y = (inDocumentOffset.h - h) --* (v.dims.sx < 0 and -1 or 1)
+                        --         end
+                        --     end
+                        -- end
+                        logger:inspect(inDocumentOffset)
                         --print(w, h)
-                        local growfactor = 1.2
+                        local growfactor = 1.0
                         -- here we can offset the texture (needed for some shapes..)
-                        local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
-                            { width = w * growfactor, height = h * growfactor })
+                        local fixture
+                        if (inDocumentOffset) then
+                            fixture = fixtures.createSFixture(body, inDocumentOffset.x, inDocumentOffset.y,
+                                'texfixture',
+                                { width = inDocumentOffset.w, height = inDocumentOffset.h })
+                        else
+                            fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                                { width = w * growfactor, height = h * growfactor })
+                        end
                         local ud = fixture:getUserData()
                         ud.extra.OMP = true --it.OMP
                         ud.extra.dirty = true

@@ -250,7 +250,7 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
-    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+    --box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
 
     script.call('draw')
 
@@ -407,7 +407,7 @@ function love.keypressed(key)
             local urlIndex = math.ceil(math.random() * #urls)
             local url = urls[urlIndex]
             local creation = humanoidInstance.dna.creation
-            local s = 1 + math.random() * 1
+            local s = 2 + math.random() * 2
 
             CharacterManager.updatePart('lfoot',
                 { shape8URL = url .. '.png', sy = s, sx = s },
