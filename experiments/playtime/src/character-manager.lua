@@ -11,6 +11,9 @@ local fixtures = require 'src.fixtures'
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
+-- the shape98 values in the dict describe a shape, (made in meta file) but it doesntdescribe
+-- how that is offsetted from the texture.
+
 
 local function randomHexColor()
     local r = math.random(0, 255)
@@ -607,8 +610,9 @@ local function getOwnOffset(partName, guy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
             -- todo like the grow offsets this too should be parametrized
-            local footOffset = -50
-            return vertices[(index * 2) - 1], -vertices[(index * 2)] + footOffset
+            local footOffset = 0
+            --return 100, 0
+            return vertices[(index * 2) - 1], -vertices[(index * 2)]
         else
             return 0, part.dims.h / 2
         end
@@ -1130,7 +1134,9 @@ function lib.addTexturesFromInstance2(instance)
                     if k2 == 'skin' then
                         local body = relevant.body
                         local cx, cy, w, h = getCenterAndDimensions(body)
-                        local growfactor = 1.1
+                        --print(w, h)
+                        local growfactor = 1.2
+                        -- here we can offset the texture (needed for some shapes..)
                         local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
                             { width = w * growfactor, height = h * growfactor })
                         local ud = fixture:getUserData()

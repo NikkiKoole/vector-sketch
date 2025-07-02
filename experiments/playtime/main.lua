@@ -402,7 +402,8 @@ function love.keypressed(key)
             -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
         if key == 'f' then
-            local urls = { 'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r', 'feet7xr', 'feet8r', 'hand3r' }
+            --'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r', 'feet7xr', 'feet8r',
+            local urls = { 'hand3r' }
             local urlIndex = math.ceil(math.random() * #urls)
             local url = urls[urlIndex]
             local creation = humanoidInstance.dna.creation
