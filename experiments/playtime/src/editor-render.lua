@@ -119,7 +119,7 @@ function lib.renderActiveEditorThings()
         --print(inspect(verts))
         local mx, my    = love.mouse:getPosition()
         local cx, cy    = cam:getWorldCoordinates(mx, my)
-        logger:inspect(fixtureUD)
+        -- logger:inspect(fixtureUD)
         for i = 1, #verts, 2 do
             local vx = verts[i]
             local vy = verts[i + 1]
@@ -153,6 +153,17 @@ function lib.renderActiveEditorThings()
             love.graphics.line(verts[3 * 2 - 1], verts[3 * 2 - 0], verts[7 * 2 - 1], verts[7 * 2 - 0])
             -- index 4 -> 6
             love.graphics.line(verts[4 * 2 - 1], verts[4 * 2 - 0], verts[6 * 2 - 1], verts[6 * 2 - 0])
+
+            function roundArray(values)
+                local result = {}
+                for i, v in ipairs(values) do
+                    result[i] = math.floor(v + 0.5)
+                end
+                return result
+            end
+
+            logger:info(isMeta8)
+            logger:inspect(roundArray(state.texFixtureEdit.tempVerts))
         end
     end
 

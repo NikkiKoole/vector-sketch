@@ -1,3 +1,614 @@
+main.lua
+```lua
+-- NOTE MAKE REVOLUTE JOINTS ALWAYS FROM PARENT TO CHILD!!!!!!!!
+
+-- TODO there is an issue where the .vertices arent populated after load.
+-- TODO src/object-manager.lua:666:	I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...
+-- TODO look for : destroybody doesnt destroy the joint on it ?
+-- TODO dirty list for textures that need to be remade, (box2d-draw-textured)
+-- TODO in character manager, the w and h arent used when we have a shape 8 i prbaly want to calculate sx and sy depending on w and h instead of not using them
+-- TODO swap body parts
+-- TODO add some ui to change body properties
+
+-- BUG press R and then N , torso hair is not positioned correctly, also the wrong texture is displayed for a torso
+-- also, this is because we do naot have a real DNA yet, i think what i mean with a real dns is a lookup table that tells me all the
+-- decisions we need, now we have some stuff in the instance.textures but we do not 'know' why.
+-- i alway see th etorso shape pop back to a circle
+-- BUG , when preseing R, N, L you can see he specia fixtures grow too big
+
+logger = require 'src.logger'
+inspect = require 'vendor.inspect'
+
+local blob = require 'vendor.loveblobs'
+local Peeker = require 'vendor.peeker'
+local recorder = require 'src.recorder'
+local ui = require 'src.ui-all'
+local playtimeui = require 'src.playtime-ui'
+
+local selectrect = require 'src.selection-rect'
+local script = require 'src.script'
+local objectManager = require 'src.object-manager'
+
+
+local moonshine = require 'moonshine'
+
+
+local utils = require 'src.utils'
+local box2dDraw = require 'src.box2d-draw'
+local box2dDrawTextured = require 'src.box2d-draw-textured'
+local box2dPointerJoints = require 'src.box2d-pointerjoints'
+local camera = require 'src.camera'
+local cam = camera.getInstance()
+
+
+snap = require 'src.snap'
+registry = require 'src.registry'
+
+local InputManager = require 'src.input-manager'
+local state = require 'src.state'
+local sceneLoader = require 'src.scene-loader'
+local editorRenderer = require 'src.editor-render'
+local CharacterManager = require 'src.character-manager'
+
+
+
+function waitForEvent()
+    local a
+    repeat
+        a = love.event.wait()
+        print(a)
+    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
+end
+
+waitForEvent()
+
+local FIXED_TIMESTEP = true
+local FPS = 60 -- in platime ui we also have a fps
+local TICKRATE = 1 / FPS
+
+function love.load(args)
+    --
+
+
+    local fontHeight = 25
+    --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
+    --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
+    local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
+
+    love.keyboard.setKeyRepeat(true)
+    love.graphics.setFont(font)
+
+    ui.init(font, fontHeight)
+
+    love.physics.setMeter(state.world.meter)
+    state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
+
+    local w, h = love.graphics.getDimensions()
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(325, 325, 2000, 2000)
+
+    objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
+
+    -- -- Adding custom polygon
+    local customVertices = {
+        250, 0,
+        0, 300,
+        500, 300,
+        -- Add more vertices as needed
+    }
+
+    objectManager.addThing('custom', { vertices = customVertices })
+    --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
+
+    if state.world.playWithSoftbodies then
+        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
+        b:setFrequency(3)
+        b:setDamping(0.1)
+        --b:setFriction(1)
+
+        table.insert(state.world.softbodies, b)
+        local points = {
+            0, 500, 800, 500,
+            800, 800, 0, 800
+        }
+        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
+        table.insert(state.world.softbodies, b)
+        b:setJointFrequency(2)
+        b:setJointDamping(.1)
+        --b:setFixtureRestitution(2)
+        -- b:setFixtureFriction(10)
+    end
+
+    --effect = moonshine(moonshine.effects.dmg)
+    --.chain(moonshine.effects.vignette)
+    --effect.filmgrain.size = 2
+
+    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
+
+
+    --local cwd = love.filesystem.getWorkingDirectory()
+    --loadScene(cwd .. '/scripts/snap2.playtime.json')
+    --loadScene(cwd .. '/scripts/grow.playtime.json')
+
+    --loadScriptAndScene('elasto')
+    --sceneLoader.loadScriptAndScene('water')
+    --sceneLoader.loadScriptAndScene('straight')
+
+    local cwd = love.filesystem.getWorkingDirectory()
+    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+
+    -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
+    --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
+
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
+    --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1100, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1300, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1500, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1700, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1900, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2100, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2300, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2500, 300)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2700, 300)
+end
+
+function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('beginContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+function endContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('endContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+function preSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('preSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+    script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+end
+
+-- this is quite the fix, a bit janky, but i fixes all the issues where bodies and joints 'break' and freak out
+-- we do need some sesible expectedDitsance
+function correctJoint(joint)
+    local expectedDistance = 10
+    local bodyA, bodyB = joint:getBodies()
+    local anchorAx, anchorAy, anchorBx, anchorBy = joint:getAnchors()
+    local maxDist = 1.5 * expectedDistance -- use your rig specs
+
+    local dx, dy = anchorBx - anchorAx, anchorBy - anchorAy
+    local dist = math.sqrt(dx * dx + dy * dy)
+    if bodyB then
+        if dist > maxDist then
+            -- Optionally move B toward A
+            local fixX = anchorAx + dx * expectedDistance / dist
+            local fixY = anchorAy + dy * expectedDistance / dist
+            bodyB:setTransform(fixX, fixY, bodyB:getAngle())
+
+            -- Optional: reset velocity
+            bodyB:setLinearVelocity(0, 0)
+            bodyB:setAngularVelocity(0)
+        end
+    end
+end
+
+function love.update(dt)
+    if recorder.isRecording or recorder.isReplaying then
+        recorder:update(dt)
+    end
+
+    Peeker.update(dt)
+    sceneLoader.maybeHotReload(dt)
+
+    local scaled_dt = dt * state.world.speedMultiplier
+    if not state.world.paused then
+        if state.world.playWithSoftbodies then
+            for i, v in ipairs(state.world.softbodies) do
+                v:update(scaled_dt)
+            end
+        end
+        local velocityiterations = 8
+        local positioniterations = 13 -- 3
+        for i = 1, 1 do
+            state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
+        end
+        script.call('update', scaled_dt)
+        local joints = state.physicsWorld:getJoints()
+        for i = 1, #joints do
+            --correctJoint(joints[i])
+        end
+        snap.update(scaled_dt)
+    end
+
+
+    if recorder.isRecording and utils.tablelength(recorder.recordingMouseJoints) > 0 then
+        recorder:recordMouseJointUpdates(cam)
+    end
+
+    box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
+    --phys.handleUpdate(dt)
+
+    if state.interaction.draggingObj then
+        InputManager.handleDraggingObj()
+    end
+end
+
+function love.draw()
+    Peeker.attach()
+    local w, h = love.graphics.getDimensions()
+
+    love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
+
+    if state.editorPreferences.showGrid then
+        editorRenderer.drawGrid()
+    end
+
+    box2dDrawTextured.makeCombinedImages()
+    --effect(function()
+    cam:push()
+    love.graphics.setColor(1, 1, 1, 1)
+    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+
+    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+
+    script.call('draw')
+
+    editorRenderer.renderActiveEditorThings()
+    cam:pop()
+    -- end)
+    -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
+    --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
+
+    Peeker.detach()
+    if state.interaction.startSelection then
+        selectrect.draw(state.interaction.startSelection)
+    end
+
+
+    playtimeui.drawUI()
+    script.call('drawUI')
+
+    if recorder.isRecording then
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.circle('fill', 20, 20, 20)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(string.format("%.1f", love.timer.getTime() - recorder.startTime), 5, 5)
+    end
+
+    if state.scene.sceneScript and state.scene.sceneScript.foundError then
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.print(state.scene.sceneScript.foundError, 0, h / 2)
+        love.graphics.setColor(1, 1, 1)
+    end
+
+    if FIXED_TIMESTEP then
+        love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
+    else
+        love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
+    end
+end
+
+function love.wheelmoved(dx, dy)
+    if not ui.overPanel then
+        local newScale = cam.scale * (1 + dy / 10)
+        if newScale > 0.01 and newScale < 50 then
+            cam:scaleToPoint(1 + dy / 10)
+        end
+    end
+    ui.mouseWheelDx = dx
+    ui.mouseWheelDy = dy
+end
+
+function love.filedropped(file)
+    local name = file:getFilename()
+    if string.find(name, '.playtime.json') then
+        script.call('onSceneUnload')
+        sceneLoader.loadScene(name)
+        script.call('onSceneLoaded')
+    end
+    if string.find(name, '.playtime.lua') then
+        sceneLoader.loadAndRunScript(name)
+    end
+end
+
+function love.textinput(t)
+    ui.handleTextInput(t)
+end
+
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
+
+function love.resize(w, h)
+    --   effect.resize(w, h)
+end
+
+function love.keypressed(key)
+    ui.handleKeyPress(key)
+    InputManager.handleKeyPressed(key)
+    script.call('onKeyPress', key)
+
+    if not ui.focusedTextInputID then
+        if key == 'r' then
+            -- we will just recolor everything.
+
+            -- logger:inspect(humanoidInstance.dna.creation)
+            local parts = humanoidInstance.dna.creation.torsoSegments
+            for i = 1, parts do
+                local bgHex = '000000ff'
+                local fgHex = randomHexColor()
+                local pHex = randomHexColor()
+                CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                    { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+                CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                    { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch1')
+                CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                    { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch2')
+
+                -- local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
+                --     'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
+                -- local urlIndex = math.ceil(math.random() * #urls)
+                -- local url = urls[urlIndex]
+                -- --print(url)
+                -- local s = .5 + love.math.random() * 2
+                -- local sign = math.random() < .5 and -1 or 1
+                -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
+                -- CharacterManager.updatePart('torso' .. i,
+                --     { shape8URL = url .. '.png', sy = s * sign, sx = s },
+                --     humanoidInstance)
+                -- CharacterManager.updateShape8(humanoidInstance, 'torso1', url)
+                -- print(url)
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
+                -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
+                --     url .. '.png')
+            end
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+            -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
+            -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
+            -- CharacterManager.updatePart('torso4', { sy = love.math.random() * 2, sx = love.math.random() * 12 },
+            --     humanoidInstance)
+            --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
+            --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+        end
+
+
+        if key == 'n' then
+            --logger:inspect(humanoidInstance.dna.creation)
+            --local oldCreation = humanoidInstance.dna.creation
+            --logger:inspect(humanoidInstance.dna.creation)
+
+            --  CharacterManager.rebuildFromCreation(humanoidInstance,
+            --      { neckSegments = math.ceil(1 + love.math.random() * 5) })
+            CharacterManager.rebuildFromCreation(humanoidInstance, {})
+
+            --            CharacterManager.refreshTextures(humanoidInstance)
+            --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+            -- local parts = humanoidInstance.dna.creation.neckSegments
+            -- if (not humanoidInstance.dna.creation.isPotatoHead) then
+            --     for i = 1, parts do
+            --         CharacterManager.updatePart('neck' .. i,
+            --             { h = 100 },
+            --             humanoidInstance)
+            --     end
+            -- end
+            -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
+        end
+        if key == 'x' then
+            local bgColor = '000000ff'
+            local fgColor = randomHexColor()
+            local pColor = randomHexColor()
+            local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
+                'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
+            local urlIndex = math.ceil(math.random() * #urls)
+            local url = urls[urlIndex]
+            local creation = humanoidInstance.dna.creation
+            --print(inspect(creation))
+            local count = creation.torsoSegments
+            local s = 1 + math.random() * 1
+            for i = 1, count do
+                CharacterManager.updatePart('torso' .. i,
+                    { shape8URL = url .. '.png', sy = s, sx = s },
+                    humanoidInstance)
+                --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
+            end
+
+            CharacterManager.rebuildFromCreation(humanoidInstance,
+                { torsoSegments = count, isPotatoHead = not creation.isPotatoHead })
+
+
+
+            -- for i = 1, count do
+            --     local partName = 'torso' .. i
+            --     local group = partName .. 'Skin'
+            --     local hair = partName .. 'Hair'
+
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgURL', url .. '.png')
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgURL', url .. '-mask.png')
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'pHex', pColor)
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgHex', fgColor)
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgHex', bgColor)
+
+
+            --     CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url .. '.png')
+            -- end
+
+
+            -- -- print('x')
+            -- -- print("BEFORE", humanoidInstance.dna.parts['torso1'].shape8URL)
+            -- CharacterManager.updatePart('torso1', { shape8URL = url .. '.png' }, humanoidInstance)
+
+            -- CharacterManager.rebuildFromCreation(humanoidInstance, {})
+
+
+            -- --   CharacterManager.refreshTextures(humanoidInstance)
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
+            -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
+            --     url .. '.png')
+
+            -- --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+        end
+
+        if key == 'l' then
+            local lowerleglength = 20 + love.math.random() * 1400
+            CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
+            CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
+            CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
+            CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
+
+            local lowerarmlength = 120 + love.math.random() * 1400
+            CharacterManager.updatePart('luarm', { h = lowerarmlength }, humanoidInstance)
+            CharacterManager.updatePart('ruarm', { h = lowerarmlength }, humanoidInstance)
+            CharacterManager.updatePart('llarm', { h = lowerarmlength }, humanoidInstance)
+            CharacterManager.updatePart('rlarm', { h = lowerarmlength }, humanoidInstance)
+
+
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+        end
+        if key == 'p' then
+            local bgColor = '000000ff'
+            local fgColor = randomHexColor()
+            local pColor = randomHexColor()
+
+            local oldCreation = humanoidInstance.dna.creation
+            local segments = 1 + math.ceil(love.math.random() * 5)
+
+            local url = humanoidInstance.dna.parts['torso1'].shape8URL
+            local sx = humanoidInstance.dna.parts['torso1'].dims.sx
+            local sy = humanoidInstance.dna.parts['torso1'].dims.sy
+
+
+            -- for i = 1, segments do
+            --     CharacterManager.updatePart('torso' .. i,
+            --         { shape8URL = url .. '.png' },
+            --         humanoidInstance)
+            -- end
+
+            --  print(url)
+            -- logger:info(oldCreation.torsoSegments, segments)
+            logger:info(segments)
+            CharacterManager.rebuildFromCreation(humanoidInstance,
+                { torsoSegments = segments })
+
+            for i = 1, segments do
+                CharacterManager.updatePart('torso' .. i,
+                    { shape8URL = url },
+                    humanoidInstance)
+                --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+            end
+            logger:info(segments)
+            -- for i = 1, segments do
+            --     CharacterManager.updatePart('torso' .. i,
+            --         { shape8URL = url, sy = sx, sx = sy },
+            --         humanoidInstance)
+            --     -- CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+
+            --     local partName = 'torso' .. i
+            --     local group = partName .. 'Skin'
+            --     local hair = partName .. 'Hair'
+
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgURL', url)
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgURL', url:gsub('.png', '-mask.png'))
+            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'pHex', pColor)
+
+            --     CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url)
+            -- end
+
+
+
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'bgHex', bgColor)
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'fgHex', fgColor)
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'pHex', pColor)
+
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'fgHex', fgColor)
+            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'pHex', pColor)
+
+
+            -- logger:info(fgColor, pColor)
+            --  if url then CharacterManager.updateShape8(humanoidInstance, 'torso1', url) end
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+        end
+    end
+end
+
+function love.mousemoved(x, y, dx, dy)
+    InputManager.handleMouseMoved(x, y, dx, dy)
+end
+
+function love.mousepressed(x, y, button, istouch)
+    InputManager.handleMousePressed(x, y, button, istouch)
+end
+
+function love.touchpressed(id, x, y, dx, dy, pressure)
+    InputManager.handleTouchPressed(id, x, y, dx, dy, pressure)
+end
+
+function love.mousereleased(x, y, button, istouch)
+    InputManager.handleMouseReleased(x, y, button, istouch)
+end
+
+function love.touchreleased(id, x, y, dx, dy, pressure)
+    InputManager.handleTouchReleased(id, x, y, dx, dy, pressure)
+end
+
+if FIXED_TIMESTEP then
+    function love.run()
+        if love.math then
+            love.math.setRandomSeed(os.time())
+        end
+
+        if love.load then love.load(arg) end
+
+        local previous = love.timer.getTime()
+        local lag = 0.0
+        while true do
+            local current = love.timer.getTime()
+            local elapsed = current - previous
+            previous = current
+            lag = lag + elapsed * state.world.speedMultiplier
+
+            if love.event then
+                love.event.pump()
+                for name, a, b, c, d, e, f in love.event.poll() do
+                    if name == "quit" then
+                        if not love.quit or not love.quit() then
+                            return a
+                        end
+                    end
+                    love.handlers[name](a, b, c, d, e, f)
+                end
+            end
+
+            while lag >= TICKRATE do
+                if love.update then love.update(TICKRATE) end
+                lag = lag - TICKRATE
+            end
+
+            if love.graphics and love.graphics.isActive() then
+                love.graphics.clear(love.graphics.getBackgroundColor())
+                love.graphics.origin()
+                if love.draw then love.draw(lag / TICKRATE) end
+                love.graphics.present()
+            end
+        end
+    end
+end
+--
+
+```
+
 src//behaviors.lua
 ```lua
 local lib = {}
@@ -32,6 +643,26 @@ local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 local imageCache = {}
 local shrinkFactor = 1
+
+
+-- local shaderCode = love.filesystem.read("shaders/offset-halftone.glsl")
+-- local halttoneShader = love.graphics.newShader(shaderCode)
+
+
+-- --local shaderCode2   = love.filesystem.read("shaders/chromasep.glsl")
+-- local chromaShader  = love.graphics.newShader [[
+-- extern vec2 direction;
+-- vec4 effect(vec4 color, Image texture, vec2 tc, vec2 _)
+-- {
+--   return color * vec4(
+--     Texel(texture, tc - direction).r,
+--     Texel(texture, tc).g,
+--     Texel(texture, tc + direction).b,
+--     1.0);
+-- }]]
+
+local moonshine     = require 'moonshine'
+local effect        = moonshine(moonshine.effects.shadow)
 
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
@@ -264,7 +895,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         --    logger:info('double?', key)
     end
     testCache[key] = true
-    logger:info(key)
+    --  logger:info(key)
 
     if true then
         local lineartColor = lineColor or { 0, 0, 0, 1 }
@@ -587,6 +1218,9 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
     love.graphics.draw(_mesh, x, y, r, 1, 1)
 end
 
+
+
+
 function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 end
@@ -744,7 +1378,8 @@ function lib.drawTexturedWorld(world)
                         local new_y = p1[2] + length * math.sin(angle)
                         return new_x, new_y
                     end
-                    local growLength = 0
+                    -- todo parameter this
+                    local growLength = 20
                     points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
                     points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
 
@@ -847,8 +1482,11 @@ function lib.drawTexturedWorld(world)
         end
     end
 
-
+    --love.graphics.setShader(chromaShader)
+    --chromaShader:send("direction", { 10 * love.math.random(), 10 })
     --for _, body in ipairs(bodies) do
+
+    --effect(function()
     for i = 1, #drawables do
         local body = drawables[i].body
         local thing = drawables[i].thing
@@ -893,6 +1531,7 @@ function lib.drawTexturedWorld(world)
                 if extra.main and extra.main.fgURL then
                     local img = getLoveImage('textures/' .. extra.main.fgURL)
                     if img then
+                        print(extra.main.wmul)
                         local mesh = createTexturedTriangleStrip(img)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
                         local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
@@ -1066,6 +1705,8 @@ function lib.drawTexturedWorld(world)
             --logger:inspect()
         end
     end
+    --  end)
+    --love.graphics.setShader()
     --love.graphics.setDepthMode()
 end
 
@@ -1631,15 +2272,61 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 
-
-
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
--- the torso images, or maybe everyt texfixture also needs a growvalue that describes how much the w, h values will be grown.
--- next the chesthair has a grow too, the torso too, i also have afoot offset value that should be parametrized.
+-- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
+-- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
 
--- flpping leghair is not yet working
+local function randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque, or adjust if you want random alpha
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
 
+function createDefaultTextureDNABlock(shape, skipFG)
+    return {
+        bgURL = shape .. '.png',
+        fgURL = skipFG and '' or shape .. '-mask.png',
+        pURL = '',
+        bgHex = '020202ff',
+        fgHex = skipFG and '' or 'ff0000ff',
+        pHex = 'ffff00ff',
+    }
+end
+
+function initBlock(url)
+    return {
+        bgURL = (url or '') .. '.png',
+        fgURL = (url or '') .. '-mask.png',
+        pURL = '',
+        bgHex = '020202ff',
+        fgHex = randomHexColor(),
+        pHex = randomHexColor(),
+    }
+end
+
+function add(block, values)
+    for k, v in pairs(values) do
+        block[k] = v
+    end
+    return block
+end
+
+function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
+    local p = instance.dna.parts[partName]
+    if p then
+        if p.appearance and p.appearance['skin'] then
+            local patch = optionalPatchName or 'main'
+            if p.appearance['skin'][patch] then
+                for k, v in pairs(values) do
+                    p.appearance['skin'][patch][k] = v
+                end
+            end
+        end
+    end
+end
 
 local shape8Dict = {
     ['shapeA1.png'] = {
@@ -1650,7 +2337,6 @@ local shape8Dict = {
     ['shapeA2.png'] = {
         v = {
             11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
-
         }
     },
     ['shapeA3.png'] = {
@@ -1737,8 +2423,6 @@ local shape8Dict = {
             22.72, -239.92, 175.91, -101.68, 197.65, 11.35, 177.85, 219.53, 14.51, 260.62, -168.30, 210.32, -156.48, 12.37, -125.83, -105.07
         }
     },
-
-
     ['feet2.png'] = {
         v = {
 
@@ -1765,12 +2449,8 @@ local shape8Dict = {
             -26.163452363425, -287.93776875202, 45.977848996918, -180.33200394521, 110.43888273961, 42.412507041203, 116.65637069995, 166.59739225104, -6.9388089085194, 273.82186588688, -108.79936590647, 268.31434765346, -110.23416300478, 47.203933468003, -102.10981258194, -181.61278889148
         }
     }
-
-
-
-
-
 }
+
 local dna = {
     ['humanoid'] = {
         creation = {
@@ -1778,259 +2458,205 @@ local dna = {
             neckSegments = 5,
             torsoSegments = 1
         },
+
+
+        -- in the pppearance belwo we have a few options for types:
+        -- skin = a skin that assumes a shape8 url to be present.
+        -- bodyhair, = an overlay that assumes the shape8 url to be present, it will follow that
+        -- connected-skin = a texture that will be drawn over a few connectd bodyparts
+        -- connected-hair = an overlay that assumes a few parts to be there too.
+
         parts = {
-            ['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 }, shape8URL = 'shapeA3.png', shape = 'shape8', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['torso-segment-template'] = {
+                appearance = {
+                    -- this will do the neck texturing (connecting torso and head)
+                    ['connected-skin'] = {
+                        main = add(initBlock('leg5'), {}),
+                        endNode = 'head'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        endNode = 'head'
+                    },
+                    ['skin'] = {
+                        main = initBlock(),
+                        patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
+                        patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                    },
+                    ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) }
+                },
+                dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
+                shape8URL = 'shapeA1.png',
+                shape = 'shape8',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
-            ['neck-segment-template'] = { dims = { w = 80, w2 = 4, h = 150 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['neck-segment-template'] = {
+
+                dims = { w = 80, w2 = 4, h = 150 },
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
             -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
-            ['head'] = { dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'shapeA2.png', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
-            ['luleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['ruleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['head'] = {
+                appearance = {
+                    ['skin'] = {
+                        main = initBlock(),
+                        patch1 = add(initBlock('patch1'), { tx = 0.3, ty = 0.3 }),
+                        patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                    },
+                    ['bodyhair'] = { main = initBlock('borsthaar4') }
+                },
+                dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
+                shape = 'shape8',
+                shape8URL = 'shapeA2.png',
+                j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } }
+            },
+            ['luleg'] = {
+                appearance = {
+                    ['connected-skin'] = {
+                        main = add(initBlock('leg5'), { dir = -1 }),
+                        endNode = 'lfoot'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
+                        endNode = 'lfoot'
+                    }
+                },
+                dims = { w = 80, h = 200, w2 = 4 },
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } }
+            },
+            ['ruleg'] = {
+                appearance = {
+                    ['connected-skin'] = {
+                        main = add(initBlock('leg5'), { dir = 1 }),
+                        endNode = 'rfoot'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        endNode = 'rfoot'
+                    }
+                },
+                dims = { w = 80, h = 200, w2 = 4 },
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } }
+            },
             ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
             ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
-            ['luarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi } } },
-            ['ruarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi, up = 0 } } },
+            ['luarm'] = {
+                appearance = {
+                    ['connected-skin'] = {
+                        zOffset = 1,
+                        main = add(initBlock('leg5'), { dir = -1 }),
+                        endNode = 'lhand'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
+                        endNode = 'lfoot'
+                    }
+                },
+                dims = { w = 40, h = 200, w2 = 4 },
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = 0, up = math.pi } }
+            },
+            ['ruarm'] = {
+                appearance = {
+                    ['connected-skin'] = {
+                        zOffset = 1,
+                        main = add(initBlock('leg5'), { dir = 1 }),
+                        endNode = 'rhand'
+                    },
+                    ['connected-hair'] = {
+                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        endNode = 'lfoot'
+                    }
+                },
+                dims = { w = 40, h = 200, w2 = 4 },
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -math.pi, up = 0 } }
+            },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['lfoot'] = { dims = { w = 80, h = 150, sx = 1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rfoot'] = { dims = { w = 80, h = 150, sx = -1, sy = 1 }, shape = 'shape8', shape8URL = 'feet6r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lfoot'] = {
+                appearance = {
+                    ['skin'] = {
+                        main = add(initBlock(), { dir = -1 }),
+                    },
+
+                },
+                dims = { w = 80, h = 150, sx = .5, sy = 1 },
+                shape = 'shape8',
+                shape8URL = 'feet6r.png',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
+            ['rfoot'] = {
+                appearance = {
+                    ['skin'] = {
+                        main = add(initBlock(), { dir = 1 }),
+                    },
+                },
+                dims = { w = 80, h = 150, sx = -.5, sy = 1 },
+                shape = 'shape8',
+                shape8URL = 'feet6r.png',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
-            -- ['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            -- ['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lhand'] = { dims = { w = 40, h = 40, sx = .5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['rhand'] = { dims = { w = 40, h = 40, sx = -.5, sy = .9 }, shape = 'shape8', shape8URL = 'feet2r.png', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            ['lhand'] = {
+                appearance = {
+                    ['skin'] = {
+                        main = add(initBlock(), { dir = -1 }),
+                    },
+                },
+                dims = { w = 40, h = 40, sx = .5, sy = .9 },
+                shape = 'shape8',
+                shape8URL = 'feet2r.png',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
+            ['rhand'] = {
+                appearance = {
+                    ['skin'] = {
+                        main = add(initBlock(), {}),
+                    },
+                },
+                dims = { w = 40, h = 40, sx = -.5, sy = .9 },
+                shape = 'shape8',
+                shape8URL = 'feet2r.png',
+                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+            },
             -- TODo same kind of weirdness for the hands!
             -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
             ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
+
     }
 }
 
-local function randomHexColor()
-    local r = math.random(0, 255)
-    local g = math.random(0, 255)
-    local b = math.random(0, 255)
-    local a = 255 -- fully opaque, or adjust if you want random alpha
 
-    return string.format("%02X%02X%02X%02X", r, g, b, a)
+
+function lib.updateShape8(instance, partName, newShape8Name)
+    -- Update the physics part
+    lib.updatePart(partName, { shape8URL = newShape8Name .. '.png' }, instance)
+
+    -- Trigger a rebuild
+    lib.rebuildFromCreation(instance, {})
+
+    -- Update all visuals linked to that shape
+    --lib.updateTextureGroupValue(instance, partName .. 'Skin', 'bgURL', newShape8Name .. '.png')
+    --lib.updateTextureGroupValue(instance, partName .. 'Skin', 'fgURL', newShape8Name .. '-mask.png')
+    --lib.updateTextureGroupValueInRoot(instance, partName .. 'Hair', 'followShape8', newShape8Name .. '.png')
+
+    -- Recreate the actual texture fixtures
+    --   lib.addTextureFixturesFromInstance(instance)
 end
 
-
-
-function createDefaultTextureDNABlock(shape, skipFG)
-    return {
-        bgURL = shape .. '.png',
-        fgURL = skipFG and '' or shape .. '-mask.png',
-        pURL = '',
-        bgHex = '020202ff',
-        fgHex = skipFG and '' or 'ff0000ff',
-        pHex = 'ffff00ff',
-
-    }
-end
-
-function addMore(block, values)
-    for k, v in pairs(values) do
-        block[k] = v
-    end
-    return block
-end
-
-function defaultSetupTextures(instance)
-    -- take note: right leg has flippedX.
-    -- torso
-
-    if true then
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'torso1Skin',
-            main = createDefaultTextureDNABlock('shapeA3'),
-            patch1 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0.3, ty = 0.3 }),
-            patch2 = addMore(createDefaultTextureDNABlock('patch1'), { tx = -0.3, ty = 0.3 }),
-            patch3 = addMore(createDefaultTextureDNABlock('patch1'), { tx = 0, ty = -0.3 }),
-            attachTo = 'torso1',
-        })
-
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = false,
-            group = 'torso1Hair',
-            zOffset = 40,
-            followShape8 = 'shapeA3.png', -- get this from my main above..
-            main = createDefaultTextureDNABlock('borsthaar4', true),
-            attachTo = 'torso1',
-        })
-    end
-
-    -- legs
-    if false then
-        table.insert(instance.textures, {
-            subtype = 'connected-texture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'leftLegSkin',
-            main = createDefaultTextureDNABlock('leg5'),
-            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
-            attachTo = 'luleg',
-        })
-        table.insert(instance.textures, {
-            subtype = 'connected-texture',
-            type = 'sfixture',
-            OMP = false,
-            zOffset = 40,
-            group = 'leftLegHair',
-            main = addMore(createDefaultTextureDNABlock('hair7', true), { dir = -1 }), --???
-            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" },
-            attachTo = 'luleg',
-        })
-        table.insert(instance.textures, {
-            subtype = 'connected-texture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'rightLegSkin',
-            main = addMore(createDefaultTextureDNABlock('leg5'), { fx = -1 }),
-            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
-            attachTo = 'ruleg',
-        })
-        table.insert(instance.textures, {
-            subtype = 'connected-texture',
-            type = 'sfixture',
-            OMP = false,
-            zOffset = 40,
-            group = 'rightLegHair',
-            main = addMore(createDefaultTextureDNABlock('hair7', true), {}), --??
-            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" },
-            attachTo = 'ruleg',
-        })
-    end
-
-
-    --feet
-    if false then
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'lfootSkin',
-            main = createDefaultTextureDNABlock('feet6r'),
-            attachTo = 'lfoot',
-        })
-
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'rfootSkin',
-            main = addMore(createDefaultTextureDNABlock('feet6r'), { fx = -1 }),
-            attachTo = 'rfoot',
-        })
-    end
-
-
-    --hand
-    if false then
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'lhandSkin',
-            main = createDefaultTextureDNABlock('feet2r'),
-            attachTo = 'lhand',
-        })
-        table.insert(instance.textures, {
-            subtype = 'texfixture',
-            type = 'sfixture',
-            OMP = true,
-            group = 'rhandSkin',
-            main = createDefaultTextureDNABlock('feet2r'),
-            attachTo = 'rhand',
-        })
-    end
-
-    -- neck
-    if false then
-        -- Assume neckSegments and torsoSegments are available
-        local creation = instance.dna.creation
-        local neckSegments = creation.neckSegments or 0
-        local torsoSegments = creation.torsoSegments or 1
-
-        local jointLabels = {}
-        local previous = 'torso' .. torsoSegments
-
-        for i = 1, neckSegments do
-            local current = 'neck' .. i
-            table.insert(jointLabels, previous .. '->' .. current)
-            previous = current
-        end
-
-        -- Final connection to head
-        table.insert(jointLabels, previous .. '->head')
-
-        logger:inspect(jointLabels)
-        if neckSegments > 0 and not creation.isPotatoHead then
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'neckSkin',
-                main = createDefaultTextureDNABlock('leg5'),
-                jointLabels = jointLabels,
-                attachTo = 'neck1',
-            })
-            table.insert(instance.textures, {
-                subtype = 'connected-texture',
-                type = 'sfixture',
-                OMP = false,
-                zOffset = 40,
-                group = 'neckHair',
-                main = addMore(createDefaultTextureDNABlock('hair10', true), { fx = -1 }),
-                jointLabels = jointLabels,
-                attachTo = 'neck1',
-            })
-        end
-    end
-
-    -- head
-    if false then
-        local creation = instance.dna.creation
-        if not creation.isPotatoHead then
-            table.insert(instance.textures, {
-                subtype = 'texfixture',
-                type = 'sfixture',
-                OMP = true,
-                group = 'headSkin',
-                main = createDefaultTextureDNABlock('shapeA2'),
-                attachTo = 'head',
-            })
-            -- table.insert(instance.textures, {
-            --     label = 'texfixture',
-            --     type = 'sfixture',
-            --     OMP = false,
-            --     group = 'headHair',
-            --     zOffset = 40,
-            --     followShape8 = 'shapeA2.png',
-            --     main = {
-            --         bgURL = 'borsthaar3.png',
-            --         fgURL = '',
-            --         pURL = '',
-            --         bgHex = '020202ff',
-            --         fgHex = randomHexColor(),
-            --         pHex = randomHexColor()
-            --     },
-            --     attachTo = 'head',
-            -- })
-        end
-    end
-end
-
--- copy pasted form playtime-ui.lua
+-- copy pasted from playtime-ui.lua
 local function getCenterAndDimensions(body)
     local ud = body:getUserData()
     local cx, cy, w, h
@@ -2039,7 +2665,6 @@ local function getCenterAndDimensions(body)
         cx, cy, w, h = mathutils.getCenterOfPoints(verts)
     else -- this is a circle shape..
         cx, cy = body:getPosition()
-
         w, h = ud.thing.radius * 2, ud.thing.radius * 2
     end
     return cx, cy, w, h
@@ -2047,22 +2672,18 @@ end
 
 
 local function makeTransformedVertices(vertices, scaleX, scaleY)
-    -- Initialize result array
-    local transformedVertices = {}
-    -- Loop through input vertices (stepping by 2)
+    local result = {}
+
     for i = 1, #vertices, 2 do
-        -- Get original x, y
         local x = vertices[i]
         local y = vertices[i + 1]
-        -- Calculate transformed x, y (scaling handles flipping)
         local newX = x * scaleX
         local newY = y * scaleY
-        -- Add transformed pair to result array
-        table.insert(transformedVertices, newX)
-        table.insert(transformedVertices, newY)
+        table.insert(result, newX)
+        table.insert(result, newY)
     end
-    -- Return the new array
-    return transformedVertices
+
+    return result
 end
 
 local function getTransformedIndex(index, flipX, flipY)
@@ -2082,8 +2703,6 @@ local function getTransformedIndex(index, flipX, flipY)
         local values = { 1, 2, 3, 4, 5, 6, 7, 8 }
         return values[index]
     end
-    -- print(index, flipX, flipY)
-    -- logger:warn('why are we getting here?')
 end
 
 local function clamp(x, min, max)
@@ -2144,11 +2763,10 @@ local function getParentAndChildrenFromPartName(partName, guy)
             }
         end
     end
-    --print(partName)
+
     local torsoIndex = extractTorsoIndex(partName)
-    --logger:info('torsoIndex', torsoIndex)
+
     if torsoIndex then
-        -- logger:info('torsoIndex', torsoIndex)
         if torsoIndex then
             local children = {}
             -- Middle segments connect only to the next torso segment
@@ -2168,15 +2786,11 @@ local function getParentAndChildrenFromPartName(partName, guy)
                     table.insert(children, 'rear')
                 end
             end
-
             -- Lowest segment connects to legs
             if torsoIndex == 1 then
                 table.insert(children, 'luleg')
                 table.insert(children, 'ruleg')
             end
-
-
-
             if torsoIndex == 1 then
                 map[partName] = { c = children } -- Torso1 has no parent
             else
@@ -2186,7 +2800,6 @@ local function getParentAndChildrenFromPartName(partName, guy)
     end
 
     -- Overrides for special cases
-
     -- Head connects directly to highest torso if no neck
     if partName == 'head' and neckSegments == 0 then
         map[partName] = { p = highestTorso, c = { 'lear', 'rear' } }
@@ -2212,11 +2825,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
         map[partName] = { c = children }
     end
 
-
     local result = map[partName]
-
-
-
     return result or {} -- Return empty table if partName not found
 end
 
@@ -2234,35 +2843,23 @@ local function getOwnOffset(partName, guy)
     end
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
-            -- local vertices = shape8Dict[parts[partName].shape8URL].v
-
+            print(parts[partName].shape8URL)
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
-
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
             local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
-
             return -vertices[(bottomIndex * 2) - 1], vertices[(topIndex * 2)]
         else
             return 0, -parts[partName].dims.h / 2
         end
     end
+
     if partName == 'head' then
-        -- return 0, -parts.head.dims.h / 2
         if parts[partName].shape == 'shape8' then
-            --local vertices = shape8Dict[parts[partName].shape8URL].v
-
-
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
-
-            --local topIndex = 1
-            --local bottomIndex = 5
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
             local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
-
-
-            --return vertices[(index * 2) - 1], vertices[(index * 2)]
             return -vertices[(bottomIndex * 2) - 1], vertices[(topIndex * 2)]
         else
             return 0, -parts[partName].dims.h / 2
@@ -2274,8 +2871,6 @@ local function getOwnOffset(partName, guy)
     if partName == 'rear' then
         return 0, -parts.rear.dims.h / 2
     end
-
-
     -- downward
     if partName == 'luleg' then
         return 0, parts.luleg.dims.h / 2
@@ -2287,15 +2882,11 @@ local function getOwnOffset(partName, guy)
         return 0, parts.llleg.dims.h / 2
     end
     if partName == 'lfoot' or partName == 'rfoot' then
-        -- return 0, parts.lfoot.dims.h / 2
-
-
         local part = parts[partName]
         if part.shape == 'shape8' then
             local raw = shape8Dict[part.shape8URL].v
 
             local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
-            --logger:info(part.dims.sx, part.dims.sy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
             -- todo like the grow offsets this too should be parametrized
@@ -2308,9 +2899,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'rlleg' then
         return 0, parts.rlleg.dims.h / 2
     end
-    -- if partName == 'rfoot' then
-    --     return 0, parts.rfoot.dims.h / 2
-    -- end
+
     if partName == 'luarm' then
         return 0, parts.luarm.dims.h / 2
     end
@@ -2318,7 +2907,6 @@ local function getOwnOffset(partName, guy)
         return 0, parts.ruarm.dims.h / 2
     end
     if partName == 'rhand' or partName == 'lhand' then
-        --return 0, parts.rhand.dims.h / 2
         local part = parts[partName]
         if part.shape == 'shape8' then
             local raw = shape8Dict[part.shape8URL].v
@@ -2337,9 +2925,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'rlarm' then
         return 0, parts.rlarm.dims.h / 2
     end
-    --if partName == 'lhand' then
-    --    return 0, parts.lhand.dims.h / 2
-    --end
+
     return 0, 0
 end
 
@@ -2356,10 +2942,7 @@ local function getOffsetFromParent(partName, guy)
 
 
     local function getTorsoPart8FromSpecificTorso(index, torsoIndex)
-        --local vertices = shape8Dict[parts[highestTorso].shape8URL].v
-
         local torso = 'torso' .. torsoIndex
-
         local raw = shape8Dict[parts[torso].shape8URL].v
         local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
         local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
@@ -2373,8 +2956,6 @@ local function getOffsetFromParent(partName, guy)
     local function getTorsoPart8FromLowest(index)
         return getTorsoPart8FromSpecificTorso(index, 1)
     end
-
-
 
     local function hasTorso8()
         if parts[highestTorso].shape == 'shape8' then
@@ -2393,10 +2974,8 @@ local function getOffsetFromParent(partName, guy)
     local function getHeadPart8(index)
         local raw = shape8Dict[parts['head'].shape8URL].v
         local vertices = makeTransformedVertices(raw, parts['head'].dims.sx or 1, parts['head'].dims.sy or 1)
-
         local newIndex = getTransformedIndex(index, sign(parts['head'].dims.sx), sign(parts['head'].dims.sy))
 
-        -- local vertices = shape8Dict[parts['head'].shape8URL].v
         return vertices[(newIndex * 2) - 1], vertices[(newIndex * 2)]
     end
 
@@ -2417,16 +2996,10 @@ local function getOffsetFromParent(partName, guy)
             return 0, 0
         else
             if hasTorso8() then
-                --print('getting here')
                 return getTorsoPart8FromSpecificTorso(1, index - 1)
-                -- return getTorsoPart8(1)
             else
-                -- return 0, -parts[highestTorso].dims.h / 2
                 return 0, -parts['torso' .. (index - 1)].dims.h / 2
             end
-
-
-            --return 0, -parts['torso' .. (index - 1)].dims.h / 2
         end
     elseif partName == 'llarm' then
         return 0, parts.luarm.dims.h / 2
@@ -2564,28 +3137,19 @@ end
 local function makePart(partName, instance, settings)
     local values = getParentAndChildrenFromPartName(partName, instance)
     local parent = values.p
-    -- logger:info(partName, parent)
-
     local prevA = 0
-
 
     if parent then
         if instance.parts[parent] then
             local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
-
             prevA = instance.parts[parent].body:getAngle()
-
             local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
             local px, py = instance.parts[parent].body:getWorldPoint(parentOffsetX, parentOffsetY)
-
-
             settings.x = px
             settings.y = py
         end
     end
 
-
-    --local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
     local ownOffsetX, ownOffsetY = getOwnOffset(partName, instance)
     local xangle = getAngleOffset(partName, instance)
 
@@ -2594,9 +3158,6 @@ local function makePart(partName, instance, settings)
 
     settings.x = settings.x + rotatedOwnX
     settings.y = settings.y + rotatedOwnY
-
-    -- logger:info(partName, prevA, xangle)
-
 
     local thing = ObjectManager.addThing(settings.shapeType, settings)
 
@@ -2615,14 +3176,13 @@ local function makePart(partName, instance, settings)
                 f[i]:setDensity(1)
             end
         end
-        --  logger:info('setting', partName)
+
         instance.parts[partName] = thing
     end
 
     if parent then
-        local partA_thing = instance.parts[parent]   --instance.parts[jointData.a]
-        local partB_thing = instance.parts[partName] --instance.parts[jointData.b]
-        -- logger:info(partA_thing, partB_thing)
+        local partA_thing = instance.parts[parent]
+        local partB_thing = instance.parts[partName]
 
         if (partA_thing and partB_thing) then
             local jointData = instance.dna.parts[partName].j
@@ -2635,7 +3195,7 @@ local function makePart(partName, instance, settings)
                 offsetA = { x = 0, y = 0 },
                 offsetB = { x = 0, y = 0 },
             }
-            --logger:info('joint:', parent, partName)
+            -- logger:info('joint:', parent, partName)
             -- todo we dont really need this yet...
             instance.joints[parent .. '->' .. partName] = jointCreationData.id
 
@@ -2687,42 +3247,25 @@ local function applyPoseCache(instance, poseCache)
 end
 
 local function fixDrift(positionTorso, instance)
-    -- this routine is to fix the drift we get .
     if positionTorso then
         local newPosX, newPosY = instance.parts['torso1'].body:getPosition()
         local newAngle = instance.parts['torso1'].body:getAngle()
-
-        --local dx = oldPosX - newPosX
-
         local dx = positionTorso[1] - newPosX
         local dy = positionTorso[2] - newPosY
-        --local da = oldAngle - newAngle
-
-        --local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -newAngle)
 
         for _, part in pairs(instance.parts) do
-            -- local px, py = part.body:getPosition()
-            --local cx, cy = mathutils.rotatePoint(px, py, newPosX, newPosY, da)
-            --   part.body:setPosition(cx + dx, cy + dy)
-            --  part.body:setAngle(part.body:getAngle() + da)
-
             local bx, by = part.body:getPosition()
             part.body:setPosition(bx + dx, by + dy)
         end
     end
 end
 
-
-
-
 local function updateSinglePart(partName, data, instance)
     local partData = instance.dna.parts[partName]
     if not partData then return end
 
-    -- Apply dimension updates
-    -- logger:inspect(data)
+
     for k, v in pairs(data) do
-        --logger:info(k, v)
         if (partData.dims[k]) then
             partData.dims[k] = v
         elseif partData[k] then
@@ -2730,21 +3273,20 @@ local function updateSinglePart(partName, data, instance)
         end
     end
 
-    -- print(partName, instance.parts[partName], inspect(instance.dna.creation))
-    local oldBody = instance.parts[partName].body
-    local oldPosX, oldPosY = oldBody:getPosition()
-    local oldAngle = oldBody:getAngle()
+    local oldBody = nil
+    local oldPosX, oldPosY = 0, 0
+    local oldAngle = 0
 
     -- Remove old body
-
     local extras = {}
     if instance.parts[partName] then
+        oldBody = instance.parts[partName].body
+        oldPosX, oldPosY = oldBody:getPosition()
+        oldAngle = oldBody:getAngle()
         local body = instance.parts[partName].body
-        --extras = safeAllExtras(body)
         ObjectManager.destroyBody(body)
         instance.parts[partName] = nil
     end
-
     -- Recreate the part
     local settings = {
         x = oldPosX,
@@ -2770,16 +3312,13 @@ local function updateSinglePart(partName, data, instance)
     end
 
     local children = getParentAndChildrenFromPartName(partName, instance).c or {}
-    --logger:inspect(children)
     if type(children) == 'string' then
         children = { children }
     end
     makePart(partName, instance, settings)
 
-
-    -- after making a part set it to its angle so the children will be using that angle in tehir calculations.
+    -- after making a part set it to its angle so the children will be using that angle in their calculations.
     instance.parts[partName].body:setAngle(oldAngle)
-
 
     for _, childName in ipairs(children) do
         local childData = instance.dna.parts[childName]
@@ -2791,7 +3330,6 @@ end
 
 -- update part
 function lib.updatePart(partName, data, instance)
-    --  preserveAllSpecialFixtures(instance)
     local positionTorso = nil
     local oldAngle = 0
     if partName == 'torso1' then
@@ -2800,14 +3338,9 @@ function lib.updatePart(partName, data, instance)
 
     -- filling the cache
     local poseCache = getPoseCache(instance)
-
-    -- update the thing
     updateSinglePart(partName, data, instance)
-
     applyPoseCache(instance, poseCache)
-    --addTextufeFixturesFromInstance(instance)
     if positionTorso then fixDrift(positionTorso, instance) end
-    -- restoreAllSpecialFixtures()
 end
 
 -- given an instance with dna and a new creation, this function is made to change a creation of a humanoid during runtime.
@@ -2841,131 +3374,287 @@ function lib.rebuildFromCreation(instance, newCreation)
     if positionTorso then fixDrift(positionTorso, instance) end
 end
 
-function lib.addTextureFixturesFromInstance(instance)
-    function removeSimilarFixture(body, it)
-        local allFixtures = body:getFixtures()
-        for fi = #allFixtures, 1, -1 do -- backwards to safely remove
-            local f = allFixtures[fi]
-            local ud = f:getUserData()
-            --  logger:inspect(ud)
-            if ud and ud.label == it.label and ud.extra.OMP == it.OMP then
-                -- logger:info('destroying fixture')
-                fixtures.destroyFixture(f)
-            end
-        end
-    end
+function lib.addTexturesFromInstance2(instance)
+    -- for k, v in pairs(instance.parts) do
+    --     local part = v
+    --     print(inspect(v))
+    --     if part.appearance then
+    --         print(k)
+    --     end
+    -- end
+    for k, v in pairs(instance.dna.parts) do
+        if v.appearance then
+            --logger:info(k .. ' has appearance')
+            local relevant = instance.parts[k]
+            if (relevant) then
+                --logger:info('relevant real thing found ' .. k)
+                --logger:inspect(v.appearance)
+                --
+                --
+                -- maybe i can jst remove all texture fixtures from the body right now?
+                -- and then reattahc new ones below.
 
-    for i = 1, #instance.textures do
-        local it = instance.textures[i]
-        if it.type == 'sfixture' then
-            if it.subtype == 'texfixture' then
-                local body = instance.parts[it.attachTo].body
-                removeSimilarFixture(body, it)
-                --print("body angle at texture creation:", body:getAngle())
-                local cx, cy, w, h = getCenterAndDimensions(body)
-                -- local localX, localY = body:getLocalPoint(wx, wy)
-                local growfactor = 1.1
-                local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
-                    { width = w * growfactor, height = h * growfactor })
-                local ud = fixture:getUserData()
-                ud.extra.OMP = it.OMP
-                ud.extra.dirty = true
-                ud.extra.main = utils.deepCopy(it.main)
-
-                ud.extra.zOffset = it.zOffset or 0
-                ud.extra.attachTo = it.attachTo
-                local partData = instance.dna.parts[it.attachTo]
-
-                -- todo we probably also need to flip the other ones (patch1..3) but not sure..
-                if partData.dims.sy < 0 then
-                    ud.extra.main.fy = -1
-                end
-                if partData.dims.sx < 0 then
-                    ud.extra.main.fx = -1
+                local allFixtures = relevant.body:getFixtures()
+                for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+                    local f = allFixtures[fi]
+                    local ud = f:getUserData()
+                    if ud then
+                        if (ud.subtype == 'connected-texture' or ud.subtype == 'texfixture') then
+                            fixtures.destroyFixture(f)
+                        end
+                    end
                 end
 
-                if it.patch1 then
-                    ud.extra.patch1 = utils.deepCopy(it.patch1)
+                for k2, v2 in pairs(v.appearance) do
+                    --print(k2)
+                    if k2 == 'skin' then
+                        local body = relevant.body
+                        local cx, cy, w, h = getCenterAndDimensions(body)
+                        local growfactor = 1.1
+                        local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                            { width = w * growfactor, height = h * growfactor })
+                        local ud = fixture:getUserData()
+                        ud.extra.OMP = true --it.OMP
+                        ud.extra.dirty = true
+                        ud.extra.main = utils.deepCopy(v2.main)
+                        ud.extra.main.bgURL = v.shape8URL
+                        ud.extra.main.fgURL = v.shape8URL:gsub('.png', '-mask.png')
+
+                        if v.dims.sy ~= nil and v.dims.sy < 0 then
+                            ud.extra.main.fy = -1
+                        end
+                        if v.dims.sx ~= nil and v.dims.sx < 0 then
+                            ud.extra.main.fx = -1
+                        end
+
+                        if v2.patch1 then
+                            ud.extra.patch1 = utils.deepCopy(v2.patch1)
+                        end
+                        if v2.patch2 then
+                            ud.extra.patch2 = utils.deepCopy(v2.patch2)
+                        end
+                        if v2.patch3 then
+                            ud.extra.patch3 = utils.deepCopy(v2.patch3)
+                        end
+                    elseif k2 == 'bodyhair' then
+                        local body = relevant.body
+                        local cx, cy, w, h = getCenterAndDimensions(body)
+                        local growfactor = 1.1
+                        local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                            { width = w * growfactor, height = h * growfactor })
+                        local ud = fixture:getUserData()
+                        ud.extra.OMP = false --it.OMP
+                        ud.extra.zOffset = 40
+                        ud.extra.dirty = true
+                        ud.extra.main = utils.deepCopy(v2.main)
+
+                        local raw = shape8Dict[v.shape8URL].v
+                        local growfactor = 1.5
+                        local vertices = makeTransformedVertices(raw, (v.dims.sx or 1) * growfactor,
+                            (v.dims.sy or 1) * growfactor)
+
+                        ud.extra.vertices = vertices
+                        ud.extra.vertexCount = #vertices / 2
+                    elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
+                        local body = relevant.body
+                        print(k)
+                        --print(k, v2.endNode)
+                        -- depending on the start and end node. build the jointlabels
+                        local torsoSegments = instance.dna.creation.torsoSegments or 1
+                        local jointLabels = {}
+
+                        local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+                            { radius = 30 })
+
+                        local ud = fixture:getUserData()
+
+                        ud.extra = {
+                            attachTo = k,
+                            OMP = (k2 == 'connected-skin'),
+                            dirty = true,
+                            main = utils.deepCopy(v2.main),
+                            zOffset = v2.zOffset or 0,
+                            nodes = {}
+                        }
+                        if k:find('uleg') then
+                            --print('this is an upper-leg, connect to torso1')
+                            if k == 'luleg' then
+                                jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" }
+                            elseif k == 'ruleg' then
+                                jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" }
+                            end
+                        end
+                        if k:find('uarm') then
+                            local top = 'torso' .. torsoSegments
+
+                            --print('this is an upper-leg, connect to torso1')
+                            if k == 'luarm' then
+                                jointLabels = { top .. "->luarm", "luarm->llarm", "llarm->lhand" }
+                            elseif k == 'ruarm' then
+                                jointLabels = { top .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" }
+                            end
+                        end
+                        -- we only do neck stuff from the top torso to the head. (other torso segments are ignored)
+                        if k == ('torso' .. torsoSegments) and v2.endNode == 'head' then
+                            local neckSegments = instance.dna.creation.neckSegments or 0
+                            local previous = 'torso' .. torsoSegments
+
+                            for i = 1, neckSegments do
+                                local current = 'neck' .. i
+                                table.insert(jointLabels, previous .. '->' .. current)
+                                previous = current
+                            end
+                            -- Final connection to head
+                            table.insert(jointLabels, previous .. '->head')
+                            --logger:inspect(jointLabels)
+
+                            print('this is about texturing the neck')
+                        end
+                        for j = 1, #jointLabels do
+                            local jointID = jointLabels[j]
+                            ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+                        end
+                    end
                 end
-                if it.patch2 then
-                    ud.extra.patch2 = utils.deepCopy(it.patch2)
-                end
-                if it.patch3 then
-                    ud.extra.patch3 = utils.deepCopy(it.patch3)
-                end
-                if it.followShape8 then
-                    ud.extra.followShape8 = it.followShape8
-                    -- logger:inspect(ud.extra)
-                    logger:inspect(it.followShape8)
-                    local raw = shape8Dict[it.followShape8].v
-                    local partData = instance.dna.parts[it.attachTo]
-                    local growfactor = 1.5
-                    local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
-                        (partData.dims.sy or 1) * growfactor)
-
-
-                    ud.extra.vertices = vertices
-                    ud.extra.vertexCount = #vertices / 2
-                    -- logger:info('found a follo8')
-                    --  logger:inspect(ud.extra)
-                end
-                -- followShape8 = 'shapeA3.png',
-
-
-                --logger:info('texgisture to add:')
-            end
-
-            if it.subtype == 'connected-texture' then
-                --print('got some stuff todo')
-                -- print(it.attachTo)
-                local body = instance.parts[it.attachTo].body
-
-                -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
-                removeSimilarFixture(body, it)
-
-                local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
-                    { radius = 30 })
-                local ud = fixture:getUserData()
-                ud.extra = {
-                    attachTo = it.attachTo,
-                    OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
-                    dirty = true,                   -- because the rendered needs to pick this up.
-                    main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
-                    zOffset = it.zOffset or 0,
-                    nodes = {
-
-                    }
-
-                }
-                for j = 1, #it.jointLabels do
-                    local jointID = it.jointLabels[j]
-                    ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
-                    --print(instance.joints[jointID])
-                end
+                -- here we do stuff.
+                -- i think we should haev some kind of helper function that know depending on what the body tye is how we will add
+                -- sfiuxture or connected fixture etc..
             end
         end
     end
 end
 
-function lib.updateTextureGroupValue(instance, group, key, value)
-    for i = 1, #instance.textures do
-        local t = instance.textures[i]
-        if t.group == group and t.main then
-            t.main[key] = value
-            logger:info('setting', key, value)
-        end
-    end
-end
+-- function lib.addTextureFixturesFromInstance(instance)
+--     function removeSimilarFixture(body, it)
+--         local allFixtures = body:getFixtures()
+--         for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+--             local f = allFixtures[fi]
+--             local ud = f:getUserData()
+--             --  logger:inspect(ud)
+--             --if ud then
+--             --    print(ud.label, it.label, ud and ud.label == it.label, ud.extra.OMP == it.OMP)
+--             --end
+--             if ud and ud.extra.OMP == it.OMP then
+--                 --logger:info('destroying fixture')
+--                 fixtures.destroyFixture(f)
+--             end
+--         end
+--     end
 
-function lib.updateTextureGroupValueInRoot(instance, group, key, value)
-    for i = 1, #instance.textures do
-        local t = instance.textures[i]
-        if t.group == group then
-            t[key] = value
-            logger:info('setting', key, value)
-        end
-    end
-end
+--     for i = 1, #instance.textures do
+--         local it = instance.textures[i]
+--         --print(it.type, it.subtype)
+--         if it.type == 'sfixture' then
+--             if it.subtype == 'texfixture' then
+--                 local body = instance.parts[it.attachTo].body
+--                 removeSimilarFixture(body, it)
+--                 --print("body angle at texture creation:", body:getAngle())
+--                 local cx, cy, w, h = getCenterAndDimensions(body)
+--                 -- local localX, localY = body:getLocalPoint(wx, wy)
+--                 local growfactor = 1.1
+--                 local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+--                     { width = w * growfactor, height = h * growfactor })
+--                 local ud = fixture:getUserData()
+--                 ud.extra.OMP = it.OMP
+--                 ud.extra.dirty = true
+--                 ud.extra.main = utils.deepCopy(it.main)
+
+--                 ud.extra.zOffset = it.zOffset or 0
+--                 ud.extra.attachTo = it.attachTo
+--                 local partData = instance.dna.parts[it.attachTo]
+
+--                 -- todo we probably also need to flip the other ones (patch1..3) but not sure..
+--                 if partData.dims.sy ~= nil and partData.dims.sy < 0 then
+--                     ud.extra.main.fy = -1
+--                 end
+--                 if partData.dims.sx ~= nil and partData.dims.sx < 0 then
+--                     ud.extra.main.fx = -1
+--                 end
+
+--                 if it.patch1 then
+--                     ud.extra.patch1 = utils.deepCopy(it.patch1)
+--                 end
+--                 if it.patch2 then
+--                     ud.extra.patch2 = utils.deepCopy(it.patch2)
+--                 end
+--                 if it.patch3 then
+--                     ud.extra.patch3 = utils.deepCopy(it.patch3)
+--                 end
+--                 if it.followShape8 then
+--                     ud.extra.followShape8 = it.followShape8
+--                     -- logger:inspect(ud.extra)
+--                     --  logger:inspect(it.followShape8)
+--                     --print(it.followShape8)
+--                     local raw = shape8Dict[it.followShape8].v
+--                     local partData = instance.dna.parts[it.attachTo]
+--                     local growfactor = 1.5
+--                     local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
+--                         (partData.dims.sy or 1) * growfactor)
+
+
+--                     ud.extra.vertices = vertices
+--                     ud.extra.vertexCount = #vertices / 2
+--                     -- logger:info('found a follo8')
+--                     --  logger:inspect(ud.extra)
+--                 end
+--                 -- followShape8 = 'shapeA3.png',
+
+
+--                 --logger:info('texgisture to add:')
+--             end
+
+--             if it.subtype == 'connected-texture' then
+--                 --print('got some stuff todo')
+--                 -- print(it.attachTo)
+--                 local body = instance.parts[it.attachTo].body
+
+--                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
+--                 removeSimilarFixture(body, it)
+
+--                 local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+--                     { radius = 30 })
+--                 local ud = fixture:getUserData()
+--                 ud.extra = {
+--                     attachTo = it.attachTo,
+--                     OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
+--                     dirty = true,                   -- because the rendered needs to pick this up.
+--                     main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
+--                     zOffset = it.zOffset or 0,
+--                     nodes = {
+
+--                     }
+
+--                 }
+--                 for j = 1, #it.jointLabels do
+--                     local jointID = it.jointLabels[j]
+--                     -- print(jointID)
+--                     ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+--                     --print(instance.joints[jointID])
+--                 end
+--             end
+--         end
+--     end
+-- end
+
+-- function lib.updateTextureGroupValue(instance, group, key, value)
+--     for i = 1, #instance.textures do
+--         local t = instance.textures[i]
+--         if t.group == group and t.main then
+--             t.main[key] = value
+--             --logger:info('setting', key, value)
+--         end
+--     end
+-- end
+
+-- function lib.updateTextureGroupValueInRoot(instance, group, key, value)
+--     for i = 1, #instance.textures do
+--         local t = instance.textures[i]
+--         if t.group == group then
+--             t[key] = value
+--             -- logger:info('setting', key, value)
+--         end
+--     end
+-- end
 
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
@@ -2977,6 +3666,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
     -- 1. Add Torso Segments
+    logger:info('createCharacterFromExistingDNA', torsoSegments)
     for i = 1, torsoSegments do
         local partName = 'torso' .. i
         table.insert(ordered, partName)
@@ -2986,7 +3676,17 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             if not instance.dna.parts['torso-segment-template'] then
                 error("Missing 'torso-segment-template' in DNA for template: " .. template)
             end
+
             instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+
+            -- if we have multiple torso parts i want to remove the data that is about neck.
+            -- only the topmost torso may have that data.
+
+            -- if i ~= torsoSegments then
+            --     instance.dna.parts[partName].appearance['connected-skin'] = nil
+            --     print('removed unneeded nexk texture data from a torso segemnt')
+            -- end
+
             -- Optional: Modify dimensions/properties of specific segments here if needed
             -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
             --instance.dna.parts[partName].dims.w = i * 100
@@ -3055,9 +3755,11 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
 
     -- here we will build up the sfixtures we need.
+    --logger:info('calling defaultSetupTextures')
 
-    defaultSetupTextures(instance)
-    lib.addTextureFixturesFromInstance(instance)
+
+    lib.addTexturesFromInstance2(instance)
+    --logger:info('calling addTextureFixturesFromInstance')
     return instance
 end
 
@@ -3074,9 +3776,6 @@ function lib.createCharacter(template, x, y)
             textures = {},   -- here we will keep the data about what texture will go where (simple textures and connected textures)
             positioners = {} -- here we will have some lerp values describing how things are positioned..
         }
-
-
-
         return lib.createCharacterFromExistingDNA(instance, x, y)
     end
 end
@@ -4158,7 +4857,7 @@ function lib.buildWorld(data, world, cam)
         body:setAngle(bodyData.angle)
         body:setLinearVelocity(bodyData.linearVelocity[1], bodyData.linearVelocity[2])
         body:setAngularVelocity(bodyData.angularVelocity)
-        body:setFixedRotation(bodyData.fixedRotation)
+        body:setFixedRotation(bodyData.fixedRotation or false)
         body:setLinearDamping(bodyData.linearDamping or 0)
         body:setAngularDamping(bodyData.angularDamping or 0)
 
@@ -4511,29 +5210,26 @@ function lib.gatherSaveData(world, camera)
             local bodyFixtures = body:getFixtures()
             if #bodyFixtures >= 1 then
                 if #bodyFixtures >= 1 then
-                    local first = bodyFixtures[1]
-                    bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
-                    bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
-                    bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
-                    bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
-
-
                     -- local fixtures = fb:getFixtures()
                     -- local ff = fixtures[1]
-                    local firstNonUserdataFixture = bodyFixtures[1]
+                    local first = bodyFixtures[1]
+
                     for k = 1, #bodyFixtures do
                         local fixture = bodyFixtures[k]
                         if fixture:getUserData() == nil then
-                            firstNonUserdataFixture = fixture
+                            first = fixture
                             break
                         end
                     end
 
 
+                    bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
+                    bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
+                    bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
+                    bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
 
+                    bodyData.sharedFixtureData.sensor = first:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
 
-
-                    bodyData.sharedFixtureData.sensor = firstNonUserdataFixture:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?
                     local shape = first:getShape()
@@ -7186,15 +7882,20 @@ function lib.recreateThingFromBody(body, newSettings)
                 -- this is fine for all sort of editor made things,
                 -- todo specific positioning for mipo on behavors
                 -- but for mipos character we might just want to be very precise and dending on behaviors and tags and dedicated rules.
-
                 --local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
                 --local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
-                local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
-                local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
+                if (#thing.vertices == #newVertices) then -- this general case isn working when the amount of points change. (and im not sure if it wise otherwise)
+                    local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
+                    local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
 
-                local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-                abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
+                    local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                    abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
+                else
+                    local new_px, new_py = centerX, centerY
+                    local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                    abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, 0, 0))
+                end
             end
 
 
@@ -7253,11 +7954,14 @@ function lib.destroyBody(body)
         end
     end
     local bfixtures = body:getFixtures()
+    ---print(#bfixtures)
     for i = 1, #bfixtures do
-        local ud = bfixtures[i]:getUserData()
+        local f = bfixtures[i]
+        local ud = f:getUserData()
         if ud and ud.id then
-            registry.unregisterSFixture(ud.id)
-            bfixtures[i]:destroy()
+            fixtures.destroyFixture(f)
+            --registry.unregisterSFixture(ud.id)
+            --bfixtures[i]:destroy()
         end
     end
     registry.unregisterBody(thing.id)
@@ -8694,7 +9398,7 @@ function lib.drawSelectedSFixture()
 
 
 
-        if ud.subtype == 'texfixture' then
+        if ud.subtype == 'texfixture' or ud.extra.type == 'texfixture' then
             local oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -9811,7 +10515,12 @@ function lib.drawUpdateSelectedObjectUI()
                     function()
                         for i = 1, index do
                             nextRow()
-                            local prefix = (string.sub(myfixtures[i]:getUserData().subtype, 1, 3))
+                            logger:inspect(myfixtures[i]:getUserData())
+
+                            local subtype = myfixtures[i]:getUserData().subtype or myfixtures[i]:getUserData().extra
+                                .type
+
+                            local prefix = (string.sub(subtype, 1, 3))
                             local fixLabel = string.format("%s %s", prefix,
                                 string.sub(myfixtures[i]:getUserData().id, 1, 3))
                             local clicked, _, _, isHover = ui.button(x, y, 260, fixLabel)

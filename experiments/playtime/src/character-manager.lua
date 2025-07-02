@@ -49,6 +49,20 @@ function add(block, values)
     return block
 end
 
+function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
+    local p = instance.dna.parts[partName]
+    if p then
+        if p.appearance and p.appearance['skin'] then
+            local patch = optionalPatchName or 'main'
+            if p.appearance['skin'][patch] then
+                for k, v in pairs(values) do
+                    p.appearance['skin'][patch][k] = v
+                end
+            end
+        end
+    end
+end
+
 local shape8Dict = {
     ['shapeA1.png'] = {
         v = {
@@ -58,7 +72,6 @@ local shape8Dict = {
     ['shapeA2.png'] = {
         v = {
             11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
-
         }
     },
     ['shapeA3.png'] = {
@@ -145,32 +158,14 @@ local shape8Dict = {
             22.72, -239.92, 175.91, -101.68, 197.65, 11.35, 177.85, 219.53, 14.51, 260.62, -168.30, 210.32, -156.48, 12.37, -125.83, -105.07
         }
     },
-    ['feet2.png'] = {
-        v = {
-
-            -- 197.92951957406, -17.817718028013, 170.28347402696, 84.883981989375, 104.3382073697, 106.29365560207, -139.66342189896, 114.08328408959, -165.65174171676, -8.6379557618171, -123.63314042073, -45.112484801676, 86.784081767721, -100.15140769724, 155.71079120581, -103.47476376929
-
-
-            22.724588666593, -239.91966159884, 175.91013654, -101.67978777203, 197.65083381201, 11.351997784339, 177.84539019051, 219.53355732218, 14.507790801039, 260.6223497519, -168.29987466902, 210.31594772675, -156.47637293323, 12.365272224268, -125.83138609296, -105.07368014657
-
-        }
-    },
-
-    ['feet2r.png'] = {
-        v = {
-
-            -- 197.92951957406, -17.817718028013, 170.28347402696, 84.883981989375, 104.3382073697, 106.29365560207, -139.66342189896, 114.08328408959, -165.65174171676, -8.6379557618171, -123.63314042073, -45.112484801676, 86.784081767721, -100.15140769724, 155.71079120581, -103.47476376929
-
-            46.990907603994, -189.52773689109, 96.489192783945, -184.68643013375, 131.34012844459, 48.508703705155, 109.48859096573, 180.93295171947, 45.027594164554, 234.39907734869, -15.618229361652, 176.92515604219, -70.173442070241, 53.300130131955, -87.304763540911, -193.80518221938
-
-
-        }
-    },
-    ['feet6r.png'] = {
-        v = {
-            -26.163452363425, -287.93776875202, 45.977848996918, -180.33200394521, 110.43888273961, 42.412507041203, 116.65637069995, 166.59739225104, -6.9388089085194, 273.82186588688, -108.79936590647, 268.31434765346, -110.23416300478, 47.203933468003, -102.10981258194, -181.61278889148
-        }
-    }
+    ['feet2r.png'] = { v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
+    ['feet6r.png'] = { v = { -26, -287, 45, -180, 110, 42, 116, 166, -6, 273, -108, 268, -110, 47, -102, -181 } },
+    ['feet5xr.png'] = { v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
+    ['feet3xr.png'] = { v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
+    ['feet7r.png'] = { v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
+    ['feet8r.png'] = { v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
+    ['hand3r.png'] = { v = { -57, -210, 21, -158, 26, -71, 37, 188, -57, 233, -117, 188, -138, -74, -130, -155 } },
+    ['feet7xr.png'] = { v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
 }
 
 local dna = {
@@ -205,7 +200,7 @@ local dna = {
                         patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
                         patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     },
-                    ['bodyhair'] = { main = initBlock('borsthaar4') }
+                    ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) }
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
@@ -305,7 +300,7 @@ local dna = {
             ['lfoot'] = {
                 appearance = {
                     ['skin'] = {
-                        main = add(initBlock('feet6r'), { dir = -1 }),
+                        main = add(initBlock(), { dir = -1 }),
                     },
 
                 },
@@ -317,7 +312,7 @@ local dna = {
             ['rfoot'] = {
                 appearance = {
                     ['skin'] = {
-                        main = add(initBlock('feet6r'), { dir = 1 }),
+                        main = add(initBlock(), { dir = 1 }),
                     },
                 },
                 dims = { w = 80, h = 150, sx = -.5, sy = 1 },
@@ -331,23 +326,23 @@ local dna = {
             ['lhand'] = {
                 appearance = {
                     ['skin'] = {
-                        main = add(initBlock('feet2r'), { dir = -1 }),
+                        main = add(initBlock(), { dir = -1 }),
                     },
                 },
                 dims = { w = 40, h = 40, sx = .5, sy = .9 },
                 shape = 'shape8',
-                shape8URL = 'feet2r.png',
+                shape8URL = 'hand3r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             ['rhand'] = {
                 appearance = {
                     ['skin'] = {
-                        main = add(initBlock('feet2r'), {}),
+                        main = add(initBlock(), {}),
                     },
                 },
                 dims = { w = 40, h = 40, sx = -.5, sy = .9 },
                 shape = 'shape8',
-                shape8URL = 'feet2r.png',
+                shape8URL = 'hand3r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODo same kind of weirdness for the hands!
@@ -370,9 +365,9 @@ function lib.updateShape8(instance, partName, newShape8Name)
     lib.rebuildFromCreation(instance, {})
 
     -- Update all visuals linked to that shape
-    lib.updateTextureGroupValue(instance, partName .. 'Skin', 'bgURL', newShape8Name .. '.png')
-    lib.updateTextureGroupValue(instance, partName .. 'Skin', 'fgURL', newShape8Name .. '-mask.png')
-    lib.updateTextureGroupValueInRoot(instance, partName .. 'Hair', 'followShape8', newShape8Name .. '.png')
+    --lib.updateTextureGroupValue(instance, partName .. 'Skin', 'bgURL', newShape8Name .. '.png')
+    --lib.updateTextureGroupValue(instance, partName .. 'Skin', 'fgURL', newShape8Name .. '-mask.png')
+    --lib.updateTextureGroupValueInRoot(instance, partName .. 'Hair', 'followShape8', newShape8Name .. '.png')
 
     -- Recreate the actual texture fixtures
     --   lib.addTextureFixturesFromInstance(instance)
@@ -565,6 +560,7 @@ local function getOwnOffset(partName, guy)
     end
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
+            print(parts[partName].shape8URL)
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
@@ -611,7 +607,7 @@ local function getOwnOffset(partName, guy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
             -- todo like the grow offsets this too should be parametrized
-            local footOffset = 0
+            local footOffset = -50
             return vertices[(index * 2) - 1], -vertices[(index * 2)] + footOffset
         else
             return 0, part.dims.h / 2
@@ -635,7 +631,10 @@ local function getOwnOffset(partName, guy)
             local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
             --logger:info(part.dims.sx, part.dims.sy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
-            return vertices[(index * 2) - 1], -vertices[(index * 2)]
+
+            local handOffset = 50
+            return vertices[(index * 2) - 1] + handOffset * sign(part.dims.sx), -vertices[(index * 2)]
+            -- return vertices[(index * 2) - 1], -vertices[(index * 2)]
         else
             return 0, part.dims.h / 2
         end
@@ -1114,6 +1113,18 @@ function lib.addTexturesFromInstance2(instance)
                 --
                 -- maybe i can jst remove all texture fixtures from the body right now?
                 -- and then reattahc new ones below.
+
+                local allFixtures = relevant.body:getFixtures()
+                for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+                    local f = allFixtures[fi]
+                    local ud = f:getUserData()
+                    if ud then
+                        if (ud.subtype == 'connected-texture' or ud.subtype == 'texfixture') then
+                            fixtures.destroyFixture(f)
+                        end
+                    end
+                end
+
                 for k2, v2 in pairs(v.appearance) do
                     --print(k2)
                     if k2 == 'skin' then
@@ -1233,137 +1244,137 @@ function lib.addTexturesFromInstance2(instance)
     end
 end
 
-function lib.addTextureFixturesFromInstance(instance)
-    function removeSimilarFixture(body, it)
-        local allFixtures = body:getFixtures()
-        for fi = #allFixtures, 1, -1 do -- backwards to safely remove
-            local f = allFixtures[fi]
-            local ud = f:getUserData()
-            --  logger:inspect(ud)
-            --if ud then
-            --    print(ud.label, it.label, ud and ud.label == it.label, ud.extra.OMP == it.OMP)
-            --end
-            if ud and ud.extra.OMP == it.OMP then
-                --logger:info('destroying fixture')
-                fixtures.destroyFixture(f)
-            end
-        end
-    end
+-- function lib.addTextureFixturesFromInstance(instance)
+--     function removeSimilarFixture(body, it)
+--         local allFixtures = body:getFixtures()
+--         for fi = #allFixtures, 1, -1 do -- backwards to safely remove
+--             local f = allFixtures[fi]
+--             local ud = f:getUserData()
+--             --  logger:inspect(ud)
+--             --if ud then
+--             --    print(ud.label, it.label, ud and ud.label == it.label, ud.extra.OMP == it.OMP)
+--             --end
+--             if ud and ud.extra.OMP == it.OMP then
+--                 --logger:info('destroying fixture')
+--                 fixtures.destroyFixture(f)
+--             end
+--         end
+--     end
 
-    for i = 1, #instance.textures do
-        local it = instance.textures[i]
-        --print(it.type, it.subtype)
-        if it.type == 'sfixture' then
-            if it.subtype == 'texfixture' then
-                local body = instance.parts[it.attachTo].body
-                removeSimilarFixture(body, it)
-                --print("body angle at texture creation:", body:getAngle())
-                local cx, cy, w, h = getCenterAndDimensions(body)
-                -- local localX, localY = body:getLocalPoint(wx, wy)
-                local growfactor = 1.1
-                local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
-                    { width = w * growfactor, height = h * growfactor })
-                local ud = fixture:getUserData()
-                ud.extra.OMP = it.OMP
-                ud.extra.dirty = true
-                ud.extra.main = utils.deepCopy(it.main)
+--     for i = 1, #instance.textures do
+--         local it = instance.textures[i]
+--         --print(it.type, it.subtype)
+--         if it.type == 'sfixture' then
+--             if it.subtype == 'texfixture' then
+--                 local body = instance.parts[it.attachTo].body
+--                 removeSimilarFixture(body, it)
+--                 --print("body angle at texture creation:", body:getAngle())
+--                 local cx, cy, w, h = getCenterAndDimensions(body)
+--                 -- local localX, localY = body:getLocalPoint(wx, wy)
+--                 local growfactor = 1.1
+--                 local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+--                     { width = w * growfactor, height = h * growfactor })
+--                 local ud = fixture:getUserData()
+--                 ud.extra.OMP = it.OMP
+--                 ud.extra.dirty = true
+--                 ud.extra.main = utils.deepCopy(it.main)
 
-                ud.extra.zOffset = it.zOffset or 0
-                ud.extra.attachTo = it.attachTo
-                local partData = instance.dna.parts[it.attachTo]
+--                 ud.extra.zOffset = it.zOffset or 0
+--                 ud.extra.attachTo = it.attachTo
+--                 local partData = instance.dna.parts[it.attachTo]
 
-                -- todo we probably also need to flip the other ones (patch1..3) but not sure..
-                if partData.dims.sy ~= nil and partData.dims.sy < 0 then
-                    ud.extra.main.fy = -1
-                end
-                if partData.dims.sx ~= nil and partData.dims.sx < 0 then
-                    ud.extra.main.fx = -1
-                end
+--                 -- todo we probably also need to flip the other ones (patch1..3) but not sure..
+--                 if partData.dims.sy ~= nil and partData.dims.sy < 0 then
+--                     ud.extra.main.fy = -1
+--                 end
+--                 if partData.dims.sx ~= nil and partData.dims.sx < 0 then
+--                     ud.extra.main.fx = -1
+--                 end
 
-                if it.patch1 then
-                    ud.extra.patch1 = utils.deepCopy(it.patch1)
-                end
-                if it.patch2 then
-                    ud.extra.patch2 = utils.deepCopy(it.patch2)
-                end
-                if it.patch3 then
-                    ud.extra.patch3 = utils.deepCopy(it.patch3)
-                end
-                if it.followShape8 then
-                    ud.extra.followShape8 = it.followShape8
-                    -- logger:inspect(ud.extra)
-                    --  logger:inspect(it.followShape8)
-                    --print(it.followShape8)
-                    local raw = shape8Dict[it.followShape8].v
-                    local partData = instance.dna.parts[it.attachTo]
-                    local growfactor = 1.5
-                    local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
-                        (partData.dims.sy or 1) * growfactor)
-
-
-                    ud.extra.vertices = vertices
-                    ud.extra.vertexCount = #vertices / 2
-                    -- logger:info('found a follo8')
-                    --  logger:inspect(ud.extra)
-                end
-                -- followShape8 = 'shapeA3.png',
+--                 if it.patch1 then
+--                     ud.extra.patch1 = utils.deepCopy(it.patch1)
+--                 end
+--                 if it.patch2 then
+--                     ud.extra.patch2 = utils.deepCopy(it.patch2)
+--                 end
+--                 if it.patch3 then
+--                     ud.extra.patch3 = utils.deepCopy(it.patch3)
+--                 end
+--                 if it.followShape8 then
+--                     ud.extra.followShape8 = it.followShape8
+--                     -- logger:inspect(ud.extra)
+--                     --  logger:inspect(it.followShape8)
+--                     --print(it.followShape8)
+--                     local raw = shape8Dict[it.followShape8].v
+--                     local partData = instance.dna.parts[it.attachTo]
+--                     local growfactor = 1.5
+--                     local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
+--                         (partData.dims.sy or 1) * growfactor)
 
 
-                --logger:info('texgisture to add:')
-            end
+--                     ud.extra.vertices = vertices
+--                     ud.extra.vertexCount = #vertices / 2
+--                     -- logger:info('found a follo8')
+--                     --  logger:inspect(ud.extra)
+--                 end
+--                 -- followShape8 = 'shapeA3.png',
 
-            if it.subtype == 'connected-texture' then
-                --print('got some stuff todo')
-                -- print(it.attachTo)
-                local body = instance.parts[it.attachTo].body
 
-                -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
-                removeSimilarFixture(body, it)
+--                 --logger:info('texgisture to add:')
+--             end
 
-                local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
-                    { radius = 30 })
-                local ud = fixture:getUserData()
-                ud.extra = {
-                    attachTo = it.attachTo,
-                    OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
-                    dirty = true,                   -- because the rendered needs to pick this up.
-                    main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
-                    zOffset = it.zOffset or 0,
-                    nodes = {
+--             if it.subtype == 'connected-texture' then
+--                 --print('got some stuff todo')
+--                 -- print(it.attachTo)
+--                 local body = instance.parts[it.attachTo].body
 
-                    }
+--                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
+--                 removeSimilarFixture(body, it)
 
-                }
-                for j = 1, #it.jointLabels do
-                    local jointID = it.jointLabels[j]
-                    -- print(jointID)
-                    ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
-                    --print(instance.joints[jointID])
-                end
-            end
-        end
-    end
-end
+--                 local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+--                     { radius = 30 })
+--                 local ud = fixture:getUserData()
+--                 ud.extra = {
+--                     attachTo = it.attachTo,
+--                     OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
+--                     dirty = true,                   -- because the rendered needs to pick this up.
+--                     main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
+--                     zOffset = it.zOffset or 0,
+--                     nodes = {
 
-function lib.updateTextureGroupValue(instance, group, key, value)
-    for i = 1, #instance.textures do
-        local t = instance.textures[i]
-        if t.group == group and t.main then
-            t.main[key] = value
-            --logger:info('setting', key, value)
-        end
-    end
-end
+--                     }
 
-function lib.updateTextureGroupValueInRoot(instance, group, key, value)
-    for i = 1, #instance.textures do
-        local t = instance.textures[i]
-        if t.group == group then
-            t[key] = value
-            -- logger:info('setting', key, value)
-        end
-    end
-end
+--                 }
+--                 for j = 1, #it.jointLabels do
+--                     local jointID = it.jointLabels[j]
+--                     -- print(jointID)
+--                     ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+--                     --print(instance.joints[jointID])
+--                 end
+--             end
+--         end
+--     end
+-- end
+
+-- function lib.updateTextureGroupValue(instance, group, key, value)
+--     for i = 1, #instance.textures do
+--         local t = instance.textures[i]
+--         if t.group == group and t.main then
+--             t.main[key] = value
+--             --logger:info('setting', key, value)
+--         end
+--     end
+-- end
+
+-- function lib.updateTextureGroupValueInRoot(instance, group, key, value)
+--     for i = 1, #instance.textures do
+--         local t = instance.textures[i]
+--         if t.group == group then
+--             t[key] = value
+--             -- logger:info('setting', key, value)
+--         end
+--     end
+-- end
 
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
@@ -1375,6 +1386,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
     -- 1. Add Torso Segments
+    logger:info('createCharacterFromExistingDNA', torsoSegments)
     for i = 1, torsoSegments do
         local partName = 'torso' .. i
         table.insert(ordered, partName)

@@ -903,6 +903,7 @@ function lib.drawTexturedWorld(world)
                 if extra.main and extra.main.fgURL then
                     local img = getLoveImage('textures/' .. extra.main.fgURL)
                     if img then
+                        print(extra.main.wmul)
                         local mesh = createTexturedTriangleStrip(img)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
                         local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)

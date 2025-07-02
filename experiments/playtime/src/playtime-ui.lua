@@ -2288,7 +2288,7 @@ function lib.drawUpdateSelectedObjectUI()
                     function()
                         for i = 1, index do
                             nextRow()
-                            logger:inspect(myfixtures[i]:getUserData())
+                            --logger:inspect(myfixtures[i]:getUserData())
 
                             local subtype = myfixtures[i]:getUserData().subtype or myfixtures[i]:getUserData().extra
                                 .type
