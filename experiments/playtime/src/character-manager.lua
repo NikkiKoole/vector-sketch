@@ -12,6 +12,12 @@ local fixtures = require 'src.fixtures'
 -- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
 
+-- do lerping positioners (arm beginning, leg beginnnig, ear)
+-- OMP images as limb hair (and chesthair)
+-- do EARS
+-- do FACE PARTS
+
+
 local function getBoundingBox(poly)
     assert(#poly % 2 == 0, "Polygon must have even number of coordinates")
 

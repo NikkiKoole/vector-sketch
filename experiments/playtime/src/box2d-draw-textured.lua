@@ -750,7 +750,8 @@ function lib.drawTexturedWorld(world)
                         local new_y = p1[2] + length * math.sin(angle)
                         return new_x, new_y
                     end
-                    -- todo parameter this
+
+                    -- todo parameterize this
                     local growLength = 20
                     points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
                     points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
