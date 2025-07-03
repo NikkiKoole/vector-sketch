@@ -675,13 +675,14 @@ local function getOwnOffset(partName, guy)
         local part = parts[partName]
         if part.shape == 'shape8' then
             local raw = shape8Dict[part.shape8URL].v
+            local rr = recenterPoints(raw)
+            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
 
-            local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
             --logger:info(part.dims.sx, part.dims.sy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
-            local handOffset = 50
-            return vertices[(index * 2) - 1] + handOffset * sign(part.dims.sx), -vertices[(index * 2)]
+            --local handOffset = 50
+            return -vertices[(index * 2) - 1], -vertices[(index * 2)]
             -- return vertices[(index * 2) - 1], -vertices[(index * 2)]
         else
             return 0, part.dims.h / 2
@@ -1182,7 +1183,7 @@ function lib.addTexturesFromInstance2(instance)
                         local cx, cy, w, h = getCenterAndDimensions(body)
 
 
-                        -- WORK IN PROGRESS
+                        -- WORK IN PROGRESS, this is correct now
                         local documentSize = nil
                         if v.shape8URL then
                             if shape8Dict[v.shape8URL] then
