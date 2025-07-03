@@ -587,6 +587,7 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
     local img = img
     _mesh:setTexture(img)
 
+    -- i believe sx and sy will just always be 1
     love.graphics.draw(_mesh, x, y, r, sx, sy)
 end
 
@@ -797,8 +798,8 @@ function lib.drawTexturedWorld(world)
         if (vertices and img) then
             local body = texfixture:getBody()
             local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-            local sx = ww / imgw
-            local sy = hh / imgh
+            local sx = 1 --ww / imgw
+            local sy = 1 --hh / imgh
             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
             local r, g, b, a = lib.hexToColor(hex)
             love.graphics.setColor(r, g, b, a)

@@ -13,7 +13,7 @@ local fixtures = require 'src.fixtures'
 -- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
 
 -- do lerping positioners (arm beginning, leg beginnnig, ear)
--- OMP images as limb hair (and chesthair)
+-- OMP images as limb hair (and chesthair) -- maybe we should just know which images have a mask and tehy are OMP
 -- do EARS
 -- do FACE PARTS
 
@@ -93,107 +93,30 @@ function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
 end
 
 local shape8Dict = {
-    ['shapeA1.png'] = {
-        v = {
-            1.61, -272.46, 112.13, -133.04, 154.81, 76.67, 123.57, 229.44, 1.21, 273.51, -134.54, 225.43, -145.28, 73.64, -91.99, -132.77
-        }
-    },
-    ['shapeA2.png'] = {
-        v = {
-            11.62, -224.06, 60.89, -144.08, 59.89, -20.57, 133.96, 135.02, 4.30, 224.06, -133.96, 131.49, -51.71, -20.97, -39.30, -147.16,
-        }
-    },
-    ['shapeA3.png'] = {
-        v = {
-            -6.62, -189.25, 135.88, -69.67, 160.54, 45.82, 123.85, 154.90, -6.37, 189.25, -92.40, 153.92, -164.61, 53.37, -155.10, -67.94
-        }
-    },
-    ['shapeA4.png'] = {
-        v = {
-            7.91, -194.17, 133.01, -56.57, 126.54, 45.82, 101.32, 190.94, -6.99, 195.81, -129.67, 185.05, -134.73, 40.26, -110.48, -66.30
-
-        }
-    },
-
-
-    ['shapes1.png'] = {
-        v = {
-            10.53, -244.02, 133.00, -56.57, 135.72, 48.44, 124.93, 221.11, -0.43, 231.23, -128.36, 215.22, -138.66, 41.58, -134.09, -62.36
-
-        }
-    },
-    ['shapes2.png'] = {
-        v = {
-            -3.37, -223.15, 74.58, -78.83, 89.81, 51.22, 104.06, 196.07, -0.43, 231.23, -92.19, 202.70, -94.15, 54.10, -61.75, -80.45
-        }
-    },
-    ['shapes3.png'] = {
-        v = {
-            -3.37, -206.98, 132.81, -137.06, 148.04, 12.40, 110.53, 186.37, -6.90, 216.67, -97.04, 192.99, -149.14, 7.194, -141.01, -141.91
-        }
-    },
-    ['shapes4.png'] = {
-        v = {
-            0.52, -123.04, 164.04, -98.02, 148.04, 12.40, 157.384, 112.19, -1.05, 117.121, -149.75, 105.159, -149.14, 7.19, -168.33, -87.25
-        }
-    },
-    ['shapes5.png'] = {
-        v = {
-            0.52, -162.14, 74.68, -132.92, 78.23, -4.34, 73.61, 148.49, -2.44, 156.21, -81.33, 142.85, -84.921, 1.609, -87.35, -126.353,
-
-        }
-    },
-    ['shapes6.png'] = {
-        v = {
-            3.17, -178.04, 77.33, -118.34, 92.815, -0.36, 93.491, 143.19, -2.44, 160.19, -85.314, 141.53, -92.87, 0.28, -67.478, -119.727
-        }
-    },
-    ['shapes7.png'] = {
-        v = {
-            -3.26, -452.74, 127.787, -245.570, 305.58, 19.37, 247.03, 384.48, -2.448, 451.92, -276.14, 378.42, -283.70, 15.63, -207.86, -238.17
-
-        }
-    },
-    ['shapes8.png'] = {
-        v = {
-            3.90, -154.02, 271.18, -307.71, 341.43, 26.54, 89.31, 298.45, -9.62, 332.43, -166.22, 299.56, -302.83, 34.76, -238.93, -319.43
-
-        }
-    },
-    ['shapes9.png'] = {
-        v = {
-            -0.56, -236.64, 233.22, -191.59, 198.53, 24.31, 174.16, 206.90, -18.55, 216.32, -226.51, 205.78, -233.61, 19.13, -234.46, -198.85
-
-
-        }
-    },
-    ['shapes10.png'] = {
-        v = {
-            4.96, -407.86, 166.94, -232.10, 231.67, 24.31, 141.02, 344.99, -16.71, 418.85, -186.00, 332.82, -233.61, 19.13, -182.91, -233.83
-        }
-    },
-    ['shapes11.png'] = {
-        v = {
-            4.96, -451.24, 110.80, -405.62, 195.94, 6.45, 306.89, 408.78, 13.91, 436.71, -277.86, 417.03, -205.54, -3.84, -114.01, -417.56
-        }
-    },
-    ['shapes12.png'] = {
-        v = {
-            17.22, -129.91, 208.91, -76.93, 249.91, 11.35, 191.60, 109.52, 9.01, 142.36, -228.81, 103.06, -247.24, -1.39, -175.34, -91.32
-        }
-    },
-    ['shapes13.png'] = {
-        v = {
-            22.72, -239.92, 175.91, -101.68, 197.65, 11.35, 177.85, 219.53, 14.51, 260.62, -168.30, 210.32, -156.48, 12.37, -125.83, -105.07
-        }
-    },
+    ['shapeA1.png'] = { v = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
+    ['shapeA2.png'] = { v = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
+    ['shapeA3.png'] = { v = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
+    ['shapeA4.png'] = { v = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
+    ['shapes1.png'] = { v = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
+    ['shapes2.png'] = { v = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
+    ['shapes3.png'] = { v = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
+    ['shapes4.png'] = { v = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
+    ['shapes5.png'] = { v = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
+    ['shapes6.png'] = { v = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
+    ['shapes7.png'] = { v = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
+    ['shapes8.png'] = { v = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
+    ['shapes9.png'] = { v = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
+    ['shapes10.png'] = { v = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
+    ['shapes11.png'] = { v = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
+    ['shapes12.png'] = { v = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
+    ['shapes13.png'] = { v = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
     ['feet2r.png'] = { d = { 261, 475 }, v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
     ['feet6r.png'] = { d = { 293, 612 }, v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
     ['feet5xr.png'] = { d = { 174, 621 }, v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
     ['feet3xr.png'] = { d = { 231, 505 }, v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
     ['feet7r.png'] = { d = { 300, 546 }, v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
     ['feet8r.png'] = { d = { 303, 465 }, v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { d = { 294, 489 }, v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 }, v2 = { -57, -210, 21, -158, 26, -71, 37, 188, -57, 233, -117, 188, -138, -74, -130, -155 } },
+    ['hand3r.png'] = { d = { 294, 489 }, v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
     ['feet7xr.png'] = { d = { 216, 410 }, v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
 }
 
@@ -377,7 +300,17 @@ local dna = {
             -- TODo same kind of weirdness for the hands!
             -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            ['lear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = -math.pi / 2 },
+            ['lear'] = {
+                ['skin'] = {
+                    main = initBlock('ear12'),
+                    --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
+                    --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                },
+                dims = { w = 100, h = 300 },
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
+                stanceAngle = -math.pi / 2
+            },
             ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
         },
 
@@ -428,15 +361,8 @@ local function recenterPoints(vertices)
         table.insert(result, newY)
     end
     return result
-    -- local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-    -- local w2 = (brx - tlx) / 2
-    -- local h2 = (bry - tly) / 2
-    -- for i = 1, #points do
-    --     points[i][1] = points[i][1] - (tlx + w2)
-    --     points[i][2] = points[i][2] - (tly + h2)
-    -- end
-    -- return points
 end
+
 local function makeTransformedVertices(vertices, scaleX, scaleY)
     local result = {}
 
@@ -655,14 +581,8 @@ local function getOwnOffset(partName, guy)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
-            --logger:info(part.shape8URL)
-            -- todo like the grow offsets this too should be parametrized
-            local footOffset = 0
-
-            -- TAKE NOTE THIS IS RECENTERED!!!
+            --local footOffset = 0
             return -vertices[(index * 2) - 1], -vertices[(index * 2)]
-            --logger:info(vertices[(index * 2) - 1] - (yoff * part.dims.sx), -vertices[(index * 2)] + (xoff * part.dims.sy))
-            --return vertices[(index * 2) - 1] - (yoff * part.dims.sx), -vertices[(index * 2)] + (xoff * part.dims.sy)
         else
             return 0, part.dims.h / 2
         end
@@ -684,12 +604,10 @@ local function getOwnOffset(partName, guy)
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
 
-            --logger:info(part.dims.sx, part.dims.sy)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
             --local handOffset = 50
             return -vertices[(index * 2) - 1], -vertices[(index * 2)]
-            -- return vertices[(index * 2) - 1], -vertices[(index * 2)]
         else
             return 0, part.dims.h / 2
         end
@@ -1189,7 +1107,7 @@ function lib.addTexturesFromInstance2(instance)
                         local cx, cy, w, h = getCenterAndDimensions(body)
 
 
-                        -- WORK IN PROGRESS, this is correct now
+                        -- WORK IN PROGRESS, this is correct now for feet and hands....
                         local documentSize = nil
                         if v.shape8URL then
                             if shape8Dict[v.shape8URL] then
@@ -1240,7 +1158,7 @@ function lib.addTexturesFromInstance2(instance)
                     elseif k2 == 'bodyhair' then
                         local body = relevant.body
                         local cx, cy, w, h = getCenterAndDimensions(body)
-                        local growfactor = 1.1
+                        local growfactor = 1.2
                         local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
                             { width = w * growfactor, height = h * growfactor })
                         local ud = fixture:getUserData()
@@ -1250,7 +1168,7 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.main = utils.deepCopy(v2.main)
 
                         local raw = shape8Dict[v.shape8URL].v
-                        local growfactor = 1.5
+                        --  local growfactor = 1.1
                         local vertices = makeTransformedVertices(raw, (v.dims.sx or 1) * growfactor,
                             (v.dims.sy or 1) * growfactor)
 
