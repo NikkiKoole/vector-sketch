@@ -250,7 +250,7 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
-    --box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
 
     script.call('draw')
 
@@ -402,12 +402,14 @@ function love.keypressed(key)
             -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
         if key == 'f' then
-            --'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r', 'feet7xr', 'feet8r',
-            local urls = { 'hand3r' }
+            --,
+            local urls = { 'hand3r', 'feet8r', 'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r',
+                'feet7xr' }
+            --local urls = { 'feet7xr', 'hand3r' }
             local urlIndex = math.ceil(math.random() * #urls)
             local url = urls[urlIndex]
             local creation = humanoidInstance.dna.creation
-            local s = 2 + math.random() * 2
+            local s = 1 + math.random() * 1
 
             CharacterManager.updatePart('lfoot',
                 { shape8URL = url .. '.png', sy = s, sx = s },

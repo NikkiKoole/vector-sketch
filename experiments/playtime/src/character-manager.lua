@@ -11,8 +11,6 @@ local fixtures = require 'src.fixtures'
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
--- the shape98 values in the dict describe a shape, (made in meta file) but it doesntdescribe
--- how that is offsetted from the texture.
 
 local function getBoundingBox(poly)
     assert(#poly % 2 == 0, "Polygon must have even number of coordinates")
@@ -183,14 +181,14 @@ local shape8Dict = {
             22.72, -239.92, 175.91, -101.68, 197.65, 11.35, 177.85, 219.53, 14.51, 260.62, -168.30, 210.32, -156.48, 12.37, -125.83, -105.07
         }
     },
-    ['feet2r.png'] = { v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
+    ['feet2r.png'] = { d = { 261, 475 }, v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
     ['feet6r.png'] = { d = { 293, 612 }, v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
-    ['feet5xr.png'] = { v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
-    ['feet3xr.png'] = { v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
-    ['feet7r.png'] = { v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
-    ['feet8r.png'] = { v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { d = { 294, 489 }, v = { -57, -210, 21, -158, 26, -71, 37, 188, -57, 233, -117, 188, -138, -74, -130, -155 } },
-    ['feet7xr.png'] = { v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
+    ['feet5xr.png'] = { d = { 174, 621 }, v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
+    ['feet3xr.png'] = { d = { 231, 505 }, v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
+    ['feet7r.png'] = { d = { 300, 546 }, v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
+    ['feet8r.png'] = { d = { 303, 465 }, v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
+    ['hand3r.png'] = { d = { 294, 489 }, v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 }, v2 = { -57, -210, 21, -158, 26, -71, 37, 188, -57, 233, -117, 188, -138, -74, -130, -155 } },
+    ['feet7xr.png'] = { d = { 216, 410 }, v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
 }
 
 local dna = {
@@ -412,7 +410,27 @@ local function getCenterAndDimensions(body)
     return cx, cy, w, h
 end
 
-
+local function recenterPoints(vertices)
+    local bbox = getBoundingBox(vertices)
+    local result = {}
+    for i = 1, #vertices, 2 do
+        local x = vertices[i]
+        local y = vertices[i + 1]
+        local newX = x - (bbox.x + bbox.width / 2)
+        local newY = y - (bbox.y + bbox.height / 2)
+        table.insert(result, newX)
+        table.insert(result, newY)
+    end
+    return result
+    -- local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+    -- local w2 = (brx - tlx) / 2
+    -- local h2 = (bry - tly) / 2
+    -- for i = 1, #points do
+    --     points[i][1] = points[i][1] - (tlx + w2)
+    --     points[i][2] = points[i][2] - (tly + h2)
+    -- end
+    -- return points
+end
 local function makeTransformedVertices(vertices, scaleX, scaleY)
     local result = {}
 
@@ -627,37 +645,18 @@ local function getOwnOffset(partName, guy)
         local part = parts[partName]
         if part.shape == 'shape8' then
             local raw = shape8Dict[part.shape8URL].v
-
-            local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
+            local rr = recenterPoints(raw)
+            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
-            logger:info(part.shape8URL)
+            --logger:info(part.shape8URL)
             -- todo like the grow offsets this too should be parametrized
             local footOffset = 0
-            local d = shape8Dict[part.shape8URL].d
-            --logger:inspect(d)
-            local bbox = getBoundingBox(raw)
-            logger:inspect(bbox)
-            local dx, dy = 0, 0
-            local xoff, yoff = 0, 0
-            if bbox and d then
-                dx = d[1] - bbox.width
-                dy = d[2] - bbox.height
-                xoff = -(d[1] / 2) - bbox.x
-                yoff = -(d[2] / 2) - bbox.y
-            end
-            --   -1*(293/2)
-            --logger:inspect(d)
 
-            --logger:info(xoff, yoff)
-            --print(xoff, yoff)
-            local sxSign = sign(part.dims.sx)
-            --print(sign(part.dims.sx), sign(part.dims.sy))
-            --return 100, 0
-            --print(dx, dy)
-            --
-            -- return vertices[(index * 2) - 1], -vertices[(index * 2)]
-            return vertices[(index * 2) - 1] - (yoff * part.dims.sx), -vertices[(index * 2)] + (xoff * part.dims.sy)
+            -- TAKE NOTE THIS IS RECENTERED!!!
+            return -vertices[(index * 2) - 1], -vertices[(index * 2)]
+            --logger:info(vertices[(index * 2) - 1] - (yoff * part.dims.sx), -vertices[(index * 2)] + (xoff * part.dims.sy))
+            --return vertices[(index * 2) - 1] - (yoff * part.dims.sx), -vertices[(index * 2)] + (xoff * part.dims.sy)
         else
             return 0, part.dims.h / 2
         end
@@ -921,7 +920,7 @@ local function makePart(partName, instance, settings)
 
     local ownOffsetX, ownOffsetY = getOwnOffset(partName, instance)
     local xangle = getAngleOffset(partName, instance)
-
+    -- print(partName, xangle)
     -- Rotate own offset into parent space
     local rotatedOwnX, rotatedOwnY = mathutils.rotatePoint(ownOffsetX, ownOffsetY, 0, 0, prevA + xangle)
 
@@ -1182,28 +1181,28 @@ function lib.addTexturesFromInstance2(instance)
 
                         local cx, cy, w, h = getCenterAndDimensions(body)
 
-                        local inDocumentOffset = nil
-                        -- if v.shape8URL then
-                        --     if shape8Dict[v.shape8URL] then
-                        --         if shape8Dict[v.shape8URL].d then
-                        --             inDocumentOffset = {}
 
-                        --             inDocumentOffset.w = shape8Dict[v.shape8URL].d[1] * math.abs(v.dims.sx)
-                        --             inDocumentOffset.h = shape8Dict[v.shape8URL].d[2] * math.abs(v.dims.sy)
-                        --             inDocumentOffset.x = (inDocumentOffset.w - w) * (v.dims.sx < 0 and -1 or 1)
-                        --             inDocumentOffset.y = (inDocumentOffset.h - h) --* (v.dims.sx < 0 and -1 or 1)
-                        --         end
-                        --     end
-                        -- end
-                        logger:inspect(inDocumentOffset)
-                        --print(w, h)
+                        -- WORK IN PROGRESS
+                        local documentSize = nil
+                        if v.shape8URL then
+                            if shape8Dict[v.shape8URL] then
+                                if shape8Dict[v.shape8URL].d then
+                                    local bbox = getBoundingBox(shape8Dict[v.shape8URL].v)
+                                    -- logger:inspect(bbox)
+                                    documentSize = {}
+                                    documentSize.w = shape8Dict[v.shape8URL].d[1] * math.abs(v.dims.sx)
+                                    documentSize.h = shape8Dict[v.shape8URL].d[2] * math.abs(v.dims.sy)
+                                end
+                            end
+                        end
+
                         local growfactor = 1.0
-                        -- here we can offset the texture (needed for some shapes..)
+
                         local fixture
-                        if (inDocumentOffset) then
-                            fixture = fixtures.createSFixture(body, inDocumentOffset.x, inDocumentOffset.y,
+                        if (documentSize) then
+                            fixture = fixtures.createSFixture(body, 0, 0,
                                 'texfixture',
-                                { width = inDocumentOffset.w, height = inDocumentOffset.h })
+                                { width = documentSize.w, height = documentSize.h })
                         else
                             fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
                                 { width = w * growfactor, height = h * growfactor })
@@ -1252,7 +1251,7 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.vertexCount = #vertices / 2
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
                         local body = relevant.body
-                        print(k)
+                        --print(k)
                         --print(k, v2.endNode)
                         -- depending on the start and end node. build the jointlabels
                         local torsoSegments = instance.dna.creation.torsoSegments or 1
@@ -1303,7 +1302,7 @@ function lib.addTexturesFromInstance2(instance)
                             table.insert(jointLabels, previous .. '->head')
                             --logger:inspect(jointLabels)
 
-                            print('this is about texturing the neck')
+                            --print('this is about texturing the neck')
                         end
                         for j = 1, #jointLabels do
                             local jointID = jointLabels[j]
