@@ -17,25 +17,6 @@ local imageCache = {}
 local shrinkFactor = 1
 
 
--- local shaderCode = love.filesystem.read("shaders/offset-halftone.glsl")
--- local halttoneShader = love.graphics.newShader(shaderCode)
-
-
--- --local shaderCode2   = love.filesystem.read("shaders/chromasep.glsl")
--- local chromaShader  = love.graphics.newShader [[
--- extern vec2 direction;
--- vec4 effect(vec4 color, Image texture, vec2 tc, vec2 _)
--- {
---   return color * vec4(
---     Texel(texture, tc - direction).r,
---     Texel(texture, tc).g,
---     Texel(texture, tc + direction).b,
---     1.0);
--- }]]
-
-local moonshine     = require 'moonshine'
-local effect        = moonshine(moonshine.effects.shadow)
-
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
 end
