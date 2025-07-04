@@ -120,8 +120,12 @@ local shape8Dict = {
     ['feet7xr.png'] = { d = { 216, 410 }, v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
     ['earx1r.png'] = { d = { 312, 416 }, v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
     ['earx2r.png'] = { d = { 354, 420 }, v = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
-    ['earx3r.png'] = { d = { 369, 339 }, v = { -112, -121, -31, -51, 45, 27, 123, 91, -38, 88, -78, 82, -99, 22, -113, -55 } },
+    ['earx3r.png'] = { d = { 369, 339 }, v = { 111, -117, 116, -51, 103, 19, 86, 78, 4, 82, -100, 80, -43, 18, 27, -45 } },
     ['earx4r.png'] = { d = { 306, 483 }, v = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
+    ['earx5r.png'] = { d = { 240, 549 }, v = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
+    ['earx6r.png'] = { d = { 240, 519 }, v = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
+    ['earx7r.png'] = { d = { 204, 474 }, v = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
+    ['earx8r.png'] = { d = { 402, 270 }, v = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
 
 }
 
@@ -1153,13 +1157,13 @@ function lib.addTexturesFromInstance2(instance)
                             end
                         end
 
-                        local growfactor = 1.0
+                        local growfactor = 1.1
 
                         local fixture
                         if (documentSize) then
                             fixture = fixtures.createSFixture(body, 0, 0,
                                 'texfixture',
-                                { width = documentSize.w, height = documentSize.h })
+                                { width = documentSize.w * growfactor, height = documentSize.h * growfactor })
                         else
                             fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
                                 { width = w * growfactor, height = h * growfactor })

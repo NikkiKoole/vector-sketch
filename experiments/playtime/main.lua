@@ -403,7 +403,15 @@ function love.keypressed(key)
             -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
         if key == 'e' then
-            local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r' }
+            local bgHex = '000000ff'
+            local fgHex = randomHexColor()
+            local pHex = randomHexColor()
+            CharacterManager.updateSkinOfPart(humanoidInstance, 'lear',
+                { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+            CharacterManager.updateSkinOfPart(humanoidInstance, 'rear',
+                { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+
+            local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r', 'earx5r', 'earx6r', 'earx7r', 'earx8r' }
             --local urls = { 'earx1r', 'earx2r' }
             local urlIndex = math.ceil(math.random() * #urls)
             local url = urls[urlIndex]
