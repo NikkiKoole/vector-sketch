@@ -415,6 +415,7 @@ function love.keypressed(key)
             --local urls = { 'earx1r', 'earx2r' }
             local urlIndex = math.ceil(math.random() * #urls)
             local url = urls[urlIndex]
+            print(url)
             local creation = humanoidInstance.dna.creation
             local s = 1 + math.random() * 1
             local sy = love.math.random()
@@ -470,12 +471,22 @@ function love.keypressed(key)
             local count = creation.torsoSegments
             local s = 1 + math.random() * 1
 
+
+
             for i = 1, count do
                 CharacterManager.updatePart('torso' .. i,
                     { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
                     humanoidInstance)
                 --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
             end
+
+
+            local s = 1 + math.random() * 1
+            local urlIndex = math.ceil(math.random() * #urls)
+            local url = urls[urlIndex]
+            CharacterManager.updatePart('head',
+                { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+                humanoidInstance)
 
             CharacterManager.rebuildFromCreation(humanoidInstance,
                 { torsoSegments = count, isPotatoHead = not creation.isPotatoHead })

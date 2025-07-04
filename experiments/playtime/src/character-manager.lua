@@ -16,7 +16,7 @@ local fixtures = require 'src.fixtures'
 -- OMP images as limb hair (and chesthair) -- maybe we should just know which images have a mask and tehy are OMP
 -- do EARS
 -- do FACE PARTS
-
+-- do trace hair
 
 local function getBoundingBox(poly)
     assert(#poly % 2 == 0, "Polygon must have even number of coordinates")
@@ -161,7 +161,12 @@ local dna = {
                         patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
                         patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     },
-                    ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) }
+                    ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) },
+                    ['haircut'] = {
+                        startIndex = 6,
+                        endIndex = 2,
+                        main = initBlock('hair7'),
+                    }
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
@@ -186,7 +191,12 @@ local dna = {
                         patch1 = add(initBlock('patch1'), { tx = 0.3, ty = 0.3 }),
                         patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     },
-                    ['bodyhair'] = { main = initBlock('borsthaar4') }
+                    ['bodyhair'] = { main = initBlock('borsthaar4') },
+                    ['haircut'] = {
+                        startIndex = 6,
+                        endIndex = 2,
+                        main = initBlock('hair6'),
+                    }
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
                 shape = 'shape8',
@@ -1268,6 +1278,42 @@ function lib.addTexturesFromInstance2(instance)
                         for j = 1, #jointLabels do
                             local jointID = jointLabels[j]
                             ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+                        end
+                    elseif k2 == 'haircut' then
+                        local rightPlaceForHaircut = false
+                        if instance.dna.creation.isPotatoHead and k == 'torso1' then
+                            rightPlaceForHaircut = true
+                        end
+                        if not instance.dna.creation.isPotatoHead and k == 'head' then
+                            rightPlaceForHaircut = true
+                        end
+                        --print(k)
+
+                        -- if instance.dna.creation.isPotatoHead and k ~= 'torso1' then
+                        --     return
+                        -- end
+                        -- if not instance.dna.creation.isPotatoHead and k ~= 'head' then
+                        --     return
+                        -- end
+                        if rightPlaceForHaircut then
+                            local body = relevant.body
+
+
+                            local fixture = fixtures.createSFixture(body, 0, 0, 'trace-vertices',
+                                { radius = 30, width = 100, height = 100 })
+                            local ud = fixture:getUserData()
+                            ud.extra.OMP = false --it.OMP
+                            ud.extra.zOffset = 40
+                            ud.extra.dirty = true
+                            ud.extra.main = utils.deepCopy(v2.main)
+                            ud.extra.width = love.math.random() * 500 --v2.width or 100
+                            ud.extra.startIndex = v2.startIndex
+                            ud.extra.endIndex = v2.endIndex
+
+                            if v.dims.sy < 0 then
+                                ud.extra.startIndex = v2.startIndex + 4
+                                ud.extra.endIndex = v2.endIndex + 4
+                            end
                         end
                     end
                 end
