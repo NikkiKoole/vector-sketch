@@ -84,8 +84,8 @@ state.world = {
     mouseDamping = 0.5,
     speedMultiplier = 1.0,
     softbodies = {},
-    playWithSoftbodies = false
-
+    playWithSoftbodies = false,
+    showTextures = true,
 }
 
 state.physicsWorld = nil

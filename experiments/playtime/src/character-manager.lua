@@ -93,23 +93,23 @@ function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
 end
 
 local shape8Dict = {
-    ['shapeA1.png'] = { v = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
-    ['shapeA2.png'] = { v = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
-    ['shapeA3.png'] = { v = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
-    ['shapeA4.png'] = { v = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
-    ['shapes1.png'] = { v = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
-    ['shapes2.png'] = { v = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
-    ['shapes3.png'] = { v = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
-    ['shapes4.png'] = { v = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
-    ['shapes5.png'] = { v = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
-    ['shapes6.png'] = { v = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
-    ['shapes7.png'] = { v = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
-    ['shapes8.png'] = { v = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
-    ['shapes9.png'] = { v = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
-    ['shapes10.png'] = { v = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
-    ['shapes11.png'] = { v = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
-    ['shapes12.png'] = { v = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
-    ['shapes13.png'] = { v = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
+    ['shapeA1.png'] = { d = { 339, 560 }, v = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
+    ['shapeA2.png'] = { d = { 289, 468 }, v = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
+    ['shapeA3.png'] = { d = { 370, 422 }, v = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
+    ['shapeA4.png'] = { d = { 308, 414 }, v = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
+    ['shapes1.png'] = { d = { 296, 495 }, v = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
+    ['shapes2.png'] = { d = { 252, 461 }, v = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
+    ['shapes3.png'] = { d = { 324, 442 }, v = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
+    ['shapes4.png'] = { d = { 364, 266 }, v = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
+    ['shapes5.png'] = { d = { 194, 338 }, v = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
+    ['shapes6.png'] = { d = { 250, 384 }, v = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
+    ['shapes7.png'] = { d = { 722, 929 }, v = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
+    ['shapes8.png'] = { d = { 788, 708 }, v = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
+    ['shapes9.png'] = { d = { 520, 468 }, v = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
+    ['shapes10.png'] = { d = { 520, 856 }, v = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
+    ['shapes11.png'] = { d = { 652, 932 }, v = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
+    ['shapes12.png'] = { d = { 558, 323 }, v = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
+    ['shapes13.png'] = { d = { 486, 556 }, v = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
     ['feet2r.png'] = { d = { 261, 475 }, v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
     ['feet6r.png'] = { d = { 293, 612 }, v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
     ['feet5xr.png'] = { d = { 174, 621 }, v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
@@ -118,13 +118,14 @@ local shape8Dict = {
     ['feet8r.png'] = { d = { 303, 465 }, v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
     ['hand3r.png'] = { d = { 294, 489 }, v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
     ['feet7xr.png'] = { d = { 216, 410 }, v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
+    ['earx1r.png'] = { d = { 312, 416 }, v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } }
 }
 
 local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 5,
+            neckSegments = 0,
             torsoSegments = 1
         },
 
@@ -134,7 +135,7 @@ local dna = {
         -- bodyhair, = an overlay that assumes the shape8 url to be present, it will follow that
         -- connected-skin = a texture that will be drawn over a few connectd bodyparts
         -- connected-hair = an overlay that assumes a few parts to be there too.
-
+        -- todo trace-hair, a texture that follows a few vertex indicises within 1 shape.
         parts = {
             ['torso-segment-template'] = {
                 appearance = {
@@ -172,6 +173,7 @@ local dna = {
             ['head'] = {
                 appearance = {
                     ['skin'] = {
+                        zOffset = 2,
                         main = initBlock(),
                         patch1 = add(initBlock('patch1'), { tx = 0.3, ty = 0.3 }),
                         patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
@@ -281,7 +283,7 @@ local dna = {
                         main = add(initBlock(), { dir = -1 }),
                     },
                 },
-                dims = { w = 40, h = 40, sx = .5, sy = .9 },
+                dims = { w = 40, h = 40, sx = 1, sy = 1 },
                 shape = 'shape8',
                 shape8URL = 'hand3r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
@@ -292,7 +294,7 @@ local dna = {
                         main = add(initBlock(), {}),
                     },
                 },
-                dims = { w = 40, h = 40, sx = -.5, sy = .9 },
+                dims = { w = 40, h = 40, sx = -1, sy = 1 },
                 shape = 'shape8',
                 shape8URL = 'hand3r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
@@ -301,17 +303,37 @@ local dna = {
             -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = {
-                ['skin'] = {
-                    main = initBlock('ear12'),
-                    --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
-                    --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                appearance = {
+                    ['skin'] = {
+                        zOffset = -1,
+                        main = add(initBlock(), {}),
+                        --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
+                        --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                    }
                 },
-                dims = { w = 100, h = 300 },
-                shape = 'capsule',
+                dims = { w = 100, h = 300, sx = -.5, sy = 1 },
+
+                shape = 'shape8',
+                shape8URL = 'earx1r.png',
                 j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
-                stanceAngle = -math.pi / 2
+                stanceAngle = -math.pi / 2 + math.pi / 5
             },
-            ['rear'] = { dims = { w = 10, h = 100 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } }, stanceAngle = math.pi / 2 }
+            ['rear'] = {
+                appearance = {
+                    ['skin'] = {
+                        zOffset = -1,
+                        main = add(initBlock(), {}),
+                        --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
+                        --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                    }
+                },
+                dims = { w = 10, h = 100, sx = .5, sy = 1 },
+
+                shape = 'shape8',
+                shape8URL = 'earx1r.png',
+                j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
+                stanceAngle = math.pi / 2 - math.pi / 5
+            }
         },
 
     }
@@ -557,11 +579,25 @@ local function getOwnOffset(partName, guy)
             return 0, -parts[partName].dims.h / 2
         end
     end
-    if partName == 'lear' then
-        return 0, -parts.lear.dims.h / 2
-    end
-    if partName == 'rear' then
-        return 0, -parts.rear.dims.h / 2
+    -- if partName == 'lear' then
+    --     return 0, -parts.lear.dims.h / 2
+    -- end
+    -- if partName == 'rear' then
+    --     return 0, -parts.rear.dims.h / 2
+    -- end
+    if partName == 'lear' or partName == 'rear' then
+        local part = parts[partName]
+        if part.shape == 'shape8' then
+            local raw = shape8Dict[part.shape8URL].v
+            local rr = recenterPoints(raw)
+            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
+            local index = getTransformedIndex(5, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
+
+            --local footOffset = 0
+            return -vertices[(index * 2) - 1], -vertices[(index * 2)]
+        else
+            return 0, -part.dims.h / 2
+        end
     end
     -- downward
     if partName == 'luleg' then
@@ -603,7 +639,6 @@ local function getOwnOffset(partName, guy)
             local raw = shape8Dict[part.shape8URL].v
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
-
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
             --local handOffset = 50
@@ -1077,7 +1112,7 @@ function lib.addTexturesFromInstance2(instance)
     -- end
     for k, v in pairs(instance.dna.parts) do
         if v.appearance then
-            --logger:info(k .. ' has appearance')
+            logger:info(k .. ' has appearance')
             local relevant = instance.parts[k]
             if (relevant) then
                 --logger:info('relevant real thing found ' .. k)
@@ -1099,7 +1134,7 @@ function lib.addTexturesFromInstance2(instance)
                 end
 
                 for k2, v2 in pairs(v.appearance) do
-                    --print(k2)
+                    print(k, k2)
                     if k2 == 'skin' then
                         local body = relevant.body
 
@@ -1138,7 +1173,7 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.main = utils.deepCopy(v2.main)
                         ud.extra.main.bgURL = v.shape8URL
                         ud.extra.main.fgURL = v.shape8URL:gsub('.png', '-mask.png')
-
+                        ud.extra.zOffset = v2.zOffset or 0
                         if v.dims.sy ~= nil and v.dims.sy < 0 then
                             ud.extra.main.fy = -1
                         end

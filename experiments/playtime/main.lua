@@ -250,8 +250,9 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
-    box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
-
+    if state.world.showTextures then
+        box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+    end
     script.call('draw')
 
     editorRenderer.renderActiveEditorThings()

@@ -907,6 +907,10 @@ function lib.drawWorldSettingsUI()
         ui.label(x, y, registry.print())
         nextRow()
 
+        if ui.button(x, y, ROW_WIDTH, 'textures') then
+            state.world.showTextures = not state.world.showTextures
+        end
+        nextRow()
         if ui.button(x, y, ROW_WIDTH, state.world.profiling and 'profiling' or 'profile') then
             if state.world.profiling then
                 ProFi:stop()
