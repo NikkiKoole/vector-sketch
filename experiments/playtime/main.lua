@@ -402,6 +402,22 @@ function love.keypressed(key)
             -- end
             -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
         end
+        if key == 'e' then
+            local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r' }
+            --local urls = { 'earx1r', 'earx2r' }
+            local urlIndex = math.ceil(math.random() * #urls)
+            local url = urls[urlIndex]
+            local creation = humanoidInstance.dna.creation
+            local s = 1 + math.random() * 1
+            local sy = love.math.random()
+            CharacterManager.updatePart('lear',
+                { shape8URL = url .. '.png', sy = s, sx = s * sy },
+                humanoidInstance)
+            CharacterManager.updatePart('rear',
+                { shape8URL = url .. '.png', sy = s, sx = -s * sy },
+                humanoidInstance)
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+        end
         if key == 'f' then
             --,
             local urls = { 'hand3r', 'feet8r', 'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r',
@@ -445,9 +461,10 @@ function love.keypressed(key)
             --print(inspect(creation))
             local count = creation.torsoSegments
             local s = 1 + math.random() * 1
+
             for i = 1, count do
                 CharacterManager.updatePart('torso' .. i,
-                    { shape8URL = url .. '.png', sy = s, sx = s },
+                    { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
                     humanoidInstance)
                 --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
             end

@@ -118,7 +118,11 @@ local shape8Dict = {
     ['feet8r.png'] = { d = { 303, 465 }, v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
     ['hand3r.png'] = { d = { 294, 489 }, v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
     ['feet7xr.png'] = { d = { 216, 410 }, v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
-    ['earx1r.png'] = { d = { 312, 416 }, v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } }
+    ['earx1r.png'] = { d = { 312, 416 }, v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
+    ['earx2r.png'] = { d = { 354, 420 }, v = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
+    ['earx3r.png'] = { d = { 369, 339 }, v = { -112, -121, -31, -51, 45, 27, 123, 91, -38, 88, -78, 82, -99, 22, -113, -55 } },
+    ['earx4r.png'] = { d = { 306, 483 }, v = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
+
 }
 
 local dna = {
@@ -311,7 +315,7 @@ local dna = {
                         --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     }
                 },
-                dims = { w = 100, h = 300, sx = -.5, sy = 1 },
+                dims = { w = 100, h = 300, sx = .5, sy = 1 },
 
                 shape = 'shape8',
                 shape8URL = 'earx1r.png',
@@ -327,7 +331,7 @@ local dna = {
                         --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     }
                 },
-                dims = { w = 10, h = 100, sx = .5, sy = 1 },
+                dims = { w = 10, h = 100, sx = -.5, sy = 1 },
 
                 shape = 'shape8',
                 shape8URL = 'earx1r.png',
@@ -557,7 +561,7 @@ local function getOwnOffset(partName, guy)
     end
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
-            print(parts[partName].shape8URL)
+            --  print(parts[partName].shape8URL)
             local raw = shape8Dict[parts[partName].shape8URL].v
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
@@ -1103,16 +1107,9 @@ function lib.rebuildFromCreation(instance, newCreation)
 end
 
 function lib.addTexturesFromInstance2(instance)
-    -- for k, v in pairs(instance.parts) do
-    --     local part = v
-    --     print(inspect(v))
-    --     if part.appearance then
-    --         print(k)
-    --     end
-    -- end
     for k, v in pairs(instance.dna.parts) do
         if v.appearance then
-            logger:info(k .. ' has appearance')
+            --logger:info(k .. ' has appearance')
             local relevant = instance.parts[k]
             if (relevant) then
                 --logger:info('relevant real thing found ' .. k)
@@ -1134,7 +1131,7 @@ function lib.addTexturesFromInstance2(instance)
                 end
 
                 for k2, v2 in pairs(v.appearance) do
-                    print(k, k2)
+                    -- print(k, k2)
                     if k2 == 'skin' then
                         local body = relevant.body
 
@@ -1277,138 +1274,6 @@ function lib.addTexturesFromInstance2(instance)
         end
     end
 end
-
--- function lib.addTextureFixturesFromInstance(instance)
---     function removeSimilarFixture(body, it)
---         local allFixtures = body:getFixtures()
---         for fi = #allFixtures, 1, -1 do -- backwards to safely remove
---             local f = allFixtures[fi]
---             local ud = f:getUserData()
---             --  logger:inspect(ud)
---             --if ud then
---             --    print(ud.label, it.label, ud and ud.label == it.label, ud.extra.OMP == it.OMP)
---             --end
---             if ud and ud.extra.OMP == it.OMP then
---                 --logger:info('destroying fixture')
---                 fixtures.destroyFixture(f)
---             end
---         end
---     end
-
---     for i = 1, #instance.textures do
---         local it = instance.textures[i]
---         --print(it.type, it.subtype)
---         if it.type == 'sfixture' then
---             if it.subtype == 'texfixture' then
---                 local body = instance.parts[it.attachTo].body
---                 removeSimilarFixture(body, it)
---                 --print("body angle at texture creation:", body:getAngle())
---                 local cx, cy, w, h = getCenterAndDimensions(body)
---                 -- local localX, localY = body:getLocalPoint(wx, wy)
---                 local growfactor = 1.1
---                 local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
---                     { width = w * growfactor, height = h * growfactor })
---                 local ud = fixture:getUserData()
---                 ud.extra.OMP = it.OMP
---                 ud.extra.dirty = true
---                 ud.extra.main = utils.deepCopy(it.main)
-
---                 ud.extra.zOffset = it.zOffset or 0
---                 ud.extra.attachTo = it.attachTo
---                 local partData = instance.dna.parts[it.attachTo]
-
---                 -- todo we probably also need to flip the other ones (patch1..3) but not sure..
---                 if partData.dims.sy ~= nil and partData.dims.sy < 0 then
---                     ud.extra.main.fy = -1
---                 end
---                 if partData.dims.sx ~= nil and partData.dims.sx < 0 then
---                     ud.extra.main.fx = -1
---                 end
-
---                 if it.patch1 then
---                     ud.extra.patch1 = utils.deepCopy(it.patch1)
---                 end
---                 if it.patch2 then
---                     ud.extra.patch2 = utils.deepCopy(it.patch2)
---                 end
---                 if it.patch3 then
---                     ud.extra.patch3 = utils.deepCopy(it.patch3)
---                 end
---                 if it.followShape8 then
---                     ud.extra.followShape8 = it.followShape8
---                     -- logger:inspect(ud.extra)
---                     --  logger:inspect(it.followShape8)
---                     --print(it.followShape8)
---                     local raw = shape8Dict[it.followShape8].v
---                     local partData = instance.dna.parts[it.attachTo]
---                     local growfactor = 1.5
---                     local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor,
---                         (partData.dims.sy or 1) * growfactor)
-
-
---                     ud.extra.vertices = vertices
---                     ud.extra.vertexCount = #vertices / 2
---                     -- logger:info('found a follo8')
---                     --  logger:inspect(ud.extra)
---                 end
---                 -- followShape8 = 'shapeA3.png',
-
-
---                 --logger:info('texgisture to add:')
---             end
-
---             if it.subtype == 'connected-texture' then
---                 --print('got some stuff todo')
---                 -- print(it.attachTo)
---                 local body = instance.parts[it.attachTo].body
-
---                 -- REMOVE OLD CONNECTED-TEXTURE FIXTURES FIRST
---                 removeSimilarFixture(body, it)
-
---                 local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
---                     { radius = 30 })
---                 local ud = fixture:getUserData()
---                 ud.extra = {
---                     attachTo = it.attachTo,
---                     OMP = it.OMP,                   -- we will just alays use OUTLINE/ MASK / PATTERN TEXTURES for characters.
---                     dirty = true,                   -- because the rendered needs to pick this up.
---                     main = utils.deepCopy(it.main), -- this is still missing a lot but that will be defaulted
---                     zOffset = it.zOffset or 0,
---                     nodes = {
-
---                     }
-
---                 }
---                 for j = 1, #it.jointLabels do
---                     local jointID = it.jointLabels[j]
---                     -- print(jointID)
---                     ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
---                     --print(instance.joints[jointID])
---                 end
---             end
---         end
---     end
--- end
-
--- function lib.updateTextureGroupValue(instance, group, key, value)
---     for i = 1, #instance.textures do
---         local t = instance.textures[i]
---         if t.group == group and t.main then
---             t.main[key] = value
---             --logger:info('setting', key, value)
---         end
---     end
--- end
-
--- function lib.updateTextureGroupValueInRoot(instance, group, key, value)
---     for i = 1, #instance.textures do
---         local t = instance.textures[i]
---         if t.group == group then
---             t[key] = value
---             -- logger:info('setting', key, value)
---         end
---     end
--- end
 
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
