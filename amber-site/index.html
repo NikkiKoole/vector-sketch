@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Nikki Koole mipo" />
+        <meta charset="utf-8" />
+        <title>Amber Site</title>
+    </head>
+    <link
+        rel="preload"
+        href="/assets/fonts/ModernDOS9x16.ttf"
+        as="font"
+        type="font/ttf"
+        crossorigin
+    />
+    <style>
+        :root {
+            --amber: #ffb000;
+            --amber-darker: #cc8a00;
+        }
+
+        @font-face {
+            font-family: "dos"; /* any name you like */
+            src: url("/assets/fonts/ModernDOS9x16.ttf") format("truetype");
+            font-weight: 400; /* match the file’s weight */
+            font-style: normal; /* match the file’s style  */
+            font-display: swap; /* shows fallback text until the font loads */
+            -webkit-font-smoothing: none;
+            image-rendering: pixelated;
+        }
+        main {
+            width: 720px; /* 80 chars × 9 px */
+            margin: 0 auto;
+            padding: 1ch 0;
+        }
+        body {
+            background-color: #000;
+            color: var(--amber-darker);
+            color:;
+            font-family: dos, monospace;
+
+            font-size: 2em;
+            margin: 20;
+            padding: 0;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            opacity: 0.9;
+            z-index: 9999;
+            background: radial-gradient(
+                circle at center,
+                transparent 60%,
+                rgba(0, 0, 0, 0.6) 100%
+            );
+        }
+        h1,
+        h2,
+        h3 {
+            color: var(--amber-darker);
+        }
+        h1 {
+            color: black;
+            background-color: var(--amber);
+            padding-left: 0.25em;
+        }
+        a {
+            font-size: 1.2em;
+            color: var(--amber);
+        }
+        /* ── Scan-lines ────────────────────────────── */
+        body::before {
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.15) 0 1px,
+                /* dark line */ transparent 1px 3px /* 2-pixel gap */
+            );
+            mix-blend-mode: multiply; /* darken across content */
+        }
+
+        /* base window */
+        .panel {
+            /* …everything you already have… */
+            position: relative;
+            padding: 0.25em 0.5em;
+            margin-top: 0.5em;
+            white-space: pre; /* keep ASCII spacing */
+            line-height: 1;
+            color: var(--amber-darker);
+            background: transparent; /* let CRT scan-lines show through */
+            font-family: dos;
+            border: 2px solid var(--amber-darker);
+        }
+
+        /* outer border (second line) */
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: -6px; /* move 4 px outward (2 px gap)  */
+            border: 2px solid var(--amber-darker);
+            pointer-events: none; /* don’t block mouse clicks      */
+        }
+
+        article {
+            color: black;
+            background: var(--amber-darker);
+        }
+
+        img {
+            margin-top: 0.5em;
+            background-color: var(--amber-darker);
+            -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+            filter: sepia(100%);
+        }
+        /* soft glow on bright glyphs */
+    </style>
+
+    <main>
+        <h1>* ☺ Lorum Ipsum</h1>
+        <p>
+            IN THE YEAR 1986 THE GLOW OF AMBER PIXELS LIT DUSTY BASEMENTS AND
+            BOLD IDEAS, ECHOING KEYS CLACKED LIKE DRUMS AS CATHODE RAYS WROTE
+            BRIGHT DREAMS IN ORANGE. EVERY BLINKING CURSOR WAS A PROMISE: PRESS
+            ANY KEY AND THE FUTURE WOULD RESPOND. BACK TO THAT MIDNIGHT-TYPE,
+            COMPILE, RUN, AND SEE LOST WORLDS UNFOLD AGAIN.
+            <a href="https://mipolai.com/apps/puppetmaker.html"
+                >check puppetmaker</a
+            >
+        </p>
+        <p>This is a sample paragraph.</p>
+        <p></p>
+        <p>Single-line frame set (light weight)</p>
+
+        <div class="panel">qweqwerw <em>ereqwr</em></div>
+
+        <div class="panel">290e wjwqdnoqwdeno</div>
+        <div class="panel">♥ ♦ ♣ ♠</div>
+        <img src="https://www.w3schools.com/css/pineapple.jpg" />
+        <img src="https://mipolai.com/assets/images/doggie.png" />
+        <h1>* MIPO PUPPETMAKER</h1>
+    </main>
+</html>

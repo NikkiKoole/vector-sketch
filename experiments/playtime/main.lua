@@ -411,7 +411,8 @@ function love.keypressed(key)
             CharacterManager.updateSkinOfPart(humanoidInstance, 'rear',
                 { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
 
-            local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r', 'earx5r', 'earx6r', 'earx7r', 'earx8r' }
+            local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r', 'earx5r', 'earx6r', 'earx7r', 'earx8r', 'earx9r',
+                'earx10r', 'earx11r', 'earx12r', 'earx13r', 'earx14r', 'earx15r', 'earx16r' }
             --local urls = { 'earx1r', 'earx2r' }
             local urlIndex = math.ceil(math.random() * #urls)
             local url = urls[urlIndex]
@@ -420,10 +421,10 @@ function love.keypressed(key)
             local s = 1 + math.random() * 1
             local sy = love.math.random()
             CharacterManager.updatePart('lear',
-                { shape8URL = url .. '.png', sy = s, sx = s * sy },
+                { shape8URL = url .. '.png', sy = s, sx = -s * sy },
                 humanoidInstance)
             CharacterManager.updatePart('rear',
-                { shape8URL = url .. '.png', sy = s, sx = -s * sy },
+                { shape8URL = url .. '.png', sy = s, sx = s * sy },
                 humanoidInstance)
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
@@ -458,6 +459,28 @@ function love.keypressed(key)
             print(url)
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
+
+        if key == 'b' then
+            local bgHex = randomHexColor()
+            local fgHex = randomHexColor()
+            local pHex = randomHexColor()
+
+
+            local urls = { 'borsthaar1', 'borsthaar2', 'borsthaar3', 'borsthaar4', 'borsthaar5', 'borsthaar6',
+                'borsthaar7' }
+            local urlIndex = math.ceil(math.random() * #urls)
+            local url = urls[urlIndex]
+
+            local creation = humanoidInstance.dna.creation
+            local count = creation.torsoSegments
+            print(url)
+            for i = 1, count do
+                CharacterManager.updateBodyhairOfPart(humanoidInstance, 'torso' .. i,
+                    { bgURL = url .. '.png', fgURL = url .. '-mask.png', bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+            end
+            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+        end
+
         if key == 'x' then
             local bgColor = '000000ff'
             local fgColor = randomHexColor()
