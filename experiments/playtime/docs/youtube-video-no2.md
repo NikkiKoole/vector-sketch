@@ -462,3 +462,184 @@ Textures & OMP	7	Tech + visuals
 Softbodies & Recording	8	Bonus tools
 Mipo characters again	9	Motivation & tool evolution
 Puppetmaker in the editor	10	Finalé, resolution
+
+
+----- chatgpt2 :
+
+Hi, today I want to show you a tool I’m building—and how I got there.
+
+It all started with this old app I made: the Puppetmaker.
+
+The Mipo Puppetmaker Tool—it’s a mouthful.
+I call my characters Mipos, so now you know.
+
+You can make—I think you can make—great little characters in there. They do look kind of fantastic. You can mix and match, and vary lots of details.
+Hand-drawn, they are. Every part is hand-drawn. That’s very important to me.
+
+Because children—or, well, anyone—will hopefully at some point just throw aside the iPad, grab a piece of paper, and start drawing.
+It’s much better than all this screen stuff.
+
+Anyway, you have these characters. They’re physics-based. But… there’s just not a lot for them to do.
+You can drag them around, stack them on top of each other, let winegums fall from the sky—
+(whispers) I can’t remember why—
+Make them do handstands…
+And that’s it, really.
+
+It feels like they should be able to explore, right?
+You want them to have worlds to see, places to visit, weird contraptions to suffer and enjoy.
+Vehicles, trees, buildings—all that stuff.
+
+So at some point, I figured:
+I need to make another app.
+The next app.
+
+And it needs to be a world for them to explore.
+If I remember correctly, there were going to be lots of rooms, and an overworld.
+And it’s not just a world.
+It would be… an endless world.
+
+So I made it like a procedural thingie that generated an endless hilly—or mountainous—landscape.
+
+I can’t remember why exactly, but I also figured your main character needed to be on a bike.
+So they could cycle down the mountain.
+(cut to Albert Hofmann LSD illustration)
+
+And then I got stuck. Really stuck.
+
+I wanted to add enormous cows and other strange stuff to these boring hills…
+But everything was a pain to configure.
+You had to think about geometric shapes and joints and write it all out in code.
+Preferably correctly.
+Because the cycle was: write some code, run the app, cycle down the hill, see your result…
+And repeat that until it was good.
+
+And that loop was so slow.
+It was just a massive pain. A big headache.
+
+I ended up shelving the project. Probably because of that.
+I was stuck.
+
+So that’s how I came to the idea of needing an editor.
+A drawing program.
+A place where you can quickly draw shapes, drag things around, and attach them to each other.
+Copy and paste components. Play with all the physics properties.
+Save and load little projects.
+
+It’s a simple insight, but you know, when you’re doing the wrong thing, it’s—well, this felt like the right one.
+
+At the beginning of developing this new tool, I was focusing on hooking up the Box2D API.
+Adding all the types of bodies, all the types of joints.
+Enabling most of the physics properties—stuff you’d normally write in code—but now with buttons on screen.
+
+It made me—it was fun. It’s fun to play with.
+Add some shapes, see them fall and bounce.
+
+But next to geometric shapes… I’m kind of a sloppy guy, right? I like hand-drawn stuff. Crooked stuff.
+Things that are off and not perfectly rectangular.
+Like the opposite of geometric perfection.
+
+So I added this thing where you can just draw a shape and it will become a physics body.
+
+And yeah, now you’re able to make nice little levels, really.
+
+The next step was scripting.
+
+Now that you don’t have to write code for joints and shapes anymore, you can focus on logic.
+Writing a script for a level.
+
+It’s also a nice place to experiment with features—without having to change the main engine.
+Just write a separate script and play around.
+
+For example:
+
+Buoyancy
+
+Elastic behaviors
+
+Platforms
+
+Angry birds and pigs
+
+Planets with their own gravity
+
+It’s just a fun place to mess around.
+
+Right now it’s one script per level or room.
+I’m not sure yet if there’ll be a project-wide script too.
+We’ll see.
+
+Okay, but it still all looks like green math shapes.
+Obviously I want textures. Pencil drawings. Stuff that feels alive.
+
+In Box2D there is no texture—just bodies and fixtures.
+So I made my own texture system.
+
+Each texture uses what I call OMP: Outline, Mask, Pattern.
+
+Outline is like the hand-drawn edge, messy and nice.
+
+Mask defines the area the texture lives in.
+
+Pattern is the fill—your scribbles, hatches, ink, dirt.
+
+Then I made different texture fixture types:
+
+Tex-Fixture – fills a single body
+
+Connected Texture – shares a texture across linked bodies, like ropes or limbs
+
+Trace-Vertices – spreads over a few points on one shape, great for hair
+
+Tile Texture – tiled stuff, like backdrops or floors
+
+Patches – little floating blobs you can drop anywhere. Stickers. Graffiti. Clothing bits.
+
+👉 [FIGURE OUT IF THERE’S A GOOD VISUAL EXAMPLE TO SHOW FOR EACH]
+
+So now we get something that doesn’t just look like test geometry.
+It looks like a weird dirty cartoon.
+
+Some other small things I added:
+
+Softbodies – jelly cubes. Might be fun. Still exploring.
+
+Recording interactions – and layering them like audio tracks.
+So you can record in takes, and replay on different screen sizes.
+Helps avoid those awful black bars or missing parts in App Store videos.
+
+Now. Let’s go back to the characters.
+The Mipos.
+
+This tool was made to give them a place to play.
+
+So of course they need to be in the editor.
+
+I could have just imported them, but I didn’t want to.
+I wanted their needs to shape the features.
+
+Like:
+
+Trace-vertices came from needing hair.
+
+Connected-textures came from limbs.
+
+Tile-texture—maybe useful for clothing?
+
+Patches for weird vegetation. Or rope. Or grime.
+
+That felt right. Build the tool around what you actually want to make.
+
+And finally—
+
+I’ll probably just rebuild the Puppetmaker tool inside this editor.
+
+That way:
+
+It’s one unified format.
+
+You can swap characters in a game.
+
+And most importantly—you get to build little one-screen worlds for these weirdos to live in.
+
+And that’s the whole point, isn’t it?
+To play. To make. To see what happens.
