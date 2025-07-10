@@ -8,11 +8,6 @@
 -- TODO swap body parts
 -- TODO add some ui to change body properties
 
--- BUG press R and then N , torso hair is not positioned correctly, also the wrong texture is displayed for a torso
--- also, this is because we do naot have a real DNA yet, i think what i mean with a real dns is a lookup table that tells me all the
--- decisions we need, now we have some stuff in the instance.textures but we do not 'know' why.
--- i alway see th etorso shape pop back to a circle
--- BUG , when preseing R, N, L you can see he specia fixtures grow too big
 
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
@@ -239,7 +234,7 @@ function love.draw()
     local w, h = love.graphics.getDimensions()
 
     love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
-
+    love.graphics.clear(.1, 0.2, .1)
     if state.editorPreferences.showGrid then
         editorRenderer.drawGrid()
     end

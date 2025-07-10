@@ -3,16 +3,17 @@ local ui = {}
 
 require('src.ui-textinput')(ui)
 
-local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
-local orange = { 242 / 255, 133 / 255, 0 }
+local creamy  = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
+local orange  = { 242 / 255, 133 / 255, 0 }
+local outline = creamy                              --{ 93 / 255, 54 / 255, 0 }
 -- Theme Configuration
-local theme  = {
+local theme   = {
     lineHeight = 25,
     button = {
-        default = { 188 / 255, 175 / 255, 156 / 255 },   -- Default fill color
+        default = { 188 / 255, 175 / 255, 156 / 255 },   --{ 231 / 255, 221 / 255, 184 / 255 },   --,   -- Default fill color
         hover = { 105 / 255, 98 / 255, 109 / 255 },      -- Hover fill color
         pressed = { 217 / 255, 189 / 255, 197 / 255 },   -- Pressed fill color
-        outline = creamy,                                -- Outline color
+        outline = outline,                               -- Outline color
         text_default = creamy,                           -- Default text color
         text_hover = { 244 / 255, 189 / 255, 94 / 255 }, -- Text color on hover
         radius = 2,
@@ -27,12 +28,12 @@ local theme  = {
         offFill = { 0.6, 0.1, 0.1 }, -- Red fill when toggled off
         onText = creamy,             -- Text color when toggled on
         offText = creamy,            -- Text color when toggled off
-        outline = creamy,            -- Outline color
+        outline = outline,           -- Outline color
     },
     slider = {
         track = { 0.5, 0.5, 0.5 }, -- Slider track color
         thumb = { 0.2, 0.6, 1 },   -- Slider thumb color
-        outline = creamy,
+        outline = outline,
         track_radius = 2,
         height = 25
     },
@@ -44,12 +45,12 @@ local theme  = {
     },
     panel = {
         background = { 50 / 255, 50 / 255, 50 / 255 }, -- Panel background color
-        outline = creamy,                              -- Panel outline color
+        outline = outline,                             -- Panel outline color
         label = creamy,                                -- Panel label text color
     },
     textinput = {
         background = { 0.1, 0.1, 0.1 },                          -- Background color of the TextInput
-        outline = creamy,                                        -- Default outline color
+        outline = outline,                                       -- Default outline color
         text = creamy,                                           -- Text color
         placeholder = { 0.5, 0.5, 0.5 },                         -- Placeholder text color
         cursor = { 1, 1, 1 },                                    -- Cursor color
@@ -62,7 +63,7 @@ local theme  = {
     lineWidth = 3, -- General line width
 }
 
-ui.theme     = theme
+ui.theme      = theme
 
 --- Initializes the UI module.
 function ui.init(font, fontHeight)

@@ -16,6 +16,20 @@ local fixtures = require 'src.fixtures'
 -- OMP images as limb hair (and chesthair) -- maybe we should just know which images have a mask and tehy are OMP
 -- do FACE PARTS
 
+
+local function cyclicShift(arr, shift)
+    local n = #arr
+    local result = {}
+    shift = shift % n -- handles overflow and negative values
+
+    for i = 1, n do
+        local new_index = ((i - 1 - shift) % n) + 1
+        result[i] = arr[new_index]
+    end
+
+    return result
+end
+
 local function getBoundingBox(poly)
     assert(#poly % 2 == 0, "Polygon must have even number of coordinates")
 
@@ -1237,8 +1251,14 @@ function lib.addTexturesFromInstance2(instance)
                         --  local growfactor = 1.1
                         local vertices = makeTransformedVertices(raw, (v.dims.sx or 1) * growfactor,
                             (v.dims.sy or 1) * growfactor)
+                        --   logger:inspect(vertices)
+                        local newVertices = cyclicShift(vertices, 2)
+                        if v.dims.sy < 0 then
+                            newVertices = cyclicShift(newVertices, 8)
+                        end
 
-                        ud.extra.vertices = vertices
+
+                        ud.extra.vertices = newVertices
                         ud.extra.vertexCount = #vertices / 2
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
                         local body = relevant.body

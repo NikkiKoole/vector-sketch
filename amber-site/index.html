@@ -74,6 +74,11 @@
             font-size: 1.2em;
             color: var(--amber);
         }
+        a:hover {
+            font-size: 1.2em;
+            background-color: var(--amber);
+            color: black;
+        }
         /* ── Scan-lines ────────────────────────────── */
         body::before {
             background: repeating-linear-gradient(
@@ -118,17 +123,75 @@
             -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
             filter: sepia(100%);
         }
+
+        @keyframes blink-muted {
+            0%,
+            100% {
+                color: var(--amber-darker);
+            }
+            50% {
+                color: black;
+            }
+        }
+
+        .blink-muted {
+            animation: blink-muted 1s step-start infinite;
+        }
+        @keyframes blink-bright {
+            0%,
+            100% {
+                color: var(--amber-darker);
+            }
+            50% {
+                color: var(--amber);
+            }
+        }
+
+        .blink-bright {
+            animation: blink-bright 1s step-start infinite;
+        }
+        @keyframes blink-glow {
+            0%,
+            100% {
+                color: var(--amber-darker);
+                text-shadow: none;
+            }
+            50% {
+                color: var(--amber);
+                text-shadow: 0 0 5px var(--amber);
+            }
+        }
+
+        .blink-glow {
+            animation: blink-glow 1s step-start infinite;
+        }
+        @keyframes blink-bright-to-black {
+            0%,
+            100% {
+                color: var(--amber);
+                text-shadow: 0 0 5px var(--amber);
+            }
+            50% {
+                color: black;
+                text-shadow: none;
+            }
+        }
+
+        .blink-bright-to-black {
+            animation: blink-bright-to-black 1s step-start infinite;
+        }
         /* soft glow on bright glyphs */
     </style>
 
     <main>
         <h1>* ☺ Lorum Ipsum</h1>
         <p>
-            IN THE YEAR 1986 THE GLOW OF AMBER PIXELS LIT DUSTY BASEMENTS AND
-            BOLD IDEAS, ECHOING KEYS CLACKED LIKE DRUMS AS CATHODE RAYS WROTE
-            BRIGHT DREAMS IN ORANGE. EVERY BLINKING CURSOR WAS A PROMISE: PRESS
-            ANY KEY AND THE FUTURE WOULD RESPOND. BACK TO THAT MIDNIGHT-TYPE,
-            COMPILE, RUN, AND SEE LOST WORLDS UNFOLD AGAIN.
+            IN THE YEAR <span class="blink-bright">1986</span> THE GLOW OF AMBER
+            PIXELS LIT DUSTY BASEMENTS AND BOLD IDEAS, ECHOING KEYS CLACKED LIKE
+            DRUMS AS CATHODE RAYS WROTE BRIGHT DREAMS IN ORANGE. EVERY BLINKING
+            CURSOR WAS A PROMISE: PRESS ANY KEY AND THE FUTURE WOULD RESPOND.
+            BACK TO THAT MIDNIGHT-TYPE, COMPILE, RUN, AND SEE LOST WORLDS UNFOLD
+            AGAIN.
             <a href="https://mipolai.com/apps/puppetmaker.html"
                 >check puppetmaker</a
             >
@@ -144,5 +207,19 @@
         <img src="https://www.w3schools.com/css/pineapple.jpg" />
         <img src="https://mipolai.com/assets/images/doggie.png" />
         <h1>* MIPO PUPPETMAKER</h1>
+
+        Nikki Koole 2025<span class="blink-bright-to-black"
+            >██═║╒╓╔╕╖╗╘╙╚╛╜╞╟▛▛░░░█░█ ▌█▒▒ ▔▇▄ ▎ ▋▃ ▊▀▍▜▄, ▒▔░▀█▆▇▔ ▅░▎ ▌ ▔▇▄
+            '▆▎ ▊▀▍▜▄ ▂▇▎ ▏ ▕▏ ▔▇▄ ▒▎ ▕▋ ▊▀▍▜▄, ▒▄▔ ▎ ▍ ▇█▒ ▆▎ ▀▋▒ ▊▀▍▜▄ █ ▇▀▔▄
+            ▔▇▄ ▍▄▚ ▊▀▍▜▄, ▔▇▄ ▁▀▃ ▌▎ ▎ ▃ ▊▀▍▜▄ ▔▇▄ ▀▋▚▀▜▒ ░▕▃▄ ▊▀▍▜▄, ▒▏▀▟ █▍
+            ▔▇▄ ▍▄▚▒ ▊▀▍▜▄ █ ▌█▒▒ ▔▇▄ ▒▚▄▄▔ ▊▀▍▜▄, ▂▇▎ ▏ ▕▏ ▔▇▄ ▁▄▀▔▒ ▊▀▍▜▄ █ ▆▎
+            ▔▔▀ ▔▎ ▒▀▜ ▀▔ ▔▇▀▔ ▔█▌▄ █'▃ ▋█▊▄ ▔▎ ▌▄▄▔ ▊▀▍▜▄ ▒▄▄ █ █▍▙▄▍▔▄▃ ▊▀▍▜▄,
+            █▔ ▚▀▒▍'▔ ▀▍▜ ▊▀▍▜▄▒ ▀▍▃ ▍▎ ▚ █ ▋▎ ▎ ▊ ▀▍▃ ▋▎ ▎ ▊ ▀░▎ ▕▍▃ ▀▍▃
+            ▔▇▄░▄'▒ ▒▎ ▌▀▍▜ ▊▀▍▜▄▒ █ ▕▒▄▃ ▔▎ ▋▎ ▙▄ ▊▀▍▜▄, █ ▕▒▄▃ ▔▎ ▋▎ ▙▄ ▊▀▍▜▄
+            █ ▄▙▄▍ ▇▀▃ ▔▇▄ ▏█▍▊ ▏▎ ▋▎ , █ ▔▇▎ ▕▆▇▔ █ ▚▀▒ ▊▀▍▜▄ ▚▇▀▔ █▅ ▊▀▍▜▄
+            ▌▀▃▄ ▀ ▒▎ ▍▆ ▀▁▎ ▕▔ ▊▀▍▜▄ ▂▀▋▋▄▃ "█ ▌█▒▒ ▔▇▄ ▎ ▋▃ ▊▀▍▜▄, " ▌▀▍ ▔▇▀▔
+            ▚▎ ▕▋▃ ▁▄ ▒▎ ▊▀▍▜▄ ▔▇▀▔'▒ ▀▋▋ █▔ ▚▀▒ ▊▀▍▜▄, ▚▄ ▒▔█▋▋ ▋▎ ▙▄ ▊▀▍▜▄ ▀▍▃
+            █ ▋▎ ▙▄ ▜▎ ▕ ▋█▊▄ ▊▀▍▜▄ ▋▎ ▙▄▒ ▊▀▍▜▄█░░█░█░█░▒▒</span
+        >
     </main>
 </html>
