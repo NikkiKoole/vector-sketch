@@ -11,6 +11,7 @@ local pal = {
     ['gold']    = { 219 / 255, 145 / 255, 0 },         --#da9100  harvest gold
     ['lime']    = { 69 / 255, 205 / 255, 50 / 255 },   --#32CD32  lime green
     ['creamy']  = { 245 / 255, 245 / 255, 220 / 255 }, --#F5F5DC Creamy White:
+    ['dark']    = { 50 / 255, 30 / 255, 30 / 255 },    -- dark
     ['choco']   = { 123 / 255, 64 / 255, 0 },          --#7B3F00 Chocolate Brown:
     ['beige']   = { 244 / 255, 164 / 255, 97 / 255 },  --#F4A460 Sand Beige:
     ['red']     = { 217 / 255, 73 / 255, 56 / 255 },   --#D94A38 Adobe Red:
@@ -75,7 +76,7 @@ function lib.drawWorld(world, drawOutline)
                 end
 
 
-                local color = pal.creamy
+                local color = state.world.darkMode and pal.creamy or pal.dark
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
                 if (fixture:getUserData()) then
                     if fixture:getUserData().bodyType == "connector" then

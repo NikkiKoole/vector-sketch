@@ -238,7 +238,8 @@ function love.draw()
     if state.world.darkMode then
         love.graphics.clear(.1, 0.2, .1)
     else
-        love.graphics.clear(1, 1, 1)
+        local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
+        love.graphics.clear(creamy)
     end
     if state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })

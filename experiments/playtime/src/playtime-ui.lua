@@ -546,7 +546,7 @@ function lib.drawAddShapeUI()
     local panelWidth = 200
     local buttonSpacing = BUTTON_SPACING
     local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 6) * (buttonHeight + buttonSpacing)) + buttonSpacing
+    local panelHeight = titleHeight + ((#shapeTypes + 9) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
     ui.panel(startX, startY, panelWidth, panelHeight, '', function()
         local layout = ui.createLayout({
@@ -839,7 +839,7 @@ function lib.drawWorldSettingsUI()
 
     local buttonSpacing = BUTTON_SPACING
     local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local panelHeight = titleHeight + titleHeight + (9 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+    local panelHeight = titleHeight + titleHeight + (12 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
     ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF§ world •', function()
         local layout = ui.createLayout({
             type = 'columns',
@@ -868,9 +868,13 @@ function lib.drawWorldSettingsUI()
         if g then
             state.editorPreferences.showGrid = value
         end
-        local g, value = ui.checkbox(x + 150, y, state.world.debugDrawMode, 'draw') --showGrid = true,
+        local g, value = ui.checkbox(x + 80, y, state.world.debugDrawMode, 'draw') --showGrid = true,
         if g then
             state.world.debugDrawMode = value
+        end
+        local g, value = ui.checkbox(x + 160, y, state.world.darkMode, 'mode') --showGrid = true,
+        if g then
+            state.world.darkMode = value
         end
         nextRow()
 
