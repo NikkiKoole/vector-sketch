@@ -36,7 +36,7 @@ local audiohelper  = require 'lib.jizzjazz-audiohelper'
 audiohelper.startAudioThread()
 require 'fileBrowser'
 
-luamidi = require "luamidi"
+--luamidi = require "luamidi"
 
 local function clear()
     local k = 1
