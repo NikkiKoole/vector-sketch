@@ -641,6 +641,35 @@ local function resetBeatsAndTicks()
     tick     = 0
 end
 
+
+local function updateCasetteEffectForAllSounds(now)
+    local t            = 0       -- global time
+    local wowHz        = 0.9     -- slow drift
+    local flutterHz    = 8.0     -- fast jitter
+    local wowDepth     = 0.003   -- ±0.3 %  (subtle)
+    local flutterDepth = 0.001   -- ±0.1 %
+
+
+    -- for i = 1, #playingSounds do
+    --     local p       = playingSounds[i].source:getPitch()
+    --     --print(p)
+    --     local t       = now
+    --     local wow     = wowDepth * math.sin(2 * math.pi * wowHz * t)
+    --     local flutter = flutterDepth * math.sin(2 * math.pi * flutterHz * t)
+    --     playingSounds[i].source:setPitch(p + wow + flutter) -- 1 = normal pitch :contentReference[oaicite:0]{index=0}
+    -- end
+
+    for i = 1, #playingDrumSounds do
+        local p        = playingDrumSounds[i].source:getPitch()
+        --print(p)
+        local t        = now
+        local wow      = wowDepth * math.sin(2 * math.pi * wowHz * t)
+        local flutter  = flutterDepth * math.sin(2 * math.pi * flutterHz * t)
+        local newPitch = math.max(p + wow + flutter, 0.0001)
+        playingDrumSounds[i].source:setPitch(newPitch) -- 1 = normal pitch :contentReference[oaicite:0]{index=0}
+    end
+end
+
 local function playMetronomeSound()
     local snd = metronome_click and metronome_click:clone()
     if (math.floor(beat) % beatInMeasure == 1) then
@@ -712,6 +741,8 @@ while (true) do
 
     updateADSREnvelopesForPlayingSounds(delta)
     updatePlayingSoundsWithLFO()
+
+    updateCasetteEffectForAllSounds(n)
 
     local sleepForMultiplier = math.ceil(bpm / 25)
     local sleepFor = 1.0 / (PPQN * sleepForMultiplier)
