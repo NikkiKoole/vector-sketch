@@ -234,9 +234,14 @@ function love.draw()
     local w, h = love.graphics.getDimensions()
 
     love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
-    love.graphics.clear(.1, 0.2, .1)
+
+    if state.world.darkMode then
+        love.graphics.clear(.1, 0.2, .1)
+    else
+        love.graphics.clear(1, 1, 1)
+    end
     if state.editorPreferences.showGrid then
-        editorRenderer.drawGrid()
+        editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
 
     box2dDrawTextured.makeCombinedImages()

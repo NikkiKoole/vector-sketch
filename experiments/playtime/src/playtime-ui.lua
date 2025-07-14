@@ -911,6 +911,14 @@ function lib.drawWorldSettingsUI()
             state.world.showTextures = not state.world.showTextures
         end
         nextRow()
+        if ui.button(x, y, ROW_WIDTH, 'drawsfixtures') then
+            state.world.drawFixtures = not state.world.drawFixtures
+        end
+        nextRow()
+        if ui.button(x, y, ROW_WIDTH, 'drawoutline') then
+            state.world.drawOutline = not state.world.drawOutline
+        end
+        nextRow()
         if ui.button(x, y, ROW_WIDTH, state.world.profiling and 'profiling' or 'profile') then
             if state.world.profiling then
                 ProFi:stop()
@@ -2332,6 +2340,7 @@ function lib.drawUI()
     local w, h = love.graphics.getDimensions()
     if state.world.paused then
         love.graphics.setColor({ 244 / 255, 164 / 255, 97 / 255 })
+        love.graphics.setColor({ 1, 0, 0, .5 })
     else
         love.graphics.setColor({ 245 /
         255, 245 / 255, 220 / 255 })

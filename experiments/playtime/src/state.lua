@@ -73,6 +73,9 @@ state.jointLengthParams = {}
 state.showPaletteFunc = nil
 
 state.world = {
+    darkMode = false,
+    drawFixtures = true,
+    drawOutline = true,
     debugDrawMode = true,
     debugAlpha = 1,
     profiling = false,

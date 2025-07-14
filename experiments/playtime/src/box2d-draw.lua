@@ -38,6 +38,11 @@ end
 
 function lib.drawWorld(world, drawOutline)
     if drawOutline == nil then drawOutline = true end
+    if drawOutline == true then
+        if state.world.drawOutline == false then
+            drawOutline = false
+        end
+    end
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8 * state.world.debugAlpha
     love.graphics.setLineJoin("none")
@@ -61,8 +66,15 @@ function lib.drawWorld(world, drawOutline)
                         local color = pal.orange
                         love.graphics.setColor(color[1], color[2], color[3], alpha)
                     end
+                    --else
+                    if state.world.drawFixtures then
+                        love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+                    end
+                else
+                    love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
                 end
-                love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+
+
                 local color = pal.creamy
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
                 if (fixture:getUserData()) then

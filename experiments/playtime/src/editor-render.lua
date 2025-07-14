@@ -12,10 +12,10 @@ local utils = require 'src.utils'
 local lib = {}
 
 
-function lib.drawGrid()
+function lib.drawGrid(color)
     local lw = love.graphics.getLineWidth()
     love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 1, 1, .1)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
 
     local w, h = love.graphics.getDimensions()
     local tlx, tly = cam:getWorldCoordinates(0, 0)
