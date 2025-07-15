@@ -179,14 +179,20 @@ function love.load()
     }
     audiohelper.sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
-    browser             = fileBrowser("samples", {}, { "wav", "WAV", "OGG", "ogg" })
-    browserClicked      = false
-    fileBrowserForSound = nil
+    browser                 = fileBrowser("samples", {}, { "wav", "WAV", "OGG", "ogg" })
+    browserClicked          = false
+    fileBrowserForSound     = nil
 
-    max_octave          = 8
-    octave              = 4
+    max_octave              = 8
+    octave                  = 4
 
-    local samples       = {
+    showInstrumentCasetteFX = false
+    showInstrumentEqualizer = false
+    showDrumCasetteFX       = false
+    showDrumEqualizer       = false
+
+
+    local samples = {
         audiohelper.prepareSingleSample({ "oscillators", "fr4 korg" }, 'Fr4 - Korg MS-10 2.wav'),
         audiohelper.prepareSingleSample({ "oscillators", "fr4 moog" }, 'Fr4 - MemoryMoog 4.wav'),
         audiohelper.prepareSingleSample({ "oscillators", "akwf", "ebass" }, 'AKWF_ebass_0009.wav'),
@@ -814,6 +820,166 @@ local function getInstrumentIndexUnderPosition(x, y)
 end
 
 
+function drawInstrumentEqualizer(x, y)
+    -- instrumetn eq
+    --
+    love.graphics.setColor(1, 0, 0, 0.3)
+    love.graphics.rectangle('fill', x, y, 400, 100)
+    love.graphics.setColor(1, 1, 1)
+
+    local eq = audiohelper.instrumentEQ
+    local bx, by = x + 100, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('ibass', bx, by, eq.bass, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.bass = v.value
+        -- print(inspect(eq))
+        audiohelper.setInstrumentEQ(eq)
+    end
+
+    local bx, by = x + 200, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('imid', bx, by, eq.mid, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.mid = v.value
+        -- print(inspect(eq))
+        audiohelper.setInstrumentEQ(eq)
+    end
+
+    local bx, by = x + 300, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('itreble', bx, by, eq.treble, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.treble = v.value
+        -- print(inspect(eq))
+        audiohelper.setInstrumentEQ(eq)
+    end
+end
+
+function drawDrumEqualizer(x, y)
+    -- drum Equalizer
+    love.graphics.setColor(1, 0, 0, 0.3)
+    love.graphics.rectangle('fill', x - 100, y, 400, 100)
+    love.graphics.setColor(1, 1, 1)
+    local eq = audiohelper.drumEQ
+    local bx, by = x, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('dbass', bx, by, eq.bass, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.bass = v.value
+        -- print(inspect(eq))
+        audiohelper.setDrumEQ(eq)
+    end
+
+    local bx, by = x + 100, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('dmid', bx, by, eq.mid, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.mid = v.value
+        -- print(inspect(eq))
+        audiohelper.setDrumEQ(eq)
+    end
+
+    local bx, by = x + 200, y + 20
+    --print(inspect(eq))
+    local v = drawLabelledKnob('dtreble', bx, by, eq.treble, -1, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        eq.treble = v.value
+        -- print(inspect(eq))
+        audiohelper.setDrumEQ(eq)
+    end
+end
+
+function drawCasetteEffectDrums(x, y)
+    local set = audiohelper.drumCasetteSettings
+    love.graphics.setColor(1, 0, 1, 0.3)
+    love.graphics.rectangle('fill', x, y, 400, 100)
+    local bx, by = x + 20, y + 20
+    local v = drawLabelledKnob('.wow-hz', bx, by, set.wowhz, 0, 1)
+    if v.value then
+        set.wowhz = v.value
+        audiohelper.setDrumCasette(set)
+    end
+    bx, by = x + 120, y + 20
+    local v = drawLabelledKnob('.wow-d', bx, by, set.wowd, 0.00001, 0.005)
+    if v.value then
+        set.wowd = v.value
+        audiohelper.setDrumCasette(set)
+    end
+    bx, by = x + 220, y + 20
+    local v = drawLabelledKnob('.flut-hz', bx, by, set.fluthz, 5, 25)
+    if v.value then
+        set.fluthz = v.value
+        audiohelper.setDrumCasette(set)
+    end
+    bx, by = x + 320, y + 20
+    local v = drawLabelledKnob('.flut-d', bx, by, set.flutd, 0.00001, 0.005)
+    if v.value then
+        set.flutd = v.value
+        audiohelper.setDrumCasette(set)
+    end
+    bx, by = x + 380, y
+    local r = getUIRect(bx, by, 20, 20)
+    if r then
+        set.on = not set.on
+        audiohelper.setDrumCasette(set)
+    end
+    if set.on then
+        love.graphics.setColor(0, 1, 0, 0.3)
+    else
+        love.graphics.setColor(1, 0, 0, 0.3)
+    end
+    love.graphics.rectangle('fill', bx, by, 20, 20)
+end
+
+function drawCasetteEffectInstrument(x, y)
+    local set = audiohelper.instrumentCasetteSettings
+    love.graphics.setColor(1, 0, 1, 0.3)
+    love.graphics.rectangle('fill', x, y, 400, 100)
+    local bx, by = x + 20, y + 20
+    local v = drawLabelledKnob('wow-hz', bx, by, set.wowhz, 0, 1)
+    if v.value then
+        set.wowhz = v.value
+        audiohelper.setInstrumentCasette(set)
+    end
+    bx, by = x + 120, y + 20
+    local v = drawLabelledKnob('wow-d', bx, by, set.wowd, 0.00001, 0.005)
+    if v.value then
+        set.wowd = v.value
+        audiohelper.setInstrumentCasette(set)
+    end
+    bx, by = x + 220, y + 20
+    local v = drawLabelledKnob('flut-hz', bx, by, set.fluthz, 5, 25)
+    if v.value then
+        set.fluthz = v.value
+        audiohelper.setInstrumentCasette(set)
+    end
+    bx, by = x + 320, y + 20
+    local v = drawLabelledKnob('flut-d', bx, by, set.flutd, 0.00001, 0.005)
+    if v.value then
+        set.flutd = v.value
+        audiohelper.setInstrumentCasette(set)
+    end
+    bx, by = x + 380, y
+    local r = getUIRect(bx, by, 20, 20)
+    if r then
+        set.on = not set.on
+        audiohelper.setInstrumentCasette(set)
+    end
+    if set.on then
+        love.graphics.setColor(0, 1, 0, 0.3)
+    else
+        love.graphics.setColor(1, 0, 0, 0.3)
+    end
+    love.graphics.rectangle('fill', bx, by, 20, 20)
+end
+
 function drawDrumMachine()
     love.graphics.setFont(smallfont)
 
@@ -831,39 +997,20 @@ function drawDrumMachine()
 
     local x = grid.startX
     local y = grid.startY + grid.cellH * #audiohelper.labels
-    love.graphics.setColor(1, 0, 0, 0.3)
-    love.graphics.rectangle('fill', x - 100, y, 400, 100)
-    love.graphics.setColor(1, 1, 1)
 
-    local eq = audiohelper.eq
-    local bx, by = x, y + 20
-    --print(inspect(eq))
-    local v = drawLabelledKnob('bass', bx, by, eq.bass, -1, 1)
-    if v.value then
-        drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        eq.bass = v.value
-        -- print(inspect(eq))
-        audiohelper.setEQ(eq)
+    if labelbutton('equalizer', x - 150, y, smallfont:getWidth('equalizer'), smallfont:getHeight()).clicked then
+        --waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
+        showDrumEqualizer = not showDrumEqualizer
     end
-
-    local bx, by = x + 100, y + 20
-    --print(inspect(eq))
-    local v = drawLabelledKnob('mid', bx, by, eq.mid, -1, 1)
-    if v.value then
-        drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        eq.mid = v.value
-        -- print(inspect(eq))
-        audiohelper.setEQ(eq)
+    if showDrumEqualizer then
+        drawDrumEqualizer(x + 100, y)
     end
-
-    local bx, by = x + 200, y + 20
-    --print(inspect(eq))
-    local v = drawLabelledKnob('treble', bx, by, eq.treble, -1, 1)
-    if v.value then
-        drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        eq.treble = v.value
-        -- print(inspect(eq))
-        audiohelper.setEQ(eq)
+    if labelbutton('casette-fx', x - 150, y + 100, smallfont:getWidth('casette-fx'), smallfont:getHeight()).clicked then
+        --waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
+        showDrumCasetteFX = not showDrumCasetteFX
+    end
+    if showDrumCasetteFX then
+        drawCasetteEffectDrums(x, y + 100)
     end
 end
 
@@ -1697,6 +1844,25 @@ function love.draw()
         drawInstrumentBanks((w / 2) + 32, 120)
 
         drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
+
+
+
+        if labelbutton('equalizer', (w / 2) + 450, 120 + 460, smallfont:getWidth('equalizer'), smallfont:getHeight()).clicked then
+            --waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
+            showInstrumentEqualizer = not showInstrumentEqualizer
+        end
+        if showInstrumentEqualizer then
+            drawInstrumentEqualizer((w / 2) + 32, 120 + 460)
+        end
+
+
+        if labelbutton('casette-fx', (w / 2) + 450, 120 + 560, smallfont:getWidth('casette-fx'), smallfont:getHeight()).clicked then
+            --waitingForTriggerToStartRecording = not waitingForTriggerToStartRecording
+            showInstrumentCasetteFX = not showInstrumentCasetteFX
+        end
+        if showInstrumentCasetteFX then
+            drawCasetteEffectInstrument((w / 2) + 32, 120 + 560)
+        end
 
         love.graphics.setColor(1, 1, 1)
 

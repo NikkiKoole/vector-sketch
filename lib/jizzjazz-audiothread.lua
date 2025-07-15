@@ -7,50 +7,53 @@ require('love.math')
 -- Linn often used a timing resolution of 96 parts per quarter note (PPQN),
 -- meaning that each quarter note is subdivided into 96 equal parts.
 -- This high resolution allows for very precise timing and sequencing of musical events,
-local PPQN                 = 96
+local PPQN                      = 96
 
-local min, max             = ...
-local paused               = true
-local now                  = love.timer.getTime()
-local time                 = 0
-local lastTick             = 0
-local lastBeat             = -1
-local beat                 = 0
-local tick                 = 0
-local beatInMeasure        = 4
-local countInMeasures      = 0
+local min, max                  = ...
+local paused                    = true
+local now                       = love.timer.getTime()
+local time                      = 0
+local lastTick                  = 0
+local lastBeat                  = -1
+local beat                      = 0
+local tick                      = 0
+local beatInMeasure             = 4
+local countInMeasures           = 0
 --local bpm             = 90
 --local swing           = 50
-local metronome_click      = nil
+local metronome_click           = nil
 
-local channel              = {};
-channel.audio2main         = love.thread.getChannel("audio2main"); -- from thread
-channel.main2audio         = love.thread.getChannel("main2audio"); --from main
+local channel                   = {};
+channel.audio2main              = love.thread.getChannel("audio2main"); -- from thread
+channel.main2audio              = love.thread.getChannel("main2audio"); --from main
 
-local missedTicks          = {}
-local playingSounds        = {} -- playingSounds are just for the melodic sounds.
+local missedTicks               = {}
+local playingSounds             = {} -- playingSounds are just for the melodic sounds.
 
-local playingDrumSounds    = {}
+local playingDrumSounds         = {}
 
-local drumkit              = {}
-local drumgrid             = {}
+local drumkit                   = {}
+local drumgrid                  = {}
 
-local samples              = {}
-local futureDrumNotes      = {}
+local samples                   = {}
+local futureDrumNotes           = {}
 
-local playing              = false
-local recording            = false
+local playing                   = false
+local recording                 = false
 
 --local sampleTuning        = {}
-local instruments          = {}
-local instrumentIndex      = 1
+local instruments               = {}
+local instrumentIndex           = 1
 
-local recordedData         = {}
-local recordedClips        = {}
+local recordedData              = {}
+local recordedClips             = {}
 
-local uiData               = nil
-local mixerDataDrums       = nil
-local mixerDataInstruments = nil
+local uiData                    = nil
+local mixerDataDrums            = nil
+local mixerDataInstruments      = nil
+
+local drumCasetteSettings       = nil
+local instrumentCasetteSettings = nil
 
 local function generateADSR(it, now)
     local adsr = instruments[it.instrumentIndex].adsr
@@ -643,30 +646,39 @@ end
 
 
 local function updateCasetteEffectForAllSounds(now)
-    local t            = 0       -- global time
-    local wowHz        = 0.9     -- slow drift
-    local flutterHz    = 8.0     -- fast jitter
-    local wowDepth     = 0.003   -- ±0.3 %  (subtle)
-    local flutterDepth = 0.001   -- ±0.1 %
+    if instrumentCasetteSettings and instrumentCasetteSettings.on then
+        local t            = 0                                -- global time
+        local wowHz        = instrumentCasetteSettings.wowhz  --  .9  / 2 -- slow drift
+        local wowDepth     = instrumentCasetteSettings.wowd   --0.003   -- ±0.3 %  (subtle)
+        local flutterHz    = instrumentCasetteSettings.fluthz --8.0     -- fast jitter
+        local flutterDepth = instrumentCasetteSettings.flutd  -- 0.001   -- ±0.1 %
 
 
-    -- for i = 1, #playingSounds do
-    --     local p       = playingSounds[i].source:getPitch()
-    --     --print(p)
-    --     local t       = now
-    --     local wow     = wowDepth * math.sin(2 * math.pi * wowHz * t)
-    --     local flutter = flutterDepth * math.sin(2 * math.pi * flutterHz * t)
-    --     playingSounds[i].source:setPitch(p + wow + flutter) -- 1 = normal pitch :contentReference[oaicite:0]{index=0}
-    -- end
+        for i = 1, #playingSounds do
+            local p       = playingSounds[i].source:getPitch()
+            --print(p)
+            local t       = now
+            local wow     = wowDepth * math.sin(2 * math.pi * wowHz * t)
+            local flutter = flutterDepth * math.sin(2 * math.pi * flutterHz * t)
+            playingSounds[i].source:setPitch(p + wow + flutter) -- 1 = normal pitch :contentReference[oaicite:0]{index=0}
+        end
+    end
 
-    for i = 1, #playingDrumSounds do
-        local p        = playingDrumSounds[i].source:getPitch()
-        --print(p)
-        local t        = now
-        local wow      = wowDepth * math.sin(2 * math.pi * wowHz * t)
-        local flutter  = flutterDepth * math.sin(2 * math.pi * flutterHz * t)
-        local newPitch = math.max(p + wow + flutter, 0.0001)
-        playingDrumSounds[i].source:setPitch(newPitch) -- 1 = normal pitch :contentReference[oaicite:0]{index=0}
+    if drumCasetteSettings and drumCasetteSettings.on then
+        local t            = 0                          -- global time
+        local wowHz        = drumCasetteSettings.wowhz  -- .9  / 2 -- slow drift
+        local wowDepth     = drumCasetteSettings.wowd   --0.003   -- ±0.3 %  (subtle)
+        local flutterHz    = drumCasetteSettings.fluthz --8.0     -- fast jitter
+        local flutterDepth = drumCasetteSettings.flutd  -- 0.001   -- ±0.1 %
+        for i = 1, #playingDrumSounds do
+            local p        = playingDrumSounds[i].source:getPitch()
+            --print(p)
+            local t        = now
+            local wow      = wowDepth * math.sin(2 * math.pi * wowHz * t)
+            local flutter  = flutterDepth * math.sin(2 * math.pi * flutterHz * t)
+            local newPitch = math.max(p + wow + flutter, 0.0001)
+            playingDrumSounds[i].source:setPitch(newPitch) -- 1 = normal pitch :contentReference[oaicite:0]{index=0}
+        end
     end
 end
 
@@ -765,6 +777,12 @@ while (true) do
         end
         if v.type == 'samples' then
             samples = v.data
+        end
+        if v.type == 'instrumentCasetteSettings' then
+            instrumentCasetteSettings = v.data
+        end
+        if v.type == 'drumCasetteSettings' then
+            drumCasetteSettings = v.data
         end
         if v.type == 'finalizeRecordedDataOnIndex' then
             for i = 1, #recordedData do

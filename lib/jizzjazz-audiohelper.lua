@@ -48,28 +48,45 @@ for i = 1, 5 do
     }
 end
 
-lib.myTick                = 0
-lib.myBeat                = 0
-lib.myBeatInMeasure       = 0
-lib.myNumPlayingSounds    = 0
+lib.myTick                    = 0
+lib.myBeat                    = 0
+lib.myBeatInMeasure           = 0
+lib.myNumPlayingSounds        = 0
 
-local defaultAttackTime   = 0.2
-local defaultDecayTime    = 0.01
-local defaultSustainLevel = 0.7
-local defaultReleaseTime  = 0.03
+local defaultAttackTime       = 0.2
+local defaultDecayTime        = 0.01
+local defaultSustainLevel     = 0.7
+local defaultReleaseTime      = 0.03
 
-lib.instruments           = {}
-lib.mixDataDrums          = {}
-lib.mixDataInstruments    = {}
-lib.drumgrid              = {}
+lib.instruments               = {}
+lib.mixDataDrums              = {}
+lib.mixDataInstruments        = {}
+lib.drumgrid                  = {}
 
-lib.columns               = nil
-lib.labels                = nil
+lib.columns                   = nil
+lib.labels                    = nil
 
-lib.eq                    = { bass = 0, mid = 0, treble = 0 }
+--lib.eq                    = { bass = 0, mid = 0, treble = 0 }
 
-function lib.setEQ(eq)
-    lib.eq = eq
+lib.drumEQ                    = { bass = 0, mid = 0, treble = 0 }
+lib.instrumentEQ              = { bass = 0, mid = 0, treble = 0 }
+
+lib.drumCasetteSettings       = { on = true, wowhz = 0.3, wowd = 0.003, fluthz = 8.0, flutd = 0.001 }
+lib.instrumentCasetteSettings = { on = true, wowhz = 0.3, wowd = 0.003, fluthz = 8.0, flutd = 0.001 }
+
+
+function lib.setInstrumentCasette(set)
+    lib.instrumentCasetteSettings = set
+    lib.sendMessageToAudioThread({ type = "instrumentCasetteSettings", data = set })
+end
+
+function lib.setDrumCasette(set)
+    lib.drumCasetteSettings = set
+    lib.sendMessageToAudioThread({ type = "drumCasetteSettings", data = set })
+end
+
+function lib.setInstrumentEQ(eq)
+    lib.instrumentEQ = eq
 
     for i = 1, #lib.instruments do
         local thing = lib.instruments[i].sample
@@ -100,6 +117,15 @@ function lib.setEQ(eq)
     end
     --lib.instruments[i]
 
+
+    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
+    --  lib.updateDrumKitData()
+    --  print(inspect(lib.drumkit))
+end
+
+function lib.setDrumEQ(eq)
+    lib.drumEQ = eq
+
     for k, v in pairs(lib.drumkit) do
         local thing = v -- lib.drumkit[i]
         if thing.path then
@@ -127,22 +153,8 @@ function lib.setEQ(eq)
         else
             --print(k, 'no')
         end
-        --§ print('before', thing.source)
-        -- sone.filter(thing.soundData, {
-        --     type = "lowpass",
-        --     frequency = 150,
-        -- })
-        -- sone.filter(thing.soundData, {
-        --     type = "peakeq",
-        --     frequency = 1000,
-        --     gain = 100,
-        -- })
-        --   thing.source = love.audio.newSource(thing.soundData)
-        --  print('after', thing.source)
-        --source = love.audio.newSource(soundData),
-        --soundDataOriginal
     end
-    lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
+    --  lib.sendMessageToAudioThread({ type = "instruments", data = lib.instruments })
     lib.updateDrumKitData()
     --  print(inspect(lib.drumkit))
 end
