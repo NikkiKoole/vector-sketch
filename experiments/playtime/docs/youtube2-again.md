@@ -1,155 +1,181 @@
-🎬 [the thumb comes alive, things fall, I grab a thing—it falls too]
-Hi, hello, wow—hold on—ahh—shoot—okay—anyway...
-Today I’m showing you a weird little tool I built, how it grew out of an older project, and why I think it might actually be kind of a big deal.
+🎬 [The thumb comes alive. Things fall. I grab a thing—it falls too.]
+Hi, hello, wow—hold why is everything so slipperly?! on—ahh—shoot—okay—anyway...
+ok [deep breath] i'm fine.
+So today… I want to show you a little thing I made. how it grew out of an older project, and why I think it could be a big deal.
+Let me explain,
 
-Before we get into it, here’s a quick overview of what I’ll be talking about:
+🎬 [On-screen list appears, no voiceover]
+Origins
+Shapes and Joints
+Scripts
+Textures
+Characters
+Finale
 
-🎬 [on-screen list appears, no voiceover]
 
-Why my Puppetmaker app needed a world editor
+1) Origins
+Almost two years ago, I made a weird little puppet app.
+That was Mipo Puppetmaker.
 
-Shape building & joints
+A create-your-own-character tool.
+You can drag them, pull their limbs, throw them, stack them…
+and you can also make winegums fall…
+(whispers) I honestly can’t remember why...
+And they could even even do handstands. But that was kind of it.
 
-Per-level scripting
+I wanted more.
+Adventures, Contraptions!
+Funky locations, Fairy tales.
+Weird physics puzzles, exploration.
 
-Textures & visuals
+So I started working on another app — this time with a procedural landscape.
+I figured: let’s give them enough space to get lost in.
 
-Adding characters
+You were on a bike. In the mountains. It was weird.
 
-Rebuilding Puppetmaker inside the editor
+But building the objects was slow. Everything had to be hardcoded.
+At one point wanted a cow.
+I spent HOURS cycling down a mountain just to test if the cow looked okay.
+Spoiler: it didn’t.
+You could say *I* got lost, instead of my characters.
+Eventually I realized:
+This wasn’t working.
+I didn’t need another game.
+I needed a sandbox.
 
-And finally: how this lets you tell stories—not just make puppets.
+A place to test ideas
+That’s what I should’ve been building all along.
 
-1) Puppetmaker Origins
-I made the very first version of Puppetmaker almost 2 years ago—you might’ve tried it.
+So I made
+an editor
 
-Mipo Puppetmaker is a fun tool for making characters. But they had nowhere to go.
-That’s when it hit me: puppets need a stage, but i'll get there.
-
-You build little hand-drawn characters. That handdrawiness is important to me.
-Because I hope, one day, someone tosses the iPad and grabs a real pencil.
-
-They chaacters are physics-based. You can drag them,pull their limbs, throw them, stack them, make winegums fall…
-(whispers) no idea why…
-...make them do handstands. But that’s it.
-
-They should explore. Visit places. Endure strange contraptions. Get lost in trees.
-
-So I started working on another app, with a procedural landscape.
-Endless options for exploring i figured.
-You were on a bike. In the mountains, It was weird. testing was slow. I spent hours cycling down procedural hills just to test if a cow looked ok, I got stuck, eventually I shelved it.
-
-That’s when I realized: I didn’t need a new  game. I needed an editor.
-Somewhere to draw, attach shapes, test ideas fast. Save and load stuff.
-
-That’s what I should’ve been doing all along.
+A stage for my puppets.
 
 2) Shapes and Joints
-I hooked up Box2D. Bodies, joints, physics properties. things I used to hand-code, now tweakable and fast.
+I hooked up Box2D to my editor — bodies, joints, physics settings — all tweakable with buttons and sliders now. No more hand-coding every little thing.
 
-It was fun:
-Add a shape → it bounces.
-Add two → connect them → they flop around.
+Before, adding anything — even just a cow — meant writing out all the vertex points by hand.
+Then figuring out the joints.
+Then testing.
+Then repeating.
+It took hours.
+soul-crushing hours
 
-But I like messy stuff. So I added: draw *any* shape → boom, it’s a physics body.
+Now? I just draw a shape — and BLAM it works.
 
-Now you can build weird little levels in seconds.
+And it's fun:
+Add a shape → it falls.
+Add another → they bounce.
+Connect them → they flop around.
+
+I like the messier stuff even more.
+So my favorite feature here right now is this: draw any shape (a freeform one) → boom, physics body.
+
+Now you can build weird little levels in seconds. Okay, minutes.
 
 3) Scripts
-Once the shapes work, it’s time to make them do stuff.
+The physics engine behind all this handles gravity, collisions, movement…
+Which is nice.
+But what if you want something that hops?
+Or explodes? Or if someone needs to  stands upright for once instead of just being a ragdoll?
 
-The visual editor saves time — so scripting is where i can spend that.
-Write one script per level or room. No engine changes, just: script → test → repeat.
+scripting.
 
-here are a few:
+Each room can run a little script. One sandboxed bit of logic. That’s all I need (for now at least).
+I use it to give things behavior.
+
+Here are some things I made with it:
 
 Buoyancy
 Elastic blobs
 Platforms
 Angry birds & pigs
 Planets with gravity
+Snappy connections
 
-Suddenly you have these interactive worlds. But they still look like green vector shapes…
 
-Time for textures.
+4) Textures
 
-4) Textures — Making It Look Like a Drawing
-Right now, it still looks like a physics prototype.
-I want it to look hand-drawn—like Puppetmaker.
+I want the world to feel hand-drawn. Like someone scribbled it.
+So I use a system  I invented in the Puppetmaker days. It’s called:
+OMP
+Outline, Mask, Pattern
 
-That uses OMP: made it up myself.
-
-Outline — pencil strokes
+Outline — pencil lines
 Mask — shape silhouette
 Pattern — texture or shading
 
-So I brought OMP into the new tool.
+Each layer?, Customizable.
 
-Box2D doesn’t do visuals, so I made Texture Fixtures —graphics attached to physics bodies.
+But Box2D? It has no clue what a texture is.
+Just bodies. Shapes. Fixtures. Joints.
+And the shapes? Just boring old polygons.
 
-Here are the main types:
+So I made my own system: Texture Fixtures — a way to attach graphics data to physics bodies.
 
-Vanilla — a PNG attached to one shape (supports OMP and distortion with 8 vertices)
+I made four kinds:
 
-Connected-texture — spans across limbs using joints (like a stretchy arm)
+Vanilla — a PNG attached to one shape (supports OMP + shape bending)
+Connected-texture — spans across limbs via joints (like a stretchy arm)
+Trace-Vertices — follows vertex paths inside a shape (for hair)
+Tile — repeating textures for backgrounds or flooring or clothes
+(Clothes? Not yet. They’re still nudists. I can respect that.)
 
-Trace-Vertices — stays inside one shape, follows vertex paths (for hair)
+5) Mipo Characters
 
-Tile — repeating textures for backgrounds or clothes
-(But Right now? no clothes, Still nudists.)
+Everything so far?
+It’s for the Mipos.
+to give them a place to live.
 
-Now it looks like a Mipo world: scrappy, sketched, alive. still nude.
-
-🧠 5) Mipo Characters
-The whole point of this editor is to give Mipos a place to live.
-
+But what are they in this editor ?
 At the physics level, they’re just shapes and joints — plus a bit of custom rendering.
-The editor already handles that. It can load their bodies, their textures, all of it.
+The editor already handles that. It can load their bodies, their textures — all of it.
 
 But there’s another layer: their DNA.
 
-Not biology, obviously — I mean their personality, their behavior, their structure.
-What counts as a limb. Whether that blob is a head, a torso, or a potatohead.
-How many torso segments they have. What makes them them.
+Their structure.
+What counts as a limb?
+Is that blob a head? A torso? A potatohead?
+If two Mipos had kids — what would they look like?
 
-I’m still figuring out how to manage and store that part — the deeper logic behind each Mipo.
-There’s more going on inside these characters than just shapes.
+I rebuilt the characters from scratch, inside this new editor.
 
-So instead of importing the old ones directly, I let the Mipos shape the tool.
-I re-implemented them from scratch — and whenever they needed something, I added it.
+They needed stuff, so I built it.
+They grew. The tool grew.
+It got… weirdly wholesome.
 
-That’s why trace-vertices exist. Why connected-textures work.
-Not because I planned them.
-But because the Mipos — kind of — asked for them.
+That’s why trace-vertices exist — because they have hair.
+Why connected-textures exist — because they have limbs.
 
 And then at some point… something flipped.
 
-The features I added for characters turned out to be useful for the world too.
-Hair systems became plants. Limb systems became ropes.
+The features I added for the characters turned out to be useful for the world too.
+Hair systems became plants.
+Limb systems became ropes.
+Suddenly, tools made for puppets started growing a whole world.
 
-It goes both ways.
+(Still no faces though. That’s another video: lips, eyes, noses, emotions—OH GOD THE EYEBROWS.)
 
-Who knows what we’ll discover next.
+Softbodies? In progress.
+Recording layers? I’m using them right now!
 
-📎 Quick Mentions (Before I Forget)
-Softbodies — still figuring them out. Could be great.
+This is just the beginning.
 
-Recording & Layering — like animation takes. I’m using it in this video!
+6) 🎬 Finale
+So yeah.
+It started with a puppet.
+Now, I have a stage.
 
-🎬 Finale
-So yeah, that was a ride.
-And yep — you guessed it — I’ll probably rebuild the Puppetmaker app inside this editor.
+I’m rebuilding Puppetmaker inside this thing too.
 
-Same file format, same logic.
-You’ll be able to swap characters into any new game I make.
+Same file format. Same logic.
+One day, you’ll be able to drop your Mipo into any game I make.
 
-But more importantly — building weird worlds for these puppets is finally fun.
-
-And maybe that was the point all along:
+But more importantly:
+it’s actually fun to build weird little worlds now.
+And maybe that was the point all along.
 
 To play.
 To make.
-To see what happens.
-
-Let’s see where it takes us.
-Let’s see what happens next with Puppetmaker.
+To see what happens next.
+To have fun.
