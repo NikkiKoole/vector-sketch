@@ -111,7 +111,7 @@ function lib.setInstrumentEQ(eq)
                 frequency = 6000,
                 gain = eq.treble * 100,
             })
-            print(i)
+            --print(i)
             lib.instruments[i].sample.source = love.audio.newSource(soundData)
         end
     end
@@ -573,7 +573,7 @@ function lib.loadJizzJazzFile(data, filename)
 
     lib.initializeDrumgrid(lib.columns)
     local k = 1
-    print(#g)
+    --print(#g)
     for x = 1, #g[k] do
         for y = 1, #g[k][x] do
             local dcell = g[k][x][y]
