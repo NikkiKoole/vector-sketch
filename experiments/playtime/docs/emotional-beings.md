@@ -1,3 +1,13 @@
+I made my Mipo cry!
+[🧠 Chapter Ideas (Optional)
+Intro: Why is he crying?
+The problem with lifeless NPCs
+Basic emotion model: mood & tension
+Eyebrows do most of the work
+Mapping emotions to expressions
+The moment it all worked (and broke me)
+What’s next for the Mipos
+]
 
 
 You know the NPC meme right?
