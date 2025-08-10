@@ -1,3 +1,11 @@
+notes:
+I called it Mipo Puppetmaker
+(about OMP) , I can create virtually unlimited variations of textures like that
+Speaking about these nude characters
+(about DNA) There are still some things to iron out over there, in the meantime
+(about MPM) It will be updated at one point with the things I'm showing here.
+
+
 🎬 [The thumb comes alive. Things fall. I grab a thing—it falls too.]
 Hi, hello, wow—hold why is everything so slipperly?! on—ahh—shoot—okay—anyway...
 ok [deep breath] i'm fine.
@@ -96,7 +104,7 @@ Snappy connections
 
 4) Textures
 
-I want the world to feel hand-drawn. Like someone scribbled it.
+I want the world to look hand-drawn. Like someone scribbled it.
 So I use a system  I invented in the Puppetmaker days. It’s called:
 OMP
 Outline, Mask, Pattern
@@ -154,7 +162,7 @@ Hair systems became plants.
 Limb systems became ropes.
 Suddenly, tools made for puppets started growing a whole world.
 
-(Still no faces though. That’s another video: lips, eyes, noses, emotions—OH GOD THE EYEBROWS.)
+(Still no faces though. That’s another video: lips, eyes, noses, eyesbrows, emotions—OH GOD THE MOUTHS.)
 
 Softbodies? In progress.
 Recording layers? I’m using them right now!
@@ -178,4 +186,4 @@ And maybe that was the point all along.
 To play.
 To make.
 To see what happens next.
-To have fun.
+To have fun building.
