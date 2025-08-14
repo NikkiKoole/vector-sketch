@@ -275,6 +275,7 @@ local function getCenterOfShapeFixtures(fixts)
     return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
 end
 
+
 -- Utility function to check if a point is inside a polygon.
 -- Implements the ray-casting algorithm.
 local function pointInPath(x, y, poly)
@@ -1213,35 +1214,6 @@ function lib.lerpOnEdge(edgeIndex, t, newPoly)
     local newY = (1 - t) * y1 + t * y2
 
     return newX, newY
-end
-
-local function getCenterOfShapeFixtures(fixts)
-    local xmin = math.huge
-    local ymin = math.huge
-    local xmax = -math.huge
-    local ymax = -math.huge
-    for i = 1, #fixts do
-        local it = fixts[i]
-        if it:getUserData() then
-        else
-            local points = {}
-            if (it:getShape().getPoints) then
-                points = { it:getShape():getPoints() }
-            else
-                points = { it:getShape():getPoint() }
-            end
-            --print(inspect(points))
-            for j = 1, #points, 2 do
-                local xx = points[j]
-                local yy = points[j + 1]
-                if xx < xmin then xmin = xx end
-                if xx > xmax then xmax = xx end
-                if yy < ymin then ymin = yy end
-                if yy > ymax then ymax = yy end
-            end
-        end
-    end
-    return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
 end
 
 -- end experiemnt

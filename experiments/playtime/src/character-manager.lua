@@ -172,7 +172,7 @@ local dna = {
         },
 
 
-        -- in the pppearance belwo we have a few options for types:
+        -- in the apppearance below we have a few options for types:
         -- skin = a skin that assumes a shape8 url to be present.
         -- bodyhair, = an overlay that assumes the shape8 url to be present, it will follow that
         -- connected-skin = a texture that will be drawn over a few connectd bodyparts
