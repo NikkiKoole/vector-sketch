@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sims-like Needs</title>
+        <link rel="stylesheet" href="/src/styles.css" />
+    </head>
+    <body>
+        <div id="app">
+            <header>
+                <h1>Sims‑like Needs</h1>
+                <div id="clock"></div>
+            </header>
+
+            <section id="bars"></section>
+
+            <section id="actions">
+                <button data-action="eat">🍽️ Eat</button>
+                <button data-action="sleep">🛏️ Sleep</button>
+                <button data-action="shower">🚿 Shower</button>
+                <button data-action="toilet">🚽 Toilet</button>
+                <button data-action="chat">💬 Socialize</button>
+                <button data-action="fun">🎮 Have Fun</button>
+            </section>
+
+            <section id="happiness">
+                <div class="stat">
+                    <span>Happy Now</span><strong id="hNow">0</strong>
+                </div>
+                <div class="stat">
+                    <span>Happy Day</span><strong id="hDay">0</strong>
+                </div>
+                <div class="stat">
+                    <span>Happy Week</span><strong id="hWeek">0</strong>
+                </div>
+                <div class="stat">
+                    <span>Happy Life</span><strong id="hLife">0</strong>
+                </div>
+            </section>
+        </div>
+
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
