@@ -2,7 +2,8 @@ I made my Mipo cry!
 [🧠 Chapter Ideas (Optional)
 Intro: Why is he crying?
 The problem with lifeless NPCs
-Basic emotion model: mood & tension
+first emotion model: mood & tension
+second emotion model: valence(mood), arousal(tension), dominance(control)
 Eyebrows do most of the work
 Mapping emotions to expressions
 The moment it all worked (and broke me)

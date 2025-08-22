@@ -781,6 +781,7 @@ local function getOffsetFromParent(partName, guy)
                 return 0, -parts['torso' .. (index - 1)].dims.h / 2
             end
         end
+        -- THESE SIMPLE ONES BELOW WORK BECAUSE LEGS AND ARMS ARE ALWAYS SIMPLE RECTANGLES
     elseif partName == 'llarm' then
         return 0, parts.luarm.dims.h / 2
     elseif partName == 'rlarm' then

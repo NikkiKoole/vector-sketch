@@ -134,6 +134,7 @@ function love.load(args)
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
     humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
+    --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
@@ -203,11 +204,19 @@ function love.update(dt)
                 v:update(scaled_dt)
             end
         end
-        local velocityiterations = 8
-        local positioniterations = 13 -- 3
-        for i = 1, 1 do
-            state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
+        local velocityiterations = 8 * 2
+        local positioniterations = 3 * 2 -- 3
+        -- for i = 1, 1 do
+        --     state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
+        -- end
+
+
+        local substeps = 1
+        local step = scaled_dt / substeps
+        for i = 1, substeps do
+            state.physicsWorld:update(step, velocityiterations, positioniterations)
         end
+
         script.call('update', scaled_dt)
         local joints = state.physicsWorld:getJoints()
         for i = 1, #joints do
