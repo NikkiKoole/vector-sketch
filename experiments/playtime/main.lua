@@ -133,7 +133,12 @@ function love.load(args)
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
 
-    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300)
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
+
+
+    --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, 1)
+
+
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
