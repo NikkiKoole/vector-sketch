@@ -136,7 +136,7 @@ function love.load(args)
     humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
 
 
-    --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, 1)
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, 1)
 
 
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
