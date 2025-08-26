@@ -167,9 +167,9 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 10,
-            torsoSegments = 10,
-            noseSegments = 10, -- 0 = no nose; >0 = segmented nose/trunk
+            neckSegments = 1,
+            torsoSegments = 1,
+            noseSegments = 2, -- 0 = no nose; >0 = segmented nose/trunk
         },
 
 
@@ -182,8 +182,10 @@ local dna = {
         parts = {
             ['nose-segment-template'] = {
                 appearance = {
+
                     -- plain skin per segment; good first step
                     ['skin'] = {
+                        zOffset = 3,
                         main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
                     },
                 },
