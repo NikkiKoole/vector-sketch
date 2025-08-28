@@ -167,8 +167,9 @@ local dna = {
     ['humanoid'] = {
         creation = {
             isPotatoHead = false,
-            neckSegments = 0,
-            torsoSegments = 1
+            neckSegments = 1,
+            torsoSegments = 1,
+            noseSegments = 12, -- 0 = no nose; >0 = segmented nose/trunk
         },
 
 
@@ -179,6 +180,32 @@ local dna = {
         -- connected-hair = an overlay that assumes a few parts to be there too.
         -- todo trace-hair, a texture that follows a few vertex indicises within 1 shape.
         parts = {
+            ['nose-segment-template'] = {
+                appearance = {
+
+                    -- plain skin per segment; good first step
+                    -- ['skin'] = {
+                    --     zOffset = 3,
+                    --     main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
+                    -- },
+                    ['connected-skin'] = {
+                        main = add(initBlock('leg5'), {}),
+                        zOffset = 3,
+                        --endNode = 'tip'
+                    },
+                },
+                -- small capsule by default; tweak as needed
+                dims = { w = 40, h = 40, w2 = 4, sx = 1, sy = 1 },
+
+                -- if we want the connected skin you probably want to use the capsule shape.
+                -- if you want a normal txture you might want the shape8
+
+                --shape = 'shape8',
+                --shape8URL = 'shapeA2.png',
+
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -1, up = 1 } }
+            },
             ['torso-segment-template'] = {
                 appearance = {
                     -- this will do the neck texturing (connecting torso and head)
@@ -488,16 +515,21 @@ local function extractTorsoIndex(name)
     local index = string.match(name, "^torso(%d+)$")
     return index and tonumber(index) or nil
 end
-
+local function extractNoseIndex(name)
+    local index = string.match(name, "^nose(%d+)$")
+    return index and tonumber(index) or nil
+end
 local function getParentAndChildrenFromPartName(partName, guy)
     local creation      = guy.dna.creation
     local neckSegments  = creation.neckSegments or 0
     local torsoSegments = creation.torsoSegments or 1
+    local noseSegments  = creation.noseSegments or 0
 
-    local highestTorso  = 'torso' .. torsoSegments
-    local lowestTorso   = 'torso1'
 
-    local map           = {
+    local highestTorso = 'torso' .. torsoSegments
+    local lowestTorso  = 'torso1'
+
+    local map          = {
 
         head = { p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso, c = { 'lear', 'rear' } },
         lear = { p = 'head' },
@@ -517,7 +549,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
     }
 
-    local neckIndex     = extractNeckIndex(partName)
+    local neckIndex    = extractNeckIndex(partName)
     if neckIndex then
         if neckIndex == 1 then
             map[partName] = { p = highestTorso, c = (neckIndex == neckSegments) and 'head' or 'neck2' }
@@ -564,6 +596,26 @@ local function getParentAndChildrenFromPartName(partName, guy)
             end
         end
     end
+
+
+    -- Nose: parent is head (or highest torso in potato mode)
+    local noseIndex = extractNoseIndex(partName)
+    if noseIndex then
+        local parentName
+        if noseIndex == 1 then
+            parentName = creation.isPotatoHead and highestTorso or 'head'
+        else
+            parentName = 'nose' .. (noseIndex - 1)
+        end
+
+        local children
+        if noseIndex < noseSegments then
+            children = 'nose' .. (noseIndex + 1)
+        end
+        logger:info('NOSE', parentName)
+        map[partName] = { p = parentName, c = children }
+    end
+
 
     -- Overrides for special cases
     -- Head connects directly to highest torso if no neck
@@ -705,7 +757,25 @@ local function getOwnOffset(partName, guy)
     if partName == 'rlarm' then
         return 0, (parts.rlarm.dims.h / 2) * scale
     end
+    if extractNoseIndex(partName) then
+        local part = guy.dna.parts[partName]
 
+        if part.shape == 'shape8' then
+            local raw = shape8Dict[part.shape8URL].v
+            local rr = recenterPoints(raw)
+            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
+            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
+
+            --local handOffset = 50
+            return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
+        else
+            --print('wowzers!')
+            return 0, (part.dims.h / 2) * scale
+        end
+
+        -- push outward along local +Y (your code rotates this into parent space)
+        -- return 0, (part.dims.h / 2) * guy.scale
+    end
     return 0, 0
 end
 
@@ -721,8 +791,18 @@ local function getOffsetFromParent(partName, guy)
     local lowestTorso   = 'torso1'
     local scale         = guy.scale
 
+
+
+
     local function getTorsoPart8FromSpecificTorso(index, torsoIndex)
         local torso = 'torso' .. torsoIndex
+        local raw = shape8Dict[parts[torso].shape8URL].v
+        local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
+        local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
+        return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
+    end
+    local function getNosePart8FromSpecificTorso(index, noseIndex)
+        local torso = 'nose' .. noseIndex
         local raw = shape8Dict[parts[torso].shape8URL].v
         local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
         local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
@@ -744,6 +824,14 @@ local function getOffsetFromParent(partName, guy)
         return false
     end
 
+    local function hasNose8()
+        if parts['nose1'].shape == 'shape8' then
+            return true
+        end
+        return false
+    end
+
+
     local function hasHead8()
         if parts['head'].shape == 'shape8' then
             return true
@@ -758,6 +846,53 @@ local function getOffsetFromParent(partName, guy)
 
         return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
     end
+
+    local noseT = (positioners and positioners.nose and positioners.nose.t) or 0.35 -- 0=top, 1=bottom
+
+    local function getMidlineLerpOnHead(t)
+        local ax, ay = getHeadPart8(1) -- top center
+        local bx, by = getHeadPart8(5) -- bottom center
+        return lerp(ax, bx, t), lerp(ay, by, t)
+    end
+    local function getMidlineLerpOnTopTorso(t)
+        local ax, ay = getTorsoPart8FromHighest(1)
+        local bx, by = getTorsoPart8FromHighest(5)
+        return lerp(ax, bx, t), lerp(ay, by, t)
+    end
+
+
+    local noseIndex = extractNoseIndex(partName)
+    if noseIndex then
+        if noseIndex == 1 then
+            if creation.isPotatoHead then
+                if hasTorso8() then
+                    local rx, ry = getMidlineLerpOnTopTorso(noseT)
+                    return rx, ry
+                else
+                    return 0, (-parts[highestTorso].dims.h) * scale
+                end
+            else
+                if hasHead8() then
+                    local rx, ry = getMidlineLerpOnHead(noseT)
+                    return rx, ry
+                else
+                    return 0, (-parts.head.dims.h) * scale
+                end
+            end
+        else
+            if hasNose8() then
+                return getNosePart8FromSpecificTorso(5, noseIndex)
+            else
+                return 0, (parts[partName].dims.h / 2) * scale
+            end
+            -- parent is previous nose segment; anchor at its tip (+Y half height)
+            --local parentName = 'nose' .. (noseIndex - 1)
+            --local pd = parts[parentName].dims
+            --return 0, (pd.h) * scale
+        end
+    end
+
+
 
     if extractNeckIndex(partName) then
         local index = extractNeckIndex(partName)
@@ -909,6 +1044,8 @@ local function getAngleOffset(partName, guy)
         return parts.lear.stanceAngle
     elseif partName == 'rear' then
         return parts.rear.stanceAngle
+    elseif extractNoseIndex(partName) then
+        return 0 -- or small per-segment curve like: (i-1)*0.08
     else
         return 0
     end
@@ -1269,19 +1406,20 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.vertices = newVertices
                         ud.extra.vertexCount = #vertices / 2
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
-                        local body = relevant.body
+                        local body          = relevant.body
                         --print(k)
                         --print(k, v2.endNode)
                         -- depending on the start and end node. build the jointlabels
                         local torsoSegments = instance.dna.creation.torsoSegments or 1
-                        local jointLabels = {}
+                        local noseSegments  = instance.dna.creation.noseSegments or 0
+                        local jointLabels   = {}
 
-                        local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+                        local fixture       = fixtures.createSFixture(body, 0, 0, 'connected-texture',
                             { radius = 30 * scale })
 
-                        local ud = fixture:getUserData()
+                        local ud            = fixture:getUserData()
 
-                        ud.extra = {
+                        ud.extra            = {
                             attachTo = k,
                             OMP = (k2 == 'connected-skin'),
                             dirty = true,
@@ -1291,7 +1429,7 @@ function lib.addTexturesFromInstance2(instance)
                             growExtra = 20 * scale,
                         }
 
-                        ud.extra.main.wmul = scale
+                        ud.extra.main.wmul  = scale
                         if k:find('uleg') then
                             --print('this is an upper-leg, connect to torso1')
                             if k == 'luleg' then
@@ -1326,6 +1464,16 @@ function lib.addTexturesFromInstance2(instance)
 
                             --print('this is about texturing the neck')
                         end
+
+                        if k == 'nose1' and noseSegments > 0 then
+                            local startParent = instance.dna.creation.isPotatoHead and ('torso' .. torsoSegments) or
+                                'head'
+                            table.insert(jointLabels, startParent .. '->nose1')
+                            for i = 1, noseSegments - 1 do
+                                table.insert(jointLabels, 'nose' .. i .. '->nose' .. (i + 1))
+                            end
+                        end
+
                         for j = 1, #jointLabels do
                             local jointID = jointLabels[j]
                             ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
@@ -1424,6 +1572,19 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     if not isPotato then
         table.insert(ordered, 'head')
     end
+
+
+    local noseSegments = instance.dna.creation.noseSegments or 0
+    if noseSegments > 0 then
+        for i = 1, noseSegments do
+            local partName = 'nose' .. i
+            table.insert(ordered, partName)
+            if not instance.dna.parts[partName] then
+                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['nose-segment-template'])
+            end
+        end
+    end
+
     -- Common limbs
     local limbs = {
         'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
