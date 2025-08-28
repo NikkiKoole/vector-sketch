@@ -16,6 +16,8 @@ local fixtures = require 'src.fixtures'
 -- OMP images as limb hair (and chesthair) -- maybe we should just know which images have a mask and tehy are OMP
 -- do FACE PARTS
 
+-- todo
+-- nose parts is unattached after body chaneg (p)
 
 local function cyclicShift(arr, shift)
     local n = #arr
@@ -111,7 +113,6 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
             local patch = optionalPatchName or 'main'
             if p.appearance['bodyhair'][patch] then
                 for k, v in pairs(values) do
-                    print('jo', k, v)
                     p.appearance['bodyhair'][patch][k] = v
                 end
             end
@@ -166,8 +167,8 @@ local shape8Dict = {
 local dna = {
     ['humanoid'] = {
         creation = {
-            isPotatoHead = false,
-            neckSegments = 1,
+            isPotatoHead = true,
+            neckSegments = 0,
             torsoSegments = 1,
             noseSegments = 12, -- 0 = no nose; >0 = segmented nose/trunk
         },
@@ -204,7 +205,7 @@ local dna = {
                 --shape8URL = 'shapeA2.png',
 
                 shape = 'capsule',
-                j = { type = 'revolute', limits = { low = -1, up = 1 } }
+                j = { type = 'revolute' }
             },
             ['torso-segment-template'] = {
                 appearance = {
@@ -582,6 +583,9 @@ local function getParentAndChildrenFromPartName(partName, guy)
                 if creation.isPotatoHead then -- Potato ears attach to highest torso
                     table.insert(children, 'lear')
                     table.insert(children, 'rear')
+                    if noseSegments then
+                        table.insert(children, 'nose1')
+                    end
                 end
             end
             -- Lowest segment connects to legs
@@ -612,21 +616,43 @@ local function getParentAndChildrenFromPartName(partName, guy)
         if noseIndex < noseSegments then
             children = 'nose' .. (noseIndex + 1)
         end
-        logger:info('NOSE', parentName)
+        --  logger:info('NOSE', parentName)
         map[partName] = { p = parentName, c = children }
     end
 
 
     -- Overrides for special cases
     -- Head connects directly to highest torso if no neck
+
+    if not creation.isPotatoHead then
+        local headChildren = { 'lear', 'rear' }
+        if noseSegments > 0 then
+            table.insert(headChildren, 'nose1')
+        end
+        map.head = {
+            p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso,
+            c = headChildren
+        }
+    end
+
     if partName == 'head' and neckSegments == 0 then
-        map[partName] = { p = highestTorso, c = { 'lear', 'rear' } }
+        local headChildren = { 'lear', 'rear' }
+        if noseSegments > 0 then
+            table.insert(headChildren, 'nose1')
+        end
+
+        -- todo nose
+        --   logger:info('626')
+        map['head'].c = headChildren
     end
 
     -- If Potato Head, ears parent is highest torso (head doesn't exist as parent)
     if creation.isPotatoHead then
         map['lear'] = { p = highestTorso }
         map['rear'] = { p = highestTorso }
+
+        --logger:info('634')
+        -- todo nose
         -- Remove head connection if it exists from map
         map['head'] = nil -- No head part in potato mode
     end
@@ -636,6 +662,9 @@ local function getParentAndChildrenFromPartName(partName, guy)
         local children = {}
         if creation.isPotatoHead then
             children = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear' }
+            if noseSegments > 0 then
+                table.insert(children, 'nose1')
+            end
         else
             children = { (neckSegments > 0) and 'neck1' or 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' }
         end
@@ -644,6 +673,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
     end
 
     local result = map[partName]
+
     return result or {} -- Return empty table if partName not found
 end
 
@@ -1235,6 +1265,7 @@ local function updateSinglePart(partName, data, instance)
     if type(children) == 'string' then
         children = { children }
     end
+    --logger:info('children :', partName, inspect(children))
     makePart(partName, instance, settings)
 
     -- after making a part set it to its angle so the children will be using that angle in their calculations.
@@ -1320,7 +1351,6 @@ function lib.addTexturesFromInstance2(instance)
                 end
 
                 for k2, v2 in pairs(v.appearance) do
-                    -- print(k, k2)
                     if k2 == 'skin' then
                         local body = relevant.body
 
@@ -1407,8 +1437,7 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.vertexCount = #vertices / 2
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
                         local body          = relevant.body
-                        --print(k)
-                        --print(k, v2.endNode)
+
                         -- depending on the start and end node. build the jointlabels
                         local torsoSegments = instance.dna.creation.torsoSegments or 1
                         local noseSegments  = instance.dna.creation.noseSegments or 0
@@ -1486,7 +1515,7 @@ function lib.addTexturesFromInstance2(instance)
                         if not instance.dna.creation.isPotatoHead and k == 'head' then
                             rightPlaceForHaircut = true
                         end
-                        --print(k)
+
 
                         -- if instance.dna.creation.isPotatoHead and k ~= 'torso1' then
                         --     return
@@ -1534,7 +1563,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
     -- 1. Add Torso Segments
-    logger:info('createCharacterFromExistingDNA', torsoSegments)
+    --logger:info('createCharacterFromExistingDNA', torsoSegments)
     for i = 1, torsoSegments do
         local partName = 'torso' .. i
         table.insert(ordered, partName)
@@ -1579,6 +1608,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         for i = 1, noseSegments do
             local partName = 'nose' .. i
             table.insert(ordered, partName)
+
             if not instance.dna.parts[partName] then
                 instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['nose-segment-template'])
             end

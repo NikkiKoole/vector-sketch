@@ -132,7 +132,7 @@ function love.load(args)
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
-    humanoidInstance = CharacterManager.createCharacter("humanoid", 100, 300, .15)
+    --humanoidInstance = CharacterManager.createCharacter("humanoid", 100, 300, .15)
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
 
 
@@ -586,7 +586,7 @@ function love.keypressed(key)
             local pColor = randomHexColor()
 
             local oldCreation = humanoidInstance.dna.creation
-            local segments = 1 + math.ceil(love.math.random() * 5)
+            local segments = 1 --+ math.ceil(love.math.random() * 5)
 
             local url = humanoidInstance.dna.parts['torso1'].shape8URL
             local sx = humanoidInstance.dna.parts['torso1'].dims.sx
@@ -601,7 +601,7 @@ function love.keypressed(key)
 
             --  print(url)
             -- logger:info(oldCreation.torsoSegments, segments)
-            logger:info(segments)
+            --  logger:info('torso segments:', segments)
             CharacterManager.rebuildFromCreation(humanoidInstance,
                 { torsoSegments = segments })
 
@@ -611,7 +611,12 @@ function love.keypressed(key)
                     humanoidInstance)
                 --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
             end
-            logger:info(segments)
+
+            -- if noseSegments > 0 then
+            -- Rebuild nose1 which will cascade to its children via updateSinglePart recursion
+            -- CharacterManager.updatePart('nose1', {}, humanoidInstance)
+            --end
+            --logger:info('torso segments:', segments)
             -- for i = 1, segments do
             --     CharacterManager.updatePart('torso' .. i,
             --         { shape8URL = url, sy = sx, sx = sy },
