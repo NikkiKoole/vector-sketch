@@ -1287,7 +1287,8 @@ function lib.addTexturesFromInstance2(instance)
                             dirty = true,
                             main = utils.deepCopy(v2.main),
                             zOffset = v2.zOffset or 0,
-                            nodes = {}
+                            nodes = {},
+                            growExtra = 20 * scale,
                         }
 
                         ud.extra.main.wmul = scale

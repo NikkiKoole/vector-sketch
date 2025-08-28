@@ -734,7 +734,7 @@ function lib.drawTexturedWorld(world)
                     end
 
                     -- todo parameterize this
-                    local growLength = 20
+                    local growLength = ud.extra.growExtra or 20
                     points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
                     points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
 
