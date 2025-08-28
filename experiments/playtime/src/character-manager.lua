@@ -170,7 +170,7 @@ local dna = {
             isPotatoHead = true,
             neckSegments = 0,
             torsoSegments = 1,
-            noseSegments = 12, -- 0 = no nose; >0 = segmented nose/trunk
+            noseSegments = 1, -- 0 = no nose; >0 = segmented nose/trunk
         },
 
 
@@ -185,15 +185,15 @@ local dna = {
                 appearance = {
 
                     -- plain skin per segment; good first step
-                    -- ['skin'] = {
-                    --     zOffset = 3,
-                    --     main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
-                    -- },
-                    ['connected-skin'] = {
-                        main = add(initBlock('leg5'), {}),
+                    ['skin'] = {
                         zOffset = 3,
-                        --endNode = 'tip'
+                        main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
                     },
+                    -- ['connected-skin'] = {
+                    --     main = add(initBlock('leg5'), {}),
+                    --     zOffset = 3,
+                    --     --endNode = 'tip'
+                    -- },
                 },
                 -- small capsule by default; tweak as needed
                 dims = { w = 40, h = 40, w2 = 4, sx = 1, sy = 1 },
@@ -201,10 +201,10 @@ local dna = {
                 -- if we want the connected skin you probably want to use the capsule shape.
                 -- if you want a normal txture you might want the shape8
 
-                --shape = 'shape8',
-                --shape8URL = 'shapeA2.png',
+                shape = 'shape8',
+                shape8URL = 'shapeA2.png',
 
-                shape = 'capsule',
+                --shape = 'capsule',
                 j = { type = 'revolute' }
             },
             ['torso-segment-template'] = {

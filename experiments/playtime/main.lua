@@ -255,6 +255,7 @@ function love.draw()
         local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
         love.graphics.clear(creamy)
     end
+
     if state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
@@ -300,6 +301,7 @@ function love.draw()
 
     if FIXED_TIMESTEP then
         love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
+        --   love.graphics.print(love.timer.getFPS(), w - 80, 30)
     else
         love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
     end

@@ -14,8 +14,7 @@ tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 local imageCache = {}
-local shrinkFactor = 1
-
+local shrinkFactor = 3
 
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
@@ -45,6 +44,7 @@ function getLoveImage(path, settings)
     end
 
     if imageCache[path] then
+        --  logger:trace()
         return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
     else
         return nil, nil, nil
@@ -436,6 +436,7 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
+                --print(' sdsfsdfdfs')
                 local patch1 = makePatch('patch1', ud)
                 local patch2 = makePatch('patch2', ud)
                 local patch3 = makePatch('patch3', ud)
@@ -507,7 +508,7 @@ end
 local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
     local canvasCache = guy.canvasCache
     local dpi = 1 --love.graphics.getDPIScale()
-    local shrink = canvas.getShrinkFactor()
+    local shrink = lib.getShrinkFactor()
     if true then
         if true or box2dGuy.hairNeedsRedo then
             local img = canvasCache.hairCanvas
@@ -788,6 +789,7 @@ function lib.drawTexturedWorld(world)
             drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
     end
+
     local function drawImageLayerVanilla(url, hex, extra, texfixture)
         local img, imgw, imgh = getLoveImage('textures/' .. url)
         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
