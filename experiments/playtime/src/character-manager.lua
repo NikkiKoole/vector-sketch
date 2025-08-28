@@ -169,7 +169,7 @@ local dna = {
             isPotatoHead = false,
             neckSegments = 1,
             torsoSegments = 1,
-            noseSegments = 2, -- 0 = no nose; >0 = segmented nose/trunk
+            noseSegments = 12, -- 0 = no nose; >0 = segmented nose/trunk
         },
 
 
@@ -184,16 +184,27 @@ local dna = {
                 appearance = {
 
                     -- plain skin per segment; good first step
-                    ['skin'] = {
+                    -- ['skin'] = {
+                    --     zOffset = 3,
+                    --     main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
+                    -- },
+                    ['connected-skin'] = {
+                        main = add(initBlock('leg5'), {}),
                         zOffset = 3,
-                        main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
+                        --endNode = 'tip'
                     },
                 },
                 -- small capsule by default; tweak as needed
-                dims = { w = 40, h = 120, w2 = 4, sx = 1, sy = 1 },
-                shape = 'shape8',
-                shape8URL = 'shapeA2.png',
-                j = { type = 'revolute', limits = { low = 0, up = 0 } }
+                dims = { w = 40, h = 40, w2 = 4, sx = 1, sy = 1 },
+
+                -- if we want the connected skin you probably want to use the capsule shape.
+                -- if you want a normal txture you might want the shape8
+
+                --shape = 'shape8',
+                --shape8URL = 'shapeA2.png',
+
+                shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -1, up = 1 } }
             },
             ['torso-segment-template'] = {
                 appearance = {
@@ -755,12 +766,10 @@ local function getOwnOffset(partName, guy)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
 
-
-
             --local handOffset = 50
             return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
         else
-            print('wowzers!')
+            --print('wowzers!')
             return 0, (part.dims.h / 2) * scale
         end
 
@@ -815,6 +824,14 @@ local function getOffsetFromParent(partName, guy)
         return false
     end
 
+    local function hasNose8()
+        if parts['nose1'].shape == 'shape8' then
+            return true
+        end
+        return false
+    end
+
+
     local function hasHead8()
         if parts['head'].shape == 'shape8' then
             return true
@@ -863,7 +880,11 @@ local function getOffsetFromParent(partName, guy)
                 end
             end
         else
-            return getNosePart8FromSpecificTorso(5, noseIndex)
+            if hasNose8() then
+                return getNosePart8FromSpecificTorso(5, noseIndex)
+            else
+                return 0, (parts[partName].dims.h / 2) * scale
+            end
             -- parent is previous nose segment; anchor at its tip (+Y half height)
             --local parentName = 'nose' .. (noseIndex - 1)
             --local pd = parts[parentName].dims
@@ -1385,19 +1406,20 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.vertices = newVertices
                         ud.extra.vertexCount = #vertices / 2
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
-                        local body = relevant.body
+                        local body          = relevant.body
                         --print(k)
                         --print(k, v2.endNode)
                         -- depending on the start and end node. build the jointlabels
                         local torsoSegments = instance.dna.creation.torsoSegments or 1
-                        local jointLabels = {}
+                        local noseSegments  = instance.dna.creation.noseSegments or 0
+                        local jointLabels   = {}
 
-                        local fixture = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+                        local fixture       = fixtures.createSFixture(body, 0, 0, 'connected-texture',
                             { radius = 30 * scale })
 
-                        local ud = fixture:getUserData()
+                        local ud            = fixture:getUserData()
 
-                        ud.extra = {
+                        ud.extra            = {
                             attachTo = k,
                             OMP = (k2 == 'connected-skin'),
                             dirty = true,
@@ -1406,7 +1428,7 @@ function lib.addTexturesFromInstance2(instance)
                             nodes = {}
                         }
 
-                        ud.extra.main.wmul = scale
+                        ud.extra.main.wmul  = scale
                         if k:find('uleg') then
                             --print('this is an upper-leg, connect to torso1')
                             if k == 'luleg' then
@@ -1441,6 +1463,16 @@ function lib.addTexturesFromInstance2(instance)
 
                             --print('this is about texturing the neck')
                         end
+
+                        if k == 'nose1' and noseSegments > 0 then
+                            local startParent = instance.dna.creation.isPotatoHead and ('torso' .. torsoSegments) or
+                                'head'
+                            table.insert(jointLabels, startParent .. '->nose1')
+                            for i = 1, noseSegments - 1 do
+                                table.insert(jointLabels, 'nose' .. i .. '->nose' .. (i + 1))
+                            end
+                        end
+
                         for j = 1, #jointLabels do
                             local jointID = jointLabels[j]
                             ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
