@@ -1534,7 +1534,7 @@ function lib.addTexturesFromInstance2(instance)
                             ud.extra.zOffset = 40
                             ud.extra.dirty = true
                             ud.extra.main = utils.deepCopy(v2.main)
-                            ud.extra.width = love.math.random() * 500 * scale --v2.width or 100
+                            ud.extra.width = .5 * 500 * scale --v2.width or 100
                             ud.extra.startIndex = v2.startIndex
                             ud.extra.endIndex = v2.endIndex
 
@@ -1673,6 +1673,23 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     lib.addTexturesFromInstance2(instance)
     --logger:info('calling addTextureFixturesFromInstance')
     return instance
+end
+
+function lib.createCharacterFromJustDNA(mydna, x, y, scale)
+    local instance = {
+        id = uuid.generateID(),
+        --templateName = template,
+        dna = utils.deepCopy(mydna), -- Copy template data for potential instance modification
+        parts = {},                  -- { [partName] = thingObject, ... }
+        joints = {},                 -- unused...{ [connectionName] = jointObject, ... }
+        --appearanceValues = {},               -- Will hold visual overrides (implement later)
+        -- Add other instance-specific state if needed
+        textures = {},   -- here we will keep the data about what texture will go where (simple textures and connected textures)
+        positioners = {} -- here we will have some lerp values describing how things are positioned..
+
+    }
+    instance.scale = scale or 1
+    return lib.createCharacterFromExistingDNA(instance, x, y, false)
 end
 
 function lib.createCharacter(template, x, y, scale)

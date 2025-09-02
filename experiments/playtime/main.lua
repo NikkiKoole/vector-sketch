@@ -136,7 +136,7 @@ function love.load(args)
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
 
 
-    humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, 1)
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
 
 
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
@@ -353,7 +353,12 @@ function love.keypressed(key)
     script.call('onKeyPress', key)
 
     if not ui.focusedTextInputID then
-        if key == 'r' then
+        if key == 'c' then
+            local mydna = (humanoidInstance.dna)
+            CharacterManager.createCharacterFromJustDNA(mydna, 200, 200, humanoidInstance.scale)
+        end
+
+        if key == 'q' then
             -- we will just recolor everything.
 
             -- logger:inspect(humanoidInstance.dna.creation)
@@ -395,9 +400,7 @@ function love.keypressed(key)
             --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
             --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
         end
-
-
-        if key == 'n' then
+        if key == 'w' then
             --logger:inspect(humanoidInstance.dna.creation)
             --local oldCreation = humanoidInstance.dna.creation
             --logger:inspect(humanoidInstance.dna.creation)
@@ -445,7 +448,7 @@ function love.keypressed(key)
                 humanoidInstance)
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
-        if key == 'f' then
+        if key == 'r' then
             --,
             local urls = { 'hand3r', 'feet8r', 'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r',
                 'feet7xr' }
@@ -476,8 +479,7 @@ function love.keypressed(key)
             print(url)
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
-
-        if key == 'b' then
+        if key == 't' then
             local bgHex = randomHexColor()
             local fgHex = randomHexColor()
             local pHex = randomHexColor()
@@ -497,8 +499,7 @@ function love.keypressed(key)
             end
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
-
-        if key == 'x' then
+        if key == 'y' then
             local bgColor = '000000ff'
             local fgColor = randomHexColor()
             local pColor = randomHexColor()
@@ -565,8 +566,7 @@ function love.keypressed(key)
             -- --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
-
-        if key == 'l' then
+        if key == 'u' then
             local lowerleglength = 20 + love.math.random() * 1400
             CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
             CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
@@ -582,7 +582,7 @@ function love.keypressed(key)
 
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
-        if key == 'p' then
+        if key == 'i' then
             local bgColor = '000000ff'
             local fgColor = randomHexColor()
             local pColor = randomHexColor()
