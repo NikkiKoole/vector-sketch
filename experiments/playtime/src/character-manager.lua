@@ -205,7 +205,7 @@ local dna = {
                 shape8URL = 'shapeA2.png',
 
                 --shape = 'capsule',
-                j = { type = 'revolute' }
+                j = { type = 'revolute', limits = { low = -math.pi / 32, up = math.pi / 32 } }
             },
             ['torso-segment-template'] = {
                 appearance = {
