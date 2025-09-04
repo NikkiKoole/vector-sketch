@@ -198,7 +198,9 @@ function correctJoint(joint)
     end
 end
 
+beginframetime = love.timer.getTime()
 function love.update(dt)
+    beginframetime = love.timer.getTime()
     if recorder.isRecording or recorder.isReplaying then
         recorder:update(dt)
     end
@@ -306,7 +308,12 @@ function love.draw()
 
     if FIXED_TIMESTEP then
         love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
-        --   love.graphics.print(love.timer.getFPS(), w - 80, 30)
+        local timediff = love.timer.getTime() - beginframetime
+        if timediff > TICKRATE then
+            love.graphics.setColor(1, 0, 0)
+            love.graphics.print(timediff, w - 80, 50)
+            love.graphics.setColor(1, 1, 1)
+        end
     else
         love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
     end

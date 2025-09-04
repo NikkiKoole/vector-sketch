@@ -14,7 +14,7 @@ tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = love.graphics.newImage('textures/shapes6.png')
 local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
 local imageCache = {}
-local shrinkFactor = 3
+local shrinkFactor = 1
 
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
