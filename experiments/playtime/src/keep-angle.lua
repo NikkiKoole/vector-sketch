@@ -1,7 +1,7 @@
 local lib = {}
 
 
-function rotateBodyTowards(body, dt, targetAngle)
+function rotateBodyTowards(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = targetAngle - currentAngle
 
@@ -9,8 +9,8 @@ function rotateBodyTowards(body, dt, targetAngle)
     diff = (diff + math.pi) % (2 * math.pi) - math.pi
 
     -- Simple proportional controller
-    local rotationSpeed = 50 -- tweak this for faster/slower turning
-    local maxAngularVel = 10 -- safety clamp
+    local rotationSpeed = data and data.speed or 5.00 -- tweak this for faster/slower turning
+    local maxAngularVel = 10                          -- safety clamp
 
     local desiredAngularVel = diff * rotationSpeed
     desiredAngularVel = math.max(-maxAngularVel, math.min(maxAngularVel, desiredAngularVel))
@@ -27,7 +27,8 @@ function lib.update(dt)
             local behaviors = ud.thing.behaviors
             for kb, vb in pairs(behaviors) do
                 if vb.name == 'KEEP_ANGLE' then
-                    rotateBodyTowards(ud.thing.body, dt, 0)
+                    logger:inspect(vb)
+                    rotateBodyTowards(ud.thing.body, dt, 0, vb)
                 end
             end
         end

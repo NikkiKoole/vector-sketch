@@ -10,7 +10,7 @@
 
 -- TODO z-order for characters is predefined
 -- TODO characters could be facing 3 ways (facingleft/facingright/facingfront)
--- TODO straightener
+-- TODO group id < 0 but different per character
 
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'

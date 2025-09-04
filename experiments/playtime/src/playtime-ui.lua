@@ -2579,6 +2579,26 @@ function lib.drawUI()
 
                 ui.scrollableList('custombehaviors', 50, 100, 280, 250,
                     function(baseX, baseY, w, h, offsetY)
+                        if state.panelVisibility.customBehavior.name == 'KEEP_ANGLE' then
+                            local myID        = state.selection.selectedObj.id
+                            local myUD        = state.panelVisibility.customBehavior.body:getUserData()
+                            local myBehaviors = myUD.thing.behaviors or {}
+                            local b           = nil
+                            for i = 1, #myBehaviors do
+                                if (myBehaviors[i].name == 'KEEP_ANGLE') then
+                                    b = myBehaviors[i]
+                                end
+                            end
+                            --logger:inspect(myBehaviors)
+
+                            if b then
+                                createSliderWithId(myID, 'speed', 100, 100, 100, 0, 500,
+                                    b.speed or 0,
+                                    function(v) b.speed = v end)
+                            end
+                        end
+
+
                         if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
                             -- we can assume all these type of other things are attached via revolute joints
                             local me = state.panelVisibility.customBehavior.body
