@@ -14,6 +14,10 @@
 
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
+PROF_CAPTURE = true
+prof = require 'vendor.jprof'
+local manual_gc = require 'vendor.batteries.manual_gc'
+--jit.off()
 
 local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
@@ -41,6 +45,7 @@ snap = require 'src.snap'
 keep_angle = require 'src.keep-angle'
 registry = require 'src.registry'
 benchmarks = require 'src.benchmarks'
+
 
 local mathUtils = require 'src.math-utils'
 
@@ -203,6 +208,7 @@ end
 
 beginframetime = love.timer.getTime()
 function love.update(dt)
+    prof.push('frame')
     beginframetime = love.timer.getTime()
     if recorder.isRecording or recorder.isReplaying then
         recorder:update(dt)
@@ -251,9 +257,19 @@ function love.update(dt)
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
+    manual_gc(0.002, 2)
+    prof.pop('frame')
+end
+
+function love.quit()
+    -- this takes annoyingly long
+    time = love.timer.getTime()
+    prof.write("prof.mpack")
+    print('writing took', love.timer.getTime() - time, 'seconds')
 end
 
 function love.draw()
+    prof.push('frame')
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
 
@@ -320,6 +336,7 @@ function love.draw()
     else
         love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
     end
+    prof.pop('frame')
 end
 
 function love.wheelmoved(dx, dy)
@@ -383,11 +400,11 @@ function love.keypressed(key)
             -- end, 0.3)
             -- benchmarks.show("unloosenVanillalineNEW", stats)
 
-            benchmarks.compare('unloosenVanillaline', function()
-                mathUtils.unloosenVanillaline(points, tension, spacing)
-            end, "unloosenVanillalineNEW", function()
-                mathUtils.unloosenVanillalineNEW(points, tension, spacing)
-            end, 1)
+            -- benchmarks.compare('unloosenVanillaline', function()
+            --     mathUtils.unloosenVanillaline(points, tension, spacing)
+            -- end, "unloosenVanillalineNEW", function()
+            --     mathUtils.unloosenVanillalineNEW(points, tension, spacing)
+            -- end, 1)
         end
 
         if key == 'c' then
