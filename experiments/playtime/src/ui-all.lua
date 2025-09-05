@@ -246,7 +246,7 @@ function ui.panel(x, y, width, height, label, drawFunc, optionalFillColor)
     -- love.graphics.setScissor()
 
     -- Reset color to white
-    love.graphics.setColor(1, 1, 1)
+    -- love.graphics.setColor(1, 1, 1)
 end
 
 --- Creates a checkbox with a label.
@@ -273,7 +273,7 @@ function ui.checkbox(x, y, checked, label)
     love.graphics.print(label, x + size + 10, textY)
 
     -- Reset color to white
-    love.graphics.setColor(1, 1, 1)
+    --love.graphics.setColor(1, 1, 1)
 
     -- Return the updated checked state
     return clicked, checked
@@ -323,7 +323,7 @@ function ui.toggleButton(x, y, width, height, labelOn, labelOff, isToggled)
     love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
-    love.graphics.setColor(1, 1, 1)
+    --love.graphics.setColor(1, 1, 1)
 
     return used, isToggled
 end
@@ -461,7 +461,7 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
     love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
-    love.graphics.setColor(1, 1, 1)
+    --love.graphics.setColor(1, 1, 1)
 
     local clicked = false
     local released = ui.mouseReleased and ui.activeElementID == id
@@ -574,7 +574,7 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
         ui.dragOffset.y = 0
     end
     -- Reset color
-    love.graphics.setColor(1, 1, 1)
+    -- love.graphics.setColor(1, 1, 1)
 
     -- Return the updated value if it has changed
     if inValue ~= value then
@@ -606,14 +606,14 @@ function ui.centeredLabel(x, y, width, text)
     love.graphics.setColor(ui.theme.general.text)
 
     love.graphics.printf(text, x, y, width, "center")
-    love.graphics.setColor(1, 1, 1)
+    -- love.graphics.setColor(1, 1, 1)
 end
 
 function ui.label(x, y, text, color)
     love.graphics.setColor(color or ui.theme.general.text)
     local yOffset = 0 --ui.font:getHeight(text) / 2
     love.graphics.print(text, x, y + yOffset)
-    love.graphics.setColor(1, 1, 1)
+    --love.graphics.setColor(1, 1, 1)
 end
 
 --- Creates a dropdown menu.

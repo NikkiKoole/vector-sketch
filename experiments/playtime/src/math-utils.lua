@@ -61,6 +61,36 @@ function lib.getLengthOfPath(path)
     return result
 end
 
+-- local function evenlySpreadPath2(result, path, index, running, spacing)
+--     -- Stop if there's no next segment
+--     if index >= #path then return end
+
+--     local hereX = path[index + 1]
+--     local hereY = path[index + 2]
+--     local thereX = path[index + 3]
+--     local thereY = path[index + 4]
+
+--     local d = getDistance(hereX, hereY, thereX, thereY)
+
+--     -- Handle degenerate segment (zero length)
+--     if d == 0 then
+--         return evenlySpreadPath2(result, path, index + 2, running, spacing)
+--     end
+
+--     while running < d do
+--         local t = running / d
+--         local x = lerp(hereX, thereY, t)
+--         local y = lerp(hereX, thereY, t)
+--         -- table.insert(result, { x, y, { 1, 0, 1 } })
+--         table.insert(result, x)
+--         table.insert(result, y)
+--         running = running + spacing
+--     end
+
+--     -- Carry leftover distance into next segment
+--     return evenlySpreadPath2(result, path, index + 2, running - d, spacing)
+-- end
+
 local function evenlySpreadPath(result, path, index, running, spacing)
     -- Stop if there's no next segment
     if index >= #path then return end
@@ -133,10 +163,16 @@ local function GetSplinePos(tab, percent, tension) --returns the position at 'pe
 end
 
 
-
-lib.unloosenVanillaline = function(points, tension, spacing)
+local sqrt = math.sqrt
+lib.unloosenVanillalineOLD = function(points, tension, spacing)
+    --todo unpackNodePointsLoop shows up in perfromance measures.
+    -- its a heavy hot looped
+    -- also unneeded, atleast below. if evenlySpreadPatch would not give me packed nodes to begin with
+    --logger:inspect(points)
+    --print(tension, spacing)
     local work = unpackNodePoints(points, true)
     local output = {}
+    local output2 = {}
     local amt = #points * 2
     for i = 0, amt do
         local t = (i / amt)
@@ -144,13 +180,20 @@ lib.unloosenVanillaline = function(points, tension, spacing)
         if t == 0 then t = 0.00000001 end
 
         local x, y = GetSplinePos(work, t, tension)
-        table.insert(output, { x, y })
+        --table.insert(output, { x, y })
+        output[i] = { x, y }
+
+        --output2[(i * 2) + 1] = x
+        --output2[(i * 2) + 2] = y
     end
     --logger:inspect(output)
     local rrr = {}
+    --logger:inspect(output)
+    --logger:inspect(output2)
     local r2 = evenlySpreadPath(rrr, output, 1, 0, spacing)
 
     output = unpackNodePoints(rrr)
+    --logger:inspect(output)
 
     -- what a hack ! the end is not good it looped back and i dont know how to solve it
     -- in evenlyspreadpath....
@@ -159,6 +202,123 @@ lib.unloosenVanillaline = function(points, tension, spacing)
     return output
 end
 
+local function flattenPoints(points, closed, out)
+    out = out or {}
+    -- wipe without reallocating: set length to 0
+    for i = #out, 1, -1 do out[i] = nil end
+
+    local n = #points
+    local j = 1
+    for i = 1, n do
+        local p    = points[i]
+        out[j]     = p[1]
+        out[j + 1] = p[2]
+        j          = j + 2
+    end
+    if closed and n > 0 then
+        local p1   = points[1]
+        out[j]     = p1[1]
+        out[j + 1] = p1[2]
+    end
+    return out
+end
+local function evenlySpreadPathFlat(pathFlat, spacing, startOffset, closed, include_first, include_last, outFlat)
+    outFlat = outFlat or {}
+    for i = #outFlat, 1, -1 do outFlat[i] = nil end
+
+    local n = #pathFlat
+    if n < 4 then return outFlat end
+
+    local acc = startOffset or 0
+    local outLen = 0
+
+    -- Optionally emit the first point (for anchors/handles)
+    if include_first and (acc == 0) then
+        outLen = outLen + 1; outFlat[outLen] = pathFlat[1]
+        outLen = outLen + 1; outFlat[outLen] = pathFlat[2]
+    end
+
+    -- Iterate segments
+    local lastx = pathFlat[1]
+    local lasty = pathFlat[2]
+    local i = 3
+    local lastSegment = (closed and n) or (n - 2)
+
+    while true do
+        local nx, ny = pathFlat[i], pathFlat[i + 1]
+        local dx, dy = nx - lastx, ny - lasty
+        local segLen = sqrt(dx * dx + dy * dy)
+
+        if segLen > 0 then
+            while acc < segLen do
+                local t = acc / segLen
+                outLen = outLen + 1; outFlat[outLen] = lastx + dx * t
+                outLen = outLen + 1; outFlat[outLen] = lasty + dy * t
+                acc = acc + spacing
+            end
+            acc = acc - segLen
+        end
+
+        lastx, lasty = nx, ny
+        i = i + 2
+
+        -- next segment or wrap for closed
+        if i > lastSegment then
+            if closed then
+                -- last->first and then stop
+                nx, ny = pathFlat[1], pathFlat[2]
+                dx, dy = nx - lastx, ny - lasty
+                segLen = sqrt(dx * dx + dy * dy)
+                if segLen > 0 then
+                    while acc < segLen do
+                        local t = acc / segLen
+                        outLen = outLen + 1; outFlat[outLen] = lastx + dx * t
+                        outLen = outLen + 1; outFlat[outLen] = lasty + dy * t
+                        acc = acc + spacing
+                    end
+                    acc = acc - segLen
+                end
+            elseif include_last and acc == 0 then
+                -- Emit true end if we landed exactly on it
+                outLen = outLen + 1; outFlat[outLen] = pathFlat[n - 1]
+                outLen = outLen + 1; outFlat[outLen] = pathFlat[n]
+            end
+            break
+        end
+    end
+
+    return outFlat
+end
+-- this should be fast (according to vhatgpt) but not sseeing it
+lib.unloosenVanillaline = function(points, tension, spacing, samples, closed)
+    -- 1) Flatten control points for the spline evaluator
+    local flat = flattenPoints(points, false) -- no loop here unless your spline requires it
+
+    -- 2) Sample the spline into a flat list (avoid t==0/1 edge-cases)
+    local samp = {}
+    local nSamples = samples or (#points * 2)
+    if nSamples < 2 then nSamples = 2 end
+    local step = 1 / nSamples
+    local eps  = 1e-8
+    local j    = 1
+    for i = 0, nSamples - 1 do
+        local t = i * step
+        if t <= 0 then t = eps elseif t >= 1 then t = 1 - eps end
+        local x, y  = GetSplinePos(flat, t, tension)
+        samp[j]     = x
+        samp[j + 1] = y
+        j           = j + 2
+    end
+
+    -- (optional) if you *want* the sample ring closed before spacing:
+    -- if closed then samp[j] = samp[1]; samp[j+1] = samp[2]; j = j + 2 end
+
+    -- 3) Evenly re-space those samples, flat in/flat out, no hacks
+    -- For a loop that shouldn’t duplicate the first point, use closed=true and include_first=false
+    local out = evenlySpreadPathFlat(samp, spacing, 0, closed == true, false, false)
+
+    return out -- flat [x1,y1,x2,y2,...]
+end
 
 
 

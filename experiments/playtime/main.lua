@@ -40,6 +40,9 @@ local cam = camera.getInstance()
 snap = require 'src.snap'
 keep_angle = require 'src.keep-angle'
 registry = require 'src.registry'
+benchmarks = require 'src.benchmarks'
+
+local mathUtils = require 'src.math-utils'
 
 local InputManager = require 'src.input-manager'
 local state = require 'src.state'
@@ -365,6 +368,28 @@ function love.keypressed(key)
     script.call('onKeyPress', key)
 
     if not ui.focusedTextInputID then
+        if key == 'p' then
+            local points = { { -14.5, 7.3 }, { -9.1, -13.2 }, { 0.1, -27.2 }, { 11.2, -13.3 }, { 15.4, 7.6 } }
+            local tension = 0.02
+            local spacing = 5
+
+            -- local stats = benchmarks.bench(function()
+            --     mathUtils.unloosenVanillaline(points, tension, spacing)
+            -- end, 0.3)
+            -- benchmarks.show("unloosenVanillaline", stats)
+
+            -- local stats = benchmarks.bench(function()
+            --     mathUtils.unloosenVanillalineNEW(points, tension, spacing)
+            -- end, 0.3)
+            -- benchmarks.show("unloosenVanillalineNEW", stats)
+
+            benchmarks.compare('unloosenVanillaline', function()
+                mathUtils.unloosenVanillaline(points, tension, spacing)
+            end, "unloosenVanillalineNEW", function()
+                mathUtils.unloosenVanillalineNEW(points, tension, spacing)
+            end, 1)
+        end
+
         if key == 'c' then
             local mydna = (humanoidInstance.dna)
             CharacterManager.createCharacterFromJustDNA(mydna, 200, 200, humanoidInstance.scale)
