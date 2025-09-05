@@ -316,7 +316,7 @@ end
 function ProFi:writeInpsectionsToFile(inspections, file)
     local inspectionsList = self:sortInspectionsIntoList(inspections)
     file:write(
-    '\n==^ INSPECT ^======================================================================================================== COUNT ===\n')
+        '\n==^ INSPECT ^======================================================================================================== COUNT ===\n')
     for _, inspection in ipairs(inspectionsList) do
         local line       = string.format(FORMAT_LINENUM, inspection.line)
         local title      = string.format(FORMAT_TITLE, inspection.source, inspection.name, line)
@@ -325,7 +325,7 @@ function ProFi:writeInpsectionsToFile(inspections, file)
         file:write(outputLine)
     end
     file:write(
-    '===============================================================================================================================\n\n')
+        '===============================================================================================================================\n\n')
 end
 
 function ProFi:sortInspectionsIntoList(inspections)
@@ -342,6 +342,7 @@ function ProFi:resetReports(reports)
         report.timer = 0
         report.count = 0
         report.inspections = nil
+        report.callTime = nil -- <<< added this here
     end
 end
 
@@ -405,6 +406,7 @@ function ProFi:onFunctionReturn(funcInfo)
     local funcReport = ProFi:getFuncReport(funcInfo)
     if funcReport.callTime then
         funcReport.timer = funcReport.timer + (getTime() - funcReport.callTime)
+        funcReport.callTime = nil -- <<< added here
     end
 end
 

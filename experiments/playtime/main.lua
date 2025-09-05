@@ -18,6 +18,7 @@ PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
 --jit.off()
+ProFi = require 'vendor.ProFi'
 
 local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
@@ -207,8 +208,14 @@ function correctJoint(joint)
 end
 
 beginframetime = love.timer.getTime()
+
 function love.update(dt)
     prof.push('frame')
+
+    --if ProFi.has_started == true and ProFi.has_finished == false then
+    --    ProFi:checkMemory(0, "love.update")
+    -- end
+
     beginframetime = love.timer.getTime()
     if recorder.isRecording or recorder.isReplaying then
         recorder:update(dt)
@@ -257,7 +264,7 @@ function love.update(dt)
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
-    manual_gc(0.002, 2)
+    -- manual_gc(0.002, 2)
     prof.pop('frame')
 end
 
@@ -270,6 +277,10 @@ end
 
 function love.draw()
     prof.push('frame')
+
+    --if ProFi.has_started == true and ProFi.has_finished == false then
+    --    ProFi:checkMemory(0, "love.draw")
+    --end
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
 
@@ -285,12 +296,13 @@ function love.draw()
     if state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
-
+    --for i = 1, 100 do
     box2dDrawTextured.makeCombinedImages()
+    --end
     --effect(function()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
-    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+    --box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
     if state.world.showTextures then
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)

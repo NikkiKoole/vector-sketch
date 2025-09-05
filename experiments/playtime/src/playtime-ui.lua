@@ -10,7 +10,7 @@ local camera = require 'src.camera'
 local cam = camera.getInstance()
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local utils = require 'src.utils'
-local ProFi = require 'vendor.ProFi'
+
 local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 local box2dDrawTextured = require 'src.box2d-draw-textured'
@@ -839,7 +839,7 @@ function lib.drawWorldSettingsUI()
 
     local buttonSpacing = BUTTON_SPACING
     local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local panelHeight = titleHeight + titleHeight + (12 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+    local panelHeight = titleHeight + titleHeight + (14 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
     ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF§ world •', function()
         local layout = ui.createLayout({
             type = 'columns',
@@ -923,6 +923,16 @@ function lib.drawWorldSettingsUI()
             state.world.drawOutline = not state.world.drawOutline
         end
         nextRow()
+        if ui.button(x, y, ROW_WIDTH, 'dbodies') then
+            state.world.debugDrawBodies = not state.world.debugDrawBodies
+        end
+        nextRow()
+
+        if ui.button(x, y, ROW_WIDTH, 'djoints') then
+            state.world.debugDrawJoints = not state.world.debugDrawJoints
+        end
+        nextRow()
+
         if ui.button(x, y, ROW_WIDTH, state.world.profiling and 'profiling' or 'profile') then
             if state.world.profiling then
                 ProFi:stop()

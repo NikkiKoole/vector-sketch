@@ -431,52 +431,57 @@ end
 
 function lib.makeCombinedImages()
     local bodies = state.physicsWorld:getBodies()
+
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
-            if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                --print(' sdsfsdfdfs')
-                local patch1 = makePatch('patch1', ud)
-                local patch2 = makePatch('patch2', ud)
-                local patch3 = makePatch('patch3', ud)
+            if true then
+                if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
+                    local patch1 = makePatch('patch1', ud)
+                    local patch2 = makePatch('patch2', ud)
+                    local patch3 = makePatch('patch3', ud)
 
-                local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
-                local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
-                local maskImage = getLoveImage('textures/' .. ud.extra.main.fgURL)
-                local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
-                local patternImage = getLoveImage('textures/pat/' .. ud.extra.main.pURL)
-                local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
+                    local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
+                    local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
+                    local maskImage = getLoveImage('textures/' .. ud.extra.main.fgURL)
+                    local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
+                    local patternImage = getLoveImage('textures/pat/' .. ud.extra.main.pURL)
+                    local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
 
-                if outlineImage or line then
-                    local imgData = lib.makeTexturedCanvas(
-                        outlineImage or line,   -- line art
-                        maskImage or maskTex,   -- mask
-                        { mr, mg, mb },         -- color1
-                        ma * 5,                 -- alpha1
-                        patternImage or tex1,   -- texture2 (fill texture)
-                        { pr, pg, pb },         -- color2
-                        pa * 5,                 -- alpha2
-                        ud.extra.main.pr or 0,  -- texRot
-                        ud.extra.main.psx or 1, -- texScale
-                        ud.extra.main.psy or 1, -- texScale
-                        ud.extra.main.ptx or 0,
-                        ud.extra.main.pty or 0,
-                        { olr, olg, olb },         -- lineColor
-                        ola * 5,                   -- lineAlpha
-                        ud.extra.main.fx or 1,     -- flipx (normal)
-                        ud.extra.main.fy or 1,     -- flipy (normal)
-                        { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
-                    )
-                    image = love.graphics.newImage(imgData)
-                    ud.extra.ompImage = image
+                    if outlineImage or line then
+                        local imgData = lib.makeTexturedCanvas(
+                            outlineImage or line,   -- line art
+                            maskImage or maskTex,   -- mask
+                            { mr, mg, mb },         -- color1
+                            ma * 5,                 -- alpha1
+                            patternImage or tex1,   -- texture2 (fill texture)
+                            { pr, pg, pb },         -- color2
+                            pa * 5,                 -- alpha2
+                            ud.extra.main.pr or 0,  -- texRot
+                            ud.extra.main.psx or 1, -- texScale
+                            ud.extra.main.psy or 1, -- texScale
+                            ud.extra.main.ptx or 0,
+                            ud.extra.main.pty or 0,
+                            { olr, olg, olb },         -- lineColor
+                            ola * 5,                   -- lineAlpha
+                            ud.extra.main.fx or 1,     -- flipx (normal)
+                            ud.extra.main.fy or 1,     -- flipy (normal)
+                            { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
+                        )
+                        image = love.graphics.newImage(imgData)
+                        ud.extra.ompImage = image
+                    end
+                    fixtures[i]:setUserData(ud)
+
+                    ud.extra.dirty = false
                 end
-                fixtures[i]:setUserData(ud)
-
-                ud.extra.dirty = false
             end
+            ud = nil
         end
+        --for i = 1, #fixtures do fixtures[i] = nil end
     end
+    --for i = 1, #bodies do bodies[i] = nil end
 end
 
 local function makeSquishableUVsFromPoints(v)
@@ -574,9 +579,52 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
 end
 
 
+-- Optionally pass dl (precomputed derivative curve) if you have it.
+function texturedCurve(curve, image, mesh, dir, scaleW, dl)
+    dir         = dir or 1
+    scaleW      = scaleW or 1
 
+    dl          = dl or curve:getDerivative()
 
-function texturedCurve(curve, image, mesh, dir, scaleW)
+    -- Only need width here
+    local w     = image:getWidth()
+    local line  = (w * dir) * scaleW
+
+    local count = mesh:getVertexCount()
+    local tmp   = { 0, 0, 0, 0 } -- reusable vertex table: {x, y, u, v}
+
+    for j = 1, count, 2 do
+        -- Map vertex pair index to [0,1] parameter
+        local t                        = (j - 1) / (count - 2)
+
+        -- Point on curve + derivative
+        local x, y                     = curve:evaluate(t)
+        local dx, dy                   = dl:evaluate(t)
+
+        -- Normalize derivative and build its left normal (-dy, dx)
+        local invlen                   = 1.0 / math.sqrt(dx * dx + dy * dy + 1e-12) -- avoid div-by-zero
+        dx, dy                         = dx * invlen, dy * invlen
+        local nx, ny                   = -dy, dx
+
+        -- Offset to both sides
+        local x2                       = x + line * nx
+        local y2                       = y + line * ny
+        local x3                       = x - line * nx
+        local y3                       = y - line * ny
+
+        -- Keep existing UVs
+        local _, _, u1, v1             = mesh:getVertex(j)
+        tmp[1], tmp[2], tmp[3], tmp[4] = x2, y2, u1, v1
+        mesh:setVertex(j, tmp)
+
+        local _, _, u2, v2 = mesh:getVertex(j + 1)
+        tmp[1], tmp[2], tmp[3], tmp[4] = x3, y3, u2, v2
+        mesh:setVertex(j + 1, tmp)
+    end
+end
+
+-- this function is a bunch slower then the new one.
+function texturedCurveOLD(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 end
     local dl = curve:getDerivative()
@@ -759,11 +807,14 @@ function lib.drawTexturedWorld(world)
             end
         end
     end
-    --print(#drawables)
-    table.sort(drawables, function(a, b)
-        return a.z < b.z
-    end)
 
+    local function sortDrawables()
+        --print(#drawables)
+        table.sort(drawables, function(a, b)
+            return a.z < b.z
+        end)
+    end
+    sortDrawables()
 
 
 
@@ -813,6 +864,7 @@ function lib.drawTexturedWorld(world)
             --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
         end
     end
+
     local function drawCombinedImageVanilla(ompImage, extra, texfixture, thing)
         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
         local img = ompImage
@@ -842,11 +894,7 @@ function lib.drawTexturedWorld(world)
         end
     end
 
-    --love.graphics.setShader(chromaShader)
-    --chromaShader:send("direction", { 10 * love.math.random(), 10 })
-    --for _, body in ipairs(bodies) do
 
-    --effect(function()
     for i = 1, #drawables do
         local body = drawables[i].body
         local thing = drawables[i].thing
@@ -876,13 +924,14 @@ function lib.drawTexturedWorld(world)
 
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
+            local derivate = curve:getDerivative()
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
                 if extra.main and extra.main.bgURL then
                     local img = getLoveImage('textures/' .. extra.main.bgURL)
                     if img then
                         local mesh = createTexturedTriangleStrip(img)
-                        texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                        texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
                         local olr, olg, olb, ola = lib.hexToColor(extra.main.bgHex)
                         love.graphics.setColor(olr, olg, olb, ola)
                         love.graphics.draw(mesh)
@@ -893,7 +942,7 @@ function lib.drawTexturedWorld(world)
                     if img then
                         print(extra.main.wmul)
                         local mesh = createTexturedTriangleStrip(img)
-                        texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
+                        texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
                         local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
                         love.graphics.setColor(olr, olg, olb, ola)
                         love.graphics.draw(mesh)
@@ -902,11 +951,13 @@ function lib.drawTexturedWorld(world)
             end
             if extra.OMP then
                 local img = extra.ompImage
-                local mesh = createTexturedTriangleStrip(img)
+                if img then
+                    local mesh = createTexturedTriangleStrip(img)
 
-                texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(mesh)
+                    texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(mesh)
+                end
             end
         end
 

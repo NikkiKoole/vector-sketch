@@ -49,7 +49,9 @@ function lib.drawWorld(world, drawOutline)
     love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
-    local DRAW_BODIES = true
+    local DRAW_BODIES = state.world.debugDrawBodies
+
+
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do
             local fixtures = body:getFixtures()
@@ -116,7 +118,7 @@ function lib.drawWorld(world, drawOutline)
     -- Joint debug
 
     local joints = world:getJoints()
-    local DRAW_JOINTS = true
+    local DRAW_JOINTS = state.world.debugDrawJoints
     if DRAW_JOINTS then
         for _, joint in ipairs(joints) do
             local x1, y1, x2, y2 = joint:getAnchors()
