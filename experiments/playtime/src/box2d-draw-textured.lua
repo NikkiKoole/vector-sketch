@@ -101,7 +101,7 @@ function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     w = w * (optionalWidthMultiplier or 1)
 
     local vertices = {}
-    local segments = 11
+    local segments = 6
     local hPart = h / (segments - 1)
     local hv = 1 / (segments - 1)
     local runningHV = 0

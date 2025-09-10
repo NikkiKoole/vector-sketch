@@ -12,12 +12,22 @@
 -- TODO characters could be facing 3 ways (facingleft/facingright/facingfront)
 -- TODO group id < 0 but different per character
 
+-- TODO how to handle referebce to humanoid after reload? maybe do a first humanoid for debug?
+--
+
+--- strategy of performance tuning
+--- for the 'vendor.jprof' to give clear result it needs to be off.
+--- to see the memory churn the best you should turn off manual_gc too.
+--- when you are happy you can turn back on the jit and manual_gc to improve framerate.
+
+
+
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
---jit.off()
+jit.off()
 ProFi = require 'vendor.ProFi'
 
 local blob = require 'vendor.loveblobs'
@@ -129,7 +139,8 @@ function love.load(args)
     --.chain(moonshine.effects.vignette)
     --effect.filmgrain.size = 2
 
-    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    -- todo this can be optimized, maybe first figure out what kind of script if any we have running.
+    --state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
     --local cwd = love.filesystem.getWorkingDirectory()
@@ -231,8 +242,8 @@ function love.update(dt)
                 v:update(scaled_dt)
             end
         end
-        local velocityiterations = 8 * 2
-        local positioniterations = 3 * 2 -- 3
+        local velocityiterations = 8 --* 2
+        local positioniterations = 3 --* 2 -- 3
         -- for i = 1, 1 do
         --     state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
         -- end
@@ -240,9 +251,11 @@ function love.update(dt)
 
         local substeps = 1
         local step = scaled_dt / substeps
+        prof.push('physicsWorld:update')
         for i = 1, substeps do
-            state.physicsWorld:update(step, velocityiterations, positioniterations)
+            state.physicsWorld:update(step, velocityiterations * 2, positioniterations * 2)
         end
+        prof.pop('physicsWorld:update')
 
         script.call('update', scaled_dt)
         local joints = state.physicsWorld:getJoints()
@@ -302,7 +315,7 @@ function love.draw()
     --effect(function()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
-    --box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+    box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
 
     if state.world.showTextures then
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
@@ -747,46 +760,224 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
     InputManager.handleTouchReleased(id, x, y, dx, dy, pressure)
 end
 
+-- if FIXED_TIMESTEP then
+--     function love.run()
+--         if love.math then
+--             love.math.setRandomSeed(os.time())
+--         end
+
+--         if love.load then love.load(arg) end
+
+--         local previous = love.timer.getTime()
+--         local lag = 0.0
+--         while true do
+--             local current = love.timer.getTime()
+--             local elapsed = current - previous
+--             previous = current
+--             lag = lag + elapsed * state.world.speedMultiplier
+
+--             if love.event then
+--                 love.event.pump()
+--                 for name, a, b, c, d, e, f in love.event.poll() do
+--                     if name == "quit" then
+--                         if not love.quit or not love.quit() then
+--                             return a
+--                         end
+--                     end
+--                     love.handlers[name](a, b, c, d, e, f)
+--                 end
+--             end
+
+--             while lag >= TICKRATE do
+--                 if love.update then love.update(TICKRATE) end
+--                 lag = lag - TICKRATE
+--             end
+
+--             if love.graphics and love.graphics.isActive() then
+--                 love.graphics.clear(love.graphics.getBackgroundColor())
+--                 love.graphics.origin()
+--                 if love.draw then love.draw(lag / TICKRATE) end
+--                 love.graphics.present()
+--             end
+--         end
+--     end
+-- end
+
+--
+-- todo not 100% sure if this is non deterministic
+-- if FIXED_TIMESTEP then
+--     function love.run()
+--         if love.math then love.math.setRandomSeed(123456) end -- fixed seed for determinism
+--         if love.load then love.load(arg or {}) end
+
+--         local previous = love.timer.getTime()
+--         local lag = 0.0
+
+--         -- fixed tick
+--         local dt = TICKRATE
+
+--         -- optional: deterministic speed via integer extra steps
+--         local speedMultiplier = 1.0 -- read from state.world if you like
+--         local speedCarry = 0.0      -- accumulates fractional extra steps
+
+--         while true do
+--             -- time (REAL elapsed; do NOT scale)
+--             local current = love.timer.getTime()
+--             local elapsed = current - previous
+--             previous = current
+--             lag = lag + elapsed
+
+--             -- events (queue anything you need for ticks)
+--             if love.event then
+--                 love.event.pump()
+--                 for name, a, b, c, d, e, f in love.event.poll() do
+--                     if name == "quit" then
+--                         if not love.quit or not love.quit() then return a end
+--                     end
+--                     love.handlers[name](a, b, c, d, e, f)
+--                 end
+--             end
+
+--             -- how many base ticks?
+--             local steps = math.floor(lag / dt)
+--             lag = lag - steps * dt
+
+--             -- add deterministic “speed” as *extra integer* steps
+--             -- e.g., 1.5x means every frame we add 0.5 to carry; whenever carry>=1 we do one more step.
+--             local s = (state and state.world and state.world.speedMultiplier) or 1.0
+--             speedCarry = speedCarry + (s - 1.0) * steps
+--             local extra = 0
+--             if speedCarry >= 1.0 then
+--                 extra = math.floor(speedCarry)
+--                 speedCarry = speedCarry - extra
+--             elseif speedCarry < 0.0 then
+--                 -- allow slow-mo (s<1) by “skipping” some steps deterministically
+--                 extra = -math.floor(-speedCarry)
+--                 speedCarry = speedCarry - extra
+--             end
+--             steps = steps + extra
+--             if steps < 0 then steps = 0 end -- guard if s<1 reduces steps
+
+--             -- run exactly N fixed steps
+--             for i = 1, steps do
+--                 if love.update then love.update(dt) end
+--             end
+
+--             -- render with interpolation (pure visual; doesn’t affect physics)
+--             if love.graphics and love.graphics.isActive() then
+--                 love.graphics.clear(love.graphics.getBackgroundColor())
+--                 love.graphics.origin()
+--                 if love.draw then love.draw(lag / dt) end
+--                 love.graphics.present()
+--             end
+
+--             if love.timer then love.timer.sleep(0.001) end
+--         end
+--     end
+-- end
 if FIXED_TIMESTEP then
     function love.run()
-        if love.math then
-            love.math.setRandomSeed(os.time())
-        end
-
+        if love.math then love.math.setRandomSeed(123456) end
         if love.load then love.load(arg) end
+
+        -- fixed tick
+        local TICKRATE = TICKRATE or (1 / 60)
+        local MAX_ACCUMULATOR = 0.25  -- never try to catch up more than 250ms
+        local MAX_STEPS_PER_FRAME = 4 -- hard cap to prevent death spiral
+        local PANIC_HORIZON = 30      -- frames before we say “we’re saturated”
+        local panicFrames = 0
+        local adaptiveSleep = 0       -- additional sleep to soften render rate under load
 
         local previous = love.timer.getTime()
         local lag = 0.0
-        while true do
-            local current = love.timer.getTime()
-            local elapsed = current - previous
-            previous = current
-            lag = lag + elapsed * state.world.speedMultiplier
 
+        -- carry for deterministic speed multiplier (optional)
+        local speedCarry = 0.0
+
+        return function()
+            -- pump events
             if love.event then
                 love.event.pump()
                 for name, a, b, c, d, e, f in love.event.poll() do
                     if name == "quit" then
-                        if not love.quit or not love.quit() then
-                            return a
-                        end
+                        if not love.quit or not love.quit() then return a or 0 end
                     end
                     love.handlers[name](a, b, c, d, e, f)
                 end
             end
 
-            while lag >= TICKRATE do
-                if love.update then love.update(TICKRATE) end
-                lag = lag - TICKRATE
+            -- time
+            local now = love.timer.getTime()
+            local elapsed = now - previous
+            previous = now
+
+            -- accumulate but clamp to avoid spiral
+            lag = lag + elapsed
+            if lag > MAX_ACCUMULATOR then
+                lag = MAX_ACCUMULATOR
             end
 
+            -- how many base steps this frame?
+            local dt = TICKRATE
+            local steps = math.floor(lag / dt)
+
+            -- deterministic speed multiplier => convert fractional speed to extra integer steps
+            local s = (state and state.world and state.world.speedMultiplier) or 1.0
+            speedCarry = speedCarry + (s - 1.0) * steps
+            if speedCarry >= 1.0 then
+                local extra = math.floor(speedCarry)
+                steps = steps + extra
+                speedCarry = speedCarry - extra
+            elseif speedCarry <= -1.0 then
+                local skip = math.floor(-speedCarry)
+                steps = math.max(0, steps - skip)
+                speedCarry = speedCarry + skip
+            end
+
+            -- cap steps to avoid runaway
+            local didPanic = false
+            if steps > MAX_STEPS_PER_FRAME then
+                steps = MAX_STEPS_PER_FRAME
+                -- drop anything older than our budget
+                lag = lag - steps * dt
+                -- ditch remaining backlog (panic): render latest state
+                lag = 0
+                didPanic = true
+                print('did panic!')
+            else
+                lag = lag - steps * dt
+            end
+
+            -- do fixed updates
+            for i = 1, steps do
+                if love.update then love.update(dt) end
+            end
+
+            -- render with interpolation (alpha in [0,1))
             if love.graphics and love.graphics.isActive() then
                 love.graphics.clear(love.graphics.getBackgroundColor())
                 love.graphics.origin()
-                if love.draw then love.draw(lag / TICKRATE) end
+                if love.draw then love.draw(lag / dt) end
                 love.graphics.present()
+            end
+
+            -- simple adaptive backoff: if we keep panicking, lower render cadence a tad
+            if didPanic then
+                panicFrames = panicFrames + 1
+                if panicFrames >= PANIC_HORIZON then
+                    adaptiveSleep = math.min(adaptiveSleep + 0.001, 0.008) -- up to ~125 FPS → ~60–80 FPS
+                end
+            else
+                panicFrames = math.max(0, panicFrames - 1)
+                if panicFrames == 0 then
+                    adaptiveSleep = math.max(0, adaptiveSleep - 0.001)
+                end
+            end
+
+            if love.timer then
+                -- tiny sleep to yield + adaptive backoff under sustained load
+                love.timer.sleep(0.001 + adaptiveSleep)
             end
         end
     end
 end
---
