@@ -1180,6 +1180,7 @@ local function getPoseCache(instance)
     local poseCache = {}
     for partName, part in pairs(instance.parts) do
         local body = part.body
+
         local groupIndex = body:getFixtures()[1]:getGroupIndex()
         poseCache[partName] = {
             pos = { body:getPosition() },

@@ -1690,7 +1690,7 @@ function lib.drawSelectedBodiesUI()
         if ui.button(x, y, 260, 'destroy') then
             for i = #state.selection.selectedBodies, 1, -1 do
                 snap.destroySnapJointAboutBody(state.selection.selectedBodies[i].body)
-                print('destroybody doesnt destroy the joint on it ?')
+                --print('destroybody doesnt destroy the joint on it ?')
                 objectManager.destroyBody(state.selection.selectedBodies[i].body)
             end
 

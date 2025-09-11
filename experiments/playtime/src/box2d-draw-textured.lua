@@ -91,7 +91,12 @@ local base = {
 lib.palette = base
 
 
-
+local function growLine(p1, p2, length)
+    local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
+    local new_x = p1[1] + length * math.cos(angle)
+    local new_y = p1[2] + length * math.sin(angle)
+    return new_x, new_y
+end
 
 
 
@@ -101,16 +106,17 @@ function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     w = w * (optionalWidthMultiplier or 1)
 
     local vertices = {}
-    local segments = 11
-    local hPart = h / (segments - 1)
-    local hv = 1 / (segments - 1)
+    local segments = 6
+    local segMinus1 = segments - 1
+    local hPart = h / (segMinus1)
+    local hv = 1 / (segMinus1)
     local runningHV = 0
     local runningHP = 0
     local index = 0
 
     for i = 1, segments do
-        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
-        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
+        vertices[index + 1] = { -w * .5, runningHP, 0, runningHV }
+        vertices[index + 2] = { w * .5, runningHP, 1, runningHV }
         runningHV = runningHV + hv
         runningHP = runningHP + hPart
         index = index + 2
@@ -624,6 +630,12 @@ end
 
 
 -- Optionally pass dl (precomputed derivative curve) if you have it.
+function meshGetVertex(mesh, j)
+    local x, y, u, v = mesh:getVertex(j)
+    return x, y, u, v
+end
+
+-- https://love2d.org/forums/viewtopic.php?t=83410
 function texturedCurve(curve, image, mesh, dir, scaleW, dl)
     dir         = dir or 1
     scaleW      = scaleW or 1
@@ -657,6 +669,7 @@ function texturedCurve(curve, image, mesh, dir, scaleW, dl)
         local y3                       = y - line * ny
 
         -- Keep existing UVs
+
         local _, _, u1, v1             = mesh:getVertex(j)
         tmp[1], tmp[2], tmp[3], tmp[4] = x2, y2, u1, v1
         mesh:setVertex(j, tmp)
@@ -697,7 +710,7 @@ function texturedCurveOLD(curve, image, mesh, dir, scaleW)
     end
 end
 
-local function doubleControlPoints(points, duplications)
+local function doubleControlPointsOld(points, duplications)
     local result = {}
 
     -- Sanity check: must be even number of values
@@ -719,6 +732,44 @@ local function doubleControlPoints(points, duplications)
             for j = 1, duplications do
                 table.insert(result, x)
                 table.insert(result, y)
+            end
+        end
+    end
+
+    return result
+end
+local function doubleControlPoints(points, duplications)
+    local len = #points
+    if len % 2 ~= 0 then
+        error("Input array must have even number of elements (x, y pairs)")
+    end
+
+    local n = len / 2                     -- number of (x,y) points
+    local mids = (n > 2) and (n - 2) or 0 -- middle points count
+    local outLen = len + 2 * duplications * mids
+
+    local result = {}
+    result[outLen] = false -- pre-allocate array size (fills with nils)
+
+    local ri = 1           -- write index into result
+    local last = len - 1   -- last x index (so y is last+1)
+    local d = duplications -- localize for tight loop
+
+    for i = 1, len, 2 do
+        local x = points[i]
+        local y = points[i + 1]
+
+        -- always copy the original point once
+        result[ri] = x
+        result[ri + 1] = y
+        ri = ri + 2
+
+        -- duplicate if it's a middle point (not first or last)
+        if i > 2 and i < last then
+            for _ = 1, d do
+                result[ri] = x
+                result[ri + 1] = y
+                ri = ri + 2
             end
         end
     end
@@ -819,12 +870,7 @@ function lib.drawTexturedWorld(world)
 
                 if #points >= 6 then
                     -- todo here we might want to grow the curve... so it will stick a little bit from the sides
-                    local function growLine(p1, p2, length)
-                        local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
-                        local new_x = p1[1] + length * math.cos(angle)
-                        local new_y = p1[2] + length * math.sin(angle)
-                        return new_x, new_y
-                    end
+
 
                     -- todo parameterize this
                     local growLength = ud.extra.growExtra or 20
@@ -854,11 +900,12 @@ function lib.drawTexturedWorld(world)
 
     -- todo this list needs to be kept around and sorted in place, resetting and doing all the work every frame is heavy!
     -- optimally i dont want to sort at all every frame, maybe i can add a flag to indicate that the list is sorted and only sort when necessary (when adding/removing)
+
+    local function sorter(a, b) return a.z < b.z end
+
     local function sortDrawables()
         --print(#drawables)
-        table.sort(drawables, function(a, b)
-            return a.z < b.z
-        end)
+        table.sort(drawables, sorter)
     end
     sortDrawables()
 
