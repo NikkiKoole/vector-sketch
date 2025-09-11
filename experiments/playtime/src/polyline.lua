@@ -2,6 +2,10 @@ local polyline = {}
 
 local LINES_PARALLEL_EPS = 0.05;
 
+local sqrt, abs, random = math.sqrt, math.abs, love.math.random
+local insert = table.insert
+
+
 local function Vector(x, y)
     if y then
         return { x = x, y = y }
@@ -11,7 +15,7 @@ local function Vector(x, y)
 end
 
 local function length(vector)
-    return math.sqrt(vector.x * vector.x + vector.y * vector.y)
+    return sqrt(vector.x * vector.x + vector.y * vector.y)
 end
 
 local function normal(out, vector, scale)
@@ -25,49 +29,49 @@ local function cross(x1, y1, x2, y2)
 end
 
 local function renderEdgeNone(anchors, normals, s, len_s, ns, q, r, hw)
-    table.insert(anchors, Vector(q))
-    table.insert(anchors, Vector(q))
-    table.insert(normals, Vector(ns))
-    table.insert(normals, Vector(-ns.x, -ns.y))
+    insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
+    insert(normals, Vector(ns))
+    insert(normals, Vector(-ns.x, -ns.y))
 
     s.x, s.y = r.x - q.x, r.y - q.y
     len_s = length(s)
     normal(ns, s, hw / len_s)
 
-    table.insert(anchors, Vector(q))
-    table.insert(anchors, Vector(q))
-    table.insert(normals, Vector(-ns.x, -ns.y))
-    table.insert(normals, Vector(ns))
+    insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
+    insert(normals, Vector(-ns.x, -ns.y))
+    insert(normals, Vector(ns))
 
     return len_s
 end
 
 local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
     local tx, ty = r.x - q.x, r.y - q.y
-    local len_t = math.sqrt(tx * tx + ty * ty)
+    local len_t = sqrt(tx * tx + ty * ty)
     local ntx, nty = -ty * (hw / len_t), tx * (hw / len_t)
 
-    table.insert(anchors, Vector(q))
-    table.insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
 
     local det = cross(s.x, s.y, tx, ty)
-    if (math.abs(det) / (len_s * len_t) < LINES_PARALLEL_EPS) and (s.x * tx + s.y * ty > 0) then
+    if (abs(det) / (len_s * len_t) < LINES_PARALLEL_EPS) and (s.x * tx + s.y * ty > 0) then
         -- lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
-        table.insert(normals, Vector(ns))
-        table.insert(normals, Vector(-ns.x, -ns.y))
+        insert(normals, Vector(ns))
+        insert(normals, Vector(-ns.x, -ns.y))
     else
         -- cramers rule
         local nx, ny = ntx - ns.x, nty - ns.y
         local lambda = cross(nx, ny, tx, ty) / det
         local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
         --print('craners', dx,dy)
-        --if dx > math.pi*2 then dx = math.pi*2 end
-        --if dx < -math.pi*2 then dx = -math.pi*2 end
-        --if dy > math.pi*2 then dy = math.pi*2 end
-        --if dy < -math.pi*2 then dy = -math.pi*2 end
+        --if dx > pi*2 then dx = pi*2 end
+        --if dx < -pi*2 then dx = -pi*2 end
+        --if dy > pi*2 then dy = pi*2 end
+        --if dy < -pi*2 then dy = -pi*2 end
 
-        table.insert(normals, Vector(dx, dy))
-        table.insert(normals, Vector(-dx, -dy))
+        insert(normals, Vector(dx, dy))
+        insert(normals, Vector(-dx, -dy))
     end
 
     s.x, s.y = tx, ty
@@ -77,16 +81,16 @@ end
 
 local function renderEdgeBevel(anchors, normals, s, len_s, ns, q, r, hw)
     local tx, ty = r.x - q.x, r.y - q.y
-    local len_t = math.sqrt(tx * tx + ty * ty)
+    local len_t = sqrt(tx * tx + ty * ty)
     local ntx, nty = -ty * (hw / len_t), tx * (hw / len_t)
 
     local det = cross(s.x, s.y, tx, ty)
-    if (math.abs(det) / (len_s * len_t) < LINES_PARALLEL_EPS) and (s.x * tx + s.y * ty > 0) then
+    if (abs(det) / (len_s * len_t) < LINES_PARALLEL_EPS) and (s.x * tx + s.y * ty > 0) then
         -- lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
-        table.insert(anchors, Vector(q))
-        table.insert(anchors, Vector(q))
-        table.insert(normals, Vector(ntx, nty))
-        table.insert(normals, Vector(-ntx, -nty))
+        insert(anchors, Vector(q))
+        insert(anchors, Vector(q))
+        insert(normals, Vector(ntx, nty))
+        insert(normals, Vector(-ntx, -nty))
 
         s.x, s.y = tx, ty
         return len_t -- early out
@@ -97,20 +101,20 @@ local function renderEdgeBevel(anchors, normals, s, len_s, ns, q, r, hw)
     local lambda = cross(nx, ny, tx, ty) / det
     local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
 
-    table.insert(anchors, Vector(q))
-    table.insert(anchors, Vector(q))
-    table.insert(anchors, Vector(q))
-    table.insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
+    insert(anchors, Vector(q))
     if det > 0 then -- 'left' turn
-        table.insert(normals, Vector(dx, dy))
-        table.insert(normals, Vector(-ns.x, -ns.y))
-        table.insert(normals, Vector(dx, dy))
-        table.insert(normals, Vector(-ntx, -nty))
+        insert(normals, Vector(dx, dy))
+        insert(normals, Vector(-ns.x, -ns.y))
+        insert(normals, Vector(dx, dy))
+        insert(normals, Vector(-ntx, -nty))
     else
-        table.insert(normals, Vector(ns.x, ns.y))
-        table.insert(normals, Vector(-dx, -dy))
-        table.insert(normals, Vector(ntx, nty))
-        table.insert(normals, Vector(-dx, -dy))
+        insert(normals, Vector(ns.x, ns.y))
+        insert(normals, Vector(-dx, -dy))
+        insert(normals, Vector(ntx, nty))
+        insert(normals, Vector(-dx, -dy))
     end
 
     s.x, s.y = tx, ty
@@ -141,7 +145,7 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
     if not is_looping then
         local spacerx, spacery = vertices[offset + 1][1] - vertices[offset + 3][1],
             vertices[offset + 1][2] - vertices[offset + 3][2]
-        local spacer_length = math.sqrt(spacerx * spacerx + spacery * spacery)
+        local spacer_length = sqrt(spacerx * spacerx + spacery * spacery)
         spacerx, spacery = spacerx * (pixel_size / spacer_length), spacery * (pixel_size / spacer_length)
         vertices[offset + 2][1], vertices[offset + 2][2] = vertices[offset + 2][1] + spacerx,
             vertices[offset + 2][2] + spacery
@@ -150,7 +154,7 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
 
         spacerx = vertices[offset + vertex_count - 0][1] - vertices[offset + vertex_count - 2][1]
         spacery = vertices[offset + vertex_count - 0][2] - vertices[offset + vertex_count - 2][2]
-        spacer_length = math.sqrt(spacerx * spacerx + spacery * spacery)
+        spacer_length = sqrt(spacerx * spacerx + spacery * spacery)
         spacerx, spacery = spacerx * (pixel_size / spacer_length), spacery * (pixel_size / spacer_length)
         vertices[offset + vertex_count][1] = vertices[offset + vertex_count][1] + spacerx
         vertices[offset + vertex_count][2] = vertices[offset + vertex_count][2] + spacery
@@ -166,8 +170,8 @@ local function renderOverdrawNone(vertices, offset, vertex_count, overdraw_verte
     for i = 1, vertex_count - 1, 4 do
         local sx, sy = vertices[i][1] - vertices[i + 3][1], vertices[i][2] - vertices[i + 3][2]
         local tx, ty = vertices[i][1] - vertices[i + 1][1], vertices[i][2] - vertices[i + 1][2]
-        local sl = math.sqrt(sx * sx + sy * sy)
-        local tl = math.sqrt(tx * tx + ty * ty)
+        local sl = sqrt(sx * sx + sy * sy)
+        local tl = sqrt(tx * tx + ty * ty)
         sx, sy = sx * (pixel_size / sl), sy * (pixel_size / sl)
         tx, ty = tx * (pixel_size / tl), ty * (pixel_size / tl)
 
@@ -278,7 +282,7 @@ polyline.render = function(join_type, coords, half_width, pixel_size, draw_overd
     if join_type == 'none' then
         vertex_count = vertex_count - 4
         for i = 3, #normals - 2 do
-            table.insert(vertices, {
+            insert(vertices, {
                 anchors[i].x + normals[i].x,
                 anchors[i].y + normals[i].y,
                 0, 0, 255, 255, 255, 255
@@ -287,11 +291,11 @@ polyline.render = function(join_type, coords, half_width, pixel_size, draw_overd
         draw_mode = 'triangles'
     else
         local firstR
-        -- love.math.setRandomSeed(1 )  -- i cant do this it breaks surrounding code that relies on rand
+        -- love.setRandomSeed(1 )  -- i cant do this it breaks surrounding code that relies on rand
         for i = 1, vertex_count do
             local r = 1
             if rndMultiplier ~= nil then
-                r = love.math.random() * 4
+                r = love.random() * 4
                 if i == 1 then
                     firstR = r
                 end
@@ -299,18 +303,18 @@ polyline.render = function(join_type, coords, half_width, pixel_size, draw_overd
                     r = firstR
                 end
                 -- end
-                r = 5 * rndMultiplier + (love.math.random() * rndMultiplier)
+                r = 5 * rndMultiplier + (love.random() * rndMultiplier)
             end
 
             --if rndMultiplier ~= 0 then
-            table.insert(vertices, {
+            insert(vertices, {
                 anchors[i].x + normals[i].x * (r),
                 anchors[i].y + normals[i].y * (r),
 
             })
         end
         -- for i=1,vertex_count do
-        --   table.insert(vertices, {
+        --   insert(vertices, {
         --     anchors[i].x + normals[i].x,
         --     anchors[i].y + normals[i].y,
         --     0, 0, 255, 255, 255, 255
@@ -349,14 +353,14 @@ polyline.render = function(join_type, coords, half_width, pixel_size, draw_overd
         local num_indices = (vertex_count + extra_vertices + overdraw_vertex_count) / 4
         for i = 0, num_indices - 1 do
             -- First triangle.
-            table.insert(indices, i * 4 + 0 + 1)
-            table.insert(indices, i * 4 + 1 + 1)
-            table.insert(indices, i * 4 + 2 + 1)
+            insert(indices, i * 4 + 0 + 1)
+            insert(indices, i * 4 + 1 + 1)
+            insert(indices, i * 4 + 2 + 1)
 
             -- Second triangle.
-            table.insert(indices, i * 4 + 0 + 1)
-            table.insert(indices, i * 4 + 2 + 1)
-            table.insert(indices, i * 4 + 3 + 1)
+            insert(indices, i * 4 + 0 + 1)
+            insert(indices, i * 4 + 2 + 1)
+            insert(indices, i * 4 + 3 + 1)
         end
     end
 
