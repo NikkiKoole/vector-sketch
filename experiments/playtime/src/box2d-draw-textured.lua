@@ -118,10 +118,43 @@ function createTexturedTriangleStrip(image, optionalWidthMultiplier)
 
     local mesh = love.graphics.newMesh(vertices, "strip")
     mesh:setTexture(image)
+
     return mesh
 end
 
+--todo the things that have a hex, should have the rgba values directly so we dont have to calculate them every frame.
+-- fix this with something like function setBgColor(item, val)
+--    item.bgHex = val
+--    item.bgR, item.bgG, item.bgB, item.bgA = ToColor(val)-
+--end
+
+function setBgColor(item, val)
+    item.bgHex = val
+    item.cached.bgR, item.cached.bgG, item.cached.bgB, item.cached.bgA = lib.hexToColor(val)
+    item.cached.bgRGB = { item.cached.bgR, item.cached.bgG, item.cached.bgB }
+end
+
+function setFgColor(item, val)
+    item.fgHex = val
+    item.cached.fgR, item.cached.fgG, item.cached.fgB, item.cached.fgA = lib.hexToColor(val)
+    item.cached.fgRGB = { item.cached.fgR, item.cached.fgG, item.cached.fgB }
+end
+
+function setPColor(item, val)
+    item.pHex = val
+    item.cached.pR, item.cached.pG, item.cached.pB, item.cached.pA = lib.hexToColor(val)
+    item.cached.pRGB = { item.cached.pR, item.cached.pG, item.cached.pB }
+end
+
+function lib.makeCached(item)
+    if not item.cached then item.cached = {} end
+    setBgColor(item, item.bgHex)
+    setFgColor(item, item.fgHex)
+    setPColor(item, item.pHex)
+end
+
 function lib.hexToColor(hex)
+    --logger:trace()
     if type(hex) ~= "string" then
         -- print("Warning: hexToColor expected a string but got " .. type(hex))
         return 1, 1, 1, 1
@@ -234,7 +267,7 @@ local function buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2,
 end
 
 local testCache = {}
-
+-- todo /5 and *5 is dumb!
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
@@ -297,6 +330,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
                     local patch = patches[i]
                     if patch and patch.img then
                         love.graphics.setColorMask(true, true, true, false)
+                        print('hextocolor patches')
                         local r, g, b, a = lib.hexToColor(patch.tint)
                         love.graphics.setColor(r, g, b, a)
                         local image = patch.img
@@ -441,32 +475,42 @@ function lib.makeCombinedImages()
                     local patch1 = makePatch('patch1', ud)
                     local patch2 = makePatch('patch2', ud)
                     local patch3 = makePatch('patch3', ud)
+                    local main = ud.extra.main
 
-                    local outlineImage = getLoveImage('textures/' .. ud.extra.main.bgURL)
-                    local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
-                    local maskImage = getLoveImage('textures/' .. ud.extra.main.fgURL)
-                    local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
-                    local patternImage = getLoveImage('textures/pat/' .. ud.extra.main.pURL)
-                    local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
+                    if not main.cached then
+                        lib.makeCached(main)
+                        --print('Cached not found')
+                    end
+                    local cached = main.cached
 
+                    local outlineImage = getLoveImage('textures/' .. main.bgURL)
+
+
+                    -- local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
+
+                    local maskImage = getLoveImage('textures/' .. main.fgURL)
+                    --local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
+                    local patternImage = getLoveImage('textures/pat/' .. main.pURL)
+                    --local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
+                    --logger:inspect(cached)
                     if outlineImage or line then
                         local imgData = lib.makeTexturedCanvas(
-                            outlineImage or line,   -- line art
-                            maskImage or maskTex,   -- mask
-                            { mr, mg, mb },         -- color1
-                            ma * 5,                 -- alpha1
-                            patternImage or tex1,   -- texture2 (fill texture)
-                            { pr, pg, pb },         -- color2
-                            pa * 5,                 -- alpha2
-                            ud.extra.main.pr or 0,  -- texRot
-                            ud.extra.main.psx or 1, -- texScale
-                            ud.extra.main.psy or 1, -- texScale
-                            ud.extra.main.ptx or 0,
-                            ud.extra.main.pty or 0,
-                            { olr, olg, olb },         -- lineColor
-                            ola * 5,                   -- lineAlpha
-                            ud.extra.main.fx or 1,     -- flipx (normal)
-                            ud.extra.main.fy or 1,     -- flipy (normal)
+                            outlineImage or line, -- line art
+                            maskImage or maskTex, -- mask
+                            cached.fgRGB,         -- color1
+                            cached.fgA * 5,       -- alpha1
+                            patternImage or tex1, -- texture2 (fill texture)
+                            cached.pRGB,          -- color2
+                            cached.pA * 5,        -- alpha2
+                            main.pr or 0,         -- texRot
+                            main.psx or 1,        -- texScale
+                            main.psy or 1,        -- texScale
+                            main.ptx or 0,
+                            main.pty or 0,
+                            cached.bgRGB,              -- lineColor
+                            cached.bgA * 5,            -- lineAlpha
+                            main.fx or 1,              -- flipx (normal)
+                            main.fy or 1,              -- flipy (normal)
                             { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
                         )
                         image = love.graphics.newImage(imgData)
@@ -808,6 +852,8 @@ function lib.drawTexturedWorld(world)
         end
     end
 
+    -- todo this list needs to be kept around and sorted in place, resetting and doing all the work every frame is heavy!
+    -- optimally i dont want to sort at all every frame, maybe i can add a flag to indicate that the list is sorted and only sort when necessary (when adding/removing)
     local function sortDrawables()
         --print(#drawables)
         table.sort(drawables, function(a, b)
@@ -823,7 +869,24 @@ function lib.drawTexturedWorld(world)
     -- and there is an issue with the center of the 'fan' mesh, it shouldnt always be 0,0 you can see this when you position the texfxture with the
     -- onscreen 'd' button quite a distnace out of the actual physics body center.
     --
-    local function drawImageLayerSquish(url, hex, extra, texfixture)
+    -- local function drawImageLayerSquish(url, hex, extra, texfixture)
+    --     -- print('jo!')
+    --     local img, imgw, imgh = getLoveImage('textures/' .. url)
+    --     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+
+    --     if (vertices and img) then
+    --         local body = texfixture:getBody()
+    --         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+    --         local sx = 1 --ww / imgw
+    --         local sy = 1 --hh / imgh
+    --         local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+    --         local r, g, b, a = lib.hexToColor(hex)
+    --         love.graphics.setColor(r, g, b, a)
+    --         --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+    --         drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
+    --     end
+    -- end
+    local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
         -- print('jo!')
         local img, imgw, imgh = getLoveImage('textures/' .. url)
         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
@@ -834,36 +897,36 @@ function lib.drawTexturedWorld(world)
             local sx = 1 --ww / imgw
             local sy = 1 --hh / imgh
             local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-            local r, g, b, a = lib.hexToColor(hex)
-            love.graphics.setColor(r, g, b, a)
+            --local r, g, b, a = lib.hexToColor(hex)
+            --love.graphics.setColor(r, g, b, a)
             --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
             drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
     end
 
-    local function drawImageLayerVanilla(url, hex, extra, texfixture)
-        local img, imgw, imgh = getLoveImage('textures/' .. url)
-        local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+    -- local function drawImageLayerVanilla(url, hex, extra, texfixture)
+    --     local img, imgw, imgh = getLoveImage('textures/' .. url)
+    --     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
 
-        if (vertices and img) then
-            local body = texfixture:getBody()
-            -- local body = texfixture:getBody()
-            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-            local sx = ww / imgw
-            local sy = hh / imgh
-            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-            local r, g, b, a = lib.hexToColor(hex)
-            love.graphics.setColor(r, g, b, a)
+    --     if (vertices and img) then
+    --         local body = texfixture:getBody()
+    --         -- local body = texfixture:getBody()
+    --         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+    --         local sx = ww / imgw
+    --         local sy = hh / imgh
+    --         local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+    --         local r, g, b, a = lib.hexToColor(hex)
+    --         love.graphics.setColor(r, g, b, a)
 
-            love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-                body:getAngle(), sx * 1, sy * 1,
-                (imgw) / 2, (imgh) / 2)
+    --         love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
+    --             body:getAngle(), sx * 1, sy * 1,
+    --             (imgw) / 2, (imgh) / 2)
 
 
 
-            --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-        end
-    end
+    --         --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+    --     end
+    -- end
 
     local function drawCombinedImageVanilla(ompImage, extra, texfixture, thing)
         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
@@ -887,8 +950,19 @@ function lib.drawTexturedWorld(world)
 
 
             -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
-            local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
-            love.graphics.setColor(r, g, b, a)
+            --local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
+            --love.graphics.setColor(r, g, b, a)
+
+
+
+            love.graphics.setColor(1, 1, 1, 1)
+
+            if (extra.main.tint) then
+                print('optimize this away, tint')
+                local r, g, b, a = lib.hexToColor(extra.main.tint)
+                love.graphics.setColor(r, g, b, a)
+            end
+
             --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
             drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
@@ -903,13 +977,27 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'texfixture' then
             --if texfixture then
             local extra = drawables[i].extra
+
             if not extra.OMP then -- this is the BG and FG routine
-                if extra.main and extra.main.bgURL then
-                    drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
+                local main = extra.main
+                -- local cached = main.cached
+                if not main.cached then
+                    lib.makeCached(main)
+                    --print('Cached not found')
+                end
+                local cached = main.cached
+
+                if main and main.bgURL then
+                    --logger:inspect(extra.main.cached)
+                    drawImageLayerSquishRGBA(extra.main.bgURL, cached.bgR, cached.bgG, cached.bgB, cached.bgA, extra,
+                        texfixture)
+                    --  drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
                     --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
                 if extra.main and extra.main.fgURL then
-                    drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
+                    --drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
+                    drawImageLayerSquishRGBA(extra.main.bgURL, cached.fgR, cached.fgG, cached.fgB, cached.fgA, extra,
+                        texfixture)
                     --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end
             end
@@ -927,13 +1015,23 @@ function lib.drawTexturedWorld(world)
             local derivate = curve:getDerivative()
             local extra = drawables[i].extra
             if not extra.OMP then -- this is the BG and FG routine
+                local main = extra.main
+                -- local cached = main.cached
+                if not main.cached then
+                    lib.makeCached(main)
+                    --print('Cached not found')
+                end
+                local cached = main.cached
+
+
+
                 if extra.main and extra.main.bgURL then
                     local img = getLoveImage('textures/' .. extra.main.bgURL)
                     if img then
                         local mesh = createTexturedTriangleStrip(img)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
-                        local olr, olg, olb, ola = lib.hexToColor(extra.main.bgHex)
-                        love.graphics.setColor(olr, olg, olb, ola)
+                        --local olr, olg, olb, ola = lib.hexToColor(extra.main.bgHex)
+                        love.graphics.setColor(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
                         love.graphics.draw(mesh)
                     end
                 end
@@ -943,8 +1041,9 @@ function lib.drawTexturedWorld(world)
                         print(extra.main.wmul)
                         local mesh = createTexturedTriangleStrip(img)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
-                        local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
-                        love.graphics.setColor(olr, olg, olb, ola)
+                        --local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
+                        -- love.graphics.setColor(olr, olg, olb, ola)
+                        love.graphics.setColor(cached.fgR, cached.fgG, cached.fgB, cached.fgA)
                         love.graphics.draw(mesh)
                     end
                 end
@@ -1035,7 +1134,7 @@ function lib.drawTexturedWorld(world)
                 mesh:setTexture(img)
 
                 --love.graphics.setColor(1, 1, 1, 1)
-
+                print('hextocolor tint')
                 local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
 

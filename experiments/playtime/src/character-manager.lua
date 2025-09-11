@@ -6,7 +6,7 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
-
+local drawTextured = require 'src.box2d-draw-textured'
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
@@ -63,26 +63,41 @@ local function randomHexColor()
     return string.format("%02X%02X%02X%02X", r, g, b, a)
 end
 
+
 function createDefaultTextureDNABlock(shape, skipFG)
-    return {
+    --local r, g, b, a = drawTextured.hexToColor('ff0000ff')
+    --print(r, g, b, a)
+
+    local result = {
         bgURL = shape .. '.png',
         fgURL = skipFG and '' or shape .. '-mask.png',
         pURL = '',
         bgHex = '020202ff',
         fgHex = skipFG and '' or 'ff0000ff',
         pHex = 'ffff00ff',
+
     }
+
+    drawTextured.makeCached(result)
+
+    return result
 end
 
 function initBlock(url)
-    return {
+    -- local r, g, b, a = drawTextured.hexToColor('ff0000ff')
+    -- print(r, g, b, a)
+    local result = {
         bgURL = (url or '') .. '.png',
         fgURL = (url or '') .. '-mask.png',
         pURL = '',
         bgHex = '020202ff',
         fgHex = randomHexColor(),
         pHex = randomHexColor(),
+
     }
+    drawTextured.makeCached(result)
+
+    return result
 end
 
 function add(block, values)

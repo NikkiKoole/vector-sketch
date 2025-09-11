@@ -264,7 +264,7 @@ function love.update(dt)
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
-    -- manual_gc(0.002, 2)
+    --manual_gc(0.002, 2)
     prof.pop('frame')
 end
 
