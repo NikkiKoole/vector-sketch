@@ -91,7 +91,12 @@ local base = {
 lib.palette = base
 
 
-
+local function growLine(p1, p2, length)
+    local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
+    local new_x = p1[1] + length * math.cos(angle)
+    local new_y = p1[2] + length * math.sin(angle)
+    return new_x, new_y
+end
 
 
 
@@ -775,12 +780,7 @@ function lib.drawTexturedWorld(world)
 
                 if #points >= 6 then
                     -- todo here we might want to grow the curve... so it will stick a little bit from the sides
-                    local function growLine(p1, p2, length)
-                        local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
-                        local new_x = p1[1] + length * math.cos(angle)
-                        local new_y = p1[2] + length * math.sin(angle)
-                        return new_x, new_y
-                    end
+
 
                     -- todo parameterize this
                     local growLength = ud.extra.growExtra or 20
