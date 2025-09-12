@@ -46,6 +46,7 @@ local function renderEdgeNone(anchors, normals, s, len_s, ns, q, r, hw)
     return len_s
 end
 
+
 local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
     local tx, ty = r.x - q.x, r.y - q.y
     local len_t = sqrt(tx * tx + ty * ty)
@@ -204,7 +205,8 @@ local JOIN_TYPES = {
     bevel = renderEdgeBevel,
 }
 
-polyline.render = function(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+function polyline.render(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+    --join_type = 'none'
     local renderEdge = JOIN_TYPES[join_type]
     assert(renderEdge, join_type .. ' is not a valid line join type.')
 
@@ -254,7 +256,7 @@ polyline.render = function(join_type, coords, half_width, pixel_size, draw_overd
     local ns = normal({}, s, half_width / len_s)
 
     local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
-
+    --print(join_type)
     for i = 1, #coords - 2, 2 do
         -- if draw_overdraw then
         --     half_width[thick_index] = getHalfWidth(thick_index) - pixel_size * 0.3

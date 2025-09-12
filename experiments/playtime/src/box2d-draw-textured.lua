@@ -586,7 +586,7 @@ local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, 
             local factor = (length / h)
             local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
             local width = (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
-            local verts, indices, draw_mode = polyline.render('miter', coords, width)
+            local verts, indices, draw_mode = polyline.render('none', coords, width)
 
             local vertsWithUVs = {}
 

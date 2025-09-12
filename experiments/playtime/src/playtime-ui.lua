@@ -33,6 +33,8 @@ local colorpickers = {
     bg = false
 }
 
+local profileFrameCounter = 0
+
 -- todo move this somewhere sensible , i also need it in character manager
 local function getCenterAndDimensions(body)
     local ud = body:getUserData()
@@ -938,11 +940,23 @@ function lib.drawWorldSettingsUI()
                 ProFi:stop()
                 ProFi:writeReport('profilingReport.txt')
                 state.world.profiling = false
+                profileFrameCounter = 0
             else
+                profileFrameCounter = 0
                 ProFi:start()
                 state.world.profiling = true
             end
         end
+        if state.world.profiling then
+            profileFrameCounter = profileFrameCounter + 1
+        end
+        if profileFrameCounter == 60 then
+            ProFi:stop()
+            ProFi:writeReport('profilingReport.txt')
+            state.world.profiling = false
+            profileFrameCounter = 0
+        end
+
         nextRow()
 
 
@@ -1684,6 +1698,15 @@ function lib.drawSelectedBodiesUI()
         if ui.button(x, y, 260, 'clone') then
             local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
             state.selection.selectedBodies = cloned
+        end
+        nextRow()
+
+        if ui.button(x, y, 260, 'clone x 10') then
+            for i = 1, 10 do
+                local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
+                state.selection.selectedBodies = cloned
+            end
+            --
         end
         nextRow()
 

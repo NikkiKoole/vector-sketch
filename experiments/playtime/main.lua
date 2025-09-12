@@ -85,7 +85,7 @@ end
 
 waitForEvent()
 
-local FIXED_TIMESTEP = true
+local FIXED_TIMESTEP = false
 local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
