@@ -7,7 +7,7 @@ local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
-
+local registry = require 'src.registry'
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 
@@ -23,6 +23,7 @@ lib.getShrinkFactor = function()
     return shrinkFactor
 end
 
+local function sorter(a, b) return a.z < b.z end
 function getLoveImage(path, settings)
     if not imageCache[path] then
         local info = love.filesystem.getInfo(path)
@@ -935,162 +936,137 @@ local function doubleControlPoints(points, duplications)
     return result
 end
 
-function lib.drawTexturedWorld(world)
-    local bodies = world:getBodies()
+
+function buildDrawables(bodies)
     local drawables = {}
 
-    for _, body in ipairs(bodies) do
-        -- local ud = body:getUserData()
-        -- if (ud and ud.thing) then
-        --     local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
-        --     table.insert(drawables, { z = composedZ, body = body, thing = ud.thing })
-        -- end
-        -- todo instead of having to check all the fixtures every frame we should mark a thing that has these type of specialfixtures.
-        local fixtures = body:getFixtures()
-        for i = 1, #fixtures do
-            local ud = fixtures[i]:getUserData()
+    for k, v in pairs(registry.sfixtures) do
+        local ud = v:getUserData()
+        local body = v:getBody()
+        -- print(inspect(ud))
+        --
+        if ud and ud.subtype == 'trace-vertices' then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
-            if ud and ud.subtype == 'trace-vertices' then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            table.insert(drawables, {
+                type = 'trace-vertices',
+                z = composedZ,
+                extra = ud.extra,
+                thing = body:getUserData().thing
+            })
+        end
 
-                table.insert(drawables, {
-                    type = 'trace-vertices',
+        if ud and ud.subtype == 'tile-repeat' then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+
+            table.insert(drawables, {
+                type = 'tile-repeat',
+                z = composedZ,
+                extra = ud.extra,
+                thing = body:getUserData().thing
+            })
+        end
+
+        if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            table.insert(drawables,
+                {
+                    type = 'texfixture',
                     z = composedZ,
+                    texfixture = v, --,fixtures[i],
                     extra = ud.extra,
+                    body = body,
                     thing = body:getUserData().thing
                 })
+        end
+
+        if ud and (ud.label == "connected-texture" or ud.subtype == 'connected-texture') and ud.extra.nodes then
+            -- logger:inspect(ud)
+            --logger:info('got some new kind of combined drawing todo!')
+            local points = {}
+            for j = 1, #ud.extra.nodes do
+                local it = ud.extra.nodes[j]
+                if it.type == 'anchor' then
+                    local f = registry.getSFixtureByID(it.id)
+                    local b = f:getBody()
+                    local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                        :getPoints()) })
+                    table.insert(points, centerX)
+                    table.insert(points, centerY)
+                end
+                if it.type == 'joint' then
+                    local j = registry.getJointByID(it.id)
+                    if j and not j:isDestroyed() then
+                        local x1, y1, _, _ = j:getAnchors()
+                        table.insert(points, x1)
+                        table.insert(points, y1)
+                    end
+                end
             end
 
-            if ud and ud.subtype == 'tile-repeat' then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            if #points == 4 then
+                -- here we will just introduce a little midle thingie
+                -- -- becaue i cannot draw a curve of 2 points
+                function addMidpoint(points)
+                    if #points ~= 4 then
+                        error("Expected array of exactly 2 points (4 numbers)")
+                    end
 
-                table.insert(drawables, {
-                    type = 'tile-repeat',
-                    z = composedZ,
-                    extra = ud.extra,
-                    thing = body:getUserData().thing
-                })
+                    local x1, y1, x2, y2 = points[1], points[2], points[3], points[4]
+                    local midX = (x1 + x2) / 2
+                    local midY = (y1 + y2) / 2
+
+                    return { x1, y1, midX, midY, x2, y2 }
+                end
+
+                points = addMidpoint(points)
             end
 
-            if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
+            if #points >= 6 then
+                -- todo here we might want to grow the curve... so it will stick a little bit from the sides
+
+
+                -- todo parameterize this
+                local growLength = ud.extra.growExtra or 20
+                points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
+                points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+
+
+                points = doubleControlPoints(points, 2)
+
+
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                --print(inspect(ud.extra))
                 table.insert(drawables,
                     {
-                        type = 'texfixture',
                         z = composedZ,
-                        texfixture = fixtures[i],
+                        type = 'connected-texture',
+                        curve = love.math.newBezierCurve(points),
+                        --texfixture = fixtures[i],
                         extra = ud.extra,
-                        body = body,
-                        thing = body:getUserData().thing
+                        --body = body,
+                        -- thing = body:getUserData().thing
                     })
-            end
-
-            if ud and (ud.label == "connected-texture" or ud.subtype == 'connected-texture') and ud.extra.nodes then
-                -- logger:inspect(ud)
-                --logger:info('got some new kind of combined drawing todo!')
-                local points = {}
-                for j = 1, #ud.extra.nodes do
-                    local it = ud.extra.nodes[j]
-                    if it.type == 'anchor' then
-                        local f = registry.getSFixtureByID(it.id)
-                        local b = f:getBody()
-                        local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
-                        table.insert(points, centerX)
-                        table.insert(points, centerY)
-                    end
-                    if it.type == 'joint' then
-                        local j = registry.getJointByID(it.id)
-                        if j and not j:isDestroyed() then
-                            local x1, y1, _, _ = j:getAnchors()
-                            table.insert(points, x1)
-                            table.insert(points, y1)
-                        end
-                    end
-                end
-
-                if #points == 4 then
-                    -- here we will just introduce a little midle thingie
-                    -- -- becaue i cannot draw a curve of 2 points
-                    function addMidpoint(points)
-                        if #points ~= 4 then
-                            error("Expected array of exactly 2 points (4 numbers)")
-                        end
-
-                        local x1, y1, x2, y2 = points[1], points[2], points[3], points[4]
-                        local midX = (x1 + x2) / 2
-                        local midY = (y1 + y2) / 2
-
-                        return { x1, y1, midX, midY, x2, y2 }
-                    end
-
-                    points = addMidpoint(points)
-                end
-
-                if #points >= 6 then
-                    -- todo here we might want to grow the curve... so it will stick a little bit from the sides
-
-
-                    -- todo parameterize this
-                    local growLength = ud.extra.growExtra or 20
-                    points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
-                    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
-
-
-                    points = doubleControlPoints(points, 2)
-
-
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    --print(inspect(ud.extra))
-                    table.insert(drawables,
-                        {
-                            z = composedZ,
-                            type = 'connected-texture',
-                            curve = love.math.newBezierCurve(points),
-                            --texfixture = fixtures[i],
-                            extra = ud.extra,
-                            --body = body,
-                            -- thing = body:getUserData().thing
-                        })
-                end
             end
         end
     end
 
-    -- todo this list needs to be kept around and sorted in place, resetting and doing all the work every frame is heavy!
-    -- optimally i dont want to sort at all every frame, maybe i can add a flag to indicate that the list is sorted and only sort when necessary (when adding/removing)
+    return drawables
+end
 
-    local function sorter(a, b) return a.z < b.z end
-
-    local function sortDrawables()
-        --print(#drawables)
-        table.sort(drawables, sorter)
-    end
-    sortDrawables()
+local function sortDrawables(drawables)
+    --print(#drawables)
+    table.sort(drawables, sorter)
+end
 
 
 
-    -- todo: these3 function look very much alike, we wnat to combine them all in otne,
-    -- another issue here is that i dont really understand how to set the ox and oy correctly, (for the combined Image)
-    -- and there is an issue with the center of the 'fan' mesh, it shouldnt always be 0,0 you can see this when you position the texfxture with the
-    -- onscreen 'd' button quite a distnace out of the actual physics body center.
-    --
-    -- local function drawImageLayerSquish(url, hex, extra, texfixture)
-    --     -- print('jo!')
-    --     local img, imgw, imgh = getLoveImage('textures/' .. url)
-    --     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+function lib.drawTexturedWorld(world)
+    local bodies = world:getBodies()
+    local drawables = buildDrawables(bodies)
 
-    --     if (vertices and img) then
-    --         local body = texfixture:getBody()
-    --         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-    --         local sx = 1 --ww / imgw
-    --         local sy = 1 --hh / imgh
-    --         local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-    --         local r, g, b, a = lib.hexToColor(hex)
-    --         love.graphics.setColor(r, g, b, a)
-    --         --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-    --         drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
-    --     end
-    -- end
+    --    sortDrawables(drawables)
+
     local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
         -- print('jo!')
         local img, imgw, imgh = getLoveImage('textures/' .. url)
