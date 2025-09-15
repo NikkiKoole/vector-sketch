@@ -117,7 +117,25 @@ local function getStrip(image, wmul)
     return m
 end
 
+-- Fan mesh pool: image -> { [vertexCount] = { mesh=..., vertsBuf=... } }
+local _fanPool = setmetatable({}, { __mode = "k" })
 
+local function _getFanMesh(image, vertexCount)
+    local byV = _fanPool[image]
+    if not byV then
+        byV = {}; _fanPool[image] = byV
+    end
+    local rec = byV[vertexCount]
+    if not rec then
+        local verts = {}
+        for i = 1, vertexCount do verts[i] = { 0, 0, 0, 0 } end -- prealloc vertex tables
+        local mesh = love.graphics.newMesh(verts, "fan")
+        mesh:setTexture(image)
+        rec = { mesh = mesh, verts = verts }
+        byV[vertexCount] = rec
+    end
+    return rec.mesh, rec.verts
+end
 
 local function growLineOLD(p1, p2, length)
     local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
@@ -598,7 +616,7 @@ end
 
 
 
-local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
+local function drawSquishableHairOverOLD(img, x, y, r, sx, sy, growFactor, vertices)
     local p = {}
     for i = 1, #vertices do
         p[i] = vertices[i] * growFactor
@@ -617,6 +635,34 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
 
     -- i believe sx and sy will just always be 1
     love.graphics.draw(_mesh, x, y, r, sx, sy)
+end
+
+local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
+    -- grow once into a flat array (reuse a local)
+    local nnums = #vertices         -- flat x,y,... array
+    local n = math.floor(nnums / 2) -- number of polygon points
+    local grown = {}                -- short-lived; ok (main cost was newMesh)
+    for i = 1, nnums do grown[i] = vertices[i] * growFactor end
+
+    -- ring UVs from your existing helper (allocates, but cheap vs newMesh)
+    local ring = makeSquishableUVsFromPoints(grown) -- size n+1 (closed)
+    local cx, cy = mathutils.getCenterOfPoints(vertices)
+
+    -- center + ring => total vertex count
+    local vcount = (n + 1) + 1 -- closed ring + center
+    local mesh, buf = _getFanMesh(img, vcount)
+
+    -- write center
+    local v = buf[1]; v[1], v[2], v[3], v[4] = cx, cy, 0.5, 0.5
+    -- write ring
+    for i = 1, #ring do
+        local s = ring[i]
+        local d = buf[i + 1]
+        d[1], d[2], d[3], d[4] = s[1], s[2], s[3], s[4]
+    end
+
+    mesh:setVertices(buf) -- 1 call instead of creating a mesh
+    love.graphics.draw(mesh, x, y, r, sx, sy)
 end
 
 
