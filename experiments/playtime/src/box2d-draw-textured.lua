@@ -19,7 +19,6 @@ local shrinkFactor = 1
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
 end
-
 lib.getShrinkFactor = function()
     return shrinkFactor
 end
@@ -90,43 +89,51 @@ local base = {
 }
 lib.palette = base
 
+-- Weak-keyed side tables so meshes GC cleanly.
+local _vertsBufByMesh = setmetatable({}, { __mode = "k" })
+local function _ensureVertsBuf(mesh)
+    local buf = _vertsBufByMesh[mesh]
+    if buf then return buf end
+    local count = mesh:getVertexCount()
+    buf = {}
+    -- Precreate the vertex tables so we only mutate numbers each frame.
+    for i = 1, count do buf[i] = { 0, 0, 0, 0 } end
+    _vertsBufByMesh[mesh] = buf
+    return buf
+end
 
-local function growLine(p1, p2, length)
+local _stripCache = setmetatable({}, { __mode = "k" }) -- image -> table
+local function getStrip(image, wmul)
+    wmul = wmul or 1
+    local byW = _stripCache[image]
+    if not byW then
+        byW = {}; _stripCache[image] = byW
+    end
+    local m = byW[wmul]
+    if not m then
+        m = createTexturedTriangleStrip(image, wmul)
+        byW[wmul] = m
+    end
+    return m
+end
+
+
+
+local function growLineOLD(p1, p2, length)
     local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
     local new_x = p1[1] + length * math.cos(angle)
     local new_y = p1[2] + length * math.sin(angle)
     return new_x, new_y
 end
 
-
-
-function createTexturedTriangleStrip(image, optionalWidthMultiplier)
-    -- this assumes an strip that is oriented vertically
-    local w, h = image:getDimensions()
-    w = w * (optionalWidthMultiplier or 1)
-
-    local vertices = {}
-    local segments = 6
-    local segMinus1 = segments - 1
-    local hPart = h / (segMinus1)
-    local hv = 1 / (segMinus1)
-    local runningHV = 0
-    local runningHP = 0
-    local index = 0
-
-    for i = 1, segments do
-        vertices[index + 1] = { -w * .5, runningHP, 0, runningHV }
-        vertices[index + 2] = { w * .5, runningHP, 1, runningHV }
-        runningHV = runningHV + hv
-        runningHP = runningHP + hPart
-        index = index + 2
-    end
-
-    local mesh = love.graphics.newMesh(vertices, "strip")
-    mesh:setTexture(image)
-
-    return mesh
+local sqrt = math.sqrt
+local function growLine(p1, p2, length)
+    local dx, dy = p1[1] - p2[1], p1[2] - p2[2]
+    local inv = 1.0 / (sqrt(dx * dx + dy * dy) + 1e-12)
+    return p1[1] + length * dx * inv, p1[2] + length * dy * inv
 end
+
+
 
 --todo the things that have a hex, should have the rgba values directly so we dont have to calculate them every frame.
 -- fix this with something like function setBgColor(item, val)
@@ -394,8 +401,6 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
 
         love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
         local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
-        --  print(flipx, flipy, lw, lh, sx, sy, ox, oy)
-        --love.graphics.setColor(0, 0, 0)
         love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
         love.graphics.setColor(0, 0, 0) --- huh?!
@@ -408,23 +413,16 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         love.graphics.setColor(1, 1, 1)
         --- huh?!
         love.graphics.draw(canvas, 0, 0, 0, 1 / shrinkFactor, 1 / shrinkFactor)
-        -- love.graphics.rectangle('fill', 0, 0, 1000, 1000)
-        --print(0, 0, 0, 1 / shrinkFactor, 1 / shrinkFactor)
         love.graphics.setCanvas()       --- <<<<<
         local imageData = otherCanvas:newImageData()
         love.graphics.setColor(0, 0, 0) --- huh?!
-        --local imageData = canvas:newImageData()
-
-
 
         canvas:release()
         otherCanvas:release()
-        -- print(imageData)
         return imageData
     end
-    -- return lineart:getData()
-    -- return nil -- love.image.newImageData(mask)
 end
+
 function makePatch(name, ud)
     local result = nil
     if ud.extra[name] and ud.extra[name].bgURL then
@@ -485,20 +483,13 @@ function lib.makeCombinedImages()
 
                     if not main.cached then
                         lib.makeCached(main)
-                        --print('Cached not found')
                     end
                     local cached = main.cached
 
                     local outlineImage = getLoveImage('textures/' .. main.bgURL)
-
-
-                    -- local olr, olg, olb, ola = lib.hexToColor(ud.extra.main.bgHex)
-
                     local maskImage = getLoveImage('textures/' .. main.fgURL)
-                    --local mr, mg, mb, ma = lib.hexToColor(ud.extra.main.fgHex)
                     local patternImage = getLoveImage('textures/pat/' .. main.pURL)
-                    --local pr, pg, pb, pa = lib.hexToColor(ud.extra.main.pHex)
-                    --logger:inspect(cached)
+
                     if outlineImage or line then
                         local imgData = lib.makeTexturedCanvas(
                             outlineImage or line, -- line art
@@ -635,8 +626,36 @@ function meshGetVertex(mesh, j)
     return x, y, u, v
 end
 
+function createTexturedTriangleStrip(image, optionalWidthMultiplier)
+    -- this assumes an strip that is oriented vertically
+    local w, h = image:getDimensions()
+    w = w * (optionalWidthMultiplier or 1)
+
+    local vertices = {}
+    local segments = 6
+    local segMinus1 = segments - 1
+    local hPart = h / (segMinus1)
+    local hv = 1 / (segMinus1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+
+    for i = 1, segments do
+        vertices[index + 1] = { -w * .5, runningHP, 0, runningHV }
+        vertices[index + 2] = { w * .5, runningHP, 1, runningHV }
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
+    end
+
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+
+    return mesh
+end
+
 -- https://love2d.org/forums/viewtopic.php?t=83410
-function texturedCurve(curve, image, mesh, dir, scaleW, dl)
+function texturedCurveOLD2(curve, image, mesh, dir, scaleW, dl)
     dir         = dir or 1
     scaleW      = scaleW or 1
 
@@ -678,6 +697,65 @@ function texturedCurve(curve, image, mesh, dir, scaleW, dl)
         tmp[1], tmp[2], tmp[3], tmp[4] = x3, y3, u2, v2
         mesh:setVertex(j + 1, tmp)
     end
+end
+
+-- Batched, no mesh:getVertex, 1x mesh:setVertices per call
+function texturedCurve(curve, image, mesh, dir, scaleW, dl)
+    dir             = dir or 1
+    scaleW          = scaleW or 1
+    dl              = dl or curve:getDerivative()
+
+    -- Only need the texture width to set half-width of the ribbon
+    local w         = image:getWidth()
+    local line      = (w * dir) * scaleW
+
+    -- Prealloc / reuse vertex tables for this mesh
+    local verts     = _ensureVertsBuf(mesh)
+
+    local count     = mesh:getVertexCount() -- always even
+    local segments  = count / 2             -- number of (left,right) pairs
+    local segMinus1 = segments - 1
+
+    -- Safety against degenerate curves
+    local eps       = 1e-12
+
+    -- Walk pairs j,j+1 while also knowing pair index p
+    local p         = 0
+    for j = 1, count, 2 do
+        -- Param along the curve in [0,1]
+        local t                    = p / segMinus1
+
+        -- Evaluate position and derivative
+        local x, y                 = curve:evaluate(t)
+        local dx, dy               = dl:evaluate(t)
+
+        -- Normalized derivative and its left normal
+        local invlen               = 1.0 / math.sqrt(dx * dx + dy * dy + eps)
+        dx, dy                     = dx * invlen, dy * invlen
+        local nx, ny               = -dy, dx
+
+        -- Offset to both sides
+        local xL                   = x + line * nx
+        local yL                   = y + line * ny
+        local xR                   = x - line * nx
+        local yR                   = y - line * ny
+
+        -- Compute UVs analytically (no getVertex):
+        -- left u=0, right u=1; v increases 0..1 per pair
+        local v                    = (segMinus1 > 0) and (p / segMinus1) or 0
+
+        -- Mutate the precreated vertex tables
+        local vL                   = verts[j]
+        vL[1], vL[2], vL[3], vL[4] = xL, yL, 0, v
+
+        local vR                   = verts[j + 1]
+        vR[1], vR[2], vR[3], vR[4] = xR, yR, 1, v
+
+        p                          = p + 1
+    end
+
+    -- One C call instead of N*2
+    mesh:setVertices(verts)
 end
 
 -- this function is a bunch slower then the new one.
@@ -738,6 +816,40 @@ local function doubleControlPointsOld(points, duplications)
 
     return result
 end
+
+
+-- -- cache squish fan meshes per fixture (extra) + url (+ vertex layout)
+-- local _fanMeshCache = setmetatable({}, { __mode = "k" })
+
+-- local function _verticesSig(v)
+--     -- cheap change detector: (#, sum, sumsq)
+--     local n, s, s2 = #v, 0.0, 0.0
+--     for i = 1, n do
+--         local x = v[i]; s = s + x; s2 = s2 + x * x
+--     end
+--     return n, s, s2
+-- end
+
+-- local function _makeSquishMesh(img, vertices, growFactor)
+--     -- scale once
+--     local n = #vertices
+--     local p = {}
+--     for i = 1, n do p[i] = vertices[i] * growFactor end
+
+--     -- reuse your helper to make perimeter UVs
+--     local uvs = makeSquishableUVsFromPoints(p)
+
+--     -- prepend center vertex (cx,cy,0.5,0.5) without table.insert
+--     local cx, cy = mathutils.getCenterOfPoints(vertices)
+--     for i = #uvs + 1, 2, -1 do uvs[i] = uvs[i - 1] end
+--     uvs[1] = { cx, cy, 0.5, 0.5 }
+
+--     local m = love.graphics.newMesh(uvs) -- default mode is 'fan' here
+--     m:setTexture(img)
+--     return m
+-- end
+
+
 local function doubleControlPoints(points, duplications)
     local len = #points
     if len % 2 ~= 0 then
@@ -940,16 +1052,19 @@ function lib.drawTexturedWorld(world)
 
         if (vertices and img) then
             local body = texfixture:getBody()
-            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            --local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
             local sx = 1 --ww / imgw
             local sy = 1 --hh / imgh
-            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+            --local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
             --local r, g, b, a = lib.hexToColor(hex)
             --love.graphics.setColor(r, g, b, a)
             --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
             drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
     end
+
+
+
 
     -- local function drawImageLayerVanilla(url, hex, extra, texfixture)
     --     local img, imgw, imgh = getLoveImage('textures/' .. url)
@@ -982,30 +1097,15 @@ function lib.drawTexturedWorld(world)
 
         if vertices and img then
             local body = texfixture:getBody()
-            local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+            -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
             local sx = 1 --ww / imgw
             local sy = 1 --hh / imgh
-            local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-            --local r, g, b, a = hexToColor(thing.textures.bgHex)
-
-            -- this routine is alos good, but it doenst take in affect the squishyness. you cannot deform the rectangle
-            -- love.graphics.setColor(1, 1, 1, 1)
-            -- love.graphics.draw(img, body:getX() + rx, body:getY() + ry, body:getAngle(),
-            --     sx * 1 * thing.mirrorX,
-            --     sy * 1 * thing.mirrorY, (imgw) / 2, (imgh) / 2)
-
-
-
-            -- this routine works as is, you just need to center more often, the 0,0 at the beginning is not always corretc though..
-            --local r, g, b, a = lib.hexToColor(extra.main.tint or 'ffffffff')
-            --love.graphics.setColor(r, g, b, a)
-
 
 
             love.graphics.setColor(1, 1, 1, 1)
 
             if (extra.main.tint) then
-                print('optimize this away, tint')
+                --                print('optimize this away, tint')
                 local r, g, b, a = lib.hexToColor(extra.main.tint)
                 love.graphics.setColor(r, g, b, a)
             end
@@ -1075,7 +1175,8 @@ function lib.drawTexturedWorld(world)
                 if extra.main and extra.main.bgURL then
                     local img = getLoveImage('textures/' .. extra.main.bgURL)
                     if img then
-                        local mesh = createTexturedTriangleStrip(img)
+                        --local mesh = createTexturedTriangleStrip(img)
+                        local mesh = getStrip(img, extra.main.wmul or 1)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
                         --local olr, olg, olb, ola = lib.hexToColor(extra.main.bgHex)
                         love.graphics.setColor(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
@@ -1085,8 +1186,9 @@ function lib.drawTexturedWorld(world)
                 if extra.main and extra.main.fgURL then
                     local img = getLoveImage('textures/' .. extra.main.fgURL)
                     if img then
-                        print(extra.main.wmul)
-                        local mesh = createTexturedTriangleStrip(img)
+                        --print(extra.main.wmul)
+                        --local mesh = createTexturedTriangleStrip(img)
+                        local mesh = getStrip(img, extra.main.wmul or 1)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
                         --local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
                         -- love.graphics.setColor(olr, olg, olb, ola)
@@ -1098,8 +1200,8 @@ function lib.drawTexturedWorld(world)
             if extra.OMP then
                 local img = extra.ompImage
                 if img then
-                    local mesh = createTexturedTriangleStrip(img)
-
+                    --local mesh = createTexturedTriangleStrip(img)
+                    local mesh = getStrip(img, extra.main.wmul or 1)
                     texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
                     love.graphics.setColor(1, 1, 1, 1)
                     love.graphics.draw(mesh)
