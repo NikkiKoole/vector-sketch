@@ -159,7 +159,7 @@ function love.load(args)
     --sceneLoader.loadScriptAndScene('straight')
 
     local cwd = love.filesystem.getWorkingDirectory()
-    sceneLoader.loadScene(cwd .. '/scripts/empty.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
@@ -674,7 +674,12 @@ function love.keypressed(key)
 
             CharacterManager.addTexturesFromInstance2(humanoidInstance)
         end
-
+        if key == 'u' then
+            --print('nose change!')
+            local count = math.floor(math.random() * 5)
+            CharacterManager.rebuildFromCreation(humanoidInstance,
+                { noseSegments = count })
+        end
         if key == 'i' then
             local bgColor = '000000ff'
             local fgColor = randomHexColor()

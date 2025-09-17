@@ -332,7 +332,6 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader(maskShader)
             local transform = love.math.newTransform()
 
-
             transform:rotate(texRot)
             transform:scale(texScaleX, texScaleY)
 
@@ -1329,12 +1328,13 @@ function lib.drawTexturedWorld(world)
                 mesh:setTexture(img)
 
                 --love.graphics.setColor(1, 1, 1, 1)
-                print('hextocolor tint')
+                -- print('hextocolor tint')
                 local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
 
                 local body = drawables[i].thing.body
                 love.graphics.draw(mesh, body:getX(), body:getY(), body:getAngle())
+                print('drawng tiles')
             end
         end
 

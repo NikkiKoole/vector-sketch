@@ -7,17 +7,16 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 local drawTextured = require 'src.box2d-draw-textured'
+
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
 
 -- do lerping positioners (arm beginning, leg beginnnig, ear)
--- OMP images as limb hair (and chesthair) -- maybe we should just know which images have a mask and tehy are OMP
+-- OMP images as limb hair (and chesthair) -- maybe we should just know which images have a mask and if they are OMP
 -- do FACE PARTS
 
--- todo
--- nose parts is unattached after body chaneg (p)
 
 local function cyclicShift(arr, shift)
     local n = #arr
