@@ -949,13 +949,15 @@ function lib.drawWorldSettingsUI()
         end
         if state.world.profiling then
             profileFrameCounter = profileFrameCounter + 1
+            print(profileFrameCounter)
+            if profileFrameCounter >= 60 then
+                ProFi:stop()
+                ProFi:writeReport('profilingReport.txt')
+                state.world.profiling = false
+                profileFrameCounter = 0
+            end
         end
-        if profileFrameCounter >= 60 then
-            ProFi:stop()
-            ProFi:writeReport('profilingReport.txt')
-            state.world.profiling = false
-            profileFrameCounter = 0
-        end
+
 
         nextRow()
 
