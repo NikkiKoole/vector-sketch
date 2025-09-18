@@ -243,6 +243,7 @@ function love.update(dt)
     sceneLoader.maybeHotReload(dt)
 
     local scaled_dt = dt * state.world.speedMultiplier
+    prof.push('physics-update')
     if not state.world.paused then
         if state.world.playWithSoftbodies then
             for i, v in ipairs(state.world.softbodies) do
@@ -272,15 +273,15 @@ function love.update(dt)
         snap.update(scaled_dt)
         keep_angle.update(scaled_dt)
     end
-
+    prof.pop('physics-update')
 
     if recorder.isRecording and utils.tablelength(recorder.recordingMouseJoints) > 0 then
         recorder:recordMouseJointUpdates(cam)
     end
-
+    prof.push('pointers')
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
     --phys.handleUpdate(dt)
-
+    prof.pop('pointers')
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
@@ -322,11 +323,14 @@ function love.draw()
     --effect(function()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
+    prof.push('drawworld')
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
-
+    prof.pop('drawworld')
+    prof.push('drawtexturedworld')
     if state.world.showTextures then
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
     end
+    prof.pop('drawtexturedworld')
     script.call('draw')
 
     editorRenderer.renderActiveEditorThings()
