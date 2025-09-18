@@ -333,7 +333,6 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             love.graphics.setShader(maskShader)
             local transform = love.math.newTransform()
 
-
             transform:rotate(texRot)
             transform:scale(texScaleX, texScaleY)
 
@@ -570,49 +569,49 @@ local function makeSquishableUVsFromPoints(v)
 end
 
 
-local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
-    local canvasCache = guy.canvasCache
-    local dpi = 1 --love.graphics.getDPIScale()
-    local shrink = lib.getShrinkFactor()
-    if true then
-        if true or box2dGuy.hairNeedsRedo then
-            local img = canvasCache.hairCanvas
-            local w, h = img:getDimensions()
-            local f = faceData.metaPoints
-            -- todo parameter hair (beard, only top hair, sidehair)
-            --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
-            local hairLine = { f[7], f[8], f[1], f[2], f[3] }
-            -- local hairLine = { f[8], f[1], f[2] }
-            -- print(inspect(hairLine))
-            --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
-            local points = hairLine
-            local hairTension = .02
-            local spacing = 10 * multipliers.hair.sMultiplier
-            local coords
+-- local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
+--     local canvasCache = guy.canvasCache
+--     local dpi = 1 --love.graphics.getDPIScale()
+--     local shrink = lib.getShrinkFactor()
+--     if true then
+--         if true or box2dGuy.hairNeedsRedo then
+--             local img = canvasCache.hairCanvas
+--             local w, h = img:getDimensions()
+--             local f = faceData.metaPoints
+--             -- todo parameter hair (beard, only top hair, sidehair)
+--             --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
+--             local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+--             -- local hairLine = { f[8], f[1], f[2] }
+--             -- print(inspect(hairLine))
+--             --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+--             local points = hairLine
+--             local hairTension = .02
+--             local spacing = 10 * multipliers.hair.sMultiplier
+--             local coords
 
-            coords = border.unloosenVanillaline(points, hairTension, spacing)
+--             coords = border.unloosenVanillaline(points, hairTension, spacing)
 
-            local length = getLengthOfPath(hairLine)
-            local factor = (length / h)
-            local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
-            local width = (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
-            local verts, indices, draw_mode = polyline.render('none', coords, width)
+--             local length = getLengthOfPath(hairLine)
+--             local factor = (length / h)
+--             local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
+--             local width = (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
+--             local verts, indices, draw_mode = polyline.render('none', coords, width)
 
-            local vertsWithUVs = {}
+--             local vertsWithUVs = {}
 
-            for i = 1, #verts do
-                local u = (i % 2 == 1) and 0 or 1
-                local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
-                vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
-            end
+--             for i = 1, #verts do
+--                 local u = (i % 2 == 1) and 0 or 1
+--                 local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+--                 vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+--             end
 
-            local vertices = vertsWithUVs
-            local m = love.graphics.newMesh(vertices, "strip")
-            m:setTexture(img)
-            love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx * (dpi / shrink), sy * (dpi / shrink))
-        end
-    end
-end
+--             local vertices = vertsWithUVs
+--             local m = love.graphics.newMesh(vertices, "strip")
+--             m:setTexture(img)
+--             love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx * (dpi / shrink), sy * (dpi / shrink))
+--         end
+--     end
+-- end
 
 
 
@@ -1305,7 +1304,7 @@ function lib.drawTexturedWorld(world)
                 mesh:setTexture(img)
 
                 --love.graphics.setColor(1, 1, 1, 1)
-                print('hextocolor tint')
+                -- print('hextocolor tint')
                 local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
 
