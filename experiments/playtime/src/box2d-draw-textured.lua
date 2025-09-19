@@ -1334,6 +1334,7 @@ function lib.drawTexturedWorld(world)
 
                 local body = drawables[i].thing.body
                 love.graphics.draw(mesh, body:getX(), body:getY(), body:getAngle())
+                print('drawng tiles')
             end
         end
 
