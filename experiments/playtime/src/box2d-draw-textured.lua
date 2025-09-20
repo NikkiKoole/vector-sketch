@@ -1256,6 +1256,7 @@ function lib.drawTexturedWorld(world)
 
         if drawables[i].type == 'tile-repeat' then
             local vertices = drawables[i].thing.vertices
+            -- todo CACHE THIS!!
             local tris = shapes.makeTrianglesFromPolygon(vertices)
             local img = getLoveImage('textures/' .. drawables[i].extra.main.bgURL)
             if img then
@@ -1334,7 +1335,6 @@ function lib.drawTexturedWorld(world)
 
                 local body = drawables[i].thing.body
                 love.graphics.draw(mesh, body:getX(), body:getY(), body:getAngle())
-                print('drawng tiles')
             end
         end
 

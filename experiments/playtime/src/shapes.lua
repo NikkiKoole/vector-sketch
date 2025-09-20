@@ -98,6 +98,7 @@ local function makeITriangle(w, h, x, y)
 end
 
 function shapes.makeTrianglesFromPolygon(polygon)
+    --   logger:trace()
     -- when this is true we also solve, self intersecting and everythign
     local triangles = {}
     local result = {}
