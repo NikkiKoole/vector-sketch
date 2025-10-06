@@ -1313,10 +1313,6 @@ function lib.drawTexturedWorld(world)
                         keepAspect = false       -- optional flag to preserve aspect ratio
                     }
 
-
-
-
-
                     for j = 1, #tris do
                         local tri = tris[j]
                         for k = 0, 2 do
@@ -1341,10 +1337,6 @@ function lib.drawTexturedWorld(world)
                     mesh:setTexture(img)
                     drawables[i].extra._mesh = mesh
                 end
-                --love.graphics.setColor(1, 1, 1, 1)
-                -- print('hextocolor tint')
-
-
 
 
                 local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
@@ -1427,6 +1419,7 @@ function lib.drawTexturedWorld(world)
             --logger:inspect()
         end
     end
+
     --  end)
     --love.graphics.setShader()
     --love.graphics.setDepthMode()
