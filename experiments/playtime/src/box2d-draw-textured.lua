@@ -492,7 +492,7 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if true then
-                if ud and ud.extra and ud.extra.OMP and ud.extra.dirty then
+                if ud and type(ud) == 'table' and ud.extra and ud.extra.OMP and ud.extra.dirty then
                     local patch1 = makePatch('patch1', ud)
                     local patch2 = makePatch('patch2', ud)
                     local patch3 = makePatch('patch3', ud)
@@ -971,7 +971,9 @@ function lib.drawTexturedWorld(world)
             local fixtures = body:getFixtures()
             for i = 1, #fixtures do
                 local ud = fixtures[i]:getUserData()
-
+                if type(ud) ~= 'table' then -- vanwege softbodies bullshit
+                    ud = nil
+                end
                 if ud and ud.subtype == 'trace-vertices' then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 

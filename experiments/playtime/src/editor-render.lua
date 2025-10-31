@@ -52,19 +52,17 @@ function lib.renderActiveEditorThings()
 
     local lw = love.graphics.getLineWidth()
     for i, v in ipairs(state.world.softbodies) do
-        love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
         if (tostring(v) == "softbody") then
             love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
             --v:draw("fill", false)
             love.graphics.setColor(50 * i / 255, 255 / 255, 200 * i / 255, .8)
-            local polygon = v:getPoly()
-            local tris = shapes.makeTrianglesFromPolygon(polygon)
-            for i = 1, #tris do
-                love.graphics.polygon('fill', tris[i])
-            end
         else
-            --v:draw(false)
+            love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
+        end
+        -- print(inspect(v))
+        if v.centerBody and not v.centerBody:isDestroyed() then
             local polygon = v:getPoly()
+
             local tris = shapes.makeTrianglesFromPolygon(polygon)
             for i = 1, #tris do
                 love.graphics.polygon('fill', tris[i])

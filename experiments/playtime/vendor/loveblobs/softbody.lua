@@ -28,7 +28,7 @@ function softbody:init(world, x, y, r, s, t, reinit)
     self.centerBody:setAngularDamping(300);
 
     --create 'nodes' (outer bodies) & connect to center body
-   local nodeRadius = r/4
+    local nodeRadius = r / 4
     self.nodeShape = physics.newCircleShape(nodeRadius);
     self.nodes = {};
 
@@ -95,9 +95,10 @@ function softbody:update()
     local pos = {};
     for i = 1, #self.nodes, self.smooth do
         v = self.nodes[i];
-
-        table.insert(pos, v.body:getX());
-        table.insert(pos, v.body:getY());
+        if not v.body:isDestroyed() then
+            table.insert(pos, v.body:getX());
+            table.insert(pos, v.body:getY());
+        end
     end
 
     tessellate(pos, self.tess[1]);
@@ -143,7 +144,7 @@ function softbody:getPoints()
 end
 
 function softbody:getPoly()
-      local t = {{}, {}}
+    local t = { {}, {} }
     local outerPositions = {}
     local centerX, centerY = self.centerBody:getPosition()
 
@@ -160,13 +161,14 @@ function softbody:getPoly()
         -- Calculate the outer position by offsetting by node radius
         local outer_x = nodeX + self.nodeShape:getRadius() * math.cos(angle)
         local outer_y = nodeY + self.nodeShape:getRadius() * math.sin(angle)
-         table.insert(t[1], outer_x)
-         table.insert(t[1], outer_y)
-       -- table.insert(outerPositions, { x = outer_x, y = outer_y })
+        table.insert(t[1], outer_x)
+        table.insert(t[1], outer_y)
+        -- table.insert(outerPositions, { x = outer_x, y = outer_y })
     end
 
     return t[1]
 end
+
 -- function softbody:getPoly()
 --      local t = {{}, {}}
 --     for i, v in ipairs(self.nodes) do

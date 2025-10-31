@@ -78,7 +78,7 @@ state.world = {
     drawOutline = true,
     debugDrawMode = true,
     debugAlpha = 1,
-    debugDrawBodies = false,
+    debugDrawBodies = true,
     debugDrawJoints = false,
     profiling = false,
     meter = 100,
@@ -89,7 +89,7 @@ state.world = {
     mouseDamping = 0.5,
     speedMultiplier = 1.0,
     softbodies = {},
-    playWithSoftbodies = false,
+    playWithSoftbodies = true,
     showTextures = true,
 }
 

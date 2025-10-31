@@ -201,7 +201,10 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
         end
 
         if (allowMouseJointMaking) then
-            local udID = temp[1].body:getUserData().thing.id
+            local udID = nil
+            if temp[1].body:getUserData() and temp[1].body:getUserData().thing.id then
+                udID = temp[1].body:getUserData().thing.id
+            end
             createdmousejointdata = {
                 pointerID = temp[1].id,
                 bodyID = udID,

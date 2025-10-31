@@ -123,24 +123,7 @@ function love.load(args)
     objectManager.addThing('custom', { vertices = customVertices })
     --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
 
-    if state.world.playWithSoftbodies then
-        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
-        b:setFrequency(3)
-        b:setDamping(0.1)
-        --b:setFriction(1)
 
-        table.insert(state.world.softbodies, b)
-        local points = {
-            0, 500, 800, 500,
-            800, 800, 0, 800
-        }
-        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
-        table.insert(state.world.softbodies, b)
-        b:setJointFrequency(2)
-        b:setJointDamping(.1)
-        --b:setFixtureRestitution(2)
-        -- b:setFixtureFriction(10)
-    end
 
     --effect = moonshine(moonshine.effects.dmg)
     --.chain(moonshine.effects.vignette)
@@ -169,7 +152,24 @@ function love.load(args)
 
     humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
 
+    if state.world.playWithSoftbodies then
+        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
+        b:setFrequency(3)
+        b:setDamping(0.1)
+        --b:setFriction(1)
 
+        table.insert(state.world.softbodies, b)
+        local points = {
+            0, 500, 800, 500,
+            800, 800, 0, 800
+        }
+        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
+        table.insert(state.world.softbodies, b)
+        b:setJointFrequency(2)
+        b:setJointDamping(.1)
+        --b:setFixtureRestitution(2)
+        -- b:setFixtureFriction(10)
+    end
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
