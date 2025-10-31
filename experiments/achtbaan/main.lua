@@ -7,7 +7,7 @@ local CONSTANTS = {
         HEIGHT = 1000
     },
     TRACK = {
-        MIN_DISTANCE = 30,
+        MIN_DISTANCE = 40,
         SUPPORT_SPACING = 100,
         MIN_BEAM_SPACING = 50
     },
@@ -30,10 +30,32 @@ local CONSTANTS = {
     }
 }
 
+local mouseState = {
+    pressed = false
+}
+-- GameState
+local GameState = {
+    track = nil,
+    train = nil,
+    ground_level = 0,
+    pause = false,
+    new = true,
+}
+
+
+
+
 -- Utility function to calculate distance between two points
 local function distance(x1, y1, x2, y2)
     return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
+
+local function inRect(x, y, rx, ry, rw, rh)
+    if x < rx or y < ry then return false end
+    if x > rx + rw or y > ry + rh then return false end
+    return true
+end
+
 
 -- Track class
 local Track = {}
@@ -61,6 +83,29 @@ function Track:addPoint(x, y)
     }
     table.insert(self.points, point)
     return point
+end
+
+function Track:finalizeDrawing()
+    if #self.points < 2 then return end
+
+    local first_point = self.points[1]
+    local last_point = self.points[#self.points]
+    local minDist = CONSTANTS.TRACK.MIN_DISTANCE
+
+    local dist = distance(last_point.x, last_point.y, first_point.x, first_point.y)
+
+
+    if dist > minDist then
+        local steps = math.floor(dist / minDist)
+        local dx_step = (first_point.x - last_point.x) / (steps + 1)
+        local dy_step = (first_point.y - last_point.y) / (steps + 1)
+
+        for i = 1, steps do
+            local px = last_point.x + dx_step * i
+            local py = last_point.y + dy_step * i
+            self:addPoint(px, py)
+        end
+    end
 end
 
 function Track:calculateLengths()
@@ -236,7 +281,7 @@ function Track:draw()
             else
                 love.graphics.setColor(1, 1, 1) -- White
             end
-            love.graphics.circle('fill', p1.x, p1.y, 2)
+            love.graphics.circle('fill', p1.x, p1.y, 3)
         end
     elseif #self.points == 1 then
         -- Single point
@@ -424,6 +469,7 @@ function Train:initialize()
     if #self.track.points < 2 then
         print("Error: Not enough points to form a track.")
         self.carts = {}
+
         return
     end
 
@@ -485,53 +531,80 @@ function Train:draw()
     if #self.carts > 0 then
         local lead_cart = self.carts[1]
         love.graphics.setColor(1, 1, 1) -- White
-        love.graphics.print(string.format("Speed: %.2f px/s", lead_cart.velocity), 10, 10)
-        love.graphics.print(string.format("Acceleration: %.2f px/s²", lead_cart.acceleration), 10, 30)
-        love.graphics.print(string.format("Mass: %.2f", self.mass), 10, 50)
+        love.graphics.print(string.format("Snelheid: %5.0f ", lead_cart.velocity), 10, 50)
+        --love.graphics.print(string.format("Speed: %5.2f px/s", lead_cart.velocity), 10, 10)
+        --love.graphics.print(string.format("Acceleration: %5.2f px/s²", lead_cart.acceleration), 10, 50)
+        --love.graphics.print(string.format("Mass: %.2f", self.mass), 10, 90)
     end
 end
-
--- GameState
-local GameState = {
-    track = nil,
-    train = nil,
-    ground_level = 0
-}
 
 -- Event Handlers
 
 function love.mousepressed(x, y, button)
-    if button == 1 then -- Left mouse button
+    if button == 1 and GameState.new == false then
+        -- are we clicking a node ?
+        -- if so we might want to start dragging that node
+        for i = 1, #GameState.track.points do
+            local point = GameState.track.points[i]
+            local dist = distance(point.x, point.y, x, y)
+            if dist < 3 then
+                -- print('clicked a node!', i)
+                GameState.draggingPointIndex = i
+            end
+        end
+    end
+    if button == 1 and GameState.new then -- Left mouse button
         -- Start drawing track
+        --print('Track creation started!')
         GameState.track.points = {}
         GameState.track.support_beams = {}
         GameState.train.carts = {}
-        GameState.train:initialize()
+
         GameState.track:addPoint(x, y)
         GameState.track.is_drawing = true
-        print('Track creation started!')
+        GameState.new = false
     end
 end
 
 function love.mousemoved(x, y, dx, dy)
     if GameState.track.is_drawing then
         local last_point = GameState.track.points[#GameState.track.points]
+        local minDist = CONSTANTS.TRACK.MIN_DISTANCE
         local dist = distance(last_point.x, last_point.y, x, y)
-        if dist >= CONSTANTS.TRACK.MIN_DISTANCE then
-            local p = GameState.track:addPoint(x, y)
-            if love.keyboard.isDown('a') then
-                p.accelerate = true
-            end
-            if love.keyboard.isDown('d') then
-                p.decelerate = true
-            end
-            if love.keyboard.isDown('h') then
-                p.hoist = true
-            end
-            if love.keyboard.isDown('f') then
-                p.flip = true
+
+        if dist >= minDist then
+            -- how many intermediate points do we need?
+            local steps = math.floor(dist / minDist)
+            local dx_step = (x - last_point.x) / (steps + 1)
+            local dy_step = (y - last_point.y) / (steps + 1)
+
+            -- add the intermediate points
+            for i = 1, steps do
+                local px = last_point.x + dx_step * i
+                local py = last_point.y + dy_step * i
+                local p = GameState.track:addPoint(px, py)
+
+                if love.keyboard.isDown('a') or love.keyboard.isDown('b') then
+                    p.accelerate = true
+                end
+                if love.keyboard.isDown('d') or love.keyboard.isDown('r') then
+                    p.decelerate = true
+                end
+                if love.keyboard.isDown('h') or love.keyboard.isDown('t') then
+                    p.hoist = true
+                end
+                if love.keyboard.isDown('f') then
+                    p.flip = true
+                end
             end
         end
+
+        -- always ensure last point matches cursor
+    end
+
+    if GameState.draggingPointIndex then
+        GameState.track.points[GameState.draggingPointIndex].x = x
+        GameState.track.points[GameState.draggingPointIndex].y = y
     end
 end
 
@@ -539,15 +612,28 @@ function love.mousereleased(x, y, button)
     if button == 1 and GameState.track.is_drawing then
         GameState.track.is_drawing = false
         print('Track creation completed with', #GameState.track.points, 'points.')
+        GameState.track:finalizeDrawing()
         GameState.track:calculateLengths()
         GameState.track:calculateSupportBeams()
         GameState.train:initialize()
+    end
+    if GameState.draggingPointIndex then
+        GameState.track:calculateLengths()
+        GameState.track:calculateSupportBeams()
+        GameState.draggingPointIndex = false
     end
 end
 
 function love.keypressed(key)
     if key == 'escape' then
         love.event.quit()
+    elseif key == 'n' then
+        GameState.new = true
+        GameState.track.points = {}
+        GameState.track.support_beams = {}
+        GameState.train.carts = {}
+    elseif key == 'space' then
+        GameState.pause = not GameState.pause
     elseif key == 'f' then
         -- Toggle flip at the closest point
         local x, y = love.mouse.getPosition()
@@ -556,7 +642,7 @@ function love.keypressed(key)
             closest_point.flip = not closest_point.flip
             print(string.format("Flip point at index %d set to %s", index, tostring(closest_point.flip)))
         end
-    elseif key == 'a' then
+    elseif key == 'b' or key == 'a' then
         -- Toggle acceleration at the closest point
         local x, y = love.mouse.getPosition()
         local closest_point, index = GameState.track:findClosestPoint(x, y)
@@ -567,7 +653,7 @@ function love.keypressed(key)
             end
             print(string.format("Acceleration point at index %d set to %s", index, tostring(closest_point.accelerate)))
         end
-    elseif key == 'd' then
+    elseif key == 'r' or key == 'd' then
         -- Toggle deceleration at the closest point
         local x, y = love.mouse.getPosition()
         local closest_point, index = GameState.track:findClosestPoint(x, y)
@@ -578,7 +664,7 @@ function love.keypressed(key)
             end
             print(string.format("Deceleration point at index %d set to %s", index, tostring(closest_point.decelerate)))
         end
-    elseif key == 'h' then
+    elseif key == 't' or key == 'h' then
         -- Toggle hoist at the closest point
         local x, y = love.mouse.getPosition()
         local closest_point, index = GameState.track:findClosestPoint(x, y)
@@ -586,34 +672,60 @@ function love.keypressed(key)
             closest_point.hoist = not closest_point.hoist
             print(string.format("Hoist point at index %d set to %s", index, tostring(closest_point.hoist)))
         end
-    elseif key == 'up' then
-        -- Increase mass
-        GameState.train.mass = GameState.train.mass + 0.5
-        print("Mass increased to", GameState.train.mass)
-    elseif key == 'down' then
-        -- Decrease mass, ensuring it doesn't go below a minimum value
-        GameState.train.mass = math.max(GameState.train.mass - 0.5, 0.1)
-        print("Mass decreased to", GameState.train.mass)
+        -- elseif key == 'up' then
+        --     -- Increase mass
+        --     GameState.train.mass = GameState.train.mass + 0.5
+        --     print("Mass increased to", GameState.train.mass)
+        -- elseif key == 'down' then
+        --     -- Decrease mass, ensuring it doesn't go below a minimum value
+        --     GameState.train.mass = math.max(GameState.train.mass - 0.5, 0.1)
+        --     print("Mass decreased to", GameState.train.mass)
     end
 end
 
 -- Initialize GameState in love.load
 function love.load()
-    love.window.setMode(CONSTANTS.WINDOW.WIDTH, CONSTANTS.WINDOW.HEIGHT)
+    love.window.setMode(CONSTANTS.WINDOW.WIDTH, CONSTANTS.WINDOW.HEIGHT, { fullscreen = true })
     GameState.ground_level = CONSTANTS.WINDOW.HEIGHT - 50
     GameState.track = Track.new(GameState.ground_level)
     GameState.train = Train.new(GameState.track, CONSTANTS.TRAIN.DEFAULT_CARTS)
+
+    font = love.graphics.newFont('Seattle Avenue.ttf', 32)
+    love.graphics.setFont(font)
 end
 
 -- Update GameState in love.update
 function love.update(dt)
-    if GameState.train and GameState.track then
+    if GameState.train and GameState.track and not GameState.pause then
         GameState.train:update(dt)
     end
 end
 
+-- function LabelButton(x, y, str)
+--     local font = love.graphics.getFont()
+--     local w = font:getWidth(str)
+--     local h = font:getHeight()
+--     local margin = 5
+
+--     love.graphics.setColor(1, 0, 0, 0.3)
+--     love.graphics.rectangle('fill', x - margin / 2, y - margin / 2, w + margin, h + margin, margin, margin)
+
+--     love.graphics.setColor(1, 1, 1, 0.3)
+--     love.graphics.rectangle('line', x - margin / 2, y - margin / 2, w + margin, h + margin, margin, margin)
+--     love.graphics.setColor(1, 1, 1, 1)
+--     love.graphics.print(str, x, y)
+
+--     if not mouseState.pressed and love.mouse.isDown(1) then
+--         local mx, my = love.mouse.getPosition()
+--         return inRect(mx, my, x - margin / 2, y - margin / 2, w + margin, h + margin)
+--     end
+--     return false
+-- end
+
 -- Draw GameState in love.draw
 function love.draw()
+    love.graphics.print("'N'ieuw  'B'oost 'R'em 'T'akel 'F'lip ", 20, 10)
+
     if GameState.track then
         GameState.track:draw()
     end
@@ -622,11 +734,18 @@ function love.draw()
         GameState.train:draw()
     end
 
+    -- if LabelButton(20, 150, 'Nieuw') then
+    --     print('clicked!')
+    -- end
+
+
     -- Draw ground
     love.graphics.setColor(0, 1, 0) -- Green
     love.graphics.line(0, GameState.ground_level, CONSTANTS.WINDOW.WIDTH, GameState.ground_level)
     love.graphics.setColor(1, 1, 1) -- Reset color
 
+
+    mouseState.pressed = love.mouse.isDown(1)
     -- local mx, my = love.mouse:getPosition()
     -- love.graphics.print(mx .. ' , ' .. my, mx + 20, my)
 end
