@@ -18,6 +18,30 @@ function rotateBodyTowards(body, dt, targetAngle, data)
     body:setAngularVelocity(desiredAngularVel)
 end
 
+-- Minimal PD version: still sets angular velocity directly
+function rotateBodyTowards(body, dt, targetAngle, data)
+    local currentAngle = body:getAngle()
+    local diff = targetAngle - currentAngle
+    -- wrap to [-pi, pi]
+    diff = (diff + math.pi) % (2 * math.pi) - math.pi
+
+    local omega = body:getAngularVelocity()
+
+    -- Tunables (or read from data)
+    local kp = (data and data.kp) or 10.0  -- P gain (1/s)  --was 8
+    local kd = (data and data.kd) or .0015 -- D gain (unitless) -- was 1.5
+    local maxOmega = (data and data.maxOmega) or 15.0
+
+    -- PD controller in "omega space"
+    local omega_cmd = kp * diff - kd * omega
+
+    -- clamp and apply
+    if omega_cmd > maxOmega then omega_cmd = maxOmega end
+    if omega_cmd < -maxOmega then omega_cmd = -maxOmega end
+
+    body:setAngularVelocity(omega_cmd)
+end
+
 function lib.update(dt)
     --logger:inspect(registry.sfixtures)
     local bods = registry.bodies
