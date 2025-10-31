@@ -2132,7 +2132,7 @@ function lib.drawUpdateSelectedObjectUI()
                         else
                             -- No UI controls for custom or unsupported shapes
                             --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
-                            if state.selection.selectedObj.shapeType == 'custom' then
+                            if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' then
                                 if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
                                     state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
                                     if state.polyEdit.lockedVerts == false then
@@ -2634,6 +2634,12 @@ function lib.drawUI()
                                 createSliderWithId(myID, 'speed', 100, 100, 100, 0, 500,
                                     b.speed or 0,
                                     function(v) b.speed = v end)
+                            end
+
+                            if b then
+                                createSliderWithId(myID, 'angle', 100, 150, 100, -360, 360,
+                                    b.angle or 0,
+                                    function(v) b.angle = v end)
                             end
                         end
 

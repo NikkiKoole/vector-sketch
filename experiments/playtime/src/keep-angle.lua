@@ -28,7 +28,7 @@ function lib.update(dt)
             for kb, vb in pairs(behaviors) do
                 if vb.name == 'KEEP_ANGLE' then
                     logger:inspect(vb)
-                    rotateBodyTowards(ud.thing.body, dt, 0, vb)
+                    rotateBodyTowards(ud.thing.body, dt, vb.angle or 0, vb)
                 end
             end
         end
