@@ -142,7 +142,9 @@ function love.load(args)
     --sceneLoader.loadScriptAndScene('straight')
 
     local cwd = love.filesystem.getWorkingDirectory()
-    sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
+    --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/beach3.playtime.json')
+
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
@@ -150,7 +152,7 @@ function love.load(args)
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
 
 
-    humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
+    --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
 
     if state.world.playWithSoftbodies then
         local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
