@@ -2465,6 +2465,10 @@ function lib.drawUI()
             if ui.button(x, y, 260, 'soft-surface') then
                 objectManager.finalizePolygonAsSoftSurface()
             end
+            -- x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            -- if ui.button(x, y, 260, 'blob') then
+            --     objectManager.finalizePolygonAsBlob()
+            -- end
         end)
     end
 
@@ -2731,8 +2735,11 @@ function lib.drawUI()
                         end
                         table.insert(myUD.thing.behaviors, { name = option })
                         state.panelVisibility.addBehavior.body:setUserData(myUD)
+                        local body = state.panelVisibility.addBehavior.body
                         state.panelVisibility.addBehavior = false
                         --table.insert(myBehaviors, {name = option})
+                        --
+                        state.panelVisibility.customBehavior = { name = option, body = body }
                     end
                 end
             end

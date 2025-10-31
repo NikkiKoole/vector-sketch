@@ -30,6 +30,10 @@ function lib.finalizePolygonAsSoftSurface()
     state.interaction.lastPolyPt = nil
 end
 
+-- function lib.finalizePolygonAsBlob()
+
+-- end
+
 function lib.finalizePolygon()
     if #state.interaction.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)

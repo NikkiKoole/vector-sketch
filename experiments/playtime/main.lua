@@ -31,7 +31,7 @@
 
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
-PROF_CAPTURE = true
+PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
 jit.off()
@@ -170,6 +170,11 @@ function love.load(args)
         --b:setFixtureRestitution(2)
         -- b:setFixtureFriction(10)
     end
+
+    if state.backdrop and state.backdrop.url then
+        state.backdrop.image = love.graphics.newImage(state.backdrop.url)
+    end
+
     --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
@@ -314,6 +319,8 @@ function love.draw()
         love.graphics.clear(creamy)
     end
 
+
+
     if state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
@@ -323,6 +330,13 @@ function love.draw()
     --effect(function()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
+
+
+    if state.backdrop and state.backdrop.show then
+        love.graphics.draw(state.backdrop.image, 0, 0)
+    end
+
+
     prof.push('drawworld')
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
     prof.pop('drawworld')

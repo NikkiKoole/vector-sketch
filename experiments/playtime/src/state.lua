@@ -89,8 +89,13 @@ state.world = {
     mouseDamping = 0.5,
     speedMultiplier = 1.0,
     softbodies = {},
-    playWithSoftbodies = true,
+    playWithSoftbodies = false,
     showTextures = true,
+}
+
+state.backdrop = {
+    show = true,
+    url = 'backdrops/5-1536x1075.jpg'
 }
 
 state.physicsWorld = nil
