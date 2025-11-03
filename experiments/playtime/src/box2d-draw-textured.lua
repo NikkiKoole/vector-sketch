@@ -1300,7 +1300,7 @@ function lib.drawTexturedWorld(world)
                     local twm = drawables[i].extra.tileWidthM
                     local thm = drawables[i].extra.tileHeightM
                     local tr = drawables[i].extra.tileRotation
-
+                    print(twm, thm, tr)
                     local bb = mathutils.getBoundingRect(vertices)
                     -- bb.width and bb.height
                     local uvParams = {

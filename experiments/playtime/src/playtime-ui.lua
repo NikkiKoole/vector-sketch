@@ -1532,6 +1532,7 @@ function lib.drawSelectedSFixture()
                     100,
                     oldTexFixUD.extra.tileWidthM, function(v)
                         oldTexFixUD.extra.tileWidthM = v
+                        oldTexFixUD.extra._mesh = nil
                     end)
                 nextRow()
                 nextRow()
@@ -1539,6 +1540,7 @@ function lib.drawSelectedSFixture()
                     100,
                     oldTexFixUD.extra.tileHeightM, function(v)
                         oldTexFixUD.extra.tileHeightM = v
+                        oldTexFixUD.extra._mesh = nil
                     end)
                 nextRow()
 
@@ -1546,6 +1548,7 @@ function lib.drawSelectedSFixture()
                     2 * math.pi,
                     oldTexFixUD.extra.tileRotation, function(v)
                         oldTexFixUD.extra.tileRotation = v
+                        oldTexFixUD.extra._mesh = nil
                     end)
 
                 nextRow()
