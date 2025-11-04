@@ -125,7 +125,6 @@ local function handlePointer(x, y, id, action)
 
 
 
-
         local onPressedParams = {
             pointerForceFunc = function(fixture)
                 return state.world.mouseForce
@@ -140,6 +139,17 @@ local function handlePointer(x, y, id, action)
             state.selection.selectedBodies = nil
         end
 
+        if (state.currentMode == 'pickAutoRopifyMode') then
+            if #hitted > 0 then
+                state.pickAutoRopifyModeHitted = hitted[1]:getBody():getUserData()
+            end
+            --print(inspect(state.pickAutoRopifyModeHitted))
+            local w, h = love.graphics.getDimensions()
+            if x < w - 300 and #hitted == 0 then
+                state.currentMode = nil
+                state.pickAutoRopifyModeHitted = nil
+            end
+        end
 
         if (state.currentMode == 'addNodeToConnectedTexture') then
             -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
@@ -196,10 +206,7 @@ local function handlePointer(x, y, id, action)
             end
         end
 
-
-
-
-        if #hitted > 0 then
+        if #hitted > 0 and (state.currentMode ~= 'pickAutoRopifyMode') then
             local ud = hitted[1]:getBody():getUserData()
             if ud and ud.thing then
                 state.selection.selectedObj = ud.thing

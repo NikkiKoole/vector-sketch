@@ -143,7 +143,7 @@ function love.load(args)
 
     local cwd = love.filesystem.getWorkingDirectory()
     --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
-    sceneLoader.loadScene(cwd .. '/scripts/beach3.playtime.json')
+    -- sceneLoader.loadScene(cwd .. '/scripts/ding.playtime.json')
 
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')

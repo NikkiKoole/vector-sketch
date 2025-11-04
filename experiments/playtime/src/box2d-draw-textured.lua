@@ -671,13 +671,14 @@ function meshGetVertex(mesh, j)
     return x, y, u, v
 end
 
+-- todo segments need to be parameterized
 function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     -- this assumes an strip that is oriented vertically
     local w, h = image:getDimensions()
     w = w * (optionalWidthMultiplier or 1)
 
     local vertices = {}
-    local segments = 6
+    local segments = 32
     local segMinus1 = segments - 1
     local hPart = h / (segMinus1)
     local hv = 1 / (segMinus1)
@@ -1300,7 +1301,7 @@ function lib.drawTexturedWorld(world)
                     local twm = drawables[i].extra.tileWidthM
                     local thm = drawables[i].extra.tileHeightM
                     local tr = drawables[i].extra.tileRotation
-                    print(twm, thm, tr)
+                    --print(twm, thm, tr)
                     local bb = mathutils.getBoundingRect(vertices)
                     -- bb.width and bb.height
                     local uvParams = {

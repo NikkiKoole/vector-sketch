@@ -467,6 +467,57 @@ function lib.destroyBody(body)
     body:destroy()
 end
 
+function lib.autoRopify(ud)
+    if not ud.thing or not ud.thing.body then
+        logger:error("autoRopify: Invalid 'thing' provided.")
+        return
+    else
+        local thing = ud.thing
+        for i = 1, 10 do
+            local originalBody = thing.body
+            if thing.height then
+                local settings = {
+                    x = originalBody:getX(),
+                    y = originalBody:getY() + thing.height,
+                    radius = thing.radius,
+                    width = thing.width,
+                    width2 = thing.width2,
+                    width3 = thing.width3,
+                    height = thing.height,
+                    height2 = thing.height2,
+                    height3 = thing.height3,
+                    height4 = thing.height4,
+                    optionalVertices = thing.vertices,
+
+                }
+
+                local newthing = createThing(thing.shapeType, settings)
+                --print('todo, attach joint between these 2 things')
+                if newthing then
+                    local data = {
+                        jointType = 'revolute',
+                        body1 = thing.body,
+                        body2 = newthing.body,
+                        offsetA = { x = 0, y = thing.height / 2 }
+                        --p2 = { 0, thing.height / 2 },
+                        --  p2 = { 0, 0 },
+                    }
+                    joints.createJoint(data)
+                    -- joint = jointHandlers['revolute'].create(data, settings.x, settings.y - thing.height / 2)
+                end
+                thing = newthing
+            else
+                print(inspect(thing))
+                logger:error("autoRopify: Invalid 'thing' provided. (it needs a height)")
+                return
+            end
+        end
+
+        --  print('who knows!')
+        --  print('todo: make 10 copies place them all neatly under each other and joint them up')
+    end
+end
+
 function lib.flipThing(thing, axis, recursive)
     -- Validate input
     if not thing or not thing.body then

@@ -537,18 +537,25 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
     end
 end
 
+local accordeonStatesAS = {
+    ['more'] = false
+}
+
+
 function lib.drawAddShapeUI()
-    local shapeTypes = { 'rectangle', 'circle', 'triangle', 'itriangle', 'capsule', 'torso', 'trapezium', 'pentagon',
+    local shapeTypesLess = { 'rectangle', 'circle', 'capsule' }
+    local shapeTypesMore = { 'rectangle', 'circle', 'capsule', 'triangle', 'itriangle', 'torso', 'trapezium', 'pentagon',
         'hexagon',
         'heptagon',
         'octagon' }
+    local shapeTypes = accordeonStatesAS['more'] and shapeTypesMore or shapeTypesLess
     local titleHeight = ui.font:getHeight() + BUTTON_SPACING
     local startX = 20
     local startY = 70
     local panelWidth = 200
     local buttonSpacing = BUTTON_SPACING
     local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 9) * (buttonHeight + buttonSpacing)) + buttonSpacing
+    local panelHeight = titleHeight + ((#shapeTypes + 10) * (buttonHeight + buttonSpacing)) + buttonSpacing
 
     ui.panel(startX, startY, panelWidth, panelHeight, '', function()
         local layout = ui.createLayout({
@@ -559,10 +566,28 @@ function lib.drawAddShapeUI()
         })
 
         local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
+
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
         end
 
+        local function drawAccordion(key, contentFunc)
+            -- Draw the accordion header
+
+            local clicked = ui.header_button(x, y, panelWidth - 40, (accordeonStatesAS[key] and " ÷  " or " •") ..
+                ' ' .. key, accordeonStatesAS[key])
+            if clicked then
+                accordeonStatesAS[key] = not accordeonStatesAS[key]
+            end
+            y = y + BUTTON_HEIGHT + BUTTON_SPACING
+
+
+            if accordeonStatesAS[key] then
+                contentFunc(clicked)
+            end
+        end
+        drawAccordion('more', function() end)
+        nextRow()
         for _, shape in ipairs(shapeTypes) do
             local width = panelWidth - 20
             local height = buttonHeight
@@ -579,7 +604,7 @@ function lib.drawAddShapeUI()
             end
             nextRow()
         end
-        love.graphics.line(x - 20, y + 20, x + panelWidth + 20, y + 20)
+        love.graphics.line(x, y + 20, x + 20 + panelWidth - 40, y + 20)
 
         local width = panelWidth - 20
         local height = buttonHeight
@@ -659,6 +684,12 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'connectedtexture', 'connected-texture')
         handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
         handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
+
+        if ui.button(x, y, width, 'auto-ropify') then
+            -- todo make this work
+            state.currentMode = 'pickAutoRopifyMode'
+        end
+        nextRow()
     end)
 end
 
@@ -2442,8 +2473,27 @@ function lib.drawUI()
 
 
 
-
-
+    if state.currentMode == 'pickAutoRopifyMode' then
+        local panelWidth = PANEL_WIDTH
+        local w, h = love.graphics.getDimensions()
+        ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ autoropify ∞', function()
+            local padding = BUTTON_SPACING
+            local layout = ui.createLayout({
+                type = 'columns',
+                spacing = BUTTON_SPACING,
+                startX = w - panelWidth,
+                startY = 100 + padding
+            })
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if state.pickAutoRopifyModeHitted then
+                if ui.button(x, y, 260, 'yes!') then
+                    objectManager.autoRopify(state.pickAutoRopifyModeHitted)
+                    state.pickAutoRopifyModeHitted = nil
+                    state.currentMode = nil
+                end
+            end
+        end)
+    end
 
 
     if state.currentMode == 'drawClickMode' then

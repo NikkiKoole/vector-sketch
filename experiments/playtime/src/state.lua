@@ -67,10 +67,11 @@ state.texFixtureEdit = {
 
 --state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
-state.currentMode = nil -- 'jointCreationMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'
+state.currentMode = nil -- 'jointCreationMode' 'pickAutoRopifyMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'
 state.jointParams = nil
 state.jointLengthParams = {}
 state.showPaletteFunc = nil
+state.pickAutoRopifyModeHitted = nil
 
 state.world = {
     darkMode = true,
