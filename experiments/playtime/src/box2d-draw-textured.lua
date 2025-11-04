@@ -178,6 +178,7 @@ function setPColor(item, val)
 end
 
 function lib.makeCached(item)
+    -- print(item.bgHex, item.fgHex, item.pHex)
     if not item.cached then item.cached = {} end
     setBgColor(item, item.bgHex)
     setFgColor(item, item.fgHex)
@@ -1131,8 +1132,8 @@ function lib.drawTexturedWorld(world)
             local sx = 1 --ww / imgw
             local sy = 1 --hh / imgh
             --local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-            --local r, g, b, a = lib.hexToColor(hex)
-            --love.graphics.setColor(r, g, b, a)
+            -- local r, g, b, a = lib.hexToColor(hex)
+            -- love.graphics.setColor(r, g, b, a)
             --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
             drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
@@ -1199,13 +1200,17 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'texfixture' then
             --if texfixture then
             local extra = drawables[i].extra
-
+            --print(extra.dirty)
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
                 -- local cached = main.cached
+                --print(inspect(main))
+
                 if not main.cached then
                     lib.makeCached(main)
-                    --print('Cached not found')
+                    print('Cached not found')
+                    local cached = main.cached
+                    print(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
                 end
                 local cached = main.cached
 

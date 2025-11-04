@@ -1066,17 +1066,20 @@ function lib.drawSelectedSFixture()
                     state.panelVisibility.showPalette = true
                     state.showPaletteFunc = function(color)
                         dirty()
-                        --  oldTexFixUD.extra.dirty = true
+                        logger:info('sadads', color)
                         colorpickers[postFix] = true
+
                         onColorChange(color)
                     end
                 end
             end
             local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '',
                 false, colorpickers[postFix])
+            --print(hex, currentHex)
             if hex and hex ~= currentHex then
                 --setDirty()
                 oldTexFixUD.extra.dirty = true
+                logger:info('jo')
                 onColorChange(hex)
             end
 
@@ -1349,7 +1352,9 @@ function lib.drawSelectedSFixture()
                     oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
 
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
-                        function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
+                        function(c)
+                            oldTexFixUD.extra.main.bgHex = c; oldTexFixUD.extra.main.cached = nil; logger:info('hello?')
+                        end, dirty)
                     handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)
                             oldTexFixUD.extra.main.bgURL = u
@@ -1489,6 +1494,45 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
                     state.currentMode = 'addNodeToConnectedTexture'
+                end
+
+                function inArray(value, array)
+                    for i = 1, #array do
+                        if array[i] == value then
+                            return true
+                        end
+                    end
+                    return false
+                end
+
+                if ui.button(x + ROW_WIDTH, y, ROW_WIDTH / 2, 'auto ') then
+                    print('todo auto node')
+                    local body = state.selection.selectedSFixture:getBody()
+                    local connectedBodies = {}
+                    ud.extra.nodes = {}
+                    while not inArray(body, connectedBodies) do
+                        --   print(#connectedBodies)
+                        local attachedJoints = body:getJoints()
+                        if #attachedJoints > 0 then
+                            table.insert(connectedBodies, body)
+
+                            --print('1 attached joint found, lets start there..')
+                            local joint = attachedJoints[1]
+                            ud.extra.nodes[#connectedBodies] = { id = joints.getJointId(joint), type = 'joint' }
+                            -- print(inspect(ud.extra.nodes))
+                            local bodyA, bodyB = joint:getBodies()
+                            if not inArray(bodyA, connectedBodies) then
+                                body = bodyA
+                                --print('settinga')
+                            end
+                            if not inArray(bodyB, connectedBodies) then
+                                body = bodyB
+                                --print('settingb')
+                            end
+                        end
+                    end
+
+                    --ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
                 end
 
                 nextRow()
@@ -1682,7 +1726,9 @@ function lib.drawSelectedSFixture()
 
                 if not e.OMP then
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
-                        function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
+                        function(c)
+                            oldTexFixUD.extra.main.bgHex = c; print('poep1')
+                        end, dirty)
                     handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)
                             oldTexFixUD.extra.main.bgURL = u

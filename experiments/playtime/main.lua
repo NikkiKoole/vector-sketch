@@ -177,7 +177,7 @@ function love.load(args)
         state.backdrop.image = love.graphics.newImage(state.backdrop.url)
     end
 
-    --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
