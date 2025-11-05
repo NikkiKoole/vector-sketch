@@ -21,14 +21,14 @@ end
 -- Minimal PD version: still sets angular velocity directly
 function rotateBodyTowards(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
-    local diff = targetAngle - currentAngle
+    local diff = math.rad(targetAngle) - currentAngle
     -- wrap to [-pi, pi]
     diff = (diff + math.pi) % (2 * math.pi) - math.pi
 
     local omega = body:getAngularVelocity()
 
     -- Tunables (or read from data)
-    local kp = (data and data.kp) or 10.0  -- P gain (1/s)  --was 8
+    local kp = (data and data.kp) or 20.0  -- P gain (1/s)  --was 8
     local kd = (data and data.kd) or .0015 -- D gain (unitless) -- was 1.5
     local maxOmega = (data and data.maxOmega) or 15.0
 
@@ -42,15 +42,26 @@ function rotateBodyTowards(body, dt, targetAngle, data)
     body:setAngularVelocity(omega_cmd)
 end
 
-function lib.update(dt)
+function lib.update(dt, hitted)
     --logger:inspect(registry.sfixtures)
     local bods = registry.bodies
     for k, v in pairs(bods) do
         local ud = v:getUserData()
         if ud.thing and ud.thing.behaviors then
             local behaviors = ud.thing.behaviors
+            local same = false
+            if hitted and #hitted > 0 then
+                for i = 1, #hitted do
+                    if (hitted[i].id == ud.thing.id) then
+                        same = true
+                    end
+                end
+            end
+            --print(same)
             for kb, vb in pairs(behaviors) do
-                if vb.name == 'KEEP_ANGLE' then
+                -- figure out if im touching this body
+
+                if vb.name == 'KEEP_ANGLE' and not same then
                     -- logger:inspect(vb)
                     rotateBodyTowards(ud.thing.body, dt, vb.angle or 0, vb)
                 end

@@ -278,7 +278,7 @@ function love.update(dt)
             --correctJoint(joints[i])
         end
         snap.update(scaled_dt)
-        keep_angle.update(scaled_dt)
+        keep_angle.update(scaled_dt, state.currentlyPressed)
     end
     prof.pop('physics-update')
 

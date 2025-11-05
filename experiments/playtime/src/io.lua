@@ -480,6 +480,10 @@ function lib.gatherSaveData(world, camera)
                         fixtureData.userData = utils.deepCopy(ud)
                     else
                         local ud = fixture:getUserData()
+                        if ud and ud.extra and ud.extra._mesh then
+                            ud.extra._mesh = nil
+                        end
+                        -- logger:inspect(ud)
                         if ud.extra and ud.extra.type == 'texfixture' or ud.subtype == 'texfixture' then
                             ud.extra.dirty = true
                             if ud.extra.ompImage then ud.extra.ompImage = nil end

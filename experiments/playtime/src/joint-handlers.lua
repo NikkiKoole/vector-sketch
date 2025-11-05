@@ -58,6 +58,12 @@ jointHandlers["revolute"] = {
 
     create = function(data, x1, y1, x2, y2)
         local joint = love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, data.collideConnected)
+        if data.lowerLimit or data.upperLimit then
+            joint:setLimits(data.lowerLimit, data.upperLimit)
+            joint:setLimitsEnabled(data.areLimitsEnabled)
+        end
+
+
 
         return joint
     end,
@@ -69,6 +75,7 @@ jointHandlers["revolute"] = {
             limitsEnabled = joint:areLimitsEnabled(),
             lowerLimit = joint:getLowerLimit(),
             upperLimit = joint:getUpperLimit(),
+            areLimitsEnabled = joint:areLimitsEnabled()
         }
     end
 }
