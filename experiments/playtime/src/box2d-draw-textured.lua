@@ -1019,11 +1019,15 @@ function lib.drawTexturedWorld(world)
                         local it = ud.extra.nodes[j]
                         if it.type == 'anchor' then
                             local f = registry.getSFixtureByID(it.id)
-                            local b = f:getBody()
-                            local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
-                                :getPoints()) })
-                            table.insert(points, centerX)
-                            table.insert(points, centerY)
+                            if f then
+                                local b = f:getBody()
+                                local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                                    :getPoints()) })
+                                table.insert(points, centerX)
+                                table.insert(points, centerY)
+                            else
+                                print('issue with finfing achor, id:', it.id)
+                            end
                         end
                         if it.type == 'joint' then
                             local j = registry.getJointByID(it.id)
@@ -1133,7 +1137,8 @@ function lib.drawTexturedWorld(world)
             local sy = 1 --hh / imgh
             --local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
             -- local r, g, b, a = lib.hexToColor(hex)
-            -- love.graphics.setColor(r, g, b, a)
+            --logger:info(r, g, b, a)
+            love.graphics.setColor(r, g, b, a)
             --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
             drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
         end
@@ -1216,6 +1221,7 @@ function lib.drawTexturedWorld(world)
 
                 if main and main.bgURL then
                     --logger:inspect(extra.main.cached)
+                    love.graphics.setColor(1, 0, 0)
                     drawImageLayerSquishRGBA(extra.main.bgURL, cached.bgR, cached.bgG, cached.bgB, cached.bgA, extra,
                         texfixture)
                     --  drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
@@ -1223,7 +1229,7 @@ function lib.drawTexturedWorld(world)
                 end
                 if extra.main and extra.main.fgURL then
                     --drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
-                    drawImageLayerSquishRGBA(extra.main.bgURL, cached.fgR, cached.fgG, cached.fgB, cached.fgA, extra,
+                    drawImageLayerSquishRGBA(extra.main.fgURL, cached.fgR, cached.fgG, cached.fgB, cached.fgA, extra,
                         texfixture)
                     --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                 end

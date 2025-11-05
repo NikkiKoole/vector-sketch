@@ -918,6 +918,9 @@ function lib.drawWorldSettingsUI()
             end)
 
         nextRow()
+        if ui.button(x, y, ROW_WIDTH, 'debugids') then
+            state.world.showDebugIds = not state.world.showDebugIds
+        end
         nextRow()
 
         local debugAlpha = createSliderWithId('', 'mouse F', x, y, ROW_WIDTH, 0, 1000000, state.world.mouseForce,
@@ -1152,20 +1155,26 @@ function lib.drawSelectedSFixture()
             myID = myID .. ':' .. layer
             local dirty = function() oldTexFixUD.extra.dirty = true end
             handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra[layer].bgHex,
-                function(color) oldTexFixUD.extra[layer].bgHex = color end, dirty)
+                function(color)
+                    oldTexFixUD.extra[layer].bgHex = color; oldTexFixUD.extra[layer].cached = nil
+                end, dirty)
             handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra[layer].bgURL,
                 function(u)
                     oldTexFixUD.extra[layer].bgURL = u
                 end)
             nextRow()
             handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra[layer].fgHex,
-                function(c) oldTexFixUD.extra[layer].fgHex = c end, dirty)
+                function(c)
+                    oldTexFixUD.extra[layer].fgHex = c; oldTexFixUD.extra[layer].cached = nil
+                end, dirty)
             handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra[layer].fgURL,
                 function(u) oldTexFixUD.extra[layer].fgURL = u end)
             nextRow()
             ---
             handlePaletteAndHex(myID, 'patternHex', x, y, 100, oldTexFixUD.extra[layer].pHex,
-                function(color) oldTexFixUD.extra[layer].pHex = color end, dirty)
+                function(color)
+                    oldTexFixUD.extra[layer].pHex = color; oldTexFixUD.extra[layer].cached = nil
+                end, dirty)
             handleURLInput(myID, 'patternURL', x + 130, y, 150, oldTexFixUD.extra[layer].pURL,
                 function(u) oldTexFixUD.extra[layer].pURL = u end)
             nextRow()
@@ -1361,7 +1370,9 @@ function lib.drawSelectedSFixture()
                         end)
                     nextRow()
                     handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
-                        function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
+                        function(c)
+                            oldTexFixUD.extra.main.fgHex = c; oldTexFixUD.extra.main.cached = nil;
+                        end, dirty)
                     handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
                         function(u)
                             oldTexFixUD.extra.main.fgURL = u
@@ -2739,6 +2750,11 @@ function lib.drawUI()
                                 createSliderWithId(myID, 'angle', 100, 150, 100, -360, 360,
                                     b.angle or 0,
                                     function(v) b.angle = v end)
+                            end
+                            if b then
+                                if ui.button(100, 200, 150, 'remove') then
+                                    myUD.thing.behaviors = {}
+                                end
                             end
                         end
 

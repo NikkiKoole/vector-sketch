@@ -215,9 +215,14 @@ local function handlePointer(x, y, id, action)
                 state.selection.selectedObj = nil
             end
             if (state.currentMode == 'jointCreationMode') and state.selection.selectedObj then
-                if #hitted == 2 and (state.jointParams.body1 == nil) and (state.jointParams.body2 == nil) then
+                local hitted2Bodies = #hitted == 2 and hitted[1]:getUserData() == nil and hitted[2]:getUserData() == nil
+                if hitted2Bodies and (state.jointParams.body1 == nil) and (state.jointParams.body2 == nil) then
                     -- if you click exactly where two bodies overlap,
                     -- picking the one whose center is closest to your click as body1.
+                    --print(inspect(hitted[1]:getUserData()))
+                    --print(inspect(hitted[2]:getUserData()))
+
+
 
                     local b1 = hitted[1]:getBody():getUserData().thing.body
                     local b2 = hitted[2]:getBody():getUserData().thing.body

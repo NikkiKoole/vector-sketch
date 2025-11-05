@@ -36,8 +36,8 @@ function lib.uuid32_base62()
 end
 
 function lib.uuid()
-    return lib.uuid32_base62()
-    --return lib.uuid128()
+    --return lib.uuid32_base62() -- does this clash?>?>??
+    return lib.uuid64_base62()
 end
 
 function lib.generateID()

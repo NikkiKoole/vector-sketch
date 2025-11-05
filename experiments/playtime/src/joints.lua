@@ -100,7 +100,12 @@ function lib.createJoint(data)
     local handler = jointHandlers[jointType]
 
     if handler and handler.create then
-        joint = handler.create(data, x1, y1, x2, y2)
+        if bodyA == bodyB then
+            print('apjspaiosjdposdjf')
+            return
+        else
+            joint = handler.create(data, x1, y1, x2, y2)
+        end
     else
         logger:error("Joint type '" .. jointType .. "' is not implemented yet.")
         return

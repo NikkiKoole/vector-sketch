@@ -85,13 +85,13 @@ end
 
 waitForEvent()
 
-local FIXED_TIMESTEP = false
+local FIXED_TIMESTEP = true
 local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
 function love.load(args)
     --
-
+    -- love.math.setRandomSeed(love.timer.getTime())
 
     local fontHeight = 25
     --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
@@ -143,7 +143,7 @@ function love.load(args)
 
     local cwd = love.filesystem.getWorkingDirectory()
     --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
-    -- sceneLoader.loadScene(cwd .. '/scripts/ding.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/knut.playtime.json')
 
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
@@ -177,7 +177,7 @@ function love.load(args)
         state.backdrop.image = love.graphics.newImage(state.backdrop.url)
     end
 
-    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
+    --humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
@@ -458,316 +458,317 @@ function love.keypressed(key)
             --     mathUtils.unloosenVanillalineNEW(points, tension, spacing)
             -- end, 1)
         end
+        if humanoidInstance then
+            if key == 'c' then
+                local mydna = (humanoidInstance.dna)
+                CharacterManager.createCharacterFromJustDNA(mydna, 200, 200, humanoidInstance.scale)
+            end
 
-        if key == 'c' then
-            local mydna = (humanoidInstance.dna)
-            CharacterManager.createCharacterFromJustDNA(mydna, 200, 200, humanoidInstance.scale)
-        end
+            if key == 'q' then
+                -- we will just recolor everything.
 
-        if key == 'q' then
-            -- we will just recolor everything.
+                -- logger:inspect(humanoidInstance.dna.creation)
+                local parts = humanoidInstance.dna.creation.torsoSegments
+                for i = 1, parts do
+                    local bgHex = '000000ff'
+                    local fgHex = randomHexColor()
+                    local pHex = randomHexColor()
+                    CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                        { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+                    CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                        { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch1')
+                    CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                        { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch2')
 
-            -- logger:inspect(humanoidInstance.dna.creation)
-            local parts = humanoidInstance.dna.creation.torsoSegments
-            for i = 1, parts do
+                    -- local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
+                    --     'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
+                    -- local urlIndex = math.ceil(math.random() * #urls)
+                    -- local url = urls[urlIndex]
+                    -- --print(url)
+                    -- local s = .5 + love.math.random() * 2
+                    -- local sign = math.random() < .5 and -1 or 1
+                    -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
+                    -- CharacterManager.updatePart('torso' .. i,
+                    --     { shape8URL = url .. '.png', sy = s * sign, sx = s },
+                    --     humanoidInstance)
+                    -- CharacterManager.updateShape8(humanoidInstance, 'torso1', url)
+                    -- print(url)
+                    -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
+                    -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
+                    -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
+                    --     url .. '.png')
+                end
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
+                -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
+                -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
+                -- CharacterManager.updatePart('torso4', { sy = love.math.random() * 2, sx = love.math.random() * 12 },
+                --     humanoidInstance)
+                --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
+                --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
+            end
+
+            if key == 'w' then
+                --logger:inspect(humanoidInstance.dna.creation)
+                --local oldCreation = humanoidInstance.dna.creation
+                --logger:inspect(humanoidInstance.dna.creation)
+
+                --  CharacterManager.rebuildFromCreation(humanoidInstance,
+                --      { neckSegments = math.ceil(1 + love.math.random() * 5) })
+                CharacterManager.rebuildFromCreation(humanoidInstance, {})
+
+                --            CharacterManager.refreshTextures(humanoidInstance)
+                --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
+                -- local parts = humanoidInstance.dna.creation.neckSegments
+                -- if (not humanoidInstance.dna.creation.isPotatoHead) then
+                --     for i = 1, parts do
+                --         CharacterManager.updatePart('neck' .. i,
+                --             { h = 100 },
+                --             humanoidInstance)
+                --     end
+                -- end
+                -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
+            end
+
+            if key == 'e' then
                 local bgHex = '000000ff'
                 local fgHex = randomHexColor()
                 local pHex = randomHexColor()
-                CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
+                CharacterManager.updateSkinOfPart(humanoidInstance, 'lear',
                     { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
-                CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
-                    { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch1')
-                CharacterManager.updateSkinOfPart(humanoidInstance, 'torso' .. i,
-                    { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch2')
+                CharacterManager.updateSkinOfPart(humanoidInstance, 'rear',
+                    { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
 
-                -- local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
-                --     'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
-                -- local urlIndex = math.ceil(math.random() * #urls)
-                -- local url = urls[urlIndex]
-                -- --print(url)
-                -- local s = .5 + love.math.random() * 2
-                -- local sign = math.random() < .5 and -1 or 1
-                -- logger:info({ shape8URL = url, sy = love.math.random() * 2, sx = love.math.random() * 12 })
-                -- CharacterManager.updatePart('torso' .. i,
-                --     { shape8URL = url .. '.png', sy = s * sign, sx = s },
-                --     humanoidInstance)
-                -- CharacterManager.updateShape8(humanoidInstance, 'torso1', url)
-                -- print(url)
+                local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r', 'earx5r', 'earx6r', 'earx7r', 'earx8r', 'earx9r',
+                    'earx10r', 'earx11r', 'earx12r', 'earx13r', 'earx14r', 'earx15r', 'earx16r' }
+                --local urls = { 'earx1r', 'earx2r' }
+                local urlIndex = math.ceil(math.random() * #urls)
+                local url = urls[urlIndex]
+                print(url)
+                local creation = humanoidInstance.dna.creation
+                local s = 1 + math.random() * 1
+                local sy = love.math.random()
+                CharacterManager.updatePart('lear',
+                    { shape8URL = url .. '.png', sy = s, sx = -s * sy },
+                    humanoidInstance)
+                CharacterManager.updatePart('rear',
+                    { shape8URL = url .. '.png', sy = s, sx = s * sy },
+                    humanoidInstance)
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
+            end
+
+            if key == 'r' then
+                --,
+                local urls = { 'hand3r', 'feet8r', 'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r',
+                    'feet7xr' }
+                --local urls = { 'feet7xr', 'hand3r' }
+                local urlIndex = math.ceil(math.random() * #urls)
+                local url = urls[urlIndex]
+                local creation = humanoidInstance.dna.creation
+                local s = 1 + math.random() * 1
+
+                CharacterManager.updatePart('lfoot',
+                    { shape8URL = url .. '.png', sy = s, sx = s },
+                    humanoidInstance)
+                CharacterManager.updatePart('rfoot',
+                    { shape8URL = url .. '.png', sy = s, sx = -s },
+                    humanoidInstance)
+
+                local s = 1 + math.random() * 1
+                local urlIndex = math.ceil(math.random() * #urls)
+                local url = urls[urlIndex]
+                CharacterManager.updatePart('lhand',
+                    { shape8URL = url .. '.png', sy = s, sx = s },
+                    humanoidInstance)
+                CharacterManager.updatePart('rhand',
+                    { shape8URL = url .. '.png', sy = s, sx = -s },
+                    humanoidInstance)
+
+                CharacterManager.rebuildFromCreation(humanoidInstance, {})
+                print(url)
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
+            end
+
+            if key == 't' then
+                local bgHex = randomHexColor()
+                local fgHex = randomHexColor()
+                local pHex = randomHexColor()
+
+
+                local urls = { 'borsthaar1', 'borsthaar2', 'borsthaar3', 'borsthaar4', 'borsthaar5', 'borsthaar6',
+                    'borsthaar7' }
+                local urlIndex = math.ceil(math.random() * #urls)
+                local url = urls[urlIndex]
+
+                local creation = humanoidInstance.dna.creation
+                local count = creation.torsoSegments
+                print(url)
+                for i = 1, count do
+                    CharacterManager.updateBodyhairOfPart(humanoidInstance, 'torso' .. i,
+                        { bgURL = url .. '.png', fgURL = url .. '-mask.png', bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+                end
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
+            end
+
+            if key == 'y' then
+                local bgColor = '000000ff'
+                local fgColor = randomHexColor()
+                local pColor = randomHexColor()
+                local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
+                    'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
+                local urlIndex = math.ceil(math.random() * #urls)
+                local url = urls[urlIndex]
+                local creation = humanoidInstance.dna.creation
+                --print(inspect(creation))
+                local count = creation.torsoSegments
+                local s = 1 + math.random() * 1
+
+
+
+                for i = 1, count do
+                    CharacterManager.updatePart('torso' .. i,
+                        { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+                        humanoidInstance)
+                    --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
+                end
+
+
+                local s = 1 + math.random() * 1
+                local urlIndex = math.ceil(math.random() * #urls)
+                local url = urls[urlIndex]
+                CharacterManager.updatePart('head',
+                    { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+                    humanoidInstance)
+
+                CharacterManager.rebuildFromCreation(humanoidInstance,
+                    { torsoSegments = count, isPotatoHead = not creation.isPotatoHead })
+
+
+
+                -- for i = 1, count do
+                --     local partName = 'torso' .. i
+                --     local group = partName .. 'Skin'
+                --     local hair = partName .. 'Hair'
+
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgURL', url .. '.png')
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgURL', url .. '-mask.png')
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'pHex', pColor)
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgHex', fgColor)
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgHex', bgColor)
+
+
+                --     CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url .. '.png')
+                -- end
+
+
+                -- -- print('x')
+                -- -- print("BEFORE", humanoidInstance.dna.parts['torso1'].shape8URL)
+                -- CharacterManager.updatePart('torso1', { shape8URL = url .. '.png' }, humanoidInstance)
+
+                -- CharacterManager.rebuildFromCreation(humanoidInstance, {})
+
+
+                -- --   CharacterManager.refreshTextures(humanoidInstance)
                 -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
                 -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
                 -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
                 --     url .. '.png')
-            end
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-            -- CharacterManager.updatePart('torso2', { sy = love.math.random() * 2 }, humanoidInstance)
-            -- CharacterManager.updatePart('torso3', { sy = love.math.random() * 2 }, humanoidInstance)
-            -- CharacterManager.updatePart('torso4', { sy = love.math.random() * 2, sx = love.math.random() * 12 },
-            --     humanoidInstance)
-            --  CharacterManager.updatePart('head', { sy = love.math.random() * 10 }, humanoidInstance)
-            --CharacterManager.updatePart('luleg', { h = 20 + love.math.random() * 400 }, humanoidInstance)
-        end
 
-        if key == 'w' then
-            --logger:inspect(humanoidInstance.dna.creation)
-            --local oldCreation = humanoidInstance.dna.creation
-            --logger:inspect(humanoidInstance.dna.creation)
-
-            --  CharacterManager.rebuildFromCreation(humanoidInstance,
-            --      { neckSegments = math.ceil(1 + love.math.random() * 5) })
-            CharacterManager.rebuildFromCreation(humanoidInstance, {})
-
-            --            CharacterManager.refreshTextures(humanoidInstance)
-            --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-            -- local parts = humanoidInstance.dna.creation.neckSegments
-            -- if (not humanoidInstance.dna.creation.isPotatoHead) then
-            --     for i = 1, parts do
-            --         CharacterManager.updatePart('neck' .. i,
-            --             { h = 100 },
-            --             humanoidInstance)
-            --     end
-            -- end
-            -- CharacterManager.addTextureFixturesFromInstance(humanoidInstance)
-        end
-
-        if key == 'e' then
-            local bgHex = '000000ff'
-            local fgHex = randomHexColor()
-            local pHex = randomHexColor()
-            CharacterManager.updateSkinOfPart(humanoidInstance, 'lear',
-                { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
-            CharacterManager.updateSkinOfPart(humanoidInstance, 'rear',
-                { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
-
-            local urls = { 'earx1r', 'earx2r', 'earx3r', 'earx4r', 'earx5r', 'earx6r', 'earx7r', 'earx8r', 'earx9r',
-                'earx10r', 'earx11r', 'earx12r', 'earx13r', 'earx14r', 'earx15r', 'earx16r' }
-            --local urls = { 'earx1r', 'earx2r' }
-            local urlIndex = math.ceil(math.random() * #urls)
-            local url = urls[urlIndex]
-            print(url)
-            local creation = humanoidInstance.dna.creation
-            local s = 1 + math.random() * 1
-            local sy = love.math.random()
-            CharacterManager.updatePart('lear',
-                { shape8URL = url .. '.png', sy = s, sx = -s * sy },
-                humanoidInstance)
-            CharacterManager.updatePart('rear',
-                { shape8URL = url .. '.png', sy = s, sx = s * sy },
-                humanoidInstance)
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-        end
-
-        if key == 'r' then
-            --,
-            local urls = { 'hand3r', 'feet8r', 'feet2r', 'feet6r', 'feet5xr', 'feet3xr', 'feet7r',
-                'feet7xr' }
-            --local urls = { 'feet7xr', 'hand3r' }
-            local urlIndex = math.ceil(math.random() * #urls)
-            local url = urls[urlIndex]
-            local creation = humanoidInstance.dna.creation
-            local s = 1 + math.random() * 1
-
-            CharacterManager.updatePart('lfoot',
-                { shape8URL = url .. '.png', sy = s, sx = s },
-                humanoidInstance)
-            CharacterManager.updatePart('rfoot',
-                { shape8URL = url .. '.png', sy = s, sx = -s },
-                humanoidInstance)
-
-            local s = 1 + math.random() * 1
-            local urlIndex = math.ceil(math.random() * #urls)
-            local url = urls[urlIndex]
-            CharacterManager.updatePart('lhand',
-                { shape8URL = url .. '.png', sy = s, sx = s },
-                humanoidInstance)
-            CharacterManager.updatePart('rhand',
-                { shape8URL = url .. '.png', sy = s, sx = -s },
-                humanoidInstance)
-
-            CharacterManager.rebuildFromCreation(humanoidInstance, {})
-            print(url)
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-        end
-
-        if key == 't' then
-            local bgHex = randomHexColor()
-            local fgHex = randomHexColor()
-            local pHex = randomHexColor()
-
-
-            local urls = { 'borsthaar1', 'borsthaar2', 'borsthaar3', 'borsthaar4', 'borsthaar5', 'borsthaar6',
-                'borsthaar7' }
-            local urlIndex = math.ceil(math.random() * #urls)
-            local url = urls[urlIndex]
-
-            local creation = humanoidInstance.dna.creation
-            local count = creation.torsoSegments
-            print(url)
-            for i = 1, count do
-                CharacterManager.updateBodyhairOfPart(humanoidInstance, 'torso' .. i,
-                    { bgURL = url .. '.png', fgURL = url .. '-mask.png', bgHex = bgHex, fgHex = fgHex, pHex = pHex })
-            end
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-        end
-
-        if key == 'y' then
-            local bgColor = '000000ff'
-            local fgColor = randomHexColor()
-            local pColor = randomHexColor()
-            local urls = { 'shapeA3', 'shapeA2', 'shapeA1', 'shapeA4', 'shapes1', 'shapes2', 'shapes3', 'shapes4',
-                'shapes5', 'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10', 'shapes11', 'shapes12', 'shapes13' }
-            local urlIndex = math.ceil(math.random() * #urls)
-            local url = urls[urlIndex]
-            local creation = humanoidInstance.dna.creation
-            --print(inspect(creation))
-            local count = creation.torsoSegments
-            local s = 1 + math.random() * 1
-
-
-
-            for i = 1, count do
-                CharacterManager.updatePart('torso' .. i,
-                    { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
-                    humanoidInstance)
-                --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url)
+                -- --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
             end
 
+            if key == 'u' then
+                local lowerleglength = 20 + love.math.random() * 1400
+                CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
+                CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
+                CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
+                CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
 
-            local s = 1 + math.random() * 1
-            local urlIndex = math.ceil(math.random() * #urls)
-            local url = urls[urlIndex]
-            CharacterManager.updatePart('head',
-                { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
-                humanoidInstance)
-
-            CharacterManager.rebuildFromCreation(humanoidInstance,
-                { torsoSegments = count, isPotatoHead = not creation.isPotatoHead })
-
-
-
-            -- for i = 1, count do
-            --     local partName = 'torso' .. i
-            --     local group = partName .. 'Skin'
-            --     local hair = partName .. 'Hair'
-
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgURL', url .. '.png')
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgURL', url .. '-mask.png')
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'pHex', pColor)
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgHex', fgColor)
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgHex', bgColor)
+                local lowerarmlength = 120 + love.math.random() * 1400
+                CharacterManager.updatePart('luarm', { h = lowerarmlength }, humanoidInstance)
+                CharacterManager.updatePart('ruarm', { h = lowerarmlength }, humanoidInstance)
+                CharacterManager.updatePart('llarm', { h = lowerarmlength }, humanoidInstance)
+                CharacterManager.updatePart('rlarm', { h = lowerarmlength }, humanoidInstance)
 
 
-            --     CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url .. '.png')
-            -- end
-
-
-            -- -- print('x')
-            -- -- print("BEFORE", humanoidInstance.dna.parts['torso1'].shape8URL)
-            -- CharacterManager.updatePart('torso1', { shape8URL = url .. '.png' }, humanoidInstance)
-
-            -- CharacterManager.rebuildFromCreation(humanoidInstance, {})
-
-
-            -- --   CharacterManager.refreshTextures(humanoidInstance)
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'bgURL', url .. '.png')
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'torso1Skin', 'fgURL', url .. '-mask.png')
-            -- CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, 'torso1Hair', 'followShape8',
-            --     url .. '.png')
-
-            -- --print("AFTER", humanoidInstance.dna.parts['torso1'].shape8URL)
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-        end
-
-        if key == 'u' then
-            local lowerleglength = 20 + love.math.random() * 1400
-            CharacterManager.updatePart('luleg', { h = lowerleglength }, humanoidInstance)
-            CharacterManager.updatePart('ruleg', { h = lowerleglength }, humanoidInstance)
-            CharacterManager.updatePart('llleg', { h = lowerleglength }, humanoidInstance)
-            CharacterManager.updatePart('rlleg', { h = lowerleglength }, humanoidInstance)
-
-            local lowerarmlength = 120 + love.math.random() * 1400
-            CharacterManager.updatePart('luarm', { h = lowerarmlength }, humanoidInstance)
-            CharacterManager.updatePart('ruarm', { h = lowerarmlength }, humanoidInstance)
-            CharacterManager.updatePart('llarm', { h = lowerarmlength }, humanoidInstance)
-            CharacterManager.updatePart('rlarm', { h = lowerarmlength }, humanoidInstance)
-
-
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
-        end
-        if key == 'u' then
-            --print('nose change!')
-            local count = math.floor(math.random() * 5)
-            CharacterManager.rebuildFromCreation(humanoidInstance,
-                { noseSegments = count })
-        end
-        if key == 'i' then
-            local bgColor = '000000ff'
-            local fgColor = randomHexColor()
-            local pColor = randomHexColor()
-
-            local oldCreation = humanoidInstance.dna.creation
-            local segments = 1 --+ math.ceil(love.math.random() * 5)
-
-            local url = humanoidInstance.dna.parts['torso1'].shape8URL
-            local sx = humanoidInstance.dna.parts['torso1'].dims.sx
-            local sy = humanoidInstance.dna.parts['torso1'].dims.sy
-
-
-            -- for i = 1, segments do
-            --     CharacterManager.updatePart('torso' .. i,
-            --         { shape8URL = url .. '.png' },
-            --         humanoidInstance)
-            -- end
-
-            --  print(url)
-            -- logger:info(oldCreation.torsoSegments, segments)
-            --  logger:info('torso segments:', segments)
-            CharacterManager.rebuildFromCreation(humanoidInstance,
-                { torsoSegments = segments })
-
-            for i = 1, segments do
-                CharacterManager.updatePart('torso' .. i,
-                    { shape8URL = url },
-                    humanoidInstance)
-                --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
             end
+            if key == 'u' then
+                --print('nose change!')
+                local count = math.floor(math.random() * 5)
+                CharacterManager.rebuildFromCreation(humanoidInstance,
+                    { noseSegments = count })
+            end
+            if key == 'i' then
+                local bgColor = '000000ff'
+                local fgColor = randomHexColor()
+                local pColor = randomHexColor()
 
-            -- if noseSegments > 0 then
-            -- Rebuild nose1 which will cascade to its children via updateSinglePart recursion
-            -- CharacterManager.updatePart('nose1', {}, humanoidInstance)
-            --end
-            --logger:info('torso segments:', segments)
-            -- for i = 1, segments do
-            --     CharacterManager.updatePart('torso' .. i,
-            --         { shape8URL = url, sy = sx, sx = sy },
-            --         humanoidInstance)
-            --     -- CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+                local oldCreation = humanoidInstance.dna.creation
+                local segments = 1 --+ math.ceil(love.math.random() * 5)
 
-            --     local partName = 'torso' .. i
-            --     local group = partName .. 'Skin'
-            --     local hair = partName .. 'Hair'
-
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgURL', url)
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgURL', url:gsub('.png', '-mask.png'))
-            --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'pHex', pColor)
-
-            --     CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url)
-            -- end
+                local url = humanoidInstance.dna.parts['torso1'].shape8URL
+                local sx = humanoidInstance.dna.parts['torso1'].dims.sx
+                local sy = humanoidInstance.dna.parts['torso1'].dims.sy
 
 
+                -- for i = 1, segments do
+                --     CharacterManager.updatePart('torso' .. i,
+                --         { shape8URL = url .. '.png' },
+                --         humanoidInstance)
+                -- end
 
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'bgHex', bgColor)
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'fgHex', fgColor)
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'pHex', pColor)
+                --  print(url)
+                -- logger:info(oldCreation.torsoSegments, segments)
+                --  logger:info('torso segments:', segments)
+                CharacterManager.rebuildFromCreation(humanoidInstance,
+                    { torsoSegments = segments })
 
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'fgHex', fgColor)
-            -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'pHex', pColor)
+                for i = 1, segments do
+                    CharacterManager.updatePart('torso' .. i,
+                        { shape8URL = url },
+                        humanoidInstance)
+                    --CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+                end
+
+                -- if noseSegments > 0 then
+                -- Rebuild nose1 which will cascade to its children via updateSinglePart recursion
+                -- CharacterManager.updatePart('nose1', {}, humanoidInstance)
+                --end
+                --logger:info('torso segments:', segments)
+                -- for i = 1, segments do
+                --     CharacterManager.updatePart('torso' .. i,
+                --         { shape8URL = url, sy = sx, sx = sy },
+                --         humanoidInstance)
+                --     -- CharacterManager.updateShape8(humanoidInstance, 'torso' .. i, url:gsub('.png', ''))
+
+                --     local partName = 'torso' .. i
+                --     local group = partName .. 'Skin'
+                --     local hair = partName .. 'Hair'
+
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'bgURL', url)
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'fgURL', url:gsub('.png', '-mask.png'))
+                --     CharacterManager.updateTextureGroupValue(humanoidInstance, group, 'pHex', pColor)
+
+                --     CharacterManager.updateTextureGroupValueInRoot(humanoidInstance, hair, 'followShape8', url)
+                -- end
 
 
-            -- logger:info(fgColor, pColor)
-            --  if url then CharacterManager.updateShape8(humanoidInstance, 'torso1', url) end
-            CharacterManager.addTexturesFromInstance2(humanoidInstance)
+
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'bgHex', bgColor)
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'fgHex', fgColor)
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'leftLegSkin', 'pHex', pColor)
+
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'bgHex', bgColor)
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'fgHex', fgColor)
+                -- CharacterManager.updateTextureGroupValue(humanoidInstance, 'rightLegSkin', 'pHex', pColor)
+
+
+                -- logger:info(fgColor, pColor)
+                --  if url then CharacterManager.updateShape8(humanoidInstance, 'torso1', url) end
+                CharacterManager.addTexturesFromInstance2(humanoidInstance)
+            end
         end
     end
 end

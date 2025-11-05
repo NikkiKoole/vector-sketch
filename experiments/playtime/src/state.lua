@@ -92,6 +92,7 @@ state.world = {
     softbodies = {},
     playWithSoftbodies = false,
     showTextures = true,
+    showDebugIds = false,
 }
 
 state.backdrop = {

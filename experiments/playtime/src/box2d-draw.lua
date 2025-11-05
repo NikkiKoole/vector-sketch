@@ -111,6 +111,13 @@ function lib.drawWorld(world, drawOutline)
                     love.graphics.setColor(color[1], color[2], color[3], alpha)
                     if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, segments) end
                 end
+                if state.world.showDebugIds then
+                    local ud = fixture:getUserData()
+                    if ud and ud.id then
+                        local x1, y1 = body:getPosition()
+                        love.graphics.print(ud.id, x1, y1)
+                    end
+                end
             end
         end
     end
@@ -196,6 +203,13 @@ function lib.drawWorld(world, drawOutline)
                     love.graphics.setColor(0, .5, 0, alpha) -- Green for axis
                     love.graphics.line(x1, y1, x1 + axisX * axisLength, y1 + axisY * axisLength)
                     love.graphics.setColor(1, 1, 1, alpha)
+                end
+            end
+            if state.world.showDebugIds then
+                local ud = joint:getUserData()
+
+                if ud and ud.id then
+                    love.graphics.print(ud.id, x1, y1)
                 end
             end
         end
