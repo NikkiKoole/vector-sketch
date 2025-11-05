@@ -28,6 +28,7 @@ function rotateBodyTowards(body, dt, targetAngle, data)
     local omega = body:getAngularVelocity()
 
     -- Tunables (or read from data)
+
     local kp = (data and data.kp) or 20.0  -- P gain (1/s)  --was 8
     local kd = (data and data.kd) or .0015 -- D gain (unitless) -- was 1.5
     local maxOmega = (data and data.maxOmega) or 15.0
@@ -57,12 +58,14 @@ function lib.update(dt, hitted)
                     end
                 end
             end
-            --print(same)
+
             for kb, vb in pairs(behaviors) do
                 -- figure out if im touching this body
 
                 if vb.name == 'KEEP_ANGLE' and not same then
-                    -- logger:inspect(vb)
+                    -- if same then vb.kp = 0.15 end
+
+                    -- logger:inspect(same, vb)
                     rotateBodyTowards(ud.thing.body, dt, vb.angle or 0, vb)
                 end
             end

@@ -38,6 +38,7 @@ end
 
 
 function lib.drawWorld(world, drawOutline)
+    local debugIds = {}
     if drawOutline == nil then drawOutline = true end
     if drawOutline == true then
         if state.world.drawOutline == false then
@@ -115,6 +116,10 @@ function lib.drawWorld(world, drawOutline)
                     local ud = fixture:getUserData()
                     if ud and ud.id then
                         local x1, y1 = body:getPosition()
+                        if debugIds[ud.id] == true then
+                            print('id already drawn in this loop', ud.id)
+                        end
+                        debugIds[ud.id] = true
                         love.graphics.print(ud.id, x1, y1)
                     end
                 end
@@ -210,6 +215,10 @@ function lib.drawWorld(world, drawOutline)
 
                 if ud and ud.id then
                     love.graphics.print(ud.id, x1, y1)
+                    if debugIds[ud.id] == true then
+                        print('id already drawn in this loop', ud.id)
+                    end
+                    debugIds[ud.id] = true
                 end
             end
         end

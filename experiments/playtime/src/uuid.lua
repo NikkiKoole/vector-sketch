@@ -30,6 +30,10 @@ function lib.uuid64_base62()
     return lib.base62_encode(num)
 end
 
+function lib.uuid128_base62()
+    return lib.uuid64_base62() .. lib.uuid64_base62()
+end
+
 function lib.uuid32_base62()
     local num = love.math.random(0, 0xffffffff) -- Generate a 32-bit random integer
     return lib.base62_encode(num)
@@ -37,7 +41,8 @@ end
 
 function lib.uuid()
     --return lib.uuid32_base62() -- does this clash?>?>??
-    return lib.uuid64_base62()
+    -- return lib.uuid64_base62()
+    return lib.uuid128_base62()
 end
 
 function lib.generateID()

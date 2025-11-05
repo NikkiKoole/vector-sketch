@@ -91,7 +91,7 @@ local TICKRATE = 1 / FPS
 
 function love.load(args)
     --
-    -- love.math.setRandomSeed(love.timer.getTime())
+    -- dlove.math.setRandomSeed(love.timer.getTime())
 
     local fontHeight = 25
     --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
@@ -278,7 +278,14 @@ function love.update(dt)
             --correctJoint(joints[i])
         end
         snap.update(scaled_dt)
-        keep_angle.update(scaled_dt, state.currentlyPressed)
+        -- todo use pointerjoints instead!!!
+        local interacted = box2dPointerJoints.getInteractedWithPointer()
+        local newHitted = utils.map(interacted, function(h)
+            local ud = (h:getUserData())
+            local thing = ud and ud.thing
+            return thing
+        end)
+        keep_angle.update(scaled_dt, newHitted)
     end
     prof.pop('physics-update')
 

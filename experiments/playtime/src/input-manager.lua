@@ -272,7 +272,7 @@ local function handlePointer(x, y, id, action)
                     local thing = ud and ud.thing
                     return thing
                 end)
-                state.currentlyPressed = newHitted
+                --state.currentlyPressed = newHitted
                 script.call('onPressed', newHitted)
             end
         else
@@ -286,23 +286,23 @@ local function handlePointer(x, y, id, action)
         end
     elseif action == "released" then
         -- Removes all items from `list` that have an id present in `removeList`
-        function removeMatchingIds(list, removeList)
-            -- Build a lookup table for fast id checking
-            local removeSet = {}
-            for _, item in ipairs(removeList) do
-                removeSet[item.id] = true
-            end
+        -- function removeMatchingIds(list, removeList)
+        --     -- Build a lookup table for fast id checking
+        --     local removeSet = {}
+        --     for _, item in ipairs(removeList) do
+        --         removeSet[item.id] = true
+        --     end
 
-            -- Create a new table with only the items we want to keep
-            local filtered = {}
-            for _, item in ipairs(list) do
-                if not removeSet[item.id] then
-                    table.insert(filtered, item)
-                end
-            end
+        --     -- Create a new table with only the items we want to keep
+        --     local filtered = {}
+        --     for _, item in ipairs(list) do
+        --         if not removeSet[item.id] then
+        --             table.insert(filtered, item)
+        --         end
+        --     end
 
-            return filtered
-        end
+        --     return filtered
+        -- end
 
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -310,7 +310,7 @@ local function handlePointer(x, y, id, action)
             -- todo this line below can be erroring, i ve had it happen when dragging a chacter nd pressing N
             local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
 
-            state.currentlyPressed = removeMatchingIds(state.currentlyPressed, newReleased)
+            --  state.currentlyPressed = removeMatchingIds(state.currentlyPressed, newReleased)
             script.call('onReleased', newReleased)
             if recorder.isRecording and not state.world.paused then
                 for _, obj in ipairs(releasedObjs) do
