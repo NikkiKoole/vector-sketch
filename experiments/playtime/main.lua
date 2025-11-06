@@ -143,7 +143,7 @@ function love.load(args)
 
     local cwd = love.filesystem.getWorkingDirectory()
     --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
-    sceneLoader.loadScene(cwd .. '/scripts/knut.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/knutjump.playtime.json')
 
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')

@@ -29,8 +29,8 @@ function rotateBodyTowards(body, dt, targetAngle, data)
 
     -- Tunables (or read from data)
 
-    local kp = (data and data.kp) or 20.0  -- P gain (1/s)  --was 8
-    local kd = (data and data.kd) or .0015 -- D gain (unitless) -- was 1.5
+    local kp = (data and data.kp) or 20.0    -- P gain (1/s)  --was 8
+    local kd = (data and data.kd) or .000015 -- D gain (unitless) -- was 1.5
     local maxOmega = (data and data.maxOmega) or 15.0
 
     -- PD controller in "omega space"

@@ -653,6 +653,11 @@ function lib.cloneSelection(selectedBodies, world)
 
             -- Generate a new unique ID for the cloned body
             local newID = uuid.generateID()
+
+            --local newID = uuid.generateID()
+
+            --oldUD.id = newID
+
             idMapping[originalThing.id] = newID
             -- Clone body properties
             local newBody = love.physics.newBody(world, originalBody:getX() + 50, originalBody:getY() + 50,
@@ -712,7 +717,14 @@ function lib.cloneSelection(selectedBodies, world)
                         local oldUD = utils.deepCopy(oldF:getUserData())
                         local oldid = oldUD.id
 
-                        oldUD.id = uuid.generateID()
+                        --oldUD.id = uuid.generateID()
+                        local newID = uuid.generateID()
+                        -- while registry.getSFixtureByID(newID) do
+                        --     --print('this was already one!')
+                        --     newID = uuid.generateID()
+                        -- end
+                        oldUD.id = newID
+
                         idMapping[oldid] = oldUD.id
                         if utils.sanitizeString(oldUD.label) == 'snap' or oldUD.subtype == 'snap' then
                             oldUD.extra.at = nil

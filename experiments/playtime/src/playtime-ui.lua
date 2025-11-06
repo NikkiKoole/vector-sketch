@@ -1547,7 +1547,9 @@ function lib.drawSelectedSFixture()
                 end
 
                 nextRow()
-
+                if ui.button(x + ROW_WIDTH + ROW_WIDTH / 2, y, 20, '?') then
+                    logger:inspect(ud.extra.nodes)
+                end
                 nextRow()
 
                 local newZOffset = createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
