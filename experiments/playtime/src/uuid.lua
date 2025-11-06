@@ -1,6 +1,15 @@
 --uuid.lua
+
+
+
+-- very important keep this on, ids will start clashing otherwise since we will be generating the SAME 'random' numbers
+math.randomseed(love.timer.getTime())
 local random = love.math.random
+
 local lib = {}
+require 'string'
+require 'src.registry'
+
 function lib.uuid128()
     local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
     return (string.gsub(template, '[xy]', function(c)
@@ -26,7 +35,7 @@ end
 -- Example: Encode a random 64-bit number
 function lib.uuid64_base62()
     -- Generate a random 64-bit integer
-    local num = love.math.random(0, 0xffffffff) * 0x100000000 + love.math.random(0, 0xffffffff)
+    local num = random(0, 0xffffffff) * 0x100000000 + random(0, 0xffffffff)
     return lib.base62_encode(num)
 end
 
@@ -35,18 +44,23 @@ function lib.uuid128_base62()
 end
 
 function lib.uuid32_base62()
-    local num = love.math.random(0, 0xffffffff) -- Generate a 32-bit random integer
+    local num = random(0, 0xffffffff) -- Generate a 32-bit random integer
     return lib.base62_encode(num)
 end
 
 function lib.uuid()
-    --return lib.uuid32_base62() -- does this clash?>?>??
-    -- return lib.uuid64_base62()
-    return lib.uuid128_base62()
+    return lib.uuid32_base62() -- does this clash?>?>?? anser: YES
+    --return lib.uuid64_base62()
+    --return lib.uuid128_base62()
+    --return string.guid()
 end
 
 function lib.generateID()
-    return lib.uuid()
+    local newID = lib.uuid()
+    while registry.taken(newID) do
+        newID = lib.uuid()
+    end
+    return newID
 end
 
 return lib

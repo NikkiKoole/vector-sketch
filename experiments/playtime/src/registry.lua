@@ -67,6 +67,10 @@ function registry.getSFixtureByID(id)
     return registry.sfixtures[id]
 end
 
+function registry.taken(id)
+    return registry.bodies[id] or registry.joints[id] or registry.sfixtures[id]
+end
+
 -- Reset the registry (useful when loading a new world)
 function registry.reset()
     registry.bodies = {}

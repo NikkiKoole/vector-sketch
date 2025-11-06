@@ -115,7 +115,10 @@ function lib.buildWorld(data, world, cam)
                 if fixtureData.userData then
                     fixture:setSensor(fixtureData.sensor)
                     local oldUD = utils.shallowCopy(fixtureData.userData)
-                    oldUD.id = oldUD.id and getNewId(oldUD.id) or uuid.generateID()
+                    if not oldUD.id then
+                        logger:info('missing')
+                    end
+                    oldUD.id = oldUD.id or uuid.generateID()
 
                     fixture:setUserData(oldUD)
 
@@ -653,6 +656,10 @@ function lib.cloneSelection(selectedBodies, world)
 
             -- Generate a new unique ID for the cloned body
             local newID = uuid.generateID()
+            -- while registry.getBodyByID(newID) do
+            --     logger:info('this body id was already taken, clashes')
+            --     newID = uuid.generateID()
+            -- end
 
             --local newID = uuid.generateID()
 
@@ -719,6 +726,12 @@ function lib.cloneSelection(selectedBodies, world)
 
                         --oldUD.id = uuid.generateID()
                         local newID = uuid.generateID()
+
+                        -- while registry.getSFixtureByID(newID) do
+                        --     logger:info('this fixture id was already taken, clashes')
+                        --     newID = uuid.generateID()
+                        -- end
+
                         -- while registry.getSFixtureByID(newID) do
                         --     --print('this was already one!')
                         --     newID = uuid.generateID()
@@ -812,11 +825,24 @@ function lib.cloneSelection(selectedBodies, world)
                                 body2 = clonedBodyB.body,
                                 jointType = jointType,
                                 collideConnected = originalJoint:getCollideConnected(),
-                                id = uuid.generateID(),
+                                --id = uuid.generateID(),
+
+
+
 
                                 offsetA = { x = ud.offsetA.x, y = ud.offsetA.y },
                                 offsetB = { x = ud.offsetB.x, y = ud.offsetB.y }
                             }
+
+
+                            local newID = uuid.generateID()
+                            -- while registry.getJointByID(newID) do
+                            --     logger:info('this is was already taken, clashes')
+                            --     newID = uuid.generateID()
+                            -- end
+                            newJointData.id = newID
+
+
                             idMapping[ud.id] = newJointData.id
                             -- Include all joint-specific properties
                             for key, value in pairs(jointData) do

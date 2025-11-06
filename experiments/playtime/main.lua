@@ -57,7 +57,7 @@ local box2dDrawTextured = require 'src.box2d-draw-textured'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
-
+local uuid = require 'src.uuid'
 
 snap = require 'src.snap'
 keep_angle = require 'src.keep-angle'
@@ -89,10 +89,17 @@ local FIXED_TIMESTEP = true
 local FPS = 60 -- in platime ui we also have a fps
 local TICKRATE = 1 / FPS
 
+
+
 function love.load(args)
     --
-    -- dlove.math.setRandomSeed(love.timer.getTime())
+    -- logger:info('random seed:', love.math.getRandomSeed())
 
+    --testGuid()
+
+
+    --love.math.setRandomSeed(love.timer.getTime())
+    -- logger:info('uuid:', uuid.generateID())
     local fontHeight = 25
     --local font = love.graphics.newFont('assets/cooper_bold_bt.ttf', fontHeight)
     --local font = love.graphics.newFont('assets/QuentinBlakeRegular.otf', fontHeight)
@@ -110,7 +117,7 @@ function love.load(args)
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
-    objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
+    --objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
 
     -- -- Adding custom polygon
     local customVertices = {
@@ -120,7 +127,7 @@ function love.load(args)
         -- Add more vertices as needed
     }
 
-    objectManager.addThing('custom', { vertices = customVertices })
+    --objectManager.addThing('custom', { vertices = customVertices })
     --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
 
 
@@ -143,7 +150,7 @@ function love.load(args)
 
     local cwd = love.filesystem.getWorkingDirectory()
     --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
-    sceneLoader.loadScene(cwd .. '/scripts/knutjump.playtime.json')
+    --   sceneLoader.loadScene(cwd .. '/scripts/knutjump.playtime.json')
 
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
