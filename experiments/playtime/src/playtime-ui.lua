@@ -1282,7 +1282,7 @@ function lib.drawSelectedSFixture()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
 
-                if ui.button(x + 210, y, ROW_WIDTH - 100, 'x') then
+                if ui.button(x + 220, y, ROW_WIDTH - 100, 'x') then
                     --  local body = state.selection.selectedSFixture:getBody()
                     logger:info('should look up the native dimensions of this texture')
                     logger:inspect(state.selection.selectedSFixture:getUserData())
@@ -1290,12 +1290,16 @@ function lib.drawSelectedSFixture()
                     if ud.extra and ud.extra.main and ud.extra.main.bgURL then
                         local path = ud.extra.main.bgURL
                         --print('finding: ', 'textures/' .. path)
-                        local img = love.graphics.newImage('textures/' .. path)
-                        if img then
-                            local w, h = img:getDimensions()
-                            --logger:info('texture dimensions:', w, h)
-                            --logger:info('still nedds to update the body too!')
-                            fixtures.updateSFixtureDimensionsFunc(w, h)
+                        local info = love.filesystem.getInfo('textures/' .. path)
+
+                        if (info and info.type ~= 'directory') then
+                            local img = love.graphics.newImage('textures/' .. path)
+                            if img then
+                                local w, h = img:getDimensions()
+                                logger:info('texture dimensions:', w, h)
+                                logger:info('still nedds to update the body too!')
+                                fixtures.updateSFixtureDimensionsFunc(w, h)
+                            end
                         end
                     end
                     -- local cx, cy, w, h = getCenterAndDimensions(body)
