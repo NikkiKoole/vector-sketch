@@ -96,7 +96,7 @@ state.world = {
 }
 
 state.backdrop = {
-    show = true,
+    show = false,
     url = 'backdrops/5-1536x1075.jpg'
 }
 

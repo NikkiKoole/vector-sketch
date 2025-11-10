@@ -38,6 +38,7 @@ local profileFrameCounter = 0
 -- todo move this somewhere sensible , i also need it in character manager
 local function getCenterAndDimensions(body)
     local ud = body:getUserData()
+    --logger:inspect(ud)
     local cx, cy, w, h
     if ud.thing.vertices then
         local verts = ud.thing.vertices
@@ -1263,7 +1264,7 @@ function lib.drawSelectedSFixture()
                     state.currentMode = 'positioningSFixture'
                 end
                 nextRow()
-                if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+                if ui.button(x + 100, y, ROW_WIDTH - 100, 'c') then
                     local body = state.selection.selectedSFixture:getBody()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                         body:getX(), body:getY())
@@ -1271,12 +1272,36 @@ function lib.drawSelectedSFixture()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
 
-                if ui.button(x + 210, y, ROW_WIDTH - 100, 'd') then
+                if ui.button(x + 160, y, ROW_WIDTH - 100, 'd') then
                     local body = state.selection.selectedSFixture:getBody()
+                    --   logger:info('should look up the native dimensions of this texture')
+                    --   logger:inspect(state.selection.selectedSFixture:getUserData())
                     local cx, cy, w, h = getCenterAndDimensions(body)
                     fixtures.updateSFixtureDimensionsFunc(w, h)
                     local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+                end
+
+                if ui.button(x + 210, y, ROW_WIDTH - 100, 'x') then
+                    --  local body = state.selection.selectedSFixture:getBody()
+                    logger:info('should look up the native dimensions of this texture')
+                    logger:inspect(state.selection.selectedSFixture:getUserData())
+                    local ud = state.selection.selectedSFixture:getUserData()
+                    if ud.extra and ud.extra.main and ud.extra.main.bgURL then
+                        local path = ud.extra.main.bgURL
+                        --print('finding: ', 'textures/' .. path)
+                        local img = love.graphics.newImage('textures/' .. path)
+                        if img then
+                            local w, h = img:getDimensions()
+                            --logger:info('texture dimensions:', w, h)
+                            --logger:info('still nedds to update the body too!')
+                            fixtures.updateSFixtureDimensionsFunc(w, h)
+                        end
+                    end
+                    -- local cx, cy, w, h = getCenterAndDimensions(body)
+                    -- fixtures.updateSFixtureDimensionsFunc(w, h)
+                    -- local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                    -- state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
                 nextRow()
 
