@@ -427,15 +427,38 @@ function love.wheelmoved(dx, dy)
     ui.mouseWheelDy = dy
 end
 
+local function getRelativePath(absPath, cwd)
+    -- Normalize both so they don't end with a slash
+    cwd = cwd:gsub("/+$", "")
+    absPath = absPath:gsub("/+$", "")
+
+    -- Ensure absPath starts with cwd
+    if absPath:sub(1, #cwd) == cwd then
+        local rel = absPath:sub(#cwd + 1)
+        return rel ~= "" and rel or "/"
+    end
+
+    return nil -- not inside working directory
+end
 function love.filedropped(file)
     local name = file:getFilename()
     if string.find(name, '.playtime.json') then
         script.call('onSceneUnload')
         sceneLoader.loadScene(name)
         script.call('onSceneLoaded')
+        return
     end
     if string.find(name, '.playtime.lua') then
         sceneLoader.loadAndRunScript(name)
+        return
+    end
+
+    local x, y = love.mouse:getPosition()
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local cwd = love.filesystem.getWorkingDirectory()
+    local relative = getRelativePath(name, cwd)
+    if relative then
+        table.insert(state.backdrops, { x = wx, y = wy, url = relative })
     end
 end
 

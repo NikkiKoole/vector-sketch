@@ -2538,7 +2538,7 @@ function lib.drawBGSettingsUI()
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         end
-
+        local toDelete -- or nil
         for i = 1, #state.backdrops do
             if ui.button(x, y, ROW_WIDTH, state.backdrops[i].url) then
                 if not state.backdrops[i].selected then
@@ -2548,7 +2548,14 @@ function lib.drawBGSettingsUI()
                 end
                 state.backdrops[i].selected = not state.backdrops[i].selected
             end
+            if ui.button(x + ROW_WIDTH + 10, y, 50, 'x') then
+                -- want to delete from the array.
+                toDelete = i
+            end
             nextRow()
+        end
+        if toDelete then
+            table.remove(state.backdrops, toDelete)
         end
     end
     )
