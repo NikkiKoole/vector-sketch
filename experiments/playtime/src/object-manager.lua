@@ -138,7 +138,7 @@ function lib.maybeUpdateCustomPolygonVertices()
 end
 
 function lib.maybeUpdateTexFixtureVertices()
-    --print('we need todo stuff here!')
+    -- print('we need todo stuff here!')
     local points = { state.selection.selectedSFixture:getShape():getPoints() }
 
 

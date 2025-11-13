@@ -180,9 +180,9 @@ function love.load(args)
         -- b:setFixtureFriction(10)
     end
 
-    if state.backdrop and state.backdrop.url then
-        state.backdrop.image = love.graphics.newImage(state.backdrop.url)
-    end
+    -- if state.backdrop and state.backdrop.url then
+    --     state.backdrop.image = love.graphics.newImage(state.backdrop.url)
+    -- end
 
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
@@ -348,10 +348,19 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
 
 
-    if state.backdrop and state.backdrop.show then
-        love.graphics.draw(state.backdrop.image, 0, 0)
-    end
+    -- if state.backdrop and state.backdrop.show then
+    --     love.graphics.draw(state.backdrop.image, 0, 0)
+    -- end
+    if state.backdrops then
+        for i = 1, #state.backdrops do
+            local b = state.backdrops[i]
+            if b.url and b.image == nil then
+                b.image = love.graphics.newImage(b.url)
+            end
 
+            love.graphics.draw(b.image, b.x or 0, b.y or 0)
+        end
+    end
 
     prof.push('drawworld')
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)

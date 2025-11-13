@@ -261,10 +261,13 @@ local function handlePointer(x, y, id, action)
             end
 
             if (state.world.paused) then
-                state.interaction.draggingObj = state.selection.selectedObj
-                if state.selection.selectedObj then
-                    local offx, offy = state.selection.selectedObj.body:getLocalPoint(cx, cy)
-                    state.interaction.offsetDragging = { -offx, -offy }
+                if state.polyEdit.lockedVerts then
+                    state.interaction.draggingObj = state.selection.selectedObj
+
+                    if state.selection.selectedObj then
+                        local offx, offy = state.selection.selectedObj.body:getLocalPoint(cx, cy)
+                        state.interaction.offsetDragging = { -offx, -offy }
+                    end
                 end
             else
                 local newHitted = utils.map(hitted, function(h)
@@ -401,6 +404,7 @@ local function handlePointer(x, y, id, action)
 end
 
 function lib.handleDraggingObj()
+    --print('getshere')
     local mx, my = love.mouse.getPosition()
     local wx, wy = cam:getWorldCoordinates(mx, my)
     local offx = state.interaction.offsetDragging[1]
