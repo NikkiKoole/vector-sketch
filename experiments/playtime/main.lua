@@ -357,7 +357,9 @@ function love.draw()
             if b.url and b.image == nil then
                 b.image = love.graphics.newImage(b.url)
             end
-
+            if b.selected then
+                love.graphics.rectangle("line", b.x or 0, b.y or 0, b.image:getWidth(), b.image:getHeight())
+            end
             love.graphics.draw(b.image, b.x or 0, b.y or 0)
         end
     end
@@ -798,6 +800,18 @@ end
 
 function love.mousemoved(x, y, dx, dy)
     InputManager.handleMouseMoved(x, y, dx, dy)
+    if state.panelVisibility.bgSettingsOpened then
+        if love.mouse.isDown(1) then
+            for i = 1, #state.backdrops do
+                local b = state.backdrops[i]
+                if b.selected then
+                    local wx, wy = cam:getWorldCoordinates(x, y)
+                    b.x = wx
+                    b.y = wy
+                end
+            end
+        end
+    end
 end
 
 function love.mousepressed(x, y, button, istouch)

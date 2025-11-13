@@ -2515,6 +2515,45 @@ function lib.drawUpdateSelectedObjectUI()
     end)
 end
 
+function lib.drawBGSettingsUI()
+    local startX = 540
+    local startY = 70
+    local panelWidth = PANEL_WIDTH
+    --local panelHeight = 255
+    local buttonHeight = ui.theme.button.height
+
+    local buttonSpacing = BUTTON_SPACING
+    local titleHeight = ui.font:getHeight() + BUTTON_SPACING
+    local panelHeight = titleHeight + titleHeight + (14 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
+
+    ui.panel(startX, startY, panelWidth, panelHeight, '• backdrops •', function()
+        local layout = ui.createLayout({
+            type = 'columns',
+            spacing = BUTTON_SPACING,
+            startX = startX + BUTTON_SPACING,
+            startY = startY + titleHeight + BUTTON_SPACING
+        })
+        local width = panelWidth - BUTTON_SPACING * 2
+        local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+        local nextRow = function()
+            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
+        end
+
+        for i = 1, #state.backdrops do
+            if ui.button(x, y, ROW_WIDTH, state.backdrops[i].url) then
+                if not state.backdrops[i].selected then
+                    for j = 1, #state.backdrops do
+                        state.backdrops[j].selected = false
+                    end
+                end
+                state.backdrops[i].selected = not state.backdrops[i].selected
+            end
+            nextRow()
+        end
+    end
+    )
+end
+
 function lib.drawUI()
     ui.startFrame()
     local w, h = love.graphics.getDimensions()
@@ -2551,14 +2590,16 @@ function lib.drawUI()
     if ui.button(440, 20, 120, 'settings') then
         state.panelVisibility.worldSettingsOpened = not state.panelVisibility.worldSettingsOpened
     end
-
-    if ui.button(570, 20, 70, 'bg') then
-        state.panelVisibility.bgSettingsOpened = not state.panelVisibility.bgSettingsOpened
-    end
-
     if state.panelVisibility.worldSettingsOpened then
         lib.drawWorldSettingsUI()
     end
+    if ui.button(570, 20, 70, 'bg') then
+        state.panelVisibility.bgSettingsOpened = not state.panelVisibility.bgSettingsOpened
+    end
+    if state.panelVisibility.bgSettingsOpened then
+        lib.drawBGSettingsUI()
+    end
+
 
     -- Play/Pause Button
     if ui.button(650, 20, 150, state.world.paused and 'play' or 'pause') then

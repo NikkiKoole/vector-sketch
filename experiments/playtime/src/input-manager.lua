@@ -356,6 +356,7 @@ local function handlePointer(x, y, id, action)
                 state.panelVisibility.customBehavior = false
                 state.panelVisibility.addJointOpened = false
                 state.panelVisibility.addShapeOpened = false
+                state.panelVisibility.bgSettingsOpened = false
                 state.panelVisibility.worldSettingsOpened = false
                 state.panelVisibility.recordingPanelOpened = false
                 state.panelVisibility.showPalette = false
