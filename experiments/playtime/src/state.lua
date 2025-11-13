@@ -35,6 +35,7 @@ state.panelVisibility = {
     addBehavior = false,
     customBehavior = false,
     customBehaviorDescription = false,
+    bgSettingsOpened = false
 }
 
 state.editorPreferences = { -- Less volatile state
@@ -95,10 +96,28 @@ state.world = {
     showDebugIds = false,
 }
 
-state.backdrop = {
-    show = false,
-    url = 'backdrops/5-1536x1075.jpg'
+-- state.backdrop = {
+--     show = true,
+--     --url = 'backdrops/5-1536x1075.jpg'
+--     url = 'textures/eye1.png'
+-- }
+
+state.backdrops = { {
+    x = 0,
+    y = 0,
+    -- show = true,
+    --url = 'backdrops/5-1536x1075.jpg'
+    url = 'textures/eye1.png'
+},
+    {
+        x = 300,
+        y = 0,
+        --   show = true,
+        --url = 'backdrops/5-1536x1075.jpg'
+        url = 'textures/eye2.png'
+    }
 }
+
 
 state.physicsWorld = nil
 

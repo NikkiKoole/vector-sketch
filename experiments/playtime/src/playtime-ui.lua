@@ -1284,8 +1284,8 @@ function lib.drawSelectedSFixture()
 
                 if ui.button(x + 220, y, ROW_WIDTH - 100, 'x') then
                     --  local body = state.selection.selectedSFixture:getBody()
-                    logger:info('should look up the native dimensions of this texture')
-                    logger:inspect(state.selection.selectedSFixture:getUserData())
+                    --   logger:info('should look up the native dimensions of this texture')
+                    --   logger:inspect(state.selection.selectedSFixture:getUserData())
                     local ud = state.selection.selectedSFixture:getUserData()
                     if ud.extra and ud.extra.main and ud.extra.main.bgURL then
                         local path = ud.extra.main.bgURL
@@ -1298,6 +1298,25 @@ function lib.drawSelectedSFixture()
                                 local w, h = img:getDimensions()
                                 logger:info('texture dimensions:', w, h)
                                 logger:info('still nedds to update the body too!')
+                                local bud = state.selection.selectedSFixture:getBody():getUserData()
+                                if bud and bud.thing then
+                                    if bud.thing.shapeType == 'rectangle' then
+                                        bud.thing.width = w
+                                        bud.thing.height = h
+
+                                        --objectManager.recreateThingFromBody(state.selection.selectedSFixture:getBody(),
+                                        --    bud.thing)
+                                        --bud.thing.vertices = nil
+                                        --bud.thing.dirty = true
+                                        -- state.selection.selectedObj = objectManager.recreateThingFromBody(
+                                        --     state.selection.selectedSFixture:getBody(),
+                                        --     bud.thing)
+                                        -- state.editorPreferences.lastUsedRadius = newRadius
+                                        -- body = state.selection.selectedObj.body
+                                    end
+                                    logger:inspect(bud.thing)
+                                end
+
                                 fixtures.updateSFixtureDimensionsFunc(w, h)
                             end
                         end
@@ -2529,8 +2548,12 @@ function lib.drawUI()
     end
 
     -- "World Settings" Button
-    if ui.button(440, 20, 200, 'settings') then
+    if ui.button(440, 20, 120, 'settings') then
         state.panelVisibility.worldSettingsOpened = not state.panelVisibility.worldSettingsOpened
+    end
+
+    if ui.button(570, 20, 70, 'bg') then
+        state.panelVisibility.bgSettingsOpened = not state.panelVisibility.bgSettingsOpened
     end
 
     if state.panelVisibility.worldSettingsOpened then
@@ -2605,6 +2628,11 @@ function lib.drawUI()
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'soft-surface') then
                 objectManager.finalizePolygonAsSoftSurface()
+            end
+            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            if ui.button(x, y, 260, 'uv-mappert') then
+                objectManager.finalizePolygon()
+                --objectManager.finalizePolygonAsSoftSurface()
             end
             -- x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             -- if ui.button(x, y, 260, 'blob') then
