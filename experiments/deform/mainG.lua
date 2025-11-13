@@ -1,0 +1,335 @@
+-- main.lua
+-- Box2D → Bones → Organic Skinned Mesh
+-- Three bodies: TORSO (static) + UPPER (shoulder) + LOWER (elbow) with revolute joints.
+-- The physics bodies drive 3 bones; an organic ribbon mesh (with varying width & jitter)
+-- is skinned across the torso-shoulder-elbow chain using 3-way LBS.
+-- LÖVE 11.x
+
+--########################## 2D Affine (3x3) ################################
+local M = {}
+local function mat(a11, a12, a13, a21, a22, a23, a31, a32, a33)
+    return { a11, a12, a13, a21, a22, a23, a31, a32, a33 }
+end
+function M.identity() return mat(1, 0, 0, 0, 1, 0, 0, 0, 1) end
+
+function M.mul(A, B)
+    local C = {}
+    C[1]    = A[1] * B[1] + A[2] * B[4] + A[3] * B[7]
+    C[2]    = A[1] * B[2] + A[2] * B[5] + A[3] * B[8]
+    C[3]    = A[1] * B[3] + A[2] * B[6] + A[3] * B[9]
+    C[4]    = A[4] * B[1] + A[5] * B[4] + A[6] * B[7]
+    C[5]    = A[4] * B[2] + A[5] * B[5] + A[6] * B[8]
+    C[6]    = A[4] * B[3] + A[5] * B[6] + A[6] * B[9]
+    C[7]    = A[7] * B[1] + A[8] * B[4] + A[9] * B[7]
+    C[8]    = A[7] * B[2] + A[8] * B[5] + A[9] * B[8]
+    C[9]    = A[7] * B[3] + A[8] * B[6] + A[9] * B[9]
+    return C
+end
+
+function M.transform(A, x, y)
+    local nx = A[1] * x + A[2] * y + A[3]
+    local ny = A[4] * x + A[5] * y + A[6]
+    return nx, ny
+end
+
+function M.translation(tx, ty) return mat(1, 0, tx, 0, 1, ty, 0, 0, 1) end
+
+function M.rotation(r)
+    local c, s = math.cos(r), math.sin(r)
+    return mat(c, -s, 0, s, c, 0, 0, 0, 1)
+end
+
+function M.scale(sx, sy) return mat(sx, 0, 0, 0, sy or sx, 0, 0, 0, 1) end
+
+function M.TRS(tx, ty, rot, sx, sy)
+    return M.mul(M.mul(M.translation(tx, ty), M.rotation(rot or 0)), M.scale(sx or 1, sy or sx or 1))
+end
+
+function M.inverse(A)
+    local a, b, c, d, e, f = A[1], A[2], A[3], A[4], A[5], A[6]
+    local det = a * e - b * d
+    if math.abs(det) < 1e-9 then return M.identity() end
+    local id = 1 / det
+    local na, nb, nd, ne = e * id, -b * id, -d * id, a * id
+    local nc = -(na * c + nb * f)
+    local nf = -(nd * c + ne * f)
+    return mat(na, nb, nc, nd, ne, nf, 0, 0, 1)
+end
+
+--############################## Bones ######################################
+local Bone = {}
+Bone.__index = Bone
+function Bone.new(args)
+    local b     = setmetatable({}, Bone)
+    b.name      = args.name or "bone"
+    b.length    = args.length or 100
+    b.body      = args.body
+    b.parent    = args.parent
+    b.worldMat  = M.identity()
+    b.bindWorld = nil
+    b.bindInv   = nil
+    return b
+end
+
+function Bone:updateFromPhysics()
+    local x, y    = self.body:getPosition()
+    local r       = self.body:getAngle()
+    self.worldMat = M.TRS(x, y, r, 1, 1)
+end
+
+--############################## Mesh #######################################
+local Mesh = {}
+Mesh.__index = Mesh
+function Mesh.new(points, influences)
+    local m = setmetatable({}, Mesh)
+    m.v_bind = points or {}
+    m.v_final = {}
+    m.influences = influences or {}
+    return m
+end
+
+function Mesh:skin()
+    for i, v in ipairs(self.v_bind) do
+        local sx, sy = 0, 0
+        for _, inf in ipairs(self.influences[i]) do
+            local bone, w = inf.bone, inf.w
+            local lx, ly = M.transform(bone.bindInv, v[1], v[2])
+            local wx, wy = M.transform(bone.worldMat, lx, ly)
+            sx, sy = sx + w * wx, sy + w * wy
+        end
+        self.v_final[i] = { sx, sy }
+    end
+end
+
+--############################## Utils ######################################
+local function clamp(x, a, b) return math.max(a, math.min(b, x)) end
+local function smoothstep(a, b, x)
+    local t = clamp((x - a) / (b - a), 0, 1)
+    return t * t * (3 - 2 * t)
+end
+local function hashf(i)
+    local x = math.sin(i * 127.1) * 43758.5453
+    return x - math.floor(x)
+end
+
+-- Build a short segment aligned to a bone's bind pose, with varying width & jitter
+local function buildSegmentPoints(bone, startOffset, segLen, baseWidth, segs, tStart)
+    local pts, tvals = {}, {}
+    for i = 0, segs do
+        local t = i / segs
+        local x = startOffset + t * segLen -- along bone local +x
+        local width = baseWidth * (0.7 + 0.6 * math.sin(math.pi * (tStart + t)))
+        local jitL = (hashf((i + 1) * 2.7) - 0.5) * 2.0
+        local jitR = (hashf((i + 1) * 4.1) - 0.5) * 2.0
+        local lx, ly = x, -(width * 0.5 + jitL)
+        local rx, ry = x, (width * 0.5 + jitR)
+        local Lx, Ly = M.transform(bone.bindWorld, lx, ly)
+        local Rx, Ry = M.transform(bone.bindWorld, rx, ry)
+        table.insert(pts, { Lx, Ly }); table.insert(pts, { Rx, Ry })
+        tvals[#pts - 1] = tStart + t * segLen -- we store absolute distance-ish; rescaled later
+        tvals[#pts]     = tStart + t * segLen
+    end
+    return pts, tvals
+end
+
+-- Construct an organic ribbon across torso→upper→lower segments (bind pose)
+local function buildOrganicArmRibbon(bTorso, bUpper, bLower, lens, width)
+    local Ltorso, Lupper, Llower = lens.torso, lens.upper, lens.lower
+    local segsT, segsU, segsL = 8, 14, 14
+
+    -- We align the torso segment to the UPPER bone's axis for a clean shoulder transition.
+    -- Use the upper bone to place the torso shoulder pad, but weight it to the torso bone.
+    local torsoProxy = bUpper
+
+    -- Start offsets along each bone's local X so that the three segments sit head-to-tail.
+    local startU = -bUpper.length * 0.5
+    local startT = startU - Ltorso
+    local startL = -bLower.length * 0.5
+
+    local ptsT, tT = buildSegmentPoints(torsoProxy, startT, Ltorso, width * 1.05, segsT, 0)
+    local ptsU, tU = buildSegmentPoints(bUpper, startU, Lupper, width * 1.00, segsU, Ltorso)
+    local ptsL, tL = buildSegmentPoints(bLower, startL, Llower, width * 0.95, segsL, Ltorso + Lupper)
+
+    -- Stitch
+    local pts, tvals = {}, {}
+    for i = 1, #ptsT do
+        pts[#pts + 1] = ptsT[i]; tvals[#tvals + 1] = tT[i]
+    end
+    for i = 1, #ptsU do
+        pts[#pts + 1] = ptsU[i]; tvals[#tvals + 1] = tU[i]
+    end
+    for i = 1, #ptsL do
+        pts[#pts + 1] = ptsL[i]; tvals[#tvals + 1] = tL[i]
+    end
+
+    -- Normalize tvals to 0..1 along total chain length
+    local Ltot = Ltorso + Lupper + Llower
+    for i = 1, #tvals do tvals[i] = tvals[i] / Ltot end
+
+    -- Compute 3‑way weights with soft windows around shoulder & elbow
+    local infl      = {}
+    local tShoulder = Ltorso / Ltot
+    local tElbow    = (Ltorso + Lupper) / Ltot
+    local k         = 0.10 -- softness
+    for i = 1, #pts do
+        local t = tvals[i]
+        local wT = 1 - smoothstep(tShoulder - k, tShoulder + k, t) -- fades out after shoulder
+        local wU = smoothstep(tShoulder - k, tShoulder + k, t) * (1 - smoothstep(tElbow - k, tElbow + k, t))
+        local wL = smoothstep(tElbow - k, tElbow + k, t)           -- fades in after elbow
+        local sum = wT + wU + wL; if sum < 1e-6 then
+            wT, wU, wL = 1, 0, 0; sum = 1
+        end
+        wT, wU, wL = wT / sum, wU / sum, wL / sum
+        infl[i] = { { bone = bTorso, w = wT }, { bone = bUpper, w = wU }, { bone = bLower, w = wL } }
+    end
+
+    return Mesh.new(pts, infl)
+end
+
+--############################## Scene ######################################
+local world
+local bodies = {}
+local joints = {}
+local bones  = {}
+local skin   = nil
+
+local DIM    = { torsoW = 80, torsoH = 110, upperW = 120, upperH = 18, lowerW = 110, lowerH = 16 }
+
+local function createSystem()
+    world = love.physics.newWorld(0, 980, true)
+
+    -- Ground (for context)
+    local ground = love.physics.newBody(world, 0, 520, "static")
+    love.physics.newFixture(ground, love.physics.newEdgeShape(-2000, 0, 2000, 0))
+
+    -- Torso: static body acting as an anchor
+    local torso = love.physics.newBody(world, 360, 280, "static")
+    love.physics.newFixture(torso, love.physics.newRectangleShape(DIM.torsoW, DIM.torsoH))
+
+    -- Shoulder (upper arm) dynamic
+    local shoulderAnchorX = 360 + DIM.torsoW * 0.5
+    local shoulderAnchorY = 280 - DIM.torsoH * 0.35
+    local upper = love.physics.newBody(world, shoulderAnchorX + DIM.upperW * 0.5, shoulderAnchorY, "dynamic")
+    upper:setLinearDamping(0.8); upper:setAngularDamping(1.1)
+    love.physics.newFixture(upper, love.physics.newRectangleShape(DIM.upperW, DIM.upperH), 1.0)
+
+    -- Elbow (lower arm)
+    local elbowAnchorX = shoulderAnchorX + DIM.upperW
+    local elbowAnchorY = shoulderAnchorY
+    local lower = love.physics.newBody(world, elbowAnchorX + DIM.lowerW * 0.5, elbowAnchorY, "dynamic")
+    lower:setLinearDamping(0.8); lower:setAngularDamping(1.1)
+    love.physics.newFixture(lower, love.physics.newRectangleShape(DIM.lowerW, DIM.lowerH), 1.0)
+
+    -- Joints
+    local shoulder = love.physics.newRevoluteJoint(torso, upper, shoulderAnchorX, shoulderAnchorY, false)
+    shoulder:setLimitsEnabled(true); shoulder:setLimits(-1.0, 1.0)
+    shoulder:setMotorEnabled(true); shoulder:setMaxMotorTorque(1600); shoulder:setMotorSpeed(0.6)
+
+    local elbow = love.physics.newRevoluteJoint(upper, lower, elbowAnchorX, elbowAnchorY, false)
+    elbow:setLimitsEnabled(true); elbow:setLimits(-1.4, 1.2)
+    elbow:setMotorEnabled(true); elbow:setMaxMotorTorque(1400); elbow:setMotorSpeed(1.2)
+
+    bodies       = { ground = ground, torso = torso, upper = upper, lower = lower }
+    joints       = { shoulder = shoulder, elbow = elbow }
+
+    -- Bones
+    local bTorso = Bone.new { name = "torso", length = DIM.torsoW, body = torso }
+    local bUpper = Bone.new { name = "upper", length = DIM.upperW, body = upper, parent = bTorso }
+    local bLower = Bone.new { name = "lower", length = DIM.lowerW, body = lower, parent = bUpper }
+    bones        = { bTorso, bUpper, bLower }
+
+    -- Bind pose (after construction)
+    for _, b in ipairs(bones) do
+        b:updateFromPhysics(); b.bindWorld = b.worldMat; b.bindInv = M.inverse(b.bindWorld)
+    end
+
+    -- Organic ribbon built across torso→upper→lower
+    local lens = { torso = 36, upper = DIM.upperW, lower = DIM.lowerW }
+    skin = buildOrganicArmRibbon(bTorso, bUpper, bLower, lens, 28)
+end
+
+function love.load()
+    love.window.setTitle("Box2D → Bones → Organic Skinned Arm (Torso+Shoulder+Elbow)")
+    love.graphics.setLineWidth(2)
+    createSystem()
+end
+
+function love.update(dt)
+    world:update(dt)
+    for _, b in ipairs(bones) do b:updateFromPhysics() end
+    if skin then skin:skin() end
+end
+
+--############################## Rendering ##################################
+local function drawBodyRect(body, w, h)
+    local x, y = body:getPosition()
+    local r    = body:getAngle()
+    love.graphics.push(); love.graphics.translate(x, y); love.graphics.rotate(r)
+    love.graphics.rectangle("line", -w * 0.5, -h * 0.5, w, h)
+    love.graphics.pop()
+end
+local function drawPolyline(points)
+    for i = 1, #points - 1 do
+        love.graphics.line(points[i][1], points[i][2], points[i + 1][1], points[i + 1][2])
+    end
+end
+
+function love.draw()
+    love.graphics.push()
+    love.graphics.translate(80, 60)
+
+    -- Ground
+    love.graphics.setColor(1, 1, 1, 0.25)
+    love.graphics.line(-10000, 520, 10000, 520)
+
+    -- Bodies (white)
+    love.graphics.setColor(1, 1, 1, 1)
+    drawBodyRect(bodies.torso, DIM.torsoW, DIM.torsoH)
+    drawBodyRect(bodies.upper, DIM.upperW, DIM.upperH)
+    drawBodyRect(bodies.lower, DIM.lowerW, DIM.lowerH)
+
+    -- Joint anchors (green)
+    love.graphics.setColor(0.2, 0.9, 0.3, 0.9)
+    local sx, sy = joints.shoulder:getAnchors()
+    local ex, ey = joints.elbow:getAnchors()
+    love.graphics.circle("fill", sx, sy, 4)
+    love.graphics.circle("fill", ex, ey, 4)
+
+    -- Bone debug (blue)
+    local function boneLine(b)
+        local sx, sy = M.transform(b.worldMat, -b.length * 0.5, 0)
+        local ex, ey = M.transform(b.worldMat, b.length * 0.5, 0)
+        love.graphics.line(sx, sy, ex, ey)
+        love.graphics.circle("fill", sx, sy, 3)
+        love.graphics.circle("fill", ex, ey, 3)
+    end
+    love.graphics.setColor(0.2, 0.7, 1.0, 0.9)
+    for _, b in ipairs(bones) do boneLine(b) end
+
+    -- Organic skinned ribbon (white)
+    if skin then
+        love.graphics.setColor(1, 1, 1, 1)
+        local top, bot = {}, {}
+        for i = 1, #skin.v_final, 2 do top[#top + 1] = skin.v_final[i] end
+        for i = 2, #skin.v_final, 2 do bot[#bot + 1] = skin.v_final[i] end
+        drawPolyline(top); drawPolyline(bot)
+    end
+    love.graphics.pop()
+    love.graphics.origin()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print(
+        "Torso + Shoulder + Elbow (Box2D-driven)\n• Green = joint anchors\n• Blue = bone lines\n• White = organic ribbon skinned to 3 bones\nKeys: R to reset + rebind, M to toggle motors",
+        14, 14)
+end
+
+--############################## Controls ###################################
+function love.keypressed(k)
+    if k == "r" then
+        -- Recreate system for a fresh bind
+        createSystem()
+    elseif k == "m" then
+        local on = not joints.shoulder:isMotorEnabled()
+        joints.shoulder:setMotorEnabled(on)
+        joints.elbow:setMotorEnabled(on)
+    end
+end
