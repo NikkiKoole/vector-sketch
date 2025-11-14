@@ -1540,7 +1540,8 @@ function lib.drawSelectedSFixture()
                     end
 
                     local uvs = normalizeUVsFromRect(verts, { x = x1l, y = y1l, w = w, h = h })
-                    logger:inspect(uvs)
+                    --logger:inspect(uvs)
+                    ud.extra.uvs = uvs
                 end
 
                 nextRow()
@@ -1558,14 +1559,14 @@ function lib.drawSelectedSFixture()
                 if bud and bud.thing and bud.thing.vertices then
                     local bd = state.backdrops[ud.extra.selectedBGIndex]
                     local verts = bud.thing.vertices
-                    print(inspect(bd))
+                    -- print(inspect(bd))
                     local bx, by = b:getX(), b:getY()
                     for i = 1, #verts, 2 do
                         local U, V = verts[i] + bx, verts[i + 1] + by
-                        print(U, V)
+                        --  print(U, V)
                     end
 
-                    print(inspect(verts))
+                    --print(inspect(verts))
                     --local x1, y1 = cam:getScreenCoordinates(bd.x, bd.y)
                     --local x2, y2 = cam:getScreenCoordinates(bd.x + bd.w, bd.y + bd.h)
 

@@ -109,6 +109,12 @@ state.backdrops = {
         y = 0,
         url = 'textures/eye2.png',
         border = true
+    },
+    {
+        x = 1300,
+        y = 1000,
+        border = true,
+        url = 'backdrops/5-1536x1075.jpg'
     }
 }
 

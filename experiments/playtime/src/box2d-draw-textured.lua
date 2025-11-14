@@ -1258,42 +1258,141 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == 'uvd' then
             -- now we need to find a mapping file..
 
-            local findLabel = drawables[i].label
+            local mappert
             for k, v in pairs(registry.sfixtures) do
                 local ud = v:getUserData()
-                if (findLabel == ud.label and ud.subtype == 'uvmappert') then
-                    print('fount the uvmappert for me.', findLabel)
-                    local bx, by = drawables[i].body:getPosition()
-                    local b = drawables[i].body:getUserData()
-                    --print(inspect(b.thing.vertices))
-
-                    local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
-                    local verts = {}
-                    for i = 1, #b.thing.vertices, 2 do
-                        verts[i] = b.thing.vertices[i] - centerX
-                        verts[i + 1] = b.thing.vertices[i + 1] - centerY
-                    end
+                if (drawables[i].label == ud.label and ud.subtype == 'uvmappert') then
+                    mappert = v
+                end
+            end
+            local data = mappert and mappert:getUserData().extra
+            if data and data.uvs then
+                --print(inspect(data))
+                --print('getting close')
 
 
-                    local p = {}
-                    for i = 1, #verts, 2 do
-                        table.insert(p, { verts[i], verts[i + 1] })
-                    end
-                    local mesh = love.graphics.newMesh(p)
-                    print('aybe start using the real uvs now?')
-                    love.graphics.setColor(.5, .5, .5)
-                    love.graphics.draw(mesh, bx, by)
-                    love.graphics.setColor(1, 1, 1)
-                    --print(inspect(b))
-                    --print(inspect(ud))
-                    --local b = v:getBody()
-                    --local bud = b:getUserData()
-                    --print(inspect(bud))
+                local bx, by = drawables[i].body:getPosition()
+                local ba = drawables[i].body:getAngle()
+                local b = drawables[i].body:getUserData()
+                --print(inspect(b.thing.vertices))
+
+                local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
+                local verts = {}
+                for i = 1, #b.thing.vertices, 2 do
+                    verts[i] = b.thing.vertices[i] - centerX
+                    verts[i + 1] = b.thing.vertices[i + 1] - centerY
                 end
 
-                -- local mesh = love.graphics.newMesh()
-                -- love.graphics.draw(mesh)
+
+                local p = {}
+                for i = 1, #verts, 2 do
+                    table.insert(p, { verts[i], verts[i + 1] })
+                end
+
+
+                local vertexFormat = {
+                    { "VertexPosition", "float", 2 },
+                    { "VertexTexCoord", "float", 2 },
+                    { "VertexColor",    "byte",  4 },
+                }
+                meshVertices = {}
+                -- for i = 1, #verts, 2 do
+                --     table.insert(meshVertices, {
+                --         verts[i], verts[i + 1],
+                --         data.uvs[i], data.uvs[i + 1],
+                --         255, 255, 255
+                --     })
+                -- end
+                local tris = shapes.makeTrianglesFromPolygon(verts)
+
+
+                for j = 1, #tris do
+                    local tri = tris[j]
+                    for k = 0, 2 do
+                        local x = tri[k * 2 + 1]
+                        local y = tri[k * 2 + 2]
+                        local u, v --= 1, 1
+                        --print(x, inspect(verts))
+                        for l = 1, #verts do
+                            --  print()
+                            if math.abs(x - verts[l]) < 0.001 then
+                                u = data.uvs[l]
+                            end
+
+                            if math.abs(y - verts[l]) < 0.001 then
+                                v = data.uvs[l]
+                            end
+                        end
+                        print('why i?,', u, v)
+                        --if u == nil then u = 0 end
+
+                        if u == nil or v == nil then
+
+                        end
+                        table.insert(meshVertices, {
+                            x, y,
+                            u, v,
+                            255, 255, 255
+                        })
+                    end
+                end
+
+
+                --print(inspect(tris))
+                -- print(#tris)
+
+
+                local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
+                mesh:setTexture(state.backdrops[data.selectedBGIndex].image)
+
+                --local mesh = love.graphics.newMesh(p)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(mesh, bx, by, ba)
+                love.graphics.setColor(1, 1, 1)
             end
+            --print(inspect(mappert:getUserData().extra))
+
+
+            -- local findLabel = drawables[i].label
+            -- for k, v in pairs(registry.sfixtures) do
+            --     local ud = v:getUserData()
+            --     if (findLabel == ud.label and ud.subtype == 'uvmappert') then
+            --         --   print('fount the uvmappert for me.', findLabel)
+            --         -- this needs to have th euvdata and point me to the right bg image
+            --         --
+            --         --
+            --         local bx, by = drawables[i].body:getPosition()
+            --         local ba = drawables[i].body:getAngle()
+            --         local b = drawables[i].body:getUserData()
+            --         --print(inspect(b.thing.vertices))
+
+            --         local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
+            --         local verts = {}
+            --         for i = 1, #b.thing.vertices, 2 do
+            --             verts[i] = b.thing.vertices[i] - centerX
+            --             verts[i + 1] = b.thing.vertices[i + 1] - centerY
+            --         end
+
+
+            --         local p = {}
+            --         for i = 1, #verts, 2 do
+            --             table.insert(p, { verts[i], verts[i + 1] })
+            --         end
+            --         local mesh = love.graphics.newMesh(p)
+            --         print('aybe start using the real uvs now?')
+            --         love.graphics.setColor(1, .5, .5)
+            --         love.graphics.draw(mesh, bx, by, ba)
+            --         love.graphics.setColor(1, 1, 1)
+            --         --print(inspect(b))
+            --         --print(inspect(ud))
+            --         --local b = v:getBody()
+            --         --local bud = b:getUserData()
+            --         --print(inspect(bud))
+            --     end
+
+            --     -- local mesh = love.graphics.newMesh()
+            --     -- love.graphics.draw(mesh)
+            -- end
             --            print('uv rendering galore!')
         end
 
