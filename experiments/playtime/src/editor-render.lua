@@ -46,6 +46,21 @@ function lib.renderActiveEditorThings()
         love.graphics.circle('line', x2, y2, 3)
     end
 
+    if state.selection.selectedSFixture then
+        local ud = state.selection.selectedSFixture:getUserData()
+        if false and ud.subtype == 'uvmappert' then
+            -- print('jojo!')
+            local bod = state.selection.selectedSFixture:getBody()
+            local bud = bod:getUserData()
+            --print(bud.thing.body, bod)
+            love.graphics.polygon('line', bud.thing.vertices)
+            local b = state.backdrops[ud.extra.selectedBGIndex]
+            local x1l, y1l = bod:getLocalPoint(b.x, b.y)
+            local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
+            love.graphics.rectangle('line', x1l, y1l, x2l - x1l, y2l - y1l)
+        end
+    end
+
     if state.selection.selectedJoint and not state.selection.selectedJoint:isDestroyed() then
         box2dDraw.drawJointAnchors(state.selection.selectedJoint)
     end
@@ -103,6 +118,11 @@ function lib.renderActiveEditorThings()
                 love.graphics.setColor(1, 1, 1)
                 love.graphics.circle('line', vx, vy, 10)
             end
+
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.print(math.ceil(i / 2), vx, vy)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(math.ceil(i / 2), vx - 2, vy - 2)
         end
     end
 

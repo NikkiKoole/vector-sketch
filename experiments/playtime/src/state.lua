@@ -96,25 +96,19 @@ state.world = {
     showDebugIds = false,
 }
 
--- state.backdrop = {
---     show = true,
---     --url = 'backdrops/5-1536x1075.jpg'
---     url = 'textures/eye1.png'
--- }
 
-state.backdrops = { {
-    x = 0,
-    y = 0,
-    -- show = true,
-    --url = 'backdrops/5-1536x1075.jpg'
-    url = 'textures/eye1.png'
-},
+state.backdrops = {
+    {
+        x = 0,
+        y = 0,
+        url = 'textures/eye1.png',
+        border = true
+    },
     {
         x = 300,
         y = 0,
-        --   show = true,
-        --url = 'backdrops/5-1536x1075.jpg'
-        url = 'textures/eye2.png'
+        url = 'textures/eye2.png',
+        border = true
     }
 }
 

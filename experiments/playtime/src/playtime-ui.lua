@@ -1480,6 +1480,134 @@ function lib.drawSelectedSFixture()
                 handlePaletteAndHex(myID, 'patch3tint', x, y, 100, oldTexFixUD.extra.patch3.tint,
                     function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
+        elseif ud.subtype == 'uvmappert' then
+            local selectedIndex = 1
+            if #state.backdrops then
+                local numericInputText, dirty = ui.textinput(myID .. 'backdropindex', x, y, 120, BUTTON_HEIGHT, ".",
+                    "" .. (ud.extra.selectedBGIndex or 1),
+                    true)
+                selectedIndex = tonumber(numericInputText)
+                ud.extra.selectedBGIndex = selectedIndex
+                if selectedIndex and selectedIndex >= 1 and selectedIndex <= #state.backdrops then
+                    local b = state.backdrops[selectedIndex]
+
+                    -- first we draw a YELLOW border around the backdrop
+                    local x1, y1 = cam:getScreenCoordinates(b.x, b.y)
+                    local x2, y2 = cam:getScreenCoordinates(b.x + b.w, b.y + b.h)
+                    love.graphics.setColor(1, 1, 0)
+                    love.graphics.rectangle('line', x1, y1, x2 - x1, y2 - y1)
+                    love.graphics.setColor(1, 1, 1)
+                    --print(inspect(state.selection.selectedSFixture:getUserData()))
+
+
+                    -- love.graphics.push()
+                    -- love.graphics.translate(300, 300)
+
+                    -- now we recenter around 0 the vert of the thing.
+                    local bod = state.selection.selectedSFixture:getBody()
+                    local bud = bod:getUserData()
+                    local centerX, centerY = mathutils.getCenterOfPoints(bud.thing.vertices)
+                    local verts = {}
+                    for i = 1, #bud.thing.vertices, 2 do
+                        verts[i] = bud.thing.vertices[i] - centerX
+                        verts[i + 1] = bud.thing.vertices[i + 1] - centerY
+                    end
+                    -- love.graphics.polygon('line', verts)
+
+                    -- now we also draw the backdrop bbox in that space
+                    local x1l, y1l = bod:getLocalPoint(b.x, b.y)
+                    local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
+                    local w, h = x2l - x1l, y2l - y1l
+                    -- love.graphics.rectangle('line', x1l, y1l, w, h)
+
+                    --  love.graphics.pop()
+
+
+                    -- vertices assumed to be world-space positions of the poly
+                    local function normalizeUVsFromRect(verts, rect)
+                        local t = {}
+                        for i = 1, #verts, 2 do
+                            local vx = verts[i]
+                            local vy = verts[i + 1]
+
+                            local u = (vx - rect.x) / rect.w
+                            local v = (vy - rect.y) / rect.h
+
+                            table.insert(t, u)
+                            table.insert(t, v)
+                        end
+                        return t
+                    end
+
+                    local uvs = normalizeUVsFromRect(verts, { x = x1l, y = y1l, w = w, h = h })
+                    logger:inspect(uvs)
+                end
+
+                nextRow()
+            end
+
+
+
+
+            if ui.button(x, y, ROW_WIDTH, 'bind-pose') then
+                logger:info('here we do great stuff')
+                print('first we figure out if we are over a background.')
+                -- lets just persist an index into bg
+                local b = state.selection.selectedSFixture:getBody()
+                local bud = b:getUserData()
+                if bud and bud.thing and bud.thing.vertices then
+                    local bd = state.backdrops[ud.extra.selectedBGIndex]
+                    local verts = bud.thing.vertices
+                    print(inspect(bd))
+                    local bx, by = b:getX(), b:getY()
+                    for i = 1, #verts, 2 do
+                        local U, V = verts[i] + bx, verts[i + 1] + by
+                        print(U, V)
+                    end
+
+                    print(inspect(verts))
+                    --local x1, y1 = cam:getScreenCoordinates(bd.x, bd.y)
+                    --local x2, y2 = cam:getScreenCoordinates(bd.x + bd.w, bd.y + bd.h)
+
+                    --local x1, y1 = b:getWorldPoint(bd.x, bd.y)
+                    --local x2, y2 = b:getWorldPoint(bd.x + bd.w, bd.y + bd.h)
+                    --print(x1, y1, x2, y2)
+                    --print(inspect(bud.thing.vertices))
+                    --local newrect = { x = x1, y = y1, w = x2 - x1, h = y2 - y1 }
+
+                    -- function normalizeUVs(verts, rect)
+                    --     local t = {}
+                    --     for i = 1, #verts, 2 do
+                    --         --local U = verts[i]
+                    --         --local V = verts[i + 1]
+                    --         --local U, V = b:getWorldPoint(verts[i], verts[i + 1])
+                    --         --local U, V = cam:getScreenCoordinates(U1, V1)
+                    --         local u = (U - rect.x) / rect.w
+                    --         local v = (V - rect.y) / rect.h
+
+                    --         table.insert(t, u)
+                    --         table.insert(t, v)
+                    --     end
+                    --     return t
+                    -- end
+
+                    --local uvs = normalizeUVs(bud.thing.vertices, bd)
+
+                    --print(inspect(uvs))
+                end
+
+
+                print('we save the current uv normalised')
+                print('we want another thing to show our poly textured')
+            end
+
+            if ui.button(x + ROW_WIDTH + 10, y, 100, 'c') then
+                local body = state.selection.selectedSFixture:getBody()
+                state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
+                    body:getX(), body:getY())
+                --local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                --state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+            end
         else
             drawAccordion('position', function()
                 nextRow()
@@ -2679,7 +2807,13 @@ function lib.drawUI()
             end
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if ui.button(x, y, 260, 'uv-mappert') then
-                objectManager.finalizePolygon()
+                local thing = objectManager.finalizePolygon()
+                --logger:inspect(thing)
+                -- local body =
+                if thing and thing.body then
+                    local fixture = fixtures.createSFixture(thing.body, 0, 0, 'uvmappert',
+                        { width = 20, height = 20 })
+                end
                 --objectManager.finalizePolygonAsSoftSurface()
             end
             -- x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)

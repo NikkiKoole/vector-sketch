@@ -205,13 +205,22 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
             rect8(cfg.width, cfg.height, localX, localY)
         local shape = love.physics.newPolygonShape(vv)
         local fixture = love.physics.newFixture(body, shape, 0)
-        fixture:setSensor(true)  -- Sensor so it doesn't collide
+        fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
         fixture:setUserData({ type = "sfixture", id = setId, subtype = 'texfixture', label = '', extra = { vertexCount = vertexCount, vertices = vv } })
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', inspect(cfg))
+    if (subtype == 'uvmappert') then
+        local shape = love.physics.newPolygonShape(rect(cfg.radius or 20, cfg.radius or 20, localX, localY))
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setSensor(true) -- Sensor so it doesn't collide
+        local setId = uuid.generateID()
+        fixture:setUserData({ type = "sfixture", subtype = 'uvmappert', id = setId, label = '', extra = {} })
+        registry.registerSFixture(setId, fixture)
+        return fixture
+    end
+    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', inspect(cfg), subtype)
 end
 
 --function lib.createTexFixtureShape(vertexCount)

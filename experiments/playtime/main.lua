@@ -140,15 +140,16 @@ function love.load(args)
     --state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
 
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --loadScene(cwd .. '/scripts/snap2.playtime.json')
-    --loadScene(cwd .. '/scripts/grow.playtime.json')
+    local cwd = love.filesystem.getWorkingDirectory()
+    -- sceneLoader.loadScene(cwd .. '/scripts/snap2.playtime.json')
+    --sceneLoader.loadScriptAndScene('water')
+    sceneLoader.loadScene(cwd .. '/scripts/uvs.playtime.json')
 
     --loadScriptAndScene('elasto')
     --sceneLoader.loadScriptAndScene('water')
-    --sceneLoader.loadScriptAndScene('straight')
+    -- sceneLoader.loadScriptAndScene('straight')
 
-    local cwd = love.filesystem.getWorkingDirectory()
+    --local cwd = love.filesystem.getWorkingDirectory()
     --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
     --   sceneLoader.loadScene(cwd .. '/scripts/knutjump.playtime.json')
 
@@ -184,7 +185,7 @@ function love.load(args)
     --     state.backdrop.image = love.graphics.newImage(state.backdrop.url)
     -- end
 
-    --humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
@@ -213,30 +214,6 @@ end
 
 function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
-end
-
--- this is quite the fix, a bit janky, but i fixes all the issues where bodies and joints 'break' and freak out
--- we do need some sesible expectedDitsance
-function correctJoint(joint)
-    local expectedDistance = 10
-    local bodyA, bodyB = joint:getBodies()
-    local anchorAx, anchorAy, anchorBx, anchorBy = joint:getAnchors()
-    local maxDist = 1.5 * expectedDistance -- use your rig specs
-
-    local dx, dy = anchorBx - anchorAx, anchorBy - anchorAy
-    local dist = math.sqrt(dx * dx + dy * dy)
-    if bodyB then
-        if dist > maxDist then
-            -- Optionally move B toward A
-            local fixX = anchorAx + dx * expectedDistance / dist
-            local fixY = anchorAy + dy * expectedDistance / dist
-            bodyB:setTransform(fixX, fixY, bodyB:getAngle())
-
-            -- Optional: reset velocity
-            bodyB:setLinearVelocity(0, 0)
-            bodyB:setAngularVelocity(0)
-        end
-    end
 end
 
 beginframetime = love.timer.getTime()
@@ -281,9 +258,9 @@ function love.update(dt)
 
         script.call('update', scaled_dt)
         local joints = state.physicsWorld:getJoints()
-        for i = 1, #joints do
-            --correctJoint(joints[i])
-        end
+        --for i = 1, #joints do
+        --correctJoint(joints[i])
+        --end
         snap.update(scaled_dt)
         -- todo use pointerjoints instead!!!
         local interacted = box2dPointerJoints.getInteractedWithPointer()
@@ -356,8 +333,13 @@ function love.draw()
             local b = state.backdrops[i]
             if b.url and b.image == nil then
                 b.image = love.graphics.newImage(b.url)
+                b.w = b.image:getWidth()
+                b.h = b.image:getHeight()
             end
             if b.selected then
+                love.graphics.rectangle("line", b.x or 0, b.y or 0, b.image:getWidth(), b.image:getHeight())
+            end
+            if b.border then
                 love.graphics.rectangle("line", b.x or 0, b.y or 0, b.image:getWidth(), b.image:getHeight())
             end
             love.graphics.draw(b.image, b.x or 0, b.y or 0)

@@ -35,6 +35,7 @@ end
 -- end
 
 function lib.finalizePolygon()
+    local result = nil
     if #state.interaction.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
         --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
@@ -46,7 +47,7 @@ function lib.finalizePolygon()
                 .polyVerts
         }
         -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
-        lib.addThing('custom', settings)
+        result = lib.addThing('custom', settings)
     else
         -- Not enough vertices to form a polygon
         logger:error("Not enough vertices to create a polygon.")
@@ -57,6 +58,7 @@ function lib.finalizePolygon()
     state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
+    return result
 end
 
 function lib.insertCustomPolygonVertex(x, y)
@@ -252,20 +254,17 @@ local function createThing(shapeType, conf)
 end
 
 function lib.startSpawn(shapeType, wx, wy)
-    local radius = tonumber(state.editorPreferences.lastUsedRadius) or 10
-    local width = tonumber(state.editorPreferences.lastUsedWidth) or radius * 2     -- Default width for polygons
-    local width2 = tonumber(state.editorPreferences.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
-    local width3 = tonumber(state.editorPreferences.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
+    local ep = state.editorPreferences
+    local radius = tonumber(ep.lastUsedRadius) or 10
+    local width = tonumber(ep.lastUsedWidth) or radius * 2     -- Default width for polygons
+    local width2 = tonumber(ep.lastUsedWidth2) or radius * 2.3 -- Default width for polygons
+    local width3 = tonumber(ep.lastUsedWidth3) or radius * 2.3 -- Default width for polygons
 
-    local height = tonumber(state.editorPreferences.lastUsedHeight) or
-        radius * 2 -- Default height for polygons
-    local height2 = tonumber(state.editorPreferences.lastUsedHeight2) or
-        radius * 2 -- Default height for polygons
-    local height3 = tonumber(state.editorPreferences.lastUsedHeight3) or
-        radius * 2 -- Default height for polygons
+    local height = tonumber(ep.lastUsedHeight) or radius * 2   -- Default height for polygons
+    local height2 = tonumber(ep.lastUsedHeight2) or radius * 2 -- Default height for polygons
+    local height3 = tonumber(ep.lastUsedHeight3) or radius * 2 -- Default height for polygons
 
-    local height4 = tonumber(state.editorPreferences.lastUsedHeight4) or
-        radius * 2 -- Default height for polygons
+    local height4 = tonumber(ep.lastUsedHeight4) or radius * 2 -- Default height for polygons
 
 
     local bodyType = state.editorPreferences.nextType

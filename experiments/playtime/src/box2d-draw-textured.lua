@@ -1210,28 +1210,29 @@ function lib.drawTexturedWorld(world)
                 local main = extra.main
                 -- local cached = main.cached
                 --print(inspect(main))
-
-                if not main.cached then
-                    lib.makeCached(main)
-                    print('Cached not found')
+                if main then
+                    if not main.cached then
+                        lib.makeCached(main)
+                        print('Cached not found')
+                        local cached = main.cached
+                        print(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
+                    end
                     local cached = main.cached
-                    print(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
-                end
-                local cached = main.cached
 
-                if main and main.bgURL then
-                    --logger:inspect(extra.main.cached)
-                    love.graphics.setColor(1, 0, 0)
-                    drawImageLayerSquishRGBA(extra.main.bgURL, cached.bgR, cached.bgG, cached.bgB, cached.bgA, extra,
-                        texfixture)
-                    --  drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
-                    --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
-                end
-                if extra.main and extra.main.fgURL then
-                    --drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
-                    drawImageLayerSquishRGBA(extra.main.fgURL, cached.fgR, cached.fgG, cached.fgB, cached.fgA, extra,
-                        texfixture)
-                    --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
+                    if main and main.bgURL then
+                        --logger:inspect(extra.main.cached)
+                        love.graphics.setColor(1, 0, 0)
+                        drawImageLayerSquishRGBA(extra.main.bgURL, cached.bgR, cached.bgG, cached.bgB, cached.bgA, extra,
+                            texfixture)
+                        --  drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
+                        --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
+                    end
+                    if extra.main and extra.main.fgURL then
+                        --drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
+                        drawImageLayerSquishRGBA(extra.main.fgURL, cached.fgR, cached.fgG, cached.fgB, cached.fgA, extra,
+                            texfixture)
+                        --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
+                    end
                 end
             end
 
