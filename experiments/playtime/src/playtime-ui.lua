@@ -685,7 +685,7 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'connectedtexture', 'connected-texture')
         handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
         handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
-
+        handleFixtureButton(x, y, width, 'uvusert', 'uvusert')
         if ui.button(x, y, width, 'auto-ropify') then
             -- todo make this work
             state.currentMode = 'pickAutoRopifyMode'

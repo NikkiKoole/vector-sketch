@@ -1010,7 +1010,19 @@ function lib.drawTexturedWorld(world)
                             thing = body:getUserData().thing
                         })
                 end
-
+                if ud and ud.subtype == 'uvusert' then
+                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                    table.insert(drawables,
+                        {
+                            type = 'uvd',
+                            z = composedZ,
+                            texfixture = fixtures[i],
+                            label = ud.label,
+                            extra = ud.extra,
+                            body = body,
+                            thing = body:getUserData().thing
+                        })
+                end
                 if ud and (ud.label == "connected-texture" or ud.subtype == 'connected-texture') and ud.extra.nodes then
                     -- logger:inspect(ud)
                     --logger:info('got some new kind of combined drawing todo!')
@@ -1243,6 +1255,48 @@ function lib.drawTexturedWorld(world)
                 --end
             end
         end
+        if drawables[i].type == 'uvd' then
+            -- now we need to find a mapping file..
+
+            local findLabel = drawables[i].label
+            for k, v in pairs(registry.sfixtures) do
+                local ud = v:getUserData()
+                if (findLabel == ud.label and ud.subtype == 'uvmappert') then
+                    print('fount the uvmappert for me.', findLabel)
+                    local bx, by = drawables[i].body:getPosition()
+                    local b = drawables[i].body:getUserData()
+                    --print(inspect(b.thing.vertices))
+
+                    local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
+                    local verts = {}
+                    for i = 1, #b.thing.vertices, 2 do
+                        verts[i] = b.thing.vertices[i] - centerX
+                        verts[i + 1] = b.thing.vertices[i + 1] - centerY
+                    end
+
+
+                    local p = {}
+                    for i = 1, #verts, 2 do
+                        table.insert(p, { verts[i], verts[i + 1] })
+                    end
+                    local mesh = love.graphics.newMesh(p)
+                    print('aybe start using the real uvs now?')
+                    love.graphics.setColor(.5, .5, .5)
+                    love.graphics.draw(mesh, bx, by)
+                    love.graphics.setColor(1, 1, 1)
+                    --print(inspect(b))
+                    --print(inspect(ud))
+                    --local b = v:getBody()
+                    --local bud = b:getUserData()
+                    --print(inspect(bud))
+                end
+
+                -- local mesh = love.graphics.newMesh()
+                -- love.graphics.draw(mesh)
+            end
+            --            print('uv rendering galore!')
+        end
+
 
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
