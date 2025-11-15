@@ -12,7 +12,7 @@ local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
-
+local polyline = require 'src.polyline'
 function lib.finalizePolygonAsSoftSurface()
     if #state.interaction.polyVerts >= 6 then
         local points = state.interaction.polyVerts
@@ -33,6 +33,116 @@ end
 -- function lib.finalizePolygonAsBlob()
 
 -- end
+--
+
+local function segmentNormal(ax, ay, bx, by)
+    local dx, dy = bx - ax, by - ay
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len == 0 then return 0, 0 end
+    dx, dy = dx / len, dy / len
+    -- perpendicular (left-hand normal)
+    return -dy, dx
+end
+
+local function polylineRibbon(points, halfWidth)
+    assert(#points >= 2, "Need at least 2 points for a ribbon")
+
+    local left  = {}
+    local right = {}
+
+    -- compute left/right offset points for each center point
+    for i, p in ipairs(points) do
+        local x, y = p[1], p[2]
+        local nx, ny
+
+        if i == 1 then
+            -- start: use first segment
+            nx, ny = segmentNormal(x, y, points[i + 1][1], points[i + 1][2])
+        elseif i == #points then
+            -- end: use last segment
+            nx, ny = segmentNormal(points[i - 1][1], points[i - 1][2], x, y)
+        else
+            -- middle: average normals of prev and next segments
+            local nx1, ny1 = segmentNormal(points[i - 1][1], points[i - 1][2], x, y)
+            local nx2, ny2 = segmentNormal(x, y, points[i + 1][1], points[i + 1][2])
+            nx, ny = nx1 + nx2, ny1 + ny2
+            local len = math.sqrt(nx * nx + ny * ny)
+            if len > 0 then
+                nx, ny = nx / len, ny / len
+            end
+        end
+
+        left[i]  = { x - nx * halfWidth, y - ny * halfWidth }
+        right[i] = { x + nx * halfWidth, y + ny * halfWidth }
+    end
+
+    -- build polygon: left side in order, right side reversed
+    local verts = {}
+
+    -- left side (forward)
+    for i = 1, #left do
+        table.insert(verts, left[i][1])
+        table.insert(verts, left[i][2])
+    end
+
+    -- right side (backwards)
+    for i = #right, 1, -1 do
+        table.insert(verts, right[i][1])
+        table.insert(verts, right[i][2])
+    end
+
+    return verts
+end
+
+function lib.finalizePath()
+    -- i just want to make a ribbon
+    logger:info(#state.interaction.polyVerts)
+    local result = nil
+    local unflat = {}
+    for i = 1, #state.interaction.polyVerts, 2 do
+        local pv = state.interaction.polyVerts
+        table.insert(unflat, { pv[i + 0], pv[i + 1] })
+    end
+
+    -- print('i want to use')
+    -- print(inspect(verts))
+    -- local function flattenXY(vertexObjects)
+    --     local out = {}
+
+    --     for i = 1, #vertexObjects do
+    --         local v = vertexObjects[i]
+    --         -- v = {x, y, u, v, r, g, b, a}
+    --         table.insert(out, v[1]) -- x
+    --         table.insert(out, v[2]) -- y
+    --     end
+
+    --     return out
+    -- end
+    -- verts = flattenXY(verts)
+    print('i was using this')
+    print(inspect(state.interaction.polyVerts))
+    if #state.interaction.polyVerts >= 6 and #unflat > 2 then
+        local verts = polylineRibbon(unflat, 20)
+        local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
+        --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
+        local settings = {
+            x = cx,
+            y = cy,
+            bodyType = state.editorPreferences.nextType,
+            vertices = verts
+        }
+        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
+        result = lib.addThing('ribbon', settings)
+    else
+        -- Not enough vertices to form a polygon
+        logger:error("Not enough vertices to create a polygon.")
+    end
+    state.currentMode = nil
+    state.interaction.capturingPoly = false
+    state.interaction.polyVerts = {}
+    state.interaction.lastPolyPt = nil
+    return result
+end
 
 function lib.finalizePolygon()
     local result = nil
@@ -215,8 +325,14 @@ local function createThing(shapeType, conf)
 
     -- Attach fixtures to the body for each shape
     for _, shape in ipairs(shapeList) do
-        local fixture = love.physics.newFixture(body, shape, 1)
-        fixture:setRestitution(0.3) -- Set bounciness
+        local success, newFixture = pcall(love.physics.newFixture, body, shape, 1)
+        --print(success, newFixture)
+        --local fixture = love.physics.newFixture(body, shape, 1)
+        if success then
+            newFixture:setRestitution(0.3) -- Set bounciness
+        else
+            logger:error('this is bad' .. newFixture)
+        end
     end
 
     -- Configure body properties

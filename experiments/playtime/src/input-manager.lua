@@ -36,7 +36,7 @@ local function handlePointer(x, y, id, action)
             end
         end
         if state.selection.selectedJoint or state.selection.selectedObj or state.selection.selectedSFixture or state.selection.selectedBodies
-            or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' then
+            or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' or state.currentMode == 'drawFreePath' then
             local w, h = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -375,9 +375,17 @@ local function handlePointer(x, y, id, action)
         end
 
         -- if we have released a mousebutton but it isnt nr1, then we keep on drawing free polygon
-        if state.currentMode == 'drawFreePoly' and not love.mouse.isDown(1) then
+        if (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath') and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
-            objectManager.finalizePolygon()
+
+            if state.currentMode == 'drawFreePoly' then
+                objectManager.finalizePolygon()
+            end
+            if state.currentMode == 'drawFreePath' then
+                print('todo')
+                objectManager.finalizePath()
+                --objectManager.finalizePath()
+            end
         end
 
         if state.polyEdit.dragIdx > 0 then
@@ -440,7 +448,7 @@ end
 
 function lib.handleMousePressed(x, y, button, istouch)
     if not istouch and button == 1 then
-        if state.currentMode == 'drawFreePoly' then
+        if state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
             -- Start capturing mouse movement
             state.interaction.capturingPoly = true
             state.interaction.polyVerts = {}
@@ -464,7 +472,7 @@ end
 
 function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
     --handlePointer(x, y, id, 'pressed')
-    if state.currentMode == 'drawFreePoly' then
+    if state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
         -- Start capturing mouse movement
         state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
@@ -513,7 +521,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
         -- print(index)
-    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly') and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
+    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' or state.currentMode == 'drawFreePath') and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false

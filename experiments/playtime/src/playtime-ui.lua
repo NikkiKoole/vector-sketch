@@ -618,17 +618,27 @@ function lib.drawAddShapeUI()
             state.editorPreferences.minPointDistance = minDist
         end
 
+
+        nextRow()
+        local fillColor = state.currentMode == 'drawFreePath' and { 1, 0, 0 } or nil
+        local freeformbutton, _, freeformReleased = ui.button(x, y, width, 'freepath', buttonHeight, fillColor)
+        if freeformReleased then
+            state.currentMode = 'drawFreePath'
+            state.interaction.polyVerts = {}
+            state.interaction.lastPolyPt = nil
+        end
         -- Add a button for custom polygon
         nextRow()
-        local freeformbutton, _, freeformReleased = ui.button(x, y, width, 'freeform')
+        local fillColor = state.currentMode == 'drawFreePoly' and { 1, 0, 0 } or nil
+        local freeformbutton, _, freeformReleased = ui.button(x, y, width, 'freeform', buttonHeight, fillColor)
         if freeformReleased then
             state.currentMode = 'drawFreePoly'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         nextRow()
-
-        if ui.button(x, y, width, 'click') then
+        local fillColor = state.currentMode == 'drawClickMode' and { 1, 0, 0 } or nil
+        if ui.button(x, y, width, 'click', buttonHeight, fillColor) then
             state.currentMode = 'drawClickMode'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil

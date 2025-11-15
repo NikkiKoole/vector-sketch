@@ -241,6 +241,7 @@ local JOIN = {
     bevel = renderEdgeBevel,
 }
 
+
 function polyline.render(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
     local renderEdge = JOIN[join_type]
     assert(renderEdge, tostring(join_type) .. " is not a valid line join type.")

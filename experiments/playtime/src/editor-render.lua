@@ -88,7 +88,8 @@ function lib.renderActiveEditorThings()
     love.graphics.setColor(1, 1, 1)
 
     -- draw to be drawn polygon
-    if state.currentMode == 'drawClickMode' or state.currentMode == 'drawFreePoly' then
+    if state.currentMode == 'drawClickMode' or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
+        --print(#state.interaction.polyVerts)
         if (#state.interaction.polyVerts >= 6) then
             love.graphics.polygon('line', state.interaction.polyVerts)
         end

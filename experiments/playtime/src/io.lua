@@ -746,6 +746,8 @@ function lib.cloneSelection(selectedBodies, world)
                         end
 
                         newFixture:setUserData(oldUD)
+                        print('jozers')
+
                         newFixture:setSensor(oldF:isSensor())
 
                         registry.registerSFixture(oldUD.id, newFixture)

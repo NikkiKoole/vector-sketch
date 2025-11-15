@@ -14,6 +14,7 @@
 
 -- TODO how to handle referebce to humanoid after reload? maybe do a first humanoid for debug?
 --
+-- TODO some sfixtures end up with sensor=false , i dunno why yet.
 
 --- strategy of performance tuning
 --- for the 'vendor.jprof' to give clear result it needs to be off.
