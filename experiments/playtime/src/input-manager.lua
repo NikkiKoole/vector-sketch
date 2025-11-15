@@ -49,8 +49,10 @@ local function handlePointer(x, y, id, action)
         end
 
         local cx, cy = cam:getWorldCoordinates(x, y)
-
-        if state.polyEdit.tempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.polyEdit.lockedVerts == false then
+        local rightShape = state.selection.selectedObj and (state.selection.selectedObj.shapeType == 'custom' or
+            state.selection.selectedObj.shapeType == 'ribbon')
+        -- print('hello??')
+        if state.polyEdit.tempVerts and state.selection.selectedObj and rightShape and state.polyEdit.lockedVerts == false then
             local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
                 state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
             for i = 1, #verts, 2 do

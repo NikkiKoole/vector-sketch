@@ -544,7 +544,7 @@ local accordeonStatesAS = {
 
 
 function lib.drawAddShapeUI()
-    local shapeTypesLess = { 'rectangle', 'circle', 'capsule' }
+    local shapeTypesLess = { 'rectangle', 'circle', 'capsule', 'ribbon' }
     local shapeTypesMore = { 'rectangle', 'circle', 'capsule', 'triangle', 'itriangle', 'torso', 'trapezium', 'pentagon',
         'hexagon',
         'heptagon',
@@ -686,6 +686,7 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
         handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
         handleFixtureButton(x, y, width, 'uvusert', 'uvusert')
+        handleFixtureButton(x, y, width, 'uvmappert', 'uvmappert')
         if ui.button(x, y, width, 'auto-ropify') then
             -- todo make this work
             state.currentMode = 'pickAutoRopifyMode'
@@ -1508,6 +1509,7 @@ function lib.drawSelectedSFixture()
                     local bud = bod:getUserData()
                     local centerX, centerY = mathutils.getCenterOfPoints(bud.thing.vertices)
                     local verts = {}
+
                     for i = 1, #bud.thing.vertices, 2 do
                         verts[i] = bud.thing.vertices[i] - centerX
                         verts[i + 1] = bud.thing.vertices[i + 1] - centerY
@@ -1620,8 +1622,11 @@ function lib.drawSelectedSFixture()
                     local body = state.selection.selectedSFixture:getBody()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                         body:getX(), body:getY())
+
                     local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                    state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+                    if (oldTexFixUD.extra.vertices) then
+                        state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+                    end
                 end
 
                 nextRow()
@@ -2402,17 +2407,20 @@ function lib.drawUpdateSelectedObjectUI()
                         else
                             -- No UI controls for custom or unsupported shapes
                             --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
-                            if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' then
-                                if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
-                                    state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
-                                    if state.polyEdit.lockedVerts == false then
-                                        state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj
-                                            .vertices)
-                                        local cx, cy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
-                                        state.polyEdit.centroid = { x = cx, y = cy }
-                                    else
-                                        state.polyEdit.tempVerts = nil
-                                        state.polyEdit.centroid = nil
+                            if (state.selection.selectedObj) then
+                                if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' or state.selection.selectedObj.shapeType == 'ribbon' then
+                                    if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                                        state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
+                                        if state.polyEdit.lockedVerts == false then
+                                            state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj
+                                                .vertices)
+                                            local cx, cy = mathutils.computeCentroid(state.selection.selectedObj
+                                                .vertices)
+                                            state.polyEdit.centroid = { x = cx, y = cy }
+                                        else
+                                            state.polyEdit.tempVerts = nil
+                                            state.polyEdit.centroid = nil
+                                        end
                                     end
                                 end
                             end

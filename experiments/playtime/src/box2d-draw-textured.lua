@@ -1278,6 +1278,7 @@ function lib.drawTexturedWorld(world)
 
                 local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
                 local verts = {}
+
                 for i = 1, #b.thing.vertices, 2 do
                     verts[i] = b.thing.vertices[i] - centerX
                     verts[i + 1] = b.thing.vertices[i + 1] - centerY
@@ -1323,11 +1324,11 @@ function lib.drawTexturedWorld(world)
                                 v = data.uvs[l]
                             end
                         end
-                        print('why i?,', u, v)
+                        --print('why i?,', u, v)
                         --if u == nil then u = 0 end
 
                         if u == nil or v == nil then
-
+                            print('asdasd')
                         end
                         table.insert(meshVertices, {
                             x, y,

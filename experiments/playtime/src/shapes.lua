@@ -70,6 +70,134 @@ local function approximateCircle(radius, centerX, centerY, segments)
 
     return vertices
 end
+local function ribbon(w, h, x, y, segments, direction)
+    segments    = segments or 4
+    direction   = direction or "horizontal" -- "horizontal" or "vertical"
+
+    local halfW = w / 2
+    local halfH = h / 2
+
+    local verts = {}
+
+    if direction == "horizontal" then
+        -----------------------------------------------------------
+        -- HORIZONTAL RIBBON  (current behavior)
+        -- Left → Right on top, then Right → Left on bottom
+        -----------------------------------------------------------
+        for i = 0, segments do
+            local t  = i / segments
+            local cx = x - halfW + w * t
+            local cy = y - halfH
+            table.insert(verts, cx)
+            table.insert(verts, cy)
+        end
+
+        for i = segments, 0, -1 do
+            local t  = i / segments
+            local cx = x - halfW + w * t
+            local cy = y + halfH
+            table.insert(verts, cx)
+            table.insert(verts, cy)
+        end
+    elseif direction == "vertical" then
+        -----------------------------------------------------------
+        -- VERTICAL RIBBON
+        -- Top → Bottom on left side, then Bottom → Top on right side
+        -----------------------------------------------------------
+
+        -- LEFT EDGE: top -> bottom
+        for i = 0, segments do
+            local t  = i / segments
+            local cx = x - halfW
+            local cy = y - halfH + h * t
+            table.insert(verts, cx)
+            table.insert(verts, cy)
+        end
+
+        -- RIGHT EDGE: bottom -> top
+        for i = segments, 0, -1 do
+            local t  = i / segments
+            local cx = x + halfW
+            local cy = y - halfH + h * t
+            table.insert(verts, cx)
+            table.insert(verts, cy)
+        end
+    else
+        error("Invalid ribbon direction: " .. tostring(direction))
+    end
+
+    return verts
+end
+local function ribbonOLD(w, h, x, y, segments)
+    segments = segments or 4 -- how many slices along the length
+    local halfW = w / 2
+    local halfH = h / 2
+
+    local verts = {}
+
+    -- TOP EDGE: left -> right
+    for i = 0, segments do
+        local t  = i / segments
+        local cx = x - halfW + w * t
+        local cy = y - halfH -- top y
+        table.insert(verts, cx)
+        table.insert(verts, cy)
+    end
+
+    -- BOTTOM EDGE: right -> left
+    for i = segments, 0, -1 do
+        local t  = i / segments
+        local cx = x - halfW + w * t
+        local cy = y + halfH -- bottom y
+        table.insert(verts, cx)
+        table.insert(verts, cy)
+    end
+
+    return verts
+end
+
+-- local function ribbon(w, h, x, y, segments)
+--     segments = segments or 4 -- default: 4 subdivisions
+--     local halfW = w / 2
+--     local halfH = h / 2
+
+--     -- centerline goes from (x - halfW, y) to (x + halfW, y)
+--     local top = {}
+--     local bottom = {}
+
+--     for i = 0, segments do
+--         local t = i / segments
+--         local cx = x - halfW + w * t
+--         local cy = y
+
+--         -- top edge (say “above” the centerline)
+--         table.insert(top, cx)
+--         table.insert(top, cy - halfH)
+
+--         -- bottom edge
+--         table.insert(bottom, cx)
+--         table.insert(bottom, cy + halfH)
+--     end
+
+--     -- build polygon: all top points left→right, then bottom points right→left
+--     local verts = {}
+
+--     -- top edge in forward order
+--     for i = 1, #top do
+--         table.insert(verts, top[i])
+--     end
+
+--     -- bottom edge in reverse order
+--     for i = #bottom, 1, -2 do
+--         -- note: bottom is [x1,y1, x2,y2,...], so step by 2 backwards
+--         local yb = bottom[i]
+--         local xb = bottom[i - 1]
+--         table.insert(verts, xb)
+--         table.insert(verts, yb)
+--     end
+
+--     return verts
+-- end
 
 local function rect(w, h, x, y)
     return {
@@ -96,9 +224,58 @@ local function makeITriangle(w, h, x, y)
         x, y - h / 2
     }
 end
+local function cross(x1, y1, x2, y2, x3, y3)
+    return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
+end
 
-function shapes.makeTrianglesFromPolygon(polygon)
-    --   logger:trace()
+
+local function triangulatePolygonWithInternalPoints(outline, internalPoints)
+    -- Step 1: triangulate outline
+    local triangles = shapes.makeTrianglesFromPolygon(outline)
+
+    -- Step 2: insert each internal point
+    for _, p in ipairs(internalPoints) do
+        local px, py = p[1], p[2]
+
+        for i, t in ipairs(triangles) do
+            local ax, ay = t[1], t[2]
+            local bx, by = t[3], t[4]
+            local cx, cy = t[5], t[6]
+
+            if pointInTriangle(px, py, ax, ay, bx, by, cx, cy) then
+                splitTriangle(triangles, i, px, py)
+                break -- go to next point once we split
+            end
+        end
+    end
+
+    return triangles
+end
+local function sign(px, py, ax, ay, bx, by)
+    return (px - bx) * (ay - by) - (ax - bx) * (py - by)
+end
+
+local function pointInTriangle(px, py, ax, ay, bx, by, cx, cy)
+    local b1 = sign(px, py, ax, ay, bx, by) < 0
+    local b2 = sign(px, py, bx, by, cx, cy) < 0
+    local b3 = sign(px, py, cx, cy, ax, ay) < 0
+    return (b1 == b2) and (b2 == b3)
+end
+local function splitTriangle(tris, triIndex, px, py)
+    local t = tris[triIndex]
+    local ax, ay = t[1], t[2]
+    local bx, by = t[3], t[4]
+    local cx, cy = t[5], t[6]
+
+    -- Replace original triangle with one of the new ones
+    tris[triIndex] = { ax, ay, bx, by, px, py }
+
+    -- Add the other two
+    table.insert(tris, { bx, by, cx, cy, px, py })
+    table.insert(tris, { cx, cy, ax, ay, px, py })
+end
+function shapes.makeTrianglesFromPolygon(polygon, internalPoints)
+    --logger:trace()
     -- when this is true we also solve, self intersecting and everythign
     local triangles = {}
     local result = {}
@@ -119,6 +296,25 @@ function shapes.makeTrianglesFromPolygon(polygon)
             logger:error("Failed to triangulate part of the polygon: " .. tris)
         end
     end
+    -- internalPoints = { { 100, 100 }, { 0, 0 } }
+    -- if internalPoints then
+    --     -- Step 2: insert each internal point
+    --     for _, p in ipairs(internalPoints) do
+    --         local px, py = p[1], p[2]
+
+    --         for i, t in ipairs(triangles) do
+    --             local ax, ay = t[1], t[2]
+    --             local bx, by = t[3], t[4]
+    --             local cx, cy = t[5], t[6]
+
+    --             if pointInTriangle(px, py, ax, ay, bx, by, cx, cy) then
+    --                 splitTriangle(triangles, i, px, py)
+    --                 print('splitted!')
+    --                 break -- go to next point once we split
+    --             end
+    --         end
+    --     end
+    -- end
     return triangles
 end
 
@@ -216,6 +412,61 @@ end
 
 
 
+local function triangulateRibbon(vertices)
+    -- number of (x,y) points
+    local count = #vertices / 2
+    assert(count % 2 == 0, "Ribbon polygon must have equal number of top and bottom points")
+
+    local perEdge = count / 2 -- number of points on top (and bottom)
+
+    -- build top[] and bottom[] as left->right
+    local top     = {}
+    local bottom  = {}
+
+    -- top: first half, already left -> right
+    for i = 1, perEdge do
+        local x = vertices[2 * i - 1]
+        local y = vertices[2 * i]
+        top[i] = { x, y }
+    end
+
+    -- bottom: second half is right -> left in the polygon;
+    -- we flip it to left -> right here.
+    for k = 1, perEdge do
+        local idx               = perEdge + k -- polygon index
+        local x                 = vertices[2 * idx - 1]
+        local y                 = vertices[2 * idx]
+        bottom[perEdge - k + 1] = { x, y }
+    end
+
+    local triangles = {}
+
+    -- for each quad strip between i and i+1, make 2 triangles
+    for i = 1, perEdge - 1 do
+        local t1 = top[i]
+        local t2 = top[i + 1]
+        local b1 = bottom[i]
+        local b2 = bottom[i + 1]
+
+        -- Quad: t1 - t2 - b2 - b1
+        -- Triangle 1: t1, b1, t2
+        table.insert(triangles, {
+            t1[1], t1[2],
+            b1[1], b1[2],
+            t2[1], t2[2],
+        })
+
+        -- Triangle 2: t2, b1, b2
+        table.insert(triangles, {
+            t2[1], t2[2],
+            b1[1], b1[2],
+            b2[1], b2[2],
+        })
+    end
+
+    return triangles
+end
+
 
 function shapes.createShape(shapeType, settings)
     if (settings.radius == 0) then settings.radius = 1 end
@@ -254,6 +505,36 @@ function shapes.createShape(shapeType, settings)
 
         shapesList = makeShapeListFromPolygon(vertices) or {}
         -- logger:info('lets start to make a thingie', inspect(settings))
+    elseif shapeType == 'ribbon' then
+        --logger:info('todo ribbon')
+        print(inspect(settings))
+        vertices = settings.optionalVertices or ribbon(settings.width, settings.height * 10, 0, 0, 5, 'vertical')
+        local tris = triangulateRibbon(vertices)
+        -- print(inspect(tris))
+
+
+        local centroidX, centroidY = mathutils.computeCentroid(vertices)
+        print(centroidX)
+        for _, triangle in ipairs(tris) do
+            -- Adjust triangle vertices relative to body position
+            local localVertices = {}
+            for i = 1, #triangle, 2 do
+                local x = triangle[i] - centroidX
+                local y = triangle[i + 1] - centroidY
+                table.insert(localVertices, x)
+                table.insert(localVertices, y)
+            end
+
+            local shapeSuccess, shape = pcall(love.physics.newPolygonShape, localVertices)
+            if shapeSuccess then
+                table.insert(shapesList, shape)
+            else
+                logger:error("Failed to create shape for triangle: " .. shape)
+            end
+        end
+
+        --shapesList = makeShapeListFromPolygon(vertices) or {}
+        --table.insert(shapesList, love.physics.newRectangleShape(settings.width, settings.height))
     else
         local sides = ({
             triangle = 3,

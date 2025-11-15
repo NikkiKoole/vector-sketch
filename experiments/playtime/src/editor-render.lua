@@ -96,9 +96,13 @@ function lib.renderActiveEditorThings()
 
 
     -- draw mousehandlers for dragging vertices
-    if state.polyEdit.tempVerts and state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' and state.polyEdit.lockedVerts == false then
+    local rightShape = state.selection.selectedObj and
+        (state.selection.selectedObj.shapeType == 'custom' or state.selection.selectedObj.shapeType == 'ribbon')
+    if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
+        --print(state.polyEdit.centroid.x)
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
+
 
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
