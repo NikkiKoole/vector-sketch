@@ -13,6 +13,7 @@ local snap = require 'src.snap'
 local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
 local polyline = require 'src.polyline'
+
 function lib.finalizePolygonAsSoftSurface()
     if #state.interaction.polyVerts >= 6 then
         local points = state.interaction.polyVerts
@@ -171,15 +172,76 @@ function lib.finalizePolygon()
     return result
 end
 
-function lib.insertCustomPolygonVertex(x, y)
+-- todo , we can refactor the insertCustomPolygonVertex / removeCustomPolygonVertex
+-- they both do roughly the same setup
+function getClosestEdge(x, y)
     local obj = state.selection.selectedObj
     if obj then
         local offx, offy = obj.body:getPosition()
         local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(), state.polyEdit.centroid.x,
             state.polyEdit.centroid.y)
-        -- Find the closest edge index
-        local insertAfterVertexIndex = mathutils.findClosestEdge(state.polyEdit.tempVerts, px, py)
-        mathutils.insertValuesAt(state.polyEdit.tempVerts, insertAfterVertexIndex * 2 + 1, px, py)
+        local result = mathutils.findClosestEdge(state.polyEdit.tempVerts, px, py)
+        return result, px, py
+    end
+end
+
+function lib.insertRibbonPair(x, y)
+    local edge, px, py = getClosestEdge(x, y)
+    --logger:inspect(edge)
+    -- print(#state.polyEdit.tempVerts / 2)
+
+    --print(edge, otherEdge)
+
+    mathutils.insertValuesAt(state.polyEdit.tempVerts, edge * 2 + 1, px, py)
+    local otherEdge   = (#state.polyEdit.tempVerts / 2) - edge
+    local firstHalf   = edge * 2 < #state.polyEdit.tempVerts / 2
+    local indexOffset = firstHalf and 0 or -1
+    local other       = otherEdge + indexOffset
+    local x1          = state.polyEdit.tempVerts[(other - 1) * 2 + 1]
+    local y1          = state.polyEdit.tempVerts[(other - 1) * 2 + 2]
+    local x2          = state.polyEdit.tempVerts[(other) * 2 + 1]
+    local y2          = state.polyEdit.tempVerts[(other) * 2 + 2]
+    local cx          = mathutils.lerp(x1, x2, .5)
+    local cy          = mathutils.lerp(y1, y2, .5)
+
+    mathutils.insertValuesAt(state.polyEdit.tempVerts, (otherEdge + indexOffset) * 2 + 1, cx, cy)
+    return edge, px, py
+end
+
+function lib.removeRibbonPair(x, y)
+    -- todo this is a bit broken. indices arent good
+    local edge, px, py = getClosestEdge(x, y)
+    if edge then
+        local otherEdge             = (#state.polyEdit.tempVerts / 2) - edge
+        local firstHalf             = edge * 2 < #state.polyEdit.tempVerts / 2
+        local indexOffset           = firstHalf and 0 or -1
+        local other                 = otherEdge + indexOffset - 1
+
+        local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
+        local vx                    = state.polyEdit.tempVerts[(edge - 1) * 2 + 1]
+        local vy                    = state.polyEdit.tempVerts[(edge - 1) * 2 + 2]
+        local dx                    = px - vx
+        local dy                    = py - vy
+        local distSq                = dx * dx + dy * dy
+
+        if distSq <= maxDeletionDistanceSq then
+            -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
+            if #state.polyEdit.tempVerts <= 6 then
+                logger:error("Cannot delete vertex: A polygon must have at least three vertices.")
+                -- Optionally, you can restore the removed vertex or prevent deletion
+                return
+            end
+            mathutils.removeVertexAt(state.polyEdit.tempVerts, math.max(edge, other))
+            mathutils.removeVertexAt(state.polyEdit.tempVerts, math.min(edge, other))
+            lib.maybeUpdateCustomPolygonVertices()
+        end
+    end
+end
+
+function lib.insertCustomPolygonVertex(x, y)
+    local edge, px, py = getClosestEdge(x, y)
+    if edge then
+        mathutils.insertValuesAt(state.polyEdit.tempVerts, edge * 2 + 1, px, py)
     end
 end
 
@@ -187,20 +249,17 @@ end
 function lib.removeCustomPolygonVertex(x, y)
     -- Step 1: Convert world coordinates to local coordinates
 
-    local obj = state.selection.selectedObj
-    if obj then
-        local offx, offy = obj.body:getPosition()
-        local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
-            state.polyEdit.centroid.x, state.polyEdit.centroid.y)
 
+    local edge, px, py = getClosestEdge(x, y)
+    if edge then
         -- Step 2: Find the closest vertex index
-        local closestVertexIndex = mathutils.findClosestVertex(state.polyEdit.tempVerts, px, py)
+        --local closestVertexIndex = mathutils.findClosestVertex(state.polyEdit.tempVerts, px, py)
 
-        if closestVertexIndex then
+        if edge then
             -- Optional: Define a maximum allowable distance to consider for deletion
             local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
-            local vx = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 1]
-            local vy = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 2]
+            local vx = state.polyEdit.tempVerts[(edge - 1) * 2 + 1]
+            local vy = state.polyEdit.tempVerts[(edge - 1) * 2 + 2]
             local dx = px - vx
             local dy = py - vy
             local distSq = dx * dx + dy * dy
@@ -214,7 +273,8 @@ function lib.removeCustomPolygonVertex(x, y)
                     -- Optionally, you can restore the removed vertex or prevent deletion
                     return
                 end
-                mathutils.removeVertexAt(state.polyEdit.tempVerts, closestVertexIndex)
+                mathutils.removeVertexAt(state.polyEdit.tempVerts, edge)
+
                 lib.maybeUpdateCustomPolygonVertices()
 
                 -- Debugging Output
@@ -225,7 +285,49 @@ function lib.removeCustomPolygonVertex(x, y)
         else
             logger:error("No vertex found to delete.")
         end
+        -- mathutils.insertValuesAt(state.polyEdit.tempVerts, edge * 2 + 1, px, py)
     end
+
+
+    -- local obj = state.selection.selectedObj
+    -- if obj then
+    --     local offx, offy = obj.body:getPosition()
+    --     local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
+    --         state.polyEdit.centroid.x, state.polyEdit.centroid.y)
+
+    --     -- Step 2: Find the closest vertex index
+    --     local closestVertexIndex = mathutils.findClosestVertex(state.polyEdit.tempVerts, px, py)
+
+    --     if closestVertexIndex then
+    --         -- Optional: Define a maximum allowable distance to consider for deletion
+    --         local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
+    --         local vx = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 1]
+    --         local vy = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 2]
+    --         local dx = px - vx
+    --         local dy = py - vy
+    --         local distSq = dx * dx + dy * dy
+
+    --         if distSq <= maxDeletionDistanceSq then
+    --             -- Step 3: Remove the vertex from the vertex list
+
+    --             -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
+    --             if #state.polyEdit.tempVerts <= 6 then
+    --                 logger:error("Cannot delete vertex: A polygon must have at least three vertices.")
+    --                 -- Optionally, you can restore the removed vertex or prevent deletion
+    --                 return
+    --             end
+    --             mathutils.removeVertexAt(state.polyEdit.tempVerts, closestVertexIndex)
+    --             lib.maybeUpdateCustomPolygonVertices()
+
+    --             -- Debugging Output
+    --             logger:info(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
+    --         else
+    --             logger:error("No vertex close enough to delete.")
+    --         end
+    --     else
+    --         logger:error("No vertex found to delete.")
+    --     end
+    -- end
 end
 
 function lib.maybeUpdateCustomPolygonVertices()

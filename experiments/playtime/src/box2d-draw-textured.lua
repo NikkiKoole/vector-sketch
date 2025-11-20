@@ -1014,7 +1014,7 @@ function lib.drawTexturedWorld(world)
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     table.insert(drawables,
                         {
-                            type = 'uvd',
+                            type = 'uvusert',
                             z = composedZ,
                             texfixture = fixtures[i],
                             label = ud.label,
@@ -1255,13 +1255,14 @@ function lib.drawTexturedWorld(world)
                 --end
             end
         end
-        if drawables[i].type == 'uvd' then
+
+        if drawables[i].type == 'uvusert' then
             -- now we need to find a mapping file..
 
             local mappert
             for k, v in pairs(registry.sfixtures) do
                 local ud = v:getUserData()
-                if (drawables[i].label == ud.label and ud.subtype == 'uvmappert') then
+                if (drawables[i].label == ud.label and ud.subtype == 'resource') then
                     mappert = v
                 end
             end
@@ -1357,7 +1358,7 @@ function lib.drawTexturedWorld(world)
             -- local findLabel = drawables[i].label
             -- for k, v in pairs(registry.sfixtures) do
             --     local ud = v:getUserData()
-            --     if (findLabel == ud.label and ud.subtype == 'uvmappert') then
+            --     if (findLabel == ud.label and ud.subtype == 'resource') then
             --         --   print('fount the uvmappert for me.', findLabel)
             --         -- this needs to have th euvdata and point me to the right bg image
             --         --
@@ -1396,7 +1397,6 @@ function lib.drawTexturedWorld(world)
             -- end
             --            print('uv rendering galore!')
         end
-
 
         if drawables[i].type == 'connected-texture' then
             local curve = drawables[i].curve
@@ -1515,7 +1515,6 @@ function lib.drawTexturedWorld(world)
                 love.graphics.draw(drawables[i].extra._mesh, body:getX(), body:getY(), body:getAngle())
             end
         end
-
 
         if drawables[i].type == 'trace-vertices' then
             local length = (#drawables[i].thing.vertices) / 2

@@ -1202,6 +1202,10 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
     return weights
 end
 
+function lib.lerp(a, b, t)
+    return a + (b - a) * t
+end
+
 function lib.repositionPointUsingWeights(weights, newPolygon)
     local newX, newY = 0, 0
     local n = #newPolygon / 2

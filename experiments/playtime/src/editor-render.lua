@@ -48,7 +48,7 @@ function lib.renderActiveEditorThings()
 
     if state.selection.selectedSFixture then
         local ud = state.selection.selectedSFixture:getUserData()
-        if false and ud.subtype == 'uvmappert' then
+        if false and ud.subtype == 'resource' then
             -- print('jojo!')
             local bod = state.selection.selectedSFixture:getBody()
             local bud = bod:getUserData()

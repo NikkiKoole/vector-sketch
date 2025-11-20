@@ -211,12 +211,12 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
         registry.registerSFixture(setId, fixture)
         return fixture
     end
-    if (subtype == 'uvmappert') then
+    if (subtype == 'resource') then
         local shape = love.physics.newPolygonShape(rect(cfg.radius or 20, cfg.radius or 20, localX, localY))
         local fixture = love.physics.newFixture(body, shape)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = 'uvmappert', id = setId, label = '', extra = {} })
+        fixture:setUserData({ type = "sfixture", subtype = 'resource', id = setId, label = '', extra = {} })
         registry.registerSFixture(setId, fixture)
         return fixture
     end

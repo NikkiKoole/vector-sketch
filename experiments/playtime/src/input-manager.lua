@@ -571,16 +571,34 @@ function lib.handleKeyPressed(key)
     end
     if key == 'i' and state.polyEdit.tempVerts then
         -- figure out where my mousecursor is, between what nodes?
-        local mx, my = love.mouse.getPosition()
-        local wx, wy = cam:getWorldCoordinates(mx, my)
-        objectManager.insertCustomPolygonVertex(wx, wy)
-        objectManager.maybeUpdateCustomPolygonVertices()
+
+        if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'ribbon' then
+            -- logger:inspect(state.selection.selectedObj)
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            objectManager.insertRibbonPair(wx, wy)
+            objectManager.maybeUpdateCustomPolygonVertices()
+        else
+            -- print(inspect(state.polyEdit))
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            objectManager.insertCustomPolygonVertex(wx, wy)
+            objectManager.maybeUpdateCustomPolygonVertices()
+        end
     end
     if key == 'd' and state.polyEdit.tempVerts then
         -- Remove a vertex
-        local mx, my = love.mouse.getPosition()
-        local wx, wy = cam:getWorldCoordinates(mx, my)
-        objectManager.removeCustomPolygonVertex(wx, wy)
+        if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'ribbon' then
+            --logger:inspect(state.selection.selectedObj)
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            objectManager.removeRibbonPair(wx, wy)
+            objectManager.maybeUpdateCustomPolygonVertices()
+        else
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            objectManager.removeCustomPolygonVertex(wx, wy)
+        end
     end
 end
 

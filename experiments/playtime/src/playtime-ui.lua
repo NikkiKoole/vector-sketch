@@ -696,7 +696,7 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
         handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
         handleFixtureButton(x, y, width, 'uvusert', 'uvusert')
-        handleFixtureButton(x, y, width, 'uvmappert', 'uvmappert')
+        handleFixtureButton(x, y, width, 'resource', 'resource')
         if ui.button(x, y, width, 'auto-ropify') then
             -- todo make this work
             state.currentMode = 'pickAutoRopifyMode'
@@ -1491,7 +1491,7 @@ function lib.drawSelectedSFixture()
                 handlePaletteAndHex(myID, 'patch3tint', x, y, 100, oldTexFixUD.extra.patch3.tint,
                     function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
-        elseif ud.subtype == 'uvmappert' then
+        elseif ud.subtype == 'resource' then
             local selectedIndex = 1
             if #state.backdrops then
                 local numericInputText, dirty = ui.textinput(myID .. 'backdropindex', x, y, 120, BUTTON_HEIGHT, ".",
@@ -2830,7 +2830,7 @@ function lib.drawUI()
                 --logger:inspect(thing)
                 -- local body =
                 if thing and thing.body then
-                    local fixture = fixtures.createSFixture(thing.body, 0, 0, 'uvmappert',
+                    local fixture = fixtures.createSFixture(thing.body, 0, 0, 'resource',
                         { width = 20, height = 20 })
                 end
                 --objectManager.finalizePolygonAsSoftSurface()

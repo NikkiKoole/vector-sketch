@@ -144,7 +144,7 @@ function love.load(args)
     local cwd = love.filesystem.getWorkingDirectory()
     -- sceneLoader.loadScene(cwd .. '/scripts/snap2.playtime.json')
     --sceneLoader.loadScriptAndScene('water')
-    sceneLoader.loadScene(cwd .. '/scripts/uvs.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/resources.playtime.json')
 
     --loadScriptAndScene('elasto')
     --sceneLoader.loadScriptAndScene('water')
