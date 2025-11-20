@@ -506,15 +506,11 @@ function shapes.createShape(shapeType, settings)
         shapesList = makeShapeListFromPolygon(vertices) or {}
         -- logger:info('lets start to make a thingie', inspect(settings))
     elseif shapeType == 'ribbon' then
-        --logger:info('todo ribbon')
-        print(inspect(settings))
         vertices = settings.optionalVertices or ribbon(settings.width, settings.height * 10, 0, 0, 5, 'vertical')
         local tris = triangulateRibbon(vertices)
-        -- print(inspect(tris))
 
 
         local centroidX, centroidY = mathutils.computeCentroid(vertices)
-        print(centroidX)
         for _, triangle in ipairs(tris) do
             -- Adjust triangle vertices relative to body position
             local localVertices = {}

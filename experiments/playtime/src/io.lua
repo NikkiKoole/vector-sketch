@@ -746,7 +746,7 @@ function lib.cloneSelection(selectedBodies, world)
                         end
 
                         newFixture:setUserData(oldUD)
-                        print('jozers')
+                        --print('jozers')
 
                         newFixture:setSensor(oldF:isSensor())
 

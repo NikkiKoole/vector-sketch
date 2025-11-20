@@ -1114,7 +1114,7 @@ local function makePart(partName, instance, settings)
 
     local ownOffsetX, ownOffsetY = getOwnOffset(partName, instance)
     local xangle = getAngleOffset(partName, instance)
-    -- print(partName, xangle)
+
     -- Rotate own offset into parent space
     local rotatedOwnX, rotatedOwnY = mathutils.rotatePoint(ownOffsetX, ownOffsetY, 0, 0, prevA + xangle)
 
@@ -1333,7 +1333,7 @@ function lib.rebuildFromCreation(instance, newCreation)
     instance.parts = {}
     instance.joints = {}
     instance.textures = {}
-    print(instance.scale)
+    --print(instance.scale)
     lib.createCharacterFromExistingDNA(instance, torsoX, torsoY, torsoAngle)
 
     applyPoseCache(instance, poseCache)

@@ -169,7 +169,7 @@ lib.unloosenVanillalineOLD = function(points, tension, spacing)
     -- its a heavy hot looped
     -- also unneeded, atleast below. if evenlySpreadPatch would not give me packed nodes to begin with
     --logger:inspect(points)
-    --print(tension, spacing)
+
     local work = unpackNodePoints(points, true)
     local output = {}
     local output2 = {}
@@ -1017,9 +1017,9 @@ function lib.slicePolygon(polygon, p1, p2)
     local intersections = lib.findIntersections(polygon, sliceLine)
 
 
-    for _, inter in ipairs(intersections) do
-        --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
-    end
+    --for _, inter in ipairs(intersections) do
+    --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
+    --end
 
     -- Ensure there are at least two unique intersection points
     if #intersections < 2 then

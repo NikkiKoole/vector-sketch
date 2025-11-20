@@ -209,14 +209,11 @@ function lib.insertRibbonPair(x, y)
 end
 
 function lib.removeRibbonPair(x, y)
-    -- todo this is a bit broken. indices arent good
     local edge, px, py = getClosestEdge(x, y)
     if edge then
         local otherEdge             = (#state.polyEdit.tempVerts / 2) - edge
-        local firstHalf             = edge * 2 < #state.polyEdit.tempVerts / 2
-        local indexOffset           = firstHalf and 0 or -1
-        local other                 = otherEdge + indexOffset - 1
 
+        otherEdge                   = otherEdge + 1
         local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
         local vx                    = state.polyEdit.tempVerts[(edge - 1) * 2 + 1]
         local vy                    = state.polyEdit.tempVerts[(edge - 1) * 2 + 2]
@@ -231,8 +228,9 @@ function lib.removeRibbonPair(x, y)
                 -- Optionally, you can restore the removed vertex or prevent deletion
                 return
             end
-            mathutils.removeVertexAt(state.polyEdit.tempVerts, math.max(edge, other))
-            mathutils.removeVertexAt(state.polyEdit.tempVerts, math.min(edge, other))
+            --            logger:info(edge, otherEdge)
+            mathutils.removeVertexAt(state.polyEdit.tempVerts, math.max(edge, otherEdge))
+            mathutils.removeVertexAt(state.polyEdit.tempVerts, math.min(edge, otherEdge))
             lib.maybeUpdateCustomPolygonVertices()
         end
     end
