@@ -49,10 +49,8 @@ function lib.renderActiveEditorThings()
     if state.selection.selectedSFixture then
         local ud = state.selection.selectedSFixture:getUserData()
         if false and ud.subtype == 'resource' then
-            -- print('jojo!')
             local bod = state.selection.selectedSFixture:getBody()
             local bud = bod:getUserData()
-            --print(bud.thing.body, bod)
             love.graphics.polygon('line', bud.thing.vertices)
             local b = state.backdrops[ud.extra.selectedBGIndex]
             local x1l, y1l = bod:getLocalPoint(b.x, b.y)
@@ -74,7 +72,7 @@ function lib.renderActiveEditorThings()
         else
             love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
         end
-        -- print(inspect(v))
+
         if v.centerBody and not v.centerBody:isDestroyed() then
             local polygon = v:getPoly()
 
@@ -89,7 +87,6 @@ function lib.renderActiveEditorThings()
 
     -- draw to be drawn polygon
     if state.currentMode == 'drawClickMode' or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
-        --print(#state.interaction.polyVerts)
         if (#state.interaction.polyVerts >= 6) then
             love.graphics.polygon('line', state.interaction.polyVerts)
         end
@@ -100,7 +97,6 @@ function lib.renderActiveEditorThings()
     local rightShape = state.selection.selectedObj and
         (state.selection.selectedObj.shapeType == 'custom' or state.selection.selectedObj.shapeType == 'ribbon')
     if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
-        --print(state.polyEdit.centroid.x)
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
 
@@ -139,7 +135,7 @@ function lib.renderActiveEditorThings()
         local isMeta8   = fixtureUD.label == 'meta8'
         local verts     = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
             thing, 0, 0)
-        --print(inspect(verts))
+
         local mx, my    = love.mouse:getPosition()
         local cx, cy    = cam:getWorldCoordinates(mx, my)
         -- logger:inspect(fixtureUD)
