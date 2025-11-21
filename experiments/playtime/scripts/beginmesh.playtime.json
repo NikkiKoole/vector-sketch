@@ -1,16 +1,68 @@
 {
   "joints":[],
   "camera":{
-    "y":325,
-    "x":325,
-    "scale":0.4,
+    "y":323.86363636364,
+    "x":212.5,
+    "scale":0.44,
     "rotation":0
   },
   "version":"1.0",
   "bodies":[{
+      "id":"3hO2Wg",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-12.5,20,-12.5,50,-42.5,50,-42.5,20],
+          "userData":{
+            "label":"mm",
+            "id":"3MIbKx",
+            "type":"sfixture",
+            "subtype":"meshusert",
+            "extra":[]
+          },
+          "sensor":true
+        },{
+          "points":[58.47,-147.25,58.47,147.25,-58.47,147.25,-58.47,-147.25]
+        }],
+      "fixedRotation":false,
+      "vertices":[-58.47,-147.25,58.47,-147.25,58.47,147.25,-58.47,147.25],
+      "mirrorX":1,
+      "position":[120,475.0001],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":"116.94",
+        "height":"294.50"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
       "id":"1zafKx",
       "linearDamping":0,
       "fixtures":[{
+          "points":[17.5,-31.25,17.5,-1.25,-12.5,-1.25,-12.5,-31.25],
+          "userData":{
+            "label":"mm",
+            "id":"3aSuYG",
+            "type":"sfixture",
+            "subtype":"resource",
+            "extra":{
+              "selectedBGIndex":0
+            }
+          },
+          "sensor":true
+        },{
           "points":[85,213.75,-40,226.25,-157.5,118.75]
         },{
           "points":[195,153.75,85,213.75,-157.5,118.75]
@@ -39,36 +91,6 @@
       "dims":[],
       "angle":0,
       "shapeType":"custom",
-      "angularDamping":0,
-      "sharedFixtureData":{
-        "groupIndex":0,
-        "sensor":false,
-        "restitution":0.3,
-        "shapeType":"polygon",
-        "density":1,
-        "friction":0.2
-      },
-      "angularVelocity":0,
-      "mirrorY":1
-    },{
-      "id":"3hO2Wg",
-      "linearDamping":0,
-      "fixtures":[{
-          "points":[-58.47,-147.25,58.47,-147.25,58.47,147.25,-58.47,147.25]
-        }],
-      "fixedRotation":false,
-      "vertices":[-58.47,-147.25,58.47,-147.25,58.47,147.25,-58.47,147.25],
-      "mirrorX":1,
-      "position":[120,475.0001],
-      "linearVelocity":[0,0],
-      "label":"",
-      "bodyType":"dynamic",
-      "dims":{
-        "width":"116.94",
-        "height":"294.50"
-      },
-      "angle":0,
-      "shapeType":"rectangle",
       "angularDamping":0,
       "sharedFixtureData":{
         "groupIndex":0,

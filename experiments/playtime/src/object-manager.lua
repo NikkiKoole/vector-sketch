@@ -97,7 +97,7 @@ end
 
 function lib.finalizePath()
     -- i just want to make a ribbon
-    logger:info(#state.interaction.polyVerts)
+    --logger:info(#state.interaction.polyVerts)
     local result = nil
     local unflat = {}
     for i = 1, #state.interaction.polyVerts, 2 do
@@ -120,8 +120,8 @@ function lib.finalizePath()
     --     return out
     -- end
     -- verts = flattenXY(verts)
-    print('i was using this')
-    print(inspect(state.interaction.polyVerts))
+    --print('i was using this')
+    --print(inspect(state.interaction.polyVerts))
     if #state.interaction.polyVerts >= 6 and #unflat > 2 then
         local verts = polylineRibbon(unflat, 20)
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)

@@ -1281,23 +1281,55 @@ function lib.drawTexturedWorld(world)
             end
             local data = mappert and mappert:getUserData().extra
             if data then
-                --print('found some resource i can use on my meshusert!')
-                --logger:inspect(data)
-                --logger:inspect(mappert:getBody():getUserData())
                 local bodyUD = mappert:getBody():getUserData()
                 local thing = bodyUD.thing
                 local verts = thing.vertices
-                --local body = mappert:getBody()
-                local x, y = body:getPosition()
+
+
+                -- somehow we need to center the vertices.
+                local vx, vy = mathutils.getCenterOfPoints(verts)
+                verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
+                for i = 1, #verts do
+                    verts[i] = verts[i] + love.math.random() * 20 - 10
+                end
+
 
                 local body = drawables[i].body
                 --logger:info(x, y)
-                logger:inspect(verts)
-                love.graphics.push()
-                love.graphics.translate(body:getX(), body:getY())
-                love.graphics.rotate(body:getAngle())
-                love.graphics.polygon("line", verts)
-                love.graphics.pop()
+                --logger:inspect(verts)
+
+                local vertexFormat = {
+                    { "VertexPosition", "float", 2 },
+                    --    { "VertexTexCoord", "float", 2 },
+                    { "VertexColor",    "byte",  4 },
+                }
+                meshVertices = {}
+
+                local tris = shapes.makeTrianglesFromPolygon(verts)
+
+                for j = 1, #tris do
+                    local tri = tris[j]
+                    for k = 0, 2 do
+                        local x = tri[k * 2 + 1]
+                        local y = tri[k * 2 + 2]
+                        table.insert(meshVertices, {
+                            x, y,
+                            -- u, v,
+                            255, 255, 255, .100
+                        })
+                    end
+                end
+
+                local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
+                local bx, by = drawables[i].body:getPosition()
+                local ba = drawables[i].body:getAngle()
+                love.graphics.draw(mesh, bx, by, ba)
+
+                -- love.graphics.push()
+                -- love.graphics.translate(body:getX(), body:getY())
+                -- love.graphics.rotate(body:getAngle())
+                --love.graphics.polygon("line", verts)
+                -- love.graphics.pop()
             end
         end
 

@@ -367,6 +367,24 @@ function lib.getCenterOfPoints(points)
     return tlx + w / 2, tly + h / 2, w, h
 end
 
+function lib.getCenterOfPoints2(points)
+    local tlx = math.huge
+    local tly = math.huge
+    local brx = -math.huge
+    local bry = -math.huge
+    for ip = 1, #points do
+        local p = points[ip]
+        if p.x < tlx then tlx = p.x end
+        if p.y < tly then tly = p.y end
+        if p.x > brx then brx = p.x end
+        if p.y > bry then bry = p.y end
+    end
+    --return tlx, tly, brx, bry
+    local w = brx - tlx
+    local h = bry - tly
+    return tlx + w / 2, tly + h / 2
+end
+
 function lib.getPolygonDimensions(polygon)
     -- Initialize min and max values
     local minX, maxX = math.huge, -math.huge
@@ -386,24 +404,6 @@ function lib.getPolygonDimensions(polygon)
     local height = maxY - minY
 
     return width, height
-end
-
-function lib.getCenterOfPoints2(points)
-    local tlx = math.huge
-    local tly = math.huge
-    local brx = -math.huge
-    local bry = -math.huge
-    for ip = 1, #points do
-        local p = points[ip]
-        if p.x < tlx then tlx = p.x end
-        if p.y < tly then tly = p.y end
-        if p.x > brx then brx = p.x end
-        if p.y > bry then bry = p.y end
-    end
-    --return tlx, tly, brx, bry
-    local w = brx - tlx
-    local h = bry - tly
-    return tlx + w / 2, tly + h / 2
 end
 
 local function getCenterOfShapeFixtures(fixts)
