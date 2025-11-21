@@ -697,6 +697,7 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
         handleFixtureButton(x, y, width, 'uvusert', 'uvusert')
         handleFixtureButton(x, y, width, 'resource', 'resource')
+        handleFixtureButton(x, y, width, 'meshusert', 'meshusert')
         if ui.button(x, y, width, 'auto-ropify') then
             -- todo make this work
             state.currentMode = 'pickAutoRopifyMode'
@@ -1492,10 +1493,12 @@ function lib.drawSelectedSFixture()
                     function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
         elseif ud.subtype == 'resource' then
-            local selectedIndex = 1
+            local selectedIndex = 0
             if #state.backdrops then
-                local numericInputText, dirty = ui.textinput(myID .. 'backdropindex', x, y, 120, BUTTON_HEIGHT, ".",
-                    "" .. (ud.extra.selectedBGIndex or 1),
+                ui.label(x, y, 'backdrop index (for uvmap)')
+                nextRow()
+                local numericInputText, dirty = ui.textinput(myID .. 'backdropindex', x, y, 90, BUTTON_HEIGHT, ".",
+                    "" .. (ud.extra.selectedBGIndex or 0),
                     true)
                 selectedIndex = tonumber(numericInputText)
                 ud.extra.selectedBGIndex = selectedIndex
@@ -1508,13 +1511,7 @@ function lib.drawSelectedSFixture()
                     love.graphics.setColor(1, 1, 0)
                     love.graphics.rectangle('line', x1, y1, x2 - x1, y2 - y1)
                     love.graphics.setColor(1, 1, 1)
-                    --print(inspect(state.selection.selectedSFixture:getUserData()))
 
-
-                    -- love.graphics.push()
-                    -- love.graphics.translate(300, 300)
-
-                    -- now we recenter around 0 the vert of the thing.
                     local bod = state.selection.selectedSFixture:getBody()
                     local bud = bod:getUserData()
                     local centerX, centerY = mathutils.getCenterOfPoints(bud.thing.vertices)
@@ -1525,15 +1522,13 @@ function lib.drawSelectedSFixture()
                         verts[i + 1] = bud.thing.vertices[i + 1] - centerY
                     end
                     -- love.graphics.polygon('line', verts)
-
                     -- now we also draw the backdrop bbox in that space
                     local x1l, y1l = bod:getLocalPoint(b.x, b.y)
                     local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
                     local w, h = x2l - x1l, y2l - y1l
+
                     -- love.graphics.rectangle('line', x1l, y1l, w, h)
-
                     --  love.graphics.pop()
-
 
                     -- vertices assumed to be world-space positions of the poly
                     local function normalizeUVsFromRect(verts, rect)
@@ -1555,16 +1550,11 @@ function lib.drawSelectedSFixture()
                     --logger:inspect(uvs)
                     ud.extra.uvs = uvs
                 end
-
-                nextRow()
             end
 
-
-
-
-            if ui.button(x, y, ROW_WIDTH, 'bind-pose') then
-                logger:info('here we do great stuff')
-                print('first we figure out if we are over a background.')
+            if ui.button(x + 100, y, ROW_WIDTH * 0.75, 'bind-pose') then
+                logger:info('here we do nothing...')
+                --print('first we figure out if we are over a background.')
                 -- lets just persist an index into bg
                 local b = state.selection.selectedSFixture:getBody()
                 local bud = b:getUserData()
@@ -1572,41 +1562,6 @@ function lib.drawSelectedSFixture()
                     local bd = state.backdrops[ud.extra.selectedBGIndex]
                     local verts = bud.thing.vertices
                     -- print(inspect(bd))
-                    local bx, by = b:getX(), b:getY()
-                    for i = 1, #verts, 2 do
-                        local U, V = verts[i] + bx, verts[i + 1] + by
-                        --  print(U, V)
-                    end
-
-                    --print(inspect(verts))
-                    --local x1, y1 = cam:getScreenCoordinates(bd.x, bd.y)
-                    --local x2, y2 = cam:getScreenCoordinates(bd.x + bd.w, bd.y + bd.h)
-
-                    --local x1, y1 = b:getWorldPoint(bd.x, bd.y)
-                    --local x2, y2 = b:getWorldPoint(bd.x + bd.w, bd.y + bd.h)
-                    --print(x1, y1, x2, y2)
-                    --print(inspect(bud.thing.vertices))
-                    --local newrect = { x = x1, y = y1, w = x2 - x1, h = y2 - y1 }
-
-                    -- function normalizeUVs(verts, rect)
-                    --     local t = {}
-                    --     for i = 1, #verts, 2 do
-                    --         --local U = verts[i]
-                    --         --local V = verts[i + 1]
-                    --         --local U, V = b:getWorldPoint(verts[i], verts[i + 1])
-                    --         --local U, V = cam:getScreenCoordinates(U1, V1)
-                    --         local u = (U - rect.x) / rect.w
-                    --         local v = (V - rect.y) / rect.h
-
-                    --         table.insert(t, u)
-                    --         table.insert(t, v)
-                    --     end
-                    --     return t
-                    -- end
-
-                    --local uvs = normalizeUVs(bud.thing.vertices, bd)
-
-                    --print(inspect(uvs))
                 end
 
 
@@ -1614,13 +1569,15 @@ function lib.drawSelectedSFixture()
                 print('we want another thing to show our poly textured')
             end
 
-            if ui.button(x + ROW_WIDTH + 10, y, 100, 'c') then
+            if ui.button(x + ROW_WIDTH + 50, y, 50, 'c') then
                 local body = state.selection.selectedSFixture:getBody()
                 state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                     body:getX(), body:getY())
                 --local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                 --state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
             end
+            nextRow()
+            ui.label(x, y, 'global mesh ftw!')
         else
             drawAccordion('position', function()
                 nextRow()

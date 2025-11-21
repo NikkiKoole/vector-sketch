@@ -1010,6 +1010,19 @@ function lib.drawTexturedWorld(world)
                             thing = body:getUserData().thing
                         })
                 end
+                if ud and ud.subtype == 'meshusert' then
+                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                    table.insert(drawables,
+                        {
+                            type = 'meshusert',
+                            z = composedZ,
+                            texfixture = fixtures[i],
+                            label = ud.label,
+                            extra = ud.extra,
+                            body = body,
+                            thing = body:getUserData().thing
+                        })
+                end
                 if ud and ud.subtype == 'uvusert' then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     table.insert(drawables,
@@ -1253,6 +1266,38 @@ function lib.drawTexturedWorld(world)
                     drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
                 --end
+            end
+        end
+
+        if drawables[i].type == 'meshusert' then
+            -- now we need to find a mapping file..
+
+            local mappert
+            for k, v in pairs(registry.sfixtures) do
+                local ud = v:getUserData()
+                if (#ud.label > 0 and drawables[i].label == ud.label and ud.subtype == 'resource') then
+                    mappert = v
+                end
+            end
+            local data = mappert and mappert:getUserData().extra
+            if data then
+                --print('found some resource i can use on my meshusert!')
+                --logger:inspect(data)
+                --logger:inspect(mappert:getBody():getUserData())
+                local bodyUD = mappert:getBody():getUserData()
+                local thing = bodyUD.thing
+                local verts = thing.vertices
+                --local body = mappert:getBody()
+                local x, y = body:getPosition()
+
+                local body = drawables[i].body
+                --logger:info(x, y)
+                logger:inspect(verts)
+                love.graphics.push()
+                love.graphics.translate(body:getX(), body:getY())
+                love.graphics.rotate(body:getAngle())
+                love.graphics.polygon("line", verts)
+                love.graphics.pop()
             end
         end
 
