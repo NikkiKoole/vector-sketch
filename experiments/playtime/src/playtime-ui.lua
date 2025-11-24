@@ -1492,6 +1492,17 @@ function lib.drawSelectedSFixture()
                 handlePaletteAndHex(myID, 'patch3tint', x, y, 100, oldTexFixUD.extra.patch3.tint,
                     function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
+        elseif ud.subtype == 'meshusert' then
+            logger:inspect(ud)
+            local b = state.selection.selectedSFixture:getBody()
+            local bud = b:getUserData()
+            logger:inspect(bud)
+            -- BIND POSE
+            -- we need a button here to eventually just take a look at all the angles of all the bodies that contain the
+            -- anchors and or joints (the things that decide where the mesh vertices will be)
+            -- because in the render phase i want to take a loook about where all the verts of the mesh
+            -- are in relation to these anchor&joints
+            -- and the only thing significant is the base rotations
         elseif ud.subtype == 'resource' then
             local selectedIndex = 0
             if #state.backdrops then

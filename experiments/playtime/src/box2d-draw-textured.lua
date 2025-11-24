@@ -1051,7 +1051,7 @@ function lib.drawTexturedWorld(world)
                                 table.insert(points, centerX)
                                 table.insert(points, centerY)
                             else
-                                print('issue with finfing achor, id:', it.id)
+                                print('issue with finding achor, id:', it.id)
                             end
                         end
                         if it.type == 'joint' then
@@ -1274,9 +1274,12 @@ function lib.drawTexturedWorld(world)
 
             local mappert
             for k, v in pairs(registry.sfixtures) do
-                local ud = v:getUserData()
-                if (#ud.label > 0 and drawables[i].label == ud.label and ud.subtype == 'resource') then
-                    mappert = v
+                if not v:isDestroyed() then
+                    local ud = v:getUserData()
+
+                    if (#ud.label > 0 and drawables[i].label == ud.label and ud.subtype == 'resource') then
+                        mappert = v
+                    end
                 end
             end
             local data = mappert and mappert:getUserData().extra
@@ -1290,13 +1293,14 @@ function lib.drawTexturedWorld(world)
                 local vx, vy = mathutils.getCenterOfPoints(verts)
                 verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
                 for i = 1, #verts do
-                    verts[i] = verts[i] + love.math.random() * 20 - 10
+                    verts[i] = verts[i] --+ love.math.random() * 20 - 10
                 end
 
 
                 local body = drawables[i].body
                 --logger:info(x, y)
                 --logger:inspect(verts)
+
 
                 local vertexFormat = {
                     { "VertexPosition", "float", 2 },
