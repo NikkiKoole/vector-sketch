@@ -145,7 +145,7 @@ function love.load(args)
     -- sceneLoader.loadScene(cwd .. '/scripts/snap2.playtime.json')
     --sceneLoader.loadScriptAndScene('water')
     -- sceneLoader.loadScene(cwd .. '/scripts/resources.playtime.json')
-    --sceneLoader.loadScene(cwd .. '/scripts/beginmesh.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/beginmesh.playtime.json')
 
     --loadScriptAndScene('elasto')
     --sceneLoader.loadScriptAndScene('water')

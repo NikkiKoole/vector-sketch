@@ -1493,16 +1493,17 @@ function lib.drawSelectedSFixture()
                     function(color) oldTexFixUD.extra.patch3.tint = color end, dirty)
             end)
         elseif ud.subtype == 'meshusert' then
-            logger:inspect(ud)
-            local b = state.selection.selectedSFixture:getBody()
-            local bud = b:getUserData()
-            logger:inspect(bud)
-            -- BIND POSE
-            -- we need a button here to eventually just take a look at all the angles of all the bodies that contain the
-            -- anchors and or joints (the things that decide where the mesh vertices will be)
-            -- because in the render phase i want to take a loook about where all the verts of the mesh
-            -- are in relation to these anchor&joints
-            -- and the only thing significant is the base rotations
+            nextRow()
+            if ui.button(x, y, ROW_WIDTH, 'bind pose') then
+                logger:info('the sfixture', inspect(ud))
+                local b = state.selection.selectedSFixture:getBody()
+                local bud = b:getUserData()
+                logger:info('the body', inspect(bud))
+                -- now we need to walk trough the mesh, look at all the vertices and how they relate to the body
+                -- but really its not the relation to the body but to all relevant anchors/joints
+                -- alos we need a ui to position the mesh/bodies. (to build the base pose)
+                -- maybe we should alos save the base pose, just so we can take a look at is later.
+            end
         elseif ud.subtype == 'resource' then
             local selectedIndex = 0
             if #state.backdrops then
