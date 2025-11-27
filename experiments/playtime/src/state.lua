@@ -1,5 +1,6 @@
 local state = {}
 
+state.positioningMesh = false
 
 state.scene = {
     sceneScript = nil,

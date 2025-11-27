@@ -1282,19 +1282,29 @@ function lib.drawTexturedWorld(world)
                     end
                 end
             end
+
             local data = mappert and mappert:getUserData().extra
             if data then
                 local bodyUD = mappert:getBody():getUserData()
-                local thing = bodyUD.thing
-                local verts = thing.vertices
+                local thing2 = bodyUD.thing
+                local verts = thing2.vertices
 
 
                 -- somehow we need to center the vertices.
                 local vx, vy = mathutils.getCenterOfPoints(verts)
                 verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
-                for i = 1, #verts do
-                    verts[i] = verts[i] --+ love.math.random() * 20 - 10
-                end
+
+                -- maybe here we deal with translate and scale ? (rotation?)
+                local x = drawables[i].extra.meshX or 0
+                local y = drawables[i].extra.meshY or 0
+                --print(x, y)
+                verts = mathutils.transformPolygonPoints(verts, x, y)
+                local sx = drawables[i].extra.scaleX or 1
+                local sy = drawables[i].extra.scaleY or 1
+                verts = mathutils.scalePolygonPoints(verts, sx, sy)
+
+
+                --    local rotation = drawables[i].rotation or 0
 
 
                 local body = drawables[i].body

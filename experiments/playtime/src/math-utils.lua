@@ -320,7 +320,37 @@ lib.unloosenVanillaline = function(points, tension, spacing, samples, closed)
     return out -- flat [x1,y1,x2,y2,...]
 end
 
+function lib.transformPolygonPoints(polygon, offX, offY)
+    -- Calculate the center
 
+
+    -- Shift all points to make them relative to the center
+    local relativePolygon = {}
+    for i = 1, #polygon, 2 do
+        local x = polygon[i] + offX
+        local y = polygon[i + 1] + offY
+        table.insert(relativePolygon, x)
+        table.insert(relativePolygon, y)
+    end
+
+    return relativePolygon
+end
+
+function lib.scalePolygonPoints(polygon, scaleX, scaleY)
+    -- Calculate the center
+
+
+    -- Shift all points to make them relative to the center
+    local relativePolygon = {}
+    for i = 1, #polygon, 2 do
+        local x = polygon[i] * scaleX
+        local y = polygon[i + 1] * scaleY
+        table.insert(relativePolygon, x)
+        table.insert(relativePolygon, y)
+    end
+
+    return relativePolygon
+end
 
 function lib.makePolygonRelativeToCenter(polygon, centerX, centerY)
     -- Calculate the center

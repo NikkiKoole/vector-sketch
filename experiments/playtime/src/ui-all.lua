@@ -433,15 +433,14 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
     -- Draw the button with state-based colors
     if ui.activeElementID == id then
         love.graphics.setColor(theme.button.pressed) -- Pressed state
+    elseif (optionalFillColor) then
+        love.graphics.setColor(optionalFillColor)
     elseif isHover then
-        love.graphics.setColor(theme.button.hover)   -- Hover state
+        love.graphics.setColor(theme.button.hover)
     else
-        if (optionalFillColor) then
-            love.graphics.setColor(optionalFillColor)
-        else
-            love.graphics.setColor(theme.button.default) -- Default state
-        end
+        love.graphics.setColor(theme.button.default) -- Default state
     end
+
     local rxry = 0
     if theme.button.radius > 0 then
         rxry = math.min(width, height) / theme.button.radius

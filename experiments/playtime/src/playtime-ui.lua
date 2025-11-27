@@ -1497,16 +1497,208 @@ function lib.drawSelectedSFixture()
             if ui.button(x, y, ROW_WIDTH, 'add node ' .. (ud.extra.nodes and #ud.extra.nodes or '')) then
                 state.currentMode = 'addNodeToMeshUsert'
             end
+            if ui.button(x + ROW_WIDTH, y, 50, 'x ') then
+                ud.extra.nodes = {}
+            end
             nextRow()
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
-                logger:info('the sfixture', inspect(ud))
+               -- logger:info('the sfixture', inspect(ud))
                 local b = state.selection.selectedSFixture:getBody()
                 local bud = b:getUserData()
-                logger:info('the body', inspect(bud))
+                local label = ud.label or ""
+
+
+                -- todo extract this!!
+                local mappert
+                for k, v in pairs(registry.sfixtures) do
+                    if not v:isDestroyed() then
+                        local ud = v:getUserData()
+
+                        if (#ud.label > 0 and label == ud.label and ud.subtype == 'resource') then
+                            mappert = v
+                        end
+                    end
+                end
+
+
+                function try(verts )
+
+                    -- For each vertex, store its position relative to each node's body
+                    local vertexWeights = {}
+
+                    for vertIdx = 1, #verts, 2 do
+                        local vx, vy = verts[vertIdx], verts[vertIdx + 1]
+                        vertexWeights[vertIdx] = {}
+
+                        -- Loop through all nodes (joints/anchors)
+                        for nodeIdx, node in pairs(ud.extra.nodes or {}) do
+                            local nodeBody = nil
+
+                            if node.type == "joint" then
+                                local joint = registry.getJointByID(node.id)
+                                if joint then
+                                    -- Get one of the bodies from the joint (you might want both)
+                                    local bodyA, bodyB = joint:getBodies()
+                                    nodeBody = bodyA -- or bodyB, depending on your needs
+                                end
+                            elseif node.type == "anchor" then
+                                local anchor = registry.getSFixtureByID(node.id)
+                                if anchor then
+                                    nodeBody = anchor:getBody()
+                                end
+                            end
+
+                            if nodeBody then
+                                -- Convert world-space vertex to this body's local space
+                                local localX, localY = nodeBody:getLocalPoint(vx, vy)
+
+                                vertexWeights[vertIdx][nodeIdx] = {
+                                    x = localX,
+                                    y = localY,
+                                    body = nodeBody -- store reference if needed
+                                }
+
+                                logger:info(string.format("Vertex %d in node %d local space: (%.2f, %.2f)",
+                                    (vertIdx + 1) / 2, nodeIdx, localX, localY))
+                            end
+                        end
+                    end
+                end
+
+                --print(label, mappert)
+                if mappert then
+                    local mb = mappert:getBody()
+                    local mud = mb:getUserData()
+                    --logger:inspect(mud.thing.vertices)
+                    local verts = mud.thing.vertices
+                    --try(verts)
+                    -- if ud.extra.meshX then
+                    --     verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX, ud.extra.meshY or 0)
+                    -- end
+                    -- if ud.extra.meshY then
+                    --     verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX or 0, ud.extra.meshY)
+                    -- end
+                    -- if ud.extra.scaleX then
+                    --     verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX, ud.extra.scaleY or 1)
+                    -- end
+                    -- if ud.extra.scaleY then
+                    --     verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY)
+                    -- end
+                    -- logger:inspect(verts)
+                    -- logger:info(bud.thing.body, b) --same!
+                    logger:inspect(ud)
+                    for i = 1, #verts,2 do
+                        local x, y = verts[i], verts[i+1]
+                        local wx,wy = b:getLocalPoint(x,y)
+                        local px,py = b:getWorldPoint(wx,wy)
+                        logger:info(px, py)
+                     --   local wx,wy = b:getLocalPoint(x,y)
+                        --logger:info(wx, wy)
+                    end
+
+                    -- for i = 1, #verts,2 do
+                    --     local x, y = verts[i], verts[i+1]
+                    --     logger:info(x, y)
+                    -- end
+
+                end
+
+                --print(label)
+               -- logger:inspect(oldTexFixUD)
+              --  local verts = bud.thing.vertices
+
+
+                -- for now lets just walk trough all the verts points (they are in teh local space of b)
+
+
+
+
+
+                --logger:inspect(verts)
+                --                love.graphics.polygon("fill", verts)
+
+                --logger:inspect(oldTexFixUD.extra.nodes)
+
+
+                -- now we will look through the nodes and figure out the position of every vertex point in relation to that.
+
+
+                -- for i = 1, #oldTexFixUD.extra.nodes do
+                --     local node = oldTexFixUD.extra.nodes[i]
+                --     --logger:inspect(node)
+                --     if node.type == "joint" then
+                --         local joint = registry.getJointByID(node.id)
+                --         local x1,y1,x2,y2 = joint:getAnchors()
+
+                --        local wx1,wy1 = b:getWorldPoint(x1,y1)
+                --       -- local wx,wy = b:getLocalPoint(x1,y1)
+                --         logger:info("Joint Point:   ", wx, wy)
+                --         --logger:inspect(body:getWorldPoint(x2,y2))
+
+
+                --     end
+                --     if node.type == "anchor" then
+                --         local anchor = registry.getSFixtureByID(node.id)
+                --         local body = anchor:getBody()
+
+                --       --  logger:info("Anchor ID:", anchor)
+                --         --local ax,ay = body:getPosition()
+                --         --local wx,wy = b:getLocalPoint(ax,ay)
+                --         --logger:info("Anchor Position:", wx, wy)
+                --        -- logger:inspect(anchor)
+                --     end
+                -- end
+
+                -- todo rotation
+
+                -- logger:inspect(verts)
+                -- logger:inspect(ud)
+
+                -- first find the verts
+                --local verts = drawables[i].extra.verts
+
                 -- now we need to walk trough the mesh, look at all the vertices and how they relate to the body
                 -- but really its not the relation to the body but to all relevant anchors/joints
                 -- alos we need a ui to position the mesh/bodies. (to build the base pose)
                 -- maybe we should alos save the base pose, just so we can take a look at is later.
+            end
+
+            -- FUCKIT IMMA MAKE A FEW SLIDERS!
+            -- FUCKIT IMMA MAKE A FEW SLIDERS!
+            -- FUCKIT IMMA MAKE A FEW SLIDERS!
+            -- FUCKIT IMMA MAKE A FEW SLIDERS!
+            -- FUCKIT IMMA MAKE A FEW SLIDERS!
+            -- FUCKIT IMMA MAKE A FEW SLIDERS!
+            --
+
+
+            nextRow()
+            local meshX = ui.sliderWithInput(myID .. ' meshX', x, y, ROW_WIDTH, -300, 300, ud.extra.meshX or 0)
+            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' meshX')
+
+            if meshX then
+                ud.extra.meshX = meshX
+            end
+            nextRow()
+            local meshY = ui.sliderWithInput(myID .. ' meshY', x, y, ROW_WIDTH, -300, 300, ud.extra.meshY or 0)
+            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' meshY')
+
+            if meshY then
+                ud.extra.meshY = meshY
+            end
+            nextRow()
+            local scaleX = ui.sliderWithInput(myID .. ' scaleX', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleX or 1)
+            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' scaleX')
+
+            if scaleX then
+                ud.extra.scaleX = scaleX
+            end
+            nextRow()
+            local scaleY = ui.sliderWithInput(myID .. ' scaleY', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleY or 1)
+            ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' scaleY')
+
+            if scaleY then
+                ud.extra.scaleY = scaleY
             end
         elseif ud.subtype == 'resource' then
             local selectedIndex = 0

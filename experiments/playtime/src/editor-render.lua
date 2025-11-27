@@ -195,6 +195,8 @@ function lib.renderActiveEditorThings()
     end
 
     if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
+        -- maybe show all possible connections on screen
+
         local node = inputmanager.showCloseNode()
 
         if node then
