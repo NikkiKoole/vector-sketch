@@ -146,6 +146,7 @@ function love.load(args)
     --sceneLoader.loadScriptAndScene('water')
     -- sceneLoader.loadScene(cwd .. '/scripts/resources.playtime.json')
     sceneLoader.loadScene(cwd .. '/scripts/beginmesh.playtime.json')
+    -- sceneLoader.loadAndRunScript(cwd .. '/scripts/mesh_test.playtime.lua')
 
     --loadScriptAndScene('elasto')
     --sceneLoader.loadScriptAndScene('water')

@@ -155,12 +155,8 @@ local function handlePointer(x, y, id, action)
             end
         end
 
-        if (state.currentMode == 'addNodeToConnectedTexture') then
+        if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
             -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
-            --
-            --
-            --
-
 
             local closest = nil
             local closestDistanceSquared = math.huge
@@ -492,8 +488,44 @@ function lib.handleTouchReleased(id, x, y, dx, dy, pressure)
     handlePointer(x, y, id, 'released')
 end
 
+function lib.showCloseNode()
+    local mx, my = love.mouse.getPosition()
+    local cx, cy = cam:getWorldCoordinates(mx, my)
+    local closest = nil
+    local closestDistanceSquared = math.huge
+    for _, f in pairs(registry.sfixtures) do
+        local body = f:getBody()
+        local ud = f:getUserData()
+        if ud.label == 'anchor' or ud.subtype == 'anchor' then
+            -- todo this will find ALL sfitures bot just anchors
+            local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
+
+            local d = distanceSquared(centerX, centerY, cx, cy)
+            if d < closestDistanceSquared then
+                closestDistanceSquared = d
+                closest = { centerX, centerY }
+            end
+        end
+    end
+    for _, j in pairs(registry.joints) do
+        local x1, y1, x2, y2 = j:getAnchors()
+        local d = distanceSquared(x1, y1, cx, cy)
+        if d < closestDistanceSquared then
+            closestDistanceSquared = d
+            closest = { x1, y1 }
+        end
+    end
+    if math.sqrt(closestDistanceSquared) < 30 then
+        return closest
+    end
+    return nil
+end
+
 function lib.handleMouseMoved(x, y, dx, dy)
     --print('moved')
+    --
+    --
+
     if state.polyEdit.dragIdx and state.polyEdit.dragIdx > 0 then
         local index = state.polyEdit.dragIdx
         local obj = state.selection.selectedObj

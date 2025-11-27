@@ -8,7 +8,7 @@ local mathutils = require 'src.math-utils'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local utils = require 'src.utils'
-
+local inputmanager = require 'src.input-manager'
 local lib = {}
 
 
@@ -192,6 +192,15 @@ function lib.renderActiveEditorThings()
             return thing.body
         end)
         box2dDraw.drawBodies(bodies)
+    end
+
+    if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
+        local node = inputmanager.showCloseNode()
+
+        if node then
+            --  logger:info(node[1] - 5, node[2] - 5)
+            love.graphics.rectangle('line', node[1] - 5, node[2] - 5, 10, 10)
+        end
     end
 
     -- draw temp poly when changing vertices

@@ -1494,6 +1494,10 @@ function lib.drawSelectedSFixture()
             end)
         elseif ud.subtype == 'meshusert' then
             nextRow()
+            if ui.button(x, y, ROW_WIDTH, 'add node ' .. (ud.extra.nodes and #ud.extra.nodes or '')) then
+                state.currentMode = 'addNodeToMeshUsert'
+            end
+            nextRow()
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
                 logger:info('the sfixture', inspect(ud))
                 local b = state.selection.selectedSFixture:getBody()
@@ -2837,7 +2841,7 @@ function lib.drawUI()
         end)
     end
 
-    if (state.currentMode == 'addNodeToConnectedTexture') then
+    if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
         ui.panel(500, 100, 400, 60, '• click anchor or joint to add ', function()
         end)
     end
