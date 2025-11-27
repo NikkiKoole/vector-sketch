@@ -76,6 +76,9 @@ function ui.init(font, fontHeight)
     ui.mouseWheelDy = 0
     ui.mouseWheelDx = 0
     ui.overPanel = false
+    ui.lastClickTime = 0
+    ui.lastClickID = nil
+    ui.doubleClickThreshold = 0.3 -- seconds
 end
 
 --- Resets UI state at the start of each frame.

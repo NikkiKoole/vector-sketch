@@ -350,18 +350,37 @@ return function(ui)
         -- Handle focus and cursor positioning
         if ui.mousePressed then
             if isHover then
+                -- Check for double-click
+                local currentTime = love.timer.getTime()
+                local isDoubleClick = false
+                
+                if ui.lastClickID == id and (currentTime - ui.lastClickTime) < ui.doubleClickThreshold then
+                    isDoubleClick = true
+                end
+                
+                ui.lastClickTime = currentTime
+                ui.lastClickID = id
+                
                 ui.focusedTextInputID = id
 
-                local relativeX = ui.mouseX - x - 5 -- Subtracting padding
-                local relativeY = ui.mouseY - y
-                local lineIndex = math.floor(relativeY / ui.font:getHeight()) + 1
-                lineIndex = math.max(1, math.min(lineIndex, #state.lines))
-                local lineText = state.lines[lineIndex]
-                local charIndex = ui.calculateCursorPositionInLine(lineText, relativeX)
-                state.cursorPosition = { line = lineIndex, char = charIndex }
-                state.selectionStart = { line = lineIndex, char = charIndex }
-                state.selectionEnd = { line = lineIndex, char = charIndex }
-                state.isSelecting = true
+                if isDoubleClick then
+                    -- Select all text on double-click
+                    state.selectionStart = { line = 1, char = 0 }
+                    state.selectionEnd = { line = #state.lines, char = #state.lines[#state.lines] }
+                    state.cursorPosition = { line = #state.lines, char = #state.lines[#state.lines] }
+                else
+                    -- Single click - position cursor
+                    local relativeX = ui.mouseX - x - 5 -- Subtracting padding
+                    local relativeY = ui.mouseY - y
+                    local lineIndex = math.floor(relativeY / ui.font:getHeight()) + 1
+                    lineIndex = math.max(1, math.min(lineIndex, #state.lines))
+                    local lineText = state.lines[lineIndex]
+                    local charIndex = ui.calculateCursorPositionInLine(lineText, relativeX)
+                    state.cursorPosition = { line = lineIndex, char = charIndex }
+                    state.selectionStart = { line = lineIndex, char = charIndex }
+                    state.selectionEnd = { line = lineIndex, char = charIndex }
+                    state.isSelecting = true
+                end
             else
                 if ui.focusedTextInputID == id then
                     ui.focusedTextInputID = nil
