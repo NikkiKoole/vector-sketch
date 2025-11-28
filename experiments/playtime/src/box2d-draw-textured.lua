@@ -1318,7 +1318,7 @@ function lib.drawTexturedWorld(world)
                     { "VertexColor",    "byte",  4 },
                 }
                 meshVertices = {}
-
+                --logger:inspect(verts)
                 local tris = shapes.makeTrianglesFromPolygon(verts)
 
                 for j = 1, #tris do
