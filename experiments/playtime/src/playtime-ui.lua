@@ -1576,9 +1576,16 @@ function lib.drawSelectedSFixture()
                     local verts = mud.thing.vertices -- this is the original mesh.
 
 
-
+                    logger:info("**")
 
                     --try(verts)
+
+                    -- logger:inspect(verts)
+                    -- logger:info(bud.thing.body, b) --same!
+                    -- logger:inspect(ud)
+
+
+
                     -- if ud.extra.meshX then
                     --     verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX, ud.extra.meshY or 0)
                     -- end
@@ -1591,57 +1598,59 @@ function lib.drawSelectedSFixture()
                     -- if ud.extra.scaleY then
                     --     verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY)
                     -- end
-                    -- logger:inspect(verts)
-                    -- logger:info(bud.thing.body, b) --same!
-                    -- logger:inspect(ud)
 
                     local vx, vy = mathutils.getCenterOfPoints(verts)
                     verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
-                    print(vx, vy)
+
+                    --print(vx, vy)
 
                     function renderDistances(verts, b, offx, offy)
-
                         for i = 1, #verts, 2 do
                             local x, y = verts[i], verts[i + 1]
                             local px, py = b:getWorldPoint(x, y)
+                            --logger:info(px, py)
                             local wx, wy = b:getLocalPoint(px, py)
-                            logger:info(wx, wy )
+                            --logger:info(px, py, wx, wy)
+                            -- logger:info(wx, wy)
                             local dx = wx - offx
                             local dy = wy - offy
-                            --logger:info( 'distance', math.sqrt((dx * dx) + (dy * dy)))
+                            logger:info('distance', math.sqrt((dx * dx) + (dy * dy)))
                         end
                     end
 
                     -- now i would like to walk through all my joints/anchors
-                    for i = 1, #ud.extra.nodes do
-                        local node = ud.extra.nodes[i]
-                        --logger:inspect(node)
-                        logger:info(i)
-                        if node.type == "joint" then
-                            local joint = registry.getJointByID(node.id)
-                            local x1, y1, x2, y2 = joint:getAnchors()
-                            -- local wx1, wy1 = b:getWorldPoint(x1, y1)
-                            local wx, wy = b:getLocalPoint(x1, y1)
-                            logger:info(b, "Joint Point:   ", wx, wy)
-                            renderDistances(verts, b, wx, wy)
-                            --logger:inspect(body:getWorldPoint(x2,y2))
-                        end
-                        if node.type == "anchor" then
-                            --local anchor = registry.getSFixtureByID(node.id)
-
-                            local f = registry.getSFixtureByID(node.id)
-                            --local body = anchor:getBody()
-                            if f then
-                                local b = f:getBody()
-                                local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
-                                    :getPoints()) })
-                                --logger:info(b, "Anchor Position:", centerX, centerY)
-                                local wx, wy = b:getLocalPoint(centerX, centerY)
-                                logger:info(b, "Anchor Point2:   ", wx, wy)
-
+                    if ud.extra.nodes then
+                        for i = 1, #ud.extra.nodes do
+                            local node = ud.extra.nodes[i]
+                            --logger:inspect(node)
+                            logger:info(i)
+                            if node.type == "joint" then
+                                local joint = registry.getJointByID(node.id)
+                                local x1, y1, x2, y2 = joint:getAnchors()
+                                -- local wx1, wy1 = b:getWorldPoint(x1, y1)
+                                local wx, wy = b:getLocalPoint(x1, y1)
+                                -- logger:info(x,y1)
+                                logger:info(b, "Joint Point:   ", wx, wy)
                                 renderDistances(verts, b, wx, wy)
-                            else
-                                print('issue with finding achor, id:', node.id)
+                                --logger:inspect(body:getWorldPoint(x2,y2))
+                            end
+                            if node.type == "anchor" then
+                                --local anchor = registry.getSFixtureByID(node.id)
+
+                                local f = registry.getSFixtureByID(node.id)
+                                --local body = anchor:getBody()
+                                if f then
+                                    local b = f:getBody()
+                                    local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                                        :getPoints()) })
+                                    --logger:info(b, "Anchor Position:", centerX, centerY)
+                                    local wx, wy = b:getLocalPoint(centerX, centerY)
+                                    logger:info(b, "Anchor Point2:   ", wx, wy)
+
+                                    renderDistances(verts, b, wx, wy)
+                                else
+                                    print('issue with finding achor, id:', node.id)
+                                end
                             end
                         end
                     end
