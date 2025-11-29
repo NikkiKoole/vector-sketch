@@ -1585,33 +1585,23 @@ function lib.drawSelectedSFixture()
                     -- logger:inspect(ud)
 
 
-
-                    -- if ud.extra.meshX then
-                    --     verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX, ud.extra.meshY or 0)
-                    -- end
-                    -- if ud.extra.meshY then
-                    --     verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX or 0, ud.extra.meshY)
-                    -- end
-                    -- if ud.extra.scaleX then
-                    --     verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX, ud.extra.scaleY or 1)
-                    -- end
-                    -- if ud.extra.scaleY then
-                    --     verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY)
-                    -- end
-
                     local vx, vy = mathutils.getCenterOfPoints(verts)
                     verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
 
+                    if ud.extra.meshX or ud.extra.meshY then
+                        verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX or 0, ud.extra.meshY or 0)
+                    end
+                    if ud.extra.scaleX or ud.extra.scaleY then
+                        verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY or 1)
+                    end
+
                     --print(vx, vy)
 
-                    function renderDistances(verts, b, offx, offy)
+                    function renderDistances(verts, bb, offx, offy)
                         for i = 1, #verts, 2 do
                             local x, y = verts[i], verts[i + 1]
-                            local px, py = b:getWorldPoint(x, y)
-                            --logger:info(px, py)
-                            local wx, wy = b:getLocalPoint(px, py)
-                            --logger:info(px, py, wx, wy)
-                            -- logger:info(wx, wy)
+                            local px, py = bb:getWorldPoint(x, y)
+                            local wx, wy = bb:getLocalPoint(px, py)
                             local dx = wx - offx
                             local dy = wy - offy
                             logger:info('distance', math.sqrt((dx * dx) + (dy * dy)))
@@ -1630,7 +1620,7 @@ function lib.drawSelectedSFixture()
                                 -- local wx1, wy1 = b:getWorldPoint(x1, y1)
                                 local wx, wy = b:getLocalPoint(x1, y1)
                                 -- logger:info(x,y1)
-                                logger:info(b, "Joint Point:   ", wx, wy)
+                                logger:info(b, "Joint pos:   ", wx, wy)
                                 renderDistances(verts, b, wx, wy)
                                 --logger:inspect(body:getWorldPoint(x2,y2))
                             end
@@ -1640,14 +1630,16 @@ function lib.drawSelectedSFixture()
                                 local f = registry.getSFixtureByID(node.id)
                                 --local body = anchor:getBody()
                                 if f then
-                                    local b = f:getBody()
-                                    local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                                    local bp = f:getBody()
+                                    local centerX, centerY = mathutils.getCenterOfPoints({ bp:getWorldPoints(f:getShape()
                                         :getPoints()) })
-                                    --logger:info(b, "Anchor Position:", centerX, centerY)
-                                    local wx, wy = b:getLocalPoint(centerX, centerY)
-                                    logger:info(b, "Anchor Point2:   ", wx, wy)
+                                    --logger:info(bp, "Anchor Position:", centerX, centerY)
+                                    local wx, wy = bp:getLocalPoint(centerX, centerY)
+                                    logger:info(bp, "Anchor pos:   ", wx, wy)
 
-                                    renderDistances(verts, b, wx, wy)
+                                    renderDistances(verts, bp, wx, wy)
+
+                                    --renderDistances(verts, b, wx, wy)
                                 else
                                     print('issue with finding achor, id:', node.id)
                                 end

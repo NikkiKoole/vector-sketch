@@ -1293,14 +1293,14 @@ function lib.drawTexturedWorld(world)
                 local vx, vy = mathutils.getCenterOfPoints(verts)
                 verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
 
-                -- -- maybe here we deal with translate and scale ? (rotation?)
-                -- local x = drawables[i].extra.meshX or 0
-                -- local y = drawables[i].extra.meshY or 0
-                -- --print(x, y)
-                -- verts = mathutils.transformPolygonPoints(verts, x, y)
-                -- local sx = drawables[i].extra.scaleX or 1
-                -- local sy = drawables[i].extra.scaleY or 1
-                -- verts = mathutils.scalePolygonPoints(verts, sx, sy)
+                -- maybe here we deal with translate and scale ? (rotation?)
+                local x = drawables[i].extra.meshX or 0
+                local y = drawables[i].extra.meshY or 0
+                --print(x, y)
+                verts = mathutils.transformPolygonPoints(verts, x, y)
+                local sx = drawables[i].extra.scaleX or 1
+                local sy = drawables[i].extra.scaleY or 1
+                verts = mathutils.scalePolygonPoints(verts, sx, sy)
 
 
                 --    local rotation = drawables[i].rotation or 0
