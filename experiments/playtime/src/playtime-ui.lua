@@ -1595,7 +1595,8 @@ function lib.drawSelectedSFixture()
                         verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY or 1)
                     end
 
-                    --print(vx, vy)
+
+
 
                     function renderDistances(verts, bb, offx, offy)
                         for i = 1, #verts, 2 do
@@ -1604,7 +1605,7 @@ function lib.drawSelectedSFixture()
                             local wx, wy = bb:getLocalPoint(px, py)
                             local dx = wx - offx
                             local dy = wy - offy
-                            logger:info('distance', math.sqrt((dx * dx) + (dy * dy)))
+                            logger:info('distance', math.sqrt((dx * dx) + (dy * dy)), '--', dx, dy)
                         end
                     end
 
