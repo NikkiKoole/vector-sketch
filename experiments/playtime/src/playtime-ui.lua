@@ -1521,72 +1521,14 @@ function lib.drawSelectedSFixture()
                 end
 
 
-                function try(verts)
-                    -- For each vertex, store its position relative to each node's body
-                    local vertexWeights = {}
-
-                    for vertIdx = 1, #verts, 2 do
-                        local vx, vy = verts[vertIdx], verts[vertIdx + 1]
-                        vertexWeights[vertIdx] = {}
-
-                        -- Loop through all nodes (joints/anchors)
-                        for nodeIdx, node in pairs(ud.extra.nodes or {}) do
-                            local nodeBody = nil
-
-                            if node.type == "joint" then
-                                local joint = registry.getJointByID(node.id)
-                                if joint then
-                                    -- Get one of the bodies from the joint (you might want both)
-                                    local bodyA, bodyB = joint:getBodies()
-                                    nodeBody = bodyA -- or bodyB, depending on your needs
-                                end
-                            elseif node.type == "anchor" then
-                                local anchor = registry.getSFixtureByID(node.id)
-                                if anchor then
-                                    nodeBody = anchor:getBody()
-                                end
-                            end
-
-                            if nodeBody then
-                                -- Convert world-space vertex to this body's local space
-                                local localX, localY = nodeBody:getLocalPoint(vx, vy)
-
-                                vertexWeights[vertIdx][nodeIdx] = {
-                                    x = localX,
-                                    y = localY,
-                                    body = nodeBody -- store reference if needed
-                                }
-
-                                logger:info(string.format("Vertex %d in node %d local space: (%.2f, %.2f)",
-                                    (vertIdx + 1) / 2, nodeIdx, localX, localY))
-                            end
-                        end
-                    end
-                end
 
                 --print(label, mappert)
                 if mappert then
-                    --  logger:inspect(b)
-                    --logger:inspect(bud.thing)      -- this is the thing on which the sfixture was added
-                    --logger:info(bud.thing.body, b) -- the same thing
-                    --logger:inspect(ud)
-                    local mb = mappert:getBody() -- mappert is a thing completelly outside of my body, its justa aplce where the mesh is stored.
+                    local mb = mappert:getBody()     -- mappert is a thing completelly outside of my body, its justa aplce where the mesh is stored.
                     local mud = mb:getUserData()
-                    --logger:inspect(mud.thing.vertices)
                     local verts = mud.thing.vertices -- this is the original mesh.
 
-
-
-
-
                     logger:info("**")
-
-                    --try(verts)
-
-                    -- logger:inspect(verts)
-                    -- logger:info(bud.thing.body, b) --same!
-                    -- logger:inspect(ud)
-
 
                     local vx, vy = mathutils.getCenterOfPoints(verts)
                     verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
@@ -1597,8 +1539,6 @@ function lib.drawSelectedSFixture()
                     if ud.extra.scaleX or ud.extra.scaleY then
                         verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY or 1)
                     end
-
-
                     -- convert LOCAL verts -> WORLD verts
                     local function vertsToWorld(body, verts)
                         local out = {}
@@ -1635,39 +1575,26 @@ function lib.drawSelectedSFixture()
                                 local joint = registry.getJointByID(node.id)
                                 local x1, y1, x2, y2 = joint:getAnchors()
                                 logger:info('joint', x1, y1, x2, y2)
+
                                 local bodyA, bodyB = joint:getBodies()
                                 local lx, ly = bodyA:getLocalPoint(x1, y1)
                                 logger:info('joint, local point', lx, ly)
-                                renderDistances(verts,bodyA, lx, ly )
-                                -- local wx1, wy1 = b:getWorldPoint(x1, y1)
-                                -- local wx, wy = b:getLocalPoint(x1, y1)
-                                -- logger:info(x,y1)
-                                --logger:info(b, "Joint pos:   ", wx, wy)
-                                --renderDistances(verts, b, wx, wy)
-                                --logger:inspect(body:getWorldPoint(x2,y2))
+                                renderDistances(verts, bodyA, lx, ly)
                             end
                             if node.type == "anchor" then
                                 --local anchor = registry.getSFixtureByID(node.id)
 
                                 local f = registry.getSFixtureByID(node.id)
-                                --local body = anchor:getBody()
+
                                 if f then
                                     local bp = f:getBody()
                                     local centerX, centerY = mathutils.getCenterOfPoints({ bp:getWorldPoints(f:getShape()
                                         :getPoints()) })
                                     logger:info('anchor', centerX, centerY)
 
-
                                     local lx, ly = bp:getLocalPoint(centerX, centerY)
                                     logger:info('anchor, local point', lx, ly)
-                                    renderDistances(verts,bp, lx, ly )
-                                    --logger:info(bp, "Anchor Position:", centerX, centerY)
-                                    --local wx, wy = bp:getLocalPoint(centerX, centerY)
-                                    --logger:info(bp, "Anchor pos:   ", wx, wy)
-
-                                    --renderDistances(verts, bp, wx, wy)
-
-                                    --renderDistances(verts, b, wx, wy)
+                                    renderDistances(verts, bp, lx, ly)
                                 else
                                     print('issue with finding achor, id:', node.id)
                                 end
