@@ -1544,7 +1544,7 @@ function lib.drawSelectedSFixture()
                         local out = {}
                         for i = 1, #verts, 2 do
                             local lx, ly = verts[i], verts[i + 1]
-                            local wx, wy = b:getWorldPoint(lx, ly)
+                            local wx, wy = body:getWorldPoint(lx, ly)
                             out[#out + 1] = wx
                             out[#out + 1] = wy
                         end
@@ -1578,8 +1578,13 @@ function lib.drawSelectedSFixture()
 
                                 local bodyA, bodyB = joint:getBodies()
                                 local lx, ly = bodyA:getLocalPoint(x1, y1)
-                                logger:info('joint, local point', lx, ly)
+                                logger:info('joint, local pointA', lx, ly)
                                 renderDistances(verts, bodyA, lx, ly)
+
+
+                                local lx2, ly2 = bodyB:getLocalPoint(x2, y2)
+                                logger:info('joint, local pointB', lx2, ly2)
+                                renderDistances(verts, bodyB, lx2, ly2)
                             end
                             if node.type == "anchor" then
                                 --local anchor = registry.getSFixtureByID(node.id)
@@ -1601,6 +1606,11 @@ function lib.drawSelectedSFixture()
                             end
                         end
                     end
+
+
+
+                    -- what is next,
+                    -- i think for every vertex i want to have each distance to the anchor/joint, the dx and dy, and then decide on a weighting variable
                 end
             end
 
