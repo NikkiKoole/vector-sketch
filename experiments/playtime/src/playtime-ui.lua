@@ -1570,10 +1570,13 @@ function lib.drawSelectedSFixture()
                     --logger:inspect(bud.thing)      -- this is the thing on which the sfixture was added
                     --logger:info(bud.thing.body, b) -- the same thing
                     --logger:inspect(ud)
-                    local mb = mappert:getBody()
+                    local mb = mappert:getBody() -- mappert is a thing completelly outside of my body, its justa aplce where the mesh is stored.
                     local mud = mb:getUserData()
                     --logger:inspect(mud.thing.vertices)
                     local verts = mud.thing.vertices -- this is the original mesh.
+
+
+
 
 
                     logger:info("**")
@@ -1596,18 +1599,31 @@ function lib.drawSelectedSFixture()
                     end
 
 
-
-
-                    function renderDistances(verts, bb, offx, offy)
+                    -- convert LOCAL verts -> WORLD verts
+                    local function vertsToWorld(body, verts)
+                        local out = {}
                         for i = 1, #verts, 2 do
-                            local x, y = verts[i], verts[i + 1]
-                            local px, py = bb:getWorldPoint(x, y)
-                            local wx, wy = bb:getLocalPoint(px, py)
-                            local dx = wx - offx
-                            local dy = wy - offy
-                            logger:info('distance', math.sqrt((dx * dx) + (dy * dy)), '--', dx, dy)
+                            local lx, ly = verts[i], verts[i + 1]
+                            local wx, wy = b:getWorldPoint(lx, ly)
+                            out[#out + 1] = wx
+                            out[#out + 1] = wy
                         end
+                        return out
                     end
+
+                    logger:inspect(vertsToWorld(b, verts))
+
+
+                    -- function renderDistances(verts, bb, offx, offy)
+                    --     for i = 1, #verts, 2 do
+                    --         local x, y = verts[i], verts[i + 1]
+                    --         local px, py = bb:getWorldPoint(x, y)
+                    --         local wx, wy = bb:getLocalPoint(px, py)
+                    --         local dx = wx - offx
+                    --         local dy = wy - offy
+                    --         logger:info('distance', math.sqrt((dx * dx) + (dy * dy)), '--', dx, dy)
+                    --     end
+                    -- end
 
                     -- now i would like to walk through all my joints/anchors
                     if ud.extra.nodes then
@@ -1618,11 +1634,12 @@ function lib.drawSelectedSFixture()
                             if node.type == "joint" then
                                 local joint = registry.getJointByID(node.id)
                                 local x1, y1, x2, y2 = joint:getAnchors()
+                                logger:info('joint', x1, y1, x2, y2)
                                 -- local wx1, wy1 = b:getWorldPoint(x1, y1)
-                                local wx, wy = b:getLocalPoint(x1, y1)
+                                -- local wx, wy = b:getLocalPoint(x1, y1)
                                 -- logger:info(x,y1)
-                                logger:info(b, "Joint pos:   ", wx, wy)
-                                renderDistances(verts, b, wx, wy)
+                                --logger:info(b, "Joint pos:   ", wx, wy)
+                                --renderDistances(verts, b, wx, wy)
                                 --logger:inspect(body:getWorldPoint(x2,y2))
                             end
                             if node.type == "anchor" then
@@ -1634,11 +1651,12 @@ function lib.drawSelectedSFixture()
                                     local bp = f:getBody()
                                     local centerX, centerY = mathutils.getCenterOfPoints({ bp:getWorldPoints(f:getShape()
                                         :getPoints()) })
+                                    logger:info('anchor', centerX, centerY)
                                     --logger:info(bp, "Anchor Position:", centerX, centerY)
-                                    local wx, wy = bp:getLocalPoint(centerX, centerY)
-                                    logger:info(bp, "Anchor pos:   ", wx, wy)
+                                    --local wx, wy = bp:getLocalPoint(centerX, centerY)
+                                    --logger:info(bp, "Anchor pos:   ", wx, wy)
 
-                                    renderDistances(verts, bp, wx, wy)
+                                    --renderDistances(verts, bp, wx, wy)
 
                                     --renderDistances(verts, b, wx, wy)
                                 else
