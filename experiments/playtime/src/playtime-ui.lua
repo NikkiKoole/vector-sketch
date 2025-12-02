@@ -1551,6 +1551,147 @@ function lib.drawSelectedSFixture()
                         return out
                     end
 
+                    local function getNodeLocal(node)
+                        if node.type == "joint" then
+                            local joint = registry.getJointByID(node.id)
+                            if not joint then return {} end
+
+                            local x1, y1, x2, y2 = joint:getAnchors() -- world anchors
+                            local bodyA, bodyB = joint:getBodies()
+
+                            -- local positions of each anchor in its own body frame
+                            local ax, ay = bodyA:getLocalPoint(x1, y1)
+                            local bx, by = bodyB:getLocalPoint(x2, y2)
+
+                            return {
+                                {
+                                    body = bodyA,
+                                    offx = ax,
+                                    offy = ay,
+                                    type = "joint",
+                                    id = node.id,
+                                    side = "A",
+                                },
+                                {
+                                    body = bodyB,
+                                    offx = bx,
+                                    offy = by,
+                                    type = "joint",
+                                    id = node.id,
+                                    side = "B",
+                                }
+                            }
+                        end
+
+                        if node.type == "anchor" then
+                            local f = registry.getSFixtureByID(node.id)
+                            if not f then return {} end
+
+                            local bp = f:getBody()
+                            local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
+                            local centerX, centerY = mathutils.getCenterOfPoints(pts)
+
+                            local lx, ly = bp:getLocalPoint(centerX, centerY)
+
+                            return {
+                                {
+                                    body = bp,
+                                    offx = lx,
+                                    offy = ly,
+                                    type = "anchor",
+                                    id = node.id,
+                                }
+                            }
+                        end
+
+                        return {}
+                    end
+                    local function computeInfluences(worldVerts, nodes)
+                        local influences = {}
+                        local numVerts = #worldVerts / 2
+
+                        for vi = 1, numVerts do
+                            local wx = worldVerts[(vi - 1) * 2 + 1]
+                            local wy = worldVerts[(vi - 1) * 2 + 2]
+                            influences[vi] = {}
+
+                            for nj = 1, #nodes do
+                                local node = nodes[nj]
+                                local infos = getNodeLocal(node)
+
+                                for _, info in ipairs(infos) do
+                                    local bb = info.body
+
+                                    local lx, ly = bb:getLocalPoint(wx, wy)
+                                    local dx = lx - info.offx
+                                    local dy = ly - info.offy
+                                    local dist = math.sqrt(dx * dx + dy * dy)
+
+                                    influences[vi][#influences[vi] + 1] = {
+                                        nodeIndex = nj,
+                                        body      = bb,        -- IMPORTANT
+                                        offx      = info.offx, -- bind pose anchor local
+                                        offy      = info.offy,
+                                        nodeType  = info.type,
+                                        nodeId    = info.id,
+                                        side      = info.side, -- nil for anchors, "A"/"B" for joints
+                                        dx        = dx,
+                                        dy        = dy,
+                                        dist      = dist,
+                                        w         = 0,
+                                    }
+                                end
+                            end
+                        end
+
+                        return influences
+                    end
+                    local function applyWeights(influences, params)
+                        local eps = params and params.eps or 1e-6
+                        local mode = params and params.mode or "inverse"
+                        local sigma = params and params.sigma or 0.5
+                        local R = params and params.R or 1.0
+
+                        for vi = 1, #influences do
+                            local infl = influences[vi]
+
+                            local sum = 0
+                            for k = 1, #infl do
+                                local d = infl[k].dist
+                                local w
+                                if mode == "inverse" then
+                                    w = 1 / (d + eps)
+                                elseif mode == "gaussian" then
+                                    w = math.exp(-(d * d) / (2 * sigma * sigma))
+                                elseif mode == "linear" then
+                                    w = (d < R) and (1 - d / R) or 0
+                                end
+                                infl[k].w = w
+                                sum = sum + w
+                            end
+
+                            if sum > 0 then
+                                for k = 1, #infl do
+                                    infl[k].w = infl[k].w / sum
+                                end
+                            end
+                        end
+
+                        return influences
+                    end
+                    local function pruneTopK(influences, K)
+                        for vi = 1, #influences do
+                            table.sort(influences[vi], function(a, b) return a.w > b.w end)
+                            while #influences[vi] > K do table.remove(influences[vi]) end
+
+                            local sum = 0
+                            for k = 1, #influences[vi] do sum = sum + influences[vi][k].w end
+                            if sum > 0 then
+                                for k = 1, #influences[vi] do influences[vi][k].w = influences[vi][k].w / sum end
+                            end
+                        end
+                        return influences
+                    end
                     --logger:inspect(vertsToWorld(b, verts))
                     verts = vertsToWorld(b, verts)
 
@@ -1566,61 +1707,60 @@ function lib.drawSelectedSFixture()
                     end
 
                     -- now i would like to walk through all my joints/anchors
-                    if ud.extra.nodes then
-                        for i = 1, #ud.extra.nodes do
-                            local node = ud.extra.nodes[i]
-                            --logger:inspect(node)
-                            logger:info(i)
-                            if node.type == "joint" then
-                                local joint = registry.getJointByID(node.id)
-                                local x1, y1, x2, y2 = joint:getAnchors()
-                                logger:info('joint', x1, y1, x2, y2)
+                    -- if ud.extra.nodes then
+                    --     for i = 1, #ud.extra.nodes do
+                    --         local node = ud.extra.nodes[i]
+                    --         --logger:inspect(node)
+                    --         logger:info(i)
+                    --         if node.type == "joint" then
+                    --             local joint = registry.getJointByID(node.id)
+                    --             local x1, y1, x2, y2 = joint:getAnchors()
+                    --             logger:info('joint', x1, y1, x2, y2)
 
-                                local bodyA, bodyB = joint:getBodies()
-                                local lx, ly = bodyA:getLocalPoint(x1, y1)
-                                logger:info('joint, local pointA', lx, ly)
-                                renderDistances(verts, bodyA, lx, ly)
+                    --             local bodyA, bodyB = joint:getBodies()
+                    --             local lx, ly = bodyA:getLocalPoint(x1, y1)
+                    --             logger:info('joint, local pointA', lx, ly)
+                    --             renderDistances(verts, bodyA, lx, ly)
 
 
-                                local lx2, ly2 = bodyB:getLocalPoint(x2, y2)
-                                logger:info('joint, local pointB', lx2, ly2)
-                                renderDistances(verts, bodyB, lx2, ly2)
-                            end
-                            if node.type == "anchor" then
-                                --local anchor = registry.getSFixtureByID(node.id)
+                    --             local lx2, ly2 = bodyB:getLocalPoint(x2, y2)
+                    --             logger:info('joint, local pointB', lx2, ly2)
+                    --             renderDistances(verts, bodyB, lx2, ly2)
+                    --         end
+                    --         if node.type == "anchor" then
+                    --             --local anchor = registry.getSFixtureByID(node.id)
 
-                                local f = registry.getSFixtureByID(node.id)
+                    --             local f = registry.getSFixtureByID(node.id)
 
-                                if f then
-                                    local bp = f:getBody()
-                                    local centerX, centerY = mathutils.getCenterOfPoints({ bp:getWorldPoints(f:getShape()
-                                        :getPoints()) })
-                                    logger:info('anchor', centerX, centerY)
+                    --             if f then
+                    --                 local bp = f:getBody()
+                    --                 local centerX, centerY = mathutils.getCenterOfPoints({ bp:getWorldPoints(f:getShape()
+                    --                     :getPoints()) })
+                    --                 logger:info('anchor', centerX, centerY)
 
-                                    local lx, ly = bp:getLocalPoint(centerX, centerY)
-                                    logger:info('anchor, local point', lx, ly)
-                                    renderDistances(verts, bp, lx, ly)
-                                else
-                                    print('issue with finding achor, id:', node.id)
-                                end
-                            end
-                        end
+                    --                 local lx, ly = bp:getLocalPoint(centerX, centerY)
+                    --                 logger:info('anchor, local point', lx, ly)
+                    --                 renderDistances(verts, bp, lx, ly)
+                    --             else
+                    --                 print('issue with finding achor, id:', node.id)
+                    --             end
+                    --         end
+                    --     end
+                    -- end
+                    if ud.extra.nodes and #ud.extra.nodes > 0 then
+                        local influences = computeInfluences(verts, ud.extra.nodes)
+                        influences = applyWeights(influences)
+
+                        -- optional but highly recommended:
+                        influences = pruneTopK(influences, 3)
+
+                        ud.extra.influences = influences -- STORE IT
+                        logger:inspect(influences)
                     end
-
-
-
-                    -- what is next,
-                    -- i think for every vertex i want to have each distance to the anchor/joint, the dx and dy, and then decide on a weighting variable
                 end
             end
 
-            -- FUCKIT IMMA MAKE A FEW SLIDERS!
-            -- FUCKIT IMMA MAKE A FEW SLIDERS!
-            -- FUCKIT IMMA MAKE A FEW SLIDERS!
-            -- FUCKIT IMMA MAKE A FEW SLIDERS!
-            -- FUCKIT IMMA MAKE A FEW SLIDERS!
-            -- FUCKIT IMMA MAKE A FEW SLIDERS!
-            --
+
 
 
             nextRow()

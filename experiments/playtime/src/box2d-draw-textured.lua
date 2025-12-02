@@ -1269,6 +1269,81 @@ function lib.drawTexturedWorld(world)
             end
         end
 
+        local function currentAnchorLocal(infl)
+            if infl.nodeType == "anchor" then
+                local f = registry.getSFixtureByID(infl.nodeId)
+                if not f then return infl.offx, infl.offy end
+                local bp = f:getBody()
+
+                local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
+                local cx, cy = mathutils.getCenterOfPoints(pts)
+                return bp:getLocalPoint(cx, cy)
+            end
+
+            if infl.nodeType == "joint" then
+                local joint = registry.getJointByID(infl.nodeId)
+                if not joint then return infl.offx, infl.offy end
+
+                local x1, y1, x2, y2 = joint:getAnchors()
+                local bodyA, bodyB = joint:getBodies()
+
+                if infl.side == "A" then
+                    return bodyA:getLocalPoint(x1, y1)
+                else
+                    return bodyB:getLocalPoint(x2, y2)
+                end
+            end
+
+            return infl.offx, infl.offy
+        end
+
+        local function deformWorldVerts(influences, numVerts, rootBody)
+            local out = {}
+
+            for vi = 1, numVerts do
+                local inflList = influences[vi]
+                local wxSum, wySum, wSum = 0, 0, 0
+                --  logger:inspect(inflList) -- somehow this can end up being nil
+                for k = 1, #inflList do
+                    local infl   = inflList[k]
+                    local body   = infl.body
+
+                    local ax, ay = currentAnchorLocal(infl)
+                    local lx     = ax + infl.dx
+                    local ly     = ay + infl.dy
+                    local wx, wy = body:getWorldPoint(lx, ly)
+
+                    local w      = infl.w
+                    wxSum        = wxSum + wx * w
+                    wySum        = wySum + wy * w
+                    wSum         = wSum + w
+                end
+
+                if wSum > 0 then
+                    wxSum = wxSum / wSum; wySum = wySum / wSum
+                end
+
+                -- convert blended world -> root local
+                local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
+                out[(vi - 1) * 2 + 1] = rx -- wxSum
+                out[(vi - 1) * 2 + 2] = ry --wySum
+            end
+
+            return out
+        end
+
+        local function vertsToWorld(body, verts)
+            local out = {}
+            for i = 1, #verts, 2 do
+                local lx, ly = verts[i], verts[i + 1]
+                local wx, wy = body:getWorldPoint(lx, ly)
+                out[#out + 1] = wx
+                out[#out + 1] = wy
+            end
+            return out
+        end
+
+
         if drawables[i].type == 'meshusert' then
             -- now we need to find a mapping file..
 
@@ -1301,6 +1376,18 @@ function lib.drawTexturedWorld(world)
                 local sx = drawables[i].extra.scaleX or 1
                 local sy = drawables[i].extra.scaleY or 1
                 verts = mathutils.scalePolygonPoints(verts, sx, sy)
+
+
+
+                if drawables[i].extra.influences and #drawables[i].extra.influences > 0 then
+                    -- logger:inspect(drawables[i].extra.influences)
+                    local newVerts = deformWorldVerts(drawables[i].extra.influences, #verts / 2, drawables[i].body)
+                    -- local worldBindVerts = vertsToWorld(drawables[i].body, verts)
+                    -- logger:inspect(worldBindVerts)
+                    --logger:inspect(newVerts)
+                    verts = newVerts
+                end
+
 
 
                 --    local rotation = drawables[i].rotation or 0
@@ -1415,12 +1502,7 @@ function lib.drawTexturedWorld(world)
                                 v = data.uvs[l]
                             end
                         end
-                        --print('why i?,', u, v)
-                        --if u == nil then u = 0 end
 
-                        if u == nil or v == nil then
-                            print('asdasd')
-                        end
                         table.insert(meshVertices, {
                             x, y,
                             u, v,
