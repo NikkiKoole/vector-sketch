@@ -215,6 +215,90 @@ function lib.renderActiveEditorThings()
         love.graphics.polygon('line', verts)
         love.graphics.setColor(1, 1, 1) -- Rese
     end
+
+    -- VERTEX SELECTION VISUALIZATION
+    if state.currentMode == 'editMeshVertices' and state.selection.selectedSFixture then
+        local ud = state.selection.selectedSFixture:getUserData()
+        if ud and ud.subtype == 'meshusert' and ud.label then
+            -- Find the resource fixture with matching label
+            local registry = require 'src.registry'
+            local mappert = nil
+            for k, v in pairs(registry.sfixtures) do
+                if not v:isDestroyed() then
+                    local vud = v:getUserData()
+                    if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
+                        mappert = v
+                        break
+                    end
+                end
+            end
+            
+            if mappert then
+                local mb = mappert:getBody()
+                local mud = mb:getUserData()
+                local verts = mud.thing.vertices
+                
+                -- Get vertices in world space
+                local body = state.selection.selectedSFixture:getBody()
+                
+                -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
+                -- 1. Center the vertices
+                local mathutils = require 'src.math-utils'
+                local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
+                local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
+                
+                for i = 1, #centeredVerts / 2 do
+                    local lx, ly = centeredVerts[i * 2 - 1], centeredVerts[i * 2]
+                    
+                    -- Apply mesh transforms
+                    if ud.extra.meshX or ud.extra.meshY then
+                        lx = lx + (ud.extra.meshX or 0)
+                        ly = ly + (ud.extra.meshY or 0)
+                    end
+                    if ud.extra.scaleX or ud.extra.scaleY then
+                        lx = lx * (ud.extra.scaleX or 1)
+                        ly = ly * (ud.extra.scaleY or 1)
+                    end
+                    
+                    local wx, wy = body:getWorldPoint(lx, ly)
+                    
+                    -- Check if this vertex is selected
+                    local isSelected = false
+                    for _, idx in ipairs(state.vertexEditor.selectedVertices) do
+                        if idx == i then
+                            isSelected = true
+                            break
+                        end
+                    end
+                    
+                    -- Draw vertex
+                    if isSelected then
+                        love.graphics.setColor(1, 0.8, 0)  -- Orange for selected
+                        love.graphics.circle('fill', wx, wy, 6)
+                        love.graphics.setColor(0, 0, 0)
+                        love.graphics.circle('line', wx, wy, 7)
+                    else
+                        love.graphics.setColor(0.5, 0.5, 1)  -- Blue for unselected
+                        love.graphics.circle('fill', wx, wy, 4)
+                        love.graphics.setColor(0, 0, 0)
+                        love.graphics.circle('line', wx, wy, 5)
+                    end
+                    
+                    -- Draw vertex index
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.print(tostring(i), wx + 8, wy - 6)
+                end
+                
+                -- Draw brush radius at mouse cursor
+                local mx, my = love.mouse.getPosition()
+                local cx, cy = cam:getWorldCoordinates(mx, my)
+                love.graphics.setColor(1, 1, 0, 0.3)
+                love.graphics.circle('line', cx, cy, tonumber(state.vertexEditor.brushSize) or 20)
+            end
+        end
+    end
+    
+    love.graphics.setColor(1, 1, 1)  -- Reset color
 end
 
 return lib

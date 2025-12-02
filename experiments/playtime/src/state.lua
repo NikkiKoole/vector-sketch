@@ -67,6 +67,14 @@ state.texFixtureEdit = {
     verts = {}
 }
 
+state.vertexEditor = {
+    selectedVertices = {},  -- Array of vertex indices that are selected
+    selectedBone = 1,       -- Which node/bone to assign to
+    assignmentMode = 'rigid', -- 'rigid' or 'blend'
+    blendWeight = 1.0,      -- Weight for blend mode (0.0 to 1.0)
+    brushSize = 20,         -- Radius for vertex selection brush
+}
+
 --state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
 state.currentMode = nil -- 'jointCreationMode' 'pickAutoRopifyMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'

@@ -155,6 +155,86 @@ local function handlePointer(x, y, id, action)
             end
         end
 
+        -- VERTEX SELECTION FOR MESH EDITING
+        if state.currentMode == 'editMeshVertices' and state.selection.selectedSFixture then
+            local ud = state.selection.selectedSFixture:getUserData()
+            if ud and ud.subtype == 'meshusert' and ud.label then
+                -- Find the resource fixture with matching label
+                local mappert = nil
+                for k, v in pairs(registry.sfixtures) do
+                    if not v:isDestroyed() then
+                        local vud = v:getUserData()
+                        if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
+                            mappert = v
+                            break
+                        end
+                    end
+                end
+                
+                if mappert then
+                    local mb = mappert:getBody()
+                    local mud = mb:getUserData()
+                    local verts = mud.thing.vertices
+                    
+                    -- Get vertices in world space
+                    local body = state.selection.selectedSFixture:getBody()
+                    
+                    -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
+                    -- 1. Center the vertices
+                    local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
+                    local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
+                    
+                    local worldVerts = {}
+                    for i = 1, #centeredVerts, 2 do
+                        local lx, ly = centeredVerts[i], centeredVerts[i + 1]
+                        -- Apply mesh transforms
+                        if ud.extra.meshX or ud.extra.meshY then
+                            lx = lx + (ud.extra.meshX or 0)
+                            ly = ly + (ud.extra.meshY or 0)
+                        end
+                        if ud.extra.scaleX or ud.extra.scaleY then
+                            lx = lx * (ud.extra.scaleX or 1)
+                            ly = ly * (ud.extra.scaleY or 1)
+                        end
+                        local wx, wy = body:getWorldPoint(lx, ly)
+                        worldVerts[i] = wx
+                        worldVerts[i + 1] = wy
+                    end
+                    
+                    -- Find vertices within brush radius
+                    local brushRadius = tonumber(state.vertexEditor.brushSize) or 20
+                    local addToSelection = love.keyboard.isDown('lshift')
+                    
+                    if not addToSelection then
+                        state.vertexEditor.selectedVertices = {}
+                    end
+                    
+                    for i = 1, #worldVerts / 2 do
+                        local vx, vy = worldVerts[i * 2 - 1], worldVerts[i * 2]
+                        local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+                        
+                        if dist < brushRadius then
+                            -- Check if already selected
+                            local alreadySelected = false
+                            for _, idx in ipairs(state.vertexEditor.selectedVertices) do
+                                if idx == i then
+                                    alreadySelected = true
+                                    break
+                                end
+                            end
+                            
+                            if not alreadySelected then
+                                table.insert(state.vertexEditor.selectedVertices, i)
+                            end
+                        end
+                    end
+                    
+                    logger:info('Selected ' .. #state.vertexEditor.selectedVertices .. ' vertices')
+                    return
+                end
+            end
+        end
+
         if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
             -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
 
