@@ -59,6 +59,8 @@ function lib.renderActiveEditorThings()
         end
     end
 
+
+
     if state.selection.selectedJoint and not state.selection.selectedJoint:isDestroyed() then
         box2dDraw.drawJointAnchors(state.selection.selectedJoint)
     end
