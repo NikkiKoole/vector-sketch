@@ -21,7 +21,7 @@ local distanceSquared = function(x1, y1, x2, y2)
     return dx * dx + dy * dy
 end
 
-local function handlePointer(x, y, id, action)
+local function handlePointer(x, y, id, action, button)
     if action == "pressed" then
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
@@ -170,20 +170,22 @@ local function handlePointer(x, y, id, action)
                         end
                     end
                 end
-                
+                if button then
+                    logger:info('mousepressed button = ', button)
+                end
                 if mappert then
                     local mb = mappert:getBody()
                     local mud = mb:getUserData()
                     local verts = mud.thing.vertices
-                    
+
                     -- Get vertices in world space
                     local body = state.selection.selectedSFixture:getBody()
-                    
+
                     -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
                     -- 1. Center the vertices
                     local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
                     local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
-                    
+
                     local worldVerts = {}
                     for i = 1, #centeredVerts, 2 do
                         local lx, ly = centeredVerts[i], centeredVerts[i + 1]
@@ -200,35 +202,56 @@ local function handlePointer(x, y, id, action)
                         worldVerts[i] = wx
                         worldVerts[i + 1] = wy
                     end
-                    
+
                     -- Find vertices within brush radius
                     local brushRadius = tonumber(state.vertexEditor.brushSize) or 20
                     local addToSelection = love.keyboard.isDown('lshift')
-                    
-                    if not addToSelection then
+                    local isRightClick = (button == 2)
+
+
+
+                    if (not addToSelection) and (not isRightClick) then
                         state.vertexEditor.selectedVertices = {}
                     end
-                    
+
+
+                    -- small helper: remove a vertex index from selection
+                    local function removeSelectedIndex(sel, idx)
+                        for n = #sel, 1, -1 do
+                            if sel[n] == idx then
+                                table.remove(sel, n)
+                                return true
+                            end
+                        end
+                        return false
+                    end
+
+
                     for i = 1, #worldVerts / 2 do
                         local vx, vy = worldVerts[i * 2 - 1], worldVerts[i * 2]
                         local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-                        
+
                         if dist < brushRadius then
-                            -- Check if already selected
-                            local alreadySelected = false
-                            for _, idx in ipairs(state.vertexEditor.selectedVertices) do
-                                if idx == i then
-                                    alreadySelected = true
-                                    break
+                            if isRightClick then
+                                -- RIGHT click: unselect vertices under the brush
+                                removeSelectedIndex(state.vertexEditor.selectedVertices, i)
+                            else
+                                -- LEFT click: select vertices under the brush (your old logic)
+                                local alreadySelected = false
+                                for _, idx in ipairs(state.vertexEditor.selectedVertices) do
+                                    if idx == i then
+                                        alreadySelected = true
+                                        break
+                                    end
                                 end
-                            end
-                            
-                            if not alreadySelected then
-                                table.insert(state.vertexEditor.selectedVertices, i)
+
+                                if not alreadySelected then
+                                    table.insert(state.vertexEditor.selectedVertices, i)
+                                end
                             end
                         end
                     end
-                    
+
                     logger:info('Selected ' .. #state.vertexEditor.selectedVertices .. ' vertices')
                     return
                 end
@@ -530,8 +553,11 @@ function lib.handleMousePressed(x, y, button, istouch)
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         else
-            handlePointer(x, y, 'mouse', 'pressed')
+            handlePointer(x, y, 'mouse', 'pressed', button)
         end
+    end
+    if not istouch and button == 2 then
+        handlePointer(x, y, 'mouse', 'pressed', button)
     end
 
     if state.world.playWithSoftbodies and button == 2 then

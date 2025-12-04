@@ -1303,7 +1303,7 @@ function lib.drawTexturedWorld(world)
             for vi = 1, numVerts do
                 local inflList = influences[vi]
                 local wxSum, wySum, wSum = 0, 0, 0
-                --  logger:inspect(inflList) -- somehow this can end up being nil
+                --logger:inspect(inflList)   -- somehow this can end up being nil
                 for k = 1, #inflList do
                     local infl   = inflList[k]
                     local body   = infl.body
