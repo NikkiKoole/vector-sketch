@@ -155,108 +155,7 @@ local function handlePointer(x, y, id, action, button)
             end
         end
 
-        -- VERTEX SELECTION FOR MESH EDITING
-        if state.currentMode == 'editMeshVertices' and state.selection.selectedSFixture then
-            local ud = state.selection.selectedSFixture:getUserData()
-            if ud and ud.subtype == 'meshusert' and ud.label then
-                -- Find the resource fixture with matching label
-                local mappert = nil
-                for k, v in pairs(registry.sfixtures) do
-                    if not v:isDestroyed() then
-                        local vud = v:getUserData()
-                        if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
-                            mappert = v
-                            break
-                        end
-                    end
-                end
-                if button then
-                    logger:info('mousepressed button = ', button)
-                end
-                if mappert then
-                    local mb = mappert:getBody()
-                    local mud = mb:getUserData()
-                    local verts = mud.thing.vertices
 
-                    -- Get vertices in world space
-                    local body = state.selection.selectedSFixture:getBody()
-
-                    -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
-                    -- 1. Center the vertices
-                    local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
-                    local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
-
-                    local worldVerts = {}
-                    for i = 1, #centeredVerts, 2 do
-                        local lx, ly = centeredVerts[i], centeredVerts[i + 1]
-                        -- Apply mesh transforms
-                        if ud.extra.meshX or ud.extra.meshY then
-                            lx = lx + (ud.extra.meshX or 0)
-                            ly = ly + (ud.extra.meshY or 0)
-                        end
-                        if ud.extra.scaleX or ud.extra.scaleY then
-                            lx = lx * (ud.extra.scaleX or 1)
-                            ly = ly * (ud.extra.scaleY or 1)
-                        end
-                        local wx, wy = body:getWorldPoint(lx, ly)
-                        worldVerts[i] = wx
-                        worldVerts[i + 1] = wy
-                    end
-
-                    -- Find vertices within brush radius
-                    local brushRadius = tonumber(state.vertexEditor.brushSize) or 20
-                    local addToSelection = love.keyboard.isDown('lshift')
-                    local isRightClick = (button == 2)
-
-
-
-                    if (not addToSelection) and (not isRightClick) then
-                        state.vertexEditor.selectedVertices = {}
-                    end
-
-
-                    -- small helper: remove a vertex index from selection
-                    local function removeSelectedIndex(sel, idx)
-                        for n = #sel, 1, -1 do
-                            if sel[n] == idx then
-                                table.remove(sel, n)
-                                return true
-                            end
-                        end
-                        return false
-                    end
-
-
-                    for i = 1, #worldVerts / 2 do
-                        local vx, vy = worldVerts[i * 2 - 1], worldVerts[i * 2]
-                        local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-
-                        if dist < brushRadius then
-                            if isRightClick then
-                                -- RIGHT click: unselect vertices under the brush
-                                removeSelectedIndex(state.vertexEditor.selectedVertices, i)
-                            else
-                                -- LEFT click: select vertices under the brush (your old logic)
-                                local alreadySelected = false
-                                for _, idx in ipairs(state.vertexEditor.selectedVertices) do
-                                    if idx == i then
-                                        alreadySelected = true
-                                        break
-                                    end
-                                end
-
-                                if not alreadySelected then
-                                    table.insert(state.vertexEditor.selectedVertices, i)
-                                end
-                            end
-                        end
-                    end
-
-                    logger:info('Selected ' .. #state.vertexEditor.selectedVertices .. ' vertices')
-                    return
-                end
-            end
-        end
 
         if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
             -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
@@ -389,6 +288,7 @@ local function handlePointer(x, y, id, action, button)
             -- print('should record a moujoint creation...', inspect(madedata))
         end
     elseif action == "released" then
+        if state.currentMode == 'editMeshVertices' then return end
         -- Removes all items from `list` that have an id present in `removeList`
         -- function removeMatchingIds(list, removeList)
         --     -- Build a lookup table for fast id checking
@@ -631,6 +531,118 @@ function lib.handleMouseMoved(x, y, dx, dy)
     --print('moved')
     --
     --
+
+    -- VERTEX SELECTION FOR MESH EDITING
+    if state.currentMode == 'editMeshVertices' and state.selection.selectedSFixture then
+        local cx, cy = cam:getWorldCoordinates(x, y)
+        local ud = state.selection.selectedSFixture:getUserData()
+        if ud and ud.subtype == 'meshusert' and ud.label then
+            -- Find the resource fixture with matching label
+            local mappert = nil
+            for k, v in pairs(registry.sfixtures) do
+                if not v:isDestroyed() then
+                    local vud = v:getUserData()
+                    if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
+                        mappert = v
+                        break
+                    end
+                end
+            end
+            local button = nil
+            if love.mouse.isDown(1) then
+                button = 1
+            end
+            if love.mouse.isDown(2) then
+                button = 2
+            end
+            if button then
+                logger:info('mousepressed button = ', button)
+            end
+            if mappert and button ~= nil then
+                local mb = mappert:getBody()
+                local mud = mb:getUserData()
+                local verts = mud.thing.vertices
+
+                -- Get vertices in world space
+                local body = state.selection.selectedSFixture:getBody()
+
+                -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
+                -- 1. Center the vertices
+                local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
+                local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
+
+                local worldVerts = {}
+                for i = 1, #centeredVerts, 2 do
+                    local lx, ly = centeredVerts[i], centeredVerts[i + 1]
+                    -- Apply mesh transforms
+                    if ud.extra.meshX or ud.extra.meshY then
+                        lx = lx + (ud.extra.meshX or 0)
+                        ly = ly + (ud.extra.meshY or 0)
+                    end
+                    if ud.extra.scaleX or ud.extra.scaleY then
+                        lx = lx * (ud.extra.scaleX or 1)
+                        ly = ly * (ud.extra.scaleY or 1)
+                    end
+                    local wx, wy = body:getWorldPoint(lx, ly)
+                    worldVerts[i] = wx
+                    worldVerts[i + 1] = wy
+                end
+
+                -- Find vertices within brush radius
+                local brushRadius = tonumber(state.vertexEditor.brushSize) or 20
+                local addToSelection = love.keyboard.isDown('lshift')
+                local isRightClick = (button == 2)
+
+
+
+                if (not addToSelection) and (not isRightClick) then
+                    --state.vertexEditor.selectedVertices = {}
+                end
+
+
+                -- small helper: remove a vertex index from selection
+                local function removeSelectedIndex(sel, idx)
+                    for n = #sel, 1, -1 do
+                        if sel[n] == idx then
+                            table.remove(sel, n)
+                            return true
+                        end
+                    end
+                    return false
+                end
+
+
+                for i = 1, #worldVerts / 2 do
+                    local vx, vy = worldVerts[i * 2 - 1], worldVerts[i * 2]
+                    local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+
+                    if dist < brushRadius then
+                        if isRightClick then
+                            -- RIGHT click: unselect vertices under the brush
+                            removeSelectedIndex(state.vertexEditor.selectedVertices, i)
+                        else
+                            -- LEFT click: select vertices under the brush (your old logic)
+                            local alreadySelected = false
+                            for _, idx in ipairs(state.vertexEditor.selectedVertices) do
+                                if idx == i then
+                                    alreadySelected = true
+                                    break
+                                end
+                            end
+
+                            if not alreadySelected then
+                                table.insert(state.vertexEditor.selectedVertices, i)
+                            end
+                        end
+                    end
+                end
+
+                logger:info('Selected ' .. #state.vertexEditor.selectedVertices .. ' vertices')
+                return
+            end
+        end
+    end
+
 
     if state.polyEdit.dragIdx and state.polyEdit.dragIdx > 0 then
         local index = state.polyEdit.dragIdx

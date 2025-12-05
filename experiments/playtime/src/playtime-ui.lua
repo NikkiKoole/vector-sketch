@@ -63,15 +63,15 @@ end
 -- Assign selected vertices to a bone with rigid or blend mode
 function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weight)
     if not fixture or fixture:isDestroyed() then return end
-    
+
     local ud = fixture:getUserData()
     if not ud or not ud.extra then return end
-    
+
     -- Initialize vertexAssignments if it doesn't exist
     if not ud.extra.vertexAssignments then
         ud.extra.vertexAssignments = {}
     end
-    
+
     for _, vi in ipairs(vertexIndices) do
         if mode == 'rigid' then
             -- Replace all weights with single bone at 100%
@@ -83,7 +83,7 @@ function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weigh
             if not ud.extra.vertexAssignments[vi] then
                 ud.extra.vertexAssignments[vi] = {}
             end
-            
+
             local found = false
             for _, assignment in ipairs(ud.extra.vertexAssignments[vi]) do
                 if assignment.nodeIndex == nodeIndex then
@@ -92,14 +92,14 @@ function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weigh
                     break
                 end
             end
-            
+
             if not found then
                 table.insert(ud.extra.vertexAssignments[vi], {
                     nodeIndex = nodeIndex,
                     weight = weight
                 })
             end
-            
+
             -- Normalize weights so they sum to 1.0
             local sum = 0
             for _, a in ipairs(ud.extra.vertexAssignments[vi]) do
@@ -112,7 +112,7 @@ function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weigh
             end
         end
     end
-    
+
     logger:info('Assigned ' .. #vertexIndices .. ' vertices to node ' .. nodeIndex .. ' (' .. mode .. ')')
 end
 
@@ -1814,11 +1814,11 @@ function lib.drawSelectedSFixture()
             nextRow()
             love.graphics.line(x, y + 10, x + ROW_WIDTH + 50, y + 10)
             nextRow()
-            
+
             local editMode = state.currentMode == 'editMeshVertices'
-            local buttonLabel = editMode and '✓ editing vertices' or 'edit vertices'
+            local buttonLabel = editMode and 'EDITING' or 'edit vertices'
             local buttonColor = editMode and { 0.2, 0.8, 0.2 } or nil
-            
+
             if ui.button(x, y, ROW_WIDTH, buttonLabel, BUTTON_HEIGHT, buttonColor) then
                 if editMode then
                     state.currentMode = nil
@@ -1828,75 +1828,75 @@ function lib.drawSelectedSFixture()
                     state.vertexEditor.selectedVertices = {}
                 end
             end
-            
+
             if editMode then
                 nextRow()
                 ui.label(x, y, 'Selected: ' .. #state.vertexEditor.selectedVertices .. ' vertices')
-                
+
                 -- Clear selection button
                 if #state.vertexEditor.selectedVertices > 0 then
                     if ui.button(x + ROW_WIDTH, y, 50, 'clear') then
                         state.vertexEditor.selectedVertices = {}
                     end
                 end
-                
+
                 nextRow()
                 love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
                 nextRow()
-                
+
                 -- Bone selection
                 if ud.extra.nodes and #ud.extra.nodes > 0 then
                     ui.label(x, y, 'Assign to bone:')
                     nextRow()
-                    
+
                     for i = 1, #ud.extra.nodes do
                         local node = ud.extra.nodes[i]
                         local isSelected = (state.vertexEditor.selectedBone == i)
                         local nodeLabel = 'Node ' .. i .. ' (' .. (node.type or '?') .. ')'
                         local nodeColor = isSelected and { 0.3, 0.6, 1.0 } or nil
-                        
+
                         if ui.button(x, y, ROW_WIDTH + 50, nodeLabel, BUTTON_HEIGHT, nodeColor) then
                             state.vertexEditor.selectedBone = i
                         end
                         nextRow()
                     end
-                    
+
                     nextRow()
                     love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
                     nextRow()
-                    
+
                     -- Assignment mode buttons
                     ui.label(x, y, 'Assignment mode:')
                     nextRow()
-                    
+
                     local rigidColor = (state.vertexEditor.assignmentMode == 'rigid') and { 0.8, 0.3, 0.3 } or nil
                     if ui.button(x, y, (ROW_WIDTH + 50) / 2 - 5, 'Rigid (100%)', BUTTON_HEIGHT, rigidColor) then
                         state.vertexEditor.assignmentMode = 'rigid'
                     end
-                    
+
                     local blendColor = (state.vertexEditor.assignmentMode == 'blend') and { 0.3, 0.8, 0.3 } or nil
                     if ui.button(x + (ROW_WIDTH + 50) / 2 + 5, y, (ROW_WIDTH + 50) / 2 - 5, 'Blend', BUTTON_HEIGHT, blendColor) then
                         state.vertexEditor.assignmentMode = 'blend'
                     end
                     nextRow()
-                    
+
                     -- Blend weight slider (only show in blend mode)
                     if state.vertexEditor.assignmentMode == 'blend' then
-                        local weight = ui.sliderWithInput(myID .. 'blendWeight', x, y, ROW_WIDTH, 0, 1, 
-                                                         state.vertexEditor.blendWeight or 0.5)
+                        local weight = ui.sliderWithInput(myID .. 'blendWeight', x, y, ROW_WIDTH, 0, 1,
+                            state.vertexEditor.blendWeight or 0.5)
                         ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' weight')
                         if weight then
                             state.vertexEditor.blendWeight = weight
                         end
                         nextRow()
                     end
-                    
+
                     -- Apply assignment button
                     if #state.vertexEditor.selectedVertices > 0 then
-                        local applyLabel = state.vertexEditor.assignmentMode == 'rigid' 
-                            and 'Apply Rigid' 
+                        local applyLabel = state.vertexEditor.assignmentMode == 'rigid'
+                            and 'Apply Rigid'
                             or 'Add Blend (' .. string.format("%.2f", state.vertexEditor.blendWeight) .. ')'
-                        
+
                         if ui.button(x, y, ROW_WIDTH + 50, applyLabel) then
                             -- Apply the assignment
                             lib.assignVerticesToBone(
@@ -1909,14 +1909,14 @@ function lib.drawSelectedSFixture()
                         end
                         nextRow()
                     end
-                    
+
                     nextRow()
                     love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
                     nextRow()
-                    
+
                     -- Brush size for selection
-                    local brushSize = ui.sliderWithInput(myID .. 'brushSize', x, y, ROW_WIDTH, 5, 100, 
-                                                        state.vertexEditor.brushSize or 20)
+                    local brushSize = ui.sliderWithInput(myID .. 'brushSize', x, y, ROW_WIDTH, 5, 100,
+                        state.vertexEditor.brushSize or 20)
                     ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' brush size')
                     if brushSize then
                         state.vertexEditor.brushSize = brushSize
