@@ -232,24 +232,52 @@ function lib.renderActiveEditorThings()
                     end
                 end
             end
-            
+
             if mappert then
                 local mb = mappert:getBody()
                 local mud = mb:getUserData()
                 local verts = mud.thing.vertices
-                
+
                 -- Get vertices in world space
                 local body = state.selection.selectedSFixture:getBody()
-                
+
                 -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
                 -- 1. Center the vertices
                 local mathutils = require 'src.math-utils'
                 local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
                 local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
-                
+                --logger:inspect(state.vertexEditor)
+                --
+                --
+                --
+
+                if state.vertexEditor.selectedBone > 0 then
+                    for i =1, #ud.extra.nodes do
+                        local node = ud.extra.nodes[i]
+                        if i == state.vertexEditor.selectedBone then
+
+                            if node.type == 'joint' then
+                                local j = registry.getJointByID(node.id)
+                                local x1, y1, x2, y2 = j:getAnchors( )
+
+                                love.graphics.circle('line', x1, y1, 10)
+
+                            end
+                            if node.type == 'anchor' then
+                                local a = registry.getSFixtureByID(node.id)
+                                local body = a:getBody()
+                                local nx, ny = body:getWorldPoint(0,0)
+                                local nx, ny = mathutils.getCenterOfPoints({ body:getWorldPoints(a:getShape():getPoints()) })
+                                love.graphics.circle('line', nx, ny, 10)
+                            end
+                        end
+                    end
+                end
+
+
                 for i = 1, #centeredVerts / 2 do
                     local lx, ly = centeredVerts[i * 2 - 1], centeredVerts[i * 2]
-                    
+
                     -- Apply mesh transforms
                     if ud.extra.meshX or ud.extra.meshY then
                         lx = lx + (ud.extra.meshX or 0)
@@ -259,9 +287,50 @@ function lib.renderActiveEditorThings()
                         lx = lx * (ud.extra.scaleX or 1)
                         ly = ly * (ud.extra.scaleY or 1)
                     end
-                    
+
                     local wx, wy = body:getWorldPoint(lx, ly)
-                    
+
+
+
+                    -- for i = 1, #ud.extra.nodes do
+                    --     local node = ud.extra.nodes[i]
+                    --     local isSelected = (state.vertexEditor.selectedBone == i)
+                    --     local nodeLabel = 'Node ' .. i .. ' (' .. (node.type or '?') .. ')'
+                    --     local nodeColor = isSelected and { 0.3, 0.6, 1.0 } or nil
+
+                    --     if ui.button(x, y, ROW_WIDTH + 50, nodeLabel, BUTTON_HEIGHT, nodeColor) then
+                    --         state.vertexEditor.selectedBone = i
+
+
+
+                    -- i owuld like to render lines from the vertex to the nodes where it got it weight from
+
+              --
+
+                   --if state.vertexEditor.selectedVertices then
+                   local lineweight = love.graphics.getLineWidth()
+                   love.graphics.setColor(1,1,1,0.5)
+                   love.graphics.setLineWidth(1)
+                        for _, node in ipairs(ud.extra.nodes) do
+
+                            if node.type == 'joint' then
+                                local j = registry.getJointByID(node.id)
+                                local x1, y1, x2, y2 = j:getAnchors( )
+
+                                love.graphics.line(wx, wy, x1, y1)
+
+                            end
+                            if node.type == 'anchor' then
+                                 local a = registry.getSFixtureByID(node.id)
+                                 local body = a:getBody()
+                                 local nx, ny = body:getWorldPoint(0,0)
+                                  local nx, ny = mathutils.getCenterOfPoints({ body:getWorldPoints(a:getShape():getPoints()) })
+                                 love.graphics.line(wx, wy, nx, ny)
+                            end
+                        end
+                         love.graphics.setLineWidth(lineweight)
+                           love.graphics.setColor(1,1,1,1)
+                        --end
                     -- Check if this vertex is selected
                     local isSelected = false
                     for _, idx in ipairs(state.vertexEditor.selectedVertices) do
@@ -270,7 +339,7 @@ function lib.renderActiveEditorThings()
                             break
                         end
                     end
-                    
+
                     -- Draw vertex
                     if isSelected then
                         love.graphics.setColor(1, 0.8, 0)  -- Orange for selected
@@ -283,12 +352,12 @@ function lib.renderActiveEditorThings()
                         love.graphics.setColor(0, 0, 0)
                         love.graphics.circle('line', wx, wy, 5)
                     end
-                    
+
                     -- Draw vertex index
                     love.graphics.setColor(1, 1, 1)
                     love.graphics.print(tostring(i), wx + 8, wy - 6)
                 end
-                
+
                 -- Draw brush radius at mouse cursor
                 local mx, my = love.mouse.getPosition()
                 local cx, cy = cam:getWorldCoordinates(mx, my)
@@ -297,7 +366,7 @@ function lib.renderActiveEditorThings()
             end
         end
     end
-    
+
     love.graphics.setColor(1, 1, 1)  -- Reset color
 end
 

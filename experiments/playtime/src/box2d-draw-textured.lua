@@ -1297,6 +1297,36 @@ function lib.drawTexturedWorld(world)
             return infl.offx, infl.offy
         end
 
+        -- this is all wrong, the code works but this shouldbnt  be a responnsible in the drawloop, do this outside!
+        -- really we want to do this on load or something.
+        local function fillBodiesInInfluences(influences, numVerts)
+            for vi = 1, numVerts do
+                local inflList = influences[vi]
+                for k = 1, #inflList do
+                    local infl   = inflList[k]
+                    --remove this to a preprocess step
+                    if not infl.body then
+                        --print("infl.body is nil")
+                        --print(inspect(infl))
+                        if infl.nodeType == "anchor" then
+                            local b = registry.getSFixtureByID(infl.nodeId):getBody()
+                            infl.body = b
+                        end
+                        if infl.nodeType == "joint" then
+                            local a,b = registry.getJointByID(infl.nodeId):getBodies()
+                            if infl.side == "A" then
+                                infl.body = a
+                            else
+                                infl.body = b
+                            end
+                        end
+                        print("infl.body is now", infl.body)
+                    end
+                end
+            end
+            return influences
+        end
+
         local function deformWorldVerts(influences, numVerts, rootBody)
             local out = {}
 
@@ -1306,6 +1336,9 @@ function lib.drawTexturedWorld(world)
                 --logger:inspect(inflList)   -- somehow this can end up being nil
                 for k = 1, #inflList do
                     local infl   = inflList[k]
+
+
+
                     local body   = infl.body
 
                     local ax, ay = currentAnchorLocal(infl)
@@ -1381,6 +1414,10 @@ function lib.drawTexturedWorld(world)
 
                 if drawables[i].extra.influences and #drawables[i].extra.influences > 0 then
                     -- logger:inspect(drawables[i].extra.influences)
+                    -- we need to fill in the bodies for each influence, but ratehr not everyframe!
+                    --drawables[i].extra.influences = fillBodiesInInfluences(drawables[i].extra.influences, #verts/2)
+
+
                     local newVerts = deformWorldVerts(drawables[i].extra.influences, #verts / 2, drawables[i].body)
                     -- local worldBindVerts = vertsToWorld(drawables[i].body, verts)
                     -- logger:inspect(worldBindVerts)

@@ -1556,8 +1556,12 @@ function lib.drawSelectedSFixture()
                 ud.extra.nodes = {}
             end
             nextRow()
+
+
+
+
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
-                -- logger:info('the sfixture', inspect(ud))
+
                 local b = state.selection.selectedSFixture:getBody()
                 local bud = b:getUserData()
                 local label = ud.label or ""
@@ -1605,7 +1609,6 @@ function lib.drawSelectedSFixture()
                         end
                         return out
                     end
-
                     local function getNodeLocal(node)
                         if node.type == "joint" then
                             local joint = registry.getJointByID(node.id)
@@ -1684,7 +1687,7 @@ function lib.drawSelectedSFixture()
 
                                     influences[vi][#influences[vi] + 1] = {
                                         nodeIndex = nj,
-                                        body      = bb,        -- IMPORTANT
+                                        body      = bb,        -- IMPORTANT but not wanetd here, atleast do not save it
                                         offx      = info.offx, -- bind pose anchor local
                                         offy      = info.offy,
                                         nodeType  = info.type,
@@ -1761,60 +1764,18 @@ function lib.drawSelectedSFixture()
                         end
                     end
 
-                    -- now i would like to walk through all my joints/anchors
-                    -- if ud.extra.nodes then
-                    --     for i = 1, #ud.extra.nodes do
-                    --         local node = ud.extra.nodes[i]
-                    --         --logger:inspect(node)
-                    --         logger:info(i)
-                    --         if node.type == "joint" then
-                    --             local joint = registry.getJointByID(node.id)
-                    --             local x1, y1, x2, y2 = joint:getAnchors()
-                    --             logger:info('joint', x1, y1, x2, y2)
-
-                    --             local bodyA, bodyB = joint:getBodies()
-                    --             local lx, ly = bodyA:getLocalPoint(x1, y1)
-                    --             logger:info('joint, local pointA', lx, ly)
-                    --             renderDistances(verts, bodyA, lx, ly)
-
-
-                    --             local lx2, ly2 = bodyB:getLocalPoint(x2, y2)
-                    --             logger:info('joint, local pointB', lx2, ly2)
-                    --             renderDistances(verts, bodyB, lx2, ly2)
-                    --         end
-                    --         if node.type == "anchor" then
-                    --             --local anchor = registry.getSFixtureByID(node.id)
-
-                    --             local f = registry.getSFixtureByID(node.id)
-
-                    --             if f then
-                    --                 local bp = f:getBody()
-                    --                 local centerX, centerY = mathutils.getCenterOfPoints({ bp:getWorldPoints(f:getShape()
-                    --                     :getPoints()) })
-                    --                 logger:info('anchor', centerX, centerY)
-
-                    --                 local lx, ly = bp:getLocalPoint(centerX, centerY)
-                    --                 logger:info('anchor, local point', lx, ly)
-                    --                 renderDistances(verts, bp, lx, ly)
-                    --             else
-                    --                 print('issue with finding achor, id:', node.id)
-                    --             end
-                    --         end
-                    --     end
-                    -- end
                     if ud.extra.nodes and #ud.extra.nodes > 0 then
                         local influences = computeInfluences(verts, ud.extra.nodes)
                         influences = applyWeights(influences)
 
                         -- optional but highly recommended:
-                        influences = pruneTopK(influences, 3)
+                        influences = pruneTopK(influences, 2)
 
                         ud.extra.influences = influences -- STORE IT
                         logger:inspect(influences)
                     end
                 end
             end
-
 
 
             -- VERTEX ASSIGNMENT UI

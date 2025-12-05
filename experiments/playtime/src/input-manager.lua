@@ -23,6 +23,8 @@ end
 
 local function handlePointer(x, y, id, action, button)
     if action == "pressed" then
+        -- this is a nice pattern, early return!
+        if state.currentMode == 'editMeshVertices' then return end
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if state.panelVisibility.saveDialogOpened then return end

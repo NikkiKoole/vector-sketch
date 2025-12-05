@@ -1,74 +1,687 @@
 {
+  "joints":[{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"9V7Xa",
+      "anchorB":[1407.399,76.22],
+      "id":"2VFfPN",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1407.399,76.22],
+      "bodyA":"3lGcG7"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"3lGcG7",
+      "anchorB":[1385.949,-193.802],
+      "id":"1PIvuM",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1385.949,-193.802],
+      "bodyA":"tmlbm"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"1MasSO",
+      "anchorB":[1175.231,71.173],
+      "id":"4vP0Qz",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1176.493,71.173],
+      "bodyA":"4vwlwd"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"4vwlwd",
+      "anchorB":[1196.682,-186.231],
+      "id":"2X4rtN",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1195.42,-186.231],
+      "bodyA":"tmlbm"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"48ofUt",
+      "anchorB":[1190.373,-441.112],
+      "id":"47nMcj",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1190.373,-441.112],
+      "bodyA":"jH2vw"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"2ln7HO",
+      "anchorB":[1396.043,-441.112],
+      "id":"vXUJ7",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1396.043,-441.112],
+      "bodyA":"48ofUt"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"Fw6SD",
+      "anchorB":[1586.573,-442.373],
+      "id":"2hG23y",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1586.573,-442.373],
+      "bodyA":"2ln7HO"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"jH2vw",
+      "anchorB":[992.273,-442.373],
+      "id":"C0t2a",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[992.273,-442.373],
+      "bodyA":"2OcYrK"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"tmlbm",
+      "anchorB":[1287.93,-273.469],
+      "id":"1XvUI1",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1287.93,-273.468],
+      "bodyA":"IopDw"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"tmlbm",
+      "anchorB":[1291.899,-273.469],
+      "id":"DFsD1",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1291.9,-273.468],
+      "bodyA":"IopDw"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"IopDw",
+      "anchorB":[1291.9,-366.753],
+      "id":"2bS0gT",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[1291.9,-366.753],
+      "bodyA":"48ofUt"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"yEeqK",
+      "anchorB":[326.115,279.795],
+      "id":"1Qg33q",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[326.115,279.795],
+      "bodyA":"3yKBM"
+    },{
+      "properties":{
+        "limitsEnabled":false,
+        "motorEnabled":false
+      },
+      "bodyB":"4uS106",
+      "anchorB":[675.307,119.739],
+      "id":"1XnWD1",
+      "type":"revolute",
+      "collideConnected":false,
+      "anchorA":[675.307,119.739],
+      "bodyA":"4om8BV"
+    }],
   "camera":{
-    "scale":0.50295542909841,
-    "y":332.31525282123,
-    "x":466.78339232501,
+    "y":-873.91881856894,
+    "x":-1273.7552577924,
+    "scale":0.38516912257046,
     "rotation":0
   },
+  "version":"1.0",
   "bodies":[{
-      "id":"yEeqK",
-      "linearVelocity":[0,0],
-      "bodyType":"dynamic",
-      "fixedRotation":false,
+      "id":"tmlbm",
       "linearDamping":0,
+      "fixtures":[{
+          "points":[-99.57,-49.595,99.57,-49.595,99.57,49.595,-99.57,49.595]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-49.595,99.57,-49.595,99.57,49.595,-99.57,49.595],
+      "mirrorX":1,
+      "position":[1294.6847,-221.8377],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":199.14,
+        "height":"99.19"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
       "angularDamping":0,
       "sharedFixtureData":{
-        "friction":0.2,
-        "shapeType":"polygon",
-        "restitution":0.3,
+        "groupIndex":0,
         "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
         "density":1,
-        "groupIndex":0
+        "friction":0.2
       },
-      "shapeType":"rectangle",
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"IopDw",
+      "linearDamping":0,
       "fixtures":[{
-          "sensor":true,
+          "points":[-99.57,-49.595,99.57,-49.595,99.57,49.595,-99.57,49.595]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-49.595,99.57,-49.595,99.57,49.595,-99.57,49.595],
+      "mirrorX":1,
+      "position":[1292.9152,-323.2833],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":199.14,
+        "height":"99.19"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"48ofUt",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-99.57,-49.595,99.57,-49.595,99.57,49.595,-99.57,49.595]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-49.595,99.57,-49.595,99.57,49.595,-99.57,49.595],
+      "mirrorX":1,
+      "position":[1292.7533,-416.6906],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":199.14,
+        "height":"99.19"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"Fw6SD",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-99.57,-20,99.57,-20,99.57,20,-99.57,20]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-20,99.57,-20,99.57,20,-99.57,20],
+      "mirrorX":1,
+      "position":[1683.1699,-439.8945],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":"199.14",
+        "height":40
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"2ln7HO",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-99.57,-20,99.57,-20,99.57,20,-99.57,20]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-20,99.57,-20,99.57,20,-99.57,20],
+      "mirrorX":1,
+      "position":[1489.0492,-441.3183],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":"199.14",
+        "height":40
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"jH2vw",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-99.57,-20,99.57,-20,99.57,20,-99.57,20]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-20,99.57,-20,99.57,20,-99.57,20],
+      "mirrorX":1,
+      "position":[1090.2664,-439.6486],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":"199.14",
+        "height":40
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"2OcYrK",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-99.57,-20,99.57,-20,99.57,20,-99.57,20]
+        }],
+      "fixedRotation":false,
+      "vertices":[-99.57,-20,99.57,-20,99.57,20,-99.57,20],
+      "mirrorX":1,
+      "position":[893.9677,-439.8107],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":"199.14",
+        "height":40
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"9V7Xa",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-20,-141.33,20,-141.33,20,141.33,-20,141.33]
+        }],
+      "fixedRotation":false,
+      "vertices":[-20,-141.33,20,-141.33,20,141.33,-20,141.33],
+      "mirrorX":1,
+      "position":[1402.5613,215.6123],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":40,
+        "height":"282.66"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"3lGcG7",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-20,-141.33,20,-141.33,20,141.33,-20,141.33]
+        }],
+      "fixedRotation":false,
+      "vertices":[-20,-141.33,20,-141.33,20,141.33,-20,141.33],
+      "mirrorX":1,
+      "position":[1404.007,-67.5008],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":40,
+        "height":"282.66"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"4vwlwd",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-20,-141.33,20,-141.33,20,141.33,-20,141.33]
+        }],
+      "fixedRotation":false,
+      "vertices":[-20,-141.33,20,-141.33,20,141.33,-20,141.33],
+      "mirrorX":1,
+      "position":[1176.8167,-64.4475],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":40,
+        "height":"282.66"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"1MasSO",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-20,-141.33,20,-141.33,20,141.33,-20,141.33]
+        }],
+      "fixedRotation":false,
+      "vertices":[-20,-141.33,20,-141.33,20,141.33,-20,141.33],
+      "mirrorX":1,
+      "position":[1175.3927,210.3031],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":40,
+        "height":"282.66"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"1j3PUh",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[30.273,-285.09,30.273,-255.09,0.273,-255.09,0.273,-285.09],
+          "userData":{
+            "label":"dear",
+            "id":"aRUfS",
+            "type":"sfixture",
+            "subtype":"resource",
+            "extra":{
+              "selectedBGIndex":0
+            }
+          },
+          "sensor":true
+        },{
+          "points":[-102.087,-398.704,-134.241,-236.328,-195.333,-295.812]
+        },{
+          "points":[-102.087,-398.704,-110.126,-38.584,-134.241,-236.328]
+        },{
+          "points":[-102.087,-398.704,-195.333,-295.812,-280.539,-302.243]
+        },{
+          "points":[-106.91,48.23,-134.241,-236.328,-110.126,-38.584]
+        },{
+          "points":[-102.087,-398.704,-280.539,-302.243,-370.569,-302.243]
+        },{
+          "points":[-106.91,48.23,-147.102,-151.122,-134.241,-236.328]
+        },{
+          "points":[-95.657,130.222,-147.102,-151.122,-106.91,48.23]
+        },{
+          "points":[-32.957,-8.038,-110.126,-38.584,-102.087,-398.704]
+        },{
+          "points":[132.633,393.881,-32.957,-8.038,-102.087,-398.704]
+        },{
+          "points":[-102.087,-398.704,-370.569,-302.243,-275.716,-400.311]
+        },{
+          "points":[-275.716,-400.311,-370.569,-302.243,-360.923,-400.311]
+        },{
+          "points":[-360.923,-400.311,-370.569,-302.243,-447.738,-400.311]
+        },{
+          "points":[-370.569,-302.243,-529.729,-403.527,-447.738,-400.311]
+        },{
+          "points":[-370.569,-302.243,-603.682,-368.158,-529.729,-403.527]
+        },{
+          "points":[-370.569,-302.243,-547.414,-310.281,-603.682,-368.158]
+        },{
+          "points":[-370.569,-302.243,-463.815,-302.243,-547.414,-310.281]
+        },{
+          "points":[-95.657,130.222,-148.71,-70.738,-147.102,-151.122]
+        },{
+          "points":[-95.657,130.222,-164.787,8.038,-148.71,-70.738]
+        },{
+          "points":[-95.657,130.222,-164.787,90.03,-164.787,8.038]
+        },{
+          "points":[-95.657,130.222,-164.787,183.275,-164.787,90.03]
+        },{
+          "points":[-95.657,130.222,-155.141,263.659,-164.787,183.275]
+        },{
+          "points":[-95.657,130.222,-132.633,344.043,-155.141,263.659]
+        },{
+          "points":[-57.073,313.497,-132.633,344.043,-95.657,130.222]
+        },{
+          "points":[-57.073,313.497,-95.657,130.222,-68.326,225.075]
+        },{
+          "points":[132.633,393.881,-4.019,75.561,-32.957,-8.038]
+        },{
+          "points":[132.633,393.881,8.842,162.375,-4.019,75.561]
+        },{
+          "points":[132.633,393.881,18.488,245.974,8.842,162.375]
+        },{
+          "points":[132.633,393.881,23.311,336.004,18.488,245.974]
+        },{
+          "points":[132.633,393.881,53.857,413.173,23.311,336.004]
+        },{
+          "points":[153.533,310.281,132.633,393.881,-102.087,-398.704]
+        },{
+          "points":[161.571,225.075,153.533,310.281,-102.087,-398.704]
+        },{
+          "points":[161.571,133.437,161.571,225.075,-102.087,-398.704]
+        },{
+          "points":[161.571,133.437,-102.087,-398.704,132.633,53.053]
+        },{
+          "points":[132.633,53.053,-102.087,-398.704,119.772,-27.33]
+        },{
+          "points":[119.772,-27.33,-102.087,-398.704,114.949,-107.714]
+        },{
+          "points":[114.949,-107.714,-102.087,-398.704,108.518,-189.706]
+        },{
+          "points":[201.763,-208.998,108.518,-189.706,-102.087,-398.704]
+        },{
+          "points":[293.401,-208.998,201.763,-208.998,-102.087,-398.704]
+        },{
+          "points":[377,-208.998,293.401,-208.998,-102.087,-398.704]
+        },{
+          "points":[465.422,-213.821,377,-208.998,-102.087,-398.704]
+        },{
+          "points":[552.237,-239.544,465.422,-213.821,-102.087,-398.704]
+        },{
+          "points":[603.682,-308.674,552.237,-239.544,-102.087,-398.704]
+        },{
+          "points":[603.682,-308.674,-102.087,-398.704,563.49,-385.842]
+        },{
+          "points":[563.49,-385.842,-102.087,-398.704,483.107,-397.096]
+        },{
+          "points":[483.107,-397.096,-102.087,-398.704,396.292,-405.134]
+        },{
+          "points":[396.292,-405.134,-102.087,-398.704,312.693,-408.35]
+        },{
+          "points":[312.693,-408.35,-102.087,-398.704,229.094,-411.565]
+        },{
+          "points":[229.094,-411.565,-102.087,-398.704,148.71,-413.173]
+        },{
+          "points":[148.71,-413.173,-102.087,-398.704,61.896,-413.173]
+        },{
+          "points":[61.896,-413.173,-102.087,-398.704,-21.704,-411.565]
+        },{
+          "points":[-102.087,-398.704,-275.716,-400.311,-195.333,-400.311]
+        }],
+      "fixedRotation":false,
+      "vertices":[1123.9470384789,-268.78438171553,1030.7018266085,-270.39205778226,950.31802327199,-270.39205778226,865.11119173529,-270.39205778226,778.29668413186,-270.39205778226,696.30520472862,-273.60740991572,622.35210565903,-238.23853644765,678.62076799459,-180.36219804537,762.21992346456,-172.32381771171,855.46513533491,-172.32381771171,945.4949950718,-172.32381771171,1030.7018266085,-165.89311344479,1091.7935171442,-106.40909897578,1078.9321086104,-21.202267439077,1077.3244325437,59.181535897432,1061.2476718764,137.95766316721,1061.2476718764,219.94914257045,1061.2476718764,313.1943544408,1070.8937282768,393.57815777731,1093.401193211,473.96196111382,1168.9619683473,443.41611584595,1157.7082358802,354.99393217579,1130.3777427458,260.1410442387,1119.1240102787,178.14956483547,1115.9086581452,91.335057232036,1193.0771093482,121.88090249991,1222.0152785494,205.48005796988,1234.8766870832,292.29456557331,1244.5227434836,375.89372104328,1249.3457716838,465.92358078017,1279.8916169517,543.09203198322,1358.6677442215,523.79991918246,1379.5675330889,440.20076371249,1387.6059134226,354.99393217579,1387.6059134226,263.35639637217,1358.6677442215,182.97259303566,1345.8063356876,102.58878969915,1340.9833074874,22.204986362638,1334.5526032205,-59.786493040602,1427.7978150909,-79.078605841364,1519.4353508945,-79.078605841364,1603.0345063644,-79.078605841364,1691.4566900346,-83.901634041555,1778.271197638,-109.62445110924,1829.7168317734,-178.75452197864,1789.5249301051,-255.92297318168,1709.1411267686,-267.1767056488,1622.3266191652,-275.21508598245,1538.7274636952,-278.43043811591,1455.1283082253,-281.64579024937,1374.7445048888,-283.2534663161,1287.9299972853,-283.2534663161,1204.3308418154,-281.64579024937],
+      "mirrorX":1,
+      "position":[2123.1174,-373.2833],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"static",
+      "dims":[],
+      "angle":0,
+      "shapeType":"custom",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"yEeqK",
+      "linearDamping":0,
+      "fixtures":[{
           "points":[16.774,43.634,16.774,73.634,-13.226,73.634,-13.226,43.634],
           "userData":{
             "label":"",
-            "subtype":"anchor",
             "extra":[],
             "type":"sfixture",
+            "subtype":"anchor",
             "id":"XsqZn"
-          }
+          },
+          "sensor":true
         },{
-          "points":[-28.88,-61.43,28.88,-61.43,28.88,61.43,-28.88,61.43]
+          "points":[28.88,-61.43,28.88,61.43,-28.88,61.43,-28.88,-61.43]
         }],
-      "angle":0,
-      "mirrorX":1,
-      "mirrorY":1,
+      "fixedRotation":false,
       "vertices":[-28.88,-61.43,28.88,-61.43,28.88,61.43,-28.88,61.43],
+      "mirrorX":1,
+      "position":[325.7442,341.8232],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
       "dims":{
         "width":"57.76",
         "height":"122.86"
       },
-      "label":"",
-      "position":[325.7442,341.8232],
-      "angularVelocity":0
-    },{
-      "id":"3yKBM",
-      "linearVelocity":[0,0],
-      "bodyType":"dynamic",
-      "fixedRotation":false,
-      "linearDamping":0,
+      "angle":0,
+      "shapeType":"rectangle",
       "angularDamping":0,
       "sharedFixtureData":{
-        "friction":0.2,
-        "shapeType":"polygon",
-        "restitution":0.3,
+        "groupIndex":0,
         "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
         "density":1,
-        "groupIndex":0
+        "friction":0.2
       },
-      "shapeType":"rectangle",
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"3yKBM",
+      "linearDamping":0,
       "fixtures":[{
-          "sensor":true,
           "points":[8.797,7.603,8.797,37.603,-21.203,37.603,-21.203,7.603],
           "userData":{
+            "label":"mm",
+            "id":"1csKck",
             "type":"sfixture",
             "subtype":"meshusert",
-            "id":"1csKck",
-            "label":"mm",
             "extra":{
               "nodes":[{
                   "type":"anchor",
@@ -81,47 +694,48 @@
                   "id":"XsqZn"
                 }]
             }
-          }
+          },
+          "sensor":true
         },{
-          "sensor":true,
           "points":[14.011,-67.041,14.011,-37.041,-15.989,-37.041,-15.989,-67.041],
           "userData":{
             "label":"",
-            "subtype":"anchor",
             "extra":[],
             "type":"sfixture",
+            "subtype":"anchor",
             "id":"3QTJx7"
-          }
+          },
+          "sensor":true
         },{
-          "points":[-28.88,-61.43,28.88,-61.43,28.88,61.43,-28.88,61.43]
+          "points":[28.88,-61.43,28.88,61.43,-28.88,61.43,-28.88,-61.43]
         }],
-      "angle":0,
-      "mirrorX":1,
-      "mirrorY":1,
+      "fixedRotation":false,
       "vertices":[-28.88,-61.43,28.88,-61.43,28.88,61.43,-28.88,61.43],
+      "mirrorX":1,
+      "position":[325.7012,216.7852],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
       "dims":{
         "width":"57.76",
         "height":"122.86"
       },
-      "label":"",
-      "position":[325.7012,216.7852],
-      "angularVelocity":0
-    },{
-      "id":"3QiJvc",
-      "linearVelocity":[0,0],
-      "bodyType":"dynamic",
-      "fixedRotation":false,
-      "linearDamping":0,
+      "angle":0,
+      "shapeType":"rectangle",
       "angularDamping":0,
       "sharedFixtureData":{
-        "friction":0.2,
-        "shapeType":"polygon",
-        "restitution":0.3,
+        "groupIndex":0,
         "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
         "density":1,
-        "groupIndex":0
+        "friction":0.2
       },
-      "shapeType":"ribbon",
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"3QiJvc",
+      "linearDamping":0,
       "fixtures":[{
           "points":[314.137,1.079,297.179,37.307,193.683,-11.422]
         },{
@@ -143,176 +757,352 @@
         },{
           "points":[-205.336,-46.736,-289.067,71.031,-314.137,39.863]
         }],
-      "angle":0,
-      "mirrorX":1,
-      "mirrorY":1,
-      "vertices":[-144.5751696167,-194.398235238,-35.77444545937,-280.9973494181,129.94009659347,-305.29236835225,254.88606935578,-298.43890554239,374.20086112333,-284.15311325548,483.69864254544,-233.18208939844,466.7410383035,-196.9544803361,363.24469774197,-245.68283272672,251.43820820813,-258.58777941644,131.66753018073,-265.3296860949,-19.843215827163,-244.30680673466,-119.50482382403,-163.22969722551],
-      "dims":[],
-      "label":"",
-      "position":[171.5899,-232.0625],
-      "angularVelocity":0
-    },{
-      "id":"33tSj3",
-      "linearVelocity":[0,0],
-      "bodyType":"dynamic",
       "fixedRotation":false,
-      "linearDamping":0,
+      "vertices":[-144.5751696167,-194.398235238,-35.77444545937,-280.9973494181,129.94009659347,-305.29236835225,254.88606935578,-298.43890554239,374.20086112333,-284.15311325548,483.69864254544,-233.18208939844,466.7410383035,-196.9544803361,363.24469774197,-245.68283272672,251.43820820813,-258.58777941644,131.66753018073,-265.3296860949,-19.843215827163,-244.30680673466,-119.50482382403,-163.22969722551],
+      "mirrorX":1,
+      "position":[171.5899,-232.0625],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":[],
+      "angle":0,
+      "shapeType":"ribbon",
       "angularDamping":0,
       "sharedFixtureData":{
-        "friction":0.2,
-        "shapeType":"polygon",
-        "restitution":0.3,
+        "groupIndex":0,
         "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
         "density":1,
-        "groupIndex":0
+        "friction":0.2
       },
-      "shapeType":"rectangle",
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"33tSj3",
+      "linearDamping":0,
       "fixtures":[{
-          "sensor":true,
           "points":[-139.025,-127.149,-139.025,-97.149,-169.025,-97.149,-169.025,-127.149],
           "userData":{
+            "label":"",
+            "id":"2OM4Qb",
             "type":"sfixture",
             "subtype":"anchor",
-            "id":"2OM4Qb",
-            "label":"",
             "extra":[]
-          }
+          },
+          "sensor":true
         },{
-          "sensor":true,
           "points":[5.908,50.918,5.908,80.918,-24.092,80.918,-24.092,50.918],
           "userData":{
+            "label":"mm",
+            "id":"35pezZ",
             "type":"sfixture",
             "subtype":"meshusert",
-            "id":"35pezZ",
-            "label":"mm",
             "extra":{
               "nodes":[{
                   "type":"anchor",
                   "id":"2OM4Qb"
                 }]
             }
-          }
+          },
+          "sensor":true
         },{
           "points":[73.265,-117.655,73.265,117.655,-73.265,117.655,-73.265,-117.655]
         }],
-      "angle":0,
-      "mirrorX":1,
-      "mirrorY":1,
+      "fixedRotation":false,
       "vertices":[-73.265,-117.655,73.265,-117.655,73.265,117.655,-73.265,117.655],
+      "mirrorX":1,
+      "position":[30.0994,315.4745],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
       "dims":{
         "width":"146.53",
         "height":"235.31"
       },
-      "label":"",
-      "position":[30.0994,315.4745],
-      "angularVelocity":0
-    },{
-      "id":"3hO2Wg",
-      "linearVelocity":[3.4936301708221,-1.2570116519928],
-      "bodyType":"dynamic",
-      "fixedRotation":false,
-      "linearDamping":0,
+      "angle":0,
+      "shapeType":"rectangle",
       "angularDamping":0,
       "sharedFixtureData":{
-        "friction":0.2,
-        "shapeType":"polygon",
-        "restitution":0.3,
+        "groupIndex":0,
         "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
         "density":1,
-        "groupIndex":0
+        "friction":0.2
       },
-      "shapeType":"rectangle",
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"3hO2Wg",
+      "linearDamping":0,
       "fixtures":[{
-          "sensor":true,
           "points":[-80.704,106.165,-80.704,136.165,-110.704,136.165,-110.704,106.165],
           "userData":{
             "label":"",
-            "subtype":"anchor",
-            "id":"2OEnx4",
             "extra":[],
-            "type":"sfixture"
-          }
+            "type":"sfixture",
+            "subtype":"anchor",
+            "id":"2OEnx4"
+          },
+          "sensor":true
         },{
-          "sensor":true,
           "points":[28.332,72.347,28.332,102.347,-1.668,102.347,-1.668,72.347],
           "userData":{
+            "label":"mm",
+            "id":"l9ULL",
             "type":"sfixture",
             "subtype":"meshusert",
-            "id":"l9ULL",
-            "label":"mm",
             "extra":{
               "nodes":[{
                   "type":"anchor",
                   "id":"2OEnx4"
                 }]
             }
-          }
+          },
+          "sensor":true
         },{
           "points":[58.47,-147.25,58.47,147.25,-58.47,147.25,-58.47,-147.25]
         }],
-      "angle":0,
-      "mirrorX":1,
-      "mirrorY":1,
+      "fixedRotation":false,
       "vertices":[-58.47,-147.25,58.47,-147.25,58.47,147.25,-58.47,147.25],
+      "mirrorX":1,
+      "position":[-267.7303,347.8968],
+      "linearVelocity":[4.9725956916809,-0.67275208234787],
+      "label":"",
+      "bodyType":"dynamic",
       "dims":{
         "width":"116.94",
         "height":"294.50"
       },
-      "label":"",
-      "position":[-267.7303,347.8968],
-      "angularVelocity":-0.0714
-    },{
-      "id":"1zafKx",
-      "linearVelocity":[0,0],
-      "bodyType":"static",
-      "fixedRotation":false,
-      "linearDamping":0,
+      "angle":0,
+      "shapeType":"rectangle",
       "angularDamping":0,
       "sharedFixtureData":{
-        "friction":0.2,
-        "shapeType":"polygon",
-        "restitution":0.3,
+        "groupIndex":0,
         "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
         "density":1,
-        "groupIndex":0
+        "friction":0.2
       },
-      "shapeType":"custom",
+      "angularVelocity":-0.0714,
+      "mirrorY":1
+    },{
+      "id":"1zafKx",
+      "linearDamping":0,
       "fixtures":[{
-          "sensor":false,
           "points":[500.123,590.625,500.123,620.625,470.123,620.625,470.123,590.625],
           "userData":{
+            "label":"mm",
+            "id":"3aSuYG",
             "type":"sfixture",
             "subtype":"resource",
-            "id":"3aSuYG",
-            "label":"mm",
             "extra":{
               "selectedBGIndex":0
             }
-          }
+          },
+          "sensor":false
         },{
           "points":[156.25,81.219,-99.138,118.781,-156.25,-118.781]
         }],
-      "angle":0,
-      "mirrorX":1,
-      "mirrorY":1,
+      "fixedRotation":false,
       "vertices":[404.61193110668,697.5629943313,347.5,460,660,660],
-      "dims":[],
-      "label":"",
+      "mirrorX":1,
       "position":[503.75,578.7815],
-      "angularVelocity":0
-    }],
-  "joints":[{
-      "anchorA":[326.115,279.795],
-      "type":"revolute",
-      "properties":{
-        "motorEnabled":false,
-        "limitsEnabled":false
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"static",
+      "dims":[],
+      "angle":0,
+      "shapeType":"custom",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
       },
-      "id":"1Qg33q",
-      "collideConnected":false,
-      "anchorB":[326.115,279.795],
-      "bodyA":"3yKBM",
-      "bodyB":"yEeqK"
-    }],
-  "version":"1.0"
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"3MIbKx",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[-4.575,88.299,-4.575,118.299,-34.575,118.299,-34.575,88.299],
+          "userData":{
+            "label":"poepje",
+            "id":"22AIAY",
+            "type":"sfixture",
+            "subtype":"resource",
+            "extra":{
+              "selectedBGIndex":0
+            }
+          },
+          "sensor":true
+        },{
+          "points":[-8.775,236.441,-56.551,39.488,-56.551,-18.038]
+        },{
+          "points":[-8.775,236.441,-76.051,160.39,-56.551,39.488]
+        },{
+          "points":[-8.775,236.441,-62.401,243.266,-76.051,160.39]
+        },{
+          "points":[39.976,229.616,-8.775,236.441,-56.551,-18.038]
+        },{
+          "points":[73.126,191.59,39.976,229.616,-56.551,-18.038]
+        },{
+          "points":[73.126,191.59,-56.551,-18.038,72.151,138.939]
+        },{
+          "points":[72.151,138.939,-56.551,-18.038,70.201,85.314]
+        },{
+          "points":[70.201,85.314,-56.551,-18.038,69.226,35.588]
+        },{
+          "points":[72.151,-14.138,69.226,35.588,-56.551,-18.038]
+        },{
+          "points":[76.051,-62.888,72.151,-14.138,-56.551,-18.038]
+        },{
+          "points":[76.051,-62.888,-56.551,-18.038,75.076,-111.639]
+        },{
+          "points":[75.076,-111.639,-56.551,-18.038,70.201,-163.315]
+        },{
+          "points":[70.201,-163.315,-56.551,-18.038,49.726,-213.041]
+        },{
+          "points":[49.726,-213.041,-56.551,-18.038,7.8,-243.266]
+        },{
+          "points":[7.8,-243.266,-56.551,-18.038,-38.026,-222.791]
+        },{
+          "points":[-38.026,-222.791,-56.551,-18.038,-60.451,-175.99]
+        },{
+          "points":[-56.551,-18.038,-63.376,-125.289,-60.451,-175.99]
+        },{
+          "points":[-56.551,-18.038,-63.376,-71.664,-63.376,-125.289]
+        },{
+          "points":[-56.551,39.488,-76.051,160.39,-71.176,106.764]
+        }],
+      "fixedRotation":false,
+      "vertices":[587.58677329869,441.87301614265,592.46184296776,388.24724978293,607.08705197495,320.97128834983,607.08705197495,263.44546625486,600.26195443826,209.81969989515,600.26195443826,156.19393353543,603.1869962397,105.49320897715,625.6123167174,58.692540154128,671.43797160661,38.217247544054,713.36357076057,68.442679492258,733.83886337064,118.16839011672,738.71393303971,169.84412860881,739.68894697352,218.59482529946,735.78889123827,267.34552199012,732.86384943683,317.07123261458,733.83886337064,366.79694323904,735.78889123827,420.42270959876,736.76390517208,473.07346202467,703.61343142244,511.09900544337,654.86273473179,517.92410298006,601.23696837207,524.74920051676],
+      "mirrorX":1,
+      "position":[71.1296,815.0442],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"static",
+      "dims":[],
+      "angle":0,
+      "shapeType":"custom",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"4om8BV",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[12.854,15.547,12.854,45.547,-17.146,45.547,-17.146,15.547],
+          "userData":{
+            "label":"poepje",
+            "id":"3D9zlQ",
+            "type":"sfixture",
+            "subtype":"meshusert",
+            "extra":{
+              "meshY":"88.89",
+              "nodes":[{
+                  "type":"anchor",
+                  "id":"7Zq7t"
+                },{
+                  "type":"joint",
+                  "id":"1XnWD1"
+                },{
+                  "type":"anchor",
+                  "id":"auuTR"
+                }]
+            }
+          },
+          "sensor":true
+        },{
+          "points":[16.486,-135.372,16.486,-105.372,-13.514,-105.372,-13.514,-135.372],
+          "userData":{
+            "label":"",
+            "id":"7Zq7t",
+            "type":"sfixture",
+            "subtype":"anchor",
+            "extra":[]
+          },
+          "sensor":true
+        },{
+          "points":[20,-132.45,20,132.45,-20,132.45,-20,-132.45]
+        }],
+      "fixedRotation":false,
+      "vertices":[-20,-132.45,20,-132.45,20,132.45,-20,132.45],
+      "mirrorX":1,
+      "position":[670.8485,-3.6049],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":40,
+        "height":"264.90"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    },{
+      "id":"4uS106",
+      "linearDamping":0,
+      "fixtures":[{
+          "points":[14.041,108.871,14.041,138.871,-15.959,138.871,-15.959,108.871],
+          "userData":{
+            "label":"",
+            "id":"auuTR",
+            "type":"sfixture",
+            "subtype":"anchor",
+            "extra":[]
+          },
+          "sensor":true
+        },{
+          "points":[20,-132.45,20,132.45,-20,132.45,-20,-132.45]
+        }],
+      "fixedRotation":false,
+      "vertices":[-20,-132.45,20,-132.45,20,132.45,-20,132.45],
+      "mirrorX":1,
+      "position":[670.322,257.4178],
+      "linearVelocity":[0,0],
+      "label":"",
+      "bodyType":"dynamic",
+      "dims":{
+        "width":40,
+        "height":"264.90"
+      },
+      "angle":0,
+      "shapeType":"rectangle",
+      "angularDamping":0,
+      "sharedFixtureData":{
+        "groupIndex":0,
+        "sensor":false,
+        "restitution":0.3,
+        "shapeType":"polygon",
+        "density":1,
+        "friction":0.2
+      },
+      "angularVelocity":0,
+      "mirrorY":1
+    }]
 }
