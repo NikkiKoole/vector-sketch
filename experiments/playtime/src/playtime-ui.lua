@@ -1823,7 +1823,7 @@ function lib.drawSelectedSFixture()
             nextRow()
 
             local editMode = state.currentMode == 'editMeshVertices'
-            local buttonLabel = editMode and '✓ editing vertices' or 'edit vertices'
+            local buttonLabel = editMode and 'EDITING' or 'edit vertices'
             local buttonColor = editMode and { 0.2, 0.8, 0.2 } or nil
 
             if ui.button(x, y, ROW_WIDTH, buttonLabel, BUTTON_HEIGHT, buttonColor) then
@@ -2442,7 +2442,7 @@ function lib.drawSelectedBodiesUI()
             local fixtures = fb:getFixtures()
             local ff = fixtures[1]
             local groupIndex = ff:getGroupIndex()
-            local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex)
+            local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex, false, 1)
 
             if groupIndexSlider then
                 local value = math.floor(groupIndexSlider)
@@ -2924,7 +2924,7 @@ function lib.drawUpdateSelectedObjectUI()
                         end
                         local groupIndex = ff:getGroupIndex()
                         local groupIndexSlider = ui.sliderWithInput(myID .. 'groupIndex', x, y, 160, -32768, 32767,
-                            groupIndex)
+                            groupIndex, false, 1)
                         ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' groupid')
                         if groupIndexSlider then
                             local value = math.floor(groupIndexSlider)

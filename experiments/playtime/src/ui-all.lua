@@ -177,14 +177,18 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
 end
 
 --- Creates a horizontal slider with a numeric input field.
-function ui.sliderWithInput(_id, x, y, w, min, max, value, changed)
+function ui.sliderWithInput(_id, x, y, w, min, max, value, changed, step)
     local yOffset = (40 - theme.slider.height) / 2
-    local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value, _id)
+    local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value, _id, step)
     local valueHasChangedViaSlider = false
     local returnValue = nil
 
     if panelSlider then
-        value = string.format("%.2f", panelSlider)
+        if step and step == 1 then
+            value = string.format("%d", panelSlider)
+        else
+            value = string.format("%.2f", panelSlider)
+        end
         valueHasChangedViaSlider = true
         returnValue = value
     end
@@ -479,7 +483,7 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
 end
 
 --- Creates a slider (horizontal or vertical).
-function ui.slider(x, y, length, thickness, orientation, min, max, value, extraId)
+function ui.slider(x, y, length, thickness, orientation, min, max, value, extraId, step)
     local inValue = value
 
     local sliderID
@@ -567,6 +571,10 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
         end
 
         value = min + proportion * (max - min)
+
+        if step then
+            value = math.floor((value / step) + 0.5) * step
+        end
     end
 
     if released and ui.draggingSliderID == sliderID then
