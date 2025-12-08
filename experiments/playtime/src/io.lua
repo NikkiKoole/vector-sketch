@@ -495,7 +495,48 @@ function lib.gatherSaveData(world, camera)
                             ud.extra.dirty = true
                             ud.extra.ompImage = nil
                         end
+                        -- removing body before save
+                        if ud.extra.influences then
+                            for i =1 ,#ud.extra.influences do
+                                local inflList = ud.extra.influences[i]
+                                for j = 1, #inflList do
+                                    if inflList[j].body then
+                                        ud.extra.influences[i][j].body = nil
+                                    end
+                                end
+                            end
+                        end
                         fixtureData.userData = utils.deepCopy(ud)
+                        -- restoring body after save
+                        if ud.extra.influences then
+                            for i =1 ,#ud.extra.influences do
+                                local inflList = ud.extra.influences[i]
+                                for j = 1, #inflList do
+                                    if inflList[j].body == nil then
+                                        logger:info("Restoring body for influence type: " , inspect(inflList[j]))
+                                        local type = inflList[j].nodeType
+                                        --logger:info("Restoring body for influence type: " .. type)
+                                        if type == 'joint' then
+                                            local joint = registry.getJointByID(inflList[j].nodeId)
+                                            local bodyA, bodyB =  joint:getBodies()
+                                            logger:info("Restoring body for influence type: ", inspect(inflList[j]))
+                                            if inflList[j].side == 'A' then
+                                                inflList[j].body = bodyA
+                                            else
+                                                inflList[j].body = bodyB
+                                            end
+                                        elseif type == 'anchor' then
+                                            local anchor = registry.getSFixtureByID(inflList[j].nodeId)
+                                            local body = anchor:getBody()
+                                            inflList[j].body = body
+                                        -- give it back!
+                                        end
+                                        --logger:info(inflList[j].body)
+                                        --ud.extra.influences[i][j].body = nil
+                                    end
+                                end
+                            end
+                        end
                     end
 
 
@@ -888,10 +929,35 @@ function lib.cloneSelection(selectedBodies, world)
             local ud = fixture:getUserData()
             local oldUD = utils.deepCopy(ud)
             if oldUD and oldUD.extra and oldUD.extra.nodes then
+
                 for ni = 1, #oldUD.extra.nodes do
                     oldUD.extra.nodes[ni].id = idMapping[oldUD.extra.nodes[ni].id]
                 end
                 fixture:setUserData(oldUD)
+            end
+
+
+            if oldUD and oldUD.extra and oldUD.extra.influences then
+                for i =1 ,#oldUD.extra.influences do
+                    local inflList = oldUD.extra.influences[i]
+                    for j = 1, #inflList do
+                        inflList[j].nodeId = idMapping[inflList[j].nodeId] -- now it is already pointing to the new node
+                            local type = inflList[j].nodeType
+                            if type == 'joint' then
+                                local joint = registry.getJointByID(inflList[j].nodeId)
+                                local bodyA, bodyB =  joint:getBodies()
+                                if inflList[j].side == 'A' then
+                                    inflList[j].body = bodyA
+                                else
+                                    inflList[j].body = bodyB
+                                end
+                            elseif type == 'anchor' then
+                                local anchor = registry.getSFixtureByID(inflList[j].nodeId)
+                                local body = anchor:getBody()
+                                inflList[j].body = body
+                            end
+                    end
+                end
             end
         end
     end

@@ -1772,7 +1772,7 @@ function lib.drawSelectedSFixture()
                         influences = pruneTopK(influences, 2)
 
                         ud.extra.influences = influences -- STORE IT
-                        logger:inspect(influences)
+                        --logger:inspect(influences)
                     end
                 end
             end
