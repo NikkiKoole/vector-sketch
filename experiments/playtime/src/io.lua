@@ -318,6 +318,58 @@ function lib.buildWorld(data, world, cam)
             logger:error("Failed to find bodies for joint:", jointData.id)
         end
     end
+
+    -- only after making the bodies and joints can we patch up the influences to have bodies.
+    -- we want to look through all bodeis
+
+    -- for k,v in pairs(registry.sfixtures) do
+    --     local ud = v:getUserData()
+    --     if ud.subtype == 'meshusert' then
+    --         print(inspect(ud))
+    --        if ud.extra and ud.extra.infuences then
+    --            print('jo!')
+    --            --if oldUD and oldUD.extra and oldUD.extra.influences then
+    --                for i =1 ,#ud.extra.influences do
+    --                    local inflList = ud.extra.influences[i]
+    --                    for j = 1, #inflList do
+    --                        --inflList[j].nodeId = idMapping[inflList[j].nodeId] -- now it is already pointing to the new node
+    --                            local type = inflList[j].nodeType
+    --                            if type == 'joint' then
+    --                                local joint = registry.getJointByID(inflList[j].nodeId)
+    --                                local bodyA, bodyB =  joint:getBodies()
+    --                                if inflList[j].side == 'A' then
+    --                                    inflList[j].body = bodyA
+    --                                else
+    --                                    inflList[j].body = bodyB
+    --                                end
+    --                            elseif type == 'anchor' then
+    --                                local anchor = registry.getSFixtureByID(inflList[j].nodeId)
+    --                                local body = anchor:getBody()
+    --                                inflList[j].body = body
+    --                            end
+    --                            print(inflList[j].body)
+    --                    end
+
+    --                    --end
+    --            end
+    --             v:setUserData(ud)
+    --        end
+    --     --print(inspect(ud))
+    --     end
+    --     -- local fixture = v
+    --     -- if fixture and fixture.userData and fixture.userData.extra and fixture.userData.extra.influences then
+    --     --     print(inspect(fixture.userData.extra.influences))
+    --     -- end
+    -- end
+
+    -- for _, bodyData in ipairs(data.bodies) do
+    --     for i = #bodyData.fixtures, 1, -1 do -- doing this backwards keeps order intact
+    --         local fixtureData = bodyData.fixtures[i]
+    --         if fixtureData and fixtureData.userData and fixtureData.userData.extra and fixtureData.userData.extra.influences then
+    --             print(inspect(fixtureData.userData.extra.influences))
+    --         end
+    --     end
+    -- end
 end
 
 function lib.load(data, world, cam)
