@@ -26,6 +26,51 @@ local function clearWorld(world)
     registry.reset()
 end
 
+local function restoreInfluenceBodies(influences)
+    for i = 1, #influences do
+        local inflList = influences[i]
+        for j = 1, #inflList do
+            local infl = inflList[j]
+            if infl.nodeType == 'joint' then
+                local joint = registry.getJointByID(infl.nodeId)
+                local bodyA, bodyB = joint:getBodies()
+                infl.body = (infl.side == 'A') and bodyA or bodyB
+            elseif infl.nodeType == 'anchor' then
+                local anchor = registry.getSFixtureByID(infl.nodeId)
+                infl.body = anchor:getBody()
+            end
+        end
+    end
+end
+-- For cloning: remap IDs THEN restore body references
+local function remapAndRestoreInfluences(influences, idMapping)
+    if not influences then return end
+
+    for i = 1, #influences do
+        local inflList = influences[i]
+        for j = 1, #inflList do
+            local infl = inflList[j]
+
+            -- Remap to new cloned node ID
+            infl.nodeId = idMapping[infl.nodeId]
+
+            -- Now restore body reference using the NEW ID
+            if infl.nodeType == 'joint' then
+                local joint = registry.getJointByID(infl.nodeId)
+                if joint then
+                    local bodyA, bodyB = joint:getBodies()
+                    infl.body = (infl.side == 'A') and bodyA or bodyB
+                end
+            elseif infl.nodeType == 'anchor' then
+                local anchor = registry.getSFixtureByID(infl.nodeId)
+                if anchor then
+                    infl.body = anchor:getBody()
+                end
+            end
+        end
+    end
+end
+
 function lib.buildWorld(data, world, cam)
     local idMap = {}
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
@@ -322,54 +367,17 @@ function lib.buildWorld(data, world, cam)
     -- only after making the bodies and joints can we patch up the influences to have bodies.
     -- we want to look through all bodeis
 
-    -- for k,v in pairs(registry.sfixtures) do
-    --     local ud = v:getUserData()
-    --     if ud.subtype == 'meshusert' then
-    --         print(inspect(ud))
-    --        if ud.extra and ud.extra.infuences then
-    --            print('jo!')
-    --            --if oldUD and oldUD.extra and oldUD.extra.influences then
-    --                for i =1 ,#ud.extra.influences do
-    --                    local inflList = ud.extra.influences[i]
-    --                    for j = 1, #inflList do
-    --                        --inflList[j].nodeId = idMapping[inflList[j].nodeId] -- now it is already pointing to the new node
-    --                            local type = inflList[j].nodeType
-    --                            if type == 'joint' then
-    --                                local joint = registry.getJointByID(inflList[j].nodeId)
-    --                                local bodyA, bodyB =  joint:getBodies()
-    --                                if inflList[j].side == 'A' then
-    --                                    inflList[j].body = bodyA
-    --                                else
-    --                                    inflList[j].body = bodyB
-    --                                end
-    --                            elseif type == 'anchor' then
-    --                                local anchor = registry.getSFixtureByID(inflList[j].nodeId)
-    --                                local body = anchor:getBody()
-    --                                inflList[j].body = body
-    --                            end
-    --                            print(inflList[j].body)
-    --                    end
+    for k, v in pairs(registry.sfixtures) do
+        local ud = v:getUserData()
 
-    --                    --end
-    --            end
-    --             v:setUserData(ud)
-    --        end
-    --     --print(inspect(ud))
-    --     end
-    --     -- local fixture = v
-    --     -- if fixture and fixture.userData and fixture.userData.extra and fixture.userData.extra.influences then
-    --     --     print(inspect(fixture.userData.extra.influences))
-    --     -- end
-    -- end
-
-    -- for _, bodyData in ipairs(data.bodies) do
-    --     for i = #bodyData.fixtures, 1, -1 do -- doing this backwards keeps order intact
-    --         local fixtureData = bodyData.fixtures[i]
-    --         if fixtureData and fixtureData.userData and fixtureData.userData.extra and fixtureData.userData.extra.influences then
-    --             print(inspect(fixtureData.userData.extra.influences))
-    --         end
-    --     end
-    -- end
+        if ud.subtype == 'meshusert' then
+            if ud.extra then --and ud.extra.infuences then
+                if ud.extra.influences then
+                    restoreInfluenceBodies(ud.extra.influences)
+                end
+            end
+        end
+    end
 end
 
 function lib.load(data, world, cam)
@@ -549,7 +557,7 @@ function lib.gatherSaveData(world, camera)
                         end
                         -- removing body before save
                         if ud.extra.influences then
-                            for i =1 ,#ud.extra.influences do
+                            for i = 1, #ud.extra.influences do
                                 local inflList = ud.extra.influences[i]
                                 for j = 1, #inflList do
                                     if inflList[j].body then
@@ -561,33 +569,7 @@ function lib.gatherSaveData(world, camera)
                         fixtureData.userData = utils.deepCopy(ud)
                         -- restoring body after save
                         if ud.extra.influences then
-                            for i =1 ,#ud.extra.influences do
-                                local inflList = ud.extra.influences[i]
-                                for j = 1, #inflList do
-                                    if inflList[j].body == nil then
-                                        logger:info("Restoring body for influence type: " , inspect(inflList[j]))
-                                        local type = inflList[j].nodeType
-                                        --logger:info("Restoring body for influence type: " .. type)
-                                        if type == 'joint' then
-                                            local joint = registry.getJointByID(inflList[j].nodeId)
-                                            local bodyA, bodyB =  joint:getBodies()
-                                            logger:info("Restoring body for influence type: ", inspect(inflList[j]))
-                                            if inflList[j].side == 'A' then
-                                                inflList[j].body = bodyA
-                                            else
-                                                inflList[j].body = bodyB
-                                            end
-                                        elseif type == 'anchor' then
-                                            local anchor = registry.getSFixtureByID(inflList[j].nodeId)
-                                            local body = anchor:getBody()
-                                            inflList[j].body = body
-                                        -- give it back!
-                                        end
-                                        --logger:info(inflList[j].body)
-                                        --ud.extra.influences[i][j].body = nil
-                                    end
-                                end
-                            end
+                            restoreInfluenceBodies(ud.extra.influences)
                         end
                     end
 
@@ -981,7 +963,6 @@ function lib.cloneSelection(selectedBodies, world)
             local ud = fixture:getUserData()
             local oldUD = utils.deepCopy(ud)
             if oldUD and oldUD.extra and oldUD.extra.nodes then
-
                 for ni = 1, #oldUD.extra.nodes do
                     oldUD.extra.nodes[ni].id = idMapping[oldUD.extra.nodes[ni].id]
                 end
@@ -990,26 +971,7 @@ function lib.cloneSelection(selectedBodies, world)
 
 
             if oldUD and oldUD.extra and oldUD.extra.influences then
-                for i =1 ,#oldUD.extra.influences do
-                    local inflList = oldUD.extra.influences[i]
-                    for j = 1, #inflList do
-                        inflList[j].nodeId = idMapping[inflList[j].nodeId] -- now it is already pointing to the new node
-                            local type = inflList[j].nodeType
-                            if type == 'joint' then
-                                local joint = registry.getJointByID(inflList[j].nodeId)
-                                local bodyA, bodyB =  joint:getBodies()
-                                if inflList[j].side == 'A' then
-                                    inflList[j].body = bodyA
-                                else
-                                    inflList[j].body = bodyB
-                                end
-                            elseif type == 'anchor' then
-                                local anchor = registry.getSFixtureByID(inflList[j].nodeId)
-                                local body = anchor:getBody()
-                                inflList[j].body = body
-                            end
-                    end
-                end
+                remapAndRestoreInfluences(oldUD.extra.influences, idMapping)
             end
         end
     end
