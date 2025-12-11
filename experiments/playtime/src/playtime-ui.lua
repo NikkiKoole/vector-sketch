@@ -1769,7 +1769,7 @@ function lib.drawSelectedSFixture()
                         influences = applyWeights(influences)
 
                         -- optional but highly recommended:
-                        influences = pruneTopK(influences, 2)
+                        influences = pruneTopK(influences, 3)
 
                         ud.extra.influences = influences -- STORE IT
                         --logger:inspect(influences)
