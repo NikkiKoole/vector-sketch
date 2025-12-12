@@ -1411,13 +1411,10 @@ function lib.drawTexturedWorld(world)
                 verts = mathutils.scalePolygonPoints(verts, sx, sy)
 
 
-
                 if drawables[i].extra.influences and #drawables[i].extra.influences > 0 then
                     -- logger:inspect(drawables[i].extra.influences)
                     -- we need to fill in the bodies for each influence, but ratehr not everyframe!
                     --drawables[i].extra.influences = fillBodiesInInfluences(drawables[i].extra.influences, #verts/2)
-
-
                     local newVerts = deformWorldVerts(drawables[i].extra.influences, #verts / 2, drawables[i].body)
                     -- local worldBindVerts = vertsToWorld(drawables[i].body, verts)
                     -- logger:inspect(worldBindVerts)
@@ -1456,8 +1453,45 @@ function lib.drawTexturedWorld(world)
                         })
                     end
                 end
+                if data and data.uvs then
+                     meshVertices = {}
+                      vertexFormat = {
+                         { "VertexPosition", "float", 2 },
+                             { "VertexTexCoord", "float", 2 },
+                         { "VertexColor",    "byte",  4 },
+                     }
+                    --print('got some uvs ready too!')
+                    for j = 1, #tris do
+                        local tri = tris[j]
+                        for k = 0, 2 do
+                            local x = tri[k * 2 + 1]
+                            local y = tri[k * 2 + 2]
+                            local u, v --= 1, 1
+                            --print(x, inspect(verts))
+                            for l = 1, #verts do
+                                --  print()
+                                if math.abs(x - verts[l]) < 0.001 then
+                                    u = data.uvs[l]
+                                end
 
+                                if math.abs(y - verts[l]) < 0.001 then
+                                    v = data.uvs[l]
+                                end
+                            end
+
+                            table.insert(meshVertices, {
+                                x, y,
+                                u, v,
+                                255, 255, 255
+                            })
+                        end
+                    end
+
+                end
                 local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
+                 if data and data.uvs then
+                mesh:setTexture(state.backdrops[data.selectedBGIndex].image)
+                 end
                 local bx, by = drawables[i].body:getPosition()
                 local ba = drawables[i].body:getAngle()
                 love.graphics.draw(mesh, bx, by, ba)
@@ -1619,7 +1653,6 @@ function lib.drawTexturedWorld(world)
                     --print('Cached not found')
                 end
                 local cached = main.cached
-
 
 
                 if extra.main and extra.main.bgURL then
