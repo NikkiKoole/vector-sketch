@@ -1561,7 +1561,6 @@ function lib.drawSelectedSFixture()
 
 
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
-
                 local b = state.selection.selectedSFixture:getBody()
                 local bud = b:getUserData()
                 local label = ud.label or ""
@@ -1769,7 +1768,7 @@ function lib.drawSelectedSFixture()
                         influences = applyWeights(influences)
 
                         -- optional but highly recommended:
-                        influences = pruneTopK(influences, 2)
+                        influences = pruneTopK(influences, 3)
 
                         ud.extra.influences = influences -- STORE IT
                         --logger:inspect(influences)

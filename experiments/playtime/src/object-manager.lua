@@ -96,8 +96,6 @@ local function polylineRibbon(points, halfWidth)
 end
 
 function lib.finalizePath()
-    -- i just want to make a ribbon
-    --logger:info(#state.interaction.polyVerts)
     local result = nil
     local unflat = {}
     for i = 1, #state.interaction.polyVerts, 2 do
@@ -105,33 +103,34 @@ function lib.finalizePath()
         table.insert(unflat, { pv[i + 0], pv[i + 1] })
     end
 
-    -- print('i want to use')
-    -- print(inspect(verts))
-    -- local function flattenXY(vertexObjects)
-    --     local out = {}
-
-    --     for i = 1, #vertexObjects do
-    --         local v = vertexObjects[i]
-    --         -- v = {x, y, u, v, r, g, b, a}
-    --         table.insert(out, v[1]) -- x
-    --         table.insert(out, v[2]) -- y
-    --     end
-
-    --     return out
-    -- end
-    -- verts = flattenXY(verts)
-    --print('i was using this')
-    --print(inspect(state.interaction.polyVerts))
     if #state.interaction.polyVerts >= 6 and #unflat > 2 then
-        local verts = polylineRibbon(unflat, 20)
+        local halfWidth = 10
+        local verts = polylineRibbon(unflat, halfWidth)
+        -- logger:inspect(unflat)
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
         --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
+
+
+
+
+        local vertices, indices, draw_mode = polyline.render('none', state.interaction.polyVerts, halfWidth)
+        local newVerts = {}
+        for i = 1, #vertices do
+            table.insert(newVerts, vertices[i][1])
+            table.insert(newVerts, vertices[i][2])
+        end
+
+
         local settings = {
             x = cx,
             y = cy,
             bodyType = state.editorPreferences.nextType,
-            vertices = verts
+            vertices = newVerts
         }
+        logger:info('VERTS')
+        logger:inspect(verts)
+        logger:info('VERTICES')
+        logger:inspect(vertices)
         -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
         result = lib.addThing('ribbon', settings)
     else
