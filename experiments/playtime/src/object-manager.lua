@@ -104,7 +104,7 @@ function lib.finalizePath()
     end
 
     if #state.interaction.polyVerts >= 6 and #unflat > 2 then
-        local halfWidth = 10
+        local halfWidth = 40
         local verts = polylineRibbon(unflat, halfWidth)
         -- logger:inspect(unflat)
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
@@ -113,24 +113,24 @@ function lib.finalizePath()
 
 
 
-        local vertices, indices, draw_mode = polyline.render('none', state.interaction.polyVerts, halfWidth)
-        local newVerts = {}
-        for i = 1, #vertices do
-            table.insert(newVerts, vertices[i][1])
-            table.insert(newVerts, vertices[i][2])
-        end
+        -- local vertices, indices, draw_mode = polyline.render('none', state.interaction.polyVerts, halfWidth)
+        -- local newVerts = {}
+        -- for i = 1, #vertices do
+        --     table.insert(newVerts, vertices[i][1])
+        --     table.insert(newVerts, vertices[i][2])
+        -- end
 
 
         local settings = {
             x = cx,
             y = cy,
             bodyType = state.editorPreferences.nextType,
-            vertices = newVerts
+            vertices = verts
         }
-        logger:info('VERTS')
-        logger:inspect(verts)
-        logger:info('VERTICES')
-        logger:inspect(vertices)
+        --logger:info('VERTS')
+        --logger:inspect(verts)
+        --logger:info('VERTICES')
+       -- logger:inspect(vertices)
         -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
         result = lib.addThing('ribbon', settings)
     else
