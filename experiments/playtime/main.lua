@@ -1,3 +1,10 @@
+-- Test mode: run with 'love . --test'
+if arg[1] == '--test' or arg[2] == '--test' then
+    require('tests.run').run()
+    love.event.quit(0)
+    return
+end
+
 -- NOTE MAKE REVOLUTE JOINTS ALWAYS FROM PARENT TO CHILD!!!!!!!!
 
 -- TODO there is an issue where the .vertices arent populated after load.
