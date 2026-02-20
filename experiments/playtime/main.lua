@@ -37,6 +37,7 @@ end
 
 -- ffi.C.printf("Hi hello from C!\n")
 
+local bridge = require 'vendor.claude-bridge'
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 PROF_CAPTURE = false
@@ -230,6 +231,7 @@ end
 beginframetime = love.timer.getTime()
 
 function love.update(dt)
+    bridge.update()
     prof.push('frame')
 
     --if ProFi.has_started == true and ProFi.has_finished == false then
