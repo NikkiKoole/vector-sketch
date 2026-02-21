@@ -263,13 +263,11 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
 
             local before = { x = data.offsetA.x, y = data.offsetA.y }
 
-            if true then
-                local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
-                local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
+            local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
+            local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
 
-                data.offsetA.x = newx
-                data.offsetA.y = newy
-            end
+            data.offsetA.x = newx
+            data.offsetA.y = newy
 
 
             local after = { x = data.offsetA.x, y = data.offsetA.y }
@@ -293,13 +291,11 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
 
             local before = { x = data.offsetB.x, y = data.offsetB.y }
 
-            if true then
-                local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
-                local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
+            local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
+            local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
 
-                data.offsetB.x = newx
-                data.offsetB.y = newy
-            end
+            data.offsetB.x = newx
+            data.offsetB.y = newy
 
 
             local after = { x = data.offsetB.x, y = data.offsetB.y }
