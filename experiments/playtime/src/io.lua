@@ -881,7 +881,7 @@ function lib.cloneSelection(selectedBodies, world)
         for _, originalJoint in ipairs(joints) do
             local ud = originalJoint:getUserData()
             if ud and ud.id then
-                if not doneJoints[ud.id] == true then -- make sure we dont do joints twice..
+                if not doneJoints[ud.id] then -- make sure we dont do joints twice..
                     local jointType = originalJoint:getType()
                     local handler = jointHandlers[jointType]
                     doneJoints[ud.id] = true

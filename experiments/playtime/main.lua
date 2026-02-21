@@ -759,11 +759,8 @@ function love.keypressed(key)
                 CharacterManager.updatePart('llarm', { h = lowerarmlength }, humanoidInstance)
                 CharacterManager.updatePart('rlarm', { h = lowerarmlength }, humanoidInstance)
 
-
                 CharacterManager.addTexturesFromInstance2(humanoidInstance)
-            end
-            if key == 'u' then
-                --print('nose change!')
+
                 local count = math.floor(math.random() * 5)
                 CharacterManager.rebuildFromCreation(humanoidInstance,
                     { noseSegments = count })

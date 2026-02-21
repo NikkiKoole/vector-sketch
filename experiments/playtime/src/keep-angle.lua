@@ -1,7 +1,7 @@
 local lib = {}
 
 
-function rotateBodyTowards(body, dt, targetAngle, data)
+function rotateBodyTowardsSimple(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = targetAngle - currentAngle
 

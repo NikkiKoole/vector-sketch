@@ -361,7 +361,6 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
                     local patch = patches[i]
                     if patch and patch.img then
                         love.graphics.setColorMask(true, true, true, false)
-                        print('hextocolor patches')
                         local r, g, b, a = lib.hexToColor(patch.tint)
                         love.graphics.setColor(r, g, b, a)
                         local image = patch.img
