@@ -44,6 +44,7 @@ bridge.input_queue = {}
 
 bridge.watches = {}       -- { [name] = { code=str, fn=compiled, interval=N, samples={}, max_samples=N, last_frame=N } }
 bridge.watch_max_samples = 200
+bridge.breakpoints = {}   -- { [name] = { code=str, fn=compiled, hit=false, hit_frame=N, hit_value=any, once=bool } }
 
 -- ─────────────────────────────────────────────
 -- Collision event log
@@ -1134,6 +1135,10 @@ local route_descriptions = {
     ["POST /watch"] = "Register a watch expression (evaluated every N frames)",
     ["GET /watch"] = "Get watch samples (?name=X or list all)",
     ["DELETE /watch"] = "Remove a watch (?name=X or clear all)",
+    ["POST /breakpoint"] = "Set a conditional breakpoint (pauses when condition is true)",
+    ["GET /breakpoint"] = "Get breakpoint status (?name=X or list all)",
+    ["POST /breakpoint/reset"] = "Reset a hit breakpoint so it can trigger again",
+    ["DELETE /breakpoint"] = "Remove a breakpoint (?name=X or clear all)",
 }
 
 routes["GET /help"] = function(req)
@@ -1516,6 +1521,102 @@ routes["DELETE /watch"] = function(req)
     return ok_response({ removed = name })
 end
 
+-- ─── Breakpoints ───
+
+routes["POST /breakpoint"] = function(req)
+    local params = req.json_body or {}
+    local name = params.name
+    if not name then return err_response("missing 'name'") end
+    local code = params.code
+    if not code then return err_response("missing 'code' (Lua condition that returns truthy to break)") end
+    local once = params.once
+    if once == nil then once = false end
+
+    local preamble = [[
+        local state = require 'src.state'
+        local registry = require 'src.registry'
+        local objectManager = require 'src.object-manager'
+        local inspect = require 'vendor.inspect'
+        local utils = require 'src.utils'
+    ]]
+    local full_code = preamble .. "\nreturn " .. code
+    local fn, compile_err = loadstring(full_code, "breakpoint:" .. name)
+    if not fn then
+        return err_response("compile error: " .. tostring(compile_err))
+    end
+
+    bridge.breakpoints[name] = {
+        code = code,
+        fn = fn,
+        hit = false,
+        hit_frame = nil,
+        hit_value = nil,
+        once = once,
+    }
+    return ok_response({ name = name, once = once })
+end
+
+routes["GET /breakpoint"] = function(req)
+    local name = req.query.name
+    if name then
+        local bp = bridge.breakpoints[name]
+        if not bp then return err_response("breakpoint not found: " .. name) end
+        return ok_response({
+            name = name,
+            code = bp.code,
+            hit = bp.hit,
+            hit_frame = bp.hit_frame,
+            hit_value = bp.hit_value,
+            once = bp.once,
+        })
+    else
+        local result = {}
+        for bname, bp in pairs(bridge.breakpoints) do
+            result[#result + 1] = {
+                name = bname,
+                code = bp.code,
+                hit = bp.hit,
+                hit_frame = bp.hit_frame,
+                hit_value = bp.hit_value,
+                once = bp.once,
+            }
+        end
+        return ok_response(result)
+    end
+end
+
+routes["POST /breakpoint/reset"] = function(req)
+    local name = req.json_body and req.json_body.name
+    if name then
+        local bp = bridge.breakpoints[name]
+        if not bp then return err_response("breakpoint not found: " .. name) end
+        bp.hit = false
+        bp.hit_frame = nil
+        bp.hit_value = nil
+        return ok_response({ reset = name })
+    else
+        for _, bp in pairs(bridge.breakpoints) do
+            bp.hit = false
+            bp.hit_frame = nil
+            bp.hit_value = nil
+        end
+        return ok_response({ reset = "all" })
+    end
+end
+
+routes["DELETE /breakpoint"] = function(req)
+    local name = req.query.name
+    if not name then
+        bridge.breakpoints = {}
+        return ok_response({ cleared = "all" })
+    end
+    if not bridge.breakpoints[name] then
+        return err_response("breakpoint not found: " .. name)
+    end
+    bridge.breakpoints[name] = nil
+    return ok_response({ removed = name })
+end
+
 -- ─── Quit ───
 
 routes["POST /quit"] = function(req)
@@ -1812,6 +1913,30 @@ function bridge.update()
             while #watch.samples > watch.max_samples do
                 table.remove(watch.samples, 1)
             end
+        end
+    end
+
+    -- Evaluate breakpoints
+    local state = require 'src.state'
+    if not state.world.paused then
+        local to_remove = {}
+        for name, bp in pairs(bridge.breakpoints) do
+            if not bp.hit then
+                local ok, result = pcall(bp.fn)
+                if ok and result then
+                    bp.hit = true
+                    bp.hit_frame = bridge.frame_count
+                    bp.hit_value = safe_serialize(result, 0, 3)
+                    state.world.paused = true
+                    print("[bridge] breakpoint '" .. name .. "' hit at frame " .. bridge.frame_count)
+                    if bp.once then
+                        to_remove[#to_remove + 1] = name
+                    end
+                end
+            end
+        end
+        for _, name in ipairs(to_remove) do
+            bridge.breakpoints[name] = nil
         end
     end
 
