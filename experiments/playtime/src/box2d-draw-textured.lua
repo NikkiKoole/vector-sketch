@@ -615,27 +615,6 @@ end
 
 
 
-local function drawSquishableHairOverOLD(img, x, y, r, sx, sy, growFactor, vertices)
-    local p = {}
-    for i = 1, #vertices do
-        p[i] = vertices[i] * growFactor
-    end
-    -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-    local uvs = makeSquishableUVsFromPoints(p)
-
-
-    -- todo maybe parametrize this point so you can make the midle of the fan not be the exact middle of the polygon.
-    local cx, cy, _, _ = mathutils.getCenterOfPoints(vertices)
-    table.insert(uvs, 1, { cx, cy, .5, .5 }) -- I will just alwasy put a center vertex as the first one
-
-    local _mesh = love.graphics.newMesh(uvs) --or love.graphics.newMesh(uvs, 'fan')
-    local img = img
-    _mesh:setTexture(img)
-
-    -- i believe sx and sy will just always be 1
-    love.graphics.draw(_mesh, x, y, r, sx, sy)
-end
-
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
     -- grow once into a flat array (reuse a local)
     local nnums = #vertices         -- flat x,y,... array
@@ -700,51 +679,6 @@ local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     return mesh
 end
 
--- https://love2d.org/forums/viewtopic.php?t=83410
-local function texturedCurveOLD2(curve, image, mesh, dir, scaleW, dl)
-    dir         = dir or 1
-    scaleW      = scaleW or 1
-
-    dl          = dl or curve:getDerivative()
-
-    -- Only need width here
-    local w     = image:getWidth()
-    local line  = (w * dir) * scaleW
-
-    local count = mesh:getVertexCount()
-    local tmp   = { 0, 0, 0, 0 } -- reusable vertex table: {x, y, u, v}
-
-    for j = 1, count, 2 do
-        -- Map vertex pair index to [0,1] parameter
-        local t                        = (j - 1) / (count - 2)
-
-        -- Point on curve + derivative
-        local x, y                     = curve:evaluate(t)
-        local dx, dy                   = dl:evaluate(t)
-
-        -- Normalize derivative and build its left normal (-dy, dx)
-        local invlen                   = 1.0 / math.sqrt(dx * dx + dy * dy + 1e-12) -- avoid div-by-zero
-        dx, dy                         = dx * invlen, dy * invlen
-        local nx, ny                   = -dy, dx
-
-        -- Offset to both sides
-        local x2                       = x + line * nx
-        local y2                       = y + line * ny
-        local x3                       = x - line * nx
-        local y3                       = y - line * ny
-
-        -- Keep existing UVs
-
-        local _, _, u1, v1             = mesh:getVertex(j)
-        tmp[1], tmp[2], tmp[3], tmp[4] = x2, y2, u1, v1
-        mesh:setVertex(j, tmp)
-
-        local _, _, u2, v2 = mesh:getVertex(j + 1)
-        tmp[1], tmp[2], tmp[3], tmp[4] = x3, y3, u2, v2
-        mesh:setVertex(j + 1, tmp)
-    end
-end
-
 -- Batched, no mesh:getVertex, 1x mesh:setVertices per call
 local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
     dir             = dir or 1
@@ -802,65 +736,6 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
 
     -- One C call instead of N*2
     mesh:setVertices(verts)
-end
-
--- this function is a bunch slower then the new one.
-local function texturedCurveOLD(curve, image, mesh, dir, scaleW)
-    if not dir then dir = 1 end
-    if not scaleW then scaleW = 1 end
-    local dl = curve:getDerivative()
-
-    for i = 1, 1 do
-        local w, h = image:getDimensions()
-        local count = mesh:getVertexCount()
-
-        for j = 1, count, 2 do
-            local index                  = (j - 1) / (count - 2)
-            local xl, yl                 = curve:evaluate(index)
-            local dx, dy                 = dl:evaluate(index)
-            local a                      = math.atan2(dy, dx) + math.pi / 2
-            local a2                     = math.atan2(dy, dx) - math.pi / 2
-            local line                   = (w * dir) * scaleW --- here we can make the texture wider!!, also flip it
-            local x2                     = xl + line * math.cos(a)
-            local y2                     = yl + line * math.sin(a)
-            local x3                     = xl + line * math.cos(a2)
-            local y3                     = yl + line * math.sin(a2)
-
-            local x, y, u, v, r, g, b, a = mesh:getVertex(j)
-            mesh:setVertex(j, { x2, y2, u, v })
-            x, y, u, v, r, g, b, a = mesh:getVertex(j + 1)
-            mesh:setVertex(j + 1, { x3, y3, u, v })
-        end
-    end
-end
-
-local function doubleControlPointsOld(points, duplications)
-    local result = {}
-
-    -- Sanity check: must be even number of values
-    if #points % 2 ~= 0 then
-        error("Input array must have even number of elements (x, y pairs)")
-    end
-
-    local numPoints = #points / 2
-
-    for i = 1, numPoints do
-        local x = points[(i - 1) * 2 + 1]
-        local y = points[(i - 1) * 2 + 2]
-
-        table.insert(result, x)
-        table.insert(result, y)
-
-        -- Double the point if it's a *middle* point (not first or last)
-        if i > 1 and i < numPoints then
-            for j = 1, duplications do
-                table.insert(result, x)
-                table.insert(result, y)
-            end
-        end
-    end
-
-    return result
 end
 
 
