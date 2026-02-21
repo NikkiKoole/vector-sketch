@@ -24,6 +24,49 @@ bridge.frame_count = 0
 bridge.snapshots = {}
 
 -- ─────────────────────────────────────────────
+-- Console capture + error tracking
+-- ─────────────────────────────────────────────
+
+bridge.console_buffer = {}
+bridge.console_max = 200
+bridge.errors = {}
+bridge.errors_max = 50
+
+local _original_print = print
+function print(...)
+    -- Store in buffer
+    local args = {...}
+    local parts = {}
+    for i = 1, select('#', ...) do
+        parts[#parts + 1] = tostring(args[i])
+    end
+    local line = table.concat(parts, "\t")
+    table.insert(bridge.console_buffer, {
+        frame = bridge.frame_count,
+        time = os.clock(),
+        text = line,
+    })
+    -- Trim buffer
+    while #bridge.console_buffer > bridge.console_max do
+        table.remove(bridge.console_buffer, 1)
+    end
+    -- Also print to real stdout
+    _original_print(...)
+end
+
+function bridge.recordError(source, message)
+    table.insert(bridge.errors, {
+        frame = bridge.frame_count,
+        time = os.clock(),
+        source = source,
+        message = tostring(message),
+    })
+    while #bridge.errors > bridge.errors_max do
+        table.remove(bridge.errors, 1)
+    end
+end
+
+-- ─────────────────────────────────────────────
 -- Safe serialization
 -- ─────────────────────────────────────────────
 
@@ -992,6 +1035,10 @@ local route_descriptions = {
     ["POST /screenshot"] = "Capture screenshot, returns file path",
     ["POST /camera"] = "Set camera position/scale or fitToScene",
     ["POST /quit"] = "Quit the application",
+    ["GET /console"] = "Get recent print() output (?n=50 for last N lines)",
+    ["POST /console/clear"] = "Clear the console buffer",
+    ["GET /errors"] = "Get captured errors (lurker, pcall, etc.)",
+    ["POST /errors/clear"] = "Clear the error list",
 }
 
 routes["GET /help"] = function(req)
@@ -1009,6 +1056,34 @@ routes["GET /help"] = function(req)
         return a.path < b.path
     end)
     return ok_response(result)
+end
+
+-- ─── Console ───
+
+routes["GET /console"] = function(req)
+    local last_n = tonumber(req.query.n) or 50
+    local result = {}
+    local start = math.max(1, #bridge.console_buffer - last_n + 1)
+    for i = start, #bridge.console_buffer do
+        result[#result + 1] = bridge.console_buffer[i]
+    end
+    return ok_response(result)
+end
+
+routes["POST /console/clear"] = function(req)
+    bridge.console_buffer = {}
+    return ok_response(true)
+end
+
+-- ─── Errors ───
+
+routes["GET /errors"] = function(req)
+    return ok_response(bridge.errors)
+end
+
+routes["POST /errors/clear"] = function(req)
+    bridge.errors = {}
+    return ok_response(true)
 end
 
 -- ─── Quit ───

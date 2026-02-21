@@ -39,6 +39,11 @@ end
 
 local bridge = require 'vendor.claude-bridge'
 local lurker = require 'vendor.lurker'
+local _lurker_onerror = lurker.onerror
+lurker.onerror = function(e, nostacktrace)
+    bridge.recordError("lurker", e)
+    _lurker_onerror(e, nostacktrace)
+end
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 PROF_CAPTURE = false
