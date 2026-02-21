@@ -341,7 +341,7 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                 end
                 local offsetB = joints.getJointMetaSetting(j, 'offsetB') or 0
 
-                function updateOffsetA(x, y)
+                local function updateOffsetA(x, y)
                     --local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
 
                     offsetA.x = x
@@ -355,7 +355,7 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                     return j
                 end
 
-                function updateOffsetB(x, y)
+                local function updateOffsetB(x, y)
                     --local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
 
                     offsetB.x = x
@@ -1088,6 +1088,7 @@ function lib.drawSelectedSFixture()
     local ud = state.selection.selectedSFixture:getUserData()
     --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
     local sfixtureType = ud.type .. ' ' .. (ud.subtype and ud.subtype or '')
+    local x, y
     -- Function to create an accordion
     local function drawAccordion(key, contentFunc)
         -- Draw the accordion header
@@ -1125,7 +1126,7 @@ function lib.drawSelectedSFixture()
         local myLabel = state.selection.selectedSFixture:getUserData().label or ''
         local oldTexFixUD = state.selection.selectedSFixture:getUserData()
 
-        function handlePaletteAndHex(idPrefix, postFix, x, y, width, currentHex, onColorChange, setDirty)
+        local function handlePaletteAndHex(idPrefix, postFix, x, y, width, currentHex, onColorChange, setDirty)
             local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
             local dirty = function() oldTexFixUD.extra.dirty = true end
             local paletteShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
@@ -1160,7 +1161,7 @@ function lib.drawSelectedSFixture()
             ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
         end
 
-        function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
+        local function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
             local urlShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { 1, 1, 1, 0.2 })
             if urlShow then
                 fileBrowser:loadFiles('/textures', { includes = '-mask' })
@@ -1176,7 +1177,7 @@ function lib.drawSelectedSFixture()
             return newValue or currentValue
         end
 
-        function patchTransformUI(layer)
+        local function patchTransformUI(layer)
             local oldId = myID
             myID = myID .. ':' .. layer
             local newRotation = createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2,
@@ -1218,7 +1219,7 @@ function lib.drawSelectedSFixture()
             myID = oldId
         end
 
-        function combineImageUI(layer)
+        local function combineImageUI(layer)
             local oldId = myID
             myID = myID .. ':' .. layer
             local dirty = function() oldTexFixUD.extra.dirty = true end
@@ -1286,7 +1287,7 @@ function lib.drawSelectedSFixture()
             myID = oldId
         end
 
-        function flipWholeUI(layer)
+        local function flipWholeUI(layer)
             local dirtyX, checkedX = ui.checkbox(x, y, oldTexFixUD.extra[layer].fx == -1, 'flipx')
             if dirtyX then
                 oldTexFixUD.extra[layer].fx = checkedX and -1 or 1
@@ -1752,7 +1753,7 @@ function lib.drawSelectedSFixture()
                     --logger:inspect(vertsToWorld(b, verts))
                     verts = vertsToWorld(b, verts)
 
-                    function renderDistances(verts, bb, offx, offy)
+                    local function renderDistances(verts, bb, offx, offy)
                         for i = 1, #verts, 2 do
                             local x, y = verts[i], verts[i + 1]
                             --local px, py = bb:getWorldPoint(x, y)
@@ -2088,7 +2089,7 @@ function lib.drawSelectedSFixture()
                     state.currentMode = 'addNodeToConnectedTexture'
                 end
 
-                function inArray(value, array)
+                local function inArray(value, array)
                     for i = 1, #array do
                         if array[i] == value then
                             return true
@@ -2366,7 +2367,7 @@ function lib.drawSelectedBodiesUI()
             startY = 100 + padding
         })
 
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         end
@@ -2469,7 +2470,7 @@ function lib.drawUpdateSelectedObjectUI()
         end
 
         -- Add a button to toggle the body type
-        x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+        local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local nextRow = function()
             x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         end
@@ -3179,7 +3180,7 @@ function lib.drawUI()
                 startX = w - panelWidth,
                 startY = 100 + padding
             })
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
             if state.pickAutoRopifyModeHitted then
                 if ui.button(x, y, 260, 'yes!') then
                     objectManager.autoRopify(state.pickAutoRopifyModeHitted)
@@ -3202,7 +3203,7 @@ function lib.drawUI()
                 startX = w - panelWidth,
                 startY = 100 + padding
             })
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
+            local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
 
 
             if ui.button(x, y, 260, 'finalize') then
