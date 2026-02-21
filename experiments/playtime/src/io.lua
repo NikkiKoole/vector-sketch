@@ -987,4 +987,12 @@ function lib.cloneSelection(selectedBodies, world)
     --state.selection.selectedBodies = result
 end
 
+-- Expose locals for testing (not part of public API)
+lib._test = {
+    needsDimProperty = needsDimProperty,
+    remapAndRestoreInfluences = remapAndRestoreInfluences,
+    clearWorld = clearWorld,
+    restoreInfluenceBodies = restoreInfluenceBodies,
+}
+
 return lib
