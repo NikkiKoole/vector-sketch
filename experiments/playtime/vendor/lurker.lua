@@ -109,6 +109,9 @@ function lurker.onerror(e, nostacktrace)
   lurker.print("An error occurred; switching to error state")
   lurker.state = "error"
 
+  -- Save graphics state to restore later
+  lurker._savedFont = love.graphics.getFont()
+
   -- Release mouse
   local setgrab = love.mouse.setGrab or love.mouse.setGrabbed
   setgrab(false)
@@ -118,7 +121,11 @@ function lurker.onerror(e, nostacktrace)
     love[v] = function() end
   end
 
-  love.update = lurker.update
+  -- Keep any registered error-state updaters alive (e.g. bridge)
+  love.update = function(dt)
+    lurker.update()
+    if lurker.errorupdate then lurker.errorupdate(dt) end
+  end
 
   love.keypressed = function(k)
     if k == "escape" then
@@ -186,6 +193,11 @@ function lurker.exiterrorstate()
   lurker.state = "normal"
   for _, v in pairs(lovecallbacknames) do
     love[v] = lurker.funcwrappers[v]
+  end
+  -- Restore graphics state
+  if lurker._savedFont then
+    love.graphics.setFont(lurker._savedFont)
+    lurker._savedFont = nil
   end
 end
 

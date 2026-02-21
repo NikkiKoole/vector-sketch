@@ -44,6 +44,10 @@ lurker.onerror = function(e, nostacktrace)
     bridge.recordError("lurker", e)
     _lurker_onerror(e, nostacktrace)
 end
+-- Keep bridge alive during lurker error state
+lurker.errorupdate = function(dt)
+    bridge.update()
+end
 logger = require 'src.logger'
 inspect = require 'vendor.inspect'
 PROF_CAPTURE = false
