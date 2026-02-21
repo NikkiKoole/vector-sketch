@@ -1139,6 +1139,8 @@ local route_descriptions = {
     ["GET /breakpoint"] = "Get breakpoint status (?name=X or list all)",
     ["POST /breakpoint/reset"] = "Reset a hit breakpoint so it can trigger again",
     ["DELETE /breakpoint"] = "Remove a breakpoint (?name=X or clear all)",
+    ["POST /profile/benchmark"] = "Benchmark a Lua code snippet (iterations, warmup, returns timing stats)",
+    ["POST /profile/frames"] = "Profile N frames of physics with ProFi (returns text report)",
 }
 
 routes["GET /help"] = function(req)
@@ -1615,6 +1617,118 @@ routes["DELETE /breakpoint"] = function(req)
     end
     bridge.breakpoints[name] = nil
     return ok_response({ removed = name })
+end
+
+-- ─── Profiling ───
+
+routes["POST /profile/benchmark"] = function(req)
+    local params = req.json_body or {}
+    local code = params.code
+    if not code then return err_response("missing 'code' (Lua code to benchmark)") end
+    local iterations = params.iterations or 100
+    local warmup = params.warmup or 10
+
+    local preamble = [[
+        local state = require 'src.state'
+        local registry = require 'src.registry'
+        local objectManager = require 'src.object-manager'
+        local inspect = require 'vendor.inspect'
+        local utils = require 'src.utils'
+    ]]
+
+    local full_code = preamble .. "\nreturn function()\n" .. code .. "\nend"
+    local fn, compile_err = loadstring(full_code, "benchmark")
+    if not fn then
+        return err_response("compile error: " .. tostring(compile_err))
+    end
+
+    local ok, bench_fn = pcall(fn)
+    if not ok then
+        return err_response("runtime error: " .. tostring(bench_fn))
+    end
+    if type(bench_fn) ~= "function" then
+        return err_response("code must be executable statements (wrapped in a function)")
+    end
+
+    -- Warmup
+    for i = 1, warmup do
+        local wok, werr = pcall(bench_fn)
+        if not wok then
+            return err_response("error during warmup: " .. tostring(werr))
+        end
+    end
+
+    -- Benchmark
+    local times = {}
+    local total = 0
+    local clock = love.timer.getTime or os.clock
+    for i = 1, iterations do
+        local t0 = clock()
+        bench_fn()
+        local t1 = clock()
+        local elapsed = t1 - t0
+        times[i] = elapsed
+        total = total + elapsed
+    end
+
+    table.sort(times)
+    local mean = total / iterations
+    local median = times[math.ceil(iterations / 2)]
+    local min = times[1]
+    local max = times[iterations]
+    -- p95
+    local p95 = times[math.ceil(iterations * 0.95)]
+
+    return ok_response({
+        iterations = iterations,
+        warmup = warmup,
+        total = total,
+        mean = mean,
+        median = median,
+        min = min,
+        max = max,
+        p95 = p95,
+        unit = "seconds",
+    })
+end
+
+routes["POST /profile/frames"] = function(req)
+    local params = req.json_body or {}
+    local frames = params.frames or 60
+    local sort = params.sort or "duration"
+
+    ProFi:reset()
+    if sort == "count" then
+        ProFi:setSortMethod("count")
+    else
+        ProFi:setSortMethod("duration")
+    end
+
+    ProFi:start()
+    local state = require 'src.state'
+    local dt = 1 / 60
+    for i = 1, frames do
+        state.physicsWorld:update(dt, 8, 3)
+    end
+    ProFi:stop()
+
+    -- Write to temp file, read back
+    local tmpfile = love.filesystem.getSaveDirectory() .. "/_bridge_profile.txt"
+    ProFi:writeReport(tmpfile)
+
+    local f = io.open(tmpfile, "r")
+    local report = ""
+    if f then
+        report = f:read("*all")
+        f:close()
+        os.remove(tmpfile)
+    end
+
+    return ok_response({
+        frames = frames,
+        sort = sort,
+        report = report,
+    })
 end
 
 -- ─── Quit ───
