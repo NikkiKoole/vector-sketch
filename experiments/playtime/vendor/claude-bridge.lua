@@ -32,6 +32,19 @@ bridge.console_max = 200
 bridge.errors = {}
 bridge.errors_max = 50
 
+-- ─────────────────────────────────────────────
+-- Input simulation queue
+-- ─────────────────────────────────────────────
+
+bridge.input_queue = {}
+
+-- ─────────────────────────────────────────────
+-- Watch expressions
+-- ─────────────────────────────────────────────
+
+bridge.watches = {}       -- { [name] = { code=str, fn=compiled, interval=N, samples={}, max_samples=N, last_frame=N } }
+bridge.watch_max_samples = 200
+
 local _original_print = print
 function print(...)
     -- Store in buffer
@@ -1039,6 +1052,13 @@ local route_descriptions = {
     ["POST /console/clear"] = "Clear the console buffer",
     ["GET /errors"] = "Get captured errors (lurker, pcall, etc.)",
     ["POST /errors/clear"] = "Clear the error list",
+    ["POST /input"] = "Queue raw input events (mousepressed, keypressed, etc.)",
+    ["POST /input/click"] = "Simulate a mouse click at x,y",
+    ["POST /input/drag"] = "Simulate a mouse drag from (x1,y1) to (x2,y2)",
+    ["POST /input/key"] = "Simulate a key press",
+    ["POST /watch"] = "Register a watch expression (evaluated every N frames)",
+    ["GET /watch"] = "Get watch samples (?name=X or list all)",
+    ["DELETE /watch"] = "Remove a watch (?name=X or clear all)",
 }
 
 routes["GET /help"] = function(req)
@@ -1084,6 +1104,167 @@ end
 routes["POST /errors/clear"] = function(req)
     bridge.errors = {}
     return ok_response(true)
+end
+
+-- ─── Input Simulation ───
+
+routes["POST /input"] = function(req)
+    local events = req.json_body and req.json_body.events
+    if not events then
+        -- Single event shorthand
+        local event = req.json_body
+        if not event or not event.type then
+            return err_response("missing 'events' array or single event with 'type'")
+        end
+        events = { event }
+    end
+
+    local queued = 0
+    for _, event in ipairs(events) do
+        local delay = event.delay or 0  -- delay in frames from now
+        event.frame = bridge.frame_count + delay
+        table.insert(bridge.input_queue, event)
+        queued = queued + 1
+    end
+    return ok_response({ queued = queued })
+end
+
+routes["POST /input/click"] = function(req)
+    local params = req.json_body or {}
+    local x = params.x or 0
+    local y = params.y or 0
+    local button = params.button or 1
+    local hold = params.hold or 3  -- frames to hold
+
+    table.insert(bridge.input_queue, { type = "mousemoved", x = x, y = y, frame = bridge.frame_count + 1 })
+    table.insert(bridge.input_queue, { type = "mousepressed", x = x, y = y, button = button, frame = bridge.frame_count + 2 })
+    table.insert(bridge.input_queue, { type = "mousereleased", x = x, y = y, button = button, frame = bridge.frame_count + 2 + hold })
+    return ok_response({ x = x, y = y, button = button })
+end
+
+routes["POST /input/drag"] = function(req)
+    local params = req.json_body or {}
+    local fromX = params.fromX or params.x1 or 0
+    local fromY = params.fromY or params.y1 or 0
+    local toX = params.toX or params.x2 or 0
+    local toY = params.toY or params.y2 or 0
+    local steps = params.steps or 10
+    local button = params.button or 1
+
+    -- Move to start
+    table.insert(bridge.input_queue, { type = "mousemoved", x = fromX, y = fromY, frame = bridge.frame_count + 1 })
+    -- Press
+    table.insert(bridge.input_queue, { type = "mousepressed", x = fromX, y = fromY, button = button, frame = bridge.frame_count + 2 })
+    -- Interpolate movement
+    for i = 1, steps do
+        local t = i / steps
+        local x = fromX + (toX - fromX) * t
+        local y = fromY + (toY - fromY) * t
+        local dx = (toX - fromX) / steps
+        local dy = (toY - fromY) / steps
+        table.insert(bridge.input_queue, { type = "mousemoved", x = x, y = y, dx = dx, dy = dy, frame = bridge.frame_count + 2 + i })
+    end
+    -- Release
+    table.insert(bridge.input_queue, { type = "mousereleased", x = toX, y = toY, button = button, frame = bridge.frame_count + 3 + steps })
+    return ok_response({ fromX = fromX, fromY = fromY, toX = toX, toY = toY, steps = steps })
+end
+
+routes["POST /input/key"] = function(req)
+    local params = req.json_body or {}
+    local key = params.key
+    if not key then return err_response("missing 'key'") end
+    local hold = params.hold or 2  -- frames to hold
+
+    table.insert(bridge.input_queue, { type = "keypressed", key = key, frame = bridge.frame_count + 1 })
+    table.insert(bridge.input_queue, { type = "keyreleased", key = key, frame = bridge.frame_count + 1 + hold })
+    return ok_response({ key = key })
+end
+
+-- ─── Watch Expressions ───
+
+routes["POST /watch"] = function(req)
+    local params = req.json_body or {}
+    local name = params.name
+    if not name then return err_response("missing 'name'") end
+    local code = params.code
+    if not code then return err_response("missing 'code' (Lua expression)") end
+    local interval = params.interval or 1  -- evaluate every N frames
+    local max_samples = params.max_samples or bridge.watch_max_samples
+
+    -- Compile with same preamble as eval
+    local preamble = [[
+        local state = require 'src.state'
+        local registry = require 'src.registry'
+        local objectManager = require 'src.object-manager'
+        local inspect = require 'vendor.inspect'
+        local utils = require 'src.utils'
+    ]]
+    local full_code = preamble .. "\nreturn " .. code
+    local fn, compile_err = loadstring(full_code, "watch:" .. name)
+    if not fn then
+        return err_response("compile error: " .. tostring(compile_err))
+    end
+
+    bridge.watches[name] = {
+        code = code,
+        fn = fn,
+        interval = interval,
+        max_samples = max_samples,
+        samples = {},
+        last_frame = bridge.frame_count,
+    }
+    return ok_response({ name = name, interval = interval })
+end
+
+routes["GET /watch"] = function(req)
+    local name = req.query.name
+    if name then
+        -- Get specific watch
+        local watch = bridge.watches[name]
+        if not watch then return err_response("watch not found: " .. name) end
+        local last_n = tonumber(req.query.n) or #watch.samples
+        local result = {}
+        local start = math.max(1, #watch.samples - last_n + 1)
+        for i = start, #watch.samples do
+            result[#result + 1] = watch.samples[i]
+        end
+        return ok_response({
+            name = name,
+            code = watch.code,
+            interval = watch.interval,
+            sampleCount = #watch.samples,
+            samples = result,
+        })
+    else
+        -- List all watches
+        local result = {}
+        for wname, watch in pairs(bridge.watches) do
+            local last_sample = watch.samples[#watch.samples]
+            result[#result + 1] = {
+                name = wname,
+                code = watch.code,
+                interval = watch.interval,
+                sampleCount = #watch.samples,
+                lastValue = last_sample and last_sample.value or nil,
+                lastError = last_sample and last_sample.error or nil,
+            }
+        end
+        return ok_response(result)
+    end
+end
+
+routes["DELETE /watch"] = function(req)
+    local name = req.query.name
+    if not name then
+        -- Clear all watches
+        bridge.watches = {}
+        return ok_response({ cleared = "all" })
+    end
+    if not bridge.watches[name] then
+        return err_response("watch not found: " .. name)
+    end
+    bridge.watches[name] = nil
+    return ok_response({ removed = name })
 end
 
 -- ─── Quit ───
@@ -1339,6 +1520,46 @@ end
 function bridge.update()
     if not bridge.inited then bridge.init() end
     bridge.frame_count = bridge.frame_count + 1
+
+    -- Process input queue
+    local new_queue = {}
+    for _, event in ipairs(bridge.input_queue) do
+        if event.frame <= bridge.frame_count then
+            if event.type == "mousepressed" and love.mousepressed then
+                love.mousepressed(event.x, event.y, event.button or 1, false)
+            elseif event.type == "mousereleased" and love.mousereleased then
+                love.mousereleased(event.x, event.y, event.button or 1, false)
+            elseif event.type == "mousemoved" and love.mousemoved then
+                love.mousemoved(event.x, event.y, event.dx or 0, event.dy or 0)
+            elseif event.type == "keypressed" and love.keypressed then
+                love.keypressed(event.key, event.key, false)
+            elseif event.type == "keyreleased" and love.keyreleased then
+                love.keyreleased(event.key, event.key)
+            elseif event.type == "wheelmoved" and love.wheelmoved then
+                love.wheelmoved(event.dx or 0, event.dy or 0)
+            end
+        else
+            new_queue[#new_queue + 1] = event
+        end
+    end
+    bridge.input_queue = new_queue
+
+    -- Evaluate watches
+    for name, watch in pairs(bridge.watches) do
+        if bridge.frame_count - watch.last_frame >= watch.interval then
+            watch.last_frame = bridge.frame_count
+            local ok, result = pcall(watch.fn)
+            local sample = {
+                frame = bridge.frame_count,
+                value = ok and safe_serialize(result, 0, 3) or nil,
+                error = not ok and tostring(result) or nil,
+            }
+            table.insert(watch.samples, sample)
+            while #watch.samples > watch.max_samples do
+                table.remove(watch.samples, 1)
+            end
+        end
+    end
 
     -- Accept new connections
     while true do
