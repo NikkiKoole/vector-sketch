@@ -101,7 +101,7 @@ function lib.createJoint(data)
 
     if handler and handler.create then
         if bodyA == bodyB then
-            print('apjspaiosjdposdjf')
+            logger:error("Cannot create joint: bodyA and bodyB are the same body")
             return
         else
             joint = handler.create(data, x1, y1, x2, y2)
