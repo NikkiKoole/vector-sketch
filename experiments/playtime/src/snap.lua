@@ -70,7 +70,7 @@ local function areBodiesConnected2(body1, body2, snapFixtures)
 end
 
 
-function checkForJointBreaks(dt, interacted, snapFixtures)
+local function checkForJointBreaks(dt, interacted, snapFixtures)
     for i = #mySnapJoints, 1, -1 do
         local joint = mySnapJoints[i]
 
@@ -203,7 +203,7 @@ function lib.rebuildSnapFixtures(sfix)
     --print('we now have ', #snapFixtures, 'snapfixtures')
 end
 
-function calculateDistance(x1, y1, x2, y2)
+local function calculateDistance(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
     return math.sqrt(dx * dx + dy * dy)

@@ -175,7 +175,7 @@ function lib.renderActiveEditorThings()
             -- index 4 -> 6
             love.graphics.line(verts[4 * 2 - 1], verts[4 * 2 - 0], verts[6 * 2 - 1], verts[6 * 2 - 0])
 
-            function roundArray(values)
+            local function roundArray(values)
                 local result = {}
                 for i, v in ipairs(values) do
                     result[i] = math.floor(v + 0.5)

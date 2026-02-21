@@ -23,7 +23,7 @@ lib.getShrinkFactor = function()
     return shrinkFactor
 end
 
-function getLoveImage(path, settings)
+local function getLoveImage(path, settings)
     if not imageCache[path] then
         local info = love.filesystem.getInfo(path)
         if not info or info.type ~= 'file' then
@@ -159,19 +159,19 @@ end
 --    item.bgR, item.bgG, item.bgB, item.bgA = ToColor(val)-
 --end
 
-function setBgColor(item, val)
+local function setBgColor(item, val)
     item.bgHex = val
     item.cached.bgR, item.cached.bgG, item.cached.bgB, item.cached.bgA = lib.hexToColor(val)
     item.cached.bgRGB = { item.cached.bgR, item.cached.bgG, item.cached.bgB }
 end
 
-function setFgColor(item, val)
+local function setFgColor(item, val)
     item.fgHex = val
     item.cached.fgR, item.cached.fgG, item.cached.fgB, item.cached.fgA = lib.hexToColor(val)
     item.cached.fgRGB = { item.cached.fgR, item.cached.fgG, item.cached.fgB }
 end
 
-function setPColor(item, val)
+local function setPColor(item, val)
     item.pHex = val
     item.cached.pR, item.cached.pG, item.cached.pB, item.cached.pA = lib.hexToColor(val)
     item.cached.pRGB = { item.cached.pR, item.cached.pG, item.cached.pB }
@@ -440,7 +440,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
     end
 end
 
-function makePatch(name, ud)
+local function makePatch(name, ud)
     local result = nil
     if ud.extra[name] and ud.extra[name].bgURL then
         local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
@@ -527,7 +527,7 @@ function lib.makeCombinedImages()
                             main.fy or 1,              -- flipy (normal)
                             { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
                         )
-                        image = love.graphics.newImage(imgData)
+                        local image = love.graphics.newImage(imgData)
                         ud.extra.ompImage = image
                     end
                     fixtures[i]:setUserData(ud)
@@ -666,13 +666,13 @@ end
 
 
 -- Optionally pass dl (precomputed derivative curve) if you have it.
-function meshGetVertex(mesh, j)
+local function meshGetVertex(mesh, j)
     local x, y, u, v = mesh:getVertex(j)
     return x, y, u, v
 end
 
 -- todo segments need to be parameterized
-function createTexturedTriangleStrip(image, optionalWidthMultiplier)
+local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     -- this assumes an strip that is oriented vertically
     local w, h = image:getDimensions()
     w = w * (optionalWidthMultiplier or 1)
@@ -701,7 +701,7 @@ function createTexturedTriangleStrip(image, optionalWidthMultiplier)
 end
 
 -- https://love2d.org/forums/viewtopic.php?t=83410
-function texturedCurveOLD2(curve, image, mesh, dir, scaleW, dl)
+local function texturedCurveOLD2(curve, image, mesh, dir, scaleW, dl)
     dir         = dir or 1
     scaleW      = scaleW or 1
 
@@ -746,7 +746,7 @@ function texturedCurveOLD2(curve, image, mesh, dir, scaleW, dl)
 end
 
 -- Batched, no mesh:getVertex, 1x mesh:setVertices per call
-function texturedCurve(curve, image, mesh, dir, scaleW, dl)
+local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
     dir             = dir or 1
     scaleW          = scaleW or 1
     dl              = dl or curve:getDerivative()
@@ -805,7 +805,7 @@ function texturedCurve(curve, image, mesh, dir, scaleW, dl)
 end
 
 -- this function is a bunch slower then the new one.
-function texturedCurveOLD(curve, image, mesh, dir, scaleW)
+local function texturedCurveOLD(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 end
     local dl = curve:getDerivative()
@@ -1066,7 +1066,7 @@ function lib.drawTexturedWorld(world)
                     if #points == 4 then
                         -- here we will just introduce a little midle thingie
                         -- -- becaue i cannot draw a curve of 2 points
-                        function addMidpoint(points)
+                        local function addMidpoint(points)
                             if #points ~= 4 then
                                 error("Expected array of exactly 2 points (4 numbers)")
                             end
@@ -1436,7 +1436,7 @@ function lib.drawTexturedWorld(world)
                     --    { "VertexTexCoord", "float", 2 },
                     { "VertexColor",    "byte",  4 },
                 }
-                meshVertices = {}
+                local meshVertices = {}
                 --logger:inspect(verts)
                 local tris = shapes.makeTrianglesFromPolygon(verts)
 
@@ -1544,7 +1544,7 @@ function lib.drawTexturedWorld(world)
                     { "VertexTexCoord", "float", 2 },
                     { "VertexColor",    "byte",  4 },
                 }
-                meshVertices = {}
+                local meshVertices = {}
                 -- for i = 1, #verts, 2 do
                 --     table.insert(meshVertices, {
                 --         verts[i], verts[i + 1],
@@ -1834,11 +1834,11 @@ function lib.drawTexturedWorld(world)
     --love.graphics.setDepthMode()
 end
 
-function resolveIndex(index, length)
+local function resolveIndex(index, length)
     return (index < 0) and ((length + index) % length) or (index % length)
 end
 
-function getIndices(length, startIdx, endIdx, allowFullLoop)
+local function getIndices(length, startIdx, endIdx, allowFullLoop)
     local start = resolveIndex(startIdx, length)
     local ending = resolveIndex(endIdx, length)
     local result = {}

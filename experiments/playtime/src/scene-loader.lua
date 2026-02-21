@@ -10,6 +10,15 @@ local hotReloadTimer = 0
 local hotReloadInterval = 1
 local lastModTime = 0
 
+local function getFiledata(filename)
+    local f = io.open(filename, 'r')
+    if f then
+        local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+        f:close()
+        return filedata
+    end
+end
+
 function lib.loadScene(name)
     local data = getFiledata(name):getString()
     state.selection.selectedJoint = nil
@@ -22,8 +31,8 @@ end
 function lib.loadScriptAndScene(id)
     local jsonPath = '/scripts/' .. id .. '.playtime.json'
     local luaPath = '/scripts/' .. id .. '.playtime.lua'
-    jsoninfo = love.filesystem.getInfo(jsonPath)
-    luainfo = love.filesystem.getInfo(luaPath)
+    local jsoninfo = love.filesystem.getInfo(jsonPath)
+    local luainfo = love.filesystem.getInfo(luaPath)
     if (jsoninfo and luainfo) then
         local cwd = love.filesystem.getWorkingDirectory()
         lib.loadScene(cwd .. jsonPath)
@@ -44,15 +53,6 @@ local function getFileModificationTime(path)
         return info and info.modtime or 0
     end
     return 0
-end
-
-function getFiledata(filename)
-    local f = io.open(filename, 'r')
-    if f then
-        local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-        f:close()
-        return filedata
-    end
 end
 
 function lib.loadAndRunScript(name)

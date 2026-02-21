@@ -1,6 +1,7 @@
 --camera.lua
 local Camera = require 'vendor.brady'
 
+local offset = 0
 
 local function resizeCamera(self, w, h)
     local scaleW, scaleH = w / self.w, h / self.h

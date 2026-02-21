@@ -63,7 +63,7 @@ local function randomHexColor()
 end
 
 
-function createDefaultTextureDNABlock(shape, skipFG)
+local function createDefaultTextureDNABlock(shape, skipFG)
     --local r, g, b, a = drawTextured.hexToColor('ff0000ff')
     --print(r, g, b, a)
 
@@ -82,7 +82,7 @@ function createDefaultTextureDNABlock(shape, skipFG)
     return result
 end
 
-function initBlock(url)
+local function initBlock(url)
     -- local r, g, b, a = drawTextured.hexToColor('ff0000ff')
     -- print(r, g, b, a)
     local result = {
@@ -99,7 +99,7 @@ function initBlock(url)
     return result
 end
 
-function add(block, values)
+local function add(block, values)
     for k, v in pairs(values) do
         block[k] = v
     end

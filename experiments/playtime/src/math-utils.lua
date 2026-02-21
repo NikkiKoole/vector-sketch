@@ -39,7 +39,7 @@ local function unpackNodePoints(points, noloop)
     return unpacked
 end
 
-function lerp(a, b, t)
+local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
@@ -872,11 +872,11 @@ end
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
 
-function inside(p, cp1, cp2)
+local function inside(p, cp1, cp2)
     return (cp2.x - cp1.x) * (p.y - cp1.y) > (cp2.y - cp1.y) * (p.x - cp1.x)
 end
 
-function intersection(cp1, cp2, s, e)
+local function intersection(cp1, cp2, s, e)
     local dcx, dcy = cp1.x - cp2.x, cp1.y - cp2.y
     local dpx, dpy = s.x - e.x, s.y - e.y
     local n1 = cp1.x * cp2.y - cp1.y * cp2.x

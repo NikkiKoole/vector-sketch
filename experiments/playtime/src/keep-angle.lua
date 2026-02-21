@@ -1,7 +1,7 @@
 local lib = {}
 
 
-function rotateBodyTowardsSimple(body, dt, targetAngle, data)
+local function rotateBodyTowardsSimple(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = targetAngle - currentAngle
 
@@ -19,7 +19,7 @@ function rotateBodyTowardsSimple(body, dt, targetAngle, data)
 end
 
 -- Minimal PD version: still sets angular velocity directly
-function rotateBodyTowards(body, dt, targetAngle, data)
+local function rotateBodyTowards(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = math.rad(targetAngle) - currentAngle
     -- wrap to [-pi, pi]

@@ -173,7 +173,7 @@ end
 
 -- todo , we can refactor the insertCustomPolygonVertex / removeCustomPolygonVertex
 -- they both do roughly the same setup
-function getClosestEdge(x, y)
+local function getClosestEdge(x, y)
     local obj = state.selection.selectedObj
     if obj then
         local offx, offy = obj.body:getPosition()

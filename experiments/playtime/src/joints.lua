@@ -219,7 +219,7 @@ local function tranlateBody(body, dx, dy)
     body:setPosition(x + dx, y + dy)
 end
 
-function moveUntilEnd(from, dx, dy, visited, dir)
+local function moveUntilEnd(from, dx, dy, visited, dir)
     local joints = from:getJoints()
     for i = 1, #joints do
         local bodyA, bodyB = joints[i]:getBodies()
