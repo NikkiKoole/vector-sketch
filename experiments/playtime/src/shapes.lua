@@ -564,4 +564,20 @@ function shapes.createShape(shapeType, settings)
     return shapesList, vertices
 end
 
+-- Expose locals for testing (not part of public API)
+shapes._test = {
+    makePolygonVertices = makePolygonVertices,
+    capsuleXY = capsuleXY,
+    torso = torso,
+    approximateCircle = approximateCircle,
+    ribbon = ribbon,
+    rect = rect,
+    makeTrapezium = makeTrapezium,
+    makeITriangle = makeITriangle,
+    triangulateRibbon = triangulateRibbon,
+    cross = cross,
+    pointInTriangle = pointInTriangle,
+    splitTriangle = splitTriangle,
+}
+
 return shapes
