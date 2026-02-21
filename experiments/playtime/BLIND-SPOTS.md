@@ -318,31 +318,38 @@ To run: `cd experiments/playtime && busted spec/`
 
 ## 8. Dead Weight Inventory
 
-Files and directories that appear unused or obsolete:
+### Deleted files (Phase 0.1 — DONE)
+
+These files were identified as dead weight and deleted (~17,500 lines removed):
+
+| Item | Description | Status |
+|------|-------------|--------|
+| `src/polylineOLD.lua` | Old polyline renderer | **Deleted** |
+| `temp/OLDOLD-dna.lua` | Old character DNA system | **Deleted** |
+| `temp/OLDOLD-guycreation.lua` | Old character creation | **Deleted** |
+| `output.md` | Generated concat2.lua output | **Deleted** |
+| `profilingReportOLD2-5.txt` | Old profiling runs (4 files) | **Deleted** |
+| `scripts/straightOLD.playtime.lua` | Old version of straight.lua | **Deleted** |
+| `scripts/bettertOLD.playtime.json` | Old version of bettert.json | **Deleted** |
+
+### Still present (not deleted — intentional)
 
 | Item | Size | Description | Verdict |
 |------|------|-------------|---------|
-| `src/polylineOLD.lua` | 392 lines | Old polyline renderer | Delete |
-| `temp/OLDOLD-dna.lua` | 14KB | Old character DNA system | Archive or delete |
-| `temp/OLDOLD-guycreation.lua` | 44KB | Old character creation | Archive or delete |
-| `playtime-files/meta.playtime.json` | 91KB | Large scene file, no code references it | Investigate — orphaned? |
-| `concat2.lua` | 61 lines | Utility to dump all code to markdown | Dev tool, not part of app |
-| `output.md` | ~551KB | Output of concat2.lua | Generated file, delete |
-| `profilingReportOLD2-5.txt` | Various | Old profiling runs | Delete |
-| `profiler.sh` | 98 bytes | Hardcoded to `/Applications/love114.app` | Fix path or delete |
-| `scripts/straightOLD.playtime.lua` | ? | Old version of straight.lua | Delete |
-| `scripts/bettertOLD.playtime.json` | ? | Old version of bettert.json | Delete |
+| `playtime-files/meta.playtime.json` | 91KB | Large scene file | Investigate — orphaned? |
+| `concat2.lua` | 61 lines | Utility to dump all code to markdown | Dev tool, keep |
+| `profiler.sh` | 98 bytes | Profiling helper script | Keep (still useful) |
 
 ### Dead code inside active files
 
-| File | Code | Description |
-|------|------|-------------|
-| `box2d-draw-textured.lua:705` | `texturedCurveOLD2()` | Old bezier curve renderer |
-| `box2d-draw-textured.lua:809` | `texturedCurveOLD()` | Older bezier curve renderer |
-| `box2d-draw-textured.lua` | `drawSquishableHairOverOLD()` | Old hair renderer |
-| `box2d-draw-textured.lua` | `doubleControlPointsOld()` | Old control point calculation |
-| `main.lua:~480-815` | Character debug keybindings | ~335 lines of hardcoded key handlers for character experiments |
-| `main.lua` | ~200 lines commented code | Commented-out character creation experiments |
+| File | Code | Description | Status |
+|------|------|-------------|--------|
+| `box2d-draw-textured.lua:705` | `texturedCurveOLD2()` | Old bezier curve renderer | **Deleted** (Phase 0.2) |
+| `box2d-draw-textured.lua:809` | `texturedCurveOLD()` | Older bezier curve renderer | **Deleted** (Phase 0.2) |
+| `box2d-draw-textured.lua` | `drawSquishableHairOverOLD()` | Old hair renderer | **Deleted** (Phase 0.2) |
+| `box2d-draw-textured.lua` | `doubleControlPointsOld()` | Old control point calculation | **Deleted** (Phase 0.2) |
+| `main.lua:~480-815` | Character debug keybindings | ~335 lines of key handlers | **Extracted** to `src/character-experiments.lua` |
+| `main.lua` | ~200 lines commented code | Commented-out experiments | **Deleted** (Phase 0.2) |
 
 ---
 

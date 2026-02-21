@@ -18,39 +18,34 @@ A concrete, ordered sequence of work. Each phase builds on the previous one. The
 
 Things that can't break anything. Pure deletion, trivial fixes, and tooling setup.
 
-### 0.1 Delete dead files
+### 0.1 Delete dead files — DONE
 
-| Action | What |
-|--------|------|
-| Delete | `src/polylineOLD.lua` (392 lines) |
-| Delete | `temp/OLDOLD-dna.lua` (14KB) |
-| Delete | `temp/OLDOLD-guycreation.lua` (44KB) |
-| Delete | `output.md` (~551KB generated file) |
-| Delete | `profilingReportOLD2.txt` through `profilingReportOLD5.txt` |
-| Delete | `scripts/straightOLD.playtime.lua` |
-| Delete | `scripts/bettertOLD.playtime.json` |
-| Decide | `playtime-files/meta.playtime.json` — ask you if it's needed |
+All dead files deleted:
+- ~~`src/polylineOLD.lua`~~ (392 lines)
+- ~~`temp/OLDOLD-dna.lua`~~ (14KB)
+- ~~`temp/OLDOLD-guycreation.lua`~~ (44KB)
+- ~~`output.md`~~ (~551KB)
+- ~~`profilingReportOLD2-5.txt`~~
+- ~~`scripts/straightOLD.playtime.lua`~~
+- ~~`scripts/bettertOLD.playtime.json`~~
+- `playtime-files/meta.playtime.json` — still open, not yet decided
 
-**Risk**: Zero. These files aren't required by anything.
-**Verification**: `love .` still starts. `love . --test` still passes.
-**Time**: 5 minutes.
+**Total deleted**: ~17,500 lines across 9 files.
 
-### 0.2 Delete dead code inside active files
+### 0.2 Delete dead code inside active files — DONE
 
-| Action | File | What |
-|--------|------|------|
-| Delete | `box2d-draw-textured.lua` | `texturedCurveOLD2()` (~45 lines at 705) |
-| Delete | `box2d-draw-textured.lua` | `texturedCurveOLD()` (~50 lines at 809) |
-| Delete | `box2d-draw-textured.lua` | `drawSquishableHairOverOLD()` |
-| Delete | `box2d-draw-textured.lua` | `doubleControlPointsOld()` |
-| Delete | `keep-angle.lua` | First `rotateBodyTowards` definition (lines 4-19, shadowed by second) |
-| Fix | `joints.lua:104` | Replace `print('apjspaiosjdposdjf')` with `logger:error("Cannot create joint: bodyA and bodyB are the same")` |
-| Remove | `joints.lua:266,296` | `if true then` wrappers (keep the contents) |
-| Remove | `box2d-draw-textured.lua:318,358,495` | `if true then` wrappers (keep the contents) |
+All items completed:
+- ~~`texturedCurveOLD2()`~~ deleted (box2d-draw-textured.lua)
+- ~~`texturedCurveOLD()`~~ deleted
+- ~~`drawSquishableHairOverOLD()`~~ deleted
+- ~~`doubleControlPointsOld()`~~ deleted
+- ~~`rotateBodyTowards` duplicate~~ renamed to `rotateBodyTowardsSimple`
+- ~~`print('apjspaiosjdposdjf')`~~ replaced with `logger:error()`
+- ~~`if true then` wrappers~~ removed (5 total: 2 in joints.lua, 3 in box2d-draw-textured.lua)
+- ~~Character experiment keybindings~~ extracted to `src/character-experiments.lua`
+- ~~Dead `key == 'p'` benchmark block~~ removed from main.lua
 
-**Risk**: Low. The OLD functions aren't called. The duplicate `rotateBodyTowards` shadows the first. The `if true` blocks are no-ops.
-**Verification**: `love .` — run the app, load a scene with textured bodies, verify rendering looks the same.
-**Time**: 15-30 minutes.
+**Total deleted**: ~850 lines of dead/old code.
 
 ### 0.3 Check spec/ tests — DONE
 
@@ -75,74 +70,25 @@ Things that can't break anything. Pure deletion, trivial fixes, and tooling setu
 
 The `.luacheckrc` config from TOOLING-SETUP.md should be created to get a cleaner baseline with known globals whitelisted.
 
-### 0.5 Set up hot reload (lurker + lovebird)
+### 0.5 Set up hot reload (lurker + lovebird) — DONE
 
-Copy `vendor/lurker.lua` and `vendor/lume.lua` from the parent vector-sketch project (or adjust require paths). Add to main.lua:
+Lurker was already integrated. Claude bridge (port 8001) replaces much of lovebird's functionality.
 
-```lua
-local lurker = require('vendor.lurker')
--- In love.update:
-lurker.update()
-```
-
-Optionally, also add lovebird for browser-based REPL:
-```lua
-local lovebird = require('vendor.lovebird')
--- In love.update:
-lovebird.update()
--- Then open http://localhost:8000 in a browser
-```
-
-**Why now**: Hot reload makes every subsequent phase faster and safer. Edit a file → see the result live → no restart needed. Lovebird lets us query runtime state from a browser, which replaces the need for some custom CLI tools (Phase 4).
-
-**Risk**: Zero — lurker is a read-only file watcher. Lovebird is an opt-in HTTP server.
-**Prerequisite**: None, but becomes much more useful after Phase 1 (global leaks fixed = clean hot swaps).
-**Time**: 15 minutes.
+Additional tooling added:
+- `playtime.sh` — app lifecycle management (start/stop/restart/status)
+- `CLAUDE.md` — project guide for working across machines
+- Bridge profiling endpoints: `POST /profile/benchmark` and `POST /profile/frames`
 
 ---
 
-## Phase 1: Fix All Global Leaks (88 leaks, 1-2 sessions, low risk)
+## Phase 1: Fix All Global Leaks — DONE
 
-Luacheck found **88 W111 warnings** (setting non-standard global variable) — more than double our manual estimate of ~40. Each fix is adding `local` to a function or variable definition. Mechanical, greppable, individually testable.
+Fixed **68 global leaks** across 12 files (87 → 19 remaining). The 19 remaining are intentional globals in main.lua (logger, inspect, registry, ProFi, etc.) and script.lua (sandbox globals). These require a larger refactor (Phase 3: Explicit Requires) and were left intentionally.
 
-### Why this is first
-
-Global leaks are the single biggest source of potential silent bugs. Every other phase involves editing files — if a global named `add` or `inside` or `x` is silently shadowing something, we'll get mysterious failures when refactoring. Fixing this first means every subsequent change happens on solid ground.
-
-**Also**: Fixing globals directly unlocks reliable hot reload (Phase 0.5). Lurker can only swap functions that live in module tables — global functions bypass it entirely. The sooner globals are fixed, the sooner we get live code editing.
-
-### Order within this phase
-
-**Round 1 — Critical globals (the ones most likely to actually clash):**
-
-| File | Function | Fix |
-|------|----------|-----|
-| `character-manager.lua:102` | `add` | → `local function add(...)` |
-| `math-utils.lua:42` | `lerp` | → `local function lerp(...)` (keep `lib.lerp` at 1235) |
-| `math-utils.lua:875` | `inside` | → `local function inside(...)` |
-| `math-utils.lua:879` | `intersection` | → `local function intersection(...)` |
-
-**Verification**: `love . --test` and load a scene with characters (uses `add`, `lerp`).
-
-**Round 2 — Module-level globals (wrong but unlikely to clash):**
-
-All remaining leaks in: `snap.lua`, `keep-angle.lua`, `object-manager.lua`, `joints.lua`, `script.lua`, `scene-loader.lua`, `camera.lua`, `editor-render.lua`, `box2d-draw-textured.lua` (13 functions), `character-manager.lua` (2 more).
-
-For each: grep to confirm it's only used within that file, then add `local`.
-
-**Round 3 — playtime-ui.lua globals (largest batch):**
-
-Luacheck found playtime-ui.lua has the most global leaks, including:
-- 9 nested function definitions without `local` (updateOffsetA, updateOffsetB, handlePaletteAndHex, handleURLInput, patchTransformUI, combineImageUI, flipWholeUI, renderDistances, inArray)
-- `x` and `y` leaking as globals in ~10 locations (loop variables, coordinates)
-- Other variable leaks
-
-These are trickier because they're defined inside other functions. Each needs `local` added at the definition site. The `x`/`y` leaks are especially dangerous — they silently overwrite any other `x`/`y` in global scope every frame.
-
-**Verification method**: Run `luacheck src/ main.lua --only 111` after each round — watch the W111 count drop from 88 toward zero. This is machine-verified, no manual checking needed. Also run the app and exercise affected features.
-
-**Risk**: Low per change. Each is a one-keyword addition. If something breaks, the error message will immediately say "attempt to call a nil value" pointing at the exact line that expected the global.
-**Time**: 2-3 hours total (more than originally estimated given 88 vs ~40 leaks).
+Key tricky fixes:
+- playtime-ui.lua `drawAccordion` pattern: `x, y` shared between closures via upvalue
+- scene-loader.lua: `getFiledata` needed to be moved before its first caller
+- 33 fixes in playtime-ui.lua alone, verified via before/after screenshots
 
 ---
 
@@ -287,54 +233,38 @@ Add to `main.lua`: capture screenshot + write JSON companion file.
 
 ## Phase 5: Fix Known Bugs (1-2 sessions, targeted risk)
 
-Now that we have tests and validator, fix the bugs we've documented.
-
-| Bug | File | Fix | Risk |
-|-----|------|-----|------|
-| `not doneJoints[ud.id] == true` | io.lua:884 | → `if not doneJoints[ud.id] then` | Low — the current code happens to work |
-| Clone OMP not marked dirty | io.lua (cloneSelection) | Set `ud.extra.dirty = true` after clone | Low |
-| `sharedFixtureData.sensor` | io.lua:499 | Find first non-userData fixture explicitly | Medium — need to understand the fixture ordering |
-| Duplicate key == 'u' handler | main.lua:722,738 | Ask you which one is correct, delete the other | Low (needs your input) |
-| endNode mismatch in DNA | character-manager.lua:323,339 | `endNode = 'lfoot'` → `'lhand'`/`'rhand'` | Low but needs visual verification |
-| Redundant reference angle | io.lua:932 | `local newRef = newJoint:getReferenceAngle()` | Very low |
-| Unused `swapBodies` param | joints.lua:162 | Remove from signature | Very low |
-
-**Verification**: Round-trip test should show sensor and vertices surviving. Validator catches orphaned joints. Visual check for character endNode fix.
-**Time**: 1-2 hours.
+| Bug | File | Fix | Status |
+|-----|------|-----|--------|
+| `not doneJoints[ud.id] == true` | io.lua:884 | → `if not doneJoints[ud.id] then` | **DONE** |
+| Debug print gibberish | joints.lua:104 | → `logger:error(...)` | **DONE** |
+| Duplicate key == 'u' handler | main.lua:722,738 | Merged into single block | **DONE** |
+| Clone OMP not marked dirty | io.lua (cloneSelection) | Set `ud.extra.dirty = true` after clone | **Open** |
+| Redundant reference angle | io.lua:932 | `local newRef = newJoint:getReferenceAngle()` | **Open** |
+| Unused `swapBodies` param | joints.lua:162 | Remove from signature | **Open** |
+| `sharedFixtureData.sensor` | io.lua:499 | Find first non-userData fixture explicitly | **Open** — needs investigation |
+| endNode mismatch in DNA | character-manager.lua:323,339 | `endNode = 'lfoot'` → `'lhand'`/`'rhand'` | **Open** — needs visual verification |
 
 ---
 
 ## Phase 6: Extract from main.lua (1 session, medium risk)
 
-main.lua is 999 lines. Extract the biggest chunks.
+### 6.1 Extract debug keybindings — DONE
 
-### 6.1 Extract debug keybindings (~335 lines)
-
-Move lines 480-815 (character experiment keys) to `src/debug-keys.lua`.
-
-```lua
--- In main.lua, replace 335 lines with:
-local debugKeys = require 'src.debug-keys'
--- ... in love.keypressed:
-debugKeys.handle(key, humanoidInstance)
-```
-
-**Risk**: Low — these are isolated if/elseif blocks with no interactions between them.
-**Time**: 30 minutes.
+Extracted to `src/character-experiments.lua` (~340 lines removed from main.lua).
 
 ### 6.2 Extract physics callbacks (~15 lines)
 
 Move `beginContact`/`endContact`/`preSolve`/`postSolve` globals to `src/physics-callbacks.lua`.
 
 **Risk**: Low — thin wrappers around script.call.
-**Time**: 15 minutes.
+**Status**: Open.
 
 ### 6.3 Consider: Extract game loop
 
-The fixed-timestep loop (lines 893-998) is self-contained. Could move to `src/game-loop.lua`. But this is riskier because it wires into `love.run()`.
+The fixed-timestep loop is self-contained. Could move to `src/game-loop.lua`.
 
 **Risk**: Medium — touching the game loop can cause subtle timing issues.
-**Decision**: Only do this if main.lua is still too big after 6.1 and 6.2. It'll be down to ~650 lines which is manageable.
+**Status**: Open — main.lua is now ~660 lines which is manageable.
 
 ---
 
@@ -407,45 +337,48 @@ Only do these when they matter for what you're building.
 ## Visual Overview
 
 ```
-Phase 0 ─── Housekeeping ──────────── [zero risk, 30 min]
-  │          delete dead files/code
+Phase 0 ─── Housekeeping ──────────── ✅ DONE
+  │          ✓ dead files deleted (17,500 lines)
+  │          ✓ dead code removed (850 lines)
   │          ✓ busted: 98 tests pass
-  │          ✓ luacheck: 1490 warnings baselined
-  │          + set up lurker (hot reload) + lovebird (browser REPL)
+  │          ✓ luacheck baselined
+  │          ✓ lurker hot reload active
+  │          ✓ playtime.sh lifecycle helper
+  │          ✓ CLAUDE.md project guide
+  │          ✓ bridge profiling endpoints
   ▼
-Phase 1 ─── Fix 88 Global Leaks ───── [low risk, 2-3 hrs]
-  │          add 'local' keyword
-  │          verify: luacheck --only 111 → zero warnings
-  │          UNLOCKS: reliable hot reload via lurker
+Phase 1 ─── Fix Global Leaks ──────── ✅ DONE (87 → 19 intentional)
+  │          ✓ 68 globals fixed across 12 files
+  │          ✓ verified via luacheck + screenshots
   ▼
-Phase 2 ─── Tests + Logger ────────── [zero risk, 2-3 hrs]
+Phase 2 ─── Tests + Logger ────────── not started
   │          unit tests, logger singleton, round-trip test
   ▼
-Phase 3 ─── Explicit Requires ─────── [medium risk, 2-3 hrs]
-  │          remove global module access
-  │          verify: luacheck --only 113 count drops
+Phase 3 ─── Explicit Requires ─────── not started
+  │          remove global module access (19 remaining)
   ▼
-Phase 4 ─── Observability Tools ───── [low risk, 2-3 hrs]
-  │          validator, dump, screenshot
-  │          (some replaceable by lovebird REPL commands)
+Phase 4 ─── Observability Tools ───── partially done (bridge covers most)
+  │          ✓ bridge: eval, console, errors, screenshots, profiling
+  │          - scene validator: not started
   ▼
-Phase 5 ─── Fix Known Bugs ────────── [targeted risk, 1-2 hrs]
-  │          clone bugs, sensor flag, endNode, etc.
+Phase 5 ─── Fix Known Bugs ────────── partially done (3/8 fixed)
+  │          ✓ io.lua precedence, joints.lua gibberish, duplicate key=='u'
+  │          - clone OMP dirty, reference angle, swapBodies, sensor, endNode
   ▼
-Phase 6 ─── Extract from main.lua ─── [medium risk, 1 hr]
-  │          debug keys, physics callbacks
+Phase 6 ─── Extract from main.lua ─── partially done (6.1 done)
+  │          ✓ character experiments extracted
+  │          - physics callbacks: not started
   ▼
-Phase 7 ─── Structural Improvements ─ [higher risk, multi-session]
-  │          (pick based on what you're building next)
+Phase 7 ─── Structural Improvements ─ not started
   │    ├── 7a. Snap state → state.lua
   │    ├── 7b. Fixture type registry
   │    ├── 7c. Mode handler table
   │    ├── 7d. DNA topology-as-data
   │    └── 7e. Extract world-settings panel
   ▼
-Phase 8 ─── Performance & Polish ──── [as needed]
+Phase 8 ─── Performance & Polish ──── not started
              caching, memory, UV fix
-             (use jprof/AppleCake to identify targets)
+             (bridge /profile/benchmark + /profile/frames available)
 ```
 
 ---
@@ -458,9 +391,9 @@ Places where we need your input before proceeding:
 |-------|----------|--------|
 | 0.1 | Is `playtime-files/meta.playtime.json` needed? Can we delete it? | **Open** |
 | 0.3 | Do you have `busted` installed? Should we try the spec/ tests? | **RESOLVED** — busted is installed, 98 tests pass |
-| 0.5 | Want lurker + lovebird set up for hot reload and browser REPL? | **Open** |
+| 0.5 | Want lurker + lovebird set up for hot reload and browser REPL? | **RESOLVED** — lurker active, bridge replaces lovebird |
 | 2.3 | Which scene files are the best test cases? (We'll use them for round-trip) | **Open** |
-| 5 | The duplicate `if key == 'u'` handler (main.lua:722 vs 738) — which one is correct? | **Open** |
+| 5 | The duplicate `if key == 'u'` handler (main.lua:722 vs 738) — which one is correct? | **RESOLVED** — merged into single block |
 | 5 | The `endNode = 'lfoot'` on arm parts — is this intentional or a bug? | **Open** |
 | 7 | Which structural improvement matters most for what you want to build next? | **Open** |
 
