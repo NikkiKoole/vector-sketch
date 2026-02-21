@@ -392,7 +392,7 @@ end
 local function createThing(shapeType, conf)
     --local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
     -- Initialize default values
-    bodyType = bodyType or 'dynamic'
+    local bodyType = conf.bodyType or 'dynamic'
     -- radius = radius or 20         -- Default radius for circular shapes
     -- width = width or radius * 2   -- Default width for polygonal shapes
     -- width2 = width2 or radius * 2 -- Default width for polygonal shapes

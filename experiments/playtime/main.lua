@@ -92,7 +92,14 @@ function waitForEvent()
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-waitForEvent()
+-- Skip wait screen when launched with --bridge (for automated/AI use)
+local skip_wait = false
+for _, v in ipairs(arg or {}) do
+    if v == '--bridge' then skip_wait = true end
+end
+if not skip_wait then
+    waitForEvent()
+end
 
 local FIXED_TIMESTEP = true
 local FPS = 60 -- in platime ui we also have a fps

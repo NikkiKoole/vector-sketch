@@ -796,6 +796,228 @@ routes["POST /reload"] = function(req)
     return ok_response(true)
 end
 
+-- ─── Camera ───
+
+routes["GET /camera"] = function(req)
+    local camera = require 'src.camera'
+    local cam = camera.getInstance()
+    local tx, ty = cam:getTranslation()
+    local scale = cam:getScale()
+    local cw, ch = cam:getContainerDimensions()
+    local halfW = (cw / scale) / 2
+    local halfH = (ch / scale) / 2
+    return ok_response({
+        x = tx,
+        y = ty,
+        scale = scale,
+        visibleBounds = {
+            left = tx - halfW,
+            top = ty - halfH,
+            right = tx + halfW,
+            bottom = ty + halfH,
+        },
+    })
+end
+
+routes["POST /camera"] = function(req)
+    local camera = require 'src.camera'
+    local cam = camera.getInstance()
+    local params = req.json_body or {}
+
+    if params.fitToScene then
+        local registry = require 'src.registry'
+        local minX, minY = math.huge, math.huge
+        local maxX, maxY = -math.huge, -math.huge
+        local count = 0
+        for _, body in pairs(registry.bodies) do
+            if not body:isDestroyed() then
+                local x, y = body:getPosition()
+                if x < minX then minX = x end
+                if y < minY then minY = y end
+                if x > maxX then maxX = x end
+                if y > maxY then maxY = y end
+                count = count + 1
+            end
+        end
+        if count > 0 then
+            local padding = 100
+            local cx = (minX + maxX) / 2
+            local cy = (minY + maxY) / 2
+            local vw = (maxX - minX) + padding * 2
+            local vh = (maxY - minY) + padding * 2
+            camera.centerCameraOnPosition(cx, cy, vw, vh)
+        end
+    else
+        if params.x or params.y then
+            local tx, ty = cam:getTranslation()
+            cam:setTranslation(params.x or tx, params.y or ty)
+        end
+        if params.scale then
+            cam:setScale(params.scale)
+        end
+    end
+
+    -- Return updated state
+    local tx, ty = cam:getTranslation()
+    local scale = cam:getScale()
+    local cw, ch = cam:getContainerDimensions()
+    local halfW = (cw / scale) / 2
+    local halfH = (ch / scale) / 2
+    return ok_response({
+        x = tx,
+        y = ty,
+        scale = scale,
+        visibleBounds = {
+            left = tx - halfW,
+            top = ty - halfH,
+            right = tx + halfW,
+            bottom = ty + halfH,
+        },
+    })
+end
+
+-- ─── Screenshot ───
+
+routes["POST /screenshot"] = function(req)
+    local params = req.json_body or {}
+    local filename = params.filename or ("screenshot_" .. bridge.frame_count .. ".png")
+    love.graphics.captureScreenshot(filename)
+    local savedir = love.filesystem.getSaveDirectory()
+    local fullpath = savedir .. "/" .. filename
+    return ok_response({ filename = filename, path = fullpath })
+end
+
+-- ─── Scene Clear ───
+
+routes["POST /scene/clear"] = function(req)
+    local registry = require 'src.registry'
+    local objectManager = require 'src.object-manager'
+    local destroyed = 0
+    -- Collect IDs first to avoid modifying table during iteration
+    local ids = {}
+    for id, body in pairs(registry.bodies) do
+        ids[#ids + 1] = { id = id, body = body }
+    end
+    for _, entry in ipairs(ids) do
+        if not entry.body:isDestroyed() then
+            local ok_pcall, err_msg = pcall(function()
+                objectManager.destroyBody(entry.body)
+            end)
+            if ok_pcall then
+                destroyed = destroyed + 1
+            end
+        end
+    end
+    -- Reset registry to clean up any stragglers
+    registry.bodies = {}
+    registry.joints = {}
+    registry.sfixtures = {}
+    return ok_response({ destroyed = destroyed })
+end
+
+-- ─── World Run ───
+
+routes["POST /world/run"] = function(req)
+    local state = require 'src.state'
+    local params = req.json_body or {}
+    local frames = params.frames or 60
+    local dt = 1 / 60
+    local was_paused = state.world.paused
+    state.world.paused = false
+    for i = 1, frames do
+        state.physicsWorld:update(dt, 8, 3)
+    end
+    state.world.paused = true
+    return ok_response({ stepped = frames, wasPaused = was_paused })
+end
+
+-- ─── Bounds ───
+
+routes["GET /bounds"] = function(req)
+    local registry = require 'src.registry'
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+    local count = 0
+    for _, body in pairs(registry.bodies) do
+        if not body:isDestroyed() then
+            local x, y = body:getPosition()
+            if x < minX then minX = x end
+            if y < minY then minY = y end
+            if x > maxX then maxX = x end
+            if y > maxY then maxY = y end
+            count = count + 1
+        end
+    end
+    if count == 0 then
+        return ok_response({ left = 0, top = 0, right = 0, bottom = 0, count = 0 })
+    end
+    return ok_response({
+        left = minX, top = minY,
+        right = maxX, bottom = maxY,
+        count = count,
+    })
+end
+
+-- ─── Help ───
+
+local route_descriptions = {
+    ["GET /ping"] = "Health check, returns 'pong'",
+    ["GET /state"] = "Get overall app state (gravity, paused, mode, selection)",
+    ["GET /bodies"] = "List all bodies (id, label, position, type)",
+    ["GET /body"] = "Get detailed body info by ?id=",
+    ["GET /joints"] = "List all joints",
+    ["GET /joint"] = "Get detailed joint info by ?id=",
+    ["GET /selection"] = "Get the currently selected body or joint",
+    ["GET /sfixtures"] = "List all special fixtures",
+    ["GET /scene"] = "Get full scene save data",
+    ["GET /world"] = "Get world settings (gravity, meter, draw modes)",
+    ["GET /registry"] = "Get registry summary (bodies, joints, sfixtures)",
+    ["GET /camera"] = "Get camera position, scale, and visible bounds",
+    ["GET /bounds"] = "Get AABB encompassing all bodies",
+    ["GET /help"] = "List all available routes with descriptions",
+    ["GET /diff"] = "Compare two snapshots (?from=&to=)",
+    ["POST /eval"] = "Execute Lua code and return result as JSON",
+    ["POST /exec"] = "Execute Lua code (fire-and-forget, no return value)",
+    ["POST /body/create"] = "Create a new physics body",
+    ["POST /body/destroy"] = "Destroy a body by id",
+    ["POST /world/pause"] = "Pause physics simulation",
+    ["POST /world/unpause"] = "Unpause physics simulation",
+    ["POST /world/step"] = "Step physics N frames (default 1) while paused",
+    ["POST /world/run"] = "Unpause, step N frames (default 60), re-pause",
+    ["POST /scene/save"] = "Save scene to file",
+    ["POST /scene/load"] = "Load scene from file",
+    ["POST /scene/clear"] = "Destroy all bodies and reset registry",
+    ["POST /reload"] = "Hot-reload current script",
+    ["POST /snapshot"] = "Take a named snapshot of body positions",
+    ["POST /screenshot"] = "Capture screenshot, returns file path",
+    ["POST /camera"] = "Set camera position/scale or fitToScene",
+    ["POST /quit"] = "Quit the application",
+}
+
+routes["GET /help"] = function(req)
+    local result = {}
+    for route, desc in pairs(route_descriptions) do
+        local method, path = route:match("(%S+) (%S+)")
+        result[#result + 1] = {
+            method = method,
+            path = path,
+            description = desc,
+        }
+    end
+    table.sort(result, function(a, b)
+        if a.path == b.path then return a.method < b.method end
+        return a.path < b.path
+    end)
+    return ok_response(result)
+end
+
+-- ─── Quit ───
+
+routes["POST /quit"] = function(req)
+    love.event.quit()
+    return ok_response(true)
+end
+
 -- Phase 4: Snapshot / Diff
 
 routes["POST /snapshot"] = function(req)
