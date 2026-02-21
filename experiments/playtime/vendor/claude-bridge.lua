@@ -1141,6 +1141,7 @@ local route_descriptions = {
     ["DELETE /breakpoint"] = "Remove a breakpoint (?name=X or clear all)",
     ["POST /profile/benchmark"] = "Benchmark a Lua code snippet (iterations, warmup, returns timing stats)",
     ["POST /profile/frames"] = "Profile N frames of physics with ProFi (returns text report)",
+    ["POST /specs"] = "Run busted specs inside LÖVE ({target:'spec/file.lua', fresh:true})",
 }
 
 routes["GET /help"] = function(req)
@@ -1728,6 +1729,106 @@ routes["POST /profile/frames"] = function(req)
         frames = frames,
         sort = sort,
         report = report,
+    })
+end
+
+-- ─── Specs (busted inside LÖVE) ───
+
+routes["POST /specs"] = function(req)
+    local target = (req.json_body and req.json_body.target) or "spec"
+    local freshModules = req.json_body and req.json_body.fresh  -- clear src.* from package.loaded
+
+    -- Add luarocks 5.1 paths so busted can be found
+    local home = os.getenv('HOME')
+    local oldPath = package.path
+    local oldCpath = package.cpath
+    package.path = home .. '/.luarocks/share/lua/5.1/?.lua;'
+                 .. home .. '/.luarocks/share/lua/5.1/?/init.lua;'
+                 .. package.path
+    package.cpath = home .. '/.luarocks/lib/lua/5.1/?.so;'
+                  .. package.cpath
+
+    -- Capture busted output
+    local output_lines = {}
+    local oldPrint = print
+    print = function(...)
+        local parts = {}
+        for i = 1, select('#', ...) do
+            parts[#parts + 1] = tostring(select(i, ...))
+        end
+        local line = table.concat(parts, "\t")
+        output_lines[#output_lines + 1] = line
+        oldPrint(...)  -- also print to console
+    end
+
+    -- Capture io.write too (busted uses it for progress dots)
+    local oldWrite = io.write
+    local writeBuffer = ""
+    io.write = function(...)
+        for i = 1, select('#', ...) do
+            writeBuffer = writeBuffer .. tostring(select(i, ...))
+        end
+        oldWrite(...)
+    end
+
+    -- Intercept os.exit
+    local realExit = os.exit
+    local exitCode = 0
+    os.exit = function(code)
+        exitCode = code or 0
+    end
+
+    -- Clear any previously loaded busted modules so we get a fresh run
+    for k in pairs(package.loaded) do
+        if k:match('^busted') or k:match('^pl%.') or k:match('^mediator') or k:match('^say') or k:match('^term') or k:match('^luassert') then
+            package.loaded[k] = nil
+        end
+    end
+
+    -- Optionally clear src.* modules for a clean require state
+    -- (specs that test module behavior may need this)
+    if freshModules then
+        for k in pairs(package.loaded) do
+            if k:match('^src%.') or k:match('^spec%.') then
+                package.loaded[k] = nil
+            end
+        end
+    end
+
+    -- Override arg
+    local oldArg = arg
+    arg = { target }
+    arg[0] = 'busted'
+    arg[-1] = 'luajit'
+
+    local ok, err = pcall(function()
+        require('busted.runner')({ standalone = false })
+    end)
+
+    -- Restore everything
+    arg = oldArg
+    os.exit = realExit
+    print = oldPrint
+    io.write = oldWrite
+    package.path = oldPath
+    package.cpath = oldCpath
+
+    if writeBuffer ~= "" then
+        table.insert(output_lines, 1, writeBuffer)
+    end
+
+    if not ok then
+        return ok_response({
+            success = false,
+            error = tostring(err),
+            output = table.concat(output_lines, "\n"),
+        })
+    end
+
+    return ok_response({
+        success = exitCode == 0,
+        exit_code = exitCode,
+        output = table.concat(output_lines, "\n"),
     })
 end
 

@@ -42,10 +42,42 @@ Lurker watches files every 0.5s and hot-swaps Lua modules. Check `/errors` after
 
 ## Testing
 
+Busted is the primary test framework. Specs live in `spec/`.
+
+### Running specs
+
 ```bash
-busted spec/             # run busted tests (98 tests)
-lua tests/run.lua        # run mini-test suite (17 tests)
+# Pure unit specs (no LÖVE needed)
+busted spec/                              # all pure specs
+busted spec/math-utils_spec.lua           # single file
+
+# Full suite including LÖVE integration tests
+love . --specs                            # all specs (pure + physics + integration)
+love . --specs spec/physics_spec.lua      # single file
+
+# Via the bridge (while app is running)
+curl -X POST localhost:8001/specs                                              # run all
+curl -X POST localhost:8001/specs -d '{"target":"spec/physics_spec.lua"}'      # single file
+curl -X POST localhost:8001/specs -d '{"fresh":true}'                          # clear cached src.* modules first
 ```
+
+### Spec conventions
+
+- Pure specs (math, utils, shapes): work everywhere, no guard needed
+- LÖVE-dependent specs (physics, rendering): start with `if not love then return end`
+- Integration specs that test src modules against live state: use `fresh:true` via bridge or manage setup/teardown carefully
+- Spec files: `spec/<module>_spec.lua` (e.g. `spec/shapes_spec.lua`)
+
+### Setup
+
+Busted must be installed for Lua 5.1 (LuaJIT):
+```bash
+luarocks --lua-version 5.1 install busted
+```
+
+### Legacy
+
+`lua tests/run.lua` runs the old mini-test suite (17 tests). Still works but busted is preferred for new tests.
 
 ## Luacheck
 

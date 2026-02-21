@@ -5,6 +5,12 @@ if arg[1] == '--test' or arg[2] == '--test' then
     return
 end
 
+-- Spec mode: run busted specs inside LÖVE with 'love . --specs'
+if arg[1] == '--specs' or arg[2] == '--specs' then
+    require('run-specs')
+    return
+end
+
 -- NOTE MAKE REVOLUTE JOINTS ALWAYS FROM PARENT TO CHILD!!!!!!!!
 
 -- TODO there is an issue where the .vertices arent populated after load.
