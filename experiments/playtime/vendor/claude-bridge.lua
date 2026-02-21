@@ -45,6 +45,60 @@ bridge.input_queue = {}
 bridge.watches = {}       -- { [name] = { code=str, fn=compiled, interval=N, samples={}, max_samples=N, last_frame=N } }
 bridge.watch_max_samples = 200
 
+-- ─────────────────────────────────────────────
+-- Collision event log
+-- ─────────────────────────────────────────────
+
+bridge.collisions = {}
+bridge.collisions_max = 200
+bridge.collision_logging = false
+bridge.destroying_body = false  -- guard flag to skip callbacks during body destruction
+
+local function get_fixture_id(fixture)
+    if not fixture or fixture:isDestroyed() then return nil end
+    local body = fixture:getBody()
+    if not body or body:isDestroyed() then return nil end
+    local ud = body:getUserData()
+    local thing = ud and ud.thing
+    return thing and thing.id or nil
+end
+
+local function get_fixture_label(fixture)
+    if not fixture or fixture:isDestroyed() then return nil end
+    local body = fixture:getBody()
+    if not body or body:isDestroyed() then return nil end
+    local ud = body:getUserData()
+    local thing = ud and ud.thing
+    return thing and thing.label or nil
+end
+
+function bridge.logCollision(event_type, fix1, fix2, contact, ni1, ti1, ni2, ti2)
+    if not bridge.collision_logging then return end
+    if bridge.destroying_body then return end  -- skip during body destruction to avoid native crash
+    local cx, cy = 0, 0
+    if contact and not contact:isDestroyed() then
+        local ok, x, y = pcall(function() return contact:getPositions() end)
+        if ok and x then cx, cy = x, y end
+    end
+    local entry = {
+        frame = bridge.frame_count,
+        type = event_type,
+        bodyA = get_fixture_id(fix1),
+        bodyB = get_fixture_id(fix2),
+        labelA = get_fixture_label(fix1),
+        labelB = get_fixture_label(fix2),
+        x = cx, y = cy,
+    }
+    if event_type == "postSolve" and ni1 then
+        entry.normalImpulse = ni1
+        entry.tangentImpulse = ti1
+    end
+    table.insert(bridge.collisions, entry)
+    while #bridge.collisions > bridge.collisions_max do
+        table.remove(bridge.collisions, 1)
+    end
+end
+
 local _original_print = print
 function print(...)
     -- Store in buffer
@@ -789,13 +843,22 @@ end
 routes["POST /body/destroy"] = function(req)
     local registry = require 'src.registry'
     local objectManager = require 'src.object-manager'
+    local state = require 'src.state'
     local id = req.json_body and req.json_body.id
     if not id then return err_response("missing 'id' in JSON body") end
     local body = registry.getBodyByID(id)
     if not body then return err_response("body not found: " .. id) end
+    -- Must clear Box2D callbacks before destroying — LÖVE's C++ crashes with SEGFAULT
+    -- when endContact fires on partially-destroyed fixtures (Reference::push fails)
+    local state = require 'src.state'
+    local cb = {state.physicsWorld:getCallbacks()}
+    state.physicsWorld:setCallbacks(nil, nil, nil, nil)
+    bridge.destroying_body = true
     local ok_pcall, err_msg = pcall(function()
         objectManager.destroyBody(body)
     end)
+    bridge.destroying_body = false
+    if #cb > 0 then state.physicsWorld:setCallbacks(unpack(cb)) end
     if not ok_pcall then
         return err_response("destroyThing failed: " .. tostring(err_msg))
     end
@@ -949,6 +1012,11 @@ routes["POST /scene/clear"] = function(req)
     local registry = require 'src.registry'
     local objectManager = require 'src.object-manager'
     local destroyed = 0
+    local state = require 'src.state'
+    -- Clear Box2D callbacks to prevent SEGFAULT during body destruction
+    local cb = {state.physicsWorld:getCallbacks()}
+    state.physicsWorld:setCallbacks(nil, nil, nil, nil)
+    bridge.destroying_body = true
     -- Collect IDs first to avoid modifying table during iteration
     local ids = {}
     for id, body in pairs(registry.bodies) do
@@ -964,6 +1032,8 @@ routes["POST /scene/clear"] = function(req)
             end
         end
     end
+    bridge.destroying_body = false
+    if #cb > 0 then state.physicsWorld:setCallbacks(unpack(cb)) end
     -- Reset registry to clean up any stragglers
     registry.bodies = {}
     registry.joints = {}
@@ -1052,6 +1122,11 @@ local route_descriptions = {
     ["POST /console/clear"] = "Clear the console buffer",
     ["GET /errors"] = "Get captured errors (lurker, pcall, etc.)",
     ["POST /errors/clear"] = "Clear the error list",
+    ["POST /body/update"] = "Update body properties (position, velocity, type, friction, etc.)",
+    ["GET /collisions"] = "Get collision events (?n=50, ?body=ID, ?type=beginContact)",
+    ["POST /collisions/start"] = "Start logging collisions (enables physics callbacks)",
+    ["POST /collisions/stop"] = "Stop logging collisions",
+    ["POST /collisions/clear"] = "Clear collision log",
     ["POST /input"] = "Queue raw input events (mousepressed, keypressed, etc.)",
     ["POST /input/click"] = "Simulate a mouse click at x,y",
     ["POST /input/drag"] = "Simulate a mouse drag from (x1,y1) to (x2,y2)",
@@ -1103,6 +1178,180 @@ end
 
 routes["POST /errors/clear"] = function(req)
     bridge.errors = {}
+    return ok_response(true)
+end
+
+-- ─── Body Editing ───
+
+routes["POST /body/update"] = function(req)
+    local registry = require 'src.registry'
+    local params = req.json_body
+    if not params then return err_response("missing JSON body") end
+    local id = params.id
+    if not id then return err_response("missing 'id'") end
+    local body = registry.getBodyByID(id)
+    if not body then return err_response("body not found: " .. id) end
+    if body:isDestroyed() then return err_response("body is destroyed: " .. id) end
+
+    local applied = {}
+
+    -- Position
+    if params.x or params.y then
+        local cx, cy = body:getPosition()
+        body:setPosition(params.x or cx, params.y or cy)
+        applied[#applied + 1] = "position"
+    end
+
+    -- Angle
+    if params.angle then
+        body:setAngle(params.angle)
+        applied[#applied + 1] = "angle"
+    end
+
+    -- Velocity
+    if params.vx or params.vy then
+        local vx, vy = body:getLinearVelocity()
+        body:setLinearVelocity(params.vx or vx, params.vy or vy)
+        applied[#applied + 1] = "linearVelocity"
+    end
+
+    -- Angular velocity
+    if params.angularVelocity then
+        body:setAngularVelocity(params.angularVelocity)
+        applied[#applied + 1] = "angularVelocity"
+    end
+
+    -- Body type
+    if params.bodyType then
+        body:setType(params.bodyType)
+        applied[#applied + 1] = "bodyType"
+    end
+
+    -- Damping
+    if params.linearDamping then
+        body:setLinearDamping(params.linearDamping)
+        applied[#applied + 1] = "linearDamping"
+    end
+    if params.angularDamping then
+        body:setAngularDamping(params.angularDamping)
+        applied[#applied + 1] = "angularDamping"
+    end
+
+    -- Gravity scale
+    if params.gravityScale then
+        body:setGravityScale(params.gravityScale)
+        applied[#applied + 1] = "gravityScale"
+    end
+
+    -- Fixed rotation
+    if params.fixedRotation ~= nil then
+        body:setFixedRotation(params.fixedRotation)
+        applied[#applied + 1] = "fixedRotation"
+    end
+
+    -- Awake
+    if params.awake ~= nil then
+        body:setAwake(params.awake)
+        applied[#applied + 1] = "awake"
+    end
+
+    -- Active
+    if params.active ~= nil then
+        body:setActive(params.active)
+        applied[#applied + 1] = "active"
+    end
+
+    -- Fixture properties (applied to all fixtures)
+    if params.friction or params.restitution or params.density or params.sensor ~= nil then
+        for _, fixture in ipairs(body:getFixtures()) do
+            if params.friction then
+                fixture:setFriction(params.friction)
+            end
+            if params.restitution then
+                fixture:setRestitution(params.restitution)
+            end
+            if params.density then
+                fixture:setDensity(params.density)
+            end
+            if params.sensor ~= nil then
+                fixture:setSensor(params.sensor)
+            end
+        end
+        if params.density then
+            body:resetMassData()
+        end
+        if params.friction then applied[#applied + 1] = "friction" end
+        if params.restitution then applied[#applied + 1] = "restitution" end
+        if params.density then applied[#applied + 1] = "density" end
+        if params.sensor ~= nil then applied[#applied + 1] = "sensor" end
+    end
+
+    -- Apply impulse
+    if params.impulse then
+        local ix = params.impulse.x or 0
+        local iy = params.impulse.y or 0
+        body:applyLinearImpulse(ix, iy)
+        applied[#applied + 1] = "impulse"
+    end
+
+    -- Apply force
+    if params.force then
+        local fx = params.force.x or 0
+        local fy = params.force.y or 0
+        body:applyForce(fx, fy)
+        applied[#applied + 1] = "force"
+    end
+
+    return ok_response({ id = id, applied = applied })
+end
+
+-- ─── Collision Log ───
+
+routes["GET /collisions"] = function(req)
+    local last_n = tonumber(req.query.n) or 50
+    local filter_body = req.query.body  -- optional: filter by body id
+    local filter_type = req.query.type  -- optional: filter by event type
+    local result = {}
+    for i = #bridge.collisions, 1, -1 do
+        local c = bridge.collisions[i]
+        local match = true
+        if filter_body and c.bodyA ~= filter_body and c.bodyB ~= filter_body then
+            match = false
+        end
+        if filter_type and c.type ~= filter_type then
+            match = false
+        end
+        if match then
+            result[#result + 1] = c
+            if #result >= last_n then break end
+        end
+    end
+    -- Reverse so oldest first
+    local reversed = {}
+    for i = #result, 1, -1 do reversed[#reversed + 1] = result[i] end
+    return ok_response({
+        logging = bridge.collision_logging,
+        count = #bridge.collisions,
+        events = reversed,
+    })
+end
+
+routes["POST /collisions/start"] = function(req)
+    local state = require 'src.state'
+    bridge.collision_logging = true
+    bridge.collisions = {}
+    -- Enable physics callbacks if not already set
+    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    return ok_response({ logging = true })
+end
+
+routes["POST /collisions/stop"] = function(req)
+    bridge.collision_logging = false
+    return ok_response({ logging = false, eventsCaptured = #bridge.collisions })
+end
+
+routes["POST /collisions/clear"] = function(req)
+    bridge.collisions = {}
     return ok_response(true)
 end
 
@@ -1510,8 +1759,13 @@ end
 -- ─────────────────────────────────────────────
 
 function bridge.init()
-    bridge.server = assert(socket.bind(bridge.host, bridge.port))
-    bridge.server:settimeout(0)
+    -- Create TCP socket with SO_REUSEADDR to avoid "address already in use" on restart
+    local server = socket.tcp4()
+    server:setoption("reuseaddr", true)
+    assert(server:bind(bridge.host, bridge.port))
+    assert(server:listen(8))
+    server:settimeout(0)
+    bridge.server = server
     local addr, port = bridge.server:getsockname()
     print("[claude-bridge] listening on " .. addr .. ":" .. port)
     bridge.inited = true
