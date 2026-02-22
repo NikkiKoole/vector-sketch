@@ -207,6 +207,7 @@ local function rect(w, h, x, y)
         x - w / 2, y + h / 2
     }
 end
+shapes.rect = rect
 
 local function makeTrapezium(w, w2, h, x, y)
     return {

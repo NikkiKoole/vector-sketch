@@ -54,13 +54,7 @@ local function getBoundingBox(poly)
         height = maxY - minY
     }
 end
-local function randomHexColor()
-    local r = math.random(0, 255)
-    local g = math.random(0, 255)
-    local b = math.random(0, 255)
-    local a = 255 -- fully opaque, or adjust if you want random alpha
-    return string.format("%02X%02X%02X%02X", r, g, b, a)
-end
+local randomHexColor = utils.randomHexColor
 
 
 local function createDefaultTextureDNABlock(shape, skipFG)
@@ -452,18 +446,7 @@ function lib.updateShape8(instance, partName, newShape8Name)
 end
 
 -- copy pasted from playtime-ui.lua
-local function getCenterAndDimensions(body)
-    local ud = body:getUserData()
-    local cx, cy, w, h
-    if ud.thing.vertices then
-        local verts = ud.thing.vertices
-        cx, cy, w, h = mathutils.getCenterOfPoints(verts)
-    else -- this is a circle shape..
-        cx, cy = body:getPosition()
-        w, h = ud.thing.radius * 2, ud.thing.radius * 2
-    end
-    return cx, cy, w, h
-end
+local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
 local function recenterPoints(vertices)
     local bbox = getBoundingBox(vertices)
@@ -479,20 +462,7 @@ local function recenterPoints(vertices)
     return result
 end
 
-local function makeTransformedVertices(vertices, scaleX, scaleY)
-    local result = {}
-
-    for i = 1, #vertices, 2 do
-        local x = vertices[i]
-        local y = vertices[i + 1]
-        local newX = x * scaleX
-        local newY = y * scaleY
-        table.insert(result, newX)
-        table.insert(result, newY)
-    end
-
-    return result
-end
+local makeTransformedVertices = mathutils.scalePolygonPoints
 
 local function getTransformedIndex(index, flipX, flipY)
     if flipY == -1 and flipX == 1 then

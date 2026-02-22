@@ -1248,6 +1248,19 @@ function lib.clampedLerp(a, b, t)
     return a + (b - a) * lib.clamp(t, 0, 1)
 end
 
+function lib.getCenterAndDimensions(body)
+    local ud = body:getUserData()
+    local cx, cy, w, h
+    if ud.thing.vertices then
+        local verts = ud.thing.vertices
+        cx, cy, w, h = lib.getCenterOfPoints(verts)
+    else -- circle shape
+        cx, cy = body:getPosition()
+        w, h = ud.thing.radius * 2, ud.thing.radius * 2
+    end
+    return cx, cy, w, h
+end
+
 function lib.repositionPointUsingWeights(weights, newPolygon)
     local newX, newY = 0, 0
     local n = #newPolygon / 2

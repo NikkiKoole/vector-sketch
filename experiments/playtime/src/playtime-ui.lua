@@ -11,6 +11,7 @@ local cam = camera.getInstance()
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local utils = require 'src.utils'
 
+local shapes = require 'src.shapes'
 local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 local box2dDrawTextured = require 'src.box2d-draw-textured'
@@ -36,20 +37,7 @@ local colorpickers = {
 local profileFrameCounter = 0
 
 -- todo move this somewhere sensible , i also need it in character manager
-local function getCenterAndDimensions(body)
-    local ud = body:getUserData()
-    --logger:inspect(ud)
-    local cx, cy, w, h
-    if ud.thing.vertices then
-        local verts = ud.thing.vertices
-        cx, cy, w, h = mathutils.getCenterOfPoints(verts)
-    else -- this is a circle shape..
-        cx, cy = body:getPosition()
-
-        w, h = ud.thing.radius * 2, ud.thing.radius * 2
-    end
-    return cx, cy, w, h
-end
+local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
 local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
     local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
@@ -123,14 +111,7 @@ function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weigh
     logger:info('Assigned ' .. #vertexIndices .. ' vertices to node ' .. nodeIndex .. ' (' .. mode .. ')')
 end
 
-local function rect(w, h, x, y)
-    return {
-        x - w / 2, y - h / 2,
-        x + w / 2, y - h / 2,
-        x + w / 2, y + h / 2,
-        x - w / 2, y + h / 2
-    }
-end
+local rect = shapes.rect
 
 function lib.doJointCreateUI(_x, _y, w, h)
     ui.panel(_x, _y, w, h, '∞ ' .. state.jointParams.jointType .. ' ∞', function()

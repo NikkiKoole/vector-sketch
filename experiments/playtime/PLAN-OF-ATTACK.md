@@ -316,14 +316,14 @@ Many generic helper functions are duplicated or stranded as locals inside domain
 
 | Function | Locations | Status |
 |---|---|---|
-| `rect(w, h, x, y)` | shapes.lua, fixtures.lua, playtime-ui.lua (**triplicate**) | **Open** |
-| `getCenterAndDimensions(body)` | playtime-ui.lua:39, character-manager.lua:455 (has TODO to move) | **Open** |
-| `randomHexColor()` | character-manager.lua:57, character-experiments.lua:7 | **Open** |
+| `rect(w, h, x, y)` | shapes.lua, fixtures.lua, playtime-ui.lua (**triplicate**) | **DONE** — exported from shapes.lua, copies replaced |
+| `getCenterAndDimensions(body)` | playtime-ui.lua:39, character-manager.lua:455 (has TODO to move) | **DONE** — added to math-utils, copies replaced |
+| `randomHexColor()` | character-manager.lua:57, character-experiments.lua:7 | **DONE** — moved to utils.lua, copies replaced |
 | `calculateDistance` | snap.lua:206 duplicates `math-utils.lib.calculateDistance` | **DONE** — replaced with `mathutils.calculateDistance` |
 | `lerp` | character-manager.lua:520 duplicates `math-utils.lib.lerp` (with clamp) | **DONE** — replaced with `mathutils.clampedLerp` |
-| `makeTransformedVertices` | character-manager.lua:482 duplicates `math-utils.scalePolygonPoints` | **Open** |
-| `tableConcat` | math-utils.lua:838 duplicates `utils.tableConcat` | **Open** — would add cross-module dependency |
-| `getRelativePath` | main.lua:457 near-duplicate of `utils.getPathDifference` | **Open** |
+| `makeTransformedVertices` | character-manager.lua:482 duplicates `math-utils.scalePolygonPoints` | **DONE** — replaced with `mathutils.scalePolygonPoints` |
+| `tableConcat` | math-utils.lua:838 duplicates `utils.tableConcat` | **Skipped** — would add cross-module dependency, only 1 internal use |
+| `getRelativePath` | main.lua:457 near-duplicate of `utils.getPathDifference` | **Skipped** — different edge case handling, only 1 call site |
 
 **Generic functions — newly added to math-utils.lua**:
 
@@ -332,6 +332,9 @@ Many generic helper functions are duplicated or stranded as locals inside domain
 | `lib.clamp(x, min, max)` | **DONE** — added to math-utils, replaces local in character-manager |
 | `lib.sign(value)` | **DONE** — added to math-utils, replaces local in character-manager |
 | `lib.clampedLerp(a, b, t)` | **DONE** — added to math-utils (lerp with t clamped to 0..1) |
+| `lib.getCenterAndDimensions(body)` | **DONE** — added to math-utils, replaces locals in playtime-ui + character-manager |
+| `lib.randomHexColor()` | **DONE** — added to utils.lua, replaces locals in character-manager + character-experiments |
+| `shapes.rect(w, h, x, y)` | **DONE** — exported from shapes.lua, replaces locals in fixtures + playtime-ui |
 
 **Generic functions still missing from any shared module**:
 
@@ -430,11 +433,12 @@ Phase 7 ─── Structural Improvements ─ 7f started
   │    ├── 7c. Mode handler table
   │    ├── 7d. DNA topology-as-data
   │    ├── 7e. Extract world-settings panel
-  │    └── 7f. Consolidate utility functions ─── in progress
-  │          ✓ clamp, sign, clampedLerp added to math-utils
-  │          ✓ character-manager: lerp, sign, clamp → mathutils
-  │          ✓ snap: calculateDistance → mathutils
-  │          - rect (×3), getCenterAndDimensions (×2), randomHexColor (×2): open
+  │    └── 7f. Consolidate utility functions ─── ✅ DONE
+  │          ✓ clamp, sign, clampedLerp, getCenterAndDimensions → math-utils
+  │          ✓ randomHexColor → utils
+  │          ✓ rect exported from shapes
+  │          ✓ 6 duplicates replaced across 8 files
+  │          ⏸ tableConcat, getRelativePath: skipped (not worth the dep/churn)
   ▼
 Phase 8 ─── Performance & Polish ──── not started
              caching, memory, UV fix

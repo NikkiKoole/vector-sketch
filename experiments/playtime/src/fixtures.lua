@@ -2,6 +2,7 @@
 
 
 local mathutils = require 'src.math-utils'
+local shapes = require 'src.shapes'
 local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
@@ -103,14 +104,7 @@ function lib.getCentroidOfFixture(body, fixture)
     return { mathutils.getCenterOfPoints({ fixture:getShape():getPoints() }) }
 end
 
-local function rect(w, h, x, y)
-    return {
-        x - w / 2, y - h / 2,
-        x + w / 2, y - h / 2,
-        x + w / 2, y + h / 2,
-        x - w / 2, y + h / 2
-    }
-end
+local rect = shapes.rect
 
 local function rect8(w, h, x, y)
     return {

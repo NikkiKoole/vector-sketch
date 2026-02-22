@@ -172,4 +172,12 @@ function lib.tablesEqualNumbers(t1, t2, tolerance)
     return true
 end
 
+function lib.randomHexColor()
+    local r = math.random(0, 255)
+    local g = math.random(0, 255)
+    local b = math.random(0, 255)
+    local a = 255 -- fully opaque
+    return string.format("%02X%02X%02X%02X", r, g, b, a)
+end
+
 return lib

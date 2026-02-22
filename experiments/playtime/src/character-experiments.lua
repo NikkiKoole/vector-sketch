@@ -4,14 +4,8 @@
 
 local lib = {}
 
-local function randomHexColor()
-    local r = math.random(0, 255)
-    local g = math.random(0, 255)
-    local b = math.random(0, 255)
-    local a = 255 -- fully opaque, or adjust if you want random alpha
-
-    return string.format("%02X%02X%02X%02X", r, g, b, a)
-end
+local utils = require 'src.utils'
+local randomHexColor = utils.randomHexColor
 
 function lib.handleKeyPress(key, humanoidInstance)
     if not humanoidInstance then return end
