@@ -122,9 +122,9 @@ Added `_test` seams to expose local functions for testing:
 
 **Global stubs needed for tests**: `snap`, `logger`, `registry` — documents the coupling Phase 3 must fix.
 
-### 2.3 Add save/load round-trip integration test — partially done
+### 2.3 Add save/load round-trip integration test — DONE
 
-`io_spec.lua` tests `gatherSaveData` (dim gating, fixture data, body types, camera). Full load→save→load→compare round-trip test not yet written — needs a test scene file.
+`io_spec.lua` tests `gatherSaveData` (dim gating, fixture data, body types, camera) plus a full round-trip test that loads **all 20 scene files**, builds a world, gathers save data, and compares bodies (count, IDs, positions, angles, types, dims, fixture counts), joints (count, IDs, types, body references), and camera state. Found and fixed a real crash bug (snap fixture at/to stale references) during development.
 
 ---
 
@@ -211,6 +211,7 @@ Add to `main.lua`: capture screenshot + write JSON companion file.
 | Clone OMP not marked dirty | io.lua (cloneSelection) | See detailed analysis below | **Deferred** — needs OMP image cache (Phase 8) |
 | Redundant reference angle | io.lua:930-932 | Removed unused `oldRef` and `newRef` + dead logger line | **DONE** |
 | Unused `swapBodies` param | joints.lua:162 | Removed from signature | **DONE** |
+| Snap at/to crash on save | io.lua:541 | Stale Box2D refs crash `gatherSaveData`; added pcall guard + type check | **DONE** — found by round-trip test |
 | `sharedFixtureData.sensor` | io.lua:499 | Find first non-userData fixture explicitly | **Open** — needs investigation |
 | endNode mismatch in DNA | character-manager.lua:323,339 | `endNode = 'lfoot'` → `'lhand'`/`'rhand'` | **Open** — needs visual verification |
 
@@ -400,14 +401,13 @@ Phase 1 ─── Fix Global Leaks ──────── ✅ DONE (87 → 19 
   │          ✓ 68 globals fixed across 12 files
   │          ✓ verified via luacheck + screenshots
   ▼
-Phase 2 ─── Tests ─────────────────── ✅ MOSTLY DONE
+Phase 2 ─── Tests ─────────────────── ✅ DONE
   │          ✓ busted-inside-LÖVE infrastructure (run-specs.lua)
   │          ✓ bridge POST /specs endpoint
-  │          ✓ 6 spec files, 263 tests (140 pure + 123 LÖVE integration)
+  │          ✓ 6 spec files, 140 pure + LÖVE integration tests
   │          ✓ _test seams on shapes.lua and io.lua
-  │          ✓ shapes, io, fixtures specs for refactor targets
+  │          ✓ save/load round-trip: all 20 scene files tested
   │          - logger singleton: deferred to Phase 3
-  │          - full save/load round-trip test: not yet
   ▼
 Phase 3 ─── Explicit Requires ─────── not started
   │          remove global module access (19 remaining)
@@ -417,9 +417,10 @@ Phase 4 ─── Observability Tools ───── partially done (bridge cov
   │          ✓ bridge: eval, console, errors, screenshots, profiling, specs
   │          - scene validator: not started
   ▼
-Phase 5 ─── Fix Known Bugs ────────── mostly done (5/8: 5 fixed, 1 deferred, 2 open)
+Phase 5 ─── Fix Known Bugs ────────── mostly done (6/9: 6 fixed, 1 deferred, 2 open)
   │          ✓ io.lua precedence, joints.lua gibberish, duplicate key=='u'
   │          ✓ reference angle (dead code removed), swapBodies param removed
+  │          ✓ snap at/to crash on save (found by round-trip test)
   │          ⏸ clone OMP dirty: deferred — needs OMP image cache (Phase 8)
   │          - sensor, endNode: need investigation
   ▼

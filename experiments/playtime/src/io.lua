@@ -537,9 +537,17 @@ function lib.gatherSaveData(world, camera)
                         local ud             = fixture:getUserData()
 
                         ud.extra.fixture     = 'fixture'
-                        -- todo cannot reproduce this one yet.. ?Error: src/io.lua:455: attempt to call method 'getUserData' (a nil value)
-                        ud.extra.at          = ud.extra.at and ud.extra.at:getUserData().thing.id
-                        ud.extra.to          = ud.extra.to and ud.extra.to:getUserData().thing.id
+                        -- NOTE: at/to were runtime fixture references from an older snap system.
+                        -- They may be stale (destroyed Box2D objects) or nil after load.
+                        -- Safely extract IDs if they're live objects, otherwise clear them.
+                        if ud.extra.at and type(ud.extra.at) ~= 'string' then
+                            local atok, atid = pcall(function() return ud.extra.at:getUserData().thing.id end)
+                            ud.extra.at = atok and atid or nil
+                        end
+                        if ud.extra.to and type(ud.extra.to) ~= 'string' then
+                            local otok, otid = pcall(function() return ud.extra.to:getUserData().thing.id end)
+                            ud.extra.to = otok and otid or nil
+                        end
                         fixtureData.userData = utils.deepCopy(ud)
                     else
                         local ud = fixture:getUserData()

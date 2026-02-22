@@ -322,3 +322,149 @@ describe("io.gatherSaveData (LÖVE integration)", function()
         assert.are.equal(2.5, data.camera.scale)
     end)
 end)
+
+-- ─── Save/Load Round-Trip Tests (all scene files) ───
+
+describe("save/load round-trip", function()
+    local json = require('vendor.dkjson')
+
+    -- Cam mock with getters and setters for the load path
+    local camState = { x = 0, y = 0, scale = 1 }
+    local cam = {
+        getTranslation = function() return camState.x, camState.y end,
+        getScale = function() return camState.scale end,
+        getRotation = function() return 0 end,
+        setTranslation = function(self, x, y) camState.x = x; camState.y = y end,
+        setScale = function(self, s) camState.scale = s end,
+    }
+
+    -- Find all scene files
+    local sceneFiles = {}
+    local items = love.filesystem.getDirectoryItems("scripts")
+    for _, item in ipairs(items) do
+        if item:match("%.playtime%.json$") then
+            table.insert(sceneFiles, "scripts/" .. item)
+        end
+    end
+
+    -- Helper: index bodies/joints by ID for comparison
+    local function indexById(list)
+        local map = {}
+        for _, item in ipairs(list) do
+            if item.id then map[item.id] = item end
+        end
+        return map
+    end
+
+    -- Helper: compare body data (positions, types, dims, fixtures count)
+    local function compareBodies(original, restored, file)
+        local origMap = indexById(original)
+        local restMap = indexById(restored)
+
+        -- Same number of bodies
+        assert.are.equal(#original, #restored,
+            file .. ": body count mismatch (original=" .. #original .. ", restored=" .. #restored .. ")")
+
+        for id, orig in pairs(origMap) do
+            local rest = restMap[id]
+            assert.is_not_nil(rest, file .. ": body " .. id .. " missing after round-trip")
+
+            -- Body type must match
+            assert.are.equal(orig.bodyType, rest.bodyType,
+                file .. ": body " .. id .. " type mismatch")
+
+            -- Shape type must match
+            assert.are.equal(orig.shapeType, rest.shapeType,
+                file .. ": body " .. id .. " shapeType mismatch")
+
+            -- Position (within rounding tolerance)
+            assert.is_near(orig.position[1], rest.position[1], 0.1,
+                file .. ": body " .. id .. " X position drift")
+            assert.is_near(orig.position[2], rest.position[2], 0.1,
+                file .. ": body " .. id .. " Y position drift")
+
+            -- Angle
+            assert.is_near(orig.angle, rest.angle, 0.001,
+                file .. ": body " .. id .. " angle drift")
+
+            -- Dims should survive
+            if orig.dims then
+                for prop, val in pairs(orig.dims) do
+                    assert.is_not_nil(rest.dims[prop],
+                        file .. ": body " .. id .. " lost dim." .. prop)
+                    assert.is_near(val, rest.dims[prop], 0.01,
+                        file .. ": body " .. id .. " dim." .. prop .. " changed")
+                end
+            end
+
+            -- Fixture count must match
+            assert.are.equal(#orig.fixtures, #rest.fixtures,
+                file .. ": body " .. id .. " fixture count mismatch (orig=" .. #orig.fixtures .. ", rest=" .. #rest.fixtures .. ")")
+        end
+    end
+
+    -- Helper: compare joint data (types, body references, key properties)
+    local function compareJoints(original, restored, file)
+        local origMap = indexById(original)
+        local restMap = indexById(restored)
+
+        assert.are.equal(#original, #restored,
+            file .. ": joint count mismatch (original=" .. #original .. ", restored=" .. #restored .. ")")
+
+        for id, orig in pairs(origMap) do
+            local rest = restMap[id]
+            assert.is_not_nil(rest, file .. ": joint " .. id .. " missing after round-trip")
+
+            assert.are.equal(orig.jointType, rest.jointType,
+                file .. ": joint " .. id .. " type mismatch")
+
+            assert.are.equal(orig.bodyA, rest.bodyA,
+                file .. ": joint " .. id .. " bodyA mismatch")
+            assert.are.equal(orig.bodyB, rest.bodyB,
+                file .. ": joint " .. id .. " bodyB mismatch")
+        end
+    end
+
+    for _, sceneFile in ipairs(sceneFiles) do
+        it("round-trips " .. sceneFile, function()
+            -- 1. Read the raw JSON
+            local rawJson = love.filesystem.read(sceneFile)
+            assert.is_not_nil(rawJson, "Could not read " .. sceneFile)
+
+            local originalData = json.decode(rawJson)
+            assert.is_not_nil(originalData, "Could not parse " .. sceneFile)
+            if originalData.version ~= "1.0" then
+                pending("skipping " .. sceneFile .. " (version " .. tostring(originalData.version) .. ")")
+                return
+            end
+
+            -- 2. Load into a fresh world
+            local world = love.physics.newWorld(0, 9.81 * 100, true)
+            registry.reset()
+            camState = { x = 0, y = 0, scale = 1 }
+
+            -- Build the world from original data
+            eio.buildWorld(originalData, world, cam)
+
+            -- 3. Gather save data from the live world
+            local restoredData = eio.gatherSaveData(world, cam)
+
+            -- 4. Compare
+            compareBodies(originalData.bodies or {}, restoredData.bodies or {}, sceneFile)
+            compareJoints(originalData.joints or {}, restoredData.joints or {}, sceneFile)
+
+            -- Camera should survive
+            if originalData.camera then
+                assert.is_near(originalData.camera.x, restoredData.camera.x, 0.1,
+                    sceneFile .. ": camera X drift")
+                assert.is_near(originalData.camera.y, restoredData.camera.y, 0.1,
+                    sceneFile .. ": camera Y drift")
+                assert.is_near(originalData.camera.scale, restoredData.camera.scale, 0.01,
+                    sceneFile .. ": camera scale drift")
+            end
+
+            -- Cleanup
+            world:destroy()
+        end)
+    end
+end)
