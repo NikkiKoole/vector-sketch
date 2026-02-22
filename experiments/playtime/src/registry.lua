@@ -1,6 +1,12 @@
 -- registry.lua
+local logger = require 'src.logger'
 local utils = require 'src.utils'
---local snap = require 'src.snap'
+-- snap is required lazily to avoid circular dependency (snap requires registry)
+local snap
+local function getSnap()
+    if not snap then snap = require 'src.snap' end
+    return snap
+end
 local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint
@@ -52,7 +58,7 @@ end
 -- sfixtures
 function registry.registerSFixture(id, sfix)
     registry.sfixtures[id] = sfix
-    snap.rebuildSnapFixtures(registry.sfixtures)
+    getSnap().rebuildSnapFixtures(registry.sfixtures)
 end
 
 function registry.unregisterSFixture(id)
@@ -60,7 +66,7 @@ function registry.unregisterSFixture(id)
         logger:info('no s fixture to unregister here')
     end
     registry.sfixtures[id] = nil
-    snap.rebuildSnapFixtures(registry.sfixtures)
+    getSnap().rebuildSnapFixtures(registry.sfixtures)
 end
 
 function registry.getSFixtureByID(id)
@@ -76,7 +82,7 @@ function registry.reset()
     registry.bodies = {}
     registry.joints = {}
     registry.sfixtures = {}
-    snap.rebuildSnapFixtures(registry.sfixtures)
+    getSnap().rebuildSnapFixtures(registry.sfixtures)
 end
 
 return registry

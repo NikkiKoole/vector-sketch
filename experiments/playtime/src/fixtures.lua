@@ -1,6 +1,8 @@
 --fixtures.lua
 
 
+local logger = require 'src.logger'
+local inspect = require 'vendor.inspect'
 local mathutils = require 'src.math-utils'
 local shapes = require 'src.shapes'
 local uuid = require 'src.uuid'

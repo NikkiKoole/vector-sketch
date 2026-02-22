@@ -8,7 +8,7 @@ local random = love.math.random
 
 local lib = {}
 require 'string'
-require 'src.registry'
+local registry = require 'src.registry'
 
 function lib.uuid128()
     local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'

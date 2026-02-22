@@ -1,4 +1,5 @@
 --utils.lua
+local logger = require 'src.logger'
 
 local lib = {}
 -- Utility function to concatenate two tables.

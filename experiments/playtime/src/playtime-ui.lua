@@ -1,4 +1,5 @@
 local lib = {}
+local logger = require 'src.logger'
 
 local eio = require 'src.io'
 local registry = require 'src.registry'
@@ -22,6 +23,7 @@ local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
 local fileBrowser = require 'src.file-browser'
 local behaviors = require 'src.behaviors'
+local ProFi = require 'vendor.ProFi'
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160

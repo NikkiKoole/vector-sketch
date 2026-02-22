@@ -1,4 +1,5 @@
 -- this thing needs to be able to show files visually, lets start with just showing the filetype im after given a subdir.
+local logger = require 'src.logger'
 
 local lib = {}
 

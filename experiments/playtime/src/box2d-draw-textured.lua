@@ -3,6 +3,7 @@ TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedT
 ]] --
 
 local lib = {}
+local registry = require 'src.registry'
 local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 local polyline = require 'src.polyline'

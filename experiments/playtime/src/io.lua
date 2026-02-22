@@ -1,5 +1,6 @@
 --io.lua
 local lib = {}
+local logger = require 'src.logger'
 
 local inspect = require 'vendor.inspect'
 local json = require 'vendor.dkjson'

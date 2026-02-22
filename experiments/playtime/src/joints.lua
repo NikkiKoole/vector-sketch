@@ -1,6 +1,7 @@
 --joints.lua
 
 local lib = {}
+local logger = require 'src.logger'
 local uuid = require 'src.uuid'
 local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'

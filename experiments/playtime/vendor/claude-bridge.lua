@@ -1349,7 +1349,7 @@ routes["POST /collisions/start"] = function(req)
     bridge.collision_logging = true
     bridge.collisions = {}
     -- Enable physics callbacks if not already set
-    state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    state.physicsWorld:setCallbacks(unpack(state.physicsCallbacks))
     return ok_response({ logging = true })
 end
 

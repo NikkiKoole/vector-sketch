@@ -1,5 +1,5 @@
 local lib = {}
-
+local registry = require 'src.registry'
 
 local function rotateBodyTowardsSimple(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()

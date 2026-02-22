@@ -54,13 +54,13 @@ end
 lurker.errorupdate = function(dt)
     bridge.update()
 end
-logger = require 'src.logger'
-inspect = require 'vendor.inspect'
-PROF_CAPTURE = false
-prof = require 'vendor.jprof'
+local logger = require 'src.logger'
+local inspect = require 'vendor.inspect'
+local PROF_CAPTURE = false
+local prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
 jit.off()
-ProFi = require 'vendor.ProFi'
+local ProFi = require 'vendor.ProFi'
 
 local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
@@ -84,11 +84,10 @@ local camera = require 'src.camera'
 local cam = camera.getInstance()
 local uuid = require 'src.uuid'
 
-snap = require 'src.snap'
+local snap = require 'src.snap'
 local characterExperiments = require 'src.character-experiments'
-keep_angle = require 'src.keep-angle'
-registry = require 'src.registry'
-benchmarks = require 'src.benchmarks'
+local keep_angle = require 'src.keep-angle'
+local registry = require 'src.registry'
 
 
 local mathUtils = require 'src.math-utils'
@@ -101,7 +100,7 @@ local CharacterManager = require 'src.character-manager'
 
 
 
-function waitForEvent()
+local function waitForEvent()
     local a
     repeat
         a = love.event.wait()
@@ -236,30 +235,33 @@ function love.load(args)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2700, 300)
 end
 
-function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+local function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
     bridge.logCollision('beginContact', fix1, fix2, contact)
     script.call('beginContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
-function endContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+local function endContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
     bridge.logCollision('endContact', fix1, fix2, contact)
     script.call('endContact', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
-function preSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+local function preSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
     script.call('preSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
-function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
+local function postSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
     bridge.logCollision('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1)
     script.call('postSolve', fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
-beginframetime = love.timer.getTime()
+-- Expose callbacks on state so the bridge can access them
+state.physicsCallbacks = { beginContact, endContact, preSolve, postSolve }
+
+local beginframetime = love.timer.getTime()
 
 function love.update(dt)
     bridge.update()
@@ -334,7 +336,7 @@ end
 
 function love.quit()
     -- this takes annoyingly long
-    time = love.timer.getTime()
+    local time = love.timer.getTime()
     prof.write("prof.mpack")
     print('writing took', love.timer.getTime() - time, 'seconds')
 end

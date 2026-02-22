@@ -1,5 +1,6 @@
 -- shapes.lua
 
+local logger = require 'src.logger'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
 local inspect = require 'vendor.inspect'

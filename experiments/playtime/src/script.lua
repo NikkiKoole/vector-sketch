@@ -1,5 +1,6 @@
 --script.lua
 local script = {}
+local logger = require 'src.logger'
 local inspect = require 'vendor.inspect'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
@@ -13,7 +14,7 @@ local registry = require 'src.registry'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
-function getObjectsByLabel(label)
+local function getObjectsByLabel(label)
     local objects = {}
     for _, body in pairs(state.physicsWorld:getBodies()) do
         local userData = body:getUserData()
@@ -24,7 +25,7 @@ function getObjectsByLabel(label)
     return objects
 end
 
-function mouseWorldPos()
+local function mouseWorldPos()
     local mx, my = love.mouse:getPosition()
     local cx, cy = cam:getWorldCoordinates(mx, my)
     return cx, cy

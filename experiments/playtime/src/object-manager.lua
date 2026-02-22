@@ -1,5 +1,6 @@
 -- object-manager.lua
 local lib = {}
+local logger = require 'src.logger'
 local shapes = require 'src.shapes'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'

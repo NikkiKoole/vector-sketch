@@ -1,5 +1,7 @@
 -- here we just have snall functions that render thigns for the editor (not ui but active state, selction boxes that sot of thing)
 --
+local logger = require 'src.logger'
+local registry = require 'src.registry'
 local state = require 'src.state'
 local fixtures = require 'src.fixtures'
 local box2dDraw = require 'src.box2d-draw'
@@ -221,7 +223,6 @@ function lib.renderActiveEditorThings()
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and ud.subtype == 'meshusert' and ud.label then
             -- Find the resource fixture with matching label
-            local registry = require 'src.registry'
             local mappert = nil
             for k, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then

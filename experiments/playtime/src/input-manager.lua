@@ -1,4 +1,6 @@
 local lib = {}
+local logger = require 'src.logger'
+local registry = require 'src.registry'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local box2dPointerJoints = require 'src.box2d-pointerjoints'

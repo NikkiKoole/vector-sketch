@@ -1,4 +1,5 @@
 local lib = {}
+local logger = require 'src.logger'
 local state = require 'src.state'
 local eio = require 'src.io'
 local script = require 'src.script'

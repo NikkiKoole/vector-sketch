@@ -5,17 +5,6 @@
 
 if not love then return end
 
--- registry.reset() calls global 'snap.rebuildSnapFixtures' — provide stubs in _G
-if not rawget(_G, 'snap') then
-    rawset(_G, 'snap', { rebuildSnapFixtures = function() end, resetList = function() end })
-end
-if not rawget(_G, 'logger') then
-    rawset(_G, 'logger', { info = function() end, error = function() end, debug = function() end, trace = function() end })
-end
--- uuid.lua uses global 'registry' for collision checking
-if not rawget(_G, 'registry') then
-    rawset(_G, 'registry', require('src.registry'))
-end
 
 local registry = require('src.registry')
 local fixtures = require('src.fixtures')
