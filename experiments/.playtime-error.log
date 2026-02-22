@@ -1,0 +1,24 @@
+main.lua:548: module 'src.game-loop-BROKEN' not found:
+	no field package.preload['src.game-loop-BROKEN']
+	no 'src/game-loop-BROKEN' in LOVE game directories.
+	no file 'src/game-loop-BROKEN' in LOVE paths.
+	no file './src/game-loop-BROKEN.lua'
+	no file '/usr/local/share/luajit-2.1.0-beta3/src/game-loop-BROKEN.lua'
+	no file '/usr/local/share/lua/5.1/src/game-loop-BROKEN.lua'
+	no file '/usr/local/share/lua/5.1/src/game-loop-BROKEN/init.lua'
+	no file './src/game-loop-BROKEN.so'
+	no file '/usr/local/lib/lua/5.1/src/game-loop-BROKEN.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file './src.so'
+	no file '/usr/local/lib/lua/5.1/src.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+stack traceback:
+	[love "boot.lua"]:345: in function <[love "boot.lua"]:341>
+	[C]: in function 'require'
+	main.lua:548: in main chunk
+	[C]: in function 'require'
+	[love "boot.lua"]:316: in function <[love "boot.lua"]:126>
+	[C]: in function 'xpcall'
+	[love "boot.lua"]:355: in function <[love "boot.lua"]:348>
+	[C]: in function 'xpcall'
+	[love "boot.lua"]:370: in function <[love "boot.lua"]:337>
