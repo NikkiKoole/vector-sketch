@@ -480,7 +480,7 @@ function lib.gatherSaveData(world, camera)
                 if #bodyFixtures >= 1 then
                     -- local fixtures = fb:getFixtures()
                     -- local ff = fixtures[1]
-                    local first = bodyFixtures[1]
+                    local first = nil
 
                     for k = 1, #bodyFixtures do
                         local fixture = bodyFixtures[k]
@@ -490,13 +490,17 @@ function lib.gatherSaveData(world, camera)
                         end
                     end
 
+                    if not first then
+                        logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), using first fixture as fallback', ud.thing.id)
+                        first = bodyFixtures[1]
+                    end
 
                     bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
                     bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
                     bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
                     bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
 
-                    bodyData.sharedFixtureData.sensor = first:isSensor() -- this isnt always working!!!!!!!!   need to find a fixture which is def. not a userdata one
+                    bodyData.sharedFixtureData.sensor = first:isSensor()
 
                     -- todo this shape type name isnt really used anymore...
                     -- can we just delete it ?

@@ -314,7 +314,7 @@ local dna = {
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
-                        endNode = 'lfoot'
+                        endNode = 'lhand'
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -330,7 +330,7 @@ local dna = {
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
-                        endNode = 'lfoot'
+                        endNode = 'rhand'
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },

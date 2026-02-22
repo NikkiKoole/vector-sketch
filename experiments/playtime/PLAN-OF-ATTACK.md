@@ -212,8 +212,8 @@ Add to `main.lua`: capture screenshot + write JSON companion file.
 | Redundant reference angle | io.lua:930-932 | Removed unused `oldRef` and `newRef` + dead logger line | **DONE** |
 | Unused `swapBodies` param | joints.lua:162 | Removed from signature | **DONE** |
 | Snap at/to crash on save | io.lua:541 | Stale Box2D refs crash `gatherSaveData`; added pcall guard + type check | **DONE** — found by round-trip test |
-| `sharedFixtureData.sensor` | io.lua:499 | Find first non-userData fixture explicitly | **Open** — needs investigation |
-| endNode mismatch in DNA | character-manager.lua:323,339 | `endNode = 'lfoot'` → `'lhand'`/`'rhand'` | **Open** — needs visual verification |
+| `sharedFixtureData.sensor` | io.lua:499 | Was already fixed (loop finds non-userData fixture); cleaned up stale comment, added guard + logger warning for edge case | **DONE** |
+| endNode mismatch in DNA | character-manager.lua:317,333 | `endNode = 'lfoot'` → `'lhand'`/`'rhand'` on arm connected-hair; no runtime effect (joint chains are hardcoded) but data was misleading | **DONE** |
 
 ### Clone OMP: Why This Is Deferred
 
@@ -417,12 +417,13 @@ Phase 4 ─── Observability Tools ───── partially done (bridge cov
   │          ✓ bridge: eval, console, errors, screenshots, profiling, specs
   │          - scene validator: not started
   ▼
-Phase 5 ─── Fix Known Bugs ────────── mostly done (6/9: 6 fixed, 1 deferred, 2 open)
+Phase 5 ─── Fix Known Bugs ────────── done (8/9 fixed, 1 deferred)
   │          ✓ io.lua precedence, joints.lua gibberish, duplicate key=='u'
   │          ✓ reference angle (dead code removed), swapBodies param removed
   │          ✓ snap at/to crash on save (found by round-trip test)
   │          ⏸ clone OMP dirty: deferred — needs OMP image cache (Phase 8)
-  │          - sensor, endNode: need investigation
+  │          ✓ sensor: was already fixed, added guard + logging
+  │          ✓ endNode: fixed misleading DNA values on arm connected-hair
   ▼
 Phase 6 ─── Extract from main.lua ─── partially done (6.1 done)
   │          ✓ character experiments extracted
