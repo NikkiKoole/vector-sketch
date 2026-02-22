@@ -3,10 +3,12 @@
 ## Running the app
 
 ```bash
-./playtime.sh start    # start (checks if already running, handles port conflicts)
+./playtime.sh start    # start with --bridge (skips start screen), captures errors
 ./playtime.sh stop     # graceful quit via bridge, force kill as fallback
 ./playtime.sh restart  # stop + start
 ./playtime.sh status   # check if running
+./playtime.sh log      # show stdout/stderr log
+./playtime.sh errors   # show startup errors + bridge /errors
 ```
 
 Love executable: `/Applications/love114.app/Contents/MacOS/love`
@@ -34,7 +36,8 @@ HTTP JSON API for interacting with the running game. All endpoints return `{ok, 
 ### Important
 - Always quote URLs with `?` in zsh: `curl 'localhost:8001/console?n=5'`
 - Must clear Box2D callbacks before destroying bodies to avoid SEGFAULT
-- App must be past the start screen click before bridge responds
+- `playtime.sh start` passes `--bridge` which skips the start screen automatically
+- macOS buffers stderr from .app bundles until process exit; `playtime.sh` handles this by killing the process to flush errors on startup failure
 
 ## Hot Reload
 
@@ -89,8 +92,9 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks
 
 ## Architecture
 
-- `main.lua` — entry point, game loop, keybindings
+- `main.lua` — entry point, keybindings, UI callbacks
 - `src/` — core modules (playtime-ui, object-manager, io, joints, box2d-draw-textured, etc.)
+- `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, loveblobs, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
 - `textures/` — character textures (~290 files, OMP system: outline + mask + pattern)
@@ -103,13 +107,19 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks
 - `src/joints.lua` — joint creation/recreation
 - `src/registry.lua` — central registry for bodies, joints, sfixtures
 - `src/character-manager.lua` — character DNA system, body part assembly
+- `src/character-experiments.lua` — character experiment keybindings (extracted from main.lua)
+- `src/game-loop.lua` — fixed-timestep love.run() with panic detection (extracted from main.lua)
 - `src/snap.lua` — proximity-based snap joints
 - `src/state.lua` — shared app state
+- `src/math-utils.lua` — shared math utilities (clamp, sign, lerp, distance, etc.)
+- `src/utils.lua` — general utilities (deepCopy, round, randomHexColor, etc.)
+- `src/shapes.lua` — shape generation (rect, capsule, polygon, etc.)
 
 ### No classes/OOP — modules return tables of functions.
 
 ## Lua Gotchas
 
 - Closures capture upvalues by reference — `local x, y` must be declared before any closure that uses them
-- When making functions `local`, check for forward references (function used before its definition)
+- When making functions `local`, check for forward references (function used before its definition). Lurker hot-reload re-executes files top-to-bottom, so a local function must be defined before first use. Use `claudetools/find-forward-refs.lua` to scan for these.
 - `registry.getBodyByID()` — capital ID, not Id
+- `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser

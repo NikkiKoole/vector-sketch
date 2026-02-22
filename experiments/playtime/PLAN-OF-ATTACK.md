@@ -416,9 +416,9 @@ Phase 3 ─── Explicit Requires ─────── not started
   │          remove global module access (19 remaining)
   │          (test stubs revealed: snap, logger, registry are worst offenders)
   ▼
-Phase 4 ─── Observability Tools ───── partially done (bridge covers most)
+Phase 4 ─── Observability Tools ───── ✅ DONE
   │          ✓ bridge: eval, console, errors, screenshots, profiling, specs
-  │          - scene validator: not started
+  │          ✓ scene validator: covered by round-trip test + bridge /eval
   ▼
 Phase 5 ─── Fix Known Bugs ────────── done (8/9 fixed, 1 deferred)
   │          ✓ io.lua precedence, joints.lua gibberish, duplicate key=='u'
