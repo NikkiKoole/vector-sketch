@@ -53,7 +53,7 @@ All items completed:
 
 **Result**: All 98 busted tests pass in 0.1 seconds. The mini-test suite (17 tests) also passes. Both frameworks are healthy. Busted covers math-utils and utils comprehensively (~6x more tests than mini-test).
 
-**Decision**: Keep both. Busted is the stronger framework for new tests.
+**Decision**: Busted is the primary framework. Installed for Lua 5.1 (`luarocks --lua-version 5.1 install busted`) so it runs inside LÖVE too. Three ways to run: `busted spec/` (pure, 140 tests), `love . --specs` (full, 263 tests), `POST /specs` (via bridge).
 
 ### 0.4 Set up luacheck — DONE
 
@@ -92,69 +92,39 @@ Key tricky fixes:
 
 ---
 
-## Phase 2: Tests & Logger Singleton (1-2 sessions, zero behavioral risk)
+## Phase 2: Tests — MOSTLY DONE
 
-### 2.1 Make logger a singleton
+Done using busted (not mini-test) with LÖVE integration. Went beyond the original plan.
 
-Change `logger.lua` to return an instance instead of the class:
+### 2.1 Make logger a singleton — not started
 
-```lua
--- Bottom of logger.lua, change:
-return Logger
--- To:
-local instance = Logger:new()
-return instance
-```
+Still a global. Deferred to Phase 3 (Explicit Requires).
 
-Then in every file that uses `logger` as a global, add:
-```lua
-local logger = require 'src.logger'
-```
+### 2.2 Add unit tests for pure modules — DONE (exceeded plan)
 
-And remove `logger = Logger:new()` from main.lua.
+Built busted-inside-LÖVE infrastructure (`run-specs.lua`, `love . --specs`, bridge `POST /specs`).
 
-**Why now**: This unblocks adding `require` statements everywhere (Phase 3), and is needed before any module can properly require its own logger.
-**Risk**: Low — the logger API doesn't change, just how you get the instance.
-**Verification**: `love .` — check that log output still appears.
-**Time**: 30 minutes.
+Added `_test` seams to expose local functions for testing:
+- `shapes.lua` — `shapes._test` exposes all geometry builders
+- `io.lua` — `io._test` exposes `needsDimProperty`, `remapAndRestoreInfluences`
 
-### 2.2 Add unit tests for pure modules
+| Spec file | Tests | Coverage |
+|-----------|-------|----------|
+| `math-utils_spec` | 56 | Geometry, paths, polygons (pre-existing) |
+| `utils_spec` | 42 | deepCopy, sanitizeString, etc. (pre-existing) |
+| `shapes_spec` | 63 | All geometry builders + createShape with real Box2D |
+| `physics_spec` | 18 | Real physics: world, bodies, fixtures, joints, simulation |
+| `io_spec` | 49 | needsDimProperty, influence remapping, gatherSaveData |
+| `fixtures_spec` | 23 | Ordering invariant, all 9 sfixture subtypes, destroy |
+| **Total** | **251** | standalone: 140 / LÖVE: 263 (+ 1 pending) |
 
-Create test files following the existing `tests/unit/test_math_utils.lua` pattern:
+**Notable finding**: Fixtures spec confirmed Box2D reorders fixtures — the ordering invariant from DEEPER-ISSUES.md is a real risk.
 
-| File | What to test | Est. tests |
-|------|-------------|-----------|
-| `tests/unit/test_utils.lua` | `deepCopy`, `shallowCopy`, `sanitizeString`, `round_to_decimals`, `map`, `tableConcat`, `findByField` | ~20 |
-| `tests/unit/test_shapes.lua` | `makePolygonVertices`, `capsuleXY`, `torso`, `approximateCircle`, `ribbon` | ~15 |
-| `tests/unit/test_uuid.lua` | Format, uniqueness, base62 encoding | ~5 |
+**Global stubs needed for tests**: `snap`, `logger`, `registry` — documents the coupling Phase 3 must fix.
 
-**Why now**: These tests protect the pure functions we'll rely on in every later phase. If a refactor accidentally changes how `deepCopy` handles cycles or how `capsuleXY` generates vertices, we catch it immediately.
-**Risk**: Zero — only adding files, not changing existing code.
-**Verification**: `lua tests/run.lua` — all tests pass.
-**Time**: 1-2 hours.
+### 2.3 Add save/load round-trip integration test — partially done
 
-### 2.3 Add save/load round-trip integration test
-
-```lua
--- tests/integration/test_io_roundtrip.lua
--- For each test scene:
---   1. Load scene
---   2. gatherSaveData → table1
---   3. Save to temp file
---   4. Load temp file
---   5. gatherSaveData → table2
---   6. Deep-compare table1 vs table2
---   7. Report differences
-```
-
-This is the single highest-value integration test. It will immediately tell us:
-- Whether the known vertices-after-load bug is real
-- Whether `sharedFixtureData.sensor` survives round-trip
-- Whether any fixture extra fields are lost
-
-**Risk**: Zero — read-only test, doesn't modify scenes.
-**Verification**: `love . --test` — see which scenes pass/fail round-trip.
-**Time**: 1-2 hours.
+`io_spec.lua` tests `gatherSaveData` (dim gating, fixture data, body types, camera). Full load→save→load→compare round-trip test not yet written — needs a test scene file.
 
 ---
 
@@ -351,14 +321,21 @@ Phase 1 ─── Fix Global Leaks ──────── ✅ DONE (87 → 19 
   │          ✓ 68 globals fixed across 12 files
   │          ✓ verified via luacheck + screenshots
   ▼
-Phase 2 ─── Tests + Logger ────────── not started
-  │          unit tests, logger singleton, round-trip test
+Phase 2 ─── Tests ─────────────────── ✅ MOSTLY DONE
+  │          ✓ busted-inside-LÖVE infrastructure (run-specs.lua)
+  │          ✓ bridge POST /specs endpoint
+  │          ✓ 6 spec files, 263 tests (140 pure + 123 LÖVE integration)
+  │          ✓ _test seams on shapes.lua and io.lua
+  │          ✓ shapes, io, fixtures specs for refactor targets
+  │          - logger singleton: deferred to Phase 3
+  │          - full save/load round-trip test: not yet
   ▼
 Phase 3 ─── Explicit Requires ─────── not started
   │          remove global module access (19 remaining)
+  │          (test stubs revealed: snap, logger, registry are worst offenders)
   ▼
 Phase 4 ─── Observability Tools ───── partially done (bridge covers most)
-  │          ✓ bridge: eval, console, errors, screenshots, profiling
+  │          ✓ bridge: eval, console, errors, screenshots, profiling, specs
   │          - scene validator: not started
   ▼
 Phase 5 ─── Fix Known Bugs ────────── partially done (3/8 fixed)

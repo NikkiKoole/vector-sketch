@@ -296,23 +296,34 @@ Partially integrated, disabled at the UI level. Unknown if it still works end-to
 
 ---
 
-## 7. Two Test Frameworks
+## 7. Test Infrastructure — RESOLVED
 
-### tests/ (mini-test.lua)
+### Busted (primary — `spec/`)
 
-The active test system. Run with `lua tests/run.lua`. Has 17 unit tests for math-utils and 5 integration tests.
+Busted is now the primary test framework, installed for Lua 5.1 to run inside LÖVE.
 
-### spec/ (busted-style)
+| Spec file | Tests | Coverage |
+|-----------|-------|----------|
+| `math-utils_spec` | 56 | Geometry, paths, polygons |
+| `utils_spec` | 42 | deepCopy, sanitizeString, etc. |
+| `shapes_spec` | 63 | All geometry builders + createShape with real Box2D |
+| `physics_spec` | 18 | Real physics: world, bodies, fixtures, joints, simulation |
+| `io_spec` | 49 | needsDimProperty, influence remapping, gatherSaveData |
+| `fixtures_spec` | 23 | Ordering invariant, all 9 sfixture subtypes |
+| **Total** | **251** | |
 
-Two files exist: `spec/math-utils_spec.lua` (23KB) and `spec/utils_spec.lua` (15KB). These use `describe`/`it`/`assert` syntax compatible with the [busted](https://olivinelabs.com/busted/) test framework.
+Three ways to run:
+- `busted spec/` — pure unit specs only (140 tests, no LÖVE needed)
+- `love . --specs` — full suite including LÖVE integration (263 tests)
+- `curl -X POST localhost:8001/specs` — via bridge while app is running
 
-These are **much more comprehensive** than the tests/ equivalents:
-- `math-utils_spec.lua` — 23KB of tests vs the 4KB in tests/unit/
-- `utils_spec.lua` — 15KB testing deepCopy, shallowCopy, sanitizeString, etc.
+LÖVE-dependent specs are guarded with `if not love then return end`.
 
-**These might be the better test suite** — but they require busted to be installed (`luarocks install busted`) and aren't mentioned in any documentation. They may have been generated during an earlier AI session.
+Test seams (`_test` tables) expose local functions on `shapes.lua` and `io.lua`.
 
-To run: `cd experiments/playtime && busted spec/`
+### tests/ (mini-test.lua) — legacy
+
+Still works (`lua tests/run.lua`, 17 tests). Not used for new tests.
 
 ---
 
