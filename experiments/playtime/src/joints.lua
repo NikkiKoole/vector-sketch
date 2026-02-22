@@ -159,7 +159,7 @@ function lib.extractJoints(body)
     return jointData
 end
 
-function lib.recreateJoint(joint, newSettings, swapBodies)
+function lib.recreateJoint(joint, newSettings)
     if joint:isDestroyed() then
         logger:error("The joint is already destroyed.")
         return nil

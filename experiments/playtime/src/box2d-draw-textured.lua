@@ -102,6 +102,57 @@ local function _ensureVertsBuf(mesh)
     return buf
 end
 
+-- todo segments need to be parameterized
+local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
+    -- this assumes an strip that is oriented vertically
+    local w, h = image:getDimensions()
+    w = w * (optionalWidthMultiplier or 1)
+
+    local vertices = {}
+    local segments = 32
+    local segMinus1 = segments - 1
+    local hPart = h / (segMinus1)
+    local hv = 1 / (segMinus1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+
+    for i = 1, segments do
+        vertices[index + 1] = { -w * .5, runningHP, 0, runningHV }
+        vertices[index + 2] = { w * .5, runningHP, 1, runningHV }
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
+    end
+
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+
+    return mesh
+end
+
+local function resolveIndex(index, length)
+    return (index < 0) and ((length + index) % length) or (index % length)
+end
+
+local function getIndices(length, startIdx, endIdx, allowFullLoop)
+    local start = resolveIndex(startIdx, length)
+    local ending = resolveIndex(endIdx, length)
+    local result = {}
+
+    local i = start
+    repeat
+        table.insert(result, i)
+        i = (i + 1) % length
+    until i == ending and (not allowFullLoop or i == start)
+
+    if i == ending then
+        table.insert(result, i)
+    end
+
+    return result
+end
+
 local _stripCache = setmetatable({}, { __mode = "k" }) -- image -> table
 local function getStrip(image, wmul)
     wmul = wmul or 1
@@ -642,34 +693,6 @@ local function meshGetVertex(mesh, j)
     return x, y, u, v
 end
 
--- todo segments need to be parameterized
-local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
-    -- this assumes an strip that is oriented vertically
-    local w, h = image:getDimensions()
-    w = w * (optionalWidthMultiplier or 1)
-
-    local vertices = {}
-    local segments = 32
-    local segMinus1 = segments - 1
-    local hPart = h / (segMinus1)
-    local hv = 1 / (segMinus1)
-    local runningHV = 0
-    local runningHP = 0
-    local index = 0
-
-    for i = 1, segments do
-        vertices[index + 1] = { -w * .5, runningHP, 0, runningHV }
-        vertices[index + 2] = { w * .5, runningHP, 1, runningHV }
-        runningHV = runningHV + hv
-        runningHP = runningHP + hPart
-        index = index + 2
-    end
-
-    local mesh = love.graphics.newMesh(vertices, "strip")
-    mesh:setTexture(image)
-
-    return mesh
-end
 
 -- Batched, no mesh:getVertex, 1x mesh:setVertices per call
 local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
@@ -1699,28 +1722,6 @@ function lib.drawTexturedWorld(world)
     --  end)
     --love.graphics.setShader()
     --love.graphics.setDepthMode()
-end
-
-local function resolveIndex(index, length)
-    return (index < 0) and ((length + index) % length) or (index % length)
-end
-
-local function getIndices(length, startIdx, endIdx, allowFullLoop)
-    local start = resolveIndex(startIdx, length)
-    local ending = resolveIndex(endIdx, length)
-    local result = {}
-
-    local i = start
-    repeat
-        table.insert(result, i)
-        i = (i + 1) % length
-    until i == ending and (not allowFullLoop or i == start)
-
-    if i == ending then
-        table.insert(result, i)
-    end
-
-    return result
 end
 
 return lib

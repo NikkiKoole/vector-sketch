@@ -203,11 +203,7 @@ function lib.rebuildSnapFixtures(sfix)
     --print('we now have ', #snapFixtures, 'snapfixtures')
 end
 
-local function calculateDistance(x1, y1, x2, y2)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    return math.sqrt(dx * dx + dy * dy)
-end
+local calculateDistance = mathutils.calculateDistance
 
 function lib.onSceneLoaded()
     --print('should build snapjoints array', #mySnapJoints)

@@ -208,11 +208,41 @@ Add to `main.lua`: capture screenshot + write JSON companion file.
 | `not doneJoints[ud.id] == true` | io.lua:884 | → `if not doneJoints[ud.id] then` | **DONE** |
 | Debug print gibberish | joints.lua:104 | → `logger:error(...)` | **DONE** |
 | Duplicate key == 'u' handler | main.lua:722,738 | Merged into single block | **DONE** |
-| Clone OMP not marked dirty | io.lua (cloneSelection) | Set `ud.extra.dirty = true` after clone | **Open** |
-| Redundant reference angle | io.lua:932 | `local newRef = newJoint:getReferenceAngle()` | **Open** |
-| Unused `swapBodies` param | joints.lua:162 | Remove from signature | **Open** |
+| Clone OMP not marked dirty | io.lua (cloneSelection) | See detailed analysis below | **Deferred** — needs OMP image cache (Phase 8) |
+| Redundant reference angle | io.lua:930-932 | Removed unused `oldRef` and `newRef` + dead logger line | **DONE** |
+| Unused `swapBodies` param | joints.lua:162 | Removed from signature | **DONE** |
 | `sharedFixtureData.sensor` | io.lua:499 | Find first non-userData fixture explicitly | **Open** — needs investigation |
 | endNode mismatch in DNA | character-manager.lua:323,339 | `endNode = 'lfoot'` → `'lhand'`/`'rhand'` | **Open** — needs visual verification |
+
+### Clone OMP: Why This Is Deferred
+
+**The bug**: When cloning bodies via `io.cloneSelection()`, the cloned sfixtures don't get the original's `extra` data (OMP settings, texture URLs, patches, etc.). The clone appears untextured.
+
+**The naive fix** — deep-copy `extra` and set `dirty = true` — is dangerous:
+
+**GPU memory cost of OMP images** (measured via bridge on a single humanoid):
+- 1 humanoid = **13 composited OMP canvases** (8 texfixtures + 5 connected-textures)
+- Total GPU memory per character: **~6.4 MB** (canvases range from 343 KB to 741 KB each)
+- Each OMP image is created by `makeCombinedImages()` in `box2d-draw-textured.lua`: it renders outline + mask + pattern + optional patches into an ImageData via `makeTexturedCanvas()`, then converts to a `love.graphics.newImage()`
+- **40 cloned characters × 6.4 MB = ~255 MB GPU memory** just for OMP textures
+
+**Why dirty=true makes it worse**: Setting `dirty = true` on 40×13 = 520 sfixtures triggers `makeCombinedImages()` for all of them, which renders 520 canvases in a single frame — a massive frame spike on top of the memory cost.
+
+**The real fix**: An **OMP image cache** keyed on the compositing inputs. Two clones with identical OMP settings (same URLs, same colors, same patches) produce pixel-identical images and should share one GPU texture. The infrastructure is partially there:
+
+- `imageCache` (line 16 in box2d-draw-textured.lua) already caches **source** images by file path
+- `_stripCache` (line 156) already caches triangle strip meshes by image
+- What's missing: a cache for the **composited result** of `makeTexturedCanvas()`, keyed on a hash of `(bgURL, fgURL, pURL, colors, patches, flips)`
+
+**Proposed approach** (for Phase 8):
+1. Build a cache key from the OMP settings: `bgURL .. fgURL .. pURL .. tint_hex .. patch_urls ...`
+2. Before calling `makeTexturedCanvas()`, check the cache — if hit, reuse the existing `love.graphics.Image`
+3. On clone: copy the OMP *settings* (URLs, colors, patches) but **not** `ompImage` — set `dirty = true` — the next `makeCombinedImages()` pass will find the cache hit and reuse the image
+4. Cache eviction: use weak values (`__mode = "v"`) so images get GC'd when no fixture references them
+
+This turns 40 identical clones from 255 MB into ~6.4 MB (one shared set of images). Characters that are visually modified after cloning get their own images on-demand.
+
+**Prerequisite**: Phase 8 "Canvas pooling for OMP" / "Image cache clearing" — this is the same work.
 
 ---
 
@@ -278,6 +308,51 @@ The big one from DEEP-DIVE-NOTES.md. Move parent/child relationships and attachm
 **Prerequisite**: Phases 1-4 (especially the validator and dump tools to compare before/after).
 **Time**: Multiple sessions. Start with extracting `getAttachmentPoint` as a data-driven resolver, then migrate parts one at a time.
 
+### 7f. Consolidate scattered utility functions
+
+Many generic helper functions are duplicated or stranded as locals inside domain modules. Centralizing them reduces copy-paste bugs and makes them testable.
+
+**Confirmed duplicates** (same function in multiple files):
+
+| Function | Locations | Status |
+|---|---|---|
+| `rect(w, h, x, y)` | shapes.lua, fixtures.lua, playtime-ui.lua (**triplicate**) | **Open** |
+| `getCenterAndDimensions(body)` | playtime-ui.lua:39, character-manager.lua:455 (has TODO to move) | **Open** |
+| `randomHexColor()` | character-manager.lua:57, character-experiments.lua:7 | **Open** |
+| `calculateDistance` | snap.lua:206 duplicates `math-utils.lib.calculateDistance` | **DONE** — replaced with `mathutils.calculateDistance` |
+| `lerp` | character-manager.lua:520 duplicates `math-utils.lib.lerp` (with clamp) | **DONE** — replaced with `mathutils.clampedLerp` |
+| `makeTransformedVertices` | character-manager.lua:482 duplicates `math-utils.scalePolygonPoints` | **Open** |
+| `tableConcat` | math-utils.lua:838 duplicates `utils.tableConcat` | **Open** — would add cross-module dependency |
+| `getRelativePath` | main.lua:457 near-duplicate of `utils.getPathDifference` | **Open** |
+
+**Generic functions — newly added to math-utils.lua**:
+
+| Function | Status |
+|---|---|
+| `lib.clamp(x, min, max)` | **DONE** — added to math-utils, replaces local in character-manager |
+| `lib.sign(value)` | **DONE** — added to math-utils, replaces local in character-manager |
+| `lib.clampedLerp(a, b, t)` | **DONE** — added to math-utils (lerp with t clamped to 0..1) |
+
+**Generic functions still missing from any shared module**:
+
+| Function | Current location | Category |
+|---|---|---|
+| `getEndpoint(x, y, angle, length)` | box2d-draw.lua:32 | geometry |
+| `pointInTriangle` | shapes.lua:236 | geometry |
+| `cross` (2D cross product) | shapes.lua:227, polyline.lua:11 (different signatures) | geometry |
+| `segmentNormal` / `normal_xy` | object-manager.lua:39, polyline.lua:10 (same thing) | geometry |
+| `cyclicShift(arr, shift)` | character-manager.lua:21 | array |
+| `resolveIndex` / `getIndices` | box2d-draw-textured.lua:134,138 | array |
+
+**Remaining approach**:
+1. Export `rect` from `shapes.lua`, replace copies in fixtures.lua and playtime-ui.lua
+2. Move `getCenterAndDimensions` to a shared location (math-utils or a new `geometry-utils.lua`)
+3. Replace remaining duplicate locals one file at a time, test after each
+
+**Risk**: Low per change — each replacement is mechanical. Main risk is circular dependencies if geometry-utils needs something from shapes or vice versa.
+**Prerequisite**: Phase 3 (explicit requires) makes this easier since imports are already cleaned up.
+**Time**: 2-3 hours across sessions, can be done incrementally.
+
 ### 7e. Extract world-settings panel from playtime-ui.lua
 
 Start the UI split with the performance bottleneck: `drawWorldSettingsUI` (42% of frame time).
@@ -298,6 +373,7 @@ Only do these when they matter for what you're building.
 | Cache drawable list (dirty flag) | Noticing frame drops with many bodies | 2-3 hours |
 | Move deformWorldVerts to update | Working on skeletal deformation | 1-2 hours |
 | Fix UV pipeline (vertex-index based) | Working on meshusert/uvusert | 2-3 hours |
+| OMP composited image cache | Cloning characters duplicates GPU textures (~6.4 MB/char). See "Clone OMP" in Phase 5. | 2-3 hours |
 | Canvas pooling for OMP | Many textured characters causing GPU memory issues | 1-2 hours |
 | Image cache clearing | Long sessions causing memory growth | 1 hour |
 | Add stable sort tiebreaker | Noticing z-fighting flicker | 30 minutes |
@@ -338,20 +414,27 @@ Phase 4 ─── Observability Tools ───── partially done (bridge cov
   │          ✓ bridge: eval, console, errors, screenshots, profiling, specs
   │          - scene validator: not started
   ▼
-Phase 5 ─── Fix Known Bugs ────────── partially done (3/8 fixed)
+Phase 5 ─── Fix Known Bugs ────────── mostly done (5/8: 5 fixed, 1 deferred, 2 open)
   │          ✓ io.lua precedence, joints.lua gibberish, duplicate key=='u'
-  │          - clone OMP dirty, reference angle, swapBodies, sensor, endNode
+  │          ✓ reference angle (dead code removed), swapBodies param removed
+  │          ⏸ clone OMP dirty: deferred — needs OMP image cache (Phase 8)
+  │          - sensor, endNode: need investigation
   ▼
 Phase 6 ─── Extract from main.lua ─── partially done (6.1 done)
   │          ✓ character experiments extracted
   │          - physics callbacks: not started
   ▼
-Phase 7 ─── Structural Improvements ─ not started
+Phase 7 ─── Structural Improvements ─ 7f started
   │    ├── 7a. Snap state → state.lua
   │    ├── 7b. Fixture type registry
   │    ├── 7c. Mode handler table
   │    ├── 7d. DNA topology-as-data
-  │    └── 7e. Extract world-settings panel
+  │    ├── 7e. Extract world-settings panel
+  │    └── 7f. Consolidate utility functions ─── in progress
+  │          ✓ clamp, sign, clampedLerp added to math-utils
+  │          ✓ character-manager: lerp, sign, clamp → mathutils
+  │          ✓ snap: calculateDistance → mathutils
+  │          - rect (×3), getCenterAndDimensions (×2), randomHexColor (×2): open
   ▼
 Phase 8 ─── Performance & Polish ──── not started
              caching, memory, UV fix
@@ -392,6 +475,7 @@ Places where we need your input before proceeding:
 | 7c | Adding a new editing mode = one function instead of a branch in a 392-line function |
 | 7d | Adding a new body part = one data entry instead of editing 3 functions |
 | 7e | World settings panel is isolated and can be performance-optimized |
+| 7f | No more copy-pasted helpers; `clamp`, `sign`, `rect` etc. are testable and centralized |
 
 ---
 

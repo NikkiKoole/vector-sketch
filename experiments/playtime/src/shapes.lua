@@ -229,6 +229,31 @@ local function cross(x1, y1, x2, y2, x3, y3)
 end
 
 
+local function sign(px, py, ax, ay, bx, by)
+    return (px - bx) * (ay - by) - (ax - bx) * (py - by)
+end
+
+local function pointInTriangle(px, py, ax, ay, bx, by, cx, cy)
+    local b1 = sign(px, py, ax, ay, bx, by) < 0
+    local b2 = sign(px, py, bx, by, cx, cy) < 0
+    local b3 = sign(px, py, cx, cy, ax, ay) < 0
+    return (b1 == b2) and (b2 == b3)
+end
+
+local function splitTriangle(tris, triIndex, px, py)
+    local t = tris[triIndex]
+    local ax, ay = t[1], t[2]
+    local bx, by = t[3], t[4]
+    local cx, cy = t[5], t[6]
+
+    -- Replace original triangle with one of the new ones
+    tris[triIndex] = { ax, ay, bx, by, px, py }
+
+    -- Add the other two
+    table.insert(tris, { bx, by, cx, cy, px, py })
+    table.insert(tris, { cx, cy, ax, ay, px, py })
+end
+
 local function triangulatePolygonWithInternalPoints(outline, internalPoints)
     -- Step 1: triangulate outline
     local triangles = shapes.makeTrianglesFromPolygon(outline)
@@ -250,29 +275,6 @@ local function triangulatePolygonWithInternalPoints(outline, internalPoints)
     end
 
     return triangles
-end
-local function sign(px, py, ax, ay, bx, by)
-    return (px - bx) * (ay - by) - (ax - bx) * (py - by)
-end
-
-local function pointInTriangle(px, py, ax, ay, bx, by, cx, cy)
-    local b1 = sign(px, py, ax, ay, bx, by) < 0
-    local b2 = sign(px, py, bx, by, cx, cy) < 0
-    local b3 = sign(px, py, cx, cy, ax, ay) < 0
-    return (b1 == b2) and (b2 == b3)
-end
-local function splitTriangle(tris, triIndex, px, py)
-    local t = tris[triIndex]
-    local ax, ay = t[1], t[2]
-    local bx, by = t[3], t[4]
-    local cx, cy = t[5], t[6]
-
-    -- Replace original triangle with one of the new ones
-    tris[triIndex] = { ax, ay, bx, by, px, py }
-
-    -- Add the other two
-    table.insert(tris, { bx, by, cx, cy, px, py })
-    table.insert(tris, { cx, cy, ax, ay, px, py })
 end
 function shapes.makeTrianglesFromPolygon(polygon, internalPoints)
     --logger:trace()

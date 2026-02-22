@@ -513,13 +513,7 @@ local function getTransformedIndex(index, flipX, flipY)
     end
 end
 
-local function clamp(x, min, max)
-    return x < min and min or (x > max and max or x)
-end
-
-local function lerp(a, b, amount)
-    return a + (b - a) * clamp(amount, 0, 1)
-end
+local lerp = mathutils.clampedLerp
 
 local function extractNeckIndex(name)
     local index = string.match(name, "^neck(%d+)$")
@@ -691,9 +685,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
     return result or {} -- Return empty table if partName not found
 end
 
-local function sign(value)
-    if value < 0 or value == nil then return -1 else return 1 end
-end
+local sign = mathutils.sign
 
 local function getOwnOffset(partName, guy)
     local parts = guy.dna.parts

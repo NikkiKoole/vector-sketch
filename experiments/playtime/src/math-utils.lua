@@ -1232,8 +1232,20 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
     return weights
 end
 
+function lib.clamp(x, min, max)
+    return x < min and min or (x > max and max or x)
+end
+
+function lib.sign(value)
+    if value == nil or value < 0 then return -1 else return 1 end
+end
+
 function lib.lerp(a, b, t)
     return a + (b - a) * t
+end
+
+function lib.clampedLerp(a, b, t)
+    return a + (b - a) * lib.clamp(t, 0, 1)
 end
 
 function lib.repositionPointUsingWeights(weights, newPolygon)
