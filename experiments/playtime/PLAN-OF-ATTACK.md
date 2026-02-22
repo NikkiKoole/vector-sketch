@@ -260,11 +260,14 @@ Move `beginContact`/`endContact`/`preSolve`/`postSolve` globals to `src/physics-
 **Risk**: Low — thin wrappers around script.call.
 **Status**: Open.
 
-### 6.3 Consider: Extract game loop
+### 6.3 Extract game loop — DONE
 
-The fixed-timestep loop is self-contained. Could move to `src/game-loop.lua`.
+Extracted both `love.run()` implementations to `src/game-loop.lua` (~150 lines removed from main.lua).
+Active loop: `createFixedTimestepRun(tickrate)` with panic detection + adaptive sleep.
+Old simple loop preserved as commented historical reference in the module.
 
-**Risk**: Medium — touching the game loop can cause subtle timing issues.
+Also improved `playtime.sh`: captures startup errors (kills process to flush macOS's buffered stderr),
+passes `--bridge` to skip start screen, added `log` and `errors` commands.
 **Status**: Open — main.lua is now ~660 lines which is manageable.
 
 ---
@@ -425,8 +428,10 @@ Phase 5 ─── Fix Known Bugs ────────── done (8/9 fixed,
   │          ✓ sensor: was already fixed, added guard + logging
   │          ✓ endNode: fixed misleading DNA values on arm connected-hair
   ▼
-Phase 6 ─── Extract from main.lua ─── partially done (6.1 done)
+Phase 6 ─── Extract from main.lua ─── mostly done (6.1, 6.3 done)
   │          ✓ character experiments extracted
+  │          ✓ game loop extracted to src/game-loop.lua (~150 lines)
+  │          ✓ playtime.sh: error capture, --bridge flag, log/errors commands
   │          - physics callbacks: not started
   ▼
 Phase 7 ─── Structural Improvements ─ 7f started

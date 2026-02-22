@@ -1,2 +1,4 @@
 profilingReport.txt
 ./profilingReport.txt
+.playtime.log
+.playtime-error.log
