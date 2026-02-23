@@ -85,10 +85,16 @@ luarocks --lua-version 5.1 install busted
 ## Luacheck
 
 ```bash
-luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks
+luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks (currently 0)
+luacheck src/ main.lua --std "lua51+love"                   # full check (~628 warnings, no errors)
 ```
 
-19 intentional globals remain (main.lua: logger, inspect, registry, etc. + script.lua sandbox).
+All globals have been converted to explicit `local require()` calls. Luacheck 111/112 is clean (0 warnings).
+Full luacheck still has ~628 warnings (unused vars, long lines, shadowing — no errors). Biggest categories:
+- 182 unused variables, 55 unused args, 21 unused loop vars (mechanical `_` prefixing)
+- 128 line-too-long (cosmetic)
+- 52 undefined variable access (37× `CharacterManager` missing require, `dirty`/`dirtyBodyChange` may be bugs)
+- 12 unused functions (potential dead code)
 
 ## Architecture
 
@@ -123,3 +129,4 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks
 - When making functions `local`, check for forward references (function used before its definition). Lurker hot-reload re-executes files top-to-bottom, so a local function must be defined before first use. Use `claudetools/find-forward-refs.lua` to scan for these.
 - `registry.getBodyByID()` — capital ID, not Id
 - `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser
+- Circular requires: `registry.lua` ↔ `snap.lua` — registry uses a lazy `getSnap()` wrapper to break the cycle. If adding cross-module requires, watch for `loop or previous error loading module` errors
