@@ -1170,7 +1170,8 @@ function lib.drawSelectedSFixture()
                 function(color)
                     oldTexFixUD.extra[layer].bgHex = color; oldTexFixUD.extra[layer].cached = nil
                 end, dirty)
-            handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra[layer].bgURL,
+            local slx, sly = ui.sameLine(20)
+            handleURLInput(myID, 'bgURL', slx, sly, 150, oldTexFixUD.extra[layer].bgURL,
                 function(u)
                     oldTexFixUD.extra[layer].bgURL = u
                 end)
@@ -1179,7 +1180,8 @@ function lib.drawSelectedSFixture()
                 function(c)
                     oldTexFixUD.extra[layer].fgHex = c; oldTexFixUD.extra[layer].cached = nil
                 end, dirty)
-            handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra[layer].fgURL,
+            slx, sly = ui.sameLine(20)
+            handleURLInput(myID, 'fgURL', slx, sly, 150, oldTexFixUD.extra[layer].fgURL,
                 function(u) oldTexFixUD.extra[layer].fgURL = u end)
             nextRow()
             ---
@@ -1187,7 +1189,8 @@ function lib.drawSelectedSFixture()
                 function(color)
                     oldTexFixUD.extra[layer].pHex = color; oldTexFixUD.extra[layer].cached = nil
                 end, dirty)
-            handleURLInput(myID, 'patternURL', x + 130, y, 150, oldTexFixUD.extra[layer].pURL,
+            slx, sly = ui.sameLine(20)
+            handleURLInput(myID, 'patternURL', slx, sly, 150, oldTexFixUD.extra[layer].pURL,
                 function(u) oldTexFixUD.extra[layer].pURL = u end)
             nextRow()
 
@@ -1277,7 +1280,8 @@ function lib.drawSelectedSFixture()
                     state.currentMode = 'positioningSFixture'
                 end
                 nextRow()
-                if ui.button(x + 100, y, ROW_WIDTH - 100, 'c') then
+                local slx, sly = ui.sameLine()
+                if ui.button(slx, sly, ROW_WIDTH - 100, 'c') then
                     local body = state.selection.selectedSFixture:getBody()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                         body:getX(), body:getY())
@@ -1285,7 +1289,8 @@ function lib.drawSelectedSFixture()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
 
-                if ui.button(x + 160, y, ROW_WIDTH - 100, 'd') then
+                slx, sly = ui.sameLine()
+                if ui.button(slx, sly, ROW_WIDTH - 100, 'd') then
                     local body = state.selection.selectedSFixture:getBody()
                     --   logger:info('should look up the native dimensions of this texture')
                     --   logger:inspect(state.selection.selectedSFixture:getUserData())
@@ -1295,7 +1300,8 @@ function lib.drawSelectedSFixture()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
 
-                if ui.button(x + 220, y, ROW_WIDTH - 100, 'x') then
+                slx, sly = ui.sameLine()
+                if ui.button(slx, sly, ROW_WIDTH - 100, 'x') then
                     --  local body = state.selection.selectedSFixture:getBody()
                     --   logger:info('should look up the native dimensions of this texture')
                     --   logger:inspect(state.selection.selectedSFixture:getUserData())
@@ -1363,7 +1369,8 @@ function lib.drawSelectedSFixture()
                     end
                 end
 
-                if ui.button(x + 220, y, 40, oldTexFixUD.extra.vertexCount or '') then
+                local slx, sly = ui.sameLine()
+                if ui.button(slx, sly, 40, oldTexFixUD.extra.vertexCount or '') then
                     if oldTexFixUD.extra.vertexCount == 4 then
                         oldTexFixUD.extra.vertexCount = 8
                     elseif oldTexFixUD.extra.vertexCount == 8 then
@@ -1424,7 +1431,8 @@ function lib.drawSelectedSFixture()
                         function(c)
                             oldTexFixUD.extra.main.bgHex = c; oldTexFixUD.extra.main.cached = nil
                         end, dirty)
-                    handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
+                    local slx, sly = ui.sameLine(20)
+                    handleURLInput(myID, 'bgURL', slx, sly, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)
                             oldTexFixUD.extra.main.bgURL = u
                         end)
@@ -1433,7 +1441,8 @@ function lib.drawSelectedSFixture()
                         function(c)
                             oldTexFixUD.extra.main.fgHex = c; oldTexFixUD.extra.main.cached = nil;
                         end, dirty)
-                    handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
+                    slx, sly = ui.sameLine(20)
+                    handleURLInput(myID, 'fgURL', slx, sly, 150, oldTexFixUD.extra.main.fgURL,
                         function(u)
                             oldTexFixUD.extra.main.fgURL = u
                         end)
@@ -1902,8 +1911,8 @@ function lib.drawSelectedSFixture()
                 -- lets just persist an index into bg
                 -- TODO: implement bind-pose for resource sfixtures
             end
-
-            if ui.button(x + ROW_WIDTH + 50, y, 50, 'c') then
+            local slx, sly = ui.sameLine()
+            if ui.button(slx, sly, 50, 'c') then
                 local body = state.selection.selectedSFixture:getBody()
                 state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                     body:getX(), body:getY())
@@ -1918,8 +1927,8 @@ function lib.drawSelectedSFixture()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
                     state.currentMode = 'positioningSFixture'
                 end
-
-                if ui.button(x + 150, y, ROW_WIDTH - 100, 'c') then
+                local slx, sly = ui.sameLine()
+                if ui.button(slx, sly, ROW_WIDTH - 100, 'c') then
                     local body = state.selection.selectedSFixture:getBody()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                         body:getX(), body:getY())
@@ -1967,16 +1976,20 @@ function lib.drawSelectedSFixture()
                     if ui.button(x, y, 40, 'N') then
                         handleOffset(0, -1)
                     end
-                    if ui.button(x + 50, y, 40, 'E') then
+                    local slx, sly = ui.sameLine()
+                    if ui.button(slx, sly, 40, 'E') then
                         handleOffset(1, 0)
                     end
-                    if ui.button(x + 100, y, 40, 'S') then
+                    slx, sly = ui.sameLine()
+                    if ui.button(slx, sly, 40, 'S') then
                         handleOffset(0, 1)
                     end
-                    if ui.button(x + 150, y, 40, 'W') then
+                    slx, sly = ui.sameLine()
+                    if ui.button(slx, sly, 40, 'W') then
                         handleOffset(-1, 0)
                     end
-                    if ui.button(x + 200, y, 40, 'C') then
+                    slx, sly = ui.sameLine()
+                    if ui.button(slx, sly, 40, 'C') then
                         handleOffset(0, 0)
                     end
                 end
@@ -2066,14 +2079,16 @@ function lib.drawSelectedSFixture()
                     local dirty = function() oldTexFixUD.extra.dirty = true end
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
-                    handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
+                    local slx, sly = ui.sameLine(20)
+                    handleURLInput(myID, 'bgURL', slx, sly, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)
                             oldTexFixUD.extra.main.bgURL = u
                         end)
                     nextRow()
                     handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
                         function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
-                    handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
+                    slx, sly = ui.sameLine(20)
+                    handleURLInput(myID, 'fgURL', slx, sly, 150, oldTexFixUD.extra.main.fgURL,
                         function(u)
                             oldTexFixUD.extra.main.fgURL = u
                         end)
@@ -2223,14 +2238,16 @@ function lib.drawSelectedSFixture()
                         function(c)
                             oldTexFixUD.extra.main.bgHex = c
                         end, dirty)
-                    handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
+                    local slx, sly = ui.sameLine(20)
+                    handleURLInput(myID, 'bgURL', slx, sly, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)
                             oldTexFixUD.extra.main.bgURL = u
                         end)
                     nextRow()
                     handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
                         function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
-                    handleURLInput(myID, 'fgURL', x + 130, y, 150, oldTexFixUD.extra.main.fgURL,
+                    slx, sly = ui.sameLine(20)
+                    handleURLInput(myID, 'fgURL', slx, sly, 150, oldTexFixUD.extra.main.fgURL,
                         function(u)
                             oldTexFixUD.extra.main.fgURL = u
                         end)
