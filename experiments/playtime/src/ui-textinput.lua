@@ -339,7 +339,9 @@ return function(ui)
 
         local state = ui.textInputs[id]
 
-        if reparse then
+        -- Auto-sync from external value when not focused
+        local isFocused = (ui.focusedTextInputID == id)
+        if not isFocused and state.text ~= currentText then
             state.text = currentText
             state.lines = ui.splitTextIntoLines(state.text)
         end
@@ -402,8 +404,8 @@ return function(ui)
             state.isSelecting = false
         end
 
-        -- Check if this TextInput is focused
-        local isFocused = (ui.focusedTextInputID == id)
+        -- Re-check focus (may have changed via mouse click above)
+        isFocused = (ui.focusedTextInputID == id)
 
         -- Update cursor blinking
         if isFocused then

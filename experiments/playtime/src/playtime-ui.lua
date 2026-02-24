@@ -32,17 +32,13 @@ local FPS = 60
 
 local offsetHasChangedViaOutside
 
-local colorpickers = {
-    bg = false
-}
-
 local profileFrameCounter = 0
 
 -- todo move this somewhere sensible , i also need it in character manager
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
-local function createSliderWithId(id, label, x, y, width, min, max, value, callback, changed)
-    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value, changed)
+local function createSliderWithId(id, label, x, y, width, min, max, value, callback)
+    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value)
     if newValue then
         callback(newValue)
     end
@@ -1052,7 +1048,6 @@ function lib.drawWorldSettingsUI()
     end)
 end
 
-local hadBeenDraggingObj = false
 local accordionStatesSF = {
     ['position'] = false,
     ['texture'] = true,
@@ -1061,21 +1056,12 @@ local accordionStatesSF = {
     ['patch3'] = false,
 }
 
-local lastSelectedSFixture = nil
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
-    if state.interaction.draggingObj then
-        hadBeenDraggingObj = true
-    end
     if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
 
-    local dirtyBodyChange = false
-    if lastSelectedSFixture ~= state.selection.selectedSFixture then
-        dirtyBodyChange = true
-        lastSelectedSFixture = state.selection.selectedSFixture
-    end
     --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
     local sfixtureType = ud.type .. ' ' .. (ud.subtype and ud.subtype or '')
     local x, y
@@ -1129,24 +1115,15 @@ function lib.drawSelectedSFixture()
                     state.showPaletteFunc = function(color)
                         dirty()
                         logger:info('sadads', color)
-                        colorpickers[postFix] = true
-
                         onColorChange(color)
                     end
                 end
             end
-            local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '',
-                false, colorpickers[postFix])
-            --print(hex, currentHex)
+            local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '')
             if hex and hex ~= currentHex then
-                --setDirty()
                 oldTexFixUD.extra.dirty = true
                 logger:info('jo')
                 onColorChange(hex)
-            end
-
-            if colorpickers[postFix] then
-                colorpickers[postFix] = false
             end
             ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
         end
@@ -1440,8 +1417,7 @@ function lib.drawSelectedSFixture()
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
-                    end,
-                    (not state.world.paused) or dirtyBodyChange)
+                    end)
             end)
             nextRow()
 
@@ -2129,8 +2105,7 @@ function lib.drawSelectedSFixture()
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
-                    end,
-                    (not state.world.paused) or dirtyBodyChange)
+                    end)
                 nextRow()
                 nextRow()
                 local e = state.selection.selectedSFixture:getUserData().extra
@@ -2219,8 +2194,7 @@ function lib.drawSelectedSFixture()
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
-                    end,
-                    (not state.world.paused) or dirtyBodyChange)
+                    end)
 
                 nextRow()
                 handleURLInput(myID, 'bgURL', x, y, 150, oldTexFixUD.extra.main.bgURL,
@@ -2286,8 +2260,7 @@ function lib.drawSelectedSFixture()
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
-                    end,
-                    (not state.world.paused) or dirtyBodyChange)
+                    end)
                 nextRow()
                 nextRow()
                 local e = state.selection.selectedSFixture:getUserData().extra
@@ -2508,12 +2481,6 @@ function lib.drawUpdateSelectedObjectUI()
         local userData = body:getUserData()
         local thing = userData and userData.thing
 
-        local dirtyBodyChange = false
-        if (state.selection.lastSelectedBody ~= body) then
-            dirtyBodyChange = true
-            state.selection.lastSelectedBody = body
-        end
-
         if thing then
             -- Shape Properties
             local shapeType = thing.shapeType
@@ -2585,38 +2552,25 @@ function lib.drawUpdateSelectedObjectUI()
                     nextRow()
                     local value = thing.body:getX()
                     local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
-                        true,
-                        clicked or not state.world.paused or state.interaction.draggingObj)
-                    if hadBeenDraggingObj then
-                        dirty = true
-                    end
+                        true)
                     if (dirty) then
                         local numericPosX = tonumber(numericInputText)
                         if numericPosX then
                             thing.body:setX(numericPosX)
                         else
-                            -- Handle invalid input, e.g., reset to previous value or show an error
                             logger:error("Invalid X position input!")
                         end
                     end
                     local value = thing.body:getY()
                     local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
-                        "" .. value, true,
-                        clicked or not state.world.paused or state.interaction.draggingObj)
-                    if hadBeenDraggingObj then
-                        dirty = true
-                    end
+                        "" .. value, true)
                     if (dirty) then
                         local numericPosY = tonumber(numericInputText)
                         if numericPosY then
                             thing.body:setY(numericPosY)
                         else
-                            -- Handle invalid input, e.g., reset to previous value or show an error
                             logger:error("Invalid Y position input!")
                         end
-                    end
-                    if hadBeenDraggingObj then
-                        hadBeenDraggingObj = false
                     end
 
                     nextRow()
@@ -2630,8 +2584,7 @@ function lib.drawUpdateSelectedObjectUI()
                     nextRow()
 
                     local newAngle = ui.sliderWithInput(myID .. 'angle', x, y, ROW_WIDTH, -180, 180,
-                        (body:getAngle() * 180 / math.pi),
-                        (body:isAwake() and not state.world.paused) or dirtyBodyChange)
+                        (body:getAngle() * 180 / math.pi))
                     if newAngle and (body:getAngle() * 180 / math.pi) ~= newAngle then
                         body:setAngle(newAngle * math.pi / 180)
                     end
@@ -2657,11 +2610,9 @@ function lib.drawUpdateSelectedObjectUI()
 
                     if ui.button(x, y, 120, 'flipX') then
                         state.selection.selectedObj = objectManager.flipThing(thing, 'x', true)
-                        dirtyBodyChange = true
                     end
                     if ui.button(x + 140, y, 120, 'flipY') then
                         state.selection.selectedObj = objectManager.flipThing(thing, 'y', true)
-                        dirtyBodyChange = true
                     end
 
 
@@ -2788,8 +2739,7 @@ function lib.drawUpdateSelectedObjectUI()
                             nextRow()
 
                             local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing
-                                .radius,
-                                dirtyBodyChange)
+                                .radius)
                             ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' radius')
                             if newRadius and newRadius ~= thing.radius then
                                 state.selection.selectedObj = objectManager.recreateThingFromBody(body,

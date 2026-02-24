@@ -193,13 +193,11 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed, step)
         returnValue = value
     end
 
-    local valueChangeFromOutside = valueHasChangedViaSlider or changed
-
-    -- TextInput for numeric input
+    -- TextInput for numeric input (auto-syncs from value when unfocused)
     local numericInputText, dirty = ui.textinput(_id, x + w + 10, y + yOffset, 80, ui.theme.slider.height,
         "Enter number...",
         "" .. value,
-        true, valueChangeFromOutside)
+        true)
 
 
     if dirty then
