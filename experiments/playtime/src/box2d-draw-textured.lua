@@ -361,9 +361,6 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         lineColor, lineAlpha,
         flipx, flipy, patches)
 
-    if testCache[key] == true then
-        --    logger:info('double?', key)
-    end
     testCache[key] = true
     --  logger:info(key)
 
@@ -579,7 +576,6 @@ function lib.makeCombinedImages()
 
                 ud.extra.dirty = false
             end
-            ud = nil
         end
         --for i = 1, #fixtures do fixtures[i] = nil end
     end

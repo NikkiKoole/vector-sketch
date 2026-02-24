@@ -10,7 +10,7 @@ function lib.bench(fn, seconds, ...)
     collectgarbage("collect"); collectgarbage("collect")
 
     local n, t0 = 0, now()
-    local t1 = t0
+    local t1
     repeat
         fn(...); n = n + 1
         t1 = now()

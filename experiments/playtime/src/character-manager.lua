@@ -637,7 +637,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
 
     -- If only one torso segment, it has all children directly
     if torsoSegments == 1 and partName == 'torso1' then
-        local children = {}
+        local children
         if creation.isPotatoHead then
             children = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear' }
             if noseSegments > 0 then
@@ -1196,17 +1196,15 @@ local function updateSinglePart(partName, data, instance)
         end
     end
 
-    local oldBody = nil
     local oldPosX, oldPosY = 0, 0
     local oldAngle = 0
 
     -- Remove old body
     if instance.parts[partName] then
-        oldBody = instance.parts[partName].body
+        local oldBody = instance.parts[partName].body
         oldPosX, oldPosY = oldBody:getPosition()
         oldAngle = oldBody:getAngle()
-        local body = instance.parts[partName].body
-        ObjectManager.destroyBody(body)
+        ObjectManager.destroyBody(oldBody)
         instance.parts[partName] = nil
     end
 

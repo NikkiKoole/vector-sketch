@@ -84,7 +84,8 @@ function lib.handlePointerUpdate(_dt, cam)
             for k = 1, #fixtures do
                 local f = fixtures[k]
                 if f:getUserData() and type(f:getUserData()) == 'table' and f:getUserData().bodyType then
-                    if f:getUserData().bodyType == 'connector' then
+                    if f:getUserData().bodyType == 'connector' then -- luacheck: ignore 542
+                        -- TODO: connector system disabled
                         --connect.maybeConnectThisConnector(f)
                     end
                 end

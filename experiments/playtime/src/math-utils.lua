@@ -276,7 +276,6 @@ local function evenlySpreadPathFlat(pathFlat, spacing, startOffset, closed, incl
                         outLen = outLen + 1; outFlat[outLen] = lasty + dy * t
                         acc = acc + spacing
                     end
-                    acc = acc - segLen
                 end
             elseif include_last and acc == 0 then
                 -- Emit true end if we landed exactly on it
@@ -443,9 +442,8 @@ local function _getCenterOfShapeFixtures(fixts)
     local ymax = -math.huge
     for i = 1, #fixts do
         local it = fixts[i]
-        if it:getUserData() then
-        else
-            local points = {}
+        if not it:getUserData() then
+            local points
             if (it:getShape().getPoints) then
                 points = { it:getShape():getPoints() }
             else

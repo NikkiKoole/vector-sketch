@@ -279,7 +279,7 @@ function polyline.render(join_type, coords, half_width, pixel_size, draw_overdra
     else
         rx, ry = rx + s_x, ry + s_y
     end
-    s_x, s_y, len_s = renderEdge(ax, ay, nx, ny, s_x, s_y, len_s, qx, qy, rx, ry, half_width)
+    renderEdge(ax, ay, nx, ny, s_x, s_y, len_s, qx, qy, rx, ry, half_width)
 
     -- emit vertices
     local vertices = {}

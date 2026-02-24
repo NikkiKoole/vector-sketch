@@ -365,8 +365,6 @@ local function handlePointer(x, y, id, action, _button)
                 state.panelVisibility.worldSettingsOpened = false
                 state.panelVisibility.recordingPanelOpened = false
                 state.panelVisibility.showPalette = false
-            else
-
             end
         end
         state.interaction.pressMissedEverything = false
@@ -595,11 +593,6 @@ function lib.handleMouseMoved(x, y, dx, dy)
                 local addToSelection = love.keyboard.isDown('lshift')
                 local isRightClick = (button == 2)
 
-
-
-                if (not addToSelection) and (not isRightClick) then
-                    --state.vertexEditor.selectedVertices = {}
-                end
 
 
                 -- small helper: remove a vertex index from selection

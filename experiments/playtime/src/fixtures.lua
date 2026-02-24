@@ -91,12 +91,8 @@ function lib.hasFixturesWithUserDataAtBeginning(fixtures)
                 found = false
             end
         end
-        if not found then
-            if fixtures[i]:getUserData() then
-                return false, -1
-            else
-
-            end
+        if not found and fixtures[i]:getUserData() then
+            return false, -1
         end
     end
     return true, index

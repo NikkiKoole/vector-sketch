@@ -853,10 +853,8 @@ function lib.flipThing(thing, axis, recursive)
 
                     fixture:destroy()
                 end
-            elseif shape:typeOf("CircleShape") then
-                -- No need to flip circle shapes beyond position
-                -- Circle radius remains the same
-                -- If the circle has user data affecting orientation, handle it here
+            elseif shape:typeOf("CircleShape") then -- luacheck: ignore 542
+                -- No need to flip circle shapes — radius is symmetric
             end
         end
         -- for _, fixture in ipairs(currentBody:getFixtures()) do

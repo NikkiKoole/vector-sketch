@@ -196,9 +196,6 @@ function lib.rebuildSnapFixtures(sfix)
                 ud.extra.fixture = v
                 v:setUserData(ud)
                 table.insert(snapFixtures, v)
-            else
-                --     --print('what is wrong ?', not v:isDestroyed(), ud, ud.label == 'snap',
-                --     --    ud.label)
             end
             count = count + 1
         end

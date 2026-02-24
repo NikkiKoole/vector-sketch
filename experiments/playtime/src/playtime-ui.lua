@@ -1382,7 +1382,6 @@ function lib.drawSelectedSFixture()
                     end
                     if newHeight and math.abs(newHeight - h) > 1 then
                         fixtures.updateSFixtureDimensionsFunc(w, newHeight)
-                        w, h = mathutils.getPolygonDimensions(points)
                     end
                 end
                 createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
@@ -1852,7 +1851,7 @@ function lib.drawSelectedSFixture()
                 ud.extra.scaleY = scaleY
             end
         elseif ud.subtype == 'resource' then
-            local selectedIndex = 0
+            local selectedIndex
             if #state.backdrops then
                 ui.label(x, y, 'backdrop index (for uvmap)')
                 nextRow()
