@@ -81,6 +81,23 @@ function ui.init(font, fontHeight)
     ui.doubleClickThreshold = 0.3 -- seconds
 end
 
+--- Track the last widget's bounds for sameLine().
+ui._cursor = { x = 0, y = 0, w = 0, h = 0 }
+
+--- Record a widget's bounds (call at the end of each widget).
+function ui.setCursor(x, y, w, h)
+    ui._cursor.x = x
+    ui._cursor.y = y
+    ui._cursor.w = w
+    ui._cursor.h = h
+end
+
+--- Returns x, y to place the next widget to the right of the last one.
+function ui.sameLine(spacing)
+    spacing = spacing or 10
+    return ui._cursor.x + ui._cursor.w + spacing, ui._cursor.y
+end
+
 --- Resets UI state at the start of each frame.
 function ui.startFrame()
     ui.nextID = 1           -- Reset unique ID counter at the start of each frame
@@ -203,6 +220,8 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
         returnValue = value
     end
 
+    -- Cursor spans slider + gap + text input
+    ui.setCursor(x, y, w + 10 + 80, theme.slider.height)
     if returnValue then
         return returnValue
     end
@@ -272,6 +291,8 @@ function ui.checkbox(x, y, checked, label)
     --love.graphics.setColor(1, 1, 1)
 
     -- Return the updated checked state
+    local totalWidth = size + 10 + ui.font:getWidth(label)
+    ui.setCursor(x, y, totalWidth, size)
     return clicked, checked
 end
 
@@ -468,6 +489,7 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
         -- Reset the active element ID
         ui.activeElementID = nil
     end
+    ui.setCursor(x, y, width, height)
     return clicked, pressed, released, isHover
 end
 
@@ -613,6 +635,11 @@ function ui.label(x, y, text, color)
     local yOffset = 0 --ui.font:getHeight(text) / 2
     love.graphics.print(text, x, y + yOffset)
     --love.graphics.setColor(1, 1, 1)
+end
+
+--- Label vertically centered within a standard row height.
+function ui.alignedLabel(x, y, text, color)
+    ui.label(x, y + (ui.theme.lineHeight - ui.fontHeight), text, color)
 end
 
 --- Creates a dropdown menu.

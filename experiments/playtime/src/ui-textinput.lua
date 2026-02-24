@@ -485,6 +485,7 @@ return function(ui)
         -- Reset color
         love.graphics.setColor(1, 1, 1)
 
+        ui.setCursor(x, y, width, height)
         return state.text, state.text ~= currentText
     end
 end
