@@ -368,9 +368,13 @@ describe("save/load round-trip", function()
                 file .. ": body " .. id .. " shapeType mismatch")
 
             -- Position (within rounding tolerance)
-            assert.is_near(orig.position[1], rest.position[1], 0.1,
+            -- Box2D uses float32 internally; precision degrades at large coordinates
+            -- (0.25 at ~4M, 0.5 at ~8M), so scale tolerance accordingly
+            local posTolX = math.max(0.1, math.abs(orig.position[1]) * 1e-6)
+            local posTolY = math.max(0.1, math.abs(orig.position[2]) * 1e-6)
+            assert.is_near(orig.position[1], rest.position[1], posTolX,
                 file .. ": body " .. id .. " X position drift")
-            assert.is_near(orig.position[2], rest.position[2], 0.1,
+            assert.is_near(orig.position[2], rest.position[2], posTolY,
                 file .. ": body " .. id .. " Y position drift")
 
             -- Angle
