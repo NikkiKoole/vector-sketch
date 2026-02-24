@@ -90,12 +90,11 @@ luacheck src/ main.lua --std "lua51+love"                   # full check (~628 w
 ```
 
 All globals have been converted to explicit `local require()` calls. Luacheck 111/112 is clean (0 warnings).
-Full luacheck has ~231 warnings (down from 628), no errors. Remaining categories:
-- 125 line-too-long (cosmetic)
-- 87 shadowing warnings (W421/W423/W431/W432/W433 — need case-by-case review)
-- 11 unused variables (W211)
-- 3 whitespace-only lines (W611)
-- 5 misc (W241, W231, W143, W422)
+Full luacheck has ~215 warnings (down from 628), no errors. Remaining categories:
+- ~125 line-too-long (cosmetic)
+- ~87 shadowing warnings (W421/W423/W431/W432/W433 — need case-by-case review)
+- Unused vars/functions: all cleared
+- Whitespace-only lines: all cleared
 
 ## Architecture
 
@@ -109,7 +108,7 @@ Full luacheck has ~231 warnings (down from 628), no errors. Remaining categories
 ### Key modules
 - `src/object-manager.lua` — body creation/destruction/recreation
 - `src/io.lua` — save/load, clone
-- `src/playtime-ui.lua` — all editor UI panels (~3500 lines)
+- `src/playtime-ui.lua` — all editor UI panels (~3400 lines, see "UI cleanup status" below)
 - `src/box2d-draw-textured.lua` — textured rendering, OMP compositing
 - `src/joints.lua` — joint creation/recreation
 - `src/registry.lua` — central registry for bodies, joints, sfixtures
@@ -131,3 +130,37 @@ Full luacheck has ~231 warnings (down from 628), no errors. Remaining categories
 - `registry.getBodyByID()` — capital ID, not Id
 - `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser
 - Circular requires: `registry.lua` ↔ `snap.lua` — registry uses a lazy `getSnap()` wrapper to break the cycle. If adding cross-module requires, watch for `loop or previous error loading module` errors
+
+## UI cleanup status
+
+### Layout helpers (in ui-all.lua)
+- `ui.alignedLabel(x, y, text, color)` — vertically centers label within a row. Use instead of `ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ...)`
+- `ui.sameLine(spacing)` — returns x, y to place the next widget to the right of the previous one (default spacing=10). Widgets (button, checkbox, textinput, sliderWithInput) track their cursor via `ui.setCursor()`.
+
+### What's been done
+- Patch layer dedup: patch1/patch2/patch3 accordions collapsed into `drawPatchAccordion(layer)`
+- 23 manual `x + offset` patterns converted to `ui.sameLine()`
+- 36 label alignment patterns converted to `ui.alignedLabel()`
+
+### Remaining ~19 `x + offset` patterns (intentionally kept)
+These are special cases not suited for sameLine: dead code (button grid inside `if false`), tiny internal offsets inside handlePaletteAndHex/handleURLInput helpers (20px color swatch + textinput), overlay labels on sliders, reverse widget order (checkbox at x, slider at x+50).
+
+### Pick-up points for further cleanup
+
+**Luacheck (215 warnings remaining):**
+- ~87 shadowing warnings — need case-by-case review (some intentional, some fixable)
+- ~125 line-too-long — cosmetic, low priority
+
+**UI file extractions (playtime-ui.lua ~3400 lines → ~500 line orchestrator):**
+Ordered by ease/risk, each function is self-contained and has smoke test coverage:
+1. `doJointUpdateUI()` (413 lines) → `src/ui-joint-update.lua` — **easiest**, self-contained, low risk
+2. `drawAddShapeUI()` (146 lines) → `src/ui-shape-panel.lua` — easy, own accordion state
+3. `drawWorldSettingsUI()` (136 lines) → `src/ui-world-settings.lua` — easy, mostly sliders
+4. `drawRecordingUI()` (137 lines) → `src/ui-recording-panel.lua` — easy, self-contained
+5. `drawSelectedSFixture()` (1249 lines) → `src/ui-sfixture-editor.lua` — **biggest win**, medium risk, complex vertex/OMP logic
+6. `drawUpdateSelectedObjectUI()` (592 lines) → `src/ui-body-editor.lua` — medium risk, many shape-specific paths
+7. Small panels (drawAddJointUI 29L, drawSelectedBodiesUI 68L, drawBGSettingsUI 44L) — trivial
+
+**Extraction pattern:** modules return `lib = {}` table. Accordion state tables (`accordionStatesSF`, `accordionStatesSO`, `accordeonStatesAS`) are local to playtime-ui.lua and would move with their respective extracted module.
+
+**Smoke tests:** `spec/ui-smoke_spec.lua` (30 tests) covers all panels including sfixture subtypes, joint types, and combined panel states. Run with `love . --specs spec/ui-smoke_spec.lua`.
