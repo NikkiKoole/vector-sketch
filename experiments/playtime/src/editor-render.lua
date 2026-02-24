@@ -1,4 +1,5 @@
--- here we just have snall functions that render thigns for the editor (not ui but active state, selction boxes that sot of thing)
+-- here we just have small functions that render things for the editor
+-- (not ui but active state, selection boxes that sort of thing)
 --
 local logger = require 'src.logger'
 local registry = require 'src.registry'
@@ -90,7 +91,9 @@ function lib.renderActiveEditorThings()
     love.graphics.setColor(1, 1, 1)
 
     -- draw to be drawn polygon
-    if state.currentMode == 'drawClickMode' or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
+    if state.currentMode == 'drawClickMode'
+        or state.currentMode == 'drawFreePoly'
+        or state.currentMode == 'drawFreePath' then
         if (#state.interaction.polyVerts >= 6) then
             love.graphics.polygon('line', state.interaction.polyVerts)
         end
@@ -132,7 +135,8 @@ function lib.renderActiveEditorThings()
     end
 
 
-    if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture and state.texFixtureEdit.lockedVerts == false then
+    if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
+        and state.texFixtureEdit.lockedVerts == false then
         local thing     = state.selection.selectedSFixture:getBody():getUserData().thing
 
         local fixtureUD = state.selection.selectedSFixture:getUserData()
@@ -266,7 +270,8 @@ function lib.renderActiveEditorThings()
                             if node.type == 'anchor' then
                                 local a = registry.getSFixtureByID(node.id)
                                 local anchorBody = a:getBody()
-                                local nx, ny = mathutils.getCenterOfPoints({ anchorBody:getWorldPoints(a:getShape():getPoints()) })
+                                local nx, ny = mathutils.getCenterOfPoints(
+                                    { anchorBody:getWorldPoints(a:getShape():getPoints()) })
                                 love.graphics.circle('line', nx, ny, 10)
                             end
                         end
@@ -322,7 +327,8 @@ function lib.renderActiveEditorThings()
                             if node.type == 'anchor' then
                                  local a = registry.getSFixtureByID(node.id)
                                  local anchorBody = a:getBody()
-                                  local nx, ny = mathutils.getCenterOfPoints({ anchorBody:getWorldPoints(a:getShape():getPoints()) })
+                                  local nx, ny = mathutils.getCenterOfPoints(
+                                      { anchorBody:getWorldPoints(a:getShape():getPoints()) })
                                  love.graphics.line(wx, wy, nx, ny)
                             end
                         end

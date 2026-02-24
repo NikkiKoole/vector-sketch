@@ -39,8 +39,10 @@ local function handlePointer(x, y, id, action, _button)
                 return
             end
         end
-        if state.selection.selectedJoint or state.selection.selectedObj or state.selection.selectedSFixture or state.selection.selectedBodies
-            or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' or state.currentMode == 'drawFreePath' then
+        if state.selection.selectedJoint or state.selection.selectedObj
+            or state.selection.selectedSFixture or state.selection.selectedBodies
+            or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly'
+            or state.currentMode == 'drawFreePath' then
             local w = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -56,7 +58,8 @@ local function handlePointer(x, y, id, action, _button)
         local rightShape = state.selection.selectedObj and (state.selection.selectedObj.shapeType == 'custom' or
             state.selection.selectedObj.shapeType == 'ribbon')
         -- print('hello??')
-        if state.polyEdit.tempVerts and state.selection.selectedObj and rightShape and state.polyEdit.lockedVerts == false then
+        if state.polyEdit.tempVerts and state.selection.selectedObj
+            and rightShape and state.polyEdit.lockedVerts == false then
             local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
                 state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
             for i = 1, #verts, 2 do
@@ -73,7 +76,8 @@ local function handlePointer(x, y, id, action, _button)
             end
         end
 
-        if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture and state.texFixtureEdit.lockedVerts == false then
+        if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
+            and state.texFixtureEdit.lockedVerts == false then
             --local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             --    state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
             local thing = state.selection.selectedSFixture:getBody():getUserData().thing
@@ -104,7 +108,8 @@ local function handlePointer(x, y, id, action, _button)
         if (state.currentMode == 'setOffsetA') then
             local bodyA = state.selection.selectedJoint:getBodies()
             local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
-            state.selection.selectedJoint = joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy) --state.interaction.setOffsetAFunc(cx, cy)
+            state.selection.selectedJoint =
+                joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy)
             print('got here!')
             --state.interaction.setOffsetAFunc = nil
             state.currentMode = nil
@@ -114,7 +119,8 @@ local function handlePointer(x, y, id, action, _button)
             local _, bodyB = state.selection.selectedJoint:getBodies()
             local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
 
-            state.selection.selectedJoint = joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy) --state.interaction.setOffsetAFunc(cx, cy)
+            state.selection.selectedJoint =
+                joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy)
             --state.interaction.setOffsetAFunc = nil
             state.currentMode = nil
         end
@@ -171,7 +177,8 @@ local function handlePointer(x, y, id, action, _button)
                 local ud = f:getUserData()
                 if ud.label == 'anchor' or ud.subtype == 'anchor' then
                     -- todo this will find ALL sfitures bot just anchors
-                    local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
+                    local centerX, centerY = mathutils.getCenterOfPoints(
+                        { body:getWorldPoints(f:getShape():getPoints()) })
 
                     local d = distanceSquared(centerX, centerY, cx, cy)
                     if d < closestDistanceSquared then
@@ -235,7 +242,8 @@ local function handlePointer(x, y, id, action, _button)
 
                     local b1x, b1y = b1:getLocalPoint(cx, cy)
                     local b2x, b2y = b2:getLocalPoint(cx, cy)
-                    -- todo i think a good compromise is to pick the body where the cx,cy is closst to its middel as the first,
+                    -- todo i think a good compromise is to pick the body where
+                    -- the cx,cy is closst to its middel as the first,
                     -- this will result in the most usefull cases i think.
                     --logger:info('b1', px, py)
                     if (distanceSquared(b1x, b1y, 0, 0) < distanceSquared(b2x, b2y, 0, 0)) then
@@ -316,7 +324,8 @@ local function handlePointer(x, y, id, action, _button)
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
             -- todo this line below can be erroring, i ve had it happen when dragging a chacter nd pressing N
-            local newReleased = utils.map(releasedObjs, function(h) return h:getUserData() and h:getUserData().thing end)
+            local newReleased = utils.map(releasedObjs,
+                function(h) return h:getUserData() and h:getUserData().thing end)
 
             --  state.currentlyPressed = removeMatchingIds(state.currentlyPressed, newReleased)
             script.call('onReleased', newReleased)
@@ -376,7 +385,8 @@ local function handlePointer(x, y, id, action, _button)
         end
 
         -- if we have released a mousebutton but it isnt nr1, then we keep on drawing free polygon
-        if (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath') and not love.mouse.isDown(1) then
+        if (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath')
+            and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
 
             if state.currentMode == 'drawFreePoly' then
@@ -665,7 +675,10 @@ function lib.handleMouseMoved(x, y, dx, dy)
         ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
         -- print(index)
-    elseif state.interaction.capturingPoly and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' or state.currentMode == 'drawFreePath') and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
+    elseif state.interaction.capturingPoly
+        and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly'
+            or state.currentMode == 'drawFreePath')
+        and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance
         local addPoint = false

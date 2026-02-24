@@ -117,7 +117,8 @@ local function checkForSnaps(interacted, snapFix)
     for i = 1, #snapFix do
         local it1 = snapFix[i]:getUserData().extra
 
-        if it1.to == nil and not isInCooldown(it1.fixture, currentTime) then -- else this snap point is already connected and it cannot be connected more then once
+        -- else this snap point is already connected and it cannot be connected more then once
+        if it1.to == nil and not isInCooldown(it1.fixture, currentTime) then
             local body1 = it1.at
             if not body1 then
                 logger:error('body1 is nil!    ')
@@ -131,14 +132,17 @@ local function checkForSnaps(interacted, snapFix)
             for j = 1, #snapFix do
                 if j ~= i then                                                           -- else you check it against it
                     local it2 = snapFix[j]:getUserData().extra
-                    if it2.to == nil and not isInCooldown(it2.fixture, currentTime) then -- else it2 is already connected,
+                    -- else it2 is already connected,
+                    if it2.to == nil and not isInCooldown(it2.fixture, currentTime) then
                         local body2 = it2.at
                         local x2, y2 = body2:getWorldPoint(it2.xOffset, it2.yOffset)
 
                         local distance = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                         if distance <= snapDistance then
-                            if (not onlyConnectWhenInteracted or (oneOfThemIsInteractedWith(body1, body2, interacted))) then
-                                if not areBodiesConnected2(body1, body2, snapFix) then -- else these bodies are already connected..
+                            if (not onlyConnectWhenInteracted
+                                    or (oneOfThemIsInteractedWith(body1, body2, interacted))) then
+                                -- else these bodies are already connected..
+                                if not areBodiesConnected2(body1, body2, snapFix) then
                                     createRevoluteJoint(body1, body2, x1, y1, x2, y2, i, j)
                                     it1.to = body2
                                     local ud1 = snapFix[i]:getUserData()

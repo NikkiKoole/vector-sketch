@@ -132,7 +132,8 @@ function lib.finalizePath()
         --logger:inspect(verts)
         --logger:info('VERTICES')
        -- logger:inspect(vertices)
-        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
+        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType,
+        --     nil, nil, nil, nil, '', state.interaction.polyVerts)
         result = lib.addThing('ribbon', settings)
     else
         -- Not enough vertices to form a polygon
@@ -157,7 +158,8 @@ function lib.finalizePolygon()
             vertices = state.interaction
                 .polyVerts
         }
-        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType, nil, nil, nil, nil, '', state.interaction.polyVerts)
+        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType,
+        --     nil, nil, nil, nil, '', state.interaction.polyVerts)
         result = lib.addThing('custom', settings)
     else
         -- Not enough vertices to form a polygon
@@ -574,14 +576,18 @@ function lib.recreateThingFromBody(body, newSettings)
             local abs = oldF:getShape()
             local centerX, centerY = mathutils.getCenterOfPoints(points)
             if (thing.vertices) then
-                -- we are repositioning special fixtures (anchors, snappoints) and doing our best to set them at a decent position.
+                -- we are repositioning special fixtures (anchors, snappoints)
+                -- and doing our best to set them at a decent position.
                 -- this is fine for all sort of editor made things,
                 -- todo specific positioning for mipo on behavors
-                -- but for mipos character we might just want to be very precise and dending on behaviors and tags and dedicated rules.
+                -- but for mipos character we might just want to be very precise
+                -- and dending on behaviors and tags and dedicated rules.
                 --local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
                 --local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
-                if (#thing.vertices == #newVertices) then -- this general case isn working when the amount of points change. (and im not sure if it wise otherwise)
+                -- this general case isn working when the amount of points
+                -- change. (and im not sure if it wise otherwise)
+                if (#thing.vertices == #newVertices) then
                     local weights = mathutils.getMeanValueCoordinatesWeights(centerX, centerY, thing.vertices)
                     local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
 
@@ -908,7 +914,8 @@ function lib.flipThing(thing, axis, recursive)
 
 
             logger:info(
-                'I should figure out if i want to do something weird with the offset, think connect to torso logic at edge nr...')
+                'I should figure out if i want to do something weird with the offset, ' ..
+                'think connect to torso logic at edge nr...')
             --print('old', inspect(processedBodies[thingA.id]), inspect(processedBodies[thingB.id]))
             --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
 
@@ -941,7 +948,8 @@ function lib.flipThing(thing, axis, recursive)
             if axis == 'y' then
                 -- as long as you build your joints in the right order this just works like this.
                 -- the reason is quite subtle (before we did lowerlimit  +math.pi and higherlimit + math.pi), but
-                -- because the axis is flipped , the order between the joint becomes flipped too, which offsets that math.pi back to 0
+                -- because the axis is flipped, the order between the joint becomes
+                -- flipped too, which offsets that math.pi back to 0
 
                 -- TLDR dont make the joints in the wrong order, then everything works great!
                 newJoint:setLimits(-upper, -lower)

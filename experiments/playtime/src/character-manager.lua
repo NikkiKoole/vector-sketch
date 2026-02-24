@@ -10,7 +10,8 @@ local drawTextured = require 'src.box2d-draw-textured'
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
--- the torso images, or maybe every tex-fixture also needs a growvalue that describes how much the w, h values will be grown.
+-- the torso images, or maybe every tex-fixture also needs a growvalue that describes
+-- how much the w, h values will be grown.
 -- next the chesthair has a grow too, the torso too and I also have a foot offset value that should be parametrized.
 
 -- do lerping positioners (arm beginning, leg beginnnig, ear)
@@ -129,47 +130,87 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
 end
 
 local shape8Dict = {
-    ['shapeA1.png'] = { d = { 339, 560 }, v = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
-    ['shapeA2.png'] = { d = { 289, 468 }, v = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
-    ['shapeA3.png'] = { d = { 370, 422 }, v = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
-    ['shapeA4.png'] = { d = { 308, 414 }, v = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
-    ['shapes1.png'] = { d = { 296, 495 }, v = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
-    ['shapes2.png'] = { d = { 252, 461 }, v = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
-    ['shapes3.png'] = { d = { 324, 442 }, v = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
-    ['shapes4.png'] = { d = { 364, 266 }, v = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
-    ['shapes5.png'] = { d = { 194, 338 }, v = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
-    ['shapes6.png'] = { d = { 250, 384 }, v = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
-    ['shapes7.png'] = { d = { 722, 929 }, v = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
-    ['shapes8.png'] = { d = { 788, 708 }, v = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
-    ['shapes9.png'] = { d = { 520, 468 }, v = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
-    ['shapes10.png'] = { d = { 520, 856 }, v = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
-    ['shapes11.png'] = { d = { 652, 932 }, v = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
-    ['shapes12.png'] = { d = { 558, 323 }, v = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
-    ['shapes13.png'] = { d = { 486, 556 }, v = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
-    ['feet2r.png'] = { d = { 261, 475 }, v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
-    ['feet6r.png'] = { d = { 293, 612 }, v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
-    ['feet5xr.png'] = { d = { 174, 621 }, v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
-    ['feet3xr.png'] = { d = { 231, 505 }, v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
-    ['feet7r.png'] = { d = { 300, 546 }, v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
-    ['feet8r.png'] = { d = { 303, 465 }, v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { d = { 294, 489 }, v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
-    ['feet7xr.png'] = { d = { 216, 410 }, v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
-    ['earx1r.png'] = { d = { 312, 416 }, v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
-    ['earx2r.png'] = { d = { 354, 420 }, v = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
-    ['earx3r.png'] = { d = { 369, 339 }, v = { -111, -116, -23, -48, 36, 13, 96, 70, -11, 74, -94, 70, -107, 15, -114, -49 } },
-    ['earx4r.png'] = { d = { 306, 483 }, v = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
-    ['earx5r.png'] = { d = { 240, 549 }, v = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
-    ['earx6r.png'] = { d = { 240, 519 }, v = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
-    ['earx7r.png'] = { d = { 204, 474 }, v = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
-    ['earx8r.png'] = { d = { 402, 270 }, v = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
+    ['shapeA1.png'] = { d = { 339, 560 },
+        v = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
+    ['shapeA2.png'] = { d = { 289, 468 },
+        v = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
+    ['shapeA3.png'] = { d = { 370, 422 },
+        v = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
+    ['shapeA4.png'] = { d = { 308, 414 },
+        v = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
+    ['shapes1.png'] = { d = { 296, 495 },
+        v = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
+    ['shapes2.png'] = { d = { 252, 461 },
+        v = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
+    ['shapes3.png'] = { d = { 324, 442 },
+        v = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
+    ['shapes4.png'] = { d = { 364, 266 },
+        v = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
+    ['shapes5.png'] = { d = { 194, 338 },
+        v = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
+    ['shapes6.png'] = { d = { 250, 384 },
+        v = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
+    ['shapes7.png'] = { d = { 722, 929 },
+        v = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
+    ['shapes8.png'] = { d = { 788, 708 },
+        v = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
+    ['shapes9.png'] = { d = { 520, 468 },
+        v = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
+    ['shapes10.png'] = { d = { 520, 856 },
+        v = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
+    ['shapes11.png'] = { d = { 652, 932 },
+        v = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
+    ['shapes12.png'] = { d = { 558, 323 },
+        v = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
+    ['shapes13.png'] = { d = { 486, 556 },
+        v = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
+    ['feet2r.png'] = { d = { 261, 475 },
+        v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
+    ['feet6r.png'] = { d = { 293, 612 },
+        v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
+    ['feet5xr.png'] = { d = { 174, 621 },
+        v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
+    ['feet3xr.png'] = { d = { 231, 505 },
+        v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
+    ['feet7r.png'] = { d = { 300, 546 },
+        v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
+    ['feet8r.png'] = { d = { 303, 465 },
+        v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
+    ['hand3r.png'] = { d = { 294, 489 },
+        v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
+    ['feet7xr.png'] = { d = { 216, 410 },
+        v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
+    ['earx1r.png'] = { d = { 312, 416 },
+        v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
+    ['earx2r.png'] = { d = { 354, 420 },
+        v = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
+    ['earx3r.png'] = { d = { 369, 339 },
+        v = { -111, -116, -23, -48, 36, 13, 96, 70, -11, 74, -94, 70, -107, 15, -114, -49 } },
+    ['earx4r.png'] = { d = { 306, 483 },
+        v = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
+    ['earx5r.png'] = { d = { 240, 549 },
+        v = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
+    ['earx6r.png'] = { d = { 240, 519 },
+        v = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
+    ['earx7r.png'] = { d = { 204, 474 },
+        v = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
+    ['earx8r.png'] = { d = { 402, 270 },
+        v = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
     ['earx9r.png'] = { d = { 231, 243 }, v = { -4, -81, 38, -60, 66, 0, 62, 38, -7, 59, -73, 49, -82, 7, -57, -59 } },
-    ['earx10r.png'] = { d = { 168, 174 }, v = { -3, -35, 29, -16, 32, 13, 35, 46, -7, 50, -50, 45, -45, 13, -37, -15 } },
-    ['earx11r.png'] = { d = { 177, 150 }, v = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
-    ['earx12r.png'] = { d = { 240, 330 }, v = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
-    ['earx13r.png'] = { d = { 225, 336 }, v = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
-    ['earx14r.png'] = { d = { 270, 465 }, v = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
-    ['earx15r.png'] = { d = { 132, 228 }, v = { -20, -78, 15, -36, 26, 11, 21, 66, -16, 63, -37, 40, -43, 12, -48, -36 } },
-    ['earx16r.png'] = { d = { 312, 258 }, v = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
+    ['earx10r.png'] = { d = { 168, 174 },
+        v = { -3, -35, 29, -16, 32, 13, 35, 46, -7, 50, -50, 45, -45, 13, -37, -15 } },
+    ['earx11r.png'] = { d = { 177, 150 },
+        v = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
+    ['earx12r.png'] = { d = { 240, 330 },
+        v = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
+    ['earx13r.png'] = { d = { 225, 336 },
+        v = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
+    ['earx14r.png'] = { d = { 270, 465 },
+        v = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
+    ['earx15r.png'] = { d = { 132, 228 },
+        v = { -20, -78, 15, -36, 26, 11, 21, 66, -16, 63, -37, 40, -43, 12, -48, -36 } },
+    ['earx16r.png'] = { d = { 312, 258 },
+        v = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
 }
 
 local dna = {
@@ -244,7 +285,8 @@ local dna = {
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
 
-            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 },
+            --    shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
             ['neck-segment-template'] = {
 
@@ -252,7 +294,8 @@ local dna = {
                 shape = 'capsule',
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
-            -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule',
+            --     j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
             ['head'] = {
                 appearance = {
                     ['skin'] = {
@@ -303,8 +346,10 @@ local dna = {
                 shape = 'capsule',
                 j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } }
             },
-            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
-            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule',
+                j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
+            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule',
+                j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
             ['luarm'] = {
                 appearance = {
                     ['connected-skin'] = {
@@ -337,8 +382,10 @@ local dna = {
                 shape = 'capsule',
                 j = { type = 'revolute', limits = { low = -math.pi, up = 0 } }
             },
-            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
-            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 }, shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 },
+                shape = 'capsule', j = { type = 'revolute', limits = {} } },
+            ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 },
+                shape = 'capsule', j = { type = 'revolute', limits = {} } },
             ['lfoot'] = {
                 appearance = {
                     ['skin'] = {
@@ -363,8 +410,10 @@ local dna = {
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
-            --['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            --['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule',
+            --    j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule',
+            --    j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lhand'] = {
                 appearance = {
                     ['skin'] = {
@@ -388,8 +437,10 @@ local dna = {
                 j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODo same kind of weirdness for the hands!
-            -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle', j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle',
+            --     j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle',
+            --     j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = {
                 appearance = {
                     ['skin'] = {
@@ -1230,7 +1281,8 @@ local function updateSinglePart(partName, data, instance)
 
     if partData.shape8URL and shape8Dict[partData.shape8URL] then
         local raw = shape8Dict[partData.shape8URL].v
-        settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
+        settings.vertices = makeTransformedVertices(
+            raw, (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
     end
 
     local children = getParentAndChildrenFromPartName(partName, instance).c or {}
@@ -1265,7 +1317,8 @@ function lib.updatePart(partName, data, instance)
     if positionTorso then fixDrift(positionTorso, instance) end
 end
 
--- given an instance with dna and a new creation, this function is made to change a creation of a humanoid during runtime.
+-- given an instance with dna and a new creation, this function is made to change
+-- a creation of a humanoid during runtime.
 -- its alos used by initially creating a character.
 function lib.rebuildFromCreation(instance, newCreation)
     -- Step 1: Update the creation settings
@@ -1315,7 +1368,9 @@ function lib.addTexturesFromInstance2(instance)
                     local f = allFixtures[fi]
                     local ud = f:getUserData()
                     if ud then
-                        if (ud.subtype == 'connected-texture' or ud.subtype == 'texfixture' or ud.subtype == 'trace-vertices') then
+                        if (ud.subtype == 'connected-texture'
+                                or ud.subtype == 'texfixture'
+                                or ud.subtype == 'trace-vertices') then
                             fixtures.destroyFixture(f)
                         end
                     end
@@ -1517,7 +1572,8 @@ function lib.addTexturesFromInstance2(instance)
                     end
                 end
                 -- here we do stuff.
-                -- i think we should haev some kind of helper function that know depending on what the body tye is how we will add
+                -- i think we should haev some kind of helper function that know depending on
+                -- what the body tye is how we will add
                 -- sfiuxture or connected fixture etc..
             end
         end
@@ -1653,10 +1709,10 @@ function lib.createCharacterFromJustDNA(mydna, x, y, scale)
         dna = utils.deepCopy(mydna), -- Copy template data for potential instance modification
         parts = {},                  -- { [partName] = thingObject, ... }
         joints = {},                 -- unused...{ [connectionName] = jointObject, ... }
-        --appearanceValues = {},               -- Will hold visual overrides (implement later)
+        --appearanceValues = {},     -- Will hold visual overrides (implement later)
         -- Add other instance-specific state if needed
-        textures = {},   -- here we will keep the data about what texture will go where (simple textures and connected textures)
-        positioners = {} -- here we will have some lerp values describing how things are positioned..
+        textures = {},   -- texture data: simple textures and connected textures
+        positioners = {} -- lerp values describing how things are positioned..
 
     }
     instance.scale = scale or 1
@@ -1669,12 +1725,12 @@ function lib.createCharacter(template, x, y, scale)
             id = uuid.generateID(),
             templateName = template,
             dna = utils.deepCopy(dna[template]), -- Copy template data for potential instance modification
-            parts = {},                          -- { [partName] = thingObject, ... }
-            joints = {},                         -- unused...{ [connectionName] = jointObject, ... }
-            --appearanceValues = {},               -- Will hold visual overrides (implement later)
+            parts = {},              -- { [partName] = thingObject, ... }
+            joints = {},             -- unused...{ [connectionName] = jointObject, ... }
+            --appearanceValues = {}, -- Will hold visual overrides (implement later)
             -- Add other instance-specific state if needed
-            textures = {},   -- here we will keep the data about what texture will go where (simple textures and connected textures)
-            positioners = {} -- here we will have some lerp values describing how things are positioned..
+            textures = {},   -- texture data: simple textures and connected textures
+            positioners = {} -- lerp values describing how things are positioned..
 
         }
         instance.scale = scale or 1

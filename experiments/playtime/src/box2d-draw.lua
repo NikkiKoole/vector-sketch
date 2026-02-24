@@ -89,7 +89,9 @@ function lib.drawWorld(world, drawOutline)
                         end
                         --  print(inspect(fixture:getUserData() ))
                     end
-                    if drawOutline then love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints())) end
+                    if drawOutline then
+                        love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
+                    end
                 elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
                     love.graphics.setColor(0, 1, 1, alpha)
                     local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
@@ -110,7 +112,9 @@ function lib.drawWorld(world, drawOutline)
 
                     local circleOutlineColor = pal.creamy
                     love.graphics.setColor(circleOutlineColor[1], circleOutlineColor[2], circleOutlineColor[3], alpha)
-                    if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, radius, segments) end
+                    if drawOutline then
+                        love.graphics.circle('line', body_x + shape_x, body_y + shape_y, radius, segments)
+                    end
                 end
                 if state.world.showDebugIds then
                     local ud = fixture:getUserData()
@@ -165,8 +169,10 @@ function lib.drawWorld(world, drawOutline)
                 if joint:areLimitsEnabled() then
                     local lower, upper = joint:getLimits()
                     love.graphics.setColor(1, 1, 0) -- Yellow
-                    love.graphics.line(x + ax * lower, y + ay * lower, x + ax * lower + ax * 10, y + ay * lower + ay * 10)
-                    love.graphics.line(x + ax * upper, y + ay * upper, x + ax * upper + ax * 10, y + ay * upper + ay * 10)
+                    love.graphics.line(x + ax * lower, y + ay * lower,
+                        x + ax * lower + ax * 10, y + ay * lower + ay * 10)
+                    love.graphics.line(x + ax * upper, y + ay * upper,
+                        x + ax * upper + ax * 10, y + ay * upper + ay * 10)
                 end
                 love.graphics.setColor(1, 1, 1) -- Reset
             end

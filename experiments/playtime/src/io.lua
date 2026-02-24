@@ -72,8 +72,9 @@ local function remapAndRestoreInfluences(influences, idMapping)
 end
 
 function lib.buildWorld(data, world, cam)
-    -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
-    -- this isnt really used. so we just might as well just always use the oldid....
+    -- todo is this actually needed, i *think* its a premature optimization,
+    -- getting ready to load a file into an exitsing situation, button
+    -- this isnt really used. so we just might as well always use the oldid....
     --print(reuseOldIds)
     -- local function getNewId(oldId)
     --     if not reuseOldIds then
@@ -488,7 +489,8 @@ function lib.gatherSaveData(world, camera)
                     end
 
                     if not first then
-                        logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), using first fixture as fallback', thing.id)
+                        logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), '
+                            .. 'using first fixture as fallback', thing.id)
                         first = bodyFixtures[1]
                     end
 
@@ -534,7 +536,8 @@ function lib.gatherSaveData(world, camera)
                 end
 
                 if fixture:getUserData() then
-                    if utils.sanitizeString(fixture:getUserData().label) == 'snap' or fixture:getUserData().subtype == 'snap' then
+                    if utils.sanitizeString(fixture:getUserData().label) == 'snap'
+                            or fixture:getUserData().subtype == 'snap' then
                         local ud             = fixture:getUserData()
 
                         ud.extra.fixture     = 'fixture'
@@ -960,7 +963,8 @@ function lib.cloneSelection(selectedBodies, world)
 
     -- at this point everything that is cloned is added into the world
     -- logger:inspect(idMapping)
-    -- now we need to figure out if i have any of the connected-texture fixtures with ids in their userdata that needs updating
+    -- now we need to figure out if i have any of the connected-texture fixtures
+    -- with ids in their userdata that needs updating
     for _, v in pairs(clonedBodiesMap) do
         local bodyFixtures = v.body:getFixtures()
         for j = 1, #bodyFixtures do

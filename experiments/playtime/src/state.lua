@@ -78,7 +78,9 @@ state.vertexEditor = {
 
 --state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
-state.currentMode = nil -- 'jointCreationMode' 'pickAutoRopifyMode' 'drawFreePoly' 'drawClickPoly', 'positioningSFixture', 'setOffsetA', 'setOffsetB' , 'addNodeToConnectedTexture'
+-- Modes: 'jointCreationMode' 'pickAutoRopifyMode' 'drawFreePoly' 'drawClickPoly',
+-- 'positioningSFixture', 'setOffsetA', 'setOffsetB', 'addNodeToConnectedTexture'
+state.currentMode = nil
 state.jointParams = nil
 state.jointLengthParams = {}
 state.showPaletteFunc = nil

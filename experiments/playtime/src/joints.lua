@@ -67,7 +67,8 @@ function lib.getJointMetaSetting(joint, settingKey)
     if type(ud) == "table" then
         return ud[settingKey] -- Return the specific setting
     else
-        logger:error('could not find meta settting ' .. settingKey .. ' on joint with type ' .. tostring(joint:getType()))
+        logger:error('could not find meta settting ' .. settingKey ..
+            ' on joint with type ' .. tostring(joint:getType()))
         return nil -- Return nil if userdata is not a table or doesn't exist
     end
 end

@@ -560,7 +560,8 @@ local accordeonStatesAS = {
 
 function lib.drawAddShapeUI()
     local shapeTypesLess = { 'rectangle', 'circle', 'capsule', 'ribbon' }
-    local shapeTypesMore = { 'rectangle', 'circle', 'capsule', 'triangle', 'itriangle', 'torso', 'trapezium', 'pentagon',
+    local shapeTypesMore = { 'rectangle', 'circle', 'capsule', 'triangle',
+        'itriangle', 'torso', 'trapezium', 'pentagon',
         'hexagon',
         'heptagon',
         'octagon' }
@@ -816,7 +817,8 @@ function lib.drawRecordingUI()
             end
         end
 
-        if state.scene.activeCheckpointIndex > 0 and ((not recorder.isRecording and state.world.paused) or recorder.isRecording) then
+        if state.scene.activeCheckpointIndex > 0
+            and ((not recorder.isRecording and state.world.paused) or recorder.isRecording) then
             local pointerbutton = ui.button(x, y, width,
                 recorder.isRecording and 'RECORDING gestures' or 'record gestures')
             if pointerbutton then
@@ -1323,7 +1325,8 @@ function lib.drawSelectedSFixture()
                                         bud.thing.width = imgW
                                         bud.thing.height = imgH
 
-                                        --objectManager.recreateThingFromBody(state.selection.selectedSFixture:getBody(),
+                                        --objectManager.recreateThingFromBody(
+                                        --    state.selection.selectedSFixture:getBody(),
                                         --    bud.thing)
                                         --bud.thing.vertices = nil
                                         --bud.thing.dirty = true
@@ -1514,7 +1517,9 @@ function lib.drawSelectedSFixture()
 
                 --print(label, mappert)
                 if mappert then
-                    local mb = mappert:getBody()     -- mappert is a thing completelly outside of my body, its justa aplce where the mesh is stored.
+                    -- mappert is a thing completely outside of my body,
+                    -- it's just a place where the mesh is stored.
+                    local mb = mappert:getBody()
                     local mud = mb:getUserData()
                     local verts = mud.thing.vertices -- this is the original mesh.
 
@@ -1763,7 +1768,8 @@ function lib.drawSelectedSFixture()
                     end
 
                     local blendColor = (state.vertexEditor.assignmentMode == 'blend') and { 0.3, 0.8, 0.3 } or nil
-                    if ui.button(x + (ROW_WIDTH + 50) / 2 + 5, y, (ROW_WIDTH + 50) / 2 - 5, 'Blend', BUTTON_HEIGHT, blendColor) then
+                    if ui.button(x + (ROW_WIDTH + 50) / 2 + 5, y,
+                        (ROW_WIDTH + 50) / 2 - 5, 'Blend', BUTTON_HEIGHT, blendColor) then
                         state.vertexEditor.assignmentMode = 'blend'
                     end
                     nextRow()
@@ -2619,13 +2625,16 @@ function lib.drawUpdateSelectedObjectUI()
                         local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
                         ui.alignedLabel(x, y, ' height')
                         nextRow()
-                        local newHeight2 = ui.sliderWithInput(myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
+                        local newHeight2 = ui.sliderWithInput(
+                            myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
                         ui.alignedLabel(x, y, ' height2')
                         nextRow()
-                        local newHeight3 = ui.sliderWithInput(myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
+                        local newHeight3 = ui.sliderWithInput(
+                            myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
                         ui.alignedLabel(x, y, ' height3')
                         nextRow()
-                        local newHeight4 = ui.sliderWithInput(myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
+                        local newHeight4 = ui.sliderWithInput(
+                            myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
                         ui.alignedLabel(x, y, ' height4')
                         nextRow()
 
@@ -2672,7 +2681,9 @@ function lib.drawUpdateSelectedObjectUI()
                         local newHeight = ui.sliderWithInput(myID .. ' height', x, y, ROW_WIDTH, 1, 800, thing.height)
                         ui.alignedLabel(x, y, ' height')
 
-                        if (newWidth and newWidth ~= thing.width) or (newWidth2 and newWidth2 ~= thing.width2) or (newHeight and newHeight ~= thing.height) then
+                        if (newWidth and newWidth ~= thing.width)
+                            or (newWidth2 and newWidth2 ~= thing.width2)
+                            or (newHeight and newHeight ~= thing.height) then
                             state.editorPreferences.lastUsedWidth2 = newWidth2
                             state.editorPreferences.lastUsedWidth = newWidth
                             state.editorPreferences.lastUsedHeight = newHeight
@@ -2704,8 +2715,11 @@ function lib.drawUpdateSelectedObjectUI()
                             -- No UI controls for custom or unsupported shapes
                             --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
                             if (state.selection.selectedObj) then
-                                if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'custom' or state.selection.selectedObj.shapeType == 'ribbon' then
-                                    if ui.button(x, y, 260, state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
+                                if state.selection.selectedObj
+                                    and state.selection.selectedObj.shapeType == 'custom'
+                                    or state.selection.selectedObj.shapeType == 'ribbon' then
+                                    if ui.button(x, y, 260,
+                                        state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
                                         state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts
                                         if state.polyEdit.lockedVerts == false then
                                             state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj
@@ -2864,7 +2878,8 @@ function lib.drawUpdateSelectedObjectUI()
 
             if not body:isDestroyed() then
                 local attachedJoints = body:getJoints()
-                if attachedJoints and #attachedJoints > 0 and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
+                if attachedJoints and #attachedJoints > 0
+                    and not (#attachedJoints == 1 and attachedJoints[1]:getType() == 'mouse') then
                     drawAccordion("joints",
                         function()
                             for _, joint in ipairs(attachedJoints) do
@@ -3145,7 +3160,8 @@ function lib.drawUI()
         lib.doJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
-    if (state.currentMode == 'setOffsetA') or (state.currentMode == 'setOffsetB') or state.currentMode == 'positioningSFixture' then
+    if (state.currentMode == 'setOffsetA') or (state.currentMode == 'setOffsetB')
+        or state.currentMode == 'positioningSFixture' then
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
@@ -3156,7 +3172,8 @@ function lib.drawUI()
     end
 
 
-    if (state.currentMode == 'jointCreationMode') and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
+    if (state.currentMode == 'jointCreationMode')
+        and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
         if (state.jointParams.body1 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
                 local x = 510
@@ -3194,7 +3211,8 @@ function lib.drawUI()
                 local y = row * cellHeight
 
                 -- ui.coloredRect(0, 0, { 255, 0, 0 }, 40)
-                if ui.coloredRect(10 + x, h - 300 + y, { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
+                if ui.coloredRect(10 + x, h - 300 + y,
+                    { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
                     state.showPaletteFunc(box2dDrawTextured.palette[i])
                 end
             end

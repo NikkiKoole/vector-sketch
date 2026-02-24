@@ -45,7 +45,8 @@ jointHandlers["weld"] = {
 jointHandlers["rope"] = {
     create = function(data, x1, y1, x2, y2)
         local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        local joint = love.physics.newRopeJoint(data.body1, data.body2, x1, y1, x2, y2, maxLength, data.collideConnected)
+        local joint = love.physics.newRopeJoint(
+            data.body1, data.body2, x1, y1, x2, y2, maxLength, data.collideConnected)
         return joint
     end,
     extract = function(joint)

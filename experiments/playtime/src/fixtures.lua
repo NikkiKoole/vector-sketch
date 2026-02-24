@@ -32,7 +32,8 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
         { sfixture:getShape():getPoints() } -- Existing local points
     local centerX, centerY = mathutils.getCenterOfPoints(points)
 
-    local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY) -- Points relative to old center
+    -- Points relative to old center
+    local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
 
     -- Create new absolute points centered at the *new* local click position
     local newShapePoints = mathutils.makePolygonAbsolute(relativePoints, localX, localY)
@@ -199,7 +200,10 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", id = setId, subtype = 'texfixture', label = '', extra = { vertexCount = vertexCount, vertices = vv } })
+        fixture:setUserData({
+            type = "sfixture", id = setId, subtype = 'texfixture', label = '',
+            extra = { vertexCount = vertexCount, vertices = vv }
+        })
         registry.registerSFixture(setId, fixture)
         return fixture
     end

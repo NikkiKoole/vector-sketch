@@ -1,5 +1,7 @@
 --[[
-TODO Recreating meshes every frame in drawSquishableHairOver and createTexturedTriangleStrip (within drawTexturedWorld) is definitely inefficient. We should absolutely cache these.
+TODO Recreating meshes every frame in drawSquishableHairOver and
+createTexturedTriangleStrip (within drawTexturedWorld) is definitely
+inefficient. We should absolutely cache these.
 ]] --
 
 local lib = {}
@@ -791,7 +793,8 @@ function lib.drawTexturedWorld(world)
             --     local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
             --     table.insert(drawables, { z = composedZ, body = body, thing = ud.thing })
             -- end
-            -- todo instead of having to check all the fixtures every frame we should mark a thing that has these type of specialfixtures.
+            -- todo instead of having to check all the fixtures every frame
+            -- we should mark a thing that has these type of specialfixtures.
             local fixtures = body:getFixtures()
             for i = 1, #fixtures do
                 local ud = fixtures[i]:getUserData()
@@ -937,8 +940,11 @@ function lib.drawTexturedWorld(world)
     end
 
     local drawables = createDrawables()
-    -- todo this list needs to be kept around and sorted in place, resetting and doing all the work every frame is heavy!
-    -- optimally i dont want to sort at all every frame, maybe i can add a flag to indicate that the list is sorted and only sort when necessary (when adding/removing)
+    -- todo this list needs to be kept around and sorted in place,
+    -- resetting and doing all the work every frame is heavy!
+    -- optimally i dont want to sort at all every frame, maybe i can
+    -- add a flag to indicate that the list is sorted and only sort
+    -- when necessary (when adding/removing)
 
     local function sorter(a, b) return a.z < b.z end
 
@@ -952,7 +958,9 @@ function lib.drawTexturedWorld(world)
 
     -- todo: these3 function look very much alike, we wnat to combine them all in otne,
     -- another issue here is that i dont really understand how to set the ox and oy correctly, (for the combined Image)
-    -- and there is an issue with the center of the 'fan' mesh, it shouldnt always be 0,0 you can see this when you position the texfxture with the
+    -- and there is an issue with the center of the 'fan' mesh, it
+    -- shouldnt always be 0,0 you can see this when you position the
+    -- texfxture with the
     -- onscreen 'd' button quite a distnace out of the actual physics body center.
     --
     -- local function drawImageLayerSquish(url, hex, extra, texfixture)
@@ -1066,15 +1074,17 @@ function lib.drawTexturedWorld(world)
                     if main and main.bgURL then
                         --logger:inspect(extra.main.cached)
                         love.graphics.setColor(1, 0, 0)
-                        drawImageLayerSquishRGBA(extra.main.bgURL, cached.bgR, cached.bgG, cached.bgB, cached.bgA, extra,
-                            texfixture)
+                        drawImageLayerSquishRGBA(extra.main.bgURL,
+                            cached.bgR, cached.bgG, cached.bgB, cached.bgA,
+                            extra, texfixture)
                         --  drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
                         --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                     end
                     if extra.main and extra.main.fgURL then
                         --drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
-                        drawImageLayerSquishRGBA(extra.main.fgURL, cached.fgR, cached.fgG, cached.fgB, cached.fgA, extra,
-                            texfixture)
+                        drawImageLayerSquishRGBA(extra.main.fgURL,
+                            cached.fgR, cached.fgG, cached.fgB, cached.fgA,
+                            extra, texfixture)
                         --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                     end
                 end
