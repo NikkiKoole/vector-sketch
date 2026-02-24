@@ -23,7 +23,7 @@ local distanceSquared = function(x1, y1, x2, y2)
     return dx * dx + dy * dy
 end
 
-local function handlePointer(x, y, id, action, button)
+local function handlePointer(x, y, id, action, _button)
     if action == "pressed" then
         -- this is a nice pattern, early return!
         if state.currentMode == 'editMeshVertices' then return end
@@ -41,7 +41,7 @@ local function handlePointer(x, y, id, action, button)
         end
         if state.selection.selectedJoint or state.selection.selectedObj or state.selection.selectedSFixture or state.selection.selectedBodies
             or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly' or state.currentMode == 'drawFreePath' then
-            local w, h = love.graphics.getDimensions()
+            local w = love.graphics.getDimensions()
             if x > w - 300 then
                 return
             end
@@ -94,7 +94,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         if (state.currentMode == 'drawClickMode') then
-            local w, h = love.graphics.getDimensions()
+            local w = love.graphics.getDimensions()
             if x < w - 300 then
                 table.insert(state.interaction.polyVerts, cx)
                 table.insert(state.interaction.polyVerts, cy)
@@ -102,7 +102,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         if (state.currentMode == 'setOffsetA') then
-            local bodyA, bodyB = state.selection.selectedJoint:getBodies()
+            local bodyA = state.selection.selectedJoint:getBodies()
             local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
             state.selection.selectedJoint = joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy) --state.interaction.setOffsetAFunc(cx, cy)
             print('got here!')
@@ -111,7 +111,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         if (state.currentMode == 'setOffsetB') then
-            local bodyA, bodyB = state.selection.selectedJoint:getBodies()
+            local _, bodyB = state.selection.selectedJoint:getBodies()
             local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
 
             state.selection.selectedJoint = joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy) --state.interaction.setOffsetAFunc(cx, cy)
@@ -133,7 +133,7 @@ local function handlePointer(x, y, id, action, button)
 
 
         local onPressedParams = {
-            pointerForceFunc = function(fixture)
+            pointerForceFunc = function(_fixture)
                 return state.world.mouseForce
             end,
             damp = state.world.mouseDamping
@@ -152,7 +152,7 @@ local function handlePointer(x, y, id, action, button)
                 state.pickAutoRopifyModeHitted = hitted[1]:getBody():getUserData()
             end
             --print(inspect(state.pickAutoRopifyModeHitted))
-            local w, h = love.graphics.getDimensions()
+            local w = love.graphics.getDimensions()
             if x < w - 300 and #hitted == 0 then
                 state.currentMode = nil
                 state.pickAutoRopifyModeHitted = nil
@@ -182,7 +182,7 @@ local function handlePointer(x, y, id, action, button)
             end
 
             for _, j in pairs(registry.joints) do
-                local x1, y1, x2, y2 = j:getAnchors()
+                local x1, y1 = j:getAnchors()
                 local d = distanceSquared(x1, y1, cx, cy)
                 if d < closestDistanceSquared then
                     closestDistanceSquared = d
@@ -427,8 +427,6 @@ function lib.handleDraggingObj()
     local oldPosX, oldPosY = state.interaction.draggingObj.body:getPosition()
     state.interaction.draggingObj.body:setPosition(wx + rx, wy + ry)
     if recorder.isRecording then
-        local ud = state.interaction.draggingObj.body:getUserData()
-
         recorder:recordObjectSetPosition(state.interaction.draggingObj.id, wx + rx, wy + ry)
     end
     -- figure out if we are dragging a group!
@@ -476,7 +474,7 @@ function lib.handleMousePressed(x, y, button, istouch)
     end
 end
 
-function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
+function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
     --handlePointer(x, y, id, 'pressed')
     if state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
         -- Start capturing mouse movement
@@ -488,13 +486,13 @@ function lib.handleTouchPressed(id, x, y, dx, dy, pressure)
     end
 end
 
-function lib.handleMouseReleased(x, y, button, istouch)
+function lib.handleMouseReleased(x, y, _button, istouch)
     if not istouch then
         handlePointer(x, y, 'mouse', 'released')
     end
 end
 
-function lib.handleTouchReleased(id, x, y, dx, dy, pressure)
+function lib.handleTouchReleased(id, x, y, _dx, _dy, _pressure)
     handlePointer(x, y, id, 'released')
 end
 
@@ -518,7 +516,7 @@ function lib.showCloseNode()
         end
     end
     for _, j in pairs(registry.joints) do
-        local x1, y1, x2, y2 = j:getAnchors()
+        local x1, y1 = j:getAnchors()
         local d = distanceSquared(x1, y1, cx, cy)
         if d < closestDistanceSquared then
             closestDistanceSquared = d
@@ -543,7 +541,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         if ud and ud.subtype == 'meshusert' and ud.label then
             -- Find the resource fixture with matching label
             local mappert = nil
-            for k, v in pairs(registry.sfixtures) do
+            for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
                     local vud = v:getUserData()
                     if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then

@@ -255,9 +255,6 @@ end
 function lib.reattachJoints(jointData, newBody, oldVertices)
     local visited = {}
     for _, data in ipairs(jointData) do
-        local jointType = data.jointType
-        local otherBody = data.otherBody
-
         if data.originalBodyOrder == "bodyA" then
             data.body1 = newBody
             data.body2 = data.otherBody
@@ -278,8 +275,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             )
             local id = data.otherBody:getUserData().thing.id
             if (not visited[id]) then
-                local ox, oy = data.otherBody:getPosition()
-
                 tranlateBody(data.otherBody, rx, ry)
                 --moveUntilEnd(from, dx, dy, visited)
                 --data.otherBody:setPosition(ox + rx, oy + ry)
@@ -301,7 +296,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
 
             local after = { x = data.offsetB.x, y = data.offsetB.y }
 
-            local ox, oy = data.otherBody:getPosition()
             local rx, ry = mathutils.rotatePoint(
                 after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
             )
@@ -326,7 +320,7 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
         end
 
 
-        local result = lib.createJoint(data)
+        lib.createJoint(data)
     end
 end
 

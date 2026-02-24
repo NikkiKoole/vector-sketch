@@ -31,7 +31,7 @@ jointHandlers["friction"] = {
     end
 }
 jointHandlers["weld"] = {
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newWeldJoint(data.body1, data.body2, x1, y1, data.collideConnected)
         return joint
     end,
@@ -56,7 +56,7 @@ jointHandlers["rope"] = {
 }
 jointHandlers["revolute"] = {
 
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, data.collideConnected)
         if data.lowerLimit or data.upperLimit then
             joint:setLimits(data.lowerLimit, data.upperLimit)
@@ -80,7 +80,7 @@ jointHandlers["revolute"] = {
     end
 }
 jointHandlers["wheel"] = {
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newWheelJoint(data.body1, data.body2, x1, y1, data.axisX or 0, data.axisY or 1,
             data.collideConnected)
 
@@ -100,7 +100,7 @@ jointHandlers["wheel"] = {
     end
 }
 jointHandlers["motor"] = {
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, _x1, _y1, _x2, _y2)
         local joint = love.physics.newMotorJoint(data.body1, data.body2, data.correctionFactor or .3,
             data.collideConnected)
         return joint
@@ -118,7 +118,7 @@ jointHandlers["motor"] = {
     end
 }
 jointHandlers["prismatic"] = {
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newPrismaticJoint(data.body1, data.body2, x1, y1, data.axisX or 0, data.axisY or 1,
             data.collideConnected)
         joint:setLowerLimit(0)
@@ -138,7 +138,7 @@ jointHandlers["prismatic"] = {
     end
 }
 jointHandlers["pulley"] = {
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, _x1, _y1, _x2, _y2)
         local groundAnchorA = data.groundAnchor1 or { 0, 0 }
         local groundAnchorB = data.groundAnchor2 or { 0, 0 }
         local bodyA_centerX, bodyA_centerY = data.body1:getWorldCenter()
@@ -166,9 +166,8 @@ jointHandlers["pulley"] = {
     end
 }
 jointHandlers["friction"] = {
-    create = function(data, x1, y1, x2, y2)
+    create = function(data, x1, y1, _x2, _y2)
         -- Create a Friction Joint
-        local x, y = data.body1:getPosition()
         local joint = love.physics.newFrictionJoint(data.body1, data.body2, x1, y1, false)
 
         if data.maxForce then

@@ -1,7 +1,7 @@
 local lib = {}
 local registry = require 'src.registry'
 
-local function rotateBodyTowardsSimple(body, dt, targetAngle, data)
+local function _rotateBodyTowardsSimple(body, _dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = targetAngle - currentAngle
 
@@ -19,7 +19,7 @@ local function rotateBodyTowardsSimple(body, dt, targetAngle, data)
 end
 
 -- Minimal PD version: still sets angular velocity directly
-local function rotateBodyTowards(body, dt, targetAngle, data)
+local function rotateBodyTowards(body, _dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = math.rad(targetAngle) - currentAngle
     -- wrap to [-pi, pi]
@@ -46,7 +46,7 @@ end
 function lib.update(dt, hitted)
     --logger:inspect(registry.sfixtures)
     local bods = registry.bodies
-    for k, v in pairs(bods) do
+    for _, v in pairs(bods) do
         local ud = v:getUserData()
         if ud.thing and ud.thing.behaviors then
             local behaviors = ud.thing.behaviors
@@ -59,7 +59,7 @@ function lib.update(dt, hitted)
                 end
             end
 
-            for kb, vb in pairs(behaviors) do
+            for _, vb in pairs(behaviors) do
                 -- figure out if im touching this body
 
                 if vb.name == 'KEEP_ANGLE' and not same then

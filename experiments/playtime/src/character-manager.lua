@@ -789,7 +789,7 @@ local function getOffsetFromParent(partName, guy)
     local parts         = guy.dna.parts
     local creation      = guy.dna.creation
     local positioners   = guy.dna.positioners
-    local data          = getParentAndChildrenFromPartName(partName, guy)
+    getParentAndChildrenFromPartName(partName, guy)
     -- Define the name of the highest torso segment
     local torsoSegments = creation.torsoSegments or 1
     local highestTorso  = 'torso' .. torsoSegments
@@ -1065,7 +1065,6 @@ local function makePart(partName, instance, settings)
 
     if parent then
         if instance.parts[parent] then
-            local parentPosX, parentPosY = instance.parts[parent].body:getPosition()
             prevA = instance.parts[parent].body:getAngle()
             local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
             local px, py = instance.parts[parent].body:getWorldPoint(parentOffsetX, parentOffsetY)
@@ -1174,7 +1173,6 @@ end
 local function fixDrift(positionTorso, instance)
     if positionTorso then
         local newPosX, newPosY = instance.parts['torso1'].body:getPosition()
-        local newAngle = instance.parts['torso1'].body:getAngle()
         local dx = positionTorso[1] - newPosX
         local dy = positionTorso[2] - newPosY
 
@@ -1203,7 +1201,6 @@ local function updateSinglePart(partName, data, instance)
     local oldAngle = 0
 
     -- Remove old body
-    local extras = {}
     if instance.parts[partName] then
         oldBody = instance.parts[partName].body
         oldPosX, oldPosY = oldBody:getPosition()
@@ -1259,7 +1256,6 @@ end
 -- update part
 function lib.updatePart(partName, data, instance)
     local positionTorso = nil
-    local oldAngle = 0
     if partName == 'torso1' then
         positionTorso = { instance.parts['torso1'].body:getPosition() }
     end
@@ -1332,7 +1328,7 @@ function lib.addTexturesFromInstance2(instance)
                         local body = relevant.body
 
 
-                        local cx, cy, w, h = getCenterAndDimensions(body)
+                        local _, _, w, h = getCenterAndDimensions(body)
 
 
                         -- WORK IN PROGRESS, this is correct now for feet and hands....
@@ -1340,7 +1336,7 @@ function lib.addTexturesFromInstance2(instance)
                         if v.shape8URL then
                             if shape8Dict[v.shape8URL] then
                                 if shape8Dict[v.shape8URL].d then
-                                    local bbox = getBoundingBox(shape8Dict[v.shape8URL].v)
+                                    getBoundingBox(shape8Dict[v.shape8URL].v)
                                     -- logger:inspect(bbox)
                                     documentSize = {}
                                     documentSize.w = shape8Dict[v.shape8URL].d[1] * math.abs(v.dims.sx)
@@ -1389,7 +1385,7 @@ function lib.addTexturesFromInstance2(instance)
                         end
                     elseif k2 == 'bodyhair' then
                         local body = relevant.body
-                        local cx, cy, w, h = getCenterAndDimensions(body)
+                        local _, _, w, h = getCenterAndDimensions(body)
                         local growfactor = 1.2
                         local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
                             { width = w * growfactor, height = h * growfactor })

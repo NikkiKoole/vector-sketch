@@ -4,7 +4,7 @@ local logger = require 'src.logger'
 
 
 
-local function unpackNodePointsLoop(points)
+local function _unpackNodePointsLoop(points)
     local unpacked = {}
 
     for i = 0, #points do
@@ -173,7 +173,6 @@ lib.unloosenVanillalineOLD = function(points, tension, spacing)
 
     local work = unpackNodePoints(points, true)
     local output = {}
-    local output2 = {}
     local amt = #points * 2
     for i = 0, amt do
         local t = (i / amt)
@@ -191,7 +190,7 @@ lib.unloosenVanillalineOLD = function(points, tension, spacing)
     local rrr = {}
     --logger:inspect(output)
     --logger:inspect(output2)
-    local r2 = evenlySpreadPath(rrr, output, 1, 0, spacing)
+    evenlySpreadPath(rrr, output, 1, 0, spacing)
 
     output = unpackNodePoints(rrr)
     --logger:inspect(output)
@@ -437,7 +436,7 @@ function lib.getPolygonDimensions(polygon)
     return width, height
 end
 
-local function getCenterOfShapeFixtures(fixts)
+local function _getCenterOfShapeFixtures(fixts)
     local xmin = math.huge
     local ymin = math.huge
     local xmax = -math.huge
@@ -469,7 +468,7 @@ end
 
 -- Utility function to check if a point is inside a polygon.
 -- Implements the ray-casting algorithm.
-local function pointInPath(x, y, poly)
+local function _pointInPath(x, y, poly)
     local inside = false
     local n = #poly
     for i = 1, n, 2 do
@@ -1168,7 +1167,6 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
     local n = #poly / 2 -- number of vertices
     local weights = {}
     local weightSum = 0
-    local epsilon = 1e-10
     -- Loop over each vertex of the polygon
     for i = 1, n do
         -- Get current, previous, and next vertex indices (wrapping around)
@@ -1188,7 +1186,6 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
         -- Vectors from point p to current, previous, and next vertices
         local dx = xi - px
         local dy = yi - py
-        local d = math.sqrt(dx * dx + dy * dy)
 
         local dx_prev = xprev - px
         local dy_prev = yprev - py

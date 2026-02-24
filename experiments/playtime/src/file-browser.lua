@@ -4,7 +4,7 @@ local logger = require 'src.logger'
 local lib = {}
 
 
-function lib:loadFiles(path, filterrules)
+function lib.loadFiles(_self, path, filterrules)
     local all_items = love.filesystem.getDirectoryItems(path)
     local filtered = {}
     for _, item in ipairs(all_items) do

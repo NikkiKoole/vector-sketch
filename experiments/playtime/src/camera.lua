@@ -29,7 +29,6 @@ local function createCamera()
             maintainAspectRatio = true,
             resizingFunction = function(self, w, h)
                 resizeCamera(self, w, h)
-                local W, H = love.graphics.getDimensions()
                 self.x = offset
                 self.y = offset
             end,
@@ -54,7 +53,7 @@ lib.centerCameraOnPosition = function(x, y, vw, vh)
     _camera:setTranslation(x, y)
 end
 lib.setCameraViewport = function(c2, w, h)
-    local cx, cy = c2:getTranslation()
+    local cx = c2:getTranslation()
     local cw, ch = c2:getContainerDimensions()
     local targetScale = math.min(cw / w, ch / h)
     c2:setScale(targetScale)

@@ -61,7 +61,6 @@ function lib.killMouseJointIfPossible(id)
 end
 
 function lib.removeDeadPointerJoints()
-    local index = -1
     for i = #pointerJoints, 1, -1 do
         if (pointerJoints[i].joint and pointerJoints[i].joint:isDestroyed()) then
             pointerJoints[i].joint     = nil
@@ -71,7 +70,7 @@ function lib.removeDeadPointerJoints()
     end
 end
 
-function lib.handlePointerUpdate(dt, cam)
+function lib.handlePointerUpdate(_dt, cam)
     lib.removeDeadPointerJoints()
     -- connect connectors
     for i = 1, #pointerJoints do
@@ -122,7 +121,7 @@ function lib.getPointerJoints()
     return pointerJoints
 end
 
-function lib.handlePointerReleased(x, y, id)
+function lib.handlePointerReleased(_x, _y, id)
     local released = {}
     if pointerJoints then
         for i = 1, #pointerJoints do

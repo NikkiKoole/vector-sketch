@@ -102,7 +102,7 @@ function lib.hasFixturesWithUserDataAtBeginning(fixtures)
     return true, index
 end
 
-function lib.getCentroidOfFixture(body, fixture)
+function lib.getCentroidOfFixture(_body, fixture)
     return { mathutils.getCenterOfPoints({ fixture:getShape():getPoints() }) }
 end
 

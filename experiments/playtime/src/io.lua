@@ -2,7 +2,6 @@
 local lib = {}
 local logger = require 'src.logger'
 
-local inspect = require 'vendor.inspect'
 local json = require 'vendor.dkjson'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
@@ -73,7 +72,6 @@ local function remapAndRestoreInfluences(influences, idMapping)
 end
 
 function lib.buildWorld(data, world, cam)
-    local idMap = {}
     -- todo is this actually needed, i *think* its a premature optimization, getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well just always use the oldid....
     --print(reuseOldIds)
@@ -131,7 +129,7 @@ function lib.buildWorld(data, world, cam)
                     table.insert(points, point)
                 end
 
-                local success, err = pcall(function()
+                local _, err = pcall(function()
                     shape = love.physics.newPolygonShape(unpack(points))
                 end)
                 if err then
@@ -345,8 +343,6 @@ function lib.buildWorld(data, world, cam)
                     -bodyB:getAngle())
 
 
-                local scriptmeta = jointData.scriptmeta
-
                 local ud = {
                     id = getNewId(jointData.id),
                     offsetA = { x = fxa, y = fya },
@@ -368,7 +364,7 @@ function lib.buildWorld(data, world, cam)
     -- only after making the bodies and joints can we patch up the influences to have bodies.
     -- we want to look through all bodeis
 
-    for k, v in pairs(registry.sfixtures) do
+    for _, v in pairs(registry.sfixtures) do
         local ud = v:getUserData()
 
         if ud.subtype == 'meshusert' then
@@ -382,7 +378,7 @@ function lib.buildWorld(data, world, cam)
 end
 
 function lib.load(data, world, cam)
-    local jsonData, pos, err = json.decode(data, 1, nil)
+    local jsonData, _, err = json.decode(data, 1, nil)
     if err then
         logger:error("Error decoding JSON:", err)
         return
@@ -801,7 +797,6 @@ function lib.cloneSelection(selectedBodies, world)
                     -- here we should recreate the special fixtures..
                     for i = 1, offset do
                         local oldF = oldFixtures[i]
-                        local shape = oldF:getShape():getPoints()
 
 
                         local newFixture = love.physics.newFixture(newBody, oldF:getShape(), oldF:getDensity())
@@ -966,7 +961,7 @@ function lib.cloneSelection(selectedBodies, world)
     -- at this point everything that is cloned is added into the world
     -- logger:inspect(idMapping)
     -- now we need to figure out if i have any of the connected-texture fixtures with ids in their userdata that needs updating
-    for k, v in pairs(clonedBodiesMap) do
+    for _, v in pairs(clonedBodiesMap) do
         local fixtures = v.body:getFixtures()
         for j = 1, #fixtures do
             local fixture = fixtures[j]
@@ -990,7 +985,7 @@ function lib.cloneSelection(selectedBodies, world)
 
 
     local result = {}
-    for k, v in pairs(clonedBodiesMap) do
+    for _, v in pairs(clonedBodiesMap) do
         table.insert(result, v)
     end
     return result

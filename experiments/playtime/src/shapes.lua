@@ -3,7 +3,6 @@
 local logger = require 'src.logger'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
-local inspect = require 'vendor.inspect'
 local shapes = {}
 
 local function makePolygonVertices(sides, radius)
@@ -129,7 +128,7 @@ local function ribbon(w, h, x, y, segments, direction)
 
     return verts
 end
-local function ribbonOLD(w, h, x, y, segments)
+local function _ribbonOLD(w, h, x, y, segments)
     segments = segments or 4 -- how many slices along the length
     local halfW = w / 2
     local halfH = h / 2
@@ -256,7 +255,7 @@ local function splitTriangle(tris, triIndex, px, py)
     table.insert(tris, { cx, cy, ax, ay, px, py })
 end
 
-local function triangulatePolygonWithInternalPoints(outline, internalPoints)
+local function _triangulatePolygonWithInternalPoints(outline, internalPoints)
     -- Step 1: triangulate outline
     local triangles = shapes.makeTrianglesFromPolygon(outline)
 
@@ -278,7 +277,7 @@ local function triangulatePolygonWithInternalPoints(outline, internalPoints)
 
     return triangles
 end
-function shapes.makeTrianglesFromPolygon(polygon, internalPoints)
+function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
     --logger:trace()
     -- when this is true we also solve, self intersecting and everythign
     local triangles = {}

@@ -224,7 +224,7 @@ function lib.renderActiveEditorThings()
         if ud and ud.subtype == 'meshusert' and ud.label then
             -- Find the resource fixture with matching label
             local mappert = nil
-            for k, v in pairs(registry.sfixtures) do
+            for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
                     local vud = v:getUserData()
                     if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
@@ -259,7 +259,7 @@ function lib.renderActiveEditorThings()
 
                             if node.type == 'joint' then
                                 local j = registry.getJointByID(node.id)
-                                local x1, y1, x2, y2 = j:getAnchors( )
+                                local x1, y1 = j:getAnchors( )
 
                                 love.graphics.circle('line', x1, y1, 10)
 
@@ -267,7 +267,6 @@ function lib.renderActiveEditorThings()
                             if node.type == 'anchor' then
                                 local a = registry.getSFixtureByID(node.id)
                                 local body = a:getBody()
-                                local nx, ny = body:getWorldPoint(0,0)
                                 local nx, ny = mathutils.getCenterOfPoints({ body:getWorldPoints(a:getShape():getPoints()) })
                                 love.graphics.circle('line', nx, ny, 10)
                             end
@@ -316,7 +315,7 @@ function lib.renderActiveEditorThings()
 
                             if node.type == 'joint' then
                                 local j = registry.getJointByID(node.id)
-                                local x1, y1, x2, y2 = j:getAnchors( )
+                                local x1, y1 = j:getAnchors( )
 
                                 love.graphics.line(wx, wy, x1, y1)
 
@@ -324,7 +323,6 @@ function lib.renderActiveEditorThings()
                             if node.type == 'anchor' then
                                  local a = registry.getSFixtureByID(node.id)
                                  local body = a:getBody()
-                                 local nx, ny = body:getWorldPoint(0,0)
                                   local nx, ny = mathutils.getCenterOfPoints({ body:getWorldPoints(a:getShape():getPoints()) })
                                  love.graphics.line(wx, wy, nx, ny)
                             end

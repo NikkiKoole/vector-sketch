@@ -118,7 +118,7 @@ local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     local runningHP = 0
     local index = 0
 
-    for i = 1, segments do
+    for _ = 1, segments do
         vertices[index + 1] = { -w * .5, runningHP, 0, runningHV }
         vertices[index + 2] = { w * .5, runningHP, 1, runningHV }
         runningHV = runningHV + hv
@@ -189,7 +189,7 @@ local function _getFanMesh(image, vertexCount)
     return rec.mesh, rec.verts
 end
 
-local function growLineOLD(p1, p2, length)
+local function _growLineOLD(p1, p2, length)
     local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
     local new_x = p1[1] + length * math.cos(angle)
     local new_y = p1[2] + length * math.sin(angle)
@@ -689,7 +689,7 @@ end
 
 
 -- Optionally pass dl (precomputed derivative curve) if you have it.
-local function meshGetVertex(mesh, j)
+local function _meshGetVertex(mesh, j)
     local x, y, u, v = mesh:getVertex(j)
     return x, y, u, v
 end
@@ -1042,7 +1042,7 @@ function lib.drawTexturedWorld(world)
     -- end
     local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
         -- print('jo!')
-        local img, imgw, imgh = getLoveImage('textures/' .. url)
+        local img = getLoveImage('textures/' .. url)
         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
 
         if (vertices and img) then
@@ -1086,11 +1086,9 @@ function lib.drawTexturedWorld(world)
     --     end
     -- end
 
-    local function drawCombinedImageVanilla(ompImage, extra, texfixture, thing)
+    local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
         local vertices = extra.vertices or { texfixture:getShape():getPoints() }
         local img = ompImage
-        local imgw, imgh = ompImage:getDimensions()
-
         if vertices and img then
             local body = texfixture:getBody()
             -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
@@ -1113,7 +1111,6 @@ function lib.drawTexturedWorld(world)
 
 
     for i = 1, #drawables do
-        local body = drawables[i].body
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
@@ -1255,7 +1252,7 @@ function lib.drawTexturedWorld(world)
             return out
         end
 
-        local function vertsToWorld(body, verts)
+        local function _vertsToWorld(body, verts)
             local out = {}
             for i = 1, #verts, 2 do
                 local lx, ly = verts[i], verts[i + 1]
@@ -1271,7 +1268,7 @@ function lib.drawTexturedWorld(world)
             -- now we need to find a mapping file..
 
             local mappert
-            for k, v in pairs(registry.sfixtures) do
+            for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
                     local ud = v:getUserData()
 
@@ -1317,7 +1314,6 @@ function lib.drawTexturedWorld(world)
                 --    local rotation = drawables[i].rotation or 0
 
 
-                local body = drawables[i].body
                 --logger:info(x, y)
                 --logger:inspect(verts)
 
@@ -1398,7 +1394,7 @@ function lib.drawTexturedWorld(world)
             -- now we need to find a mapping file..
 
             local mappert
-            for k, v in pairs(registry.sfixtures) do
+            for _, v in pairs(registry.sfixtures) do
                 local ud = v:getUserData()
                 if (drawables[i].label == ud.label and ud.subtype == 'resource') then
                     mappert = v
@@ -1600,8 +1596,6 @@ function lib.drawTexturedWorld(world)
                     local thm = drawables[i].extra.tileHeightM
                     local tr = drawables[i].extra.tileRotation
                     --print(twm, thm, tr)
-                    local bb = mathutils.getBoundingRect(vertices)
-                    -- bb.width and bb.height
                     local uvParams = {
                         tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
                         tileHeight = texH * thm, --bb.height,  -- world units per tile vertically
@@ -1675,8 +1669,6 @@ function lib.drawTexturedWorld(world)
                     img = getLoveImage('textures/' .. 'hair7.png')
                 end
 
-                local w, h = img:getDimensions()
-
                 local hairTension = drawables[i].extra.tension or .02 -- love.math.random() --.02
                 local spacing = drawables[i].extra.spacing or 5
                 -- 5                                                    --* multipliers.hair.sMultiplier
@@ -1684,13 +1676,11 @@ function lib.drawTexturedWorld(world)
                 -- logger:info('check these below')
                 -- logger:inspect(points)
                 -- logger:inspect(coords)
-                local length = mathutils.getLengthOfPath(points)
-
                 --local factor = (length / h)
                 --local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
                 local width = drawables[i].extra.width or 100 -- 100 --(w * factor) / 2
                 --2                         -- 100             (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
-                local verts, indices, draw_mode = polyline.render('miter', coords, width)
+                local verts = polyline.render('miter', coords, width)
 
                 local cx, cy = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
                 for i = 1, #verts do

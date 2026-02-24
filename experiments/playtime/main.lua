@@ -51,16 +51,15 @@ lurker.onerror = function(e, nostacktrace)
     _lurker_onerror(e, nostacktrace)
 end
 -- Keep bridge alive during lurker error state
-lurker.errorupdate = function(dt)
+lurker.errorupdate = function(_dt)
     bridge.update()
 end
-local logger = require 'src.logger'
-local inspect = require 'vendor.inspect'
-local PROF_CAPTURE = false
+require 'src.logger'
+require 'vendor.inspect'
 local prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
-jit.off()
-local ProFi = require 'vendor.ProFi'
+jit.off() -- luacheck: ignore 113 (jit is a LuaJIT global)
+require 'vendor.ProFi'
 
 local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
@@ -70,7 +69,7 @@ local playtimeui = require 'src.playtime-ui'
 
 local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
-local objectManager = require 'src.object-manager'
+require 'src.object-manager'
 
 
 --local moonshine = require 'moonshine'
@@ -82,21 +81,21 @@ local box2dDrawTextured = require 'src.box2d-draw-textured'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
-local uuid = require 'src.uuid'
+require 'src.uuid'
 
 local snap = require 'src.snap'
 local characterExperiments = require 'src.character-experiments'
 local keep_angle = require 'src.keep-angle'
-local registry = require 'src.registry'
+require 'src.registry'
 
 
-local mathUtils = require 'src.math-utils'
+require 'src.math-utils'
 
 local InputManager = require 'src.input-manager'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
-local CharacterManager = require 'src.character-manager'
+require 'src.character-manager'
 
 
 
@@ -125,7 +124,7 @@ local TICKRATE = 1 / FPS
 
 local humanoidInstance = nil -- uncomment a createCharacter call in love.load to enable character experiments
 
-function love.load(args)
+function love.load(_args)
     --
     -- logger:info('random seed:', love.math.getRandomSeed())
 
@@ -152,14 +151,6 @@ function love.load(args)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
     --objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
-
-    -- -- Adding custom polygon
-    local customVertices = {
-        250, 0,
-        0, 300,
-        500, 300,
-        -- Add more vertices as needed
-    }
 
     --objectManager.addThing('custom', { vertices = customVertices })
     --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
@@ -286,7 +277,7 @@ function love.update(dt)
     prof.push('physics-update')
     if not state.world.paused then
         if state.world.playWithSoftbodies then
-            for i, v in ipairs(state.world.softbodies) do
+            for _, v in ipairs(state.world.softbodies) do
                 v:update(scaled_dt)
             end
         end
@@ -300,13 +291,12 @@ function love.update(dt)
         local substeps = 1
         local step = scaled_dt / substeps
         prof.push('physicsWorld:update')
-        for i = 1, substeps do
+        for _ = 1, substeps do
             state.physicsWorld:update(step, velocityiterations * 2, positioniterations * 2)
         end
         prof.pop('physicsWorld:update')
 
         script.call('update', scaled_dt)
-        local joints = state.physicsWorld:getJoints()
         --for i = 1, #joints do
         --correctJoint(joints[i])
         --end
@@ -497,7 +487,7 @@ function love.textinput(t)
     ui.handleTextInput(t)
 end
 
-function love.resize(w, h)
+function love.resize(_w, _h)
     --   effect.resize(w, h)
 end
 

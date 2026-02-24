@@ -164,8 +164,6 @@ function lib.handleKeyPress(key, humanoidInstance)
         local segments = 1
 
         local url = humanoidInstance.dna.parts['torso1'].shape8URL
-        local sx = humanoidInstance.dna.parts['torso1'].dims.sx
-        local sy = humanoidInstance.dna.parts['torso1'].dims.sy
 
         CharacterManager.rebuildFromCreation(humanoidInstance,
             { torsoSegments = segments })

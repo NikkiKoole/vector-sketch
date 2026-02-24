@@ -177,9 +177,9 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
 end
 
 --- Creates a horizontal slider with a numeric input field.
-function ui.sliderWithInput(_id, x, y, w, min, max, value, changed, step)
+function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
     local yOffset = (40 - theme.slider.height) / 2
-    local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value, _id, step)
+    local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value, id, step)
     local valueHasChangedViaSlider = false
     local returnValue = nil
 
@@ -194,7 +194,7 @@ function ui.sliderWithInput(_id, x, y, w, min, max, value, changed, step)
     end
 
     -- TextInput for numeric input (auto-syncs from value when unfocused)
-    local numericInputText, dirty = ui.textinput(_id, x + w + 10, y + yOffset, 80, ui.theme.slider.height,
+    local numericInputText, dirty = ui.textinput(id, x + w + 10, y + yOffset, 80, ui.theme.slider.height,
         "Enter number...",
         "" .. value,
         true)
@@ -234,7 +234,6 @@ function ui.panel(x, y, width, height, label, drawFunc, optionalFillColor)
     -- Draw panel label if provided
     if label then
         love.graphics.setColor(theme.panel.label)
-        local labelHeight = ui.font:getHeight()
         love.graphics.printf(label, x, y + 5, width, "center")
     end
 
@@ -257,11 +256,9 @@ end
 --- Creates a checkbox with a label.
 function ui.checkbox(x, y, checked, label)
     local size = theme.slider.height
-    -- Determine the label to display inside the checkbox
-    local checkmark = checked and "x" or ""
 
     -- Render the checkbox square using the existing button function
-    local clicked, pressed, released = ui.button(x, y, size, '', size)
+    local clicked = ui.button(x, y, size, '', size)
 
     -- Toggle the checked state if the checkbox was clicked
     if clicked then
@@ -531,7 +528,7 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
 
     -- Render the thumb using the existing button function
     local thumbLabel = ''
-    local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
+    local _, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
 
     -- Remove scissor after rendering the thumb
     love.graphics.setScissor()

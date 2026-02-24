@@ -13,7 +13,7 @@ local fixtures = require 'src.fixtures'
 local snap = require 'src.snap'
 local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
-local polyline = require 'src.polyline'
+-- local polyline = require 'src.polyline' -- unused
 
 function lib.finalizePolygonAsSoftSurface()
     if #state.interaction.polyVerts >= 6 then
@@ -358,7 +358,7 @@ function lib.maybeUpdateTexFixtureVertices()
     local body = state.selection.selectedSFixture:getBody()
     state.selection.selectedSFixture:destroy()
 
-    local centerX, centerY = mathutils.getCenterOfPoints(points)
+    mathutils.getCenterOfPoints(points)
     local shape = love.physics.newPolygonShape(state.texFixtureEdit.tempVerts)
     local newfixture = love.physics.newFixture(body, shape)
     newfixture:setSensor(true) -- Sensor so it doesn't collide
@@ -372,7 +372,7 @@ function lib.maybeUpdateTexFixtureVertices()
 end
 
 -- Helper function to collect all connected bodies
-local function collectBodies(thing, collected)
+local function _collectBodies(thing, collected)
     collected = collected or {}
     if not thing or not thing.body or collected[thing.id] then
         return collected
@@ -383,7 +383,7 @@ local function collectBodies(thing, collected)
         local otherBody = (bodyA == thing.body) and bodyB or bodyA
         local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
         if otherThing then
-            collectBodies(otherThing, collected)
+            _collectBodies(otherThing, collected)
         end
     end
     return collected
@@ -575,7 +575,7 @@ function lib.recreateThingFromBody(body, newSettings)
 
 
 
-    local ok, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
+    local _, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
 
     for _, shape in ipairs(shapeList) do
         local fixture = love.physics.newFixture(newBody, shape, 1)
@@ -606,7 +606,6 @@ function lib.recreateThingFromBody(body, newSettings)
                     local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
                     abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
                 else
-                    local new_px, new_py = centerX, centerY
                     local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
                     abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, 0, 0))
                 end
@@ -688,7 +687,7 @@ function lib.autoRopify(ud)
         return
     else
         local thing = ud.thing
-        for i = 1, 10 do
+        for _ = 1, 10 do
             local originalBody = thing.body
             if thing.height then
                 local settings = {
@@ -895,7 +894,7 @@ function lib.flipThing(thing, axis, recursive)
 
     -- Phase 2: Flip All Joints
     local function flipJoints()
-        for jointID, joint in pairs(toBeProcessedJoints) do
+        for _, joint in pairs(toBeProcessedJoints) do
             local jointType = joint:getType()
             local jointUserData = joint:getUserData()
 
@@ -915,7 +914,7 @@ function lib.flipThing(thing, axis, recursive)
                 logger:error("flipThing: No handler found for joint type:", jointType)
                 goto continue
             end
-            local jointData = handler.extract(joint)
+            handler.extract(joint)
 
             -- Determine the connected bodies
             local bodyA, bodyB = joint:getBodies()

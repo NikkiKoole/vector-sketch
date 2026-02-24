@@ -83,7 +83,7 @@ function lib.createFixedTimestepRun(tickrate)
             end
 
             -- do fixed updates
-            for i = 1, steps do
+            for _ = 1, steps do
                 if love.update then love.update(dt) end
             end
 

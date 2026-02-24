@@ -197,7 +197,7 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
 end
 
 -- specialized AA for join_type == 'none'
-local function renderOverdrawNone(vertices, offset, vertex_count, overdraw_vertex_count, pixel_size, is_looping)
+local function renderOverdrawNone(vertices, offset, vertex_count, _overdraw_vertex_count, pixel_size, _is_looping)
     for i = 1, vertex_count - 1, 4 do
         local sx = vertices[i][1] - vertices[i + 3][1]
         local sy = vertices[i][2] - vertices[i + 3][2]

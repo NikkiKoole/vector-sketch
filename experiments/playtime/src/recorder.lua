@@ -85,7 +85,7 @@ local function getPointerPosition(id)
     end
 end
 function recorder:recordMouseJointUpdates(cam)
-    for k, v in pairs(self.recordingMouseJoints) do
+    for _, v in pairs(self.recordingMouseJoints) do
         if v.data.pointerId then
             local x, y = getPointerPosition(v.data.pointerId)
             local wx, wy = cam:getWorldCoordinates(x, y)
@@ -170,7 +170,7 @@ function recorder:recordObjectSetPosition(bodyId, x, y)
 end
 
 -- During replay, we'll need to map recorded object IDs to current objects
-function recorder:mapRecordedIdToCurrentObject(recordedId)
+function recorder.mapRecordedIdToCurrentObject(_self, recordedId)
     return registry.getBodyByID(recordedId)
 end
 

@@ -7,14 +7,14 @@ Logger.__index = Logger
 -- Store original print function safely
 local _old_print = print
 
-function Logger:new()
+function Logger.new(_self)
     local instance = setmetatable({}, Logger)
     -- You could add log levels, file output etc. here later
     return instance
 end
 
 -- Generic log function
-function Logger:_log(level, ...)
+function Logger._log(_self, level, ...)
     local info = debug.getinfo(3, "Sl") -- 3 levels up: _log -> info/warn/error -> caller
     local source = info.short_src or "unknown"
     local line = info.currentline > 0 and info.currentline or "?"

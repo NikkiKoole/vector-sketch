@@ -82,7 +82,7 @@ return function(ui)
             local startLineText = state.lines[selStartLine]:sub(1, selStartChar)
             local endLineText = state.lines[selEndLine]:sub(selEndChar + 1)
             -- Remove middle lines
-            for i = selStartLine + 1, selEndLine do
+            for _ = selStartLine + 1, selEndLine do
                 table.remove(state.lines, selStartLine + 1)
             end
             -- Merge start and end lines
@@ -317,8 +317,8 @@ return function(ui)
         end
     end
 
-    function ui.textinput(_id, x, y, width, height, placeholder, currentText, isNumeric, reparse)
-        local id = _id or ui.generateID()
+    function ui.textinput(inputId, x, y, width, height, _placeholder, currentText, isNumeric, _reparse)
+        local id = inputId or ui.generateID()
 
         -- Initialize state for this TextInput if not already done
         if not ui.textInputs[id] then

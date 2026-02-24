@@ -44,7 +44,7 @@ local function oneOfThemIsInteractedWith(b1, b2, list)
     return false
 end
 -- Create a revolute joint between two bodies
-local function createRevoluteJoint(body1, body2, x, y, x2, y2, index1, index2)
+local function createRevoluteJoint(body1, body2, x, y, x2, y2, _index1, _index2)
     local id = uuid.generateID()
 
     local joint = love.physics.newRevoluteJoint(body1, body2, x, y, x2, y2)
@@ -182,7 +182,7 @@ end
 function lib.rebuildSnapFixtures(sfix)
     snapFixtures = {}
     local count = 0
-    for k, v in pairs(sfix) do
+    for _, v in pairs(sfix) do
         if not v:isDestroyed() then
             local ud = v:getUserData()
             --logger:inspect(ud)
@@ -211,7 +211,7 @@ local calculateDistance = mathutils.calculateDistance
 function lib.onSceneLoaded()
     --print('should build snapjoints array', #mySnapJoints)
 
-    for k, value in pairs(registry.joints) do
+    for _, value in pairs(registry.joints) do
         local ud = value:getUserData()
 
         -- Check if the joint is a snap-type joint
