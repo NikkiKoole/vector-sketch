@@ -371,24 +371,6 @@ function lib.maybeUpdateTexFixtureVertices()
     --snap.rebuildSnapFixtures(registry.sfixtures)
 end
 
--- Helper function to collect all connected bodies
-local function _collectBodies(thing, collected)
-    collected = collected or {}
-    if not thing or not thing.body or collected[thing.id] then
-        return collected
-    end
-    collected[thing.id] = thing.body
-    for _, joint in ipairs(thing.body:getJoints()) do
-        local bodyA, bodyB = joint:getBodies()
-        local otherBody = (bodyA == thing.body) and bodyB or bodyA
-        local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
-        if otherThing then
-            _collectBodies(otherThing, collected)
-        end
-    end
-    return collected
-end
-
 -- Helper function to create and configure a physics body with shapes
 local function createThing(shapeType, conf)
     --local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)

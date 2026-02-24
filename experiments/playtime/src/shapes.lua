@@ -128,34 +128,6 @@ local function ribbon(w, h, x, y, segments, direction)
 
     return verts
 end
-local function _ribbonOLD(w, h, x, y, segments)
-    segments = segments or 4 -- how many slices along the length
-    local halfW = w / 2
-    local halfH = h / 2
-
-    local verts = {}
-
-    -- TOP EDGE: left -> right
-    for i = 0, segments do
-        local t  = i / segments
-        local cx = x - halfW + w * t
-        local cy = y - halfH -- top y
-        table.insert(verts, cx)
-        table.insert(verts, cy)
-    end
-
-    -- BOTTOM EDGE: right -> left
-    for i = segments, 0, -1 do
-        local t  = i / segments
-        local cx = x - halfW + w * t
-        local cy = y + halfH -- bottom y
-        table.insert(verts, cx)
-        table.insert(verts, cy)
-    end
-
-    return verts
-end
-
 -- local function ribbon(w, h, x, y, segments)
 --     segments = segments or 4 -- default: 4 subdivisions
 --     local halfW = w / 2
@@ -255,28 +227,6 @@ local function splitTriangle(tris, triIndex, px, py)
     table.insert(tris, { cx, cy, ax, ay, px, py })
 end
 
-local function _triangulatePolygonWithInternalPoints(outline, internalPoints)
-    -- Step 1: triangulate outline
-    local triangles = shapes.makeTrianglesFromPolygon(outline)
-
-    -- Step 2: insert each internal point
-    for _, p in ipairs(internalPoints) do
-        local px, py = p[1], p[2]
-
-        for i, t in ipairs(triangles) do
-            local ax, ay = t[1], t[2]
-            local bx, by = t[3], t[4]
-            local cx, cy = t[5], t[6]
-
-            if pointInTriangle(px, py, ax, ay, bx, by, cx, cy) then
-                splitTriangle(triangles, i, px, py)
-                break -- go to next point once we split
-            end
-        end
-    end
-
-    return triangles
-end
 function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
     --logger:trace()
     -- when this is true we also solve, self intersecting and everythign

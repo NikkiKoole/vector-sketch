@@ -189,13 +189,6 @@ local function _getFanMesh(image, vertexCount)
     return rec.mesh, rec.verts
 end
 
-local function _growLineOLD(p1, p2, length)
-    local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
-    local new_x = p1[1] + length * math.cos(angle)
-    local new_y = p1[2] + length * math.sin(angle)
-    return new_x, new_y
-end
-
 local sqrt = math.sqrt
 local function growLine(p1, p2, length)
     local dx, dy = p1[1] - p2[1], p1[2] - p2[2]
@@ -350,7 +343,6 @@ local function buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2,
     return table.concat(keyParts, "|")
 end
 
-local testCache = {}
 -- todo /5 and *5 is dumb!
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
@@ -681,13 +673,6 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
 
     mesh:setVertices(buf) -- 1 call instead of creating a mesh
     love.graphics.draw(mesh, x, y, r, sx, sy)
-end
-
-
--- Optionally pass dl (precomputed derivative curve) if you have it.
-local function _meshGetVertex(mesh, j)
-    local x, y, u, v = mesh:getVertex(j)
-    return x, y, u, v
 end
 
 
@@ -1247,18 +1232,6 @@ function lib.drawTexturedWorld(world)
 
             return out
         end
-
-        local function _vertsToWorld(body, verts)
-            local out = {}
-            for i = 1, #verts, 2 do
-                local lx, ly = verts[i], verts[i + 1]
-                local wx, wy = body:getWorldPoint(lx, ly)
-                out[#out + 1] = wx
-                out[#out + 1] = wy
-            end
-            return out
-        end
-
 
         if drawables[i].type == 'meshusert' then
             -- now we need to find a mapping file..

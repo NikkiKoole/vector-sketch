@@ -180,7 +180,6 @@ end
 function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
     local yOffset = (40 - theme.slider.height) / 2
     local panelSlider = ui.slider(x, y + yOffset, w, ui.theme.slider.height, 'horizontal', min, max, value, id, step)
-    local valueHasChangedViaSlider = false
     local returnValue = nil
 
     if panelSlider then
@@ -189,7 +188,6 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
         else
             value = string.format("%.2f", panelSlider)
         end
-        valueHasChangedViaSlider = true
         returnValue = value
     end
 

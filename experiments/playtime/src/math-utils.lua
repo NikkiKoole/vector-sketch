@@ -4,24 +4,6 @@ local logger = require 'src.logger'
 
 
 
-local function _unpackNodePointsLoop(points)
-    local unpacked = {}
-
-    for i = 0, #points do
-        local nxt = i == #points and 1 or i + 1
-        unpacked[1 + (i * 2)] = points[nxt][1]
-        unpacked[2 + (i * 2)] = points[nxt][2]
-    end
-
-    for i = 0, #points do
-        local nxt = i == #points and 1 or i + 1
-        unpacked[(#points * 2) + 1 + (i * 2)] = points[nxt][1]
-        unpacked[(#points * 2) + 2 + (i * 2)] = points[nxt][2]
-    end
-
-    return unpacked
-end
-
 local function unpackNodePoints(points, noloop)
     local unpacked = {}
     if #points >= 1 then
@@ -433,55 +415,6 @@ function lib.getPolygonDimensions(polygon)
     local height = maxY - minY
 
     return width, height
-end
-
-local function _getCenterOfShapeFixtures(fixts)
-    local xmin = math.huge
-    local ymin = math.huge
-    local xmax = -math.huge
-    local ymax = -math.huge
-    for i = 1, #fixts do
-        local it = fixts[i]
-        if not it:getUserData() then
-            local points
-            if (it:getShape().getPoints) then
-                points = { it:getShape():getPoints() }
-            else
-                points = { it:getShape():getPoint() }
-            end
-
-            for j = 1, #points, 2 do
-                local xx = points[j]
-                local yy = points[j + 1]
-                if xx < xmin then xmin = xx end
-                if xx > xmax then xmax = xx end
-                if yy < ymin then ymin = yy end
-                if yy > ymax then ymax = yy end
-            end
-        end
-    end
-    return xmin + (xmax - xmin) / 2, ymin + (ymax - ymin) / 2
-end
-
-
--- Utility function to check if a point is inside a polygon.
--- Implements the ray-casting algorithm.
-local function _pointInPath(x, y, poly)
-    local inside = false
-    local n = #poly
-    for i = 1, n, 2 do
-        local j = (i + 2) % n
-        if j == 0 then j = n end
-        local xi, yi = poly[i], poly[i + 1]
-        local xj, yj = poly[j], poly[j + 1]
-
-        local intersect = ((yi > y) ~= (yj > y)) and
-            (x < (xj - xi) * (y - yi) / (yj - yi + 1e-10) + xi)
-        if intersect then
-            inside = not inside
-        end
-    end
-    return inside
 end
 
 function lib.pointInRect(px, py, rect)

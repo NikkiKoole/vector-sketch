@@ -1,23 +1,6 @@
 local lib = {}
 local registry = require 'src.registry'
 
-local function _rotateBodyTowardsSimple(body, _dt, targetAngle, data)
-    local currentAngle = body:getAngle()
-    local diff = targetAngle - currentAngle
-
-    -- Wrap difference into [-pi, pi] range
-    diff = (diff + math.pi) % (2 * math.pi) - math.pi
-
-    -- Simple proportional controller
-    local rotationSpeed = data and data.speed or 5.00 -- tweak this for faster/slower turning
-    local maxAngularVel = 10                          -- safety clamp
-
-    local desiredAngularVel = diff * rotationSpeed
-    desiredAngularVel = math.max(-maxAngularVel, math.min(maxAngularVel, desiredAngularVel))
-
-    body:setAngularVelocity(desiredAngularVel)
-end
-
 -- Minimal PD version: still sets angular velocity directly
 local function rotateBodyTowards(body, _dt, targetAngle, data)
     local currentAngle = body:getAngle()

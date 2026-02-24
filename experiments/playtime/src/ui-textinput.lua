@@ -355,14 +355,14 @@ return function(ui)
                 -- Check for double-click
                 local currentTime = love.timer.getTime()
                 local isDoubleClick = false
-                
+
                 if ui.lastClickID == id and (currentTime - ui.lastClickTime) < ui.doubleClickThreshold then
                     isDoubleClick = true
                 end
-                
+
                 ui.lastClickTime = currentTime
                 ui.lastClickID = id
-                
+
                 ui.focusedTextInputID = id
 
                 if isDoubleClick then

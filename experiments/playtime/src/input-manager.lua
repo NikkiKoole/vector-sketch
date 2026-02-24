@@ -590,7 +590,6 @@ function lib.handleMouseMoved(x, y, dx, dy)
 
                 -- Find vertices within brush radius
                 local brushRadius = tonumber(state.vertexEditor.brushSize) or 20
-                local addToSelection = love.keyboard.isDown('lshift')
                 local isRightClick = (button == 2)
 
 
