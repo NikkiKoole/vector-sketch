@@ -132,10 +132,10 @@ function lib.updateSFixtureDimensionsFunc(w, h)
     state.selection.selectedSFixture:destroy()
 
     local centerX, centerY = mathutils.getCenterOfPoints(points)
-    local vv = oldUD.extra.vertexCount == 8 and rect8(w, h, centerX, centerY) or rect(w, h, centerX, centerY)
-    local shape = love.physics.newPolygonShape(vv)
+    local vertices = oldUD.extra.vertexCount == 8 and rect8(w, h, centerX, centerY) or rect(w, h, centerX, centerY)
+    local shape = love.physics.newPolygonShape(vertices)
     local newfixture = love.physics.newFixture(body, shape)
-    oldUD.extra.vertices = vv
+    oldUD.extra.vertices = vertices
     newfixture:setSensor(true) -- Sensor so it doesn't collide
     newfixture:setUserData(oldUD)
 
@@ -194,15 +194,15 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
     end
     if (subtype == 'texfixture') then
         local vertexCount = 4
-        local vv = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
+        local vertices = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
             rect8(cfg.width, cfg.height, localX, localY)
-        local shape = love.physics.newPolygonShape(vv)
+        local shape = love.physics.newPolygonShape(vertices)
         local fixture = love.physics.newFixture(body, shape, 0)
         fixture:setSensor(true) -- Sensor so it doesn't collide
         local setId = uuid.generateID()
         fixture:setUserData({
             type = "sfixture", id = setId, subtype = 'texfixture', label = '',
-            extra = { vertexCount = vertexCount, vertices = vv }
+            extra = { vertexCount = vertexCount, vertices = vertices }
         })
         registry.registerSFixture(setId, fixture)
         return fixture

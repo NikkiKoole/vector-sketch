@@ -130,87 +130,88 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
 end
 
 local shape8Dict = {
-    ['shapeA1.png'] = { d = { 339, 560 },
-        v = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
-    ['shapeA2.png'] = { d = { 289, 468 },
-        v = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
-    ['shapeA3.png'] = { d = { 370, 422 },
-        v = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
-    ['shapeA4.png'] = { d = { 308, 414 },
-        v = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
-    ['shapes1.png'] = { d = { 296, 495 },
-        v = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
-    ['shapes2.png'] = { d = { 252, 461 },
-        v = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
-    ['shapes3.png'] = { d = { 324, 442 },
-        v = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
-    ['shapes4.png'] = { d = { 364, 266 },
-        v = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
-    ['shapes5.png'] = { d = { 194, 338 },
-        v = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
-    ['shapes6.png'] = { d = { 250, 384 },
-        v = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
-    ['shapes7.png'] = { d = { 722, 929 },
-        v = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
-    ['shapes8.png'] = { d = { 788, 708 },
-        v = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
-    ['shapes9.png'] = { d = { 520, 468 },
-        v = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
-    ['shapes10.png'] = { d = { 520, 856 },
-        v = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
-    ['shapes11.png'] = { d = { 652, 932 },
-        v = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
-    ['shapes12.png'] = { d = { 558, 323 },
-        v = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
-    ['shapes13.png'] = { d = { 486, 556 },
-        v = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
-    ['feet2r.png'] = { d = { 261, 475 },
-        v = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
-    ['feet6r.png'] = { d = { 293, 612 },
-        v = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
-    ['feet5xr.png'] = { d = { 174, 621 },
-        v = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
-    ['feet3xr.png'] = { d = { 231, 505 },
-        v = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
-    ['feet7r.png'] = { d = { 300, 546 },
-        v = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
-    ['feet8r.png'] = { d = { 303, 465 },
-        v = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { d = { 294, 489 },
-        v = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
-    ['feet7xr.png'] = { d = { 216, 410 },
-        v = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
-    ['earx1r.png'] = { d = { 312, 416 },
-        v = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
-    ['earx2r.png'] = { d = { 354, 420 },
-        v = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
-    ['earx3r.png'] = { d = { 369, 339 },
-        v = { -111, -116, -23, -48, 36, 13, 96, 70, -11, 74, -94, 70, -107, 15, -114, -49 } },
-    ['earx4r.png'] = { d = { 306, 483 },
-        v = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
-    ['earx5r.png'] = { d = { 240, 549 },
-        v = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
-    ['earx6r.png'] = { d = { 240, 519 },
-        v = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
-    ['earx7r.png'] = { d = { 204, 474 },
-        v = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
-    ['earx8r.png'] = { d = { 402, 270 },
-        v = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
-    ['earx9r.png'] = { d = { 231, 243 }, v = { -4, -81, 38, -60, 66, 0, 62, 38, -7, 59, -73, 49, -82, 7, -57, -59 } },
-    ['earx10r.png'] = { d = { 168, 174 },
-        v = { -3, -35, 29, -16, 32, 13, 35, 46, -7, 50, -50, 45, -45, 13, -37, -15 } },
-    ['earx11r.png'] = { d = { 177, 150 },
-        v = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
-    ['earx12r.png'] = { d = { 240, 330 },
-        v = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
-    ['earx13r.png'] = { d = { 225, 336 },
-        v = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
-    ['earx14r.png'] = { d = { 270, 465 },
-        v = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
-    ['earx15r.png'] = { d = { 132, 228 },
-        v = { -20, -78, 15, -36, 26, 11, 21, 66, -16, 63, -37, 40, -43, 12, -48, -36 } },
-    ['earx16r.png'] = { d = { 312, 258 },
-        v = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
+    ['shapeA1.png'] = { dimensions = { 339, 560 },
+        vertices = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
+    ['shapeA2.png'] = { dimensions = { 289, 468 },
+        vertices = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
+    ['shapeA3.png'] = { dimensions = { 370, 422 },
+        vertices = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
+    ['shapeA4.png'] = { dimensions = { 308, 414 },
+        vertices = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
+    ['shapes1.png'] = { dimensions = { 296, 495 },
+        vertices = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
+    ['shapes2.png'] = { dimensions = { 252, 461 },
+        vertices = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
+    ['shapes3.png'] = { dimensions = { 324, 442 },
+        vertices = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
+    ['shapes4.png'] = { dimensions = { 364, 266 },
+        vertices = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
+    ['shapes5.png'] = { dimensions = { 194, 338 },
+        vertices = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
+    ['shapes6.png'] = { dimensions = { 250, 384 },
+        vertices = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
+    ['shapes7.png'] = { dimensions = { 722, 929 },
+        vertices = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
+    ['shapes8.png'] = { dimensions = { 788, 708 },
+        vertices = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
+    ['shapes9.png'] = { dimensions = { 520, 468 },
+        vertices = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
+    ['shapes10.png'] = { dimensions = { 520, 856 },
+        vertices = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
+    ['shapes11.png'] = { dimensions = { 652, 932 },
+        vertices = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
+    ['shapes12.png'] = { dimensions = { 558, 323 },
+        vertices = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
+    ['shapes13.png'] = { dimensions = { 486, 556 },
+        vertices = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
+    ['feet2r.png'] = { dimensions = { 261, 475 },
+        vertices = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
+    ['feet6r.png'] = { dimensions = { 293, 612 },
+        vertices = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
+    ['feet5xr.png'] = { dimensions = { 174, 621 },
+        vertices = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
+    ['feet3xr.png'] = { dimensions = { 231, 505 },
+        vertices = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
+    ['feet7r.png'] = { dimensions = { 300, 546 },
+        vertices = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
+    ['feet8r.png'] = { dimensions = { 303, 465 },
+        vertices = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
+    ['hand3r.png'] = { dimensions = { 294, 489 },
+        vertices = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
+    ['feet7xr.png'] = { dimensions = { 216, 410 },
+        vertices = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
+    ['earx1r.png'] = { dimensions = { 312, 416 },
+        vertices = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
+    ['earx2r.png'] = { dimensions = { 354, 420 },
+        vertices = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
+    ['earx3r.png'] = { dimensions = { 369, 339 },
+        vertices = { -111, -116, -23, -48, 36, 13, 96, 70, -11, 74, -94, 70, -107, 15, -114, -49 } },
+    ['earx4r.png'] = { dimensions = { 306, 483 },
+        vertices = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
+    ['earx5r.png'] = { dimensions = { 240, 549 },
+        vertices = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
+    ['earx6r.png'] = { dimensions = { 240, 519 },
+        vertices = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
+    ['earx7r.png'] = { dimensions = { 204, 474 },
+        vertices = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
+    ['earx8r.png'] = { dimensions = { 402, 270 },
+        vertices = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
+    ['earx9r.png'] = { dimensions = { 231, 243 },
+        vertices = { -4, -81, 38, -60, 66, 0, 62, 38, -7, 59, -73, 49, -82, 7, -57, -59 } },
+    ['earx10r.png'] = { dimensions = { 168, 174 },
+        vertices = { -3, -35, 29, -16, 32, 13, 35, 46, -7, 50, -50, 45, -45, 13, -37, -15 } },
+    ['earx11r.png'] = { dimensions = { 177, 150 },
+        vertices = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
+    ['earx12r.png'] = { dimensions = { 240, 330 },
+        vertices = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
+    ['earx13r.png'] = { dimensions = { 225, 336 },
+        vertices = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
+    ['earx14r.png'] = { dimensions = { 270, 465 },
+        vertices = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
+    ['earx15r.png'] = { dimensions = { 132, 228 },
+        vertices = { -20, -78, 15, -36, 26, 11, 21, 66, -16, 63, -37, 40, -43, 12, -48, -36 } },
+    ['earx16r.png'] = { dimensions = { 312, 258 },
+        vertices = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
 }
 
 local dna = {
@@ -719,7 +720,7 @@ local function getOwnOffset(partName, guy)
     if extractTorsoIndex(partName) then
         if parts[partName].shape == 'shape8' then
             --  print(parts[partName].shape8URL)
-            local raw = shape8Dict[parts[partName].shape8URL].v
+            local raw = shape8Dict[parts[partName].shape8URL].vertices
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
             local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
@@ -731,7 +732,7 @@ local function getOwnOffset(partName, guy)
 
     if partName == 'head' then
         if parts[partName].shape == 'shape8' then
-            local raw = shape8Dict[parts[partName].shape8URL].v
+            local raw = shape8Dict[parts[partName].shape8URL].vertices
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
             local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
@@ -749,7 +750,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'lear' or partName == 'rear' then
         local part = parts[partName]
         if part.shape == 'shape8' then
-            local raw = shape8Dict[part.shape8URL].v
+            local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(5, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
@@ -773,7 +774,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'lfoot' or partName == 'rfoot' then
         local part = parts[partName]
         if part.shape == 'shape8' then
-            local raw = shape8Dict[part.shape8URL].v
+            local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
@@ -797,7 +798,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'rhand' or partName == 'lhand' then
         local part = parts[partName]
         if part.shape == 'shape8' then
-            local raw = shape8Dict[part.shape8URL].v
+            local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
@@ -818,7 +819,7 @@ local function getOwnOffset(partName, guy)
         local part = guy.dna.parts[partName]
 
         if part.shape == 'shape8' then
-            local raw = shape8Dict[part.shape8URL].v
+            local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
             local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
@@ -853,14 +854,14 @@ local function getOffsetFromParent(partName, guy)
 
     local function getTorsoPart8FromSpecificTorso(index, torsoIndex)
         local torso = 'torso' .. torsoIndex
-        local raw = shape8Dict[parts[torso].shape8URL].v
+        local raw = shape8Dict[parts[torso].shape8URL].vertices
         local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
         local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
         return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
     end
     local function getNosePart8FromSpecificTorso(index, noseIndex)
         local torso = 'nose' .. noseIndex
-        local raw = shape8Dict[parts[torso].shape8URL].v
+        local raw = shape8Dict[parts[torso].shape8URL].vertices
         local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
         local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
         return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
@@ -897,7 +898,7 @@ local function getOffsetFromParent(partName, guy)
     end
 
     local function getHeadPart8(index)
-        local raw = shape8Dict[parts['head'].shape8URL].v
+        local raw = shape8Dict[parts['head'].shape8URL].vertices
         local vertices = makeTransformedVertices(raw, parts['head'].dims.sx or 1, parts['head'].dims.sy or 1)
         local newIndex = getTransformedIndex(index, sign(parts['head'].dims.sx), sign(parts['head'].dims.sy))
 
@@ -1280,7 +1281,7 @@ local function updateSinglePart(partName, data, instance)
     }
 
     if partData.shape8URL and shape8Dict[partData.shape8URL] then
-        local raw = shape8Dict[partData.shape8URL].v
+        local raw = shape8Dict[partData.shape8URL].vertices
         settings.vertices = makeTransformedVertices(
             raw, (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
     end
@@ -1388,12 +1389,12 @@ function lib.addTexturesFromInstance2(instance)
                         local documentSize = nil
                         if v.shape8URL then
                             if shape8Dict[v.shape8URL] then
-                                if shape8Dict[v.shape8URL].d then
-                                    getBoundingBox(shape8Dict[v.shape8URL].v)
+                                if shape8Dict[v.shape8URL].dimensions then
+                                    getBoundingBox(shape8Dict[v.shape8URL].vertices)
                                     -- logger:inspect(bbox)
                                     documentSize = {}
-                                    documentSize.w = shape8Dict[v.shape8URL].d[1] * math.abs(v.dims.sx)
-                                    documentSize.h = shape8Dict[v.shape8URL].d[2] * math.abs(v.dims.sy)
+                                    documentSize.w = shape8Dict[v.shape8URL].dimensions[1] * math.abs(v.dims.sx)
+                                    documentSize.h = shape8Dict[v.shape8URL].dimensions[2] * math.abs(v.dims.sy)
                                 end
                             end
                         end
@@ -1448,7 +1449,7 @@ function lib.addTexturesFromInstance2(instance)
                         ud.extra.dirty = true
                         ud.extra.main = utils.deepCopy(v2.main)
 
-                        local raw = shape8Dict[v.shape8URL].v
+                        local raw = shape8Dict[v.shape8URL].vertices
                         --  local growfactor = 1.1
                         local vertices = makeTransformedVertices(raw, (v.dims.sx or 1) * growfactor * scale,
                             (v.dims.sy or 1) * growfactor * scale)
@@ -1677,7 +1678,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
         if (partData.shape8URL) then
             if (shape8Dict[partData.shape8URL]) then
-                local raw = shape8Dict[partData.shape8URL].v
+                local raw = shape8Dict[partData.shape8URL].vertices
                 settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * instance.scale,
                     (partData.dims.sy or 1) * instance.scale)
             end

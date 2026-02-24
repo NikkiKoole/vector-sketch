@@ -7,8 +7,8 @@ if not love then return end
 
 
 package.loaded['src.io'] = nil
-local eio = require('src.io')
-local t = eio._test
+local sceneIO = require('src.io')
+local t = sceneIO._test
 local registry = require('src.registry')
 local utils = require('src.utils')
 
@@ -190,7 +190,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
     end)
 
     it("returns valid structure for empty world", function()
-        local data = eio.gatherSaveData(world, cam)
+        local data = sceneIO.gatherSaveData(world, cam)
         assert.is_not_nil(data)
         assert.is_not_nil(data.bodies)
         assert.is_not_nil(data.joints)
@@ -209,7 +209,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
         })
         registry.registerBody("test1", body)
 
-        local data = eio.gatherSaveData(world, cam)
+        local data = sceneIO.gatherSaveData(world, cam)
 
         assert.are.equal(1, #data.bodies)
         assert.are.equal("test1", data.bodies[1].id)
@@ -230,7 +230,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
         })
         registry.registerBody("circ1", body)
 
-        local data = eio.gatherSaveData(world, cam)
+        local data = sceneIO.gatherSaveData(world, cam)
 
         assert.are.equal(30, data.bodies[1].dims.radius)
         assert.is_nil(data.bodies[1].dims.width)
@@ -251,7 +251,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
         })
         registry.registerBody("box1", body)
 
-        local data = eio.gatherSaveData(world, cam)
+        local data = sceneIO.gatherSaveData(world, cam)
 
         assert.is_near(2.5, data.bodies[1].sharedFixtureData.density, 0.01)
         assert.is_near(0.7, data.bodies[1].sharedFixtureData.friction, 0.01)
@@ -271,7 +271,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
         })
         registry.registerBody("b2", body2)
 
-        local data = eio.gatherSaveData(world, cam)
+        local data = sceneIO.gatherSaveData(world, cam)
 
         assert.are.equal(1, #data.bodies)
         assert.are.equal("b2", data.bodies[1].id)
@@ -288,7 +288,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
             registry.registerBody(id, body)
         end
 
-        local data = eio.gatherSaveData(world, cam)
+        local data = sceneIO.gatherSaveData(world, cam)
         assert.are.equal(3, #data.bodies)
 
         local types = {}
@@ -305,7 +305,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
             getRotation = function() return 0 end
         }
 
-        local data = eio.gatherSaveData(world, myCam)
+        local data = sceneIO.gatherSaveData(world, myCam)
 
         assert.are.equal(500, data.camera.x)
         assert.are.equal(300, data.camera.y)
@@ -438,10 +438,10 @@ describe("save/load round-trip", function()
             camState = { x = 0, y = 0, scale = 1 }
 
             -- Build the world from original data
-            eio.buildWorld(originalData, world, cam)
+            sceneIO.buildWorld(originalData, world, cam)
 
             -- 3. Gather save data from the live world
-            local restoredData = eio.gatherSaveData(world, cam)
+            local restoredData = sceneIO.gatherSaveData(world, cam)
 
             -- 4. Compare
             compareBodies(originalData.bodies or {}, restoredData.bodies or {}, sceneFile)

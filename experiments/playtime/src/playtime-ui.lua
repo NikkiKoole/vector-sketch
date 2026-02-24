@@ -1,7 +1,7 @@
 local lib = {}
 local logger = require 'src.logger'
 
-local eio = require 'src.io'
+local sceneIO = require 'src.io'
 local registry = require 'src.registry'
 local mathutils = require 'src.math-utils'
 local ui = require 'src.ui-all'
@@ -125,8 +125,8 @@ function lib.doJointCreateUI(panelX, panelY, w, h)
         end
         nextRow()
         if ui.button(x, y, width, 'Create') then
-            local j = joints.createJoint(state.jointParams)
-            state.selection.selectedJoint = j
+            local joint = joints.createJoint(state.jointParams)
+            state.selection.selectedJoint = joint
             state.selection.selectedObject = nil
             state.jointParams = nil
             state.currentMode = nil
@@ -139,10 +139,10 @@ function lib.doJointCreateUI(panelX, panelY, w, h)
     end)
 end
 
-function lib.doJointUpdateUI(j, panelX, panelY, w, h)
-    if not j:isDestroyed() then
-        ui.panel(panelX, panelY, w, h, '∞ ' .. j:getType() .. ' ∞', function()
-            local bodyA, bodyB = j:getBodies()
+function lib.doJointUpdateUI(joint, panelX, panelY, w, h)
+    if not joint:isDestroyed() then
+        ui.panel(panelX, panelY, w, h, '∞ ' .. joint:getType() .. ' ∞', function()
+            local bodyA, bodyB = joint:getBodies()
 
             local layout = ui.createLayout({
                 type = 'columns',
@@ -150,8 +150,8 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 startX = panelX + 10,
                 startY = panelY + 10
             })
-            local jointType = j:getType()
-            local jointId = joints.getJointId(j)
+            local jointType = joint:getType()
+            local jointId = joints.getJointId(joint)
             local x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
 
             local nextRow = function()
@@ -162,9 +162,9 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
 
 
             if ui.button(x, y, width, 'destroy') then
-                local setId = joints.getJointId(j)
+                local setId = joints.getJointId(joint)
                 registry.unregisterJoint(setId)
-                j:destroy()
+                joint:destroy()
                 return;
             end
 
@@ -177,71 +177,71 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 )
 
                 if state.editorPreferences.axisEnabled then
-                    local _x, _y = j:getAxis()
+                    local _x, _y = joint:getAxis()
                     --_x, _y = normalizeAxis(_x, _y)
                     nextRow()
                     createSliderWithId(jointId, ' axisX', x, y, 160, -1, 1,
                         _x or 0,
                         function(val)
-                            state.selection.selectedJoint = joints.recreateJoint(j, { axisX = val, axisY = _y })
-                            j = state.selection.selectedJoint
+                            state.selection.selectedJoint = joints.recreateJoint(joint, { axisX = val, axisY = _y })
+                            joint = state.selection.selectedJoint
                         end
                     )
                     nextRow()
                     createSliderWithId(jointId, ' axisY', x, y, 160, -1, 1,
                         _y or 1,
                         function(val)
-                            state.selection.selectedJoint = joints.recreateJoint(j, { axisX = _x, axisY = val })
-                            j = state.selection.selectedJoint
+                            state.selection.selectedJoint = joints.recreateJoint(joint, { axisX = _x, axisY = val })
+                            joint = state.selection.selectedJoint
                         end
                     )
                     nextRow()
                     if ui.button(x, y, 160, 'normalize') then
-                        local ax, ay = j:getAxis()
+                        local ax, ay = joint:getAxis()
                         ax, ay = mathutils.normalizeAxis(ax, ay)
-                        state.selection.selectedJoint = joints.recreateJoint(j, { axisX = ax, axisY = ay })
-                        j = state.selection.selectedJoint
+                        state.selection.selectedJoint = joints.recreateJoint(joint, { axisX = ax, axisY = ay })
+                        joint = state.selection.selectedJoint
                     end
                 end
-                return j
+                return joint
             end
 
             local function collideFunctionality()
                 createCheckbox(' collide', x, y,
-                    j:getCollideConnected(),
+                    joint:getCollideConnected(),
                     function(val)
-                        state.selection.selectedJoint = joints.recreateJoint(j, { collideConnected = val })
-                        j = state.selection.selectedJoint
+                        state.selection.selectedJoint = joints.recreateJoint(joint, { collideConnected = val })
+                        joint = state.selection.selectedJoint
                     end
                 )
-                return j
+                return joint
             end
 
             local function motorFunctionality(settings)
                 createCheckbox(' motor', x, y,
-                    j:isMotorEnabled(),
+                    joint:isMotorEnabled(),
                     function(val)
-                        j:setMotorEnabled(val)
+                        joint:setMotorEnabled(val)
                     end
                 )
                 nextRow()
-                if j:isMotorEnabled() then
+                if joint:isMotorEnabled() then
                     createSliderWithId(jointId, ' speed', x, y, 160, -1000, 1000,
-                        j:getMotorSpeed(),
-                        function(val) j:setMotorSpeed(val) end
+                        joint:getMotorSpeed(),
+                        function(val) joint:setMotorSpeed(val) end
                     )
                     nextRow()
                     if (settings and settings.useTorque) then
                         createSliderWithId(jointId, ' max T', x, y, 160, 0, 100000,
-                            j:getMaxMotorTorque(),
-                            function(val) j:setMaxMotorTorque(val) end
+                            joint:getMaxMotorTorque(),
+                            function(val) joint:setMaxMotorTorque(val) end
                         )
                         nextRow()
                     end
                     if (settings and settings.useForce) then
                         createSliderWithId(jointId, ' max F', x, y, 160, 0, 100000,
-                            j:getMaxMotorForce(),
-                            function(val) j:setMaxMotorForce(val) end
+                            joint:getMaxMotorForce(),
+                            function(val) joint:setMaxMotorForce(val) end
                         )
                         nextRow()
                     end
@@ -250,30 +250,30 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
 
             local function limitsFunctionalityAngular()
                 createCheckbox(' limits', x, y,
-                    j:areLimitsEnabled(),
+                    joint:areLimitsEnabled(),
                     function(val)
-                        j:setLimitsEnabled(val)
+                        joint:setLimitsEnabled(val)
                     end
                 )
 
-                if (j:areLimitsEnabled()) then
+                if (joint:areLimitsEnabled()) then
                     nextRow()
-                    local up = math.deg(j:getUpperLimit())
+                    local up = math.deg(joint:getUpperLimit())
                     createSliderWithId(jointId, ' lower', x, y, 160, -180, up,
-                        math.deg(j:getLowerLimit()),
+                        math.deg(joint:getLowerLimit()),
                         function(val)
                             local newValue = math.rad(val)
 
-                            j:setLowerLimit(newValue)
+                            joint:setLowerLimit(newValue)
                         end
                     )
                     nextRow()
-                    local low = math.deg(j:getLowerLimit())
+                    local low = math.deg(joint:getLowerLimit())
                     createSliderWithId(jointId, ' upper', x, y, 160, low, 180,
-                        math.deg(j:getUpperLimit()),
+                        math.deg(joint:getUpperLimit()),
                         function(val)
                             local newValue = math.rad(val)
-                            j:setUpperLimit(newValue)
+                            joint:setUpperLimit(newValue)
                         end
                     )
                 end
@@ -281,40 +281,40 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
 
             local function limitsFunctionalityLinear()
                 createCheckbox(' limits', x, y,
-                    j:areLimitsEnabled(),
+                    joint:areLimitsEnabled(),
                     function(val)
-                        j:setLimitsEnabled(val)
+                        joint:setLimitsEnabled(val)
                     end
                 )
 
-                if (j:areLimitsEnabled()) then
+                if (joint:areLimitsEnabled()) then
                     nextRow()
-                    local up = (j:getUpperLimit())
+                    local up = (joint:getUpperLimit())
                     createSliderWithId(jointId, ' lower', x, y, 160, -1000, up,
-                        j:getLowerLimit(),
+                        joint:getLowerLimit(),
                         function(val)
-                            j:setLowerLimit(val)
+                            joint:setLowerLimit(val)
                         end
                     )
                     nextRow()
-                    local low = j:getLowerLimit()
+                    local low = joint:getLowerLimit()
                     createSliderWithId(jointId, ' upper', x, y, 160, low, 1000,
-                        j:getUpperLimit(),
+                        joint:getUpperLimit(),
                         function(val)
-                            j:setUpperLimit(val)
+                            joint:setUpperLimit(val)
                         end
                     )
                 end
             end
 
             local function offsetSliders()
-                if not joints.getJointMetaSetting(j, 'offsetA') then
-                    joints.setJointMetaSetting(j, 'offsetA', { x = 0, y = 0 })
+                if not joints.getJointMetaSetting(joint, 'offsetA') then
+                    joints.setJointMetaSetting(joint, 'offsetA', { x = 0, y = 0 })
                 end
-                local offsetA = joints.getJointMetaSetting(j, 'offsetA') or 0
+                local offsetA = joints.getJointMetaSetting(joint, 'offsetA') or 0
 
-                if not joints.getJointMetaSetting(j, 'offsetB') then
-                    joints.setJointMetaSetting(j, 'offsetB', { x = 0, y = 0 })
+                if not joints.getJointMetaSetting(joint, 'offsetB') then
+                    joints.setJointMetaSetting(joint, 'offsetB', { x = 0, y = 0 })
                 end
 
                 local function updateOffsetA(ox, oy)
@@ -322,12 +322,12 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
 
                     offsetA.x = ox
                     offsetA.y = oy
-                    joints.setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                    state.selection.selectedJoint = joints.recreateJoint(j)
-                    j = state.selection.selectedJoint
+                    joints.setJointMetaSetting(joint, 'offsetA', { x = offsetA.x, y = offsetA.y })
+                    state.selection.selectedJoint = joints.recreateJoint(joint)
+                    joint = state.selection.selectedJoint
 
 
-                    return j
+                    return joint
                 end
 
                 -- Ensure offsets exist
@@ -344,7 +344,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 end
                 nextRow()
 
-                local bodyARef = j:getBodies()
+                local bodyARef = joint:getBodies()
                 local ud = bodyARef:getUserData()
 
 
@@ -385,7 +385,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
 
 
 
-                return j
+                return joint
             end
 
             if jointType == 'distance' then
@@ -394,27 +394,27 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
                 offsetSliders()
                 nextRow()
-                -- local bodyA, bodyB = j:getBodies()
+                -- local bodyA, bodyB = joint:getBodies()
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                 createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
                     state.jointLengthParams.length or myLength,
                     function(val)
-                        j:setLength(val)
+                        joint:setLength(val)
                         state.jointLengthParams.length = val
                     end
                 )
                 nextRow()
 
                 createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
-                    j:getFrequency(),
-                    function(val) j:setFrequency(val) end
+                    joint:getFrequency(),
+                    function(val) joint:setFrequency(val) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
-                    j:getDampingRatio(),
-                    function(val) j:setDampingRatio(val) end
+                    joint:getDampingRatio(),
+                    function(val) joint:setDampingRatio(val) end
                 )
 
                 nextRow()
@@ -426,13 +426,13 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 offsetSliders()
                 nextRow()
                 createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
-                    j:getFrequency(),
-                    function(val) j:setFrequency(val) end
+                    joint:getFrequency(),
+                    function(val) joint:setFrequency(val) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
-                    j:getDampingRatio(),
-                    function(val) j:setDampingRatio(val) end
+                    joint:getDampingRatio(),
+                    function(val) joint:setDampingRatio(val) end
                 )
                 nextRow()
             elseif jointType == 'rope' then
@@ -441,14 +441,14 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
                 offsetSliders()
                 nextRow()
-                -- local bodyA, bodyB = j:getBodies()
+                -- local bodyA, bodyB = joint:getBodies()
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                 createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
                     state.jointLengthParams.maxLength or myLength,
                     function(val)
-                        j:setMaxLength(val)
+                        joint:setMaxLength(val)
                         state.jointLengthParams.maxLength = val
                     end
                 )
@@ -470,21 +470,21 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
                 axisFunctionality()
                 nextRow()
-                -- if not j:isDestroyed() then
+                -- if not joint:isDestroyed() then
                 createSliderWithId(jointId, ' spring F', x, y, 160, 0, 100,
-                    j:getSpringFrequency(),
+                    joint:getSpringFrequency(),
                     function(val)
-                        j:setSpringFrequency(val)
+                        joint:setSpringFrequency(val)
                     end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' spring D', x, y, 160, 0, 1,
-                    j:getSpringDampingRatio(),
-                    function(val) j:setSpringDampingRatio(val) end
+                    joint:getSpringDampingRatio(),
+                    function(val) joint:setSpringDampingRatio(val) end
                 )
                 nextRow()
                 motorFunctionality({ useTorque = true })
-                -- axisFunctionality(j)
+                -- axisFunctionality(joint)
                 nextRow()
                 --  end
             elseif jointType == 'motor' then
@@ -494,47 +494,47 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 offsetSliders()
                 nextRow()
                 createSliderWithId(jointId, ' angular o', x, y, 160, -180, 180,
-                    math.deg(j:getAngularOffset()),
-                    function(val) j:setAngularOffset(math.rad(val)) end
+                    math.deg(joint:getAngularOffset()),
+                    function(val) joint:setAngularOffset(math.rad(val)) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' corr.', x, y, 160, 0, 1,
-                    j:getCorrectionFactor(),
-                    function(val) j:setCorrectionFactor(val) end
+                    joint:getCorrectionFactor(),
+                    function(val) joint:setCorrectionFactor(val) end
                 )
                 nextRow()
-                local lx, ly = j:getLinearOffset()
+                local lx, ly = joint:getLinearOffset()
                 createSliderWithId(jointId, ' lx', x, y, 160, -1000, 1000,
                     lx,
-                    function(val) j:setLinearOffset(val, ly) end
+                    function(val) joint:setLinearOffset(val, ly) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' ly', x, y, 160, -1000, 1000,
                     ly,
-                    function(val) j:setLinearOffset(lx, val) end
+                    function(val) joint:setLinearOffset(lx, val) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
-                    j:getMaxForce(),
-                    function(val) j:setMaxForce(val) end
+                    joint:getMaxForce(),
+                    function(val) joint:setMaxForce(val) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
-                    j:getMaxTorque(),
-                    function(val) j:setMaxTorque(val) end
+                    joint:getMaxTorque(),
+                    function(val) joint:setMaxTorque(val) end
                 )
                 nextRow()
             elseif jointType == 'friction' then
                 offsetSliders()
                 nextRow()
                 createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
-                    j:getMaxForce(),
-                    function(val) j:setMaxForce(val) end
+                    joint:getMaxForce(),
+                    function(val) joint:setMaxForce(val) end
                 )
                 nextRow()
                 createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
-                    j:getMaxTorque(),
-                    function(val) j:setMaxTorque(val) end
+                    joint:getMaxTorque(),
+                    function(val) joint:setMaxTorque(val) end
                 )
                 nextRow()
             elseif jointType == 'prismatic' then
@@ -761,8 +761,8 @@ function lib.drawRecordingUI()
         local function startFromCurrentCheckpoint()
             state.selection.selectedJoint = nil
             state.selection.selectedObj = nil
-            eio.buildWorld(state.scene.checkpoints[state.scene.activeCheckpointIndex].saveData, state.physicsWorld, cam,
-                true)
+            local checkpoint = state.scene.checkpoints[state.scene.activeCheckpointIndex]
+            sceneIO.buildWorld(checkpoint.saveData, state.physicsWorld, cam, true)
             --
 
             if state.scene.sceneScript then state.scene.sceneScript.onStart() end
@@ -770,7 +770,7 @@ function lib.drawRecordingUI()
 
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
         if addcheckpointbutton then
-            local saveData = eio.gatherSaveData(state.physicsWorld, cam)
+            local saveData = sceneIO.gatherSaveData(state.physicsWorld, cam)
             table.insert(state.scene.checkpoints, { saveData = saveData, recordings = {} })
         end
         nextRow()
@@ -2295,14 +2295,14 @@ function lib.drawSelectedBodiesUI()
         end
 
         if ui.button(x, y, 260, 'clone') then
-            local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
+            local cloned = sceneIO.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
             state.selection.selectedBodies = cloned
         end
         nextRow()
 
         if ui.button(x, y, 260, 'clone x 10') then
             for _ = 1, 10 do
-                local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
+                local cloned = sceneIO.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
                 state.selection.selectedBodies = cloned
             end
             --
@@ -2415,7 +2415,7 @@ function lib.drawUpdateSelectedObjectUI()
 
         if ui.button(x, y, 100, 'clone') then
             state.selection.selectedBodies = { state.selection.selectedObj }
-            local cloned = eio.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
+            local cloned = sceneIO.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
             state.selection.selectedBodies = cloned
             state.selection.selectedObj = nil
         end
@@ -3230,7 +3230,7 @@ function lib.drawUI()
             end
             if ui.button(320, 500, 200, 'save') then
                 state.panelVisibility.saveDialogOpened = false
-                eio.save(state.physicsWorld, cam, state.editorPreferences.saveName)
+                sceneIO.save(state.physicsWorld, cam, state.editorPreferences.saveName)
             end
             if ui.button(540, 500, 200, 'cancel') then
                 state.panelVisibility.saveDialogOpened = false

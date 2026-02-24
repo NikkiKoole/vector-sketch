@@ -53,8 +53,8 @@ function lib.renderActiveEditorThings()
         local ud = state.selection.selectedSFixture:getUserData()
         if false and ud.subtype == 'resource' then
             local bod = state.selection.selectedSFixture:getBody()
-            local bud = bod:getUserData()
-            love.graphics.polygon('line', bud.thing.vertices)
+            local bodyData = bod:getUserData()
+            love.graphics.polygon('line', bodyData.thing.vertices)
             local b = state.backdrops[ud.extra.selectedBGIndex]
             local x1l, y1l = bod:getLocalPoint(b.x, b.y)
             local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
@@ -240,8 +240,8 @@ function lib.renderActiveEditorThings()
 
             if mappert then
                 local mb = mappert:getBody()
-                local mud = mb:getUserData()
-                local verts = mud.thing.vertices
+                local meshData = mb:getUserData()
+                local verts = meshData.thing.vertices
 
                 -- Get vertices in world space
                 local body = state.selection.selectedSFixture:getBody()

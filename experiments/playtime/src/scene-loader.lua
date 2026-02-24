@@ -1,7 +1,7 @@
 local lib = {}
 local logger = require 'src.logger'
 local state = require 'src.state'
-local eio = require 'src.io'
+local sceneIO = require 'src.io'
 local script = require 'src.script'
 local utils = require 'src.utils'
 local camera = require 'src.camera'
@@ -24,7 +24,7 @@ function lib.loadScene(name)
     local data = getFiledata(name):getString()
     state.selection.selectedJoint = nil
     state.selection.selectedObj = nil
-    eio.load(data, state.physicsWorld, cam)
+    sceneIO.load(data, state.physicsWorld, cam)
     logger:info("Scene loaded: " .. name)
     return data
 end

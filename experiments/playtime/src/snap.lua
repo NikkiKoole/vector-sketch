@@ -10,7 +10,7 @@ local mathutils = require 'src.math-utils'
 
 local snapFixtures = {}
 local snapDistance = 140           -- Maximum distance to snap
-local mySnapJoints = {}            -- Store created joints
+local activeSnapJoints = {}            -- Store created joints
 local jointBreakThreshold = 100000 -- Force threshold for breaking the joint
 local cooldownTime = .5            -- Time in seconds to prevent immediate reconnection
 local cooldownList = {}            -- Table to track cooldown for each snap point
@@ -58,14 +58,14 @@ local function createRevoluteJoint(body1, body2, x, y, x2, y2, _index1, _index2)
 
     joint:setUserData({ id = id, offsetA = offsetA, offsetB = offsetB, scriptmeta = { type = 'snap' } })
     --  joint:setUserData({ id = id, scriptmeta = { type = 'snap', index1 = index1, index2 = index2 } })
-    table.insert(mySnapJoints, joint)
+    table.insert(activeSnapJoints, joint)
     registry.registerJoint(id, joint)
 end
 
 local function areBodiesConnected2(body1, body2, snapFix)
     for i = 1, #snapFix do
-        local it = snapFix[i]:getUserData().extra
-        if (it.to == body1 and it.at == body2) or (it.to == body2 and it.at == body1) then
+        local snapInfo = snapFix[i]:getUserData().extra
+        if (snapInfo.to == body1 and snapInfo.at == body2) or (snapInfo.to == body2 and snapInfo.at == body1) then
             return true
         end
     end
@@ -74,8 +74,8 @@ end
 
 
 local function checkForJointBreaks(dt, interacted, snapFix)
-    for i = #mySnapJoints, 1, -1 do
-        local joint = mySnapJoints[i]
+    for i = #activeSnapJoints, 1, -1 do
+        local joint = activeSnapJoints[i]
 
         -- Check if the force exceeds the threshold
         local xf, yf = joint:getReactionForce(1 / dt)
@@ -105,7 +105,7 @@ local function checkForJointBreaks(dt, interacted, snapFix)
 
                 joint:destroy()
                 -- Remove the joint from the list of joints
-                table.remove(mySnapJoints, i)
+                table.remove(activeSnapJoints, i)
             end
         end
     end
@@ -115,27 +115,27 @@ local function checkForSnaps(interacted, snapFix)
     local currentTime = love.timer.getTime()
 
     for i = 1, #snapFix do
-        local it1 = snapFix[i]:getUserData().extra
+        local snapInfoA = snapFix[i]:getUserData().extra
 
         -- else this snap point is already connected and it cannot be connected more then once
-        if it1.to == nil and not isInCooldown(it1.fixture, currentTime) then
-            local body1 = it1.at
+        if snapInfoA.to == nil and not isInCooldown(snapInfoA.fixture, currentTime) then
+            local body1 = snapInfoA.at
             if not body1 then
                 logger:error('body1 is nil!    ')
-                logger:info(inspect(it1))
+                logger:info(inspect(snapInfoA))
             end
 
             -- todo , src/snap.lua:119: attempt to call method 'getWorldPoint' (a nil value)
 
-            local x1, y1 = body1:getWorldPoint(it1.xOffset, it1.yOffset)
+            local x1, y1 = body1:getWorldPoint(snapInfoA.xOffset, snapInfoA.yOffset)
 
             for j = 1, #snapFix do
                 if j ~= i then                                                           -- else you check it against it
-                    local it2 = snapFix[j]:getUserData().extra
-                    -- else it2 is already connected,
-                    if it2.to == nil and not isInCooldown(it2.fixture, currentTime) then
-                        local body2 = it2.at
-                        local x2, y2 = body2:getWorldPoint(it2.xOffset, it2.yOffset)
+                    local snapInfoB = snapFix[j]:getUserData().extra
+                    -- else snapInfoB is already connected,
+                    if snapInfoB.to == nil and not isInCooldown(snapInfoB.fixture, currentTime) then
+                        local body2 = snapInfoB.at
+                        local x2, y2 = body2:getWorldPoint(snapInfoB.xOffset, snapInfoB.yOffset)
 
                         local distance = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                         if distance <= snapDistance then
@@ -144,14 +144,14 @@ local function checkForSnaps(interacted, snapFix)
                                 -- else these bodies are already connected..
                                 if not areBodiesConnected2(body1, body2, snapFix) then
                                     createRevoluteJoint(body1, body2, x1, y1, x2, y2, i, j)
-                                    it1.to = body2
+                                    snapInfoA.to = body2
                                     local ud1 = snapFix[i]:getUserData()
-                                    ud1.extra = it1
+                                    ud1.extra = snapInfoA
                                     snapFix[i]:setUserData(ud1)
 
-                                    it2.to = body1
+                                    snapInfoB.to = body1
                                     local ud2 = snapFix[j]:getUserData()
-                                    ud2.extra = it2
+                                    ud2.extra = snapInfoB
                                     snapFix[j]:setUserData(ud2)
                                     break
                                 end
@@ -209,7 +209,7 @@ end
 local calculateDistance = mathutils.calculateDistance
 
 function lib.onSceneLoaded()
-    --print('should build snapjoints array', #mySnapJoints)
+    --print('should build snapjoints array', #activeSnapJoints)
 
     for _, value in pairs(registry.joints) do
         local ud = value:getUserData()
@@ -289,59 +289,59 @@ function lib.onSceneLoaded()
             snapFixtures[indx2]:setUserData(i2ud)
 
 
-            table.insert(mySnapJoints, value)
+            table.insert(activeSnapJoints, value)
         end
     end
 end
 
 function lib.resetList()
-    mySnapJoints = {}
+    activeSnapJoints = {}
 end
 
-function lib.addSnapJoint(j)
-    table.insert(mySnapJoints, j)
+function lib.addSnapJoint(joint)
+    table.insert(activeSnapJoints, joint)
 end
 
 function lib.maybeUpdateSnapJoints(joints)
-    for i = 1, #mySnapJoints do
-        local msj = mySnapJoints[i]
+    for i = 1, #activeSnapJoints do
+        local msj = activeSnapJoints[i]
         local lookForId = msj:getUserData().id
 
         for j = 1, #joints do
             local newer = joints[j]
 
             if (lookForId == newer.id) then
-                mySnapJoints[i] = registry.getJointByID(newer.id)
+                activeSnapJoints[i] = registry.getJointByID(newer.id)
             end
         end
     end
 end
 
 function lib.maybeUpdateSnapJointWithId(id)
-    for i = 1, #mySnapJoints do
-        local msj = mySnapJoints[i]
-        -- TODO mySnapJoints should bbecome a key value map keyed on IDs
+    for i = 1, #activeSnapJoints do
+        local msj = activeSnapJoints[i]
+        -- TODO activeSnapJoints should bbecome a key value map keyed on IDs
         if msj:isDestroyed() or msj:getUserData().id == id then
-            mySnapJoints[i] = registry.getJointByID(id)
+            activeSnapJoints[i] = registry.getJointByID(id)
         end
         --if snap.maybeUpdateSnapJointWithId(id)
     end
 end
 
 function lib.destroySnapJointAboutBody(body)
-    for i = #mySnapJoints, 1, -1 do
-        local joint = mySnapJoints[i]
+    for i = #activeSnapJoints, 1, -1 do
+        local joint = activeSnapJoints[i]
         local body1, body2 = joint:getBodies()
         if (body:getUserData().thing.id == body1:getUserData().thing.id) then
             registry.unregisterJoint(joint:getUserData().id)
             joint:destroy()
-            table.remove(mySnapJoints, i)
+            table.remove(activeSnapJoints, i)
         end
         if (body:getUserData().thing.id == body2:getUserData().thing.id) then
             registry.unregisterJoint(joint:getUserData().id)
 
             joint:destroy()
-            table.remove(mySnapJoints, i)
+            table.remove(activeSnapJoints, i)
         end
     end
 end

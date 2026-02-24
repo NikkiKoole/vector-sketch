@@ -613,7 +613,7 @@ routes["POST /eval"] = function(req)
         local registry = require 'src.registry'
         local objectManager = require 'src.object-manager'
         local joints = require 'src.joints'
-        local eio = require 'src.io'
+        local sceneIO = require 'src.io'
         local inspect = require 'vendor.inspect'
         local utils = require 'src.utils'
     ]]
@@ -707,11 +707,11 @@ end
 
 routes["GET /scene"] = function(req)
     local state = require 'src.state'
-    local eio = require 'src.io'
+    local sceneIO = require 'src.io'
     local camera = require 'src.camera'
     local cam = camera.getInstance()
     local ok_pcall, data = pcall(function()
-        return eio.gatherSaveData(state.physicsWorld, cam)
+        return sceneIO.gatherSaveData(state.physicsWorld, cam)
     end)
     if not ok_pcall then
         return err_response("gatherSaveData failed: " .. tostring(data))
@@ -785,7 +785,7 @@ routes["POST /exec"] = function(req)
         local registry = require 'src.registry'
         local objectManager = require 'src.object-manager'
         local joints = require 'src.joints'
-        local eio = require 'src.io'
+        local sceneIO = require 'src.io'
         local inspect = require 'vendor.inspect'
         local utils = require 'src.utils'
     ]]
@@ -868,13 +868,13 @@ end
 
 routes["POST /scene/save"] = function(req)
     local state = require 'src.state'
-    local eio = require 'src.io'
+    local sceneIO = require 'src.io'
     local camera = require 'src.camera'
     local cam = camera.getInstance()
     local filename = req.json_body and req.json_body.filename
     if not filename then return err_response("missing 'filename' in JSON body") end
     local ok_pcall, err_msg = pcall(function()
-        local data = eio.gatherSaveData(state.physicsWorld, cam)
+        local data = sceneIO.gatherSaveData(state.physicsWorld, cam)
         local encoded = json.encode(data, { indent = true })
         local f = io.open(filename, "w")
         if not f then error("cannot open file: " .. filename) end
