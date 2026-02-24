@@ -188,7 +188,6 @@ function lib.rebuildSnapFixtures(sfix)
             --logger:inspect(ud)
             if ud and utils.sanitizeString(ud.subtype) == 'snap' then
                 local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
-                local ud = v:getUserData()
 
                 ud.extra.xOffset = centroid[1]
                 ud.extra.yOffset = centroid[2]

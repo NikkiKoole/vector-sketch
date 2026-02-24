@@ -197,9 +197,9 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                     )
                     nextRow()
                     if ui.button(x, y, 160, 'normalize') then
-                        local _x, _y = j:getAxis()
-                        _x, _y = mathutils.normalizeAxis(_x, _y)
-                        state.selection.selectedJoint = joints.recreateJoint(j, { axisX = _x, axisY = _y })
+                        local ax, ay = j:getAxis()
+                        ax, ay = mathutils.normalizeAxis(ax, ay)
+                        state.selection.selectedJoint = joints.recreateJoint(j, { axisX = ax, axisY = ay })
                         j = state.selection.selectedJoint
                     end
                 end
@@ -1208,7 +1208,7 @@ function lib.drawSelectedSFixture()
                     oldTexFixUD.extra.dirty = true
                 end)
 
-            local slx, sly = ui.sameLine()
+            slx, sly = ui.sameLine()
             createSliderWithId(myID, 'psy', slx, sly, 50, 0.01, 3,
                 oldTexFixUD.extra[layer].psy or 1,
                 function(v)
@@ -1369,7 +1369,7 @@ function lib.drawSelectedSFixture()
                     end
                 end
 
-                local slx, sly = ui.sameLine()
+                slx, sly = ui.sameLine()
                 if ui.button(slx, sly, 40, oldTexFixUD.extra.vertexCount or '') then
                     if oldTexFixUD.extra.vertexCount == 4 then
                         oldTexFixUD.extra.vertexCount = 8
@@ -1976,7 +1976,7 @@ function lib.drawSelectedSFixture()
                     if ui.button(x, y, 40, 'N') then
                         handleOffset(0, -1)
                     end
-                    local slx, sly = ui.sameLine()
+                    slx, sly = ui.sameLine()
                     if ui.button(slx, sly, 40, 'E') then
                         handleOffset(1, 0)
                     end
@@ -3063,7 +3063,7 @@ function lib.drawUI()
 
     if state.currentMode == 'pickAutoRopifyMode' then
         local panelWidth = PANEL_WIDTH
-        local w, h = love.graphics.getDimensions()
+        w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ autoropify ∞', function()
             local padding = BUTTON_SPACING
             local layout = ui.createLayout({
@@ -3086,7 +3086,7 @@ function lib.drawUI()
 
     if state.currentMode == 'drawClickMode' then
         local panelWidth = PANEL_WIDTH
-        local w, h = love.graphics.getDimensions()
+        w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
             local padding = BUTTON_SPACING
             local layout = ui.createLayout({

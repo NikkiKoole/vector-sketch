@@ -926,9 +926,9 @@ function lib.drawTexturedWorld(world)
                             end
                         end
                         if it.type == 'joint' then
-                            local j = registry.getJointByID(it.id)
-                            if j and not j:isDestroyed() then
-                                local x1, y1, _, _ = j:getAnchors()
+                            local jnt = registry.getJointByID(it.id)
+                            if jnt and not jnt:isDestroyed() then
+                                local x1, y1, _, _ = jnt:getAnchors()
                                 table.insert(points, x1)
                                 table.insert(points, y1)
                             end
@@ -1383,15 +1383,15 @@ function lib.drawTexturedWorld(world)
                 local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
                 local verts = {}
 
-                for i = 1, #b.thing.vertices, 2 do
-                    verts[i] = b.thing.vertices[i] - centerX
-                    verts[i + 1] = b.thing.vertices[i + 1] - centerY
+                for vi = 1, #b.thing.vertices, 2 do
+                    verts[vi] = b.thing.vertices[vi] - centerX
+                    verts[vi + 1] = b.thing.vertices[vi + 1] - centerY
                 end
 
 
                 local p = {}
-                for i = 1, #verts, 2 do
-                    table.insert(p, { verts[i], verts[i + 1] })
+                for vi = 1, #verts, 2 do
+                    table.insert(p, { verts[vi], verts[vi + 1] })
                 end
 
 
@@ -1652,17 +1652,17 @@ function lib.drawTexturedWorld(world)
                 local verts = polyline.render('miter', coords, width)
 
                 local cx, cy = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
-                for i = 1, #verts do
-                    verts[i][1] = verts[i][1] - cx
-                    verts[i][2] = verts[i][2] - cy
+                for vi = 1, #verts do
+                    verts[vi][1] = verts[vi][1] - cx
+                    verts[vi][2] = verts[vi][2] - cy
                 end
 
                 local vertsWithUVs = {}
 
-                for i = 1, #verts do
-                    local u = (i % 2 == 1) and 0 or 1
-                    local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
-                    vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+                for vi = 1, #verts do
+                    local u = (vi % 2 == 1) and 0 or 1
+                    local v = math.floor(((vi - 1) / 2)) / (#verts / 2 - 1)
+                    vertsWithUVs[vi] = { verts[vi][1], verts[vi][2], u, v }
                 end
 
                 local vertices = vertsWithUVs

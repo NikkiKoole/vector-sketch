@@ -33,8 +33,8 @@ local function createCamera()
                 self.y = offset
             end,
             getContainerDimensions = function()
-                local W, H = love.graphics.getDimensions()
-                return W - 2 * offset, H - 2 * offset
+                local cW, cH = love.graphics.getDimensions()
+                return cW - 2 * offset, cH - 2 * offset
             end
         }
     )

@@ -92,9 +92,9 @@ function script.loadScript(data, filePath)
             error("Error loading script: " .. err)
         end
 
-        local success, err = pcall(chunk)
+        local success, execErr = pcall(chunk)
         if not success then
-            error("Error executing script: " .. err)
+            error("Error executing script: " .. execErr)
         end
 
         logger:info("Script loaded: " .. filePath)

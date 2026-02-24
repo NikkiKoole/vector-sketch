@@ -242,8 +242,8 @@ function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
     end
 
     for i = 1, #result do
-        local success, tris = pcall(love.math.triangulate, result[i])
-        if success then
+        local triOk, tris = pcall(love.math.triangulate, result[i])
+        if triOk then
             utils.tableConcat(triangles, tris)
         else
             logger:error("Failed to triangulate part of the polygon: " .. tris)
@@ -301,8 +301,8 @@ local function makeShapeListFromPolygon(polygon)
             end
 
             for i = 1, #result do
-                local success, tris = pcall(love.math.triangulate, result[i])
-                if success then
+                local triOk, tris = pcall(love.math.triangulate, result[i])
+                if triOk then
                     utils.tableConcat(triangles, tris)
                 else
                     logger:error("Failed to triangulate part of the polygon: " .. tris)

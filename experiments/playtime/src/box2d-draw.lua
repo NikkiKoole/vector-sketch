@@ -102,15 +102,15 @@ function lib.drawWorld(world, drawOutline)
                 elseif fixture:getShape():type() == 'CircleShape' then
                     local body_x, body_y = body:getPosition()
                     local shape_x, shape_y = fixture:getShape():getPoint()
-                    local r = fixture:getShape():getRadius()
+                    local radius = fixture:getShape():getRadius()
                     local circleFillColor = getBodyColor(body)
                     local segments = 180
                     love.graphics.setColor(circleFillColor[1], circleFillColor[2], circleFillColor[3], alpha)
-                    love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, segments)
+                    love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, radius, segments)
 
                     local circleOutlineColor = pal.creamy
                     love.graphics.setColor(circleOutlineColor[1], circleOutlineColor[2], circleOutlineColor[3], alpha)
-                    if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, segments) end
+                    if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, radius, segments) end
                 end
                 if state.world.showDebugIds then
                     local ud = fixture:getUserData()

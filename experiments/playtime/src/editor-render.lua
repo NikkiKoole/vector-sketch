@@ -81,8 +81,8 @@ function lib.renderActiveEditorThings()
             local polygon = v:getPoly()
 
             local tris = shapes.makeTrianglesFromPolygon(polygon)
-            for i = 1, #tris do
-                love.graphics.polygon('fill', tris[i])
+            for ti = 1, #tris do
+                love.graphics.polygon('fill', tris[ti])
             end
         end
     end

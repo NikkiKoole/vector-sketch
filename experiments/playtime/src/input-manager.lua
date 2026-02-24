@@ -436,8 +436,8 @@ function lib.handleDraggingObj()
                 local dy = newPosY - oldPosY
                 for j = 1, #state.selection.selectedBodies do
                     if (state.selection.selectedBodies[j] ~= state.interaction.draggingObj) then
-                        local oldPosX, oldPosY = state.selection.selectedBodies[j].body:getPosition()
-                        state.selection.selectedBodies[j].body:setPosition(oldPosX + dx, oldPosY + dy)
+                        local otherPosX, otherPosY = state.selection.selectedBodies[j].body:getPosition()
+                        state.selection.selectedBodies[j].body:setPosition(otherPosX + dx, otherPosY + dy)
                     end
                 end
             end
