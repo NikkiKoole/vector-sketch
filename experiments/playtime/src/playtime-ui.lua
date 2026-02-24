@@ -30,7 +30,6 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 local FPS = 60
 
-local offsetHasChangedViaOutside
 
 local profileFrameCounter = 0
 
@@ -330,7 +329,6 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                     j = state.selection.selectedJoint
 
 
-                    offsetHasChangedViaOutside = true
                     return j
                 end
 
@@ -344,7 +342,6 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                     j = state.selection.selectedJoint
 
 
-                    offsetHasChangedViaOutside = true
                     return j
                 end
 
@@ -361,7 +358,6 @@ function lib.doJointUpdateUI(j, _x, _y, w, h)
                     end
                 end
                 nextRow()
-                if (offsetHasChangedViaOutside) then offsetHasChangedViaOutside = false end
 
                 local bodyA, bodyB = j:getBodies()
                 local ud = bodyA:getUserData()
@@ -1056,9 +1052,22 @@ local accordionStatesSF = {
     ['patch3'] = false,
 }
 
+local lastSFixtureForCleanup = nil
+
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
+    if lastSFixtureForCleanup ~= state.selection.selectedSFixture then
+        lastSFixtureForCleanup = state.selection.selectedSFixture
+        if state.panelVisibility.showPalette then
+            state.panelVisibility.showPalette = nil
+            state.showPaletteFunc = nil
+        end
+        state.texFixtureEdit.tempVerts = nil
+        state.texFixtureEdit.centroid = nil
+        state.texFixtureEdit.lockedVerts = true
+        state.texFixtureEdit.dragIdx = 0
+    end
     if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
 
@@ -1114,7 +1123,6 @@ function lib.drawSelectedSFixture()
                     state.panelVisibility.showPalette = true
                     state.showPaletteFunc = function(color)
                         dirty()
-                        logger:info('sadads', color)
                         onColorChange(color)
                     end
                 end
@@ -1122,7 +1130,6 @@ function lib.drawSelectedSFixture()
             local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '')
             if hex and hex ~= currentHex then
                 oldTexFixUD.extra.dirty = true
-                logger:info('jo')
                 onColorChange(hex)
             end
             ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
@@ -1445,7 +1452,7 @@ function lib.drawSelectedSFixture()
 
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c)
-                            oldTexFixUD.extra.main.bgHex = c; oldTexFixUD.extra.main.cached = nil; logger:info('hello?')
+                            oldTexFixUD.extra.main.bgHex = c; oldTexFixUD.extra.main.cached = nil
                         end, dirty)
                     handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)
@@ -2288,7 +2295,7 @@ function lib.drawSelectedSFixture()
                     local dirty = function() oldTexFixUD.extra.dirty = true end
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c)
-                            oldTexFixUD.extra.main.bgHex = c; print('poep1')
+                            oldTexFixUD.extra.main.bgHex = c
                         end, dirty)
                     handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
                         function(u)

@@ -64,6 +64,7 @@ state.texFixtureEdit = {
     dragIdx = 0,
     lockedVerts = true,
     tempVerts = nil,
+    centroid = nil,
     verts = {}
 }
 
