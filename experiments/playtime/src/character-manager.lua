@@ -129,6 +129,7 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
     end
 end
 
+-- 8-vertex polygon shapes for character body parts, keyed by texture filename
 local shape8Dict = {
     ['shapeA1.png'] = { dimensions = { 339, 560 },
         vertices = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
