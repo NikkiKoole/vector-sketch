@@ -1548,7 +1548,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         if not instance.dna.parts[partName] then
             -- Ensure template exists
             if not instance.dna.parts['torso-segment-template'] then
-                error("Missing 'torso-segment-template' in DNA for template: " .. template)
+                error("Missing 'torso-segment-template' in DNA parts")
             end
 
             instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])

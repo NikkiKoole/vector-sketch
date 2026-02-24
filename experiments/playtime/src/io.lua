@@ -399,7 +399,7 @@ function lib.load(data, world, cam)
         return
     end
     -- Clear existing world
-    lib.buildWorld(jsonData, world, cam, reuseOldIds)
+    lib.buildWorld(jsonData, world, cam)
 
     snap.onSceneLoaded()
 end
@@ -492,7 +492,7 @@ function lib.gatherSaveData(world, camera)
                     end
 
                     if not first then
-                        logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), using first fixture as fallback', ud.thing.id)
+                        logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), using first fixture as fallback', thing.id)
                         first = bodyFixtures[1]
                     end
 

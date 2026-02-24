@@ -123,6 +123,8 @@ local TICKRATE = 1 / FPS
 
 
 
+local humanoidInstance = nil -- uncomment a createCharacter call in love.load to enable character experiments
+
 function love.load(args)
     --
     -- logger:info('random seed:', love.math.getRandomSeed())

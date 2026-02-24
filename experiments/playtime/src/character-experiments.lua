@@ -6,6 +6,7 @@ local lib = {}
 
 local utils = require 'src.utils'
 local randomHexColor = utils.randomHexColor
+local CharacterManager = require('src.character-manager')
 
 function lib.handleKeyPress(key, humanoidInstance)
     if not humanoidInstance then return end

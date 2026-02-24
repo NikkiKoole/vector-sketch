@@ -1061,6 +1061,7 @@ local accordionStatesSF = {
     ['patch3'] = false,
 }
 
+local lastSelectedSFixture = nil
 function lib.drawSelectedSFixture()
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -1069,6 +1070,12 @@ function lib.drawSelectedSFixture()
     end
     if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
+
+    local dirtyBodyChange = false
+    if lastSelectedSFixture ~= state.selection.selectedSFixture then
+        dirtyBodyChange = true
+        lastSelectedSFixture = state.selection.selectedSFixture
+    end
     --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
     local sfixtureType = ud.type .. ' ' .. (ud.subtype and ud.subtype or '')
     local x, y
@@ -1458,6 +1465,7 @@ function lib.drawSelectedSFixture()
 
                 if not e.OMP then
                     oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
 
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c)
@@ -2147,6 +2155,7 @@ function lib.drawSelectedSFixture()
 
 
                 if not e.OMP then
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c) oldTexFixUD.extra.main.bgHex = c end, dirty)
                     handleURLInput(myID, 'bgURL', x + 130, y, 150, oldTexFixUD.extra.main.bgURL,
@@ -2303,6 +2312,7 @@ function lib.drawSelectedSFixture()
 
 
                 if not e.OMP then
+                    local dirty = function() oldTexFixUD.extra.dirty = true end
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c)
                             oldTexFixUD.extra.main.bgHex = c; print('poep1')
