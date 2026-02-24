@@ -27,7 +27,7 @@ HTTP JSON API for interacting with the running game. All endpoints return `{ok, 
 - `GET /errors` — captured errors (lurker, etc.)
 - `GET /console?n=10` — last N print() lines
 - `GET /help` — list all endpoints
-- `POST /eval` — run Lua code, get result (preamble: state, registry, objectManager, joints, eio, inspect, utils)
+- `POST /eval` — run Lua code, get result (preamble: state, registry, objectManager, joints, sceneIO, inspect, utils)
 - `POST /exec` — run Lua code, fire-and-forget
 - `POST /screenshot` — capture screenshot
 - `POST /profile/benchmark` — benchmark code snippet (iterations, returns mean/median/min/max/p95)
@@ -126,6 +126,19 @@ All globals have been converted to explicit `local require()` calls. Luacheck is
 - `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser
 - Circular requires: `registry.lua` ↔ `snap.lua` — registry uses a lazy `getSnap()` wrapper to break the cycle. If adding cross-module requires, watch for `loop or previous error loading module` errors
 
+## Naming conventions
+
+- **`require` aliases**: use descriptive names — `sceneIO` (not `eio`), `sceneLoader`, `box2dDrawTextured`
+- **UI draw functions**: use `draw` prefix — `drawJointUpdateUI`, `drawAddShapeUI`, `drawWorldSettingsUI`
+- **Function names**: no redundant suffixes — `updateSFixtureDimensions` (not `...Func`)
+- **Joint variables**: spell out `joint` in function params (not `j`)
+- **Snap module**: `activeSnapJoints` (not `mySnapJoints`), `snapInfo`/`snapInfoA`/`snapInfoB` (not `it`/`it1`/`it2`)
+- **Shape data**: `vertices` and `dimensions` as keys (not `v`/`d`), `vertices` for vertex arrays (not `vv`)
+- **Body/mesh data**: `bodyData`/`meshData` (not `bud`/`mud`)
+- **`ud`**: acceptable shorthand for `getUserData()` — used consistently across the codebase
+- **`thing`**: the runtime property bag on body userData — persisted indirectly (decomposed on save, reconstructed on load)
+- **`extra`, `subtype`, `scriptmeta`**: persisted in `.playtime.json` — do not rename without migration
+
 ## UI cleanup status
 
 ### Layout helpers (in ui-all.lua)
@@ -146,7 +159,7 @@ These are special cases not suited for sameLine: dead code (button grid inside `
 
 **UI file extractions (playtime-ui.lua ~3400 lines → ~500 line orchestrator):**
 Ordered by ease/risk, each function is self-contained and has smoke test coverage:
-1. `doJointUpdateUI()` (413 lines) → `src/ui-joint-update.lua` — **easiest**, self-contained, low risk
+1. `drawJointUpdateUI()` (413 lines) → `src/ui-joint-update.lua` — **easiest**, self-contained, low risk
 2. `drawAddShapeUI()` (146 lines) → `src/ui-shape-panel.lua` — easy, own accordion state
 3. `drawWorldSettingsUI()` (136 lines) → `src/ui-world-settings.lua` — easy, mostly sliders
 4. `drawRecordingUI()` (137 lines) → `src/ui-recording-panel.lua` — easy, self-contained
