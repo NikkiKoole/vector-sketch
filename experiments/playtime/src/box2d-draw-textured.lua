@@ -299,61 +299,12 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
-local function buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
-                        texOffX, texOffY,
-                        lineColor, lineAlpha,
-                        flipx, flipy, patches)
-    local function toStr(v)
-        if type(v) == "number" then
-            return string.format("%.3f", v)
-        elseif type(v) == "table" then
-            return table.concat(v, ",")
-        elseif type(v) == "boolean" then
-            return v and "1" or "0"
-        elseif type(v) == "userdata" and v.typeOf and v:typeOf("Image") then
-            return tostring(v):match("Image: (.+)") or "image"
-        else
-            return tostring(v)
-        end
-    end
-
-    local keyParts = {
-        toStr(lineart),
-        toStr(mask),
-        toStr(color1), alpha1,
-        toStr(texture2), toStr(color2), alpha2,
-        texRot, texScaleX, texScaleY,
-        texOffX, texOffY,
-        toStr(lineColor), lineAlpha,
-        flipx, flipy
-    }
-
-    if patches then
-        for _, p in ipairs(patches) do
-            table.insert(keyParts, toStr(p.img))
-            table.insert(keyParts, p.tx or 0)
-            table.insert(keyParts, p.ty or 0)
-            table.insert(keyParts, p.r or 0)
-            table.insert(keyParts, p.sx or 1)
-            table.insert(keyParts, p.sy or 1)
-            table.insert(keyParts, p.tint or "ffffff")
-        end
-    end
-
-    return table.concat(keyParts, "|")
-end
 
 -- todo /5 and *5 is dumb!
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
                                   flipx, flipy, patches)
-    local key = buildKey(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
-        texOffX, texOffY,
-        lineColor, lineAlpha,
-        flipx, flipy, patches)
-
-    testCache[key] = true
     --  logger:info(key)
 
     local lineartColor = lineColor or { 0, 0, 0, 1 }

@@ -36,7 +36,7 @@ function lib.createFixedTimestepRun(tickrate)
                     if name == "quit" then
                         if not love.quit or not love.quit() then return a or 0 end
                     end
-                    love.handlers[name](a, b, c, d, e, f)
+                    love.handlers[name](a, b, c, d, e, f) -- luacheck: ignore 143
                 end
             end
 

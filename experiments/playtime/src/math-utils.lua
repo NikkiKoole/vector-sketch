@@ -117,7 +117,7 @@ local function GetSplinePos(tab, percent, tension) --returns the position at 'pe
         local p3x = tab[i + 4]
         local p3y = tab[i + 5]
 
-        local tension = tension or .5
+        tension = tension or .5
         local t1x = 0
         local t1y = 0
         if (p0x and p0y) then

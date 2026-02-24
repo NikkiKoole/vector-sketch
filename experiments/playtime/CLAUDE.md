@@ -90,11 +90,11 @@ luacheck src/ main.lua --std "lua51+love"                   # full check (~628 w
 ```
 
 All globals have been converted to explicit `local require()` calls. Luacheck 111/112 is clean (0 warnings).
-Full luacheck has ~128 warnings (down from 628), no errors. Remaining categories:
-- ~125 line-too-long (cosmetic)
+Full luacheck has 125 warnings (down from 628), all line-too-long. Everything else is clean:
 - Shadowing warnings: all cleared (87 → 0)
 - Unused vars/functions: all cleared
 - Whitespace-only lines: all cleared
+- Global leaks: 0
 
 ## Architecture
 
@@ -147,9 +147,8 @@ These are special cases not suited for sameLine: dead code (button grid inside `
 
 ### Pick-up points for further cleanup
 
-**Luacheck (128 warnings remaining):**
-- ~125 line-too-long — cosmetic, low priority
-- ~3 misc — all cosmetic
+**Luacheck (125 warnings remaining):**
+- All 125 are line-too-long — cosmetic, low priority
 
 **UI file extractions (playtime-ui.lua ~3400 lines → ~500 line orchestrator):**
 Ordered by ease/risk, each function is self-contained and has smoke test coverage:
