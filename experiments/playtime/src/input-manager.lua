@@ -275,8 +275,8 @@ local function handlePointer(x, y, id, action, _button)
                 end
             else
                 local newHitted = utils.map(hitted, function(h)
-                    local ud = (h:getBody() and h:getBody():getUserData())
-                    local thing = ud and ud.thing
+                    local hud = (h:getBody() and h:getBody():getUserData())
+                    local thing = hud and hud.thing
                     return thing
                 end)
                 --state.currentlyPressed = newHitted

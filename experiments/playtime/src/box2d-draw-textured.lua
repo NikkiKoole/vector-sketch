@@ -684,7 +684,7 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
 
     -- Only need the texture width to set half-width of the ribbon
     local w         = image:getWidth()
-    local line      = (w * dir) * scaleW
+    local halfWidth = (w * dir) * scaleW
 
     -- Prealloc / reuse vertex tables for this mesh
     local verts     = _ensureVertsBuf(mesh)
@@ -712,10 +712,10 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
         local nx, ny               = -dy, dx
 
         -- Offset to both sides
-        local xL                   = x + line * nx
-        local yL                   = y + line * ny
-        local xR                   = x - line * nx
-        local yR                   = y - line * ny
+        local xL                   = x + halfWidth * nx
+        local yL                   = y + halfWidth * ny
+        local xR                   = x - halfWidth * nx
+        local yR                   = y - halfWidth * ny
 
         -- Compute UVs analytically (no getVertex):
         -- left u=0, right u=1; v increases 0..1 per pair
@@ -938,12 +938,12 @@ function lib.drawTexturedWorld(world)
                     if #points == 4 then
                         -- here we will just introduce a little midle thingie
                         -- -- becaue i cannot draw a curve of 2 points
-                        local function addMidpoint(points)
-                            if #points ~= 4 then
+                        local function addMidpoint(pts)
+                            if #pts ~= 4 then
                                 error("Expected array of exactly 2 points (4 numbers)")
                             end
 
-                            local x1, y1, x2, y2 = points[1], points[2], points[3], points[4]
+                            local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
                             local midX = (x1 + x2) / 2
                             local midY = (y1 + y2) / 2
 
@@ -1254,8 +1254,8 @@ function lib.drawTexturedWorld(world)
 
 
                 -- somehow we need to center the vertices.
-                local vx, vy = mathutils.getCenterOfPoints(verts)
-                verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
+                local cx, cy = mathutils.getCenterOfPoints(verts)
+                verts = mathutils.makePolygonRelativeToCenter(verts, cx, cy)
 
                 -- maybe here we deal with translate and scale ? (rotation?)
                 local x = drawables[i].extra.meshX or 0
@@ -1299,10 +1299,10 @@ function lib.drawTexturedWorld(world)
                 for j = 1, #tris do
                     local tri = tris[j]
                     for k = 0, 2 do
-                        local x = tri[k * 2 + 1]
-                        local y = tri[k * 2 + 2]
+                        local vx = tri[k * 2 + 1]
+                        local vy = tri[k * 2 + 2]
                         table.insert(meshVertices, {
-                            x, y,
+                            vx, vy,
                             -- u, v,
                             255, 255, 255, .100
                         })
@@ -1319,23 +1319,23 @@ function lib.drawTexturedWorld(world)
                     for j = 1, #tris do
                         local tri = tris[j]
                         for k = 0, 2 do
-                            local x = tri[k * 2 + 1]
-                            local y = tri[k * 2 + 2]
+                            local vx = tri[k * 2 + 1]
+                            local vy = tri[k * 2 + 2]
                             local u, v --= 1, 1
-                            --print(x, inspect(verts))
+                            --print(vx, inspect(verts))
                             for l = 1, #verts do
                                 --  print()
-                                if math.abs(x - verts[l]) < 0.001 then
+                                if math.abs(vx - verts[l]) < 0.001 then
                                     u = data.uvs[l]
                                 end
 
-                                if math.abs(y - verts[l]) < 0.001 then
+                                if math.abs(vy - verts[l]) < 0.001 then
                                     v = data.uvs[l]
                                 end
                             end
 
                             table.insert(meshVertices, {
-                                x, y,
+                                vx, vy,
                                 u, v,
                                 255, 255, 255
                             })

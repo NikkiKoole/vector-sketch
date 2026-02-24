@@ -244,7 +244,6 @@ function lib.renderActiveEditorThings()
 
                 -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
                 -- 1. Center the vertices
-                local mathutils = require 'src.math-utils'
                 local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
                 local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
                 --logger:inspect(state.vertexEditor)
@@ -266,8 +265,8 @@ function lib.renderActiveEditorThings()
                             end
                             if node.type == 'anchor' then
                                 local a = registry.getSFixtureByID(node.id)
-                                local body = a:getBody()
-                                local nx, ny = mathutils.getCenterOfPoints({ body:getWorldPoints(a:getShape():getPoints()) })
+                                local anchorBody = a:getBody()
+                                local nx, ny = mathutils.getCenterOfPoints({ anchorBody:getWorldPoints(a:getShape():getPoints()) })
                                 love.graphics.circle('line', nx, ny, 10)
                             end
                         end
@@ -322,8 +321,8 @@ function lib.renderActiveEditorThings()
                             end
                             if node.type == 'anchor' then
                                  local a = registry.getSFixtureByID(node.id)
-                                 local body = a:getBody()
-                                  local nx, ny = mathutils.getCenterOfPoints({ body:getWorldPoints(a:getShape():getPoints()) })
+                                 local anchorBody = a:getBody()
+                                  local nx, ny = mathutils.getCenterOfPoints({ anchorBody:getWorldPoints(a:getShape():getPoints()) })
                                  love.graphics.line(wx, wy, nx, ny)
                             end
                         end

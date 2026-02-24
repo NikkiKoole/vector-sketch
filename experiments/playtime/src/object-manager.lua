@@ -796,19 +796,19 @@ function lib.flipThing(thing, axis, recursive)
         -- for _, fixture in ipairs(currentBody:getFixtures()) do
         --     print(_, fixture:getUserData() ~= nil)
         -- end
-        local fixtures = currentBody:getFixtures()
+        local bodyFixtures = currentBody:getFixtures()
         -- if i do this backwards the fixtures end up being in the same order... !!
-        for i = #fixtures, 1, -1 do
+        for i = #bodyFixtures, 1, -1 do
             -- for _, fixture in ipairs(currentBody:getFixtures()) do
-            local fixture = fixtures[i]
+            local fixture = bodyFixtures[i]
             local shape = fixture:getShape()
             if shape:typeOf("PolygonShape") then
                 local points = { shape:getPoints() }
-                for i = 1, #points, 2 do
+                for pi = 1, #points, 2 do
                     if axis == 'x' then
-                        points[i] = -points[i]         -- Invert X coordinate
+                        points[pi] = -points[pi]         -- Invert X coordinate
                     elseif axis == 'y' then
-                        points[i + 1] = -points[i + 1] -- Invert Y coordinate
+                        points[pi + 1] = -points[pi + 1] -- Invert Y coordinate
                     end
                 end
                 -- currentThing.vertices = points;

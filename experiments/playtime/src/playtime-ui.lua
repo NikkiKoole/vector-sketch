@@ -168,7 +168,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 return;
             end
 
-            local function axisFunctionality(j)
+            local function axisFunctionality()
                 createCheckbox(' axis', x, y,
                     state.editorPreferences.axisEnabled or false,
                     function(val)
@@ -206,7 +206,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 return j
             end
 
-            local function collideFunctionality(j)
+            local function collideFunctionality()
                 createCheckbox(' collide', x, y,
                     j:getCollideConnected(),
                     function(val)
@@ -217,7 +217,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 return j
             end
 
-            local function motorFunctionality(j, settings)
+            local function motorFunctionality(settings)
                 createCheckbox(' motor', x, y,
                     j:isMotorEnabled(),
                     function(val)
@@ -248,7 +248,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 end
             end
 
-            local function limitsFunctionalityAngular(j)
+            local function limitsFunctionalityAngular()
                 createCheckbox(' limits', x, y,
                     j:areLimitsEnabled(),
                     function(val)
@@ -279,7 +279,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 end
             end
 
-            local function limitsFunctionalityLinear(j)
+            local function limitsFunctionalityLinear()
                 createCheckbox(' limits', x, y,
                     j:areLimitsEnabled(),
                     function(val)
@@ -307,7 +307,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 end
             end
 
-            local function offsetSliders(j)
+            local function offsetSliders()
                 if not joints.getJointMetaSetting(j, 'offsetA') then
                     joints.setJointMetaSetting(j, 'offsetA', { x = 0, y = 0 })
                 end
@@ -317,11 +317,11 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                     joints.setJointMetaSetting(j, 'offsetB', { x = 0, y = 0 })
                 end
 
-                local function updateOffsetA(x, y)
-                    --local rx, ry = rotatePoint(x, y, 0, 0, bodyA:getAngle())
+                local function updateOffsetA(ox, oy)
+                    --local rx, ry = rotatePoint(ox, oy, 0, 0, bodyA:getAngle())
 
-                    offsetA.x = x
-                    offsetA.y = y
+                    offsetA.x = ox
+                    offsetA.y = oy
                     joints.setJointMetaSetting(j, 'offsetA', { x = offsetA.x, y = offsetA.y })
                     state.selection.selectedJoint = joints.recreateJoint(j)
                     j = state.selection.selectedJoint
@@ -344,8 +344,8 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 end
                 nextRow()
 
-                local bodyA = j:getBodies()
-                local ud = bodyA:getUserData()
+                local bodyARef = j:getBodies()
+                local ud = bodyARef:getUserData()
 
 
                 if false and ud and ud.thing then
@@ -390,9 +390,9 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
 
             if jointType == 'distance' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
@@ -421,9 +421,9 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
             elseif jointType == 'weld' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
                 createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
                     j:getFrequency(),
@@ -437,9 +437,9 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
             elseif jointType == 'rope' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
                 -- local bodyA, bodyB = j:getBodies()
                 local x1, y1 = bodyA:getPosition()
@@ -455,20 +455,20 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
             elseif jointType == 'revolute' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
-                limitsFunctionalityAngular(j)
+                limitsFunctionalityAngular()
                 nextRow()
-                motorFunctionality(j, { useTorque = true })
+                motorFunctionality({ useTorque = true })
             elseif jointType == 'wheel' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
-                j = axisFunctionality(j)
+                axisFunctionality()
                 nextRow()
                 -- if not j:isDestroyed() then
                 createSliderWithId(jointId, ' spring F', x, y, 160, 0, 100,
@@ -483,15 +483,15 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                     function(val) j:setSpringDampingRatio(val) end
                 )
                 nextRow()
-                motorFunctionality(j, { useTorque = true })
+                motorFunctionality({ useTorque = true })
                 -- axisFunctionality(j)
                 nextRow()
                 --  end
             elseif jointType == 'motor' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
                 createSliderWithId(jointId, ' angular o', x, y, 160, -180, 180,
                     math.deg(j:getAngularOffset()),
@@ -525,7 +525,7 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 )
                 nextRow()
             elseif jointType == 'friction' then
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
                 createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
                     j:getMaxForce(),
@@ -539,15 +539,15 @@ function lib.doJointUpdateUI(j, panelX, panelY, w, h)
                 nextRow()
             elseif jointType == 'prismatic' then
                 nextRow()
-                j = collideFunctionality(j)
+                collideFunctionality()
                 nextRow()
-                j = offsetSliders(j)
+                offsetSliders()
                 nextRow()
-                j = axisFunctionality(j)
+                axisFunctionality()
                 nextRow()
-                limitsFunctionalityLinear(j)
+                limitsFunctionalityLinear()
                 nextRow()
-                motorFunctionality(j, { useForce = true })
+                motorFunctionality({ useForce = true })
             end
         end)
     end
@@ -660,8 +660,8 @@ function lib.drawAddShapeUI()
 
         -- width already defined above as panelWidth - 20
 
-        local function handleFixtureButton(x, y, width, label, shapeType, extraDataFunc)
-            local _, pressed, released = ui.button(x, y, width, label)
+        local function handleFixtureButton(bx, by, bw, label, shapeType, extraDataFunc)
+            local _, pressed, released = ui.button(bx, by, bw, label)
 
             if pressed then
                 ui.draggingActive = ui.activeElementID
@@ -1079,10 +1079,10 @@ function lib.drawSelectedSFixture()
         local myLabel = state.selection.selectedSFixture:getUserData().label or ''
         local oldTexFixUD = state.selection.selectedSFixture:getUserData()
 
-        local function handlePaletteAndHex(idPrefix, postFix, x, y, width, currentHex, onColorChange, _setDirty)
+        local function handlePaletteAndHex(idPrefix, postFix, px, py, pw, currentHex, onColorChange, _setDirty)
             local r, g, b, a = box2dDrawTextured.hexToColor(currentHex)
             local dirty = function() oldTexFixUD.extra.dirty = true end
-            local paletteShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { r, g, b, a })
+            local paletteShow = ui.button(px - 10, py, 20, '', BUTTON_HEIGHT, { r, g, b, a })
             if paletteShow then
                 if state.panelVisibility.showPalette then
                     state.panelVisibility.showPalette = nil
@@ -1095,27 +1095,27 @@ function lib.drawSelectedSFixture()
                     end
                 end
             end
-            local hex = ui.textinput(idPrefix .. postFix, x + 10, y, width, BUTTON_HEIGHT, "", currentHex or '')
+            local hex = ui.textinput(idPrefix .. postFix, px + 10, py, pw, BUTTON_HEIGHT, "", currentHex or '')
             if hex and hex ~= currentHex then
                 oldTexFixUD.extra.dirty = true
                 onColorChange(hex)
             end
-            ui.label(x + 10, y, postFix, { 1, 1, 1, 0.2 })
+            ui.label(px + 10, py, postFix, { 1, 1, 1, 0.2 })
         end
 
-        local function handleURLInput(id, labelText, x, y, width, currentValue, updateCallback)
-            local urlShow = ui.button(x - 10, y, 20, '', BUTTON_HEIGHT, { 1, 1, 1, 0.2 })
+        local function handleURLInput(id, labelText, px, py, pw, currentValue, updateCallback)
+            local urlShow = ui.button(px - 10, py, 20, '', BUTTON_HEIGHT, { 1, 1, 1, 0.2 })
             if urlShow then
                 fileBrowser:loadFiles('/textures', { includes = '-mask' })
                 --fileBrowser:loadFiles('/textures', {excludes='-mask'})
             end
-            local newValue = ui.textinput(id .. labelText, x + 10, y, width, BUTTON_HEIGHT, "", currentValue or '')
+            local newValue = ui.textinput(id .. labelText, px + 10, py, pw, BUTTON_HEIGHT, "", currentValue or '')
             if newValue and newValue ~= currentValue then
                 updateCallback(newValue)
                 oldTexFixUD.extra.dirty = true
                 state.selection.selectedSFixture:setUserData(oldTexFixUD)
             end
-            ui.label(x, y, labelText, { 1, 1, 1, 0.2 })
+            ui.label(px, py, labelText, { 1, 1, 1, 0.2 })
             return newValue or currentValue
         end
 
@@ -1274,7 +1274,7 @@ function lib.drawSelectedSFixture()
 
 
         if ud.subtype == 'texfixture' or ud.extra.type == 'texfixture' then
-            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+            oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
                     state.currentMode = 'positioningSFixture'
@@ -1285,7 +1285,7 @@ function lib.drawSelectedSFixture()
                     local body = state.selection.selectedSFixture:getBody()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                         body:getX(), body:getY())
-                    local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
 
@@ -1294,9 +1294,9 @@ function lib.drawSelectedSFixture()
                     local body = state.selection.selectedSFixture:getBody()
                     --   logger:info('should look up the native dimensions of this texture')
                     --   logger:inspect(state.selection.selectedSFixture:getUserData())
-                    local _, _, w, h = getCenterAndDimensions(body)
-                    fixtures.updateSFixtureDimensionsFunc(w, h)
-                    local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                    local _, _, bw, bh = getCenterAndDimensions(body)
+                    fixtures.updateSFixtureDimensionsFunc(bw, bh)
+                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
 
@@ -1305,23 +1305,23 @@ function lib.drawSelectedSFixture()
                     --  local body = state.selection.selectedSFixture:getBody()
                     --   logger:info('should look up the native dimensions of this texture')
                     --   logger:inspect(state.selection.selectedSFixture:getUserData())
-                    local ud = state.selection.selectedSFixture:getUserData()
-                    if ud.extra and ud.extra.main and ud.extra.main.bgURL then
-                        local path = ud.extra.main.bgURL
+                    local sfUD = state.selection.selectedSFixture:getUserData()
+                    if sfUD.extra and sfUD.extra.main and sfUD.extra.main.bgURL then
+                        local path = sfUD.extra.main.bgURL
                         --print('finding: ', 'textures/' .. path)
                         local info = love.filesystem.getInfo('textures/' .. path)
 
                         if (info and info.type ~= 'directory') then
                             local img = love.graphics.newImage('textures/' .. path)
                             if img then
-                                local w, h = img:getDimensions()
-                                logger:info('texture dimensions:', w, h)
+                                local imgW, imgH = img:getDimensions()
+                                logger:info('texture dimensions:', imgW, imgH)
                                 logger:info('still nedds to update the body too!')
                                 local bud = state.selection.selectedSFixture:getBody():getUserData()
                                 if bud and bud.thing then
                                     if bud.thing.shapeType == 'rectangle' then
-                                        bud.thing.width = w
-                                        bud.thing.height = h
+                                        bud.thing.width = imgW
+                                        bud.thing.height = imgH
 
                                         --objectManager.recreateThingFromBody(state.selection.selectedSFixture:getBody(),
                                         --    bud.thing)
@@ -1336,7 +1336,7 @@ function lib.drawSelectedSFixture()
                                     logger:inspect(bud.thing)
                                 end
 
-                                fixtures.updateSFixtureDimensionsFunc(w, h)
+                                fixtures.updateSFixtureDimensionsFunc(imgW, imgH)
                             end
                         end
                     end
@@ -1350,7 +1350,7 @@ function lib.drawSelectedSFixture()
 
 
                 local points = oldTexFixUD.extra.vertices or { state.selection.selectedSFixture:getShape():getPoints() }
-                local w, h   = mathutils.getPolygonDimensions(points)
+                local polyW, polyH = mathutils.getPolygonDimensions(points)
 
                 if ui.checkbox(x, y, state.editorPreferences.showTexFixtureDim, 'dims') then
                     state.editorPreferences.showTexFixtureDim = not state.editorPreferences.showTexFixtureDim
@@ -1358,7 +1358,7 @@ function lib.drawSelectedSFixture()
                 nextRow()
 
                 if ui.button(x, y, 200, state.texFixtureEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
-                    local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     state.texFixtureEdit.lockedVerts = not state.texFixtureEdit.lockedVerts
 
                     if state.texFixtureEdit.lockedVerts == false then
@@ -1381,20 +1381,20 @@ function lib.drawSelectedSFixture()
                 nextRow()
 
                 if (state.editorPreferences.showTexFixtureDim) then
-                    local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, w)
+                    local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, polyW)
                     ui.alignedLabel(x, y, ' width')
                     nextRow()
 
-                    local newHeight = ui.sliderWithInput(myID .. ' texfix height', x, y, ROW_WIDTH, 1, 1000, h)
+                    local newHeight = ui.sliderWithInput(myID .. ' texfix height', x, y, ROW_WIDTH, 1, 1000, polyH)
                     ui.alignedLabel(x, y, ' height')
                     nextRow()
 
-                    if newWidth and math.abs(newWidth - w) > 1 then
-                        fixtures.updateSFixtureDimensionsFunc(newWidth, h)
-                        w, h = mathutils.getPolygonDimensions(points)
+                    if newWidth and math.abs(newWidth - polyW) > 1 then
+                        fixtures.updateSFixtureDimensionsFunc(newWidth, polyH)
+                        polyW, polyH = mathutils.getPolygonDimensions(points)
                     end
-                    if newHeight and math.abs(newHeight - h) > 1 then
-                        fixtures.updateSFixtureDimensionsFunc(w, newHeight)
+                    if newHeight and math.abs(newHeight - polyH) > 1 then
+                        fixtures.updateSFixtureDimensionsFunc(polyW, newHeight)
                     end
                 end
                 createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
@@ -1502,9 +1502,9 @@ function lib.drawSelectedSFixture()
                 local mappert
                 for _, v in pairs(registry.sfixtures) do
                     if not v:isDestroyed() then
-                        local ud = v:getUserData()
+                        local vud = v:getUserData()
 
-                        if (#ud.label > 0 and label == ud.label and ud.subtype == 'resource') then
+                        if (#vud.label > 0 and label == vud.label and vud.subtype == 'resource') then
                             mappert = v
                         end
                     end
@@ -1530,10 +1530,10 @@ function lib.drawSelectedSFixture()
                         verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY or 1)
                     end
                     -- convert LOCAL verts -> WORLD verts
-                    local function vertsToWorld(body, verts)
+                    local function vertsToWorld(body, localVerts)
                         local out = {}
-                        for i = 1, #verts, 2 do
-                            local lx, ly = verts[i], verts[i + 1]
+                        for i = 1, #localVerts, 2 do
+                            local lx, ly = localVerts[i], localVerts[i + 1]
                             local wx, wy = body:getWorldPoint(lx, ly)
                             out[#out + 1] = wx
                             out[#out + 1] = wy
@@ -1647,16 +1647,16 @@ function lib.drawSelectedSFixture()
                             local sum = 0
                             for k = 1, #infl do
                                 local d = infl[k].dist
-                                local w
+                                local wt
                                 if mode == "inverse" then
-                                    w = 1 / (d + eps)
+                                    wt = 1 / (d + eps)
                                 elseif mode == "gaussian" then
-                                    w = math.exp(-(d * d) / (2 * sigma * sigma))
+                                    wt = math.exp(-(d * d) / (2 * sigma * sigma))
                                 elseif mode == "linear" then
-                                    w = (d < R) and (1 - d / R) or 0
+                                    wt = (d < R) and (1 - d / R) or 0
                                 end
-                                infl[k].w = w
-                                sum = sum + w
+                                infl[k].w = wt
+                                sum = sum + wt
                             end
 
                             if sum > 0 then
@@ -1878,17 +1878,17 @@ function lib.drawSelectedSFixture()
                     -- now we also draw the backdrop bbox in that space
                     local x1l, y1l = bod:getLocalPoint(b.x, b.y)
                     local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
-                    local w, h = x2l - x1l, y2l - y1l
+                    local rectW, rectH = x2l - x1l, y2l - y1l
 
                     -- love.graphics.rectangle('line', x1l, y1l, w, h)
                     --  love.graphics.pop()
 
                     -- vertices assumed to be world-space positions of the poly
-                    local function normalizeUVsFromRect(verts, rect)
+                    local function normalizeUVsFromRect(polyVerts, rect)
                         local t = {}
-                        for i = 1, #verts, 2 do
-                            local vx = verts[i]
-                            local vy = verts[i + 1]
+                        for i = 1, #polyVerts, 2 do
+                            local vx = polyVerts[i]
+                            local vy = polyVerts[i + 1]
 
                             local u = (vx - rect.x) / rect.w
                             local v = (vy - rect.y) / rect.h
@@ -1899,7 +1899,7 @@ function lib.drawSelectedSFixture()
                         return t
                     end
 
-                    local uvs = normalizeUVsFromRect(verts, { x = x1l, y = y1l, w = w, h = h })
+                    local uvs = normalizeUVsFromRect(verts, { x = x1l, y = y1l, w = rectW, h = rectH })
                     --logger:inspect(uvs)
                     ud.extra.uvs = uvs
                 end
@@ -1933,7 +1933,7 @@ function lib.drawSelectedSFixture()
                     state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                         body:getX(), body:getY())
 
-                    local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     if (oldTexFixUD.extra.vertices) then
                         state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                     end
@@ -1954,10 +1954,10 @@ function lib.drawSelectedSFixture()
                 local function handleOffset(xMultiplier, yMultiplier)
                     local body = state.selection.selectedSFixture:getBody()
                     local parentVerts = body:getUserData().thing.vertices
-                    local points = { state.selection.selectedSFixture:getShape():getPoints() }
-                    local centerX, centerY = mathutils.getCenterOfPoints(points)
+                    local sfPoints = { state.selection.selectedSFixture:getShape():getPoints() }
+                    local centerX, centerY = mathutils.getCenterOfPoints(sfPoints)
                     local bounds = mathutils.getBoundingRect(parentVerts)
-                    local relativePoints = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
+                    local relativePoints = mathutils.makePolygonRelativeToCenter(sfPoints, centerX, centerY)
                     local newShape = mathutils.makePolygonAbsolute(relativePoints,
                         ((bounds.width / 2) * xMultiplier),
                         ((bounds.height / 2) * yMultiplier))
@@ -2316,8 +2316,8 @@ function lib.drawSelectedBodiesUI()
 
         if state.selection.selectedBodies and #state.selection.selectedBodies > 0 then
             local fb = state.selection.selectedBodies[1].body
-            local fixtures = fb:getFixtures()
-            local ff = fixtures[1]
+            local fbFixtures = fb:getFixtures()
+            local ff = fbFixtures[1]
             local groupIndex = ff:getGroupIndex()
             local groupIndexSlider = ui.sliderWithInput('groupIndex', x, y, 160, -32768, 32767, groupIndex, false, 1)
 
@@ -2326,9 +2326,9 @@ function lib.drawSelectedBodiesUI()
                 local count = 0
                 for i = 1, #state.selection.selectedBodies do
                     local b = state.selection.selectedBodies[i].body
-                    local fixtures = b:getFixtures()
-                    for j = 1, #fixtures do
-                        fixtures[j]:setGroupIndex(value)
+                    local bFixtures = b:getFixtures()
+                    for j = 1, #bFixtures do
+                        bFixtures[j]:setGroupIndex(value)
                         count = count + 1
                     end
                 end
@@ -2474,8 +2474,8 @@ function lib.drawUpdateSelectedObjectUI()
                             nextRow()
 
                             local behavior = thing.behaviors[i]
-                            local w = love.graphics.getFont():getWidth(behavior.name) + 20
-                            if ui.button(x, y, w, behavior.name, BUTTON_HEIGHT, { 0.4, 0.4, 0.8 }) then
+                            local btnW = love.graphics.getFont():getWidth(behavior.name) + 20
+                            if ui.button(x, y, btnW, behavior.name, BUTTON_HEIGHT, { 0.4, 0.4, 0.8 }) then
                                 if (state.panelVisibility.customBehavior) then
                                     state.panelVisibility.customBehavior = false
                                 else
@@ -2512,9 +2512,9 @@ function lib.drawUpdateSelectedObjectUI()
                             logger:error("Invalid X position input!")
                         end
                     end
-                    local slx, sly = ui.sameLine()
+                    local slx2, sly2 = ui.sameLine()
                     local yValue = thing.body:getY()
-                    local yInputText, yDirty = ui.textinput(myID .. 'y', slx, sly, 120, BUTTON_HEIGHT, ".",
+                    local yInputText, yDirty = ui.textinput(myID .. 'y', slx2, sly2, 120, BUTTON_HEIGHT, ".",
                         "" .. yValue, true)
                     if (yDirty) then
                         local numericPosY = tonumber(yInputText)
@@ -2563,8 +2563,8 @@ function lib.drawUpdateSelectedObjectUI()
                     if ui.button(x, y, 120, 'flipX') then
                         state.selection.selectedObj = objectManager.flipThing(thing, 'x', true)
                     end
-                    local slx, sly = ui.sameLine()
-                    if ui.button(slx, sly, 120, 'flipY') then
+                    local slx3, sly3 = ui.sameLine()
+                    if ui.button(slx3, sly3, 120, 'flipY') then
                         state.selection.selectedObj = objectManager.flipThing(thing, 'y', true)
                     end
 
@@ -2729,39 +2729,39 @@ function lib.drawUpdateSelectedObjectUI()
 
             drawAccordion("physics",
                 function()
-                    local fixtures = body:getFixtures()
-                    if #fixtures >= 1 then
-                        local density = fixtures[1]:getDensity()
+                    local bodyFixtures = body:getFixtures()
+                    if #bodyFixtures >= 1 then
+                        local density = bodyFixtures[1]:getDensity()
 
                         nextRow()
                         local newDensity = ui.sliderWithInput(myID .. 'density', x, y, ROW_WIDTH, 0, 10, density)
                         if newDensity and density ~= newDensity then
-                            for i = 1, #fixtures do
-                                fixtures[i]:setDensity(newDensity)
+                            for i = 1, #bodyFixtures do
+                                bodyFixtures[i]:setDensity(newDensity)
                             end
                         end
                         ui.alignedLabel(x, y, ' density')
 
                         -- Bounciness Slider
-                        local bounciness = fixtures[1]:getRestitution()
+                        local bounciness = bodyFixtures[1]:getRestitution()
                         nextRow()
 
                         local newBounce = ui.sliderWithInput(myID .. 'bounce', x, y, ROW_WIDTH, 0, 1, bounciness)
                         if newBounce and bounciness ~= newBounce then
-                            for i = 1, #fixtures do
-                                fixtures[i]:setRestitution(newBounce)
+                            for i = 1, #bodyFixtures do
+                                bodyFixtures[i]:setRestitution(newBounce)
                             end
                         end
                         ui.alignedLabel(x, y, ' bounce')
 
                         -- Friction Slider
-                        local friction = fixtures[1]:getFriction()
+                        local friction = bodyFixtures[1]:getFriction()
                         nextRow()
 
                         local newFriction = ui.sliderWithInput(myID .. 'friction', x, y, ROW_WIDTH, 0, 1, friction)
                         if newFriction and friction ~= newFriction then
-                            for i = 1, #fixtures do
-                                fixtures[i]:setFriction(newFriction)
+                            for i = 1, #bodyFixtures do
+                                bodyFixtures[i]:setFriction(newFriction)
                             end
                         end
                         ui.alignedLabel(x, y, ' friction')
@@ -2769,11 +2769,11 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                         local fb = thing.body
-                        local fixtures = fb:getFixtures()
-                        local ff = fixtures[1]
+                        bodyFixtures = fb:getFixtures()
+                        local ff = bodyFixtures[1]
                         local firstNonUserdataFixture = ff
-                        for k = 1, #fixtures do
-                            local fixture = fixtures[k]
+                        for k = 1, #bodyFixtures do
+                            local fixture = bodyFixtures[k]
                             if fixture:getUserData() == nil then
                                 firstNonUserdataFixture = fixture
                                 break
@@ -2788,9 +2788,9 @@ function lib.drawUpdateSelectedObjectUI()
                             local count = 0
 
                             local b = thing.body
-                            local fixtures = b:getFixtures()
-                            for j = 1, #fixtures do
-                                fixtures[j]:setGroupIndex(value)
+                            local grpFixtures = b:getFixtures()
+                            for j = 1, #grpFixtures do
+                                grpFixtures[j]:setGroupIndex(value)
                                 count = count + 1
                             end
                         end
@@ -2798,11 +2798,11 @@ function lib.drawUpdateSelectedObjectUI()
                         if ui.checkbox(x, y, firstNonUserdataFixture:isSensor(), 'sensor') then
                             -- ff:setSensor(not ff:isSensor())
                             local b = thing.body
-                            local fixtures = b:getFixtures()
+                            local sensorFixtures = b:getFixtures()
                             local value = not firstNonUserdataFixture:isSensor()
-                            for j = 1, #fixtures do
-                                if not fixtures[j]:getUserData() then
-                                    fixtures[j]:setSensor(value)
+                            for j = 1, #sensorFixtures do
+                                if not sensorFixtures[j]:getUserData() then
+                                    sensorFixtures[j]:setSensor(value)
                                 end
                             end
                         end
@@ -3181,7 +3181,7 @@ function lib.drawUI()
     end
 
     if state.panelVisibility.showPalette then
-        local w, h = love.graphics.getDimensions()
+        w, h = love.graphics.getDimensions()
         ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
             --ui.coloredRect()
             local cellHeight = 50
@@ -3300,10 +3300,10 @@ function lib.drawUI()
                         if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
                             -- we can assume all these type of other things are attached via revolute joints
                             local me = state.panelVisibility.customBehavior.body
-                            local joints = me:getJoints()
+                            local bodyJoints = me:getJoints()
                             local names = {}
-                            for i = 1, #joints do
-                                local bodyA, bodyB = joints[i]:getBodies()
+                            for i = 1, #bodyJoints do
+                                local bodyA, bodyB = bodyJoints[i]:getBodies()
                                 local otherBody = bodyA == me and bodyB or bodyA
                                 --print(inspect(otherBody:getUserData().thing.label))
                                 table.insert(names, otherBody:getUserData().thing.label)

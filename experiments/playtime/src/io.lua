@@ -401,9 +401,9 @@ function lib.load(data, world, cam)
 end
 
 local function needsDimProperty(prop, shape)
-    local needsRadius = function(shape)
-        return shape == 'triangle' or shape == 'pentagon' or shape == 'hexagon' or
-            shape == 'heptagon' or shape == 'octagon' or shape == 'circle'
+    local needsRadius = function(s)
+        return s == 'triangle' or s == 'pentagon' or s == 'hexagon' or
+            s == 'heptagon' or s == 'octagon' or s == 'circle'
     end
 
     if prop == 'radius' then
@@ -808,7 +808,7 @@ function lib.cloneSelection(selectedBodies, world)
                         local oldid = oldUD.id
 
                         --oldUD.id = uuid.generateID()
-                        local newID = uuid.generateID()
+                        local newFixID = uuid.generateID()
 
                         -- while registry.getSFixtureByID(newID) do
                         --     logger:info('this fixture id was already taken, clashes')
@@ -819,7 +819,7 @@ function lib.cloneSelection(selectedBodies, world)
                         --     --print('this was already one!')
                         --     newID = uuid.generateID()
                         -- end
-                        oldUD.id = newID
+                        oldUD.id = newFixID
 
                         idMapping[oldid] = oldUD.id
                         if utils.sanitizeString(oldUD.label) == 'snap' or oldUD.subtype == 'snap' then
@@ -962,9 +962,9 @@ function lib.cloneSelection(selectedBodies, world)
     -- logger:inspect(idMapping)
     -- now we need to figure out if i have any of the connected-texture fixtures with ids in their userdata that needs updating
     for _, v in pairs(clonedBodiesMap) do
-        local fixtures = v.body:getFixtures()
-        for j = 1, #fixtures do
-            local fixture = fixtures[j]
+        local bodyFixtures = v.body:getFixtures()
+        for j = 1, #bodyFixtures do
+            local fixture = bodyFixtures[j]
             local ud = fixture:getUserData()
             local oldUD = utils.deepCopy(ud)
             if oldUD and oldUD.extra and oldUD.extra.nodes then

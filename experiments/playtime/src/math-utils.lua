@@ -879,10 +879,10 @@ end
 
 -- Function to split a polygon into two at a single given intersection point.
 -- this is used to fix self-intersecting polygons
-function lib.splitPoly(poly, intersection)
+function lib.splitPoly(poly, inter)
     local function getIndices()
-        local biggestIndex = math.max(intersection.i1, intersection.i2)
-        local smallestIndex = math.min(intersection.i1, intersection.i2)
+        local biggestIndex = math.max(inter.i1, inter.i2)
+        local smallestIndex = math.min(inter.i1, inter.i2)
         return smallestIndex, biggestIndex
     end
 
@@ -900,8 +900,8 @@ function lib.splitPoly(poly, intersection)
         table.insert(wrap, poly[bb])
         table.insert(wrap, poly[bb + 1])
     end
-    table.insert(wrap, intersection.x)
-    table.insert(wrap, intersection.y)
+    table.insert(wrap, inter.x)
+    table.insert(wrap, inter.y)
 
     -- Build the 'back' polygon
     local bk = biggestIndex
@@ -913,8 +913,8 @@ function lib.splitPoly(poly, intersection)
             bk = #poly - 1
         end
     end
-    table.insert(back, intersection.x)
-    table.insert(back, intersection.y)
+    table.insert(back, inter.x)
+    table.insert(back, inter.y)
 
     return wrap, back
 end
@@ -1059,14 +1059,14 @@ function lib.slicePolygon(polygon, p1, p2)
     end
 
     -- Step 6: Traverse the polygon to create two new polygons
-    local function traverse(polygon, startIdx, endIdx, direction)
+    local function traverse(poly, startIdx, endIdx, direction)
         local result = {}
-        local n = #polygon / 2
+        local n = #poly / 2
         local idx = startIdx
 
         while true do
-            table.insert(result, polygon[(idx - 1) * 2 + 1])
-            table.insert(result, polygon[(idx - 1) * 2 + 2])
+            table.insert(result, poly[(idx - 1) * 2 + 1])
+            table.insert(result, poly[(idx - 1) * 2 + 2])
 
             if idx == endIdx then
                 break

@@ -62,9 +62,9 @@ local function createRevoluteJoint(body1, body2, x, y, x2, y2, _index1, _index2)
     registry.registerJoint(id, joint)
 end
 
-local function areBodiesConnected2(body1, body2, snapFixtures)
-    for i = 1, #snapFixtures do
-        local it = snapFixtures[i]:getUserData().extra
+local function areBodiesConnected2(body1, body2, snapFix)
+    for i = 1, #snapFix do
+        local it = snapFix[i]:getUserData().extra
         if (it.to == body1 and it.at == body2) or (it.to == body2 and it.at == body1) then
             return true
         end
@@ -73,7 +73,7 @@ local function areBodiesConnected2(body1, body2, snapFixtures)
 end
 
 
-local function checkForJointBreaks(dt, interacted, snapFixtures)
+local function checkForJointBreaks(dt, interacted, snapFix)
     for i = #mySnapJoints, 1, -1 do
         local joint = mySnapJoints[i]
 
@@ -85,20 +85,20 @@ local function checkForJointBreaks(dt, interacted, snapFixtures)
             -- Cleanup: Mark the snap points as disconnected
             local body1, body2 = joint:getBodies()
             if (not onlyBreakWhenInteracted or (oneOfThemIsInteractedWith(body1, body2, interacted))) then
-                for j = 1, #snapFixtures do
-                    local extra = snapFixtures[j]:getUserData().extra
+                for j = 1, #snapFix do
+                    local extra = snapFix[j]:getUserData().extra
                     if extra.to == body1 and extra.at == body2 then
                         extra.to = nil
-                        local ud = snapFixtures[j]:getUserData()
+                        local ud = snapFix[j]:getUserData()
                         ud.extra = extra
-                        snapFixtures[j]:setUserData(ud)
-                        addCooldown(snapFixtures[j])
+                        snapFix[j]:setUserData(ud)
+                        addCooldown(snapFix[j])
                     elseif extra.to == body2 and extra.at == body1 then
                         extra.to = nil
-                        local ud = snapFixtures[j]:getUserData()
+                        local ud = snapFix[j]:getUserData()
                         ud.extra = extra
-                        snapFixtures[j]:setUserData(ud)
-                        addCooldown(snapFixtures[j])
+                        snapFix[j]:setUserData(ud)
+                        addCooldown(snapFix[j])
                     end
                 end
                 registry.unregisterJoint(joint:getUserData().id)
@@ -111,11 +111,11 @@ local function checkForJointBreaks(dt, interacted, snapFixtures)
     end
 end
 
-local function checkForSnaps(interacted, snapFixtures)
+local function checkForSnaps(interacted, snapFix)
     local currentTime = love.timer.getTime()
 
-    for i = 1, #snapFixtures do
-        local it1 = snapFixtures[i]:getUserData().extra
+    for i = 1, #snapFix do
+        local it1 = snapFix[i]:getUserData().extra
 
         if it1.to == nil and not isInCooldown(it1.fixture, currentTime) then -- else this snap point is already connected and it cannot be connected more then once
             local body1 = it1.at
@@ -128,9 +128,9 @@ local function checkForSnaps(interacted, snapFixtures)
 
             local x1, y1 = body1:getWorldPoint(it1.xOffset, it1.yOffset)
 
-            for j = 1, #snapFixtures do
+            for j = 1, #snapFix do
                 if j ~= i then                                                           -- else you check it against it
-                    local it2 = snapFixtures[j]:getUserData().extra
+                    local it2 = snapFix[j]:getUserData().extra
                     if it2.to == nil and not isInCooldown(it2.fixture, currentTime) then -- else it2 is already connected,
                         local body2 = it2.at
                         local x2, y2 = body2:getWorldPoint(it2.xOffset, it2.yOffset)
@@ -138,17 +138,17 @@ local function checkForSnaps(interacted, snapFixtures)
                         local distance = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
                         if distance <= snapDistance then
                             if (not onlyConnectWhenInteracted or (oneOfThemIsInteractedWith(body1, body2, interacted))) then
-                                if not areBodiesConnected2(body1, body2, snapFixtures) then -- else these bodies are already connected..
+                                if not areBodiesConnected2(body1, body2, snapFix) then -- else these bodies are already connected..
                                     createRevoluteJoint(body1, body2, x1, y1, x2, y2, i, j)
                                     it1.to = body2
-                                    local ud1 = snapFixtures[i]:getUserData()
+                                    local ud1 = snapFix[i]:getUserData()
                                     ud1.extra = it1
-                                    snapFixtures[i]:setUserData(ud1)
+                                    snapFix[i]:setUserData(ud1)
 
                                     it2.to = body1
-                                    local ud2 = snapFixtures[j]:getUserData()
+                                    local ud2 = snapFix[j]:getUserData()
                                     ud2.extra = it2
-                                    snapFixtures[j]:setUserData(ud2)
+                                    snapFix[j]:setUserData(ud2)
                                     break
                                 end
                             end

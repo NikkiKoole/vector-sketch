@@ -1162,9 +1162,9 @@ local function applyPoseCache(instance, poseCache)
             body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
             body:setAngularVelocity(pose.angularVelocity)
 
-            local fixtures = body:getFixtures()
-            for j = 1, #fixtures do
-                fixtures[j]:setGroupIndex(pose.groupIndex)
+            local bodyFixtures = body:getFixtures()
+            for j = 1, #bodyFixtures do
+                bodyFixtures[j]:setGroupIndex(pose.groupIndex)
             end
         end
     end
