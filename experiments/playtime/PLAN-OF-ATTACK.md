@@ -51,7 +51,7 @@ All items completed:
 
 ~~Run the busted tests to see if they pass.~~
 
-**Result**: All 98 busted tests pass in 0.1 seconds. The mini-test suite (17 tests) also passes. Both frameworks are healthy. Busted covers math-utils and utils comprehensively (~6x more tests than mini-test).
+**Result**: All busted tests pass. The mini-test suite (17 tests) also passes. Both frameworks are healthy. Busted covers math-utils and utils comprehensively (~6x more tests than mini-test).
 
 **Decision**: Busted is the primary framework. Installed for Lua 5.1 (`luarocks --lua-version 5.1 install busted`) so it runs inside LÖVE too. Three ways to run: `busted spec/` (pure, 140 tests), `love . --specs` (full, 263 tests), `POST /specs` (via bridge).
 
@@ -59,16 +59,7 @@ All items completed:
 
 ~~Install luacheck, create `.luacheckrc`, run once to get baseline.~~
 
-**Result**: Luacheck found **1490 warnings / 0 errors across 34 files**, including:
-- **88 W111** (setting non-standard global variable) — more than double our manual estimate of ~40
-- **786 W113** (accessing undefined global) — using globals without require
-- **206 W211** (unused local variable)
-- **58 W212** (unused function argument)
-- **36 W411** (variable shadowing)
-- Worst file: playtime-ui.lua with 708 warnings (half the total)
-- New discoveries: `x`/`y` leaking as globals in ~10 locations in playtime-ui.lua
-
-The `.luacheckrc` config from TOOLING-SETUP.md should be created to get a cleaner baseline with known globals whitelisted.
+**Result**: Luacheck initially found **1490 warnings / 0 errors across 34 files**. All warnings have since been resolved: **0 warnings / 0 errors across 35 files** (down from 628 after globals were fixed, then shadowing, unused vars, line-too-long, and misc warnings all cleared).
 
 ### 0.5 Set up hot reload (lurker + lovebird) — DONE
 
@@ -278,7 +269,7 @@ These are the changes that actually improve the architecture. Each one is indepe
 
 ### 7a. Move snap state into state.lua
 
-`snap.lua` has hidden module-level state (`snapFixtures`, `mySnapJoints`, `cooldownList`). Move these into `state.snap` so they're visible to serialization, debugging, and the validator.
+`snap.lua` has hidden module-level state (`snapFixtures`, `activeSnapJoints`, `cooldownList`). Move these into `state.snap` so they're visible to serialization, debugging, and the validator.
 
 **Risk**: Medium — snap behavior must remain identical.
 **Verification**: Load a snap scene, verify joints still form/break. Validator checks snap state.
@@ -360,6 +351,30 @@ Many generic helper functions are duplicated or stranded as locals inside domain
 **Prerequisite**: Phase 3 (explicit requires) makes this easier since imports are already cleaned up.
 **Time**: 2-3 hours across sessions, can be done incrementally.
 
+### 7g. Readability renames — ✅ DONE
+
+Renamed unclear variables and functions across the codebase. Only runtime names were changed (persisted keys like `extra`, `subtype`, `scriptmeta`, `thing` were left alone).
+
+**Variable renames:**
+| Old | New | Files |
+|-----|-----|-------|
+| `eio` | `sceneIO` | playtime-ui, scene-loader, claude-bridge, io_spec |
+| `it`/`it1`/`it2` | `snapInfo`/`snapInfoA`/`snapInfoB` | snap.lua |
+| `mySnapJoints` | `activeSnapJoints` | snap.lua |
+| `j` (joint param) | `joint` | playtime-ui.lua |
+| `bud`/`mud` | `bodyData`/`meshData` | editor-render.lua |
+| `vv` | `vertices` | fixtures.lua |
+| `v`/`d` (shape8Dict keys) | `vertices`/`dimensions` | character-manager.lua |
+
+**Function renames:**
+| Old | New | Why |
+|-----|-----|-----|
+| `doJointCreateUI` | `drawJointCreateUI` | Consistent `draw` prefix |
+| `doJointUpdateUI` | `drawJointUpdateUI` | Consistent `draw` prefix |
+| `updateSFixtureDimensionsFunc` | `updateSFixtureDimensions` | Redundant `Func` suffix |
+
+Naming conventions documented in CLAUDE.md.
+
 ### 7e. Extract world-settings panel from playtime-ui.lua
 
 Start the UI split with the performance bottleneck: `drawWorldSettingsUI` (42% of frame time).
@@ -393,12 +408,13 @@ Only do these when they matter for what you're building.
 Phase 0 ─── Housekeeping ──────────── ✅ DONE
   │          ✓ dead files deleted (17,500 lines)
   │          ✓ dead code removed (850 lines)
-  │          ✓ busted: 98 tests pass
-  │          ✓ luacheck baselined
+  │          ✓ busted: 140 pure tests pass
+  │          ✓ luacheck: 0 warnings / 0 errors (down from 1490 → 628 → 0)
   │          ✓ lurker hot reload active
   │          ✓ playtime.sh lifecycle helper
   │          ✓ CLAUDE.md project guide
   │          ✓ bridge profiling endpoints
+  │          ✓ readability renames (see below)
   ▼
 Phase 1 ─── Fix Global Leaks ──────── ✅ DONE (87 → 19 intentional)
   │          ✓ 68 globals fixed across 12 files
@@ -434,7 +450,7 @@ Phase 6 ─── Extract from main.lua ─── mostly done (6.1, 6.3 done)
   │          ✓ playtime.sh: error capture, --bridge flag, log/errors commands
   │          - physics callbacks: not started
   ▼
-Phase 7 ─── Structural Improvements ─ 7f started
+Phase 7 ─── Structural Improvements ─ 7f done
   │    ├── 7a. Snap state → state.lua
   │    ├── 7b. Fixture type registry
   │    ├── 7c. Mode handler table

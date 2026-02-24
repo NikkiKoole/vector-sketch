@@ -1,5 +1,7 @@
 # AI Collaboration Plan for Playtime
 
+> **Status (Feb 2026):** Most items in this plan have been completed. See `PLAN-OF-ATTACK.md` for the current master plan with up-to-date status on all phases. This document is kept for historical context.
+
 ## What This Document Is
 
 A practical guide for making the playtime codebase easier to work on together (human + AI). Focused on changes that give the most leverage: things that let us verify correctness without running the app, reduce coupling so changes don't break distant code, and make the codebase easier to reason about in chunks.
@@ -15,25 +17,25 @@ A practical guide for making the playtime codebase easier to work on together (h
 - **Module pattern is consistent** — `local lib = {} ... return lib`
 - **PROJECT.md is thorough** — good map of the codebase
 
-### What Makes AI Collaboration Hard Right Now
+### What Made AI Collaboration Hard (mostly resolved)
 
-1. **Globals everywhere** — `logger`, `snap`, `registry`, `keep_angle`, `benchmarks`, `inspect`, `prof` are all globals set in main.lua. When I read a module, I can't see what it depends on just from the `require` calls.
+1. ~~**Globals everywhere**~~ — ✅ Fixed. All globals converted to explicit `local require()`. Luacheck 111/112 is clean (0 warnings).
 
-2. **Almost no tests** — 17 unit tests for math-utils, 5 integration tests for basic physics. That's 22 tests for ~17,000 lines. When I change something, I can't verify it works without you running the app visually.
+2. ~~**Almost no tests**~~ — ✅ Fixed. 140 pure busted tests + 263 LÖVE integration tests. Round-trip save/load tested on all 20 scene files.
 
-3. **main.lua is a god file** (999 lines) — Mixes initialization, game loop, input handling, debug key bindings, and two different fixed-timestep implementations. Hard to understand what a change affects.
+3. ~~**main.lua is a god file**~~ — ✅ Mostly fixed. Character experiments and game loop extracted. Down to ~660 lines.
 
-4. **Large files with mixed concerns** — `playtime-ui.lua` (3,527 lines), `character-manager.lua` (1,729 lines). I can't hold these in context easily, and changes have unpredictable ripple effects.
+4. **Large files with mixed concerns** — Still open. `playtime-ui.lua` (~3,400 lines), `character-manager.lua` (~1,730 lines). Extraction plan exists in PLAN-OF-ATTACK.md Phase 7e.
 
-5. **Functions coupled to Box2D/LÖVE** — Most modules call `love.physics.*` or `body:getX()` directly, making them untestable without LÖVE running.
+5. **Functions coupled to Box2D/LÖVE** — Still true for most modules. `_test` seams added to shapes.lua and io.lua.
 
-6. **~30 global function leaks** — `lerp`, `add`, `inside`, `calculateDistance`, `getLoveImage`, and many more are defined without `local` keyword, polluting global scope. A global named `add` (character-manager.lua:102) is particularly dangerous.
+6. ~~**~30 global function leaks**~~ — ✅ Fixed. All function leaks resolved. Luacheck fully clean (0 warnings / 0 errors).
 
-7. **Lots of dead/commented code** — main.lua has ~200 lines of commented-out character experiments. `polylineOLD.lua` is 392 lines of dead code.
+7. ~~**Lots of dead/commented code**~~ — ✅ Fixed. 17,500 lines of dead files + 850 lines of dead code removed.
 
 ---
 
-## Priority 1: Make Pure Functions Testable (Low Risk, High Value)
+## Priority 1: Make Pure Functions Testable — ✅ DONE
 
 These are changes that don't affect runtime behavior at all — just make it possible to verify correctness.
 
@@ -115,7 +117,7 @@ If they're used by other modules or would be useful in tests, put them on `lib`.
 
 ---
 
-## Priority 2: Eliminate Globals (Medium Risk, High Value)
+## Priority 2: Eliminate Globals — ✅ DONE (except 19 intentional in main.lua)
 
 ### 2a. Make all globals explicit requires
 
@@ -170,7 +172,7 @@ return Logger:new()
 
 ---
 
-## Priority 3: Extract Logic from main.lua (Medium Risk, Medium Value)
+## Priority 3: Extract Logic from main.lua — ✅ MOSTLY DONE
 
 main.lua currently handles:
 1. Module loading and global setup (lines 40-83)
@@ -216,7 +218,7 @@ The fixed-timestep loop (lines 893-998) is a self-contained algorithm. It could 
 
 ---
 
-## Priority 4: Add Integration Tests for Key Workflows (Medium Risk, High Value)
+## Priority 4: Add Integration Tests — ✅ DONE
 
 These tests need LÖVE but verify actual app behavior:
 
@@ -253,7 +255,7 @@ This is the highest-value integration test. It covers io.lua, registry.lua, shap
 
 ---
 
-## Priority 5: Module Splitting (Higher Risk, Lower Urgency)
+## Priority 5: Module Splitting — OPEN (see PLAN-OF-ATTACK.md Phase 7)
 
 ### 5a. Split `playtime-ui.lua` (3,527 lines)
 
@@ -291,7 +293,7 @@ The DNA system in particular should be highly testable once extracted.
 
 ---
 
-## Priority 6: Code Cleanup (Low Risk)
+## Priority 6: Code Cleanup — ✅ DONE
 
 ### 6a. Remove dead code
 - Delete `src/polylineOLD.lua` (392 lines, unused)
