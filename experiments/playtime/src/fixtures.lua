@@ -125,7 +125,7 @@ function lib.destroyFixture(fixture)
     fixture:destroy()
 end
 
-function lib.updateSFixtureDimensionsFunc(w, h)
+function lib.updateSFixtureDimensions(w, h)
     local points = { state.selection.selectedSFixture:getShape():getPoints() }
     local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
     local body = state.selection.selectedSFixture:getBody()

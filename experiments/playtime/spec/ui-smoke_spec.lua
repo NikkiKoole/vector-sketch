@@ -202,7 +202,7 @@ describe("UI smoke tests", function()
 
     -- === Joint panels ===
 
-    it("doJointUpdateUI renders with selected joint", function()
+    it("drawJointUpdateUI renders with selected joint", function()
         local thing1 = createBody(world, 'rectangle', { x = 100, y = 100 })
         local thing2 = createBody(world, 'rectangle', { x = 200, y = 200 })
         local joint = joints.createJoint({
@@ -217,10 +217,10 @@ describe("UI smoke tests", function()
         local ok, err = renderToCanvas(function()
             playtimeui.drawUI()
         end)
-        assert.is_true(ok, "doJointUpdateUI (revolute) failed: " .. tostring(err))
+        assert.is_true(ok, "drawJointUpdateUI (revolute) failed: " .. tostring(err))
     end)
 
-    it("doJointUpdateUI renders with distance joint", function()
+    it("drawJointUpdateUI renders with distance joint", function()
         local thing1 = createBody(world, 'rectangle', { x = 100, y = 100 })
         local thing2 = createBody(world, 'rectangle', { x = 200, y = 200 })
         local joint = joints.createJoint({
@@ -237,10 +237,10 @@ describe("UI smoke tests", function()
         local ok, err = renderToCanvas(function()
             playtimeui.drawUI()
         end)
-        assert.is_true(ok, "doJointUpdateUI (distance) failed: " .. tostring(err))
+        assert.is_true(ok, "drawJointUpdateUI (distance) failed: " .. tostring(err))
     end)
 
-    it("doJointUpdateUI renders with rope joint", function()
+    it("drawJointUpdateUI renders with rope joint", function()
         local thing1 = createBody(world, 'rectangle', { x = 100, y = 100 })
         local thing2 = createBody(world, 'rectangle', { x = 200, y = 200 })
         local joint = joints.createJoint({
@@ -257,7 +257,7 @@ describe("UI smoke tests", function()
         local ok, err = renderToCanvas(function()
             playtimeui.drawUI()
         end)
-        assert.is_true(ok, "doJointUpdateUI (rope) failed: " .. tostring(err))
+        assert.is_true(ok, "drawJointUpdateUI (rope) failed: " .. tostring(err))
     end)
 
     it("joint creation UI renders", function()

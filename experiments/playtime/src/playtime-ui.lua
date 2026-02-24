@@ -109,7 +109,7 @@ function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weigh
 end
 
 
-function lib.doJointCreateUI(panelX, panelY, w, h)
+function lib.drawJointCreateUI(panelX, panelY, w, h)
     ui.panel(panelX, panelY, w, h, '∞ ' .. state.jointParams.jointType .. ' ∞', function()
         local layout = ui.createLayout({
             type = 'columns',
@@ -139,7 +139,7 @@ function lib.doJointCreateUI(panelX, panelY, w, h)
     end)
 end
 
-function lib.doJointUpdateUI(joint, panelX, panelY, w, h)
+function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
     if not joint:isDestroyed() then
         ui.panel(panelX, panelY, w, h, '∞ ' .. joint:getType() .. ' ∞', function()
             local bodyA, bodyB = joint:getBodies()
@@ -1297,7 +1297,7 @@ function lib.drawSelectedSFixture()
                     --   logger:info('should look up the native dimensions of this texture')
                     --   logger:inspect(state.selection.selectedSFixture:getUserData())
                     local _, _, bw, bh = getCenterAndDimensions(body)
-                    fixtures.updateSFixtureDimensionsFunc(bw, bh)
+                    fixtures.updateSFixtureDimensions(bw, bh)
                     oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
@@ -1339,12 +1339,12 @@ function lib.drawSelectedSFixture()
                                     logger:inspect(bud.thing)
                                 end
 
-                                fixtures.updateSFixtureDimensionsFunc(imgW, imgH)
+                                fixtures.updateSFixtureDimensions(imgW, imgH)
                             end
                         end
                     end
                     -- local cx, cy, w, h = getCenterAndDimensions(body)
-                    -- fixtures.updateSFixtureDimensionsFunc(w, h)
+                    -- fixtures.updateSFixtureDimensions(w, h)
                     -- local oldTexFixUD = state.selection.selectedSFixture:getUserData()
                     -- state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
                 end
@@ -1393,11 +1393,11 @@ function lib.drawSelectedSFixture()
                     nextRow()
 
                     if newWidth and math.abs(newWidth - polyW) > 1 then
-                        fixtures.updateSFixtureDimensionsFunc(newWidth, polyH)
+                        fixtures.updateSFixtureDimensions(newWidth, polyH)
                         polyW, polyH = mathutils.getPolygonDimensions(points)
                     end
                     if newHeight and math.abs(newHeight - polyH) > 1 then
-                        fixtures.updateSFixtureDimensionsFunc(polyW, newHeight)
+                        fixtures.updateSFixtureDimensions(polyW, newHeight)
                     end
                 end
                 createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
@@ -1952,7 +1952,7 @@ function lib.drawSelectedSFixture()
                 local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, dim)
                 ui.alignedLabel(x, y, ' radius')
                 if newRadius and newRadius ~= dim then
-                    fixtures.updateSFixtureDimensionsFunc(newRadius, newRadius)
+                    fixtures.updateSFixtureDimensions(newRadius, newRadius)
                     snap.rebuildSnapFixtures(registry.sfixtures)
                 end
 
@@ -3148,7 +3148,7 @@ function lib.drawUI()
     end
 
     if (state.currentMode == 'jointCreationMode') and state.jointParams.body1 and state.jointParams.body2 then
-        lib.doJointCreateUI(500, 100, 400, 150)
+        lib.drawJointCreateUI(500, 100, 400, 150)
     end
 
     if state.selection.selectedSFixture then
@@ -3157,7 +3157,7 @@ function lib.drawUI()
 
     if state.selection.selectedObj and state.selection.selectedJoint then
         -- (w - panelWidth - 20, 20, panelWidth, h - 40
-        lib.doJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
+        lib.drawJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
     if (state.currentMode == 'setOffsetA') or (state.currentMode == 'setOffsetB')
