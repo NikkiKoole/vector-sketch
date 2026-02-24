@@ -56,12 +56,12 @@ end
 lurker.errorupdate = function(_dt)
     bridge.update()
 end
-require 'src.logger'
-require 'vendor.inspect'
+local _logger = require 'src.logger' -- luacheck: ignore 211
+local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
 local prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
 jit.off() -- luacheck: ignore 113 (jit is a LuaJIT global)
-require 'vendor.ProFi'
+local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 
 local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
@@ -71,7 +71,7 @@ local playtimeui = require 'src.playtime-ui'
 
 local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
-require 'src.object-manager'
+local _objectManager = require 'src.object-manager' -- luacheck: ignore 211
 
 
 --local moonshine = require 'moonshine'
@@ -83,21 +83,21 @@ local box2dDrawTextured = require 'src.box2d-draw-textured'
 local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
-require 'src.uuid'
+local _uuid = require 'src.uuid' -- luacheck: ignore 211
 
 local snap = require 'src.snap'
 local characterExperiments = require 'src.character-experiments'
 local keep_angle = require 'src.keep-angle'
-require 'src.registry'
+local _registry = require 'src.registry' -- luacheck: ignore 211
 
 
-require 'src.math-utils'
+local _mathutils = require 'src.math-utils' -- luacheck: ignore 211
 
 local InputManager = require 'src.input-manager'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
-require 'src.character-manager'
+local _characterManager = require 'src.character-manager' -- luacheck: ignore 211
 
 
 
