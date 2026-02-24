@@ -77,14 +77,14 @@ function lib.handleKeyPress(key, humanoidInstance)
             { shape8URL = url .. '.png', sy = s, sx = -s },
             humanoidInstance)
 
-        local s = 1 + math.random() * 1
-        local urlIndex = math.ceil(math.random() * #urls)
-        local url = urls[urlIndex]
+        local handScale = 1 + math.random() * 1
+        local handUrlIndex = math.ceil(math.random() * #urls)
+        local handUrl = urls[handUrlIndex]
         CharacterManager.updatePart('lhand',
-            { shape8URL = url .. '.png', sy = s, sx = s },
+            { shape8URL = handUrl .. '.png', sy = handScale, sx = handScale },
             humanoidInstance)
         CharacterManager.updatePart('rhand',
-            { shape8URL = url .. '.png', sy = s, sx = -s },
+            { shape8URL = handUrl .. '.png', sy = handScale, sx = -handScale },
             humanoidInstance)
 
         CharacterManager.rebuildFromCreation(humanoidInstance, {})
@@ -127,11 +127,11 @@ function lib.handleKeyPress(key, humanoidInstance)
                 humanoidInstance)
         end
 
-        local s = 1 + math.random() * 1
-        local urlIndex = math.ceil(math.random() * #urls)
-        local url = urls[urlIndex]
+        local headScale = 1 + math.random() * 1
+        local headUrlIndex = math.ceil(math.random() * #urls)
+        local headUrl = urls[headUrlIndex]
         CharacterManager.updatePart('head',
-            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < 0.5 and -1 or 1), sx = headScale },
             humanoidInstance)
 
         CharacterManager.rebuildFromCreation(humanoidInstance,

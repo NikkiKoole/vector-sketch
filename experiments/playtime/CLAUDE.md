@@ -90,11 +90,12 @@ luacheck src/ main.lua --std "lua51+love"                   # full check (~628 w
 ```
 
 All globals have been converted to explicit `local require()` calls. Luacheck 111/112 is clean (0 warnings).
-Full luacheck still has ~628 warnings (unused vars, long lines, shadowing — no errors). Biggest categories:
-- 182 unused variables, 55 unused args, 21 unused loop vars (mechanical `_` prefixing)
-- 128 line-too-long (cosmetic)
-- 52 undefined variable access (37× `CharacterManager` missing require, `dirty`/`dirtyBodyChange` may be bugs)
-- 12 unused functions (potential dead code)
+Full luacheck has ~231 warnings (down from 628), no errors. Remaining categories:
+- 125 line-too-long (cosmetic)
+- 87 shadowing warnings (W421/W423/W431/W432/W433 — need case-by-case review)
+- 11 unused variables (W211)
+- 3 whitespace-only lines (W611)
+- 5 misc (W241, W231, W143, W422)
 
 ## Architecture
 

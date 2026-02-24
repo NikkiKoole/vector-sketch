@@ -95,7 +95,7 @@ function lib.createJoint(data)
     x1, y1 = x1 + rx, y1 + ry
 
     local offsetB = data.offsetB or { x = data.p2[1], y = data.p2[2] } or { x = 0, y = 0 }
-    local rx, ry = mathutils.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
+    rx, ry = mathutils.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
     --print(inspect(offsetA), inspect(offsetB))
     local handler = jointHandlers[jointType]

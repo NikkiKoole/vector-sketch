@@ -191,20 +191,20 @@ function love.load(_args)
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
 
     if state.world.playWithSoftbodies then
-        local b = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
-        b:setFrequency(3)
-        b:setDamping(0.1)
-        --b:setFriction(1)
+        local softBody = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
+        softBody:setFrequency(3)
+        softBody:setDamping(0.1)
+        --softBody:setFriction(1)
 
-        table.insert(state.world.softbodies, b)
+        table.insert(state.world.softbodies, softBody)
         local points = {
             0, 500, 800, 500,
             800, 800, 0, 800
         }
-        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
-        table.insert(state.world.softbodies, b)
-        b:setJointFrequency(2)
-        b:setJointDamping(.1)
+        local softSurface = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
+        table.insert(state.world.softbodies, softSurface)
+        softSurface:setJointFrequency(2)
+        softSurface:setJointDamping(.1)
         --b:setFixtureRestitution(2)
         -- b:setFixtureFriction(10)
     end

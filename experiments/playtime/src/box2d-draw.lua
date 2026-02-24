@@ -62,15 +62,15 @@ function lib.drawWorld(world, drawOutline)
                 --     print(inspect(fixture:getUserData()))
                 --end
                 if fixture:getShape():type() == 'PolygonShape' then
-                    local color = getBodyColor(body)
-                    love.graphics.setColor(color[1], color[2], color[3], alpha)
+                    local fillColor = getBodyColor(body)
+                    love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
                     if (fixture:getUserData()) then
                         if fixture:getUserData().bodyType == "connector" then
                             love.graphics.setColor(1, 0, 0, alpha)
                         end
                         if fixture:getUserData().type then
-                            local color = pal.orange
-                            love.graphics.setColor(color[1], color[2], color[3], alpha)
+                            local typeColor = pal.orange
+                            love.graphics.setColor(typeColor[1], typeColor[2], typeColor[3], alpha)
                         end
                         --else
                         if state.world.drawFixtures then
@@ -81,8 +81,8 @@ function lib.drawWorld(world, drawOutline)
                     end
 
 
-                    local color = state.world.darkMode and pal.creamy or pal.dark
-                    love.graphics.setColor(color[1], color[2], color[3], alpha)
+                    local outlineColor = state.world.darkMode and pal.creamy or pal.dark
+                    love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
                     if (fixture:getUserData()) then
                         if fixture:getUserData().bodyType == "connector" then
                             love.graphics.setColor(1, 0, 0, alpha)
@@ -103,13 +103,13 @@ function lib.drawWorld(world, drawOutline)
                     local body_x, body_y = body:getPosition()
                     local shape_x, shape_y = fixture:getShape():getPoint()
                     local r = fixture:getShape():getRadius()
-                    local color = getBodyColor(body)
+                    local circleFillColor = getBodyColor(body)
                     local segments = 180
-                    love.graphics.setColor(color[1], color[2], color[3], alpha)
+                    love.graphics.setColor(circleFillColor[1], circleFillColor[2], circleFillColor[3], alpha)
                     love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, segments)
 
-                    local color = pal.creamy
-                    love.graphics.setColor(color[1], color[2], color[3], alpha)
+                    local circleOutlineColor = pal.creamy
+                    love.graphics.setColor(circleOutlineColor[1], circleOutlineColor[2], circleOutlineColor[3], alpha)
                     if drawOutline then love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, segments) end
                 end
                 if state.world.showDebugIds then

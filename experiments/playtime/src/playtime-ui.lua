@@ -632,32 +632,32 @@ function lib.drawAddShapeUI()
 
 
         nextRow()
-        local fillColor = state.currentMode == 'drawFreePath' and { 1, 0, 0 } or nil
-        local _, _, freeformReleased = ui.button(x, y, width, 'freepath', buttonHeight, fillColor)
-        if freeformReleased then
+        local freePathColor = state.currentMode == 'drawFreePath' and { 1, 0, 0 } or nil
+        local _, _, freePathReleased = ui.button(x, y, width, 'freepath', buttonHeight, freePathColor)
+        if freePathReleased then
             state.currentMode = 'drawFreePath'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         -- Add a button for custom polygon
         nextRow()
-        local fillColor = state.currentMode == 'drawFreePoly' and { 1, 0, 0 } or nil
-        local _, _, freeformReleased = ui.button(x, y, width, 'freeform', buttonHeight, fillColor)
-        if freeformReleased then
+        local freePolyColor = state.currentMode == 'drawFreePoly' and { 1, 0, 0 } or nil
+        local _, _, freePolyReleased = ui.button(x, y, width, 'freeform', buttonHeight, freePolyColor)
+        if freePolyReleased then
             state.currentMode = 'drawFreePoly'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         nextRow()
-        local fillColor = state.currentMode == 'drawClickMode' and { 1, 0, 0 } or nil
-        if ui.button(x, y, width, 'click', buttonHeight, fillColor) then
+        local clickModeColor = state.currentMode == 'drawClickMode' and { 1, 0, 0 } or nil
+        if ui.button(x, y, width, 'click', buttonHeight, clickModeColor) then
             state.currentMode = 'drawClickMode'
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         nextRow()
 
-        local width = panelWidth - 20
+        -- width already defined above as panelWidth - 20
 
         local function handleFixtureButton(x, y, width, label, shapeType, extraDataFunc)
             local _, pressed, released = ui.button(x, y, width, label)
@@ -905,17 +905,17 @@ function lib.drawWorldSettingsUI()
 
         nextRow()
 
-        local g, value = ui.checkbox(x, y, state.editorPreferences.showGrid, 'grid') --showGrid = true,
-        if g then
-            state.editorPreferences.showGrid = value
+        local gridChanged, gridValue = ui.checkbox(x, y, state.editorPreferences.showGrid, 'grid')
+        if gridChanged then
+            state.editorPreferences.showGrid = gridValue
         end
-        local g, value = ui.checkbox(x + 80, y, state.world.debugDrawMode, 'draw') --showGrid = true,
-        if g then
-            state.world.debugDrawMode = value
+        local drawChanged, drawValue = ui.checkbox(x + 80, y, state.world.debugDrawMode, 'draw')
+        if drawChanged then
+            state.world.debugDrawMode = drawValue
         end
-        local g, value = ui.checkbox(x + 160, y, state.world.darkMode, 'mode') --showGrid = true,
-        if g then
-            state.world.darkMode = value
+        local modeChanged, modeValue = ui.checkbox(x + 160, y, state.world.darkMode, 'mode')
+        if modeChanged then
+            state.world.darkMode = modeValue
         end
         nextRow()
 
@@ -2497,22 +2497,22 @@ function lib.drawUpdateSelectedObjectUI()
             drawAccordion("position",
                 function(_clicked)
                     nextRow()
-                    local value = thing.body:getX()
-                    local numericInputText, dirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. value,
+                    local xValue = thing.body:getX()
+                    local xInputText, xDirty = ui.textinput(myID .. 'x', x, y, 120, BUTTON_HEIGHT, ".", "" .. xValue,
                         true)
-                    if (dirty) then
-                        local numericPosX = tonumber(numericInputText)
+                    if (xDirty) then
+                        local numericPosX = tonumber(xInputText)
                         if numericPosX then
                             thing.body:setX(numericPosX)
                         else
                             logger:error("Invalid X position input!")
                         end
                     end
-                    local value = thing.body:getY()
-                    local numericInputText, dirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
-                        "" .. value, true)
-                    if (dirty) then
-                        local numericPosY = tonumber(numericInputText)
+                    local yValue = thing.body:getY()
+                    local yInputText, yDirty = ui.textinput(myID .. 'y', x + 140, y, 120, BUTTON_HEIGHT, ".",
+                        "" .. yValue, true)
+                    if (yDirty) then
+                        local numericPosY = tonumber(yInputText)
                         if numericPosY then
                             thing.body:setY(numericPosY)
                         else
@@ -2522,8 +2522,8 @@ function lib.drawUpdateSelectedObjectUI()
 
                     nextRow()
 
-                    local dirty = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
-                    if dirty then
+                    local fixedAngleDirty = ui.checkbox(x, y, body:isFixedRotation(), 'fixed angle')
+                    if fixedAngleDirty then
                         body:setFixedRotation(not body:isFixedRotation())
                     end
 
@@ -2830,8 +2830,8 @@ function lib.drawUpdateSelectedObjectUI()
                 function()
                     -- set sleeping allowed
                     nextRow()
-                    local dirty = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
-                    if dirty then
+                    local sleepDirty = ui.checkbox(x, y, body:isSleepingAllowed(), 'sleep ok')
+                    if sleepDirty then
                         body:setSleepingAllowed(not body:isSleepingAllowed())
                     end
                     nextRow()
@@ -2846,8 +2846,8 @@ function lib.drawUpdateSelectedObjectUI()
                     ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ' ang-vel')
 
                     nextRow()
-                    local dirty = ui.checkbox(x, y, body:isBullet(), 'bullet')
-                    if dirty then
+                    local bulletDirty = ui.checkbox(x, y, body:isBullet(), 'bullet')
+                    if bulletDirty then
                         body:setBullet(not body:isBullet())
                     end
 
@@ -2885,10 +2885,10 @@ function lib.drawUpdateSelectedObjectUI()
                                         local x1, y1, x2, y2 = joint:getAnchors()
                                         -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
                                         --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
-                                        local x3, y3 = cam:getScreenCoordinates(x1, y1)
-                                        love.graphics.circle('line', x3, y3, 6)
-                                        local x3, y3 = cam:getScreenCoordinates(x2, y2)
-                                        love.graphics.circle('line', x3, y3, 3)
+                                        local ax3, ay3 = cam:getScreenCoordinates(x1, y1)
+                                        love.graphics.circle('line', ax3, ay3, 6)
+                                        local bx3, by3 = cam:getScreenCoordinates(x2, y2)
+                                        love.graphics.circle('line', bx3, by3, 3)
                                     end
                                 end
                             end

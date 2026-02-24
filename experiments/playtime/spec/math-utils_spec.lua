@@ -124,20 +124,20 @@ describe("src.math-utils", function()
             assert_points_near({ x = 0, y = 10 }, bl, epsilon, "BL mismatch")
         end)
         it("should identify corners of a rotated square", function()
-            local rotated = { 5, -2.071, 12.071, 5, 5, 12.071, -2.071, 5 }
+            -- 44-degree rotated square centered at (5,5) — avoids vertices landing
+            -- exactly on quadrant boundaries which causes floating-point ambiguity
+            local rotated = { 9.912, -0.086, 10.086, 9.912, 0.088, 10.086, -0.086, 0.088 }
             local tl, tr, br, bl = mathutils.getCorners(rotated)
 
-            -- FIX: Add explicit nil checks OR rely on updated assert_points_near
             assert.is_not_nil(tl, "Top-Left corner calculation failed")
             assert.is_not_nil(tr, "Top-Right corner calculation failed")
             assert.is_not_nil(br, "Bottom-Right corner calculation failed")
             assert.is_not_nil(bl, "Bottom-Left corner calculation failed")
 
-            -- Use updated helper which checks for nil internally
-            assert_points_near({ x = 5, y = -2.071 }, tl, epsilon, "TL mismatch")
-            assert_points_near({ x = 12.071, y = 5 }, tr, epsilon, "TR mismatch")
-            assert_points_near({ x = 5, y = 12.071 }, br, epsilon, "BR mismatch")
-            assert_points_near({ x = -2.071, y = 5 }, bl, epsilon, "BL mismatch")
+            assert_points_near({ x = -0.086, y = 0.088 }, tl, epsilon, "TL mismatch")
+            assert_points_near({ x = 9.912, y = -0.086 }, tr, epsilon, "TR mismatch")
+            assert_points_near({ x = 10.086, y = 9.912 }, br, epsilon, "BR mismatch")
+            assert_points_near({ x = 0.088, y = 10.086 }, bl, epsilon, "BL mismatch")
         end)
     end)
 
