@@ -1635,8 +1635,14 @@ function lib.drawTexturedWorld(world)
                 local m = love.graphics.newMesh(vertices, "strip")
                 m:setTexture(img)
                 local body = drawables[i].thing.body
-                --local cx, cy, ww, hh = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
+                local main = drawables[i].extra.main
+                if main then
+                    if not main.cached then lib.makeCached(main) end
+                    local c = main.cached
+                    love.graphics.setColor(c.bgR, c.bgG, c.bgB, c.bgA)
+                end
                 love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
+                love.graphics.setColor(1, 1, 1, 1)
             end
             --logger:inspect(points)
             --logger:inspect()

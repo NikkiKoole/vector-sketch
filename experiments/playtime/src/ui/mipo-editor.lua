@@ -44,6 +44,12 @@ local bodyhairTextures = {
     'borsthaar5', 'borsthaar6', 'borsthaar7'
 }
 
+-- Textures for haircut (trace-vertices along head outline)
+local haircutTextures = {
+    'hair1', 'hair2', 'hair3', 'hair4', 'hair5',
+    'hair6', 'hair7', 'hair8', 'hair9', 'hair10', 'hair11'
+}
+
 -- Textures for connected-skin (OMP, has outline + mask pairs)
 local limbSkinTextures = {
     'leg1', 'leg2', 'leg3', 'leg4', 'leg5', 'leg7'
@@ -93,12 +99,38 @@ local function getMirrorPart(partName)
     return nil
 end
 
-local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, onSelect)
+local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, onSelect, showNone)
     local itemsPerRow = math.floor((PANEL_WIDTH - 20) / cellSize)
     local clicked = false
+    local offset = 0
+
+    -- Optional "none" cell at position 0
+    if showNone then
+        offset = 1
+        local cx = panelX + 10
+        local cy = startY
+        love.graphics.setColor(0.5, 0.5, 0.5, 1)
+        love.graphics.rectangle('line', cx + 2, cy + 2, cellSize - 4, cellSize - 4)
+        love.graphics.line(cx + 2, cy + 2, cx + cellSize - 4, cy + cellSize - 4)
+        love.graphics.setColor(0.7, 0.7, 0.7, 1)
+        love.graphics.print('x', cx + cellSize / 2 - 4, cy + cellSize / 2 - 6)
+        if not currentURL or currentURL == '' then
+            love.graphics.setColor(1, 0.6, 0, 1)
+            love.graphics.rectangle('line', cx, cy, cellSize, cellSize)
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+        if ui.mouseX >= cx and ui.mouseX <= cx + cellSize and
+            ui.mouseY >= cy and ui.mouseY <= cy + cellSize and
+            ui.mouseReleased then
+            onSelect(nil)
+            clicked = true
+        end
+    end
+
     for i, item in ipairs(items) do
-        local row = math.floor((i - 1) / itemsPerRow)
-        local col = (i - 1) % itemsPerRow
+        local idx = (i - 1) + offset
+        local row = math.floor(idx / itemsPerRow)
+        local col = idx % itemsPerRow
         local cx = panelX + 10 + col * cellSize
         local cy = startY + row * cellSize
 
@@ -135,7 +167,8 @@ local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, on
         end
     end
 
-    local totalRows = math.ceil(#items / itemsPerRow)
+    local totalItems = #items + offset
+    local totalRows = math.ceil(totalItems / itemsPerRow)
     return totalRows * cellSize, clicked
 end
 
@@ -228,6 +261,22 @@ function lib.drawMipoEditor(instance, partName)
                 end
             end
             y = y + ROW
+
+            -- neck height (adjusts all neck segments at once)
+            if (creation.neckSegments or 0) > 0 then
+                local firstNeck = instance.dna.parts['neck1']
+                local currentH = firstNeck and firstNeck.dims and firstNeck.dims.h or 150
+                local nh = ui.sliderWithInput('mipo_neckH', x, y, 120, 10, 500, currentH)
+                ui.alignedLabel(x, y, '  neck height')
+                nh = nh and tonumber(nh)
+                if nh and nh ~= currentH then
+                    for i = 1, creation.neckSegments do
+                        CharacterManager.updatePart('neck' .. i, { h = nh }, instance)
+                    end
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+            end
 
             -- noseSegments
             local noses = ui.sliderWithInput('mipo_noseSeg', x, y, 120, 0, 5, creation.noseSegments or 0, false, 1)
@@ -375,7 +424,11 @@ function lib.drawMipoEditor(instance, partName)
         end
 
         -- === BODYHAIR ACCORDION ===
+        -- Bodyhair is per-part (head has its own, each torso segment has its own).
+        -- For torso parts, changes propagate to all torso segments for consistency.
+        -- For head (or other parts), changes only affect that part.
         if partData and partData.appearance and partData.appearance['bodyhair'] then
+            local isTorso = partName:match('^torso')
             drawAccordion(partName .. ' bodyhair', function()
                 local bh = partData.appearance['bodyhair']
                 if bh['main'] then
@@ -383,21 +436,39 @@ function lib.drawMipoEditor(instance, partName)
                     local cellSize = 50
                     local gridHeight = drawThumbnailGrid(bodyhairTextures, currentBG, panelX, y, cellSize,
                         function(url)
-                            local count = instance.dna.creation.torsoSegments or 1
-                            for i = 1, count do
-                                CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i,
-                                    { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') })
+                            local function clearOrSet(pn)
+                                local bhPatch = instance.dna.parts[pn].appearance['bodyhair'].main
+                                if url then
+                                    bhPatch.bgURL = url
+                                    bhPatch.fgURL = url:gsub('%.png', '-mask.png')
+                                else
+                                    bhPatch.bgURL = nil
+                                    bhPatch.fgURL = nil
+                                end
+                                bhPatch.cached = nil
+                            end
+                            if isTorso then
+                                local count = instance.dna.creation.torsoSegments or 1
+                                for i = 1, count do
+                                    clearOrSet('torso' .. i)
+                                end
+                            else
+                                clearOrSet(partName)
                             end
                             CharacterManager.addTexturesFromInstance2(instance)
-                        end)
+                        end, true)
                     y = y + gridHeight + BUTTON_SPACING
 
                     -- bodyhair colors (2-layer: outline + fill, no pattern)
                     handlePaletteButton('mipo_bh_bg_' .. partName,
                         x + 30, y, 140, bh['main'].bgHex, function(color)
-                            local count = instance.dna.creation.torsoSegments or 1
-                            for i = 1, count do
-                                CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i, { bgHex = color })
+                            if isTorso then
+                                local count = instance.dna.creation.torsoSegments or 1
+                                for i = 1, count do
+                                    CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i, { bgHex = color })
+                                end
+                            else
+                                CharacterManager.updateBodyhairOfPart(instance, partName, { bgHex = color })
                             end
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -406,13 +477,97 @@ function lib.drawMipoEditor(instance, partName)
 
                     handlePaletteButton('mipo_bh_fg_' .. partName,
                         x + 30, y, 140, bh['main'].fgHex, function(color)
-                            local count = instance.dna.creation.torsoSegments or 1
-                            for i = 1, count do
-                                CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i, { fgHex = color })
+                            if isTorso then
+                                local count = instance.dna.creation.torsoSegments or 1
+                                for i = 1, count do
+                                    CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i, { fgHex = color })
+                                end
+                            else
+                                CharacterManager.updateBodyhairOfPart(instance, partName, { fgHex = color })
                             end
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
                     ui.alignedLabel(x + 180, y, 'fill')
+                    y = y + ROW
+                end
+            end)
+        end
+
+        -- === HAIRCUT ACCORDION ===
+        -- Haircut renders on head (non-potato) or torso1 (potato). It traces along
+        -- the shape outline between startIndex and endIndex with a hair texture.
+        local haircutOwner = nil
+        if instance.dna.creation.isPotatoHead and partName:match('^torso') then
+            haircutOwner = 'torso1'
+        elseif not instance.dna.creation.isPotatoHead and partName == 'head' then
+            haircutOwner = 'head'
+        end
+        local haircutData = haircutOwner and instance.dna.parts[haircutOwner]
+        if haircutData and haircutData.appearance and haircutData.appearance['haircut'] then
+            drawAccordion(partName .. ' haircut', function()
+                local hc = haircutData.appearance['haircut']
+                local main = hc.main
+                if main then
+                    -- Texture thumbnail grid
+                    local currentURL = main.bgURL or ''
+                    local cellSize = 50
+                    local gridHeight = drawThumbnailGrid(haircutTextures, currentURL, panelX, y, cellSize,
+                        function(url)
+                            if url then
+                                CharacterManager.updateHaircutOfPart(instance, haircutOwner,
+                                    { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') })
+                            else
+                                main.bgURL = nil
+                                main.fgURL = nil
+                                main.cached = nil
+                            end
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end, true)
+                    y = y + gridHeight + BUTTON_SPACING
+
+                    -- width slider
+                    local currentWidth = hc.width or 250
+                    local wVal = ui.sliderWithInput('mipo_hc_w', x, y, 120, 10, 800, currentWidth)
+                    ui.alignedLabel(x, y, '  width')
+                    wVal = wVal and tonumber(wVal)
+                    if wVal and wVal ~= currentWidth then
+                        CharacterManager.updateHaircutOfPart(instance, haircutOwner, { width = wVal })
+                        CharacterManager.addTexturesFromInstance2(instance)
+                    end
+                    y = y + ROW
+
+                    -- startIndex / endIndex sliders
+                    local si = ui.sliderWithInput('mipo_hc_si', x, y, 120, 0, 16, hc.startIndex or 6, false, 1)
+                    ui.alignedLabel(x, y, '  start')
+                    si = si and tonumber(si)
+                    if si then
+                        si = math.floor(si)
+                        if si ~= hc.startIndex then
+                            CharacterManager.updateHaircutOfPart(instance, haircutOwner, { startIndex = si })
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                    end
+                    y = y + ROW
+
+                    local ei = ui.sliderWithInput('mipo_hc_ei', x, y, 120, 0, 16, hc.endIndex or 2, false, 1)
+                    ui.alignedLabel(x, y, '  end')
+                    ei = ei and tonumber(ei)
+                    if ei then
+                        ei = math.floor(ei)
+                        if ei ~= hc.endIndex then
+                            CharacterManager.updateHaircutOfPart(instance, haircutOwner, { endIndex = ei })
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                    end
+                    y = y + ROW
+
+                    -- Color (tints the hair texture)
+                    handlePaletteButton('mipo_hc_bg_' .. partName,
+                        x + 30, y, 140, main.bgHex, function(color)
+                            CharacterManager.updateHaircutOfPart(instance, haircutOwner, { bgHex = color })
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end)
+                    ui.alignedLabel(x + 180, y, 'color')
                     y = y + ROW
                 end
             end)

@@ -65,7 +65,9 @@ function lib.drawAddShapeUI()
                 contentFunc(clicked)
             end
         end
-        if ui.button(x, y, panelWidth - 20, 'add mipo') then
+        local _, mipoPressed, mipoReleased = ui.button(x, y, panelWidth - 20, 'add mipo')
+        if mipoPressed then
+            ui.draggingActive = ui.activeElementID
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             local CharacterManager = require('src.character-manager')
@@ -73,7 +75,22 @@ function lib.drawAddShapeUI()
             local instance = CharacterManager.createCharacter("humanoid", wx, wy, 0.3)
             if instance then
                 uiMipoEditor.randomizeMipo(instance)
+                -- Set up drag: torso1 as the primary drag target, all parts as group
+                local torsoThing = instance.parts['torso1']
+                if torsoThing then
+                    state.interaction.draggingObj = torsoThing
+                    state.interaction.offsetDragging = { 0, 0 }
+                    local allThings = {}
+                    for _, part in pairs(instance.parts) do
+                        table.insert(allThings, part)
+                    end
+                    state.selection.selectedBodies = allThings
+                end
             end
+        end
+        if mipoReleased then
+            ui.draggingActive = nil
+            state.selection.selectedBodies = nil
         end
         nextRow()
         drawAccordion('more', function() end)

@@ -142,6 +142,23 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
     end
 end
 
+function lib.updateHaircutOfPart(instance, partName, values)
+    local p = instance.dna.parts[partName]
+    if p and p.appearance and p.appearance['haircut'] then
+        local hc = p.appearance['haircut']
+        for k, v in pairs(values) do
+            if k == 'bgURL' or k == 'fgURL' or k == 'bgHex' or k == 'fgHex' or k == 'pHex' or k == 'pURL' then
+                if hc.main then
+                    hc.main[k] = v
+                    hc.main.cached = nil
+                end
+            else
+                hc[k] = v
+            end
+        end
+    end
+end
+
 -- Update connected-skin or connected-hair appearance colors.
 -- Connected textures stretch between joint-linked body parts (used for arms/legs).
 -- appearanceKey is 'connected-skin' (OMP composite) or 'connected-hair' (2-layer).
@@ -1377,6 +1394,17 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     local positionTorso = { instance.parts['torso1'].body:getPosition() }
 
+    -- Track which part was selected so we can re-select after rebuild
+    local selectedPartName = nil
+    local selectedObj = state.selection.selectedObj
+    if selectedObj and selectedObj.body and not selectedObj.body:isDestroyed() then
+        for pName, part in pairs(instance.parts) do
+            if part == selectedObj then
+                selectedPartName = pName
+                break
+            end
+        end
+    end
 
     -- Step 2: Remove all existing parts
     for _, part in pairs(instance.parts) do
@@ -1391,6 +1419,14 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
+
+    -- Re-select the same part (or torso1 if the old part no longer exists)
+    if selectedPartName then
+        local newPart = instance.parts[selectedPartName] or instance.parts['torso1']
+        if newPart then
+            state.selection.selectedObj = newPart
+        end
+    end
 end
 
 function lib.addTexturesFromInstance2(instance)
@@ -1606,7 +1642,7 @@ function lib.addTexturesFromInstance2(instance)
                             ud.extra.zOffset = 40
                             ud.extra.dirty = true
                             ud.extra.main = utils.deepCopy(v2.main)
-                            ud.extra.width = .5 * 500 * scale --v2.width or 100
+                            ud.extra.width = (v2.width or 250) * scale
                             ud.extra.startIndex = v2.startIndex
                             ud.extra.endIndex = v2.endIndex
 
