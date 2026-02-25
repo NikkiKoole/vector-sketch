@@ -34,12 +34,16 @@ function lib.loadScriptAndScene(id)
     local luaPath = '/scripts/' .. id .. '.playtime.lua'
     local jsoninfo = love.filesystem.getInfo(jsonPath)
     local luainfo = love.filesystem.getInfo(luaPath)
-    if (jsoninfo and luainfo) then
-        local cwd = love.filesystem.getWorkingDirectory()
-        lib.loadScene(cwd .. jsonPath)
+    if not jsoninfo then
+        logger:error('Scene file not found: ' .. jsonPath)
+        return
+    end
+    local cwd = love.filesystem.getWorkingDirectory()
+    lib.loadScene(cwd .. jsonPath)
+    if luainfo then
         lib.loadAndRunScript(cwd .. luaPath)
     else
-        logger:error('issue loading both files.')
+        logger:info('No script file for scene: ' .. id)
     end
 end
 
