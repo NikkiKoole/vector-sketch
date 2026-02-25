@@ -5,7 +5,7 @@
 if not love then return end
 
 local state = require('src.state')
-local ui = require('src.ui-all')
+local ui = require('src.ui.all')
 local registry = require('src.registry')
 local fixtures = require('src.fixtures')
 local joints = require('src.joints')

@@ -12,7 +12,7 @@ local selectrect = require 'src.selection-rect'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local blob = require 'vendor.loveblobs'
-local ui = require 'src.ui-all'
+local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
 local joints = require 'src.joints'
 

@@ -1,7 +1,7 @@
 -- ui-all.lua
 local ui = {}
 
-require('src.ui-textinput')(ui)
+require('src.ui.textinput')(ui)
 
 local creamy  = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
 local orange  = { 242 / 255, 133 / 255, 0 }

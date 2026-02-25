@@ -1,6 +1,6 @@
 local lib = {}
 
-local ui = require('src.ui-all')
+local ui = require('src.ui.all')
 local state = require('src.state')
 local registry = require('src.registry')
 local ProFi = require('vendor.ProFi')

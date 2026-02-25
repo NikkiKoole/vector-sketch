@@ -66,7 +66,7 @@ local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
 local recorder = require 'src.recorder'
-local ui = require 'src.ui-all'
+local ui = require('src.ui.all')
 local playtimeui = require 'src.playtime-ui'
 
 local selectrect = require 'src.selection-rect'
