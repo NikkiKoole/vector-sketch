@@ -13,6 +13,7 @@ local fixtures = require 'src.fixtures'
 local snap = require 'src.physics.snap'
 local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
+local modes = require 'src.modes'
 -- local polyline = require 'src.polyline' -- unused
 
 function lib.finalizePolygonAsSoftSurface()
@@ -26,7 +27,7 @@ function lib.finalizePolygonAsSoftSurface()
     logger:warn('blob surface wanted instead?')
     -- Reset the drawing state
 
-    state.currentMode = nil
+    modes.clear()
     state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
@@ -139,7 +140,7 @@ function lib.finalizePath()
         -- Not enough vertices to form a polygon
         logger:error("Not enough vertices to create a polygon.")
     end
-    state.currentMode = nil
+    modes.clear()
     state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil
@@ -167,7 +168,7 @@ function lib.finalizePolygon()
     end
     -- Reset the drawing state
 
-    state.currentMode = nil
+    modes.clear()
     state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil

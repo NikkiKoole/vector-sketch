@@ -2,6 +2,7 @@ local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
+local modes = require('src.modes')
 local registry = require('src.registry')
 local joints = require('src.joints')
 local mathutils = require('src.math-utils')
@@ -213,11 +214,11 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
 
                 nextRow()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-                    state.currentMode = 'setOffsetA'
+                    modes.set(modes.SET_OFFSET_A)
                 end
                 if jointType ~= 'revolute' then
                     if ui.button(x + 50, y, BUTTON_HEIGHT, 'b  ') then
-                        state.currentMode = 'setOffsetB'
+                        modes.set(modes.SET_OFFSET_B)
                     end
                 end
                 nextRow()

@@ -12,6 +12,7 @@ local fixtures = require('src.fixtures')
 local snap = require('src.physics.snap')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local state = require('src.state')
+local modes = require('src.modes')
 local fileBrowser = require('src.file-browser')
 
 local PANEL_WIDTH = 300
@@ -342,7 +343,7 @@ function lib.drawSelectedSFixture()
             oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-                    state.currentMode = 'positioningSFixture'
+                    modes.set(modes.POSITIONING_SFIXTURE)
                 end
                 nextRow()
                 local slx, sly = ui.sameLine()
@@ -550,7 +551,7 @@ function lib.drawSelectedSFixture()
         elseif ud.subtype == 'meshusert' then
             nextRow()
             if ui.button(x, y, ROW_WIDTH, 'add node ' .. (ud.extra.nodes and #ud.extra.nodes or '')) then
-                state.currentMode = 'addNodeToMeshUsert'
+                modes.set(modes.ADD_NODE_MESHUSERT)
             end
             if ui.button(x + ROW_WIDTH, y, 50, 'x ') then
                 ud.extra.nodes = {}
@@ -771,16 +772,16 @@ function lib.drawSelectedSFixture()
             love.graphics.line(x, y + 10, x + ROW_WIDTH + 50, y + 10)
             nextRow()
 
-            local editMode = state.currentMode == 'editMeshVertices'
+            local editMode = modes.is(modes.EDIT_MESH_VERTS)
             local buttonLabel = editMode and 'EDITING' or 'edit vertices'
             local buttonColor = editMode and { 0.2, 0.8, 0.2 } or nil
 
             if ui.button(x, y, ROW_WIDTH, buttonLabel, BUTTON_HEIGHT, buttonColor) then
                 if editMode then
-                    state.currentMode = nil
+                    modes.clear()
                     state.vertexEditor.selectedVertices = {}
                 else
-                    state.currentMode = 'editMeshVertices'
+                    modes.set(modes.EDIT_MESH_VERTS)
                     state.vertexEditor.selectedVertices = {}
                 end
             end
@@ -993,7 +994,7 @@ function lib.drawSelectedSFixture()
             drawAccordion('position', function()
                 nextRow()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-                    state.currentMode = 'positioningSFixture'
+                    modes.set(modes.POSITIONING_SFIXTURE)
                 end
                 local slx, sly = ui.sameLine()
                 if ui.button(slx, sly, ROW_WIDTH - 100, 'c') then
@@ -1067,7 +1068,7 @@ function lib.drawSelectedSFixture()
             if oldUD.label == 'connected-texture' or oldUD.subtype == 'connected-texture' then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
-                    state.currentMode = 'addNodeToConnectedTexture'
+                    modes.set(modes.ADD_NODE_CONNECTED_TEX)
                 end
 
                 local function inArray(value, array)

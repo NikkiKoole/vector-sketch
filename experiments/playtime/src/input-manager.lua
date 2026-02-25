@@ -11,6 +11,7 @@ local script = require 'src.script'
 local selectrect = require 'src.selection-rect'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
+local modes = require 'src.modes'
 local blob = require 'vendor.loveblobs'
 local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
@@ -38,7 +39,7 @@ local function pressedSetOffsetA(cx, cy)
     state.selection.selectedJoint =
         joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy)
     print('got here!')
-    state.currentMode = nil
+    modes.clear()
 end
 
 local function pressedSetOffsetB(cx, cy)
@@ -46,7 +47,7 @@ local function pressedSetOffsetB(cx, cy)
     local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
     state.selection.selectedJoint =
         joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy)
-    state.currentMode = nil
+    modes.clear()
 end
 
 local function pressedPositioningSFixture(cx, cy)
@@ -55,7 +56,7 @@ local function pressedPositioningSFixture(cx, cy)
     if (oldTexFixUD.extra.vertices) then
         state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
     end
-    state.currentMode = nil
+    modes.clear()
 end
 
 local function pressedAddNode(cx, cy)
@@ -99,18 +100,18 @@ local function pressedAddNode(cx, cy)
         state.selection.selectedSFixture:setUserData(ud)
         return true -- signal early return
     else
-        state.currentMode = nil
+        modes.clear()
         return true -- signal early return
     end
 end
 
 local prePhysicsHandlers = {
-    drawClickMode            = pressedDrawClickMode,
-    setOffsetA               = pressedSetOffsetA,
-    setOffsetB               = pressedSetOffsetB,
-    positioningSFixture      = pressedPositioningSFixture,
-    addNodeToConnectedTexture = pressedAddNode,
-    addNodeToMeshUsert       = pressedAddNode,
+    [modes.DRAW_CLICK]             = pressedDrawClickMode,
+    [modes.SET_OFFSET_A]           = pressedSetOffsetA,
+    [modes.SET_OFFSET_B]           = pressedSetOffsetB,
+    [modes.POSITIONING_SFIXTURE]   = pressedPositioningSFixture,
+    [modes.ADD_NODE_CONNECTED_TEX] = pressedAddNode,
+    [modes.ADD_NODE_MESHUSERT]     = pressedAddNode,
 }
 
 -- Post-physics pressed handlers (run after physics hit detection, need hitted)
@@ -120,7 +121,7 @@ local function pressedPickAutoRopifyMode(hitted, x)
     end
     local w = love.graphics.getDimensions()
     if x < w - 300 and #hitted == 0 then
-        state.currentMode = nil
+        modes.clear()
         state.pickAutoRopifyModeHitted = nil
     end
 end
@@ -175,14 +176,14 @@ local function releasedDrawFreePath()
 end
 
 local releasedHandlers = {
-    drawFreePoly  = releasedDrawFreePoly,
-    drawFreePath  = releasedDrawFreePath,
+    [modes.DRAW_FREE_POLY] = releasedDrawFreePoly,
+    [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
 }
 
 local function handlePointer(x, y, id, action, _button)
     if action == "pressed" then
         -- this is a nice pattern, early return!
-        if state.currentMode == 'editMeshVertices' then return end
+        if modes.is(modes.EDIT_MESH_VERTS) then return end
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if state.panelVisibility.saveDialogOpened then return end
@@ -197,8 +198,8 @@ local function handlePointer(x, y, id, action, _button)
         end
         if state.selection.selectedJoint or state.selection.selectedObj
             or state.selection.selectedSFixture or state.selection.selectedBodies
-            or state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly'
-            or state.currentMode == 'drawFreePath' then
+            or modes.is(modes.DRAW_FREE_POLY)
+            or modes.is(modes.DRAW_FREE_PATH) then
             local w = love.graphics.getDimensions()
             if x > w - 300 then
                 return
@@ -274,12 +275,12 @@ local function handlePointer(x, y, id, action, _button)
         end
 
         -- Post-physics mode dispatch
-        if state.currentMode == 'pickAutoRopifyMode' then
+        if modes.is(modes.PICK_AUTO_ROPIFY) then
             pressedPickAutoRopifyMode(hitted, x)
         end
 
         -- Default selection + jointCreationMode handling
-        if #hitted > 0 and (state.currentMode ~= 'pickAutoRopifyMode') then
+        if #hitted > 0 and (not modes.is(modes.PICK_AUTO_ROPIFY)) then
             local ud = hitted[1]:getBody():getUserData()
             if ud and ud.thing then
                 state.selection.selectedObj = ud.thing
@@ -287,7 +288,7 @@ local function handlePointer(x, y, id, action, _button)
             if state.scene.sceneScript and not state.world.paused and state.selection.selectedObj then
                 state.selection.selectedObj = nil
             end
-            if (state.currentMode == 'jointCreationMode') and state.selection.selectedObj then
+            if modes.is(modes.JOINT_CREATION) and state.selection.selectedObj then
                 pressedJointCreation(cx, cy, hitted)
             end
 
@@ -315,7 +316,7 @@ local function handlePointer(x, y, id, action, _button)
             recorder:recordMouseJointStart(madedata)
         end
     elseif action == "released" then
-        if state.currentMode == 'editMeshVertices' then return end
+        if modes.is(modes.EDIT_MESH_VERTS) then return end
 
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -377,7 +378,7 @@ local function handlePointer(x, y, id, action, _button)
         end
 
         -- if we have released a mousebutton but it isnt nr1, then we keep on drawing free polygon
-        if (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath')
+        if (modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH))
             and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
 
@@ -445,7 +446,7 @@ end
 
 function lib.handleMousePressed(x, y, button, istouch)
     if not istouch and button == 1 then
-        if state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
+        if modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) then
             -- Start capturing mouse movement
             state.interaction.capturingPoly = true
             state.interaction.polyVerts = {}
@@ -472,7 +473,7 @@ end
 
 function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
     --handlePointer(x, y, id, 'pressed')
-    if state.currentMode == 'drawFreePoly' or state.currentMode == 'drawFreePath' then
+    if modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) then
         -- Start capturing mouse movement
         state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
@@ -531,7 +532,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
     --
 
     -- VERTEX SELECTION FOR MESH EDITING
-    if state.currentMode == 'editMeshVertices' and state.selection.selectedSFixture then
+    if modes.is(modes.EDIT_MESH_VERTS) and state.selection.selectedSFixture then
         local cx, cy = cam:getWorldCoordinates(x, y)
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and ud.subtype == 'meshusert' and ud.label then
@@ -664,8 +665,8 @@ function lib.handleMouseMoved(x, y, dx, dy)
         state.selection.selectedSFixture:setUserData(ud)
         -- print(index)
     elseif state.interaction.capturingPoly
-        and (state.currentMode == 'drawFreePoly' or state.currentMode == 'drawClickPoly'
-            or state.currentMode == 'drawFreePath')
+        and (modes.is(modes.DRAW_FREE_POLY)
+            or modes.is(modes.DRAW_FREE_PATH))
         and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance

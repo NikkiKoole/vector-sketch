@@ -15,6 +15,7 @@ local snap = require 'src.physics.snap'
 local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 
 local state = require 'src.state'
+local modes = require 'src.modes'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
 local behaviors = require 'src.behaviors'
@@ -54,12 +55,12 @@ function lib.drawJointCreateUI(panelX, panelY, w, h)
             state.selection.selectedJoint = joint
             state.selection.selectedObject = nil
             state.jointParams = nil
-            state.currentMode = nil
+            modes.clear()
         end
 
         if ui.button(x + width + 10, y, width, 'Cancel') then
             state.jointParams = nil
-            state.currentMode = nil
+            modes.clear()
         end
     end)
 end
@@ -92,7 +93,7 @@ function lib.drawAddJointUI()
             local jointStarted = ui.button(x, y, width, joint)
             if jointStarted then
                 state.jointParams = { body1 = nil, body2 = nil, jointType = joint }
-                state.currentMode = 'jointCreationMode'
+                modes.set(modes.JOINT_CREATION)
             end
         end
     end)
@@ -290,7 +291,7 @@ function lib.drawUI()
 
 
 
-    if state.currentMode == 'pickAutoRopifyMode' then
+    if modes.is(modes.PICK_AUTO_ROPIFY) then
         local panelWidth = PANEL_WIDTH
         w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ autoropify ∞', function()
@@ -306,14 +307,14 @@ function lib.drawUI()
                 if ui.button(x, y, 260, 'yes!') then
                     objectManager.autoRopify(state.pickAutoRopifyModeHitted)
                     state.pickAutoRopifyModeHitted = nil
-                    state.currentMode = nil
+                    modes.clear()
                 end
             end
         end)
     end
 
 
-    if state.currentMode == 'drawClickMode' then
+    if modes.is(modes.DRAW_CLICK) then
         local panelWidth = PANEL_WIDTH
         w, h = love.graphics.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
@@ -361,7 +362,7 @@ function lib.drawUI()
         lib.drawSelectedBodiesUI()
     end
 
-    if (state.currentMode == 'jointCreationMode') and state.jointParams.body1 and state.jointParams.body2 then
+    if modes.is(modes.JOINT_CREATION) and state.jointParams.body1 and state.jointParams.body2 then
         lib.drawJointCreateUI(500, 100, 400, 150)
     end
 
@@ -374,19 +375,19 @@ function lib.drawUI()
         lib.drawJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
-    if (state.currentMode == 'setOffsetA') or (state.currentMode == 'setOffsetB')
-        or state.currentMode == 'positioningSFixture' then
+    if modes.is(modes.SET_OFFSET_A) or modes.is(modes.SET_OFFSET_B)
+        or modes.is(modes.POSITIONING_SFIXTURE) then
         ui.panel(500, 100, 300, 60, '• click point ∆', function()
         end)
     end
 
-    if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
+    if modes.is(modes.ADD_NODE_CONNECTED_TEX) or modes.is(modes.ADD_NODE_MESHUSERT) then
         ui.panel(500, 100, 400, 60, '• click anchor or joint to add ', function()
         end)
     end
 
 
-    if (state.currentMode == 'jointCreationMode')
+    if modes.is(modes.JOINT_CREATION)
         and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
         if (state.jointParams.body1 == nil) then
             ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
@@ -395,7 +396,7 @@ function lib.drawUI()
                 local width = 280
                 if ui.button(x, y, width, 'cancel') then
                     state.jointParams = nil
-                    state.currentMode = nil
+                    modes.clear()
                 end
             end)
         elseif (state.jointParams.body2 == nil) then
@@ -405,7 +406,7 @@ function lib.drawUI()
                 local width = 280
                 if ui.button(x, y, width, 'cancel') then
                     state.jointParams = nil
-                    state.currentMode = nil
+                    modes.clear()
                 end
             end)
         end

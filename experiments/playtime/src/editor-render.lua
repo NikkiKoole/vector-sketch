@@ -4,6 +4,7 @@
 local logger = require 'src.logger'
 local registry = require 'src.registry'
 local state = require 'src.state'
+local modes = require 'src.modes'
 local fixtures = require 'src.fixtures'
 local box2dDraw = require 'src.physics.box2d-draw'
 local shapes = require 'src.shapes'
@@ -91,9 +92,9 @@ function lib.renderActiveEditorThings()
     love.graphics.setColor(1, 1, 1)
 
     -- draw to be drawn polygon
-    if state.currentMode == 'drawClickMode'
-        or state.currentMode == 'drawFreePoly'
-        or state.currentMode == 'drawFreePath' then
+    if modes.is(modes.DRAW_CLICK)
+        or modes.is(modes.DRAW_FREE_POLY)
+        or modes.is(modes.DRAW_FREE_PATH) then
         if (#state.interaction.polyVerts >= 6) then
             love.graphics.polygon('line', state.interaction.polyVerts)
         end
@@ -202,7 +203,7 @@ function lib.renderActiveEditorThings()
         box2dDraw.drawBodies(bodies)
     end
 
-    if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
+    if modes.is(modes.ADD_NODE_CONNECTED_TEX) or modes.is(modes.ADD_NODE_MESHUSERT) then
         -- maybe show all possible connections on screen
 
         local node = inputmanager.showCloseNode()
@@ -223,7 +224,7 @@ function lib.renderActiveEditorThings()
     end
 
     -- VERTEX SELECTION VISUALIZATION
-    if state.currentMode == 'editMeshVertices' and state.selection.selectedSFixture then
+    if modes.is(modes.EDIT_MESH_VERTS) and state.selection.selectedSFixture then
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and ud.subtype == 'meshusert' and ud.label then
             -- Find the resource fixture with matching label

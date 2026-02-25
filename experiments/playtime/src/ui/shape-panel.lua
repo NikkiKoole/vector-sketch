@@ -2,6 +2,7 @@ local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
+local modes = require('src.modes')
 local objectManager = require('src.object-manager')
 local camera = require('src.camera')
 local cam = camera.getInstance()
@@ -94,26 +95,26 @@ function lib.drawAddShapeUI()
 
 
         nextRow()
-        local freePathColor = state.currentMode == 'drawFreePath' and { 1, 0, 0 } or nil
+        local freePathColor = modes.is(modes.DRAW_FREE_PATH) and { 1, 0, 0 } or nil
         local _, _, freePathReleased = ui.button(x, y, width, 'freepath', buttonHeight, freePathColor)
         if freePathReleased then
-            state.currentMode = 'drawFreePath'
+            modes.set(modes.DRAW_FREE_PATH)
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         -- Add a button for custom polygon
         nextRow()
-        local freePolyColor = state.currentMode == 'drawFreePoly' and { 1, 0, 0 } or nil
+        local freePolyColor = modes.is(modes.DRAW_FREE_POLY) and { 1, 0, 0 } or nil
         local _, _, freePolyReleased = ui.button(x, y, width, 'freeform', buttonHeight, freePolyColor)
         if freePolyReleased then
-            state.currentMode = 'drawFreePoly'
+            modes.set(modes.DRAW_FREE_POLY)
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
         nextRow()
-        local clickModeColor = state.currentMode == 'drawClickMode' and { 1, 0, 0 } or nil
+        local clickModeColor = modes.is(modes.DRAW_CLICK) and { 1, 0, 0 } or nil
         if ui.button(x, y, width, 'click', buttonHeight, clickModeColor) then
-            state.currentMode = 'drawClickMode'
+            modes.set(modes.DRAW_CLICK)
             state.interaction.polyVerts = {}
             state.interaction.lastPolyPt = nil
         end
@@ -160,7 +161,7 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'meshusert', 'meshusert')
         if ui.button(x, y, width, 'auto-ropify') then
             -- todo make this work
-            state.currentMode = 'pickAutoRopifyMode'
+            modes.set(modes.PICK_AUTO_ROPIFY)
         end
         nextRow()
     end)

@@ -78,8 +78,7 @@ state.vertexEditor = {
 
 --state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
--- Modes: 'jointCreationMode' 'pickAutoRopifyMode' 'drawFreePoly' 'drawClickPoly',
--- 'positioningSFixture', 'setOffsetA', 'setOffsetB', 'addNodeToConnectedTexture'
+-- Mode constants live in src/modes.lua — use modes.set/clear/is to manage this field
 state.currentMode = nil
 state.jointParams = nil
 state.jointLengthParams = {}
