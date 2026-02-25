@@ -11,8 +11,8 @@ local cam = camera.getInstance()
 local utils = require 'src.utils'
 
 local fixtures = require 'src.fixtures'
-local snap = require 'src.snap'
-local box2dDrawTextured = require 'src.box2d-draw-textured'
+local snap = require 'src.physics.snap'
+local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 local recorder = require 'src.recorder'
 local state = require 'src.state'
 local script = require 'src.script'

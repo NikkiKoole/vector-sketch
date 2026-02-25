@@ -13,7 +13,7 @@ local jointslib = require 'src.joints'
 local fixtures = require 'src.fixtures'
 local state = require 'src.state'
 
-local snap = require 'src.snap'
+local snap = require 'src.physics.snap'
 
 function lib.reload(data, world, cam)
     lib.load(data, world, cam)

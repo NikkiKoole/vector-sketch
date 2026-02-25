@@ -6,7 +6,7 @@ local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
-local drawTextured = require 'src.box2d-draw-textured'
+local drawTextured = require 'src.physics.box2d-draw-textured'
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)

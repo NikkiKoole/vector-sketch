@@ -5,7 +5,7 @@ local inspect = require 'vendor.inspect'
 local registry = require 'src.registry'
 local uuid = require 'src.uuid'
 local utils = require 'src.utils'
-local box2dPointerJoints = require 'src.box2d-pointerjoints'
+local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
 
 local snapFixtures = {}

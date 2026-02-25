@@ -78,14 +78,14 @@ local _objectManager = require 'src.object-manager' -- luacheck: ignore 211
 
 
 local utils = require 'src.utils'
-local box2dDraw = require 'src.box2d-draw'
-local box2dDrawTextured = require 'src.box2d-draw-textured'
-local box2dPointerJoints = require 'src.box2d-pointerjoints'
+local box2dDraw = require 'src.physics.box2d-draw'
+local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
+local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local _uuid = require 'src.uuid' -- luacheck: ignore 211
 
-local snap = require 'src.snap'
+local snap = require 'src.physics.snap'
 local characterExperiments = require 'src.character-experiments'
 local keep_angle = require 'src.keep-angle'
 local _registry = require 'src.registry' -- luacheck: ignore 211
@@ -230,7 +230,7 @@ function love.load(_args)
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2700, 300)
 end
 
-local _physicsCallbacks = require('src.physics-callbacks') -- luacheck: ignore 211
+local _physicsCallbacks = require('src.physics.physics-callbacks') -- luacheck: ignore 211
 
 local beginframetime = love.timer.getTime()
 

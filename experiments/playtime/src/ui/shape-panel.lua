@@ -5,7 +5,7 @@ local state = require('src.state')
 local objectManager = require('src.object-manager')
 local camera = require('src.camera')
 local cam = camera.getInstance()
-local box2dPointerJoints = require('src.box2d-pointerjoints')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local fixtures = require('src.fixtures')
 local mathutils = require('src.math-utils')
 

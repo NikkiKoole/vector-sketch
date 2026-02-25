@@ -4,7 +4,7 @@ local utils = require 'src.utils'
 -- snap is required lazily to avoid circular dependency (snap requires registry)
 local snap
 local function getSnap()
-    if not snap then snap = require 'src.snap' end
+    if not snap then snap = require 'src.physics.snap' end
     return snap
 end
 local registry = {
