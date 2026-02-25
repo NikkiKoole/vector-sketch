@@ -45,9 +45,7 @@ Lurker watches files every 0.5s and hot-swaps Lua modules. Check `/errors` after
 
 ## Testing
 
-Busted is the primary test framework. Specs live in `spec/`.
-
-### Running specs
+Busted is the primary test framework. Specs live in `spec/`. Full suite: **8 spec files, 367 tests**.
 
 ```bash
 # Pure unit specs (no LÖVE needed)
@@ -56,31 +54,17 @@ busted spec/math-utils_spec.lua           # single file
 
 # Full suite including LÖVE integration tests
 love . --specs                            # all specs (pure + physics + integration)
-love . --specs spec/physics_spec.lua      # single file
+love . --specs spec/integration_spec.lua  # single file
 
 # Via the bridge (while app is running)
 curl -X POST localhost:8001/specs                                              # run all
-curl -X POST localhost:8001/specs -d '{"target":"spec/physics_spec.lua"}'      # single file
+curl -X POST localhost:8001/specs -d '{"target":"spec/integration_spec.lua"}'  # single file
 curl -X POST localhost:8001/specs -d '{"fresh":true}'                          # clear cached src.* modules first
 ```
 
-### Spec conventions
-
 - Pure specs (math, utils, shapes): work everywhere, no guard needed
-- LÖVE-dependent specs (physics, rendering): start with `if not love then return end`
-- Integration specs that test src modules against live state: use `fresh:true` via bridge or manage setup/teardown carefully
-- Spec files: `spec/<module>_spec.lua` (e.g. `spec/shapes_spec.lua`)
-
-### Setup
-
-Busted must be installed for Lua 5.1 (LuaJIT):
-```bash
-luarocks --lua-version 5.1 install busted
-```
-
-### Legacy
-
-`lua tests/run.lua` runs the old mini-test suite (17 tests). Still works but busted is preferred for new tests.
+- LÖVE-dependent specs (physics, integration, ui-smoke): start with `if not love then return end`
+- Busted must be installed for Lua 5.1: `luarocks --lua-version 5.1 install busted`
 
 ## Luacheck
 
@@ -89,36 +73,66 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks 
 luacheck src/ main.lua --std "lua51+love"                   # full check (0 warnings, 0 errors)
 ```
 
-All globals have been converted to explicit `local require()` calls. Luacheck is fully clean: **0 warnings / 0 errors** across 41 files (down from 628 warnings).
+Fully clean: **0 warnings / 0 errors** across 42 files.
 
 ## Architecture
 
 - `main.lua` — entry point, keybindings, UI callbacks
-- `src/` — core modules (playtime-ui, object-manager, io, joints, etc.)
+- `src/` — core modules (42 files across src/, src/ui/, src/physics/)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, loveblobs, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
 - `textures/` — character textures (~290 files, OMP system: outline + mask + pattern)
 
 ### Key modules
+
+**Core data & state:**
+- `src/state.lua` — shared app state
+- `src/registry.lua` — central registry for bodies, joints, sfixtures
 - `src/object-manager.lua` — body creation/destruction/recreation
 - `src/io.lua` — save/load, clone
-- `src/playtime-ui.lua` — editor UI orchestrator (~2900 lines, see "UI cleanup status" below)
-- `src/ui/` — extracted UI modules (all.lua, textinput.lua, world-settings.lua, joint-update.lua)
+- `src/fixtures.lua` — fixture creation, shape attachment, property management
+
+**Editor & input:**
+- `src/input-manager.lua` — mouse/keyboard input handling, drag, selection, tool modes
+- `src/editor-render.lua` — editor overlay rendering: selection boxes, handles, guides
+- `src/camera.lua` — camera singleton (pan, zoom via vendor/brady)
+
+**UI:**
+- `src/playtime-ui.lua` — editor UI orchestrator (~648 lines)
+- `src/ui/` — extracted UI panels: all.lua, textinput.lua, body-editor.lua, sfixture-editor.lua, joint-update.lua, world-settings.lua, shape-panel.lua, recording-panel.lua
+
+**Physics & rendering:**
 - `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)
-- `src/physics/box2d-draw-textured.lua` — textured rendering, OMP compositing
-- `src/physics/snap.lua` — proximity-based snap joints
 - `src/joints.lua` — joint creation/recreation
-- `src/registry.lua` — central registry for bodies, joints, sfixtures
+- `src/joint-handlers.lua` — per-type joint create/update handlers
+- `src/shapes.lua` — shape generation: rect, capsule, polygon, etc.
+
+**Characters & scripting:**
 - `src/character-manager.lua` — character DNA system, body part assembly
-- `src/character-experiments.lua` — character experiment keybindings (extracted from main.lua)
-- `src/game-loop.lua` — fixed-timestep love.run() with panic detection (extracted from main.lua)
-- `src/state.lua` — shared app state
-- `src/math-utils.lua` — shared math utilities (clamp, sign, lerp, distance, etc.)
-- `src/utils.lua` — general utilities (deepCopy, round, randomHexColor, etc.)
-- `src/shapes.lua` — shape generation (rect, capsule, polygon, etc.)
+- `src/script.lua` — per-scene Lua script loading and execution
+- `src/recorder.lua` — animation recording and playback
+
+**Infrastructure:**
+- `src/game-loop.lua` — fixed-timestep love.run() with panic detection
+- `src/math-utils.lua` — shared math utilities: clamp, sign, lerp, distance, etc.
+- `src/utils.lua` — general utilities: deepCopy, round, randomHexColor, etc.
+- `src/logger.lua` — structured logging
 
 ### No classes/OOP — modules return tables of functions.
+
+### Core data model
+
+**thing** — the runtime property bag stored on `body:getUserData().thing`:
+```lua
+{ id, label, shapeType, body, shapes, vertices, radius, width, height,
+  width2, width3, height2, height3, height4, mirrorX, mirrorY,
+  zOffset, behaviors, label }
+```
+
+**sfixture** — special sensor fixture on a body (9 subtypes: anchor, snap, texfixture, connected-texture, meshusert, trace-vertices, resource, bone, script). Stored as `fixture:getUserData()` with `{ type, subtype, id, label, extra }`.
+
+**Fixture ordering invariant**: all fixtures with userData (sfixtures) must come before fixtures without userData (collision shapes) on each body. Validated by `fixtures.hasFixturesWithUserDataAtBeginning()`.
 
 ## Lua Gotchas
 
@@ -134,41 +148,45 @@ All globals have been converted to explicit `local require()` calls. Luacheck is
 - **UI draw functions**: use `draw` prefix — `drawJointUpdateUI`, `drawAddShapeUI`, `drawWorldSettingsUI`
 - **Function names**: no redundant suffixes — `updateSFixtureDimensions` (not `...Func`)
 - **Joint variables**: spell out `joint` in function params (not `j`)
-- **Snap module**: `activeSnapJoints` (not `mySnapJoints`), `snapInfo`/`snapInfoA`/`snapInfoB` (not `it`/`it1`/`it2`)
 - **Shape data**: `vertices` and `dimensions` as keys (not `v`/`d`), `vertices` for vertex arrays (not `vv`)
 - **Body/mesh data**: `bodyData`/`meshData` (not `bud`/`mud`)
 - **`ud`**: acceptable shorthand for `getUserData()` — used consistently across the codebase
 - **`thing`**: the runtime property bag on body userData — persisted indirectly (decomposed on save, reconstructed on load)
 - **`extra`, `subtype`, `scriptmeta`**: persisted in `.playtime.json` — do not rename without migration
 
-## UI cleanup status
+## UI patterns
 
-### Layout helpers (in src/ui/all.lua)
-- `ui.alignedLabel(x, y, text, color)` — vertically centers label within a row. Use instead of `ui.label(x, y + (BUTTON_HEIGHT - ui.fontHeight), ...)`
-- `ui.sameLine(spacing)` — returns x, y to place the next widget to the right of the previous one (default spacing=10). Widgets (button, checkbox, textinput, sliderWithInput) track their cursor via `ui.setCursor()`.
+- Modules return `lib = {}` table, live in `src/ui/`
+- Layout helpers: `ui.alignedLabel()` for vertical centering, `ui.sameLine()` for horizontal flow
+- Accordion state tables are local to their respective extracted module
 
-### What's been done
-- Patch layer dedup: patch1/patch2/patch3 accordions collapsed into `drawPatchAccordion(layer)`
-- 23 manual `x + offset` patterns converted to `ui.sameLine()`
-- 36 label alignment patterns converted to `ui.alignedLabel()`
+## Known issues
 
-### Remaining ~19 `x + offset` patterns (intentionally kept)
-These are special cases not suited for sameLine: dead code (button grid inside `if false`), tiny internal offsets inside handlePaletteAndHex/handleURLInput helpers (20px color swatch + textinput), overlay labels on sliders, reverse widget order (checkbox at x, slider at x+50).
+See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 
-### Pick-up points for further cleanup
+**Bugs:**
+- Cloned OMP texfixtures not marked `dirty` — composite texture won't regenerate on first render
+- Unused `swapBodies` parameter in `joints.recreateJoint()` — dead code
+- Redundant reference angle read during clone — reads old joint twice
 
-**Luacheck: fully clean (0 warnings)**
+**Architectural risks:**
+- Box2D doesn't guarantee fixture ordering — the ordering invariant can break silently
+- Z-sort uses unstable `table.sort` — same-z drawables can flicker
+- `state.currentMode` has 27 writers across 3 files with no state machine
+- Image/OMP/canvas caches never cleared — memory grows over long sessions
+- Clone pipeline: influence references can become nil silently when cloning partial selections
 
-**UI file extractions (playtime-ui.lua ~2900 lines → 648 line orchestrator):**
-Ordered by ease/risk, each function is self-contained and has smoke test coverage:
-1. ~~`drawJointUpdateUI()` (413 lines) → `src/ui/joint-update.lua`~~ — **done**
-2. ~~`drawWorldSettingsUI()` (136 lines) → `src/ui/world-settings.lua`~~ — **done**
-3. ~~`drawAddShapeUI()` (146 lines) → `src/ui/shape-panel.lua`~~ — **done**
-4. ~~`drawRecordingUI()` (137 lines) → `src/ui/recording-panel.lua`~~ — **done**
-5. ~~`drawSelectedSFixture()` (1249 lines) → `src/ui/sfixture-editor.lua`~~ — **done**
-6. ~~`drawUpdateSelectedObjectUI()` (603 lines) → `src/ui/body-editor.lua`~~ — **done**
-7. Small panels (drawAddJointUI 29L, drawSelectedBodiesUI 68L, drawBGSettingsUI 44L) — trivial
+## Further documentation
 
-**Extraction pattern:** modules return `lib = {}` table, live in `src/ui/`. Accordion state tables (`accordionStatesSF`, `accordionStatesSO`, `accordeonStatesAS`) moved with their respective extracted modules.
-
-**Smoke tests:** `spec/ui-smoke_spec.lua` (30 tests) covers all panels including sfixture subtypes, joint types, and combined panel states. Run with `love . --specs spec/ui-smoke_spec.lua`.
+Deep-dive docs live in `docs/`:
+- `PLAN-OF-ATTACK.md` — master work plan with phase status
+- `DEEPER-ISSUES.md` — bugs, hidden constraints, architectural risks
+- `BLIND-SPOTS.md` — undocumented systems (thing structure, fixture subtypes, OMP pipeline)
+- `MODULE-ANALYSIS.md` — full module inventory, dependency map, serialization pipeline
+- `CLAUDE-BRIDGE.md` — complete bridge API reference
+- `DEEP-DIVE-NOTES.md` — analysis of DNA/character system, texture deformation, UI flow
+- `AI-COLLABORATION-PLAN.md` — strategy and completed phases
+- `TOOLING-SETUP.md` — dev tool setup (luacheck, busted, profiling)
+- `TOOLING-IDEAS.md` — proposed observability tools (not yet implemented)
+- `done/PROJECT.md` — original project overview (outdated, kept for reference)
+- `done/TODO-BRIDGE.md` — bridge feature wishlist (mostly implemented)
