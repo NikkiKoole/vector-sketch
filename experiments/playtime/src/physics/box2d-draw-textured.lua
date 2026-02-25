@@ -10,6 +10,7 @@ local state = require 'src.state'
 local mathutils = require 'src.math-utils'
 local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
+local subtypes = require 'src.subtypes'
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
@@ -801,7 +802,7 @@ function lib.drawTexturedWorld(world)
                 if type(ud) ~= 'table' then -- vanwege softbodies bullshit
                     ud = nil
                 end
-                if ud and ud.subtype == 'trace-vertices' then
+                if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
                     table.insert(drawables, {
@@ -812,7 +813,7 @@ function lib.drawTexturedWorld(world)
                     })
                 end
 
-                if ud and ud.subtype == 'tile-repeat' then
+                if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
                     table.insert(drawables, {
@@ -823,7 +824,7 @@ function lib.drawTexturedWorld(world)
                     })
                 end
 
-                if (ud and ud.extra and ud.extra.type == 'texfixture') or (ud and ud.subtype == 'texfixture') then
+                if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     table.insert(drawables,
                         {
@@ -835,7 +836,7 @@ function lib.drawTexturedWorld(world)
                             thing = body:getUserData().thing
                         })
                 end
-                if ud and ud.subtype == 'meshusert' then
+                if ud and subtypes.is(ud, subtypes.MESHUSERT) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     table.insert(drawables,
                         {
@@ -848,7 +849,7 @@ function lib.drawTexturedWorld(world)
                             thing = body:getUserData().thing
                         })
                 end
-                if ud and ud.subtype == 'uvusert' then
+                if ud and subtypes.is(ud, subtypes.UVUSERT) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                     table.insert(drawables,
                         {
@@ -861,7 +862,7 @@ function lib.drawTexturedWorld(world)
                             thing = body:getUserData().thing
                         })
                 end
-                if ud and (ud.label == "connected-texture" or ud.subtype == 'connected-texture') and ud.extra.nodes then
+                if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
                     -- logger:inspect(ud)
                     --logger:info('got some new kind of combined drawing todo!')
                     local points = {}

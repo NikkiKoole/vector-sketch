@@ -13,6 +13,7 @@ local camera = require 'src.camera'
 local cam = camera.getInstance()
 local utils = require 'src.utils'
 local inputmanager = require 'src.input-manager'
+local subtypes = require 'src.subtypes'
 local lib = {}
 
 
@@ -226,13 +227,13 @@ function lib.renderActiveEditorThings()
     -- VERTEX SELECTION VISUALIZATION
     if modes.is(modes.EDIT_MESH_VERTS) and state.selection.selectedSFixture then
         local ud = state.selection.selectedSFixture:getUserData()
-        if ud and ud.subtype == 'meshusert' and ud.label then
+        if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
             -- Find the resource fixture with matching label
             local mappert = nil
             for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
                     local vud = v:getUserData()
-                    if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
+                    if #vud.label > 0 and vud.label == ud.label and subtypes.is(vud, subtypes.RESOURCE) then
                         mappert = v
                         break
                     end

@@ -7,6 +7,7 @@ local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 local drawTextured = require 'src.physics.box2d-draw-textured'
+local subtypes = require 'src.subtypes'
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
@@ -1370,9 +1371,9 @@ function lib.addTexturesFromInstance2(instance)
                     local f = allFixtures[fi]
                     local ud = f:getUserData()
                     if ud then
-                        if (ud.subtype == 'connected-texture'
-                                or ud.subtype == 'texfixture'
-                                or ud.subtype == 'trace-vertices') then
+                        if (subtypes.is(ud, subtypes.CONNECTED_TEXTURE)
+                                or subtypes.is(ud, subtypes.TEXFIXTURE)
+                                or subtypes.is(ud, subtypes.TRACE_VERTICES)) then
                             fixtures.destroyFixture(f)
                         end
                     end

@@ -14,6 +14,7 @@ local fixtures = require 'src.fixtures'
 local state = require 'src.state'
 
 local snap = require 'src.physics.snap'
+local subtypes = require 'src.subtypes'
 
 function lib.reload(data, world, cam)
     lib.load(data, world, cam)
@@ -166,6 +167,9 @@ function lib.buildWorld(data, world, cam)
                     oldUD.id = oldUD.id or uuid.generateID()
 
                     fixture:setUserData(oldUD)
+
+                    -- Migrate old/middle-era subtype formats to current era
+                    subtypes.migrate(oldUD)
 
                     -- make it recreate the image!
                     if oldUD.extra and oldUD.extra.OMP then
@@ -536,8 +540,7 @@ function lib.gatherSaveData(world, camera)
                 end
 
                 if fixture:getUserData() then
-                    if utils.sanitizeString(fixture:getUserData().label) == 'snap'
-                            or fixture:getUserData().subtype == 'snap' then
+                    if subtypes.is(fixture:getUserData(), subtypes.SNAP) then
                         local ud             = fixture:getUserData()
 
                         ud.extra.fixture     = 'fixture'
@@ -559,7 +562,7 @@ function lib.gatherSaveData(world, camera)
                             ud.extra._mesh = nil
                         end
                         -- logger:inspect(ud)
-                        if ud.extra and ud.extra.type == 'texfixture' or ud.subtype == 'texfixture' then
+                        if subtypes.is(ud, subtypes.TEXFIXTURE) then
                             ud.extra.dirty = true
                             if ud.extra.ompImage then ud.extra.ompImage = nil end
                         end
@@ -825,7 +828,7 @@ function lib.cloneSelection(selectedBodies, world)
                         oldUD.id = newFixID
 
                         idMapping[oldid] = oldUD.id
-                        if utils.sanitizeString(oldUD.label) == 'snap' or oldUD.subtype == 'snap' then
+                        if subtypes.is(oldUD, subtypes.SNAP) then
                             oldUD.extra.at = nil
                             oldUD.extra.to = nil
                             oldUD.extra.fixture = nil

@@ -4,9 +4,9 @@ local logger = require 'src.logger'
 local inspect = require 'vendor.inspect'
 local registry = require 'src.registry'
 local uuid = require 'src.uuid'
-local utils = require 'src.utils'
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
+local subtypes = require 'src.subtypes'
 
 local snapFixtures = {}
 local snapDistance = 140           -- Maximum distance to snap
@@ -190,7 +190,7 @@ function lib.rebuildSnapFixtures(sfix)
         if not v:isDestroyed() then
             local ud = v:getUserData()
             --logger:inspect(ud)
-            if ud and utils.sanitizeString(ud.subtype) == 'snap' then
+            if ud and subtypes.is(ud, subtypes.SNAP) then
                 local centroid = { mathutils.getCenterOfPoints({ v:getShape():getPoints() }) }
 
                 ud.extra.xOffset = centroid[1]

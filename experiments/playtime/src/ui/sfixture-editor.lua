@@ -14,6 +14,7 @@ local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local state = require('src.state')
 local modes = require('src.modes')
 local fileBrowser = require('src.file-browser')
+local subtypes = require('src.subtypes')
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -339,7 +340,7 @@ function lib.drawSelectedSFixture()
 
 
 
-        if ud.subtype == 'texfixture' or ud.extra.type == 'texfixture' then
+        if subtypes.is(ud, subtypes.TEXFIXTURE) then
             oldTexFixUD = state.selection.selectedSFixture:getUserData()
             drawAccordion('position', function()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -548,7 +549,7 @@ function lib.drawSelectedSFixture()
             drawPatchAccordion('patch2')
             nextRow()
             drawPatchAccordion('patch3')
-        elseif ud.subtype == 'meshusert' then
+        elseif subtypes.is(ud, subtypes.MESHUSERT) then
             nextRow()
             if ui.button(x, y, ROW_WIDTH, 'add node ' .. (ud.extra.nodes and #ud.extra.nodes or '')) then
                 modes.set(modes.ADD_NODE_MESHUSERT)
@@ -571,7 +572,7 @@ function lib.drawSelectedSFixture()
                     if not v:isDestroyed() then
                         local vud = v:getUserData()
 
-                        if (#vud.label > 0 and label == vud.label and vud.subtype == 'resource') then
+                        if (#vud.label > 0 and label == vud.label and subtypes.is(vud, subtypes.RESOURCE)) then
                             mappert = v
                         end
                     end
@@ -914,7 +915,7 @@ function lib.drawSelectedSFixture()
             if scaleY then
                 ud.extra.scaleY = scaleY
             end
-        elseif ud.subtype == 'resource' then
+        elseif subtypes.is(ud, subtypes.RESOURCE) then
             local selectedIndex
             if #state.backdrops then
                 ui.label(x, y, 'backdrop index (for uvmap)')
@@ -1041,7 +1042,7 @@ function lib.drawSelectedSFixture()
                     state.selection.selectedSFixture = newfixture
                 end
 
-                if state.selection.selectedSFixture:getUserData().subtype ~= 'texfixture' then
+                if not subtypes.is(state.selection.selectedSFixture:getUserData(), subtypes.TEXFIXTURE) then
                     if ui.button(x, y, 40, 'N') then
                         handleOffset(0, -1)
                     end
@@ -1065,7 +1066,7 @@ function lib.drawSelectedSFixture()
             end)
 
             local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            if oldUD.label == 'connected-texture' or oldUD.subtype == 'connected-texture' then
+            if subtypes.is(oldUD, subtypes.CONNECTED_TEXTURE) then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 if ui.button(x, y, ROW_WIDTH, 'add node ' .. (oldUD.extra.nodes and #oldUD.extra.nodes or '')) then
                     modes.set(modes.ADD_NODE_CONNECTED_TEX)
@@ -1177,7 +1178,7 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            if oldUD.subtype == 'tile-repeat' then
+            if subtypes.is(oldUD, subtypes.TILE_REPEAT) then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 oldTexFixUD.extra.tileWidthM = oldTexFixUD.extra.tileWidthM or 1
                 oldTexFixUD.extra.tileHeightM = oldTexFixUD.extra.tileHeightM or 1
@@ -1226,7 +1227,7 @@ function lib.drawSelectedSFixture()
 
 
 
-            if oldUD.subtype == 'trace-vertices' then
+            if subtypes.is(oldUD, subtypes.TRACE_VERTICES) then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 oldTexFixUD.extra.startIndex = oldTexFixUD.extra.startIndex or 1
                 oldTexFixUD.extra.endIndex = oldTexFixUD.extra.endIndex or 1

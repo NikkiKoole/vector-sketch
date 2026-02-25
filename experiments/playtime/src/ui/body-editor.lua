@@ -600,8 +600,7 @@ function lib.drawUpdateSelectedObjectUI()
                             nextRow()
                             --logger:inspect(myfixtures[i]:getUserData())
 
-                            local subtype = myfixtures[i]:getUserData().subtype or myfixtures[i]:getUserData().extra
-                                .type
+                            local subtype = myfixtures[i]:getUserData().subtype
 
                             local prefix = (string.sub(subtype, 1, 3))
                             local fixLabel = string.format("%s %s", prefix,

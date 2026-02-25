@@ -15,6 +15,7 @@ local modes = require 'src.modes'
 local blob = require 'vendor.loveblobs'
 local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
+local subtypes = require 'src.subtypes'
 local joints = require 'src.joints'
 
 local distanceSquared = function(x1, y1, x2, y2)
@@ -66,7 +67,7 @@ local function pressedAddNode(cx, cy)
     for _, f in pairs(registry.sfixtures) do
         local body = f:getBody()
         local ud = f:getUserData()
-        if ud.label == 'anchor' or ud.subtype == 'anchor' then
+        if subtypes.is(ud, subtypes.ANCHOR) then
             -- todo this will find ALL sfitures bot just anchors
             local centerX, centerY = mathutils.getCenterOfPoints(
                 { body:getWorldPoints(f:getShape():getPoints()) })
@@ -501,7 +502,7 @@ function lib.showCloseNode()
     for _, f in pairs(registry.sfixtures) do
         local body = f:getBody()
         local ud = f:getUserData()
-        if ud.label == 'anchor' or ud.subtype == 'anchor' then
+        if subtypes.is(ud, subtypes.ANCHOR) then
             -- todo this will find ALL sfitures bot just anchors
             local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
 
