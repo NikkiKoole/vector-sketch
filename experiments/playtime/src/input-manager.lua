@@ -23,6 +23,162 @@ local distanceSquared = function(x1, y1, x2, y2)
     return dx * dx + dy * dy
 end
 
+-- Pre-physics pressed handlers (run before physics hit detection)
+local function pressedDrawClickMode(cx, cy, x)
+    local w = love.graphics.getDimensions()
+    if x < w - 300 then
+        table.insert(state.interaction.polyVerts, cx)
+        table.insert(state.interaction.polyVerts, cy)
+    end
+end
+
+local function pressedSetOffsetA(cx, cy)
+    local bodyA = state.selection.selectedJoint:getBodies()
+    local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
+    state.selection.selectedJoint =
+        joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy)
+    print('got here!')
+    state.currentMode = nil
+end
+
+local function pressedSetOffsetB(cx, cy)
+    local _, bodyB = state.selection.selectedJoint:getBodies()
+    local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
+    state.selection.selectedJoint =
+        joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy)
+    state.currentMode = nil
+end
+
+local function pressedPositioningSFixture(cx, cy)
+    state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture, cx, cy)
+    local oldTexFixUD = state.selection.selectedSFixture:getUserData()
+    if (oldTexFixUD.extra.vertices) then
+        state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
+    end
+    state.currentMode = nil
+end
+
+local function pressedAddNode(cx, cy)
+    -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
+    local closest = nil
+    local closestDistanceSquared = math.huge
+    for _, f in pairs(registry.sfixtures) do
+        local body = f:getBody()
+        local ud = f:getUserData()
+        if ud.label == 'anchor' or ud.subtype == 'anchor' then
+            -- todo this will find ALL sfitures bot just anchors
+            local centerX, centerY = mathutils.getCenterOfPoints(
+                { body:getWorldPoints(f:getShape():getPoints()) })
+
+            local d = distanceSquared(centerX, centerY, cx, cy)
+            if d < closestDistanceSquared then
+                closestDistanceSquared = d
+                closest = { type = 'anchor', id = f:getUserData().id }
+            end
+        end
+    end
+
+    for _, j in pairs(registry.joints) do
+        local x1, y1 = j:getAnchors()
+        local d = distanceSquared(x1, y1, cx, cy)
+        if d < closestDistanceSquared then
+            closestDistanceSquared = d
+            closest = { type = 'joint', id = j:getUserData().id }
+        end
+    end
+
+    if math.sqrt(closestDistanceSquared) < 30 then
+        local ud = state.selection.selectedSFixture:getUserData()
+        ud.extra.nodes = ud.extra.nodes or {}
+
+        local lastAdded = ud.extra.nodes[#ud.extra.nodes]
+        if (closest and lastAdded and lastAdded.id ~= closest.id) or not lastAdded then
+            table.insert(ud.extra.nodes, closest)
+        end
+
+        state.selection.selectedSFixture:setUserData(ud)
+        return true -- signal early return
+    else
+        state.currentMode = nil
+        return true -- signal early return
+    end
+end
+
+local prePhysicsHandlers = {
+    drawClickMode            = pressedDrawClickMode,
+    setOffsetA               = pressedSetOffsetA,
+    setOffsetB               = pressedSetOffsetB,
+    positioningSFixture      = pressedPositioningSFixture,
+    addNodeToConnectedTexture = pressedAddNode,
+    addNodeToMeshUsert       = pressedAddNode,
+}
+
+-- Post-physics pressed handlers (run after physics hit detection, need hitted)
+local function pressedPickAutoRopifyMode(hitted, x)
+    if #hitted > 0 then
+        state.pickAutoRopifyModeHitted = hitted[1]:getBody():getUserData()
+    end
+    local w = love.graphics.getDimensions()
+    if x < w - 300 and #hitted == 0 then
+        state.currentMode = nil
+        state.pickAutoRopifyModeHitted = nil
+    end
+end
+
+local function pressedJointCreation(cx, cy, hitted)
+    local hitted2Bodies = #hitted == 2 and hitted[1]:getUserData() == nil and hitted[2]:getUserData() == nil
+    if hitted2Bodies and (state.jointParams.body1 == nil) and (state.jointParams.body2 == nil) then
+        -- if you click exactly where two bodies overlap,
+        -- picking the one whose center is closest to your click as body1.
+        local b1 = hitted[1]:getBody():getUserData().thing.body
+        local b2 = hitted[2]:getBody():getUserData().thing.body
+
+        local b1x, b1y = b1:getLocalPoint(cx, cy)
+        local b2x, b2y = b2:getLocalPoint(cx, cy)
+        -- todo i think a good compromise is to pick the body where
+        -- the cx,cy is closst to its middel as the first,
+        -- this will result in the most usefull cases i think.
+        if (distanceSquared(b1x, b1y, 0, 0) < distanceSquared(b2x, b2y, 0, 0)) then
+            state.jointParams.body1 = b1
+            state.jointParams.body2 = b2
+            state.jointParams.p1 = { b1x, b1y }
+            state.jointParams.p2 = { b2x, b2y }
+        else
+            state.jointParams.body1 = b2
+            state.jointParams.body2 = b1
+            state.jointParams.p1 = { b2x, b2y }
+            state.jointParams.p2 = { b1x, b1y }
+        end
+    else
+        if state.jointParams.body1 == nil then
+            state.jointParams.body1 = state.selection.selectedObj.body
+            local px, py = state.jointParams.body1:getLocalPoint(cx, cy)
+            state.jointParams.p1 = { px, py }
+        elseif state.jointParams.body2 == nil then
+            if (state.selection.selectedObj.body ~= state.jointParams.body1) then
+                state.jointParams.body2 = state.selection.selectedObj.body
+                local px, py = state.jointParams.body2:getLocalPoint(cx, cy)
+                state.jointParams.p2 = { px, py }
+            end
+        end
+    end
+end
+
+-- Released handlers
+local function releasedDrawFreePoly()
+    objectManager.finalizePolygon()
+end
+
+local function releasedDrawFreePath()
+    print('todo')
+    objectManager.finalizePath()
+end
+
+local releasedHandlers = {
+    drawFreePoly  = releasedDrawFreePoly,
+    drawFreePath  = releasedDrawFreePath,
+}
+
 local function handlePointer(x, y, id, action, _button)
     if action == "pressed" then
         -- this is a nice pattern, early return!
@@ -78,8 +234,6 @@ local function handlePointer(x, y, id, action, _button)
 
         if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
             and state.texFixtureEdit.lockedVerts == false then
-            --local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
-            --    state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
             local thing = state.selection.selectedSFixture:getBody():getUserData().thing
             local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
                 thing, 0, 0)
@@ -97,47 +251,14 @@ local function handlePointer(x, y, id, action, _button)
             end
         end
 
-        if (state.currentMode == 'drawClickMode') then
-            local w = love.graphics.getDimensions()
-            if x < w - 300 then
-                table.insert(state.interaction.polyVerts, cx)
-                table.insert(state.interaction.polyVerts, cy)
-            end
+        -- Pre-physics mode dispatch
+        local preHandler = prePhysicsHandlers[state.currentMode]
+        if preHandler then
+            local earlyReturn = preHandler(cx, cy, x)
+            if earlyReturn then return end
         end
 
-        if (state.currentMode == 'setOffsetA') then
-            local bodyA = state.selection.selectedJoint:getBodies()
-            local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
-            state.selection.selectedJoint =
-                joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy)
-            print('got here!')
-            --state.interaction.setOffsetAFunc = nil
-            state.currentMode = nil
-        end
-
-        if (state.currentMode == 'setOffsetB') then
-            local _, bodyB = state.selection.selectedJoint:getBodies()
-            local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
-
-            state.selection.selectedJoint =
-                joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy)
-            --state.interaction.setOffsetAFunc = nil
-            state.currentMode = nil
-        end
-
-
-        if (state.currentMode == 'positioningSFixture') then
-            state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture, cx, cy)
-            local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-
-            if (oldTexFixUD.extra.vertices) then
-                state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-            end
-            state.currentMode = nil
-        end
-
-
-
+        -- Physics hit detection (shared infrastructure)
         local onPressedParams = {
             pointerForceFunc = function(_fixture)
                 return state.world.mouseForce
@@ -147,78 +268,17 @@ local function handlePointer(x, y, id, action, _button)
 
         local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams,
             not state.world.paused)
-        --print(#hitted)
 
         if (state.selection.selectedBodies and #hitted == 0) then
             state.selection.selectedBodies = nil
         end
 
-        if (state.currentMode == 'pickAutoRopifyMode') then
-            if #hitted > 0 then
-                state.pickAutoRopifyModeHitted = hitted[1]:getBody():getUserData()
-            end
-            --print(inspect(state.pickAutoRopifyModeHitted))
-            local w = love.graphics.getDimensions()
-            if x < w - 300 and #hitted == 0 then
-                state.currentMode = nil
-                state.pickAutoRopifyModeHitted = nil
-            end
+        -- Post-physics mode dispatch
+        if state.currentMode == 'pickAutoRopifyMode' then
+            pressedPickAutoRopifyMode(hitted, x)
         end
 
-
-
-        if (state.currentMode == 'addNodeToConnectedTexture' or state.currentMode == 'addNodeToMeshUsert') then
-            -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
-
-            local closest = nil
-            local closestDistanceSquared = math.huge
-            for _, f in pairs(registry.sfixtures) do
-                local body = f:getBody()
-                local ud = f:getUserData()
-                if ud.label == 'anchor' or ud.subtype == 'anchor' then
-                    -- todo this will find ALL sfitures bot just anchors
-                    local centerX, centerY = mathutils.getCenterOfPoints(
-                        { body:getWorldPoints(f:getShape():getPoints()) })
-
-                    local d = distanceSquared(centerX, centerY, cx, cy)
-                    if d < closestDistanceSquared then
-                        closestDistanceSquared = d
-                        closest = { type = 'anchor', id = f:getUserData().id }
-                    end
-                end
-            end
-
-            for _, j in pairs(registry.joints) do
-                local x1, y1 = j:getAnchors()
-                local d = distanceSquared(x1, y1, cx, cy)
-                if d < closestDistanceSquared then
-                    closestDistanceSquared = d
-                    closest = { type = 'joint', id = j:getUserData().id }
-                end
-            end
-
-
-            if math.sqrt(closestDistanceSquared) < 30 then
-                --print(logger:info(math.sqrt(closestDistanceSquared)))
-
-                local ud = state.selection.selectedSFixture:getUserData()
-                ud.extra.nodes = ud.extra.nodes or {}
-
-                local lastAdded = ud.extra.nodes[#ud.extra.nodes]
-                --                logger:inspect(lastAdded)
-                if (closest and lastAdded and lastAdded.id ~= closest.id) or not lastAdded then
-                    table.insert(ud.extra.nodes, closest)
-                end
-
-                state.selection.selectedSFixture:setUserData(ud)
-                --logger:inspect(state.selection.selectedSFixture:getUserData())
-                return
-            else
-                state.currentMode = nil
-                return
-            end
-        end
-
+        -- Default selection + jointCreationMode handling
         if #hitted > 0 and (state.currentMode ~= 'pickAutoRopifyMode') then
             local ud = hitted[1]:getBody():getUserData()
             if ud and ud.thing then
@@ -228,48 +288,7 @@ local function handlePointer(x, y, id, action, _button)
                 state.selection.selectedObj = nil
             end
             if (state.currentMode == 'jointCreationMode') and state.selection.selectedObj then
-                local hitted2Bodies = #hitted == 2 and hitted[1]:getUserData() == nil and hitted[2]:getUserData() == nil
-                if hitted2Bodies and (state.jointParams.body1 == nil) and (state.jointParams.body2 == nil) then
-                    -- if you click exactly where two bodies overlap,
-                    -- picking the one whose center is closest to your click as body1.
-                    --print(inspect(hitted[1]:getUserData()))
-                    --print(inspect(hitted[2]:getUserData()))
-
-
-
-                    local b1 = hitted[1]:getBody():getUserData().thing.body
-                    local b2 = hitted[2]:getBody():getUserData().thing.body
-
-                    local b1x, b1y = b1:getLocalPoint(cx, cy)
-                    local b2x, b2y = b2:getLocalPoint(cx, cy)
-                    -- todo i think a good compromise is to pick the body where
-                    -- the cx,cy is closst to its middel as the first,
-                    -- this will result in the most usefull cases i think.
-                    --logger:info('b1', px, py)
-                    if (distanceSquared(b1x, b1y, 0, 0) < distanceSquared(b2x, b2y, 0, 0)) then
-                        state.jointParams.body1 = b1
-                        state.jointParams.body2 = b2
-                        state.jointParams.p1 = { b1x, b1y }
-                        state.jointParams.p2 = { b2x, b2y }
-                    else
-                        state.jointParams.body1 = b2
-                        state.jointParams.body2 = b1
-                        state.jointParams.p1 = { b2x, b2y }
-                        state.jointParams.p2 = { b1x, b1y }
-                    end
-                else
-                    if state.jointParams.body1 == nil then
-                        state.jointParams.body1 = state.selection.selectedObj.body
-                        local px, py = state.jointParams.body1:getLocalPoint(cx, cy)
-                        state.jointParams.p1 = { px, py }
-                    elseif state.jointParams.body2 == nil then
-                        if (state.selection.selectedObj.body ~= state.jointParams.body1) then
-                            state.jointParams.body2 = state.selection.selectedObj.body
-                            local px, py = state.jointParams.body2:getLocalPoint(cx, cy)
-                            state.jointParams.p2 = { px, py }
-                        end
-                    end
-                end
+                pressedJointCreation(cx, cy, hitted)
             end
 
             if (state.world.paused) then
@@ -284,69 +303,42 @@ local function handlePointer(x, y, id, action, _button)
             else
                 local newHitted = utils.map(hitted, function(h)
                     local hud = (h:getBody() and h:getBody():getUserData())
-                    local thing = hud and hud.thing
-                    return thing
+                    local hthing = hud and hud.thing
+                    return hthing
                 end)
-                --state.currentlyPressed = newHitted
                 script.call('onPressed', newHitted)
             end
         else
-            --state.interaction.maybeHideSelectedPanel = true
             state.interaction.pressMissedEverything = true
         end
         if recorder.isRecording and #hitted > 0 and not state.world.paused and madedata.bodyID then
-            --madedata.activeLayer = recorder.activeLayer
             recorder:recordMouseJointStart(madedata)
-            -- print('should record a moujoint creation...', inspect(madedata))
         end
     elseif action == "released" then
         if state.currentMode == 'editMeshVertices' then return end
-        -- Removes all items from `list` that have an id present in `removeList`
-        -- function removeMatchingIds(list, removeList)
-        --     -- Build a lookup table for fast id checking
-        --     local removeSet = {}
-        --     for _, item in ipairs(removeList) do
-        --         removeSet[item.id] = true
-        --     end
-
-        --     -- Create a new table with only the items we want to keep
-        --     local filtered = {}
-        --     for _, item in ipairs(list) do
-        --         if not removeSet[item.id] then
-        --             table.insert(filtered, item)
-        --         end
-        --     end
-
-        --     return filtered
-        -- end
 
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
         if (#releasedObjs > 0) then
-            -- todo this line below can be erroring, i ve had it happen when dragging a chacter nd pressing N
             local newReleased = utils.map(releasedObjs,
                 function(h) return h:getUserData() and h:getUserData().thing end)
 
-            --  state.currentlyPressed = removeMatchingIds(state.currentlyPressed, newReleased)
             script.call('onReleased', newReleased)
             if recorder.isRecording and not state.world.paused then
                 for _, obj in ipairs(releasedObjs) do
                     recorder:recordMouseJointFinish(id, obj:getUserData().thing.id)
-                    --  print('should record a moujoint deletion...', inspect(obj:getUserData().thing.id))
                 end
             end
         end
 
-
         if state.interaction.pressMissedEverything then
             local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
             if not wasOverUI then
-                -- removed from main!
                 if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then
                     local body = state.selection.selectedSFixture:getBody()
-                    local thing = body:getUserData().thing
+                    local rthing = body:getUserData().thing
 
-                    state.selection.selectedObj = thing
+                    state.selection.selectedObj = rthing
                     state.selection.selectedSFixture = nil
                     state.texFixtureEdit.tempVerts = nil
                     state.texFixtureEdit.centroid = nil
@@ -389,13 +381,9 @@ local function handlePointer(x, y, id, action, _button)
             and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
 
-            if state.currentMode == 'drawFreePoly' then
-                objectManager.finalizePolygon()
-            end
-            if state.currentMode == 'drawFreePath' then
-                print('todo')
-                objectManager.finalizePath()
-                --objectManager.finalizePath()
+            local releaseHandler = releasedHandlers[state.currentMode]
+            if releaseHandler then
+                releaseHandler()
             end
         end
 
