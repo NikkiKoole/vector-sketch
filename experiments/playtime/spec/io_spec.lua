@@ -462,3 +462,302 @@ describe("save/load round-trip", function()
         end)
     end
 end)
+
+-- ─── Double Round-Trip: load → save → load → save → compare ───
+-- If the pipeline is idempotent, save1 and save2 should be identical.
+-- Catches data that drifts or leaks on each save/load cycle.
+
+describe("double round-trip (all scene files)", function()
+    local json = require('vendor.dkjson')
+
+    local function makeCam()
+        local cs = { x = 0, y = 0, scale = 1 }
+        return {
+            getTranslation = function() return cs.x, cs.y end,
+            getScale = function() return cs.scale end,
+            getRotation = function() return 0 end,
+            setTranslation = function(_, x, y) cs.x = x; cs.y = y end,
+            setScale = function(_, s) cs.scale = s end,
+        }, cs
+    end
+
+    local function indexById(list)
+        local map = {}
+        for _, item in ipairs(list) do
+            if item.id then map[item.id] = item end
+        end
+        return map
+    end
+
+    -- Deep-compare two save data blobs, reporting all differences
+    local function compareSaveData(save1, save2, file)
+        local diffs = {}
+        local function diff(msg) table.insert(diffs, file .. ": " .. msg) end
+
+        -- Body count
+        local b1, b2 = save1.bodies or {}, save2.bodies or {}
+        if #b1 ~= #b2 then
+            diff("body count changed: " .. #b1 .. " → " .. #b2)
+        end
+
+        local map1 = indexById(b1)
+        local map2 = indexById(b2)
+
+        -- Check every body from save1 appears in save2
+        for id, orig in pairs(map1) do
+            local rest = map2[id]
+            if not rest then
+                diff("body " .. id .. " disappeared on second save")
+            else
+                -- Core identity
+                if orig.shapeType ~= rest.shapeType then
+                    diff("body " .. id .. " shapeType: " .. tostring(orig.shapeType) .. " → " .. tostring(rest.shapeType))
+                end
+                if orig.bodyType ~= rest.bodyType then
+                    diff("body " .. id .. " bodyType: " .. tostring(orig.bodyType) .. " → " .. tostring(rest.bodyType))
+                end
+                if orig.label ~= rest.label then
+                    diff("body " .. id .. " label: " .. tostring(orig.label) .. " → " .. tostring(rest.label))
+                end
+
+                -- Position drift
+                if math.abs(orig.position[1] - rest.position[1]) > 0.01 then
+                    diff("body " .. id .. " X drifted: " .. orig.position[1] .. " → " .. rest.position[1])
+                end
+                if math.abs(orig.position[2] - rest.position[2]) > 0.01 then
+                    diff("body " .. id .. " Y drifted: " .. orig.position[2] .. " → " .. rest.position[2])
+                end
+
+                -- Angle drift
+                if math.abs(orig.angle - rest.angle) > 0.001 then
+                    diff("body " .. id .. " angle drifted: " .. orig.angle .. " → " .. rest.angle)
+                end
+
+                -- Dims
+                if orig.dims and rest.dims then
+                    for prop, val in pairs(orig.dims) do
+                        if not rest.dims[prop] then
+                            diff("body " .. id .. " lost dim." .. prop)
+                        elseif math.abs(val - rest.dims[prop]) > 0.01 then
+                            diff("body " .. id .. " dim." .. prop .. " drifted: " .. val .. " → " .. rest.dims[prop])
+                        end
+                    end
+                    for prop, _ in pairs(rest.dims) do
+                        if not orig.dims[prop] then
+                            diff("body " .. id .. " gained unexpected dim." .. prop)
+                        end
+                    end
+                end
+
+                -- Fixture count
+                if #orig.fixtures ~= #rest.fixtures then
+                    diff("body " .. id .. " fixture count: " .. #orig.fixtures .. " → " .. #rest.fixtures)
+                end
+
+                -- Shared fixture data
+                local sfd1 = orig.sharedFixtureData or {}
+                local sfd2 = rest.sharedFixtureData or {}
+                for _, prop in ipairs({ 'density', 'friction', 'restitution', 'groupIndex', 'sensor' }) do
+                    local v1, v2 = sfd1[prop], sfd2[prop]
+                    if type(v1) == 'number' and type(v2) == 'number' then
+                        if math.abs(v1 - v2) > 0.001 then
+                            diff("body " .. id .. " sharedFixtureData." .. prop .. ": " .. v1 .. " → " .. v2)
+                        end
+                    elseif v1 ~= v2 then
+                        diff("body " .. id .. " sharedFixtureData." .. prop .. ": " .. tostring(v1) .. " → " .. tostring(v2))
+                    end
+                end
+
+                -- SFixture userData survival
+                for fi, fdata in ipairs(orig.fixtures) do
+                    local rfix = rest.fixtures[fi]
+                    if rfix then
+                        local hasUD1 = fdata.userData ~= nil
+                        local hasUD2 = rfix.userData ~= nil
+                        if hasUD1 ~= hasUD2 then
+                            diff("body " .. id .. " fixture[" .. fi .. "] userData presence changed")
+                        elseif hasUD1 and hasUD2 then
+                            if fdata.userData.subtype ~= rfix.userData.subtype then
+                                diff("body " .. id .. " fixture[" .. fi .. "] subtype: "
+                                    .. tostring(fdata.userData.subtype) .. " → " .. tostring(rfix.userData.subtype))
+                            end
+                            if fdata.userData.id ~= rfix.userData.id then
+                                diff("body " .. id .. " fixture[" .. fi .. "] sfixture id changed")
+                            end
+                        end
+                    end
+                end
+
+                -- Behaviors
+                local beh1 = orig.behaviors or {}
+                local beh2 = rest.behaviors or {}
+                for k, v in pairs(beh1) do
+                    if beh2[k] ~= v then
+                        diff("body " .. id .. " behavior " .. k .. ": " .. tostring(v) .. " → " .. tostring(beh2[k]))
+                    end
+                end
+
+                -- Mirror flags
+                if orig.mirrorX ~= rest.mirrorX then
+                    diff("body " .. id .. " mirrorX: " .. tostring(orig.mirrorX) .. " → " .. tostring(rest.mirrorX))
+                end
+                if orig.mirrorY ~= rest.mirrorY then
+                    diff("body " .. id .. " mirrorY: " .. tostring(orig.mirrorY) .. " → " .. tostring(rest.mirrorY))
+                end
+
+                -- Vertices (polygon shapes)
+                if orig.vertices and rest.vertices then
+                    if #orig.vertices ~= #rest.vertices then
+                        diff("body " .. id .. " vertex count: " .. #orig.vertices .. " → " .. #rest.vertices)
+                    else
+                        for vi = 1, #orig.vertices do
+                            if math.abs(orig.vertices[vi] - rest.vertices[vi]) > 0.01 then
+                                diff("body " .. id .. " vertex[" .. vi .. "] drifted: "
+                                    .. orig.vertices[vi] .. " → " .. rest.vertices[vi])
+                                break
+                            end
+                        end
+                    end
+                elseif (orig.vertices ~= nil) ~= (rest.vertices ~= nil) then
+                    diff("body " .. id .. " vertices presence changed")
+                end
+
+                -- Damping
+                if math.abs((orig.linearDamping or 0) - (rest.linearDamping or 0)) > 0.001 then
+                    diff("body " .. id .. " linearDamping drifted")
+                end
+                if math.abs((orig.angularDamping or 0) - (rest.angularDamping or 0)) > 0.001 then
+                    diff("body " .. id .. " angularDamping drifted")
+                end
+
+                -- Fixed rotation
+                if orig.fixedRotation ~= rest.fixedRotation then
+                    diff("body " .. id .. " fixedRotation changed")
+                end
+            end
+        end
+
+        -- Bodies that appeared in save2 but not save1
+        for id, _ in pairs(map2) do
+            if not map1[id] then
+                diff("body " .. id .. " appeared out of nowhere on second save")
+            end
+        end
+
+        -- Joint count
+        local j1, j2 = save1.joints or {}, save2.joints or {}
+        if #j1 ~= #j2 then
+            diff("joint count changed: " .. #j1 .. " → " .. #j2)
+        end
+
+        local jmap1 = indexById(j1)
+        local jmap2 = indexById(j2)
+
+        for id, orig in pairs(jmap1) do
+            local rest = jmap2[id]
+            if not rest then
+                diff("joint " .. id .. " disappeared on second save")
+            else
+                if orig.type ~= rest.type then
+                    diff("joint " .. id .. " type: " .. tostring(orig.type) .. " → " .. tostring(rest.type))
+                end
+                if orig.bodyA ~= rest.bodyA then
+                    diff("joint " .. id .. " bodyA changed")
+                end
+                if orig.bodyB ~= rest.bodyB then
+                    diff("joint " .. id .. " bodyB changed")
+                end
+                -- Anchor drift
+                if orig.anchorA and rest.anchorA then
+                    if math.abs(orig.anchorA[1] - rest.anchorA[1]) > 0.1
+                        or math.abs(orig.anchorA[2] - rest.anchorA[2]) > 0.1 then
+                        diff("joint " .. id .. " anchorA drifted")
+                    end
+                end
+                if orig.anchorB and rest.anchorB then
+                    if math.abs(orig.anchorB[1] - rest.anchorB[1]) > 0.1
+                        or math.abs(orig.anchorB[2] - rest.anchorB[2]) > 0.1 then
+                        diff("joint " .. id .. " anchorB drifted")
+                    end
+                end
+                -- Joint properties
+                if orig.properties and rest.properties then
+                    for k, v in pairs(orig.properties) do
+                        local rv = rest.properties[k]
+                        if type(v) == 'number' and type(rv) == 'number' then
+                            if math.abs(v - rv) > 0.01 then
+                                diff("joint " .. id .. " property " .. k .. ": " .. v .. " → " .. rv)
+                            end
+                        elseif type(v) ~= 'table' and v ~= rv then
+                            diff("joint " .. id .. " property " .. k .. " changed")
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Camera
+        if save1.camera and save2.camera then
+            if math.abs(save1.camera.x - save2.camera.x) > 0.1 then
+                diff("camera X drifted")
+            end
+            if math.abs(save1.camera.y - save2.camera.y) > 0.1 then
+                diff("camera Y drifted")
+            end
+            if math.abs(save1.camera.scale - save2.camera.scale) > 0.01 then
+                diff("camera scale drifted")
+            end
+        end
+
+        return diffs
+    end
+
+    -- Find all scene files
+    local sceneFiles = {}
+    local items = love.filesystem.getDirectoryItems("scripts")
+    for _, item in ipairs(items) do
+        if item:match("%.playtime%.json$") then
+            table.insert(sceneFiles, "scripts/" .. item)
+        end
+    end
+
+    for _, sceneFile in ipairs(sceneFiles) do
+        it("is idempotent for " .. sceneFile, function()
+            local rawJson = love.filesystem.read(sceneFile)
+            assert.is_not_nil(rawJson, "Could not read " .. sceneFile)
+
+            local originalData = json.decode(rawJson)
+            assert.is_not_nil(originalData, "Could not parse " .. sceneFile)
+            if originalData.version ~= "1.0" then
+                pending("skipping " .. sceneFile .. " (version " .. tostring(originalData.version) .. ")")
+                return
+            end
+
+            -- Pass 1: load original → save
+            local world1 = love.physics.newWorld(0, 9.81 * 100, true)
+            registry.reset()
+            local cam1 = makeCam()
+            sceneIO.buildWorld(originalData, world1, cam1)
+            local save1 = sceneIO.gatherSaveData(world1, cam1)
+            world1:destroy()
+
+            -- Pass 2: load save1 → save again
+            local world2 = love.physics.newWorld(0, 9.81 * 100, true)
+            registry.reset()
+            local cam2 = makeCam()
+            sceneIO.buildWorld(save1, world2, cam2)
+            local save2 = sceneIO.gatherSaveData(world2, cam2)
+            world2:destroy()
+
+            -- Compare: save1 and save2 should be identical
+            local diffs = compareSaveData(save1, save2, sceneFile)
+            if #diffs > 0 then
+                local msg = "Double round-trip found " .. #diffs .. " difference(s):\n"
+                for i, d in ipairs(diffs) do
+                    msg = msg .. "  " .. i .. ". " .. d .. "\n"
+                end
+                assert.is_true(false, msg)
+            end
+        end)
+    end
+end)

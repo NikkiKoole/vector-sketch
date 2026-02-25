@@ -28,7 +28,7 @@ All dead files deleted:
 - ~~`profilingReportOLD2-5.txt`~~
 - ~~`scripts/straightOLD.playtime.lua`~~
 - ~~`scripts/bettertOLD.playtime.json`~~
-- `playtime-files/meta.playtime.json` — still open, not yet decided
+- ~~`playtime-files/meta.playtime.json`~~ moved to `scripts/meta.playtime.json`; directory removed
 
 **Total deleted**: ~17,500 lines across 9 files.
 
@@ -462,7 +462,7 @@ Places where we need your input before proceeding:
 
 | Phase | Question | Status |
 |-------|----------|--------|
-| 0.1 | Is `playtime-files/meta.playtime.json` needed? Can we delete it? | **Open** |
+| 0.1 | Is `playtime-files/meta.playtime.json` needed? Can we delete it? | **RESOLVED** — moved to scripts/, directory removed |
 | 0.3 | Do you have `busted` installed? Should we try the spec/ tests? | **RESOLVED** — busted is installed, 98 tests pass |
 | 0.5 | Want lurker + lovebird set up for hot reload and browser REPL? | **RESOLVED** — lurker active, bridge replaces lovebird |
 | 2.3 | Which scene files are the best test cases? (We'll use them for round-trip) | **Open** |
