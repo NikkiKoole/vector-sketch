@@ -257,7 +257,7 @@ These are the changes that actually improve the architecture. Each one is indepe
 **Time**: 1 hour.
 **Done**: Moved all 8 module-level variables to `state.snap`. Fixed cooldownList not cleared on load. Added cooldown cleanup in update(). 8 new integration tests.
 
-### 7b. Fixture type registry
+### 7b. Fixture type registry — DONE
 
 Replace the 4-file if/elseif chains for fixture subtypes with a `src/fixture-types.lua` registry (design in MODULE-ANALYSIS.md).
 
@@ -265,6 +265,8 @@ Replace the 4-file if/elseif chains for fixture subtypes with a `src/fixture-typ
 **Verification**: Round-trip test, validator, visual check of all fixture types.
 **Prerequisite**: Phases 1-5 (globals fixed, tests exist, bugs fixed).
 **Time**: 4-6 hours across sessions.
+
+**Done (creation only)**: Added `src/fixture-types.lua` data-driven registry. Replaced 9 if-blocks in `createSFixture` (~95 lines) with a single lookup+dispatch (~15 lines). 5 new tests. io.lua/rendering/UI not touched yet.
 
 ### 7c. Mode handler table for input-manager — DONE
 
@@ -433,9 +435,9 @@ Phase 6 ─── Extract from main.lua ─── ✅ DONE
   │          ✓ playtime.sh: error capture, --bridge flag, log/errors commands
   │          ✓ physics callbacks extracted to src/physics/physics-callbacks.lua
   ▼
-Phase 7 ─── Structural Improvements ─ 7a/7c/7e/7f/7g done
+Phase 7 ─── Structural Improvements ─ 7a/7b/7c/7e/7f/7g done
   │    ├── 7a. Snap state → state.lua ─── ✅ DONE
-  │    ├── 7b. Fixture type registry
+  │    ├── 7b. Fixture type registry (creation) ─── ✅ DONE
   │    ├── 7c. Mode handler table ─── ✅ DONE
   │    ├── 7d. DNA topology-as-data
   │    ├── 7e. Extract world-settings panel ─── ✅ DONE
