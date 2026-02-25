@@ -56,12 +56,6 @@ end
 lurker.errorupdate = function(_dt)
     bridge.update()
 end
--- Re-init UI after hot-reload so font/state survive module re-require
-lurker.postswap = function(_f)
-    local currentFont = love.graphics.getFont()
-    local freshUi = require('src.ui.all')
-    freshUi.init(currentFont, currentFont:getHeight())
-end
 local _logger = require 'src.logger' -- luacheck: ignore 211
 local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
 local prof = require 'vendor.jprof'

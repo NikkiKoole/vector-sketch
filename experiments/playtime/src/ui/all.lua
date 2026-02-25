@@ -65,6 +65,10 @@ local theme   = {
 
 ui.theme      = theme
 
+-- Persistent store that survives lurker hot-reload (global, not on ui table)
+local _persist = rawget(_G, '_ui_persist') or {} -- luacheck: ignore 113
+rawset(_G, '_ui_persist', _persist)              -- luacheck: ignore 112
+
 --- Initializes the UI module.
 function ui.init(font, fontHeight)
     ui.nextID = 1               -- Unique ID counter
@@ -79,6 +83,9 @@ function ui.init(font, fontHeight)
     ui.lastClickTime = 0
     ui.lastClickID = nil
     ui.doubleClickThreshold = 0.3 -- seconds
+    -- Remember font for hot-reload recovery
+    _persist.font = ui.font
+    _persist.fontHeight = ui.fontHeight
 end
 
 --- Track the last widget's bounds for sameLine().
@@ -679,6 +686,11 @@ function ui.createSliderWithId(id, label, x, y, width, min, max, value, callback
     end
     ui.alignedLabel(x, y, label)
     return newValue
+end
+
+-- Auto-restore font after lurker hot-reload
+if _persist.font and not ui.font then
+    ui.init(_persist.font, _persist.fontHeight)
 end
 
 return ui
