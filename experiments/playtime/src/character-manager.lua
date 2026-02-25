@@ -11,6 +11,7 @@ local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
 local JT = require('src.joint-types')
 local BT = require('src.body-types')
+local NT = require('src.node-types')
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
@@ -1537,7 +1538,7 @@ function lib.addTexturesFromInstance2(instance)
 
                         for j = 1, #jointLabels do
                             local jointID = jointLabels[j]
-                            ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
+                            ud.extra.nodes[j] = { id = instance.joints[jointID], type = NT.JOINT }
                         end
                     elseif k2 == 'haircut' then
                         local rightPlaceForHaircut = false

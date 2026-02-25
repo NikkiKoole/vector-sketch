@@ -11,6 +11,8 @@ local mathutils = require 'src.math-utils'
 local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
 local subtypes = require 'src.subtypes'
+local NT = require('src.node-types')
+local SIDES = require('src.sides')
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
@@ -868,7 +870,7 @@ function lib.drawTexturedWorld(world)
                     local points = {}
                     for j = 1, #ud.extra.nodes do
                         local it = ud.extra.nodes[j]
-                        if it.type == 'anchor' then
+                        if it.type == NT.ANCHOR then
                             local f = registry.getSFixtureByID(it.id)
                             if f then
                                 local b = f:getBody()
@@ -880,7 +882,7 @@ function lib.drawTexturedWorld(world)
                                 print('issue with finding achor, id:', it.id)
                             end
                         end
-                        if it.type == 'joint' then
+                        if it.type == NT.JOINT then
                             local jnt = registry.getJointByID(it.id)
                             if jnt and not jnt:isDestroyed() then
                                 local x1, y1, _, _ = jnt:getAnchors()
@@ -1100,7 +1102,7 @@ function lib.drawTexturedWorld(world)
         end
 
         local function currentAnchorLocal(infl)
-            if infl.nodeType == "anchor" then
+            if infl.nodeType == NT.ANCHOR then
                 local f = registry.getSFixtureByID(infl.nodeId)
                 if not f then return infl.offx, infl.offy end
                 local bp = f:getBody()
@@ -1110,14 +1112,14 @@ function lib.drawTexturedWorld(world)
                 return bp:getLocalPoint(cx, cy)
             end
 
-            if infl.nodeType == "joint" then
+            if infl.nodeType == NT.JOINT then
                 local joint = registry.getJointByID(infl.nodeId)
                 if not joint then return infl.offx, infl.offy end
 
                 local x1, y1, x2, y2 = joint:getAnchors()
                 local bodyA, bodyB = joint:getBodies()
 
-                if infl.side == "A" then
+                if infl.side == SIDES.A then
                     return bodyA:getLocalPoint(x1, y1)
                 else
                     return bodyB:getLocalPoint(x2, y2)

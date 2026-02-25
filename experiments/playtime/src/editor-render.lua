@@ -15,6 +15,7 @@ local utils = require 'src.utils'
 local inputmanager = require 'src.input-manager'
 local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
+local NT = require('src.node-types')
 local lib = {}
 
 
@@ -263,14 +264,14 @@ function lib.renderActiveEditorThings()
                         local node = ud.extra.nodes[i]
                         if i == state.vertexEditor.selectedBone then
 
-                            if node.type == 'joint' then
+                            if node.type == NT.JOINT then
                                 local j = registry.getJointByID(node.id)
                                 local x1, y1 = j:getAnchors( )
 
                                 love.graphics.circle('line', x1, y1, 10)
 
                             end
-                            if node.type == 'anchor' then
+                            if node.type == NT.ANCHOR then
                                 local a = registry.getSFixtureByID(node.id)
                                 local anchorBody = a:getBody()
                                 local nx, ny = mathutils.getCenterOfPoints(
@@ -320,14 +321,14 @@ function lib.renderActiveEditorThings()
                    love.graphics.setLineWidth(1)
                         for _, node in ipairs(ud.extra.nodes) do
 
-                            if node.type == 'joint' then
+                            if node.type == NT.JOINT then
                                 local j = registry.getJointByID(node.id)
                                 local x1, y1 = j:getAnchors( )
 
                                 love.graphics.line(wx, wy, x1, y1)
 
                             end
-                            if node.type == 'anchor' then
+                            if node.type == NT.ANCHOR then
                                  local a = registry.getSFixtureByID(node.id)
                                  local anchorBody = a:getBody()
                                   local nx, ny = mathutils.getCenterOfPoints(

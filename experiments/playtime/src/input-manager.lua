@@ -18,6 +18,7 @@ local fixtures = require 'src.fixtures'
 local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
 local joints = require 'src.joints'
+local NT = require('src.node-types')
 
 local distanceSquared = function(x1, y1, x2, y2)
     local dx = x2 - x1
@@ -76,7 +77,7 @@ local function pressedAddNode(cx, cy)
             local d = distanceSquared(centerX, centerY, cx, cy)
             if d < closestDistanceSquared then
                 closestDistanceSquared = d
-                closest = { type = 'anchor', id = f:getUserData().id }
+                closest = { type = NT.ANCHOR, id = f:getUserData().id }
             end
         end
     end
@@ -86,7 +87,7 @@ local function pressedAddNode(cx, cy)
         local d = distanceSquared(x1, y1, cx, cy)
         if d < closestDistanceSquared then
             closestDistanceSquared = d
-            closest = { type = 'joint', id = j:getUserData().id }
+            closest = { type = NT.JOINT, id = j:getUserData().id }
         end
     end
 

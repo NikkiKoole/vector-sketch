@@ -5,6 +5,8 @@ local sceneIO = require 'src.io'
 local script = require 'src.script'
 local utils = require 'src.utils'
 local camera = require 'src.camera'
+local SE = require('src.script-events')
+local FEXT = require('src.file-extensions')
 local cam = camera.getInstance()
 
 local hotReloadTimer = 0
@@ -30,8 +32,8 @@ function lib.loadScene(name)
 end
 
 function lib.loadScriptAndScene(id)
-    local jsonPath = '/scripts/' .. id .. '.playtime.json'
-    local luaPath = '/scripts/' .. id .. '.playtime.lua'
+    local jsonPath = '/scripts/' .. id .. FEXT.SCENE_JSON
+    local luaPath = '/scripts/' .. id .. FEXT.SCENE_LUA
     local jsoninfo = love.filesystem.getInfo(jsonPath)
     local luainfo = love.filesystem.getInfo(luaPath)
     if not jsoninfo then
@@ -65,8 +67,8 @@ function lib.loadAndRunScript(name)
     state.scene.sceneScript = script.loadScript(data, name)()
     state.scene.scriptPath = name
     script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
-    script.call('onUnload')
-    script.call('onStart')
+    script.call(SE.ON_UNLOAD)
+    script.call(SE.ON_START)
 
     lastModTime = getFileModificationTime(name)
 end

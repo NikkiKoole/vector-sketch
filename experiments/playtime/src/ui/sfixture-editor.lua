@@ -15,6 +15,8 @@ local state = require('src.state')
 local modes = require('src.modes')
 local fileBrowser = require('src.file-browser')
 local subtypes = require('src.subtypes')
+local NT = require('src.node-types')
+local SIDES = require('src.sides')
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -611,7 +613,7 @@ function lib.drawSelectedSFixture()
                         return out
                     end
                     local function getNodeLocal(node)
-                        if node.type == "joint" then
+                        if node.type == NT.JOINT then
                             local joint = registry.getJointByID(node.id)
                             if not joint then return {} end
 
@@ -627,22 +629,22 @@ function lib.drawSelectedSFixture()
                                     body = bodyA,
                                     offx = ax,
                                     offy = ay,
-                                    type = "joint",
+                                    type = NT.JOINT,
                                     id = node.id,
-                                    side = "A",
+                                    side = SIDES.A,
                                 },
                                 {
                                     body = bodyB,
                                     offx = bx,
                                     offy = by,
-                                    type = "joint",
+                                    type = NT.JOINT,
                                     id = node.id,
-                                    side = "B",
+                                    side = SIDES.B,
                                 }
                             }
                         end
 
-                        if node.type == "anchor" then
+                        if node.type == NT.ANCHOR then
                             local f = registry.getSFixtureByID(node.id)
                             if not f then return {} end
 
@@ -657,7 +659,7 @@ function lib.drawSelectedSFixture()
                                     body = bp,
                                     offx = lx,
                                     offy = ly,
-                                    type = "anchor",
+                                    type = NT.ANCHOR,
                                     id = node.id,
                                 }
                             }
@@ -1094,7 +1096,7 @@ function lib.drawSelectedSFixture()
 
                             --print('1 attached joint found, lets start there..')
                             local joint = attachedJoints[1]
-                            ud.extra.nodes[#connectedBodies] = { id = joints.getJointId(joint), type = 'joint' }
+                            ud.extra.nodes[#connectedBodies] = { id = joints.getJointId(joint), type = NT.JOINT }
                             -- print(inspect(ud.extra.nodes))
                             local bodyA, bodyB = joint:getBodies()
                             if not inArray(bodyA, connectedBodies) then

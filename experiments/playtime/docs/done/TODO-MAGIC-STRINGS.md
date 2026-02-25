@@ -17,19 +17,15 @@ Scattered string literals that should be constants modules. Typo = silent bug.
 - [x] **Body types** — `src/body-types.lua` (dynamic, static, kinematic)
   - [x] 3 constants, adopted in 6 files
 
-## Medium priority
+- [x] **Node/influence types** — `src/node-types.lua` (joint, anchor)
+  - [x] 2 constants, adopted in 6 files
+  - [x] Note: `node.type` (creation) vs `infl.nodeType` (influence) naming is structural, not a bug
 
-- [ ] **Node/influence type strings** — 15+ occurrences, 6 files, inconsistent naming
-  - `'joint'`, `'anchor'` — sometimes `node.type`, sometimes `infl.nodeType`
-  - Files: editor-render, input-manager, io, box2d-draw-textured, sfixture-editor, character-manager
+- [x] **Script event names** — `src/script-events.lua` (onStart, beginContact, etc.)
+  - [x] 6 constants, adopted in 3 files
 
-## Low priority
+- [x] **File extensions** — `src/file-extensions.lua` (.playtime.json, .playtime.lua)
+  - [x] 2 constants, adopted in 2 files
 
-- [ ] **Script event names** — 6 occurrences, 3 files
-  - `'onStart'`, `'beginContact'`, `'endContact'`, `'preSolve'`, `'postSolve'`
-
-- [ ] **File extensions** — 3 occurrences, 2 files
-  - `'.playtime.json'`, `'.playtime.lua'`
-
-- [ ] **Side identifiers** — 8 occurrences, 4 files, inconsistent quoting
-  - `'A'`/`'B'` vs `"A"`/`"B"`
+- [x] **Side identifiers** — `src/sides.lua` (A, B, bodyA, bodyB)
+  - [x] 4 constants, adopted in 4 files

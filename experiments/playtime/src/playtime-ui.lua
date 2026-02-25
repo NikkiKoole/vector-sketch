@@ -19,6 +19,7 @@ local modes = require 'src.modes'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
 local subtypes = require 'src.subtypes'
+local SE = require('src.script-events')
 local behaviors = require 'src.behaviors'
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
@@ -286,7 +287,7 @@ function lib.drawUI()
         if ui.button(970, 20, 50, 'R') then
             -- todo actually reread the file itself!
             sceneLoader.loadAndRunScript(state.scene.scriptPath)
-            script.call('onStart') --state.scene.sceneScript.onStart()
+            script.call(SE.ON_START) --state.scene.sceneScript.onStart()
         end
     end
 

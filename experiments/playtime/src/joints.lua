@@ -7,6 +7,7 @@ local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
 local mathutils = require 'src.math-utils'
 local JT = require 'src.joint-types'
+local SIDES = require('src.sides')
 
 
 -- Updates offsetA of a joint based on a new LOCAL point (relative to body A)
@@ -140,7 +141,7 @@ function lib.extractJoints(body)
             jointType = jointType,
             otherBody = otherBody,
             collideConnected = joint:getCollideConnected(),
-            originalBodyOrder = isBodyA and "bodyA" or "bodyB",
+            originalBodyOrder = isBodyA and SIDES.BODY_A or SIDES.BODY_B,
         }
 
         local handler = jointHandlers[jointType]
@@ -227,7 +228,7 @@ local function moveUntilEnd(from, dx, dy, visited, dir)
     for i = 1, #joints do
         local bodyA, bodyB = joints[i]:getBodies()
 
-        if (dir == 'A') then
+        if (dir == SIDES.A) then
             if (not visited[bodyB:getUserData().thing.id]) then
                 tranlateBody(bodyB, dx, dy)
                 visited[bodyB:getUserData().thing.id] = true
@@ -239,7 +240,7 @@ local function moveUntilEnd(from, dx, dy, visited, dir)
             --     moveUntilEnd(bodyA, -dx, -dy, visited, dir)
             -- end
         end
-        if dir == 'B' then
+        if dir == SIDES.B then
             if (not visited[bodyA:getUserData().thing.id]) then
                 tranlateBody(bodyA, dx, dy)
                 visited[bodyA:getUserData().thing.id] = true
@@ -257,7 +258,7 @@ end
 function lib.reattachJoints(jointData, newBody, oldVertices)
     local visited = {}
     for _, data in ipairs(jointData) do
-        if data.originalBodyOrder == "bodyA" then
+        if data.originalBodyOrder == SIDES.BODY_A then
             data.body1 = newBody
             data.body2 = data.otherBody
 

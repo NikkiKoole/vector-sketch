@@ -15,6 +15,9 @@ local state = require 'src.state'
 
 local snap = require 'src.physics.snap'
 local subtypes = require 'src.subtypes'
+local NT = require('src.node-types')
+local SIDES = require('src.sides')
+local FEXT = require('src.file-extensions')
 
 function lib.reload(data, world, cam)
     lib.load(data, world, cam)
@@ -32,11 +35,11 @@ local function restoreInfluenceBodies(influences)
         local inflList = influences[i]
         for j = 1, #inflList do
             local infl = inflList[j]
-            if infl.nodeType == 'joint' then
+            if infl.nodeType == NT.JOINT then
                 local joint = registry.getJointByID(infl.nodeId)
                 local bodyA, bodyB = joint:getBodies()
-                infl.body = (infl.side == 'A') and bodyA or bodyB
-            elseif infl.nodeType == 'anchor' then
+                infl.body = (infl.side == SIDES.A) and bodyA or bodyB
+            elseif infl.nodeType == NT.ANCHOR then
                 local anchor = registry.getSFixtureByID(infl.nodeId)
                 infl.body = anchor:getBody()
             end
@@ -56,13 +59,13 @@ local function remapAndRestoreInfluences(influences, idMapping)
             infl.nodeId = idMapping[infl.nodeId]
 
             -- Now restore body reference using the NEW ID
-            if infl.nodeType == 'joint' then
+            if infl.nodeType == NT.JOINT then
                 local joint = registry.getJointByID(infl.nodeId)
                 if joint then
                     local bodyA, bodyB = joint:getBodies()
-                    infl.body = (infl.side == 'A') and bodyA or bodyB
+                    infl.body = (infl.side == SIDES.A) and bodyA or bodyB
                 end
-            elseif infl.nodeType == 'anchor' then
+            elseif infl.nodeType == NT.ANCHOR then
                 local anchor = registry.getSFixtureByID(infl.nodeId)
                 if anchor then
                     infl.body = anchor:getBody()
@@ -721,7 +724,7 @@ function lib.save(world, camera, filename)
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file
-    local success, message = love.filesystem.write(filename .. '.playtime.json', jsonData)
+    local success, message = love.filesystem.write(filename .. FEXT.SCENE_JSON, jsonData)
     if success then
         logger:info("World successfully saved to " .. filename)
         logger:info("file://" .. love.filesystem.getSaveDirectory())
