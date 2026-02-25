@@ -9,7 +9,6 @@ local joints = require 'src.joints'
 local objectManager = require 'src.object-manager'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
-local box2dPointerJoints = require 'src.box2d-pointerjoints'
 local utils = require 'src.utils'
 
 local fixtures = require 'src.fixtures'
@@ -24,6 +23,7 @@ local fileBrowser = require 'src.file-browser'
 local behaviors = require 'src.behaviors'
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
+local uiShapePanel = require('src.ui.shape-panel')
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
@@ -123,158 +123,7 @@ end
 
 lib.drawJointUpdateUI = uiJointUpdate.drawJointUpdateUI
 
-local accordeonStatesAS = {
-    ['more'] = false
-}
-
-
-function lib.drawAddShapeUI()
-    local shapeTypesLess = { 'rectangle', 'circle', 'capsule', 'ribbon' }
-    local shapeTypesMore = { 'rectangle', 'circle', 'capsule', 'triangle',
-        'itriangle', 'torso', 'trapezium', 'pentagon',
-        'hexagon',
-        'heptagon',
-        'octagon' }
-    local shapeTypes = accordeonStatesAS['more'] and shapeTypesMore or shapeTypesLess
-    local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local startX = 20
-    local startY = 70
-    local panelWidth = 200
-    local buttonSpacing = BUTTON_SPACING
-    local buttonHeight = ui.theme.button.height
-    local panelHeight = titleHeight + ((#shapeTypes + 10) * (buttonHeight + buttonSpacing)) + buttonSpacing
-
-    ui.panel(startX, startY, panelWidth, panelHeight, '', function()
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = BUTTON_SPACING,
-            startX = startX + BUTTON_SPACING,
-            startY = startY + BUTTON_SPACING
-        })
-
-        local x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-
-        local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, panelWidth - 20, buttonHeight)
-        end
-
-        local function drawAccordion(key, contentFunc)
-            -- Draw the accordion header
-
-            local clicked = ui.header_button(x, y, panelWidth - 40, (accordeonStatesAS[key] and " ÷  " or " •") ..
-                ' ' .. key, accordeonStatesAS[key])
-            if clicked then
-                accordeonStatesAS[key] = not accordeonStatesAS[key]
-            end
-            y = y + BUTTON_HEIGHT + BUTTON_SPACING
-
-
-            if accordeonStatesAS[key] then
-                contentFunc(clicked)
-            end
-        end
-        drawAccordion('more', function() end)
-        nextRow()
-        for _, shape in ipairs(shapeTypes) do
-            local width = panelWidth - 20
-
-            local _, pressed, released = ui.button(x, y, width, shape)
-            if pressed then
-                ui.draggingActive = ui.activeElementID
-                local mx, my = love.mouse.getPosition()
-                local wx, wy = cam:getWorldCoordinates(mx, my)
-                objectManager.startSpawn(shape, wx, wy)
-            end
-            if released then
-                ui.draggingActive = nil
-            end
-            nextRow()
-        end
-        love.graphics.line(x, y + 20, x + 20 + panelWidth - 40, y + 20)
-
-        local width = panelWidth - 20
-        nextRow()
-
-        local minDist = ui.sliderWithInput('minDistance', x, y, 80, 1, 150,
-            state.editorPreferences.minPointDistance or 10)
-        ui.alignedLabel(x, y, '  dis')
-        if minDist then
-            state.editorPreferences.minPointDistance = minDist
-        end
-
-
-        nextRow()
-        local freePathColor = state.currentMode == 'drawFreePath' and { 1, 0, 0 } or nil
-        local _, _, freePathReleased = ui.button(x, y, width, 'freepath', buttonHeight, freePathColor)
-        if freePathReleased then
-            state.currentMode = 'drawFreePath'
-            state.interaction.polyVerts = {}
-            state.interaction.lastPolyPt = nil
-        end
-        -- Add a button for custom polygon
-        nextRow()
-        local freePolyColor = state.currentMode == 'drawFreePoly' and { 1, 0, 0 } or nil
-        local _, _, freePolyReleased = ui.button(x, y, width, 'freeform', buttonHeight, freePolyColor)
-        if freePolyReleased then
-            state.currentMode = 'drawFreePoly'
-            state.interaction.polyVerts = {}
-            state.interaction.lastPolyPt = nil
-        end
-        nextRow()
-        local clickModeColor = state.currentMode == 'drawClickMode' and { 1, 0, 0 } or nil
-        if ui.button(x, y, width, 'click', buttonHeight, clickModeColor) then
-            state.currentMode = 'drawClickMode'
-            state.interaction.polyVerts = {}
-            state.interaction.lastPolyPt = nil
-        end
-        nextRow()
-
-        -- width already defined above as panelWidth - 20
-
-        local function handleFixtureButton(bx, by, bw, label, shapeType, extraDataFunc)
-            local _, pressed, released = ui.button(bx, by, bw, label)
-
-            if pressed then
-                ui.draggingActive = ui.activeElementID
-                state.interaction.offsetDragging = { 0, 0 }
-            end
-
-            if released then
-                local mx, my = love.mouse.getPosition()
-                local wx, wy = cam:getWorldCoordinates(mx, my)
-                local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
-                if #hitted > 0 then
-                    local body = hitted[#hitted]:getBody()
-                    local localX, localY = body:getLocalPoint(wx, wy)
-                    local extraData = extraDataFunc and extraDataFunc(body, localX, localY) or { radius = 30 }
-                    local fixture = fixtures.createSFixture(body, localX, localY, shapeType, extraData)
-                    state.selection.selectedSFixture = fixture
-                end
-                ui.draggingActive = nil
-            end
-
-            nextRow()
-        end
-
-        handleFixtureButton(x, y, width, 'snapfixture', 'snap')
-        handleFixtureButton(x, y, width, 'anchorfixture', 'anchor')
-        handleFixtureButton(x, y, width, 'texturefixture', 'texfixture', function(body)
-            local _, _, w, h = getCenterAndDimensions(body)
-            return { width = w, height = h }
-        end)
-        handleFixtureButton(x, y, width, 'connectedtexture', 'connected-texture')
-        handleFixtureButton(x, y, width, 'trace-vertices', 'trace-vertices')
-        handleFixtureButton(x, y, width, 'tile-repeat', 'tile-repeat')
-        handleFixtureButton(x, y, width, 'uvusert', 'uvusert')
-        handleFixtureButton(x, y, width, 'resource', 'resource')
-        handleFixtureButton(x, y, width, 'meshusert', 'meshusert')
-        if ui.button(x, y, width, 'auto-ropify') then
-            -- todo make this work
-            state.currentMode = 'pickAutoRopifyMode'
-        end
-        nextRow()
-    end)
-end
+lib.drawAddShapeUI = uiShapePanel.drawAddShapeUI
 
 function lib.drawAddJointUI()
     local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley',
