@@ -20,6 +20,7 @@ local fixtures = require('src.fixtures')
 local sceneIO = require('src.io')
 local state = require('src.state')
 local utils = require('src.utils')
+local snap = require('src.physics.snap')
 
 -- ─── Helpers ───
 
@@ -803,6 +804,125 @@ describe("integration: object lifecycle", function()
             -- Should have settled near ground
             assert.is_true(thing.body:getY() > 400, "body didn't fall")
             assert.is_true(thing.body:getY() < 510, "body fell through ground")
+        end)
+    end)
+
+    -- ═══════════════════════════════════════════════════════
+    -- SNAP STATE THROUGH SAVE/LOAD
+    -- ═══════════════════════════════════════════════════════
+
+    describe("snap state", function()
+        local cam
+
+        before_each(function()
+            cam = makeCam()
+        end)
+
+        it("snap fixtures are populated after creating snap sfixtures", function()
+            local thing = addBody('rectangle', 0, 0, { width = 80, height = 80 })
+            fixtures.createSFixture(thing.body, 0, 0, 'snap', { radius = 10 })
+
+            assert.are.equal(1, #state.snap.fixtures)
+            assert.are.equal('snap', state.snap.fixtures[1]:getUserData().subtype)
+        end)
+
+        it("snap fixtures are cleared after registry.reset()", function()
+            local thing = addBody('rectangle', 0, 0, { width = 80, height = 80 })
+            fixtures.createSFixture(thing.body, 0, 0, 'snap', { radius = 10 })
+            assert.are.equal(1, #state.snap.fixtures)
+
+            registry.reset()
+
+            assert.are.equal(0, #state.snap.fixtures)
+        end)
+
+        it("activeJoints are cleared on resetList()", function()
+            -- Manually insert a dummy to prove it clears
+            table.insert(state.snap.activeJoints, "dummy")
+            assert.are.equal(1, #state.snap.activeJoints)
+
+            snap.resetList()
+
+            assert.are.equal(0, #state.snap.activeJoints)
+        end)
+
+        it("cooldownList is cleared on resetList()", function()
+            state.snap.cooldownList["fake-fixture"] = 999
+            assert.is_not_nil(state.snap.cooldownList["fake-fixture"])
+
+            snap.resetList()
+
+            assert.is_nil(next(state.snap.cooldownList))
+        end)
+
+        it("snap fixtures survive save/load round-trip", function()
+            local t1 = addBody('rectangle', -100, 0, { width = 80, height = 80 })
+            local t2 = addBody('rectangle', 100, 0, { width = 80, height = 80 })
+            fixtures.createSFixture(t1.body, 0, 0, 'snap', { radius = 10 })
+            fixtures.createSFixture(t2.body, 0, 0, 'snap', { radius = 10 })
+
+            assert.are.equal(2, #state.snap.fixtures)
+
+            local saveData = sceneIO.gatherSaveData(state.physicsWorld, cam)
+
+            -- Load into fresh world
+            local world2 = makeWorld()
+            registry.reset()
+            sceneIO.buildWorld(saveData, world2, cam)
+
+            -- snap.fixtures should be repopulated via registry.registerSFixture
+            assert.are.equal(2, #state.snap.fixtures)
+            for i = 1, #state.snap.fixtures do
+                assert.are.equal('snap', state.snap.fixtures[i]:getUserData().subtype)
+            end
+
+            world2:destroy()
+        end)
+
+        it("activeJoints and cooldownList are clean after load", function()
+            local thing = addBody('rectangle', 0, 0, { width = 80, height = 80 })
+            fixtures.createSFixture(thing.body, 0, 0, 'snap', { radius = 10 })
+
+            -- Pollute snap state
+            table.insert(state.snap.activeJoints, "stale-joint")
+            state.snap.cooldownList["stale-fixture"] = 999
+
+            local saveData = sceneIO.gatherSaveData(state.physicsWorld, cam)
+
+            local world2 = makeWorld()
+            -- buildWorld calls snap.resetList() which should clear both
+            sceneIO.buildWorld(saveData, world2, cam)
+
+            assert.are.equal(0, #state.snap.activeJoints)
+            assert.is_nil(next(state.snap.cooldownList))
+
+            world2:destroy()
+        end)
+
+        it("snap config values have correct defaults", function()
+            assert.are.equal(140, state.snap.snapDistance)
+            assert.are.equal(100000, state.snap.jointBreakThreshold)
+            assert.are.equal(0.5, state.snap.cooldownTime)
+            assert.is_true(state.snap.onlyConnectWhenInteracted)
+            assert.is_true(state.snap.onlyBreakWhenInteracted)
+        end)
+
+        it("multiple snap sfixtures on same body are all tracked", function()
+            local thing = addBody('rectangle', 0, 0, { width = 120, height = 120 })
+            fixtures.createSFixture(thing.body, -20, 0, 'snap', { radius = 10 })
+            fixtures.createSFixture(thing.body, 20, 0, 'snap', { radius = 10 })
+            fixtures.createSFixture(thing.body, 0, -20, 'snap', { radius = 10 })
+
+            assert.are.equal(3, #state.snap.fixtures)
+        end)
+
+        it("non-snap sfixtures don't appear in snap.fixtures", function()
+            local thing = addBody('rectangle', 0, 0, { width = 80, height = 80 })
+            fixtures.createSFixture(thing.body, 0, 0, 'anchor', { radius = 10 })
+            fixtures.createSFixture(thing.body, 10, 0, 'snap', { radius = 10 })
+
+            assert.are.equal(1, #state.snap.fixtures)
+            assert.are.equal('snap', state.snap.fixtures[1]:getUserData().subtype)
         end)
     end)
 end)

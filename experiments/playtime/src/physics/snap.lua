@@ -296,6 +296,7 @@ end
 
 function lib.resetList()
     state.snap.activeJoints = {}
+    state.snap.cooldownList = {}
 end
 
 function lib.addSnapJoint(joint)
