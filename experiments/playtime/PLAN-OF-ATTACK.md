@@ -359,13 +359,15 @@ Naming conventions documented in CLAUDE.md.
 
 ### 7e. Extract world-settings panel from playtime-ui.lua ─── ✅ DONE
 
-Extracted `drawWorldSettingsUI` (~138 lines) to `src/ui-world-settings.lua`.
-Also moved `createSliderWithId` helper to `ui-all.lua` as `ui.createSliderWithId` (shared by ~50 call sites).
+Extracted `drawWorldSettingsUI` (~138 lines) to `src/ui/world-settings.lua`.
+Also moved `createSliderWithId` helper to `src/ui/all.lua` as `ui.createSliderWithId` (shared by ~50 call sites).
 
-**Risk**: Medium — extracting one panel is safer than splitting the whole file.
-**Verification**: luacheck 0 warnings, busted 140/140, open world settings panel works.
-**Prerequisite**: Phase 1 (global leaks in playtime-ui.lua fixed).
-**Time**: 2-3 hours.
+### 7f. Move UI files to src/ui/ subfolder + Extract drawJointUpdateUI ─── ✅ DONE
+
+Moved `src/ui-all.lua`, `src/ui-textinput.lua`, `src/ui-world-settings.lua` into `src/ui/` subfolder.
+Extracted `drawJointUpdateUI` (~413 lines) to `src/ui/joint-update.lua`.
+
+**Verification**: luacheck 0 warnings/0 errors (38 files), busted 140/140, UI smoke tests 30/30, app restart 0 errors.
 
 ---
 
