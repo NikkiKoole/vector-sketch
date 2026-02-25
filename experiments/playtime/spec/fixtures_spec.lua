@@ -154,6 +154,54 @@ describe("fixtures with real Box2D (LÖVE integration)", function()
         end)
     end)
 
+    describe("fixture-types registry", function()
+        it("unknown subtype returns nil", function()
+            local body = love.physics.newBody(world, 0, 0, "dynamic")
+            love.physics.newFixture(body, love.physics.newRectangleShape(50, 50))
+
+            local fixture = fixtures.createSFixture(body, 0, 0, 'nonexistent', { radius = 20 })
+            assert.is_nil(fixture)
+        end)
+
+        it("SNAP gets 5x radius shape", function()
+            local body = love.physics.newBody(world, 0, 0, "dynamic")
+            local fixture = fixtures.createSFixture(body, 0, 0, 'snap', { radius = 10 })
+            local points = { fixture:getShape():getPoints() }
+            -- 5x radius = 50, so shape spans -25 to +25 in both axes
+            local minX, maxX = math.huge, -math.huge
+            for i = 1, #points, 2 do
+                if points[i] < minX then minX = points[i] end
+                if points[i] > maxX then maxX = points[i] end
+            end
+            assert.is_near(50, maxX - minX, 0.01, "SNAP shape width should be 5x radius")
+        end)
+
+        it("TEXFIXTURE extra has vertexCount and vertices", function()
+            local body = love.physics.newBody(world, 0, 0, "dynamic")
+            local fixture = fixtures.createSFixture(body, 5, 10, 'texfixture', {
+                width = 30, height = 50
+            })
+            local ud = fixture:getUserData()
+            assert.are.equal(4, ud.extra.vertexCount)
+            assert.are.equal(8, #ud.extra.vertices)
+        end)
+
+        it("TEXFIXTURE has density 0", function()
+            local body = love.physics.newBody(world, 0, 0, "dynamic")
+            local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture', {
+                width = 30, height = 50
+            })
+            assert.are.equal(0, fixture:getDensity())
+        end)
+
+        it("simple subtypes have empty extra", function()
+            local body = love.physics.newBody(world, 0, 0, "dynamic")
+            local fixture = fixtures.createSFixture(body, 0, 0, 'anchor', { radius = 10 })
+            local ud = fixture:getUserData()
+            assert.are.same({}, ud.extra)
+        end)
+    end)
+
     describe("fixture ordering invariant with real bodies", function()
         it("sfixtures added first maintain correct ordering", function()
             local body = love.physics.newBody(world, 0, 0, "dynamic")

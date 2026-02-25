@@ -10,7 +10,7 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local utils = require 'src.utils' -- Needed for shallowCopy
 local state = require 'src.state'
-local subtypes = require 'src.subtypes'
+local fixtureTypes = require('src.fixture-types')
 local lib = {}
 
 
@@ -148,100 +148,21 @@ function lib.updateSFixtureDimensions(w, h)
 end
 
 function lib.createSFixture(body, localX, localY, subtype, cfg)
-    if (subtype == subtypes.SNAP) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius * 5, cfg.radius * 5, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = subtypes.SNAP, id = setId, label = '', extra = {} })
-        registry.registerSFixture(setId, fixture)
-        return fixture
+    local ft = fixtureTypes[subtype]
+    if not ft then
+        logger:info('Unknown fixture subtype:', subtype, inspect(cfg))
+        return
     end
-    if (subtype == subtypes.ANCHOR) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = subtypes.ANCHOR, id = setId, label = '', extra = {} })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.CONNECTED_TEXTURE) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({
-            type = "sfixture", subtype = subtypes.CONNECTED_TEXTURE,
-            id = setId, label = '', extra = {}
-        })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.TRACE_VERTICES) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({
-            type = "sfixture", subtype = subtypes.TRACE_VERTICES,
-            id = setId, label = '', extra = {}
-        })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.TILE_REPEAT) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius, cfg.radius, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = subtypes.TILE_REPEAT, id = setId, label = '', extra = {} })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.TEXFIXTURE) then
-        local vertexCount = 4
-        local vertices = vertexCount == 4 and rect(cfg.width, cfg.height, localX, localY) or
-            rect8(cfg.width, cfg.height, localX, localY)
-        local shape = love.physics.newPolygonShape(vertices)
-        local fixture = love.physics.newFixture(body, shape, 0)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({
-            type = "sfixture", id = setId, subtype = subtypes.TEXFIXTURE, label = '',
-            extra = { vertexCount = vertexCount, vertices = vertices }
-        })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.RESOURCE) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius or 20, cfg.radius or 20, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = subtypes.RESOURCE, id = setId, label = '', extra = {} })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.UVUSERT) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius or 20, cfg.radius or 20, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = subtypes.UVUSERT, id = setId, label = '', extra = {} })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    if (subtype == subtypes.MESHUSERT) then
-        local shape = love.physics.newPolygonShape(rect(cfg.radius or 20, cfg.radius or 20, localX, localY))
-        local fixture = love.physics.newFixture(body, shape)
-        fixture:setSensor(true) -- Sensor so it doesn't collide
-        local setId = uuid.generateID()
-        fixture:setUserData({ type = "sfixture", subtype = subtypes.MESHUSERT, id = setId, label = '', extra = {} })
-        registry.registerSFixture(setId, fixture)
-        return fixture
-    end
-    logger:info('I NEED A BETTER CONFIG FOR THIS FIXTURE OF YOURS!', inspect(cfg), subtype)
+
+    local w, h = ft.getSize(cfg)
+    local shape = love.physics.newPolygonShape(rect(w, h, localX, localY))
+    local fixture = love.physics.newFixture(body, shape, ft.density or 1)
+    fixture:setSensor(true)
+    local setId = uuid.generateID()
+    local extra = ft.getExtra(cfg, localX, localY)
+    fixture:setUserData({ type = "sfixture", subtype = subtype, id = setId, label = '', extra = extra })
+    registry.registerSFixture(setId, fixture)
+    return fixture
 end
 
 --function lib.createTexFixtureShape(vertexCount)
