@@ -159,16 +159,16 @@ These are special cases not suited for sameLine: dead code (button grid inside `
 
 **Luacheck: fully clean (0 warnings)**
 
-**UI file extractions (playtime-ui.lua ~2900 lines → ~500 line orchestrator):**
+**UI file extractions (playtime-ui.lua ~2900 lines → 648 line orchestrator):**
 Ordered by ease/risk, each function is self-contained and has smoke test coverage:
 1. ~~`drawJointUpdateUI()` (413 lines) → `src/ui/joint-update.lua`~~ — **done**
 2. ~~`drawWorldSettingsUI()` (136 lines) → `src/ui/world-settings.lua`~~ — **done**
-3. `drawAddShapeUI()` (146 lines) → `src/ui/shape-panel.lua` — easy, own accordion state
-4. `drawRecordingUI()` (137 lines) → `src/ui/recording-panel.lua` — easy, self-contained
-5. `drawSelectedSFixture()` (1249 lines) → `src/ui/sfixture-editor.lua` — **biggest win**, medium risk, complex vertex/OMP logic
-6. `drawUpdateSelectedObjectUI()` (592 lines) → `src/ui/body-editor.lua` — medium risk, many shape-specific paths
+3. ~~`drawAddShapeUI()` (146 lines) → `src/ui/shape-panel.lua`~~ — **done**
+4. ~~`drawRecordingUI()` (137 lines) → `src/ui/recording-panel.lua`~~ — **done**
+5. ~~`drawSelectedSFixture()` (1249 lines) → `src/ui/sfixture-editor.lua`~~ — **done**
+6. ~~`drawUpdateSelectedObjectUI()` (603 lines) → `src/ui/body-editor.lua`~~ — **done**
 7. Small panels (drawAddJointUI 29L, drawSelectedBodiesUI 68L, drawBGSettingsUI 44L) — trivial
 
-**Extraction pattern:** modules return `lib = {}` table, live in `src/ui/`. Accordion state tables (`accordionStatesSF`, `accordionStatesSO`, `accordeonStatesAS`) are local to playtime-ui.lua and would move with their respective extracted module.
+**Extraction pattern:** modules return `lib = {}` table, live in `src/ui/`. Accordion state tables (`accordionStatesSF`, `accordionStatesSO`, `accordeonStatesAS`) moved with their respective extracted modules.
 
 **Smoke tests:** `spec/ui-smoke_spec.lua` (30 tests) covers all panels including sfixture subtypes, joint types, and combined panel states. Run with `love . --specs spec/ui-smoke_spec.lua`.
