@@ -9,6 +9,7 @@ local cam = camera.getInstance()
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local fixtures = require('src.fixtures')
 local mathutils = require('src.math-utils')
+local ST = require('src.shape-types')
 
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
@@ -20,12 +21,12 @@ local accordeonStatesAS = {
 }
 
 function lib.drawAddShapeUI()
-    local shapeTypesLess = { 'rectangle', 'circle', 'capsule', 'ribbon' }
-    local shapeTypesMore = { 'rectangle', 'circle', 'capsule', 'triangle',
-        'itriangle', 'torso', 'trapezium', 'pentagon',
-        'hexagon',
-        'heptagon',
-        'octagon' }
+    local shapeTypesLess = { ST.RECTANGLE, ST.CIRCLE, ST.CAPSULE, ST.RIBBON }
+    local shapeTypesMore = { ST.RECTANGLE, ST.CIRCLE, ST.CAPSULE, ST.TRIANGLE,
+        ST.ITRIANGLE, ST.TORSO, ST.TRAPEZIUM, ST.PENTAGON,
+        ST.HEXAGON,
+        ST.HEPTAGON,
+        ST.OCTAGON }
     local shapeTypes = accordeonStatesAS['more'] and shapeTypesMore or shapeTypesLess
     local titleHeight = ui.font:getHeight() + BUTTON_SPACING
     local startX = 20

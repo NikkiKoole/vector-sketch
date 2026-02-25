@@ -1055,7 +1055,7 @@ function lib.drawTexturedWorld(world)
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
-        if drawables[i].type == 'texfixture' then
+        if drawables[i].type == subtypes.TEXFIXTURE then
             --if texfixture then
             local extra = drawables[i].extra
             --print(extra.dirty)
@@ -1195,7 +1195,7 @@ function lib.drawTexturedWorld(world)
             return out
         end
 
-        if drawables[i].type == 'meshusert' then
+        if drawables[i].type == subtypes.MESHUSERT then
             -- now we need to find a mapping file..
 
             local mappert
@@ -1203,7 +1203,7 @@ function lib.drawTexturedWorld(world)
                 if not v:isDestroyed() then
                     local ud = v:getUserData()
 
-                    if (#ud.label > 0 and drawables[i].label == ud.label and ud.subtype == 'resource') then
+                    if (#ud.label > 0 and drawables[i].label == ud.label and subtypes.is(ud, subtypes.RESOURCE)) then
                         mappert = v
                     end
                 end
@@ -1321,13 +1321,13 @@ function lib.drawTexturedWorld(world)
             end
         end
 
-        if drawables[i].type == 'uvusert' then
+        if drawables[i].type == subtypes.UVUSERT then
             -- now we need to find a mapping file..
 
             local mappert
             for _, v in pairs(registry.sfixtures) do
                 local ud = v:getUserData()
-                if (drawables[i].label == ud.label and ud.subtype == 'resource') then
+                if (drawables[i].label == ud.label and subtypes.is(ud, subtypes.RESOURCE)) then
                     mappert = v
                 end
             end
@@ -1418,7 +1418,7 @@ function lib.drawTexturedWorld(world)
             -- local findLabel = drawables[i].label
             -- for k, v in pairs(registry.sfixtures) do
             --     local ud = v:getUserData()
-            --     if (findLabel == ud.label and ud.subtype == 'resource') then
+            --     if (findLabel == ud.label and subtypes.is(ud, subtypes.RESOURCE)) then
             --         --   print('fount the uvmappert for me.', findLabel)
             --         -- this needs to have th euvdata and point me to the right bg image
             --         --
@@ -1458,7 +1458,7 @@ function lib.drawTexturedWorld(world)
             --            print('uv rendering galore!')
         end
 
-        if drawables[i].type == 'connected-texture' then
+        if drawables[i].type == subtypes.CONNECTED_TEXTURE then
             local curve = drawables[i].curve
             local derivate = curve:getDerivative()
             local extra = drawables[i].extra
@@ -1509,7 +1509,7 @@ function lib.drawTexturedWorld(world)
             end
         end
 
-        if drawables[i].type == 'tile-repeat' then
+        if drawables[i].type == subtypes.TILE_REPEAT then
             local vertices = drawables[i].thing.vertices
             -- todo CACHE THIS!!
             local tris = drawables[i].thing._tris or shapes.makeTrianglesFromPolygon(vertices)
@@ -1573,7 +1573,7 @@ function lib.drawTexturedWorld(world)
             end
         end
 
-        if drawables[i].type == 'trace-vertices' then
+        if drawables[i].type == subtypes.TRACE_VERTICES then
             local length = (#drawables[i].thing.vertices) / 2
             local startIndex = drawables[i].extra.startIndex
             local endIndex = drawables[i].extra.endIndex

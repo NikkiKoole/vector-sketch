@@ -16,6 +16,7 @@ local blob = require 'vendor.loveblobs'
 local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
 local subtypes = require 'src.subtypes'
+local ST = require 'src.shape-types'
 local joints = require 'src.joints'
 
 local distanceSquared = function(x1, y1, x2, y2)
@@ -213,8 +214,8 @@ local function handlePointer(x, y, id, action, _button)
         end
 
         local cx, cy = cam:getWorldCoordinates(x, y)
-        local rightShape = state.selection.selectedObj and (state.selection.selectedObj.shapeType == 'custom' or
-            state.selection.selectedObj.shapeType == 'ribbon')
+        local rightShape = state.selection.selectedObj and (state.selection.selectedObj.shapeType == ST.CUSTOM or
+            state.selection.selectedObj.shapeType == ST.RIBBON)
         -- print('hello??')
         if state.polyEdit.tempVerts and state.selection.selectedObj
             and rightShape and state.polyEdit.lockedVerts == false then
@@ -536,13 +537,13 @@ function lib.handleMouseMoved(x, y, dx, dy)
     if modes.is(modes.EDIT_MESH_VERTS) and state.selection.selectedSFixture then
         local cx, cy = cam:getWorldCoordinates(x, y)
         local ud = state.selection.selectedSFixture:getUserData()
-        if ud and ud.subtype == 'meshusert' and ud.label then
+        if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
             -- Find the resource fixture with matching label
             local mappert = nil
             for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
                     local vud = v:getUserData()
-                    if #vud.label > 0 and vud.label == ud.label and vud.subtype == 'resource' then
+                    if #vud.label > 0 and vud.label == ud.label and subtypes.is(vud, subtypes.RESOURCE) then
                         mappert = v
                         break
                     end
@@ -719,7 +720,7 @@ function lib.handleKeyPressed(key)
     if key == 'i' and state.polyEdit.tempVerts then
         -- figure out where my mousecursor is, between what nodes?
 
-        if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'ribbon' then
+        if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
             -- logger:inspect(state.selection.selectedObj)
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
@@ -735,7 +736,7 @@ function lib.handleKeyPressed(key)
     end
     if key == 'd' and state.polyEdit.tempVerts then
         -- Remove a vertex
-        if state.selection.selectedObj and state.selection.selectedObj.shapeType == 'ribbon' then
+        if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
             --logger:inspect(state.selection.selectedObj)
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)

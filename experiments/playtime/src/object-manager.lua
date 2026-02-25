@@ -14,6 +14,9 @@ local snap = require 'src.physics.snap'
 local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
 local modes = require 'src.modes'
+local ST = require 'src.shape-types'
+local JT = require('src.joint-types')
+local BT = require('src.body-types')
 -- local polyline = require 'src.polyline' -- unused
 
 function lib.finalizePolygonAsSoftSurface()
@@ -135,7 +138,7 @@ function lib.finalizePath()
        -- logger:inspect(vertices)
         -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType,
         --     nil, nil, nil, nil, '', state.interaction.polyVerts)
-        result = lib.addThing('ribbon', settings)
+        result = lib.addThing(ST.RIBBON, settings)
     else
         -- Not enough vertices to form a polygon
         logger:error("Not enough vertices to create a polygon.")
@@ -161,7 +164,7 @@ function lib.finalizePolygon()
         }
         -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType,
         --     nil, nil, nil, nil, '', state.interaction.polyVerts)
-        result = lib.addThing('custom', settings)
+        result = lib.addThing(ST.CUSTOM, settings)
     else
         -- Not enough vertices to form a polygon
         logger:error("Not enough vertices to create a polygon.")
@@ -378,7 +381,7 @@ end
 local function createThing(shapeType, conf)
     --local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
     -- Initialize default values
-    local bodyType = conf.bodyType or 'dynamic'
+    local bodyType = conf.bodyType or BT.DYNAMIC
     -- radius = radius or 20         -- Default radius for circular shapes
     -- width = width or radius * 2   -- Default width for polygonal shapes
     -- width2 = width2 or radius * 2 -- Default width for polygonal shapes
@@ -698,7 +701,7 @@ function lib.autoRopify(ud)
                 --print('todo, attach joint between these 2 things')
                 if newthing then
                     local data = {
-                        jointType = 'revolute',
+                        jointType = JT.REVOLUTE,
                         body1 = thing.body,
                         body2 = newthing.body,
                         offsetA = { x = 0, y = thing.height / 2 }

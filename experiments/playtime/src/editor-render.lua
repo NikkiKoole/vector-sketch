@@ -14,6 +14,7 @@ local cam = camera.getInstance()
 local utils = require 'src.utils'
 local inputmanager = require 'src.input-manager'
 local subtypes = require 'src.subtypes'
+local ST = require 'src.shape-types'
 local lib = {}
 
 
@@ -104,7 +105,7 @@ function lib.renderActiveEditorThings()
 
     -- draw mousehandlers for dragging vertices
     local rightShape = state.selection.selectedObj and
-        (state.selection.selectedObj.shapeType == 'custom' or state.selection.selectedObj.shapeType == 'ribbon')
+        (state.selection.selectedObj.shapeType == ST.CUSTOM or state.selection.selectedObj.shapeType == ST.RIBBON)
     if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)

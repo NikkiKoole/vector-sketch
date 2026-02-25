@@ -6,6 +6,7 @@ local modes = require('src.modes')
 local registry = require('src.registry')
 local joints = require('src.joints')
 local mathutils = require('src.math-utils')
+local JT = require('src.joint-types')
 
 local BUTTON_HEIGHT = ui.theme.lineHeight
 
@@ -216,7 +217,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
                     modes.set(modes.SET_OFFSET_A)
                 end
-                if jointType ~= 'revolute' then
+                if jointType ~= JT.REVOLUTE then
                     if ui.button(x + 50, y, BUTTON_HEIGHT, 'b  ') then
                         modes.set(modes.SET_OFFSET_B)
                     end
@@ -267,7 +268,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 return joint
             end
 
-            if jointType == 'distance' then
+            if jointType == JT.DISTANCE then
                 nextRow()
                 collideFunctionality()
                 nextRow()
@@ -298,7 +299,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
 
                 nextRow()
                 nextRow()
-            elseif jointType == 'weld' then
+            elseif jointType == JT.WELD then
                 nextRow()
                 collideFunctionality()
                 nextRow()
@@ -314,7 +315,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     function(val) joint:setDampingRatio(val) end
                 )
                 nextRow()
-            elseif jointType == 'rope' then
+            elseif jointType == JT.ROPE then
                 nextRow()
                 collideFunctionality()
                 nextRow()
@@ -332,7 +333,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     end
                 )
                 nextRow()
-            elseif jointType == 'revolute' then
+            elseif jointType == JT.REVOLUTE then
                 nextRow()
                 collideFunctionality()
                 nextRow()
@@ -341,7 +342,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 limitsFunctionalityAngular()
                 nextRow()
                 motorFunctionality({ useTorque = true })
-            elseif jointType == 'wheel' then
+            elseif jointType == JT.WHEEL then
                 nextRow()
                 collideFunctionality()
                 nextRow()
@@ -366,7 +367,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 -- axisFunctionality(joint)
                 nextRow()
                 --  end
-            elseif jointType == 'motor' then
+            elseif jointType == JT.MOTOR then
                 nextRow()
                 collideFunctionality()
                 nextRow()
@@ -403,7 +404,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     function(val) joint:setMaxTorque(val) end
                 )
                 nextRow()
-            elseif jointType == 'friction' then
+            elseif jointType == JT.FRICTION then
                 offsetSliders()
                 nextRow()
                 ui.createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
@@ -416,7 +417,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     function(val) joint:setMaxTorque(val) end
                 )
                 nextRow()
-            elseif jointType == 'prismatic' then
+            elseif jointType == JT.PRISMATIC then
                 nextRow()
                 collideFunctionality()
                 nextRow()

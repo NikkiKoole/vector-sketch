@@ -1,7 +1,8 @@
 -- joint-handlers.lua
 local jointHandlers = {}
+local JT = require('src.joint-types')
 
-jointHandlers["distance"] = {
+jointHandlers[JT.DISTANCE] = {
     create = function(data, x1, y1, x2, y2)
         local length = data.length or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
         local joint = love.physics.newDistanceJoint(data.body1, data.body2, x1, y1, x2, y2, data.collideConnected)
@@ -17,20 +18,7 @@ jointHandlers["distance"] = {
         }
     end
 }
-jointHandlers["friction"] = {
-    create = function(data, x1, y1, x2, y2)
-        local joint = love.physics.newFrictionJoint(data.body1, data.body2, x1, y1, x2, y2, data.collideConnected)
-        return joint
-    end,
-
-    extract = function(joint)
-        return {
-            maxForce = joint:getMaxForce(),
-            maxTorque = joint:getMaxTorque()
-        }
-    end
-}
-jointHandlers["weld"] = {
+jointHandlers[JT.WELD] = {
     create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newWeldJoint(data.body1, data.body2, x1, y1, data.collideConnected)
         return joint
@@ -42,7 +30,7 @@ jointHandlers["weld"] = {
         }
     end
 }
-jointHandlers["rope"] = {
+jointHandlers[JT.ROPE] = {
     create = function(data, x1, y1, x2, y2)
         local maxLength = data.maxLength or math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
         local joint = love.physics.newRopeJoint(
@@ -55,7 +43,7 @@ jointHandlers["rope"] = {
         }
     end
 }
-jointHandlers["revolute"] = {
+jointHandlers[JT.REVOLUTE] = {
 
     create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, data.collideConnected)
@@ -80,7 +68,7 @@ jointHandlers["revolute"] = {
         }
     end
 }
-jointHandlers["wheel"] = {
+jointHandlers[JT.WHEEL] = {
     create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newWheelJoint(data.body1, data.body2, x1, y1, data.axisX or 0, data.axisY or 1,
             data.collideConnected)
@@ -100,7 +88,7 @@ jointHandlers["wheel"] = {
         }
     end
 }
-jointHandlers["motor"] = {
+jointHandlers[JT.MOTOR] = {
     create = function(data, _x1, _y1, _x2, _y2)
         local joint = love.physics.newMotorJoint(data.body1, data.body2, data.correctionFactor or .3,
             data.collideConnected)
@@ -118,7 +106,7 @@ jointHandlers["motor"] = {
         }
     end
 }
-jointHandlers["prismatic"] = {
+jointHandlers[JT.PRISMATIC] = {
     create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newPrismaticJoint(data.body1, data.body2, x1, y1, data.axisX or 0, data.axisY or 1,
             data.collideConnected)
@@ -138,7 +126,7 @@ jointHandlers["prismatic"] = {
         }
     end
 }
-jointHandlers["pulley"] = {
+jointHandlers[JT.PULLEY] = {
     create = function(data, _x1, _y1, _x2, _y2)
         local groundAnchorA = data.groundAnchor1 or { 0, 0 }
         local groundAnchorB = data.groundAnchor2 or { 0, 0 }
@@ -166,7 +154,7 @@ jointHandlers["pulley"] = {
         }
     end
 }
-jointHandlers["friction"] = {
+jointHandlers[JT.FRICTION] = {
     create = function(data, x1, y1, _x2, _y2)
         -- Create a Friction Joint
         local joint = love.physics.newFrictionJoint(data.body1, data.body2, x1, y1, false)

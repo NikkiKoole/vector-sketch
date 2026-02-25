@@ -1,4 +1,5 @@
 local state = {}
+local BT = require('src.body-types')
 
 state.positioningMesh = false
 
@@ -41,7 +42,7 @@ state.panelVisibility = {
 
 state.editorPreferences = { -- Less volatile state
     showGrid = false,
-    nextType = 'dynamic',
+    nextType = BT.DYNAMIC,
     lastUsedRadius = 20,
     lastUsedWidth = 40,
     lastUsedWidth2 = 5,

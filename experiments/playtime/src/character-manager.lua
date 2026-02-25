@@ -8,6 +8,9 @@ local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
 local drawTextured = require 'src.physics.box2d-draw-textured'
 local subtypes = require 'src.subtypes'
+local ST = require 'src.shape-types'
+local JT = require('src.joint-types')
+local BT = require('src.body-types')
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
@@ -253,11 +256,11 @@ local dna = {
                 -- if we want the connected skin you probably want to use the capsule shape.
                 -- if you want a normal txture you might want the shape8
 
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'shapeA2.png',
 
-                --shape = 'capsule',
-                j = { type = 'revolute', limits = { low = -math.pi / 32, up = math.pi / 32 } }
+                --shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 32, up = math.pi / 32 } }
             },
             ['torso-segment-template'] = {
                 appearance = {
@@ -284,21 +287,21 @@ local dna = {
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
-                shape = 'shape8',
-                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+                shape = ST.SHAPE8,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
 
             --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 },
-            --    shape = 'capsule', j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } } },
+            --    shape = ST.CAPSULE, j = { type = JT.REVOLUTE, limits = { low = -math.pi / 16, up = math.pi / 16 } } },
             -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
             ['neck-segment-template'] = {
 
                 dims = { w = 80, w2 = 4, h = 150 },
-                shape = 'capsule',
-                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+                shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
-            -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = 'capsule',
-            --     j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } } },
+            -- ['head'] = { dims = { w = 100, w2 = 4, h = 180 }, shape = ST.CAPSULE,
+            --     j = { type = JT.REVOLUTE, limits = { low = -math.pi / 4, up = math.pi / 4 } } },
             ['head'] = {
                 appearance = {
                     ['skin'] = {
@@ -315,9 +318,9 @@ local dna = {
                     }
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'shapeA2.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 4, up = math.pi / 4 } }
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 4, up = math.pi / 4 } }
             },
             ['luleg'] = {
                 appearance = {
@@ -331,8 +334,8 @@ local dna = {
                     }
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
-                shape = 'capsule',
-                j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } }
+                shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } }
             },
             ['ruleg'] = {
                 appearance = {
@@ -346,13 +349,13 @@ local dna = {
                     }
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
-                shape = 'capsule',
-                j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } }
+                shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } }
             },
-            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule',
-                j = { type = 'revolute', limits = { low = -math.pi / 2, up = 0 } } },
-            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = 'capsule',
-                j = { type = 'revolute', limits = { low = 0, up = math.pi / 2 } } },
+            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } } },
+            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } } },
             ['luarm'] = {
                 appearance = {
                     ['connected-skin'] = {
@@ -366,8 +369,8 @@ local dna = {
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
-                shape = 'capsule',
-                j = { type = 'revolute', limits = { low = 0, up = math.pi } }
+                shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi } }
             },
             ['ruarm'] = {
                 appearance = {
@@ -382,13 +385,13 @@ local dna = {
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
-                shape = 'capsule',
-                j = { type = 'revolute', limits = { low = -math.pi, up = 0 } }
+                shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi, up = 0 } }
             },
             ['llarm'] = { dims = { w = 40, h = 200, w2 = 4 },
-                shape = 'capsule', j = { type = 'revolute', limits = {} } },
+                shape = ST.CAPSULE, j = { type = JT.REVOLUTE, limits = {} } },
             ['rlarm'] = { dims = { w = 40, h = 200, w2 = 4 },
-                shape = 'capsule', j = { type = 'revolute', limits = {} } },
+                shape = ST.CAPSULE, j = { type = JT.REVOLUTE, limits = {} } },
             ['lfoot'] = {
                 appearance = {
                     ['skin'] = {
@@ -397,9 +400,9 @@ local dna = {
 
                 },
                 dims = { w = 80, h = 150, sx = 1, sy = 1 },
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'feet6r.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             ['rfoot'] = {
                 appearance = {
@@ -408,15 +411,15 @@ local dna = {
                     },
                 },
                 dims = { w = 80, h = 150, sx = -1, sy = 1 },
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'feet6r.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
-            --['lfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule',
-            --    j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
-            --['rfoot'] = { dims = { w = 80, h = 250 }, shape = 'capsule',
-            --    j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['lfoot'] = { dims = { w = 80, h = 250 }, shape = ST.CAPSULE,
+            --    j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --['rfoot'] = { dims = { w = 80, h = 250 }, shape = ST.CAPSULE,
+            --    j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lhand'] = {
                 appearance = {
                     ['skin'] = {
@@ -424,9 +427,9 @@ local dna = {
                     },
                 },
                 dims = { w = 40, h = 40, sx = 1, sy = 1 },
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'hand3r.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             ['rhand'] = {
                 appearance = {
@@ -435,15 +438,15 @@ local dna = {
                     },
                 },
                 dims = { w = 40, h = 40, sx = -1, sy = 1 },
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'hand3r.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } }
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODo same kind of weirdness for the hands!
             -- ['lhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle',
-            --     j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --     j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             -- ['rhand'] = { dims = { w = 40, h = 400 }, shape = 'rectangle',
-            --     j = { type = 'revolute', limits = { low = -math.pi / 8, up = math.pi / 8 } } },
+            --     j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } } },
             ['lear'] = {
                 appearance = {
                     ['skin'] = {
@@ -455,9 +458,9 @@ local dna = {
                 },
                 dims = { w = 100, h = 300, sx = .5, sy = 1 },
 
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'earx1r.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 16, up = math.pi / 16 } },
                 stanceAngle = -math.pi / 2 + math.pi / 5
             },
             ['rear'] = {
@@ -471,9 +474,9 @@ local dna = {
                 },
                 dims = { w = 10, h = 100, sx = -.5, sy = 1 },
 
-                shape = 'shape8',
+                shape = ST.SHAPE8,
                 shape8URL = 'earx1r.png',
-                j = { type = 'revolute', limits = { low = -math.pi / 16, up = math.pi / 16 } },
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 16, up = math.pi / 16 } },
                 stanceAngle = math.pi / 2 - math.pi / 5
             }
         },
@@ -720,7 +723,7 @@ local function getOwnOffset(partName, guy)
         return 0, (-parts[partName].dims.h / 2) * scale
     end
     if extractTorsoIndex(partName) then
-        if parts[partName].shape == 'shape8' then
+        if parts[partName].shape == ST.SHAPE8 then
             --  print(parts[partName].shape8URL)
             local raw = shape8Dict[parts[partName].shape8URL].vertices
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
@@ -733,7 +736,7 @@ local function getOwnOffset(partName, guy)
     end
 
     if partName == 'head' then
-        if parts[partName].shape == 'shape8' then
+        if parts[partName].shape == ST.SHAPE8 then
             local raw = shape8Dict[parts[partName].shape8URL].vertices
             local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
             local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
@@ -751,7 +754,7 @@ local function getOwnOffset(partName, guy)
     -- end
     if partName == 'lear' or partName == 'rear' then
         local part = parts[partName]
-        if part.shape == 'shape8' then
+        if part.shape == ST.SHAPE8 then
             local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
@@ -775,7 +778,7 @@ local function getOwnOffset(partName, guy)
     end
     if partName == 'lfoot' or partName == 'rfoot' then
         local part = parts[partName]
-        if part.shape == 'shape8' then
+        if part.shape == ST.SHAPE8 then
             local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
@@ -799,7 +802,7 @@ local function getOwnOffset(partName, guy)
     end
     if partName == 'rhand' or partName == 'lhand' then
         local part = parts[partName]
-        if part.shape == 'shape8' then
+        if part.shape == ST.SHAPE8 then
             local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
@@ -820,7 +823,7 @@ local function getOwnOffset(partName, guy)
     if extractNoseIndex(partName) then
         local part = guy.dna.parts[partName]
 
-        if part.shape == 'shape8' then
+        if part.shape == ST.SHAPE8 then
             local raw = shape8Dict[part.shape8URL].vertices
             local rr = recenterPoints(raw)
             local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
@@ -878,14 +881,14 @@ local function getOffsetFromParent(partName, guy)
     end
 
     local function hasTorso8()
-        if parts[highestTorso].shape == 'shape8' then
+        if parts[highestTorso].shape == ST.SHAPE8 then
             return true
         end
         return false
     end
 
     local function hasNose8()
-        if parts['nose1'].shape == 'shape8' then
+        if parts['nose1'].shape == ST.SHAPE8 then
             return true
         end
         return false
@@ -893,7 +896,7 @@ local function getOffsetFromParent(partName, guy)
 
 
     local function hasHead8()
-        if parts['head'].shape == 'shape8' then
+        if parts['head'].shape == ST.SHAPE8 then
             return true
         end
         return false
@@ -1267,7 +1270,7 @@ local function updateSinglePart(partName, data, instance)
     local settings = {
         x = oldPosX,
         y = oldPosY,
-        bodyType = 'dynamic',
+        bodyType = BT.DYNAMIC,
         shapeType = partData.shape,
         shape8URL = partData.shape8URL,
         label = partName,
@@ -1406,14 +1409,14 @@ function lib.addTexturesFromInstance2(instance)
                         local fixture
                         if (documentSize) then
                             fixture = fixtures.createSFixture(body, 0, 0,
-                                'texfixture',
+                                subtypes.TEXFIXTURE,
                                 {
                                     width = documentSize.w * growfactor * scale,
                                     height = documentSize.h * growfactor *
                                         scale
                                 })
                         else
-                            fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                            fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
                                 { width = w * growfactor, height = h * growfactor })
                         end
                         local ud = fixture:getUserData()
@@ -1443,7 +1446,7 @@ function lib.addTexturesFromInstance2(instance)
                         local body = relevant.body
                         local _, _, w, h = getCenterAndDimensions(body)
                         local growfactor = 1.2
-                        local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture',
+                        local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
                             { width = w * growfactor, height = h * growfactor })
                         local ud = fixture:getUserData()
                         ud.extra.OMP = false --it.OMP
@@ -1472,7 +1475,7 @@ function lib.addTexturesFromInstance2(instance)
                         local noseSegments  = instance.dna.creation.noseSegments or 0
                         local jointLabels   = {}
 
-                        local fixture       = fixtures.createSFixture(body, 0, 0, 'connected-texture',
+                        local fixture       = fixtures.createSFixture(body, 0, 0, subtypes.CONNECTED_TEXTURE,
                             { radius = 30 * scale })
 
                         local ud            = fixture:getUserData()
@@ -1556,7 +1559,7 @@ function lib.addTexturesFromInstance2(instance)
                             local body = relevant.body
 
 
-                            local fixture = fixtures.createSFixture(body, 0, 0, 'trace-vertices',
+                            local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TRACE_VERTICES,
                                 { radius = 30, width = 100, height = 100 })
                             local ud = fixture:getUserData()
                             ud.extra.OMP = false --it.OMP
@@ -1661,7 +1664,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         local settings = {
             x = x,
             y = y,
-            bodyType = 'dynamic',       -- Start as dynamic, will be adjusted later if inactive
+            bodyType = BT.DYNAMIC,      -- Start as dynamic, will be adjusted later if inactive
             shapeType = partData.shape, -- Use shape defined in template
             shape8URL = partData.shape8URL,
             label = partName,           --partName,           -- Use part name as initial label

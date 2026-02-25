@@ -3,6 +3,7 @@
 local logger = require 'src.logger'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
+local ST = require 'src.shape-types'
 local shapes = {}
 
 local function makePolygonVertices(sides, radius)
@@ -429,36 +430,36 @@ function shapes.createShape(shapeType, settings)
     local shapesList = {}
     local vertices = nil
 
-    if shapeType == 'circle' then
+    if shapeType == ST.CIRCLE then
         vertices = approximateCircle(settings.radius, 0, 0, 20)
         --table.insert(shapesList, love.physics.newPolygonShape(vertices))
         table.insert(shapesList, love.physics.newCircleShape(settings.radius))
-    elseif shapeType == 'rectangle' then
+    elseif shapeType == ST.RECTANGLE then
         vertices = rect(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newRectangleShape(settings.width, settings.height))
-    elseif shapeType == 'torso' then
+    elseif shapeType == ST.TORSO then
         vertices = torso(settings.width, settings.width2, settings.width3, settings.height,
             settings.height2,
             settings.height3, settings.height4, 0, 0)
         shapesList = makeShapeListFromPolygon(vertices) or {}
         --table.insert(shapesList, love.physics.newPolygonShape(vertices))
-    elseif shapeType == 'capsule' then
+    elseif shapeType == ST.CAPSULE then
         local radius = math.min(settings.width / (settings.width2 or 1), settings.height / (settings.width2 or 1))
         vertices = capsuleXY(settings.width, settings.height, radius, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
-    elseif shapeType == 'trapezium' then
+    elseif shapeType == ST.TRAPEZIUM then
         vertices = makeTrapezium(settings.width, settings.width2 or (settings.width * 1.2), settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
-    elseif shapeType == 'itriangle' then
+    elseif shapeType == ST.ITRIANGLE then
         vertices = makeITriangle(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
-    elseif shapeType == 'shape8' then
+    elseif shapeType == ST.SHAPE8 then
         --local v = makeTransformedVertices(settings.optionalVertices)
         vertices = settings.optionalVertices
 
         shapesList = makeShapeListFromPolygon(vertices) or {}
         -- logger:info('lets start to make a thingie', inspect(settings))
-    elseif shapeType == 'ribbon' then
+    elseif shapeType == ST.RIBBON then
         vertices = settings.optionalVertices or ribbon(settings.width, settings.height * 10, 0, 0, 5, 'vertical')
         local tris = triangulateRibbon(vertices)
 
@@ -486,11 +487,11 @@ function shapes.createShape(shapeType, settings)
         --table.insert(shapesList, love.physics.newRectangleShape(settings.width, settings.height))
     else
         local sides = ({
-            triangle = 3,
-            pentagon = 5,
-            hexagon = 6,
-            heptagon = 7,
-            octagon = 8,
+            [ST.TRIANGLE] = 3,
+            [ST.PENTAGON] = 5,
+            [ST.HEXAGON] = 6,
+            [ST.HEPTAGON] = 7,
+            [ST.OCTAGON] = 8,
         })[shapeType]
 
         if sides then
@@ -499,7 +500,7 @@ function shapes.createShape(shapeType, settings)
             local rel = mathutils.makePolygonRelativeToCenter(vertices, cx, cy)
             vertices = mathutils.makePolygonAbsolute(rel, 0, 0)
             table.insert(shapesList, love.physics.newPolygonShape(vertices))
-        elseif shapeType == 'custom' then
+        elseif shapeType == ST.CUSTOM then
             if settings.optionalVertices then
                 local polygon = settings.optionalVertices
 

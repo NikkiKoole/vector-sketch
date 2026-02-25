@@ -12,6 +12,8 @@ local sceneIO = require('src.io')
 local objectManager = require('src.object-manager')
 local recorder = require('src.recorder')
 local state = require('src.state')
+local ST = require('src.shape-types')
+local BT = require('src.body-types')
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -56,12 +58,12 @@ function lib.drawUpdateSelectedObjectUI()
 
         -- Determine the next body type in the cycle
         local nextBodyType
-        if currentBodyType == 'static' then
-            nextBodyType = 'dynamic'
-        elseif currentBodyType == 'dynamic' then
-            nextBodyType = 'kinematic'
-        elseif currentBodyType == 'kinematic' then
-            nextBodyType = 'static'
+        if currentBodyType == BT.STATIC then
+            nextBodyType = BT.DYNAMIC
+        elseif currentBodyType == BT.DYNAMIC then
+            nextBodyType = BT.KINEMATIC
+        elseif currentBodyType == BT.KINEMATIC then
+            nextBodyType = BT.STATIC
         end
 
         -- Add a button to toggle the body type
@@ -249,7 +251,7 @@ function lib.drawUpdateSelectedObjectUI()
 
 
                     nextRow()
-                    if shapeType == 'circle' then
+                    if shapeType == ST.CIRCLE then
                         -- Show radius control for circles
 
 
@@ -257,11 +259,11 @@ function lib.drawUpdateSelectedObjectUI()
                         ui.alignedLabel(x, y, ' radius')
                         if newRadius and newRadius ~= thing.radius then
                             state.selection.selectedObj = objectManager.recreateThingFromBody(body,
-                                { shapeType = "circle", radius = newRadius })
+                                { shapeType = ST.CIRCLE, radius = newRadius })
                             state.editorPreferences.lastUsedRadius = newRadius
                             body = state.selection.selectedObj.body
                         end
-                    elseif shapeType == 'rectangle' or shapeType == 'itriangle' then
+                    elseif shapeType == ST.RECTANGLE or shapeType == ST.ITRIANGLE then
                         -- Show width and height controls for these shapes
 
 
@@ -282,7 +284,7 @@ function lib.drawUpdateSelectedObjectUI()
                             })
                             body = state.selection.selectedObj.body
                         end
-                    elseif shapeType == 'torso' then
+                    elseif shapeType == ST.TORSO then
                         local newWidth = ui.sliderWithInput(myID .. ' width', x, y, ROW_WIDTH, 1, 800, thing.width)
                         ui.alignedLabel(x, y, ' width')
                         nextRow()
@@ -338,7 +340,7 @@ function lib.drawUpdateSelectedObjectUI()
                             })
                             body = state.selection.selectedObj.body
                         end
-                    elseif shapeType == 'trapezium' or shapeType == 'capsule' then
+                    elseif shapeType == ST.TRAPEZIUM or shapeType == ST.CAPSULE then
                         -- Show width and height controls for these shapes
 
 
@@ -371,8 +373,8 @@ function lib.drawUpdateSelectedObjectUI()
                         end
                     else
                         -- For polygonal or other custom shapes, only allow radius control if applicable
-                        if shapeType == 'triangle' or shapeType == 'pentagon' or shapeType == 'hexagon' or
-                            shapeType == 'heptagon' or shapeType == 'octagon' then
+                        if shapeType == ST.TRIANGLE or shapeType == ST.PENTAGON or shapeType == ST.HEXAGON or
+                            shapeType == ST.HEPTAGON or shapeType == ST.OCTAGON then
                             nextRow()
 
                             local newRadius = ui.sliderWithInput(myID .. ' radius', x, y, ROW_WIDTH, 1, 200, thing
@@ -389,8 +391,8 @@ function lib.drawUpdateSelectedObjectUI()
                             --+ (BUTTON_HEIGHT-ui.fontHeight)(x, y, 'custom')
                             if (state.selection.selectedObj) then
                                 if state.selection.selectedObj
-                                    and state.selection.selectedObj.shapeType == 'custom'
-                                    or state.selection.selectedObj.shapeType == 'ribbon' then
+                                    and state.selection.selectedObj.shapeType == ST.CUSTOM
+                                    or state.selection.selectedObj.shapeType == ST.RIBBON then
                                     if ui.button(x, y, 260,
                                         state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
                                         state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts

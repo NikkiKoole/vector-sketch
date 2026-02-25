@@ -372,7 +372,7 @@ function lib.buildWorld(data, world, cam)
     for _, v in pairs(registry.sfixtures) do
         local ud = v:getUserData()
 
-        if ud.subtype == 'meshusert' then
+        if subtypes.is(ud, subtypes.MESHUSERT) then
             if ud.extra then --and ud.extra.infuences then
                 if ud.extra.influences then
                     restoreInfluenceBodies(ud.extra.influences)
@@ -406,25 +406,26 @@ function lib.load(data, world, cam)
 end
 
 local function needsDimProperty(prop, shape)
+    local ST = require 'src.shape-types'
     local needsRadius = function(s)
-        return s == 'triangle' or s == 'pentagon' or s == 'hexagon' or
-            s == 'heptagon' or s == 'octagon' or s == 'circle'
+        return s == ST.TRIANGLE or s == ST.PENTAGON or s == ST.HEXAGON or
+            s == ST.HEPTAGON or s == ST.OCTAGON or s == ST.CIRCLE
     end
 
     if prop == 'radius' then
         return needsRadius(shape)
     elseif prop == 'width' then
-        return not needsRadius(shape) and shape ~= 'custom'
+        return not needsRadius(shape) and shape ~= ST.CUSTOM
     elseif prop == 'height' then
-        return not needsRadius(shape) and shape ~= 'custom'
+        return not needsRadius(shape) and shape ~= ST.CUSTOM
     elseif prop == 'height2' then
-        return shape == 'capsule' or shape == 'torso'
+        return shape == ST.CAPSULE or shape == ST.TORSO
     elseif prop == 'width2' then
-        return shape == 'trapezium' or shape == 'torso'
+        return shape == ST.TRAPEZIUM or shape == ST.TORSO
     elseif prop == 'height3' or prop == 'height4' then
-        return shape == 'torso'
+        return shape == ST.TORSO
     elseif prop == 'width3' then
-        return shape == 'torso'
+        return shape == ST.TORSO
     end
 end
 
@@ -509,7 +510,7 @@ function lib.gatherSaveData(world, camera)
                     -- can we just delete it ?
                     local shape = first:getShape()
                     if shape:typeOf("CircleShape") then
-                        bodyData.sharedFixtureData.shapeType = 'circle'
+                        bodyData.sharedFixtureData.shapeType = require('src.shape-types').CIRCLE
                     elseif shape:typeOf("PolygonShape") then
                         bodyData.sharedFixtureData.shapeType = 'polygon'
                     end
@@ -633,13 +634,14 @@ function lib.gatherSaveData(world, camera)
                 end
 
                 -- Extract joint-specific properties
-                if joint:getType() == "distance" then
+                local JT = require 'src.joint-types'
+                if joint:getType() == JT.DISTANCE then
                     jointData.properties.length = joint:getLength()
                     jointData.properties.frequency = joint:getFrequency()
                     jointData.properties.dampingRatio = joint:getDampingRatio()
-                elseif joint:getType() == 'rope' then
+                elseif joint:getType() == JT.ROPE then
                     jointData.properties.maxLength = joint:getMaxLength()
-                elseif joint:getType() == "revolute" then
+                elseif joint:getType() == JT.REVOLUTE then
                     jointData.properties.motorEnabled = joint:isMotorEnabled()
                     if jointData.properties.motorEnabled then
                         jointData.properties.motorSpeed = joint:getMotorSpeed()
@@ -650,10 +652,10 @@ function lib.gatherSaveData(world, camera)
                         jointData.properties.lowerLimit = joint:getLowerLimit()
                         jointData.properties.upperLimit = joint:getUpperLimit()
                     end
-                elseif joint:getType() == "weld" then
+                elseif joint:getType() == JT.WELD then
                     jointData.properties.frequency = joint:getFrequency()
                     jointData.properties.dampingRatio = joint:getDampingRatio()
-                elseif joint:getType() == "prismatic" then
+                elseif joint:getType() == JT.PRISMATIC then
                     local axisx, axisy = joint:getAxis()
                     jointData.properties.axis = { x = axisx, y = axisy }
                     jointData.properties.motorEnabled = joint:isMotorEnabled()
@@ -666,12 +668,12 @@ function lib.gatherSaveData(world, camera)
                         jointData.properties.lowerLimit = joint:getLowerLimit()
                         jointData.properties.upperLimit = joint:getUpperLimit()
                     end
-                elseif joint:getType() == "pulley" then
+                elseif joint:getType() == JT.PULLEY then
                     local a1x, a1y, a2x, a2y = joint:getGroundAnchors()
                     jointData.properties.groundAnchor1 = { x = a1x, y = a1y }
                     jointData.properties.groundAnchor2 = { x = a2x, y = a2y }
                     jointData.properties.ratio = joint:getRatio()
-                elseif joint:getType() == "wheel" then
+                elseif joint:getType() == JT.WHEEL then
                     jointData.properties.motorEnabled = joint:isMotorEnabled()
                     if jointData.properties.motorEnabled then
                         jointData.properties.motorSpeed = joint:getMotorSpeed()
@@ -681,13 +683,13 @@ function lib.gatherSaveData(world, camera)
                     jointData.properties.axis = { x = axisx, y = axisy }
                     jointData.properties.springFrequency = joint:getSpringFrequency()
                     jointData.properties.springDampingRatio = joint:getSpringDampingRatio()
-                elseif joint:getType() == "motor" then
+                elseif joint:getType() == JT.MOTOR then
                     jointData.properties.correctionFactor = joint:getCorrectionFactor()
                     jointData.properties.angularOffset = joint:getAngularOffset()
                     jointData.properties.linearOffsetX, jointData.properties.linearOffsetY = joint:getLinearOffset()
                     jointData.properties.maxForce = joint:getMaxForce()
                     jointData.properties.maxTorque = joint:getMaxTorque()
-                elseif joint:getType() == "friction" then
+                elseif joint:getType() == JT.FRICTION then
                     jointData.properties.maxForce = joint:getMaxForce()
                     jointData.properties.maxTorque = joint:getMaxTorque()
                 else

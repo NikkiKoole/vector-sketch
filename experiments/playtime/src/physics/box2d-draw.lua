@@ -3,6 +3,8 @@
 local lib = {}
 
 local state = require 'src.state'
+local JT = require 'src.joint-types'
+local BT = require('src.body-types')
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -18,13 +20,13 @@ local pal = {
 }
 
 local function getBodyColor(body)
-    if body:getType() == 'kinematic' then
+    if body:getType() == BT.KINEMATIC then
         return pal.red
     end
-    if body:getType() == 'dynamic' then
+    if body:getType() == BT.DYNAMIC then
         return pal.lime
     end
-    if body:getType() == 'static' then
+    if body:getType() == BT.STATIC then
         return pal.sun
     end
 end
@@ -153,14 +155,14 @@ function lib.drawWorld(world, drawOutline)
             love.graphics.setLineJoin("none")
 
             local jointType = joint:getType()
-            if jointType == 'pulley' then
+            if jointType == JT.PULLEY then
                 local gx1, gy1, gx2, gy2 = joint:getGroundAnchors()
                 love.graphics.setColor(1, 1, 0, alpha)
                 love.graphics.line(x1, y1, gx1, gy1)
                 love.graphics.line(x2, y2, gx2, gy2)
                 love.graphics.line(gx1, gy1, gx2, gy2)
             end
-            if jointType == 'prismatic' then
+            if jointType == JT.PRISMATIC then
                 local x, y = joint:getAnchors()
                 local ax, ay = joint:getAxis()
                 local length = 50
@@ -176,7 +178,7 @@ function lib.drawWorld(world, drawOutline)
                 end
                 love.graphics.setColor(1, 1, 1) -- Reset
             end
-            if jointType == 'revolute' and joint:areLimitsEnabled() then
+            if jointType == JT.REVOLUTE and joint:areLimitsEnabled() then
                 local lower = joint:getLowerLimit()
                 local upper = joint:getUpperLimit()
                 local referenceAngle = joint:getReferenceAngle()
@@ -206,7 +208,7 @@ function lib.drawWorld(world, drawOutline)
                 love.graphics.setColor(0.5, 0.5, 0.5, alpha)
                 love.graphics.line(x1, y1, endX, endY)
             end
-            if jointType == 'wheel' then
+            if jointType == JT.WHEEL then
                 -- Draw wheel joint axis
                 local axisX, axisY = joint:getAxis()
                 if x1 and y1 and axisX and axisY then

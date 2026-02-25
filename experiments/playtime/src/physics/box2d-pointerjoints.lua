@@ -1,6 +1,7 @@
 --box2d-pointerjoints.lua
 local lib = {}
 local state = require 'src.state'
+local BT = require('src.body-types')
 local pointerJoints = {}
 
 local function getPointerPosition(id)
@@ -149,7 +150,7 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
     local temp = {}
     local hitted = {}
     for _, body in ipairs(bodies) do
-        if body:getType() == 'kinematic' then
+        if body:getType() == BT.KINEMATIC then
             -- for the playitme editor i do want to be able to slect these..
             -- local fixtures = body:getFixtures()
             local fixtures = body:getFixtures()
@@ -161,7 +162,7 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
                 end
             end
         end
-        if body:getType() ~= 'kinematic' then
+        if body:getType() ~= BT.KINEMATIC then
             local fixtures = body:getFixtures()
             for _, fixture in ipairs(fixtures) do
                 local hitThisOne = fixture:testPoint(wx, wy)

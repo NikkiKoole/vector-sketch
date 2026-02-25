@@ -18,6 +18,7 @@ local state = require 'src.state'
 local modes = require 'src.modes'
 local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
+local subtypes = require 'src.subtypes'
 local behaviors = require 'src.behaviors'
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
@@ -70,8 +71,9 @@ function lib.drawJointUpdateUI(...) return uiJointUpdate.drawJointUpdateUI(...) 
 function lib.drawAddShapeUI(...) return uiShapePanel.drawAddShapeUI(...) end
 
 function lib.drawAddJointUI()
-    local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley',
-        'friction' }
+    local JT = require 'src.joint-types'
+    local jointTypes = { JT.DISTANCE, JT.WELD, JT.ROPE, JT.REVOLUTE, JT.WHEEL, JT.MOTOR, JT.PRISMATIC, JT.PULLEY,
+        JT.FRICTION }
     local startX = 230
     local startY = 70
     local panelWidth = 200
@@ -342,7 +344,7 @@ function lib.drawUI()
                 --logger:inspect(thing)
                 -- local body =
                 if thing and thing.body then
-                    fixtures.createSFixture(thing.body, 0, 0, 'resource',
+                    fixtures.createSFixture(thing.body, 0, 0, subtypes.RESOURCE,
                         { width = 20, height = 20 })
                 end
                 --objectManager.finalizePolygonAsSoftSurface()

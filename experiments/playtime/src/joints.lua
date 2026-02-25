@@ -6,6 +6,7 @@ local uuid = require 'src.uuid'
 local jointHandlers = require 'src.joint-handlers'
 local registry = require 'src.registry'
 local mathutils = require 'src.math-utils'
+local JT = require 'src.joint-types'
 
 
 -- Updates offsetA of a joint based on a new LOCAL point (relative to body A)
@@ -84,7 +85,7 @@ function lib.createJoint(data)
     local x2, y2 = bodyB:getPosition()
 
 
-    if not (jointType == 'rope' or jointType == 'distance') then
+    if not (jointType == JT.ROPE or jointType == JT.DISTANCE) then
         -- i only want to do the positioning when im a rope joint..!
         -- that p1 and p2 is set when creating the joint by clicking on the bodies..
         data.p1 = { 0, 0 }
