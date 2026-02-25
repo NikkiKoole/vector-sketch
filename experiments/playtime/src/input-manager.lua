@@ -185,6 +185,8 @@ local releasedHandlers = {
 
 local function handlePointer(x, y, id, action, _button)
     if action == "pressed" then
+        -- Track whether press originated over a UI element
+        state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
         -- this is a nice pattern, early return!
         if modes.is(modes.EDIT_MESH_VERTS) then return end
         -- Handle press logig
@@ -336,8 +338,9 @@ local function handlePointer(x, y, id, action, _button)
         end
 
         if state.interaction.pressMissedEverything then
-            local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
-            if not wasOverUI then
+            local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel or state.interaction.pressedOverUI
+            local wasSpawning = state.interaction.draggingObj ~= nil
+            if not wasOverUI and not wasSpawning then
                 if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then
                     local body = state.selection.selectedSFixture:getBody()
                     local rthing = body:getUserData().thing
@@ -373,6 +376,7 @@ local function handlePointer(x, y, id, action, _button)
             end
         end
         state.interaction.pressMissedEverything = false
+        state.interaction.pressedOverUI = false
 
         if state.interaction.draggingObj then
             state.interaction.draggingObj.body:setAwake(true)

@@ -12,6 +12,8 @@ local ST = require 'src.shape-types'
 local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local NT = require('src.node-types')
+local mipoRegistry = require('src.mipo-registry')
+local state = require('src.state')
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
@@ -115,6 +117,10 @@ function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
                 for k, v in pairs(values) do
                     p.appearance['skin'][patch][k] = v
                 end
+                -- Clear cached RGB so makeCached() recalculates from the new hex values.
+                -- Without this, deepCopy in addTexturesFromInstance2 copies stale cached
+                -- values and makeCached skips recalculation (it only runs when cached is nil).
+                p.appearance['skin'][patch].cached = nil
             end
         end
     end
@@ -129,7 +135,26 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
                 for k, v in pairs(values) do
                     p.appearance['bodyhair'][patch][k] = v
                 end
+                -- Clear cached RGB (same reason as updateSkinOfPart above)
+                p.appearance['bodyhair'][patch].cached = nil
             end
+        end
+    end
+end
+
+-- Update connected-skin or connected-hair appearance colors.
+-- Connected textures stretch between joint-linked body parts (used for arms/legs).
+-- appearanceKey is 'connected-skin' (OMP composite) or 'connected-hair' (2-layer).
+function lib.updateConnectedAppearance(instance, partName, appearanceKey, values)
+    local p = instance.dna.parts[partName]
+    if p and p.appearance and p.appearance[appearanceKey] then
+        local main = p.appearance[appearanceKey].main
+        if main then
+            for k, v in pairs(values) do
+                main[k] = v
+            end
+            -- Clear cached RGB so makeCached() recalculates from the new hex values
+            main.cached = nil
         end
     end
 end
@@ -1144,6 +1169,8 @@ local function makePart(partName, instance, settings)
 
     if thing then
         thing.body:setAngle(prevA + xangle)
+        thing.mipoId = instance.id
+        thing.mipoPartName = partName
 
         if extractNeckIndex(partName) then
             thing.body:setAngularDamping(.1)
@@ -1258,10 +1285,12 @@ local function updateSinglePart(partName, data, instance)
     local oldAngle = 0
 
     -- Remove old body
+    local wasSelected = false
     if instance.parts[partName] then
         local oldBody = instance.parts[partName].body
         oldPosX, oldPosY = oldBody:getPosition()
         oldAngle = oldBody:getAngle()
+        wasSelected = (state.selection.selectedObj and state.selection.selectedObj.body == oldBody)
         ObjectManager.destroyBody(oldBody)
         instance.parts[partName] = nil
     end
@@ -1301,6 +1330,14 @@ local function updateSinglePart(partName, data, instance)
 
     -- after making a part set it to its angle so the children will be using that angle in their calculations.
     instance.parts[partName].body:setAngle(oldAngle)
+
+    -- Re-select the new body if the old one was selected
+    if wasSelected and instance.parts[partName] then
+        local ud = instance.parts[partName].body:getUserData()
+        if ud and ud.thing then
+            state.selection.selectedObj = ud.thing
+        end
+    end
 
     for _, childName in ipairs(children) do
         local childData = instance.dna.parts[childName]
@@ -1491,7 +1528,9 @@ function lib.addTexturesFromInstance2(instance)
                             growExtra = 20 * scale,
                         }
 
-                        ud.extra.main.wmul  = scale
+                        -- wmul controls the rendered width of the connected texture.
+                        -- Use DNA value if set, otherwise default to instance scale.
+                        ud.extra.main.wmul  = v2.main.wmul or scale
                         if k:find('uleg') then
                             --print('this is an upper-leg, connect to torso1')
                             if k == 'luleg' then
@@ -1706,6 +1745,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     lib.addTexturesFromInstance2(instance)
     --logger:info('calling addTextureFixturesFromInstance')
+    mipoRegistry.register(instance)
     return instance
 end
 

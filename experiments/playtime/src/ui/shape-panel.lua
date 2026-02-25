@@ -65,6 +65,17 @@ function lib.drawAddShapeUI()
                 contentFunc(clicked)
             end
         end
+        if ui.button(x, y, panelWidth - 20, 'add mipo') then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            local CharacterManager = require('src.character-manager')
+            local uiMipoEditor = require('src.ui.mipo-editor')
+            local instance = CharacterManager.createCharacter("humanoid", wx, wy, 0.3)
+            if instance then
+                uiMipoEditor.randomizeMipo(instance)
+            end
+        end
+        nextRow()
         drawAccordion('more', function() end)
         nextRow()
         for _, shape in ipairs(shapeTypes) do
@@ -164,6 +175,8 @@ function lib.drawAddShapeUI()
             -- todo make this work
             modes.set(modes.PICK_AUTO_ROPIFY)
         end
+        nextRow()
+        love.graphics.line(x, y + 10, x + panelWidth - 40, y + 10)
         nextRow()
     end)
 end

@@ -27,6 +27,8 @@ local uiShapePanel = require('src.ui.shape-panel')
 local uiRecordingPanel = require('src.ui.recording-panel')
 local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
+local uiMipoEditor = require('src.ui.mipo-editor')
+local mipoRegistry = require('src.mipo-registry')
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
@@ -358,7 +360,13 @@ function lib.drawUI()
     end
 
     if state.selection.selectedObj and not state.selection.selectedJoint and not state.selection.selectedSFixture then
-        lib.drawUpdateSelectedObjectUI()
+        local body = state.selection.selectedObj.body
+        local mipoInstance, mipoPartName = mipoRegistry.getFromBody(body)
+        if mipoInstance then
+            uiMipoEditor.drawMipoEditor(mipoInstance, mipoPartName)
+        else
+            lib.drawUpdateSelectedObjectUI()
+        end
     end
 
     if state.selection.selectedBodies and #state.selection.selectedBodies > 0 then
