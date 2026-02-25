@@ -107,6 +107,11 @@ end
 
 --- Resets UI state at the start of each frame.
 function ui.startFrame()
+    -- Self-heal font after hot-reload
+    if not ui.font then
+        ui.font = _persist.font or love.graphics.getFont()
+        ui.fontHeight = _persist.fontHeight or ui.font:getHeight()
+    end
     ui.nextID = 1           -- Reset unique ID counter at the start of each frame
 
     ui.mousePressed = false -- Reset click state
