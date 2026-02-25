@@ -120,9 +120,9 @@ function lib.drawJointCreateUI(panelX, panelY, w, h)
     end)
 end
 
-lib.drawJointUpdateUI = uiJointUpdate.drawJointUpdateUI
+function lib.drawJointUpdateUI(...) return uiJointUpdate.drawJointUpdateUI(...) end
 
-lib.drawAddShapeUI = uiShapePanel.drawAddShapeUI
+function lib.drawAddShapeUI(...) return uiShapePanel.drawAddShapeUI(...) end
 
 function lib.drawAddJointUI()
     local jointTypes = { 'distance', 'weld', 'rope', 'revolute', 'wheel', 'motor', 'prismatic', 'pulley',
@@ -154,8 +154,8 @@ function lib.drawAddJointUI()
     end)
 end
 
-lib.drawRecordingUI = uiRecordingPanel.drawRecordingUI
-lib.drawWorldSettingsUI = uiWorldSettings.drawWorldSettingsUI
+function lib.drawRecordingUI(...) return uiRecordingPanel.drawRecordingUI(...) end
+function lib.drawWorldSettingsUI(...) return uiWorldSettings.drawWorldSettingsUI(...) end
 
 local accordionStatesSF = {
     ['position'] = false,
