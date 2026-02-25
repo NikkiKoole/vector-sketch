@@ -226,12 +226,10 @@ This turns 40 identical clones from 255 MB into ~6.4 MB (one shared set of image
 
 Extracted to `src/character-experiments.lua` (~340 lines removed from main.lua).
 
-### 6.2 Extract physics callbacks (~15 lines)
+### 6.2 Extract physics callbacks (~15 lines) — DONE
 
-Move `beginContact`/`endContact`/`preSolve`/`postSolve` globals to `src/physics-callbacks.lua`.
-
-**Risk**: Low — thin wrappers around script.call.
-**Status**: Open.
+Moved `beginContact`/`endContact`/`preSolve`/`postSolve` to `src/physics/physics-callbacks.lua`.
+Callbacks now use `src/script-events.lua` constants for event names.
 
 ### 6.3 Extract game loop — DONE
 
@@ -241,7 +239,7 @@ Old simple loop preserved as commented historical reference in the module.
 
 Also improved `playtime.sh`: captures startup errors (kills process to flush macOS's buffered stderr),
 passes `--bridge` to skip start screen, added `log` and `errors` commands.
-**Status**: Open — main.lua is now ~660 lines which is manageable.
+**Status**: Done — main.lua is now ~660 lines which is manageable.
 
 ---
 
@@ -267,14 +265,12 @@ Replace the 4-file if/elseif chains for fixture subtypes with a `src/fixture-typ
 **Prerequisite**: Phases 1-5 (globals fixed, tests exist, bugs fixed).
 **Time**: 4-6 hours across sessions.
 
-### 7c. Mode handler table for input-manager
+### 7c. Mode handler table for input-manager — DONE
 
-Replace the if/elseif chain in `handlePointer` with a table-dispatch pattern.
+Replaced the if/elseif chain in `handlePointer` with a table-dispatch pattern.
+Also centralized `currentMode` into `src/modes.lua` with `modes.set()` / `modes.get()`.
 
-**Risk**: Medium — input handling is sensitive to ordering.
-**Verification**: Test every editing mode manually (draw polygon, draw circle, draw capsule, etc.).
-**Prerequisite**: Phase 1 (globals fixed).
-**Time**: 2-3 hours.
+**Commits**: `8c15d989`, `48afd9f4`.
 
 ### 7d. DNA topology-as-data
 
@@ -430,16 +426,16 @@ Phase 5 ─── Fix Known Bugs ────────── done (8/9 fixed,
   │          ✓ sensor: was already fixed, added guard + logging
   │          ✓ endNode: fixed misleading DNA values on arm connected-hair
   ▼
-Phase 6 ─── Extract from main.lua ─── mostly done (6.1, 6.3 done)
+Phase 6 ─── Extract from main.lua ─── ✅ DONE
   │          ✓ character experiments extracted
   │          ✓ game loop extracted to src/game-loop.lua (~150 lines)
   │          ✓ playtime.sh: error capture, --bridge flag, log/errors commands
-  │          - physics callbacks: not started
+  │          ✓ physics callbacks extracted to src/physics/physics-callbacks.lua
   ▼
-Phase 7 ─── Structural Improvements ─ 7f done
+Phase 7 ─── Structural Improvements ─ 7c/7e/7f/7g done
   │    ├── 7a. Snap state → state.lua
   │    ├── 7b. Fixture type registry
-  │    ├── 7c. Mode handler table
+  │    ├── 7c. Mode handler table ─── ✅ DONE
   │    ├── 7d. DNA topology-as-data
   │    ├── 7e. Extract world-settings panel ─── ✅ DONE
   │    └── 7f. Consolidate utility functions ─── ✅ DONE
