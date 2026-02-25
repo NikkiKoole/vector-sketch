@@ -671,4 +671,14 @@ function ui.dropdown(x, y, width, options, currentSelection)
     return false, pressed, released
 end
 
+--- Slider with label and callback, keyed by id::label.
+function ui.createSliderWithId(id, label, x, y, width, min, max, value, callback)
+    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value)
+    if newValue then
+        callback(newValue)
+    end
+    ui.alignedLabel(x, y, label)
+    return newValue
+end
+
 return ui

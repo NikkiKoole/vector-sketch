@@ -357,12 +357,13 @@ Renamed unclear variables and functions across the codebase. Only runtime names 
 
 Naming conventions documented in CLAUDE.md.
 
-### 7e. Extract world-settings panel from playtime-ui.lua
+### 7e. Extract world-settings panel from playtime-ui.lua ─── ✅ DONE
 
-Start the UI split with the performance bottleneck: `drawWorldSettingsUI` (42% of frame time).
+Extracted `drawWorldSettingsUI` (~138 lines) to `src/ui-world-settings.lua`.
+Also moved `createSliderWithId` helper to `ui-all.lua` as `ui.createSliderWithId` (shared by ~50 call sites).
 
 **Risk**: Medium — extracting one panel is safer than splitting the whole file.
-**Verification**: Open world settings, verify all sliders/checkboxes work. Profile to confirm perf improvement.
+**Verification**: luacheck 0 warnings, busted 140/140, open world settings panel works.
 **Prerequisite**: Phase 1 (global leaks in playtime-ui.lua fixed).
 **Time**: 2-3 hours.
 
@@ -438,7 +439,7 @@ Phase 7 ─── Structural Improvements ─ 7f done
   │    ├── 7b. Fixture type registry
   │    ├── 7c. Mode handler table
   │    ├── 7d. DNA topology-as-data
-  │    ├── 7e. Extract world-settings panel
+  │    ├── 7e. Extract world-settings panel ─── ✅ DONE
   │    └── 7f. Consolidate utility functions ─── ✅ DONE
   │          ✓ clamp, sign, clampedLerp, getCenterAndDimensions → math-utils
   │          ✓ randomHexColor → utils

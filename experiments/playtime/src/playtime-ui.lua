@@ -22,7 +22,7 @@ local script = require 'src.script'
 local sceneLoader = require 'src.scene-loader'
 local fileBrowser = require 'src.file-browser'
 local behaviors = require 'src.behaviors'
-local ProFi = require 'vendor.ProFi'
+local uiWorldSettings = require('src.ui-world-settings')
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
@@ -30,20 +30,9 @@ local BUTTON_SPACING = 10
 local FPS = 60
 
 
-local profileFrameCounter = 0
-
-
 -- todo move this somewhere sensible , i also need it in character manager
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
-local function createSliderWithId(id, label, x, y, width, min, max, value, callback)
-    local newValue = ui.sliderWithInput(id .. "::" .. label, x, y, width, min, max, value)
-    if newValue then
-        callback(newValue)
-    end
-    ui.alignedLabel(x, y, label)
-    return newValue
-end
 -- Helper function to create a checkbox with an associated label
 local function createCheckbox(labelText, x, y, value, callback)
     local changed, newValue = ui.checkbox(x, y, value, labelText)
@@ -180,7 +169,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     local _x, _y = joint:getAxis()
                     --_x, _y = normalizeAxis(_x, _y)
                     nextRow()
-                    createSliderWithId(jointId, ' axisX', x, y, 160, -1, 1,
+                    ui.createSliderWithId(jointId, ' axisX', x, y, 160, -1, 1,
                         _x or 0,
                         function(val)
                             state.selection.selectedJoint = joints.recreateJoint(joint, { axisX = val, axisY = _y })
@@ -188,7 +177,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                         end
                     )
                     nextRow()
-                    createSliderWithId(jointId, ' axisY', x, y, 160, -1, 1,
+                    ui.createSliderWithId(jointId, ' axisY', x, y, 160, -1, 1,
                         _y or 1,
                         function(val)
                             state.selection.selectedJoint = joints.recreateJoint(joint, { axisX = _x, axisY = val })
@@ -226,20 +215,20 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 )
                 nextRow()
                 if joint:isMotorEnabled() then
-                    createSliderWithId(jointId, ' speed', x, y, 160, -1000, 1000,
+                    ui.createSliderWithId(jointId, ' speed', x, y, 160, -1000, 1000,
                         joint:getMotorSpeed(),
                         function(val) joint:setMotorSpeed(val) end
                     )
                     nextRow()
                     if (settings and settings.useTorque) then
-                        createSliderWithId(jointId, ' max T', x, y, 160, 0, 100000,
+                        ui.createSliderWithId(jointId, ' max T', x, y, 160, 0, 100000,
                             joint:getMaxMotorTorque(),
                             function(val) joint:setMaxMotorTorque(val) end
                         )
                         nextRow()
                     end
                     if (settings and settings.useForce) then
-                        createSliderWithId(jointId, ' max F', x, y, 160, 0, 100000,
+                        ui.createSliderWithId(jointId, ' max F', x, y, 160, 0, 100000,
                             joint:getMaxMotorForce(),
                             function(val) joint:setMaxMotorForce(val) end
                         )
@@ -259,7 +248,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 if (joint:areLimitsEnabled()) then
                     nextRow()
                     local up = math.deg(joint:getUpperLimit())
-                    createSliderWithId(jointId, ' lower', x, y, 160, -180, up,
+                    ui.createSliderWithId(jointId, ' lower', x, y, 160, -180, up,
                         math.deg(joint:getLowerLimit()),
                         function(val)
                             local newValue = math.rad(val)
@@ -269,7 +258,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     )
                     nextRow()
                     local low = math.deg(joint:getLowerLimit())
-                    createSliderWithId(jointId, ' upper', x, y, 160, low, 180,
+                    ui.createSliderWithId(jointId, ' upper', x, y, 160, low, 180,
                         math.deg(joint:getUpperLimit()),
                         function(val)
                             local newValue = math.rad(val)
@@ -290,7 +279,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 if (joint:areLimitsEnabled()) then
                     nextRow()
                     local up = (joint:getUpperLimit())
-                    createSliderWithId(jointId, ' lower', x, y, 160, -1000, up,
+                    ui.createSliderWithId(jointId, ' lower', x, y, 160, -1000, up,
                         joint:getLowerLimit(),
                         function(val)
                             joint:setLowerLimit(val)
@@ -298,7 +287,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     )
                     nextRow()
                     local low = joint:getLowerLimit()
-                    createSliderWithId(jointId, ' upper', x, y, 160, low, 1000,
+                    ui.createSliderWithId(jointId, ' upper', x, y, 160, low, 1000,
                         joint:getUpperLimit(),
                         function(val)
                             joint:setUpperLimit(val)
@@ -398,7 +387,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
+                ui.createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
                     state.jointLengthParams.length or myLength,
                     function(val)
                         joint:setLength(val)
@@ -407,12 +396,12 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 )
                 nextRow()
 
-                createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
+                ui.createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
                     joint:getFrequency(),
                     function(val) joint:setFrequency(val) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
+                ui.createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
                     joint:getDampingRatio(),
                     function(val) joint:setDampingRatio(val) end
                 )
@@ -425,12 +414,12 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 nextRow()
                 offsetSliders()
                 nextRow()
-                createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
+                ui.createSliderWithId(jointId, ' freq', x, y, 160, 0, 20,
                     joint:getFrequency(),
                     function(val) joint:setFrequency(val) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
+                ui.createSliderWithId(jointId, ' damp', x, y, 160, 0, 20,
                     joint:getDampingRatio(),
                     function(val) joint:setDampingRatio(val) end
                 )
@@ -445,7 +434,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 local x1, y1 = bodyA:getPosition()
                 local x2, y2 = bodyB:getPosition()
                 local myLength = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-                createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
+                ui.createSliderWithId(jointId, ' length', x, y, 160, 0.1, 500,
                     state.jointLengthParams.maxLength or myLength,
                     function(val)
                         joint:setMaxLength(val)
@@ -471,14 +460,14 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 axisFunctionality()
                 nextRow()
                 -- if not joint:isDestroyed() then
-                createSliderWithId(jointId, ' spring F', x, y, 160, 0, 100,
+                ui.createSliderWithId(jointId, ' spring F', x, y, 160, 0, 100,
                     joint:getSpringFrequency(),
                     function(val)
                         joint:setSpringFrequency(val)
                     end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' spring D', x, y, 160, 0, 1,
+                ui.createSliderWithId(jointId, ' spring D', x, y, 160, 0, 1,
                     joint:getSpringDampingRatio(),
                     function(val) joint:setSpringDampingRatio(val) end
                 )
@@ -493,33 +482,33 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                 nextRow()
                 offsetSliders()
                 nextRow()
-                createSliderWithId(jointId, ' angular o', x, y, 160, -180, 180,
+                ui.createSliderWithId(jointId, ' angular o', x, y, 160, -180, 180,
                     math.deg(joint:getAngularOffset()),
                     function(val) joint:setAngularOffset(math.rad(val)) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' corr.', x, y, 160, 0, 1,
+                ui.createSliderWithId(jointId, ' corr.', x, y, 160, 0, 1,
                     joint:getCorrectionFactor(),
                     function(val) joint:setCorrectionFactor(val) end
                 )
                 nextRow()
                 local lx, ly = joint:getLinearOffset()
-                createSliderWithId(jointId, ' lx', x, y, 160, -1000, 1000,
+                ui.createSliderWithId(jointId, ' lx', x, y, 160, -1000, 1000,
                     lx,
                     function(val) joint:setLinearOffset(val, ly) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' ly', x, y, 160, -1000, 1000,
+                ui.createSliderWithId(jointId, ' ly', x, y, 160, -1000, 1000,
                     ly,
                     function(val) joint:setLinearOffset(lx, val) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
+                ui.createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
                     joint:getMaxForce(),
                     function(val) joint:setMaxForce(val) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
+                ui.createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
                     joint:getMaxTorque(),
                     function(val) joint:setMaxTorque(val) end
                 )
@@ -527,12 +516,12 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
             elseif jointType == 'friction' then
                 offsetSliders()
                 nextRow()
-                createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
+                ui.createSliderWithId(jointId, ' force', x, y, 160, 0, 100000,
                     joint:getMaxForce(),
                     function(val) joint:setMaxForce(val) end
                 )
                 nextRow()
-                createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
+                ui.createSliderWithId(jointId, ' torque', x, y, 160, 0, 100000,
                     joint:getMaxTorque(),
                     function(val) joint:setMaxTorque(val) end
                 )
@@ -875,144 +864,7 @@ function lib.drawRecordingUI()
     end)
 end
 
-function lib.drawWorldSettingsUI()
-    local startX = 440
-    local startY = 70
-    local panelWidth = PANEL_WIDTH
-    --local panelHeight = 255
-    local buttonHeight = ui.theme.button.height
-
-    local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local panelHeight = titleHeight + titleHeight + (14 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
-    ui.panel(startX, startY, panelWidth, panelHeight, '• ∫ƒF§ world •', function()
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = BUTTON_SPACING,
-            startX = startX + BUTTON_SPACING,
-            startY = startY + titleHeight + BUTTON_SPACING
-        })
-        local width = panelWidth - BUTTON_SPACING * 2
-
-        local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-        local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-        end
-        --  x, y = ui.nextLayoutPosition(layout, width, 50)
-        --  local grav = ui.sliderWithInput('grav', x, y, ROW_WIDTH, -10, BUTTON_HEIGHT, state.world.gravity)
-        createSliderWithId('', 'grav', x, y, ROW_WIDTH, -10, 20, state.world.gravity, function(v)
-            state.world.gravity = v
-            if state.physicsWorld then
-                state.physicsWorld:setGravity(0, state.world.gravity * state.world.meter)
-            end
-        end)
-
-        nextRow()
-
-        local gridChanged, gridValue = ui.checkbox(x, y, state.editorPreferences.showGrid, 'grid')
-        if gridChanged then
-            state.editorPreferences.showGrid = gridValue
-        end
-        local slx, sly = ui.sameLine()
-        local drawChanged, drawValue = ui.checkbox(slx, sly, state.world.debugDrawMode, 'draw')
-        if drawChanged then
-            state.world.debugDrawMode = drawValue
-        end
-        slx, sly = ui.sameLine()
-        local modeChanged, modeValue = ui.checkbox(slx, sly, state.world.darkMode, 'mode')
-        if modeChanged then
-            state.world.darkMode = modeValue
-        end
-        nextRow()
-
-
-        createSliderWithId('', 'debugalpha', x, y, ROW_WIDTH, 0, 1, state.world.debugAlpha,
-            function(v)
-                state.world.debugAlpha = v
-            end)
-
-        nextRow()
-        if ui.button(x, y, ROW_WIDTH, 'debugids') then
-            state.world.showDebugIds = not state.world.showDebugIds
-        end
-        nextRow()
-
-        createSliderWithId('', 'mouse F', x, y, ROW_WIDTH, 0, 1000000, state.world.mouseForce,
-            function(v)
-                state.world.mouseForce = v
-            end)
-
-        nextRow()
-
-        createSliderWithId('', 'damp', x, y, ROW_WIDTH, 0.001, 1, state.world.mouseDamping, function(v)
-            state.world.mouseDamping = v
-        end)
-
-        -- Add Speed Multiplier Slider
-
-        nextRow()
-        createSliderWithId('', 'speed', x, y, ROW_WIDTH, 0.1, 10.0, state.world.speedMultiplier,
-            function(v)
-                state.world.speedMultiplier = v
-            end)
-
-        nextRow()
-
-        ui.label(x, y, registry.print())
-        nextRow()
-
-        if ui.button(x, y, ROW_WIDTH, 'textures') then
-            state.world.showTextures = not state.world.showTextures
-        end
-        nextRow()
-        if ui.button(x, y, ROW_WIDTH, 'drawsfixtures') then
-            state.world.drawFixtures = not state.world.drawFixtures
-        end
-        nextRow()
-        if ui.button(x, y, ROW_WIDTH, 'drawoutline') then
-            state.world.drawOutline = not state.world.drawOutline
-        end
-        nextRow()
-        if ui.button(x, y, ROW_WIDTH, 'dbodies') then
-            state.world.debugDrawBodies = not state.world.debugDrawBodies
-        end
-        nextRow()
-
-        if ui.button(x, y, ROW_WIDTH, 'djoints') then
-            state.world.debugDrawJoints = not state.world.debugDrawJoints
-        end
-        nextRow()
-
-        if ui.button(x, y, ROW_WIDTH, state.world.profiling and 'profiling' or 'profile') then
-            if state.world.profiling then
-                ProFi:stop()
-                ProFi:writeReport('profilingReport.txt')
-                state.world.profiling = false
-                profileFrameCounter = 0
-            else
-                profileFrameCounter = 0
-                ProFi:start()
-                state.world.profiling = true
-            end
-        end
-        if state.world.profiling then
-            profileFrameCounter = profileFrameCounter + 1
-            print(profileFrameCounter)
-            if profileFrameCounter >= 60 then
-                ProFi:stop()
-                ProFi:writeReport('profilingReport.txt')
-                state.world.profiling = false
-                profileFrameCounter = 0
-            end
-        end
-
-
-        nextRow()
-
-
-        ui.label(x, y, string.format("%.2f", love.graphics.getStats().texturememory / 1000000) .. ' MB')
-        ui.label(x + 150, y, love.graphics.getStats().drawcallsbatched .. 'batched')
-    end)
-end
+lib.drawWorldSettingsUI = uiWorldSettings.drawWorldSettingsUI
 
 local accordionStatesSF = {
     ['position'] = false,
@@ -1124,7 +976,7 @@ function lib.drawSelectedSFixture()
         local function patchTransformUI(layer)
             local oldId = myID
             myID = myID .. ':' .. layer
-            createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2,
+            ui.createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2,
                 oldTexFixUD.extra[layer].r or 0,
                 function(v)
                     oldTexFixUD.extra[layer].r = v
@@ -1132,14 +984,14 @@ function lib.drawSelectedSFixture()
                 end)
 
             nextRow()
-            createSliderWithId(myID, 'sx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].sx or 1,
+            ui.createSliderWithId(myID, 'sx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].sx or 1,
                 function(v)
                     oldTexFixUD.extra[layer].sx = v
                     oldTexFixUD.extra.dirty = true
                 end)
 
             local slx, sly = ui.sameLine()
-            createSliderWithId(myID, 'sy', slx, sly, 50, 0.01, 3,
+            ui.createSliderWithId(myID, 'sy', slx, sly, 50, 0.01, 3,
                 oldTexFixUD.extra[layer].sy or 1,
                 function(v)
                     oldTexFixUD.extra[layer].sy = v
@@ -1147,14 +999,14 @@ function lib.drawSelectedSFixture()
                 end)
 
             nextRow()
-            createSliderWithId(myID, 'tx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].tx or 0,
+            ui.createSliderWithId(myID, 'tx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].tx or 0,
                 function(v)
                     oldTexFixUD.extra[layer].tx = v
                     oldTexFixUD.extra.dirty = true
                 end)
 
             local slx2, sly2 = ui.sameLine()
-            createSliderWithId(myID, 'ty', slx2, sly2, 50, -1, 1, oldTexFixUD.extra[layer].ty or 0,
+            ui.createSliderWithId(myID, 'ty', slx2, sly2, 50, -1, 1, oldTexFixUD.extra[layer].ty or 0,
                 function(v)
                     oldTexFixUD.extra[layer].ty = v
                     oldTexFixUD.extra.dirty = true
@@ -1196,7 +1048,7 @@ function lib.drawSelectedSFixture()
                 function(u) oldTexFixUD.extra[layer].pURL = u end)
             nextRow()
 
-            createSliderWithId(myID, 'pr', x, y, ROW_WIDTH, 0, math.pi * 2,
+            ui.createSliderWithId(myID, 'pr', x, y, ROW_WIDTH, 0, math.pi * 2,
                 oldTexFixUD.extra[layer].pr or 0,
                 function(v)
                     oldTexFixUD.extra[layer].pr = v
@@ -1204,14 +1056,14 @@ function lib.drawSelectedSFixture()
                 end)
 
             nextRow()
-            createSliderWithId(myID, 'psx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].psx or 1,
+            ui.createSliderWithId(myID, 'psx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].psx or 1,
                 function(v)
                     oldTexFixUD.extra[layer].psx = v
                     oldTexFixUD.extra.dirty = true
                 end)
 
             slx, sly = ui.sameLine()
-            createSliderWithId(myID, 'psy', slx, sly, 50, 0.01, 3,
+            ui.createSliderWithId(myID, 'psy', slx, sly, 50, 0.01, 3,
                 oldTexFixUD.extra[layer].psy or 1,
                 function(v)
                     oldTexFixUD.extra[layer].psy = v
@@ -1219,14 +1071,14 @@ function lib.drawSelectedSFixture()
                 end)
 
             nextRow()
-            createSliderWithId(myID, 'ptx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].ptx or 0,
+            ui.createSliderWithId(myID, 'ptx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].ptx or 0,
                 function(v)
                     oldTexFixUD.extra[layer].ptx = v
                     oldTexFixUD.extra.dirty = true
                 end)
 
             local slx2, sly2 = ui.sameLine()
-            createSliderWithId(myID, 'pty', slx2, sly2, 50, -1, 1, oldTexFixUD.extra[layer].pty or 0,
+            ui.createSliderWithId(myID, 'pty', slx2, sly2, 50, -1, 1, oldTexFixUD.extra[layer].pty or 0,
                 function(v)
                     oldTexFixUD.extra[layer].pty = v
                     oldTexFixUD.extra.dirty = true
@@ -1400,7 +1252,7 @@ function lib.drawSelectedSFixture()
                         fixtures.updateSFixtureDimensions(polyW, newHeight)
                     end
                 end
-                createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
@@ -2053,7 +1905,7 @@ function lib.drawSelectedSFixture()
                 end
                 nextRow()
 
-                createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
@@ -2066,7 +1918,7 @@ function lib.drawSelectedSFixture()
                 end
                 nextRow()
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
-                createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
+                ui.createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
                     oldTexFixUD.extra.main.wmul or 1,
                     function(v)
                         oldTexFixUD.extra.main.wmul = v
@@ -2119,7 +1971,7 @@ function lib.drawSelectedSFixture()
                 oldTexFixUD.extra.tileWidthM = oldTexFixUD.extra.tileWidthM or 1
                 oldTexFixUD.extra.tileHeightM = oldTexFixUD.extra.tileHeightM or 1
                 oldTexFixUD.extra.tileRotation = oldTexFixUD.extra.tileRotation or 0
-                createSliderWithId(myID, 'twm', x, y, 160, 0.01,
+                ui.createSliderWithId(myID, 'twm', x, y, 160, 0.01,
                     100,
                     oldTexFixUD.extra.tileWidthM, function(v)
                         oldTexFixUD.extra.tileWidthM = v
@@ -2127,7 +1979,7 @@ function lib.drawSelectedSFixture()
                     end)
                 nextRow()
                 nextRow()
-                createSliderWithId(myID, 'thm', x, y, 160, 0.01,
+                ui.createSliderWithId(myID, 'thm', x, y, 160, 0.01,
                     100,
                     oldTexFixUD.extra.tileHeightM, function(v)
                         oldTexFixUD.extra.tileHeightM = v
@@ -2135,7 +1987,7 @@ function lib.drawSelectedSFixture()
                     end)
                 nextRow()
 
-                createSliderWithId(myID, 'tr', x, y, 160, 0,
+                ui.createSliderWithId(myID, 'tr', x, y, 160, 0,
                     2 * math.pi,
                     oldTexFixUD.extra.tileRotation, function(v)
                         oldTexFixUD.extra.tileRotation = v
@@ -2144,7 +1996,7 @@ function lib.drawSelectedSFixture()
 
                 nextRow()
 
-                createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
@@ -2175,7 +2027,7 @@ function lib.drawSelectedSFixture()
                 --print(#parentVerts)
                 nextRow()
                 nextRow()
-                createSliderWithId(myID, 'startIndex', x, y, 160, -(#parentVerts / 2),
+                ui.createSliderWithId(myID, 'startIndex', x, y, 160, -(#parentVerts / 2),
                     (#parentVerts / 2),
                     oldTexFixUD.extra.startIndex, function(v)
                         oldTexFixUD.extra.startIndex = math.floor(v + 0)
@@ -2183,7 +2035,7 @@ function lib.drawSelectedSFixture()
 
                 ui.alignedLabel(x + 130, y, oldTexFixUD.extra.startIndex)
                 nextRow()
-                createSliderWithId(myID, 'endIndex', x, y, 160, -(#parentVerts / 2),
+                ui.createSliderWithId(myID, 'endIndex', x, y, 160, -(#parentVerts / 2),
                     (#parentVerts / 2),
                     oldTexFixUD.extra.endIndex, function(v)
                         oldTexFixUD.extra.endIndex = math.floor(v + 0)
@@ -2192,25 +2044,25 @@ function lib.drawSelectedSFixture()
                 ui.alignedLabel(x + 130, y, oldTexFixUD.extra.endIndex)
 
                 nextRow()
-                createSliderWithId(myID, 'tension', x, y, 160, 0.01,
+                ui.createSliderWithId(myID, 'tension', x, y, 160, 0.01,
                     0.5,
                     oldTexFixUD.extra.tension, function(v)
                         oldTexFixUD.extra.tension = v
                     end)
                 nextRow()
-                createSliderWithId(myID, 'spacing', x, y, 160, 1,
+                ui.createSliderWithId(myID, 'spacing', x, y, 160, 1,
                     100,
                     oldTexFixUD.extra.spacing, function(v)
                         oldTexFixUD.extra.spacing = v
                     end)
                 nextRow()
-                createSliderWithId(myID, 'width', x, y, 160, 1,
+                ui.createSliderWithId(myID, 'width', x, y, 160, 1,
                     1000,
                     oldTexFixUD.extra.width, function(v)
                         oldTexFixUD.extra.width = v
                     end)
                 nextRow()
-                createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
+                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
                     math.floor(oldTexFixUD.extra.zOffset or 0),
                     function(v)
                         oldTexFixUD.extra.zOffset = math.floor(v)
@@ -2223,7 +2075,7 @@ function lib.drawSelectedSFixture()
                 end
                 nextRow()
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
-                createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
+                ui.createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
                     oldTexFixUD.extra.main.wmul or 1,
                     function(v)
                         oldTexFixUD.extra.main.wmul = v
@@ -3297,13 +3149,13 @@ function lib.drawUI()
                             --logger:inspect(myBehaviors)
 
                             if b then
-                                createSliderWithId(myID, 'speed', 100, 100, 100, 0, 500,
+                                ui.createSliderWithId(myID, 'speed', 100, 100, 100, 0, 500,
                                     b.speed or 0,
                                     function(v) b.speed = v end)
                             end
 
                             if b then
-                                createSliderWithId(myID, 'angle', 100, 150, 100, -360, 360,
+                                ui.createSliderWithId(myID, 'angle', 100, 150, 100, -360, 360,
                                     b.angle or 0,
                                     function(v) b.angle = v end)
                             end
