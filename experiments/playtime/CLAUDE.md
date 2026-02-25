@@ -89,12 +89,12 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks 
 luacheck src/ main.lua --std "lua51+love"                   # full check (0 warnings, 0 errors)
 ```
 
-All globals have been converted to explicit `local require()` calls. Luacheck is fully clean: **0 warnings / 0 errors** across 38 files (down from 628 warnings).
+All globals have been converted to explicit `local require()` calls. Luacheck is fully clean: **0 warnings / 0 errors** across 41 files (down from 628 warnings).
 
 ## Architecture
 
 - `main.lua` — entry point, keybindings, UI callbacks
-- `src/` — core modules (playtime-ui, object-manager, io, joints, box2d-draw-textured, etc.)
+- `src/` — core modules (playtime-ui, object-manager, io, joints, etc.)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, loveblobs, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
@@ -105,13 +105,14 @@ All globals have been converted to explicit `local require()` calls. Luacheck is
 - `src/io.lua` — save/load, clone
 - `src/playtime-ui.lua` — editor UI orchestrator (~2900 lines, see "UI cleanup status" below)
 - `src/ui/` — extracted UI modules (all.lua, textinput.lua, world-settings.lua, joint-update.lua)
-- `src/box2d-draw-textured.lua` — textured rendering, OMP compositing
+- `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)
+- `src/physics/box2d-draw-textured.lua` — textured rendering, OMP compositing
+- `src/physics/snap.lua` — proximity-based snap joints
 - `src/joints.lua` — joint creation/recreation
 - `src/registry.lua` — central registry for bodies, joints, sfixtures
 - `src/character-manager.lua` — character DNA system, body part assembly
 - `src/character-experiments.lua` — character experiment keybindings (extracted from main.lua)
 - `src/game-loop.lua` — fixed-timestep love.run() with panic detection (extracted from main.lua)
-- `src/snap.lua` — proximity-based snap joints
 - `src/state.lua` — shared app state
 - `src/math-utils.lua` — shared math utilities (clamp, sign, lerp, distance, etc.)
 - `src/utils.lua` — general utilities (deepCopy, round, randomHexColor, etc.)
@@ -125,7 +126,7 @@ All globals have been converted to explicit `local require()` calls. Luacheck is
 - When making functions `local`, check for forward references (function used before its definition). Lurker hot-reload re-executes files top-to-bottom, so a local function must be defined before first use. Use `claudetools/find-forward-refs.lua` to scan for these.
 - `registry.getBodyByID()` — capital ID, not Id
 - `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser
-- Circular requires: `registry.lua` ↔ `snap.lua` — registry uses a lazy `getSnap()` wrapper to break the cycle. If adding cross-module requires, watch for `loop or previous error loading module` errors
+- Circular requires: `registry.lua` ↔ `src/physics/snap.lua` — registry uses a lazy `getSnap()` wrapper to break the cycle. If adding cross-module requires, watch for `loop or previous error loading module` errors
 
 ## Naming conventions
 
