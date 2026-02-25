@@ -247,7 +247,7 @@ passes `--bridge` to skip start screen, added `log` and `errors` commands.
 
 These are the changes that actually improve the architecture. Each one is independently valuable — do them in whatever order matches what you're working on next.
 
-### 7a. Move snap state into state.lua
+### 7a. Move snap state into state.lua ── ✅ DONE
 
 `snap.lua` has hidden module-level state (`snapFixtures`, `activeSnapJoints`, `cooldownList`). Move these into `state.snap` so they're visible to serialization, debugging, and the validator.
 
@@ -255,6 +255,7 @@ These are the changes that actually improve the architecture. Each one is indepe
 **Verification**: Load a snap scene, verify joints still form/break. Validator checks snap state.
 **Prerequisite**: Phase 1 (global leaks fixed in snap.lua).
 **Time**: 1 hour.
+**Done**: Moved all 8 module-level variables to `state.snap`. Fixed cooldownList not cleared on load. Added cooldown cleanup in update(). 8 new integration tests.
 
 ### 7b. Fixture type registry
 
@@ -432,8 +433,8 @@ Phase 6 ─── Extract from main.lua ─── ✅ DONE
   │          ✓ playtime.sh: error capture, --bridge flag, log/errors commands
   │          ✓ physics callbacks extracted to src/physics/physics-callbacks.lua
   ▼
-Phase 7 ─── Structural Improvements ─ 7c/7e/7f/7g done
-  │    ├── 7a. Snap state → state.lua
+Phase 7 ─── Structural Improvements ─ 7a/7c/7e/7f/7g done
+  │    ├── 7a. Snap state → state.lua ─── ✅ DONE
   │    ├── 7b. Fixture type registry
   │    ├── 7c. Mode handler table ─── ✅ DONE
   │    ├── 7d. DNA topology-as-data
