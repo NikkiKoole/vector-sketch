@@ -7,6 +7,7 @@ local randomHexColor = utils.randomHexColor
 local CharacterManager = require('src.character-manager')
 local mipoRegistry = require('src.mipo-registry')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
+local mouthShapes = require('src.mouth-shapes')
 local ST = require('src.shape-types')
 
 local PANEL_WIDTH = 300
@@ -65,6 +66,10 @@ local pupilShapes = {
     'pupil1', 'pupil2', 'pupil3', 'pupil4', 'pupil5', 'pupil6',
     'pupil7', 'pupil8', 'pupil9', 'pupil10', 'pupil11'
 }
+
+-- Lip shape textures for mouth decals
+local upperLipShapes = { 'upperlip1', 'upperlip2', 'upperlip3', 'upperlip4' }
+local lowerLipShapes = { 'lowerlip1', 'lowerlip2', 'lowerlip3', 'lowerlip4' }
 
 -- Textures for connected-hair (2-layer, outline only, no mask)
 local limbHairTextures = {
@@ -641,6 +646,111 @@ function lib.drawMipoEditor(instance, partName)
                     end)
                 ui.alignedLabel(x + 180, y, 'pupil color')
                 y = y + ROW
+
+                -- === MOUTH SECTION ===
+                local mouth = face.mouth or {}
+                local mouthPos = (face.positioners and face.positioners.mouth) or { y = 0.7 }
+
+                ui.label(x, y, 'mouth shape (' .. (mouth.shape or 2) .. '/' .. #mouthShapes.normalized .. ')')
+                y = y + ROW
+
+                local mShape = ui.sliderWithInput('mipo_mouth_shape', x, y, 120, 1, #mouthShapes.normalized,
+                    mouth.shape or 2)
+                ui.alignedLabel(x, y, '  mouth preset')
+                mShape = mShape and tonumber(mShape)
+                if mShape then mShape = math.floor(mShape + 0.5) end
+                if mShape and mShape ~= (mouth.shape or 2) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthShape = mShape })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Upper lip texture grid
+                ui.label(x, y, 'upper lip')
+                y = y + ROW
+                local currentUpperURL = 'upperlip' .. (mouth.upperLipShape or 1) .. '.png'
+                gridHeight = drawThumbnailGrid(upperLipShapes, currentUpperURL, panelX, y, cellSize, function(url)
+                    if url then
+                        local num = tonumber(url:match('upperlip(%d+)%.png'))
+                        if num then
+                            CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthUpperLipShape = num })
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                    end
+                end)
+                y = y + gridHeight + BUTTON_SPACING
+
+                -- Lower lip texture grid
+                ui.label(x, y, 'lower lip')
+                y = y + ROW
+                local currentLowerURL = 'lowerlip' .. (mouth.lowerLipShape or 1) .. '.png'
+                gridHeight = drawThumbnailGrid(lowerLipShapes, currentLowerURL, panelX, y, cellSize, function(url)
+                    if url then
+                        local num = tonumber(url:match('lowerlip(%d+)%.png'))
+                        if num then
+                            CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLowerLipShape = num })
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                    end
+                end)
+                y = y + gridHeight + BUTTON_SPACING
+
+                -- Mouth position
+                local mY = ui.sliderWithInput('mipo_mouth_y', x, y, 120, 0.5, 0.95, mouthPos.y)
+                ui.alignedLabel(x, y, '  mouth vertical')
+                mY = mY and tonumber(mY)
+                if mY and mY ~= mouthPos.y then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthY = mY })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Mouth size
+                local mwMul = ui.sliderWithInput('mipo_mouth_wmul', x, y, 120, 0.3, 2, mouth.wMul or 1)
+                ui.alignedLabel(x, y, '  mouth width')
+                mwMul = mwMul and tonumber(mwMul)
+                if mwMul and mwMul ~= (mouth.wMul or 1) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthWMul = mwMul })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                local mhMul = ui.sliderWithInput('mipo_mouth_hmul', x, y, 120, 0.3, 2, mouth.hMul or 1)
+                ui.alignedLabel(x, y, '  mouth height')
+                mhMul = mhMul and tonumber(mhMul)
+                if mhMul and mhMul ~= (mouth.hMul or 1) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthHMul = mhMul })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Lip thickness
+                local lipScale = ui.sliderWithInput('mipo_lip_scale', x, y, 120, 0.05, 0.5, mouth.lipScale or 0.25)
+                ui.alignedLabel(x, y, '  lip thickness')
+                lipScale = lipScale and tonumber(lipScale)
+                if lipScale and lipScale ~= (mouth.lipScale or 0.25) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLipScale = lipScale })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Lip color
+                handlePaletteButton('mipo_lip_color_' .. partName,
+                    x + 30, y, 140, mouth.lipHex or 'cc5555ff', function(color)
+                        CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLipHex = color })
+                        CharacterManager.addTexturesFromInstance2(instance)
+                    end)
+                ui.alignedLabel(x + 180, y, 'lip color')
+                y = y + ROW
+
+                -- Backdrop color
+                handlePaletteButton('mipo_mouth_backdrop_' .. partName,
+                    x + 30, y, 140, mouth.backdropHex or '330000ff', function(color)
+                        CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthBackdropHex = color })
+                        CharacterManager.addTexturesFromInstance2(instance)
+                    end)
+                ui.alignedLabel(x + 180, y, 'mouth interior')
+                y = y + ROW
             end)
         end
 
@@ -971,6 +1081,15 @@ function lib.randomizeMipo(instance)
         eyeBgHex = randomHexColor(),
         eyeFgHex = randomHexColor(),
         pupilBgHex = randomHexColor(),
+        mouthShape = math.ceil(math.random() * #mouthShapes.normalized),
+        mouthUpperLipShape = math.ceil(math.random() * #upperLipShapes),
+        mouthLowerLipShape = math.ceil(math.random() * #lowerLipShapes),
+        mouthLipHex = randomHexColor(),
+        mouthBackdropHex = randomHexColor(),
+        mouthLipScale = 0.1 + math.random() * 0.3,
+        mouthWMul = 0.5 + math.random() * 1.0,
+        mouthHMul = 0.5 + math.random() * 1.0,
+        mouthY = 0.55 + math.random() * 0.3,
     }
     CharacterManager.updateFaceOfPart(instance, 'head', faceValues)
     CharacterManager.updateFaceOfPart(instance, 'torso1', faceValues)
