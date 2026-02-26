@@ -160,10 +160,11 @@ function lib.updateHaircutOfPart(instance, partName, values)
     end
 end
 
--- Update face appearance (eye/pupil/brow/mouth shape, colors, positions).
+-- Update face appearance (eye/pupil/brow/nose/mouth shape, colors, positions).
 -- values can contain: eyeShape, eyeBgHex, eyeFgHex, eyeWMul, eyeHMul,
 -- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY,
 -- browShape, browBgHex, browWMul, browHMul, browBend, browY,
+-- noseShape, noseBgHex, noseFgHex, noseWMul, noseHMul, noseY,
 -- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
 -- mouthBackdropHex, mouthLipScale, mouthWMul, mouthHMul, mouthY
 function lib.updateFaceOfPart(instance, partName, values)
@@ -180,9 +181,11 @@ function lib.updateFaceOfPart(instance, partName, values)
         }
     end
     if not face.brow then face.brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 } end
-    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, mouth = { y = 0.7 } } end
+    if not face.nose then face.nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 } end
+    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } } end
     if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5 } end
     if not face.positioners.brow then face.positioners.brow = { y = 0.3 } end
+    if not face.positioners.nose then face.positioners.nose = { y = 0.35 } end
     if not face.positioners.mouth then face.positioners.mouth = { y = 0.7 } end
 
     if values.eyeShape then face.eye.shape = values.eyeShape end
@@ -204,6 +207,13 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.browHMul then face.brow.hMul = values.browHMul end
     if values.browBend then face.brow.bend = values.browBend end
     if values.browY then face.positioners.brow.y = values.browY end
+
+    if values.noseShape then face.nose.shape = values.noseShape end
+    if values.noseBgHex then face.nose.bgHex = values.noseBgHex end
+    if values.noseFgHex then face.nose.fgHex = values.noseFgHex end
+    if values.noseWMul then face.nose.wMul = values.noseWMul end
+    if values.noseHMul then face.nose.hMul = values.noseHMul end
+    if values.noseY then face.positioners.nose.y = values.noseY end
 
     if values.mouthShape then face.mouth.shape = values.mouthShape end
     if values.mouthUpperLipShape then face.mouth.upperLipShape = values.mouthUpperLipShape end
@@ -377,8 +387,9 @@ local dna = {
                     },
                     ['skin'] = {
                         main = initBlock(),
-                        patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
-                        patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                        patch1 = add(initBlock('patch2'), { tx = -0.33, ty = 0 }),
+                        patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
+                        patch3 = add(initBlock('patch1'), { tx = 0, ty = 0.83, sx = 2 })
                     },
                     ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) },
                     ['haircut'] = {
@@ -390,12 +401,13 @@ local dna = {
                         eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
                         brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
+                        nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
                             lipHex = 'cc5555ff', backdropHex = '00000033',
                             lipScale = 0.25, wMul = 1, hMul = 1,
                         },
-                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, mouth = { y = 0.7 } },
+                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } },
                     },
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
@@ -420,8 +432,9 @@ local dna = {
                     ['skin'] = {
                         zOffset = 2,
                         main = initBlock(),
-                        patch1 = add(initBlock('patch1'), { tx = 0.3, ty = 0.3 }),
-                        patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                        patch1 = add(initBlock('patch1'), { tx = -0.33, ty = 0 }),
+                        patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
+                        patch3 = add(initBlock('patch1'), { tx = 0, ty = 0.83, sx = 2 })
                     },
                     ['bodyhair'] = { main = initBlock('borsthaar4') },
                     ['haircut'] = {
@@ -433,12 +446,13 @@ local dna = {
                         eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
                         brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
+                        nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
                             lipHex = 'cc5555ff', backdropHex = '00000033',
                             lipScale = 0.25, wMul = 1, hMul = 1,
                         },
-                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, mouth = { y = 0.7 } },
+                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } },
                     },
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
@@ -1638,7 +1652,7 @@ function lib.addTexturesFromInstance2(instance)
 
                         ud.extra            = {
                             attachTo = k,
-                            OMP = (k2 == 'connected-skin'),
+                            OMP = true,
                             dirty = true,
                             main = utils.deepCopy(v2.main),
                             zOffset = v2.zOffset or 0,
@@ -1755,10 +1769,11 @@ function lib.addTexturesFromInstance2(instance)
 
                             -- 8-vertex polygon: 1=top, 3=right-mid, 5=bottom, 7=left-mid
                             -- Indices are 1-based, pairs of x,y
-                            local _, topY = verts[1], verts[2]
-                            local rightX = verts[5]
-                            local _, botY = verts[9], verts[10]
-                            local leftX = verts[13]
+                            -- Normalize so topY < botY and leftX < rightX even when shape is flipped
+                            local topY = math.min(verts[2], verts[10])
+                            local botY = math.max(verts[2], verts[10])
+                            local leftX = math.min(verts[5], verts[13])
+                            local rightX = math.max(verts[5], verts[13])
 
                             local leftEyeX = lerp(leftX, rightX, 0.5 - eyePos.x)
                             local rightEyeX = lerp(leftX, rightX, 0.5 + eyePos.x)
@@ -1880,6 +1895,51 @@ function lib.addTexturesFromInstance2(instance)
                                 ud.extra.browMirror = side.mirror
                                 ud.extra.bgURL = browURL
                                 ud.extra.bgHex = brow.bgHex or '000000ff'
+                            end
+
+                            -- Create nose decal (single, centered)
+                            local nose = face.nose or {}
+                            local noseShape = nose.shape or 0
+                            if noseShape > 0 then
+                                local nosePos = face.positioners and face.positioners.nose or { y = 0.35 }
+                                local noseY = lerp(topY, botY, nosePos.y)
+                                local noseX = (leftX + rightX) / 2
+                                local noseW = headW * 0.15 * (nose.wMul or 1)
+                                local noseH = headH * 0.15 * (nose.hMul or 1)
+                                local noseBgURL = 'nose' .. noseShape .. '.png'
+                                local noseMaskPath = 'textures/nose' .. noseShape .. '-mask.png'
+                                local noseFgURL = ''
+                                if love.filesystem.getInfo(noseMaskPath) then
+                                    noseFgURL = 'nose' .. noseShape .. '-mask.png'
+                                end
+                                local hasNoseMask = noseFgURL ~= ''
+                                local noseZOffset = 48
+
+                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                local ud = f:getUserData()
+                                ud.label = 'nose'
+                                ud.extra.ox = noseX
+                                ud.extra.oy = noseY
+                                ud.extra.w = noseW
+                                ud.extra.h = noseH
+                                ud.extra.zOffset = noseZOffset
+                                if hasNoseMask then
+                                    ud.extra.OMP = true
+                                    ud.extra.dirty = true
+                                    ud.extra.main = {
+                                        bgURL = noseBgURL,
+                                        fgURL = noseFgURL,
+                                        pURL = '',
+                                        bgHex = nose.bgHex or '000000ff',
+                                        fgHex = nose.fgHex or 'ffffffff',
+                                        pHex = 'ffffff00',
+                                    }
+                                    drawTextured.makeCached(ud.extra.main)
+                                else
+                                    ud.extra.OMP = false
+                                    ud.extra.bgURL = noseBgURL
+                                    ud.extra.bgHex = nose.bgHex or '000000ff'
+                                end
                             end
 
                             -- Create mouth decals (upper lip + lower lip)
