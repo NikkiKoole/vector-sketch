@@ -12,6 +12,7 @@ package.loaded['src.joints'] = nil
 package.loaded['src.fixtures'] = nil
 package.loaded['src.io'] = nil
 package.loaded['src.state'] = nil
+package.loaded['src.physics.snap'] = nil
 
 local registry = require('src.registry')
 local objectManager = require('src.object-manager')

@@ -160,9 +160,10 @@ function lib.updateHaircutOfPart(instance, partName, values)
     end
 end
 
--- Update face appearance (eye/pupil/mouth shape, colors, positions).
+-- Update face appearance (eye/pupil/brow/mouth shape, colors, positions).
 -- values can contain: eyeShape, eyeBgHex, eyeFgHex, eyeWMul, eyeHMul,
 -- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY,
+-- browShape, browBgHex, browWMul, browHMul, browBend, browY,
 -- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
 -- mouthBackdropHex, mouthLipScale, mouthWMul, mouthHMul, mouthY
 function lib.updateFaceOfPart(instance, partName, values)
@@ -178,8 +179,10 @@ function lib.updateFaceOfPart(instance, partName, values)
             lipScale = 0.25, wMul = 1, hMul = 1,
         }
     end
-    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } } end
+    if not face.brow then face.brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 } end
+    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, mouth = { y = 0.7 } } end
     if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5 } end
+    if not face.positioners.brow then face.positioners.brow = { y = 0.3 } end
     if not face.positioners.mouth then face.positioners.mouth = { y = 0.7 } end
 
     if values.eyeShape then face.eye.shape = values.eyeShape end
@@ -194,6 +197,13 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.pupilHMul then face.pupil.hMul = values.pupilHMul end
     if values.eyeX then face.positioners.eye.x = values.eyeX end
     if values.eyeY then face.positioners.eye.y = values.eyeY end
+
+    if values.browShape then face.brow.shape = values.browShape end
+    if values.browBgHex then face.brow.bgHex = values.browBgHex end
+    if values.browWMul then face.brow.wMul = values.browWMul end
+    if values.browHMul then face.brow.hMul = values.browHMul end
+    if values.browBend then face.brow.bend = values.browBend end
+    if values.browY then face.positioners.brow.y = values.browY end
 
     if values.mouthShape then face.mouth.shape = values.mouthShape end
     if values.mouthUpperLipShape then face.mouth.upperLipShape = values.mouthUpperLipShape end
@@ -357,11 +367,13 @@ local dna = {
                     -- this will do the neck texturing (connecting torso and head)
                     ['connected-skin'] = {
                         main = add(initBlock('leg5'), {}),
-                        endNode = 'head'
+                        endNode = 'head',
+                        zOffset = 4,
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
-                        endNode = 'head'
+                        endNode = 'head',
+                        zOffset = 5,
                     },
                     ['skin'] = {
                         main = initBlock(),
@@ -377,12 +389,13 @@ local dna = {
                     ['face'] = {
                         eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
+                        brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
                             lipHex = 'cc5555ff', backdropHex = '00000033',
                             lipScale = 0.25, wMul = 1, hMul = 1,
                         },
-                        positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } },
+                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, mouth = { y = 0.7 } },
                     },
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
@@ -419,12 +432,13 @@ local dna = {
                     ['face'] = {
                         eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
+                        brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
                             lipHex = 'cc5555ff', backdropHex = '00000033',
                             lipScale = 0.25, wMul = 1, hMul = 1,
                         },
-                        positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } },
+                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, mouth = { y = 0.7 } },
                     },
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
@@ -1838,6 +1852,34 @@ function lib.addTexturesFromInstance2(instance)
                                     ud.extra.bgURL = pupilBgURL
                                     ud.extra.bgHex = pupil.bgHex or '000000ff'
                                 end
+                            end
+
+                            -- Create brow decals (left and right)
+                            local brow = face.brow or {}
+                            local browPos = face.positioners and face.positioners.brow or { y = 0.3 }
+                            local browY = lerp(topY, botY, browPos.y)
+                            local browW = headW * 0.2 * (brow.wMul or 1)
+                            local browH = headH * 0.1 * (brow.hMul or 1)
+                            local browURL = 'brow' .. (brow.shape or 1) .. '.png'
+                            local browZOffset = 49
+                            local browSides = {
+                                { ox = leftEyeX, label = 'lbrow', mirror = false },
+                                { ox = rightEyeX, label = 'rbrow', mirror = true },
+                            }
+                            for _, side in ipairs(browSides) do
+                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                local ud = f:getUserData()
+                                ud.label = side.label
+                                ud.extra.ox = side.ox
+                                ud.extra.oy = browY
+                                ud.extra.w = browW
+                                ud.extra.h = browH
+                                ud.extra.zOffset = browZOffset
+                                ud.extra.browCurve = true
+                                ud.extra.browBend = brow.bend or 1
+                                ud.extra.browMirror = side.mirror
+                                ud.extra.bgURL = browURL
+                                ud.extra.bgHex = brow.bgHex or '000000ff'
                             end
 
                             -- Create mouth decals (upper lip + lower lip)

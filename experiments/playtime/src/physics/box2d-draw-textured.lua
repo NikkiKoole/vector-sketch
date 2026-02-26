@@ -866,7 +866,14 @@ function lib.drawTexturedWorld(world)
                 end
                 if ud and subtypes.is(ud, subtypes.DECAL) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    if ud.extra.mouthCurve then
+                    if ud.extra.browCurve then
+                        table.insert(drawables, {
+                            type = 'brow',
+                            z = composedZ,
+                            extra = ud.extra,
+                            body = body,
+                        })
+                    elseif ud.extra.mouthCurve then
                         -- Mouth bezier curve decal (upper or lower lip)
                         local pts = ud.extra.curvePoints
                         if pts and #pts == 16 then
@@ -1717,6 +1724,72 @@ function lib.drawTexturedWorld(world)
                         love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
                     end
                 end
+            end
+        end
+
+        -- Brow: bezier curve with bend pattern
+        if drawables[i].type == 'brow' then
+            local extra = drawables[i].extra
+            local body = drawables[i].body
+            if body and not body:isDestroyed() and extra.bgURL then
+                local browBends = {
+                    { 0, 0, 0 },       -- 1: flat
+                    { 1, 0, -1 },      -- 2: angry
+                    { -1, 0, 1 },      -- 3: sad
+                    { 1, 0, 1 },       -- 4: raised both ends
+                    { -1, 0, -1 },     -- 5: lowered both ends
+                    { 1, 0, 0 },       -- 6: raise left
+                    { -1, 0, 0 },      -- 7: lower left
+                    { 0, -1, 1 },      -- 8: center down, right up
+                    { 0, 1, 1 },       -- 9: center up, right up
+                    { -1, 1, 1 },      -- 10: asymmetric
+                }
+
+                local angle = body:getAngle()
+                local bx, by = body:getPosition()
+
+                love.graphics.push()
+                love.graphics.translate(bx, by)
+                love.graphics.rotate(angle)
+
+                local browImg = getLoveImage('textures/' .. extra.bgURL)
+                if browImg then
+                    local w = extra.w or 20
+                    local h = extra.h or 10
+                    local bendIdx = extra.browBend or 1
+                    local bend = browBends[bendIdx] or browBends[1]
+                    local bendMul = w / 5
+
+                    -- Build 3 control points for the bezier curve
+                    local ox = extra.ox or 0
+                    local oy = extra.oy or 0
+                    local scaleX = extra.browMirror and -1 or 1
+
+                    local p1x = ox + (-w / 2) * scaleX
+                    local p1y = oy + bend[1] * bendMul
+                    local p2x = ox
+                    local p2y = oy + bend[2] * bendMul
+                    local p3x = ox + (w / 2) * scaleX
+                    local p3y = oy + bend[3] * bendMul
+
+                    -- Double control points to create a proper bezier
+                    local curveData = {
+                        p1x, p1y,
+                        (p1x + p2x) / 2, (p1y + p2y) / 2,
+                        (p2x + p3x) / 2, (p2y + p3y) / 2,
+                        p3x, p3y,
+                    }
+
+                    local curve = love.math.newBezierCurve(curveData)
+                    local lipScale = h / (browImg:getHeight() * 2)
+                    local mesh = getStrip(browImg, lipScale)
+                    local r, g, b, a = lib.hexToColor(extra.bgHex or '000000ff')
+                    love.graphics.setColor(r, g, b, a)
+                    texturedCurve(curve, browImg, mesh, -1, lipScale)
+                    love.graphics.draw(mesh)
+                end
+
+                love.graphics.pop()
             end
         end
 

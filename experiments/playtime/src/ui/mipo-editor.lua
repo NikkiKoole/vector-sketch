@@ -67,6 +67,11 @@ local pupilShapes = {
     'pupil7', 'pupil8', 'pupil9', 'pupil10', 'pupil11'
 }
 
+-- Brow shape textures for face decals
+local browShapes = {
+    'brow1', 'brow2', 'brow3', 'brow4', 'brow5', 'brow6', 'brow7', 'brow8'
+}
+
 -- Lip shape textures for mouth decals
 local upperLipShapes = { 'upperlip1', 'upperlip2', 'upperlip3', 'upperlip4' }
 local lowerLipShapes = { 'lowerlip1', 'lowerlip2', 'lowerlip3', 'lowerlip4' }
@@ -647,6 +652,74 @@ function lib.drawMipoEditor(instance, partName)
                 ui.alignedLabel(x + 180, y, 'pupil color')
                 y = y + ROW
 
+                -- === BROW SECTION ===
+                local brow = face.brow or {}
+                local browPos = (face.positioners and face.positioners.brow) or { y = 0.3 }
+
+                -- Brow shape thumbnail grid
+                ui.label(x, y, 'brow shape')
+                y = y + ROW
+                local currentBrowURL = 'brow' .. (brow.shape or 1) .. '.png'
+                gridHeight = drawThumbnailGrid(browShapes, currentBrowURL, panelX, y, cellSize, function(url)
+                    if url then
+                        local shapeNum = tonumber(url:match('brow(%d+)%.png'))
+                        if shapeNum then
+                            CharacterManager.updateFaceOfPart(instance, faceOwner, { browShape = shapeNum })
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                    end
+                end)
+                y = y + gridHeight + BUTTON_SPACING
+
+                -- Brow bend pattern
+                local browBend = ui.sliderWithInput('mipo_brow_bend', x, y, 120, 1, 10, brow.bend or 1)
+                ui.alignedLabel(x, y, '  brow bend')
+                browBend = browBend and tonumber(browBend)
+                if browBend then browBend = math.floor(browBend + 0.5) end
+                if browBend and browBend ~= (brow.bend or 1) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { browBend = browBend })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Brow size
+                local bwMul = ui.sliderWithInput('mipo_brow_wmul', x, y, 120, 0.25, 2, brow.wMul or 1)
+                ui.alignedLabel(x, y, '  brow width')
+                bwMul = bwMul and tonumber(bwMul)
+                if bwMul and bwMul ~= (brow.wMul or 1) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { browWMul = bwMul })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                local bhMul = ui.sliderWithInput('mipo_brow_hmul', x, y, 120, 0.25, 2, brow.hMul or 1)
+                ui.alignedLabel(x, y, '  brow height')
+                bhMul = bhMul and tonumber(bhMul)
+                if bhMul and bhMul ~= (brow.hMul or 1) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { browHMul = bhMul })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Brow vertical position
+                local browYVal = ui.sliderWithInput('mipo_brow_y', x, y, 120, 0.1, 0.5, browPos.y)
+                ui.alignedLabel(x, y, '  brow vertical')
+                browYVal = browYVal and tonumber(browYVal)
+                if browYVal and browYVal ~= browPos.y then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { browY = browYVal })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Brow color
+                handlePaletteButton('mipo_brow_bg_' .. partName,
+                    x + 30, y, 140, brow.bgHex or '000000ff', function(color)
+                        CharacterManager.updateFaceOfPart(instance, faceOwner, { browBgHex = color })
+                        CharacterManager.addTexturesFromInstance2(instance)
+                    end)
+                ui.alignedLabel(x + 180, y, 'brow color')
+                y = y + ROW
+
                 -- === MOUTH SECTION ===
                 local mouth = face.mouth or {}
                 local mouthPos = (face.positioners and face.positioners.mouth) or { y = 0.7 }
@@ -845,7 +918,10 @@ function lib.drawMipoEditor(instance, partName)
         end
         local connSkinData = connSkinOwner and instance.dna.parts[connSkinOwner]
         if connSkinData and connSkinData.appearance and connSkinData.appearance['connected-skin'] then
-            drawAccordion(partName .. ' skin', function()
+            local connLabel = connSkinData.appearance['connected-skin'].endNode
+                and (partName .. ' > ' .. connSkinData.appearance['connected-skin'].endNode .. ' skin')
+                or (partName .. ' connected skin')
+            drawAccordion(connLabel, function()
                 local cs = connSkinData.appearance['connected-skin'].main
                 if cs then
                     -- Texture thumbnail grid
@@ -910,7 +986,10 @@ function lib.drawMipoEditor(instance, partName)
         end
         local connHairData = connHairOwner and instance.dna.parts[connHairOwner]
         if connHairData and connHairData.appearance and connHairData.appearance['connected-hair'] then
-            drawAccordion(partName .. ' hair', function()
+            local connHairLabel = connHairData.appearance['connected-hair'].endNode
+                and (partName .. ' > ' .. connHairData.appearance['connected-hair'].endNode .. ' hair')
+                or (partName .. ' connected hair')
+            drawAccordion(connHairLabel, function()
                 local ch = connHairData.appearance['connected-hair'].main
                 if ch then
                     -- Texture thumbnail grid
@@ -1090,6 +1169,12 @@ function lib.randomizeMipo(instance)
         mouthWMul = 0.5 + math.random() * 1.0,
         mouthHMul = 0.5 + math.random() * 1.0,
         mouthY = 0.55 + math.random() * 0.3,
+        browShape = math.ceil(math.random() * #browShapes),
+        browBgHex = '000000ff',
+        browWMul = 0.8 + math.random() * 0.5,
+        browHMul = 0.6 + math.random() * 0.8,
+        browBend = math.ceil(math.random() * 10),
+        browY = 0.25 + math.random() * 0.1,
     }
     CharacterManager.updateFaceOfPart(instance, 'head', faceValues)
     CharacterManager.updateFaceOfPart(instance, 'torso1', faceValues)
