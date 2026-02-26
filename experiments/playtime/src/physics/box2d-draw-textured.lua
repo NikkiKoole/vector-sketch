@@ -866,12 +866,43 @@ function lib.drawTexturedWorld(world)
                 end
                 if ud and subtypes.is(ud, subtypes.DECAL) then
                     local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    table.insert(drawables, {
-                        type = 'decal',
-                        z = composedZ,
-                        extra = ud.extra,
-                        body = body,
-                    })
+                    if ud.extra.mouthCurve then
+                        -- Mouth bezier curve decal (upper or lower lip)
+                        local pts = ud.extra.curvePoints
+                        if pts and #pts == 16 then
+                            local s = pts
+                            local curveData
+                            if ud.extra.mouthCurve == 'upper' then
+                                curveData = {
+                                    s[1], s[2], s[3], s[4],
+                                    s[3], s[4], s[5], s[6],
+                                    s[5], s[6], s[7], s[8],
+                                    s[7], s[8], s[9], s[10],
+                                }
+                            else
+                                curveData = {
+                                    s[9], s[10], s[11], s[12],
+                                    s[11], s[12], s[13], s[14],
+                                    s[13], s[14], s[15], s[16],
+                                    s[15], s[16], s[1], s[2],
+                                }
+                            end
+                            table.insert(drawables, {
+                                type = 'mouth-' .. ud.extra.mouthCurve,
+                                z = composedZ,
+                                extra = ud.extra,
+                                body = body,
+                                curveData = curveData,
+                            })
+                        end
+                    else
+                        table.insert(drawables, {
+                            type = 'decal',
+                            z = composedZ,
+                            extra = ud.extra,
+                            body = body,
+                        })
+                    end
                 end
 
                 if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
@@ -1686,6 +1717,122 @@ function lib.drawTexturedWorld(world)
                         love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
                     end
                 end
+            end
+        end
+
+        -- Mouth lower lip: stencil-fill interior + draw lower lip curve
+        if drawables[i].type == 'mouth-lower' then
+            local extra = drawables[i].extra
+            local body = drawables[i].body
+            local curveData = drawables[i].curveData
+            if body and not body:isDestroyed() and curveData then
+                local angle = body:getAngle()
+                local bx, by = body:getPosition()
+
+                love.graphics.push()
+                love.graphics.translate(bx, by)
+                love.graphics.rotate(angle)
+
+                -- Build upper + lower curves for the full mouth polygon
+                local pts = extra.curvePoints
+                local upData = {
+                    pts[1], pts[2], pts[3], pts[4],
+                    pts[3], pts[4], pts[5], pts[6],
+                    pts[5], pts[6], pts[7], pts[8],
+                    pts[7], pts[8], pts[9], pts[10],
+                }
+                local downData = curveData
+
+                local upCurve = love.math.newBezierCurve(upData)
+                local downCurve = love.math.newBezierCurve(downData)
+                local upPts = upCurve:render(1)
+                local downPts = downCurve:render(1)
+
+                -- Combine into a closed polygon
+                local poly = {}
+                for pi = 1, #upPts do poly[#poly + 1] = upPts[pi] end
+                for pi = 1, #downPts do poly[#poly + 1] = downPts[pi] end
+
+                -- Remove consecutive duplicates
+                local cleaned = {}
+                local prevX, prevY
+                for pi = 1, #poly - 1, 2 do
+                    local px, py = poly[pi], poly[pi + 1]
+                    if not prevX or math.abs(px - prevX) > 0.1 or math.abs(py - prevY) > 0.1 then
+                        cleaned[#cleaned + 1] = px
+                        cleaned[#cleaned + 1] = py
+                        prevX, prevY = px, py
+                    end
+                end
+
+                if #cleaned >= 6 then
+                    local tris = shapes.makeTrianglesFromPolygon(cleaned)
+                    if tris and #tris > 0 then
+                        -- Stencil fill with backdrop color
+                        love.graphics.stencil(function()
+                            for ti = 1, #tris do
+                                love.graphics.polygon("fill", tris[ti])
+                            end
+                        end, "replace", 1)
+                        love.graphics.setStencilTest("equal", 1)
+
+                        local br, bg, bb, ba = lib.hexToColor(extra.backdropHex or '330000ff')
+                        love.graphics.setColor(br, bg, bb, ba)
+                        -- Fill bounding rect
+                        local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]
+                        for pi = 3, #cleaned, 2 do
+                            if cleaned[pi] < minX then minX = cleaned[pi] end
+                            if cleaned[pi + 1] < minY then minY = cleaned[pi + 1] end
+                            if cleaned[pi] > maxX then maxX = cleaned[pi] end
+                            if cleaned[pi + 1] > maxY then maxY = cleaned[pi + 1] end
+                        end
+                        love.graphics.rectangle("fill", minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4)
+                        love.graphics.setStencilTest()
+                    end
+                end
+
+                -- Draw lower lip curve (outside stencil block so it renders even for closed mouths)
+                local lipImg = extra.ompImage
+                if not lipImg and extra.main and extra.main.bgURL then
+                    lipImg = getLoveImage('textures/' .. extra.main.bgURL)
+                end
+                if lipImg then
+                    local mesh = getStrip(lipImg, extra.lipScale or 0.25)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    texturedCurve(downCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
+                    love.graphics.draw(mesh)
+                end
+
+                love.graphics.pop()
+            end
+        end
+
+        -- Mouth upper lip: draw upper lip curve on top
+        if drawables[i].type == 'mouth-upper' then
+            local extra = drawables[i].extra
+            local body = drawables[i].body
+            local curveData = drawables[i].curveData
+            if body and not body:isDestroyed() and curveData then
+                local angle = body:getAngle()
+                local bx, by = body:getPosition()
+
+                love.graphics.push()
+                love.graphics.translate(bx, by)
+                love.graphics.rotate(angle)
+
+                local upCurve = love.math.newBezierCurve(curveData)
+                local lipImg = extra.ompImage
+                if not lipImg and extra.main and extra.main.bgURL then
+                    lipImg = getLoveImage('textures/' .. extra.main.bgURL)
+                end
+                if lipImg then
+                    local mesh = getStrip(lipImg, extra.lipScale or 0.25)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    texturedCurve(upCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
+                    love.graphics.draw(mesh)
+                end
+
+                love.graphics.pop()
             end
         end
     end

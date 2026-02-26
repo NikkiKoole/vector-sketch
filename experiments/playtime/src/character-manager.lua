@@ -13,6 +13,7 @@ local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local NT = require('src.node-types')
 local mipoRegistry = require('src.mipo-registry')
+local mouthShapes = require('src.mouth-shapes')
 local state = require('src.state')
 
 -- todo,
@@ -159,17 +160,27 @@ function lib.updateHaircutOfPart(instance, partName, values)
     end
 end
 
--- Update face appearance (eye/pupil shape, colors, positions).
+-- Update face appearance (eye/pupil/mouth shape, colors, positions).
 -- values can contain: eyeShape, eyeBgHex, eyeFgHex, eyeWMul, eyeHMul,
--- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY
+-- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY,
+-- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
+-- mouthBackdropHex, mouthLipScale, mouthWMul, mouthHMul, mouthY
 function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if not p or not p.appearance or not p.appearance['face'] then return end
     local face = p.appearance['face']
     if not face.eye then face.eye = {} end
     if not face.pupil then face.pupil = {} end
-    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 } } end
+    if not face.mouth then
+        face.mouth = {
+            shape = 2, upperLipShape = 1, lowerLipShape = 1,
+            lipHex = 'cc5555ff', backdropHex = '330000ff',
+            lipScale = 0.25, wMul = 1, hMul = 1,
+        }
+    end
+    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } } end
     if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5 } end
+    if not face.positioners.mouth then face.positioners.mouth = { y = 0.7 } end
 
     if values.eyeShape then face.eye.shape = values.eyeShape end
     if values.eyeBgHex then face.eye.bgHex = values.eyeBgHex end
@@ -183,6 +194,16 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.pupilHMul then face.pupil.hMul = values.pupilHMul end
     if values.eyeX then face.positioners.eye.x = values.eyeX end
     if values.eyeY then face.positioners.eye.y = values.eyeY end
+
+    if values.mouthShape then face.mouth.shape = values.mouthShape end
+    if values.mouthUpperLipShape then face.mouth.upperLipShape = values.mouthUpperLipShape end
+    if values.mouthLowerLipShape then face.mouth.lowerLipShape = values.mouthLowerLipShape end
+    if values.mouthLipHex then face.mouth.lipHex = values.mouthLipHex end
+    if values.mouthBackdropHex then face.mouth.backdropHex = values.mouthBackdropHex end
+    if values.mouthLipScale then face.mouth.lipScale = values.mouthLipScale end
+    if values.mouthWMul then face.mouth.wMul = values.mouthWMul end
+    if values.mouthHMul then face.mouth.hMul = values.mouthHMul end
+    if values.mouthY then face.positioners.mouth.y = values.mouthY end
 end
 
 -- Update connected-skin or connected-hair appearance colors.
@@ -354,9 +375,14 @@ local dna = {
                         main = initBlock('hair7'),
                     },
                     ['face'] = {
-                        eye = { shape = 1, bgHex = 'ffffffff', fgHex = '000000ff', wMul = 1, hMul = 1 },
+                        eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
-                        positioners = { eye = { x = 0.2, y = 0.5 } },
+                        mouth = {
+                            shape = 2, upperLipShape = 1, lowerLipShape = 1,
+                            lipHex = 'cc5555ff', backdropHex = '330000ff',
+                            lipScale = 0.25, wMul = 1, hMul = 1,
+                        },
+                        positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } },
                     },
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
@@ -391,9 +417,14 @@ local dna = {
                         main = initBlock('hair6'),
                     },
                     ['face'] = {
-                        eye = { shape = 1, bgHex = 'ffffffff', fgHex = '000000ff', wMul = 1, hMul = 1 },
+                        eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
-                        positioners = { eye = { x = 0.2, y = 0.5 } },
+                        mouth = {
+                            shape = 2, upperLipShape = 1, lowerLipShape = 1,
+                            lipHex = 'cc5555ff', backdropHex = '330000ff',
+                            lipScale = 0.25, wMul = 1, hMul = 1,
+                        },
+                        positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } },
                     },
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
@@ -1765,8 +1796,8 @@ function lib.addTexturesFromInstance2(instance)
                                     bgURL = eyeBgURL,
                                     fgURL = eyeFgURL,
                                     pURL = '',
-                                    bgHex = eye.bgHex or 'ffffffff',
-                                    fgHex = eye.fgHex or '000000ff',
+                                    bgHex = eye.bgHex or '000000ff',
+                                    fgHex = eye.fgHex or 'ffffffff',
                                     pHex = 'ffffff00',
                                 }
                                 drawTextured.makeCached(ud.extra.main)
@@ -1807,6 +1838,80 @@ function lib.addTexturesFromInstance2(instance)
                                     ud.extra.bgURL = pupilBgURL
                                     ud.extra.bgHex = pupil.bgHex or '000000ff'
                                 end
+                            end
+
+                            -- Create mouth decals (upper lip + lower lip)
+                            local mouth = face.mouth or {}
+                            local mouthPos = face.positioners and face.positioners.mouth or { y = 0.7 }
+                            local mouthY = lerp(topY, botY, mouthPos.y)
+                            local mouthX = 0 -- centered on head
+
+                            -- Get the normalized shape points and scale to head
+                            local shapeIdx = mouth.shape or 2
+                            local mouthShape = mouthShapes.normalized[shapeIdx]
+                            if mouthShape then
+                                local mwMul = mouth.wMul or 1
+                                local mhMul = mouth.hMul or 1
+                                -- Scale mouth to ~40% of head width (adjustable via wMul/hMul)
+                                local mouthScaleX = (headW * 0.004) * mwMul
+                                local mouthScaleY = (headH * 0.004) * mhMul
+
+                                -- Build scaled + offset curve points (16 floats)
+                                local curvePoints = {}
+                                for ci = 1, 16, 2 do
+                                    curvePoints[ci] = mouthShape.points[ci] * mouthScaleX + mouthX
+                                    curvePoints[ci + 1] = mouthShape.points[ci + 1] * mouthScaleY + mouthY
+                                end
+
+                                local upperLipURL = 'upperlip' .. (mouth.upperLipShape or 1) .. '.png'
+                                local upperLipMaskURL = 'upperlip' .. (mouth.upperLipShape or 1) .. '-mask.png'
+                                local lowerLipURL = 'lowerlip' .. (mouth.lowerLipShape or 1) .. '.png'
+                                local lowerLipMaskURL = 'lowerlip' .. (mouth.lowerLipShape or 1) .. '-mask.png'
+
+                                -- Lower lip decal (draws first, handles stencil interior)
+                                local fLower = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                local udLower = fLower:getUserData()
+                                udLower.label = 'lowerlip'
+                                udLower.extra.ox = mouthX
+                                udLower.extra.oy = mouthY
+                                udLower.extra.zOffset = 52
+                                udLower.extra.mouthCurve = 'lower'
+                                udLower.extra.curvePoints = curvePoints
+                                udLower.extra.lipScale = mouth.lipScale or 0.25
+                                udLower.extra.backdropHex = mouth.backdropHex or '330000ff'
+                                udLower.extra.OMP = true
+                                udLower.extra.dirty = true
+                                udLower.extra.main = {
+                                    bgURL = lowerLipURL,
+                                    fgURL = lowerLipMaskURL,
+                                    pURL = '',
+                                    bgHex = '000000ff',
+                                    fgHex = mouth.lipHex or 'cc5555ff',
+                                    pHex = 'ffffff00',
+                                }
+                                drawTextured.makeCached(udLower.extra.main)
+
+                                -- Upper lip decal (draws on top)
+                                local fUpper = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                local udUpper = fUpper:getUserData()
+                                udUpper.label = 'upperlip'
+                                udUpper.extra.ox = mouthX
+                                udUpper.extra.oy = mouthY
+                                udUpper.extra.zOffset = 53
+                                udUpper.extra.mouthCurve = 'upper'
+                                udUpper.extra.curvePoints = curvePoints
+                                udUpper.extra.lipScale = mouth.lipScale or 0.25
+                                udUpper.extra.OMP = true
+                                udUpper.extra.dirty = true
+                                udUpper.extra.main = {
+                                    bgURL = upperLipURL,
+                                    fgURL = upperLipMaskURL,
+                                    pURL = '',
+                                    bgHex = '000000ff',
+                                    fgHex = mouth.lipHex or 'cc5555ff',
+                                    pHex = 'ffffff00',
+                                }
+                                drawTextured.makeCached(udUpper.extra.main)
                             end
                         end
                     end
