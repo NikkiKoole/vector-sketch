@@ -23,10 +23,11 @@ Assets already in playtime's `textures/`: eye1-7, pupil1-11, brow1-8, nose1-15,
 upperlip1-4, lowerlip1-4, teeth1-7 (all with `-mask.png` where applicable).
 
 ### Eyes
-- [ ] Eye shapes: `eye1.png` through `eye7.png` (+ masks)
-- [ ] Eye rendering: white sclera with black outline canvas (`createWhiteColoredBlackOutlineTexture`)
-- [ ] Eye w/h multipliers (0.125–4.0)
-- [ ] Eye positioners: `eye.x` (spacing, 0–0.5), `eye.y` (vertical, 0–1), `eye.r` (rotation, -2 to 2)
+- [x] Eye shapes: `eye1.png` through `eye7.png` (+ masks)
+- [x] Eye rendering: OMP compositing with black outline, white fill
+- [x] Eye w/h multipliers (0.125–4.0)
+- [x] Eye positioners: `eye.x` (spacing, 0–0.5), `eye.y` (vertical, 0–1)
+- [ ] Eye positioner: `eye.r` (rotation, -2 to 2)
 - [ ] Left eye rendered with negative width (horizontal flip)
 
 **How eyes are positioned** (texturedBox2d.lua ~line 1064):
@@ -39,8 +40,8 @@ local eyeY = lerp(f[1][2], f[5][2], positioners.eye.y)
 ```
 
 ### Pupils
-- [ ] Pupil shapes: `pupil1.png` through `pupil11.png` (some with masks)
-- [ ] Pupil w/h multipliers (0.125–2.0, default 0.5)
+- [x] Pupil shapes: `pupil1.png` through `pupil11.png` (some with masks)
+- [x] Pupil w/h multipliers (0.125–2.0, default 0.5)
 - [ ] Pupils follow look-at target (constrained to max offset within eye bounds)
 - [ ] Max pupil offset = `eyeW/3`, `eyeH/3`
 
@@ -83,12 +84,16 @@ local bends = {
 - [ ] Simple positioned image, no animation
 
 ### Mouth (most complex face part)
-- [ ] Upper lip shapes: `upperlip1.png` through `upperlip4.png` (+ masks)
-- [ ] Lower lip shapes: `lowerlip1.png` through `lowerlip4.png` (+ masks)
+- [x] Upper lip shapes: `upperlip1.png` through `upperlip4.png` (+ masks, OMP with black outline)
+- [x] Lower lip shapes: `lowerlip1.png` through `lowerlip4.png` (+ masks, OMP with black outline)
 - [ ] Teeth shapes: `teeth1.png` through `teeth7.png` (+ masks)
-- [ ] Mouth w/h multipliers (0.5–3.0), teeth hMultiplier (0.5–3.0)
-- [ ] Mouth positioner: `mouth.y` (vertical, 0–1)
-- [ ] **Stencil-masked rendering**: teeth only visible inside mouth hole
+- [x] Mouth w/h multipliers (0.3–2.0)
+- [ ] Teeth hMultiplier (0.5–3.0)
+- [x] Mouth positioner: `mouth.y` (vertical, 0.5–0.95)
+- [x] **Stencil-masked rendering**: mouth interior polygon with backdrop color
+- [x] Lip thickness control (lipScale 0.05–0.5)
+- [x] Lip color + mouth interior color controls
+- [x] 15 mouth shape presets (from mipomi-lang phoneme system)
 
 **Mouth animation** (tweenVars):
 ```lua
@@ -272,17 +277,17 @@ instance.tweenVars = {
 
 ## Priority Order (suggested)
 
-### Phase 1: Face rendering infrastructure
-1. Add `dna.face` and `dna.positioners` to DNA template in character-manager
-2. Face rendering function: given head body + face DNA, draw eyes/nose/mouth/brows
-3. Need: head bounding polygon (8 metaPoints from shape8Dict vertices)
-4. Need: `renderNonAttachedObject` equivalent — draw image at world-space position
+### Phase 1: Face rendering infrastructure ✅
+1. ✅ Add `dna.face` and `dna.positioners` to DNA template in character-manager
+2. ✅ Face rendering function: decal sfixtures with OMP compositing on head body
+3. ✅ Head bounding polygon (shape8Dict vertices for eye/mouth positioning)
+4. ✅ Decal rendering: positioned images at body-local coordinates
 
-### Phase 2: Individual face parts
-5. Eyes + pupils (shape thumbnails, position, scale, color)
-6. Eyebrows (shape, bend patterns, bezier curve rendering)
+### Phase 2: Individual face parts (in progress)
+5. ✅ Eyes + pupils (shape thumbnails, position, scale, color)
+6. Eyebrows (shape, bend patterns, bezier curve rendering) — **next up**
 7. Nose (shape, position, scale — face overlay, separate from nose segments)
-8. Mouth (upper lip + lower lip as bezier curves, stencil-masked teeth)
+8. ✅ Mouth (upper lip + lower lip as bezier curves, stencil-masked interior, 15 presets)
 9. Skin patches with transforms
 
 ### Phase 3: Animation
