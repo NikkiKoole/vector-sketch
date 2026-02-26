@@ -494,13 +494,14 @@ function lib.makeCombinedImages()
                 local cached = main.cached
 
                 local outlineImage = getLoveImage('textures/' .. main.bgURL)
-                local maskImage = getLoveImage('textures/' .. main.fgURL)
+                local hasFgURL = main.fgURL and main.fgURL ~= ''
+                local maskImage = hasFgURL and getLoveImage('textures/' .. main.fgURL) or nil
                 local patternImage = getLoveImage('textures/pat/' .. main.pURL)
 
                 if outlineImage or line then
                     local imgData = lib.makeTexturedCanvas(
                         outlineImage or line, -- line art
-                        maskImage or maskTex, -- mask
+                        maskImage or (hasFgURL and maskTex) or nil, -- mask (nil for outline-only textures)
                         cached.fgRGB,         -- color1
                         cached.fgA * 5,       -- alpha1
                         patternImage or tex1, -- texture2 (fill texture)
@@ -515,7 +516,7 @@ function lib.makeCombinedImages()
                         cached.bgA * 5,            -- lineAlpha
                         main.fx or 1,              -- flipx (normal)
                         main.fy or 1,              -- flipy (normal)
-                        { patch1, patch2, patch3 } -- renderPatch (set to truthy to enable extra patch rendering)
+                        { patch1 or false, patch2 or false, patch3 or false } -- renderPatch (avoid sparse table)
                     )
                     local image = love.graphics.newImage(imgData)
                     ud.extra.ompImage = image
@@ -1645,21 +1646,25 @@ function lib.drawTexturedWorld(world)
             if #points >= 2 then
                 --love.graphics.line(pointsflat)
                 --if drawables[i].extra.main.bgURL
-                local img = getLoveImage('textures/' .. (drawables[i].extra.main.bgURL))
-                if not img then
-                    img = getLoveImage('textures/' .. 'hair7.png')
+                local extra = drawables[i].extra
+                local useOMP = extra.OMP and extra.ompImage
+                local img
+                if useOMP then
+                    img = extra.ompImage
+                else
+                    img = getLoveImage('textures/' .. (extra.main.bgURL))
+                    if not img then
+                        img = getLoveImage('textures/' .. 'hair7.png')
+                    end
                 end
 
-                local hairTension = drawables[i].extra.tension or .02 -- love.math.random() --.02
-                local spacing = drawables[i].extra.spacing or 5
+                local hairTension = extra.tension or .02 -- love.math.random() --.02
+                local spacing = extra.spacing or 5
                 -- 5                                                    --* multipliers.hair.sMultiplier
                 local coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
-                -- logger:info('check these below')
-                -- logger:inspect(points)
-                -- logger:inspect(coords)
                 --local factor = (length / h)
                 --local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
-                local width = drawables[i].extra.width or 100 -- 100 --(w * factor) / 2
+                local width = extra.width or 100 -- 100 --(w * factor) / 2
                 --2                         -- 100             (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
                 local verts = polyline.render('miter', coords, width)
 
@@ -1683,11 +1688,15 @@ function lib.drawTexturedWorld(world)
                 local m = love.graphics.newMesh(vertices, "strip")
                 m:setTexture(img)
                 local body = drawables[i].thing.body
-                local main = drawables[i].extra.main
-                if main then
-                    if not main.cached then lib.makeCached(main) end
-                    local c = main.cached
-                    love.graphics.setColor(c.bgR, c.bgG, c.bgB, c.bgA)
+                if useOMP then
+                    love.graphics.setColor(1, 1, 1, 1)
+                else
+                    local main = extra.main
+                    if main then
+                        if not main.cached then lib.makeCached(main) end
+                        local c = main.cached
+                        love.graphics.setColor(c.bgR, c.bgG, c.bgB, c.bgA)
+                    end
                 end
                 love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
                 love.graphics.setColor(1, 1, 1, 1)
@@ -1704,12 +1713,13 @@ function lib.drawTexturedWorld(world)
                 local angle = body:getAngle() + (extra.rot or 0)
                 local dw = extra.w or 50
                 local dh = extra.h or 50
+                local mirrorX = extra.mirror and -1 or 1
 
                 if extra.OMP and extra.ompImage then
                     -- Pre-composited OMP image (has proper alpha)
                     local img = extra.ompImage
                     local imgw, imgh = img:getDimensions()
-                    local sx = dw / imgw
+                    local sx = dw / imgw * mirrorX
                     local sy = dh / imgh
                     love.graphics.setColor(1, 1, 1, 1)
                     love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
@@ -1717,7 +1727,7 @@ function lib.drawTexturedWorld(world)
                     -- Simple single-color tinted image (no mask)
                     local img, imgw, imgh = getLoveImage('textures/' .. extra.bgURL)
                     if img then
-                        local sx = dw / imgw
+                        local sx = dw / imgw * mirrorX
                         local sy = dh / imgh
                         local r, g, b, a = lib.hexToColor(extra.bgHex or 'ffffffff')
                         love.graphics.setColor(r, g, b, a)

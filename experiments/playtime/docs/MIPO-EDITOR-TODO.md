@@ -14,7 +14,7 @@ Key source files in puppet-maker2:
 
 ---
 
-## 1. Face Parts (NOT in playtime yet)
+## 1. Face Parts (partially implemented)
 
 Face parts are **NOT physics bodies** — they're 2D images rendered on top of the head
 body using world-space coordinates derived from the head's 8-point bounding polygon.
@@ -54,10 +54,11 @@ guy.tweenVars.lookAtCounter            -- counts down, eyes track when > 0
 ```
 
 ### Eyebrows
-- [ ] Brow shapes: `brow1.png` through `brow8.png` (no masks — single-layer)
-- [ ] Brow w/h multipliers (0.25–2.0)
-- [ ] Brow positioners: `brow.y` (vertical, 0–1), `brow.bend` (1–10)
-- [ ] Rendered as bezier curve mesh, NOT flat image
+- [x] Brow shapes: `brow1.png` through `brow8.png` (no masks — single-layer)
+- [x] Brow w/h multipliers (0.25–2.0)
+- [x] Brow positioners: `brow.y` (vertical, 0–1), `brow.bend` (1–10)
+- [x] Brow color (bgHex) control
+- [ ] Rendered as bezier curve mesh, NOT flat image (currently rendered as flat decal)
 
 **10 bend patterns** (texturedBox2d.lua ~line 1160):
 ```lua
@@ -78,10 +79,11 @@ local bends = {
 ```
 
 ### Nose (face overlay, NOT nose segments)
-- [ ] Nose shapes: `nose1.png` through `nose15.png` (most with masks)
-- [ ] Nose w/h multipliers (0.5–3.0)
-- [ ] Nose positioner: `nose.y` (vertical, 0–1)
-- [ ] Simple positioned image, no animation
+- [x] Nose shapes: `nose1.png` through `nose15.png` (most with masks)
+- [x] Nose w/h multipliers (0.5–3.0)
+- [x] Nose positioner: `nose.y` (vertical, 0–1)
+- [x] Simple positioned image, no animation
+- [x] Mutually exclusive with physics nose segments
 
 ### Mouth (most complex face part)
 - [x] Upper lip shapes: `upperlip1.png` through `upperlip4.png` (+ masks, OMP with black outline)
@@ -158,7 +160,7 @@ We use hex strings directly — equivalent, just different representation.
 - [x] **Torso segments** — 1–5
 - [x] **Nose segments** — 0–5
 - [ ] **Has neck toggle** — separate from segment count (puppet-maker2 has this as boolean)
-- [ ] **Physics hair** — 5 hair segments as physics bodies attached to head
+- [~] **Physics hair** — skipped (won't implement)
 - [ ] **Leg facing** — 'left', 'right', 'front' (affects foot stance angles)
 
 ---
@@ -203,7 +205,7 @@ dna = {
   creation = { ... },        -- ✅ We have this
   multipliers = { ... },     -- ❌ We use dims.sx/sy/h/w instead (partial)
   values = { ... },          -- ❌ We use appearance table (partial)
-  positioners = { ... },     -- ❌ Missing entirely
+  positioners = { ... },     -- ✅ Partial: eye, brow, mouth positioners implemented via dna.face
 }
 
 -- Proposed additions to instance.dna:
@@ -261,9 +263,10 @@ instance.tweenVars = {
 ## 10. Randomization
 
 - [x] **Basic randomize** — shapes, colors, bodyhair
+- [x] **Symmetric color randomization** — torso segments share colors, head matches torso, feet/hands share colors, limb connected-skin/hair share texture + colors
+- [x] **Randomize face** — eyes, pupils, mouth, brows (shapes, positions, sizes, colors)
 - [ ] **Smarter randomize** — `randValue(min, max, step, preferMiddle)` avoids extremes
 - [ ] **Linked colors** — hair, chesthair, armhair, leghair, brows share hair color
-- [ ] **Randomize face** — all face part shapes, positions, sizes
 - [ ] **Randomize patches** — skin patch alpha/transform randomization
 
 ---
@@ -285,10 +288,11 @@ instance.tweenVars = {
 
 ### Phase 2: Individual face parts (in progress)
 5. ✅ Eyes + pupils (shape thumbnails, position, scale, color)
-6. Eyebrows (shape, bend patterns, bezier curve rendering) — **next up**
-7. Nose (shape, position, scale — face overlay, separate from nose segments)
+6. ✅ Eyebrows (shape, bend patterns, position, color — rendered as flat decal, not bezier yet)
+7. ✅ Nose (shape, position, scale — face overlay, mutually exclusive with nose segments)
 8. ✅ Mouth (upper lip + lower lip as bezier curves, stencil-masked interior, 15 presets)
-9. Skin patches with transforms
+9. Teeth (shape, hMul, color — rendered inside mouth stencil)
+10. Skin patches with transforms (snout, eye1, eye2 overlays)
 
 ### Phase 3: Animation
 10. Eye blink tween (eyesOpen 0→1)
@@ -303,7 +307,7 @@ instance.tweenVars = {
 17. Face magnitude global scaler
 
 ### Phase 5: Advanced
-18. Physics hair (5 hair bodies attached to head)
+18. ~~Physics hair~~ — skipped
 19. Procedural texture controls (texScale, texRot, alpha)
 20. DNA save/load presets
 21. Smarter randomization with linked colors

@@ -71,7 +71,7 @@ local playtimeui = require 'src.playtime-ui'
 
 local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
-local _objectManager = require 'src.object-manager' -- luacheck: ignore 211
+local ObjectManager = require('src.object-manager')
 
 
 --local moonshine = require 'moonshine'
@@ -97,26 +97,12 @@ local InputManager = require 'src.input-manager'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
-local _characterManager = require 'src.character-manager' -- luacheck: ignore 211
+local CharacterManager = require('src.character-manager')
 
 
 
-local function waitForEvent()
-    local a
-    repeat
-        a = love.event.wait()
-        print(a)
-    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
-end
-
--- Skip wait screen when launched with --bridge (for automated/AI use)
-local skip_wait = true
-for _, v in ipairs(arg or {}) do
-    if v == '--bridge' then skip_wait = true end
-end
-if not skip_wait then
-    waitForEvent()
-end
+-- Request window focus so mouse events work when launched from terminal
+love.window.requestAttention()
 
 local FIXED_TIMESTEP = true
 local FPS = 60 -- in platime ui we also have a fps
@@ -186,8 +172,12 @@ function love.load(_args)
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
-    --humanoidInstance = CharacterManager.createCharacter("humanoid", 100, 300, .15)
-    --  humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
+    ObjectManager.addThing('rectangle', { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
+    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
+    if humanoidInstance then
+        local uiMipoEditor = require('src.ui.mipo-editor')
+        uiMipoEditor.randomizeMipo(humanoidInstance)
+    end
 
 
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)

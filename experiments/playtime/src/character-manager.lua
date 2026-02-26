@@ -183,7 +183,8 @@ function lib.updateFaceOfPart(instance, partName, values)
     if not face.brow then face.brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 } end
     if not face.nose then face.nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 } end
     if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } } end
-    if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5 } end
+    if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5, r = 0 } end
+    if not face.positioners.eye.r then face.positioners.eye.r = 0 end
     if not face.positioners.brow then face.positioners.brow = { y = 0.3 } end
     if not face.positioners.nose then face.positioners.nose = { y = 0.35 } end
     if not face.positioners.mouth then face.positioners.mouth = { y = 0.7 } end
@@ -200,6 +201,7 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.pupilHMul then face.pupil.hMul = values.pupilHMul end
     if values.eyeX then face.positioners.eye.x = values.eyeX end
     if values.eyeY then face.positioners.eye.y = values.eyeY end
+    if values.eyeR then face.positioners.eye.r = values.eyeR end
 
     if values.browShape then face.brow.shape = values.browShape end
     if values.browBgHex then face.brow.bgHex = values.browBgHex end
@@ -224,6 +226,23 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.mouthWMul then face.mouth.wMul = values.mouthWMul end
     if values.mouthHMul then face.mouth.hMul = values.mouthHMul end
     if values.mouthY then face.positioners.mouth.y = values.mouthY end
+end
+
+-- Update top-level positioners (leg.x, ear.y, nose.t) and faceMagnitude.
+-- values can contain: legX, earY, noseT, faceMagnitude
+function lib.updatePositioners(instance, values)
+    if not instance.dna.positioners then
+        instance.dna.positioners = { leg = { x = 0.5 }, ear = { y = 0.5 }, nose = { t = 0.35 } }
+    end
+    local pos = instance.dna.positioners
+    if not pos.leg then pos.leg = { x = 0.5 } end
+    if not pos.ear then pos.ear = { y = 0.5 } end
+    if not pos.nose then pos.nose = { t = 0.35 } end
+
+    if values.legX then pos.leg.x = values.legX end
+    if values.earY then pos.ear.y = values.earY end
+    if values.noseT then pos.nose.t = values.noseT end
+    if values.faceMagnitude then instance.dna.faceMagnitude = values.faceMagnitude end
 end
 
 -- Update connected-skin or connected-hair appearance colors.
@@ -337,6 +356,12 @@ local dna = {
             torsoSegments = 1,
             noseSegments = 1, -- 0 = no nose; >0 = segmented nose/trunk
         },
+        positioners = {
+            leg = { x = 0.5 },
+            ear = { y = 0.5 },
+            nose = { t = 0.35 },
+        },
+        faceMagnitude = 1,
 
 
         -- in the apppearance below we have a few options for types:
@@ -413,6 +438,7 @@ local dna = {
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
                 shape = ST.SHAPE8,
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
 
@@ -458,41 +484,50 @@ local dna = {
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
                 shape8URL = 'shapeA2.png',
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 4, up = math.pi / 4 } }
             },
             ['luleg'] = {
                 appearance = {
                     ['connected-skin'] = {
                         main = add(initBlock('leg5'), { dir = -1 }),
-                        endNode = 'lfoot'
+                        endNode = 'lfoot',
+                        zOffset = 1,
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
-                        endNode = 'lfoot'
+                        endNode = 'lfoot',
+                        zOffset = 2,
                     }
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
                 shape = ST.CAPSULE,
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } }
             },
             ['ruleg'] = {
                 appearance = {
                     ['connected-skin'] = {
                         main = add(initBlock('leg5'), { dir = 1 }),
-                        endNode = 'rfoot'
+                        endNode = 'rfoot',
+                        zOffset = 1,
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
-                        endNode = 'rfoot'
+                        endNode = 'rfoot',
+                        zOffset = 2,
                     }
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
                 shape = ST.CAPSULE,
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } }
             },
             ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } } },
             ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } } },
             ['luarm'] = {
                 appearance = {
@@ -503,7 +538,8 @@ local dna = {
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
-                        endNode = 'lhand'
+                        endNode = 'lhand',
+                        zOffset = 2,
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -519,7 +555,8 @@ local dna = {
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
-                        endNode = 'rhand'
+                        endNode = 'rhand',
+                        zOffset = 2,
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -1155,7 +1192,7 @@ local function getOffsetFromParent(partName, guy)
             return (parts[highestTorso].dims.w / 2) * scale, (-parts[highestTorso].dims.h / 2) * scale
         end
     elseif partName == 'luleg' then
-        local t = 0.5 --positioners.leg.x
+        local t = (positioners and positioners.leg and positioners.leg.x) or 0.5
         if hasTorso8() then
             local ax, ay = getTorsoPart8FromLowest(6)
             local bx, by = getTorsoPart8FromLowest(5)
@@ -1165,8 +1202,7 @@ local function getOffsetFromParent(partName, guy)
             return (-parts[lowestTorso].dims.w / 2) * (1 - t) * scale, (parts[lowestTorso].dims.h / 2) * scale
         end
     elseif partName == 'ruleg' then
-        local t = 0.5 -- positioners.leg.x
-
+        local t = (positioners and positioners.leg and positioners.leg.x) or 0.5
         if hasTorso8() then
             local ax, ay = getTorsoPart8FromLowest(4)
             local bx, by = getTorsoPart8FromLowest(5)
@@ -1176,11 +1212,12 @@ local function getOffsetFromParent(partName, guy)
             return (parts[lowestTorso].dims.w / 2) * (1 - t) * scale, (parts[lowestTorso].dims.h / 2) * scale
         end
     elseif partName == 'lear' then
+        -- Left ear: lerp from top-left(8) to bottom-left(6), t=0 is top, t=1 is bottom
+        local t = (positioners and positioners.ear and positioners.ear.y) or 0.5
         if creation.isPotatoHead then
             if hasTorso8() then
-                local t = 0.5
                 local ax, ay = getTorsoPart8FromHighest(8)
-                local bx, by = getTorsoPart8FromHighest(7)
+                local bx, by = getTorsoPart8FromHighest(6)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx * scale, ry * scale
             else
@@ -1188,9 +1225,8 @@ local function getOffsetFromParent(partName, guy)
             end
         else
             if hasHead8() then
-                local t = 0.5
-                local ax, ay = getHeadPart8(7)
-                local bx, by = getHeadPart8(8)
+                local ax, ay = getHeadPart8(8)
+                local bx, by = getHeadPart8(6)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -1198,11 +1234,12 @@ local function getOffsetFromParent(partName, guy)
             end
         end
     elseif partName == 'rear' then
+        -- Right ear: lerp from top-right(2) to bottom-right(4), t=0 is top, t=1 is bottom
+        local t = (positioners and positioners.ear and positioners.ear.y) or 0.5
         if creation.isPotatoHead then
             if hasTorso8() then
-                local t = 0.5
                 local ax, ay = getTorsoPart8FromHighest(2)
-                local bx, by = getTorsoPart8FromHighest(3)
+                local bx, by = getTorsoPart8FromHighest(4)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -1210,9 +1247,8 @@ local function getOffsetFromParent(partName, guy)
             end
         else
             if hasHead8() then
-                local t = 0.5
                 local ax, ay = getHeadPart8(2)
-                local bx, by = getHeadPart8(3)
+                local bx, by = getHeadPart8(4)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
                 return rx, ry
             else
@@ -1349,13 +1385,17 @@ local function getPoseCache(instance)
     end
     return poseCache
 end
+-- Parts with a stance angle (ears, feet) should keep the angle from makePart
+-- rather than restoring the cached angle, since their stanceAngle may have changed.
+local stanceAngleParts = { lear = true, rear = true, lfoot = true, rfoot = true }
 local function applyPoseCache(instance, poseCache)
     -- using the cache
     for partName, pose in pairs(poseCache) do
         if instance.parts[partName] and pose then
             local body = instance.parts[partName].body
-            --body:setPosition(pose.pos[1], pose.pos[2])
-            body:setAngle(pose.angle)
+            if not stanceAngleParts[partName] then
+                body:setAngle(pose.angle)
+            end
             body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
             body:setAngularVelocity(pose.angularVelocity)
 
@@ -1615,7 +1655,7 @@ function lib.addTexturesFromInstance2(instance)
                     elseif k2 == 'bodyhair' then
                         local body = relevant.body
                         local _, _, w, h = getCenterAndDimensions(body)
-                        local growfactor = 1.2
+                        local growfactor = v2.growfactor or 1.2
                         local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
                             { width = w * growfactor, height = h * growfactor })
                         local ud = fixture:getUserData()
@@ -1734,7 +1774,8 @@ function lib.addTexturesFromInstance2(instance)
                             local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TRACE_VERTICES,
                                 { radius = 30, width = 100, height = 100 })
                             local ud = fixture:getUserData()
-                            ud.extra.OMP = false --it.OMP
+                            local hasMask = v2.main.fgURL and v2.main.fgURL ~= ''
+                            ud.extra.OMP = hasMask
                             ud.extra.zOffset = 40
                             ud.extra.dirty = true
                             ud.extra.main = utils.deepCopy(v2.main)
@@ -1782,8 +1823,9 @@ function lib.addTexturesFromInstance2(instance)
                             -- Compute base eye size from head dimensions
                             local headW = math.abs(rightX - leftX)
                             local headH = math.abs(botY - topY)
-                            local baseEyeW = headW * 0.25
-                            local baseEyeH = headH * 0.25
+                            local fm = instance.dna.faceMagnitude or 1
+                            local baseEyeW = headW * 0.25 * fm
+                            local baseEyeH = headH * 0.25 * fm
 
                             local eye = face.eye or {}
                             local pupil = face.pupil or {}
@@ -1806,9 +1848,10 @@ function lib.addTexturesFromInstance2(instance)
                             -- Create eye decals (left and right)
                             -- Uses OMP compositing: outline + mask → pre-composited image
                             local eyeZOffset = 50
+                            local eyeR = eyePos.r or 0
                             local eyeSides = {
-                                { ox = leftEyeX, label = 'leye' },
-                                { ox = rightEyeX, label = 'reye' },
+                                { ox = leftEyeX, label = 'leye', mirror = true, rot = -eyeR },
+                                { ox = rightEyeX, label = 'reye', rot = eyeR },
                             }
                             for _, side in ipairs(eyeSides) do
                                 local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
@@ -1818,6 +1861,8 @@ function lib.addTexturesFromInstance2(instance)
                                 ud.extra.oy = eyeY
                                 ud.extra.w = eyeW
                                 ud.extra.h = eyeH
+                                ud.extra.mirror = side.mirror or false
+                                ud.extra.rot = side.rot or 0
                                 ud.extra.zOffset = eyeZOffset
                                 ud.extra.OMP = true
                                 ud.extra.dirty = true
@@ -1838,7 +1883,7 @@ function lib.addTexturesFromInstance2(instance)
                             local hasPupilMask = pupilFgURL ~= ''
                             local pupilZOffset = 51
                             local pupilSides = {
-                                { ox = leftEyeX, label = 'lpupil' },
+                                { ox = leftEyeX, label = 'lpupil', mirror = true },
                                 { ox = rightEyeX, label = 'rpupil' },
                             }
                             for _, side in ipairs(pupilSides) do
@@ -1849,6 +1894,7 @@ function lib.addTexturesFromInstance2(instance)
                                 ud.extra.oy = eyeY
                                 ud.extra.w = pupilW
                                 ud.extra.h = pupilH
+                                ud.extra.mirror = side.mirror or false
                                 ud.extra.zOffset = pupilZOffset
                                 if hasPupilMask then
                                     ud.extra.OMP = true
@@ -1873,8 +1919,8 @@ function lib.addTexturesFromInstance2(instance)
                             local brow = face.brow or {}
                             local browPos = face.positioners and face.positioners.brow or { y = 0.3 }
                             local browY = lerp(topY, botY, browPos.y)
-                            local browW = headW * 0.2 * (brow.wMul or 1)
-                            local browH = headH * 0.1 * (brow.hMul or 1)
+                            local browW = headW * 0.2 * (brow.wMul or 1) * fm
+                            local browH = headH * 0.1 * (brow.hMul or 1) * fm
                             local browURL = 'brow' .. (brow.shape or 1) .. '.png'
                             local browZOffset = 49
                             local browSides = {
@@ -1904,8 +1950,8 @@ function lib.addTexturesFromInstance2(instance)
                                 local nosePos = face.positioners and face.positioners.nose or { y = 0.35 }
                                 local noseY = lerp(topY, botY, nosePos.y)
                                 local noseX = (leftX + rightX) / 2
-                                local noseW = headW * 0.15 * (nose.wMul or 1)
-                                local noseH = headH * 0.15 * (nose.hMul or 1)
+                                local noseW = headW * 0.15 * (nose.wMul or 1) * fm
+                                local noseH = headH * 0.15 * (nose.hMul or 1) * fm
                                 local noseBgURL = 'nose' .. noseShape .. '.png'
                                 local noseMaskPath = 'textures/nose' .. noseShape .. '-mask.png'
                                 local noseFgURL = ''
@@ -1955,8 +2001,8 @@ function lib.addTexturesFromInstance2(instance)
                                 local mwMul = mouth.wMul or 1
                                 local mhMul = mouth.hMul or 1
                                 -- Scale mouth to ~40% of head width (adjustable via wMul/hMul)
-                                local mouthScaleX = (headW * 0.004) * mwMul
-                                local mouthScaleY = (headH * 0.004) * mhMul
+                                local mouthScaleX = (headW * 0.004) * mwMul * fm
+                                local mouthScaleY = (headH * 0.004) * mhMul * fm
 
                                 -- Build scaled + offset curve points (16 floats)
                                 local curvePoints = {}
@@ -2119,6 +2165,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             height3 = (partData.dims.h3 or 0) * instance.scale,
             height4 = (partData.dims.h4 or 0) * instance.scale,
 
+            behaviors = partData.behaviors,
             -- Add other physics properties if needed (friction, restitution?)
         }
 

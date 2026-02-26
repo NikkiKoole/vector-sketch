@@ -51,9 +51,20 @@ local haircutTextures = {
     'hair6', 'hair7', 'hair8', 'hair9', 'hair10', 'hair11'
 }
 
+-- Hair textures that have a mask (OMP-capable)
+local hairsWithMask = { ['hair7.png'] = true, ['hair8.png'] = true }
+
 -- Textures for connected-skin (OMP, has outline + mask pairs)
 local limbSkinTextures = {
     'leg1', 'leg2', 'leg3', 'leg4', 'leg5', 'leg7'
+}
+
+-- Pattern textures for OMP compositing (textures/pat/)
+local patternTextures = {
+    'pat/type0', 'pat/type1', 'pat/type2t', 'pat/type3_',
+    'pat/type4', 'pat/type5', 'pat/type6', 'pat/type7', 'pat/type8',
+    'pat/pattern', 'pat/pattern2', 'pat/pattern3', 'pat/pattern4',
+    'pat/pattern5', 'pat/pattern6', 'pat/pattern7', 'pat/lijnen'
 }
 
 -- Eye shape textures for face decals
@@ -222,6 +233,60 @@ local function handlePaletteButton(idPrefix, px, py, pw, currentHex, onColorChan
     end
 end
 
+-- Draw pattern controls (texture grid + transform sliders) for an OMP block.
+-- block: the DNA texture block (e.g. skin.main, connected-skin.main)
+-- idPrefix: unique prefix for slider IDs
+-- panelX, startY: layout position
+-- onUpdate: function(key, value) called when a field changes
+-- Returns the new y position after all controls.
+local function drawPatternControls(block, idPrefix, panelX, startY, onUpdate)
+    local px = panelX + 10
+    local yy = startY
+    local ROW = BUTTON_HEIGHT + BUTTON_SPACING
+
+    -- Pattern texture thumbnail grid
+    local currentPURL = block.pURL or ''
+    -- Convert pURL (e.g. 'type0.png') to grid format ('pat/type0')
+    local currentGridURL = currentPURL ~= '' and ('pat/' .. currentPURL) or ''
+    local cellSize = 40
+    local gridHeight = drawThumbnailGrid(patternTextures, currentGridURL, panelX, yy, cellSize,
+        function(url)
+            -- url is 'pat/type0.png' or nil; strip 'pat/' prefix for pURL
+            local purl = url and url:gsub('^pat/', '') or ''
+            onUpdate('pURL', purl)
+        end, true)
+    yy = yy + gridHeight + BUTTON_SPACING
+
+    -- Only show transform sliders if a pattern is selected
+    if currentPURL ~= '' then
+        handlePaletteButton(idPrefix .. '_pHex', px + 30, yy, 140, block.pHex, function(color)
+            onUpdate('pHex', color)
+        end)
+        ui.alignedLabel(px + 180, yy, 'pattern')
+        yy = yy + ROW
+
+        local sliders = {
+            { key = 'pr',  label = 'rot',  min = 0, max = 6.28, default = 0 },
+            { key = 'psx', label = 'scaleX', min = 0.01, max = 3, default = 1 },
+            { key = 'psy', label = 'scaleY', min = 0.01, max = 3, default = 1 },
+            { key = 'ptx', label = 'offX', min = -1, max = 1, default = 0 },
+            { key = 'pty', label = 'offY', min = -1, max = 1, default = 0 },
+        }
+        for _, s in ipairs(sliders) do
+            local val = ui.sliderWithInput(idPrefix .. '_' .. s.key,
+                px, yy, 120, s.min, s.max, block[s.key] or s.default)
+            ui.alignedLabel(px, yy, '  ' .. s.label)
+            val = val and tonumber(val)
+            if val and val ~= (block[s.key] or s.default) then
+                onUpdate(s.key, val)
+            end
+            yy = yy + ROW
+        end
+    end
+
+    return yy
+end
+
 function lib.drawMipoEditor(instance, partName)
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -335,6 +400,73 @@ function lib.drawMipoEditor(instance, partName)
 
             -- suppress unused warning
             local _ = changed
+        end)
+
+        -- === POSITIONERS ACCORDION ===
+        drawAccordion('positioners', function()
+            local pos = instance.dna.positioners or {}
+
+            -- Leg stance width
+            local legX = ui.sliderWithInput('mipo_leg_x', x, y, 120, 0, 1, (pos.leg and pos.leg.x) or 0.5)
+            ui.alignedLabel(x, y, '  leg stance')
+            legX = legX and tonumber(legX)
+            if legX and legX ~= ((pos.leg and pos.leg.x) or 0.5) then
+                CharacterManager.updatePositioners(instance, { legX = legX })
+                CharacterManager.rebuildFromCreation(instance, {})
+                CharacterManager.addTexturesFromInstance2(instance)
+            end
+            y = y + ROW
+
+            -- Ear vertical position
+            local earY = ui.sliderWithInput('mipo_ear_y', x, y, 120, 0, 1, (pos.ear and pos.ear.y) or 0.5)
+            ui.alignedLabel(x, y, '  ear vertical')
+            earY = earY and tonumber(earY)
+            if earY and earY ~= ((pos.ear and pos.ear.y) or 0.5) then
+                CharacterManager.updatePositioners(instance, { earY = earY })
+                CharacterManager.rebuildFromCreation(instance, {})
+                CharacterManager.addTexturesFromInstance2(instance)
+            end
+            y = y + ROW
+
+            -- Ear stance angle (left ear)
+            local learPart = instance.dna.parts['lear']
+            if learPart then
+                local lAngle = learPart.stanceAngle or (-math.pi / 2 + math.pi / 5)
+                local lVal = ui.sliderWithInput('mipo_lear_angle', x, y, 120, -math.pi, math.pi, lAngle)
+                ui.alignedLabel(x, y, '  L ear angle')
+                lVal = lVal and tonumber(lVal)
+                if lVal and lVal ~= lAngle then
+                    learPart.stanceAngle = lVal
+                    CharacterManager.rebuildFromCreation(instance, {})
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+            end
+
+            -- Ear stance angle (right ear)
+            local rearPart = instance.dna.parts['rear']
+            if rearPart then
+                local rAngle = rearPart.stanceAngle or (math.pi / 2 - math.pi / 5)
+                local rVal = ui.sliderWithInput('mipo_rear_angle', x, y, 120, -math.pi, math.pi, rAngle)
+                ui.alignedLabel(x, y, '  R ear angle')
+                rVal = rVal and tonumber(rVal)
+                if rVal and rVal ~= rAngle then
+                    rearPart.stanceAngle = rVal
+                    CharacterManager.rebuildFromCreation(instance, {})
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+            end
+
+            -- Face magnitude (global face feature scaler)
+            local fmVal = ui.sliderWithInput('mipo_face_mag', x, y, 120, 0.25, 2, instance.dna.faceMagnitude or 1)
+            ui.alignedLabel(x, y, '  face magnitude')
+            fmVal = fmVal and tonumber(fmVal)
+            if fmVal and fmVal ~= (instance.dna.faceMagnitude or 1) then
+                CharacterManager.updatePositioners(instance, { faceMagnitude = fmVal })
+                CharacterManager.addTexturesFromInstance2(instance)
+            end
+            y = y + ROW
         end)
 
         -- === SHAPE ACCORDION ===
@@ -493,13 +625,11 @@ function lib.drawMipoEditor(instance, partName)
                         ui.alignedLabel(x + 180, y, 'fill')
                         y = y + ROW
 
-                        handlePaletteButton('mipo_p_' .. partName .. '_' .. patch,
-                            x + 30, y, 140, skin[patch].pHex, function(color)
-                                CharacterManager.updateSkinOfPart(instance, partName, { pHex = color }, patch)
+                        y = drawPatternControls(skin[patch], 'mipo_pat_' .. partName .. '_' .. patch, panelX, y,
+                            function(key, value)
+                                CharacterManager.updateSkinOfPart(instance, partName, { [key] = value }, patch)
                                 CharacterManager.addTexturesFromInstance2(instance)
                             end)
-                        ui.alignedLabel(x + 180, y, 'pattern')
-                        y = y + ROW
                     end
                 end
             end)
@@ -571,6 +701,27 @@ function lib.drawMipoEditor(instance, partName)
                         end)
                     ui.alignedLabel(x + 180, y, 'fill')
                     y = y + ROW
+
+                    -- Growfactor slider (how much bigger bodyhair is relative to the body)
+                    local currentGrow = bh.growfactor or 1.2
+                    ui.alignedLabel(x, y, 'grow')
+                    local changed, newGrow = ui.slider('mipo_bh_grow_' .. partName,
+                        x + 40, y, 200, currentGrow, 0.5, 2.5)
+                    if changed then
+                        local function setGrow(pn)
+                            instance.dna.parts[pn].appearance['bodyhair'].growfactor = newGrow
+                        end
+                        if isTorso then
+                            local count = instance.dna.creation.torsoSegments or 1
+                            for i = 1, count do
+                                setGrow('torso' .. i)
+                            end
+                        else
+                            setGrow(partName)
+                        end
+                        CharacterManager.rebuildFromCreation(instance, {})
+                    end
+                    y = y + ROW
                 end
             end)
         end
@@ -637,6 +788,16 @@ function lib.drawMipoEditor(instance, partName)
                 eyeY = eyeY and tonumber(eyeY)
                 if eyeY and eyeY ~= eyePos.y then
                     CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeY = eyeY })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+
+                -- Eye rotation
+                local eyeRVal = ui.sliderWithInput('mipo_eye_r', x, y, 120, -2, 2, eyePos.r or 0)
+                ui.alignedLabel(x, y, '  eye rotation')
+                eyeRVal = eyeRVal and tonumber(eyeRVal)
+                if eyeRVal and eyeRVal ~= (eyePos.r or 0) then
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeR = eyeRVal })
                     CharacterManager.addTexturesFromInstance2(instance)
                 end
                 y = y + ROW
@@ -970,8 +1131,9 @@ function lib.drawMipoEditor(instance, partName)
                     local gridHeight = drawThumbnailGrid(haircutTextures, currentURL, panelX, y, cellSize,
                         function(url)
                             if url then
+                                local fgUrl = hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
                                 CharacterManager.updateHaircutOfPart(instance, haircutOwner,
-                                    { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') })
+                                    { bgURL = url, fgURL = fgUrl })
                             else
                                 main.bgURL = nil
                                 main.fgURL = nil
@@ -1017,14 +1179,31 @@ function lib.drawMipoEditor(instance, partName)
                     end
                     y = y + ROW
 
-                    -- Color (tints the hair texture)
+                    -- Color (tints the hair outline)
                     handlePaletteButton('mipo_hc_bg_' .. partName,
                         x + 30, y, 140, main.bgHex, function(color)
                             CharacterManager.updateHaircutOfPart(instance, haircutOwner, { bgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
-                    ui.alignedLabel(x + 180, y, 'color')
+                    ui.alignedLabel(x + 180, y, 'outline')
                     y = y + ROW
+
+                    -- OMP controls (fill + pattern) only for masked hair textures
+                    if main.fgURL and main.fgURL ~= '' then
+                        handlePaletteButton('mipo_hc_fg_' .. partName,
+                            x + 30, y, 140, main.fgHex or 'ffffffff', function(color)
+                                CharacterManager.updateHaircutOfPart(instance, haircutOwner, { fgHex = color })
+                                CharacterManager.addTexturesFromInstance2(instance)
+                            end)
+                        ui.alignedLabel(x + 180, y, 'fill')
+                        y = y + ROW
+
+                        y = drawPatternControls(main, 'mipo_hc_pat_' .. partName, panelX, y,
+                            function(key, value)
+                                CharacterManager.updateHaircutOfPart(instance, haircutOwner, { [key] = value })
+                                CharacterManager.addTexturesFromInstance2(instance)
+                            end)
+                    end
                 end
             end)
         end
@@ -1088,20 +1267,18 @@ function lib.drawMipoEditor(instance, partName)
                     ui.alignedLabel(x + 180, y, 'fill')
                     y = y + ROW
 
-                    handlePaletteButton('mipo_cs_p_' .. partName,
-                        x + 30, y, 140, cs.pHex, function(color)
+                    y = drawPatternControls(cs, 'mipo_cs_pat_' .. partName, panelX, y,
+                        function(key, value)
                             CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
-                                { pHex = color })
+                                { [key] = value })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
-                    ui.alignedLabel(x + 180, y, 'pattern')
-                    y = y + ROW
                 end
             end)
         end
 
         -- === CONNECTED-HAIR ACCORDION (arms, legs) ===
-        -- connected-hair uses 2-layer rendering (outline + fill, no pattern).
+        -- connected-hair is 2-layer by default; hair7/hair8 have masks (OMP with pattern).
         local connHairOwner = partName
         if not (partData and partData.appearance and partData.appearance['connected-hair']) then
             connHairOwner = getLimbRoot(partName)
@@ -1119,9 +1296,9 @@ function lib.drawMipoEditor(instance, partName)
                     local cellSize = 50
                     local gridHeight = drawThumbnailGrid(limbHairTextures, currentURL, panelX, y, cellSize,
                         function(url)
-                            -- Hair uses outline only (no mask), so only update bgURL
+                            local fgUrl = url and hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
                             CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
-                                { bgURL = url })
+                                { bgURL = url, fgURL = fgUrl })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
                     y = y + gridHeight + BUTTON_SPACING
@@ -1139,7 +1316,7 @@ function lib.drawMipoEditor(instance, partName)
                     end
                     y = y + ROW
 
-                    -- Hair is 2-layer (outline only, no mask/fill)
+                    -- Outline color
                     handlePaletteButton('mipo_ch_bg_' .. partName,
                         x + 30, y, 140, ch.bgHex, function(color)
                             CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
@@ -1148,14 +1325,39 @@ function lib.drawMipoEditor(instance, partName)
                         end)
                     ui.alignedLabel(x + 180, y, 'outline')
                     y = y + ROW
+
+                    -- OMP controls (fill + pattern) only for masked hair textures
+                    if ch.fgURL and ch.fgURL ~= '' then
+                        handlePaletteButton('mipo_ch_fg_' .. partName,
+                            x + 30, y, 140, ch.fgHex or 'ffffffff', function(color)
+                                CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
+                                    { fgHex = color })
+                                CharacterManager.addTexturesFromInstance2(instance)
+                            end)
+                        ui.alignedLabel(x + 180, y, 'fill')
+                        y = y + ROW
+
+                        y = drawPatternControls(ch, 'mipo_ch_pat_' .. partName, panelX, y,
+                            function(key, value)
+                                CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
+                                    { [key] = value })
+                                CharacterManager.addTexturesFromInstance2(instance)
+                            end)
+                    end
                 end
             end)
         end
 
-        -- === DISSOLVE BUTTON ===
+        -- === RANDOMIZE BUTTON ===
         y = y + BUTTON_SPACING
         love.graphics.line(x, y, x + panelWidth - 40, y)
         y = y + BUTTON_SPACING
+        if ui.button(x, y, panelWidth - 40, 'randomize') then
+            lib.randomizeMipo(instance)
+        end
+        y = y + ROW
+
+        -- === DISSOLVE BUTTON ===
         if ui.button(x, y, panelWidth - 40, 'dissolve') then
             for pName, part in pairs(instance.parts) do
                 if part and part.body and not part.body:isDestroyed() then
@@ -1258,12 +1460,20 @@ function lib.randomizeMipo(instance)
         { shape8URL = handUrl .. '.png', sy = handScale, sx = -handScale },
         instance)
 
-    -- Random feet/hand skin colors — shared across all extremities
-    local extremityFgHex = randomHexColor()
-    local extremityPHex = randomHexColor()
-    for _, part in ipairs({'lfoot', 'rfoot', 'lhand', 'rhand'}) do
+    -- Random feet skin colors
+    local feetFgHex = randomHexColor()
+    local feetPHex = randomHexColor()
+    for _, part in ipairs({'lfoot', 'rfoot'}) do
         CharacterManager.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = extremityFgHex, pHex = extremityPHex })
+            { bgHex = '000000ff', fgHex = feetFgHex, pHex = feetPHex })
+    end
+
+    -- Random hand skin colors
+    local handFgHex = randomHexColor()
+    local handPHex = randomHexColor()
+    for _, part in ipairs({'lhand', 'rhand'}) do
+        CharacterManager.updateSkinOfPart(instance, part,
+            { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex })
     end
 
     -- Random bodyhair (from key 't')
@@ -1278,30 +1488,50 @@ function lib.randomizeMipo(instance)
             { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png', bgHex = bhBgHex, fgHex = bhFgHex, pHex = bhPHex })
     end
 
-    -- Random limb connected-skin — shared texture + colors across limbs, neck, and torso
-    local limbUrl = limbSkinTextures[math.ceil(math.random() * #limbSkinTextures)]
-    local limbFgHex = randomHexColor()
-    local limbPHex = randomHexColor()
-    for _, part in ipairs({'luleg', 'ruleg', 'luarm', 'ruarm'}) do
+    -- Random arm connected-skin
+    local armSkinUrl = limbSkinTextures[math.ceil(math.random() * #limbSkinTextures)]
+    local armSkinFgHex = randomHexColor()
+    local armSkinPHex = randomHexColor()
+    for _, part in ipairs({'luarm', 'ruarm'}) do
         CharacterManager.updateConnectedAppearance(instance, part, 'connected-skin',
-            { bgURL = limbUrl .. '.png', fgURL = limbUrl .. '-mask.png', fgHex = limbFgHex, pHex = limbPHex })
-    end
-    for i = 1, count do
-        CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
-            { bgURL = limbUrl .. '.png', fgURL = limbUrl .. '-mask.png', fgHex = limbFgHex, pHex = limbPHex })
+            { bgURL = armSkinUrl .. '.png', fgURL = armSkinUrl .. '-mask.png', fgHex = armSkinFgHex, pHex = armSkinPHex })
     end
 
-    -- Random limb connected-hair — shared texture + color across limbs and torso
-    -- Connected-hair uses outline-only rendering (bgURL), no mask layer
-    local limbHairUrl = limbHairTextures[math.ceil(math.random() * #limbHairTextures)]
-    local limbHairBgHex = randomHexColor()
-    for _, part in ipairs({'luleg', 'ruleg', 'luarm', 'ruarm'}) do
-        CharacterManager.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = limbHairUrl .. '.png', bgHex = limbHairBgHex })
+    -- Random leg connected-skin
+    local legSkinUrl = limbSkinTextures[math.ceil(math.random() * #limbSkinTextures)]
+    local legSkinFgHex = randomHexColor()
+    local legSkinPHex = randomHexColor()
+    for _, part in ipairs({'luleg', 'ruleg'}) do
+        CharacterManager.updateConnectedAppearance(instance, part, 'connected-skin',
+            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png', fgHex = legSkinFgHex, pHex = legSkinPHex })
     end
+
+    -- Torso connected-skin (uses leg skin for continuity)
+    for i = 1, count do
+        CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
+            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png', fgHex = legSkinFgHex, pHex = legSkinPHex })
+    end
+
+    -- Random arm connected-hair
+    local armHairUrl = limbHairTextures[math.ceil(math.random() * #limbHairTextures)]
+    local armHairBgHex = randomHexColor()
+    for _, part in ipairs({'luarm', 'ruarm'}) do
+        CharacterManager.updateConnectedAppearance(instance, part, 'connected-hair',
+            { bgURL = armHairUrl .. '.png', bgHex = armHairBgHex })
+    end
+
+    -- Random leg connected-hair
+    local legHairUrl = limbHairTextures[math.ceil(math.random() * #limbHairTextures)]
+    local legHairBgHex = randomHexColor()
+    for _, part in ipairs({'luleg', 'ruleg'}) do
+        CharacterManager.updateConnectedAppearance(instance, part, 'connected-hair',
+            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
+    end
+
+    -- Torso connected-hair (uses leg hair for continuity)
     for i = 1, count do
         CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-hair',
-            { bgURL = limbHairUrl .. '.png', bgHex = limbHairBgHex })
+            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
     end
 
     -- Random face (eyes + pupils)
