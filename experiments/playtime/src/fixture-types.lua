@@ -58,6 +58,20 @@ fixtureTypes[subtypes.TEXFIXTURE] = {
     end,
 }
 
+fixtureTypes[subtypes.DECAL] = {
+    subtype = subtypes.DECAL,
+    density = 0,
+    getSize = function(cfg) return cfg.radius or 10, cfg.radius or 10 end,
+    getExtra = function()
+        return {
+            ox = 0, oy = 0, w = 50, h = 50, rot = 0,
+            bgURL = '', fgURL = '',
+            bgHex = 'ffffffff', fgHex = '',
+            zOffset = 0, zGroupOffset = 0,
+        }
+    end,
+}
+
 -- Expose rect8 for updateSFixtureDimensions in fixtures.lua
 fixtureTypes.rect8 = rect8
 

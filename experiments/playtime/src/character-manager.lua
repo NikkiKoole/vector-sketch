@@ -159,6 +159,32 @@ function lib.updateHaircutOfPart(instance, partName, values)
     end
 end
 
+-- Update face appearance (eye/pupil shape, colors, positions).
+-- values can contain: eyeShape, eyeBgHex, eyeFgHex, eyeWMul, eyeHMul,
+-- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY
+function lib.updateFaceOfPart(instance, partName, values)
+    local p = instance.dna.parts[partName]
+    if not p or not p.appearance or not p.appearance['face'] then return end
+    local face = p.appearance['face']
+    if not face.eye then face.eye = {} end
+    if not face.pupil then face.pupil = {} end
+    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 } } end
+    if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5 } end
+
+    if values.eyeShape then face.eye.shape = values.eyeShape end
+    if values.eyeBgHex then face.eye.bgHex = values.eyeBgHex end
+    if values.eyeFgHex then face.eye.fgHex = values.eyeFgHex end
+    if values.eyeWMul then face.eye.wMul = values.eyeWMul end
+    if values.eyeHMul then face.eye.hMul = values.eyeHMul end
+    if values.pupilShape then face.pupil.shape = values.pupilShape end
+    if values.pupilBgHex then face.pupil.bgHex = values.pupilBgHex end
+    if values.pupilFgHex then face.pupil.fgHex = values.pupilFgHex end
+    if values.pupilWMul then face.pupil.wMul = values.pupilWMul end
+    if values.pupilHMul then face.pupil.hMul = values.pupilHMul end
+    if values.eyeX then face.positioners.eye.x = values.eyeX end
+    if values.eyeY then face.positioners.eye.y = values.eyeY end
+end
+
 -- Update connected-skin or connected-hair appearance colors.
 -- Connected textures stretch between joint-linked body parts (used for arms/legs).
 -- appearanceKey is 'connected-skin' (OMP composite) or 'connected-hair' (2-layer).
@@ -326,7 +352,12 @@ local dna = {
                         startIndex = 6,
                         endIndex = 2,
                         main = initBlock('hair7'),
-                    }
+                    },
+                    ['face'] = {
+                        eye = { shape = 1, bgHex = 'ffffffff', fgHex = '000000ff', wMul = 1, hMul = 1 },
+                        pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
+                        positioners = { eye = { x = 0.2, y = 0.5 } },
+                    },
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
@@ -358,7 +389,12 @@ local dna = {
                         startIndex = 6,
                         endIndex = 2,
                         main = initBlock('hair6'),
-                    }
+                    },
+                    ['face'] = {
+                        eye = { shape = 1, bgHex = 'ffffffff', fgHex = '000000ff', wMul = 1, hMul = 1 },
+                        pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
+                        positioners = { eye = { x = 0.2, y = 0.5 } },
+                    },
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
@@ -1450,7 +1486,8 @@ function lib.addTexturesFromInstance2(instance)
                     if ud then
                         if (subtypes.is(ud, subtypes.CONNECTED_TEXTURE)
                                 or subtypes.is(ud, subtypes.TEXFIXTURE)
-                                or subtypes.is(ud, subtypes.TRACE_VERTICES)) then
+                                or subtypes.is(ud, subtypes.TRACE_VERTICES)
+                                or subtypes.is(ud, subtypes.DECAL)) then
                             fixtures.destroyFixture(f)
                         end
                     end
@@ -1649,6 +1686,127 @@ function lib.addTexturesFromInstance2(instance)
                             if v.dims.sy < 0 then
                                 ud.extra.startIndex = v2.startIndex + 4
                                 ud.extra.endIndex = v2.endIndex + 4
+                            end
+                        end
+                    elseif k2 == 'face' then
+                        -- Face decals (eyes + pupils) go on head (non-potato) or torso1 (potato)
+                        local rightPlaceForFace = false
+                        if instance.dna.creation.isPotatoHead and k == 'torso1' then
+                            rightPlaceForFace = true
+                        end
+                        if not instance.dna.creation.isPotatoHead and k == 'head' then
+                            rightPlaceForFace = true
+                        end
+
+                        if rightPlaceForFace and v.shape8URL and shape8Dict[v.shape8URL] then
+                            local body = relevant.body
+                            local face = v2
+                            local eyePos = face.positioners and face.positioners.eye or { x = 0.2, y = 0.5 }
+
+                            -- Get head shape vertices to compute eye positions
+                            local raw = shape8Dict[v.shape8URL].vertices
+                            local verts = makeTransformedVertices(raw,
+                                (v.dims.sx or 1) * scale, (v.dims.sy or 1) * scale)
+
+                            -- 8-vertex polygon: 1=top, 3=right-mid, 5=bottom, 7=left-mid
+                            -- Indices are 1-based, pairs of x,y
+                            local _, topY = verts[1], verts[2]
+                            local rightX = verts[5]
+                            local _, botY = verts[9], verts[10]
+                            local leftX = verts[13]
+
+                            local leftEyeX = lerp(leftX, rightX, 0.5 - eyePos.x)
+                            local rightEyeX = lerp(leftX, rightX, 0.5 + eyePos.x)
+                            local eyeY = lerp(topY, botY, eyePos.y)
+
+                            -- Compute base eye size from head dimensions
+                            local headW = math.abs(rightX - leftX)
+                            local headH = math.abs(botY - topY)
+                            local baseEyeW = headW * 0.25
+                            local baseEyeH = headH * 0.25
+
+                            local eye = face.eye or {}
+                            local pupil = face.pupil or {}
+
+                            local eyeW = baseEyeW * (eye.wMul or 1)
+                            local eyeH = baseEyeH * (eye.hMul or 1)
+                            local pupilW = baseEyeW * (pupil.wMul or 0.5)
+                            local pupilH = baseEyeH * (pupil.hMul or 0.5)
+
+                            local eyeBgURL = 'eye' .. (eye.shape or 1) .. '.png'
+                            local eyeFgURL = 'eye' .. (eye.shape or 1) .. '-mask.png'
+                            local pupilBgURL = 'pupil' .. (pupil.shape or 1) .. '.png'
+                            -- Only some pupils have masks
+                            local pupilFgURL = ''
+                            local pupilMaskPath = 'textures/pupil' .. (pupil.shape or 1) .. '-mask.png'
+                            if love.filesystem.getInfo(pupilMaskPath) then
+                                pupilFgURL = 'pupil' .. (pupil.shape or 1) .. '-mask.png'
+                            end
+
+                            -- Create eye decals (left and right)
+                            -- Uses OMP compositing: outline + mask → pre-composited image
+                            local eyeZOffset = 50
+                            local eyeSides = {
+                                { ox = leftEyeX, label = 'leye' },
+                                { ox = rightEyeX, label = 'reye' },
+                            }
+                            for _, side in ipairs(eyeSides) do
+                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                local ud = f:getUserData()
+                                ud.label = side.label
+                                ud.extra.ox = side.ox
+                                ud.extra.oy = eyeY
+                                ud.extra.w = eyeW
+                                ud.extra.h = eyeH
+                                ud.extra.zOffset = eyeZOffset
+                                ud.extra.OMP = true
+                                ud.extra.dirty = true
+                                ud.extra.main = {
+                                    bgURL = eyeBgURL,
+                                    fgURL = eyeFgURL,
+                                    pURL = '',
+                                    bgHex = eye.bgHex or 'ffffffff',
+                                    fgHex = eye.fgHex or '000000ff',
+                                    pHex = 'ffffff00',
+                                }
+                                drawTextured.makeCached(ud.extra.main)
+                            end
+
+                            -- Create pupil decals (left and right)
+                            -- Pupils with a mask use OMP compositing (2-color).
+                            -- Pupils without a mask are single-color (just tinted outline).
+                            local hasPupilMask = pupilFgURL ~= ''
+                            local pupilZOffset = 51
+                            local pupilSides = {
+                                { ox = leftEyeX, label = 'lpupil' },
+                                { ox = rightEyeX, label = 'rpupil' },
+                            }
+                            for _, side in ipairs(pupilSides) do
+                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                local ud = f:getUserData()
+                                ud.label = side.label
+                                ud.extra.ox = side.ox
+                                ud.extra.oy = eyeY
+                                ud.extra.w = pupilW
+                                ud.extra.h = pupilH
+                                ud.extra.zOffset = pupilZOffset
+                                if hasPupilMask then
+                                    ud.extra.OMP = true
+                                    ud.extra.dirty = true
+                                    ud.extra.main = {
+                                        bgURL = pupilBgURL,
+                                        fgURL = pupilFgURL,
+                                        pURL = '',
+                                        bgHex = pupil.bgHex or '000000ff',
+                                        fgHex = pupil.fgHex or '',
+                                        pHex = 'ffffff00',
+                                    }
+                                    drawTextured.makeCached(ud.extra.main)
+                                else
+                                    ud.extra.OMP = false
+                                    ud.extra.bgURL = pupilBgURL
+                                    ud.extra.bgHex = pupil.bgHex or '000000ff'
+                                end
                             end
                         end
                     end

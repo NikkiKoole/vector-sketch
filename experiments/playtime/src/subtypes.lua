@@ -10,6 +10,7 @@ lib.TILE_REPEAT       = 'tile-repeat'
 lib.RESOURCE          = 'resource'
 lib.UVUSERT           = 'uvusert'
 lib.MESHUSERT         = 'meshusert'
+lib.DECAL             = 'decal'
 
 -- All known subtypes (current era) — used by migration
 lib.ALL = {
@@ -22,6 +23,7 @@ lib.ALL = {
     [lib.RESOURCE]          = true,
     [lib.UVUSERT]           = true,
     [lib.MESHUSERT]         = true,
+    [lib.DECAL]             = true,
 }
 
 --- Check whether a fixture userData has a given subtype.

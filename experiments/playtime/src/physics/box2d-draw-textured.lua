@@ -864,6 +864,16 @@ function lib.drawTexturedWorld(world)
                             thing = body:getUserData().thing
                         })
                 end
+                if ud and subtypes.is(ud, subtypes.DECAL) then
+                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                    table.insert(drawables, {
+                        type = 'decal',
+                        z = composedZ,
+                        extra = ud.extra,
+                        body = body,
+                    })
+                end
+
                 if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
                     -- logger:inspect(ud)
                     --logger:info('got some new kind of combined drawing todo!')
@@ -1646,6 +1656,37 @@ function lib.drawTexturedWorld(world)
             end
             --logger:inspect(points)
             --logger:inspect()
+        end
+
+        if drawables[i].type == 'decal' then
+            local extra = drawables[i].extra
+            local body = drawables[i].body
+            if body and not body:isDestroyed() then
+                local wx, wy = body:getWorldPoint(extra.ox or 0, extra.oy or 0)
+                local angle = body:getAngle() + (extra.rot or 0)
+                local dw = extra.w or 50
+                local dh = extra.h or 50
+
+                if extra.OMP and extra.ompImage then
+                    -- Pre-composited OMP image (has proper alpha)
+                    local img = extra.ompImage
+                    local imgw, imgh = img:getDimensions()
+                    local sx = dw / imgw
+                    local sy = dh / imgh
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
+                elseif extra.bgURL and extra.bgURL ~= '' then
+                    -- Simple single-color tinted image (no mask)
+                    local img, imgw, imgh = getLoveImage('textures/' .. extra.bgURL)
+                    if img then
+                        local sx = dw / imgw
+                        local sy = dh / imgh
+                        local r, g, b, a = lib.hexToColor(extra.bgHex or 'ffffffff')
+                        love.graphics.setColor(r, g, b, a)
+                        love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
+                    end
+                end
+            end
         end
     end
 
