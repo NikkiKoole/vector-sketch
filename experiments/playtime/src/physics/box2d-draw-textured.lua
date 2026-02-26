@@ -1777,7 +1777,7 @@ function lib.drawTexturedWorld(world)
                         end, "replace", 1)
                         love.graphics.setStencilTest("equal", 1)
 
-                        local br, bg, bb, ba = lib.hexToColor(extra.backdropHex or '330000ff')
+                        local br, bg, bb, ba = lib.hexToColor(extra.backdropHex or '00000033')
                         love.graphics.setColor(br, bg, bb, ba)
                         -- Fill bounding rect
                         local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]

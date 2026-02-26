@@ -174,7 +174,7 @@ function lib.updateFaceOfPart(instance, partName, values)
     if not face.mouth then
         face.mouth = {
             shape = 2, upperLipShape = 1, lowerLipShape = 1,
-            lipHex = 'cc5555ff', backdropHex = '330000ff',
+            lipHex = 'cc5555ff', backdropHex = '00000033',
             lipScale = 0.25, wMul = 1, hMul = 1,
         }
     end
@@ -379,7 +379,7 @@ local dna = {
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
-                            lipHex = 'cc5555ff', backdropHex = '330000ff',
+                            lipHex = 'cc5555ff', backdropHex = '00000033',
                             lipScale = 0.25, wMul = 1, hMul = 1,
                         },
                         positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } },
@@ -421,7 +421,7 @@ local dna = {
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
-                            lipHex = 'cc5555ff', backdropHex = '330000ff',
+                            lipHex = 'cc5555ff', backdropHex = '00000033',
                             lipScale = 0.25, wMul = 1, hMul = 1,
                         },
                         positioners = { eye = { x = 0.2, y = 0.5 }, mouth = { y = 0.7 } },
