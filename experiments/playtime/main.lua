@@ -56,11 +56,11 @@ end
 lurker.errorupdate = function(_dt)
     bridge.update()
 end
-local _logger = require 'src.logger' -- luacheck: ignore 211
+local _logger = require 'src.logger'      -- luacheck: ignore 211
 local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
 local prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
-jit.off() -- luacheck: ignore 113 (jit is a LuaJIT global)
+jit.off()                             -- luacheck: ignore 113 (jit is a LuaJIT global)
 local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 
 local blob = require 'vendor.loveblobs'
@@ -110,7 +110,7 @@ local function waitForEvent()
 end
 
 -- Skip wait screen when launched with --bridge (for automated/AI use)
-local skip_wait = false
+local skip_wait = true
 for _, v in ipairs(arg or {}) do
     if v == '--bridge' then skip_wait = true end
 end
@@ -171,8 +171,8 @@ function love.load(_args)
     -- sceneLoader.loadScene(cwd .. '/scripts/snap2.playtime.json')
     --sceneLoader.loadScriptAndScene('water')
     -- sceneLoader.loadScene(cwd .. '/scripts/resources.playtime.json')
-     --sceneLoader.loadScene(cwd .. '/scripts/beginmesh.playtime.json')
-     sceneLoader.loadScene(cwd .. '/scripts/test.playtime.json')
+    --sceneLoader.loadScene(cwd .. '/scripts/beginmesh.playtime.json')
+    sceneLoader.loadScene(cwd .. '/scripts/test.playtime.json')
     -- sceneLoader.loadAndRunScript(cwd .. '/scripts/mesh_test.playtime.lua')
 
     --loadScriptAndScene('elasto')
