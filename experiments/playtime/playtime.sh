@@ -2,7 +2,7 @@
 # Helper script for managing the playtime LÖVE app
 # Usage: ./playtime.sh [start|stop|restart|status|log|errors]
 
-LOVE="/Applications/love114.app/Contents/MacOS/love"
+LOVE="/Applications/love115.app/Contents/MacOS/love"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 PORT=8001
 LOGFILE="$DIR/.playtime.log"
@@ -83,7 +83,7 @@ do_start() {
     #
     # Strategy: kill the process to flush stderr, check for errors.
     # If no error, restart it for the user.
-    local lovepid=$(pgrep -f "love114" 2>/dev/null)
+    local lovepid=$(pgrep -f "love115" 2>/dev/null)
     if [ -n "$lovepid" ]; then
         kill "$lovepid" 2>/dev/null
         sleep 0.5

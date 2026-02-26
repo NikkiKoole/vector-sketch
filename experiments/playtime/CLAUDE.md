@@ -11,8 +11,8 @@
 ./playtime.sh errors   # show startup errors + bridge /errors
 ```
 
-Love executable: `/Applications/love114.app/Contents/MacOS/love`
-LÖVE version: 11.4, window 1200x768.
+Love executable: `/Applications/love115.app/Contents/MacOS/love`
+LÖVE version: 11.5, window 1200x768.
 
 ## Claude Bridge (port 8001)
 
