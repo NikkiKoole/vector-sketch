@@ -1734,6 +1734,7 @@ function lib.drawTexturedWorld(world)
                 love.graphics.rotate(angle)
 
                 -- Build upper + lower curves for the full mouth polygon
+                -- Same approach as mipomi-lang: raw curve centerlines, lips drawn on top
                 local pts = extra.curvePoints
                 local upData = {
                     pts[1], pts[2], pts[3], pts[4],
