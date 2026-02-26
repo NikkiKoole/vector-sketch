@@ -1001,10 +1001,40 @@ end
 routes["POST /screenshot"] = function(req)
     local params = req.json_body or {}
     local filename = params.filename or ("screenshot_" .. bridge.frame_count .. ".png")
-    love.graphics.captureScreenshot(filename)
     local savedir = love.filesystem.getSaveDirectory()
     local fullpath = savedir .. "/" .. filename
-    return ok_response({ filename = filename, path = fullpath })
+    -- Use callback form: captureScreenshot fires at end of love.draw()
+    local ready = false
+    local capture_error = nil
+    love.graphics.captureScreenshot(function(imageData)
+        local ok_encode, fileData = pcall(function()
+            return imageData:encode("png")
+        end)
+        if not ok_encode then
+            capture_error = tostring(fileData)
+            ready = true
+            return
+        end
+        local ok_write, writeErr = pcall(function()
+            love.filesystem.write(filename, fileData)
+        end)
+        if not ok_write then
+            capture_error = tostring(writeErr)
+        end
+        ready = true
+    end)
+    -- Return a deferred response that the connection handler will poll
+    return {
+        _deferred = true,
+        max_frames = 120, -- ~2 seconds at 60fps
+        poll = function()
+            if not ready then return nil end
+            if capture_error then
+                return err_response("screenshot failed: " .. capture_error)
+            end
+            return ok_response({ filename = filename, path = fullpath })
+        end,
+    }
 end
 
 -- ─── Scene Clear ───
@@ -2057,7 +2087,24 @@ local function handle_connection(client)
     if handler then
         local ok_handler, result = pcall(handler, req)
         if ok_handler then
-            response_body = result
+            -- Support deferred responses (e.g. screenshot waits for next draw)
+            if type(result) == "table" and result._deferred then
+                local frames_waited = 0
+                while frames_waited < (result.max_frames or 120) do
+                    local polled = result.poll()
+                    if polled then
+                        response_body = polled
+                        break
+                    end
+                    frames_waited = frames_waited + 1
+                    coroutine.yield(true) -- yield back to bridge.update, resume next frame
+                end
+                if not response_body then
+                    response_body = err_response("deferred response timed out")
+                end
+            else
+                response_body = result
+            end
         else
             response_body = err_response("handler error: " .. tostring(result))
         end
