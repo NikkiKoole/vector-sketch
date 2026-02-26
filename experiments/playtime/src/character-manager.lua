@@ -466,7 +466,7 @@ local dna = {
                     ['haircut'] = {
                         startIndex = 6,
                         endIndex = 2,
-                        main = initBlock('hair6'),
+                        main = add(initBlock('hair6'), { fgURL = '' }),
                     },
                     ['face'] = {
                         eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
@@ -647,7 +647,7 @@ local dna = {
                         --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
                     }
                 },
-                dims = { w = 10, h = 100, sx = -.5, sy = 1 },
+                dims = { w = 100, h = 300, sx = -.5, sy = 1 },
 
                 shape = ST.SHAPE8,
                 shape8URL = 'earx1r.png',
@@ -1212,23 +1212,23 @@ local function getOffsetFromParent(partName, guy)
             return (parts[lowestTorso].dims.w / 2) * (1 - t) * scale, (parts[lowestTorso].dims.h / 2) * scale
         end
     elseif partName == 'lear' then
-        -- Left ear: lerp from top-left(8) to bottom-left(6), t=0 is top, t=1 is bottom
+        -- Left ear: mirror the right ear position for symmetry
         local t = (positioners and positioners.ear and positioners.ear.y) or 0.5
         if creation.isPotatoHead then
             if hasTorso8() then
-                local ax, ay = getTorsoPart8FromHighest(8)
-                local bx, by = getTorsoPart8FromHighest(6)
+                local ax, ay = getTorsoPart8FromHighest(2)
+                local bx, by = getTorsoPart8FromHighest(4)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                return rx * scale, ry * scale
+                return -rx * scale, ry * scale
             else
                 return (-parts[highestTorso].dims.w / 2) * scale, (-parts[highestTorso].dims.h / 2) * scale
             end
         else
             if hasHead8() then
-                local ax, ay = getHeadPart8(8)
-                local bx, by = getHeadPart8(6)
+                local ax, ay = getHeadPart8(2)
+                local bx, by = getHeadPart8(4)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                return rx, ry
+                return -rx, ry
             else
                 return (-parts.head.dims.w / 2) * scale, (-parts.head.dims.h / 2) * scale
             end

@@ -1416,17 +1416,36 @@ function lib.randomizeMipo(instance)
     CharacterManager.updateSkinOfPart(instance, 'head',
         { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
 
+    -- Clear skin patches (they're optional overlays, not always wanted)
+    for _, patchName in ipairs({'patch1', 'patch2', 'patch3'}) do
+        local headSkin = instance.dna.parts.head.appearance.skin
+        if headSkin[patchName] then
+            headSkin[patchName].bgURL = ''
+            headSkin[patchName].fgURL = ''
+        end
+        for i = 1, count do
+            local torsoSkin = instance.dna.parts['torso' .. i].appearance.skin
+            if torsoSkin[patchName] then
+                torsoSkin[patchName].bgURL = ''
+                torsoSkin[patchName].fgURL = ''
+            end
+        end
+    end
+
     -- Random ears (from key 'e')
     local earUrls = earShapes
     local earUrlIndex = math.ceil(math.random() * #earUrls)
     local earUrl = earUrls[earUrlIndex]
-    local earS = 1 + math.random() * 1
-    local earSy = love.math.random()
+    local earSy = 0.5 + math.random() * 1.5
+    local earSx = 0.5 + math.random() * 1.5
+    -- Sync w/h between ears so they're always symmetric
+    local earW = instance.dna.parts.lear.dims.w
+    local earH = instance.dna.parts.lear.dims.h
     CharacterManager.updatePart('lear',
-        { shape8URL = earUrl .. '.png', sy = earS, sx = -earS * earSy },
+        { shape8URL = earUrl .. '.png', sy = earSy, sx = -earSx, w = earW, h = earH },
         instance)
     CharacterManager.updatePart('rear',
-        { shape8URL = earUrl .. '.png', sy = earS, sx = earS * earSy },
+        { shape8URL = earUrl .. '.png', sy = earSy, sx = earSx, w = earW, h = earH },
         instance)
 
     local earBgHex = '000000ff'
@@ -1475,6 +1494,14 @@ function lib.randomizeMipo(instance)
         CharacterManager.updateSkinOfPart(instance, part,
             { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex })
     end
+
+    -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
+    local hcUrl = haircutTextures[math.ceil(math.random() * #haircutTextures)]
+    local hcBgURL = hcUrl .. '.png'
+    local hcFgURL = hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
+    local hcValues = { bgURL = hcBgURL, fgURL = hcFgURL, bgHex = randomHexColor(), width = 100 + math.random() * 300 }
+    CharacterManager.updateHaircutOfPart(instance, 'head', hcValues)
+    CharacterManager.updateHaircutOfPart(instance, 'torso1', hcValues)
 
     -- Random bodyhair (from key 't')
     local bhUrls = bodyhairTextures
