@@ -16,6 +16,12 @@ local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 local state = require('src.state')
 
+-- Negative group index counter for character self-collision prevention.
+-- Each character gets a unique negative index so its fixtures never collide
+-- with each other, but fixtures from different characters (different indices)
+-- still collide normally.
+local nextGroupIndex = -1
+
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
 -- the torso images, or maybe every tex-fixture also needs a growvalue that describes
@@ -1399,9 +1405,10 @@ local function applyPoseCache(instance, poseCache)
             body:setLinearVelocity(pose.linearVelocity[1], pose.linearVelocity[2])
             body:setAngularVelocity(pose.angularVelocity)
 
+            local gi = instance.groupIndex or pose.groupIndex
             local bodyFixtures = body:getFixtures()
             for j = 1, #bodyFixtures do
-                bodyFixtures[j]:setGroupIndex(pose.groupIndex)
+                bodyFixtures[j]:setGroupIndex(gi)
             end
         end
     end
@@ -2193,6 +2200,20 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     lib.addTexturesFromInstance2(instance)
     --logger:info('calling addTextureFixturesFromInstance')
+
+    -- Assign a unique negative group index to prevent self-collision.
+    -- Reuse existing index if this is a rebuild, otherwise allocate a new one.
+    if not instance.groupIndex then
+        instance.groupIndex = nextGroupIndex
+        nextGroupIndex = nextGroupIndex - 1
+    end
+    for _, part in pairs(instance.parts) do
+        local bodyFixtures = part.body:getFixtures()
+        for i = 1, #bodyFixtures do
+            bodyFixtures[i]:setGroupIndex(instance.groupIndex)
+        end
+    end
+
     mipoRegistry.register(instance)
     return instance
 end
