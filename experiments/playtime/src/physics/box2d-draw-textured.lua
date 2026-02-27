@@ -13,6 +13,7 @@ local shapes = require 'src.shapes'
 local subtypes = require 'src.subtypes'
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
+local cam = require('src.camera').getInstance()
 
 local tex1 = love.graphics.newImage('textures/pat/type2t.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
@@ -785,6 +786,50 @@ local function transformUV(x, y, cx, cy, opts)
     return u * (opts.scaleX or 1), v * (opts.scaleY or 1)
 end
 
+-- Build a closed polygon from mouth curvePoints (16 floats: 8 control points).
+-- Returns a cleaned flat vertex array suitable for triangulation, or nil.
+local function buildMouthPolygon(curvePoints)
+    local pts = curvePoints
+    if not pts or #pts ~= 16 then return nil end
+
+    local upData = {
+        pts[1], pts[2], pts[3], pts[4],
+        pts[3], pts[4], pts[5], pts[6],
+        pts[5], pts[6], pts[7], pts[8],
+        pts[7], pts[8], pts[9], pts[10],
+    }
+    local downData = {
+        pts[9], pts[10], pts[11], pts[12],
+        pts[11], pts[12], pts[13], pts[14],
+        pts[13], pts[14], pts[15], pts[16],
+        pts[15], pts[16], pts[1], pts[2],
+    }
+
+    local upCurve = love.math.newBezierCurve(upData)
+    local downCurve = love.math.newBezierCurve(downData)
+    local upPts = upCurve:render(1)
+    local downPts = downCurve:render(1)
+
+    local poly = {}
+    for pi = 1, #upPts do poly[#poly + 1] = upPts[pi] end
+    for pi = 1, #downPts do poly[#poly + 1] = downPts[pi] end
+
+    -- Remove consecutive duplicates
+    local cleaned = {}
+    local prevX, prevY
+    for pi = 1, #poly - 1, 2 do
+        local px, py = poly[pi], poly[pi + 1]
+        if not prevX or math.abs(px - prevX) > 0.1 or math.abs(py - prevY) > 0.1 then
+            cleaned[#cleaned + 1] = px
+            cleaned[#cleaned + 1] = py
+            prevX, prevY = px, py
+        end
+    end
+
+    if #cleaned >= 6 then return cleaned end
+    return nil
+end
+
 function lib.drawTexturedWorld(world)
     local bodies = world:getBodies()
 
@@ -875,33 +920,43 @@ function lib.drawTexturedWorld(world)
                             body = body,
                         })
                     elseif ud.extra.mouthCurve then
-                        -- Mouth bezier curve decal (upper or lower lip)
-                        local pts = ud.extra.curvePoints
-                        if pts and #pts == 16 then
-                            local s = pts
-                            local curveData
-                            if ud.extra.mouthCurve == 'upper' then
-                                curveData = {
-                                    s[1], s[2], s[3], s[4],
-                                    s[3], s[4], s[5], s[6],
-                                    s[5], s[6], s[7], s[8],
-                                    s[7], s[8], s[9], s[10],
-                                }
-                            else
-                                curveData = {
-                                    s[9], s[10], s[11], s[12],
-                                    s[11], s[12], s[13], s[14],
-                                    s[13], s[14], s[15], s[16],
-                                    s[15], s[16], s[1], s[2],
-                                }
-                            end
+                        if ud.extra.mouthCurve == 'teeth' then
+                            -- Teeth: positioned image, optionally clipped to mouth polygon
                             table.insert(drawables, {
-                                type = 'mouth-' .. ud.extra.mouthCurve,
+                                type = 'mouth-teeth',
                                 z = composedZ,
                                 extra = ud.extra,
                                 body = body,
-                                curveData = curveData,
                             })
+                        else
+                            -- Mouth bezier curve decal (upper or lower lip)
+                            local pts = ud.extra.curvePoints
+                            if pts and #pts == 16 then
+                                local s = pts
+                                local curveData
+                                if ud.extra.mouthCurve == 'upper' then
+                                    curveData = {
+                                        s[1], s[2], s[3], s[4],
+                                        s[3], s[4], s[5], s[6],
+                                        s[5], s[6], s[7], s[8],
+                                        s[7], s[8], s[9], s[10],
+                                    }
+                                else
+                                    curveData = {
+                                        s[9], s[10], s[11], s[12],
+                                        s[11], s[12], s[13], s[14],
+                                        s[13], s[14], s[15], s[16],
+                                        s[15], s[16], s[1], s[2],
+                                    }
+                                end
+                                table.insert(drawables, {
+                                    type = 'mouth-' .. ud.extra.mouthCurve,
+                                    z = composedZ,
+                                    extra = ud.extra,
+                                    body = body,
+                                    curveData = curveData,
+                                })
+                            end
                         end
                     else
                         table.insert(drawables, {
@@ -1709,7 +1764,22 @@ function lib.drawTexturedWorld(world)
             local extra = drawables[i].extra
             local body = drawables[i].body
             if body and not body:isDestroyed() then
-                local wx, wy = body:getWorldPoint(extra.ox or 0, extra.oy or 0)
+                local ox, oy = extra.ox or 0, extra.oy or 0
+                if extra.lookAtMouse and extra.eyeW then
+                    local mx, my = love.mouse.getPosition()
+                    local wmx, wmy = cam:getWorldCoordinates(mx, my)
+                    local ecx, ecy = body:getWorldPoint(ox, oy)
+                    local dx, dy = wmx - ecx, wmy - ecy
+                    local angle = math.atan2(dy, dx)
+                    local localAngle = angle - body:getAngle()
+                    local dw = extra.w or 0
+                    local dh = extra.h or 0
+                    local maxX = math.max(0, (extra.eyeW - dw) / 2)
+                    local maxY = math.max(0, (extra.eyeH - dh) / 2)
+                    ox = ox + math.cos(localAngle) * maxX
+                    oy = oy + math.sin(localAngle) * maxY
+                end
+                local wx, wy = body:getWorldPoint(ox, oy)
                 local angle = body:getAngle() + (extra.rot or 0)
                 local dw = extra.w or 50
                 local dh = extra.h or 50
@@ -1770,17 +1840,16 @@ function lib.drawTexturedWorld(world)
                     local bend = browBends[bendIdx] or browBends[1]
                     local bendMul = w / 5
 
-                    -- Build 3 control points for the bezier curve
+                    -- Build curve at origin, same for both sides
                     local ox = extra.ox or 0
                     local oy = extra.oy or 0
-                    local scaleX = extra.browMirror and -1 or 1
 
-                    local p1x = ox + (-w / 2) * scaleX
-                    local p1y = oy + bend[1] * bendMul
-                    local p2x = ox
-                    local p2y = oy + bend[2] * bendMul
-                    local p3x = ox + (w / 2) * scaleX
-                    local p3y = oy + bend[3] * bendMul
+                    local p1x = -w / 2
+                    local p1y = bend[1] * bendMul
+                    local p2x = 0
+                    local p2y = bend[2] * bendMul
+                    local p3x = w / 2
+                    local p3y = bend[3] * bendMul
 
                     -- Double control points to create a proper bezier
                     local curveData = {
@@ -1796,7 +1865,9 @@ function lib.drawTexturedWorld(world)
                     local r, g, b, a = lib.hexToColor(extra.bgHex or '000000ff')
                     love.graphics.setColor(r, g, b, a)
                     texturedCurve(curve, browImg, mesh, -1, lipScale)
-                    love.graphics.draw(mesh)
+                    -- Mirror right brow via sx=-1, matching puppet-maker2 approach
+                    local mirrorSx = extra.browMirror and -1 or 1
+                    love.graphics.draw(mesh, ox, oy, 0, mirrorSx, 1)
                 end
 
                 love.graphics.pop()
@@ -1816,40 +1887,10 @@ function lib.drawTexturedWorld(world)
                 love.graphics.translate(bx, by)
                 love.graphics.rotate(angle)
 
-                -- Build upper + lower curves for the full mouth polygon
-                -- Same approach as mipomi-lang: raw curve centerlines, lips drawn on top
-                local pts = extra.curvePoints
-                local upData = {
-                    pts[1], pts[2], pts[3], pts[4],
-                    pts[3], pts[4], pts[5], pts[6],
-                    pts[5], pts[6], pts[7], pts[8],
-                    pts[7], pts[8], pts[9], pts[10],
-                }
-                local downData = curveData
+                local cleaned = buildMouthPolygon(extra.curvePoints)
+                local downCurve = love.math.newBezierCurve(curveData)
 
-                local upCurve = love.math.newBezierCurve(upData)
-                local downCurve = love.math.newBezierCurve(downData)
-                local upPts = upCurve:render(1)
-                local downPts = downCurve:render(1)
-
-                -- Combine into a closed polygon
-                local poly = {}
-                for pi = 1, #upPts do poly[#poly + 1] = upPts[pi] end
-                for pi = 1, #downPts do poly[#poly + 1] = downPts[pi] end
-
-                -- Remove consecutive duplicates
-                local cleaned = {}
-                local prevX, prevY
-                for pi = 1, #poly - 1, 2 do
-                    local px, py = poly[pi], poly[pi + 1]
-                    if not prevX or math.abs(px - prevX) > 0.1 or math.abs(py - prevY) > 0.1 then
-                        cleaned[#cleaned + 1] = px
-                        cleaned[#cleaned + 1] = py
-                        prevX, prevY = px, py
-                    end
-                end
-
-                if #cleaned >= 6 then
+                if cleaned then
                     local tris = shapes.makeTrianglesFromPolygon(cleaned)
                     if tris and #tris > 0 then
                         -- Stencil fill with backdrop color
@@ -1914,6 +1955,62 @@ function lib.drawTexturedWorld(world)
                     love.graphics.setColor(1, 1, 1, 1)
                     texturedCurve(upCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
                     love.graphics.draw(mesh)
+                end
+
+                love.graphics.pop()
+            end
+        end
+
+        -- Teeth: positioned image, optionally stencil-clipped to mouth interior
+        if drawables[i].type == 'mouth-teeth' then
+            local extra = drawables[i].extra
+            local body = drawables[i].body
+            if body and not body:isDestroyed() then
+                local angle = body:getAngle()
+                local bx, by = body:getPosition()
+
+                love.graphics.push()
+                love.graphics.translate(bx, by)
+                love.graphics.rotate(angle)
+
+                local img = extra.ompImage
+                if not img and extra.main and extra.main.bgURL then
+                    img = getLoveImage('textures/' .. extra.main.bgURL)
+                end
+
+                if img then
+                    local ox = extra.ox or 0
+                    local oy = extra.oy or 0
+                    local w = extra.w or 20
+                    local h = extra.h or 10
+                    local imgW, imgH = img:getDimensions()
+                    local scaleX = w / imgW
+                    local scaleY = h / imgH
+
+                    if not extra.teethStickOut then
+                        -- Clip teeth to mouth polygon interior
+                        local cleaned = buildMouthPolygon(extra.curvePoints)
+                        if cleaned then
+                            local tris = shapes.makeTrianglesFromPolygon(cleaned)
+                            if tris and #tris > 0 then
+                                love.graphics.stencil(function()
+                                    for ti = 1, #tris do
+                                        love.graphics.polygon("fill", tris[ti])
+                                    end
+                                end, "replace", 1)
+                                love.graphics.setStencilTest("equal", 1)
+
+                                love.graphics.setColor(1, 1, 1, 1)
+                                love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
+
+                                love.graphics.setStencilTest()
+                            end
+                        end
+                    else
+                        -- Stick out: draw freely, no stencil clipping
+                        love.graphics.setColor(1, 1, 1, 1)
+                        love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
+                    end
                 end
 
                 love.graphics.pop()

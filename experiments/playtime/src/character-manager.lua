@@ -173,7 +173,8 @@ end
 -- browShape, browBgHex, browWMul, browHMul, browBend, browY,
 -- noseShape, noseBgHex, noseFgHex, noseWMul, noseHMul, noseY,
 -- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
--- mouthBackdropHex, mouthLipScale, mouthWMul, mouthHMul, mouthY
+-- mouthBackdropHex, mouthLipScale, mouthWMul, mouthHMul, mouthY,
+-- teethShape, teethHMul, teethStickOut, teethBgHex, teethFgHex
 function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if not p or not p.appearance or not p.appearance['face'] then return end
@@ -189,6 +190,7 @@ function lib.updateFaceOfPart(instance, partName, values)
     end
     if not face.brow then face.brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 } end
     if not face.nose then face.nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 } end
+    if not face.teeth then face.teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false } end
     if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } } end
     if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5, r = 0 } end
     if not face.positioners.eye.r then face.positioners.eye.r = 0 end
@@ -209,6 +211,7 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.eyeX then face.positioners.eye.x = values.eyeX end
     if values.eyeY then face.positioners.eye.y = values.eyeY end
     if values.eyeR then face.positioners.eye.r = values.eyeR end
+    if values.eyeLookAtMouse ~= nil then face.eye.lookAtMouse = values.eyeLookAtMouse end
 
     if values.browShape then face.brow.shape = values.browShape end
     if values.browBgHex then face.brow.bgHex = values.browBgHex end
@@ -233,6 +236,12 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.mouthWMul then face.mouth.wMul = values.mouthWMul end
     if values.mouthHMul then face.mouth.hMul = values.mouthHMul end
     if values.mouthY then face.positioners.mouth.y = values.mouthY end
+
+    if values.teethShape then face.teeth.shape = values.teethShape end
+    if values.teethHMul then face.teeth.hMul = values.teethHMul end
+    if values.teethStickOut ~= nil then face.teeth.stickOut = values.teethStickOut end
+    if values.teethBgHex then face.teeth.bgHex = values.teethBgHex end
+    if values.teethFgHex then face.teeth.fgHex = values.teethFgHex end
 end
 
 -- Update top-level positioners (leg.x, ear.y, nose.t) and faceMagnitude.
@@ -418,6 +427,7 @@ local dna = {
                         zOffset = 101,
                     },
                     ['skin'] = {
+                        zOffset = 200,
                         main = initBlock(),
                         patch1 = add(initBlock('patch2'), { tx = -0.33, ty = 0 }),
                         patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
@@ -426,7 +436,7 @@ local dna = {
                     ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) },
                     ['haircut'] = {
                         startIndex = 6,
-                        endIndex = 2,
+                        endIndex = 3,
                         main = initBlock('hair7'),
                     },
                     ['face'] = {
@@ -434,6 +444,7 @@ local dna = {
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
                         brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
                         nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
+                        teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
                             lipHex = 'cc5555ff', backdropHex = '00000033',
@@ -472,7 +483,7 @@ local dna = {
                     ['bodyhair'] = { main = initBlock('borsthaar4') },
                     ['haircut'] = {
                         startIndex = 6,
-                        endIndex = 2,
+                        endIndex = 3,
                         main = add(initBlock('hair6'), { fgURL = '' }),
                     },
                     ['face'] = {
@@ -480,6 +491,7 @@ local dna = {
                         pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
                         brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
                         nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
+                        teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
                         mouth = {
                             shape = 2, upperLipShape = 1, lowerLipShape = 1,
                             lipHex = 'cc5555ff', backdropHex = '00000033',
@@ -509,7 +521,7 @@ local dna = {
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
                 shape = ST.CAPSULE,
-                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } }
             },
             ['ruleg'] = {
@@ -527,14 +539,14 @@ local dna = {
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
                 shape = ST.CAPSULE,
-                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } }
             },
             ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
-                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } } },
             ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
-                behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
+                behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } } },
             ['luarm'] = {
                 appearance = {
@@ -1896,8 +1908,8 @@ function lib.addTexturesFromInstance2(instance)
                             local hasPupilMask = pupilFgURL ~= ''
                             local pupilZOffset = 251
                             local pupilSides = {
-                                { ox = leftEyeX, label = 'lpupil', mirror = true },
-                                { ox = rightEyeX, label = 'rpupil' },
+                                { ox = leftEyeX, label = 'lpupil', mirror = true, eyeRot = -eyeR },
+                                { ox = rightEyeX, label = 'rpupil', eyeRot = eyeR },
                             }
                             for _, side in ipairs(pupilSides) do
                                 local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
@@ -1909,6 +1921,12 @@ function lib.addTexturesFromInstance2(instance)
                                 ud.extra.h = pupilH
                                 ud.extra.mirror = side.mirror or false
                                 ud.extra.zOffset = pupilZOffset
+                                ud.extra.eyeW = eyeW
+                                ud.extra.eyeH = eyeH
+                                ud.extra.eyeMaskURL = eyeFgURL
+                                ud.extra.eyeMirror = side.mirror or false
+                                ud.extra.eyeRot = side.eyeRot or 0
+                                ud.extra.lookAtMouse = (face.eye and face.eye.lookAtMouse) or false
                                 if hasPupilMask then
                                     ud.extra.OMP = true
                                     ud.extra.dirty = true
@@ -2005,7 +2023,7 @@ function lib.addTexturesFromInstance2(instance)
                             local mouth = face.mouth or {}
                             local mouthPos = face.positioners and face.positioners.mouth or { y = 0.7 }
                             local mouthY = lerp(topY, botY, mouthPos.y)
-                            local mouthX = 0 -- centered on head
+                            local mouthX = (leftX + rightX) / 2
 
                             -- Get the normalized shape points and scale to head
                             local shapeIdx = mouth.shape or 2
@@ -2073,6 +2091,47 @@ function lib.addTexturesFromInstance2(instance)
                                     pHex = 'ffffff00',
                                 }
                                 drawTextured.makeCached(udUpper.extra.main)
+
+                                -- Create teeth decal (positioned image, clipped to mouth polygon)
+                                local teeth = face.teeth or {}
+                                local teethShape = teeth.shape or 0
+                                if teethShape > 0 then
+                                    local teethURL = 'teeth' .. teethShape .. '.png'
+                                    local teethMaskURL = 'teeth' .. teethShape .. '-mask.png'
+                                    -- Calculate teeth dimensions: scale to mouth width, preserve aspect ratio
+                                    local teethImgPath = 'textures/' .. teethURL
+                                    local teethImg = love.filesystem.getInfo(teethImgPath) and love.graphics.newImage(teethImgPath)
+                                    local teethW = mouthScaleX * 100
+                                    local teethH = teethW * 0.5 * (teeth.hMul or 1) -- default aspect ratio 2:1
+                                    if teethImg then
+                                        local imgW, imgH = teethImg:getDimensions()
+                                        teethH = teethW * (imgH / imgW) * (teeth.hMul or 1)
+                                    end
+
+                                    local teethZOffset = teeth.stickOut and 252.5 or 251
+                                    local fTeeth = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                                    local udTeeth = fTeeth:getUserData()
+                                    udTeeth.label = 'teeth'
+                                    udTeeth.extra.ox = mouthX
+                                    udTeeth.extra.oy = mouthY
+                                    udTeeth.extra.w = teethW
+                                    udTeeth.extra.h = teethH
+                                    udTeeth.extra.zOffset = teethZOffset
+                                    udTeeth.extra.mouthCurve = 'teeth'
+                                    udTeeth.extra.curvePoints = curvePoints
+                                    udTeeth.extra.teethStickOut = teeth.stickOut or false
+                                    udTeeth.extra.OMP = true
+                                    udTeeth.extra.dirty = true
+                                    udTeeth.extra.main = {
+                                        bgURL = teethURL,
+                                        fgURL = teethMaskURL,
+                                        pURL = '',
+                                        bgHex = teeth.bgHex or 'ffffffff',
+                                        fgHex = teeth.fgHex or 'eeeeeeff',
+                                        pHex = 'ffffff00',
+                                    }
+                                    drawTextured.makeCached(udTeeth.extra.main)
+                                end
                             end
                         end
                     end
@@ -2081,6 +2140,20 @@ function lib.addTexturesFromInstance2(instance)
                 -- i think we should haev some kind of helper function that know depending on
                 -- what the body tye is how we will add
                 -- sfiuxture or connected fixture etc..
+            end
+        end
+    end
+    -- Re-apply zGroupOffset to newly created fixtures (destroyed+recreated above)
+    if instance.zGroupOffset then
+        for _, part in pairs(instance.parts) do
+            if part.body and not part.body:isDestroyed() then
+                local bodyFixtures = part.body:getFixtures()
+                for fi = 1, #bodyFixtures do
+                    local ud = bodyFixtures[fi]:getUserData()
+                    if ud and ud.extra then
+                        ud.extra.zGroupOffset = instance.zGroupOffset
+                    end
+                end
             end
         end
     end
