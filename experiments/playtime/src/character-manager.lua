@@ -21,6 +21,7 @@ local state = require('src.state')
 -- with each other, but fixtures from different characters (different indices)
 -- still collide normally.
 local nextGroupIndex = -1
+local nextZGroupOffset = 1
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
@@ -382,7 +383,7 @@ local dna = {
 
                     -- plain skin per segment; good first step
                     ['skin'] = {
-                        zOffset = 3,
+                        zOffset = 230,
                         main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
                     },
                     -- ['connected-skin'] = {
@@ -409,12 +410,12 @@ local dna = {
                     ['connected-skin'] = {
                         main = add(initBlock('leg5'), {}),
                         endNode = 'head',
-                        zOffset = 4,
+                        zOffset = 100,
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
                         endNode = 'head',
-                        zOffset = 5,
+                        zOffset = 101,
                     },
                     ['skin'] = {
                         main = initBlock(),
@@ -462,7 +463,7 @@ local dna = {
             ['head'] = {
                 appearance = {
                     ['skin'] = {
-                        zOffset = 2,
+                        zOffset = 200,
                         main = initBlock(),
                         patch1 = add(initBlock('patch1'), { tx = -0.33, ty = 0 }),
                         patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
@@ -498,12 +499,12 @@ local dna = {
                     ['connected-skin'] = {
                         main = add(initBlock('leg5'), { dir = -1 }),
                         endNode = 'lfoot',
-                        zOffset = 1,
+                        zOffset = 300,
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
                         endNode = 'lfoot',
-                        zOffset = 2,
+                        zOffset = 301,
                     }
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
@@ -516,12 +517,12 @@ local dna = {
                     ['connected-skin'] = {
                         main = add(initBlock('leg5'), { dir = 1 }),
                         endNode = 'rfoot',
-                        zOffset = 1,
+                        zOffset = 300,
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
                         endNode = 'rfoot',
-                        zOffset = 2,
+                        zOffset = 301,
                     }
                 },
                 dims = { w = 80, h = 200, w2 = 4 },
@@ -538,14 +539,14 @@ local dna = {
             ['luarm'] = {
                 appearance = {
                     ['connected-skin'] = {
-                        zOffset = 1,
+                        zOffset = 402,
                         main = add(initBlock('leg5'), { dir = -1 }),
                         endNode = 'lhand'
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
                         endNode = 'lhand',
-                        zOffset = 2,
+                        zOffset = 403,
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -555,14 +556,14 @@ local dna = {
             ['ruarm'] = {
                 appearance = {
                     ['connected-skin'] = {
-                        zOffset = 1,
+                        zOffset = 402,
                         main = add(initBlock('leg5'), { dir = 1 }),
                         endNode = 'rhand'
                     },
                     ['connected-hair'] = {
                         main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
                         endNode = 'rhand',
-                        zOffset = 2,
+                        zOffset = 403,
                     }
                 },
                 dims = { w = 40, h = 200, w2 = 4 },
@@ -576,6 +577,7 @@ local dna = {
             ['lfoot'] = {
                 appearance = {
                     ['skin'] = {
+                        zOffset = 399,
                         main = add(initBlock(), { dir = -1 }),
                     },
 
@@ -588,6 +590,7 @@ local dna = {
             ['rfoot'] = {
                 appearance = {
                     ['skin'] = {
+                        zOffset = 399,
                         main = add(initBlock(), { dir = 1 }),
                     },
                 },
@@ -604,6 +607,7 @@ local dna = {
             ['lhand'] = {
                 appearance = {
                     ['skin'] = {
+                        zOffset = 500,
                         main = add(initBlock(), { dir = -1 }),
                     },
                 },
@@ -615,6 +619,7 @@ local dna = {
             ['rhand'] = {
                 appearance = {
                     ['skin'] = {
+                        zOffset = 500,
                         main = add(initBlock(), {}),
                     },
                 },
@@ -631,7 +636,7 @@ local dna = {
             ['lear'] = {
                 appearance = {
                     ['skin'] = {
-                        zOffset = -1,
+                        zOffset = 190,
                         main = add(initBlock(), {}),
                         --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
                         --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
@@ -647,7 +652,7 @@ local dna = {
             ['rear'] = {
                 appearance = {
                     ['skin'] = {
-                        zOffset = -1,
+                        zOffset = 190,
                         main = add(initBlock(), {}),
                         --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
                         --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
@@ -1667,7 +1672,8 @@ function lib.addTexturesFromInstance2(instance)
                             { width = w * growfactor, height = h * growfactor })
                         local ud = fixture:getUserData()
                         ud.extra.OMP = false --it.OMP
-                        ud.extra.zOffset = 40
+                        -- Layer bodyhair relative to its parent part
+                        ud.extra.zOffset = (k == 'head') and 210 or 10
                         ud.extra.dirty = true
                         ud.extra.main = utils.deepCopy(v2.main)
 
@@ -1783,7 +1789,7 @@ function lib.addTexturesFromInstance2(instance)
                             local ud = fixture:getUserData()
                             local hasMask = v2.main.fgURL and v2.main.fgURL ~= ''
                             ud.extra.OMP = hasMask
-                            ud.extra.zOffset = 40
+                            ud.extra.zOffset = 220
                             ud.extra.dirty = true
                             ud.extra.main = utils.deepCopy(v2.main)
                             ud.extra.width = (v2.width or 250) * scale
@@ -1854,7 +1860,7 @@ function lib.addTexturesFromInstance2(instance)
 
                             -- Create eye decals (left and right)
                             -- Uses OMP compositing: outline + mask → pre-composited image
-                            local eyeZOffset = 50
+                            local eyeZOffset = 250
                             local eyeR = eyePos.r or 0
                             local eyeSides = {
                                 { ox = leftEyeX, label = 'leye', mirror = true, rot = -eyeR },
@@ -1888,7 +1894,7 @@ function lib.addTexturesFromInstance2(instance)
                             -- Pupils with a mask use OMP compositing (2-color).
                             -- Pupils without a mask are single-color (just tinted outline).
                             local hasPupilMask = pupilFgURL ~= ''
-                            local pupilZOffset = 51
+                            local pupilZOffset = 251
                             local pupilSides = {
                                 { ox = leftEyeX, label = 'lpupil', mirror = true },
                                 { ox = rightEyeX, label = 'rpupil' },
@@ -1929,7 +1935,7 @@ function lib.addTexturesFromInstance2(instance)
                             local browW = headW * 0.2 * (brow.wMul or 1) * fm
                             local browH = headH * 0.1 * (brow.hMul or 1) * fm
                             local browURL = 'brow' .. (brow.shape or 1) .. '.png'
-                            local browZOffset = 49
+                            local browZOffset = 249
                             local browSides = {
                                 { ox = leftEyeX, label = 'lbrow', mirror = false },
                                 { ox = rightEyeX, label = 'rbrow', mirror = true },
@@ -1966,7 +1972,7 @@ function lib.addTexturesFromInstance2(instance)
                                     noseFgURL = 'nose' .. noseShape .. '-mask.png'
                                 end
                                 local hasNoseMask = noseFgURL ~= ''
-                                local noseZOffset = 48
+                                local noseZOffset = 248
 
                                 local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
                                 local ud = f:getUserData()
@@ -2029,7 +2035,7 @@ function lib.addTexturesFromInstance2(instance)
                                 udLower.label = 'lowerlip'
                                 udLower.extra.ox = mouthX
                                 udLower.extra.oy = mouthY
-                                udLower.extra.zOffset = 52
+                                udLower.extra.zOffset = 252
                                 udLower.extra.mouthCurve = 'lower'
                                 udLower.extra.curvePoints = curvePoints
                                 udLower.extra.lipScale = mouth.lipScale or 0.25
@@ -2052,7 +2058,7 @@ function lib.addTexturesFromInstance2(instance)
                                 udUpper.label = 'upperlip'
                                 udUpper.extra.ox = mouthX
                                 udUpper.extra.oy = mouthY
-                                udUpper.extra.zOffset = 53
+                                udUpper.extra.zOffset = 253
                                 udUpper.extra.mouthCurve = 'upper'
                                 udUpper.extra.curvePoints = curvePoints
                                 udUpper.extra.lipScale = mouth.lipScale or 0.25
@@ -2207,10 +2213,20 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         instance.groupIndex = nextGroupIndex
         nextGroupIndex = nextGroupIndex - 1
     end
+    -- Assign a unique zGroupOffset so each character's textures occupy a
+    -- separate z-range (composedZ = zGroupOffset * 1000 + zOffset).
+    if not instance.zGroupOffset then
+        instance.zGroupOffset = nextZGroupOffset
+        nextZGroupOffset = nextZGroupOffset + 1
+    end
     for _, part in pairs(instance.parts) do
         local bodyFixtures = part.body:getFixtures()
         for i = 1, #bodyFixtures do
             bodyFixtures[i]:setGroupIndex(instance.groupIndex)
+            local ud = bodyFixtures[i]:getUserData()
+            if ud and ud.extra then
+                ud.extra.zGroupOffset = instance.zGroupOffset
+            end
         end
     end
 
