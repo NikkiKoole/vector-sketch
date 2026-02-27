@@ -2,13 +2,13 @@ local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
-local utils = require('src.utils')
-local randomHexColor = utils.randomHexColor
 local CharacterManager = require('src.character-manager')
 local mipoRegistry = require('src.mipo-registry')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local mouthShapes = require('src.mouth-shapes')
 local ST = require('src.shape-types')
+
+local C = require('src.shape-catalogs')
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -19,87 +19,31 @@ local imageCache = {}
 local accordionStates = {}
 accordionStates.symmetricEditing = true
 
--- Shape categories for thumbnail grids
-local torsoHeadShapes = {
-    'shapeA1', 'shapeA2', 'shapeA3', 'shapeA4',
-    'shapes1', 'shapes2', 'shapes3', 'shapes4', 'shapes5',
-    'shapes6', 'shapes7', 'shapes8', 'shapes9', 'shapes10',
-    'shapes11', 'shapes12', 'shapes13'
-}
+-- Shape categories for thumbnail grids (shared with character-manager via shape-catalogs)
+local torsoHeadShapes = C.torsoHeadShapes
+local earShapes = C.earShapes
+local feetShapes = C.feetShapes
+local handShapes = C.handShapes
+local bodyhairTextures = C.bodyhairTextures
+local haircutTextures = C.haircutTextures
+local hairsWithMask = C.hairsWithMask
+local limbSkinTextures = C.limbSkinTextures
+local eyeShapes = C.eyeShapes
+local pupilShapes = C.pupilShapes
+local browShapes = C.browShapes
+local upperLipShapes = C.upperLipShapes
+local lowerLipShapes = C.lowerLipShapes
+local limbHairTextures = C.limbHairTextures
+local noseShapes = C.noseShapes
+local teethShapes = C.teethShapes
 
-local earShapes = {
-    'earx1r', 'earx2r', 'earx3r', 'earx4r', 'earx5r', 'earx6r',
-    'earx7r', 'earx8r', 'earx9r', 'earx10r', 'earx11r', 'earx12r',
-    'earx13r', 'earx14r', 'earx15r', 'earx16r'
-}
-
-local feetShapes = {
-    'feet2r', 'feet3xr', 'feet5xr', 'feet6r', 'feet7r', 'feet7xr', 'feet8r'
-}
-
-local handShapes = {
-    'hand3r', 'feet2r', 'feet3xr', 'feet5xr', 'feet6r', 'feet7r', 'feet7xr', 'feet8r'
-}
-
-local bodyhairTextures = {
-    'borsthaar1', 'borsthaar2', 'borsthaar3', 'borsthaar4',
-    'borsthaar5', 'borsthaar6', 'borsthaar7'
-}
-
--- Textures for haircut (trace-vertices along head outline)
-local haircutTextures = {
-    'hair1', 'hair2', 'hair3', 'hair4', 'hair5',
-    'hair6', 'hair7', 'hair8', 'hair9', 'hair10', 'hair11'
-}
-
--- Hair textures that have a mask (OMP-capable)
-local hairsWithMask = { ['hair7.png'] = true, ['hair8.png'] = true }
-
--- Textures for connected-skin (OMP, has outline + mask pairs)
-local limbSkinTextures = {
-    'leg1', 'leg2', 'leg3', 'leg4', 'leg5', 'leg7'
-}
-
--- Pattern textures for OMP compositing (textures/pat/)
+-- UI-only catalogs (not used by randomization)
 local patternTextures = {
     'pat/type0', 'pat/type1', 'pat/type2t', 'pat/type3_',
     'pat/type4', 'pat/type5', 'pat/type6', 'pat/type7', 'pat/type8',
     'pat/pattern', 'pat/pattern2', 'pat/pattern3', 'pat/pattern4',
     'pat/pattern5', 'pat/pattern6', 'pat/pattern7', 'pat/lijnen'
 }
-
--- Eye shape textures for face decals
-local eyeShapes = {
-    'eye1', 'eye2', 'eye3', 'eye4', 'eye5', 'eye6', 'eye7'
-}
-
--- Pupil shape textures for face decals
-local pupilShapes = {
-    'pupil1', 'pupil2', 'pupil3', 'pupil4', 'pupil5', 'pupil6',
-    'pupil7', 'pupil8', 'pupil9', 'pupil10', 'pupil11'
-}
-
--- Brow shape textures for face decals
-local browShapes = {
-    'brow1', 'brow2', 'brow3', 'brow4', 'brow5', 'brow6', 'brow7', 'brow8'
-}
-
--- Lip shape textures for mouth decals
-local upperLipShapes = { 'upperlip1', 'upperlip2', 'upperlip3', 'upperlip4' }
-local lowerLipShapes = { 'lowerlip1', 'lowerlip2', 'lowerlip3', 'lowerlip4' }
-
--- Textures for connected-hair (2-layer, outline only, no mask)
-local limbHairTextures = {
-    'hair1', 'hair2', 'hair3', 'hair4', 'hair5',
-    'hair6', 'hair7', 'hair8', 'hair9', 'hair10', 'hair11'
-}
-
-local noseShapes = {
-    'nose1', 'nose2', 'nose3', 'nose4', 'nose5', 'nose6', 'nose7', 'nose8',
-    'nose9', 'nose10', 'nose11', 'nose12', 'nose13', 'nose14', 'nose15'
-}
-
-local teethShapes = { 'teeth1', 'teeth2', 'teeth3', 'teeth4', 'teeth5', 'teeth6', 'teeth7' }
 
 local patchShapes = {
     'patch1', 'patch2', 'patch3', 'patch4'
@@ -414,13 +358,13 @@ function lib.drawMipoEditor(instance, partName)
 
         -- === POSITIONERS ACCORDION ===
         drawAccordion('positioners', function()
-            local pos = instance.dna.positioners or {}
+            local pos = instance.dna.positioners
 
             -- Leg stance width
-            local legX = ui.sliderWithInput('mipo_leg_x', x, y, 120, 0, 1, (pos.leg and pos.leg.x) or 0.5)
+            local legX = ui.sliderWithInput('mipo_leg_x', x, y, 120, 0, 1, pos.leg.x)
             ui.alignedLabel(x, y, '  leg stance')
             legX = legX and tonumber(legX)
-            if legX and legX ~= ((pos.leg and pos.leg.x) or 0.5) then
+            if legX and legX ~= pos.leg.x then
                 CharacterManager.updatePositioners(instance, { legX = legX })
                 CharacterManager.rebuildFromCreation(instance, {})
                 CharacterManager.addTexturesFromInstance2(instance)
@@ -428,10 +372,10 @@ function lib.drawMipoEditor(instance, partName)
             y = y + ROW
 
             -- Ear vertical position
-            local earY = ui.sliderWithInput('mipo_ear_y', x, y, 120, 0, 1, (pos.ear and pos.ear.y) or 0.5)
+            local earY = ui.sliderWithInput('mipo_ear_y', x, y, 120, 0, 1, pos.ear.y)
             ui.alignedLabel(x, y, '  ear vertical')
             earY = earY and tonumber(earY)
-            if earY and earY ~= ((pos.ear and pos.ear.y) or 0.5) then
+            if earY and earY ~= pos.ear.y then
                 CharacterManager.updatePositioners(instance, { earY = earY })
                 CharacterManager.rebuildFromCreation(instance, {})
                 CharacterManager.addTexturesFromInstance2(instance)
@@ -868,14 +812,14 @@ function lib.drawMipoEditor(instance, partName)
 
                 -- --- Eyes sub-accordion ---
                 drawAccordion(partName .. ' face > eyes', function()
-                    local eye = face.eye or {}
-                    local pupil = face.pupil or {}
-                    local eyePos = (face.positioners and face.positioners.eye) or { x = 0.2, y = 0.5 }
+                    local eye = face.eye
+                    local pupil = face.pupil
+                    local eyePos = face.positioners.eye
 
                     -- Eye shape thumbnail grid
                     ui.label(x, y, 'eye shape')
                     y = y + ROW
-                    local currentEyeURL = 'eye' .. (eye.shape or 1) .. '.png'
+                    local currentEyeURL = 'eye' .. eye.shape .. '.png'
                     local gridHeight = drawThumbnailGrid(eyeShapes, currentEyeURL, panelX, y, cellSize, function(url)
                         if url then
                             local shapeNum = tonumber(url:match('eye(%d+)%.png'))
@@ -890,7 +834,7 @@ function lib.drawMipoEditor(instance, partName)
                     -- Pupil shape thumbnail grid
                     ui.label(x, y, 'pupil shape')
                     y = y + ROW
-                    local currentPupilURL = 'pupil' .. (pupil.shape or 1) .. '.png'
+                    local currentPupilURL = 'pupil' .. pupil.shape .. '.png'
                     gridHeight = drawThumbnailGrid(pupilShapes, currentPupilURL, panelX, y, cellSize, function(url)
                         if url then
                             local shapeNum = tonumber(url:match('pupil(%d+)%.png'))
@@ -922,48 +866,48 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + ROW
 
                     -- Eye rotation
-                    local eyeRVal = ui.sliderWithInput('mipo_eye_r', x, y, 120, -2, 2, eyePos.r or 0)
+                    local eyeRVal = ui.sliderWithInput('mipo_eye_r', x, y, 120, -2, 2, eyePos.r)
                     ui.alignedLabel(x, y, '  eye rotation')
                     eyeRVal = eyeRVal and tonumber(eyeRVal)
-                    if eyeRVal and eyeRVal ~= (eyePos.r or 0) then
+                    if eyeRVal and eyeRVal ~= eyePos.r then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeR = eyeRVal })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
                     -- Eye size sliders
-                    local ewMul = ui.sliderWithInput('mipo_eye_wmul', x, y, 120, 0.25, 2, eye.wMul or 1)
+                    local ewMul = ui.sliderWithInput('mipo_eye_wmul', x, y, 120, 0.25, 2, eye.wMul)
                     ui.alignedLabel(x, y, '  eye width')
                     ewMul = ewMul and tonumber(ewMul)
-                    if ewMul and ewMul ~= (eye.wMul or 1) then
+                    if ewMul and ewMul ~= eye.wMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeWMul = ewMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
-                    local ehMul = ui.sliderWithInput('mipo_eye_hmul', x, y, 120, 0.25, 2, eye.hMul or 1)
+                    local ehMul = ui.sliderWithInput('mipo_eye_hmul', x, y, 120, 0.25, 2, eye.hMul)
                     ui.alignedLabel(x, y, '  eye height')
                     ehMul = ehMul and tonumber(ehMul)
-                    if ehMul and ehMul ~= (eye.hMul or 1) then
+                    if ehMul and ehMul ~= eye.hMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeHMul = ehMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
                     -- Pupil size sliders
-                    local pwMul = ui.sliderWithInput('mipo_pupil_wmul', x, y, 120, 0.1, 1, pupil.wMul or 0.5)
+                    local pwMul = ui.sliderWithInput('mipo_pupil_wmul', x, y, 120, 0.1, 1, pupil.wMul)
                     ui.alignedLabel(x, y, '  pupil width')
                     pwMul = pwMul and tonumber(pwMul)
-                    if pwMul and pwMul ~= (pupil.wMul or 0.5) then
+                    if pwMul and pwMul ~= pupil.wMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilWMul = pwMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
-                    local phMul = ui.sliderWithInput('mipo_pupil_hmul', x, y, 120, 0.1, 1, pupil.hMul or 0.5)
+                    local phMul = ui.sliderWithInput('mipo_pupil_hmul', x, y, 120, 0.1, 1, pupil.hMul)
                     ui.alignedLabel(x, y, '  pupil height')
                     phMul = phMul and tonumber(phMul)
-                    if phMul and phMul ~= (pupil.hMul or 0.5) then
+                    if phMul and phMul ~= pupil.hMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilHMul = phMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
@@ -971,7 +915,7 @@ function lib.drawMipoEditor(instance, partName)
 
                     -- Eye color
                     handlePaletteButton('mipo_eye_bg_' .. partName,
-                        x + 30, y, 140, eye.bgHex or 'ffffffff', function(color)
+                        x + 30, y, 140, eye.bgHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeBgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -979,7 +923,7 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + ROW
 
                     handlePaletteButton('mipo_eye_fg_' .. partName,
-                        x + 30, y, 140, eye.fgHex or '000000ff', function(color)
+                        x + 30, y, 140, eye.fgHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeFgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -988,14 +932,14 @@ function lib.drawMipoEditor(instance, partName)
 
                     -- Pupil color
                     handlePaletteButton('mipo_pupil_bg_' .. partName,
-                        x + 30, y, 140, pupil.bgHex or '000000ff', function(color)
+                        x + 30, y, 140, pupil.bgHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilBgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
                     ui.alignedLabel(x + 180, y, 'pupil color')
                     y = y + ROW
 
-                    local lookClicked, lookChecked = ui.checkbox(x, y, eye.lookAtMouse or false, 'pupils follow mouse')
+                    local lookClicked, lookChecked = ui.checkbox(x, y, eye.lookAtMouse, 'pupils follow mouse')
                     if lookClicked then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeLookAtMouse = lookChecked })
                         CharacterManager.addTexturesFromInstance2(instance)
@@ -1005,13 +949,13 @@ function lib.drawMipoEditor(instance, partName)
 
                 -- --- Brows sub-accordion ---
                 drawAccordion(partName .. ' face > brows', function()
-                    local brow = face.brow or {}
-                    local browPos = (face.positioners and face.positioners.brow) or { y = 0.3 }
+                    local brow = face.brow
+                    local browPos = face.positioners.brow
 
                     -- Brow shape thumbnail grid
                     ui.label(x, y, 'brow shape')
                     y = y + ROW
-                    local currentBrowURL = 'brow' .. (brow.shape or 1) .. '.png'
+                    local currentBrowURL = 'brow' .. brow.shape .. '.png'
                     local gridHeight = drawThumbnailGrid(browShapes, currentBrowURL, panelX, y, cellSize, function(url)
                         if url then
                             local shapeNum = tonumber(url:match('brow(%d+)%.png'))
@@ -1024,30 +968,30 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + gridHeight + BUTTON_SPACING
 
                     -- Brow bend pattern
-                    local browBend = ui.sliderWithInput('mipo_brow_bend', x, y, 120, 1, 10, brow.bend or 1)
+                    local browBend = ui.sliderWithInput('mipo_brow_bend', x, y, 120, 1, 10, brow.bend)
                     ui.alignedLabel(x, y, '  brow bend')
                     browBend = browBend and tonumber(browBend)
                     if browBend then browBend = math.floor(browBend + 0.5) end
-                    if browBend and browBend ~= (brow.bend or 1) then
+                    if browBend and browBend ~= brow.bend then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { browBend = browBend })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
                     -- Brow size
-                    local bwMul = ui.sliderWithInput('mipo_brow_wmul', x, y, 120, 0.25, 2, brow.wMul or 1)
+                    local bwMul = ui.sliderWithInput('mipo_brow_wmul', x, y, 120, 0.25, 2, brow.wMul)
                     ui.alignedLabel(x, y, '  brow width')
                     bwMul = bwMul and tonumber(bwMul)
-                    if bwMul and bwMul ~= (brow.wMul or 1) then
+                    if bwMul and bwMul ~= brow.wMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { browWMul = bwMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
-                    local bhMul = ui.sliderWithInput('mipo_brow_hmul', x, y, 120, 0.25, 2, brow.hMul or 1)
+                    local bhMul = ui.sliderWithInput('mipo_brow_hmul', x, y, 120, 0.25, 2, brow.hMul)
                     ui.alignedLabel(x, y, '  brow height')
                     bhMul = bhMul and tonumber(bhMul)
-                    if bhMul and bhMul ~= (brow.hMul or 1) then
+                    if bhMul and bhMul ~= brow.hMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { browHMul = bhMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
@@ -1065,7 +1009,7 @@ function lib.drawMipoEditor(instance, partName)
 
                     -- Brow color
                     handlePaletteButton('mipo_brow_bg_' .. partName,
-                        x + 30, y, 140, brow.bgHex or '000000ff', function(color)
+                        x + 30, y, 140, brow.bgHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { browBgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1075,12 +1019,12 @@ function lib.drawMipoEditor(instance, partName)
 
                 -- --- Nose sub-accordion ---
                 drawAccordion(partName .. ' face > nose', function()
-                    local nose = face.nose or {}
-                    local nosePos = (face.positioners and face.positioners.nose) or { y = 0.35 }
+                    local nose = face.nose
+                    local nosePos = face.positioners.nose
 
                     ui.label(x, y, 'nose (overlay)')
                     y = y + ROW
-                    local currentNoseURL = (nose.shape or 0) > 0 and ('nose' .. nose.shape .. '.png') or ''
+                    local currentNoseURL = nose.shape > 0 and ('nose' .. nose.shape .. '.png') or ''
                     local gridHeight = drawThumbnailGrid(noseShapes, currentNoseURL, panelX, y, cellSize, function(url)
                         if url then
                             local shapeNum = tonumber(url:match('nose(%d+)%.png'))
@@ -1098,19 +1042,19 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + gridHeight + BUTTON_SPACING
 
                     -- Nose size sliders
-                    local nwMul = ui.sliderWithInput('mipo_nose_wmul', x, y, 120, 0.5, 3, nose.wMul or 1)
+                    local nwMul = ui.sliderWithInput('mipo_nose_wmul', x, y, 120, 0.5, 3, nose.wMul)
                     ui.alignedLabel(x, y, '  nose width')
                     nwMul = nwMul and tonumber(nwMul)
-                    if nwMul and nwMul ~= (nose.wMul or 1) then
+                    if nwMul and nwMul ~= nose.wMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseWMul = nwMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
-                    local nhMul = ui.sliderWithInput('mipo_nose_hmul', x, y, 120, 0.5, 3, nose.hMul or 1)
+                    local nhMul = ui.sliderWithInput('mipo_nose_hmul', x, y, 120, 0.5, 3, nose.hMul)
                     ui.alignedLabel(x, y, '  nose height')
                     nhMul = nhMul and tonumber(nhMul)
-                    if nhMul and nhMul ~= (nose.hMul or 1) then
+                    if nhMul and nhMul ~= nose.hMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseHMul = nhMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
@@ -1128,7 +1072,7 @@ function lib.drawMipoEditor(instance, partName)
 
                     -- Nose colors
                     handlePaletteButton('mipo_nose_bg_' .. partName,
-                        x + 30, y, 140, nose.bgHex or '000000ff', function(color)
+                        x + 30, y, 140, nose.bgHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { noseBgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1136,7 +1080,7 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + ROW
 
                     handlePaletteButton('mipo_nose_fg_' .. partName,
-                        x + 30, y, 140, nose.fgHex or 'ffffffff', function(color)
+                        x + 30, y, 140, nose.fgHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { noseFgHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1146,18 +1090,18 @@ function lib.drawMipoEditor(instance, partName)
 
                 -- --- Mouth sub-accordion ---
                 drawAccordion(partName .. ' face > mouth', function()
-                    local mouth = face.mouth or {}
-                    local mouthPos = (face.positioners and face.positioners.mouth) or { y = 0.7 }
+                    local mouth = face.mouth
+                    local mouthPos = face.positioners.mouth
 
-                    ui.label(x, y, 'mouth shape (' .. (mouth.shape or 2) .. '/' .. #mouthShapes.normalized .. ')')
+                    ui.label(x, y, 'mouth shape (' .. mouth.shape .. '/' .. #mouthShapes.normalized .. ')')
                     y = y + ROW
 
                     local mShape = ui.sliderWithInput('mipo_mouth_shape', x, y, 120, 1, #mouthShapes.normalized,
-                        mouth.shape or 2)
+                        mouth.shape)
                     ui.alignedLabel(x, y, '  mouth preset')
                     mShape = mShape and tonumber(mShape)
                     if mShape then mShape = math.floor(mShape + 0.5) end
-                    if mShape and mShape ~= (mouth.shape or 2) then
+                    if mShape and mShape ~= mouth.shape then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthShape = mShape })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
@@ -1166,7 +1110,7 @@ function lib.drawMipoEditor(instance, partName)
                     -- Upper lip texture grid
                     ui.label(x, y, 'upper lip')
                     y = y + ROW
-                    local currentUpperURL = 'upperlip' .. (mouth.upperLipShape or 1) .. '.png'
+                    local currentUpperURL = 'upperlip' .. mouth.upperLipShape .. '.png'
                     local gridHeight = drawThumbnailGrid(upperLipShapes, currentUpperURL, panelX, y, cellSize, function(url)
                         if url then
                             local num = tonumber(url:match('upperlip(%d+)%.png'))
@@ -1181,7 +1125,7 @@ function lib.drawMipoEditor(instance, partName)
                     -- Lower lip texture grid
                     ui.label(x, y, 'lower lip')
                     y = y + ROW
-                    local currentLowerURL = 'lowerlip' .. (mouth.lowerLipShape or 1) .. '.png'
+                    local currentLowerURL = 'lowerlip' .. mouth.lowerLipShape .. '.png'
                     gridHeight = drawThumbnailGrid(lowerLipShapes, currentLowerURL, panelX, y, cellSize, function(url)
                         if url then
                             local num = tonumber(url:match('lowerlip(%d+)%.png'))
@@ -1204,29 +1148,29 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + ROW
 
                     -- Mouth size
-                    local mwMul = ui.sliderWithInput('mipo_mouth_wmul', x, y, 120, 0.3, 2, mouth.wMul or 1)
+                    local mwMul = ui.sliderWithInput('mipo_mouth_wmul', x, y, 120, 0.3, 2, mouth.wMul)
                     ui.alignedLabel(x, y, '  mouth width')
                     mwMul = mwMul and tonumber(mwMul)
-                    if mwMul and mwMul ~= (mouth.wMul or 1) then
+                    if mwMul and mwMul ~= mouth.wMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthWMul = mwMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
-                    local mhMul = ui.sliderWithInput('mipo_mouth_hmul', x, y, 120, 0.3, 2, mouth.hMul or 1)
+                    local mhMul = ui.sliderWithInput('mipo_mouth_hmul', x, y, 120, 0.3, 2, mouth.hMul)
                     ui.alignedLabel(x, y, '  mouth height')
                     mhMul = mhMul and tonumber(mhMul)
-                    if mhMul and mhMul ~= (mouth.hMul or 1) then
+                    if mhMul and mhMul ~= mouth.hMul then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthHMul = mhMul })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
                     y = y + ROW
 
                     -- Lip thickness
-                    local lipScale = ui.sliderWithInput('mipo_lip_scale', x, y, 120, 0.05, 0.5, mouth.lipScale or 0.25)
+                    local lipScale = ui.sliderWithInput('mipo_lip_scale', x, y, 120, 0.05, 0.5, mouth.lipScale)
                     ui.alignedLabel(x, y, '  lip thickness')
                     lipScale = lipScale and tonumber(lipScale)
-                    if lipScale and lipScale ~= (mouth.lipScale or 0.25) then
+                    if lipScale and lipScale ~= mouth.lipScale then
                         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLipScale = lipScale })
                         CharacterManager.addTexturesFromInstance2(instance)
                     end
@@ -1234,7 +1178,7 @@ function lib.drawMipoEditor(instance, partName)
 
                     -- Lip color
                     handlePaletteButton('mipo_lip_color_' .. partName,
-                        x + 30, y, 140, mouth.lipHex or 'cc5555ff', function(color)
+                        x + 30, y, 140, mouth.lipHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLipHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1243,7 +1187,7 @@ function lib.drawMipoEditor(instance, partName)
 
                     -- Backdrop color
                     handlePaletteButton('mipo_mouth_backdrop_' .. partName,
-                        x + 30, y, 140, mouth.backdropHex or '330000ff', function(color)
+                        x + 30, y, 140, mouth.backdropHex, function(color)
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthBackdropHex = color })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1251,7 +1195,7 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + ROW
 
                     -- --- Teeth ---
-                    local teeth = face.teeth or {}
+                    local teeth = face.teeth
                     ui.label(x, y, 'teeth')
                     y = y + ROW
 
@@ -1271,16 +1215,16 @@ function lib.drawMipoEditor(instance, partName)
                     y = y + teethGridHeight + BUTTON_SPACING
 
                     if teeth.shape and teeth.shape > 0 then
-                        local thMul = ui.sliderWithInput('mipo_teeth_hmul', x, y, 120, 0.5, 3, teeth.hMul or 1)
+                        local thMul = ui.sliderWithInput('mipo_teeth_hmul', x, y, 120, 0.5, 3, teeth.hMul)
                         ui.alignedLabel(x, y, '  teeth height')
                         thMul = thMul and tonumber(thMul)
-                        if thMul and thMul ~= (teeth.hMul or 1) then
+                        if thMul and thMul ~= teeth.hMul then
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethHMul = thMul })
                             CharacterManager.addTexturesFromInstance2(instance)
                         end
                         y = y + ROW
 
-                        local soClicked, soChecked = ui.checkbox(x, y, teeth.stickOut or false, 'stick out')
+                        local soClicked, soChecked = ui.checkbox(x, y, teeth.stickOut, 'stick out')
                         if soClicked then
                             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethStickOut = soChecked })
                             CharacterManager.addTexturesFromInstance2(instance)
@@ -1288,7 +1232,7 @@ function lib.drawMipoEditor(instance, partName)
                         y = y + ROW
 
                         handlePaletteButton('mipo_teeth_bg_' .. partName,
-                            x + 30, y, 140, teeth.bgHex or 'ffffffff', function(color)
+                            x + 30, y, 140, teeth.bgHex, function(color)
                                 CharacterManager.updateFaceOfPart(instance, faceOwner, { teethBgHex = color })
                                 CharacterManager.addTexturesFromInstance2(instance)
                             end)
@@ -1296,7 +1240,7 @@ function lib.drawMipoEditor(instance, partName)
                         y = y + ROW
 
                         handlePaletteButton('mipo_teeth_fg_' .. partName,
-                            x + 30, y, 140, teeth.fgHex or 'eeeeeeff', function(color)
+                            x + 30, y, 140, teeth.fgHex, function(color)
                                 CharacterManager.updateFaceOfPart(instance, faceOwner, { teethFgHex = color })
                                 CharacterManager.addTexturesFromInstance2(instance)
                             end)
@@ -1590,7 +1534,7 @@ function lib.drawMipoEditor(instance, partName)
         love.graphics.line(x, y, x + panelWidth - 40, y)
         y = y + BUTTON_SPACING
         if ui.button(x, y, panelWidth - 40, 'randomize') then
-            lib.randomizeMipo(instance)
+            CharacterManager.randomizeMipo(instance)
         end
         y = y + ROW
 
@@ -1612,241 +1556,6 @@ function lib.drawMipoEditor(instance, partName)
 
         return y - startY
     end)
-end
-
-function lib.randomizeMipo(instance)
-    if not instance then return end
-
-    -- Random torso/head shapes (from key 'y')
-    local urls = torsoHeadShapes
-    local urlIndex = math.ceil(math.random() * #urls)
-    local url = urls[urlIndex]
-    local creation = instance.dna.creation
-    local count = creation.torsoSegments or 1
-    local s = 1 + math.random() * 1
-
-    for i = 1, count do
-        CharacterManager.updatePart('torso' .. i,
-            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
-            instance)
-    end
-
-    local headScale = 1 + math.random() * 1
-    local headUrlIndex = math.ceil(math.random() * #urls)
-    local headUrl = urls[headUrlIndex]
-    CharacterManager.updatePart('head',
-        { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < 0.5 and -1 or 1), sx = headScale },
-        instance)
-
-    -- Random colors (from key 'q') — shared across all torso segments + head
-    local bgHex = '000000ff'
-    local fgHex = randomHexColor()
-    local pHex = randomHexColor()
-    for i = 1, count do
-        CharacterManager.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
-        CharacterManager.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch1')
-        CharacterManager.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch2')
-    end
-    CharacterManager.updateSkinOfPart(instance, 'head',
-        { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
-
-    -- Clear skin patches (they're optional overlays, not always wanted)
-    for _, patchName in ipairs({'patch1', 'patch2', 'patch3'}) do
-        local headSkin = instance.dna.parts.head.appearance.skin
-        if headSkin[patchName] then
-            headSkin[patchName].bgURL = ''
-            headSkin[patchName].fgURL = ''
-        end
-        for i = 1, count do
-            local torsoSkin = instance.dna.parts['torso' .. i].appearance.skin
-            if torsoSkin[patchName] then
-                torsoSkin[patchName].bgURL = ''
-                torsoSkin[patchName].fgURL = ''
-            end
-        end
-    end
-
-    -- Random ears (from key 'e')
-    local earUrls = earShapes
-    local earUrlIndex = math.ceil(math.random() * #earUrls)
-    local earUrl = earUrls[earUrlIndex]
-    local earSy = 0.5 + math.random() * 1.5
-    local earSx = 0.5 + math.random() * 1.5
-    -- Sync w/h between ears so they're always symmetric
-    local earW = instance.dna.parts.lear.dims.w
-    local earH = instance.dna.parts.lear.dims.h
-    CharacterManager.updatePart('lear',
-        { shape8URL = earUrl .. '.png', sy = earSy, sx = -earSx, w = earW, h = earH },
-        instance)
-    CharacterManager.updatePart('rear',
-        { shape8URL = earUrl .. '.png', sy = earSy, sx = earSx, w = earW, h = earH },
-        instance)
-
-    local earBgHex = '000000ff'
-    local earFgHex = randomHexColor()
-    local earPHex = randomHexColor()
-    CharacterManager.updateSkinOfPart(instance, 'lear',
-        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
-    CharacterManager.updateSkinOfPart(instance, 'rear',
-        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
-
-    -- Random feet/hands (from key 'r')
-    local fhUrls = handShapes
-    local fUrlIndex = math.ceil(math.random() * #fhUrls)
-    local fUrl = fhUrls[fUrlIndex]
-    local fS = 1 + math.random() * 1
-
-    CharacterManager.updatePart('lfoot',
-        { shape8URL = fUrl .. '.png', sy = fS, sx = fS },
-        instance)
-    CharacterManager.updatePart('rfoot',
-        { shape8URL = fUrl .. '.png', sy = fS, sx = -fS },
-        instance)
-
-    local handScale = 1 + math.random() * 1
-    local handUrlIndex = math.ceil(math.random() * #fhUrls)
-    local handUrl = fhUrls[handUrlIndex]
-    CharacterManager.updatePart('lhand',
-        { shape8URL = handUrl .. '.png', sy = handScale, sx = handScale },
-        instance)
-    CharacterManager.updatePart('rhand',
-        { shape8URL = handUrl .. '.png', sy = handScale, sx = -handScale },
-        instance)
-
-    -- Random feet skin colors
-    local feetFgHex = randomHexColor()
-    local feetPHex = randomHexColor()
-    for _, part in ipairs({'lfoot', 'rfoot'}) do
-        CharacterManager.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = feetFgHex, pHex = feetPHex })
-    end
-
-    -- Random hand skin colors
-    local handFgHex = randomHexColor()
-    local handPHex = randomHexColor()
-    for _, part in ipairs({'lhand', 'rhand'}) do
-        CharacterManager.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex })
-    end
-
-    -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
-    local hcUrl = haircutTextures[math.ceil(math.random() * #haircutTextures)]
-    local hcBgURL = hcUrl .. '.png'
-    local hcFgURL = hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
-    local hcValues = { bgURL = hcBgURL, fgURL = hcFgURL, bgHex = randomHexColor(), width = 100 + math.random() * 300 }
-    CharacterManager.updateHaircutOfPart(instance, 'head', hcValues)
-    CharacterManager.updateHaircutOfPart(instance, 'torso1', hcValues)
-
-    -- Random bodyhair (from key 't')
-    local bhUrls = bodyhairTextures
-    local bhUrlIndex = math.ceil(math.random() * #bhUrls)
-    local bhUrl = bhUrls[bhUrlIndex]
-    local bhBgHex = randomHexColor()
-    local bhFgHex = randomHexColor()
-    local bhPHex = randomHexColor()
-    for i = 1, count do
-        CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i,
-            { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png', bgHex = bhBgHex, fgHex = bhFgHex, pHex = bhPHex })
-    end
-
-    -- Random arm connected-skin
-    local armSkinUrl = limbSkinTextures[math.ceil(math.random() * #limbSkinTextures)]
-    local armSkinFgHex = randomHexColor()
-    local armSkinPHex = randomHexColor()
-    for _, part in ipairs({'luarm', 'ruarm'}) do
-        CharacterManager.updateConnectedAppearance(instance, part, 'connected-skin',
-            { bgURL = armSkinUrl .. '.png', fgURL = armSkinUrl .. '-mask.png', fgHex = armSkinFgHex, pHex = armSkinPHex })
-    end
-
-    -- Random leg connected-skin
-    local legSkinUrl = limbSkinTextures[math.ceil(math.random() * #limbSkinTextures)]
-    local legSkinFgHex = randomHexColor()
-    local legSkinPHex = randomHexColor()
-    for _, part in ipairs({'luleg', 'ruleg'}) do
-        CharacterManager.updateConnectedAppearance(instance, part, 'connected-skin',
-            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png', fgHex = legSkinFgHex, pHex = legSkinPHex })
-    end
-
-    -- Torso connected-skin (uses leg skin for continuity)
-    for i = 1, count do
-        CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
-            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png', fgHex = legSkinFgHex, pHex = legSkinPHex })
-    end
-
-    -- Random arm connected-hair
-    local armHairUrl = limbHairTextures[math.ceil(math.random() * #limbHairTextures)]
-    local armHairBgHex = randomHexColor()
-    for _, part in ipairs({'luarm', 'ruarm'}) do
-        CharacterManager.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = armHairUrl .. '.png', bgHex = armHairBgHex })
-    end
-
-    -- Random leg connected-hair
-    local legHairUrl = limbHairTextures[math.ceil(math.random() * #limbHairTextures)]
-    local legHairBgHex = randomHexColor()
-    for _, part in ipairs({'luleg', 'ruleg'}) do
-        CharacterManager.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
-    end
-
-    -- Torso connected-hair (uses leg hair for continuity)
-    for i = 1, count do
-        CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-hair',
-            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
-    end
-
-    -- Random face (eyes + pupils)
-    -- rebuildFromCreation below flips isPotatoHead, so update both head and torso1
-    local randomEyeY = 0.3 + math.random() * 0.3
-    local randomMouthY = randomEyeY + 0.15 + math.random() * 0.2
-    local faceValues = {
-        eyeShape = math.ceil(math.random() * #eyeShapes),
-        pupilShape = math.ceil(math.random() * #pupilShapes),
-        eyeX = 0.1 + math.random() * 0.3,
-        eyeY = randomEyeY,
-        eyeWMul = 0.5 + math.random() * 1.0,
-        eyeHMul = 0.5 + math.random() * 1.0,
-        pupilWMul = 0.2 + math.random() * 0.6,
-        pupilHMul = 0.2 + math.random() * 0.6,
-        eyeBgHex = '000000ff',
-        eyeFgHex = 'ffffffff',
-        pupilBgHex = '000000ff',
-        mouthShape = math.ceil(math.random() * #mouthShapes.normalized),
-        mouthUpperLipShape = math.ceil(math.random() * #upperLipShapes),
-        mouthLowerLipShape = math.ceil(math.random() * #lowerLipShapes),
-        mouthLipHex = 'cc5555ff',
-        mouthBackdropHex = '00000033',
-        mouthLipScale = 0.1 + math.random() * 0.3,
-        mouthWMul = 0.5 + math.random() * 1.0,
-        mouthHMul = 0.5 + math.random() * 1.0,
-        mouthY = randomMouthY,
-        browShape = math.ceil(math.random() * #browShapes),
-        browBgHex = '000000ff',
-        browWMul = 0.8 + math.random() * 0.5,
-        browHMul = 0.6 + math.random() * 0.8,
-        browBend = math.ceil(math.random() * 10),
-        browY = 0.25 + math.random() * 0.1,
-        noseShape = math.ceil(math.random() * #noseShapes),
-        noseBgHex = '000000ff',
-        noseFgHex = randomHexColor(),
-        noseWMul = 0.5 + math.random() * 2,
-        noseHMul = 0.5 + math.random() * 2,
-        noseY = 0.3 + math.random() * 0.2,
-        teethShape = math.random() < 0.3 and math.ceil(math.random() * #teethShapes) or 0,
-        teethHMul = 0.5 + math.random() * 2,
-        teethStickOut = math.random() < 0.2,
-        teethBgHex = 'ffffffff',
-        teethFgHex = 'eeeeeeff',
-    }
-    CharacterManager.updateFaceOfPart(instance, 'head', faceValues)
-    CharacterManager.updateFaceOfPart(instance, 'torso1', faceValues)
-
-    -- Disable physics nose when overlay nose is randomized
-    CharacterManager.rebuildFromCreation(instance, { isPotatoHead = not creation.isPotatoHead, noseSegments = 0 })
-    CharacterManager.addTexturesFromInstance2(instance)
 end
 
 return lib

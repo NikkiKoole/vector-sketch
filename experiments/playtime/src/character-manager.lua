@@ -15,6 +15,8 @@ local NT = require('src.node-types')
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 local state = require('src.state')
+local D = require('src.dna-defaults')
+local C = require('src.shape-catalogs')
 
 -- Negative group index counter for character self-collision prevention.
 -- Each character gets a unique negative index so its fixtures never collide
@@ -179,24 +181,7 @@ function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if not p or not p.appearance or not p.appearance['face'] then return end
     local face = p.appearance['face']
-    if not face.eye then face.eye = {} end
-    if not face.pupil then face.pupil = {} end
-    if not face.mouth then
-        face.mouth = {
-            shape = 2, upperLipShape = 1, lowerLipShape = 1,
-            lipHex = 'cc5555ff', backdropHex = '00000033',
-            lipScale = 0.25, wMul = 1, hMul = 1,
-        }
-    end
-    if not face.brow then face.brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 } end
-    if not face.nose then face.nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 } end
-    if not face.teeth then face.teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false } end
-    if not face.positioners then face.positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } } end
-    if not face.positioners.eye then face.positioners.eye = { x = 0.2, y = 0.5, r = 0 } end
-    if not face.positioners.eye.r then face.positioners.eye.r = 0 end
-    if not face.positioners.brow then face.positioners.brow = { y = 0.3 } end
-    if not face.positioners.nose then face.positioners.nose = { y = 0.35 } end
-    if not face.positioners.mouth then face.positioners.mouth = { y = 0.7 } end
+    D.ensureDefaults(face, D.face)
 
     if values.eyeShape then face.eye.shape = values.eyeShape end
     if values.eyeBgHex then face.eye.bgHex = values.eyeBgHex end
@@ -247,13 +232,9 @@ end
 -- Update top-level positioners (leg.x, ear.y, nose.t) and faceMagnitude.
 -- values can contain: legX, earY, noseT, faceMagnitude
 function lib.updatePositioners(instance, values)
-    if not instance.dna.positioners then
-        instance.dna.positioners = { leg = { x = 0.5 }, ear = { y = 0.5 }, nose = { t = 0.35 } }
-    end
+    if not instance.dna.positioners then instance.dna.positioners = {} end
+    D.ensureDefaults(instance.dna.positioners, D.positioners)
     local pos = instance.dna.positioners
-    if not pos.leg then pos.leg = { x = 0.5 } end
-    if not pos.ear then pos.ear = { y = 0.5 } end
-    if not pos.nose then pos.nose = { t = 0.35 } end
 
     if values.legX then pos.leg.x = values.legX end
     if values.earY then pos.ear.y = values.earY end
@@ -276,6 +257,251 @@ function lib.updateConnectedAppearance(instance, partName, appearanceKey, values
             main.cached = nil
         end
     end
+end
+
+-- Randomize all visual aspects of a character instance.
+function lib.randomizeMipo(instance)
+    if not instance then return end
+
+    local randomHexColor = utils.randomHexColor
+
+    -- Random torso/head shapes
+    local urls = C.torsoHeadShapes
+    local urlIndex = math.ceil(math.random() * #urls)
+    local url = urls[urlIndex]
+    local creation = instance.dna.creation
+    local count = creation.torsoSegments
+    local s = D.randomInRange('bodyScale')
+
+    for i = 1, count do
+        lib.updatePart('torso' .. i,
+            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            instance)
+    end
+
+    local headScale = D.randomInRange('bodyScale')
+    local headUrlIndex = math.ceil(math.random() * #urls)
+    local headUrl = urls[headUrlIndex]
+    lib.updatePart('head',
+        { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < 0.5 and -1 or 1), sx = headScale },
+        instance)
+
+    -- Random colors — shared across all torso segments + head
+    local bgHex = '000000ff'
+    local fgHex = randomHexColor()
+    local pHex = randomHexColor()
+    for i = 1, count do
+        lib.updateSkinOfPart(instance, 'torso' .. i,
+            { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+        lib.updateSkinOfPart(instance, 'torso' .. i,
+            { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch1')
+        lib.updateSkinOfPart(instance, 'torso' .. i,
+            { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch2')
+    end
+    lib.updateSkinOfPart(instance, 'head',
+        { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+
+    -- Clear skin patches (they're optional overlays, not always wanted)
+    for _, patchName in ipairs({'patch1', 'patch2', 'patch3'}) do
+        local headSkin = instance.dna.parts.head.appearance.skin
+        if headSkin[patchName] then
+            headSkin[patchName].bgURL = ''
+            headSkin[patchName].fgURL = ''
+        end
+        for i = 1, count do
+            local torsoSkin = instance.dna.parts['torso' .. i].appearance.skin
+            if torsoSkin[patchName] then
+                torsoSkin[patchName].bgURL = ''
+                torsoSkin[patchName].fgURL = ''
+            end
+        end
+    end
+
+    -- Random ears
+    local earUrls = C.earShapes
+    local earUrlIndex = math.ceil(math.random() * #earUrls)
+    local earUrl = earUrls[earUrlIndex]
+    local earSy = D.randomInRange('earScale')
+    local earSx = D.randomInRange('earScale')
+    -- Sync w/h between ears so they're always symmetric
+    local earW = instance.dna.parts.lear.dims.w
+    local earH = instance.dna.parts.lear.dims.h
+    lib.updatePart('lear',
+        { shape8URL = earUrl .. '.png', sy = earSy, sx = -earSx, w = earW, h = earH },
+        instance)
+    lib.updatePart('rear',
+        { shape8URL = earUrl .. '.png', sy = earSy, sx = earSx, w = earW, h = earH },
+        instance)
+
+    local earBgHex = '000000ff'
+    local earFgHex = randomHexColor()
+    local earPHex = randomHexColor()
+    lib.updateSkinOfPart(instance, 'lear',
+        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
+    lib.updateSkinOfPart(instance, 'rear',
+        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
+
+    -- Random feet/hands
+    local fhUrls = C.handShapes
+    local fUrlIndex = math.ceil(math.random() * #fhUrls)
+    local fUrl = fhUrls[fUrlIndex]
+    local fS = D.randomInRange('feetScale')
+
+    lib.updatePart('lfoot',
+        { shape8URL = fUrl .. '.png', sy = fS, sx = fS },
+        instance)
+    lib.updatePart('rfoot',
+        { shape8URL = fUrl .. '.png', sy = fS, sx = -fS },
+        instance)
+
+    local handScale = D.randomInRange('handScale')
+    local handUrlIndex = math.ceil(math.random() * #fhUrls)
+    local handUrl = fhUrls[handUrlIndex]
+    lib.updatePart('lhand',
+        { shape8URL = handUrl .. '.png', sy = handScale, sx = handScale },
+        instance)
+    lib.updatePart('rhand',
+        { shape8URL = handUrl .. '.png', sy = handScale, sx = -handScale },
+        instance)
+
+    -- Random feet skin colors
+    local feetFgHex = randomHexColor()
+    local feetPHex = randomHexColor()
+    for _, part in ipairs({'lfoot', 'rfoot'}) do
+        lib.updateSkinOfPart(instance, part,
+            { bgHex = '000000ff', fgHex = feetFgHex, pHex = feetPHex })
+    end
+
+    -- Random hand skin colors
+    local handFgHex = randomHexColor()
+    local handPHex = randomHexColor()
+    for _, part in ipairs({'lhand', 'rhand'}) do
+        lib.updateSkinOfPart(instance, part,
+            { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex })
+    end
+
+    -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
+    local hcUrl = C.haircutTextures[math.ceil(math.random() * #C.haircutTextures)]
+    local hcBgURL = hcUrl .. '.png'
+    local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
+    local hcValues = {
+        bgURL = hcBgURL, fgURL = hcFgURL,
+        bgHex = randomHexColor(), width = D.randomInRange('haircutWidth'),
+    }
+    lib.updateHaircutOfPart(instance, 'head', hcValues)
+    lib.updateHaircutOfPart(instance, 'torso1', hcValues)
+
+    -- Random bodyhair
+    local bhUrls = C.bodyhairTextures
+    local bhUrlIndex = math.ceil(math.random() * #bhUrls)
+    local bhUrl = bhUrls[bhUrlIndex]
+    local bhBgHex = randomHexColor()
+    local bhFgHex = randomHexColor()
+    local bhPHex = randomHexColor()
+    for i = 1, count do
+        lib.updateBodyhairOfPart(instance, 'torso' .. i,
+            { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
+              bgHex = bhBgHex, fgHex = bhFgHex, pHex = bhPHex })
+    end
+
+    -- Random arm connected-skin
+    local armSkinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
+    local armSkinFgHex = randomHexColor()
+    local armSkinPHex = randomHexColor()
+    for _, part in ipairs({'luarm', 'ruarm'}) do
+        lib.updateConnectedAppearance(instance, part, 'connected-skin',
+            { bgURL = armSkinUrl .. '.png', fgURL = armSkinUrl .. '-mask.png',
+              fgHex = armSkinFgHex, pHex = armSkinPHex })
+    end
+
+    -- Random leg connected-skin
+    local legSkinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
+    local legSkinFgHex = randomHexColor()
+    local legSkinPHex = randomHexColor()
+    for _, part in ipairs({'luleg', 'ruleg'}) do
+        lib.updateConnectedAppearance(instance, part, 'connected-skin',
+            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png',
+              fgHex = legSkinFgHex, pHex = legSkinPHex })
+    end
+
+    -- Torso connected-skin (uses leg skin for continuity)
+    for i = 1, count do
+        lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
+            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png',
+              fgHex = legSkinFgHex, pHex = legSkinPHex })
+    end
+
+    -- Random arm connected-hair
+    local armHairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
+    local armHairBgHex = randomHexColor()
+    for _, part in ipairs({'luarm', 'ruarm'}) do
+        lib.updateConnectedAppearance(instance, part, 'connected-hair',
+            { bgURL = armHairUrl .. '.png', bgHex = armHairBgHex })
+    end
+
+    -- Random leg connected-hair
+    local legHairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
+    local legHairBgHex = randomHexColor()
+    for _, part in ipairs({'luleg', 'ruleg'}) do
+        lib.updateConnectedAppearance(instance, part, 'connected-hair',
+            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
+    end
+
+    -- Torso connected-hair (uses leg hair for continuity)
+    for i = 1, count do
+        lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-hair',
+            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
+    end
+
+    -- Random face (eyes + pupils)
+    -- rebuildFromCreation below flips isPotatoHead, so update both head and torso1
+    local randomEyeY = D.randomInRange('eyeY')
+    local randomMouthY = randomEyeY + D.randomInRange('mouthYOffset')
+    local faceValues = {
+        eyeShape = math.ceil(math.random() * #C.eyeShapes),
+        pupilShape = math.ceil(math.random() * #C.pupilShapes),
+        eyeX = D.randomInRange('eyeX'),
+        eyeY = randomEyeY,
+        eyeWMul = D.randomInRange('eyeWMul'),
+        eyeHMul = D.randomInRange('eyeHMul'),
+        pupilWMul = D.randomInRange('pupilWMul'),
+        pupilHMul = D.randomInRange('pupilHMul'),
+        eyeBgHex = '000000ff',
+        eyeFgHex = 'ffffffff',
+        pupilBgHex = '000000ff',
+        mouthShape = math.ceil(math.random() * #mouthShapes.normalized),
+        mouthUpperLipShape = math.ceil(math.random() * #C.upperLipShapes),
+        mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
+        mouthLipHex = 'cc5555ff',
+        mouthBackdropHex = '00000033',
+        mouthLipScale = D.randomInRange('mouthLipScale'),
+        mouthWMul = D.randomInRange('mouthWMul'),
+        mouthHMul = D.randomInRange('mouthHMul'),
+        mouthY = randomMouthY,
+        browShape = math.ceil(math.random() * #C.browShapes),
+        browBgHex = '000000ff',
+        browWMul = D.randomInRange('browWMul'),
+        browHMul = D.randomInRange('browHMul'),
+        browBend = D.randomIntInRange('browBend'),
+        browY = D.randomInRange('browY'),
+        noseShape = math.ceil(math.random() * #C.noseShapes),
+        noseBgHex = '000000ff',
+        noseFgHex = randomHexColor(),
+        noseWMul = D.randomInRange('noseWMul'),
+        noseHMul = D.randomInRange('noseHMul'),
+        noseY = D.randomInRange('noseY'),
+        teethShape = math.random() < D.randomRanges.teethChance and math.ceil(math.random() * #C.teethShapes) or 0,
+        teethHMul = D.randomInRange('teethHMul'),
+        teethStickOut = math.random() < D.randomRanges.teethStickOut,
+        teethBgHex = 'ffffffff',
+        teethFgHex = 'eeeeeeff',
+    }
+    lib.updateFaceOfPart(instance, 'head', faceValues)
+    lib.updateFaceOfPart(instance, 'torso1', faceValues)
+
+    -- Disable physics nose when overlay nose is randomized
+    lib.rebuildFromCreation(instance, { isPotatoHead = not creation.isPotatoHead, noseSegments = 0 })
+    lib.addTexturesFromInstance2(instance)
 end
 
 -- 8-vertex polygon shapes for character body parts, keyed by texture filename
@@ -439,19 +665,7 @@ local dna = {
                         endIndex = 3,
                         main = initBlock('hair7'),
                     },
-                    ['face'] = {
-                        eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
-                        pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
-                        brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
-                        nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
-                        teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
-                        mouth = {
-                            shape = 2, upperLipShape = 1, lowerLipShape = 1,
-                            lipHex = 'cc5555ff', backdropHex = '00000033',
-                            lipScale = 0.25, wMul = 1, hMul = 1,
-                        },
-                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } },
-                    },
+                    ['face'] = utils.deepCopy(D.face),
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
                 shape8URL = 'shapeA1.png',
@@ -486,19 +700,7 @@ local dna = {
                         endIndex = 3,
                         main = add(initBlock('hair6'), { fgURL = '' }),
                     },
-                    ['face'] = {
-                        eye = { shape = 1, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
-                        pupil = { shape = 1, bgHex = '000000ff', fgHex = '', wMul = 0.5, hMul = 0.5 },
-                        brow = { shape = 1, bgHex = '000000ff', wMul = 1, hMul = 1, bend = 1 },
-                        nose = { shape = 0, bgHex = '000000ff', fgHex = 'ffffffff', wMul = 1, hMul = 1 },
-                        teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
-                        mouth = {
-                            shape = 2, upperLipShape = 1, lowerLipShape = 1,
-                            lipHex = 'cc5555ff', backdropHex = '00000033',
-                            lipScale = 0.25, wMul = 1, hMul = 1,
-                        },
-                        positioners = { eye = { x = 0.2, y = 0.5 }, brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 } },
-                    },
+                    ['face'] = utils.deepCopy(D.face),
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
@@ -755,9 +957,9 @@ local function extractNoseIndex(name)
 end
 local function getParentAndChildrenFromPartName(partName, guy)
     local creation      = guy.dna.creation
-    local neckSegments  = creation.neckSegments or 0
-    local torsoSegments = creation.torsoSegments or 1
-    local noseSegments  = creation.noseSegments or 0
+    local neckSegments  = creation.neckSegments
+    local torsoSegments = creation.torsoSegments
+    local noseSegments  = creation.noseSegments
 
 
     local highestTorso = 'torso' .. torsoSegments
@@ -1046,7 +1248,7 @@ local function getOffsetFromParent(partName, guy)
     local positioners   = guy.dna.positioners
     getParentAndChildrenFromPartName(partName, guy)
     -- Define the name of the highest torso segment
-    local torsoSegments = creation.torsoSegments or 1
+    local torsoSegments = creation.torsoSegments
     local highestTorso  = 'torso' .. torsoSegments
     -- Define the name of the lowest torso segment (always torso1)
     local lowestTorso   = 'torso1'
@@ -1108,7 +1310,7 @@ local function getOffsetFromParent(partName, guy)
         return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
     end
 
-    local noseT = (positioners and positioners.nose and positioners.nose.t) or 0.35 -- 0=top, 1=bottom
+    local noseT = positioners.nose.t -- 0=top, 1=bottom
 
     local function getMidlineLerpOnHead(t)
         local ax, ay = getHeadPart8(1) -- top center
@@ -1215,7 +1417,7 @@ local function getOffsetFromParent(partName, guy)
             return (parts[highestTorso].dims.w / 2) * scale, (-parts[highestTorso].dims.h / 2) * scale
         end
     elseif partName == 'luleg' then
-        local t = (positioners and positioners.leg and positioners.leg.x) or 0.5
+        local t = positioners.leg.x
         if hasTorso8() then
             local ax, ay = getTorsoPart8FromLowest(6)
             local bx, by = getTorsoPart8FromLowest(5)
@@ -1225,7 +1427,7 @@ local function getOffsetFromParent(partName, guy)
             return (-parts[lowestTorso].dims.w / 2) * (1 - t) * scale, (parts[lowestTorso].dims.h / 2) * scale
         end
     elseif partName == 'ruleg' then
-        local t = (positioners and positioners.leg and positioners.leg.x) or 0.5
+        local t = positioners.leg.x
         if hasTorso8() then
             local ax, ay = getTorsoPart8FromLowest(4)
             local bx, by = getTorsoPart8FromLowest(5)
@@ -1236,7 +1438,7 @@ local function getOffsetFromParent(partName, guy)
         end
     elseif partName == 'lear' then
         -- Left ear: mirror the right ear position for symmetry
-        local t = (positioners and positioners.ear and positioners.ear.y) or 0.5
+        local t = positioners.ear.y
         if creation.isPotatoHead then
             if hasTorso8() then
                 local ax, ay = getTorsoPart8FromHighest(2)
@@ -1258,7 +1460,7 @@ local function getOffsetFromParent(partName, guy)
         end
     elseif partName == 'rear' then
         -- Right ear: lerp from top-right(2) to bottom-right(4), t=0 is top, t=1 is bottom
-        local t = (positioners and positioners.ear and positioners.ear.y) or 0.5
+        local t = positioners.ear.y
         if creation.isPotatoHead then
             if hasTorso8() then
                 local ax, ay = getTorsoPart8FromHighest(2)
@@ -1588,6 +1790,505 @@ function lib.rebuildFromCreation(instance, newCreation)
     end
 end
 
+local function addSkinTexture(body, partData, skinData, scale)
+    local _, _, w, h = getCenterAndDimensions(body)
+
+    local documentSize = nil
+    if partData.shape8URL then
+        if shape8Dict[partData.shape8URL] then
+            if shape8Dict[partData.shape8URL].dimensions then
+                getBoundingBox(shape8Dict[partData.shape8URL].vertices)
+                documentSize = {}
+                documentSize.w = shape8Dict[partData.shape8URL].dimensions[1] * math.abs(partData.dims.sx)
+                documentSize.h = shape8Dict[partData.shape8URL].dimensions[2] * math.abs(partData.dims.sy)
+            end
+        end
+    end
+
+    local growfactor = 1.1
+
+    local fixture
+    if (documentSize) then
+        fixture = fixtures.createSFixture(body, 0, 0,
+            subtypes.TEXFIXTURE,
+            {
+                width = documentSize.w * growfactor * scale,
+                height = documentSize.h * growfactor *
+                    scale
+            })
+    else
+        fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
+            { width = w * growfactor, height = h * growfactor })
+    end
+    local ud = fixture:getUserData()
+    ud.extra.OMP = true
+    ud.extra.dirty = true
+    ud.extra.main = utils.deepCopy(skinData.main)
+    ud.extra.main.bgURL = partData.shape8URL
+    ud.extra.main.fgURL = partData.shape8URL:gsub('.png', '-mask.png')
+    ud.extra.zOffset = skinData.zOffset or 0
+    if partData.dims.sy ~= nil and partData.dims.sy < 0 then
+        ud.extra.main.fy = -1
+    end
+    if partData.dims.sx ~= nil and partData.dims.sx < 0 then
+        ud.extra.main.fx = -1
+    end
+
+    if skinData.patch1 then
+        ud.extra.patch1 = utils.deepCopy(skinData.patch1)
+    end
+    if skinData.patch2 then
+        ud.extra.patch2 = utils.deepCopy(skinData.patch2)
+    end
+    if skinData.patch3 then
+        ud.extra.patch3 = utils.deepCopy(skinData.patch3)
+    end
+end
+
+local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
+    local _, _, w, h = getCenterAndDimensions(body)
+    local growfactor = bodyhairData.growfactor or 1.2
+    local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
+        { width = w * growfactor, height = h * growfactor })
+    local ud = fixture:getUserData()
+    ud.extra.OMP = false
+    -- Layer bodyhair relative to its parent part
+    ud.extra.zOffset = (partName == 'head') and 210 or 10
+    ud.extra.dirty = true
+    ud.extra.main = utils.deepCopy(bodyhairData.main)
+
+    local raw = shape8Dict[partData.shape8URL].vertices
+    local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor * scale,
+        (partData.dims.sy or 1) * growfactor * scale)
+    local newVertices = cyclicShift(vertices, 2)
+    if partData.dims.sy < 0 then
+        newVertices = cyclicShift(newVertices, 8)
+    end
+
+    ud.extra.vertices = newVertices
+    ud.extra.vertexCount = #vertices / 2
+end
+
+local function addConnectedTexture(body, partName, partData, connData, instance, scale)
+    local torsoSegments = instance.dna.creation.torsoSegments
+    local noseSegments  = instance.dna.creation.noseSegments
+    local jointLabels   = {}
+
+    local fixture       = fixtures.createSFixture(body, 0, 0, subtypes.CONNECTED_TEXTURE,
+        { radius = 30 * scale })
+
+    local ud            = fixture:getUserData()
+
+    ud.extra            = {
+        attachTo = partName,
+        OMP = true,
+        dirty = true,
+        main = utils.deepCopy(connData.main),
+        zOffset = connData.zOffset or 0,
+        nodes = {},
+        growExtra = 20 * scale,
+    }
+
+    -- wmul controls the rendered width of the connected texture.
+    -- Use DNA value if set, otherwise default to instance scale.
+    ud.extra.main.wmul  = connData.main.wmul or scale
+    if partName:find('uleg') then
+        if partName == 'luleg' then
+            jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" }
+        elseif partName == 'ruleg' then
+            jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" }
+        end
+    end
+    if partName:find('uarm') then
+        local top = 'torso' .. torsoSegments
+
+        if partName == 'luarm' then
+            jointLabels = { top .. "->luarm", "luarm->llarm", "llarm->lhand" }
+        elseif partName == 'ruarm' then
+            jointLabels = { top .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" }
+        end
+    end
+    -- we only do neck stuff from the top torso to the head. (other torso segments are ignored)
+    if partName == ('torso' .. torsoSegments) and connData.endNode == 'head' then
+        local neckSegments2 = instance.dna.creation.neckSegments
+        local previous = 'torso' .. torsoSegments
+
+        for i = 1, neckSegments2 do
+            local current = 'neck' .. i
+            table.insert(jointLabels, previous .. '->' .. current)
+            previous = current
+        end
+        -- Final connection to head
+        table.insert(jointLabels, previous .. '->head')
+    end
+
+    if partName == 'nose1' and noseSegments > 0 then
+        local startParent = instance.dna.creation.isPotatoHead and ('torso' .. torsoSegments) or
+            'head'
+        table.insert(jointLabels, startParent .. '->nose1')
+        for i = 1, noseSegments - 1 do
+            table.insert(jointLabels, 'nose' .. i .. '->nose' .. (i + 1))
+        end
+    end
+
+    for j = 1, #jointLabels do
+        local jointID = jointLabels[j]
+        ud.extra.nodes[j] = { id = instance.joints[jointID], type = NT.JOINT }
+    end
+end
+
+local function addHaircutTexture(body, partName, partData, haircutData, instance, scale)
+    local rightPlaceForHaircut = false
+    if instance.dna.creation.isPotatoHead and partName == 'torso1' then
+        rightPlaceForHaircut = true
+    end
+    if not instance.dna.creation.isPotatoHead and partName == 'head' then
+        rightPlaceForHaircut = true
+    end
+
+    if rightPlaceForHaircut then
+        local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TRACE_VERTICES,
+            { radius = 30, width = 100, height = 100 })
+        local ud = fixture:getUserData()
+        local hasMask = haircutData.main.fgURL and haircutData.main.fgURL ~= ''
+        ud.extra.OMP = hasMask
+        ud.extra.zOffset = 220
+        ud.extra.dirty = true
+        ud.extra.main = utils.deepCopy(haircutData.main)
+        ud.extra.width = (haircutData.width or 250) * scale
+        ud.extra.startIndex = haircutData.startIndex
+        ud.extra.endIndex = haircutData.endIndex
+
+        if partData.dims.sy < 0 then
+            ud.extra.startIndex = haircutData.startIndex + 4
+            ud.extra.endIndex = haircutData.endIndex + 4
+        end
+    end
+end
+
+local function addFaceDecals(body, partName, partData, faceData, instance, scale)
+    -- Face decals (eyes + pupils) go on head (non-potato) or torso1 (potato)
+    local rightPlaceForFace = false
+    if instance.dna.creation.isPotatoHead and partName == 'torso1' then
+        rightPlaceForFace = true
+    end
+    if not instance.dna.creation.isPotatoHead and partName == 'head' then
+        rightPlaceForFace = true
+    end
+
+    if rightPlaceForFace and partData.shape8URL and shape8Dict[partData.shape8URL] then
+        local face = faceData
+        D.ensureDefaults(face, D.face)
+        local eyePos = face.positioners.eye
+
+        -- Get head shape vertices to compute eye positions
+        local raw = shape8Dict[partData.shape8URL].vertices
+        local verts = makeTransformedVertices(raw,
+            (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
+
+        -- 8-vertex polygon: 1=top, 3=right-mid, 5=bottom, 7=left-mid
+        -- Indices are 1-based, pairs of x,y
+        -- Normalize so topY < botY and leftX < rightX even when shape is flipped
+        local topY = math.min(verts[2], verts[10])
+        local botY = math.max(verts[2], verts[10])
+        local leftX = math.min(verts[5], verts[13])
+        local rightX = math.max(verts[5], verts[13])
+
+        local leftEyeX = lerp(leftX, rightX, 0.5 - eyePos.x)
+        local rightEyeX = lerp(leftX, rightX, 0.5 + eyePos.x)
+        local eyeY = lerp(topY, botY, eyePos.y)
+
+        -- Compute base eye size from head dimensions
+        local headW = math.abs(rightX - leftX)
+        local headH = math.abs(botY - topY)
+        local fm = instance.dna.faceMagnitude
+        local baseEyeW = headW * 0.25 * fm
+        local baseEyeH = headH * 0.25 * fm
+
+        local eye = face.eye
+        local pupil = face.pupil
+
+        local eyeW = baseEyeW * eye.wMul
+        local eyeH = baseEyeH * eye.hMul
+        local pupilW = baseEyeW * pupil.wMul
+        local pupilH = baseEyeH * pupil.hMul
+
+        local eyeBgURL = 'eye' .. eye.shape .. '.png'
+        local eyeFgURL = 'eye' .. eye.shape .. '-mask.png'
+        local pupilBgURL = 'pupil' .. pupil.shape .. '.png'
+        -- Only some pupils have masks
+        local pupilFgURL = ''
+        local pupilMaskPath = 'textures/pupil' .. pupil.shape .. '-mask.png'
+        if love.filesystem.getInfo(pupilMaskPath) then
+            pupilFgURL = 'pupil' .. pupil.shape .. '-mask.png'
+        end
+
+        -- Create eye decals (left and right)
+        -- Uses OMP compositing: outline + mask → pre-composited image
+        local eyeZOffset = 250
+        local eyeR = eyePos.r
+        local eyeSides = {
+            { ox = leftEyeX, label = 'leye', mirror = true, rot = -eyeR },
+            { ox = rightEyeX, label = 'reye', rot = eyeR },
+        }
+        for _, side in ipairs(eyeSides) do
+            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+            local ud = f:getUserData()
+            ud.label = side.label
+            ud.extra.ox = side.ox
+            ud.extra.oy = eyeY
+            ud.extra.w = eyeW
+            ud.extra.h = eyeH
+            ud.extra.mirror = side.mirror or false
+            ud.extra.rot = side.rot or 0
+            ud.extra.zOffset = eyeZOffset
+            ud.extra.OMP = true
+            ud.extra.dirty = true
+            ud.extra.main = {
+                bgURL = eyeBgURL,
+                fgURL = eyeFgURL,
+                pURL = '',
+                bgHex = eye.bgHex,
+                fgHex = eye.fgHex,
+                pHex = 'ffffff00',
+            }
+            drawTextured.makeCached(ud.extra.main)
+        end
+
+        -- Create pupil decals (left and right)
+        -- Pupils with a mask use OMP compositing (2-color).
+        -- Pupils without a mask are single-color (just tinted outline).
+        local hasPupilMask = pupilFgURL ~= ''
+        local pupilZOffset = 251
+        local pupilSides = {
+            { ox = leftEyeX, label = 'lpupil', mirror = true, eyeRot = -eyeR },
+            { ox = rightEyeX, label = 'rpupil', eyeRot = eyeR },
+        }
+        for _, side in ipairs(pupilSides) do
+            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+            local ud = f:getUserData()
+            ud.label = side.label
+            ud.extra.ox = side.ox
+            ud.extra.oy = eyeY
+            ud.extra.w = pupilW
+            ud.extra.h = pupilH
+            ud.extra.mirror = side.mirror or false
+            ud.extra.zOffset = pupilZOffset
+            ud.extra.eyeW = eyeW
+            ud.extra.eyeH = eyeH
+            ud.extra.eyeMaskURL = eyeFgURL
+            ud.extra.eyeMirror = side.mirror or false
+            ud.extra.eyeRot = side.eyeRot or 0
+            ud.extra.lookAtMouse = eye.lookAtMouse
+            if hasPupilMask then
+                ud.extra.OMP = true
+                ud.extra.dirty = true
+                ud.extra.main = {
+                    bgURL = pupilBgURL,
+                    fgURL = pupilFgURL,
+                    pURL = '',
+                    bgHex = pupil.bgHex,
+                    fgHex = pupil.fgHex,
+                    pHex = 'ffffff00',
+                }
+                drawTextured.makeCached(ud.extra.main)
+            else
+                ud.extra.OMP = false
+                ud.extra.bgURL = pupilBgURL
+                ud.extra.bgHex = pupil.bgHex
+            end
+        end
+
+        -- Create brow decals (left and right)
+        local brow = face.brow
+        local browPos = face.positioners.brow
+        local browY = lerp(topY, botY, browPos.y)
+        local browW = headW * 0.2 * brow.wMul * fm
+        local browH = headH * 0.1 * brow.hMul * fm
+        local browURL = 'brow' .. brow.shape .. '.png'
+        local browZOffset = 249
+        local browSides = {
+            { ox = leftEyeX, label = 'lbrow', mirror = false },
+            { ox = rightEyeX, label = 'rbrow', mirror = true },
+        }
+        for _, side in ipairs(browSides) do
+            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+            local ud = f:getUserData()
+            ud.label = side.label
+            ud.extra.ox = side.ox
+            ud.extra.oy = browY
+            ud.extra.w = browW
+            ud.extra.h = browH
+            ud.extra.zOffset = browZOffset
+            ud.extra.browCurve = true
+            ud.extra.browBend = brow.bend
+            ud.extra.browMirror = side.mirror
+            ud.extra.bgURL = browURL
+            ud.extra.bgHex = brow.bgHex
+        end
+
+        -- Create nose decal (single, centered)
+        local nose = face.nose
+        local noseShape = nose.shape
+        if noseShape > 0 then
+            local nosePos = face.positioners.nose
+            local noseY = lerp(topY, botY, nosePos.y)
+            local noseX = (leftX + rightX) / 2
+            local noseW = headW * 0.15 * nose.wMul * fm
+            local noseH = headH * 0.15 * nose.hMul * fm
+            local noseBgURL = 'nose' .. noseShape .. '.png'
+            local noseMaskPath = 'textures/nose' .. noseShape .. '-mask.png'
+            local noseFgURL = ''
+            if love.filesystem.getInfo(noseMaskPath) then
+                noseFgURL = 'nose' .. noseShape .. '-mask.png'
+            end
+            local hasNoseMask = noseFgURL ~= ''
+            local noseZOffset = 248
+
+            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+            local ud = f:getUserData()
+            ud.label = 'nose'
+            ud.extra.ox = noseX
+            ud.extra.oy = noseY
+            ud.extra.w = noseW
+            ud.extra.h = noseH
+            ud.extra.zOffset = noseZOffset
+            if hasNoseMask then
+                ud.extra.OMP = true
+                ud.extra.dirty = true
+                ud.extra.main = {
+                    bgURL = noseBgURL,
+                    fgURL = noseFgURL,
+                    pURL = '',
+                    bgHex = nose.bgHex,
+                    fgHex = nose.fgHex,
+                    pHex = 'ffffff00',
+                }
+                drawTextured.makeCached(ud.extra.main)
+            else
+                ud.extra.OMP = false
+                ud.extra.bgURL = noseBgURL
+                ud.extra.bgHex = nose.bgHex
+            end
+        end
+
+        -- Create mouth decals (upper lip + lower lip)
+        local mouth = face.mouth
+        local mouthPos = face.positioners.mouth
+        local mouthY = lerp(topY, botY, mouthPos.y)
+        local mouthX = (leftX + rightX) / 2
+
+        -- Get the normalized shape points and scale to head
+        local shapeIdx = mouth.shape
+        local mouthShape = mouthShapes.normalized[shapeIdx]
+        if mouthShape then
+            local mwMul = mouth.wMul
+            local mhMul = mouth.hMul
+            -- Scale mouth to ~40% of head width (adjustable via wMul/hMul)
+            local mouthScaleX = (headW * 0.004) * mwMul * fm
+            local mouthScaleY = (headH * 0.004) * mhMul * fm
+
+            -- Build scaled + offset curve points (16 floats)
+            local curvePoints = {}
+            for ci = 1, 16, 2 do
+                curvePoints[ci] = mouthShape.points[ci] * mouthScaleX + mouthX
+                curvePoints[ci + 1] = mouthShape.points[ci + 1] * mouthScaleY + mouthY
+            end
+
+            local upperLipURL = 'upperlip' .. mouth.upperLipShape .. '.png'
+            local upperLipMaskURL = 'upperlip' .. mouth.upperLipShape .. '-mask.png'
+            local lowerLipURL = 'lowerlip' .. mouth.lowerLipShape .. '.png'
+            local lowerLipMaskURL = 'lowerlip' .. mouth.lowerLipShape .. '-mask.png'
+
+            -- Lower lip decal (draws first, handles stencil interior)
+            local fLower = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+            local udLower = fLower:getUserData()
+            udLower.label = 'lowerlip'
+            udLower.extra.ox = mouthX
+            udLower.extra.oy = mouthY
+            udLower.extra.zOffset = 252
+            udLower.extra.mouthCurve = 'lower'
+            udLower.extra.curvePoints = curvePoints
+            udLower.extra.lipScale = mouth.lipScale
+            udLower.extra.backdropHex = mouth.backdropHex
+            udLower.extra.OMP = true
+            udLower.extra.dirty = true
+            udLower.extra.main = {
+                bgURL = lowerLipURL,
+                fgURL = lowerLipMaskURL,
+                pURL = '',
+                bgHex = '000000ff',
+                fgHex = mouth.lipHex,
+                pHex = 'ffffff00',
+            }
+            drawTextured.makeCached(udLower.extra.main)
+
+            -- Upper lip decal (draws on top)
+            local fUpper = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+            local udUpper = fUpper:getUserData()
+            udUpper.label = 'upperlip'
+            udUpper.extra.ox = mouthX
+            udUpper.extra.oy = mouthY
+            udUpper.extra.zOffset = 253
+            udUpper.extra.mouthCurve = 'upper'
+            udUpper.extra.curvePoints = curvePoints
+            udUpper.extra.lipScale = mouth.lipScale
+            udUpper.extra.OMP = true
+            udUpper.extra.dirty = true
+            udUpper.extra.main = {
+                bgURL = upperLipURL,
+                fgURL = upperLipMaskURL,
+                pURL = '',
+                bgHex = '000000ff',
+                fgHex = mouth.lipHex,
+                pHex = 'ffffff00',
+            }
+            drawTextured.makeCached(udUpper.extra.main)
+
+            -- Create teeth decal (positioned image, clipped to mouth polygon)
+            local teeth = face.teeth
+            local teethShape = teeth.shape
+            if teethShape > 0 then
+                local teethURL = 'teeth' .. teethShape .. '.png'
+                local teethMaskURL = 'teeth' .. teethShape .. '-mask.png'
+                -- Calculate teeth dimensions: scale to mouth width, preserve aspect ratio
+                local teethImgPath = 'textures/' .. teethURL
+                local teethImg = love.filesystem.getInfo(teethImgPath) and love.graphics.newImage(teethImgPath)
+                local teethW = mouthScaleX * 100
+                local teethH = teethW * 0.5 * teeth.hMul -- default aspect ratio 2:1
+                if teethImg then
+                    local imgW, imgH = teethImg:getDimensions()
+                    teethH = teethW * (imgH / imgW) * teeth.hMul
+                end
+
+                local teethZOffset = teeth.stickOut and 252.5 or 251
+                local fTeeth = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
+                local udTeeth = fTeeth:getUserData()
+                udTeeth.label = 'teeth'
+                udTeeth.extra.ox = mouthX
+                udTeeth.extra.oy = mouthY
+                udTeeth.extra.w = teethW
+                udTeeth.extra.h = teethH
+                udTeeth.extra.zOffset = teethZOffset
+                udTeeth.extra.mouthCurve = 'teeth'
+                udTeeth.extra.curvePoints = curvePoints
+                udTeeth.extra.teethStickOut = teeth.stickOut
+                udTeeth.extra.OMP = true
+                udTeeth.extra.dirty = true
+                udTeeth.extra.main = {
+                    bgURL = teethURL,
+                    fgURL = teethMaskURL,
+                    pURL = '',
+                    bgHex = teeth.bgHex,
+                    fgHex = teeth.fgHex,
+                    pHex = 'ffffff00',
+                }
+                drawTextured.makeCached(udTeeth.extra.main)
+            end
+        end
+    end
+end
+
 function lib.addTexturesFromInstance2(instance)
     local scale = instance.scale
     for k, v in pairs(instance.dna.parts) do
@@ -1618,528 +2319,17 @@ function lib.addTexturesFromInstance2(instance)
 
                 for k2, v2 in pairs(v.appearance) do
                     if k2 == 'skin' then
-                        local body = relevant.body
-
-
-                        local _, _, w, h = getCenterAndDimensions(body)
-
-
-                        -- WORK IN PROGRESS, this is correct now for feet and hands....
-                        local documentSize = nil
-                        if v.shape8URL then
-                            if shape8Dict[v.shape8URL] then
-                                if shape8Dict[v.shape8URL].dimensions then
-                                    getBoundingBox(shape8Dict[v.shape8URL].vertices)
-                                    -- logger:inspect(bbox)
-                                    documentSize = {}
-                                    documentSize.w = shape8Dict[v.shape8URL].dimensions[1] * math.abs(v.dims.sx)
-                                    documentSize.h = shape8Dict[v.shape8URL].dimensions[2] * math.abs(v.dims.sy)
-                                end
-                            end
-                        end
-
-                        local growfactor = 1.1
-
-                        local fixture
-                        if (documentSize) then
-                            fixture = fixtures.createSFixture(body, 0, 0,
-                                subtypes.TEXFIXTURE,
-                                {
-                                    width = documentSize.w * growfactor * scale,
-                                    height = documentSize.h * growfactor *
-                                        scale
-                                })
-                        else
-                            fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
-                                { width = w * growfactor, height = h * growfactor })
-                        end
-                        local ud = fixture:getUserData()
-                        ud.extra.OMP = true --it.OMP
-                        ud.extra.dirty = true
-                        ud.extra.main = utils.deepCopy(v2.main)
-                        ud.extra.main.bgURL = v.shape8URL
-                        ud.extra.main.fgURL = v.shape8URL:gsub('.png', '-mask.png')
-                        ud.extra.zOffset = v2.zOffset or 0
-                        if v.dims.sy ~= nil and v.dims.sy < 0 then
-                            ud.extra.main.fy = -1
-                        end
-                        if v.dims.sx ~= nil and v.dims.sx < 0 then
-                            ud.extra.main.fx = -1
-                        end
-
-                        if v2.patch1 then
-                            ud.extra.patch1 = utils.deepCopy(v2.patch1)
-                        end
-                        if v2.patch2 then
-                            ud.extra.patch2 = utils.deepCopy(v2.patch2)
-                        end
-                        if v2.patch3 then
-                            ud.extra.patch3 = utils.deepCopy(v2.patch3)
-                        end
+                        addSkinTexture(relevant.body, v, v2, scale)
                     elseif k2 == 'bodyhair' then
-                        local body = relevant.body
-                        local _, _, w, h = getCenterAndDimensions(body)
-                        local growfactor = v2.growfactor or 1.2
-                        local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
-                            { width = w * growfactor, height = h * growfactor })
-                        local ud = fixture:getUserData()
-                        ud.extra.OMP = false --it.OMP
-                        -- Layer bodyhair relative to its parent part
-                        ud.extra.zOffset = (k == 'head') and 210 or 10
-                        ud.extra.dirty = true
-                        ud.extra.main = utils.deepCopy(v2.main)
-
-                        local raw = shape8Dict[v.shape8URL].vertices
-                        --  local growfactor = 1.1
-                        local vertices = makeTransformedVertices(raw, (v.dims.sx or 1) * growfactor * scale,
-                            (v.dims.sy or 1) * growfactor * scale)
-                        --   logger:inspect(vertices)
-                        local newVertices = cyclicShift(vertices, 2)
-                        if v.dims.sy < 0 then
-                            newVertices = cyclicShift(newVertices, 8)
-                        end
-
-
-                        ud.extra.vertices = newVertices
-                        ud.extra.vertexCount = #vertices / 2
+                        addBodyhairTexture(relevant.body, k, v, v2, scale)
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
-                        local body          = relevant.body
-
-                        -- depending on the start and end node. build the jointlabels
-                        local torsoSegments = instance.dna.creation.torsoSegments or 1
-                        local noseSegments  = instance.dna.creation.noseSegments or 0
-                        local jointLabels   = {}
-
-                        local fixture       = fixtures.createSFixture(body, 0, 0, subtypes.CONNECTED_TEXTURE,
-                            { radius = 30 * scale })
-
-                        local ud            = fixture:getUserData()
-
-                        ud.extra            = {
-                            attachTo = k,
-                            OMP = true,
-                            dirty = true,
-                            main = utils.deepCopy(v2.main),
-                            zOffset = v2.zOffset or 0,
-                            nodes = {},
-                            growExtra = 20 * scale,
-                        }
-
-                        -- wmul controls the rendered width of the connected texture.
-                        -- Use DNA value if set, otherwise default to instance scale.
-                        ud.extra.main.wmul  = v2.main.wmul or scale
-                        if k:find('uleg') then
-                            --print('this is an upper-leg, connect to torso1')
-                            if k == 'luleg' then
-                                jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" }
-                            elseif k == 'ruleg' then
-                                jointLabels = { "torso1->ruleg", "ruleg->rlleg", "rlleg->rfoot" }
-                            end
-                        end
-                        if k:find('uarm') then
-                            local top = 'torso' .. torsoSegments
-
-                            --print('this is an upper-leg, connect to torso1')
-                            if k == 'luarm' then
-                                jointLabels = { top .. "->luarm", "luarm->llarm", "llarm->lhand" }
-                            elseif k == 'ruarm' then
-                                jointLabels = { top .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" }
-                            end
-                        end
-                        -- we only do neck stuff from the top torso to the head. (other torso segments are ignored)
-                        if k == ('torso' .. torsoSegments) and v2.endNode == 'head' then
-                            local neckSegments = instance.dna.creation.neckSegments or 0
-                            local previous = 'torso' .. torsoSegments
-
-                            for i = 1, neckSegments do
-                                local current = 'neck' .. i
-                                table.insert(jointLabels, previous .. '->' .. current)
-                                previous = current
-                            end
-                            -- Final connection to head
-                            table.insert(jointLabels, previous .. '->head')
-                            --logger:inspect(jointLabels)
-
-                            --print('this is about texturing the neck')
-                        end
-
-                        if k == 'nose1' and noseSegments > 0 then
-                            local startParent = instance.dna.creation.isPotatoHead and ('torso' .. torsoSegments) or
-                                'head'
-                            table.insert(jointLabels, startParent .. '->nose1')
-                            for i = 1, noseSegments - 1 do
-                                table.insert(jointLabels, 'nose' .. i .. '->nose' .. (i + 1))
-                            end
-                        end
-
-                        for j = 1, #jointLabels do
-                            local jointID = jointLabels[j]
-                            ud.extra.nodes[j] = { id = instance.joints[jointID], type = NT.JOINT }
-                        end
+                        addConnectedTexture(relevant.body, k, v, v2, instance, scale)
                     elseif k2 == 'haircut' then
-                        local rightPlaceForHaircut = false
-                        if instance.dna.creation.isPotatoHead and k == 'torso1' then
-                            rightPlaceForHaircut = true
-                        end
-                        if not instance.dna.creation.isPotatoHead and k == 'head' then
-                            rightPlaceForHaircut = true
-                        end
-
-
-                        -- if instance.dna.creation.isPotatoHead and k ~= 'torso1' then
-                        --     return
-                        -- end
-                        -- if not instance.dna.creation.isPotatoHead and k ~= 'head' then
-                        --     return
-                        -- end
-                        if rightPlaceForHaircut then
-                            local body = relevant.body
-
-
-                            local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TRACE_VERTICES,
-                                { radius = 30, width = 100, height = 100 })
-                            local ud = fixture:getUserData()
-                            local hasMask = v2.main.fgURL and v2.main.fgURL ~= ''
-                            ud.extra.OMP = hasMask
-                            ud.extra.zOffset = 220
-                            ud.extra.dirty = true
-                            ud.extra.main = utils.deepCopy(v2.main)
-                            ud.extra.width = (v2.width or 250) * scale
-                            ud.extra.startIndex = v2.startIndex
-                            ud.extra.endIndex = v2.endIndex
-
-                            if v.dims.sy < 0 then
-                                ud.extra.startIndex = v2.startIndex + 4
-                                ud.extra.endIndex = v2.endIndex + 4
-                            end
-                        end
+                        addHaircutTexture(relevant.body, k, v, v2, instance, scale)
                     elseif k2 == 'face' then
-                        -- Face decals (eyes + pupils) go on head (non-potato) or torso1 (potato)
-                        local rightPlaceForFace = false
-                        if instance.dna.creation.isPotatoHead and k == 'torso1' then
-                            rightPlaceForFace = true
-                        end
-                        if not instance.dna.creation.isPotatoHead and k == 'head' then
-                            rightPlaceForFace = true
-                        end
-
-                        if rightPlaceForFace and v.shape8URL and shape8Dict[v.shape8URL] then
-                            local body = relevant.body
-                            local face = v2
-                            local eyePos = face.positioners and face.positioners.eye or { x = 0.2, y = 0.5 }
-
-                            -- Get head shape vertices to compute eye positions
-                            local raw = shape8Dict[v.shape8URL].vertices
-                            local verts = makeTransformedVertices(raw,
-                                (v.dims.sx or 1) * scale, (v.dims.sy or 1) * scale)
-
-                            -- 8-vertex polygon: 1=top, 3=right-mid, 5=bottom, 7=left-mid
-                            -- Indices are 1-based, pairs of x,y
-                            -- Normalize so topY < botY and leftX < rightX even when shape is flipped
-                            local topY = math.min(verts[2], verts[10])
-                            local botY = math.max(verts[2], verts[10])
-                            local leftX = math.min(verts[5], verts[13])
-                            local rightX = math.max(verts[5], verts[13])
-
-                            local leftEyeX = lerp(leftX, rightX, 0.5 - eyePos.x)
-                            local rightEyeX = lerp(leftX, rightX, 0.5 + eyePos.x)
-                            local eyeY = lerp(topY, botY, eyePos.y)
-
-                            -- Compute base eye size from head dimensions
-                            local headW = math.abs(rightX - leftX)
-                            local headH = math.abs(botY - topY)
-                            local fm = instance.dna.faceMagnitude or 1
-                            local baseEyeW = headW * 0.25 * fm
-                            local baseEyeH = headH * 0.25 * fm
-
-                            local eye = face.eye or {}
-                            local pupil = face.pupil or {}
-
-                            local eyeW = baseEyeW * (eye.wMul or 1)
-                            local eyeH = baseEyeH * (eye.hMul or 1)
-                            local pupilW = baseEyeW * (pupil.wMul or 0.5)
-                            local pupilH = baseEyeH * (pupil.hMul or 0.5)
-
-                            local eyeBgURL = 'eye' .. (eye.shape or 1) .. '.png'
-                            local eyeFgURL = 'eye' .. (eye.shape or 1) .. '-mask.png'
-                            local pupilBgURL = 'pupil' .. (pupil.shape or 1) .. '.png'
-                            -- Only some pupils have masks
-                            local pupilFgURL = ''
-                            local pupilMaskPath = 'textures/pupil' .. (pupil.shape or 1) .. '-mask.png'
-                            if love.filesystem.getInfo(pupilMaskPath) then
-                                pupilFgURL = 'pupil' .. (pupil.shape or 1) .. '-mask.png'
-                            end
-
-                            -- Create eye decals (left and right)
-                            -- Uses OMP compositing: outline + mask → pre-composited image
-                            local eyeZOffset = 250
-                            local eyeR = eyePos.r or 0
-                            local eyeSides = {
-                                { ox = leftEyeX, label = 'leye', mirror = true, rot = -eyeR },
-                                { ox = rightEyeX, label = 'reye', rot = eyeR },
-                            }
-                            for _, side in ipairs(eyeSides) do
-                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                local ud = f:getUserData()
-                                ud.label = side.label
-                                ud.extra.ox = side.ox
-                                ud.extra.oy = eyeY
-                                ud.extra.w = eyeW
-                                ud.extra.h = eyeH
-                                ud.extra.mirror = side.mirror or false
-                                ud.extra.rot = side.rot or 0
-                                ud.extra.zOffset = eyeZOffset
-                                ud.extra.OMP = true
-                                ud.extra.dirty = true
-                                ud.extra.main = {
-                                    bgURL = eyeBgURL,
-                                    fgURL = eyeFgURL,
-                                    pURL = '',
-                                    bgHex = eye.bgHex or '000000ff',
-                                    fgHex = eye.fgHex or 'ffffffff',
-                                    pHex = 'ffffff00',
-                                }
-                                drawTextured.makeCached(ud.extra.main)
-                            end
-
-                            -- Create pupil decals (left and right)
-                            -- Pupils with a mask use OMP compositing (2-color).
-                            -- Pupils without a mask are single-color (just tinted outline).
-                            local hasPupilMask = pupilFgURL ~= ''
-                            local pupilZOffset = 251
-                            local pupilSides = {
-                                { ox = leftEyeX, label = 'lpupil', mirror = true, eyeRot = -eyeR },
-                                { ox = rightEyeX, label = 'rpupil', eyeRot = eyeR },
-                            }
-                            for _, side in ipairs(pupilSides) do
-                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                local ud = f:getUserData()
-                                ud.label = side.label
-                                ud.extra.ox = side.ox
-                                ud.extra.oy = eyeY
-                                ud.extra.w = pupilW
-                                ud.extra.h = pupilH
-                                ud.extra.mirror = side.mirror or false
-                                ud.extra.zOffset = pupilZOffset
-                                ud.extra.eyeW = eyeW
-                                ud.extra.eyeH = eyeH
-                                ud.extra.eyeMaskURL = eyeFgURL
-                                ud.extra.eyeMirror = side.mirror or false
-                                ud.extra.eyeRot = side.eyeRot or 0
-                                ud.extra.lookAtMouse = (face.eye and face.eye.lookAtMouse) or false
-                                if hasPupilMask then
-                                    ud.extra.OMP = true
-                                    ud.extra.dirty = true
-                                    ud.extra.main = {
-                                        bgURL = pupilBgURL,
-                                        fgURL = pupilFgURL,
-                                        pURL = '',
-                                        bgHex = pupil.bgHex or '000000ff',
-                                        fgHex = pupil.fgHex or '',
-                                        pHex = 'ffffff00',
-                                    }
-                                    drawTextured.makeCached(ud.extra.main)
-                                else
-                                    ud.extra.OMP = false
-                                    ud.extra.bgURL = pupilBgURL
-                                    ud.extra.bgHex = pupil.bgHex or '000000ff'
-                                end
-                            end
-
-                            -- Create brow decals (left and right)
-                            local brow = face.brow or {}
-                            local browPos = face.positioners and face.positioners.brow or { y = 0.3 }
-                            local browY = lerp(topY, botY, browPos.y)
-                            local browW = headW * 0.2 * (brow.wMul or 1) * fm
-                            local browH = headH * 0.1 * (brow.hMul or 1) * fm
-                            local browURL = 'brow' .. (brow.shape or 1) .. '.png'
-                            local browZOffset = 249
-                            local browSides = {
-                                { ox = leftEyeX, label = 'lbrow', mirror = false },
-                                { ox = rightEyeX, label = 'rbrow', mirror = true },
-                            }
-                            for _, side in ipairs(browSides) do
-                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                local ud = f:getUserData()
-                                ud.label = side.label
-                                ud.extra.ox = side.ox
-                                ud.extra.oy = browY
-                                ud.extra.w = browW
-                                ud.extra.h = browH
-                                ud.extra.zOffset = browZOffset
-                                ud.extra.browCurve = true
-                                ud.extra.browBend = brow.bend or 1
-                                ud.extra.browMirror = side.mirror
-                                ud.extra.bgURL = browURL
-                                ud.extra.bgHex = brow.bgHex or '000000ff'
-                            end
-
-                            -- Create nose decal (single, centered)
-                            local nose = face.nose or {}
-                            local noseShape = nose.shape or 0
-                            if noseShape > 0 then
-                                local nosePos = face.positioners and face.positioners.nose or { y = 0.35 }
-                                local noseY = lerp(topY, botY, nosePos.y)
-                                local noseX = (leftX + rightX) / 2
-                                local noseW = headW * 0.15 * (nose.wMul or 1) * fm
-                                local noseH = headH * 0.15 * (nose.hMul or 1) * fm
-                                local noseBgURL = 'nose' .. noseShape .. '.png'
-                                local noseMaskPath = 'textures/nose' .. noseShape .. '-mask.png'
-                                local noseFgURL = ''
-                                if love.filesystem.getInfo(noseMaskPath) then
-                                    noseFgURL = 'nose' .. noseShape .. '-mask.png'
-                                end
-                                local hasNoseMask = noseFgURL ~= ''
-                                local noseZOffset = 248
-
-                                local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                local ud = f:getUserData()
-                                ud.label = 'nose'
-                                ud.extra.ox = noseX
-                                ud.extra.oy = noseY
-                                ud.extra.w = noseW
-                                ud.extra.h = noseH
-                                ud.extra.zOffset = noseZOffset
-                                if hasNoseMask then
-                                    ud.extra.OMP = true
-                                    ud.extra.dirty = true
-                                    ud.extra.main = {
-                                        bgURL = noseBgURL,
-                                        fgURL = noseFgURL,
-                                        pURL = '',
-                                        bgHex = nose.bgHex or '000000ff',
-                                        fgHex = nose.fgHex or 'ffffffff',
-                                        pHex = 'ffffff00',
-                                    }
-                                    drawTextured.makeCached(ud.extra.main)
-                                else
-                                    ud.extra.OMP = false
-                                    ud.extra.bgURL = noseBgURL
-                                    ud.extra.bgHex = nose.bgHex or '000000ff'
-                                end
-                            end
-
-                            -- Create mouth decals (upper lip + lower lip)
-                            local mouth = face.mouth or {}
-                            local mouthPos = face.positioners and face.positioners.mouth or { y = 0.7 }
-                            local mouthY = lerp(topY, botY, mouthPos.y)
-                            local mouthX = (leftX + rightX) / 2
-
-                            -- Get the normalized shape points and scale to head
-                            local shapeIdx = mouth.shape or 2
-                            local mouthShape = mouthShapes.normalized[shapeIdx]
-                            if mouthShape then
-                                local mwMul = mouth.wMul or 1
-                                local mhMul = mouth.hMul or 1
-                                -- Scale mouth to ~40% of head width (adjustable via wMul/hMul)
-                                local mouthScaleX = (headW * 0.004) * mwMul * fm
-                                local mouthScaleY = (headH * 0.004) * mhMul * fm
-
-                                -- Build scaled + offset curve points (16 floats)
-                                local curvePoints = {}
-                                for ci = 1, 16, 2 do
-                                    curvePoints[ci] = mouthShape.points[ci] * mouthScaleX + mouthX
-                                    curvePoints[ci + 1] = mouthShape.points[ci + 1] * mouthScaleY + mouthY
-                                end
-
-                                local upperLipURL = 'upperlip' .. (mouth.upperLipShape or 1) .. '.png'
-                                local upperLipMaskURL = 'upperlip' .. (mouth.upperLipShape or 1) .. '-mask.png'
-                                local lowerLipURL = 'lowerlip' .. (mouth.lowerLipShape or 1) .. '.png'
-                                local lowerLipMaskURL = 'lowerlip' .. (mouth.lowerLipShape or 1) .. '-mask.png'
-
-                                -- Lower lip decal (draws first, handles stencil interior)
-                                local fLower = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                local udLower = fLower:getUserData()
-                                udLower.label = 'lowerlip'
-                                udLower.extra.ox = mouthX
-                                udLower.extra.oy = mouthY
-                                udLower.extra.zOffset = 252
-                                udLower.extra.mouthCurve = 'lower'
-                                udLower.extra.curvePoints = curvePoints
-                                udLower.extra.lipScale = mouth.lipScale or 0.25
-                                udLower.extra.backdropHex = mouth.backdropHex or '330000ff'
-                                udLower.extra.OMP = true
-                                udLower.extra.dirty = true
-                                udLower.extra.main = {
-                                    bgURL = lowerLipURL,
-                                    fgURL = lowerLipMaskURL,
-                                    pURL = '',
-                                    bgHex = '000000ff',
-                                    fgHex = mouth.lipHex or 'cc5555ff',
-                                    pHex = 'ffffff00',
-                                }
-                                drawTextured.makeCached(udLower.extra.main)
-
-                                -- Upper lip decal (draws on top)
-                                local fUpper = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                local udUpper = fUpper:getUserData()
-                                udUpper.label = 'upperlip'
-                                udUpper.extra.ox = mouthX
-                                udUpper.extra.oy = mouthY
-                                udUpper.extra.zOffset = 253
-                                udUpper.extra.mouthCurve = 'upper'
-                                udUpper.extra.curvePoints = curvePoints
-                                udUpper.extra.lipScale = mouth.lipScale or 0.25
-                                udUpper.extra.OMP = true
-                                udUpper.extra.dirty = true
-                                udUpper.extra.main = {
-                                    bgURL = upperLipURL,
-                                    fgURL = upperLipMaskURL,
-                                    pURL = '',
-                                    bgHex = '000000ff',
-                                    fgHex = mouth.lipHex or 'cc5555ff',
-                                    pHex = 'ffffff00',
-                                }
-                                drawTextured.makeCached(udUpper.extra.main)
-
-                                -- Create teeth decal (positioned image, clipped to mouth polygon)
-                                local teeth = face.teeth or {}
-                                local teethShape = teeth.shape or 0
-                                if teethShape > 0 then
-                                    local teethURL = 'teeth' .. teethShape .. '.png'
-                                    local teethMaskURL = 'teeth' .. teethShape .. '-mask.png'
-                                    -- Calculate teeth dimensions: scale to mouth width, preserve aspect ratio
-                                    local teethImgPath = 'textures/' .. teethURL
-                                    local teethImg = love.filesystem.getInfo(teethImgPath) and love.graphics.newImage(teethImgPath)
-                                    local teethW = mouthScaleX * 100
-                                    local teethH = teethW * 0.5 * (teeth.hMul or 1) -- default aspect ratio 2:1
-                                    if teethImg then
-                                        local imgW, imgH = teethImg:getDimensions()
-                                        teethH = teethW * (imgH / imgW) * (teeth.hMul or 1)
-                                    end
-
-                                    local teethZOffset = teeth.stickOut and 252.5 or 251
-                                    local fTeeth = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                                    local udTeeth = fTeeth:getUserData()
-                                    udTeeth.label = 'teeth'
-                                    udTeeth.extra.ox = mouthX
-                                    udTeeth.extra.oy = mouthY
-                                    udTeeth.extra.w = teethW
-                                    udTeeth.extra.h = teethH
-                                    udTeeth.extra.zOffset = teethZOffset
-                                    udTeeth.extra.mouthCurve = 'teeth'
-                                    udTeeth.extra.curvePoints = curvePoints
-                                    udTeeth.extra.teethStickOut = teeth.stickOut or false
-                                    udTeeth.extra.OMP = true
-                                    udTeeth.extra.dirty = true
-                                    udTeeth.extra.main = {
-                                        bgURL = teethURL,
-                                        fgURL = teethMaskURL,
-                                        pURL = '',
-                                        bgHex = teeth.bgHex or 'ffffffff',
-                                        fgHex = teeth.fgHex or 'eeeeeeff',
-                                        pHex = 'ffffff00',
-                                    }
-                                    drawTextured.makeCached(udTeeth.extra.main)
-                                end
-                            end
-                        end
+                        addFaceDecals(relevant.body, k, v, v2, instance, scale)
                     end
                 end
-                -- here we do stuff.
-                -- i think we should haev some kind of helper function that know depending on
-                -- what the body tye is how we will add
-                -- sfiuxture or connected fixture etc..
             end
         end
     end
@@ -2162,12 +2352,18 @@ end
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
     -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
-    --
+
+    -- Ensure all DNA sub-tables have their defaults filled in
+    D.ensureDefaults(instance.dna.creation, D.creation)
+    if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
+    if not instance.dna.positioners then instance.dna.positioners = {} end
+    D.ensureDefaults(instance.dna.positioners, D.positioners)
+
     local isPotato = instance.dna.creation.isPotatoHead
     local hasNeck = instance.dna.creation.neckSegments > 0
     local ordered = {}
 
-    local torsoSegments = instance.dna.creation.torsoSegments or 1 -- Default to 1 torso segment
+    local torsoSegments = instance.dna.creation.torsoSegments
     -- 1. Add Torso Segments
     --logger:info('createCharacterFromExistingDNA', torsoSegments)
     for i = 1, torsoSegments do
@@ -2199,7 +2395,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     end
 
     if hasNeck and not isPotato then
-        for i = 1, (instance.dna.creation.neckSegments or 2) do
+        for i = 1, instance.dna.creation.neckSegments do
             table.insert(ordered, 'neck' .. i)
             instance.dna.parts['neck' .. i] = utils.deepCopy(instance.dna.parts['neck-segment-template'])
         end
@@ -2209,7 +2405,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     end
 
 
-    local noseSegments = instance.dna.creation.noseSegments or 0
+    local noseSegments = instance.dna.creation.noseSegments
     if noseSegments > 0 then
         for i = 1, noseSegments do
             local partName = 'nose' .. i

@@ -1115,6 +1115,95 @@ routes["GET /bounds"] = function(req)
     })
 end
 
+-- ─── Mipo (character) inspection ───
+
+local function resolve_mipo(req_id)
+    local mipoRegistry = require('src.mipo-registry')
+    if req_id then return mipoRegistry.getById(req_id) end
+    local all = mipoRegistry.getAll()
+    local count, last = 0, nil
+    for _, inst in pairs(all) do count = count + 1; last = inst end
+    if count == 1 then return last end
+    return nil
+end
+
+routes["GET /mipo"] = function(req)
+    local mipoRegistry = require('src.mipo-registry')
+    local all = mipoRegistry.getAll()
+    local result = {}
+    for _, inst in pairs(all) do
+        local partNames = {}
+        if inst.parts then
+            for name, _ in pairs(inst.parts) do
+                partNames[#partNames + 1] = name
+            end
+            table.sort(partNames)
+        end
+        result[#result + 1] = {
+            id = inst.id,
+            templateName = inst.templateName,
+            scale = inst.scale,
+            partNames = partNames,
+        }
+    end
+    return ok_response(result)
+end
+
+routes["GET /mipo/dna"] = function(req)
+    local inst = resolve_mipo(req.query.id)
+    if not inst then return err_response("character not found (pass ?id= or have exactly 1 character)") end
+    return ok_response(safe_serialize(inst.dna, 0, 6))
+end
+
+routes["POST /mipo/dna/validate"] = function(req)
+    local D = require('src.dna-defaults')
+    local id = req.json_body and req.json_body.id
+    local inst = resolve_mipo(id)
+    if not inst then return err_response("character not found (pass id in body or have exactly 1 character)") end
+    local all_issues = {}
+    -- Validate each part's face
+    if inst.dna and inst.dna.parts then
+        for partName, partData in pairs(inst.dna.parts) do
+            if partData.face then
+                local issues = D.validateFace(partData.face)
+                for i = 1, #issues do
+                    issues[i].part = partName
+                    all_issues[#all_issues + 1] = issues[i]
+                end
+            end
+        end
+    end
+    -- Validate top-level positioners
+    if inst.dna and inst.dna.positioners then
+        local issues = D.validatePositioners(inst.dna.positioners)
+        for i = 1, #issues do
+            all_issues[#all_issues + 1] = issues[i]
+        end
+    end
+    -- Validate creation params
+    if inst.dna and inst.dna.creation then
+        local issues = D.validateCreation(inst.dna.creation)
+        for i = 1, #issues do
+            all_issues[#all_issues + 1] = issues[i]
+        end
+    end
+    return ok_response(all_issues)
+end
+
+routes["POST /mipo/randomize"] = function(req)
+    local CharacterManager = require('src.character-manager')
+    local id = req.json_body and req.json_body.id
+    local inst = resolve_mipo(id)
+    if not inst then return err_response("character not found (pass id in body or have exactly 1 character)") end
+    local ok_pcall, err_msg = pcall(function()
+        CharacterManager.randomizeMipo(inst)
+    end)
+    if not ok_pcall then
+        return err_response("randomizeMipo failed: " .. tostring(err_msg))
+    end
+    return ok_response({ id = inst.id, status = "randomized" })
+end
+
 -- ─── Help ───
 
 local route_descriptions = {
@@ -1172,6 +1261,10 @@ local route_descriptions = {
     ["POST /profile/benchmark"] = "Benchmark a Lua code snippet (iterations, warmup, returns timing stats)",
     ["POST /profile/frames"] = "Profile N frames of physics with ProFi (returns text report)",
     ["POST /specs"] = "Run busted specs inside LÖVE ({target:'spec/file.lua', fresh:true})",
+    ["GET /mipo"] = "List all mipo characters (id, templateName, scale, partNames)",
+    ["GET /mipo/dna"] = "Get character DNA (?id=X, auto-selects if 1 character)",
+    ["POST /mipo/dna/validate"] = "Validate character DNA against schema ({id:'X'}, optional)",
+    ["POST /mipo/randomize"] = "Randomize a character's appearance ({id:'X'}, optional)",
 }
 
 routes["GET /help"] = function(req)
