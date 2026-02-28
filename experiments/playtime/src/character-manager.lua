@@ -1,12 +1,12 @@
 local lib = {}
 
-local ObjectManager = require 'src.object-manager' -- To create the physical parts
-local Joints = require 'src.joints'
+local objectManager = require 'src.object-manager'
+local joints = require 'src.joints'
 local uuid = require 'src.uuid'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
-local drawTextured = require 'src.physics.box2d-draw-textured'
+local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
 local JT = require('src.joint-types')
@@ -76,7 +76,7 @@ local randomHexColor = utils.randomHexColor
 
 
 local function createDefaultTextureDNABlock(shape, skipFG)
-    --local r, g, b, a = drawTextured.hexToColor('ff0000ff')
+    --local r, g, b, a = box2dDrawTextured.hexToColor('ff0000ff')
     --print(r, g, b, a)
 
     local result = {
@@ -89,13 +89,13 @@ local function createDefaultTextureDNABlock(shape, skipFG)
 
     }
 
-    drawTextured.makeCached(result)
+    box2dDrawTextured.makeCached(result)
 
     return result
 end
 
 local function initBlock(url)
-    -- local r, g, b, a = drawTextured.hexToColor('ff0000ff')
+    -- local r, g, b, a = box2dDrawTextured.hexToColor('ff0000ff')
     -- print(r, g, b, a)
     local result = {
         bgURL = (url or '') .. '.png',
@@ -106,7 +106,7 @@ local function initBlock(url)
         pHex = randomHexColor(),
 
     }
-    drawTextured.makeCached(result)
+    box2dDrawTextured.makeCached(result)
 
     return result
 end
@@ -118,6 +118,9 @@ local function add(block, values)
     return block
 end
 
+-- Update skin appearance on a body part's OMP texture layer.
+-- values: {bgHex, fgHex, pHex, bgURL, fgURL, [pattern params like pOpacity]}
+-- optionalPatchName: 'main', 'patch1', 'patch2', etc. (defaults to 'main')
 function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
     local p = instance.dna.parts[partName]
     if p then
@@ -136,6 +139,9 @@ function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
     end
 end
 
+-- Update bodyhair appearance on a body part's texture layer.
+-- values: {bgHex, fgHex, pHex, bgURL, fgURL}
+-- optionalPatchName: defaults to 'main'
 function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
     local p = instance.dna.parts[partName]
     if p then
@@ -152,6 +158,8 @@ function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
     end
 end
 
+-- Update haircut appearance. Color keys (bgURL, fgURL, bgHex, fgHex, pHex, pURL)
+-- go into haircut.main; other keys (startIndex, endIndex) go on the haircut table itself.
 function lib.updateHaircutOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if p and p.appearance and p.appearance['haircut'] then
@@ -244,7 +252,8 @@ end
 
 -- Update connected-skin or connected-hair appearance colors.
 -- Connected textures stretch between joint-linked body parts (used for arms/legs).
--- appearanceKey is 'connected-skin' (OMP composite) or 'connected-hair' (2-layer).
+-- appearanceKey: 'connected-skin' (OMP composite) or 'connected-hair' (2-layer)
+-- values: {bgURL, fgURL, bgHex, fgHex, pHex}
 function lib.updateConnectedAppearance(instance, partName, appearanceKey, values)
     local p = instance.dna.parts[partName]
     if p and p.appearance and p.appearance[appearanceKey] then
@@ -259,13 +268,9 @@ function lib.updateConnectedAppearance(instance, partName, appearanceKey, values
     end
 end
 
--- Randomize all visual aspects of a character instance.
-function lib.randomizeMipo(instance)
-    if not instance then return end
-
+-- Randomize torso/head shapes, scales, colors, and clear skin patches.
+local function randomizeShapes(instance)
     local randomHexColor = utils.randomHexColor
-
-    -- Random torso/head shapes
     local urls = C.torsoHeadShapes
     local urlIndex = math.ceil(math.random() * #urls)
     local url = urls[urlIndex]
@@ -316,8 +321,11 @@ function lib.randomizeMipo(instance)
             end
         end
     end
+end
 
-    -- Random ears
+-- Randomize ear shapes, scales, and colors.
+local function randomizeEars(instance)
+    local randomHexColor = utils.randomHexColor
     local earUrls = C.earShapes
     local earUrlIndex = math.ceil(math.random() * #earUrls)
     local earUrl = earUrls[earUrlIndex]
@@ -340,8 +348,11 @@ function lib.randomizeMipo(instance)
         { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
     lib.updateSkinOfPart(instance, 'rear',
         { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
+end
 
-    -- Random feet/hands
+-- Randomize feet/hand shapes, scales, and colors.
+local function randomizeFeetAndHands(instance)
+    local randomHexColor = utils.randomHexColor
     local fhUrls = C.handShapes
     local fUrlIndex = math.ceil(math.random() * #fhUrls)
     local fUrl = fhUrls[fUrlIndex]
@@ -379,6 +390,12 @@ function lib.randomizeMipo(instance)
         lib.updateSkinOfPart(instance, part,
             { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex })
     end
+end
+
+-- Randomize haircut, bodyhair, connected-skin, and connected-hair textures.
+local function randomizeTextures(instance)
+    local randomHexColor = utils.randomHexColor
+    local count = instance.dna.creation.torsoSegments
 
     -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
     local hcUrl = C.haircutTextures[math.ceil(math.random() * #C.haircutTextures)]
@@ -452,9 +469,11 @@ function lib.randomizeMipo(instance)
         lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-hair',
             { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
     end
+end
 
-    -- Random face (eyes + pupils)
-    -- rebuildFromCreation below flips isPotatoHead, so update both head and torso1
+-- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
+local function randomizeFace(instance)
+    local randomHexColor = utils.randomHexColor
     local randomEyeY = D.randomInRange('eyeY')
     local randomMouthY = randomEyeY + D.randomInRange('mouthYOffset')
     local faceValues = {
@@ -498,9 +517,20 @@ function lib.randomizeMipo(instance)
     }
     lib.updateFaceOfPart(instance, 'head', faceValues)
     lib.updateFaceOfPart(instance, 'torso1', faceValues)
+end
+
+-- Randomize all visual aspects of a character instance.
+function lib.randomizeMipo(instance)
+    if not instance then return end
+
+    randomizeShapes(instance)
+    randomizeEars(instance)
+    randomizeFeetAndHands(instance)
+    randomizeTextures(instance)
+    randomizeFace(instance)
 
     -- Disable physics nose when overlay nose is randomized
-    lib.rebuildFromCreation(instance, { isPotatoHead = not creation.isPotatoHead, noseSegments = 0 })
+    lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
     lib.addTexturesFromInstance2(instance)
 end
 
@@ -1114,6 +1144,16 @@ end
 
 local sign = mathutils.sign
 
+-- Get anchor point for a shape8 part at a given vertex index.
+-- Returns the negated vertex position scaled by `scale`, used to attach parts at specific outline points.
+-- Used by ears (index 5), feet/hands/nose (index 1).
+local function getShape8Anchor(part, vertexIndex, scale)
+    local raw = shape8Dict[part.shape8URL].vertices
+    local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
+    local index = getTransformedIndex(vertexIndex, sign(part.dims.sx), sign(part.dims.sy))
+    return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
+end
+
 local function getOwnOffset(partName, guy)
     local parts = guy.dna.parts
     local scale = guy.scale
@@ -1155,13 +1195,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'lear' or partName == 'rear' then
         local part = parts[partName]
         if part.shape == ST.SHAPE8 then
-            local raw = shape8Dict[part.shape8URL].vertices
-            local rr = recenterPoints(raw)
-            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
-            local index = getTransformedIndex(5, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
-
-            --local footOffset = 0
-            return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
+            return getShape8Anchor(part, 5, scale)
         else
             return 0, (-part.dims.h / 2) * scale
         end
@@ -1179,13 +1213,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'lfoot' or partName == 'rfoot' then
         local part = parts[partName]
         if part.shape == ST.SHAPE8 then
-            local raw = shape8Dict[part.shape8URL].vertices
-            local rr = recenterPoints(raw)
-            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
-            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
-
-            --local footOffset = 0
-            return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
+            return getShape8Anchor(part, 1, scale)
         else
             return 0, (part.dims.h / 2) * scale
         end
@@ -1203,13 +1231,7 @@ local function getOwnOffset(partName, guy)
     if partName == 'rhand' or partName == 'lhand' then
         local part = parts[partName]
         if part.shape == ST.SHAPE8 then
-            local raw = shape8Dict[part.shape8URL].vertices
-            local rr = recenterPoints(raw)
-            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
-            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
-
-            --local handOffset = 50
-            return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
+            return getShape8Anchor(part, 1, scale)
         else
             return 0, (part.dims.h / 2) * scale
         end
@@ -1224,20 +1246,10 @@ local function getOwnOffset(partName, guy)
         local part = guy.dna.parts[partName]
 
         if part.shape == ST.SHAPE8 then
-            local raw = shape8Dict[part.shape8URL].vertices
-            local rr = recenterPoints(raw)
-            local vertices = makeTransformedVertices(rr, part.dims.sx or 1, part.dims.sy or 1)
-            local index = getTransformedIndex(1, sign(part.dims.sx), sign(part.dims.sy)) -- or pick 5 or another
-
-            --local handOffset = 50
-            return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
+            return getShape8Anchor(part, 1, scale)
         else
-            --print('wowzers!')
             return 0, (part.dims.h / 2) * scale
         end
-
-        -- push outward along local +Y (your code rotates this into parent space)
-        -- return 0, (part.dims.h / 2) * guy.scale
     end
     return 0, 0
 end
@@ -1538,7 +1550,7 @@ local function makePart(partName, instance, settings)
     settings.x = settings.x + rotatedOwnX
     settings.y = settings.y + rotatedOwnY
 
-    local thing = ObjectManager.addThing(settings.shapeType, settings)
+    local thing = objectManager.addThing(settings.shapeType, settings)
 
     if thing then
         thing.body:setAngle(prevA + xangle)
@@ -1583,7 +1595,7 @@ local function makePart(partName, instance, settings)
             local offX, offY = getOffsetFromParent(partName, instance)
             jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
             jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
-            local joint = Joints.createJoint(jointCreationData)
+            local joint = joints.createJoint(jointCreationData)
             local limits = jointData.limits
 
             if joint and limits and limits.low and limits.up then
@@ -1669,7 +1681,7 @@ local function updateSinglePart(partName, data, instance)
         oldPosX, oldPosY = oldBody:getPosition()
         oldAngle = oldBody:getAngle()
         wasSelected = (state.selection.selectedObj and state.selection.selectedObj.body == oldBody)
-        ObjectManager.destroyBody(oldBody)
+        objectManager.destroyBody(oldBody)
         instance.parts[partName] = nil
     end
 
@@ -1725,7 +1737,8 @@ local function updateSinglePart(partName, data, instance)
     end
 end
 
--- update part
+-- Update a character body part's shape/dimensions and recreate it.
+-- data: {shape8URL, sx, sy, w, h}
 function lib.updatePart(partName, data, instance)
     local positionTorso = nil
     if partName == 'torso1' then
@@ -1769,7 +1782,7 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     -- Step 2: Remove all existing parts
     for _, part in pairs(instance.parts) do
-        ObjectManager.destroyBody(part.body)
+        objectManager.destroyBody(part.body)
     end
 
     instance.parts = {}
@@ -2052,7 +2065,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 fgHex = eye.fgHex,
                 pHex = 'ffffff00',
             }
-            drawTextured.makeCached(ud.extra.main)
+            box2dDrawTextured.makeCached(ud.extra.main)
         end
 
         -- Create pupil decals (left and right)
@@ -2091,7 +2104,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                     fgHex = pupil.fgHex,
                     pHex = 'ffffff00',
                 }
-                drawTextured.makeCached(ud.extra.main)
+                box2dDrawTextured.makeCached(ud.extra.main)
             else
                 ud.extra.OMP = false
                 ud.extra.bgURL = pupilBgURL
@@ -2164,7 +2177,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                     fgHex = nose.fgHex,
                     pHex = 'ffffff00',
                 }
-                drawTextured.makeCached(ud.extra.main)
+                box2dDrawTextured.makeCached(ud.extra.main)
             else
                 ud.extra.OMP = false
                 ud.extra.bgURL = noseBgURL
@@ -2221,7 +2234,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 fgHex = mouth.lipHex,
                 pHex = 'ffffff00',
             }
-            drawTextured.makeCached(udLower.extra.main)
+            box2dDrawTextured.makeCached(udLower.extra.main)
 
             -- Upper lip decal (draws on top)
             local fUpper = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
@@ -2243,7 +2256,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 fgHex = mouth.lipHex,
                 pHex = 'ffffff00',
             }
-            drawTextured.makeCached(udUpper.extra.main)
+            box2dDrawTextured.makeCached(udUpper.extra.main)
 
             -- Create teeth decal (positioned image, clipped to mouth polygon)
             local teeth = face.teeth
@@ -2283,7 +2296,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                     fgHex = teeth.fgHex,
                     pHex = 'ffffff00',
                 }
-                drawTextured.makeCached(udTeeth.extra.main)
+                box2dDrawTextured.makeCached(udTeeth.extra.main)
             end
         end
     end
