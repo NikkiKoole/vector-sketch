@@ -82,7 +82,7 @@ local function createDefaultTextureDNABlock(shape, skipFG)
     local result = {
         bgURL = shape .. '.png',
         fgURL = skipFG and '' or shape .. '-mask.png',
-        pURL = '',
+        pURL = 'type2t.png',
         bgHex = '020202ff',
         fgHex = skipFG and '' or 'ff0000ff',
         pHex = 'ffff00ff',
@@ -100,7 +100,7 @@ local function initBlock(url)
     local result = {
         bgURL = (url or '') .. '.png',
         fgURL = (url or '') .. '-mask.png',
-        pURL = '',
+        pURL = 'type2t.png',
         bgHex = '020202ff',
         fgHex = randomHexColor(),
         pHex = randomHexColor(),
@@ -268,6 +268,13 @@ function lib.updateConnectedAppearance(instance, partName, appearanceKey, values
     end
 end
 
+local function randomPatternURL()
+    local pats = C.patternTextures
+    -- strip 'pat/' prefix, add '.png' suffix to match pURL format
+    local pat = pats[math.ceil(math.random() * #pats)]
+    return pat:gsub('^pat/', '') .. '.png'
+end
+
 -- Randomize torso/head shapes, scales, colors, and clear skin patches.
 local function randomizeShapes(instance)
     local randomHexColor = utils.randomHexColor
@@ -276,7 +283,7 @@ local function randomizeShapes(instance)
     local url = urls[urlIndex]
     local creation = instance.dna.creation
     local count = creation.torsoSegments
-    local s = D.randomInRange('bodyScale')
+    local s = D.randomInRangeWeighted('bodyScale')
 
     for i = 1, count do
         lib.updatePart('torso' .. i,
@@ -284,27 +291,28 @@ local function randomizeShapes(instance)
             instance)
     end
 
-    local headScale = D.randomInRange('bodyScale')
+    local headScale = D.randomInRangeWeighted('bodyScale')
     local headUrlIndex = math.ceil(math.random() * #urls)
     local headUrl = urls[headUrlIndex]
     lib.updatePart('head',
         { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < 0.5 and -1 or 1), sx = headScale },
         instance)
 
-    -- Random colors — shared across all torso segments + head
+    -- Random colors + pattern — shared across all torso segments + head
     local bgHex = '000000ff'
     local fgHex = randomHexColor()
     local pHex = randomHexColor()
+    local skinPURL = randomPatternURL()
     for i = 1, count do
         lib.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+            { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL })
         lib.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch1')
+            { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL }, 'patch1')
         lib.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex }, 'patch2')
+            { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL }, 'patch2')
     end
     lib.updateSkinOfPart(instance, 'head',
-        { bgHex = bgHex, fgHex = fgHex, pHex = pHex })
+        { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL })
 
     -- Clear skin patches (they're optional overlays, not always wanted)
     for _, patchName in ipairs({'patch1', 'patch2', 'patch3'}) do
@@ -329,8 +337,8 @@ local function randomizeEars(instance)
     local earUrls = C.earShapes
     local earUrlIndex = math.ceil(math.random() * #earUrls)
     local earUrl = earUrls[earUrlIndex]
-    local earSy = D.randomInRange('earScale')
-    local earSx = D.randomInRange('earScale')
+    local earSy = D.randomInRangeWeighted('earScale')
+    local earSx = D.randomInRangeWeighted('earScale')
     -- Sync w/h between ears so they're always symmetric
     local earW = instance.dna.parts.lear.dims.w
     local earH = instance.dna.parts.lear.dims.h
@@ -344,10 +352,11 @@ local function randomizeEars(instance)
     local earBgHex = '000000ff'
     local earFgHex = randomHexColor()
     local earPHex = randomHexColor()
+    local earPURL = randomPatternURL()
     lib.updateSkinOfPart(instance, 'lear',
-        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
+        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex, pURL = earPURL })
     lib.updateSkinOfPart(instance, 'rear',
-        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex })
+        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex, pURL = earPURL })
 end
 
 -- Randomize feet/hand shapes, scales, and colors.
@@ -356,7 +365,7 @@ local function randomizeFeetAndHands(instance)
     local fhUrls = C.handShapes
     local fUrlIndex = math.ceil(math.random() * #fhUrls)
     local fUrl = fhUrls[fUrlIndex]
-    local fS = D.randomInRange('feetScale')
+    local fS = D.randomInRangeWeighted('feetScale')
 
     lib.updatePart('lfoot',
         { shape8URL = fUrl .. '.png', sy = fS, sx = fS },
@@ -365,7 +374,7 @@ local function randomizeFeetAndHands(instance)
         { shape8URL = fUrl .. '.png', sy = fS, sx = -fS },
         instance)
 
-    local handScale = D.randomInRange('handScale')
+    local handScale = D.randomInRangeWeighted('handScale')
     local handUrlIndex = math.ceil(math.random() * #fhUrls)
     local handUrl = fhUrls[handUrlIndex]
     lib.updatePart('lhand',
@@ -378,22 +387,25 @@ local function randomizeFeetAndHands(instance)
     -- Random feet skin colors
     local feetFgHex = randomHexColor()
     local feetPHex = randomHexColor()
+    local feetPURL = randomPatternURL()
     for _, part in ipairs({'lfoot', 'rfoot'}) do
         lib.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = feetFgHex, pHex = feetPHex })
+            { bgHex = '000000ff', fgHex = feetFgHex, pHex = feetPHex, pURL = feetPURL })
     end
 
     -- Random hand skin colors
     local handFgHex = randomHexColor()
     local handPHex = randomHexColor()
+    local handPURL = randomPatternURL()
     for _, part in ipairs({'lhand', 'rhand'}) do
         lib.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex })
+            { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex, pURL = handPURL })
     end
 end
 
 -- Randomize haircut, bodyhair, connected-skin, and connected-hair textures.
-local function randomizeTextures(instance)
+-- hairColor: shared hex color for all hair-related parts.
+local function randomizeTextures(instance, hairColor)
     local randomHexColor = utils.randomHexColor
     local count = instance.dna.creation.torsoSegments
 
@@ -403,88 +415,89 @@ local function randomizeTextures(instance)
     local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
     local hcValues = {
         bgURL = hcBgURL, fgURL = hcFgURL,
-        bgHex = randomHexColor(), width = D.randomInRange('haircutWidth'),
+        bgHex = hairColor, width = D.randomInRangeWeighted('haircutWidth'),
     }
     lib.updateHaircutOfPart(instance, 'head', hcValues)
     lib.updateHaircutOfPart(instance, 'torso1', hcValues)
 
-    -- Random bodyhair
+    -- Random bodyhair (shared hairColor for bgHex, independent fgHex/pHex for variety)
     local bhUrls = C.bodyhairTextures
     local bhUrlIndex = math.ceil(math.random() * #bhUrls)
     local bhUrl = bhUrls[bhUrlIndex]
-    local bhBgHex = randomHexColor()
     local bhFgHex = randomHexColor()
     local bhPHex = randomHexColor()
+    local bhPURL = randomPatternURL()
     for i = 1, count do
         lib.updateBodyhairOfPart(instance, 'torso' .. i,
             { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
-              bgHex = bhBgHex, fgHex = bhFgHex, pHex = bhPHex })
+              bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL })
     end
 
     -- Random arm connected-skin
     local armSkinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
     local armSkinFgHex = randomHexColor()
     local armSkinPHex = randomHexColor()
+    local armSkinPURL = randomPatternURL()
     for _, part in ipairs({'luarm', 'ruarm'}) do
         lib.updateConnectedAppearance(instance, part, 'connected-skin',
             { bgURL = armSkinUrl .. '.png', fgURL = armSkinUrl .. '-mask.png',
-              fgHex = armSkinFgHex, pHex = armSkinPHex })
+              fgHex = armSkinFgHex, pHex = armSkinPHex, pURL = armSkinPURL })
     end
 
     -- Random leg connected-skin
     local legSkinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
     local legSkinFgHex = randomHexColor()
     local legSkinPHex = randomHexColor()
+    local legSkinPURL = randomPatternURL()
     for _, part in ipairs({'luleg', 'ruleg'}) do
         lib.updateConnectedAppearance(instance, part, 'connected-skin',
             { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png',
-              fgHex = legSkinFgHex, pHex = legSkinPHex })
+              fgHex = legSkinFgHex, pHex = legSkinPHex, pURL = legSkinPURL })
     end
 
     -- Torso connected-skin (uses leg skin for continuity)
     for i = 1, count do
         lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
             { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png',
-              fgHex = legSkinFgHex, pHex = legSkinPHex })
+              fgHex = legSkinFgHex, pHex = legSkinPHex, pURL = legSkinPURL })
     end
 
-    -- Random arm connected-hair
+    -- Random arm connected-hair (shared hairColor)
     local armHairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
-    local armHairBgHex = randomHexColor()
     for _, part in ipairs({'luarm', 'ruarm'}) do
         lib.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = armHairUrl .. '.png', bgHex = armHairBgHex })
+            { bgURL = armHairUrl .. '.png', bgHex = hairColor })
     end
 
-    -- Random leg connected-hair
+    -- Random leg connected-hair (shared hairColor)
     local legHairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
-    local legHairBgHex = randomHexColor()
     for _, part in ipairs({'luleg', 'ruleg'}) do
         lib.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
+            { bgURL = legHairUrl .. '.png', bgHex = hairColor })
     end
 
-    -- Torso connected-hair (uses leg hair for continuity)
+    -- Torso connected-hair (uses leg hair URL for continuity, shared hairColor)
     for i = 1, count do
         lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-hair',
-            { bgURL = legHairUrl .. '.png', bgHex = legHairBgHex })
+            { bgURL = legHairUrl .. '.png', bgHex = hairColor })
     end
 end
 
 -- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
-local function randomizeFace(instance)
+-- hairColor: shared hex color used for brow color.
+local function randomizeFace(instance, hairColor)
     local randomHexColor = utils.randomHexColor
-    local randomEyeY = D.randomInRange('eyeY')
-    local randomMouthY = randomEyeY + D.randomInRange('mouthYOffset')
+    local randomEyeY = D.randomInRangeWeighted('eyeY')
+    local randomMouthY = randomEyeY + D.randomInRangeWeighted('mouthYOffset')
     local faceValues = {
         eyeShape = math.ceil(math.random() * #C.eyeShapes),
         pupilShape = math.ceil(math.random() * #C.pupilShapes),
-        eyeX = D.randomInRange('eyeX'),
+        eyeX = D.randomInRangeWeighted('eyeX'),
         eyeY = randomEyeY,
-        eyeWMul = D.randomInRange('eyeWMul'),
-        eyeHMul = D.randomInRange('eyeHMul'),
-        pupilWMul = D.randomInRange('pupilWMul'),
-        pupilHMul = D.randomInRange('pupilHMul'),
+        eyeWMul = D.randomInRangeWeighted('eyeWMul'),
+        eyeHMul = D.randomInRangeWeighted('eyeHMul'),
+        pupilWMul = D.randomInRangeWeighted('pupilWMul'),
+        pupilHMul = D.randomInRangeWeighted('pupilHMul'),
         eyeBgHex = '000000ff',
         eyeFgHex = 'ffffffff',
         pupilBgHex = '000000ff',
@@ -493,24 +506,24 @@ local function randomizeFace(instance)
         mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
         mouthLipHex = 'cc5555ff',
         mouthBackdropHex = '00000033',
-        mouthLipScale = D.randomInRange('mouthLipScale'),
-        mouthWMul = D.randomInRange('mouthWMul'),
-        mouthHMul = D.randomInRange('mouthHMul'),
+        mouthLipScale = D.randomInRangeWeighted('mouthLipScale'),
+        mouthWMul = D.randomInRangeWeighted('mouthWMul'),
+        mouthHMul = D.randomInRangeWeighted('mouthHMul'),
         mouthY = randomMouthY,
         browShape = math.ceil(math.random() * #C.browShapes),
-        browBgHex = '000000ff',
-        browWMul = D.randomInRange('browWMul'),
-        browHMul = D.randomInRange('browHMul'),
-        browBend = D.randomIntInRange('browBend'),
-        browY = D.randomInRange('browY'),
+        browBgHex = hairColor,
+        browWMul = D.randomInRangeWeighted('browWMul'),
+        browHMul = D.randomInRangeWeighted('browHMul'),
+        browBend = D.randomIntInRangeWeighted('browBend'),
+        browY = D.randomInRangeWeighted('browY'),
         noseShape = math.ceil(math.random() * #C.noseShapes),
         noseBgHex = '000000ff',
         noseFgHex = randomHexColor(),
-        noseWMul = D.randomInRange('noseWMul'),
-        noseHMul = D.randomInRange('noseHMul'),
-        noseY = D.randomInRange('noseY'),
+        noseWMul = D.randomInRangeWeighted('noseWMul'),
+        noseHMul = D.randomInRangeWeighted('noseHMul'),
+        noseY = D.randomInRangeWeighted('noseY'),
         teethShape = math.random() < D.randomRanges.teethChance and math.ceil(math.random() * #C.teethShapes) or 0,
-        teethHMul = D.randomInRange('teethHMul'),
+        teethHMul = D.randomInRangeWeighted('teethHMul'),
         teethStickOut = math.random() < D.randomRanges.teethStickOut,
         teethBgHex = 'ffffffff',
         teethFgHex = 'eeeeeeff',
@@ -523,11 +536,14 @@ end
 function lib.randomizeMipo(instance)
     if not instance then return end
 
+    -- Generate one shared hair color for haircut, bodyhair, connected-hair, and brows
+    local hairColor = utils.randomHexColor()
+
     randomizeShapes(instance)
     randomizeEars(instance)
     randomizeFeetAndHands(instance)
-    randomizeTextures(instance)
-    randomizeFace(instance)
+    randomizeTextures(instance, hairColor)
+    randomizeFace(instance, hairColor)
 
     -- Disable physics nose when overlay nose is randomized
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
@@ -1695,6 +1711,7 @@ local function updateSinglePart(partName, data, instance)
         shape8URL = partData.shape8URL,
         label = partName,
         density = partData.density or 1,
+        behaviors = partData.behaviors,
         radius = (partData.dims.r or 0) * scale,
         width = (partData.dims.w or 0) * scale,
         width2 = (partData.dims.w2 or 0) * scale,
@@ -1865,8 +1882,9 @@ local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
         { width = w * growfactor, height = h * growfactor })
     local ud = fixture:getUserData()
     ud.extra.OMP = false
-    -- Layer bodyhair relative to its parent part
-    ud.extra.zOffset = (partName == 'head') and 210 or 10
+    -- Layer bodyhair above skin (skin zOffset is 200 for torso/head parts)
+    local skinZ = (partData.appearance and partData.appearance['skin'] and partData.appearance['skin'].zOffset) or 200
+    ud.extra.zOffset = skinZ + 10
     ud.extra.dirty = true
     ud.extra.main = utils.deepCopy(bodyhairData.main)
 

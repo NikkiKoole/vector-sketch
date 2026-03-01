@@ -9,7 +9,7 @@ local shapes = require 'src.shapes'
 local jointHandlers = require 'src.joint-handlers'
 local mathutils = require 'src.math-utils'
 local utils = require 'src.utils'
-local jointslib = require 'src.joints'
+local joints = require 'src.joints'
 local fixtures = require 'src.fixtures'
 local state = require 'src.state'
 
@@ -946,7 +946,7 @@ function lib.cloneSelection(selectedBodies, world)
                             end
                             local limitsEnabled = originalJoint:areLimitsEnabled()
                             local lower, upper = originalJoint:getLimits()
-                            local newJoint = jointslib.createJoint(newJointData)
+                            local newJoint = joints.createJoint(newJointData)
                             newJoint:setLimits(lower, upper)
                             --newJoint:setUpperLimit(upper)
                             --newJoint:setLowerLimit(lower)

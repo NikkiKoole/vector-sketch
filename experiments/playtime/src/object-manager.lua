@@ -499,10 +499,11 @@ function lib.startSpawn(shapeType, wx, wy)
     state.interaction.offsetDragging = { 0, 0 }
 end
 
+-- Create a physics body+shape and register it.
+-- settings: {x, y, bodyType, width, height, radius, label,
+--   width2, width3, height2, height3, height4,  -- extra dims for complex shapes
+--   vertices, mirrorX, mirrorY, behaviors, shape8URL, density}
 function lib.addThing(shapeType, settings)
-    --function lib.addThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
-    --local thing = createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
-    --  print(inspect(settings))
     local thing = createThing(shapeType, settings)
     if not thing then
         logger:error("addThing: Failed to create thing.")

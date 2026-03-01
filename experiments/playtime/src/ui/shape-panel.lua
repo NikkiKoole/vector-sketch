@@ -71,10 +71,9 @@ function lib.drawAddShapeUI()
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             local CharacterManager = require('src.character-manager')
-            local uiMipoEditor = require('src.ui.mipo-editor')
             local instance = CharacterManager.createCharacter("humanoid", wx, wy, 0.3)
             if instance then
-                uiMipoEditor.randomizeMipo(instance)
+                CharacterManager.randomizeMipo(instance)
                 -- Set up drag: torso1 as the primary drag target, all parts as group
                 local torsoThing = instance.parts['torso1']
                 if torsoThing then

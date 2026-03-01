@@ -37,13 +37,7 @@ local limbHairTextures = C.limbHairTextures
 local noseShapes = C.noseShapes
 local teethShapes = C.teethShapes
 
--- UI-only catalogs (not used by randomization)
-local patternTextures = {
-    'pat/type0', 'pat/type1', 'pat/type2t', 'pat/type3_',
-    'pat/type4', 'pat/type5', 'pat/type6', 'pat/type7', 'pat/type8',
-    'pat/pattern', 'pat/pattern2', 'pat/pattern3', 'pat/pattern4',
-    'pat/pattern5', 'pat/pattern6', 'pat/pattern7', 'pat/lijnen'
-}
+local patternTextures = C.patternTextures
 
 local patchShapes = {
     'patch1', 'patch2', 'patch3', 'patch4'
@@ -194,16 +188,17 @@ local function drawPatternControls(block, idPrefix, panelX, startY, onUpdate)
     local ROW = BUTTON_HEIGHT + BUTTON_SPACING
 
     -- Pattern texture thumbnail grid
-    local currentPURL = block.pURL or ''
+    local currentPURL = block.pURL or 'type0.png'
+    if currentPURL == '' then currentPURL = 'type0.png' end
     -- Convert pURL (e.g. 'type0.png') to grid format ('pat/type0')
-    local currentGridURL = currentPURL ~= '' and ('pat/' .. currentPURL) or ''
+    local currentGridURL = 'pat/' .. currentPURL
     local cellSize = 40
     local gridHeight = drawThumbnailGrid(patternTextures, currentGridURL, panelX, yy, cellSize,
         function(url)
-            -- url is 'pat/type0.png' or nil; strip 'pat/' prefix for pURL
-            local purl = url and url:gsub('^pat/', '') or ''
+            -- url is 'pat/type0.png'; strip 'pat/' prefix for pURL
+            local purl = url and url:gsub('^pat/', '') or 'type0.png'
             onUpdate('pURL', purl)
-        end, true)
+        end)
     yy = yy + gridHeight + BUTTON_SPACING
 
     -- Only show transform sliders if a pattern is selected
@@ -1024,9 +1019,24 @@ function lib.drawMipoEditor(instance, partName)
                 --   p/pattern:  tints the decorative pattern overlay (from textures/pat/)
                 for _, patch in ipairs(patches) do
                     if skin[patch] then
-                        ui.label(x, y, patch)
-                        y = y + ROW
+                        -- Wrap patch1/2/3 in sub-accordions; main is always visible
+                        local showPatch = true
+                        if patch ~= 'main' then
+                            local patchKey = partName .. '_skin_' .. patch
+                            local clicked = ui.header_button(x, y, panelWidth - 40,
+                                (accordionStates[patchKey] and " ÷  " or " •") .. ' ' .. patch,
+                                accordionStates[patchKey])
+                            if clicked then
+                                accordionStates[patchKey] = not accordionStates[patchKey]
+                            end
+                            y = y + ROW
+                            showPatch = accordionStates[patchKey]
+                        else
+                            ui.label(x, y, patch)
+                            y = y + ROW
+                        end
 
+                        if showPatch then
                         -- Shape selection grid and transform sliders for patches (not main)
                         if patch ~= 'main' then
                             local currentBG = skin[patch].bgURL or ''
@@ -1123,6 +1133,7 @@ function lib.drawMipoEditor(instance, partName)
                                 end
                                 CharacterManager.addTexturesFromInstance2(instance)
                             end)
+                        end -- if showPatch
                     end
                 end
             end)
@@ -1386,7 +1397,13 @@ function lib.drawMipoEditor(instance, partName)
             connSkinOwner = getLimbRoot(partName)
         end
         local connSkinData = connSkinOwner and instance.dna.parts[connSkinOwner]
-        if connSkinData and connSkinData.appearance and connSkinData.appearance['connected-skin'] then
+        -- Hide neck connected-skin when there are no neck segments
+        local connSkinEndNode = connSkinData and connSkinData.appearance
+            and connSkinData.appearance['connected-skin']
+            and connSkinData.appearance['connected-skin'].endNode
+        local hideConnSkin = connSkinEndNode == 'head'
+            and instance.dna.creation.neckSegments == 0
+        if not hideConnSkin and connSkinData and connSkinData.appearance and connSkinData.appearance['connected-skin'] then
             local connLabel = connSkinData.appearance['connected-skin'].endNode
                 and (partName .. ' > ' .. connSkinData.appearance['connected-skin'].endNode .. ' skin')
                 or (partName .. ' connected skin')
@@ -1472,7 +1489,13 @@ function lib.drawMipoEditor(instance, partName)
             connHairOwner = getLimbRoot(partName)
         end
         local connHairData = connHairOwner and instance.dna.parts[connHairOwner]
-        if connHairData and connHairData.appearance and connHairData.appearance['connected-hair'] then
+        -- Hide neck connected-hair when there are no neck segments
+        local connHairEndNode = connHairData and connHairData.appearance
+            and connHairData.appearance['connected-hair']
+            and connHairData.appearance['connected-hair'].endNode
+        local hideConnHair = connHairEndNode == 'head'
+            and instance.dna.creation.neckSegments == 0
+        if not hideConnHair and connHairData and connHairData.appearance and connHairData.appearance['connected-hair'] then
             local connHairLabel = connHairData.appearance['connected-hair'].endNode
                 and (partName .. ' > ' .. connHairData.appearance['connected-hair'].endNode .. ' hair')
                 or (partName .. ' connected hair')
@@ -1486,13 +1509,13 @@ function lib.drawMipoEditor(instance, partName)
                     local gridHeight = drawThumbnailGrid(limbHairTextures, currentURL, panelX, y, cellSize,
                         function(url)
                             local fgUrl = url and hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
-                            local vals = { bgURL = url, fgURL = fgUrl }
+                            local vals = { bgURL = url or '', fgURL = fgUrl }
                             CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair', vals)
                             if chMirror and instance.dna.parts[chMirror] then
                                 CharacterManager.updateConnectedAppearance(instance, chMirror, 'connected-hair', vals)
                             end
                             CharacterManager.addTexturesFromInstance2(instance)
-                        end)
+                        end, true)
                     y = y + gridHeight + BUTTON_SPACING
 
                     -- wmul (width multiplier) slider

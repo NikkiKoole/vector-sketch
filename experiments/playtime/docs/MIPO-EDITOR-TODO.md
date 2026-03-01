@@ -28,7 +28,7 @@ upperlip1-4, lowerlip1-4, teeth1-7 (all with `-mask.png` where applicable).
 - [x] Eye w/h multipliers (0.125–4.0)
 - [x] Eye positioners: `eye.x` (spacing, 0–0.5), `eye.y` (vertical, 0–1)
 - [x] Eye positioner: `eye.r` (rotation, -2 to 2)
-- [ ] Left eye rendered with negative width (horizontal flip)
+- [x] Left eye rendered with negative width (horizontal flip)
 
 **How eyes are positioned** (texturedBox2d.lua ~line 1064):
 ```lua
@@ -305,7 +305,7 @@ instance.tweenVars = {
 
 ### Rendering + editor features
 - [x] **Teeth** — shapes (teeth1-7.png), hMul, color, stencil-clipped or stick-out mode.
-- [ ] **Face skin patches** — snout/eye1/eye2 overlays on head with transforms. Different from body skin patches.
+- [x] **Face skin patches** — patch1/2/3 overlays with transforms, OMP coloring. Accordion UI added.
 - [x] **Bezier brow rendering** — 10 bend patterns, uses texturedCurve (slightly different control point interpolation than puppet-maker2)
 
 ### Animation (runtime, not editor)
@@ -319,7 +319,7 @@ instance.tweenVars = {
 - [ ] **DNA save/load presets**
 - [ ] **Screenshot export**
 - [ ] **Procedural texture controls** — texScale, texRot, fgAlpha per part
-- [ ] **Left eye horizontal flip** — render left eye with negative width
+- [x] **Left eye horizontal flip** — render left eye with negative width
 
 ---
 
@@ -337,7 +337,7 @@ instance.tweenVars = {
 7. ✅ Nose (shape, position, scale — face overlay, mutually exclusive with nose segments)
 8. ✅ Mouth (upper lip + lower lip as bezier curves, stencil-masked interior, 15 presets)
 9. ✅ Teeth (shape, hMul, color, stick-out — rendered inside mouth stencil or over lower lip)
-10. Face skin patches with transforms (snout, eye1, eye2 overlays)
+10. ✅ Face skin patches with transforms (patch1/2/3 overlays with OMP coloring)
 
 ### Phase 3: Animation
 11. Eye blink tween (eyesOpen 0→1)

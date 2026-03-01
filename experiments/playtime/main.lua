@@ -71,7 +71,7 @@ local playtimeui = require 'src.playtime-ui'
 
 local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
-local ObjectManager = require('src.object-manager')
+local objectManager = require('src.object-manager')
 
 
 --local moonshine = require 'moonshine'
@@ -172,11 +172,10 @@ function love.load(_args)
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
-    ObjectManager.addThing('rectangle', { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
+    objectManager.addThing('rectangle', { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
     humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
     if humanoidInstance then
-        local uiMipoEditor = require('src.ui.mipo-editor')
-        uiMipoEditor.randomizeMipo(humanoidInstance)
+        CharacterManager.randomizeMipo(humanoidInstance)
     end
 
 

@@ -56,7 +56,7 @@ lib.pupilShapes = {
 }
 
 lib.browShapes = {
-    'brow1', 'brow2', 'brow3', 'brow4', 'brow5', 'brow6', 'brow7', 'brow8'
+    'brow1', 'brow2', 'brow3', 'brow4', 'brow5', 'brow6', 'brow7'
 }
 
 lib.upperLipShapes = { 'upperlip1', 'upperlip2', 'upperlip3', 'upperlip4' }
@@ -69,6 +69,11 @@ lib.noseShapes = {
 
 lib.teethShapes = {
     'teeth1', 'teeth2', 'teeth3', 'teeth4', 'teeth5', 'teeth6', 'teeth7'
+}
+
+lib.patternTextures = {
+    'pat/type0', 'pat/type1', 'pat/type2t', 'pat/type3_',
+    'pat/type4', 'pat/type5', 'pat/type6', 'pat/type7', 'pat/type8',
 }
 
 return lib

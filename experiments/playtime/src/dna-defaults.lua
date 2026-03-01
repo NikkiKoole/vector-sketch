@@ -140,6 +140,20 @@ function lib.randomIntInRange(key)
     return math.ceil(r.min + math.random() * (r.max - r.min))
 end
 
+-- Weighted variants using triangle distribution (average of 2 uniform randoms).
+-- Produces values that cluster toward the middle of the range.
+function lib.randomInRangeWeighted(key)
+    local r = lib.randomRanges[key]
+    local t = (math.random() + math.random()) / 2
+    return r.min + t * (r.max - r.min)
+end
+
+function lib.randomIntInRangeWeighted(key)
+    local r = lib.randomRanges[key]
+    local t = (math.random() + math.random()) / 2
+    return math.floor(r.min + t * (r.max - r.min) + 0.5)
+end
+
 -- ─── Schemas for validation ───
 
 lib.faceSchema = {

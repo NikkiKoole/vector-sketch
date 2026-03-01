@@ -15,7 +15,7 @@ local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 
-local tex1 = love.graphics.newImage('textures/pat/type2t.png')
+local tex1 = love.graphics.newImage('textures/pat/type0.png')
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 
 local line = love.graphics.newImage('textures/shapes6.png')
@@ -942,11 +942,13 @@ function lib.drawTexturedWorld(world)
                                         s[7], s[8], s[9], s[10],
                                     }
                                 else
+                                    -- Reverse lower lip curve to go left-to-right
+                                    -- (matching upper lip direction) so texture orientation is consistent
                                     curveData = {
-                                        s[9], s[10], s[11], s[12],
-                                        s[11], s[12], s[13], s[14],
-                                        s[13], s[14], s[15], s[16],
-                                        s[15], s[16], s[1], s[2],
+                                        s[1], s[2], s[15], s[16],
+                                        s[15], s[16], s[13], s[14],
+                                        s[13], s[14], s[11], s[12],
+                                        s[11], s[12], s[9], s[10],
                                     }
                                 end
                                 table.insert(drawables, {
