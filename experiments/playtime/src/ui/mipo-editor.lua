@@ -744,11 +744,28 @@ function lib.drawMipoEditor(instance, partName)
                 local val = math.floor(ts)
                 if val ~= creation.torsoSegments then
                     changed = true
-                    CharacterManager.rebuildFromCreation(instance, { torsoSegments = val })
+                    local updates = { torsoSegments = val }
+                    if val < 2 and (creation.torsoMode or 'normal') == 'flex' then
+                        updates.torsoMode = 'normal'
+                    end
+                    CharacterManager.rebuildFromCreation(instance, updates)
                     CharacterManager.addTexturesFromInstance2(instance)
                 end
             end
             y = y + ROW
+
+            -- flex torso checkbox (only when torsoSegments >= 2 and not potato head)
+            if (creation.torsoSegments or 1) >= 2 and not creation.isPotatoHead then
+                local currentMode = creation.torsoMode or 'normal'
+                local clicked, checked = ui.checkbox(x, y, currentMode == 'flex', 'flex torso')
+                if clicked then
+                    changed = true
+                    local newMode = checked and 'flex' or 'normal'
+                    CharacterManager.rebuildFromCreation(instance, { torsoMode = newMode })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+            end
 
             -- neckSegments
             local ns = ui.sliderWithInput('mipo_neckSeg', x, y, 120, 0, 5, creation.neckSegments or 0, false, 1)

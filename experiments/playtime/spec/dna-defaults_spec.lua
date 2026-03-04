@@ -146,6 +146,7 @@ describe('dna-defaults', function()
             assert.equal(1, D.creation.torsoSegments)
             assert.equal(0, D.creation.neckSegments)
             assert.equal(0, D.creation.noseSegments)
+            assert.equal('normal', D.creation.torsoMode)
         end)
 
         it('has faceMagnitude default', function()
@@ -278,14 +279,14 @@ describe('dna-defaults', function()
         end)
 
         it('validateCreation passes for complete creation', function()
-            local creation = { isPotatoHead = false, torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay' }
+            local creation = { isPotatoHead = false, torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay', torsoMode = 'normal' }
             local issues = D.validateCreation(creation)
             assert.same({}, issues)
         end)
 
         it('validateCreation catches missing fields', function()
             local issues = D.validateCreation({})
-            assert.equal(5, #issues)
+            assert.equal(6, #issues)
             local paths = {}
             for _, issue in ipairs(issues) do paths[issue.path] = true end
             assert.is_true(paths['creation.isPotatoHead'])
@@ -293,10 +294,11 @@ describe('dna-defaults', function()
             assert.is_true(paths['creation.neckSegments'])
             assert.is_true(paths['creation.noseSegments'])
             assert.is_true(paths['creation.noseMode'])
+            assert.is_true(paths['creation.torsoMode'])
         end)
 
         it('validateCreation catches type mismatches', function()
-            local creation = { isPotatoHead = 'yes', torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay' }
+            local creation = { isPotatoHead = 'yes', torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay', torsoMode = 'normal' }
             local issues = D.validateCreation(creation)
             assert.equal(1, #issues)
             assert.equal('creation.isPotatoHead', issues[1].path)

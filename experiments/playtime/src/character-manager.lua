@@ -714,9 +714,8 @@ local dna = {
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
 
-            --['torso-segment-template'] = { dims = { w = 280, w2 = 5, h = 80 },
-            --    shape = ST.CAPSULE, j = { type = JT.REVOLUTE, limits = { low = -math.pi / 16, up = math.pi / 16 } } },
-            -- ['torso1'] = { dims = { w = 300, w2 = 4, h = 300 }, shape = 'trapezium' },
+            -- (flex-torso-segment-template removed: flex mode copies from torso-segment-template
+            -- and overrides shape to CAPSULE with per-segment widths from shape8)
             ['neck-segment-template'] = {
 
                 dims = { w = 80, w2 = 4, h = 150 },
@@ -962,6 +961,74 @@ end
 local makeTransformedVertices = mathutils.scalePolygonPoints
 
 local lerp = mathutils.clampedLerp
+
+--- Given shape8 raw vertices (flat array of x,y pairs) and N segments,
+--- return an array of N widths by sampling the polygon at the vertical midpoint
+--- of each segment. sx/sy scale the raw vertices before sampling.
+local function getShape8SegmentWidths(rawVerts, numSegments, sx, sy)
+    sx = sx or 1
+    sy = sy or 1
+    -- Scale vertices
+    local verts = {}
+    for i = 1, #rawVerts, 2 do
+        verts[#verts + 1] = rawVerts[i] * sx
+        verts[#verts + 1] = rawVerts[i + 1] * sy
+    end
+
+    -- Find bounding box
+    local minY, maxY = math.huge, -math.huge
+    local n = #verts / 2
+    for i = 1, n do
+        local vy = verts[i * 2]
+        if vy < minY then minY = vy end
+        if vy > maxY then maxY = vy end
+    end
+    local totalH = maxY - minY
+    local segH = totalH / numSegments
+    local widths = {}
+
+    for seg = 1, numSegments do
+        -- Sample at vertical midpoint of this segment
+        local sampleY = minY + (seg - 0.5) * segH
+
+        -- Find all polygon edge intersections at sampleY
+        local xs = {}
+        for i = 1, n do
+            local j = (i % n) + 1
+            local x1, y1 = verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2]
+            local x2, y2 = verts[(j - 1) * 2 + 1], verts[(j - 1) * 2 + 2]
+            -- Check if edge crosses sampleY
+            if (y1 <= sampleY and y2 >= sampleY) or (y2 <= sampleY and y1 >= sampleY) then
+                if y1 == y2 then
+                    xs[#xs + 1] = x1
+                    xs[#xs + 1] = x2
+                else
+                    local t = (sampleY - y1) / (y2 - y1)
+                    xs[#xs + 1] = x1 + t * (x2 - x1)
+                end
+            end
+        end
+
+        if #xs >= 2 then
+            local minX, maxX = math.huge, -math.huge
+            for k = 1, #xs do
+                if xs[k] < minX then minX = xs[k] end
+                if xs[k] > maxX then maxX = xs[k] end
+            end
+            widths[seg] = maxX - minX
+        else
+            -- Fallback: use full bounding box width
+            local minX, maxX = math.huge, -math.huge
+            for i = 1, n do
+                local vx = verts[(i - 1) * 2 + 1]
+                if vx < minX then minX = vx end
+                if vx > maxX then maxX = vx end
+            end
+            widths[seg] = maxX - minX
+        end
+    end
+    return widths
+end
 
 local function extractNeckIndex(name)
     local index = string.match(name, "^neck(%d+)$")
@@ -1285,8 +1352,10 @@ local function addSkinTexture(body, partData, skinData, scale)
     ud.extra.OMP = true
     ud.extra.dirty = true
     ud.extra.main = utils.deepCopy(skinData.main)
-    ud.extra.main.bgURL = partData.shape8URL
-    ud.extra.main.fgURL = partData.shape8URL:gsub('.png', '-mask.png')
+    if partData.shape8URL then
+        ud.extra.main.bgURL = partData.shape8URL
+        ud.extra.main.fgURL = partData.shape8URL:gsub('.png', '-mask.png')
+    end
     ud.extra.zOffset = skinData.zOffset or 0
     if partData.dims.sy ~= nil and partData.dims.sy < 0 then
         ud.extra.main.fy = -1
@@ -1307,6 +1376,9 @@ local function addSkinTexture(body, partData, skinData, scale)
 end
 
 local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
+    -- Bodyhair requires shape8 vertices; skip for capsule bodies without shape8URL
+    if not partData.shape8URL or not shape8Dict[partData.shape8URL] then return end
+
     local _, _, w, h = getCenterAndDimensions(body)
     local growfactor = bodyhairData.growfactor or 1.2
     local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
@@ -1370,6 +1442,27 @@ local function addConnectedTexture(body, partName, partData, connData, instance,
             jointLabels = { top .. "->ruarm", "ruarm->rlarm", "rlarm->rhand" }
         end
     end
+    -- Flex torso: starting anchor at bottom of torso1, then chain, then anchor at top of torsoN
+    -- (torso1 is the bottom segment, torsoN is the top — chain goes bottom-up)
+    local torsoMode = instance.dna.creation.torsoMode or 'normal'
+    if torsoMode == 'flex' and partName == 'torso1' and not connData.endNode then
+        -- Add starting anchor at the bottom of torso1 (the outer extreme)
+        local t1Body = instance.parts['torso1'] and instance.parts['torso1'].body
+        if t1Body then
+            local t1Dims = instance.dna.parts['torso1'].dims
+            local botY = (t1Dims.h / 2) * scale
+            local botAnchor = fixtures.createSFixture(t1Body, 0, botY, subtypes.ANCHOR,
+                { radius = 5 * scale })
+            if botAnchor then
+                local anchorId = botAnchor:getUserData().id
+                ud.extra.nodes[1] = { id = anchorId, type = NT.ANCHOR }
+            end
+        end
+        for i = 1, torsoSegments - 1 do
+            table.insert(jointLabels, 'torso' .. i .. '->torso' .. (i + 1))
+        end
+    end
+
     -- we only do neck stuff from the top torso to the head. (other torso segments are ignored)
     if partName == ('torso' .. torsoSegments) and connData.endNode == 'head' then
         local neckSegments2 = instance.dna.creation.neckSegments
@@ -1393,9 +1486,10 @@ local function addConnectedTexture(body, partName, partData, connData, instance,
         end
     end
 
+    local nodeOffset = #ud.extra.nodes  -- account for any pre-inserted anchors
     for j = 1, #jointLabels do
         local jointID = jointLabels[j]
-        ud.extra.nodes[j] = { id = instance.joints[jointID], type = NT.JOINT }
+        ud.extra.nodes[nodeOffset + j] = { id = instance.joints[jointID], type = NT.JOINT }
     end
 
     -- Add terminal anchor at the tip of the last nose segment
@@ -1413,6 +1507,23 @@ local function addConnectedTexture(body, partName, partData, connData, instance,
             end
         end
     end
+
+    -- Add terminal anchor at the top of the last flex torso segment (outer extreme)
+    if torsoMode == 'flex' and partName == 'torso1' and not connData.endNode then
+        local lastTorso = 'torso' .. torsoSegments
+        local lastBody = instance.parts[lastTorso] and instance.parts[lastTorso].body
+        if lastBody then
+            local lastDims = instance.dna.parts[lastTorso].dims
+            local tipY = -(lastDims.h / 2) * scale
+            local tipAnchor = fixtures.createSFixture(lastBody, 0, tipY, subtypes.ANCHOR,
+                { radius = 5 * scale })
+            if tipAnchor then
+                local anchorId = tipAnchor:getUserData().id
+                ud.extra.nodes[#ud.extra.nodes + 1] = { id = anchorId, type = NT.ANCHOR }
+            end
+        end
+    end
+
 end
 
 local function addHaircutTexture(body, partName, partData, haircutData, instance, scale)
@@ -1846,13 +1957,129 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     -- Ensure template-based parts have their DNA filled in
     local torsoSegments = instance.dna.creation.torsoSegments
+    local torsoMode = instance.dna.creation.torsoMode or 'normal'
+
+    -- Capture current torso1 data before clearing (for flex: preserves user's shape/colors)
+    local isFlex = torsoMode == 'flex' and torsoSegments >= 2
+    local currentTorso1 = instance.dna.parts['torso1']
+
+    -- Clear torso parts that don't match current mode so templates get re-applied
     for i = 1, torsoSegments do
         local partName = 'torso' .. i
-        if not instance.dna.parts[partName] then
-            if not instance.dna.parts['torso-segment-template'] then
-                error("Missing 'torso-segment-template' in DNA parts")
+        local existing = instance.dna.parts[partName]
+        if existing then
+            if isFlex and existing.shape ~= ST.CAPSULE then
+                instance.dna.parts[partName] = nil
+            elseif not isFlex and existing.shape ~= ST.SHAPE8 then
+                instance.dna.parts[partName] = nil
             end
-            instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+        end
+    end
+
+    if isFlex then
+        local template = instance.dna.parts['torso-segment-template']
+        if not template then
+            error("Missing 'torso-segment-template' in DNA parts")
+        end
+
+        -- Use current torso1 data if available (has user's shape/colors),
+        -- fall back to template for fresh characters
+        local sourceData = currentTorso1 or template
+        local sourceURL = sourceData.shape8URL or template.shape8URL
+        local sx = math.abs(sourceData.dims.sx or 1)
+        local sy = math.abs(sourceData.dims.sy or 1)
+
+        -- Calculate per-segment widths and height from shape8 polygon.
+        -- Use the actual shape8 dimensions (scaled by sx/sy) so capsules match
+        -- the original body's visual/collision size (not the smaller DNA dims).
+        local segWidths = nil
+        local totalH = sourceData.dims.h or 300
+        if sourceURL and shape8Dict[sourceURL] then
+            local raw = shape8Dict[sourceURL].vertices
+            segWidths = getShape8SegmentWidths(raw, torsoSegments, sx, sy)
+            -- Get total polygon height for segment division
+            local minY, maxY = math.huge, -math.huge
+            for vi = 1, #raw / 2 do
+                local vy = raw[vi * 2]
+                if vy < minY then minY = vy end
+                if vy > maxY then maxY = vy end
+            end
+            totalH = (maxY - minY) * sy
+        end
+        local segH = totalH / torsoSegments
+
+        -- Grab skin colors from the source torso (current or template)
+        local sourceSkin = sourceData.appearance and sourceData.appearance['skin']
+        local sourceSkinMain = sourceSkin and sourceSkin.main
+
+        -- Build the connected-skin block using the actual shape8 image and skin colors
+        local bodyConnSkin = {
+            zOffset = (sourceSkin and sourceSkin.zOffset) or 200,
+        }
+        local skinURLBase = (sourceURL or 'leg5'):gsub('%.png$', '')
+        bodyConnSkin.main = initBlock(skinURLBase)
+        if sourceSkinMain then
+            bodyConnSkin.main.bgHex = sourceSkinMain.bgHex
+            bodyConnSkin.main.fgHex = sourceSkinMain.fgHex
+            bodyConnSkin.main.pHex = sourceSkinMain.pHex
+            bodyConnSkin.main.pURL = sourceSkinMain.pURL
+            box2dDrawTextured.makeCached(bodyConnSkin.main)
+        end
+
+        -- Always regenerate torso parts in flex mode to keep dims in sync
+        for i = 1, torsoSegments do
+            local partName = 'torso' .. i
+            local part = utils.deepCopy(template)
+            part.shape = ST.CAPSULE
+            part.shape8URL = nil
+            part.dims.h = segH
+            if segWidths then
+                part.dims.w = segWidths[i]
+            end
+
+            -- Clear per-body appearance; connected-textures handle visuals instead
+            part.appearance = {}
+
+            if i == 1 then
+                -- torso1: connected-skin spanning the whole torso chain
+                part.appearance['connected-skin'] = utils.deepCopy(bodyConnSkin)
+            end
+            if i == torsoSegments then
+                -- Top torso: connected-skin to head/neck + face features
+                if template.appearance and template.appearance['connected-skin'] then
+                    part.appearance['connected-skin'] = utils.deepCopy(template.appearance['connected-skin'])
+                    -- Match skin colors so neck transition looks consistent
+                    if sourceSkinMain and part.appearance['connected-skin'].main then
+                        part.appearance['connected-skin'].main.fgHex = sourceSkinMain.fgHex
+                        part.appearance['connected-skin'].main.pHex = sourceSkinMain.pHex
+                        box2dDrawTextured.makeCached(part.appearance['connected-skin'].main)
+                    end
+                end
+                if template.appearance then
+                    if template.appearance['connected-hair'] then
+                        part.appearance['connected-hair'] = utils.deepCopy(template.appearance['connected-hair'])
+                    end
+                    if template.appearance['face'] then
+                        part.appearance['face'] = utils.deepCopy(template.appearance['face'])
+                    end
+                    if template.appearance['haircut'] then
+                        part.appearance['haircut'] = utils.deepCopy(template.appearance['haircut'])
+                    end
+                end
+            end
+
+            instance.dna.parts[partName] = part
+        end
+    else
+        -- Normal: existing SHAPE8 torso init
+        for i = 1, torsoSegments do
+            local partName = 'torso' .. i
+            if not instance.dna.parts[partName] then
+                if not instance.dna.parts['torso-segment-template'] then
+                    error("Missing 'torso-segment-template' in DNA parts")
+                end
+                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
+            end
         end
     end
 
