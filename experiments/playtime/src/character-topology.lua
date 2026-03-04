@@ -160,20 +160,6 @@ parentStrategies.midlineLerp = function(_partName, guy, entry)
     end
 end
 
--- Nose chain (nose2+): reads vertex 5 from CURRENT part (not parent).
--- NOTE: Original code checks nose1's shape type but reads from current nose.
--- This quirk is preserved for compatibility.
-parentStrategies.noseChain = function(partName, guy, _entry)
-    local currentPart = guy.dna.parts[partName]
-    local scale = guy.scale
-    local nose1 = guy.dna.parts['nose1']
-    if nose1 and isShape8(nose1) then
-        return getVertex(currentPart, 5, scale)
-    else
-        return 0, (currentPart.dims.h / 2) * scale
-    end
-end
-
 -- ─── Own-attach: offset on SELF where parent connects ───
 
 function lib.getOwnOffset(partName, guy, entry)
@@ -293,20 +279,30 @@ function lib.resolve(creation)
 
     -- 4. Nose segments
     if noseSegments > 0 then
-        for i = 1, noseSegments do
+        local noseMode = creation.noseMode or 'overlay'
+        local physicsNoseCount = noseSegments
+        if noseSegments == 1 and noseMode == 'overlay' then
+            physicsNoseCount = 0
+        end
+
+        local isSinglePhysics = (physicsNoseCount == 1 and noseMode == 'physics')
+
+        for i = 1, physicsNoseCount do
             local parent, parentAttach
             if i == 1 then
                 parent = isPotato and highestTorso or 'head'
                 parentAttach = { strategy = 'midlineLerp' }
             else
                 parent = 'nose' .. (i - 1)
-                parentAttach = { strategy = 'noseChain' }
+                parentAttach = { strategy = 'parentBottom' }
             end
             result[#result + 1] = {
                 name = 'nose' .. i,
                 parent = parent,
                 parentAttach = parentAttach,
-                ownAttach = { strategy = 'bottom', shape8 = 1 },
+                ownAttach = isSinglePhysics
+                    and { strategy = 'bottom', shape8 = 1 }
+                    or  { strategy = 'bottom' },
                 angleOffset = 0,
             }
         end

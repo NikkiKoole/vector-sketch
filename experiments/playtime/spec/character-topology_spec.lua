@@ -208,8 +208,8 @@ describe("character-topology", function()
                 assert.are.equal('midlineLerp', findEntry(topo, 'nose1').parentAttach.strategy)
             end)
 
-            it("nose2 uses noseChain", function()
-                assert.are.equal('noseChain', findEntry(topo, 'nose2').parentAttach.strategy)
+            it("nose2 uses parentBottom", function()
+                assert.are.equal('parentBottom', findEntry(topo, 'nose2').parentAttach.strategy)
             end)
         end)
 
@@ -246,7 +246,7 @@ describe("character-topology", function()
         -- ─── Potato + nose ───
 
         describe("potato head with nose", function()
-            local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, isPotatoHead = true }
+            local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, noseMode = 'physics', isPotatoHead = true }
             local topo
 
             before_each(function()
@@ -359,7 +359,7 @@ describe("character-topology", function()
         -- ─── Ordering matches original ───
 
         describe("ordering", function()
-            local creation = { torsoSegments = 2, neckSegments = 1, noseSegments = 1, isPotatoHead = false }
+            local creation = { torsoSegments = 2, neckSegments = 1, noseSegments = 1, noseMode = 'physics', isPotatoHead = false }
             local topo
 
             before_each(function()
@@ -385,6 +385,81 @@ describe("character-topology", function()
 
             it("limbs come after nose", function()
                 assert.is_true(indexOf(topo, 'luleg') > indexOf(topo, 'nose1'))
+            end)
+        end)
+    end)
+
+    -- ─── noseMode variants ───
+
+    describe("noseMode variants", function()
+
+        describe("noseMode='overlay' with noseSegments=1", function()
+            local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, noseMode = 'overlay', isPotatoHead = false }
+            local topo
+
+            before_each(function()
+                topo = topology.resolve(creation)
+            end)
+
+            it("produces no nose entries", function()
+                assert.is_nil(findEntry(topo, 'nose1'))
+            end)
+
+            it("has same part count as noseSegments=0", function()
+                local topo0 = topology.resolve({ torsoSegments = 1, neckSegments = 0, noseSegments = 0, isPotatoHead = false })
+                assert.are.equal(#topo0, #topo)
+            end)
+        end)
+
+        describe("noseMode='physics' with noseSegments=1", function()
+            local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, noseMode = 'physics', isPotatoHead = false }
+            local topo
+
+            before_each(function()
+                topo = topology.resolve(creation)
+            end)
+
+            it("produces one nose entry", function()
+                assert.is_not_nil(findEntry(topo, 'nose1'))
+                assert.is_nil(findEntry(topo, 'nose2'))
+            end)
+
+            it("nose1 has shape8=1 in ownAttach", function()
+                assert.are.equal(1, findEntry(topo, 'nose1').ownAttach.shape8)
+            end)
+
+            it("nose1 attaches to head", function()
+                assert.are.equal('head', findEntry(topo, 'nose1').parent)
+            end)
+        end)
+
+        describe("noseSegments=2 (segmented, no shape8)", function()
+            local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 2, isPotatoHead = false }
+            local topo
+
+            before_each(function()
+                topo = topology.resolve(creation)
+            end)
+
+            it("produces two nose entries without shape8", function()
+                local n1 = findEntry(topo, 'nose1')
+                local n2 = findEntry(topo, 'nose2')
+                assert.is_not_nil(n1)
+                assert.is_not_nil(n2)
+                assert.is_nil(n1.ownAttach.shape8)
+                assert.is_nil(n2.ownAttach.shape8)
+            end)
+
+            it("nose2 uses parentBottom strategy", function()
+                assert.are.equal('parentBottom', findEntry(topo, 'nose2').parentAttach.strategy)
+            end)
+        end)
+
+        describe("noseMode defaults to overlay when omitted", function()
+            it("noseSegments=1 without noseMode produces no nose entries", function()
+                local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, isPotatoHead = false }
+                local topo = topology.resolve(creation)
+                assert.is_nil(findEntry(topo, 'nose1'))
             end)
         end)
     end)
@@ -455,7 +530,7 @@ describe("character-topology", function()
     -- ─── ownAttach strategies ───
 
     describe("ownAttach entries", function()
-        local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, isPotatoHead = false }
+        local creation = { torsoSegments = 1, neckSegments = 0, noseSegments = 1, noseMode = 'physics', isPotatoHead = false }
         local topo, map
 
         before_each(function()
@@ -488,7 +563,7 @@ describe("character-topology", function()
             assert.are.equal(1, map['lhand'].ownAttach.shape8)
         end)
 
-        it("nose uses shape8 vertex 1", function()
+        it("single physics nose uses bottom with shape8 vertex 1", function()
             assert.are.equal('bottom', map['nose1'].ownAttach.strategy)
             assert.are.equal(1, map['nose1'].ownAttach.shape8)
         end)

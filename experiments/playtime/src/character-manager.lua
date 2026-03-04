@@ -663,29 +663,20 @@ local dna = {
         -- todo trace-hair, a texture that follows a few vertex indicises within 1 shape.
         parts = {
             ['nose-segment-template'] = {
+                dims = { w = 40, h = 40, w2 = 4 },
+                shape = ST.CAPSULE,
+                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 32, up = math.pi / 32 } }
+            },
+            ['nose-single-template'] = {
                 appearance = {
-
-                    -- plain skin per segment; good first step
                     ['skin'] = {
-                        zOffset = 230,
-                        main = initBlock('shapeA2'), -- swap to a specific shape/texture if you prefer
+                        zOffset = 490,
+                        main = initBlock('shapeA2'),
                     },
-                    -- ['connected-skin'] = {
-                    --     main = add(initBlock('leg5'), {}),
-                    --     zOffset = 3,
-                    --     --endNode = 'tip'
-                    -- },
                 },
-                -- small capsule by default; tweak as needed
                 dims = { w = 40, h = 40, w2 = 4, sx = 1, sy = 1 },
-
-                -- if we want the connected skin you probably want to use the capsule shape.
-                -- if you want a normal txture you might want the shape8
-
                 shape = ST.SHAPE8,
                 shape8URL = 'shapeA2.png',
-
-                --shape = ST.CAPSULE,
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 32, up = math.pi / 32 } }
             },
             ['torso-segment-template'] = {
@@ -1406,6 +1397,22 @@ local function addConnectedTexture(body, partName, partData, connData, instance,
         local jointID = jointLabels[j]
         ud.extra.nodes[j] = { id = instance.joints[jointID], type = NT.JOINT }
     end
+
+    -- Add terminal anchor at the tip of the last nose segment
+    if partName == 'nose1' and noseSegments > 0 then
+        local lastNose = 'nose' .. noseSegments
+        local lastBody = instance.parts[lastNose] and instance.parts[lastNose].body
+        if lastBody then
+            local lastDims = instance.dna.parts[lastNose].dims
+            local tipY = (lastDims.h / 2) * scale
+            local tipAnchor = fixtures.createSFixture(lastBody, 0, tipY, subtypes.ANCHOR,
+                { radius = 5 * scale })
+            if tipAnchor then
+                local anchorId = tipAnchor:getUserData().id
+                ud.extra.nodes[#ud.extra.nodes + 1] = { id = anchorId, type = NT.ANCHOR }
+            end
+        end
+    end
 end
 
 local function addHaircutTexture(body, partName, partData, haircutData, instance, scale)
@@ -1614,7 +1621,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 noseFgURL = 'nose' .. noseShape .. '-mask.png'
             end
             local hasNoseMask = noseFgURL ~= ''
-            local noseZOffset = 248
+            local noseZOffset = 490
 
             local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
             local ud = f:getUserData()
@@ -1856,11 +1863,35 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     end
 
     local noseSegments = instance.dna.creation.noseSegments
-    if noseSegments > 0 then
-        for i = 1, noseSegments do
-            local partName = 'nose' .. i
-            if not instance.dna.parts[partName] then
-                instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['nose-segment-template'])
+    local noseMode = instance.dna.creation.noseMode or 'overlay'
+
+    -- Skip physics nose entirely for overlay mode with 1 segment
+    local physicsNoseCount = noseSegments
+    if noseSegments == 1 and noseMode == 'overlay' then
+        physicsNoseCount = 0
+    end
+
+    if physicsNoseCount > 0 then
+        if physicsNoseCount == 1 and noseMode == 'physics' then
+            -- Single SHAPE8 nose
+            if not instance.dna.parts['nose1'] then
+                instance.dna.parts['nose1'] = utils.deepCopy(instance.dna.parts['nose-single-template'])
+            end
+        else
+            -- Segmented capsule trunk
+            for i = 1, physicsNoseCount do
+                local partName = 'nose' .. i
+                if not instance.dna.parts[partName] then
+                    instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['nose-segment-template'])
+                end
+            end
+            local nose1 = instance.dna.parts['nose1']
+            if not nose1.appearance then nose1.appearance = {} end
+            if not nose1.appearance['connected-skin'] then
+                nose1.appearance['connected-skin'] = {
+                    main = initBlock('leg5'),
+                    zOffset = 490,
+                }
             end
         end
     end

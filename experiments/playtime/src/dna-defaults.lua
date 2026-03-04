@@ -95,6 +95,7 @@ lib.creation = {
     torsoSegments = 1,
     neckSegments = 0,
     noseSegments = 0,
+    noseMode = 'overlay', -- 'overlay' or 'physics' (only when noseSegments == 1)
 }
 
 -- Face magnitude (overall face-part scale factor)
@@ -189,6 +190,7 @@ lib.creationSchema = {
     torsoSegments = 'number',
     neckSegments = 'number',
     noseSegments = 'number',
+    noseMode = 'string',
 }
 
 --- Recursively validate target against schema.

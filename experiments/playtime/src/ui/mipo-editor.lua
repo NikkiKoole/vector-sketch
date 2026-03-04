@@ -458,8 +458,6 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
             local shapeNum = tonumber(url:match('nose(%d+)%.png'))
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { noseShape = shapeNum })
-                -- Disable physics nose when overlay nose is selected
-                CharacterManager.rebuildFromCreation(instance, { noseSegments = 0 })
                 CharacterManager.addTexturesFromInstance2(instance)
             end
         else
@@ -787,16 +785,42 @@ function lib.drawMipoEditor(instance, partName)
             if noses then
                 local val = math.floor(noses)
                 if val ~= creation.noseSegments then
-                    -- Disable face overlay nose when physics nose is enabled
-                    if val > 0 then
+                    local updates = { noseSegments = val }
+                    if val == 0 then
+                        -- No nose — nothing extra
+                    elseif val == 1 then
+                        -- Keep current noseMode; disable overlay if switching to physics
+                        if (creation.noseMode or 'overlay') == 'physics' then
+                            local startParent = creation.isPotatoHead and 'torso1' or 'head'
+                            CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
+                        end
+                    else
+                        -- 2+ → segmented, disable overlay
+                        updates.noseMode = 'physics'
                         local startParent = creation.isPotatoHead and 'torso1' or 'head'
                         CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
                     end
-                    CharacterManager.rebuildFromCreation(instance, { noseSegments = val })
+                    CharacterManager.rebuildFromCreation(instance, updates)
                     CharacterManager.addTexturesFromInstance2(instance)
                 end
             end
             y = y + ROW
+
+            -- When noseSegments == 1, show physics toggle checkbox
+            if (creation.noseSegments or 0) == 1 then
+                local currentMode = creation.noseMode or 'overlay'
+                local clicked, checked = ui.checkbox(x, y, currentMode == 'physics', 'physics nose')
+                if clicked then
+                    local newMode = checked and 'physics' or 'overlay'
+                    if newMode == 'physics' then
+                        local startParent = creation.isPotatoHead and 'torso1' or 'head'
+                        CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
+                    end
+                    CharacterManager.rebuildFromCreation(instance, { noseMode = newMode })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+            end
 
             -- suppress unused warning
             local _ = changed
@@ -1279,9 +1303,133 @@ function lib.drawMipoEditor(instance, partName)
                     y = drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
                 end)
 
-                drawAccordion(partName .. ' face > nose', function()
-                    y = drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
-                end)
+                local noseSegs = instance.dna.creation.noseSegments or 0
+                local nMode = instance.dna.creation.noseMode or 'overlay'
+                local isPhysicsNose = (noseSegs >= 2) or (noseSegs == 1 and nMode == 'physics')
+                if isPhysicsNose then
+                    drawAccordion(partName .. ' face > nose (physics)', function()
+                        local nose1Data = instance.dna.parts['nose1']
+                        if not nose1Data then return end
+
+                        -- Dimension sliders (w, h)
+                        -- Uses rebuildFromCreation so nose chain repositions correctly
+                        local currentW = nose1Data.dims and nose1Data.dims.w or 40
+                        local nw = ui.sliderWithInput('mipo_nose_w', x, y, 120, 5, 500, currentW)
+                        ui.alignedLabel(x, y, '  nose width')
+                        nw = nw and tonumber(nw)
+                        if nw and nw ~= currentW then
+                            for i = 1, noseSegs do
+                                instance.dna.parts['nose' .. i].dims.w = nw
+                            end
+                            CharacterManager.rebuildFromCreation(instance, {})
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                        y = y + ROW
+
+                        local currentH = nose1Data.dims and nose1Data.dims.h or 40
+                        local nh = ui.sliderWithInput('mipo_nose_h', x, y, 120, 5, 500, currentH)
+                        ui.alignedLabel(x, y, '  nose height')
+                        nh = nh and tonumber(nh)
+                        if nh and nh ~= currentH then
+                            for i = 1, noseSegs do
+                                instance.dna.parts['nose' .. i].dims.h = nh
+                            end
+                            CharacterManager.rebuildFromCreation(instance, {})
+                            CharacterManager.addTexturesFromInstance2(instance)
+                        end
+                        y = y + ROW
+
+                        -- Connected-skin texture controls (segmented nose, 2+)
+                        if noseSegs >= 2 and nose1Data.appearance and nose1Data.appearance['connected-skin'] then
+                            local cs = nose1Data.appearance['connected-skin'].main
+                            if cs then
+                                ui.label(x, y, 'connected skin')
+                                y = y + ROW
+
+                                local currentURL = cs.bgURL or ''
+                                local cellSize = 50
+                                local gridHeight = drawThumbnailGrid(limbSkinTextures, currentURL, panelX, y, cellSize,
+                                    function(url)
+                                        local vals = { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') }
+                                        CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin', vals)
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                                y = y + gridHeight + BUTTON_SPACING
+
+                                local currentWmul = cs.wmul or instance.scale or 1
+                                local wmulVal = ui.sliderWithInput('mipo_nose_cs_wmul', x, y, 120, 0.1, 10, currentWmul)
+                                ui.alignedLabel(x, y, '  width')
+                                wmulVal = wmulVal and tonumber(wmulVal)
+                                if wmulVal and wmulVal ~= currentWmul then
+                                    CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
+                                        { wmul = wmulVal })
+                                    CharacterManager.addTexturesFromInstance2(instance)
+                                end
+                                y = y + ROW
+
+                                handlePaletteButton('mipo_nose_cs_bg',
+                                    x + 30, y, 140, cs.bgHex, function(color)
+                                        CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
+                                            { bgHex = color })
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                                ui.alignedLabel(x + 180, y, 'outline')
+                                y = y + ROW
+
+                                handlePaletteButton('mipo_nose_cs_fg',
+                                    x + 30, y, 140, cs.fgHex, function(color)
+                                        CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
+                                            { fgHex = color })
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                                ui.alignedLabel(x + 180, y, 'fill')
+                                y = y + ROW
+
+                                y = drawPatternControls(cs, 'mipo_nose_cs_pat', panelX, y,
+                                    function(key, value)
+                                        CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
+                                            { [key] = value })
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                            end
+                        end
+
+                        -- Skin texture controls (single physics nose, noseSegments == 1)
+                        if noseSegs == 1 and nose1Data.appearance and nose1Data.appearance['skin'] then
+                            local skin = nose1Data.appearance['skin']
+                            if skin.main then
+                                ui.label(x, y, 'skin')
+                                y = y + ROW
+
+                                handlePaletteButton('mipo_nose_skin_bg',
+                                    x + 30, y, 140, skin.main.bgHex, function(color)
+                                        CharacterManager.updateSkinOfPart(instance, 'nose1', { bgHex = color }, 'main')
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                                ui.alignedLabel(x + 180, y, 'outline')
+                                y = y + ROW
+
+                                handlePaletteButton('mipo_nose_skin_fg',
+                                    x + 30, y, 140, skin.main.fgHex, function(color)
+                                        CharacterManager.updateSkinOfPart(instance, 'nose1', { fgHex = color }, 'main')
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                                ui.alignedLabel(x + 180, y, 'fill')
+                                y = y + ROW
+
+                                y = drawPatternControls(skin.main, 'mipo_nose_skin_pat', panelX, y,
+                                    function(key, value)
+                                        CharacterManager.updateSkinOfPart(instance, 'nose1', { [key] = value }, 'main')
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                            end
+                        end
+                    end)
+                else
+                    drawAccordion(partName .. ' face > nose', function()
+                        y = drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
+                    end)
+                end
 
                 drawAccordion(partName .. ' face > mouth', function()
                     y = drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
