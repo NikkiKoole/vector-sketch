@@ -17,6 +17,7 @@ local mouthShapes = require('src.mouth-shapes')
 local state = require('src.state')
 local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
+local topology = require('src.character-topology')
 
 -- Negative group index counter for character self-collision prevention.
 -- Each character gets a unique negative index so its fixtures never collide
@@ -636,6 +637,8 @@ local shape8Dict = {
         vertices = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
 }
 
+topology.setShape8Dict(shape8Dict)
+
 local dna = {
     ['humanoid'] = {
         creation = {
@@ -967,25 +970,6 @@ end
 
 local makeTransformedVertices = mathutils.scalePolygonPoints
 
-local function getTransformedIndex(index, flipX, flipY)
-    if flipY == -1 and flipX == 1 then
-        local values = { 5, 4, 3, 2, 1, 8, 7, 6 }
-        return values[index]
-    end
-    if flipX == -1 and flipY == 1 then
-        local values = { 1, 8, 7, 6, 5, 4, 3, 2 }
-        return values[index]
-    end
-    if flipX == -1 and flipY == -1 then
-        local values = { 5, 6, 7, 8, 1, 2, 3, 4 }
-        return values[index]
-    end
-    if flipX == 1 and flipY == 1 then
-        local values = { 1, 2, 3, 4, 5, 6, 7, 8 }
-        return values[index]
-    end
-end
-
 local lerp = mathutils.clampedLerp
 
 local function extractNeckIndex(name)
@@ -997,568 +981,26 @@ local function extractTorsoIndex(name)
     local index = string.match(name, "^torso(%d+)$")
     return index and tonumber(index) or nil
 end
-local function extractNoseIndex(name)
-    local index = string.match(name, "^nose(%d+)$")
-    return index and tonumber(index) or nil
-end
-local function getParentAndChildrenFromPartName(partName, guy)
-    local creation      = guy.dna.creation
-    local neckSegments  = creation.neckSegments
-    local torsoSegments = creation.torsoSegments
-    local noseSegments  = creation.noseSegments
-
-
-    local highestTorso = 'torso' .. torsoSegments
-    local lowestTorso  = 'torso1'
-
-    local map          = {
-
-        head = { p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso, c = { 'lear', 'rear' } },
-        lear = { p = 'head' },
-        rear = { p = 'head' },
-        luarm = { p = highestTorso, c = 'llarm' },
-        llarm = { p = 'luarm', c = 'lhand' },
-        lhand = { p = 'llarm' },
-        ruarm = { p = highestTorso, c = 'rlarm' },
-        rlarm = { p = 'ruarm', c = 'rhand' },
-        rhand = { p = 'rlarm' },
-        luleg = { p = lowestTorso, c = 'llleg' },
-        llleg = { p = 'luleg', c = 'lfoot' },
-        lfoot = { p = 'llleg' },
-        ruleg = { p = lowestTorso, c = 'rlleg' },
-        rlleg = { p = 'ruleg', c = 'rfoot' },
-        rfoot = { p = 'rlleg' },
-
-    }
-
-    local neckIndex    = extractNeckIndex(partName)
-    if neckIndex then
-        if neckIndex == 1 then
-            map[partName] = { p = highestTorso, c = (neckIndex == neckSegments) and 'head' or 'neck2' }
-        else
-            map[partName] = {
-                p = 'neck' .. (neckIndex - 1),
-                c = (neckIndex == neckSegments) and 'head' or
-                    'neck' .. neckIndex + 1
-            }
-        end
-    end
-
-    local torsoIndex = extractTorsoIndex(partName)
-
-    if torsoIndex then
-        if torsoIndex then
-            local children = {}
-            -- Middle segments connect only to the next torso segment
-            if torsoIndex < torsoSegments then
-                table.insert(children, 'torso' .. (torsoIndex + 1))
-            end
-
-            -- Highest segment connects to arms and neck/head
-            if torsoIndex == torsoSegments then
-                if not creation.isPotatoHead then
-                    table.insert(children, (neckSegments > 0) and 'neck1' or 'head')
-                end
-                table.insert(children, 'luarm')
-                table.insert(children, 'ruarm')
-                if creation.isPotatoHead then -- Potato ears attach to highest torso
-                    table.insert(children, 'lear')
-                    table.insert(children, 'rear')
-                    if noseSegments then
-                        table.insert(children, 'nose1')
-                    end
-                end
-            end
-            -- Lowest segment connects to legs
-            if torsoIndex == 1 then
-                table.insert(children, 'luleg')
-                table.insert(children, 'ruleg')
-            end
-            if torsoIndex == 1 then
-                map[partName] = { c = children } -- Torso1 has no parent
-            else
-                map[partName] = { p = 'torso' .. (torsoIndex - 1), c = children }
-            end
-        end
-    end
-
-
-    -- Nose: parent is head (or highest torso in potato mode)
-    local noseIndex = extractNoseIndex(partName)
-    if noseIndex then
-        local parentName
-        if noseIndex == 1 then
-            parentName = creation.isPotatoHead and highestTorso or 'head'
-        else
-            parentName = 'nose' .. (noseIndex - 1)
-        end
-
-        local children
-        if noseIndex < noseSegments then
-            children = 'nose' .. (noseIndex + 1)
-        end
-        --  logger:info('NOSE', parentName)
-        map[partName] = { p = parentName, c = children }
-    end
-
-
-    -- Overrides for special cases
-    -- Head connects directly to highest torso if no neck
-
-    if not creation.isPotatoHead then
-        local headChildren = { 'lear', 'rear' }
-        if noseSegments > 0 then
-            table.insert(headChildren, 'nose1')
-        end
-        map.head = {
-            p = (neckSegments > 0) and ('neck' .. neckSegments) or highestTorso,
-            c = headChildren
-        }
-    end
-
-    if partName == 'head' and neckSegments == 0 then
-        local headChildren = { 'lear', 'rear' }
-        if noseSegments > 0 then
-            table.insert(headChildren, 'nose1')
-        end
-
-        -- todo nose
-        --   logger:info('626')
-        map['head'].c = headChildren
-    end
-
-    -- If Potato Head, ears parent is highest torso (head doesn't exist as parent)
-    if creation.isPotatoHead then
-        map['lear'] = { p = highestTorso }
-        map['rear'] = { p = highestTorso }
-
-        --logger:info('634')
-        -- todo nose
-        -- Remove head connection if it exists from map
-        map['head'] = nil -- No head part in potato mode
-    end
-
-    -- If only one torso segment, it has all children directly
-    if torsoSegments == 1 and partName == 'torso1' then
-        local children
-        if creation.isPotatoHead then
-            children = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear' }
-            if noseSegments > 0 then
-                table.insert(children, 'nose1')
-            end
-        else
-            children = { (neckSegments > 0) and 'neck1' or 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' }
-        end
-
-        map[partName] = { c = children }
-    end
-
-    local result = map[partName]
-
-    return result or {} -- Return empty table if partName not found
-end
-
-local sign = mathutils.sign
-
--- Get anchor point for a shape8 part at a given vertex index.
--- Returns the negated vertex position scaled by `scale`, used to attach parts at specific outline points.
--- Used by ears (index 5), feet/hands/nose (index 1).
-local function getShape8Anchor(part, vertexIndex, scale)
-    local raw = shape8Dict[part.shape8URL].vertices
-    local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
-    local index = getTransformedIndex(vertexIndex, sign(part.dims.sx), sign(part.dims.sy))
-    return -vertices[(index * 2) - 1] * scale, -vertices[(index * 2)] * scale
-end
-
-local function getOwnOffset(partName, guy)
-    local parts = guy.dna.parts
-    local scale = guy.scale
-
-    -- upward
-    if extractNeckIndex(partName) then
-        return 0, (-parts[partName].dims.h / 2) * scale
-    end
-    if extractTorsoIndex(partName) then
-        if parts[partName].shape == ST.SHAPE8 then
-            --  print(parts[partName].shape8URL)
-            local raw = shape8Dict[parts[partName].shape8URL].vertices
-            local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
-            local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
-            local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
-            return -vertices[(bottomIndex * 2) - 1] * scale, vertices[(topIndex * 2)] * scale
-        else
-            return 0, -parts[partName].dims.h / 2 * scale
-        end
-    end
-
-    if partName == 'head' then
-        if parts[partName].shape == ST.SHAPE8 then
-            local raw = shape8Dict[parts[partName].shape8URL].vertices
-            local vertices = makeTransformedVertices(raw, parts[partName].dims.sx or 1, parts[partName].dims.sy or 1)
-            local topIndex = getTransformedIndex(1, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
-            local bottomIndex = getTransformedIndex(5, sign(parts[partName].dims.sx), sign(parts[partName].dims.sy))
-            return -vertices[(bottomIndex * 2) - 1] * scale, vertices[(topIndex * 2)] * scale
-        else
-            return 0, -parts[partName].dims.h / 2 * scale
-        end
-    end
-    -- if partName == 'lear' then
-    --     return 0, -parts.lear.dims.h / 2
-    -- end
-    -- if partName == 'rear' then
-    --     return 0, -parts.rear.dims.h / 2
-    -- end
-    if partName == 'lear' or partName == 'rear' then
-        local part = parts[partName]
-        if part.shape == ST.SHAPE8 then
-            return getShape8Anchor(part, 5, scale)
-        else
-            return 0, (-part.dims.h / 2) * scale
-        end
-    end
-    -- downward
-    if partName == 'luleg' then
-        return 0, (parts.luleg.dims.h / 2) * scale
-    end
-    if partName == 'ruleg' then
-        return 0, (parts.ruleg.dims.h / 2) * scale
-    end
-    if partName == 'llleg' then
-        return 0, (parts.llleg.dims.h / 2) * scale
-    end
-    if partName == 'lfoot' or partName == 'rfoot' then
-        local part = parts[partName]
-        if part.shape == ST.SHAPE8 then
-            return getShape8Anchor(part, 1, scale)
-        else
-            return 0, (part.dims.h / 2) * scale
-        end
-    end
-    if partName == 'rlleg' then
-        return 0, (parts.rlleg.dims.h / 2) * scale
-    end
-
-    if partName == 'luarm' then
-        return 0, (parts.luarm.dims.h / 2) * scale
-    end
-    if partName == 'ruarm' then
-        return 0, (parts.ruarm.dims.h / 2) * scale
-    end
-    if partName == 'rhand' or partName == 'lhand' then
-        local part = parts[partName]
-        if part.shape == ST.SHAPE8 then
-            return getShape8Anchor(part, 1, scale)
-        else
-            return 0, (part.dims.h / 2) * scale
-        end
-    end
-    if partName == 'llarm' then
-        return 0, (parts.llarm.dims.h / 2) * scale
-    end
-    if partName == 'rlarm' then
-        return 0, (parts.rlarm.dims.h / 2) * scale
-    end
-    if extractNoseIndex(partName) then
-        local part = guy.dna.parts[partName]
-
-        if part.shape == ST.SHAPE8 then
-            return getShape8Anchor(part, 1, scale)
-        else
-            return 0, (part.dims.h / 2) * scale
-        end
-    end
-    return 0, 0
-end
-
-local function getOffsetFromParent(partName, guy)
-    local parts         = guy.dna.parts
-    local creation      = guy.dna.creation
-    local positioners   = guy.dna.positioners
-    getParentAndChildrenFromPartName(partName, guy)
-    -- Define the name of the highest torso segment
-    local torsoSegments = creation.torsoSegments
-    local highestTorso  = 'torso' .. torsoSegments
-    -- Define the name of the lowest torso segment (always torso1)
-    local lowestTorso   = 'torso1'
-    local scale         = guy.scale
-
-
-
-
-    local function getTorsoPart8FromSpecificTorso(index, torsoIndex)
-        local torso = 'torso' .. torsoIndex
-        local raw = shape8Dict[parts[torso].shape8URL].vertices
-        local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
-        local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
-        return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
-    end
-    local function getNosePart8FromSpecificTorso(index, noseIndex)
-        local torso = 'nose' .. noseIndex
-        local raw = shape8Dict[parts[torso].shape8URL].vertices
-        local vertices = makeTransformedVertices(raw, parts[torso].dims.sx or 1, parts[torso].dims.sy or 1)
-        local newIndex = getTransformedIndex(index, sign(parts[torso].dims.sx), sign(parts[torso].dims.sy))
-        return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
-    end
-
-    local function getTorsoPart8FromHighest(index)
-        return getTorsoPart8FromSpecificTorso(index, torsoSegments)
-    end
-
-    local function getTorsoPart8FromLowest(index)
-        return getTorsoPart8FromSpecificTorso(index, 1)
-    end
-
-    local function hasTorso8()
-        if parts[highestTorso].shape == ST.SHAPE8 then
-            return true
-        end
-        return false
-    end
-
-    local function hasNose8()
-        if parts['nose1'].shape == ST.SHAPE8 then
-            return true
-        end
-        return false
-    end
-
-
-    local function hasHead8()
-        if parts['head'].shape == ST.SHAPE8 then
-            return true
-        end
-        return false
-    end
-
-    local function getHeadPart8(index)
-        local raw = shape8Dict[parts['head'].shape8URL].vertices
-        local vertices = makeTransformedVertices(raw, parts['head'].dims.sx or 1, parts['head'].dims.sy or 1)
-        local newIndex = getTransformedIndex(index, sign(parts['head'].dims.sx), sign(parts['head'].dims.sy))
-
-        return vertices[(newIndex * 2) - 1] * scale, vertices[(newIndex * 2)] * scale
-    end
-
-    local noseT = positioners.nose.t -- 0=top, 1=bottom
-
-    local function getMidlineLerpOnHead(t)
-        local ax, ay = getHeadPart8(1) -- top center
-        local bx, by = getHeadPart8(5) -- bottom center
-        return lerp(ax, bx, t), lerp(ay, by, t)
-    end
-    local function getMidlineLerpOnTopTorso(t)
-        local ax, ay = getTorsoPart8FromHighest(1)
-        local bx, by = getTorsoPart8FromHighest(5)
-        return lerp(ax, bx, t), lerp(ay, by, t)
-    end
-
-
-    local noseIndex = extractNoseIndex(partName)
-    if noseIndex then
-        if noseIndex == 1 then
-            if creation.isPotatoHead then
-                if hasTorso8() then
-                    local rx, ry = getMidlineLerpOnTopTorso(noseT)
-                    return rx, ry
-                else
-                    return 0, (-parts[highestTorso].dims.h) * scale
-                end
-            else
-                if hasHead8() then
-                    local rx, ry = getMidlineLerpOnHead(noseT)
-                    return rx, ry
-                else
-                    return 0, (-parts.head.dims.h) * scale
-                end
-            end
-        else
-            if hasNose8() then
-                return getNosePart8FromSpecificTorso(5, noseIndex)
-            else
-                return 0, (parts[partName].dims.h / 2) * scale
-            end
-            -- parent is previous nose segment; anchor at its tip (+Y half height)
-            --local parentName = 'nose' .. (noseIndex - 1)
-            --local pd = parts[parentName].dims
-            --return 0, (pd.h) * scale
-        end
-    end
-
-
-
-    if extractNeckIndex(partName) then
-        local index = extractNeckIndex(partName)
-        if index == 1 then
-            if hasTorso8() then
-                return getTorsoPart8FromHighest(1)
-            else
-                return 0, (-parts[highestTorso].dims.h / 2) * scale
-            end
-        else
-            return 0, (-parts['neck' .. (index - 1)].dims.h / 2) * scale
-        end
-    elseif extractTorsoIndex(partName) then
-        local index = extractTorsoIndex(partName)
-        if index == 1 then
-            return 0, 0
-        else
-            if hasTorso8() then
-                return getTorsoPart8FromSpecificTorso(1, index - 1)
-            else
-                return 0, (-parts['torso' .. (index - 1)].dims.h / 2) * scale
-            end
-        end
-        -- THESE SIMPLE ONES BELOW WORK BECAUSE LEGS AND ARMS ARE ALWAYS SIMPLE RECTANGLES
-    elseif partName == 'llarm' then
-        return 0, (parts.luarm.dims.h / 2) * scale
-    elseif partName == 'rlarm' then
-        return 0, (parts.ruarm.dims.h / 2) * scale
-    elseif partName == 'llleg' then
-        return 0, (parts.luleg.dims.h / 2) * scale
-    elseif partName == 'lfoot' then
-        return 0, (parts.llleg.dims.h / 2) * scale
-    elseif partName == 'rlleg' then
-        return 0, (parts.ruleg.dims.h / 2) * scale
-    elseif partName == 'rfoot' then
-        return 0, (parts.rlleg.dims.h / 2) * scale
-    elseif partName == 'rhand' then
-        return 0, (parts.rlarm.dims.h / 2) * scale
-    elseif partName == 'lhand' then
-        return 0, (parts.llarm.dims.h / 2) * scale
-    elseif partName == 'luarm' then
-        if hasTorso8() then
-            if creation.isPotatoHead then
-                return getTorsoPart8FromHighest(7)
-            else
-                return getTorsoPart8FromHighest(8)
-            end
-        else
-            return (-parts[highestTorso].dims.w / 2) * scale, (-parts[highestTorso].dims.h / 2) * scale
-        end
-    elseif partName == 'ruarm' then
-        if hasTorso8() then
-            if creation.isPotatoHead then
-                return getTorsoPart8FromHighest(3)
-            else
-                return getTorsoPart8FromHighest(2)
-            end
-        else
-            return (parts[highestTorso].dims.w / 2) * scale, (-parts[highestTorso].dims.h / 2) * scale
-        end
-    elseif partName == 'luleg' then
-        local t = positioners.leg.x
-        if hasTorso8() then
-            local ax, ay = getTorsoPart8FromLowest(6)
-            local bx, by = getTorsoPart8FromLowest(5)
-            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry
-        else
-            return (-parts[lowestTorso].dims.w / 2) * (1 - t) * scale, (parts[lowestTorso].dims.h / 2) * scale
-        end
-    elseif partName == 'ruleg' then
-        local t = positioners.leg.x
-        if hasTorso8() then
-            local ax, ay = getTorsoPart8FromLowest(4)
-            local bx, by = getTorsoPart8FromLowest(5)
-            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry
-        else
-            return (parts[lowestTorso].dims.w / 2) * (1 - t) * scale, (parts[lowestTorso].dims.h / 2) * scale
-        end
-    elseif partName == 'lear' then
-        -- Left ear: mirror the right ear position for symmetry
-        local t = positioners.ear.y
-        if creation.isPotatoHead then
-            if hasTorso8() then
-                local ax, ay = getTorsoPart8FromHighest(2)
-                local bx, by = getTorsoPart8FromHighest(4)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                return -rx * scale, ry * scale
-            else
-                return (-parts[highestTorso].dims.w / 2) * scale, (-parts[highestTorso].dims.h / 2) * scale
-            end
-        else
-            if hasHead8() then
-                local ax, ay = getHeadPart8(2)
-                local bx, by = getHeadPart8(4)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                return -rx, ry
-            else
-                return (-parts.head.dims.w / 2) * scale, (-parts.head.dims.h / 2) * scale
-            end
-        end
-    elseif partName == 'rear' then
-        -- Right ear: lerp from top-right(2) to bottom-right(4), t=0 is top, t=1 is bottom
-        local t = positioners.ear.y
-        if creation.isPotatoHead then
-            if hasTorso8() then
-                local ax, ay = getTorsoPart8FromHighest(2)
-                local bx, by = getTorsoPart8FromHighest(4)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                return rx, ry
-            else
-                return parts[highestTorso].dims.w / 2, -parts[highestTorso].dims.h / 2
-            end
-        else
-            if hasHead8() then
-                local ax, ay = getHeadPart8(2)
-                local bx, by = getHeadPart8(4)
-                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                return rx, ry
-            else
-                return parts.head.dims.w / 2, -parts.head.dims.h / 2
-            end
-        end
-    elseif (partName == 'head') then
-        if creation.neckSegments == 0 then
-            if hasTorso8() then
-                return getTorsoPart8FromHighest(1)
-            else
-                return 0, (-parts[highestTorso].dims.h / 2) * scale
-            end
-        else
-            local last = 'neck' .. creation.neckSegments
-            return 0, -parts[last].dims.h / 2
-        end
-    else
-        return 0, 0
-    end
-end
-
-local function getAngleOffset(partName, guy)
-    local parts = guy.dna.parts
-    if partName == 'lfoot' then
-        return math.pi / 2
-    elseif partName == 'rfoot' then
-        return -math.pi / 2
-    elseif partName == 'lear' then
-        return parts.lear.stanceAngle
-    elseif partName == 'rear' then
-        return parts.rear.stanceAngle
-    elseif extractNoseIndex(partName) then
-        return 0 -- or small per-segment curve like: (i-1)*0.08
-    else
-        return 0
-    end
-end
 
 
 local function makePart(partName, instance, settings)
-    local values = getParentAndChildrenFromPartName(partName, instance)
-    local parent = values.p
+    local entry = instance.entryMap[partName]
+    if not entry then return end
+    local parent = entry.parent
     local prevA = 0
 
     if parent then
         if instance.parts[parent] then
             prevA = instance.parts[parent].body:getAngle()
-            local parentOffsetX, parentOffsetY = getOffsetFromParent(partName, instance)
+            local parentOffsetX, parentOffsetY = topology.getOffsetFromParent(partName, instance, entry)
             local px, py = instance.parts[parent].body:getWorldPoint(parentOffsetX, parentOffsetY)
             settings.x = px
             settings.y = py
         end
     end
 
-    local ownOffsetX, ownOffsetY = getOwnOffset(partName, instance)
-    local xangle = getAngleOffset(partName, instance)
+    local ownOffsetX, ownOffsetY = topology.getOwnOffset(partName, instance, entry)
+    local xangle = topology.getAngleOffset(partName, instance, entry)
 
     -- Rotate own offset into parent space
     local rotatedOwnX, rotatedOwnY = mathutils.rotatePoint(ownOffsetX, ownOffsetY, 0, 0, prevA + xangle)
@@ -1608,7 +1050,7 @@ local function makePart(partName, instance, settings)
             -- todo we dont really need this yet...
             instance.joints[parent .. '->' .. partName] = jointCreationData.id
 
-            local offX, offY = getOffsetFromParent(partName, instance)
+            local offX, offY = topology.getOffsetFromParent(partName, instance, entry)
             jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
             jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
             local joint = joints.createJoint(jointCreationData)
@@ -1728,12 +1170,10 @@ local function updateSinglePart(partName, data, instance)
             raw, (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
     end
 
-    local children = getParentAndChildrenFromPartName(partName, instance).c or {}
-    if type(children) == 'string' then
-        children = { children }
-    end
-    --logger:info('children :', partName, inspect(children))
+    local children = instance.childrenMap[partName] or {}
     makePart(partName, instance, settings)
+
+    if not instance.parts[partName] then return end
 
     -- after making a part set it to its angle so the children will be using that angle in their calculations.
     instance.parts[partName].body:setAngle(oldAngle)
@@ -2390,84 +1830,51 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     if not instance.dna.positioners then instance.dna.positioners = {} end
     D.ensureDefaults(instance.dna.positioners, D.positioners)
 
-    local isPotato = instance.dna.creation.isPotatoHead
-    local hasNeck = instance.dna.creation.neckSegments > 0
-    local ordered = {}
+    -- Resolve topology: flat ordered list of body-part entries with parent links
+    local topo = topology.resolve(instance.dna.creation)
+    instance.topology = topo
+    instance.entryMap = topology.buildEntryMap(topo)
+    instance.childrenMap = topology.buildChildrenMap(topo)
+    local ordered = topology.buildOrderedNames(topo)
 
+    -- Ensure template-based parts have their DNA filled in
     local torsoSegments = instance.dna.creation.torsoSegments
-    -- 1. Add Torso Segments
-    --logger:info('createCharacterFromExistingDNA', torsoSegments)
     for i = 1, torsoSegments do
         local partName = 'torso' .. i
-        table.insert(ordered, partName)
-        -- Copy template DNA for this segment if it doesn't exist (it shouldn't)
         if not instance.dna.parts[partName] then
-            -- Ensure template exists
             if not instance.dna.parts['torso-segment-template'] then
                 error("Missing 'torso-segment-template' in DNA parts")
             end
-
             instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
-
-            -- if we have multiple torso parts i want to remove the data that is about neck.
-            -- only the topmost torso may have that data.
-
-            -- if i ~= torsoSegments then
-            --     instance.dna.parts[partName].appearance['connected-skin'] = nil
-            --     print('removed unneeded nexk texture data from a torso segemnt')
-            -- end
-
-            -- Optional: Modify dimensions/properties of specific segments here if needed
-            -- e.g., make torso1 wider (pelvis) or torsoN narrower (shoulders)
-            --instance.dna.parts[partName].dims.w = i * 100
-            --logger:inspect(instance.dna.parts[partName])
-            --  instance.dna.parts[partName].dims.w = ((torsoSegments + 1) - i) * 100
         end
     end
 
-    if hasNeck and not isPotato then
+    if not instance.dna.creation.isPotatoHead and instance.dna.creation.neckSegments > 0 then
         for i = 1, instance.dna.creation.neckSegments do
-            table.insert(ordered, 'neck' .. i)
             instance.dna.parts['neck' .. i] = utils.deepCopy(instance.dna.parts['neck-segment-template'])
         end
     end
-    if not isPotato then
-        table.insert(ordered, 'head')
-    end
-
 
     local noseSegments = instance.dna.creation.noseSegments
     if noseSegments > 0 then
         for i = 1, noseSegments do
             local partName = 'nose' .. i
-            table.insert(ordered, partName)
-
             if not instance.dna.parts[partName] then
                 instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['nose-segment-template'])
             end
         end
     end
 
-    -- Common limbs
-    local limbs = {
-        'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot', 'rfoot',
-        'luarm', 'ruarm', 'llarm', 'rlarm', 'lhand', 'rhand',
-        'lear', 'rear'
-    }
-    for _, part in ipairs(limbs) do table.insert(ordered, part) end
-
-
     for i = 1, #ordered do
         local partName = ordered[i]
         local partData = instance.dna.parts[partName]
-        --logger:info(partName, partData.shapeName)
         local settings = {
             x = x,
             y = y,
-            bodyType = BT.DYNAMIC,      -- Start as dynamic, will be adjusted later if inactive
-            shapeType = partData.shape, -- Use shape defined in template
+            bodyType = BT.DYNAMIC,
+            shapeType = partData.shape,
             shape8URL = partData.shape8URL,
-            label = partName,           --partName,           -- Use part name as initial label
+            label = partName,
             density = partData.density or 1,
             radius = (partData.dims.r or 0) * instance.scale,
             width = (partData.dims.w or 0) * instance.scale,
@@ -2477,21 +1884,14 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             height2 = (partData.dims.h2 or 0) * instance.scale,
             height3 = (partData.dims.h3 or 0) * instance.scale,
             height4 = (partData.dims.h4 or 0) * instance.scale,
-
             behaviors = partData.behaviors,
-            -- Add other physics properties if needed (friction, restitution?)
         }
 
-        if (partData.shape8URL) then
-            if (shape8Dict[partData.shape8URL]) then
-                local raw = shape8Dict[partData.shape8URL].vertices
-                settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * instance.scale,
-                    (partData.dims.sy or 1) * instance.scale)
-            end
+        if partData.shape8URL and shape8Dict[partData.shape8URL] then
+            local raw = shape8Dict[partData.shape8URL].vertices
+            settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * instance.scale,
+                (partData.dims.sy or 1) * instance.scale)
         end
-        --logger:info('getting offset for ', partName)
-
-
 
         makePart(partName, instance, settings)
         if optionalTorsoAngle and partName == 'torso1' then

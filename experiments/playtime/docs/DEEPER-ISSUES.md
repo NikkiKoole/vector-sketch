@@ -14,6 +14,10 @@ Changed to `if not doneJoints[ud.id] then`.
 
 When cloning bodies with OMP texfixtures, the `extra.dirty` flag is not set to `true` on the cloned fixture. The OMP composite image (`ompImage`) is a runtime cache that gets stripped during serialization, but during cloning the old reference may be copied or lost. Without `dirty = true`, the cloned fixture won't regenerate its composite texture on first render.
 
+### Bug: noseChain topology reads from current part instead of parent (character-topology.lua)
+
+The `noseChain` parent-attach strategy (for nose2+) checks `nose1`'s shape type but reads vertex 5 from the *current* nose segment, not the parent. The non-SHAPE8 fallback also reads from the current part. This works in practice because all nose segments share the same template (same shape, same dimensions), but it's conceptually wrong — `getOffsetFromParent` should read from the parent. If nose segments ever get independent shapes/sizes, this will produce incorrect attachment positions.
+
 ### Bug: Unused `swapBodies` parameter (joints.lua:162)
 
 ```lua
