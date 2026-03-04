@@ -1893,6 +1893,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
                     zOffset = 490,
                 }
             end
+            -- connected-hair is optional; added via UI when the user picks a hair texture
         end
     end
 

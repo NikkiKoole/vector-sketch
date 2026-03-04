@@ -1394,6 +1394,76 @@ function lib.drawMipoEditor(instance, partName)
                             end
                         end
 
+                        -- Connected-hair texture controls (segmented nose, 2+)
+                        if noseSegs >= 2 and nose1Data.appearance then
+                            local ch = nose1Data.appearance['connected-hair'] and nose1Data.appearance['connected-hair'].main
+                            ui.label(x, y, 'connected hair')
+                            y = y + ROW
+
+                            local currentURL = ch and ch.bgURL or ''
+                            local cellSize = 50
+                            local gridHeight = drawThumbnailGrid(limbHairTextures, currentURL, panelX, y, cellSize,
+                                function(url)
+                                    if url then
+                                        local fgUrl = hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
+                                        if not nose1Data.appearance['connected-hair'] then
+                                            nose1Data.appearance['connected-hair'] = {
+                                                main = { bgURL = url, fgURL = fgUrl, bgHex = '020202ff', fgHex = 'ff0000ff', pURL = 'type2t.png', pHex = 'ffff00ff' },
+                                                zOffset = 491,
+                                            }
+                                        else
+                                            CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
+                                                { bgURL = url, fgURL = fgUrl })
+                                        end
+                                    else
+                                        nose1Data.appearance['connected-hair'] = nil
+                                    end
+                                    CharacterManager.rebuildFromCreation(instance, {})
+                                    CharacterManager.addTexturesFromInstance2(instance)
+                                end, true)
+                            y = y + gridHeight + BUTTON_SPACING
+
+                            if ch then
+                                local currentWmul = ch.wmul or instance.scale or 1
+                                local wmulVal = ui.sliderWithInput('mipo_nose_ch_wmul', x, y, 120, 0.1, 10, currentWmul)
+                                ui.alignedLabel(x, y, '  width')
+                                wmulVal = wmulVal and tonumber(wmulVal)
+                                if wmulVal and wmulVal ~= currentWmul then
+                                    CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
+                                        { wmul = wmulVal })
+                                    CharacterManager.addTexturesFromInstance2(instance)
+                                end
+                                y = y + ROW
+
+                                handlePaletteButton('mipo_nose_ch_bg',
+                                    x + 30, y, 140, ch.bgHex, function(color)
+                                        CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
+                                            { bgHex = color })
+                                        CharacterManager.addTexturesFromInstance2(instance)
+                                    end)
+                                ui.alignedLabel(x + 180, y, 'outline')
+                                y = y + ROW
+
+                                if ch.fgURL and ch.fgURL ~= '' then
+                                    handlePaletteButton('mipo_nose_ch_fg',
+                                        x + 30, y, 140, ch.fgHex or 'ffffffff', function(color)
+                                            CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
+                                                { fgHex = color })
+                                            CharacterManager.addTexturesFromInstance2(instance)
+                                        end)
+                                    ui.alignedLabel(x + 180, y, 'fill')
+                                    y = y + ROW
+
+                                    y = drawPatternControls(ch, 'mipo_nose_ch_pat', panelX, y,
+                                        function(key, value)
+                                            CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
+                                                { [key] = value })
+                                            CharacterManager.addTexturesFromInstance2(instance)
+                                        end)
+                                end
+                            end
+                        end
+
                         -- Skin texture controls (single physics nose, noseSegments == 1)
                         if noseSegs == 1 and nose1Data.appearance and nose1Data.appearance['skin'] then
                             local skin = nose1Data.appearance['skin']
