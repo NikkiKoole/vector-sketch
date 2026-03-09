@@ -83,19 +83,17 @@ safe	KOLA	KO place + LA
 dangerous	FAHO / NAKO	FA + HO · NA + KO
 beautiful	LALI	LA + LI
 Function words (grammar)
-English	Mipomi	Breakdown
-I / me	mi	root
-be (is/are)	e	particle
-go / move	a	particle
-do / act	o	particle
+Pronouns: mi (I/me), jo (you), bi (they/them)
+Aspect particles: i (state/be), a (become/move), o (do/act)
+Negation: na (not — placed before aspect particle)
 Creature Anatomy & Modularity
 English	Mipomi	Breakdown
 arm	DAKA	DA body + KA object
 leg	DAPA	DA + PA keep
 neck	DATI	DA + TI now
-head	DAJO	DA + JO
+head	DAFO	DA + FO (body + sky/up)
 eye	JIKI	JI ID + KI tool
-mouth	JAJO	JA speak + JO
+mouth	JADA	JA speak + DA body
 hat	KOPA	KO place + PA keep
 tail	DONO	DO stone + NO end
 plug	KOPA	KO + PA
@@ -474,87 +472,38 @@ Breakdown: KA (object / stuff - the shell itself) + BO (animal) + WO (round / so
 Garden (cultivated place)
 Mipomi: KOBAPA
 Breakdown: KO (place / container) + BA (life / child - plants) + PA (keep / hold - cultivated/kept)
-Red:
-Mipomi: FAFA
-Breakdown: FA (fire/heat) + FA (fire/heat) - The quintessential color of fire.
-Alternative: FAMO (fire-feel) for a passionate red.
-Orange:
-Mipomi: FALA (if it's distinct from 'sun' as an object)
-Breakdown: FA (fire/heat) + LA (light/good) - Fire with light, like a bright ember or sunset. (Note: FALA is currently "sun," so this might be "sun-colored").
-Alternative: FAWO (fire-round, thinking of an orange fruit).
-Yellow:
-Mipomi: LALA (if not solely "good")
-Breakdown: LA (light/good) + LA (light/good) - Pure light, the brightest. (Note: LALA is "good," so this could be "good-colored" or "bright as good").
-Alternative: LAFA (light-fire), a lighter, brighter fire.
-Green:
-Mipomi: BAFI (if it's distinct from 'tree')
-Breakdown: BA (life/child) + FI (earth/soil) - The color of plant life on earth. (Note: BAFI is "tree," so "tree-colored").
-Alternative: BALI (life-detail), the detailed green of leaves.
-Blue (Sky Blue):
-Mipomi: FOFO
-Breakdown: FO (sky/air) + FO (sky/air) - The color of the clear sky.
-Blue (Water Blue):
-Mipomi: WAWA
-Breakdown: WA (water/flow) + WA (water/flow) - The color of deep or plentiful water. (Note: WAWA is "rain," so "rain-colored").
-Purple/Violet:
-Mipomi: FAFO
-Breakdown: FA (fire/heat) + FO (sky/air) - Colors of a sunset where red fire meets the blue sky.
-Alternative: MOWI (love/feel + cold), a cooler, perhaps more "royal" purple.
-Pink (Light Red):
-Mipomi: FALI
-Breakdown: FA (fire/heat) + LI (fine/detail) - A fine, delicate red.
-Alternative: MALA (nurture-light), a gentle, light color.
-Brown:
-Mipomi: FIFI
-Breakdown: FI (earth/soil) + FI (earth/soil) - The deep color of soil.
-Alternative: DOFI (stone-earth), also "hill," but could be "earth-stone color."
-Black:
-Mipomi: NANA
-Breakdown: NA (none/absence) + NA (none/absence) - Total absence of light/color.
-Alternative: WINA (cold-none), also "night," implying darkness.
-White:
-Mipomi: WILA
-Breakdown: WI (cold/ice) + LA (light/good) - The bright white of snow or ice.
-Alternative: LALA (light-light), if it can mean pure bright white. Or FOLA (sky-light, like a white cloud).
-Grey:
-Mipomi: DONA
-Breakdown: DO (stone/rock) + NA (none/absence) - The color of unlit stone, or stone without vibrant color.
-Alternative: NALA (none-light), also "not good," but could be "lacking light/color."
 
-
-
-🧪 Examples Using SI:
+Colors use reduplication of elemental roots — doubling a root means "the color of that element":
 Color	Word	Breakdown
-Red	SIFA	sign-of-fire
-Orange	SILA	sign-of-light
-Yellow	SITA	sign-of-past/sun
-Green	SIFI	sign-of-earth
-Blue (sky)	SIFO	sign-of-sky
-Blue (water)	SIWA	sign-of-water
-Purple	SIFAFO	sign-of-fire+sky
-Pink	SIMA	sign-of-nurture
-Brown	SIDO	sign-of-stone
-Black	SINA	sign-of-absence
-White	SIWI	sign-of-cold
-Grey	SIDO or SINAWI	stone/absence combo
+Red	FAFA	fire+fire
+Orange	FALA	fire+light
+Yellow	LALA	light+light
+Green	BAFI	life+earth
+Sky blue	FOFO	sky+sky
+Water blue	WAWA	water+water
+Purple	FAFO	fire+sky
+Pink	FALI	fire+detail
+Brown	FIFI	earth+earth
+Black	NANA	none+none
+White	WILA	cold+light
+Grey	DONA	stone+none
 
 
 
 
 Hair (general, on head):
-Mipomi: DAJOFI
-Breakdown: DA (body/flesh) + JO (you/listener - often associated with the head/face) + FI (earth/soil - grows from, or covers like foliage)
+Mipomi: DAFOFI
+Breakdown: DA (body/flesh) + FO (sky/up - head area) + FI (earth/soil - grows from, covers like foliage)
 Alternative for "strand of hair": DALIKA (DA body + LI fine/detail + KA object)
 Hairdo / Hairstyle:
-Mipomi: DAJOLO
-Breakdown: DAJOFI (hair on head) + LO (shape/form)
+Mipomi: DAFOLO
+Breakdown: DAFOFI (hair on head) + LO (shape/form)
 Hairy Chest:
 Mipomi: DAKOLI (Body-container-detail, chest as a container for organs, with detailed covering)
 Breakdown: DA (body/flesh) + KO (place/container - for the chest area) + LI (fine/detail - representing the hair)
 Eyebrow:
-Mipomi: DAJIKI (Body-ID-tool-covering)
-Breakdown: DA (body/flesh) + JI (name/ID - above the identifying eye) + KI (tool/device - like a tool framing the eye, could also be KA object)
-Simpler: DAJILA (Body-ID-light, as it frames the 'light' of the eye)
+Mipomi: DAJIKI (Body-ID-tool)
+Breakdown: DA (body/flesh) + JI (name/ID - above the identifying eye) + KI (tool/device - frames the eye)
 Arm Hair:
 Mipomi: DAKALI
 Breakdown: DA (body/flesh) + KA (object/stuff - arm is an object-like limb) + LI (fine/detail - the hair)
@@ -563,9 +512,8 @@ Torso Shape (general):
 Mipomi: DALOKO
 Breakdown: DA (body/flesh) + LO (shape/form) + KO (place/container - the torso as a container)
 Head Shape (general):
-Mipomi: DAJOLO (same as hairdo, context would differentiate. Or use DAJO (head) + LO)
-Mipomi: DALOJO (if DAJO is specifically "head")
-Breakdown: DA (body/flesh) + LO (shape/form) + JO (you/listener - associated with head)
+Mipomi: DAFOLO
+Breakdown: DA (body/flesh) + FO (sky/up - head) + LO (shape/form)
 Long Neck:
 Mipomi: DATITO
 Breakdown: DA (body/flesh) + TI (now/present - the neck) + TO (future/goal - implies extension, length)

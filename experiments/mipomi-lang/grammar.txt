@@ -107,20 +107,39 @@ dangerous	FAHO / NAKO	FA + HO · NA + KO
 beautiful	LALI	LA + LI
 
 6. Function words (grammar)
-English	Mipomi	Breakdown
-I / me	mi	root
-be (is/are)	e	particle
-go / move	a	particle
-do / act	o	particle
+Pronouns
+I / me	mi	(from MI "self")
+you	jo	(from JO "listener")
+they / them	bi	(from BI "peer/kin")
+
+Aspect particles (placed after the subject)
+be / state	i	stable state
+become / move	a	change, motion
+do / act	o	deliberate action
+
+Negation
+not	na	placed before the aspect particle
+
+📐 Compound Word-Order Rule
+Concrete nouns (places, things, creatures) are HEAD-FIRST — the category root leads:
+  KO-BIPA = house (place + kin + keep)
+  KI-FIHI = car (tool + earth + go)
+  BO-FO   = bird (creature + sky)
+
+Function words & spatial terms are MODIFIER-FIRST — the quality/direction leads:
+  FO-KO = up (sky + place)
+  FI-KO = down (earth + place)
+  MO-LA = joy (feel + light)
+  LA-LA = good (light + light)
 
 7. Creature Anatomy & Modularity
 English	Mipomi	Breakdown
 arm	DAKA	DA body + KA object
 leg	DAPA	DA + PA keep
 neck	DATI	DA + TI now
-head	DAJO	DA + JO
+head	DAFO	DA + FO (body + sky/up)
 eye	JIKI	JI ID + KI tool
-mouth	JAJO	JA speak + JO
+mouth	JADA	JA speak + DA body
 hat	KOPA	KO place + PA keep
 tail	DONO	DO stone + NO end
 plug	KOPA	KO + PA
@@ -262,7 +281,11 @@ Particle	Core idea	Typical uses	Quick mnemonic
 i	STATE / BE – something simply is	identity, description, location, possession, emotion that is already present	high, steady vowel ⇒ stable
 a	BECOME / MOVE / BEGIN – entering a new state or heading toward a goal	start, change, motion, inchoative (“get-”, “become-”)	mouth opens as you “step forward”
 o	DO / ACT / AFFECT – deliberate, ongoing action	create, use, manipulate, perform, experience actively	round, forceful sound ⇒ energy
-(optional) u	WITH / TOGETHER / BY-MEANS-OF (comitative / instrumental)	companionship or tool marker	lips meet → “together”
+
+Pronouns
+mi	I / me (self)
+jo	you (listener)
+bi	they / them (others, third person — from BI “peer/kin”)
 
 Position.
 Place the particle right after the subject (or topic) and before the main predicate chunk.
@@ -273,8 +296,8 @@ Copy
 Edit
 mi  i  momo           I am (full of) love.
 mi  a  fowa          I became afraid.
-mi  o  ki  hoka     I do build with a tool.
-mi  i  mokI  o  di  widi
+mi  o  ki  hoka      I do build (using) a tool.
+mi  i  moki  o  di  widi
 I (in a state of) wanting → do eat ice-cream.
 Other handy bits
 
@@ -294,9 +317,9 @@ English	Mipomi (aspect chain)	Word-for-word
 4. I go there.	mi a koto.	I • MOVE • there
 5. The creature runs (actively).	bo o hihi.	creature • DO • run
 6. I want to eat ice-cream.	mi i moki o di widi.	I • BE-want → DO-eat • ice-treat
-7. I build a bridge with a friend.	mi o hoka u bi i koti.	I • DO-build • WITH friend • AT here
+7. I build a bridge with a friend.	mi o hoka bi koti.	I • DO-build • friend • here
 8. I am not sleepy.	mi na i nini.	I • NOT • BE • very-sleepy
-9. She became angry and shouted.	jo a faho, jo o jaho.	she • BECOME-anger, she • DO-yell
+9. She became angry and shouted.	bi a faho, bi o jaho.	they • BECOME-anger, they • DO-yell
 10. Let’s keep talking!	jojo o jaja h!	you+I • DO • talk-talk • (soft sigh)
 
 🛠️ Building your own
@@ -307,10 +330,10 @@ Pick the aspect.
 i if it simply is, a if it’s about to happen/become, o if someone is making it happen.
 
 Add extras.
-u companion/tool, reduplication for intensity, paragrammar consonant for tone.
+Reduplication for intensity, paragrammar consonant for tone.
 
 Template:
-(Subject) (NEG?) (Aspect vowel) (Predicate roots) (u + instrument/companion) (location/time) (paragram-consonant)
+(Subject) (NEG?) (Aspect vowel) (Predicate roots) (location/time) (paragram-consonant)
 
 Play with it, sing it, mash roots together — the chain is flexible but stays crystal clear once your ear catches the three key vowels. When you need more nuance (tense, evidential, etc.) we can still layer little particles after the vowel without breaking the core rhythm.
 

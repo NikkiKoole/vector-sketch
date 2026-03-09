@@ -1,0 +1,621 @@
+================================================================================
+  MIPOMI — Complete Language Reference
+================================================================================
+
+TABLE OF CONTENTS
+  1. The Mipo World (lore context)
+  2. Design Philosophy
+  3. Phonology (sounds & syllables)
+  4. The Semantic Grid (39 core roots)
+  5. Grammar
+  6. Compound Word-Order Rule
+  7. Reduplication
+  8. Paragrammar Consonants
+  9. Example Sentences
+  10. How to Build Your Own Words & Sentences
+  11. Full Lexicon
+
+
+================================================================================
+  1. THE MIPO WORLD
+================================================================================
+
+The Mipo World feels like someone doodled a physics textbook in a 1970s
+children's encyclopedia, then blew life into the margins. Everything is
+hand-drawn and slightly rubbery: clouds bounce, shadows wiggle, and "gravity"
+is more of a polite suggestion than a rule.
+
+Mipos — semi-sentient, potato-head collage-creatures — are the stars of this
+squishy pocket-universe. They come apart, snap together, stretch, repaint, or
+sprout new gadgets at the player's whim, and each new combination might unlock
+a fresh ability or a slapstick disaster.
+
+Seven regions:
+  - MipoTown — toaster-houses and dancing doors, the social hub
+  - The Playground — build-your-own Rube-Goldberg of trampolines and cannons
+  - Forest of Limbs — a wardrobe made of living body parts
+  - Wobbly Hills — walking becomes bowling
+  - Sky-Sketch Isles — toast-gliders and spaghetti-copters
+  - Burrow Below — a tinkerer's maze of scrap
+  - Busybody Bay — earnest nonsense parody of grown-up jobs
+
+Mipos themselves are open-hearted slapstick inventors. Their emotions broadcast
+physically — eyes balloon when startled, limbs pop off when annoyed, whole
+bodies bounce with joy. Their myths are equally silly: a giggle-powered sun, a
+sleepy moon that sneezed the world into being, and a legendary Big Box toy
+store where perfect Mipos are displayed forever.
+
+
+================================================================================
+  2. DESIGN PHILOSOPHY
+================================================================================
+
+"Serious nonsense" — the language should feel playful and meaningful at the
+same time. Like toddler babble that makes sense if you listen carefully.
+
+Principles:
+  - Simple CV (consonant-vowel) syllables, like a toddler's first words
+  - Semantic compositionality: complex meanings built from small roots
+  - Designed for speech synthesis, mouth animation, and emotional expression
+  - Modularity mirrors the Mipo creatures themselves (snap together, pull apart)
+  - Singable, memorable, and fun to speak aloud
+
+
+================================================================================
+  3. PHONOLOGY
+================================================================================
+
+Structure: strict CV (consonant + vowel). No consonant clusters, no closed
+syllables. Every syllable is open.
+
+Consonants (13): B  D  F  H  J  K  L  M  N  P  S  T  W
+Vowels (3):      A  I  O
+
+This gives 39 possible syllables:
+
+  BA  BI  BO        DA  DI  DO        FA  FI  FO
+  HA  HI  HO        JA  JI  JO        KA  KI  KO
+  LA  LI  LO        MA  MI  MO        NA  NI  NO
+  PA  PI  PO        SA  SI  SO        TA  TI  TO
+  WA  WI  WO
+
+Each syllable is recorded as a discrete audio sample (in multiple voices).
+Pitch, volume, and timing are modulated at runtime for prosody.
+
+
+================================================================================
+  4. THE SEMANTIC GRID — 13 x 3 Core Roots
+================================================================================
+
+Every syllable has a meaning. The consonant determines the semantic field,
+the vowel shifts meaning within it.
+
++--------------------------+---------------------------+---------------------------+---------------------------+
+| FIELD                  C |   -A                      |   -I                      |   -O                      |
++--------------------------+---------------------------+---------------------------+---------------------------+
+| self / feeling         M | MA  nurture               | MI  I / self              | MO  love / feel           |
+| living beings          B | BA  life / child           | BI  peer / kin / they     | BO  animal / creature     |
+| possession / transfer  P | PA  keep / hold            | PI  take / receive        | PO  give                  |
+| nature / element       F | FA  fire / heat            | FI  earth / soil          | FO  sky / air             |
+| thing / place          K | KA  object / stuff         | KI  tool / device         | KO  place / container     |
+| beauty / design        L | LA  light / good           | LI  fine / detail         | LO  shape / form          |
+| time / goal            T | TA  past                   | TI  now                   | TO  future                |
+| voice / story          J | JA  speak                  | JI  name / identity       | JO  you / listener        |
+| negation / rest        N | NA  none / absence         | NI  rest / sleep          | NO  end / negate          |
+| body / substance       D | DA  body / flesh           | DI  eat / drink           | DO  stone / rock          |
+| mind / pattern         S | SA  idea                   | SI  sign / tag            | SO  pattern / structure   |
+| action / control       H | HA  start                  | HI  go / act              | HO  stop / halt           |
+| water / qualities      W | WA  water / flow           | WI  cold / ice            | WO  round / solid         |
++--------------------------+---------------------------+---------------------------+---------------------------+
+
+Vowel tendencies across the grid:
+  -A  tends toward the raw, energetic, or source
+  -I  tends toward the precise, individual, or internal
+  -O  tends toward the abstract, spatial, or outward
+
+
+================================================================================
+  5. GRAMMAR
+================================================================================
+
+PRONOUNS
+  mi    I / me          (from MI "self")
+  jo    you             (from JO "listener")
+  bi    they / them     (from BI "peer/kin")
+
+ASPECT PARTICLES (placed immediately after the subject)
+  i     STATE / BE      — something simply is (identity, description, location)
+  a     BECOME / MOVE   — entering a new state, heading toward a goal
+  o     DO / ACT        — deliberate, ongoing action
+
+  Mnemonics:
+    i = high, steady vowel => stable state
+    a = mouth opens, you "step forward" => change
+    o = round, forceful sound => energy, action
+
+NEGATION
+  na    NOT — placed before the aspect particle
+        mi na i lala  =>  "I am not good"
+
+WORD ORDER
+  Loose S-V-O, but the aspect particle anchors the clause.
+  You can chain aspect particles for layered meaning:
+    mi i moki o di widi  =>  "I (state: wanting) (do: eat) ice-cream"
+
+SENTENCE TEMPLATE
+  (Subject) (na?) (Aspect) (Predicate roots) (location/time) (paragrammar)
+
+
+================================================================================
+  6. COMPOUND WORD-ORDER RULE
+================================================================================
+
+Concrete nouns are HEAD-FIRST — the category root leads:
+  KO-BIPA  = house       (place + kin + keep)
+  KI-FIHI  = car         (tool + earth + go)
+  BO-FO    = bird        (creature + sky)
+  DA-KA    = arm         (body + object)
+
+Function words & spatial terms are MODIFIER-FIRST — the quality leads:
+  FO-KO    = up          (sky + place)
+  FI-KO    = down        (earth + place)
+  MO-LA    = joy         (feel + light)
+  LA-LA    = good        (light + light)
+
+This means: if you're naming a THING, start with what kind of thing it is.
+If you're describing a QUALITY or DIRECTION, start with the quality.
+
+
+================================================================================
+  7. REDUPLICATION
+================================================================================
+
+Doubling a root intensifies or iterates:
+  MOMO     love (intense feeling)
+  HIHI     run (go+go)
+  NINI     very sleepy (rest+rest)
+  SOSO     spin (pattern+pattern)
+  MISO MISO = sob hard / keep sobbing
+
+Reduplication is also the basis for COLORS (see lexicon section 11).
+
+
+================================================================================
+  8. PARAGRAMMAR CONSONANTS
+================================================================================
+
+Single consonants whispered after a sentence add emotional color:
+
+  M   comfort, warmth
+  P   readiness, tension
+  T   urgency
+  H   sigh, awe
+  F   frustration
+  B   affectionate "aww"
+  N   negation
+  D   firm closure
+
+Example: "mi i momo... m."  (I am in love... [warm sigh])
+
+Other notable reduplications as standalone expressions:
+  POPO     share freely (give+give)
+  MAMA     nurture deeply, motherly
+  TATA     long ago, deep past
+  JAJA     keep talking, storytelling
+  FIFI     deep earth, grounding
+  SISI     label carefully
+
+
+================================================================================
+  9. EXAMPLE SENTENCES
+================================================================================
+
+ 1. I am happy.
+    mi i mola.
+    I - BE - joy
+
+ 2. The box is here.
+    koka i koti.
+    box - BE - here
+
+ 3. It starts raining.
+    wawa a fala.
+    rain - BECOME - fall
+
+ 4. I go there.
+    mi a koto.
+    I - MOVE - there
+
+ 5. The creature runs (actively).
+    bo o hihi.
+    creature - DO - run
+
+ 6. I want to eat ice-cream.
+    mi i moki o di widi.
+    I - BE(want) - DO(eat) - ice-treat
+
+ 7. I build a bridge with a friend.
+    mi o hoka bi koti.
+    I - DO(build) - friend - here
+
+ 8. I am not sleepy.
+    mi na i nini.
+    I - NOT - BE - very-sleepy
+
+ 9. They became angry and shouted.
+    bi a faho, bi o jaho.
+    they - BECOME(anger), they - DO(yell)
+
+10. Let's keep talking!
+    jojo o jaja h!
+    (sing) - DO - talk-talk - (sigh!)
+
+
+================================================================================
+  10. HOW TO BUILD YOUR OWN WORDS & SENTENCES
+================================================================================
+
+Step 1: Choose root(s)
+  Look up the semantic grid. Pick the roots that capture your meaning.
+  HAFA = jump (start+fire), MOMO = love (feel+feel), KOKA = box (place+object)
+
+Step 2: Follow the word-order rule
+  Naming a thing? Head-first (category root leads).
+  Describing a quality? Modifier-first.
+
+Step 3: Pick the aspect
+  i  if it simply is
+  a  if it's about to happen or become
+  o  if someone is making it happen
+
+Step 4: Add extras
+  Reduplication for intensity.
+  Paragrammar consonant for emotional tone.
+
+Step 5: Assemble
+  (Subject) (na?) (Aspect) (Predicate) (location/time) (paragrammar)
+
+
+================================================================================
+  11. FULL LEXICON
+================================================================================
+
+All compound words with breakdowns, organized by domain.
+
+
+--- SPATIAL CONCEPTS ---
+
+here              KOTI        KO place + TI now
+there             KOTO        KO place + TO future
+up                FOKO        FO sky + KO place
+down              FIKO        FI earth + KO place
+inside            KOKO        KO + KO
+outside           KOFO        KO + FO
+near              TITI        TI + TI
+far               TOTO        TO + TO
+
+
+--- SIZE & PHYSICAL QUALITY ---
+
+big / heavy       DOKA        DO stone + KA object
+small / tiny      LILI        LI + LI
+lightweight       WALA        WA flow + LA light
+tall              DALOFO      DA body + LO shape + FO sky
+short (height)    DALOFI      DA body + LO shape + FI earth
+
+
+--- EMOTIONS & FEELINGS ---
+
+love              MOMO        MO + MO
+joy               MOLA        MO feel + LA light
+sad               MINO        MI self + NO negate
+fear / anxious    FOWA        FO sky + WA flow
+anger             FAHO        FA fire + HO stop
+excited           MOLAFO      MO + LA + FO sky
+bored             NINI        NI + NI
+embarrassed       MISOFO      MI + SO structure + FO
+proud             MOKIHA      MO + KI tool + HA start
+surprised         MOJA        MO + JA speak
+giggling          HOMO        HO stop + MO feel
+
+
+--- COGNITION & MIND ---
+
+understand/learn  SAPI        SA idea + PI receive
+memory            TADI        TA past + DI eat
+idea / insight    SALA        SA + LA
+confusion         SOSI        SO pattern + SI tag
+desire / want     MOKI        MO + KI
+dream             NISA        NI rest + SA idea
+doubt             SAJO        SA + JO
+motivation        HIMO        HI go + MO
+goal/aspiration   TOLA        TO future + LA light
+focus / truth     JILA        JI ID + LA light
+false             JINO        JI + NO
+
+
+--- QUALITIES & STATES ---
+
+good              LALA        LA + LA
+bad               LANA        LA + NA
+not good          NALA        NA + LA
+ugly              LONO        LO form + NO
+clean             WALA        WA + LA
+dirty             WAFI        WA + FI
+safe              KOLA        KO place + LA
+dangerous         FAHO        FA + HO
+beautiful         LALI        LA + LI
+
+
+--- COLORS (reduplication system) ---
+
+red               FAFA        fire + fire
+orange            FALA        fire + light
+yellow            LALA        light + light
+green             BAFI        life + earth
+sky blue          FOFO        sky + sky
+water blue        WAWA        water + water
+purple / violet   FAFO        fire + sky
+pink              FALI        fire + detail
+brown             FIFI        earth + earth
+black             NANA        none + none
+white             WILA        cold + light
+grey              DONA        stone + none
+
+
+--- BODY & ANATOMY ---
+
+arm               DAKA        DA body + KA object
+leg               DAPA        DA + PA keep
+neck              DATI        DA + TI now
+head              DAFO        DA body + FO sky/up
+eye               JIKI        JI ID + KI tool
+mouth             JADA        JA speak + DA body
+tail              DONO        DO stone + NO end
+body shape        DALO        DA body + LO shape
+torso shape       DALOKO      DA + LO shape + KO container
+head shape        DAFOLO      DA + FO sky/up + LO shape
+thin torso        DAKOLI      DA + KO container + LI detail
+thick torso       DAKODO      DA + KO container + DO stone
+long neck         DATITO      DA + TI now + TO future/extension
+short neck        DATITA      DA + TI now + TA past/less
+hair (on head)    DAFOFI      DA + FO sky/up + FI grows
+hairstyle         DAFOLO      DAFOFI + LO shape
+eyebrow           DAJIKI      DA + JI ID + KI tool
+beard             DAJALI      DA + JA speak-area + LI detail
+arm hair          DAKALI      DA + KA arm-object + LI detail
+
+
+--- MODULARITY (creature assembly) ---
+
+hat / plug        KOPA        KO place + PA keep
+socket            KOPO        KO + PO give
+attach / stick    HAPA        HA start + PA
+detach            HOKO        HO stop + KO
+wobble            FOKO        FO sky + KO
+
+
+--- MOVEMENT & PHYSICS ---
+
+jump              HAFA        HA start + FA fire
+run               HIHI        HI + HI
+trip              HOHI        HO stop + HI
+slide             FALA        FA + LA
+tumble            FOWO        FO + WO round
+spin              SOSO        SO + SO
+catch             PAKI        PA hold + KI
+push              FAHA        FA + HA
+pull              PIFO        PI take + FO
+lift              WALA        WA flow + LA
+fall              DOKO        DO stone + KO
+
+
+--- COMMUNICATION & SOUND ---
+
+yell              JAHO        JA speak + HO stop
+cry               MISO        MI + SO
+hum / sing        JOJO        JO + JO
+laugh             MOWA        MO + WA
+murmur            HIJI        HI + JI
+narrate           JASAJO      JA + SA idea + JO
+silence           NOJA        NO + JA
+gesture           JAHA        JA + HA
+wave (hand)       PAHI        PA hold + HI
+
+
+--- FLORA (plants) ---
+
+flower            BALA        BA life + LA light
+tree              BAFI        BA life + FI earth
+grass / moss      BILI        BA life + LI detail
+fruit             BADI        BA life + DI eat
+root / tuber      FIPA        FI earth + PA keep
+leaf              BALO        BA life + LO shape
+mushroom          FIBA        FI earth + BA life
+vine / creeper    BAHI        BA life + HI go
+
+
+--- FAUNA (animals) ---
+
+bird              BOFO        BO animal + FO sky
+fish              BOWA        BO animal + WA water
+insect            BOLI        BO animal + LI detail
+mammal            BOFI        BO animal + FI earth
+snake / worm      BOHI        BO animal + HI go
+herbivore         BODI        BO animal + DI eat
+pet / companion   BOBI        BO animal + BI kin
+
+
+--- PLACES & ENVIRONMENTS ---
+
+bridge            KOTI        KO + TI
+tunnel / cave     FIKO        FI earth + KO
+hill              DOFI        DO + FI
+ramp              KOFA        KO + FA
+tower             TOKOTO      TO + KO + TO
+pit / hole        KONO        KO + NO
+edge / cliff      HOKO        HO + KO
+floating island   FOKOFO      FO + KO + FO
+house / home      KOBIPA      KO + BI kin + PA keep
+nest              KOBOFO      KO + BO animal + FO sky
+burrow            KOBOFI      KO + BO animal + FI earth
+forest            KOBAFI      KO + BA life + FI earth
+ocean / sea       KOWABO      KO + WA water + BO animal
+desert            KOFA        KO + FA fire
+mountain          DOFOKO      DO stone + FO sky + KO place
+city / town       KOBISO      KO + BI kin + SO structure
+hive              KOBOLI      KO + BO animal + LI detail
+swamp / marsh     KOWAFI      KO + WA water + FI earth
+arctic            KOWI        KO + WI cold
+shell (home)      KABOWO      KA object + BO animal + WO round
+garden            KOBAPA      KO + BA life + PA keep
+
+
+--- TIME & WEATHER ---
+
+night             WINA        WI cold + NA none
+afternoon         TALA        TA past + LA
+rain              WAWA        WA + WA
+storm             FAWA        FA + WA
+rainbow           LAFOKO      LA + FO + KO
+windy             FOWA        FO + WA
+sunrise           FALATI      FA + LA + TI
+sunset            FONO        FO + NO
+cloudy            FOKO        FO + KO
+clock             TOKOKA      TO + KO + KA
+
+
+--- OBJECTS & TOYS ---
+
+ball              WOBO        WO round + BO
+fan               FOHI        FO + HI
+box / cup         KOKA        KO + KA
+ladder            TOKIKA      TO + KI + KA
+cart              KOPA        KO + PA
+crayon            LIKISA      LI + KI + SA
+book              JIKI        JI + KI
+brush             LIKIKA      LI + KI + KA
+mirror            LOJO        LO form + JO you
+pillow            NIFA        NI rest + FA warm
+jar / container   KOKOKA      KO + KO + KA
+
+
+--- TOOLS (handheld) ---
+
+hammer            KIDO        KI tool + DO stone
+screwdriver       KILIPI      KI + LI detail + PI take
+wrench            KIPAWO      KI + PA keep + WO round
+knife / blade     KILIKA      KI + LI detail + KA object
+saw               KISOKA      KI + SO pattern + KA object
+shovel / spade    KIFIPI      KI + FI earth + PI take
+needle            KILISO      KI + LI detail + SO pattern
+pen / pencil      SIKILI      SI sign + KI tool + LI detail
+scissors          KIPIKI      KI + PI take + KI
+ruler             SOKILO      SO pattern + KI tool + LO shape
+axe               KIDOFA      KI + DO stone + FA fire
+pliers            KIPAHA      KI + PA keep + HA start
+file (smoothing)  KILOKA      KI + LO shape + KA object
+magnifying glass  LAPIKI      LA light + PI take + KI tool
+
+
+--- TECHNOLOGY & MACHINES ---
+
+computer          SAKISO      SA idea + KI tool + SO structure
+washing machine   WAKIKAHA    WA + KI + KA + HA
+refrigerator      WIKIKO      WI cold + KI tool + KO container
+engine / motor    KIHAHA      KI + HA + HA
+printer           SIKIPO      SI sign + KI tool + PO give
+camera            LOKIPI      LO shape + KI tool + PI take
+drill             KIKIWOHA    KI + KI + WO round + HA
+generator         FAKIHA      FA fire + KI tool + HA start
+fan (machine)     FOHIKI      FO air + HI go + KI tool
+pump              WAPIKI      WA water + PI take + KI tool
+crane             DOKAPIKI    DO heavy + KA object + PI take + KI
+vending machine   KAPOKI      KA object + PO give + KI tool
+robot             KIHIKA      KI tool + HI act + KA object
+loom              SOKIPA      SO pattern + KI tool + PA keep
+plug              KOPA        KO place + PA keep
+socket            KOPO        KO place + PO give
+screw / bolt      KIKIPI      KI + KI + PI
+wire              FIKI        FI + KI
+machine           KIKIFO      KI + KI + FO
+lever             KIKAHO      KI + KA + HO
+knob              KOKOKI      KO + KO + KI
+switch            HOKOHA      HO + KO + HA
+
+
+--- VEHICLES ---
+
+car               KIFIHI      KI tool + FI earth + HI go
+boat / ship       KIWAHI      KI tool + WA water + HI go
+airplane          KIFOHI      KI tool + FO sky + HI go
+train             SOKIHI      SO structure + KI tool + HI go
+bicycle           KILIHI      KI tool + LI fine + HI go
+bus               KIBIHI      KI tool + BI kin + HI go
+truck             KIKAHI      KI tool + KA stuff + HI go
+rocket            KIFOTO      KI tool + FO sky + TO future
+submarine         KIWAFI      KI tool + WA water + FI earth
+motorcycle        FAKIHI      FA fire + KI tool + HI go
+skateboard        FIWOHI      FI earth + WO round + HI go
+helicopter        FOKISOHI    FO sky + KI tool + SO pattern + HI go
+hot air balloon   FAKOFOHI    FA fire + KO container + FO sky + HI go
+cart / wagon      KAPAHI      KA object + PA hold + HI go
+sled / sleigh     KIWIHI      KI tool + WI cold + HI go
+
+
+--- PROFESSIONS & ROLES ---
+
+doctor / healer   BIHOFA      BI kin + HO stop + FA fire
+painter           LIKIHA      LI detail + KI tool + HA start
+musician          JILAFO      JI voice + LA light + FO air
+builder           HOBOKA      HO act + BO creature + KA object
+tinkerer          KIBOSA      KI tool + BO creature + SA idea
+teacher           BIMOSI      BI kin + MO feel + SI sign
+gardener          BIFIFA      BI kin + FI earth + FA fire
+pilot / flyer     FOKOPI      FO sky + KO place + PI take
+cleaner           WALAFO      WA + LA + FO
+inventor          SAHOPI      SA idea + HO act + PI
+performer/dancer  MOHIHI      MO feel + HI go + HI go
+
+
+--- SPORTS & ACTIVITIES ---
+
+running / racing  HIHI        HI go + HI go
+swimming          WAHI        WA water + HI go
+ball game         KAHI        KA object + HI go
+football/soccer   WOKOHI      WO round + KO goal + HI go
+basketball        WOPOKO      WO round + PO give + KO container
+climbing          HIFI        HI go + FI earth
+cycling           KIHIHI      KI tool + HI go + HI go
+skiing            WIHI        WI cold + HI go
+weightlifting     DOKAPI      DO heavy + KA object + PI take
+archery           KITOPI      KI tool + TO goal + PI take
+rowing            WAKIHI      WA water + KI tool + HI go
+gymnastics        DALOHI      DA body + LO shape + HI go
+surfing           WAHIPI      WA water + HI go + PI take
+fencing           KIHOHI      KI tool + HO stop + HI go
+volleyball        WOHISO      WO round + HI go + SO structure
+
+
+--- CRAFTING & CREATION ---
+
+paint             LIKI        LI detail + KI tool
+blueprint         SALAKI      SA idea + LA + KI
+doodle / drawing  LOLISA      LO form + LI detail + SA idea
+
+
+--- MYTHOLOGY & LORE ---
+
+moon (Sleepy)     NISA        NI rest + SA idea
+sun (Giggle-sun)  FALA        FA fire + LA light
+Big Box           KOKOKA      KO + KO + KA
+toy (artifact)    KAPIBO      KA object + PI take + BO creature
+spirit            WAJO        WA flow + JO listener
+wish              TOMOJO      TO future + MO feel + JO listener
+giggle (power)    MOMO        MO + MO
+sneeze (creation) HOFA        HO stop + FA fire
+
+
+================================================================================
+  END OF REFERENCE
+================================================================================
