@@ -453,9 +453,8 @@ local function sampleAlpha(imgData, px, py, imgW, imgH)
     return a
 end
 
--- Check if a grid cell has any non-transparent content by sampling several points
+-- Check if a grid cell has any non-transparent content
 local function cellHasContent(imgData, x0, y0, x1, y1, imgW, imgH)
-    -- Sample corners + center + edge midpoints (9 samples)
     local cx, cy = (x0+x1)*0.5, (y0+y1)*0.5
     local threshold = 0.01
     if sampleAlpha(imgData, x0, y0, imgW, imgH) > threshold then return true end
@@ -500,7 +499,7 @@ local function createGridMesh(image, gridW, gridH, jointDefs)
         end
     end
 
-    -- Triangle indices — skip cells where all sample points are transparent
+    -- Triangle indices — skip fully empty cells
     local indices = {}
     local cols = gridW + 1
     for gy = 0, gridH - 1 do
@@ -510,7 +509,7 @@ local function createGridMesh(image, gridW, gridH, jointDefs)
             local y0 = yPositions[gy + 1]
             local y1 = yPositions[gy + 2]
 
-            if cellHasContent(cachedImageData, x0, y0, x1, y1, imgW, imgH) then
+            if not cachedImageData or cellHasContent(cachedImageData, x0, y0, x1, y1, imgW, imgH) then
                 local tl = gy * cols + gx + 1
                 local tr = tl + 1
                 local bl = tl + cols
@@ -1439,25 +1438,19 @@ function love.draw()
 
     -- Debug overlay
     if debugMode then
-        -- Grid wireframe
+        -- Grid wireframe (draw triangle edges from index buffer)
         if boneDisplayMode >= 1 then
             love.graphics.setColor(1, 1, 1, 0.15)
             love.graphics.setLineWidth(1)
-            local gl = gridLevels[gridLevelIdx]
-            local cols = gl.w + 1
-            for vi = 1, #deformedVerts do
-                local x, y = deformedVerts[vi][1], deformedVerts[vi][2]
-                local gx = (vi - 1) % cols
-                local gy = math.floor((vi - 1) / cols)
-                -- horizontal line to right neighbor
-                if gx < gl.w then
-                    local ni = vi + 1
-                    love.graphics.line(x, y, deformedVerts[ni][1], deformedVerts[ni][2])
-                end
-                -- vertical line to bottom neighbor
-                if gy < gl.h then
-                    local ni = vi + cols
-                    love.graphics.line(x, y, deformedVerts[ni][1], deformedVerts[ni][2])
+            -- Draw each triangle's edges
+            for i = 1, #gridIndices - 2, 3 do
+                local a = gridIndices[i]
+                local b = gridIndices[i + 1]
+                local c = gridIndices[i + 2]
+                if deformedVerts[a] and deformedVerts[b] and deformedVerts[c] then
+                    love.graphics.line(deformedVerts[a][1], deformedVerts[a][2], deformedVerts[b][1], deformedVerts[b][2])
+                    love.graphics.line(deformedVerts[b][1], deformedVerts[b][2], deformedVerts[c][1], deformedVerts[c][2])
+                    love.graphics.line(deformedVerts[c][1], deformedVerts[c][2], deformedVerts[a][1], deformedVerts[a][2])
                 end
             end
         end
@@ -1783,10 +1776,13 @@ function love.keypressed(k)
         gridLevelIdx = gridLevelIdx % #gridLevels + 1
         rebuildGrid()
     elseif k == "f" then
-        -- Toggle gravity (just change world gravity, don't recreate)
+        -- Toggle gravity and wake all bodies
         useGravity = not useGravity
         if world then
             world:setGravity(0, useGravity and 600 or 0)
+            for _, body in pairs(allBodies) do
+                body:setAwake(true)
+            end
         end
     elseif k == "r" then
         -- Reset: destroy everything and recreate

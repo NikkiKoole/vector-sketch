@@ -176,6 +176,12 @@ All existing infrastructure is reused:
 
 No changes to existing modules needed in Phase 1-2.
 
+## Related: Texture Deformation Experiment
+
+A standalone skeletal mesh deformation prototype was built at `../../deform-textured/` (committed `fb9c1d21`). It explores the "scanned body image + Box2D skeleton = deforming character" approach needed for Knut. Key features: DQS skinning, bodies-as-bones, per-endpoint influence radii, alpha-aware weights, adaptive grid, weight painting, save/load. See `docs/TEXTURE-DEFORMATION-RESEARCH.md` for full details and integration plan.
+
+This experiment should be integrated before or alongside Phase 1 of the Knut toolkit — the blueprint assembly system would use the skinned-texture approach instead of (or in addition to) connected-textures for Knut's body.
+
 ## Open Questions
 
 1. **Should arm/tail chains attach to torso via joints?** The current knut scene has them as separate static-root chains. For ragdoll physics, jointing them to the torso would be better. But static roots give more control for posed/scripted animation.
