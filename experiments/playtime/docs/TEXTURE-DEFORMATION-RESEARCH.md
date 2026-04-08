@@ -205,3 +205,57 @@ These are simpler but still need solutions:
 - Need: a simple sound manager that preloads assets, plays by name, handles overlap/cooldown
 - Music: `love.audio.newSource(path, "stream")` for background music
 - SFX: `love.audio.newSource(path, "static")` for short effects
+
+### Texture Flipping (hand-drawn animation feel)
+- Instead of one static image per body, cycle 2-4 slightly different frames at ~5fps
+- Gives a charming hand-drawn jitter (think Cuphead backgrounds, Paper Mario wobble)
+- Implementation: `texfixture.extra.frames = {"walk1.png", "walk2.png", "walk3.png"}` + timer
+- Works with deforming meshes too — same grid/weights/bones, just swap the texture
+- Great for scanned book illustrations: scan 2-3 slightly different drawings, cycle them
+
+### Per-Object State Machines
+Nothing like this exists in playtime yet. The closest things are scene scripts (freeform Lua), `state.currentMode` (a single global string with 27 writers), and `thing.behaviors` (metadata only, no logic).
+
+For Knut's interactive scenes, each object needs its own simple state machine:
+
+```lua
+knutStates = {
+    idle = {
+        animation = "breathe",  -- looping
+        transitions = {
+            {on = "clicked",      goto = "waving"},
+            {on = "dragged",      goto = "held"},
+        }
+    },
+    waving = {
+        animation = "wave",     -- plays once
+        transitions = {
+            {on = "animDone",     goto = "idle"},
+        }
+    },
+    held = {
+        animation = "surprised",
+        transitions = {
+            {on = "released",     goto = "falling"},
+        }
+    },
+    falling = {
+        animation = nil,        -- physics takes over
+        transitions = {
+            {on = "hitGround",    goto = "idle"},
+        }
+    },
+}
+```
+
+The core update is trivial (~10 lines). The real work is hooking events (click, drag, physics collisions, animation completion) into the transition system and defining what "play animation" means (joint angle targets? texture swaps? both?).
+
+Inspired by Rive's state machine + listener model, but much simpler. Rive also offers blend states (mix animations by a number input), data binding (external values drive animation parameters), and per-glyph text animation — these are nice-to-have but not essential for v1.
+
+### Suggested Build Order for Knut Mini-Game
+1. **Get scans, set up deforming characters** (deform experiment is ready)
+2. **Texture flipping** for hand-drawn feel (quick win)
+3. **Simple state machine** per interactive object (small module)
+4. **Scene transitions** (fade/wipe between scenes)
+5. **Sound FX** (trivial with love.audio)
+6. **Parallax scrolling** (if needed for specific scenes)
