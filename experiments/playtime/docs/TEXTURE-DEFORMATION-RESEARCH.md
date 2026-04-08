@@ -252,10 +252,55 @@ The core update is trivial (~10 lines). The real work is hooking events (click, 
 
 Inspired by Rive's state machine + listener model, but much simpler. Rive also offers blend states (mix animations by a number input), data binding (external values drive animation parameters), and per-glyph text animation — these are nice-to-have but not essential for v1.
 
+### Tween / Motion Design System
+
+Bodies need squash-and-stretch, bounce-in, pulse, wobble, anticipation — the stuff that makes interactive scenes feel alive.
+
+**Approach: visual-only scaling.** Don't touch the physics body — just inject `love.graphics.scale()` in the draw code. Physics shapes, joints, and collisions stay untouched. For brief animations (0.1-0.3s) nobody notices the mismatch.
+
+Playtime already uses `push/translate/rotate/pop` blocks in `box2d-draw-textured.lua` (lines 1833-1875, 1888-1934, etc.). The injection point is one line after the rotate:
+
+```lua
+-- Existing pattern in box2d-draw-textured.lua:
+love.graphics.push()
+love.graphics.translate(bx, by)
+love.graphics.rotate(angle)
+love.graphics.scale(thing.tweenSX or 1, thing.tweenSY or 1)  -- ← inject here
+-- draw body textures/meshes as usual
+love.graphics.pop()
+```
+
+**What to build:**
+
+1. **Easing functions** in `math-utils.lua` — elastic, bounce, back, ease-in-out (lerp already exists)
+2. **Tween manager** — small module, stores active tweens on `thing.tweens`, updates each frame
+3. **Inject scale reads** in draw code — read `thing.tweenSX/SY` in the push/pop blocks
+4. **API for scripts:**
+
+```lua
+-- In scene scripts (.playtime.lua):
+tween(body, {scaleX = 1.3, scaleY = 0.7}, 0.15, "elasticOut", function()
+    tween(body, {scaleX = 1, scaleY = 1}, 0.3, "elasticOut")
+end)
+```
+
+**Common animations this enables:**
+- **Squash & stretch** — land: flatten briefly then spring back
+- **Bounce in** — appear with overshoot spring (0 → 1.1 → 1.0)
+- **Pulse** — gentle scale oscillation to invite interaction
+- **Wobble** — tap something and it jiggles (rotation tween with elastic)
+- **Anticipation** — shrink before jump, scale up on release
+- **Pop** — quick scale from 0 to 1.1 to 1.0 for UI elements
+
+**Why visual-only works:** `recreateThingFromBody()` in object-manager.lua (lines 517-650) is the only way to actually change physics dimensions — it destroys and rebuilds the entire body including all joints. Way too expensive for animation. Visual-only scaling via graphics transforms is essentially free.
+
+Position and rotation tweens could also be visual-only offsets: `thing.tweenOffsetX/Y` and `thing.tweenRotation` added to the translate/rotate calls. Or for position tweens that should affect physics, use `body:setPosition()` directly (cheap, no recreation needed).
+
 ### Suggested Build Order for Knut Mini-Game
 1. **Get scans, set up deforming characters** (deform experiment is ready)
 2. **Texture flipping** for hand-drawn feel (quick win)
-3. **Simple state machine** per interactive object (small module)
-4. **Scene transitions** (fade/wipe between scenes)
-5. **Sound FX** (trivial with love.audio)
-6. **Parallax scrolling** (if needed for specific scenes)
+3. **Tween system** for squash-stretch-bounce-wobble (small module, high impact)
+4. **Simple state machine** per interactive object (small module)
+5. **Scene transitions** (fade/wipe between scenes)
+6. **Sound FX** (trivial with love.audio)
+7. **Parallax scrolling** (if needed for specific scenes)
