@@ -860,26 +860,22 @@ function lib.flipThing(thing, axis, recursive)
         if recursive then
             for _, joint in ipairs(currentBody:getJoints()) do
                 local jointUserData = joint:getUserData()
-                if not jointUserData or not jointUserData.id then
+                if jointUserData and jointUserData.id then
+                    toBeProcessedJoints[jointUserData.id] = joint
+                    -- Determine the other body connected by the joint
+                    local bodyA, bodyB = joint:getBodies()
+                    local otherBody = (bodyA == currentBody) and bodyB or bodyA
+                    local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
+
+                    if otherThing then
+                        -- Recursively flip the connected body
+                        flipBody(otherThing)
+                    else
+                        logger:error("flipThing: Connected joint's other body is invalid.")
+                    end
+                else
                     logger:error("flipThing: Joint without valid user data encountered.")
-                    goto continue
                 end
-
-                toBeProcessedJoints[jointUserData.id] = joint
-                -- Determine the other body connected by the joint
-                local bodyA, bodyB = joint:getBodies()
-                local otherBody = (bodyA == currentBody) and bodyB or bodyA
-                local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
-
-                if not otherThing then
-                    logger:error("flipThing: Connected joint's other body is invalid.")
-                    goto continue
-                end
-
-                -- Recursively flip the connected body
-                flipBody(otherThing)
-
-                ::continue::
             end
         end
     end
@@ -892,77 +888,67 @@ function lib.flipThing(thing, axis, recursive)
 
             if not jointUserData or not jointUserData.id then
                 logger:error("flipThing: Joint without valid user data encountered.")
-                goto continue
+            elseif processedJoints[jointUserData.id] then
+                -- already processed, skip
+            else
+                processedJoints[jointUserData.id] = true
+
+                -- Extract joint data using the handler
+                local handler = jointHandlers[jointType]
+                if not handler or not handler.extract then
+                    logger:error("flipThing: No handler found for joint type:", jointType)
+                else
+                    handler.extract(joint)
+
+                    -- Determine the connected bodies
+                    local bodyA, bodyB = joint:getBodies()
+                    local thingA = bodyA:getUserData() and bodyA:getUserData().thing
+                    local thingB = bodyB:getUserData() and bodyB:getUserData().thing
+
+                    if not thingA or not thingB then
+                        logger:error("flipThing: One or both connected things are invalid.")
+                    else
+                        logger:info(
+                            'I should figure out if i want to do something weird with the offset, ' ..
+                            'think connect to torso logic at edge nr...')
+
+                        --todo when a joint is flipped i alos need to redo its limits (if applicable)
+
+                        local offsetA = jointUserData.offsetA
+                        local offsetB = jointUserData.offsetB
+
+                        if axis == 'x' then
+                            offsetA.x = -offsetA.x
+                            offsetB.x = -offsetB.x
+                        elseif axis == 'y' then
+                            offsetA.y = -offsetA.y
+                            offsetB.y = -offsetB.y
+                        end
+
+                        local limitsEnabled = joint:areLimitsEnabled()
+                        local lower, upper = joint:getLimits()
+
+                        local id = joint:getUserData().id
+                        local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
+
+                        if axis == 'x' then
+                            newJoint:setLimits(-upper, -lower)
+                            newJoint:setLimitsEnabled(limitsEnabled)
+                        end
+                        if axis == 'y' then
+                            -- as long as you build your joints in the right order this just works like this.
+                            -- the reason is quite subtle (before we did lowerlimit  +math.pi and higherlimit + math.pi), but
+                            -- because the axis is flipped, the order between the joint becomes
+                            -- flipped too, which offsets that math.pi back to 0
+
+                            -- TLDR dont make the joints in the wrong order, then everything works great!
+                            newJoint:setLimits(-upper, -lower)
+                            newJoint:setLimitsEnabled(limitsEnabled)
+                        end
+                        snap.maybeUpdateSnapJointWithId(id)
+                    end
+                end
             end
-
-            if processedJoints[jointUserData.id] then
-                goto continue
-            end
-            processedJoints[jointUserData.id] = true
-
-            -- Extract joint data using the handler
-            local handler = jointHandlers[jointType]
-            if not handler or not handler.extract then
-                logger:error("flipThing: No handler found for joint type:", jointType)
-                goto continue
-            end
-            handler.extract(joint)
-
-            -- Determine the connected bodies
-            local bodyA, bodyB = joint:getBodies()
-            local thingA = bodyA:getUserData() and bodyA:getUserData().thing
-            local thingB = bodyB:getUserData() and bodyB:getUserData().thing
-
-            if not thingA or not thingB then
-                logger:error("flipThing: One or both connected things are invalid.")
-                goto continue
-            end
-
-
-            logger:info(
-                'I should figure out if i want to do something weird with the offset, ' ..
-                'think connect to torso logic at edge nr...')
-            --print('old', inspect(processedBodies[thingA.id]), inspect(processedBodies[thingB.id]))
-            --print('new', inspect(thingA.vertices), inspect(thingB.vertices))
-
-
-            --todo when a joint is flipped i alos need to redo its limits (if applicable)
-
-
-            local offsetA = jointUserData.offsetA
-            local offsetB = jointUserData.offsetB
-
-            if axis == 'x' then
-                offsetA.x = -offsetA.x
-                offsetB.x = -offsetB.x
-            elseif axis == 'y' then
-                offsetA.y = -offsetA.y
-                offsetB.y = -offsetB.y
-            end
-
-            local limitsEnabled = joint:areLimitsEnabled()
-            local lower, upper = joint:getLimits()
-
-
-            local id = joint:getUserData().id
-            local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
-
-            if axis == 'x' then
-                newJoint:setLimits(-upper, -lower)
-                newJoint:setLimitsEnabled(limitsEnabled)
-            end
-            if axis == 'y' then
-                -- as long as you build your joints in the right order this just works like this.
-                -- the reason is quite subtle (before we did lowerlimit  +math.pi and higherlimit + math.pi), but
-                -- because the axis is flipped, the order between the joint becomes
-                -- flipped too, which offsets that math.pi back to 0
-
-                -- TLDR dont make the joints in the wrong order, then everything works great!
-                newJoint:setLimits(-upper, -lower)
-                newJoint:setLimitsEnabled(limitsEnabled)
-            end
-            snap.maybeUpdateSnapJointWithId(id)
-            ::continue::
         end
     end
 

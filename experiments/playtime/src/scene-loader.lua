@@ -14,12 +14,21 @@ local hotReloadInterval = 1
 local lastModTime = 0
 
 local function getFiledata(filename)
-    local f = io.open(filename, 'r')
-    if f then
-        local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-        f:close()
-        return filedata
+    -- io.open works on native (LuaJIT), not available on web (PUC Lua 5.1 in love.js)
+    if io then
+        local f = io.open(filename, 'r')
+        if f then
+            local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+            f:close()
+            return filedata
+        end
     end
+    -- Fallback for web/.love bundles: use love.filesystem
+    local data = love.filesystem.read(filename)
+    if data then
+        return love.filesystem.newFileData(data, filename)
+    end
+    return nil
 end
 
 function lib.loadScene(name)
@@ -40,10 +49,21 @@ function lib.loadScriptAndScene(id)
         logger:error('Scene file not found: ' .. jsonPath)
         return
     end
+    -- Try absolute path first (native), fall back to relative (web/.love bundle)
     local cwd = love.filesystem.getWorkingDirectory()
-    lib.loadScene(cwd .. jsonPath)
+    local absJson = cwd .. jsonPath
+    local absLua = cwd .. luaPath
+    if getFiledata(absJson) then
+        lib.loadScene(absJson)
+    else
+        lib.loadScene(jsonPath)
+    end
     if luainfo then
-        lib.loadAndRunScript(cwd .. luaPath)
+        if getFiledata(absLua) then
+            lib.loadAndRunScript(absLua)
+        else
+            lib.loadAndRunScript(luaPath)
+        end
     else
         logger:info('No script file for scene: ' .. id)
     end

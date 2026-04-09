@@ -84,7 +84,16 @@ function script.loadScript(data, filePath)
     end
 
 
-    local chunk, err = load(scriptContent, "@" .. filePath, "t", scriptEnv)
+    -- load() with 4 args is Lua 5.2+/LuaJIT; Lua 5.1 needs loadstring + setfenv
+    local chunk, err
+    if setfenv then -- luacheck: ignore 113
+        -- Lua 5.1 (love.js / PUC Lua)
+        chunk, err = loadstring(scriptContent, "@" .. filePath) -- luacheck: ignore 113
+        if chunk then setfenv(chunk, scriptEnv) end -- luacheck: ignore 113
+    else
+        -- LuaJIT / Lua 5.2+
+        chunk, err = load(scriptContent, "@" .. filePath, "t", scriptEnv)
+    end
     if err then
         logger:error('error: ' .. err)
     else

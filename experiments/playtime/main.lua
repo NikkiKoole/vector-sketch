@@ -45,22 +45,30 @@ end
 
 -- ffi.C.printf("Hi hello from C!\n")
 
-local bridge = require 'vendor.claude-bridge'
-local lurker = require 'vendor.lurker'
-local _lurker_onerror = lurker.onerror
-lurker.onerror = function(e, nostacktrace)
-    bridge.recordError("lurker", e)
-    _lurker_onerror(e, nostacktrace)
-end
--- Keep bridge alive during lurker error state
-lurker.errorupdate = function(_dt)
-    bridge.update()
+local IS_WEB = love.system.getOS() == "Web"
+
+local bridge, lurker
+if not IS_WEB then
+    bridge = require 'vendor.claude-bridge'
+    lurker = require 'vendor.lurker'
+    local _lurker_onerror = lurker.onerror
+    lurker.onerror = function(e, nostacktrace)
+        bridge.recordError("lurker", e)
+        _lurker_onerror(e, nostacktrace)
+    end
+    -- Keep bridge alive during lurker error state
+    lurker.errorupdate = function(_dt)
+        bridge.update()
+    end
+else
+    bridge = { update = function() end, recordError = function() end }
+    lurker = { update = function() end }
 end
 local _logger = require 'src.logger'      -- luacheck: ignore 211
 local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
 local prof = require 'vendor.jprof'
 local manual_gc = require 'vendor.batteries.manual_gc'
-jit.off()                             -- luacheck: ignore 113 (jit is a LuaJIT global)
+if jit then jit.off() end                -- luacheck: ignore 113 (jit is a LuaJIT global)
 local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 
 local blob = require 'vendor.loveblobs'

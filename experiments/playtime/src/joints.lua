@@ -145,19 +145,17 @@ function lib.extractJoints(body)
         }
 
         local handler = jointHandlers[jointType]
-        if not handler or not handler.extract then
+        if handler and handler.extract then
+            -- Extract additional data using the handler
+            local additionalData = handler.extract(joint)
+            for key, value in pairs(additionalData) do
+                data[key] = value
+            end
+
+            table.insert(jointData, data)
+        else
             logger:error("extract: Unsupported joint type: " .. jointType)
-            goto continue
         end
-
-        -- Extract additional data using the handler
-        local additionalData = handler.extract(joint)
-        for key, value in pairs(additionalData) do
-            data[key] = value
-        end
-
-        table.insert(jointData, data)
-        ::continue::
     end
 
     return jointData
