@@ -15,11 +15,23 @@ local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 
-local tex1 = love.graphics.newImage('textures/pat/type0.png')
+local function safeLoadImage(path)
+    local info = love.filesystem.getInfo(path)
+    if not info then return nil end
+    return love.graphics.newImage(path)
+end
+
+local tex1 = safeLoadImage('textures/pat/type0.png')
+if not tex1 then
+    -- Fallback: 1x1 white pixel so textured rendering doesn't crash on nil
+    local pd = love.image.newImageData(1, 1)
+    pd:setPixel(0, 0, 1, 1, 1, 1)
+    tex1 = love.graphics.newImage(pd)
+end
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 
-local line = love.graphics.newImage('textures/shapes6.png')
-local maskTex = love.graphics.newImage('textures/shapes6-mask.png')
+local line = safeLoadImage('textures/shapes6.png')
+local maskTex = safeLoadImage('textures/shapes6-mask.png')
 local imageCache = {}
 local shrinkFactor = 1
 

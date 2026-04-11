@@ -767,6 +767,11 @@ local gridMesh, bindVerts, gridIndices
 local deformedVerts
 local boneWeights
 
+-- Multi-layer support: each layer = {image, imageData, gridMesh, bindVerts, gridIndices, deformedVerts, boneWeights, file}
+-- Layers are drawn back-to-front. Layer 1 = backmost.
+-- When layers is non-nil, the per-layer data overrides the globals above for rendering.
+local layers = nil  -- nil = single image mode (backwards compatible), table = multi-layer mode
+
 local debugMode = true
 local boneDisplayMode = 1  -- 0=off, 1=bones, 2=weights
 local hoveredBone = nil    -- bone nearest to mouse cursor (for scroll-to-resize)
@@ -894,7 +899,9 @@ local function createSkeleton()
         b:setAngularDamping(3.0)
         if def.angle then b:setAngle(def.angle) end
         local shape = love.physics.newRectangleShape(def.w, def.h)
-        love.physics.newFixture(b, shape, 1.0)
+        local fix = love.physics.newFixture(b, shape, 1.0)
+        -- Negative group: all skeleton bodies ignore each other
+        fix:setGroupIndex(-1)
         allBodies[key] = b
     end
 
@@ -938,6 +945,46 @@ local function createSkeleton()
     end
 end
 
+-- Build grid mesh + weights for a single image (used by both single and multi-layer modes)
+local function buildLayerGrid(layerImage, layerImageData)
+    local gl = gridLevels[gridLevelIdx]
+    -- Temporarily swap cachedImageData so createGridMesh's alpha check uses the right image
+    local origImageData = cachedImageData
+    cachedImageData = layerImageData
+    local lMesh, lBindVerts, lGridIndices = createGridMesh(layerImage, gl.w, gl.h, JOINT_DEFS)
+    cachedImageData = origImageData
+
+    -- Offset bind vertices to world space
+    local worldBindVerts = {}
+    for i = 1, #lBindVerts do
+        worldBindVerts[i] = {
+            lBindVerts[i][1] + DRAW_OFFSET_X,
+            lBindVerts[i][2] + DRAW_OFFSET_Y,
+            lBindVerts[i][3],
+            lBindVerts[i][4],
+        }
+    end
+
+    local lWeights = computeBoneWeights(worldBindVerts, bones)
+
+    local lDeformed = {}
+    for i = 1, #worldBindVerts do
+        lDeformed[i] = {worldBindVerts[i][1], worldBindVerts[i][2]}
+    end
+
+    lBindVerts._world = worldBindVerts
+
+    return {
+        image = layerImage,
+        imageData = layerImageData,
+        gridMesh = lMesh,
+        bindVerts = lBindVerts,
+        gridIndices = lGridIndices,
+        deformedVerts = lDeformed,
+        boneWeights = lWeights,
+    }
+end
+
 local function rebuildGrid()
     local gl = gridLevels[gridLevelIdx]
     gridMesh, bindVerts, gridIndices = createGridMesh(image, gl.w, gl.h, JOINT_DEFS)
@@ -964,6 +1011,15 @@ local function rebuildGrid()
 
     -- Store world-space bind positions for skinning
     bindVerts._world = worldBindVerts
+
+    -- Rebuild all layers too
+    if layers then
+        for li = 1, #layers do
+            local L = layers[li]
+            local rebuilt = buildLayerGrid(L.image, L.imageData)
+            layers[li] = rebuilt
+        end
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -1234,6 +1290,14 @@ end
 ---------------------------------------------------------------------------
 -- LÖVE callbacks
 ---------------------------------------------------------------------------
+-- Helper to load an image file and return {image, imageData}
+local function loadImagePair(filename)
+    local iData = love.image.newImageData(filename)
+    local img = love.graphics.newImage(iData)
+    img:setFilter("linear", "linear")
+    return img, iData
+end
+
 function love.load()
     love.window.setTitle("Textured Skeletal Deformation")
     love.graphics.setBackgroundColor(0.15, 0.15, 0.18)
@@ -1249,6 +1313,22 @@ function love.load()
 
     createSkeleton()
     rebuildGrid()
+
+    -- Set up multi-layer mode if layer images exist
+    -- Draw order: torso (back) → legs (middle) → arms (front)
+    local layerFiles = {"oldman-torso.png", "oldman-legs.png", "oldman-arms.png"}
+    local allExist = true
+    for _, f in ipairs(layerFiles) do
+        if not love.filesystem.getInfo(f) then allExist = false; break end
+    end
+    if allExist then
+        layers = {}
+        for _, f in ipairs(layerFiles) do
+            local img, data = loadImagePair(f)
+            layers[#layers + 1] = buildLayerGrid(img, data)
+        end
+        love.window.setTitle("Textured Skeletal Deformation — MULTI-LAYER (" .. #layers .. " layers)")
+    end
 
     -- Auto-load saved project
     loadProject()
@@ -1314,6 +1394,24 @@ function love.update(dt)
             )
         end
     end
+
+    -- Skin all layers
+    if layers then
+        for _, L in ipairs(layers) do
+            if L.bindVerts._world and L.boneWeights then
+                skinVertices(L.bindVerts._world, L.boneWeights, bones, L.deformedVerts)
+                for vi = 1, #L.deformedVerts do
+                    L.gridMesh:setVertex(vi,
+                        L.deformedVerts[vi][1] - DRAW_OFFSET_X,
+                        L.deformedVerts[vi][2] - DRAW_OFFSET_Y,
+                        L.bindVerts[vi][3],
+                        L.bindVerts[vi][4],
+                        255, 255, 255, 255
+                    )
+                end
+            end
+        end
+    end
 end
 
 function love.draw()
@@ -1323,7 +1421,15 @@ function love.draw()
     else
         love.graphics.setColor(1, 1, 1, 1)
     end
-    love.graphics.draw(gridMesh, DRAW_OFFSET_X, DRAW_OFFSET_Y)
+
+    -- Multi-layer: draw back-to-front
+    if layers then
+        for _, L in ipairs(layers) do
+            love.graphics.draw(L.gridMesh, DRAW_OFFSET_X, DRAW_OFFSET_Y)
+        end
+    else
+        love.graphics.draw(gridMesh, DRAW_OFFSET_X, DRAW_OFFSET_Y)
+    end
 
     -- Weight paint heatmap overlay
     if weightPaintMode and activeBoneIdx and bindVerts._world then

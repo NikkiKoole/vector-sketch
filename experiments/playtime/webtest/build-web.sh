@@ -30,9 +30,41 @@ if [ -f "$PLAYTIME_DIR/scripts/${SCENE}.playtime.lua" ]; then
     cp "$PLAYTIME_DIR/scripts/${SCENE}.playtime.lua" "$BUILD_DIR/scripts/"
 fi
 
-# Copy textures if they exist and scene references them
+# Copy only textures referenced by this scene (parse bgURL from JSON)
+SCENE_JSON="$PLAYTIME_DIR/scripts/${SCENE}.playtime.json"
 if [ -d "$PLAYTIME_DIR/textures" ]; then
-    cp -r "$PLAYTIME_DIR/textures" "$BUILD_DIR/textures"
+    TEXTURE_FILES=$(python3 -c "
+import json, sys
+with open('$SCENE_JSON') as f:
+    data = json.load(f)
+urls = set()
+def walk(obj):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k in ('bgURL', 'outlineURL', 'maskURL', 'patternURL') and isinstance(v, str) and v:
+                urls.add(v)
+            else:
+                walk(v)
+    elif isinstance(obj, list):
+        for i in obj: walk(i)
+walk(data)
+for u in sorted(urls):
+    print(u)
+" 2>/dev/null)
+
+    if [ -n "$TEXTURE_FILES" ]; then
+        echo "Copying referenced textures..."
+        while IFS= read -r texfile; do
+            src="$PLAYTIME_DIR/textures/$texfile"
+            if [ -f "$src" ]; then
+                mkdir -p "$BUILD_DIR/textures/$(dirname "$texfile")"
+                cp "$src" "$BUILD_DIR/textures/$texfile"
+                echo "  $texfile"
+            fi
+        done <<< "$TEXTURE_FILES"
+    else
+        echo "No texture references found in scene — skipping textures."
+    fi
 fi
 
 # Create web-compatible main.lua
@@ -87,11 +119,15 @@ local function loadSceneFromFilesystem(sceneName)
     state.selection.selectedObj = nil
     sceneIO.load(jsonData, state.physicsWorld, cam)
 
-    local luaData = love.filesystem.read(luaPath)
-    if luaData then
-        state.scene.sceneScript = scriptMod.loadScript(luaData, luaPath)()
-        scriptMod.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
-        scriptMod.call('onStart')
+    -- Only load script if file exists
+    local luaInfo = love.filesystem.getInfo(luaPath)
+    if luaInfo then
+        local luaData = love.filesystem.read(luaPath)
+        if luaData then
+            state.scene.sceneScript = scriptMod.loadScript(luaData, luaPath)()
+            scriptMod.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
+            scriptMod.call('onStart')
+        end
     end
 end
 
@@ -231,7 +267,9 @@ function love.textinput(t)
     ui.handleTextInput(t)
 end
 
-function love.resize() end
+function love.resize(w, h)
+    camera.setCameraViewport(cam, w, h)
+end
 function love.quit() end
 MAINLUA
 
@@ -271,13 +309,155 @@ python3 "$(dirname "$0")/patch-goto.py" "$BUILD_DIR"
 
 # Create .love file
 echo "Creating .love file..."
+rm -f /tmp/playtime-web.love
 cd "$BUILD_DIR"
 zip -r /tmp/playtime-web.love . -x "*.DS_Store" -x "*.git*" > /dev/null
+echo "  .love file: $(du -sh /tmp/playtime-web.love | cut -f1)"
 
 # Package with love.js
 echo "Packaging with love.js..."
 rm -rf "$OUTPUT_DIR"
 love.js /tmp/playtime-web.love "$OUTPUT_DIR" --title "Playtime: ${SCENE}" --memory 134217728
+
+# Overwrite love.js default HTML/CSS with responsive versions
+echo "Applying responsive layout..."
+cat > "$OUTPUT_DIR/index.html" << HTMLEOF
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Playtime: ${SCENE}</title>
+    <link rel="stylesheet" type="text/css" href="theme/love.css">
+  </head>
+  <body>
+    <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="800" height="600"></canvas>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+
+    <script type='text/javascript'>
+      function resizeCanvas() {
+        var canvas = document.getElementById("canvas");
+        var dpr = window.devicePixelRatio || 1;
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+
+        var loading = document.getElementById("loadingCanvas");
+        if (loading && loading.style.display !== 'none') {
+          loading.width = w;
+          loading.height = h;
+        }
+      }
+
+      function goFullScreen(){
+        var canvas = document.getElementById("canvas");
+        var rfs = canvas.requestFullscreen || canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen;
+        if (rfs) rfs.call(canvas);
+      }
+
+      var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
+      function drawLoadingText(text) {
+        var canvas = loadingContext.canvas;
+        loadingContext.fillStyle = "rgb(142, 195, 227)";
+        loadingContext.fillRect(0, 0, canvas.width, canvas.height);
+        loadingContext.font = '2em arial';
+        loadingContext.textAlign = 'center';
+        loadingContext.fillStyle = "rgb(11, 86, 117)";
+        loadingContext.fillText(text, canvas.width / 2, canvas.height / 2);
+      }
+
+      window.onload = function () { window.focus(); };
+      window.onclick = function () { window.focus(); };
+
+      window.addEventListener("keydown", function(e) {
+        if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+          e.preventDefault();
+        }
+      }, false);
+
+      window.addEventListener("resize", function() {
+        resizeCanvas();
+      });
+
+      resizeCanvas();
+
+      var Module = {
+        arguments: ["./game.love"],
+        INITIAL_MEMORY: 134217728,
+        printErr: console.error.bind(console),
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+          canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+          canvas.addEventListener("wheel", function(e) { e.preventDefault(); }, { passive: false });
+          return canvas;
+        })(),
+        setStatus: function(text) {
+          if (text) {
+            drawLoadingText(text);
+          } else if (Module.remainingDependencies === 0) {
+            document.getElementById('loadingCanvas').style.display = 'none';
+            var canvas = document.getElementById('canvas');
+            canvas.style.visibility = 'visible';
+            resizeCanvas();
+          }
+        },
+        totalDependencies: 0,
+        remainingDependencies: 0,
+        monitorRunDependencies: function(left) {
+          this.remainingDependencies = left;
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        }
+      };
+      Module.setStatus('Downloading...');
+      window.onerror = function(event) {
+        Module.setStatus('Exception thrown, see JavaScript console');
+        Module.setStatus = function(text) {
+          if (text) Module.printErr('[post-exception status] ' + text);
+        };
+      };
+
+      var applicationLoad = function(e) {
+        Love(Module);
+        var resizeRetries = 0;
+        var resizeInterval = setInterval(function() {
+          resizeCanvas();
+          window.dispatchEvent(new Event('resize'));
+          resizeRetries++;
+          if (resizeRetries > 20) clearInterval(resizeInterval);
+        }, 200);
+      }
+    </script>
+    <script type="text/javascript" src="game.js"></script>
+    <script async type="text/javascript" src="love.js" onload="applicationLoad(this)"></script>
+  </body>
+</html>
+HTMLEOF
+
+mkdir -p "$OUTPUT_DIR/theme"
+cat > "$OUTPUT_DIR/theme/love.css" << 'CSSEOF'
+* { box-sizing: border-box; }
+html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background-color: rgb(154, 205, 237);
+    font-family: arial;
+}
+#loadingCanvas {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+#canvas {
+    position: absolute; top: 0; left: 0;
+    border: 0px none; padding: 0; margin: 0;
+    visibility: hidden;
+}
+CSSEOF
 
 echo ""
 echo "=== Done! ==="
