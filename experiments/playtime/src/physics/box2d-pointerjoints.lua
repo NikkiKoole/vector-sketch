@@ -114,7 +114,13 @@ function lib.getInteractedWithPointer()
     local interactedWith = {}
     local pjs = pointerJoints
     for i = 1, #pjs do
-        table.insert(interactedWith, pjs[i].jointBody)
+        local b = pjs[i].jointBody
+        -- A stone being dragged can be destroyed out from under us (e.g. by
+        -- the beginContact reset hook). Skip dead refs so callers don't
+        -- crash on :getUserData().
+        if b and not b:isDestroyed() then
+            table.insert(interactedWith, b)
+        end
     end
     return interactedWith
 end

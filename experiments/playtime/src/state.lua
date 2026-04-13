@@ -109,26 +109,10 @@ state.world = {
 }
 
 
-state.backdrops = {
-    {
-        x = 0,
-        y = 0,
-        url = 'textures/eye1.png',
-        border = true
-    },
-    {
-        x = 300,
-        y = 0,
-        url = 'textures/eye2.png',
-        border = true
-    },
-    {
-        x = 1300,
-        y = 1000,
-        border = true,
-        url = 'backdrops/5-1536x1075.jpg'
-    }
-}
+-- Backdrops are now persisted per-scene (see io.lua gatherSaveData / buildWorld).
+-- Sessions that open a scene with a `backdrops` field replace this list wholesale;
+-- sessions that open a pre-persistence scene inherit whatever is here.
+state.backdrops = {}
 
 
 state.snap = {

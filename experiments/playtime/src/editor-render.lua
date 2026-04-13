@@ -19,9 +19,12 @@ local NT = require('src.node-types')
 local lib = {}
 
 
+-- drawGrid renders in WORLD space so it must be called inside cam:push().
+-- Line width is divided by the camera scale so grid lines stay visually 1px
+-- regardless of zoom.
 function lib.drawGrid(color)
     local lw = love.graphics.getLineWidth()
-    love.graphics.setLineWidth(1)
+    love.graphics.setLineWidth(1 / cam:getScale())
     love.graphics.setColor(color[1], color[2], color[3], color[4])
 
     local w, h = love.graphics.getDimensions()
@@ -34,12 +37,10 @@ function lib.drawGrid(color)
     local endY = math.ceil(bry / step) * step
 
     for i = startX, endX, step do
-        local x, _ = cam:getScreenCoordinates(i, 0)
-        love.graphics.line(x, 0, x, h)
+        love.graphics.line(i, tly, i, bry)
     end
     for i = startY, endY, step do
-        local _, y = cam:getScreenCoordinates(0, i)
-        love.graphics.line(0, y, w, y)
+        love.graphics.line(tlx, i, brx, i)
     end
     love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1)

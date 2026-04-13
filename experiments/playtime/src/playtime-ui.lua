@@ -203,6 +203,7 @@ function lib.drawBGSettingsUI()
             x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
         end
         local toDelete -- or nil
+        local selectedBD
         for i = 1, #state.backdrops do
             if ui.button(x, y, ROW_WIDTH, state.backdrops[i].url) then
                 if not state.backdrops[i].selected then
@@ -216,10 +217,25 @@ function lib.drawBGSettingsUI()
                 -- want to delete from the array.
                 toDelete = i
             end
+            if state.backdrops[i].selected then selectedBD = state.backdrops[i] end
             nextRow()
         end
         if toDelete then
             table.remove(state.backdrops, toDelete)
+        end
+
+        -- Per-backdrop controls for the selected one.
+        if selectedBD then
+            nextRow()
+            local newScale = ui.sliderWithInput('bdScale', x, y, ROW_WIDTH, 0.05, 3, selectedBD.scale or 1)
+            ui.alignedLabel(x, y, ' scale')
+            if newScale then selectedBD.scale = tonumber(newScale) or selectedBD.scale end
+            nextRow()
+            local fgChanged, fgValue = ui.checkbox(x, y, selectedBD.foreground or false, 'foreground')
+            if fgChanged then selectedBD.foreground = fgValue end
+            nextRow()
+            local borderChanged, borderValue = ui.checkbox(x, y, selectedBD.border or false, 'border')
+            if borderChanged then selectedBD.border = borderValue end
         end
     end
     )

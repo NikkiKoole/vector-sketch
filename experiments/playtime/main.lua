@@ -51,6 +51,12 @@ local bridge, lurker
 if not IS_WEB then
     bridge = require 'vendor.claude-bridge'
     lurker = require 'vendor.lurker'
+    -- Scene scripts (scripts/*.playtime.lua) are loaded by scene-loader, not
+    -- require()'d as modules. Tell lurker to skip them so it doesn't try to
+    -- hotswap them as Lua modules and crash into its error overlay.
+    lurker.preswap = function(f)
+        return f:match('scripts/.+%.playtime%.lua$') ~= nil
+    end
     local _lurker_onerror = lurker.onerror
     lurker.onerror = function(e, nostacktrace)
         bridge.recordError("lurker", e)
@@ -157,8 +163,11 @@ function love.load(_args)
     --.chain(moonshine.effects.vignette)
     --effect.filmgrain.size = 2
 
-    -- todo this can be optimized, maybe first figure out what kind of script if any we have running.
-    --state.physicsWorld:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    -- Wire physics callbacks so scene scripts can listen to beginContact /
+    -- endContact / preSolve / postSolve. physics-callbacks.lua populates
+    -- state.physicsCallbacks with {beginContact, endContact, preSolve, postSolve}.
+    require('src.physics.physics-callbacks')
+    state.physicsWorld:setCallbacks(unpack(state.physicsCallbacks))
 
 
     local cwd = love.filesystem.getWorkingDirectory()
@@ -180,11 +189,14 @@ function love.load(_args)
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
     --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
-    objectManager.addThing('rectangle', { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
-    humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
-    if humanoidInstance then
-        CharacterManager.randomizeMipo(humanoidInstance)
-    end
+    -- Dev scaffolding (off by default): a static ground at (300,550) and a
+    -- starter humanoid mipo. The mipo's DNA is what `c` in character-experiments
+    -- clones from, so leave this disabled for non-character scenes.
+    -- objectManager.addThing('rectangle', { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
+    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
+    -- if humanoidInstance then
+    --     CharacterManager.randomizeMipo(humanoidInstance)
+    -- end
 
 
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
@@ -328,9 +340,6 @@ function love.draw()
 
 
 
-    if state.editorPreferences.showGrid then
-        editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
-    end
     --for i = 1, 100 do
     box2dDrawTextured.makeCombinedImages()
     --end
@@ -342,22 +351,32 @@ function love.draw()
     -- if state.backdrop and state.backdrop.show then
     --     love.graphics.draw(state.backdrop.image, 0, 0)
     -- end
+    local function drawOneBackdrop(b)
+        if b.url and b.image == nil then
+            b.image = love.graphics.newImage(b.url)
+            b.w = b.image:getWidth()
+            b.h = b.image:getHeight()
+        end
+        if not b.image then return end
+        local s = b.scale or 1
+        local drawW = b.image:getWidth() * s
+        local drawH = b.image:getHeight() * s
+        if b.selected or b.border then
+            love.graphics.rectangle("line", b.x or 0, b.y or 0, drawW, drawH)
+        end
+        love.graphics.draw(b.image, b.x or 0, b.y or 0, 0, s, s)
+    end
+
     if state.backdrops then
         for i = 1, #state.backdrops do
             local b = state.backdrops[i]
-            if b.url and b.image == nil then
-                b.image = love.graphics.newImage(b.url)
-                b.w = b.image:getWidth()
-                b.h = b.image:getHeight()
-            end
-            if b.selected then
-                love.graphics.rectangle("line", b.x or 0, b.y or 0, b.image:getWidth(), b.image:getHeight())
-            end
-            if b.border then
-                love.graphics.rectangle("line", b.x or 0, b.y or 0, b.image:getWidth(), b.image:getHeight())
-            end
-            love.graphics.draw(b.image, b.x or 0, b.y or 0)
+            if not b.foreground then drawOneBackdrop(b) end
         end
+    end
+
+    -- Grid draws over backdrops, under bodies.
+    if state.editorPreferences.showGrid then
+        editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
 
     prof.push('drawworld')
@@ -369,6 +388,13 @@ function love.draw()
     end
     prof.pop('drawtexturedworld')
     script.call('draw')
+
+    if state.backdrops then
+        for i = 1, #state.backdrops do
+            local b = state.backdrops[i]
+            if b.foreground then drawOneBackdrop(b) end
+        end
+    end
 
     editorRenderer.renderActiveEditorThings()
     cam:pop()
