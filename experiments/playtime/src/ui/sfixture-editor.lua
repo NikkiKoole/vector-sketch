@@ -699,6 +699,7 @@ function lib.drawSelectedSFixture()
                                         dx        = dx,
                                         dy        = dy,
                                         dist      = dist,
+                                        bindAngle = bb:getAngle(), -- body rotation at bind time (for DQS)
                                         w         = 0,
                                     }
                                 end
@@ -764,6 +765,14 @@ function lib.drawSelectedSFixture()
                         influences = pruneTopK(influences, 3)
 
                         ud.extra.influences = influences -- STORE IT
+
+                        -- Capture world-space bind-pose vertex positions (for DQS skinning).
+                        local bindVerts = {}
+                        local numVerts = #verts / 2
+                        for vi = 1, numVerts do
+                            bindVerts[vi] = { verts[(vi - 1) * 2 + 1], verts[(vi - 1) * 2 + 2] }
+                        end
+                        ud.extra.bindVerts = bindVerts
                         --logger:inspect(influences)
                     end
                 end

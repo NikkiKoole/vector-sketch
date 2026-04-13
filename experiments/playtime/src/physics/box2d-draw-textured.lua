@@ -35,6 +35,17 @@ local maskTex = safeLoadImage('textures/shapes6-mask.png')
 local imageCache = {}
 local shrinkFactor = 1
 
+-- Skinning mode for MESHUSERT deformation (the mesh-with-influences path).
+--   true  = Dual Quaternion Skinning — preserves volume, avoids candy-wrapper at joints
+--   false = Linear Blend Skinning    — fast, but collapses/pinches when influencing bones rotate oppositely
+-- NOTE: this does NOT affect CONNECTED_TEXTURE (textured ribbon along a Bezier through joint
+-- anchors — e.g. arm/leg hair), which has its own bow-tie cause (sharp curve bends at elbow/knee)
+-- handled in `texturedCurve` via per-sample width clamping.
+-- NOTE: requires per-influence `bindAngle` and per-vertex `bindVerts` on ud.extra. New binds
+-- (re-running "edit vertices" → weights) capture these; old scenes are backfilled on load in io.lua
+-- using the loaded pose as bind pose. Falls back to LBS gracefully per-vertex if data is missing.
+lib.useDQS = true
+
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
 end
@@ -647,6 +658,18 @@ end
 
 
 -- Batched, no mesh:getVertex, 1x mesh:setVertices per call
+-- Per-sample scratch arrays for texturedCurve (reused across calls, single-threaded).
+local _tcX, _tcY, _tcDX, _tcDY = {}, {}, {}, {}
+
+-- Build a textured triangle-strip ribbon along `curve`.
+-- `halfWidth` is derived from image width × dir × scaleW.
+--
+-- Bow-tie prevention: at sharp bends (e.g. arm-hair curve through shoulder→elbow→wrist when
+-- the elbow is flexed), a constant-width ribbon's inner edge crosses itself, producing a
+-- visible X/bow-tie. We clamp per-sample halfWidth by the polyline-corner miter limit:
+--   halfWidth ≤ min(prevSegLen, nextSegLen) × tan((π − turnAngle) / 2)
+-- where turnAngle = acos(segDirPrev · segDirNext). Straight joins are unaffected
+-- (tan(π/2) = ∞); 90° joins are capped at min-seg-len; sharper joins taper toward zero.
 local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
     dir             = dir or 1
     scaleW          = scaleW or 1
@@ -655,6 +678,8 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
     -- Only need the texture width to set half-width of the ribbon
     local w         = image:getWidth()
     local halfWidth = (w * dir) * scaleW
+    local absHW     = halfWidth < 0 and -halfWidth or halfWidth
+    local signHW    = halfWidth < 0 and -1 or 1
 
     -- Prealloc / reuse vertex tables for this mesh
     local verts     = _ensureVertsBuf(mesh)
@@ -665,33 +690,65 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
 
     -- Safety against degenerate curves
     local eps       = 1e-12
+    local sqrt_     = math.sqrt
+    local acos      = math.acos
+    local tan       = math.tan
+    local PI        = math.pi
 
-    -- Walk pairs j,j+1 while also knowing pair index p
-    local p         = 0
+    -- Pass 1: sample positions and normalized tangents along the curve.
+    for p = 0, segMinus1 do
+        local t            = p / segMinus1
+        local x, y         = curve:evaluate(t)
+        local dx, dy       = dl:evaluate(t)
+        local invlen       = 1.0 / sqrt_(dx * dx + dy * dy + eps)
+        _tcX[p + 1]        = x
+        _tcY[p + 1]        = y
+        _tcDX[p + 1]       = dx * invlen
+        _tcDY[p + 1]       = dy * invlen
+    end
+
+    -- Pass 2: write ribbon vertices with bend-aware half-width.
+    local p = 0
     for j = 1, count, 2 do
-        -- Param along the curve in [0,1]
-        local t                    = p / segMinus1
+        local i    = p + 1
+        local x    = _tcX[i]
+        local y    = _tcY[i]
 
-        -- Evaluate position and derivative
-        local x, y                 = curve:evaluate(t)
-        local dx, dy               = dl:evaluate(t)
+        -- Left normal of the tangent.
+        local nx   = -_tcDY[i]
+        local ny   = _tcDX[i]
 
-        -- Normalized derivative and its left normal
-        local invlen               = 1.0 / math.sqrt(dx * dx + dy * dy + eps)
-        dx, dy                     = dx * invlen, dy * invlen
-        local nx, ny               = -dy, dx
+        -- Adaptive half-width: clamp to prevent inner-edge crossover at sharp bends.
+        local hw   = absHW
+        if i > 1 and i < segments then
+            local ax = x - _tcX[i - 1]
+            local ay = y - _tcY[i - 1]
+            local bx = _tcX[i + 1] - x
+            local by = _tcY[i + 1] - y
+            local la = sqrt_(ax * ax + ay * ay)
+            local lb = sqrt_(bx * bx + by * by)
+            if la > eps and lb > eps then
+                local dot = (ax * bx + ay * by) / (la * lb)
+                if dot < 0.9999 then
+                    if dot < -1 then dot = -1 elseif dot > 1 then dot = 1 end
+                    local turn  = acos(dot)                -- 0 = straight, π = reverse
+                    local alpha = (PI - turn) * 0.5        -- interior half-angle
+                    -- tan(alpha) can be huge near straight joins → harmless (clamp below hw)
+                    local maxHw = (la < lb and la or lb) * tan(alpha)
+                    if maxHw < hw then hw = maxHw end
+                end
+            end
+        end
+        hw = hw * signHW
 
-        -- Offset to both sides
-        local xL                   = x + halfWidth * nx
-        local yL                   = y + halfWidth * ny
-        local xR                   = x - halfWidth * nx
-        local yR                   = y - halfWidth * ny
+        local xL                   = x + hw * nx
+        local yL                   = y + hw * ny
+        local xR                   = x - hw * nx
+        local yR                   = y - hw * ny
 
-        -- Compute UVs analytically (no getVertex):
-        -- left u=0, right u=1; v increases 0..1 per pair
+        -- UVs: left u=0, right u=1; v increases 0..1 per pair
         local v                    = (segMinus1 > 0) and (p / segMinus1) or 0
 
-        -- Mutate the precreated vertex tables
         local vL                   = verts[j]
         vL[1], vL[2], vL[3], vL[4] = xL, yL, 0, v
 
@@ -840,6 +897,34 @@ local function buildMouthPolygon(curvePoints)
 
     if #cleaned >= 6 then return cleaned end
     return nil
+end
+
+-- UV lookup helpers for MESHUSERT / UVUSERT paths.
+-- The source polygon (`polyVerts`) is `{x1,y1,x2,y2,...}` and its corresponding
+-- UV array (`uvs`) is `{u1,v1,u2,v2,...}` aligned by vertex index. After
+-- triangulation, each triangle vertex's (x,y) matches one of the source vertices
+-- (triangulation doesn't add Steiner points for simple polygons). Build an
+-- (x,y) → vertex-index map once, then look up both u and v from the same source
+-- vertex by keying on the full (x,y) pair — not by matching x and y against
+-- every slot independently (which was the pre-fix bug: numeric collisions between
+-- x- and y-coordinates of different vertices caused scrambled UVs).
+local function buildPolyVertexIndex(polyVerts)
+    local map = {}
+    local numVerts = math.floor(#polyVerts / 2)
+    for vi = 1, numVerts do
+        local key = string.format("%.3f,%.3f",
+            polyVerts[(vi - 1) * 2 + 1],
+            polyVerts[(vi - 1) * 2 + 2])
+        map[key] = vi
+    end
+    return map
+end
+
+local function lookupUV(vx, vy, vertexIndex, uvs)
+    local key = string.format("%.3f,%.3f", vx, vy)
+    local vi = vertexIndex[key]
+    if not vi then return nil, nil end
+    return uvs[(vi - 1) * 2 + 1], uvs[(vi - 1) * 2 + 2]
 end
 
 function lib.drawTexturedWorld(world)
@@ -1277,18 +1362,17 @@ function lib.drawTexturedWorld(world)
         --     return influences
         -- end
 
-        local function deformWorldVerts(influences, numVerts, rootBody)
+        -- Linear Blend Skinning: averages per-bone world positions directly.
+        -- Causes "candy wrapper" / bowtie collapse at joints when influencing bodies
+        -- rotate in opposite directions (the averaged midpoint falls inside the joint).
+        local function deformWorldVertsLBS(influences, numVerts, rootBody)
             local out = {}
 
             for vi = 1, numVerts do
                 local inflList = influences[vi]
                 local wxSum, wySum, wSum = 0, 0, 0
-                --logger:inspect(inflList)   -- somehow this can end up being nil
                 for k = 1, #inflList do
                     local infl = inflList[k]
-
-
-
                     local body   = infl.body
 
                     local ax, ay = currentAnchorLocal(infl)
@@ -1306,13 +1390,133 @@ function lib.drawTexturedWorld(world)
                     wxSum = wxSum / wSum; wySum = wySum / wSum
                 end
 
-                -- convert blended world -> root local
                 local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-                out[(vi - 1) * 2 + 1] = rx -- wxSum
-                out[(vi - 1) * 2 + 2] = ry --wySum
+                out[(vi - 1) * 2 + 1] = rx
+                out[(vi - 1) * 2 + 2] = ry
             end
 
             return out
+        end
+
+        -- Dual Quaternion Skinning (2D):
+        -- 1. Compute each bone's delta rotation from bind pose (Δθ_i = θ_i_now - θ_i_bind).
+        -- 2. Circular-mean blend the delta angles weighted by influence weight.
+        -- 3. Apply the single blended rotation to the bind vertex (around world origin).
+        -- 4. Add a rotation-compensated translation: Σ w_i·(P_i_now - R_blend·bindVert).
+        --
+        -- Requires per-influence `bindAngle` and per-vertex `bindVerts`. Falls back to LBS
+        -- if either is missing (old scenes that were never rebound).
+        local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
+            local atan2, cos, sin = math.atan2, math.cos, math.sin
+            local out = {}
+
+            for vi = 1, numVerts do
+                local inflList = influences[vi]
+                local bv       = bindVerts and bindVerts[vi]
+
+                -- Fallback path: no bind data for this vertex → LBS for this vertex only.
+                if not bv then
+                    local wxSum, wySum, wSum = 0, 0, 0
+                    for k = 1, #inflList do
+                        local infl = inflList[k]
+                        local ax, ay = currentAnchorLocal(infl)
+                        local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                        wxSum = wxSum + wx * infl.w
+                        wySum = wySum + wy * infl.w
+                        wSum  = wSum + infl.w
+                    end
+                    if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
+                    local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
+                    out[(vi - 1) * 2 + 1] = rx
+                    out[(vi - 1) * 2 + 2] = ry
+                else
+                    local bx, by = bv[1], bv[2]
+
+                    -- Pass 1: blended delta rotation + per-bone current world positions.
+                    local cosSum, sinSum, wSum = 0, 0, 0
+                    local nInfl = #inflList
+                    local pxs, pys, ws = {}, {}, {}
+
+                    for k = 1, nInfl do
+                        local infl = inflList[k]
+                        if infl.bindAngle == nil then
+                            -- Missing bind angle on this influence → bail to LBS for this vertex.
+                            pxs = nil
+                            break
+                        end
+                        local body   = infl.body
+                        local ax, ay = currentAnchorLocal(infl)
+                        local wx, wy = body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                        local dTheta = body:getAngle() - infl.bindAngle
+                        local w      = infl.w
+                        pxs[k] = wx
+                        pys[k] = wy
+                        ws[k]  = w
+                        cosSum = cosSum + w * cos(dTheta)
+                        sinSum = sinSum + w * sin(dTheta)
+                        wSum   = wSum + w
+                    end
+
+                    if not pxs then
+                        -- Fallback for this vertex: LBS
+                        local wxSum, wySum, wSum2 = 0, 0, 0
+                        for k = 1, nInfl do
+                            local infl = inflList[k]
+                            local ax, ay = currentAnchorLocal(infl)
+                            local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                            wxSum = wxSum + wx * infl.w
+                            wySum = wySum + wy * infl.w
+                            wSum2 = wSum2 + infl.w
+                        end
+                        if wSum2 > 0 then wxSum = wxSum / wSum2; wySum = wySum / wSum2 end
+                        local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
+                        out[(vi - 1) * 2 + 1] = rx
+                        out[(vi - 1) * 2 + 2] = ry
+                    else
+                        -- Blended delta rotation (circular mean).
+                        local len = (cosSum * cosSum + sinSum * sinSum) ^ 0.5
+                        local blendAngle
+                        if len > 1e-9 then
+                            blendAngle = atan2(sinSum / len, cosSum / len)
+                        else
+                            blendAngle = 0
+                        end
+
+                        -- R_blend · bindVert (rotate bind world pos by blended delta, around origin).
+                        local cosB, sinB = cos(blendAngle), sin(blendAngle)
+                        local rbx = cosB * bx - sinB * by
+                        local rby = sinB * bx + cosB * by
+
+                        -- Translation: Σ w_i · (P_i_now - R_blend · bindVert).
+                        local txBlend, tyBlend = 0, 0
+                        for k = 1, nInfl do
+                            txBlend = txBlend + ws[k] * (pxs[k] - rbx)
+                            tyBlend = tyBlend + ws[k] * (pys[k] - rby)
+                        end
+                        if wSum > 0 then
+                            txBlend = txBlend / wSum
+                            tyBlend = tyBlend / wSum
+                        end
+
+                        -- Final world position, then map to root-local.
+                        local fx = rbx + txBlend
+                        local fy = rby + tyBlend
+                        local rx, ry = rootBody:getLocalPoint(fx, fy)
+                        out[(vi - 1) * 2 + 1] = rx
+                        out[(vi - 1) * 2 + 2] = ry
+                    end
+                end
+            end
+
+            return out
+        end
+
+        local function deformWorldVerts(influences, bindVerts, numVerts, rootBody)
+            if lib.useDQS then
+                return deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
+            else
+                return deformWorldVertsLBS(influences, numVerts, rootBody)
+            end
         end
 
         if drawables[i].type == subtypes.MESHUSERT then
@@ -1353,7 +1557,7 @@ function lib.drawTexturedWorld(world)
                     -- logger:inspect(drawables[i].extra.influences)
                     -- we need to fill in the bodies for each influence, but ratehr not everyframe!
                     --drawables[i].extra.influences = fillBodiesInInfluences(drawables[i].extra.influences, #verts/2)
-                    local newVerts = deformWorldVerts(drawables[i].extra.influences, #verts / 2, drawables[i].body)
+                    local newVerts = deformWorldVerts(drawables[i].extra.influences, drawables[i].extra.bindVerts, #verts / 2, drawables[i].body)
                     -- local worldBindVerts = vertsToWorld(drawables[i].body, verts)
                     -- logger:inspect(worldBindVerts)
                     --logger:inspect(newVerts)
@@ -1391,43 +1595,32 @@ function lib.drawTexturedWorld(world)
                     end
                 end
                 if data and data.uvs then
-                     meshVertices = {}
-                      vertexFormat = {
-                         { "VertexPosition", "float", 2 },
-                             { "VertexTexCoord", "float", 2 },
-                         { "VertexColor",    "byte",  4 },
-                     }
-                    --print('got some uvs ready too!')
+                    meshVertices = {}
+                    vertexFormat = {
+                        { "VertexPosition", "float", 2 },
+                        { "VertexTexCoord", "float", 2 },
+                        { "VertexColor",    "byte",  4 },
+                    }
+
+                    local vertexIndex = buildPolyVertexIndex(verts)
                     for j = 1, #tris do
                         local tri = tris[j]
                         for k = 0, 2 do
                             local vx = tri[k * 2 + 1]
                             local vy = tri[k * 2 + 2]
-                            local u, v --= 1, 1
-                            --print(vx, inspect(verts))
-                            for l = 1, #verts do
-                                --  print()
-                                if math.abs(vx - verts[l]) < 0.001 then
-                                    u = data.uvs[l]
-                                end
-
-                                if math.abs(vy - verts[l]) < 0.001 then
-                                    v = data.uvs[l]
-                                end
-                            end
-
+                            local u, v = lookupUV(vx, vy, vertexIndex, data.uvs)
                             table.insert(meshVertices, {
                                 vx, vy,
-                                u, v,
+                                u or 0, v or 0,
                                 255, 255, 255
                             })
                         end
                     end
-
                 end
                 local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
                  if data and data.uvs then
-                mesh:setTexture(state.backdrops[data.selectedBGIndex].image)
+                    local bd = state.backdrops and state.backdrops[data.selectedBGIndex]
+                    if bd and bd.image then mesh:setTexture(bd.image) end
                  end
                 local bx, by = drawables[i].body:getPosition()
                 local ba = drawables[i].body:getAngle()
@@ -1492,28 +1685,16 @@ function lib.drawTexturedWorld(world)
                 -- end
                 local tris = shapes.makeTrianglesFromPolygon(verts)
 
-
+                local vertexIndex = buildPolyVertexIndex(verts)
                 for j = 1, #tris do
                     local tri = tris[j]
                     for k = 0, 2 do
                         local x = tri[k * 2 + 1]
                         local y = tri[k * 2 + 2]
-                        local u, v --= 1, 1
-                        --print(x, inspect(verts))
-                        for l = 1, #verts do
-                            --  print()
-                            if math.abs(x - verts[l]) < 0.001 then
-                                u = data.uvs[l]
-                            end
-
-                            if math.abs(y - verts[l]) < 0.001 then
-                                v = data.uvs[l]
-                            end
-                        end
-
+                        local u, v = lookupUV(x, y, vertexIndex, data.uvs)
                         table.insert(meshVertices, {
                             x, y,
-                            u, v,
+                            u or 0, v or 0,
                             255, 255, 255
                         })
                     end
@@ -1525,7 +1706,8 @@ function lib.drawTexturedWorld(world)
 
 
                 local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
-                mesh:setTexture(state.backdrops[data.selectedBGIndex].image)
+                local bd = state.backdrops and state.backdrops[data.selectedBGIndex]
+                if bd and bd.image then mesh:setTexture(bd.image) end
 
                 --local mesh = love.graphics.newMesh(p)
                 love.graphics.setColor(1, 1, 1)

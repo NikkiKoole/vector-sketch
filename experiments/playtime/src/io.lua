@@ -43,8 +43,35 @@ local function restoreInfluenceBodies(influences)
                 local anchor = registry.getSFixtureByID(infl.nodeId)
                 infl.body = anchor:getBody()
             end
+            -- Backfill bindAngle for scenes saved before DQS support.
+            -- Assumes the loaded pose is the bind pose (true when scene is saved at rest).
+            if infl.bindAngle == nil and infl.body then
+                infl.bindAngle = infl.body:getAngle()
+            end
         end
     end
+end
+
+-- Backfill bindVerts from current body poses for scenes saved before DQS support.
+-- At bind time, each influence's (offx,offy) IS the anchor's body-local position, so
+-- (offx+dx, offy+dy) transformed by the body's current world transform gives the bind-world
+-- position — provided bodies haven't moved since load. True when scene is loaded paused/at-rest.
+local function backfillBindVerts(extra)
+    if not extra or not extra.influences then return end
+    if extra.bindVerts then return end
+    local bindVerts = {}
+    for vi = 1, #extra.influences do
+        local inflList = extra.influences[vi]
+        local infl = inflList and inflList[1]
+        if infl and infl.body then
+            local wx, wy = infl.body:getWorldPoint(
+                (infl.offx or 0) + (infl.dx or 0),
+                (infl.offy or 0) + (infl.dy or 0)
+            )
+            bindVerts[vi] = { wx, wy }
+        end
+    end
+    extra.bindVerts = bindVerts
 end
 -- For cloning: remap IDs THEN restore body references
 local function remapAndRestoreInfluences(influences, idMapping)
@@ -101,6 +128,23 @@ function lib.buildWorld(data, world, cam)
     if data.camera then
         cam:setTranslation(data.camera.x, data.camera.y)
         cam:setScale(data.camera.scale)
+    end
+
+    if data.backdrops then
+        -- Scene-persisted backdrops replace session backdrops wholesale.
+        -- Runtime-only fields (image, w, h, selected) are not saved; they
+        -- get re-populated lazily by the draw loop in main.lua.
+        state.backdrops = {}
+        for _, b in ipairs(data.backdrops) do
+            table.insert(state.backdrops, {
+                url = b.url,
+                x = b.x,
+                y = b.y,
+                scale = b.scale,
+                border = b.border,
+                foreground = b.foreground,
+            })
+        end
     end
 
     local recreatedSFixtures = {}
@@ -173,6 +217,19 @@ function lib.buildWorld(data, world, cam)
 
                     -- Migrate old/middle-era subtype formats to current era
                     subtypes.migrate(oldUD)
+
+                    -- RESOURCE sfixtures reference backdrops by array index.
+                    -- If a URL was saved alongside the index, resolve it now so
+                    -- reordering/adding backdrops doesn't silently break the ref.
+                    if subtypes.is(oldUD, subtypes.RESOURCE) and oldUD.extra
+                        and oldUD.extra.selectedBGURL and state.backdrops then
+                        for bi, b in ipairs(state.backdrops) do
+                            if b.url == oldUD.extra.selectedBGURL then
+                                oldUD.extra.selectedBGIndex = bi
+                                break
+                            end
+                        end
+                    end
 
                     -- make it recreate the image!
                     if oldUD.extra and oldUD.extra.OMP then
@@ -379,6 +436,7 @@ function lib.buildWorld(data, world, cam)
             if ud.extra then --and ud.extra.infuences then
                 if ud.extra.influences then
                     restoreInfluenceBodies(ud.extra.influences)
+                    backfillBindVerts(ud.extra)
                 end
             end
         end
@@ -438,8 +496,19 @@ function lib.gatherSaveData(world, camera)
         version = "1.0", -- Versioning for future compatibility
         bodies = {},
         joints = {},
-        camera = {}
+        camera = {},
+        backdrops = {},
     }
+    for _, b in ipairs(state.backdrops or {}) do
+        table.insert(saveData.backdrops, {
+            url = b.url,
+            x = b.x,
+            y = b.y,
+            scale = b.scale,
+            border = b.border,
+            foreground = b.foreground,
+        })
+    end
     for _, body in pairs(world:getBodies()) do
         local userData = body:getUserData()
         local thing = userData and userData.thing
@@ -569,6 +638,14 @@ function lib.gatherSaveData(world, camera)
                         if subtypes.is(ud, subtypes.TEXFIXTURE) then
                             ud.extra.dirty = true
                             if ud.extra.ompImage then ud.extra.ompImage = nil end
+                        end
+                        -- Stash the backdrop URL alongside the array index so the
+                        -- reference survives backdrop reordering across sessions.
+                        if subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
+                            local idx = ud.extra.selectedBGIndex
+                            if idx and state.backdrops and state.backdrops[idx] then
+                                ud.extra.selectedBGURL = state.backdrops[idx].url
+                            end
                         end
                         if ud.extra and ud.extra.ompImage then
                             ud.extra.dirty = true
