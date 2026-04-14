@@ -28,16 +28,21 @@ Multiple iterations (mainA.lua through mainH.lua). Implements:
 - Classic skinning formula: `finalPos = sum(weight * boneWorld * boneBindInv * bindPos)`
 - Currently draws polylines only — **needs textured mesh rendering**
 
-### 2. `meshusert` subtype in playtime (half-shipped)
+### 2. `meshusert` subtype in playtime
 
-Located in `src/physics/box2d-draw-textured.lua` lines ~1306-1430:
-- `deformWorldVerts()` does weighted vertex blending from Box2D anchors/joints
-- Distance-based influence weights, serialization in `io.lua`
-- **Problems:** no UI to set up, UV mapping bugs, deformation in draw loop (slow), OMP textures don't compose with per-vertex deformation
+Located in `src/physics/box2d-draw-textured.lua`:
+- `deformWorldVerts()` dispatches between DQS and LBS skinning (`lib.useDQS` toggle, default true)
+- DQS (Dual Quaternion Skinning) avoids candy-wrapper collapse at joints — ported from `deform-textured/` experiment (2026-04-13)
+- Distance-based influence weights, top-K pruning, serialization in `io.lua`
+- UV lookup fixed: uses pair-keyed vertex matching (`buildPolyVertexIndex` + `lookupUV`) instead of per-slot numeric matching that could scramble UVs on symmetric polygons
+- Polygon-dirty hook in `object-manager.lua` invalidates stale UVs when vertex count changes
+- UI exists in `sfixture-editor.lua`: "add node" to select joints/anchors, "bind pose" to compute influences
+- Bind-pose captures `bindAngle` per influence and `bindVerts` per vertex for DQS; backfilled on load for older scenes
+- **Remaining gaps:** no weight-painting UI, no alpha-aware weights, no per-endpoint radii, deformation still in draw loop (slow), OMP textures don't compose with per-vertex deformation
 
 ### 3. Connected-texture bezier ribbons
 
-Works well for individual limbs (arms, tail, tentacles) but can't handle a whole-body scan — it's a 1D ribbon, not a 2D mesh.
+Works well for individual limbs (arms, tail, tentacles) but can't handle a whole-body scan — it's a 1D ribbon, not a 2D mesh. As of 2026-04-13, `texturedCurve` has per-sample miter-limit width clamping to prevent bow-tie artifacts at sharp bends (e.g. arm hair at flexed elbow/knee).
 
 ### 4. `vendor/loveblobs/` — soft body physics (disabled)
 

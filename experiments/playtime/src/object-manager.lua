@@ -17,6 +17,7 @@ local modes = require 'src.modes'
 local ST = require 'src.shape-types'
 local JT = require('src.joint-types')
 local BT = require('src.body-types')
+local subtypes = require('src.subtypes')
 -- local polyline = require 'src.polyline' -- unused
 
 function lib.finalizePolygonAsSoftSurface()
@@ -635,6 +636,19 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.vertices = newVertices
     thing.behaviors = newSettings.behaviors or thing.behaviors
 
+    -- If the polygon vertex count changed, any RESOURCE sfixture on this body
+    -- has a stale UV array (uvs length is pinned to the old vertex count).
+    -- Drop it so the RESOURCE editor re-computes UVs next time it's selected,
+    -- and so MESHUSERT/UVUSERT render paths don't hand out stale mappings.
+    -- See docs/UV-BACKDROP-FRAGILITY.md (fragility #6).
+    if oldVertices and #oldVertices ~= #newVertices then
+        for _, f in ipairs(newBody:getFixtures()) do
+            local ud = f:getUserData()
+            if type(ud) == 'table' and subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
+                ud.extra.uvs = nil
+            end
+        end
+    end
 
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })

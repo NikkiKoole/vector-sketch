@@ -160,6 +160,16 @@ Fully clean: **0 warnings / 0 errors** across 42 files.
 - Layout helpers: `ui.alignedLabel()` for vertical centering, `ui.sameLine()` for horizontal flow
 - Accordion state tables are local to their respective extracted module
 
+## Mesh deformation & skinning
+
+**MESHUSERT** sfixtures support Dual Quaternion Skinning (DQS) for deforming a polygon mesh across multiple Box2D body "bones". Toggle: `box2dDrawTextured.useDQS` (default true). Falls back to LBS per-vertex when bind data is missing. Bind-pose data (`bindAngle` per influence, `bindVerts` per vertex) is captured during bind and backfilled on load for old scenes (`io.lua`).
+
+**CONNECTED_TEXTURE** textured ribbons (Bezier through joints) have per-sample miter-limit width clamping to prevent bow-tie artifacts at sharp bends (e.g. arm hair at a flexed elbow).
+
+**UV lookup** for MESHUSERT/UVUSERT uses pair-keyed vertex matching (`buildPolyVertexIndex` + `lookupUV` in `box2d-draw-textured.lua`) — maps triangle vertices to source polygon by full (x,y) pair, not individual coordinate slots.
+
+**Polygon-dirty UV invalidation**: when polygon vertex count changes via `recreateThingFromBody` in `object-manager.lua`, any RESOURCE sfixture on the body has its `uvs` nulled so stale UV arrays don't persist.
+
 ## Known issues
 
 See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
@@ -175,6 +185,7 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 - `state.currentMode` has 27 writers across 3 files with no state machine
 - Image/OMP/canvas caches never cleared — memory grows over long sessions
 - Clone pipeline: influence references can become nil silently when cloning partial selections
+- Backdrop/UV system has several fragilities — see `docs/UV-BACKDROP-FRAGILITY.md`
 
 ## Further documentation
 
@@ -185,6 +196,8 @@ Deep-dive docs live in `docs/`:
 - `MODULE-ANALYSIS.md` — full module inventory, dependency map, serialization pipeline
 - `CLAUDE-BRIDGE.md` — complete bridge API reference
 - `DEEP-DIVE-NOTES.md` — analysis of DNA/character system, texture deformation, UI flow
+- `UV-BACKDROP-FRAGILITY.md` — RESOURCE/backdrop/UV duct-tape seams and hardening order
+- `TEXTURE-DEFORMATION-RESEARCH.md` — skeletal mesh deformation research + integration plan
 - `AI-COLLABORATION-PLAN.md` — strategy and completed phases
 - `TOOLING-SETUP.md` — dev tool setup (luacheck, busted, profiling)
 - `TOOLING-IDEAS.md` — proposed observability tools (not yet implemented)
