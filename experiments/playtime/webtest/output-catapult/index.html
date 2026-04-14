@@ -3,66 +3,63 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <title>Playtime: catapult</title>
-
-    <!-- Load custom style sheet -->
     <link rel="stylesheet" type="text/css" href="theme/love.css">
   </head>
   <body>
-    <center>
-      <div>
-        <h1>Playtime: catapult</h1>
-        <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="800" height="600"></canvas>
-        <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
-      </div>
-    </center>
+    <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="800" height="600"></canvas>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
 
     <script type='text/javascript'>
-      function goFullScreen(){
-            var canvas = document.getElementById("canvas");
-            if(canvas.requestFullScreen)
-                canvas.requestFullScreen();
-            else if(canvas.webkitRequestFullScreen)
-                canvas.webkitRequestFullScreen();
-            else if(canvas.mozRequestFullScreen)
-                canvas.mozRequestFullScreen();
-      }
-      function FullScreenHook(){
+      function resizeCanvas() {
         var canvas = document.getElementById("canvas");
-        canvas.width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        canvas.height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        var dpr = window.devicePixelRatio || 1;
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+
+        var loading = document.getElementById("loadingCanvas");
+        if (loading && loading.style.display !== 'none') {
+          loading.width = w;
+          loading.height = h;
+        }
       }
+
+      function goFullScreen(){
+        var canvas = document.getElementById("canvas");
+        var rfs = canvas.requestFullscreen || canvas.webkitRequestFullScreen || canvas.mozRequestFullScreen;
+        if (rfs) rfs.call(canvas);
+      }
+
       var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
       function drawLoadingText(text) {
         var canvas = loadingContext.canvas;
-
         loadingContext.fillStyle = "rgb(142, 195, 227)";
-        loadingContext.fillRect(0, 0, canvas.scrollWidth, canvas.scrollHeight);
-
+        loadingContext.fillRect(0, 0, canvas.width, canvas.height);
         loadingContext.font = '2em arial';
-        loadingContext.textAlign = 'center'
-        loadingContext.fillStyle = "rgb( 11, 86, 117 )";
-        loadingContext.fillText(text, canvas.scrollWidth / 2, canvas.scrollHeight / 2);
-
-        loadingContext.fillText("Powered By Emscripten.", canvas.scrollWidth / 2, canvas.scrollHeight / 4);
-        loadingContext.fillText("Powered By LÖVE.", canvas.scrollWidth / 2, canvas.scrollHeight / 4 * 3);
+        loadingContext.textAlign = 'center';
+        loadingContext.fillStyle = "rgb(11, 86, 117)";
+        loadingContext.fillText(text, canvas.width / 2, canvas.height / 2);
       }
 
       window.onload = function () { window.focus(); };
       window.onclick = function () { window.focus(); };
 
       window.addEventListener("keydown", function(e) {
-        // space and arrow keys
         if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
           e.preventDefault();
         }
       }, false);
 
-      // Prevent browser scroll/zoom on mouse wheel — let LÖVE handle it
-      document.getElementById('canvas').addEventListener("wheel", function(e) {
-        e.preventDefault();
-      }, { passive: false });
+      window.addEventListener("resize", function() {
+        resizeCanvas();
+      });
+
+      resizeCanvas();
 
       var Module = {
         arguments: ["./game.love"],
@@ -70,12 +67,8 @@
         printErr: console.error.bind(console),
         canvas: (function() {
           var canvas = document.getElementById('canvas');
-
-          // As a default initial behavior, pop up an alert when webgl context is lost. To make your
-          // application robust, you may want to override this behavior before shipping!
-          // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
           canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
-
+          canvas.addEventListener("wheel", function(e) { e.preventDefault(); }, { passive: false });
           return canvas;
         })(),
         setStatus: function(text) {
@@ -83,7 +76,9 @@
             drawLoadingText(text);
           } else if (Module.remainingDependencies === 0) {
             document.getElementById('loadingCanvas').style.display = 'none';
-            document.getElementById('canvas').style.visibility = 'visible';
+            var canvas = document.getElementById('canvas');
+            canvas.style.visibility = 'visible';
+            resizeCanvas();
           }
         },
         totalDependencies: 0,
@@ -96,7 +91,6 @@
       };
       Module.setStatus('Downloading...');
       window.onerror = function(event) {
-        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
         Module.setStatus('Exception thrown, see JavaScript console');
         Module.setStatus = function(text) {
           if (text) Module.printErr('[post-exception status] ' + text);
@@ -105,12 +99,16 @@
 
       var applicationLoad = function(e) {
         Love(Module);
+        var resizeRetries = 0;
+        var resizeInterval = setInterval(function() {
+          resizeCanvas();
+          window.dispatchEvent(new Event('resize'));
+          resizeRetries++;
+          if (resizeRetries > 20) clearInterval(resizeInterval);
+        }, 200);
       }
     </script>
     <script type="text/javascript" src="game.js"></script>
     <script async type="text/javascript" src="love.js" onload="applicationLoad(this)"></script>
-    <footer>
-      <p>Built with <a href="https://github.com/Davidobot/love.js">love.js</a> <button onclick="goFullScreen();">Go Fullscreen</button><br>Hint: Reload the page if screen is blank</p>
-    </footer>
   </body>
 </html>
