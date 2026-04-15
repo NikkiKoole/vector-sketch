@@ -132,18 +132,34 @@ function lib.buildWorld(data, world, cam)
 
     if data.backdrops then
         -- Scene-persisted backdrops replace session backdrops wholesale.
-        -- Runtime-only fields (image, w, h, selected) are not saved; they
-        -- get re-populated lazily by the draw loop in main.lua.
+        -- Image/w/h aren't saved (just url+world position). Eagerly load
+        -- the image here so dimensions are known before draw — UV compute
+        -- and any width/height-dependent code can run on scene load
+        -- without waiting for the first draw frame (was fragility #7 in
+        -- docs/UV-BACKDROP-FRAGILITY.md).
         state.backdrops = {}
         for _, b in ipairs(data.backdrops) do
-            table.insert(state.backdrops, {
+            local entry = {
                 url = b.url,
                 x = b.x,
                 y = b.y,
                 scale = b.scale,
                 border = b.border,
                 foreground = b.foreground,
-            })
+            }
+            if b.url and love.filesystem.getInfo(b.url) then
+                local ok, img = pcall(love.graphics.newImage, b.url)
+                if ok and img then
+                    entry.image = img
+                    entry.w = img:getWidth()
+                    entry.h = img:getHeight()
+                else
+                    logger:error("Failed to load backdrop image: " .. tostring(b.url))
+                end
+            else
+                logger:error("Backdrop URL not found: " .. tostring(b.url))
+            end
+            table.insert(state.backdrops, entry)
         end
     end
 
@@ -437,6 +453,29 @@ function lib.buildWorld(data, world, cam)
                 if ud.extra.influences then
                     restoreInfluenceBodies(ud.extra.influences)
                     backfillBindVerts(ud.extra)
+                end
+            end
+        end
+    end
+
+    -- Auto-compute mesh (UVs + triangle indices, optionally with CDT Steiner
+    -- points) for RESOURCE sfixtures that have a backdrop selected but no
+    -- cached mesh. Without this, MESHUSERT meshes render untextured until
+    -- the user manually selects the RESOURCE. Uses the current
+    -- `state.triangulationMode`.
+    local cdt = require 'src.cdt'
+    for _, v in pairs(registry.sfixtures) do
+        if not v:isDestroyed() then
+            local ud = v:getUserData()
+            if subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
+                local idx = ud.extra.selectedBGIndex
+                local bd = idx and state.backdrops and state.backdrops[idx]
+                local needsUVs = not ud.extra.uvs or #ud.extra.uvs == 0
+                local needsTris = not ud.extra.triangles or #ud.extra.triangles == 0
+                if bd and bd.image and bd.w and bd.h and (needsUVs or needsTris) then
+                    cdt.computeResourceMesh(ud, v:getBody(), bd,
+                        state.triangulationMode or 'basic',
+                        state.cdtSpacing, mathutils)
                 end
             end
         end

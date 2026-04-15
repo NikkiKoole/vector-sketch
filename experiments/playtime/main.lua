@@ -108,6 +108,7 @@ local _registry = require 'src.registry' -- luacheck: ignore 211
 local _mathutils = require 'src.math-utils' -- luacheck: ignore 211
 
 local InputManager = require 'src.input-manager'
+local bodyRotate = require 'src.body-rotate'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
@@ -439,6 +440,44 @@ function love.draw()
 end
 
 function love.wheelmoved(dx, dy)
+    -- R + mousewheel on a body → rotate it (and its child chain) around its
+    -- parent joint anchor. Used for pre-bind rig alignment (match bones to
+    -- the drawn character before MESHUSERT bind pose captures rest pose).
+    if love.keyboard.isDown('r') and not ui.overPanel then
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        local body = bodyRotate.findBodyAt(state.physicsWorld, wx, wy)
+        if body then
+            -- Step size: ~1.5° per wheel click; shift for finer control.
+            local step = love.keyboard.isDown('lshift', 'rshift') and 0.005 or 0.02618
+            bodyRotate.rotateSubtree(body, dy * step)
+            return
+        end
+    end
+
+    -- W / H + mousewheel on a body → resize its width / height. Recreates
+    -- the body with new dimensions (sfixtures reposition proportionally).
+    -- Complements the R+wheel rotation for pre-bind rig alignment.
+    local resizeKey
+    if love.keyboard.isDown('w') then resizeKey = 'width'
+    elseif love.keyboard.isDown('h') then resizeKey = 'height' end
+    if resizeKey and not ui.overPanel then
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        local body = bodyRotate.findBodyAt(state.physicsWorld, wx, wy)
+        if body then
+            local ud = body:getUserData()
+            local thing = ud and ud.thing
+            if thing and thing[resizeKey] then
+                local step = love.keyboard.isDown('lshift', 'rshift') and 1 or 4
+                local delta = dy * step
+                local newVal = math.max(10, (thing[resizeKey] or 0) + delta)
+                objectManager.recreateThingFromBody(body, { [resizeKey] = newVal })
+                return
+            end
+        end
+    end
+
     if not ui.overPanel then
         local newScale = cam.scale * (1 + dy / 10)
         if newScale > 0.01 and newScale < 50 then

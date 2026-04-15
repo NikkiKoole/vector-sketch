@@ -54,7 +54,7 @@ function lib.renderActiveEditorThings()
         love.graphics.circle('line', x2, y2, 3)
     end
 
-    if state.selection.selectedSFixture then
+    if state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed() then
         local ud = state.selection.selectedSFixture:getUserData()
         if false and ud.subtype == 'resource' then
             local bod = state.selection.selectedSFixture:getBody()
@@ -64,6 +64,69 @@ function lib.renderActiveEditorThings()
             local x1l, y1l = bod:getLocalPoint(b.x, b.y)
             local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
             love.graphics.rectangle('line', x1l, y1l, x2l - x1l, y2l - y1l)
+        end
+
+        -- Render bone-segment influence capsules for MESHUSERT so the user can
+        -- see what `bindRadius` actually covers in world space. A capsule is
+        -- the set of points within `radius` of the bone segment — the
+        -- influence zone used by applySegmentWeights.
+        if ud.subtype == 'meshusert' and ud.extra.nodes and #ud.extra.nodes >= 2 then
+            local radius = tonumber(ud.extra.bindRadius) or 80
+            local function endpointsOnSharedBody(nA, nB)
+                local function resolve(n)
+                    if n.type == NT.JOINT then
+                        local j = registry.getJointByID(n.id)
+                        if not j then return {} end
+                        local x1, y1, x2, y2 = j:getAnchors()
+                        local bA, bB = j:getBodies()
+                        return { { body = bA, wx = x1, wy = y1 }, { body = bB, wx = x2, wy = y2 } }
+                    end
+                    local f = registry.getSFixtureByID(n.id)
+                    if not f then return {} end
+                    local bp = f:getBody()
+                    local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
+                    local cx, cy = mathutils.getCenterOfPoints(pts)
+                    return { { body = bp, wx = cx, wy = cy } }
+                end
+                local a, b = resolve(nA), resolve(nB)
+                for _, ai in ipairs(a) do
+                    for _, bi in ipairs(b) do
+                        if ai.body == bi.body then return ai, bi end
+                    end
+                end
+                return nil, nil
+            end
+
+            local lw = love.graphics.getLineWidth()
+            love.graphics.setLineWidth(1 / cam:getScale())
+            love.graphics.setColor(1.0, 0.7, 0.2, 0.7)
+
+            local nodes = ud.extra.nodes
+            for i = 1, #nodes - 1 do
+                local a, b = endpointsOnSharedBody(nodes[i], nodes[i + 1])
+                if a and b then
+                    local dx, dy = b.wx - a.wx, b.wy - a.wy
+                    local len = math.sqrt(dx * dx + dy * dy)
+                    if len > 1e-4 then
+                        -- Perpendicular offset, normalized.
+                        local nxp, nyp = -dy / len * radius, dx / len * radius
+                        -- Two parallel lines forming the "tube" part.
+                        love.graphics.line(a.wx + nxp, a.wy + nyp, b.wx + nxp, b.wy + nyp)
+                        love.graphics.line(a.wx - nxp, a.wy - nyp, b.wx - nxp, b.wy - nyp)
+                    end
+                    -- Rounded caps: full circles at each endpoint (simpler
+                    -- than arcs, slight overlap with tube lines is fine).
+                    love.graphics.circle('line', a.wx, a.wy, radius)
+                    love.graphics.circle('line', b.wx, b.wy, radius)
+                    -- Centerline for orientation reference.
+                    love.graphics.setColor(1.0, 0.7, 0.2, 0.35)
+                    love.graphics.line(a.wx, a.wy, b.wx, b.wy)
+                    love.graphics.setColor(1.0, 0.7, 0.2, 0.7)
+                end
+            end
+
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setLineWidth(lw)
         end
     end
 

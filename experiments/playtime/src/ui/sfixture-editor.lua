@@ -17,6 +17,7 @@ local fileBrowser = require('src.file-browser')
 local subtypes = require('src.subtypes')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
+local cdt = require('src.cdt')
 
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -24,6 +25,11 @@ local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
+
+-- Per-MESHUSERT toggle: show transform sliders (meshX/Y, scaleX/Y) even when
+-- bound. They're baked into bindVerts, so toggling this on is "I want to
+-- adjust and re-bind." Keyed by sfixture id.
+local showTransformSliders = {}
 
 local accordionStatesSF = {
     ['position'] = false,
@@ -564,6 +570,64 @@ function lib.drawSelectedSFixture()
 
 
 
+            -- Triangulation mode toggle — A/B test ear-clipping vs
+            -- CDT+Steiner. Flipping it recomputes the linked RESOURCE's mesh
+            -- (uvs/triangles/meshVertices) and unbinds this MESHUSERT so the
+            -- user re-binds against the new topology.
+            local function recomputeLinkedResourceAndUnbind()
+                local lbl = ud.label or ''
+                for _, rv in pairs(registry.sfixtures) do
+                    if not rv:isDestroyed() then
+                        local rud = rv:getUserData()
+                        if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                            local idx = rud.extra and rud.extra.selectedBGIndex
+                            local bd = idx and state.backdrops and state.backdrops[idx]
+                            if bd then
+                                cdt.computeResourceMesh(rud, rv:getBody(), bd,
+                                    state.triangulationMode,
+                                    state.cdtSpacing, mathutils)
+                            end
+                        end
+                    end
+                end
+                ud.extra.influences = nil
+                ud.extra.bindVerts = nil
+                ud.extra.vertexAssignments = nil
+            end
+
+            local tmode = state.triangulationMode or 'basic'
+            local tlabel = (tmode == 'cdt') and 'triangulation: CDT (click for basic)'
+                or 'triangulation: basic (click for CDT)'
+            if ui.button(x, y, ROW_WIDTH, tlabel) then
+                state.triangulationMode = (tmode == 'cdt') and 'basic' or 'cdt'
+                recomputeLinkedResourceAndUnbind()
+            end
+            nextRow()
+
+            -- CDT Steiner-point spacing (only relevant when mode=='cdt').
+            -- Smaller = denser interior mesh = smoother deformation, more
+            -- triangles. Recomputes on drag + clears the bind so the user
+            -- re-binds once satisfied with the density.
+            if state.triangulationMode == 'cdt' then
+                local defaultSpacing = state.cdtSpacing or 60
+                local newSpacing = ui.sliderWithInput(myID .. ' cdtSpacing', x, y, ROW_WIDTH,
+                    10, 200, defaultSpacing)
+                ui.alignedLabel(x, y, ' cdt spacing (lo=dense)')
+                if newSpacing and tonumber(newSpacing) and tonumber(newSpacing) ~= defaultSpacing then
+                    state.cdtSpacing = tonumber(newSpacing)
+                    recomputeLinkedResourceAndUnbind()
+                end
+                nextRow()
+            end
+
+            -- Bind radius: how far each bone segment's influence reaches.
+            -- Larger = softer falloff / more blending; smaller = tighter
+            -- skin-to-bone coupling. Applied at bind time.
+            local br = ui.sliderWithInput(myID .. ' bindRadius', x, y, ROW_WIDTH, 10, 500, ud.extra.bindRadius or 80)
+            ui.alignedLabel(x, y, ' bindRadius')
+            if br then ud.extra.bindRadius = br end
+            nextRow()
+
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
                 local label = ud.label or ""
 
@@ -588,11 +652,21 @@ function lib.drawSelectedSFixture()
                     -- it's just a place where the mesh is stored.
                     local mb = mappert:getBody()
                     local mud = mb:getUserData()
-                    local verts = mud.thing.vertices -- this is the original mesh.
+                    -- Prefer the RESOURCE's `meshVertices` when present
+                    -- (CDT mode — includes Steiner points). Fall back to the
+                    -- polygon's raw verts for basic mode / legacy scenes.
+                    local mapperExtra = mappert:getUserData().extra
+                    local verts = (mapperExtra and mapperExtra.meshVertices)
+                        or mud.thing.vertices
 
                     logger:info("**")
 
-                    local vx, vy = mathutils.getCenterOfPoints(verts)
+                    -- Center by polygon BODY's position (not mean-of-verts)
+                    -- to match the mesh render path and UV compute — keeps
+                    -- bindVerts, mesh render, and texture UVs all in the
+                    -- same frame (eliminates the 3-4 px drift that mean-of-
+                    -- verts introduced).
+                    local vx, vy = mb:getPosition()
                     verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
 
                     if ud.extra.meshX or ud.extra.meshY then
@@ -741,6 +815,140 @@ function lib.drawSelectedSFixture()
 
                         return influences
                     end
+                    -- Segment-based weighting (ported from
+                    -- experiments/deform-textured/main.lua:570). For each
+                    -- consecutive pair of nodes that share a body, treat that
+                    -- pair as a bone SEGMENT on that body. Compute weight per
+                    -- body from segment-distance + smoothstep falloff, then
+                    -- distribute the body weight across the influences we've
+                    -- already created on that body.
+                    --
+                    -- Why: point-distance (old applyWeights) blurs a vertex
+                    -- between every nearby anchor, which collapses mesh width
+                    -- at bone midpoints. Segment-distance binds a vertex to
+                    -- whichever bone it's closest-to as a whole line, keeping
+                    -- width consistent along the length.
+                    local function distToSegment(px, py, ax, ay, bx, by)
+                        local abx, aby = bx - ax, by - ay
+                        local abLen2 = abx * abx + aby * aby
+                        if abLen2 < 1e-12 then
+                            local dx, dy = px - ax, py - ay
+                            return math.sqrt(dx * dx + dy * dy), 0
+                        end
+                        local t = ((px - ax) * abx + (py - ay) * aby) / abLen2
+                        if t < 0 then t = 0 elseif t > 1 then t = 1 end
+                        local cx, cy = ax + abx * t, ay + aby * t
+                        local dx, dy = px - cx, py - cy
+                        return math.sqrt(dx * dx + dy * dy), t
+                    end
+                    local function smoothstep(e0, e1, x)
+                        if x <= e0 then return 0 end
+                        if x >= e1 then return 1 end
+                        local t = (x - e0) / (e1 - e0)
+                        return t * t * (3 - 2 * t)
+                    end
+                    local function buildSegments(nodes)
+                        local segs = {}
+                        for i = 1, #nodes - 1 do
+                            local a = getNodeLocal(nodes[i])
+                            local b = getNodeLocal(nodes[i + 1])
+                            for _, ai in ipairs(a) do
+                                for _, bi in ipairs(b) do
+                                    if ai.body == bi.body then
+                                        segs[#segs + 1] = {
+                                            body = ai.body,
+                                            lax = ai.offx, lay = ai.offy,
+                                            lbx = bi.offx, lby = bi.offy,
+                                        }
+                                    end
+                                end
+                            end
+                        end
+                        return segs
+                    end
+                    local function applySegmentWeights(influences, nodes, worldVerts, radius)
+                        radius = radius or 80
+                        local segments = buildSegments(nodes)
+                        if #segments == 0 then
+                            -- Fall back to point-based inverse-distance weights.
+                            for vi = 1, #influences do
+                                local sum = 0
+                                for k = 1, #influences[vi] do
+                                    influences[vi][k].w = 1 / (influences[vi][k].dist + 1e-6)
+                                    sum = sum + influences[vi][k].w
+                                end
+                                if sum > 0 then
+                                    for k = 1, #influences[vi] do
+                                        influences[vi][k].w = influences[vi][k].w / sum
+                                    end
+                                end
+                            end
+                            return influences
+                        end
+
+                        local numVerts = #worldVerts / 2
+                        for vi = 1, numVerts do
+                            local px = worldVerts[(vi - 1) * 2 + 1]
+                            local py = worldVerts[(vi - 1) * 2 + 2]
+
+                            -- Per-body weight = max segment weight across any
+                            -- segment on that body (one body can host multiple
+                            -- segments if the node list is longer).
+                            local bodyW = {}
+                            for _, seg in ipairs(segments) do
+                                local wax, way = seg.body:getWorldPoint(seg.lax, seg.lay)
+                                local wbx, wby = seg.body:getWorldPoint(seg.lbx, seg.lby)
+                                local d = distToSegment(px, py, wax, way, wbx, wby)
+                                local w = 1 - smoothstep(0, radius, d)
+                                if w > 0 and (not bodyW[seg.body] or bodyW[seg.body] < w) then
+                                    bodyW[seg.body] = w
+                                end
+                            end
+
+                            -- Count influences per body to split body-weight
+                            -- evenly (multiple endpoints on a body deform
+                            -- rigidly together — sharing the weight keeps the
+                            -- total body contribution = body-weight).
+                            local countPerBody = {}
+                            for k = 1, #influences[vi] do
+                                local b = influences[vi][k].body
+                                countPerBody[b] = (countPerBody[b] or 0) + 1
+                            end
+
+                            local sum = 0
+                            for k = 1, #influences[vi] do
+                                local b = influences[vi][k].body
+                                local bw = bodyW[b] or 0
+                                influences[vi][k].w = bw / countPerBody[b]
+                                sum = sum + influences[vi][k].w
+                            end
+
+                            if sum > 0 then
+                                for k = 1, #influences[vi] do
+                                    influences[vi][k].w = influences[vi][k].w / sum
+                                end
+                            else
+                                -- All segments outside radius → bind to the
+                                -- nearest segment's body at full weight so the
+                                -- vertex isn't left orphaned.
+                                local bestBody, bestDist = nil, math.huge
+                                for _, seg in ipairs(segments) do
+                                    local wax, way = seg.body:getWorldPoint(seg.lax, seg.lay)
+                                    local wbx, wby = seg.body:getWorldPoint(seg.lbx, seg.lby)
+                                    local d = distToSegment(px, py, wax, way, wbx, wby)
+                                    if d < bestDist then bestDist = d; bestBody = seg.body end
+                                end
+                                if bestBody then
+                                    local count = countPerBody[bestBody] or 1
+                                    for k = 1, #influences[vi] do
+                                        influences[vi][k].w = (influences[vi][k].body == bestBody) and (1 / count) or 0
+                                    end
+                                end
+                            end
+                        end
+                        return influences
+                    end
+
                     local function pruneTopK(influences, K)
                         for vi = 1, #influences do
                             table.sort(influences[vi], function(a, b) return a.w > b.w end)
@@ -755,11 +963,19 @@ function lib.drawSelectedSFixture()
                         return influences
                     end
                     --logger:inspect(vertsToWorld(b, verts))
-                    verts = vertsToWorld(mb, verts)
+                    -- Capture bindVerts in the MESHUSERT-owning body's world
+                    -- space (the bone), NOT the polygon's world space. The
+                    -- pre-bind draw path renders the mesh at the bone's
+                    -- transform (`box2d-draw-textured.lua:1625`), so binding
+                    -- relative to the bone keeps the mesh visually in place
+                    -- — what-you-see-is-what-you-bind. Using `mb` (polygon
+                    -- body) here instead caused the mesh to jump on bind.
+                    local ownerBody = state.selection.selectedSFixture:getBody()
+                    verts = vertsToWorld(ownerBody, verts)
 
                     if ud.extra.nodes and #ud.extra.nodes > 0 then
                         local influences = computeInfluences(verts, ud.extra.nodes)
-                        influences = applyWeights(influences)
+                        influences = applySegmentWeights(influences, ud.extra.nodes, verts, tonumber(ud.extra.bindRadius) or 80)
 
                         -- optional but highly recommended:
                         influences = pruneTopK(influences, 3)
@@ -775,6 +991,18 @@ function lib.drawSelectedSFixture()
                         ud.extra.bindVerts = bindVerts
                         --logger:inspect(influences)
                     end
+                end
+            end
+
+            -- Unbind: clear influences + bindVerts + vertex assignments so
+            -- the mesh falls back to the undeformed draw path (drawn at bone
+            -- position, no deformation). Keeps the node list + transforms.
+            if ud.extra.influences and #ud.extra.influences > 0 then
+                nextRow()
+                if ui.button(x, y, ROW_WIDTH, 'unbind (reset mesh)') then
+                    ud.extra.influences = nil
+                    ud.extra.bindVerts = nil
+                    ud.extra.vertexAssignments = nil
                 end
             end
 
@@ -898,33 +1126,35 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            nextRow()
-            local meshX = ui.sliderWithInput(myID .. ' meshX', x, y, ROW_WIDTH, -300, 300, ud.extra.meshX or 0)
-            ui.alignedLabel(x, y, ' meshX')
-
-            if meshX then
-                ud.extra.meshX = meshX
+            -- meshX/Y + scaleX/Y are baked into bindVerts at bind time; after
+            -- bind they're dead until you re-bind. Hide by default once bound,
+            -- show behind a toggle so you can tweak + re-bind when you want.
+            local isBound = ud.extra.influences and #ud.extra.influences > 0
+            local showTransforms = not isBound or showTransformSliders[ud.id]
+            if isBound then
+                nextRow()
+                local label = showTransformSliders[ud.id] and 'hide transform (re-bind to apply)' or 'adjust transform'
+                if ui.button(x, y, ROW_WIDTH, label) then
+                    showTransformSliders[ud.id] = not showTransformSliders[ud.id]
+                end
             end
-            nextRow()
-            local meshY = ui.sliderWithInput(myID .. ' meshY', x, y, ROW_WIDTH, -300, 300, ud.extra.meshY or 0)
-            ui.alignedLabel(x, y, ' meshY')
-
-            if meshY then
-                ud.extra.meshY = meshY
-            end
-            nextRow()
-            local scaleX = ui.sliderWithInput(myID .. ' scaleX', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleX or 1)
-            ui.alignedLabel(x, y, ' scaleX')
-
-            if scaleX then
-                ud.extra.scaleX = scaleX
-            end
-            nextRow()
-            local scaleY = ui.sliderWithInput(myID .. ' scaleY', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleY or 1)
-            ui.alignedLabel(x, y, ' scaleY')
-
-            if scaleY then
-                ud.extra.scaleY = scaleY
+            if showTransforms then
+                nextRow()
+                local meshX = ui.sliderWithInput(myID .. ' meshX', x, y, ROW_WIDTH, -300, 300, ud.extra.meshX or 0)
+                ui.alignedLabel(x, y, ' meshX')
+                if meshX then ud.extra.meshX = meshX end
+                nextRow()
+                local meshY = ui.sliderWithInput(myID .. ' meshY', x, y, ROW_WIDTH, -300, 300, ud.extra.meshY or 0)
+                ui.alignedLabel(x, y, ' meshY')
+                if meshY then ud.extra.meshY = meshY end
+                nextRow()
+                local scaleX = ui.sliderWithInput(myID .. ' scaleX', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleX or 1)
+                ui.alignedLabel(x, y, ' scaleX')
+                if scaleX then ud.extra.scaleX = scaleX end
+                nextRow()
+                local scaleY = ui.sliderWithInput(myID .. ' scaleY', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleY or 1)
+                ui.alignedLabel(x, y, ' scaleY')
+                if scaleY then ud.extra.scaleY = scaleY end
             end
         elseif subtypes.is(ud, subtypes.RESOURCE) then
             local selectedIndex
@@ -947,42 +1177,15 @@ function lib.drawSelectedSFixture()
                     love.graphics.setColor(1, 1, 1)
 
                     local bod = state.selection.selectedSFixture:getBody()
-                    local bud = bod:getUserData()
-                    local centerX, centerY = mathutils.getCenterOfPoints(bud.thing.vertices)
-                    local verts = {}
 
-                    for i = 1, #bud.thing.vertices, 2 do
-                        verts[i] = bud.thing.vertices[i] - centerX
-                        verts[i + 1] = bud.thing.vertices[i + 1] - centerY
-                    end
-                    -- love.graphics.polygon('line', verts)
-                    -- now we also draw the backdrop bbox in that space
-                    local x1l, y1l = bod:getLocalPoint(b.x, b.y)
-                    local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
-                    local rectW, rectH = x2l - x1l, y2l - y1l
-
-                    -- love.graphics.rectangle('line', x1l, y1l, w, h)
-                    --  love.graphics.pop()
-
-                    -- vertices assumed to be world-space positions of the poly
-                    local function normalizeUVsFromRect(polyVerts, rect)
-                        local t = {}
-                        for i = 1, #polyVerts, 2 do
-                            local vx = polyVerts[i]
-                            local vy = polyVerts[i + 1]
-
-                            local u = (vx - rect.x) / rect.w
-                            local v = (vy - rect.y) / rect.h
-
-                            table.insert(t, u)
-                            table.insert(t, v)
-                        end
-                        return t
-                    end
-
-                    local uvs = normalizeUVsFromRect(verts, { x = x1l, y = y1l, w = rectW, h = rectH })
-                    --logger:inspect(uvs)
-                    ud.extra.uvs = uvs
+                    -- Delegate UV + triangulation to the shared mesh builder
+                    -- in `src/cdt.lua`. Picks basic or CDT based on
+                    -- `state.triangulationMode`. Stores `ud.extra.uvs`,
+                    -- `ud.extra.triangles`, and optionally
+                    -- `ud.extra.meshVertices` (CDT mode only).
+                    cdt.computeResourceMesh(ud, bod, b,
+                        state.triangulationMode or 'basic',
+                        state.cdtSpacing, mathutils)
                 end
             end
 

@@ -35,6 +35,8 @@ function lib.loadScene(name)
     local data = getFiledata(name):getString()
     state.selection.selectedJoint = nil
     state.selection.selectedObj = nil
+    state.selection.selectedSFixture = nil
+    state.selection.selectedBodies = nil
     sceneIO.load(data, state.physicsWorld, cam)
     logger:info("Scene loaded: " .. name)
     return data

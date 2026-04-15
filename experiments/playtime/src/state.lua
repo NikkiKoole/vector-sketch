@@ -114,6 +114,16 @@ state.world = {
 -- sessions that open a pre-persistence scene inherit whatever is here.
 state.backdrops = {}
 
+-- MESHUSERT triangulation mode.
+-- `basic`  → love.math.triangulate on polygon outline (ear-clipping, fast,
+--            but produces long interior spans and sliver triangles on
+--            concave shapes — artifacts during deformation).
+-- `cdt`    → Delaunay triangulation with interior Steiner points
+--            (`src/cdt.lua`). Denser, well-shaped triangles. Smooth
+--            deformation across bones. Requires re-bind after toggling.
+state.triangulationMode = 'basic'
+state.cdtSpacing = nil -- optional override; auto-picked from polygon size
+
 
 state.snap = {
     fixtures = {},

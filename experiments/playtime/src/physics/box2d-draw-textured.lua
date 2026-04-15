@@ -45,6 +45,7 @@ local shrinkFactor = 1
 -- (re-running "edit vertices" → weights) capture these; old scenes are backfilled on load in io.lua
 -- using the loaded pose as bind pose. Falls back to LBS gracefully per-vertex if data is missing.
 lib.useDQS = true
+lib.drawMeshOutline = true -- debug: draw wireframe over deformed MESHUSERT meshes
 
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
@@ -1535,12 +1536,22 @@ function lib.drawTexturedWorld(world)
 
             local data = mappert and mappert:getUserData().extra
             if data then
-                local bodyUD = mappert:getBody():getUserData()
-                local verts = bodyUD.thing.vertices
+                local mapperBody = mappert:getBody()
+                local bodyUD = mapperBody:getUserData()
+                -- Prefer `meshVertices` (CDT mode — includes Steiner points)
+                -- over the polygon's raw verts. UVs + triangle indices are
+                -- stored aligned with whichever vertex source is in use.
+                local verts = data.meshVertices or bodyUD.thing.vertices
 
 
-                -- somehow we need to center the vertices.
-                local cx, cy = mathutils.getCenterOfPoints(verts)
+                -- Centering origin: polygon BODY's position (not mean-of-
+                -- verts). This aligns the mesh render with the collision-
+                -- polygon render, which also uses body.position + localPoint.
+                -- Using mean-of-verts caused a 3-4 px drift between mesh and
+                -- collision outline; also mismatched the UV compute's
+                -- centering. Keep this and `cdt.computeResourceMesh` using
+                -- the same origin.
+                local cx, cy = mapperBody:getPosition()
                 verts = mathutils.makePolygonRelativeToCenter(verts, cx, cy)
 
                 -- maybe here we deal with translate and scale ? (rotation?)
@@ -1576,44 +1587,80 @@ function lib.drawTexturedWorld(world)
                 local vertexFormat = {
                     { "VertexPosition", "float", 2 },
                     --    { "VertexTexCoord", "float", 2 },
-                    { "VertexColor",    "byte",  4 },
+                    { "VertexColor",    "float", 4 },
                 }
                 local meshVertices = {}
-                --logger:inspect(verts)
-                local tris = shapes.makeTrianglesFromPolygon(verts)
 
-                for j = 1, #tris do
-                    local tri = tris[j]
-                    for k = 0, 2 do
-                        local vx = tri[k * 2 + 1]
-                        local vy = tri[k * 2 + 2]
+                -- Prefer pre-stored triangle indices (computed once at UV-
+                -- compute time on the rest-pose polygon). Index-based draw
+                -- means topology is stable across deformation — no per-frame
+                -- triangulation, no Steiner-point UV gaps. Fall back to
+                -- per-frame triangulation if indices missing (old scenes or
+                -- RESOURCE never selected after polygon edit).
+                local triIdx = data and data.triangles
+                local tris
+                if not triIdx then
+                    tris = shapes.makeTrianglesFromPolygon(verts)
+                end
+
+                if triIdx then
+                    for j = 1, #triIdx do
+                        local i = triIdx[j]
                         table.insert(meshVertices, {
-                            vx, vy,
-                            -- u, v,
-                            255, 255, 255, .100
+                            verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2],
+                            1, 1, 1, 0.5
                         })
                     end
+                else
+                    for j = 1, #tris do
+                        local tri = tris[j]
+                        for k = 0, 2 do
+                            table.insert(meshVertices, {
+                                tri[k * 2 + 1], tri[k * 2 + 2],
+                                -- Untextured fallback: white ghost so you
+                                -- can see bones/polygon underneath.
+                                1, 1, 1, 0.5
+                            })
+                        end
+                    end
                 end
+
                 if data and data.uvs then
                     meshVertices = {}
                     vertexFormat = {
                         { "VertexPosition", "float", 2 },
                         { "VertexTexCoord", "float", 2 },
-                        { "VertexColor",    "byte",  4 },
+                        { "VertexColor",    "float", 4 },
                     }
 
-                    local vertexIndex = buildPolyVertexIndex(verts)
-                    for j = 1, #tris do
-                        local tri = tris[j]
-                        for k = 0, 2 do
-                            local vx = tri[k * 2 + 1]
-                            local vy = tri[k * 2 + 2]
-                            local u, v = lookupUV(vx, vy, vertexIndex, data.uvs)
+                    if triIdx then
+                        -- Index-based: each tri vertex's UV is uvs[i*2-1..i*2].
+                        -- No coord-key lookup — direct, stable, fast.
+                        for j = 1, #triIdx do
+                            local i = triIdx[j]
                             table.insert(meshVertices, {
-                                vx, vy,
-                                u or 0, v or 0,
-                                255, 255, 255
+                                verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2],
+                                data.uvs[(i - 1) * 2 + 1] or 0,
+                                data.uvs[(i - 1) * 2 + 2] or 0,
+                                1, 1, 1, 1
                             })
+                        end
+                    else
+                        local vertexIndex = buildPolyVertexIndex(verts)
+                        for j = 1, #tris do
+                            local tri = tris[j]
+                            for k = 0, 2 do
+                                local vx = tri[k * 2 + 1]
+                                local vy = tri[k * 2 + 2]
+                                local u, v = lookupUV(vx, vy, vertexIndex, data.uvs)
+                                table.insert(meshVertices, {
+                                    vx, vy,
+                                    u or 0, v or 0,
+                                    -- Textured: white at full opacity so the
+                                    -- texture sample shows untinted.
+                                    1, 1, 1, 1
+                                })
+                            end
                         end
                     end
                 end
@@ -1625,6 +1672,32 @@ function lib.drawTexturedWorld(world)
                 local bx, by = drawables[i].body:getPosition()
                 local ba = drawables[i].body:getAngle()
                 love.graphics.draw(mesh, bx, by, ba)
+
+                -- Debug outline: draw triangle edges so the deformed mesh is
+                -- visible even when untextured / backdrop missing. Toggle with
+                -- lib.drawMeshOutline.
+                if lib.drawMeshOutline then
+                    love.graphics.push()
+                    love.graphics.translate(bx, by)
+                    love.graphics.rotate(ba)
+                    love.graphics.setColor(0.2, 1.0, 0.4, 0.5)
+                    love.graphics.setLineWidth(1)
+                    if triIdx then
+                        for j = 1, #triIdx, 3 do
+                            local i1, i2, i3 = triIdx[j], triIdx[j + 1], triIdx[j + 2]
+                            love.graphics.polygon('line',
+                                verts[(i1 - 1) * 2 + 1], verts[(i1 - 1) * 2 + 2],
+                                verts[(i2 - 1) * 2 + 1], verts[(i2 - 1) * 2 + 2],
+                                verts[(i3 - 1) * 2 + 1], verts[(i3 - 1) * 2 + 2])
+                        end
+                    else
+                        for j = 1, #tris do
+                            love.graphics.polygon('line', tris[j])
+                        end
+                    end
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.pop()
+                end
 
                 -- love.graphics.push()
                 -- love.graphics.translate(body:getX(), body:getY())
@@ -1850,7 +1923,7 @@ function lib.drawTexturedWorld(world)
                             table.insert(meshVertices, {
                                 x - centroidX, y - centroidY,
                                 u, v,
-                                255, 255, 255, 255
+                                255, 255, 255, 140
                             })
                         end
                     end

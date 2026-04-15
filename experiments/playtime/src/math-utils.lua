@@ -773,6 +773,50 @@ local function tableConcat(t1, t2)
     return t1
 end
 
+-- Triangulate `polyVerts` (flat {x1,y1,x2,y2,...}) and return a flat list of
+-- vertex indices (1-based, into polyVerts) describing the triangles. Three
+-- consecutive indices = one triangle.
+--
+-- Uses nearest-vertex matching (not exact coord equality) because
+-- love.math.triangulate can produce coords that differ from the input by
+-- tiny floating-point amounts (~1e-4) even though no Steiner points are
+-- introduced. Formatted string lookups fail on those boundary cases.
+--
+-- Returns nil if triangulation fails or produces a vertex more than
+-- `tol` away from every input vertex (which would mean real Steiner
+-- points — caller should fall back to per-frame triangulation).
+function lib.triangulateToIndices(polyVerts, tol)
+    tol = tol or 0.01
+    local tolSq = tol * tol
+    local ok, tris = pcall(love.math.triangulate, polyVerts)
+    if not ok or not tris then return nil end
+    local numVerts = math.floor(#polyVerts / 2)
+    local indices = {}
+    for j = 1, #tris do
+        local tri = tris[j]
+        for k = 0, 2 do
+            local tx, ty = tri[k * 2 + 1], tri[k * 2 + 2]
+            local bestIdx, bestDistSq = nil, math.huge
+            for vi = 1, numVerts do
+                local dx = polyVerts[(vi - 1) * 2 + 1] - tx
+                local dy = polyVerts[(vi - 1) * 2 + 2] - ty
+                local d2 = dx * dx + dy * dy
+                if d2 < bestDistSq then
+                    bestDistSq = d2
+                    bestIdx = vi
+                end
+            end
+            if bestIdx and bestDistSq < tolSq then
+                indices[#indices + 1] = bestIdx
+            else
+                -- Triangulator introduced a Steiner point beyond tolerance.
+                return nil
+            end
+        end
+    end
+    return indices
+end
+
 function lib.decompose(poly, result)
     result = result or {}
     local intersections = getCollisions(poly)
