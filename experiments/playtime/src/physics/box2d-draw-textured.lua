@@ -1415,8 +1415,12 @@ function lib.drawTexturedWorld(world)
                 local inflList = influences[vi]
                 local bv       = bindVerts and bindVerts[vi]
 
+                -- Safety: stale influences (vert count mismatch) — skip vertex.
+                if not inflList then
+                    out[(vi - 1) * 2 + 1] = 0
+                    out[(vi - 1) * 2 + 2] = 0
                 -- Fallback path: no bind data for this vertex → LBS for this vertex only.
-                if not bv then
+                elseif not bv then
                     local wxSum, wySum, wSum = 0, 0, 0
                     for k = 1, #inflList do
                         local infl = inflList[k]
@@ -1564,11 +1568,19 @@ function lib.drawTexturedWorld(world)
                 verts = mathutils.scalePolygonPoints(verts, sx, sy)
 
 
+                -- Auto-unbind when polygon vert count changed since bind —
+                -- stale influences would crash (inflList nil for new verts).
+                local numVerts = #verts / 2
+                if drawables[i].extra.influences and #drawables[i].extra.influences ~= numVerts then
+                    drawables[i].extra.influences = nil
+                    drawables[i].extra.bindVerts   = nil
+                end
+
                 if drawables[i].extra.influences and #drawables[i].extra.influences > 0 then
                     -- logger:inspect(drawables[i].extra.influences)
                     -- we need to fill in the bodies for each influence, but ratehr not everyframe!
                     --drawables[i].extra.influences = fillBodiesInInfluences(drawables[i].extra.influences, #verts/2)
-                    local newVerts = deformWorldVerts(drawables[i].extra.influences, drawables[i].extra.bindVerts, #verts / 2, drawables[i].body)
+                    local newVerts = deformWorldVerts(drawables[i].extra.influences, drawables[i].extra.bindVerts, numVerts, drawables[i].body)
                     -- local worldBindVerts = vertsToWorld(drawables[i].body, verts)
                     -- logger:inspect(worldBindVerts)
                     --logger:inspect(newVerts)
