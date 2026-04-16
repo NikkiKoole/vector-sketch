@@ -1544,14 +1544,14 @@ function lib.drawTexturedWorld(world)
                 local verts = data.meshVertices or bodyUD.thing.vertices
 
 
-                -- Centering origin: polygon BODY's position (not mean-of-
-                -- verts). This aligns the mesh render with the collision-
-                -- polygon render, which also uses body.position + localPoint.
-                -- Using mean-of-verts caused a 3-4 px drift between mesh and
-                -- collision outline; also mismatched the UV compute's
-                -- centering. Keep this and `cdt.computeResourceMesh` using
-                -- the same origin.
-                local cx, cy = mapperBody:getPosition()
+                -- Centering origin: bbox center of the vertices — the same
+                -- value `makeShapeListFromPolygon` subtracts when building
+                -- Box2D fixtures. This is stable (doesn't change when the
+                -- RESOURCE body is moved) and matches the collision polygon.
+                -- Using body:getPosition() breaks when the body has been
+                -- moved since creation (thing.vertices are authoring-world,
+                -- not body-local).
+                local cx, cy = mathutils.computeCentroid(verts)
                 verts = mathutils.makePolygonRelativeToCenter(verts, cx, cy)
 
                 -- maybe here we deal with translate and scale ? (rotation?)
@@ -1671,6 +1671,11 @@ function lib.drawTexturedWorld(world)
                  end
                 local bx, by = drawables[i].body:getPosition()
                 local ba = drawables[i].body:getAngle()
+                -- Reset global color: previous TEXFIXTURE drawables leave
+                -- their bg/fg/tint in love.graphics state, which multiplies
+                -- into mesh vertex colors and tints the textured mesh
+                -- (brown/tan cast from whichever OMP character drew last).
+                love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.draw(mesh, bx, by, ba)
 
                 -- Debug outline: draw triangle edges so the deformed mesh is

@@ -271,12 +271,43 @@ lib.bowyerWatson = bowyerWatson
 -- vertices) followed by Steiner points.
 ---------------------------------------------------------------------------
 
--- Filter: keep only triangles whose centroid is inside the polygon (drops
--- triangles that sit outside the polygon in concave regions of the convex
--- hull). This is the "poor man's CDT" — true CDT would enforce outline
--- edges via edge flipping.
+-- True if open segments (p1,p2) and (q1,q2) properly cross (not just touch
+-- at a shared endpoint). Uses the four orientation-sign test with a small
+-- tolerance; colinear overlaps and shared-endpoint touches return false so
+-- outline edges that coincide with a triangle edge don't get flagged.
+local function segmentsProperlyCross(p1x, p1y, p2x, p2y, q1x, q1y, q2x, q2y)
+    local function orient(ax, ay, bx, by, cx, cy)
+        return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
+    end
+    local EPS = 1e-6
+    local d1 = orient(q1x, q1y, q2x, q2y, p1x, p1y)
+    local d2 = orient(q1x, q1y, q2x, q2y, p2x, p2y)
+    local d3 = orient(p1x, p1y, p2x, p2y, q1x, q1y)
+    local d4 = orient(p1x, p1y, p2x, p2y, q2x, q2y)
+    if ((d1 > EPS and d2 < -EPS) or (d1 < -EPS and d2 > EPS)) and
+       ((d3 > EPS and d4 < -EPS) or (d3 < -EPS and d4 > EPS)) then
+        return true
+    end
+    return false
+end
+
+-- Filter: keep only triangles that (a) have their centroid inside the
+-- polygon AND (b) have no edge properly crossing any polygon outline edge.
+--
+-- The edge-cross test is what catches "bridging" triangles across concave
+-- regions like armpits / crotches: unconstrained Delaunay will happily span
+-- a triangle from one side of a V-shaped notch to the other, and the
+-- centroid can still land inside the polygon's solid mass. Without this
+-- test those bridge triangles pass the centroid filter and render as long
+-- skinny triangles closing off the concavity.
+--
+-- Proper constrained Delaunay would fix this by edge-flipping until every
+-- outline edge is present; this is a simpler "drop the offenders, leave a
+-- hole" approximation. The hole is harmless since that space is outside
+-- the polygon's silhouette anyway.
 local function filterInsidePoly(triIndices, verts, poly)
     local out = {}
+    local n = math.floor(#poly / 2)
     for j = 1, #triIndices, 3 do
         local i1, i2, i3 = triIndices[j], triIndices[j + 1], triIndices[j + 2]
         local x1, y1 = verts[(i1 - 1) * 2 + 1], verts[(i1 - 1) * 2 + 2]
@@ -284,9 +315,23 @@ local function filterInsidePoly(triIndices, verts, poly)
         local x3, y3 = verts[(i3 - 1) * 2 + 1], verts[(i3 - 1) * 2 + 2]
         local cx, cy = (x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3
         if pointInPoly(cx, cy, poly) then
-            out[#out + 1] = i1
-            out[#out + 1] = i2
-            out[#out + 1] = i3
+            local crosses = false
+            for k = 1, n do
+                local m = (k % n) + 1
+                local ax, ay = poly[(k - 1) * 2 + 1], poly[(k - 1) * 2 + 2]
+                local bx, by = poly[(m - 1) * 2 + 1], poly[(m - 1) * 2 + 2]
+                if segmentsProperlyCross(x1, y1, x2, y2, ax, ay, bx, by) or
+                   segmentsProperlyCross(x2, y2, x3, y3, ax, ay, bx, by) or
+                   segmentsProperlyCross(x3, y3, x1, y1, ax, ay, bx, by) then
+                    crosses = true
+                    break
+                end
+            end
+            if not crosses then
+                out[#out + 1] = i1
+                out[#out + 1] = i2
+                out[#out + 1] = i3
+            end
         end
     end
     return out
@@ -348,30 +393,24 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     end
     if not triIndices or #triIndices == 0 then return false end
 
-    -- UV centering origin: use the polygon body's current position instead
-    -- of `polyCenter` (mean of verts). Both the MESH render and the
-    -- COLLISION-polygon render use `body.position + localOffset` — so if we
-    -- also use body.position here, all three representations align and the
-    -- ~3-4 px drift between mesh and collision outline disappears.
-    --
-    -- Assumption: polygon body hasn't been moved since scene save (typical
-    -- for the static polygon bodies used as skin sources). If it was moved,
-    -- `thing.vertices` is already stale anyway (authoring-world coords),
-    -- so any centering choice has the same issue.
-    --
-    -- Also requires the MESH render path to use body.position as the
-    -- centering — `box2d-draw-textured.lua` was updated to match.
-    local cx, cy = body:getPosition()
-    local x1l, y1l = body:getLocalPoint(bd.x, bd.y)
-    local x2l, y2l = body:getLocalPoint(bd.x + bd.w, bd.y + bd.h)
-    local rectW, rectH = x2l - x1l, y2l - y1l
+    -- UV mapping: map each vertex to its actual world position on the
+    -- backdrop. thing.vertices are in authoring-world space (frozen at
+    -- creation time); the body may have been moved since. To get the
+    -- vertex's current world position we compute:
+    --   body-local = vert - computeCentroid(verts)     [same as fixture creation]
+    --   world      = body:getWorldPoint(body-local)    [handles position + rotation]
+    -- Then UV = (world - backdrop_corner) / backdrop_size.
+    local mathutils2 = mathutils or require('src.math-utils')
+    local centX, centY = mathutils2.computeCentroid(origVerts)
+    local bdW, bdH = bd.w, bd.h
 
     local uvs = {}
     for i = 1, #meshVerts, 2 do
-        local lx = meshVerts[i] - cx
-        local ly = meshVerts[i + 1] - cy
-        uvs[#uvs + 1] = (lx - x1l) / rectW
-        uvs[#uvs + 1] = (ly - y1l) / rectH
+        local lx = meshVerts[i] - centX
+        local ly = meshVerts[i + 1] - centY
+        local wx, wy = body:getWorldPoint(lx, ly)
+        uvs[#uvs + 1] = (wx - bd.x) / bdW
+        uvs[#uvs + 1] = (wy - bd.y) / bdH
     end
 
     ud.extra.uvs = uvs

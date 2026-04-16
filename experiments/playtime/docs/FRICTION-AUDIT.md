@@ -82,6 +82,20 @@ whether rigging needs its own editor mode or just targeted fixes. See
   broke everything because `thing.vertices` isn't true world coords —
   it's authoring-world, only equal to world while the body hasn't been
   moved since save.)
+- **Textured mesh picked up a brownish/tinted cast** from whichever TEXFIXTURE
+  (OMP character) happened to draw just before it. Global `love.graphics`
+  color state leaks across the drawables loop; mesh vertex colors are white
+  so the leftover tint multiplies straight through. Fixed:
+  `love.graphics.setColor(1,1,1,1)` before the mesh draw in
+  `box2d-draw-textured.lua` MESHUSERT branch.
+- **CDT bridging triangles across armpits / crotches.** Centroid-inside
+  filter alone lets Delaunay span a triangle across a concave notch when
+  the centroid happens to land in the solid mass next door. Fixed:
+  `filterInsidePoly` in `src/cdt.lua` now also drops any triangle whose
+  edges properly cross a polygon outline edge. Caveat: won't catch
+  bridges that run parallel-to or along the outline inside thin concave
+  pockets — that'd still need proper CDT with edge-flipping. Verified
+  on a synthetic U-shape test (0 bridges) and on the real character.
 - **Long, skinny triangles across the polygon even at rest.** Ear-clipping on
   a concave silhouette picks ears in vertex order; no interior verts means
   every triangle spans outline-to-outline. Visible as sliver artifacts that
@@ -93,6 +107,20 @@ whether rigging needs its own editor mode or just targeted fixes. See
   bind so the user re-binds against the new topology. Polygon outline is
   stored first in `meshVertices` so UVs remain aligned for legacy paths.
   Fallback: if CDT fails it falls back to basic automatically.
+
+- **MESHUSERT centering used live RESOURCE body position.** Caused three
+  symptoms: (1) mesh positioned wrong, (2) moving RESOURCE body moved mesh
+  in mirrored direction, (3) UVs mapped out-of-bounds → brown texture.
+  Root cause: `thing.vertices` is in authoring-world space (frozen at
+  creation), but centering subtracted the RESOURCE body's *current*
+  position. Body gets moved after creation → mismatch. Fixed both sides:
+  - **Render** (`box2d-draw-textured.lua`): center by
+    `computeCentroid(verts)` (bbox center) — same as
+    `makeShapeListFromPolygon` uses for fixtures. Stable, matches
+    collision polygon.
+  - **UV compute** (`cdt.lua`): convert each vertex to actual world
+    position via `body:getWorldPoint(vert - computeCentroid)` before
+    mapping to backdrop rect. Handles moved + rotated bodies.
 
 ## Next session — directions
 
