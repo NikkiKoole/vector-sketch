@@ -661,12 +661,12 @@ function lib.drawSelectedSFixture()
 
                     logger:info("**")
 
-                    -- Center by polygon BODY's position (not mean-of-verts)
-                    -- to match the mesh render path and UV compute — keeps
-                    -- bindVerts, mesh render, and texture UVs all in the
-                    -- same frame (eliminates the 3-4 px drift that mean-of-
-                    -- verts introduced).
-                    local vx, vy = mb:getPosition()
+                    -- Center by centroid (same as the draw path uses) so
+                    -- bindVerts end up in the same world-space frame as
+                    -- what's visible pre-bind. Using mb:getPosition() was
+                    -- wrong when the RESOURCE body had been moved away from
+                    -- the authoring-world origin.
+                    local vx, vy = mathutils.computeCentroid(verts)
                     verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
 
                     if ud.extra.meshX or ud.extra.meshY then
