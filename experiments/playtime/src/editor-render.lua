@@ -346,14 +346,19 @@ function lib.renderActiveEditorThings()
                                ((g * 151) % 256) / 255,
                                ((g * 211) % 256) / 255
                     end
-                    local targetBone = state.triangleEditor.selectedBone or 1
-                    local triangleBones = ud.extra.triangleBones
+                    local paintMode = state.triangleEditor.paintMode or 'bones'
 
                     local function boneColor(b)
                         return ((b * 97)  % 256) / 255,
                                ((b * 163) % 256) / 255,
                                ((b * 211) % 256) / 255
                     end
+
+                    local targetBone     = state.triangleEditor.selectedBone or 1
+                    local triangleBones  = ud.extra.triangleBones
+                    local targetGroup    = state.triangleEditor.selectedGroup or 1
+                    -- triangleGroups lives on the RESOURCE fixture
+                    local triangleGroups = groups  -- already read above
 
                     for t = 1, numTris do
                         local i1 = triIdx[(t - 1) * 3 + 1]
@@ -363,24 +368,47 @@ function lib.renderActiveEditorThings()
                             local x1, y1 = worldAt(i1)
                             local x2, y2 = worldAt(i2)
                             local x3, y3 = worldAt(i3)
-                            local assignedBone = triangleBones and triangleBones[t]
-                            if assignedBone then
-                                local r, gn, bl = boneColor(assignedBone)
-                                love.graphics.setColor(r, gn, bl, 0.6)
-                                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                                love.graphics.setColor(r, gn, bl, 0.9)
-                                love.graphics.setLineWidth(1)
-                                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-                            end
-                            if selSet[t] then
-                                local r, gn, bl = boneColor(targetBone)
-                                love.graphics.setColor(r, gn, bl, 0.85)
-                                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                            end
-                            if not assignedBone then
-                                love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
-                                love.graphics.setLineWidth(1)
-                                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+
+                            if paintMode == 'groups' then
+                                local assignedGroup = triangleGroups and triangleGroups[t]
+                                if assignedGroup then
+                                    local r, gn, bl = groupColor(assignedGroup)
+                                    love.graphics.setColor(r, gn, bl, 0.6)
+                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                                    love.graphics.setColor(r, gn, bl, 0.9)
+                                    love.graphics.setLineWidth(1)
+                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+                                end
+                                if selSet[t] then
+                                    local r, gn, bl = groupColor(targetGroup)
+                                    love.graphics.setColor(r, gn, bl, 0.85)
+                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                                end
+                                if not assignedGroup then
+                                    love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
+                                    love.graphics.setLineWidth(1)
+                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+                                end
+                            else -- bones
+                                local assignedBone = triangleBones and triangleBones[t]
+                                if assignedBone then
+                                    local r, gn, bl = boneColor(assignedBone)
+                                    love.graphics.setColor(r, gn, bl, 0.6)
+                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                                    love.graphics.setColor(r, gn, bl, 0.9)
+                                    love.graphics.setLineWidth(1)
+                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+                                end
+                                if selSet[t] then
+                                    local r, gn, bl = boneColor(targetBone)
+                                    love.graphics.setColor(r, gn, bl, 0.85)
+                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                                end
+                                if not assignedBone then
+                                    love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
+                                    love.graphics.setLineWidth(1)
+                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+                                end
                             end
                         end
                     end

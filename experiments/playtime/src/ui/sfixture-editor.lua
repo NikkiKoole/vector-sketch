@@ -1037,9 +1037,25 @@ function lib.drawSelectedSFixture()
             end
 
             if editMode then
+                -- Sub-mode: bones or z-order groups
+                if not state.triangleEditor.paintMode then
+                    state.triangleEditor.paintMode = 'bones'
+                end
                 nextRow()
-                ui.label(x, y, 'Selected: ' .. #state.triangleEditor.selectedTriangles .. ' tris')
+                local boneTabColor  = state.triangleEditor.paintMode == 'bones'  and {0.2,0.6,1} or nil
+                local groupTabColor = state.triangleEditor.paintMode == 'groups' and {0.2,0.6,1} or nil
+                local halfW = (ROW_WIDTH + 50) / 2 - 1
+                if ui.button(x,           y, halfW, 'Bones',   BUTTON_HEIGHT, boneTabColor)  then
+                    state.triangleEditor.paintMode = 'bones'
+                    state.triangleEditor.selectedTriangles = {}
+                end
+                if ui.button(x + halfW + 2, y, halfW, 'Z-order', BUTTON_HEIGHT, groupTabColor) then
+                    state.triangleEditor.paintMode = 'groups'
+                    state.triangleEditor.selectedTriangles = {}
+                end
+                nextRow()
 
+                ui.label(x, y, 'Selected: ' .. #state.triangleEditor.selectedTriangles .. ' tris')
                 if #state.triangleEditor.selectedTriangles > 0 then
                     if ui.button(x + ROW_WIDTH, y, 50, 'clear') then
                         state.triangleEditor.selectedTriangles = {}
@@ -1094,65 +1110,58 @@ function lib.drawSelectedSFixture()
                     nextRow()
                 end
 
-                love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
-                nextRow()
+                if state.triangleEditor.paintMode == 'groups' then
+                    love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
+                    nextRow()
 
-                -- Group z-order UI hidden until bone assignment is working.
-                -- Revisit: bones may drive z-order directly, making groups redundant.
-                if false then -- luacheck: ignore
-                -- Group picker: 1..8 buttons. Lower = behind.
-                ui.label(x, y, 'Group (z-order):')
-                nextRow()
-                local btnW = (ROW_WIDTH + 50) / 8 - 2
-                for g = 1, 8 do
-                    local isSel = (state.triangleEditor.selectedGroup == g)
-                    local gx = ((g * 73) % 256) / 255
-                    local gy = ((g * 151) % 256) / 255
-                    local gz = ((g * 211) % 256) / 255
-                    local col = isSel and { gx, gy, gz } or nil
-                    if ui.button(x + (g - 1) * (btnW + 2), y, btnW, tostring(g), BUTTON_HEIGHT, col) then
-                        state.triangleEditor.selectedGroup = g
-                    end
-                end
-                nextRow()
-
-                if #state.triangleEditor.selectedTriangles > 0 then
-                    if ui.button(x, y, ROW_WIDTH + 50,
-                        'Assign to group ' .. state.triangleEditor.selectedGroup) then
-                        lib.assignTrianglesToGroup(
-                            state.selection.selectedSFixture,
-                            state.triangleEditor.selectedTriangles,
-                            state.triangleEditor.selectedGroup
-                        )
-                        state.triangleEditor.selectedTriangles = {}
+                    -- Group picker: 1..8 buttons. Lower = behind.
+                    ui.label(x, y, 'Group (z-order):')
+                    nextRow()
+                    local btnW = (ROW_WIDTH + 50) / 8 - 2
+                    for g = 1, 8 do
+                        local isSel = (state.triangleEditor.selectedGroup == g)
+                        local gx = ((g * 73) % 256) / 255
+                        local gy = ((g * 151) % 256) / 255
+                        local gz = ((g * 211) % 256) / 255
+                        local col = isSel and { gx, gy, gz } or nil
+                        if ui.button(x + (g - 1) * (btnW + 2), y, btnW, tostring(g), BUTTON_HEIGHT, col) then
+                            state.triangleEditor.selectedGroup = g
+                        end
                     end
                     nextRow()
-                end
 
-                -- Clear-all-groups: wipes triangleGroups on the RESOURCE so
-                -- the mesh reverts to CDT-native triangle order.
-                if ui.button(x, y, ROW_WIDTH + 50, 'clear all groups') then
-                    local lbl = ud.label or ''
-                    for _, rv in pairs(registry.sfixtures) do
-                        if not rv:isDestroyed() then
-                            local rud = rv:getUserData()
-                            if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
-                                rud.extra.triangleGroups = nil
-                                rud.extra.triangleOrderDirty = true
+                    if #state.triangleEditor.selectedTriangles > 0 then
+                        if ui.button(x, y, ROW_WIDTH + 50,
+                            'Assign to group ' .. state.triangleEditor.selectedGroup) then
+                            lib.assignTrianglesToGroup(
+                                state.selection.selectedSFixture,
+                                state.triangleEditor.selectedTriangles,
+                                state.triangleEditor.selectedGroup
+                            )
+                            state.triangleEditor.selectedTriangles = {}
+                        end
+                        nextRow()
+                    end
+
+                    if ui.button(x, y, ROW_WIDTH + 50, 'clear all groups') then
+                        local lbl = ud.label or ''
+                        for _, rv in pairs(registry.sfixtures) do
+                            if not rv:isDestroyed() then
+                                local rud = rv:getUserData()
+                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                    rud.extra.triangleGroups = nil
+                                    rud.extra.triangleOrderDirty = true
+                                end
                             end
                         end
                     end
-                end
-                nextRow()
-                end -- group z-order
-
-                love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
-                nextRow()
+                    nextRow()
+                end -- groups sub-mode
 
                 -- Bone picker: one button per node. Assign paints triangleBones
                 -- on the MESHUSERT (not RESOURCE) — overrides DQS per-vertex weights.
                 local nodes = ud.extra.nodes
-                if nodes and #nodes > 0 then
+                if state.triangleEditor.paintMode == 'bones' and nodes and #nodes > 0 then
                     ui.label(x, y, 'Bone:')
                     nextRow()
                     local boneBtnW = math.min(40, (ROW_WIDTH + 50) / #nodes - 2)
