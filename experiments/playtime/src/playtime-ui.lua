@@ -36,7 +36,7 @@ local BUTTON_SPACING = 10
 
 
 
-function lib.assignVerticesToBone(...) return uiSFixtureEditor.assignVerticesToBone(...) end
+function lib.assignTrianglesToGroup(...) return uiSFixtureEditor.assignTrianglesToGroup(...) end
 
 
 function lib.drawJointCreateUI(panelX, panelY, w, h)

@@ -41,60 +41,34 @@ local accordionStatesSF = {
 
 local lastSFixtureForCleanup = nil
 
--- Assign selected vertices to a bone with rigid or blend mode
-function lib.assignVerticesToBone(fixture, vertexIndices, nodeIndex, mode, weight)
-    if not fixture or fixture:isDestroyed() then return end
+-- Tag a set of triangle indices with a group number on the RESOURCE fixture
+-- that owns this MESHUSERT's triangle list. Groups drive triangle render
+-- order (lower group drawn first → behind).
+function lib.assignTrianglesToGroup(meshusertFixture, triIndices, group)
+    if not meshusertFixture or meshusertFixture:isDestroyed() then return end
+    local ud = meshusertFixture:getUserData()
+    if not ud or not ud.label or #ud.label == 0 then return end
 
-    local ud = fixture:getUserData()
-    if not ud or not ud.extra then return end
-
-    -- Initialize vertexAssignments if it doesn't exist
-    if not ud.extra.vertexAssignments then
-        ud.extra.vertexAssignments = {}
-    end
-
-    for _, vi in ipairs(vertexIndices) do
-        if mode == 'rigid' then
-            -- Replace all weights with single bone at 100%
-            ud.extra.vertexAssignments[vi] = {
-                { nodeIndex = nodeIndex, weight = 1.0 }
-            }
-        elseif mode == 'blend' then
-            -- Add or update weight for this bone
-            if not ud.extra.vertexAssignments[vi] then
-                ud.extra.vertexAssignments[vi] = {}
-            end
-
-            local found = false
-            for _, assignment in ipairs(ud.extra.vertexAssignments[vi]) do
-                if assignment.nodeIndex == nodeIndex then
-                    assignment.weight = weight
-                    found = true
-                    break
-                end
-            end
-
-            if not found then
-                table.insert(ud.extra.vertexAssignments[vi], {
-                    nodeIndex = nodeIndex,
-                    weight = weight
-                })
-            end
-
-            -- Normalize weights so they sum to 1.0
-            local sum = 0
-            for _, a in ipairs(ud.extra.vertexAssignments[vi]) do
-                sum = sum + a.weight
-            end
-            if sum > 0 then
-                for _, a in ipairs(ud.extra.vertexAssignments[vi]) do
-                    a.weight = a.weight / sum
-                end
+    local mappert
+    for _, v in pairs(registry.sfixtures) do
+        if not v:isDestroyed() then
+            local vud = v:getUserData()
+            if #vud.label > 0 and vud.label == ud.label and subtypes.is(vud, subtypes.RESOURCE) then
+                mappert = v
+                break
             end
         end
     end
+    if not mappert then return end
 
-    logger:info('Assigned ' .. #vertexIndices .. ' vertices to node ' .. nodeIndex .. ' (' .. mode .. ')')
+    local mextra = mappert:getUserData().extra
+    if not mextra then return end
+    if not mextra.triangleGroups then mextra.triangleGroups = {} end
+    for _, t in ipairs(triIndices) do
+        mextra.triangleGroups[t] = group
+    end
+    mextra.triangleOrderDirty = true
+    logger:info('Assigned ' .. #triIndices .. ' triangles to group ' .. tostring(group))
 end
 
 function lib.drawSelectedSFixture()
@@ -592,7 +566,6 @@ function lib.drawSelectedSFixture()
                 end
                 ud.extra.influences = nil
                 ud.extra.bindVerts = nil
-                ud.extra.vertexAssignments = nil
             end
 
             local tmode = state.triangulationMode or 'basic'
@@ -994,136 +967,109 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            -- Unbind: clear influences + bindVerts + vertex assignments so
-            -- the mesh falls back to the undeformed draw path (drawn at bone
-            -- position, no deformation). Keeps the node list + transforms.
+            -- Unbind: clear influences + bindVerts so the mesh falls back to
+            -- the undeformed draw path (drawn at bone position, no
+            -- deformation). Keeps the node list + transforms.
             if ud.extra.influences and #ud.extra.influences > 0 then
                 nextRow()
                 if ui.button(x, y, ROW_WIDTH, 'unbind (reset mesh)') then
                     ud.extra.influences = nil
                     ud.extra.bindVerts = nil
-                    ud.extra.vertexAssignments = nil
                 end
             end
 
 
-            -- VERTEX ASSIGNMENT UI
+            -- TRIANGLE PAINTER — tag triangles with a group number. Groups
+            -- drive triangle render order (lower group → drawn first → behind).
+            -- Data lives on the paired RESOURCE fixture (mextra.triangleGroups).
             nextRow()
             love.graphics.line(x, y + 10, x + ROW_WIDTH + 50, y + 10)
             nextRow()
 
-            local editMode = modes.is(modes.EDIT_MESH_VERTS)
-            local buttonLabel = editMode and 'EDITING' or 'edit vertices'
+            local editMode = modes.is(modes.EDIT_MESH_TRIS)
+            local buttonLabel = editMode and 'EDITING TRIS' or 'edit triangles'
             local buttonColor = editMode and { 0.2, 0.8, 0.2 } or nil
 
             if ui.button(x, y, ROW_WIDTH, buttonLabel, BUTTON_HEIGHT, buttonColor) then
                 if editMode then
                     modes.clear()
-                    state.vertexEditor.selectedVertices = {}
+                    state.triangleEditor.selectedTriangles = {}
                 else
-                    modes.set(modes.EDIT_MESH_VERTS)
-                    state.vertexEditor.selectedVertices = {}
+                    modes.set(modes.EDIT_MESH_TRIS)
+                    state.triangleEditor.selectedTriangles = {}
                 end
             end
 
             if editMode then
                 nextRow()
-                ui.label(x, y, 'Selected: ' .. #state.vertexEditor.selectedVertices .. ' vertices')
+                ui.label(x, y, 'Selected: ' .. #state.triangleEditor.selectedTriangles .. ' tris')
 
-                -- Clear selection button
-                if #state.vertexEditor.selectedVertices > 0 then
+                if #state.triangleEditor.selectedTriangles > 0 then
                     if ui.button(x + ROW_WIDTH, y, 50, 'clear') then
-                        state.vertexEditor.selectedVertices = {}
+                        state.triangleEditor.selectedTriangles = {}
                     end
                 end
-
                 nextRow()
                 love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
                 nextRow()
 
-                -- Bone selection
-                if ud.extra.nodes and #ud.extra.nodes > 0 then
-                    ui.label(x, y, 'Assign to bone:')
-                    nextRow()
-
-                    for i = 1, #ud.extra.nodes do
-                        local node = ud.extra.nodes[i]
-                        local isSelected = (state.vertexEditor.selectedBone == i)
-                        local nodeLabel = 'Node ' .. i .. ' (' .. (node.type or '?') .. ')'
-                        local nodeColor = isSelected and { 0.3, 0.6, 1.0 } or nil
-
-                        if ui.button(x, y, ROW_WIDTH + 50, nodeLabel, BUTTON_HEIGHT, nodeColor) then
-                            state.vertexEditor.selectedBone = i
-                        end
-                        nextRow()
+                -- Group picker: 1..8 buttons. Lower = behind.
+                ui.label(x, y, 'Group (z-order):')
+                nextRow()
+                local btnW = (ROW_WIDTH + 50) / 8 - 2
+                for g = 1, 8 do
+                    local isSel = (state.triangleEditor.selectedGroup == g)
+                    local gx = ((g * 73) % 256) / 255
+                    local gy = ((g * 151) % 256) / 255
+                    local gz = ((g * 211) % 256) / 255
+                    local col = isSel and { gx, gy, gz } or nil
+                    if ui.button(x + (g - 1) * (btnW + 2), y, btnW, tostring(g), BUTTON_HEIGHT, col) then
+                        state.triangleEditor.selectedGroup = g
                     end
+                end
+                nextRow()
 
-                    nextRow()
-                    love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
-                    nextRow()
-
-                    -- Assignment mode buttons
-                    ui.label(x, y, 'Assignment mode:')
-                    nextRow()
-
-                    local rigidColor = (state.vertexEditor.assignmentMode == 'rigid') and { 0.8, 0.3, 0.3 } or nil
-                    if ui.button(x, y, (ROW_WIDTH + 50) / 2 - 5, 'Rigid (100%)', BUTTON_HEIGHT, rigidColor) then
-                        state.vertexEditor.assignmentMode = 'rigid'
+                if #state.triangleEditor.selectedTriangles > 0 then
+                    if ui.button(x, y, ROW_WIDTH + 50,
+                        'Assign to group ' .. state.triangleEditor.selectedGroup) then
+                        lib.assignTrianglesToGroup(
+                            state.selection.selectedSFixture,
+                            state.triangleEditor.selectedTriangles,
+                            state.triangleEditor.selectedGroup
+                        )
+                        -- Assign triggers a draw-path re-sort of `triangles`;
+                        -- ordinal selection indices are stale after that, so
+                        -- clear or they'd refer to different tris next click.
+                        state.triangleEditor.selectedTriangles = {}
                     end
-
-                    local blendColor = (state.vertexEditor.assignmentMode == 'blend') and { 0.3, 0.8, 0.3 } or nil
-                    if ui.button(x + (ROW_WIDTH + 50) / 2 + 5, y,
-                        (ROW_WIDTH + 50) / 2 - 5, 'Blend', BUTTON_HEIGHT, blendColor) then
-                        state.vertexEditor.assignmentMode = 'blend'
-                    end
-                    nextRow()
-
-                    -- Blend weight slider (only show in blend mode)
-                    if state.vertexEditor.assignmentMode == 'blend' then
-                        local weight = ui.sliderWithInput(myID .. 'blendWeight', x, y, ROW_WIDTH, 0, 1,
-                            state.vertexEditor.blendWeight or 0.5)
-                        ui.alignedLabel(x, y, ' weight')
-                        if weight then
-                            state.vertexEditor.blendWeight = weight
-                        end
-                        nextRow()
-                    end
-
-                    -- Apply assignment button
-                    if #state.vertexEditor.selectedVertices > 0 then
-                        local applyLabel = state.vertexEditor.assignmentMode == 'rigid'
-                            and 'Apply Rigid'
-                            or 'Add Blend (' .. string.format("%.2f", state.vertexEditor.blendWeight) .. ')'
-
-                        if ui.button(x, y, ROW_WIDTH + 50, applyLabel) then
-                            -- Apply the assignment
-                            lib.assignVerticesToBone(
-                                state.selection.selectedSFixture,
-                                state.vertexEditor.selectedVertices,
-                                state.vertexEditor.selectedBone,
-                                state.vertexEditor.assignmentMode,
-                                state.vertexEditor.blendWeight
-                            )
-                        end
-                        nextRow()
-                    end
-
-                    nextRow()
-                    love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
-                    nextRow()
-
-                    -- Brush size for selection
-                    local brushSize = ui.sliderWithInput(myID .. 'brushSize', x, y, ROW_WIDTH, 5, 100,
-                        state.vertexEditor.brushSize or 20)
-                    ui.alignedLabel(x, y, ' brush size')
-                    if brushSize then
-                        state.vertexEditor.brushSize = brushSize
-                    end
-                    nextRow()
-                else
-                    ui.label(x, y, 'Add nodes first!')
                     nextRow()
                 end
+
+                -- Clear-all-groups: wipes triangleGroups on the RESOURCE so
+                -- the mesh reverts to CDT-native triangle order.
+                if ui.button(x, y, ROW_WIDTH + 50, 'clear all groups') then
+                    local lbl = ud.label or ''
+                    for _, rv in pairs(registry.sfixtures) do
+                        if not rv:isDestroyed() then
+                            local rud = rv:getUserData()
+                            if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                rud.extra.triangleGroups = nil
+                                rud.extra.triangleOrderDirty = true
+                            end
+                        end
+                    end
+                end
+                nextRow()
+                love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
+                nextRow()
+
+                local brushSize = ui.sliderWithInput(myID .. 'brushSize', x, y, ROW_WIDTH, 5, 100,
+                    state.triangleEditor.brushSize or 20)
+                ui.alignedLabel(x, y, ' brush size')
+                if brushSize then
+                    state.triangleEditor.brushSize = brushSize
+                end
+                nextRow()
             end
 
             -- meshX/Y + scaleX/Y are baked into bindVerts at bind time; after

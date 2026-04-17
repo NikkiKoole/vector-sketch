@@ -1610,6 +1610,35 @@ function lib.drawTexturedWorld(world)
                 -- per-frame triangulation if indices missing (old scenes or
                 -- RESOURCE never selected after polygon edit).
                 local triIdx = data and data.triangles
+                -- Re-order triIdx so triangles with lower group number draw
+                -- first (behind). triangleGroups is written by the triangle
+                -- painter; reorder is stable — triangles within the same
+                -- group preserve CDT order. UVs are per-vertex so reordering
+                -- triangle indices never desyncs them.
+                if triIdx and data.triangleGroups and data.triangleOrderDirty then
+                    local numTris = math.floor(#triIdx / 3)
+                    local perm = {}
+                    for t = 1, numTris do perm[t] = t end
+                    table.sort(perm, function(a, b)
+                        local ga = data.triangleGroups[a] or 0
+                        local gb = data.triangleGroups[b] or 0
+                        if ga == gb then return a < b end
+                        return ga < gb
+                    end)
+                    local newTri = {}
+                    local newGroups = {}
+                    for k = 1, numTris do
+                        local src = perm[k]
+                        newTri[(k - 1) * 3 + 1] = triIdx[(src - 1) * 3 + 1]
+                        newTri[(k - 1) * 3 + 2] = triIdx[(src - 1) * 3 + 2]
+                        newTri[(k - 1) * 3 + 3] = triIdx[(src - 1) * 3 + 3]
+                        newGroups[k] = data.triangleGroups[src]
+                    end
+                    data.triangles = newTri
+                    data.triangleGroups = newGroups
+                    data.triangleOrderDirty = false
+                    triIdx = newTri
+                end
                 local tris
                 if not triIdx then
                     tris = shapes.makeTrianglesFromPolygon(verts)

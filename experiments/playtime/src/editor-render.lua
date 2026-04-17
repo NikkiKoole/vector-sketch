@@ -290,11 +290,10 @@ function lib.renderActiveEditorThings()
         love.graphics.setColor(1, 1, 1) -- Rese
     end
 
-    -- VERTEX SELECTION VISUALIZATION
-    if modes.is(modes.EDIT_MESH_VERTS) and state.selection.selectedSFixture then
+    -- TRIANGLE SELECTION VISUALIZATION
+    if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture then
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
-            -- Find the resource fixture with matching label
             local mappert = nil
             for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
@@ -307,134 +306,79 @@ function lib.renderActiveEditorThings()
             end
 
             if mappert then
+                local mextra = mappert:getUserData().extra
+                local triIdx = mextra and mextra.triangles
                 local mb = mappert:getBody()
                 local meshData = mb:getUserData()
-                local verts = meshData.thing.vertices
+                local baseVerts = (mextra and mextra.meshVertices) or meshData.thing.vertices
 
-                -- Get vertices in world space
                 local body = state.selection.selectedSFixture:getBody()
+                local polyCx, polyCy = mathutils.computeCentroid(baseVerts)
+                local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, polyCx, polyCy)
 
-                -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
-                -- 1. Center the vertices
-                local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
-                local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
-                --logger:inspect(state.vertexEditor)
-                --
-                --
-                --
+                local mx = ud.extra.meshX or 0
+                local my = ud.extra.meshY or 0
+                local sx = ud.extra.scaleX or 1
+                local sy = ud.extra.scaleY or 1
 
-                if state.vertexEditor.selectedBone > 0 then
-                    for i =1, #ud.extra.nodes do
-                        local node = ud.extra.nodes[i]
-                        if i == state.vertexEditor.selectedBone then
-
-                            if node.type == NT.JOINT then
-                                local j = registry.getJointByID(node.id)
-                                local x1, y1 = j:getAnchors( )
-
-                                love.graphics.circle('line', x1, y1, 10)
-
-                            end
-                            if node.type == NT.ANCHOR then
-                                local a = registry.getSFixtureByID(node.id)
-                                local anchorBody = a:getBody()
-                                local nx, ny = mathutils.getCenterOfPoints(
-                                    { anchorBody:getWorldPoints(a:getShape():getPoints()) })
-                                love.graphics.circle('line', nx, ny, 10)
-                            end
-                        end
-                    end
+                local function worldAt(vertIndex)
+                    local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
+                    local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
+                    lx = (lx + mx) * sx
+                    ly = (ly + my) * sy
+                    return body:getWorldPoint(lx, ly)
                 end
 
+                if triIdx and #triIdx >= 3 then
+                    local selSet = {}
+                    for _, t in ipairs(state.triangleEditor.selectedTriangles) do selSet[t] = true end
+                    local groups = mextra.triangleGroups
+                    local numTris = math.floor(#triIdx / 3)
 
-                for i = 1, #centeredVerts / 2 do
-                    local lx, ly = centeredVerts[i * 2 - 1], centeredVerts[i * 2]
-
-                    -- Apply mesh transforms
-                    if ud.extra.meshX or ud.extra.meshY then
-                        lx = lx + (ud.extra.meshX or 0)
-                        ly = ly + (ud.extra.meshY or 0)
+                    -- Same hash as the group buttons in sfixture-editor.lua
+                    local function groupColor(g)
+                        return ((g * 73) % 256) / 255,
+                               ((g * 151) % 256) / 255,
+                               ((g * 211) % 256) / 255
                     end
-                    if ud.extra.scaleX or ud.extra.scaleY then
-                        lx = lx * (ud.extra.scaleX or 1)
-                        ly = ly * (ud.extra.scaleY or 1)
-                    end
+                    local targetGroup = state.triangleEditor.selectedGroup or 1
 
-                    local wx, wy = body:getWorldPoint(lx, ly)
-
-
-
-                    -- for i = 1, #ud.extra.nodes do
-                    --     local node = ud.extra.nodes[i]
-                    --     local isSelected = (state.vertexEditor.selectedBone == i)
-                    --     local nodeLabel = 'Node ' .. i .. ' (' .. (node.type or '?') .. ')'
-                    --     local nodeColor = isSelected and { 0.3, 0.6, 1.0 } or nil
-
-                    --     if ui.button(x, y, ROW_WIDTH + 50, nodeLabel, BUTTON_HEIGHT, nodeColor) then
-                    --         state.vertexEditor.selectedBone = i
-
-
-
-                    -- i owuld like to render lines from the vertex to the nodes where it got it weight from
-
-              --
-
-                   --if state.vertexEditor.selectedVertices then
-                   local lineweight = love.graphics.getLineWidth()
-                   love.graphics.setColor(1,1,1,0.5)
-                   love.graphics.setLineWidth(1)
-                        for _, node in ipairs(ud.extra.nodes) do
-
-                            if node.type == NT.JOINT then
-                                local j = registry.getJointByID(node.id)
-                                local x1, y1 = j:getAnchors( )
-
-                                love.graphics.line(wx, wy, x1, y1)
-
+                    -- Fill pass: assigned triangles get a faint group tint;
+                    -- selected triangles get a brighter preview in the
+                    -- current target-group color (what Assign will paint).
+                    for t = 1, numTris do
+                        local i1 = triIdx[(t - 1) * 3 + 1]
+                        local i2 = triIdx[(t - 1) * 3 + 2]
+                        local i3 = triIdx[(t - 1) * 3 + 3]
+                        if i1 and i2 and i3 then
+                            local x1, y1 = worldAt(i1)
+                            local x2, y2 = worldAt(i2)
+                            local x3, y3 = worldAt(i3)
+                            local g = groups and groups[t]
+                            if g then
+                                local r, gn, bl = groupColor(g)
+                                love.graphics.setColor(r, gn, bl, 0.25)
+                                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
                             end
-                            if node.type == NT.ANCHOR then
-                                 local a = registry.getSFixtureByID(node.id)
-                                 local anchorBody = a:getBody()
-                                  local nx, ny = mathutils.getCenterOfPoints(
-                                      { anchorBody:getWorldPoints(a:getShape():getPoints()) })
-                                 love.graphics.line(wx, wy, nx, ny)
+                            if selSet[t] then
+                                local r, gn, bl = groupColor(targetGroup)
+                                love.graphics.setColor(r, gn, bl, 0.55)
+                                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
                             end
-                        end
-                         love.graphics.setLineWidth(lineweight)
-                           love.graphics.setColor(1,1,1,1)
-                        --end
-                    -- Check if this vertex is selected
-                    local isSelected = false
-                    for _, idx in ipairs(state.vertexEditor.selectedVertices) do
-                        if idx == i then
-                            isSelected = true
-                            break
+                            love.graphics.setColor(0.2, 1.0, 0.4, 0.6)
+                            love.graphics.setLineWidth(1)
+                            love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
                         end
                     end
-
-                    -- Draw vertex
-                    if isSelected then
-                        love.graphics.setColor(1, 0.8, 0)  -- Orange for selected
-                        love.graphics.circle('fill', wx, wy, 6)
-                        love.graphics.setColor(0, 0, 0)
-                        love.graphics.circle('line', wx, wy, 7)
-                    else
-                        love.graphics.setColor(0.5, 0.5, 1)  -- Blue for unselected
-                        love.graphics.circle('fill', wx, wy, 4)
-                        love.graphics.setColor(0, 0, 0)
-                        love.graphics.circle('line', wx, wy, 5)
-                    end
-
-                    -- Draw vertex index
-                    love.graphics.setColor(1, 1, 1)
-                    love.graphics.print(tostring(i), wx + 8, wy - 6)
+                    love.graphics.setColor(1, 1, 1, 1)
                 end
 
-                -- Draw brush radius at mouse cursor
-                local mx, my = love.mouse.getPosition()
-                local cx, cy = cam:getWorldCoordinates(mx, my)
+                -- Brush radius at mouse cursor
+                local msx, msy = love.mouse.getPosition()
+                local bcx, bcy = cam:getWorldCoordinates(msx, msy)
                 love.graphics.setColor(1, 1, 0, 0.3)
-                love.graphics.circle('line', cx, cy, tonumber(state.vertexEditor.brushSize) or 20)
+                love.graphics.circle('line', bcx, bcy, tonumber(state.triangleEditor.brushSize) or 20)
+                love.graphics.setColor(1, 1, 1, 1)
             end
         end
     end

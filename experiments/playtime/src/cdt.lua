@@ -415,6 +415,10 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
 
     ud.extra.uvs = uvs
     ud.extra.triangles = triIndices
+    -- Triangle-group assignments are index-based; retriangulating
+    -- invalidates them. Drop so painter starts fresh.
+    ud.extra.triangleGroups = nil
+    ud.extra.triangleOrderDirty = false
     -- Only store meshVertices when it differs from the polygon's verts
     -- (saves data + lets legacy paths pick the polygon source directly).
     if mode == 'cdt' then

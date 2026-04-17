@@ -188,7 +188,7 @@ local function handlePointer(x, y, id, action, _button)
         -- Track whether press originated over a UI element
         state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
         -- this is a nice pattern, early return!
-        if modes.is(modes.EDIT_MESH_VERTS) then return end
+        if modes.is(modes.EDIT_MESH_TRIS) then return end
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if state.panelVisibility.saveDialogOpened then return end
@@ -321,7 +321,7 @@ local function handlePointer(x, y, id, action, _button)
             recorder:recordMouseJointStart(madedata)
         end
     elseif action == "released" then
-        if modes.is(modes.EDIT_MESH_VERTS) then return end
+        if modes.is(modes.EDIT_MESH_TRIS) then return end
 
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -538,12 +538,13 @@ function lib.handleMouseMoved(x, y, dx, dy)
     --
     --
 
-    -- VERTEX SELECTION FOR MESH EDITING
-    if modes.is(modes.EDIT_MESH_VERTS) and state.selection.selectedSFixture then
+    -- TRIANGLE SELECTION FOR MESH EDITING
+    if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture then
         local cx, cy = cam:getWorldCoordinates(x, y)
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
-            -- Find the resource fixture with matching label
+            -- Find the RESOURCE fixture with matching label — it owns the
+            -- triangle index array (ud.extra.triangles).
             local mappert = nil
             for _, v in pairs(registry.sfixtures) do
                 if not v:isDestroyed() then
@@ -555,52 +556,26 @@ function lib.handleMouseMoved(x, y, dx, dy)
                 end
             end
             local button = nil
-            if love.mouse.isDown(1) then
-                button = 1
-            end
-            if love.mouse.isDown(2) then
-                button = 2
-            end
-            if button then
-                logger:info('mousepressed button = ', button)
-            end
+            if love.mouse.isDown(1) then button = 1 end
+            if love.mouse.isDown(2) then button = 2 end
             if mappert and button ~= nil then
                 local mb = mappert:getBody()
                 local mud = mb:getUserData()
-                local verts = mud.thing.vertices
+                local mextra = mappert:getUserData().extra
+                local triIdx = mextra and mextra.triangles
+                if not triIdx or #triIdx < 3 then return end
+                -- Match the draw path's vertex source: CDT mode uses
+                -- meshVertices (includes Steiner points), basic mode falls
+                -- back to the polygon.
+                local baseVerts = (mextra and mextra.meshVertices) or mud.thing.vertices
 
-                -- Get vertices in world space
                 local body = state.selection.selectedSFixture:getBody()
+                local polyCx, polyCy = mathutils.computeCentroid(baseVerts)
+                local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, polyCx, polyCy)
 
-                -- IMPORTANT: Must match the logic in playtime-ui.lua bind pose!
-                -- 1. Center the vertices
-                local polyCx, polyCy = mathutils.getCenterOfPoints(verts)
-                local centeredVerts = mathutils.makePolygonRelativeToCenter(verts, polyCx, polyCy)
-
-                local worldVerts = {}
-                for i = 1, #centeredVerts, 2 do
-                    local lx, ly = centeredVerts[i], centeredVerts[i + 1]
-                    -- Apply mesh transforms
-                    if ud.extra.meshX or ud.extra.meshY then
-                        lx = lx + (ud.extra.meshX or 0)
-                        ly = ly + (ud.extra.meshY or 0)
-                    end
-                    if ud.extra.scaleX or ud.extra.scaleY then
-                        lx = lx * (ud.extra.scaleX or 1)
-                        ly = ly * (ud.extra.scaleY or 1)
-                    end
-                    local wx, wy = body:getWorldPoint(lx, ly)
-                    worldVerts[i] = wx
-                    worldVerts[i + 1] = wy
-                end
-
-                -- Find vertices within brush radius
-                local brushRadius = tonumber(state.vertexEditor.brushSize) or 20
+                local brushRadius = tonumber(state.triangleEditor.brushSize) or 20
                 local isRightClick = (button == 2)
 
-
-
-                -- small helper: remove a vertex index from selection
                 local function removeSelectedIndex(sel, idx)
                     for n = #sel, 1, -1 do
                         if sel[n] == idx then
@@ -611,33 +586,46 @@ function lib.handleMouseMoved(x, y, dx, dy)
                     return false
                 end
 
+                local mx = ud.extra.meshX or 0
+                local my = ud.extra.meshY or 0
+                local sx = ud.extra.scaleX or 1
+                local sy = ud.extra.scaleY or 1
 
-                for i = 1, #worldVerts / 2 do
-                    local vx, vy = worldVerts[i * 2 - 1], worldVerts[i * 2]
-                    local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+                local function worldAt(vertIndex)
+                    local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
+                    local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
+                    lx = (lx + mx) * sx
+                    ly = (ly + my) * sy
+                    return body:getWorldPoint(lx, ly)
+                end
 
-                    if dist < brushRadius then
-                        if isRightClick then
-                            -- RIGHT click: unselect vertices under the brush
-                            removeSelectedIndex(state.vertexEditor.selectedVertices, i)
-                        else
-                            -- LEFT click: select vertices under the brush (your old logic)
-                            local alreadySelected = false
-                            for _, idx in ipairs(state.vertexEditor.selectedVertices) do
-                                if idx == i then
-                                    alreadySelected = true
-                                    break
+                local numTris = math.floor(#triIdx / 3)
+                for t = 1, numTris do
+                    local i1 = triIdx[(t - 1) * 3 + 1]
+                    local i2 = triIdx[(t - 1) * 3 + 2]
+                    local i3 = triIdx[(t - 1) * 3 + 3]
+                    if i1 and i2 and i3 then
+                        local x1, y1 = worldAt(i1)
+                        local x2, y2 = worldAt(i2)
+                        local x3, y3 = worldAt(i3)
+                        local ccx = (x1 + x2 + x3) / 3
+                        local ccy = (y1 + y2 + y3) / 3
+                        local dist = math.sqrt((cx - ccx) ^ 2 + (cy - ccy) ^ 2)
+                        if dist < brushRadius then
+                            if isRightClick then
+                                removeSelectedIndex(state.triangleEditor.selectedTriangles, t)
+                            else
+                                local already = false
+                                for _, idx in ipairs(state.triangleEditor.selectedTriangles) do
+                                    if idx == t then already = true; break end
                                 end
-                            end
-
-                            if not alreadySelected then
-                                table.insert(state.vertexEditor.selectedVertices, i)
+                                if not already then
+                                    table.insert(state.triangleEditor.selectedTriangles, t)
+                                end
                             end
                         end
                     end
                 end
-
-                logger:info('Selected ' .. #state.vertexEditor.selectedVertices .. ' vertices')
                 return
             end
         end
