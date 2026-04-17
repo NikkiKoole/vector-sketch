@@ -366,17 +366,22 @@ function lib.renderActiveEditorThings()
                             local assignedBone = triangleBones and triangleBones[t]
                             if assignedBone then
                                 local r, gn, bl = boneColor(assignedBone)
-                                love.graphics.setColor(r, gn, bl, 0.3)
+                                love.graphics.setColor(r, gn, bl, 0.6)
                                 love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                                love.graphics.setColor(r, gn, bl, 0.9)
+                                love.graphics.setLineWidth(1)
+                                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
                             end
                             if selSet[t] then
                                 local r, gn, bl = boneColor(targetBone)
-                                love.graphics.setColor(r, gn, bl, 0.65)
+                                love.graphics.setColor(r, gn, bl, 0.85)
                                 love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
                             end
-                            love.graphics.setColor(0.2, 1.0, 0.4, 0.6)
-                            love.graphics.setLineWidth(1)
-                            love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+                            if not assignedBone then
+                                love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
+                                love.graphics.setLineWidth(1)
+                                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+                            end
                         end
                     end
                     love.graphics.setColor(1, 1, 1, 1)

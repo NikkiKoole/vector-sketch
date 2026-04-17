@@ -1524,21 +1524,32 @@ function lib.drawTexturedWorld(world)
             end
         end
 
-        -- Rigid single-bone position for vert vi: find the influence for boneIndex
-        -- and rigidly follow that body. Returns root-local x, y, or nil if the
-        -- bone is not in vi's influence list (caller falls back to blended vert).
-        local function rigidBoneVertLocal(vi, boneIndex, influences, rootBody)
-            local inflList = influences[vi]
-            if not inflList then return nil end
-            for k = 1, #inflList do
-                local infl = inflList[k]
-                if infl.nodeIndex == boneIndex then
-                    local ax, ay = currentAnchorLocal(infl)
-                    local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                    return rootBody:getLocalPoint(wx, wy)
+        -- Rigid single-bone position for vert vi: look up the unpruned rigidLookup
+        -- table (built at bind time) so any painted bone works regardless of
+        -- pruneTopK ranking. Falls back to the pruned influences path if rigidLookup
+        -- is absent (old scene compatibility).
+        local function rigidBoneVertLocal(vi, boneIndex, rigidLookupOrInfluences, rootBody, isLookup)
+            if isLookup then
+                local row = rigidLookupOrInfluences[vi]
+                if not row then return nil end
+                local entry = row[boneIndex]
+                if not entry then return nil end
+                local wx, wy = entry.body:getWorldPoint(entry.lx, entry.ly)
+                return rootBody:getLocalPoint(wx, wy)
+            else
+                -- legacy path: pruned influences table
+                local inflList = rigidLookupOrInfluences[vi]
+                if not inflList then return nil end
+                for k = 1, #inflList do
+                    local infl = inflList[k]
+                    if infl.nodeIndex == boneIndex then
+                        local ax, ay = currentAnchorLocal(infl)
+                        local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                        return rootBody:getLocalPoint(wx, wy)
+                    end
                 end
+                return nil
             end
-            return nil
         end
 
         if drawables[i].type == subtypes.MESHUSERT then
@@ -1672,19 +1683,54 @@ function lib.drawTexturedWorld(world)
                 local isSelected = state.selection.selectedSFixture == drawables[i].texfixture
                 local alpha = (data and data.uvs) and (isSelected and 0.75 or 1) or 0.5
 
-                local triangleBones = drawables[i].extra.triangleBones
+                local triangleBones  = drawables[i].extra.triangleBones
                 local boneInfluences = drawables[i].extra.influences
                 local boneBindVerts  = drawables[i].extra.bindVerts
-                local hasBoneOverrides = triangleBones and boneInfluences and boneBindVerts
+                local rigidLookup    = drawables[i].extra.rigidLookup
+                -- rigidLookup is preferred (unpruned); fall back to pruned influences for old scenes
+                local rigidSource    = rigidLookup or boneInfluences
+                local isRigidLookup  = rigidLookup ~= nil
+                local hasBoneOverrides = triangleBones and rigidSource and boneBindVerts
+
+                -- Pre-compute per-vertex bone weights averaged across all triangles
+                -- that share the vertex. Shared seam vertices blend between adjacent
+                -- bone regions instead of snapping to whichever triangle is drawn first.
+                local vertBoneWeights = nil
+                if hasBoneOverrides and triIdx then
+                    vertBoneWeights = {}
+                    local numTris = math.floor(#triIdx / 3)
+                    for t = 1, numTris do
+                        local boneIdx = triangleBones[t]
+                        if boneIdx then
+                            for corner = 0, 2 do
+                                local vi = triIdx[t * 3 - 2 + corner]
+                                if not vertBoneWeights[vi] then vertBoneWeights[vi] = {} end
+                                vertBoneWeights[vi][boneIdx] = (vertBoneWeights[vi][boneIdx] or 0) + 1
+                            end
+                        end
+                    end
+                    for _, bw in pairs(vertBoneWeights) do
+                        local total = 0
+                        for _, w in pairs(bw) do total = total + w end
+                        for bIdx, w in pairs(bw) do bw[bIdx] = w / total end
+                    end
+                end
 
                 if triIdx then
                     for j = 1, #triIdx do
                         local vi = triIdx[j]
-                        local t = math.ceil(j / 3)
-                        local boneIdx = hasBoneOverrides and triangleBones[t]
                         local px, py
-                        if boneIdx then
-                            px, py = rigidBoneVertLocal(vi, boneIdx, boneInfluences, drawables[i].body)
+                        if vertBoneWeights and vertBoneWeights[vi] then
+                            local wxSum, wySum, wSum = 0, 0, 0
+                            for nodeIndex, w in pairs(vertBoneWeights[vi]) do
+                                local bx, by = rigidBoneVertLocal(vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
+                                if bx then
+                                    wxSum = wxSum + bx * w
+                                    wySum = wySum + by * w
+                                    wSum  = wSum + w
+                                end
+                            end
+                            if wSum > 0 then px = wxSum / wSum; py = wySum / wSum end
                         end
                         px = px or verts[(vi - 1) * 2 + 1]
                         py = py or verts[(vi - 1) * 2 + 2]
@@ -1715,11 +1761,18 @@ function lib.drawTexturedWorld(world)
                         -- No coord-key lookup — direct, stable, fast.
                         for j = 1, #triIdx do
                             local vi = triIdx[j]
-                            local t = math.ceil(j / 3)
-                            local boneIdx = hasBoneOverrides and triangleBones[t]
                             local px, py
-                            if boneIdx then
-                                px, py = rigidBoneVertLocal(vi, boneIdx, boneInfluences, drawables[i].body)
+                            if vertBoneWeights and vertBoneWeights[vi] then
+                                local wxSum, wySum, wSum = 0, 0, 0
+                                for nodeIndex, w in pairs(vertBoneWeights[vi]) do
+                                    local bx, by = rigidBoneVertLocal(vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
+                                    if bx then
+                                        wxSum = wxSum + bx * w
+                                        wySum = wySum + by * w
+                                        wSum  = wSum + w
+                                    end
+                                end
+                                if wSum > 0 then px = wxSum / wSum; py = wySum / wSum end
                             end
                             px = px or verts[(vi - 1) * 2 + 1]
                             py = py or verts[(vi - 1) * 2 + 2]

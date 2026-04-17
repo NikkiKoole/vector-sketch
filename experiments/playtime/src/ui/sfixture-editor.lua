@@ -594,13 +594,18 @@ function lib.drawSelectedSFixture()
                 end
                 ud.extra.influences = nil
                 ud.extra.bindVerts = nil
+                ud.extra.rigidLookup = nil
+                ud.extra.rigidBindCoords = nil
+                ud.extra.triangleBones = nil
             end
 
             local tmode = state.triangulationMode or 'basic'
-            local tlabel = (tmode == 'cdt') and 'triangulation: CDT (click for basic)'
-                or 'triangulation: basic (click for CDT)'
+            local tlabel = (tmode == 'cdt') and 'tri: CDT (Bowyer-Watson)'
+                or (tmode == 'refined') and 'tri: refined (ear+subdivide)'
+                or 'tri: basic (ear-clip)'
             if ui.button(x, y, ROW_WIDTH, tlabel) then
-                state.triangulationMode = (tmode == 'cdt') and 'basic' or 'cdt'
+                state.triangulationMode = (tmode == 'basic') and 'cdt'
+                    or (tmode == 'cdt') and 'refined' or 'basic'
                 recomputeLinkedResourceAndUnbind()
             end
             nextRow()
@@ -609,7 +614,7 @@ function lib.drawSelectedSFixture()
             -- Smaller = denser interior mesh = smoother deformation, more
             -- triangles. Recomputes on drag + clears the bind so the user
             -- re-binds once satisfied with the density.
-            if state.triangulationMode == 'cdt' then
+            if state.triangulationMode == 'cdt' or state.triangulationMode == 'refined' then
                 local defaultSpacing = state.cdtSpacing or 30
                 local newSpacing = ui.sliderWithInput(myID .. ' cdtSpacing', x, y, ROW_WIDTH,
                     10, 80, defaultSpacing)
@@ -628,6 +633,31 @@ function lib.drawSelectedSFixture()
             ui.alignedLabel(x, y, ' bindRadius')
             if br then ud.extra.bindRadius = br end
             nextRow()
+
+            local function getNodeLocal(node)
+                if node.type == NT.JOINT then
+                    local joint = registry.getJointByID(node.id)
+                    if not joint then return {} end
+                    local x1, y1, x2, y2 = joint:getAnchors()
+                    local bodyA, bodyB = joint:getBodies()
+                    local ax, ay = bodyA:getLocalPoint(x1, y1)
+                    local bx, by = bodyB:getLocalPoint(x2, y2)
+                    return {
+                        { body = bodyA, offx = ax, offy = ay, type = NT.JOINT, id = node.id, side = SIDES.A },
+                        { body = bodyB, offx = bx, offy = by, type = NT.JOINT, id = node.id, side = SIDES.B },
+                    }
+                end
+                if node.type == NT.ANCHOR then
+                    local f = registry.getSFixtureByID(node.id)
+                    if not f then return {} end
+                    local bp = f:getBody()
+                    local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
+                    local centerX, centerY = mathutils.getCenterOfPoints(pts)
+                    local lx, ly = bp:getLocalPoint(centerX, centerY)
+                    return { { body = bp, offx = lx, offy = ly, type = NT.ANCHOR, id = node.id } }
+                end
+                return {}
+            end
 
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
                 local label = ud.label or ""
@@ -689,61 +719,6 @@ function lib.drawSelectedSFixture()
                             out[#out + 1] = wy
                         end
                         return out
-                    end
-                    local function getNodeLocal(node)
-                        if node.type == NT.JOINT then
-                            local joint = registry.getJointByID(node.id)
-                            if not joint then return {} end
-
-                            local x1, y1, x2, y2 = joint:getAnchors() -- world anchors
-                            local bodyA, bodyB = joint:getBodies()
-
-                            -- local positions of each anchor in its own body frame
-                            local ax, ay = bodyA:getLocalPoint(x1, y1)
-                            local bx, by = bodyB:getLocalPoint(x2, y2)
-
-                            return {
-                                {
-                                    body = bodyA,
-                                    offx = ax,
-                                    offy = ay,
-                                    type = NT.JOINT,
-                                    id = node.id,
-                                    side = SIDES.A,
-                                },
-                                {
-                                    body = bodyB,
-                                    offx = bx,
-                                    offy = by,
-                                    type = NT.JOINT,
-                                    id = node.id,
-                                    side = SIDES.B,
-                                }
-                            }
-                        end
-
-                        if node.type == NT.ANCHOR then
-                            local f = registry.getSFixtureByID(node.id)
-                            if not f then return {} end
-
-                            local bp = f:getBody()
-                            local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
-                            local centerX, centerY = mathutils.getCenterOfPoints(pts)
-
-                            local lx, ly = bp:getLocalPoint(centerX, centerY)
-
-                            return {
-                                {
-                                    body = bp,
-                                    offx = lx,
-                                    offy = ly,
-                                    type = NT.ANCHOR,
-                                    id = node.id,
-                                }
-                            }
-                        end
-
-                        return {}
                     end
                     local function computeInfluences(worldVerts, nodes)
                         local influences = {}
@@ -993,6 +968,34 @@ function lib.drawSelectedSFixture()
                             bindVerts[vi] = { verts[(vi - 1) * 2 + 1], verts[(vi - 1) * 2 + 2] }
                         end
                         ud.extra.bindVerts = bindVerts
+
+                        -- Build rigidLookup: unpruned per-vertex per-bone body+local-coords.
+                        -- The pruned `influences` table (top 3) is used for DQS blending,
+                        -- but the rigid paint path needs ALL bones — this table bypasses
+                        -- the pruneTopK limit so painted assignments always resolve.
+                        -- Also save rigidBindCoords (just the numbers, no body refs) so
+                        -- load can restore the exact same lx/ly without reconstruction.
+                        local rigidLookup = {}
+                        local rigidBindCoords = {}
+                        local numNodes = #ud.extra.nodes
+                        for vi = 1, numVerts do
+                            local wx = verts[(vi - 1) * 2 + 1]
+                            local wy = verts[(vi - 1) * 2 + 2]
+                            rigidLookup[vi] = {}
+                            local coordRow = {}
+                            for nj = 1, numNodes do
+                                local infos = getNodeLocal(ud.extra.nodes[nj])
+                                if #infos > 0 then
+                                    local lx, ly = infos[1].body:getLocalPoint(wx, wy)
+                                    rigidLookup[vi][nj] = { body = infos[1].body, lx = lx, ly = ly }
+                                    coordRow[2 * nj - 1] = lx
+                                    coordRow[2 * nj]     = ly
+                                end
+                            end
+                            rigidBindCoords[vi] = coordRow
+                        end
+                        ud.extra.rigidLookup = rigidLookup
+                        ud.extra.rigidBindCoords = rigidBindCoords
                         --logger:inspect(influences)
                     end
                 end
@@ -1006,6 +1009,8 @@ function lib.drawSelectedSFixture()
                 if ui.button(x, y, ROW_WIDTH, 'unbind (reset mesh)') then
                     ud.extra.influences = nil
                     ud.extra.bindVerts = nil
+                    ud.extra.rigidLookup = nil
+                    ud.extra.rigidBindCoords = nil
                 end
             end
 
@@ -1077,6 +1082,8 @@ function lib.drawSelectedSFixture()
                                         ud.extra.triangleBones = nil
                                         ud.extra.influences = nil
                                         ud.extra.bindVerts = nil
+                                        ud.extra.rigidLookup = nil
+                                        ud.extra.rigidBindCoords = nil
                                     end
                                     break
                                 end
@@ -1226,6 +1233,73 @@ function lib.drawSelectedSFixture()
                         end
                     end
                     nextRow()
+                    -- Proximity-based auto-assign: triangle centroid → closest
+                    -- node anchor within bindRadius. Triangles outside all radii
+                    -- stay nil (DQS fallback). Use manual painting to fix edges.
+                    if ui.button(x, y, ROW_WIDTH + 50, 'auto assign by proximity') then
+                        local nodes = ud.extra.nodes
+                        local radius = tonumber(ud.extra.bindRadius) or 80
+                        local lbl = ud.label or ''
+                        local mappert2
+                        for _, rv in pairs(registry.sfixtures) do
+                            if not rv:isDestroyed() then
+                                local rud = rv:getUserData()
+                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                    mappert2 = rv; break
+                                end
+                            end
+                        end
+                        if nodes and #nodes > 0 and mappert2 then
+                            local mud2 = mappert2:getBody():getUserData()
+                            local mextra2 = mappert2:getUserData().extra
+                            local triIdx2 = mextra2 and mextra2.triangles
+                            local baseVerts2 = (mextra2 and mextra2.meshVertices)
+                                or (mud2.thing and mud2.thing.vertices)
+                            if triIdx2 and baseVerts2 then
+                                local bdy = state.selection.selectedSFixture:getBody()
+                                local pcx, pcy = mathutils.computeCentroid(baseVerts2)
+                                local cVerts = mathutils.makePolygonRelativeToCenter(baseVerts2, pcx, pcy)
+                                local pmx = ud.extra.meshX or 0
+                                local pmy = ud.extra.meshY or 0
+                                local psx = ud.extra.scaleX or 1
+                                local psy = ud.extra.scaleY or 1
+                                local pmr = ud.extra.meshRot or 0
+                                local cosR2, sinR2 = math.cos(pmr), math.sin(pmr)
+                                local function triCentroidWorld(t)
+                                    local wcx, wcy = 0, 0
+                                    for corner = 0, 2 do
+                                        local vi = triIdx2[t * 3 - 2 + corner]
+                                        local lx = (cVerts[(vi-1)*2+1] + pmx) * psx
+                                        local ly = (cVerts[(vi-1)*2+2] + pmy) * psy
+                                        if pmr ~= 0 then
+                                            lx, ly = lx*cosR2 - ly*sinR2, lx*sinR2 + ly*cosR2
+                                        end
+                                        local wx, wy = bdy:getWorldPoint(lx, ly)
+                                        wcx = wcx + wx; wcy = wcy + wy
+                                    end
+                                    return wcx / 3, wcy / 3
+                                end
+                                local newBones = {}
+                                local numTris2 = math.floor(#triIdx2 / 3)
+                                for t = 1, numTris2 do
+                                    local tcx, tcy = triCentroidWorld(t)
+                                    local bestNode, bestDist = nil, math.huge
+                                    for nj, node in ipairs(nodes) do
+                                        for _, info in ipairs(getNodeLocal(node)) do
+                                            local wx, wy = info.body:getWorldPoint(info.offx, info.offy)
+                                            local d = math.sqrt((tcx-wx)^2 + (tcy-wy)^2)
+                                            if d < bestDist then bestDist = d; bestNode = nj end
+                                        end
+                                    end
+                                    if bestNode and bestDist <= radius then
+                                        newBones[t] = bestNode
+                                    end
+                                end
+                                ud.extra.triangleBones = newBones
+                            end
+                        end
+                    end
+                    nextRow()
                     if ui.button(x, y, ROW_WIDTH + 50, 'clear all bones') then
                         ud.extra.triangleBones = nil
                     end
@@ -1252,6 +1326,8 @@ function lib.drawSelectedSFixture()
                                         ud.extra.triangleBones = nil
                                         ud.extra.influences = nil
                                         ud.extra.bindVerts = nil
+                                        ud.extra.rigidLookup = nil
+                                        ud.extra.rigidBindCoords = nil
                                     end
                                     nextRow()
                                 end

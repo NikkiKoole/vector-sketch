@@ -71,6 +71,15 @@ local function distToPolyEdge(px, py, poly)
     return best
 end
 
+local function pointInTriangle(px, py, ax, ay, bx, by, cx, cy)
+    local d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by)
+    local d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy)
+    local d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay)
+    local hasNeg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+    local hasPos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+    return not (hasNeg and hasPos)
+end
+
 -- Bounding box.
 local function bbox(poly)
     local minX, minY = math.huge, math.huge
@@ -413,6 +422,151 @@ function lib.triangulatePolyWithSteiner(polyVerts, spacing, extraPoints)
 end
 
 ---------------------------------------------------------------------------
+-- Refined triangulation: ear-clip base + centroid subdivision.
+--
+-- Alternative to triangulatePolyWithSteiner. Starts from love.math.triangulate
+-- (always covers the full polygon — no boundary erosion) then repeatedly splits
+-- triangles larger than spacing² by inserting their centroid, until all
+-- triangles are small enough. extraPoints are inserted into the triangulation
+-- before the subdivision pass (used by "split selected").
+---------------------------------------------------------------------------
+function lib.triangulatePolyRefined(polyVerts, spacing, extraPoints)
+    if not spacing then
+        local minX, minY, maxX, maxY = bbox(polyVerts)
+        local diag = math.sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
+        spacing = math.max(20, diag / 20)
+    end
+    local numPolyVerts = math.floor(#polyVerts / 2)
+
+    local ok, loveTris = pcall(love.math.triangulate, polyVerts)
+    if not ok or not loveTris or #loveTris == 0 then return polyVerts, {} end
+
+    -- Vertex pool: polygon verts first (preserves UV index alignment).
+    local verts = {}
+    for i = 1, #polyVerts do verts[i] = polyVerts[i] end
+    local function getXY(i) return verts[(i-1)*2+1], verts[(i-1)*2+2] end
+    local function addVert(x, y)
+        verts[#verts+1] = x; verts[#verts+1] = y
+        return math.floor(#verts / 2)
+    end
+
+    -- Convert love coord-triangles → {i1,i2,i3} tables referencing verts.
+    local tolSq = 0.01
+    local function findPolyIdx(x, y)
+        for i = 1, numPolyVerts do
+            local dx = verts[(i-1)*2+1] - x
+            local dy = verts[(i-1)*2+2] - y
+            if dx*dx + dy*dy <= tolSq then return i end
+        end
+        return nil
+    end
+    local tris = {}
+    for _, tri in ipairs(loveTris) do
+        local t = {}
+        local valid = true
+        for k = 0, 2 do
+            local idx = findPolyIdx(tri[k*2+1], tri[k*2+2])
+            if not idx then valid = false; break end
+            t[k+1] = idx
+        end
+        if valid then tris[#tris+1] = t end
+    end
+    if #tris == 0 then return polyVerts, {} end
+
+    -- Insert extraPoints (e.g. "split selected" centroids) into the
+    -- triangulation before the area-based subdivision pass.
+    if extraPoints then
+        for ep = 1, #extraPoints, 2 do
+            local px, py = extraPoints[ep], extraPoints[ep+1]
+            for j = 1, #tris do
+                local tri = tris[j]
+                local x1,y1 = getXY(tri[1])
+                local x2,y2 = getXY(tri[2])
+                local x3,y3 = getXY(tri[3])
+                if pointInTriangle(px, py, x1,y1, x2,y2, x3,y3) then
+                    local pi = addVert(px, py)
+                    table.remove(tris, j)
+                    tris[#tris+1] = {tri[1], tri[2], pi}
+                    tris[#tris+1] = {tri[2], tri[3], pi}
+                    tris[#tris+1] = {tri[3], tri[1], pi}
+                    break
+                end
+            end
+        end
+    end
+
+    -- Longest-edge bisection: find each oversized triangle's longest edge,
+    -- insert its midpoint, split into 2. The neighbor sharing that edge is
+    -- also split at the same midpoint — no T-junctions.
+    local threshold = spacing * spacing
+    local function eKey(a, b) return a < b and (a .. ',' .. b) or (b .. ',' .. a) end
+    for _ = 1, 30 do
+        -- Build edge→triangle adjacency for this pass.
+        local edgeAdj = {}
+        for j, tri in ipairs(tris) do
+            for e = 1, 3 do
+                local a, b = tri[e], tri[e % 3 + 1]
+                local k = eKey(a, b)
+                if not edgeAdj[k] then edgeAdj[k] = {} end
+                edgeAdj[k][#edgeAdj[k] + 1] = j
+            end
+        end
+
+        -- For each oversized triangle find its longest edge and insert midpoint.
+        local edgeMid = {}
+        for _, tri in ipairs(tris) do
+            local x1,y1 = getXY(tri[1]); local x2,y2 = getXY(tri[2]); local x3,y3 = getXY(tri[3])
+            local area = math.abs((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)) * 0.5
+            if area > threshold then
+                local e12 = (x2-x1)^2+(y2-y1)^2
+                local e23 = (x3-x2)^2+(y3-y2)^2
+                local e31 = (x1-x3)^2+(y1-y3)^2
+                local la, lb
+                if e12 >= e23 and e12 >= e31 then la,lb = tri[1],tri[2]
+                elseif e23 >= e31 then la,lb = tri[2],tri[3]
+                else la,lb = tri[3],tri[1] end
+                local k = eKey(la, lb)
+                if not edgeMid[k] then
+                    local ax,ay = getXY(la); local bx,by = getXY(lb)
+                    edgeMid[k] = addVert((ax+bx)*0.5, (ay+by)*0.5)
+                end
+            end
+        end
+
+        if not next(edgeMid) then break end
+
+        -- Split every triangle that touches a bisected edge (covers both the
+        -- original oversized triangle AND its neighbor automatically).
+        local newTris = {}
+        for _, tri in ipairs(tris) do
+            local sa, sb, mi
+            for e = 1, 3 do
+                local a, b = tri[e], tri[e % 3 + 1]
+                mi = edgeMid[eKey(a, b)]
+                if mi then sa, sb = a, b; break end
+            end
+            if mi then
+                local c
+                for _, v in ipairs(tri) do if v ~= sa and v ~= sb then c = v; break end end
+                newTris[#newTris+1] = {sa, mi, c}
+                newTris[#newTris+1] = {mi, sb, c}
+            else
+                newTris[#newTris+1] = tri
+            end
+        end
+        tris = newTris
+    end
+
+    local triIdx = {}
+    for _, tri in ipairs(tris) do
+        triIdx[#triIdx+1] = tri[1]
+        triIdx[#triIdx+1] = tri[2]
+        triIdx[#triIdx+1] = tri[3]
+    end
+    return verts, triIdx
+end
+
+---------------------------------------------------------------------------
 -- High-level helper: compute RESOURCE mesh data (verts, UVs, triangles)
 -- in either `basic` or `cdt` mode. Called from io.lua on scene load, from
 -- the RESOURCE UI when it's selected, and from the toggle-triangulation
@@ -431,19 +585,21 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     if not (bodyUD and bodyUD.thing and bodyUD.thing.vertices) then return false end
     local origVerts = bodyUD.thing.vertices
 
-    -- Build the mesh vertex list. In `basic` mode this is just the polygon
-    -- outline. In `cdt` mode we append interior Steiner points and build a
-    -- Delaunay triangulation across the union.
     local meshVerts, triIndices
     if mode == 'cdt' then
         meshVerts, triIndices = lib.triangulatePolyWithSteiner(origVerts, spacing, ud.extra.extraSteiner)
         if not triIndices or #triIndices == 0 then
-            -- CDT bailed; fall back so user still gets a textured mesh.
+            mode = 'basic'
+            meshVerts = origVerts
+        end
+    elseif mode == 'refined' then
+        meshVerts, triIndices = lib.triangulatePolyRefined(origVerts, spacing, ud.extra.extraSteiner)
+        if not triIndices or #triIndices == 0 then
             mode = 'basic'
             meshVerts = origVerts
         end
     end
-    if mode ~= 'cdt' then
+    if mode ~= 'cdt' and mode ~= 'refined' then
         meshVerts = origVerts
         triIndices = mathutils and mathutils.triangulateToIndices(origVerts) or nil
     end
@@ -478,7 +634,7 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     ud.extra.triangleOrderDirty = false
     -- Only store meshVertices when it differs from the polygon's verts
     -- (saves data + lets legacy paths pick the polygon source directly).
-    if mode == 'cdt' then
+    if mode == 'cdt' or mode == 'refined' then
         ud.extra.meshVertices = meshVerts
     else
         ud.extra.meshVertices = nil

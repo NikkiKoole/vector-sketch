@@ -558,6 +558,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
             local button = nil
             if love.mouse.isDown(1) then button = 1 end
             if love.mouse.isDown(2) then button = 2 end
+            local isCtrl = love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl')
             if mappert and button ~= nil then
                 local mb = mappert:getBody()
                 local mud = mb:getUserData()
@@ -617,8 +618,18 @@ function lib.handleMouseMoved(x, y, dx, dy)
                         local ccy = (y1 + y2 + y3) / 3
                         local dist = math.sqrt((cx - ccx) ^ 2 + (cy - ccy) ^ 2)
                         if dist < brushRadius then
-                            if isRightClick then
+                            if isCtrl and button == 1 then
+                                local tb = ud.extra.triangleBones
+                                if tb and tb[t] then
+                                    state.triangleEditor.selectedBone = tb[t]
+                                    return
+                                end
+                            elseif isRightClick then
                                 removeSelectedIndex(state.triangleEditor.selectedTriangles, t)
+                                local tb = ud.extra.triangleBones
+                                if tb and tb[t] == state.triangleEditor.selectedBone then
+                                    tb[t] = nil
+                                end
                             else
                                 local already = false
                                 for _, idx in ipairs(state.triangleEditor.selectedTriangles) do

@@ -73,6 +73,95 @@ local function backfillBindVerts(extra)
     end
     extra.bindVerts = bindVerts
 end
+-- Rebuild rigidLookup after load. rigidLookup holds body refs so it is never
+-- saved. rigidBindCoords (saved since the fix) stores the exact lx,ly from
+-- bind time as plain numbers — we just attach body refs to them on load.
+-- Falls back to bind-pose reconstruction for older saves without rigidBindCoords.
+local function backfillRigidLookup(extra)
+    if not extra or not extra.nodes then return end
+    if extra.rigidLookup then return end
+
+    local nodeBodies = {}
+    for nj, node in ipairs(extra.nodes) do
+        if node.type == NT.ANCHOR then
+            local f = registry.getSFixtureByID(node.id)
+            if f and not f:isDestroyed() then nodeBodies[nj] = f:getBody() end
+        elseif node.type == NT.JOINT then
+            local joint = registry.getJointByID(node.id)
+            if joint then nodeBodies[nj] = joint:getBodies() end
+        end
+    end
+
+    local coords = extra.rigidBindCoords
+    if coords then
+        local numNodes = #extra.nodes
+        local rigidLookup = {}
+        for vi = 1, #coords do
+            local row = coords[vi]
+            if row then
+                rigidLookup[vi] = {}
+                for nj = 1, numNodes do
+                    local lx = row[2 * nj - 1]
+                    local ly = row[2 * nj]
+                    local body = nodeBodies[nj]
+                    if body and lx then
+                        rigidLookup[vi][nj] = { body = body, lx = lx, ly = ly }
+                    end
+                end
+            end
+        end
+        extra.rigidLookup = rigidLookup
+        return
+    end
+
+    -- Fallback for old saves without rigidBindCoords: reconstruct from influences.
+    local influences = extra.influences
+    if not influences or not extra.bindVerts then return end
+    local bindPose = {}
+    for vi = 1, #extra.bindVerts do
+        local bv = extra.bindVerts[vi]
+        if bv and influences[vi] then
+            local wx, wy = bv[1], bv[2]
+            for _, infl in ipairs(influences[vi]) do
+                local ni = infl.nodeIndex
+                if ni and not bindPose[ni] and infl.bindAngle and infl.offx then
+                    local lx = infl.offx + infl.dx
+                    local ly = infl.offy + infl.dy
+                    local ba = infl.bindAngle
+                    local c, s = math.cos(ba), math.sin(ba)
+                    bindPose[ni] = {
+                        bx = wx - (c * lx - s * ly),
+                        by = wy - (s * lx + c * ly),
+                        ba = ba, body = infl.body,
+                    }
+                end
+            end
+        end
+    end
+    local rigidLookup = {}
+    for vi = 1, #extra.bindVerts do
+        local bv = extra.bindVerts[vi]
+        if bv then
+            local wx, wy = bv[1], bv[2]
+            rigidLookup[vi] = {}
+            for nj = 1, #extra.nodes do
+                local bp = bindPose[nj]
+                if bp then
+                    local dx2 = wx - bp.bx
+                    local dy2 = wy - bp.by
+                    local c, s = math.cos(bp.ba), math.sin(bp.ba)
+                    rigidLookup[vi][nj] = {
+                        body = bp.body,
+                        lx   =  c * dx2 + s * dy2,
+                        ly   = -s * dx2 + c * dy2,
+                    }
+                end
+            end
+        end
+    end
+    extra.rigidLookup = rigidLookup
+end
+
 -- For cloning: remap IDs THEN restore body references
 local function remapAndRestoreInfluences(influences, idMapping)
     if not influences then return end
@@ -453,6 +542,21 @@ function lib.buildWorld(data, world, cam)
                 if ud.extra.influences then
                     restoreInfluenceBodies(ud.extra.influences)
                     backfillBindVerts(ud.extra)
+                    backfillRigidLookup(ud.extra)
+                end
+                -- JSON serialises integer keys as strings; convert back so
+                -- triangleBones[t] (integer lookup in the draw path) works.
+                if ud.extra.triangleBones then
+                    local tb = ud.extra.triangleBones
+                    local needsFix = false
+                    for k in pairs(tb) do
+                        if type(k) == 'string' then needsFix = true; break end
+                    end
+                    if needsFix then
+                        local fixed = {}
+                        for k, v2 in pairs(tb) do fixed[tonumber(k) or k] = v2 end
+                        ud.extra.triangleBones = fixed
+                    end
                 end
             end
         end
@@ -468,6 +572,20 @@ function lib.buildWorld(data, world, cam)
         if not v:isDestroyed() then
             local ud = v:getUserData()
             if subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
+                -- JSON serialises integer keys as strings; convert back so
+                -- triangleGroups[t] (integer lookup in the draw path) works.
+                if ud.extra.triangleGroups then
+                    local tg = ud.extra.triangleGroups
+                    local needsFix = false
+                    for k in pairs(tg) do
+                        if type(k) == 'string' then needsFix = true; break end
+                    end
+                    if needsFix then
+                        local fixed = {}
+                        for k, v2 in pairs(tg) do fixed[tonumber(k) or k] = v2 end
+                        ud.extra.triangleGroups = fixed
+                    end
+                end
                 local idx = ud.extra.selectedBGIndex
                 local bd = idx and state.backdrops and state.backdrops[idx]
                 local needsUVs = not ud.extra.uvs or #ud.extra.uvs == 0
@@ -701,11 +819,15 @@ function lib.gatherSaveData(world, camera)
                                 end
                             end
                         end
+                        -- rigidLookup holds body references (userdata) — strip before JSON
+                        local savedRigidLookup = ud.extra.rigidLookup
+                        ud.extra.rigidLookup = nil
                         fixtureData.userData = utils.deepCopy(ud)
                         -- restoring body after save
                         if ud.extra.influences then
                             restoreInfluenceBodies(ud.extra.influences)
                         end
+                        ud.extra.rigidLookup = savedRigidLookup
                     end
 
 
@@ -1012,8 +1134,8 @@ function lib.cloneSelection(selectedBodies, world)
     -- Step 2: Clone Joints
     for _, originalThing in ipairs(state.selection.selectedBodies) do
         local originalBody = originalThing.body
-        local joints = originalBody:getJoints()
-        for _, originalJoint in ipairs(joints) do
+        local bodyJoints = originalBody:getJoints()
+        for _, originalJoint in ipairs(bodyJoints) do
             local ud = originalJoint:getUserData()
             if ud and ud.id then
                 if not doneJoints[ud.id] then -- make sure we dont do joints twice..
@@ -1099,12 +1221,17 @@ function lib.cloneSelection(selectedBodies, world)
                 for ni = 1, #oldUD.extra.nodes do
                     oldUD.extra.nodes[ni].id = idMapping[oldUD.extra.nodes[ni].id]
                 end
+                -- stale body refs — will be rebuilt below from rigidBindCoords
+                oldUD.extra.rigidLookup = nil
                 fixture:setUserData(oldUD)
             end
 
-
             if oldUD and oldUD.extra and oldUD.extra.influences then
                 remapAndRestoreInfluences(oldUD.extra.influences, idMapping)
+            end
+
+            if oldUD and oldUD.extra and oldUD.extra.rigidBindCoords then
+                backfillRigidLookup(oldUD.extra)
             end
         end
     end
