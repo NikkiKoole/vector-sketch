@@ -1566,6 +1566,10 @@ function lib.drawTexturedWorld(world)
                 local sx = drawables[i].extra.scaleX or 1
                 local sy = drawables[i].extra.scaleY or 1
                 verts = mathutils.scalePolygonPoints(verts, sx, sy)
+                local meshRot = drawables[i].extra.meshRot or 0
+                if meshRot ~= 0 then
+                    verts = mathutils.rotatePolygonPoints(verts, meshRot)
+                end
 
 
                 -- Auto-unbind when polygon vert count changed since bind —
@@ -1644,12 +1648,15 @@ function lib.drawTexturedWorld(world)
                     tris = shapes.makeTrianglesFromPolygon(verts)
                 end
 
+                local isSelected = state.selection.selectedSFixture == drawables[i].texfixture
+                local alpha = (data and data.uvs) and (isSelected and 0.75 or 1) or 0.5
+
                 if triIdx then
                     for j = 1, #triIdx do
                         local i = triIdx[j]
                         table.insert(meshVertices, {
                             verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2],
-                            1, 1, 1, 0.5
+                            1, 1, 1, alpha
                         })
                     end
                 else
@@ -1658,9 +1665,7 @@ function lib.drawTexturedWorld(world)
                         for k = 0, 2 do
                             table.insert(meshVertices, {
                                 tri[k * 2 + 1], tri[k * 2 + 2],
-                                -- Untextured fallback: white ghost so you
-                                -- can see bones/polygon underneath.
-                                1, 1, 1, 0.5
+                                1, 1, 1, alpha
                             })
                         end
                     end
@@ -1683,7 +1688,7 @@ function lib.drawTexturedWorld(world)
                                 verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2],
                                 data.uvs[(i - 1) * 2 + 1] or 0,
                                 data.uvs[(i - 1) * 2 + 2] or 0,
-                                1, 1, 1, 1
+                                1, 1, 1, alpha
                             })
                         end
                     else
@@ -1697,9 +1702,7 @@ function lib.drawTexturedWorld(world)
                                 table.insert(meshVertices, {
                                     vx, vy,
                                     u or 0, v or 0,
-                                    -- Textured: white at full opacity so the
-                                    -- texture sample shows untinted.
-                                    1, 1, 1, 1
+                                    1, 1, 1, alpha
                                 })
                             end
                         end

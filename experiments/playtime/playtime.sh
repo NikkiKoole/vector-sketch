@@ -49,6 +49,8 @@ do_stop() {
 }
 
 do_start() {
+    local scene="${1:-}"
+
     if is_running; then
         echo "already running (port $PORT)"
         return 0
@@ -65,7 +67,9 @@ do_start() {
     # Note: macOS buffers stdout/stderr from .app bundles until process exit,
     # so errors won't appear in the log until the process is killed.
     > "$LOGFILE"  # truncate log
-    "$LOVE" "$DIR" --bridge >"$LOGFILE" 2>&1 &
+    local scene_args=""
+    [ -n "$scene" ] && scene_args="--scene $scene"
+    "$LOVE" "$DIR" --bridge $scene_args >"$LOGFILE" 2>&1 &
     disown
 
     # Wait for bridge to come up
@@ -126,15 +130,15 @@ do_errors() {
 
 do_restart() {
     do_stop
-    do_start
+    do_start "${1:-}"
 }
 
 case "${1:-status}" in
-    start)   do_start ;;
+    start)   do_start "${2:-}" ;;
     stop)    do_stop ;;
-    restart) do_restart ;;
+    restart) do_restart "${2:-}" ;;
     status)  do_status ;;
     log)     do_log ;;
     errors)  do_errors ;;
-    *)       echo "Usage: $0 [start|stop|restart|status|log|errors]" ;;
+    *)       echo "Usage: $0 [start|stop|restart|status|log|errors] [scene]" ;;
 esac

@@ -317,6 +317,17 @@ function lib.transformPolygonPoints(polygon, offX, offY)
     return relativePolygon
 end
 
+function lib.rotatePolygonPoints(polygon, angle)
+    local cosA, sinA = math.cos(angle), math.sin(angle)
+    local result = {}
+    for i = 1, #polygon, 2 do
+        local x, y = polygon[i], polygon[i + 1]
+        result[i]     = x * cosA - y * sinA
+        result[i + 1] = x * sinA + y * cosA
+    end
+    return result
+end
+
 function lib.scalePolygonPoints(polygon, scaleX, scaleY)
     -- Calculate the center
 

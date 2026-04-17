@@ -172,11 +172,15 @@ function love.load(_args)
 
 
     local cwd = love.filesystem.getWorkingDirectory()
-    -- sceneLoader.loadScene(cwd .. '/scripts/snap2.playtime.json')
-    --sceneLoader.loadScriptAndScene('water')
-    -- sceneLoader.loadScene(cwd .. '/scripts/resources.playtime.json')
-    --sceneLoader.loadScene(cwd .. '/scripts/beginmesh.playtime.json')
-    sceneLoader.loadScene(cwd .. '/scripts/test.playtime.json')
+
+    local startScene = 'test'
+    for i = 1, #arg do
+        if arg[i] == '--scene' and arg[i + 1] then
+            startScene = arg[i + 1]
+            break
+        end
+    end
+    sceneLoader.loadScene(cwd .. '/scripts/' .. startScene .. '.playtime.json')
     -- sceneLoader.loadAndRunScript(cwd .. '/scripts/mesh_test.playtime.lua')
 
     --loadScriptAndScene('elasto')

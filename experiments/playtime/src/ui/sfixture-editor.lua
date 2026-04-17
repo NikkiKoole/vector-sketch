@@ -1101,6 +1101,10 @@ function lib.drawSelectedSFixture()
                 local scaleY = ui.sliderWithInput(myID .. ' scaleY', x, y, ROW_WIDTH, 0.25, 3, ud.extra.scaleY or 1)
                 ui.alignedLabel(x, y, ' scaleY')
                 if scaleY then ud.extra.scaleY = scaleY end
+                nextRow()
+                local meshRotDeg = ui.sliderWithInput(myID .. ' meshRot', x, y, ROW_WIDTH, -180, 180, math.deg(ud.extra.meshRot or 0))
+                ui.alignedLabel(x, y, ' meshRot')
+                if meshRotDeg then ud.extra.meshRot = math.rad(meshRotDeg) end
             end
         elseif subtypes.is(ud, subtypes.RESOURCE) then
             local selectedIndex
