@@ -646,8 +646,9 @@ function lib.recreateThingFromBody(body, newSettings)
             local ud = f:getUserData()
             if type(ud) == 'table' and subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
                 ud.extra.uvs = nil
-                -- triangleGroups indexes into the old triangulation; drop.
+                -- triangleGroups/triangleBones index into the old triangulation; drop.
                 ud.extra.triangleGroups = nil
+                ud.extra.triangleBones = nil
                 ud.extra.triangleOrderDirty = false
             end
         end

@@ -41,6 +41,21 @@ local accordionStatesSF = {
 
 local lastSFixtureForCleanup = nil
 
+-- Returns world x, y for a node (JOINT → midpoint of both anchors, ANCHOR → centroid).
+local function nodeWorldPos(node)
+    if node.type == NT.JOINT then
+        local joint = registry.getJointByID(node.id)
+        if not joint then return nil end
+        local x1, y1, x2, y2 = joint:getAnchors()
+        return (x1 + x2) / 2, (y1 + y2) / 2
+    elseif node.type == NT.ANCHOR then
+        local f = registry.getSFixtureByID(node.id)
+        if not f then return nil end
+        local pts = { f:getBody():getWorldPoints(f:getShape():getPoints()) }
+        return mathutils.getCenterOfPoints(pts)
+    end
+end
+
 -- Tag a set of triangle indices with a group number on the RESOURCE fixture
 -- that owns this MESHUSERT's triangle list. Groups drive triangle render
 -- order (lower group drawn first → behind).
@@ -69,6 +84,19 @@ function lib.assignTrianglesToGroup(meshusertFixture, triIndices, group)
     end
     mextra.triangleOrderDirty = true
     logger:info('Assigned ' .. #triIndices .. ' triangles to group ' .. tostring(group))
+end
+
+-- Tag a set of triangle indices with a bone (node index) on the MESHUSERT fixture.
+-- Per-triangle bone overrides DQS per-vertex influences for those triangles.
+function lib.assignTrianglesToBone(meshusertFixture, triIndices, boneIndex)
+    if not meshusertFixture or meshusertFixture:isDestroyed() then return end
+    local ud = meshusertFixture:getUserData()
+    if not ud then return end
+    if not ud.extra.triangleBones then ud.extra.triangleBones = {} end
+    for _, t in ipairs(triIndices) do
+        ud.extra.triangleBones[t] = boneIndex
+    end
+    logger:info('Assigned ' .. #triIndices .. ' triangles to bone ' .. tostring(boneIndex))
 end
 
 function lib.drawSelectedSFixture()
@@ -648,6 +676,9 @@ function lib.drawSelectedSFixture()
                     if ud.extra.scaleX or ud.extra.scaleY then
                         verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY or 1)
                     end
+                    if ud.extra.meshRot and ud.extra.meshRot ~= 0 then
+                        verts = mathutils.rotatePolygonPoints(verts, ud.extra.meshRot)
+                    end
                     -- convert LOCAL verts -> WORLD verts
                     local function vertsToWorld(body, localVerts)
                         local out = {}
@@ -1010,9 +1041,58 @@ function lib.drawSelectedSFixture()
                     end
                 end
                 nextRow()
+
+                if #state.triangleEditor.selectedTriangles > 0 then
+                    if ui.button(x, y, ROW_WIDTH + 50, 'split selected') then
+                        local lbl = ud.label or ''
+                        for _, rv in pairs(registry.sfixtures) do
+                            if not rv:isDestroyed() then
+                                local rud = rv:getUserData()
+                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                    local rextra = rud.extra
+                                    local triIdx = rextra and rextra.triangles
+                                    local allVerts = rextra and (rextra.meshVertices or rv:getBody():getUserData().thing.vertices)
+                                    if triIdx and allVerts then
+                                        if not rextra.extraSteiner then rextra.extraSteiner = {} end
+                                        for _, t in ipairs(state.triangleEditor.selectedTriangles) do
+                                            local i1 = triIdx[(t - 1) * 3 + 1]
+                                            local i2 = triIdx[(t - 1) * 3 + 2]
+                                            local i3 = triIdx[(t - 1) * 3 + 3]
+                                            if i1 and i2 and i3 then
+                                                local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1] + allVerts[(i3-1)*2+1]) / 3
+                                                local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2] + allVerts[(i3-1)*2+2]) / 3
+                                                rextra.extraSteiner[#rextra.extraSteiner + 1] = cx
+                                                rextra.extraSteiner[#rextra.extraSteiner + 1] = cy
+                                            end
+                                        end
+                                        -- Re-triangulate with the new points included
+                                        local idx = rextra.selectedBGIndex
+                                        local bd = idx and state.backdrops and state.backdrops[idx]
+                                        if bd then
+                                            cdt.computeResourceMesh(rud, rv:getBody(), bd,
+                                                state.triangulationMode or 'cdt',
+                                                state.cdtSpacing, mathutils)
+                                        end
+                                        -- Invalidate bone assignments — topology changed
+                                        ud.extra.triangleBones = nil
+                                        ud.extra.influences = nil
+                                        ud.extra.bindVerts = nil
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                        state.triangleEditor.selectedTriangles = {}
+                    end
+                    nextRow()
+                end
+
                 love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
                 nextRow()
 
+                -- Group z-order UI hidden until bone assignment is working.
+                -- Revisit: bones may drive z-order directly, making groups redundant.
+                if false then -- luacheck: ignore
                 -- Group picker: 1..8 buttons. Lower = behind.
                 ui.label(x, y, 'Group (z-order):')
                 nextRow()
@@ -1037,9 +1117,6 @@ function lib.drawSelectedSFixture()
                             state.triangleEditor.selectedTriangles,
                             state.triangleEditor.selectedGroup
                         )
-                        -- Assign triggers a draw-path re-sort of `triangles`;
-                        -- ordinal selection indices are stale after that, so
-                        -- clear or they'd refer to different tris next click.
                         state.triangleEditor.selectedTriangles = {}
                     end
                     nextRow()
@@ -1060,6 +1137,130 @@ function lib.drawSelectedSFixture()
                     end
                 end
                 nextRow()
+                end -- group z-order
+
+                love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
+                nextRow()
+
+                -- Bone picker: one button per node. Assign paints triangleBones
+                -- on the MESHUSERT (not RESOURCE) — overrides DQS per-vertex weights.
+                local nodes = ud.extra.nodes
+                if nodes and #nodes > 0 then
+                    ui.label(x, y, 'Bone:')
+                    nextRow()
+                    local boneBtnW = math.min(40, (ROW_WIDTH + 50) / #nodes - 2)
+                    for b = 1, #nodes do
+                        local isSel = (state.triangleEditor.selectedBone == b)
+                        local br = ((b * 97)  % 256) / 255
+                        local bg = ((b * 163) % 256) / 255
+                        local bb = ((b * 211) % 256) / 255
+                        local col = isSel and { br, bg, bb } or nil
+                        if ui.button(x + (b - 1) * (boneBtnW + 2), y, boneBtnW, tostring(b), BUTTON_HEIGHT, col) then
+                            state.triangleEditor.selectedBone = b
+                        end
+                        if isSel then
+                            local wx, wy = nodeWorldPos(nodes[b])
+                            if wx then
+                                local sx, sy = cam:getScreenCoordinates(wx, wy)
+                                love.graphics.setColor(br, bg, bb, 0.9)
+                                love.graphics.setLineWidth(3)
+                                love.graphics.circle('line', sx, sy, 18)
+                                love.graphics.line(sx - 24, sy, sx + 24, sy)
+                                love.graphics.line(sx, sy - 24, sx, sy + 24)
+                                love.graphics.setColor(1, 1, 1)
+                                love.graphics.setLineWidth(1)
+                            end
+                        end
+                    end
+                    nextRow()
+                    if #state.triangleEditor.selectedTriangles > 0 then
+                        if ui.button(x, y, ROW_WIDTH + 50,
+                            'Assign to bone ' .. state.triangleEditor.selectedBone) then
+                            lib.assignTrianglesToBone(
+                                state.selection.selectedSFixture,
+                                state.triangleEditor.selectedTriangles,
+                                state.triangleEditor.selectedBone
+                            )
+                            state.triangleEditor.selectedTriangles = {}
+                        end
+                        nextRow()
+                    end
+                    -- Auto-assign: each triangle goes to the bone with the
+                    -- highest total influence weight across its 3 verts.
+                    if ui.button(x, y, ROW_WIDTH + 50, 'auto assign bones') then
+                        local influences = ud.extra.influences
+                        local lbl = ud.label or ''
+                        local mappert2
+                        for _, rv in pairs(registry.sfixtures) do
+                            if not rv:isDestroyed() then
+                                local rud = rv:getUserData()
+                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                    mappert2 = rv; break
+                                end
+                            end
+                        end
+                        if influences and mappert2 then
+                            local triIdx2 = mappert2:getUserData().extra.triangles
+                            if triIdx2 then
+                                local newBones = {}
+                                local numTris2 = math.floor(#triIdx2 / 3)
+                                for t = 1, numTris2 do
+                                    local boneTotals = {}
+                                    for corner = 0, 2 do
+                                        local vi = triIdx2[t * 3 - 2 + corner]
+                                        local inflList = influences[vi]
+                                        if inflList then
+                                            for _, infl in ipairs(inflList) do
+                                                boneTotals[infl.nodeIndex] = (boneTotals[infl.nodeIndex] or 0) + infl.w
+                                            end
+                                        end
+                                    end
+                                    local bestBone, bestW = 1, -1
+                                    for boneIdx, w in pairs(boneTotals) do
+                                        if w > bestW then bestBone, bestW = boneIdx, w end
+                                    end
+                                    newBones[t] = bestBone
+                                end
+                                ud.extra.triangleBones = newBones
+                            end
+                        end
+                    end
+                    nextRow()
+                    if ui.button(x, y, ROW_WIDTH + 50, 'clear all bones') then
+                        ud.extra.triangleBones = nil
+                    end
+                    nextRow()
+                end
+
+                -- Clear splits: wipes extraSteiner on the linked RESOURCE and re-triangulates.
+                do
+                    local lbl = ud.label or ''
+                    for _, rv in pairs(registry.sfixtures) do
+                        if not rv:isDestroyed() then
+                            local rud = rv:getUserData()
+                            if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                if rud.extra.extraSteiner and #rud.extra.extraSteiner > 0 then
+                                    local numSplits = #rud.extra.extraSteiner / 2
+                                    if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
+                                        rud.extra.extraSteiner = nil
+                                        local idx = rud.extra.selectedBGIndex
+                                        local bd = idx and state.backdrops and state.backdrops[idx]
+                                        if bd then
+                                            cdt.computeResourceMesh(rud, rv:getBody(), bd,
+                                                state.triangulationMode or 'cdt', state.cdtSpacing, mathutils)
+                                        end
+                                        ud.extra.triangleBones = nil
+                                        ud.extra.influences = nil
+                                        ud.extra.bindVerts = nil
+                                    end
+                                    nextRow()
+                                end
+                                break
+                            end
+                        end
+                    end
+                end
+
                 love.graphics.line(x, y + 5, x + ROW_WIDTH + 50, y + 5)
                 nextRow()
 
@@ -1139,10 +1340,22 @@ function lib.drawSelectedSFixture()
                 end
             end
 
+            if ud.extra.extraSteiner and #ud.extra.extraSteiner > 0 then
+                local numSplits = #ud.extra.extraSteiner / 2
+                if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
+                    ud.extra.extraSteiner = nil
+                    local idx = ud.extra.selectedBGIndex
+                    local bd = idx and state.backdrops and state.backdrops[idx]
+                    if bd then
+                        cdt.computeResourceMesh(ud, state.selection.selectedSFixture:getBody(), bd,
+                            state.triangulationMode or 'cdt', state.cdtSpacing, mathutils)
+                    end
+                end
+                nextRow()
+            end
+
             if ui.button(x + 100, y, ROW_WIDTH * 0.75, 'bind-pose') then
                 logger:info('here we do nothing...')
-                --print('first we figure out if we are over a background.')
-                -- lets just persist an index into bg
                 -- TODO: implement bind-pose for resource sfixtures
             end
             local slx, sly = ui.sameLine()

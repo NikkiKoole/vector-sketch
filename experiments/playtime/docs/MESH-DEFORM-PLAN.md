@@ -3,7 +3,7 @@
 Three goals for the MESHUSERT triangle painter. Status tracked inline. All changes live in the working tree (uncommitted) unless noted.
 
 ## Goal 1 — Paint triangles → bones
-**Status:** not started. This is the next step.
+**Status:** done.
 
 Per-triangle bone assignment drives DQS (instead of segment-weight auto-bind).
 
@@ -14,7 +14,7 @@ Per-triangle bone assignment drives DQS (instead of segment-weight auto-bind).
 - **Open design question:** per-triangle *rigid* (whole tri follows one bone — cheap, may show seams at bone boundaries) vs per-triangle *blend* (2–3 weighted bones per tri — smoother seams, more UI). Start rigid; upgrade only if seams look bad.
 
 ## Goal 2 — Z-ordering by group
-**Status:** done (working-tree diff, not committed).
+**Status:** done (committed). UI hidden behind `if false` in sfixture-editor.lua — re-enable once bones are proven. May fold into bone-driven z-order.
 
 - **Data:** `ud.extra.triangleGroups[triIdx]` + `ud.extra.triangleOrderDirty` on RESOURCE sfixture.
 - **Sort:** stable, lower group drawn first. Reorders `triangles` + `triangleGroups` together in `box2d-draw-textured.lua:1610+`.

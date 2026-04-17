@@ -320,12 +320,17 @@ function lib.renderActiveEditorThings()
                 local my = ud.extra.meshY or 0
                 local sx = ud.extra.scaleX or 1
                 local sy = ud.extra.scaleY or 1
+                local mr = ud.extra.meshRot or 0
+                local cosR, sinR = math.cos(mr), math.sin(mr)
 
                 local function worldAt(vertIndex)
                     local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
                     local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
                     lx = (lx + mx) * sx
                     ly = (ly + my) * sy
+                    if mr ~= 0 then
+                        lx, ly = lx * cosR - ly * sinR, lx * sinR + ly * cosR
+                    end
                     return body:getWorldPoint(lx, ly)
                 end
 
@@ -341,11 +346,15 @@ function lib.renderActiveEditorThings()
                                ((g * 151) % 256) / 255,
                                ((g * 211) % 256) / 255
                     end
-                    local targetGroup = state.triangleEditor.selectedGroup or 1
+                    local targetBone = state.triangleEditor.selectedBone or 1
+                    local triangleBones = ud.extra.triangleBones
 
-                    -- Fill pass: assigned triangles get a faint group tint;
-                    -- selected triangles get a brighter preview in the
-                    -- current target-group color (what Assign will paint).
+                    local function boneColor(b)
+                        return ((b * 97)  % 256) / 255,
+                               ((b * 163) % 256) / 255,
+                               ((b * 211) % 256) / 255
+                    end
+
                     for t = 1, numTris do
                         local i1 = triIdx[(t - 1) * 3 + 1]
                         local i2 = triIdx[(t - 1) * 3 + 2]
@@ -354,15 +363,15 @@ function lib.renderActiveEditorThings()
                             local x1, y1 = worldAt(i1)
                             local x2, y2 = worldAt(i2)
                             local x3, y3 = worldAt(i3)
-                            local g = groups and groups[t]
-                            if g then
-                                local r, gn, bl = groupColor(g)
-                                love.graphics.setColor(r, gn, bl, 0.25)
+                            local assignedBone = triangleBones and triangleBones[t]
+                            if assignedBone then
+                                local r, gn, bl = boneColor(assignedBone)
+                                love.graphics.setColor(r, gn, bl, 0.3)
                                 love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
                             end
                             if selSet[t] then
-                                local r, gn, bl = groupColor(targetGroup)
-                                love.graphics.setColor(r, gn, bl, 0.55)
+                                local r, gn, bl = boneColor(targetBone)
+                                love.graphics.setColor(r, gn, bl, 0.65)
                                 love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
                             end
                             love.graphics.setColor(0.2, 1.0, 0.4, 0.6)

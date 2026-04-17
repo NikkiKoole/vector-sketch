@@ -1524,6 +1524,23 @@ function lib.drawTexturedWorld(world)
             end
         end
 
+        -- Rigid single-bone position for vert vi: find the influence for boneIndex
+        -- and rigidly follow that body. Returns root-local x, y, or nil if the
+        -- bone is not in vi's influence list (caller falls back to blended vert).
+        local function rigidBoneVertLocal(vi, boneIndex, influences, rootBody)
+            local inflList = influences[vi]
+            if not inflList then return nil end
+            for k = 1, #inflList do
+                local infl = inflList[k]
+                if infl.nodeIndex == boneIndex then
+                    local ax, ay = currentAnchorLocal(infl)
+                    local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                    return rootBody:getLocalPoint(wx, wy)
+                end
+            end
+            return nil
+        end
+
         if drawables[i].type == subtypes.MESHUSERT then
             -- now we need to find a mapping file..
 
@@ -1631,15 +1648,19 @@ function lib.drawTexturedWorld(world)
                     end)
                     local newTri = {}
                     local newGroups = {}
+                    local oldBones = drawables[i].extra.triangleBones
+                    local newBones = oldBones and {} or nil
                     for k = 1, numTris do
                         local src = perm[k]
                         newTri[(k - 1) * 3 + 1] = triIdx[(src - 1) * 3 + 1]
                         newTri[(k - 1) * 3 + 2] = triIdx[(src - 1) * 3 + 2]
                         newTri[(k - 1) * 3 + 3] = triIdx[(src - 1) * 3 + 3]
                         newGroups[k] = data.triangleGroups[src]
+                        if newBones then newBones[k] = oldBones[src] end
                     end
                     data.triangles = newTri
                     data.triangleGroups = newGroups
+                    if newBones then drawables[i].extra.triangleBones = newBones end
                     data.triangleOrderDirty = false
                     triIdx = newTri
                 end
@@ -1651,13 +1672,23 @@ function lib.drawTexturedWorld(world)
                 local isSelected = state.selection.selectedSFixture == drawables[i].texfixture
                 local alpha = (data and data.uvs) and (isSelected and 0.75 or 1) or 0.5
 
+                local triangleBones = drawables[i].extra.triangleBones
+                local boneInfluences = drawables[i].extra.influences
+                local boneBindVerts  = drawables[i].extra.bindVerts
+                local hasBoneOverrides = triangleBones and boneInfluences and boneBindVerts
+
                 if triIdx then
                     for j = 1, #triIdx do
-                        local i = triIdx[j]
-                        table.insert(meshVertices, {
-                            verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2],
-                            1, 1, 1, alpha
-                        })
+                        local vi = triIdx[j]
+                        local t = math.ceil(j / 3)
+                        local boneIdx = hasBoneOverrides and triangleBones[t]
+                        local px, py
+                        if boneIdx then
+                            px, py = rigidBoneVertLocal(vi, boneIdx, boneInfluences, drawables[i].body)
+                        end
+                        px = px or verts[(vi - 1) * 2 + 1]
+                        py = py or verts[(vi - 1) * 2 + 2]
+                        table.insert(meshVertices, { px, py, 1, 1, 1, alpha })
                     end
                 else
                     for j = 1, #tris do
@@ -1683,11 +1714,19 @@ function lib.drawTexturedWorld(world)
                         -- Index-based: each tri vertex's UV is uvs[i*2-1..i*2].
                         -- No coord-key lookup — direct, stable, fast.
                         for j = 1, #triIdx do
-                            local i = triIdx[j]
+                            local vi = triIdx[j]
+                            local t = math.ceil(j / 3)
+                            local boneIdx = hasBoneOverrides and triangleBones[t]
+                            local px, py
+                            if boneIdx then
+                                px, py = rigidBoneVertLocal(vi, boneIdx, boneInfluences, drawables[i].body)
+                            end
+                            px = px or verts[(vi - 1) * 2 + 1]
+                            py = py or verts[(vi - 1) * 2 + 2]
                             table.insert(meshVertices, {
-                                verts[(i - 1) * 2 + 1], verts[(i - 1) * 2 + 2],
-                                data.uvs[(i - 1) * 2 + 1] or 0,
-                                data.uvs[(i - 1) * 2 + 2] or 0,
+                                px, py,
+                                data.uvs[(vi - 1) * 2 + 1] or 0,
+                                data.uvs[(vi - 1) * 2 + 2] or 0,
                                 1, 1, 1, alpha
                             })
                         end

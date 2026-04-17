@@ -339,18 +339,23 @@ end
 
 -- Returns (mergedVerts, triIndices). spacing in world-space units; auto-
 -- picks a reasonable default based on polygon bbox if not given.
-function lib.triangulatePolyWithSteiner(polyVerts, spacing)
+-- extraPoints: optional flat {x,y,x,y,...} array of additional Steiner points
+-- (e.g. centroids of previously selected triangles for local refinement).
+function lib.triangulatePolyWithSteiner(polyVerts, spacing, extraPoints)
     if not spacing then
         local minX, minY, maxX, maxY = bbox(polyVerts)
         local diag = math.sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
-        spacing = math.max(20, diag / 12)
+        spacing = math.max(20, diag / 20)
     end
     local steiner = lib.generateSteinerGrid(polyVerts, spacing)
     -- Merge: outline verts first (so UVs align with legacy indexing),
-    -- Steiner points appended.
+    -- grid Steiner points, then any extra split points.
     local merged = {}
     for i = 1, #polyVerts do merged[i] = polyVerts[i] end
     for i = 1, #steiner do merged[#merged + 1] = steiner[i] end
+    if extraPoints then
+        for i = 1, #extraPoints do merged[#merged + 1] = extraPoints[i] end
+    end
     local triIndices = bowyerWatson(merged)
     triIndices = filterInsidePoly(triIndices, merged, polyVerts)
     return merged, triIndices
@@ -380,7 +385,7 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     -- Delaunay triangulation across the union.
     local meshVerts, triIndices
     if mode == 'cdt' then
-        meshVerts, triIndices = lib.triangulatePolyWithSteiner(origVerts, spacing)
+        meshVerts, triIndices = lib.triangulatePolyWithSteiner(origVerts, spacing, ud.extra.extraSteiner)
         if not triIndices or #triIndices == 0 then
             -- CDT bailed; fall back so user still gets a textured mesh.
             mode = 'basic'
@@ -418,6 +423,7 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     -- Triangle-group assignments are index-based; retriangulating
     -- invalidates them. Drop so painter starts fresh.
     ud.extra.triangleGroups = nil
+    ud.extra.triangleBones = nil
     ud.extra.triangleOrderDirty = false
     -- Only store meshVertices when it differs from the polygon's verts
     -- (saves data + lets legacy paths pick the polygon source directly).

@@ -72,6 +72,7 @@ state.texFixtureEdit = {
 state.triangleEditor = {
     selectedTriangles = {}, -- Array of triangle indices that are selected
     selectedGroup = 1,      -- Group/layer number triangles get tagged with (drives z-order)
+    selectedBone = 1,       -- Node index triangles get assigned to (drives per-triangle DQS)
     brushSize = 20,         -- Radius for triangle selection brush (tested against tri centroid)
 }
 

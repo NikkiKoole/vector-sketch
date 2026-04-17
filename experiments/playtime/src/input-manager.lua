@@ -590,12 +590,17 @@ function lib.handleMouseMoved(x, y, dx, dy)
                 local my = ud.extra.meshY or 0
                 local sx = ud.extra.scaleX or 1
                 local sy = ud.extra.scaleY or 1
+                local mr = ud.extra.meshRot or 0
+                local cosR, sinR = math.cos(mr), math.sin(mr)
 
                 local function worldAt(vertIndex)
                     local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
                     local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
                     lx = (lx + mx) * sx
                     ly = (ly + my) * sy
+                    if mr ~= 0 then
+                        lx, ly = lx * cosR - ly * sinR, lx * sinR + ly * cosR
+                    end
                     return body:getWorldPoint(lx, ly)
                 end
 
