@@ -305,9 +305,21 @@ end
 -- outline edge is present; this is a simpler "drop the offenders, leave a
 -- hole" approximation. The hole is harmless since that space is outside
 -- the polygon's silhouette anyway.
-local function filterInsidePoly(triIndices, verts, poly)
+local function filterInsidePoly(triIndices, verts, poly, numPolyVerts)
     local out = {}
     local n = math.floor(#poly / 2)
+    numPolyVerts = numPolyVerts or n
+
+    -- Returns true if vertex index i is a polygon boundary vertex.
+    local function isPolyVert(i) return i <= numPolyVerts end
+
+    -- Returns true if i and j are adjacent polygon boundary vertices.
+    local function areAdjacent(i, j)
+        if not isPolyVert(i) or not isPolyVert(j) then return false end
+        local diff = math.abs(i - j)
+        return diff == 1 or diff == numPolyVerts - 1
+    end
+
     for j = 1, #triIndices, 3 do
         local i1, i2, i3 = triIndices[j], triIndices[j + 1], triIndices[j + 2]
         local x1, y1 = verts[(i1 - 1) * 2 + 1], verts[(i1 - 1) * 2 + 2]
@@ -316,6 +328,7 @@ local function filterInsidePoly(triIndices, verts, poly)
         local cx, cy = (x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3
         if pointInPoly(cx, cy, poly) then
             local crosses = false
+            -- Edge-cross test: catches diagonals that properly cross a poly edge.
             for k = 1, n do
                 local m = (k % n) + 1
                 local ax, ay = poly[(k - 1) * 2 + 1], poly[(k - 1) * 2 + 2]
@@ -325,6 +338,22 @@ local function filterInsidePoly(triIndices, verts, poly)
                    segmentsProperlyCross(x3, y3, x1, y1, ax, ay, bx, by) then
                     crosses = true
                     break
+                end
+            end
+            -- Diagonal test: for edges connecting two non-adjacent polygon
+            -- boundary vertices, the midpoint must be inside the polygon.
+            -- These edges don't properly cross any poly edge (shared endpoints)
+            -- but can bridge concave notches. Safe to test midpoint directly
+            -- since non-adjacent poly verts can't place the midpoint ON the boundary.
+            if not crosses then
+                local edges = {{i1,i2,x1,y1,x2,y2},{i2,i3,x2,y2,x3,y3},{i3,i1,x3,y3,x1,y1}}
+                for _, e in ipairs(edges) do
+                    if isPolyVert(e[1]) and isPolyVert(e[2]) and not areAdjacent(e[1], e[2]) then
+                        if not pointInPoly((e[3]+e[5])/2, (e[4]+e[6])/2, poly) then
+                            crosses = true
+                            break
+                        end
+                    end
                 end
             end
             if not crosses then
@@ -348,16 +377,38 @@ function lib.triangulatePolyWithSteiner(polyVerts, spacing, extraPoints)
         spacing = math.max(20, diag / 20)
     end
     local steiner = lib.generateSteinerGrid(polyVerts, spacing)
-    -- Merge: outline verts first (so UVs align with legacy indexing),
-    -- grid Steiner points, then any extra split points.
     local merged = {}
     for i = 1, #polyVerts do merged[i] = polyVerts[i] end
     for i = 1, #steiner do merged[#merged + 1] = steiner[i] end
     if extraPoints then
         for i = 1, #extraPoints do merged[#merged + 1] = extraPoints[i] end
     end
+    local numPolyVerts = math.floor(#polyVerts / 2)
+    -- If no Steiner points were added, Bowyer-Watson on just the polygon verts
+    -- will bridge concavities. Fall back to love ear-clip which always correct.
+    if #merged == #polyVerts then
+        local ok, loveTris = pcall(love.math.triangulate, polyVerts)
+        if ok and loveTris and #loveTris > 0 then
+            local indices = {}
+            local tolSq = 1.0
+            for _, tri in ipairs(loveTris) do
+                for k = 0, 2 do
+                    local tx, ty = tri[k*2+1], tri[k*2+2]
+                    local best, bestD = nil, math.huge
+                    for vi = 1, numPolyVerts do
+                        local dx = polyVerts[(vi-1)*2+1] - tx
+                        local dy = polyVerts[(vi-1)*2+2] - ty
+                        local d = dx*dx + dy*dy
+                        if d < bestD then bestD = d; best = vi end
+                    end
+                    if best and bestD <= tolSq then indices[#indices+1] = best end
+                end
+            end
+            if #indices > 0 then return polyVerts, indices end
+        end
+    end
     local triIndices = bowyerWatson(merged)
-    triIndices = filterInsidePoly(triIndices, merged, polyVerts)
+    triIndices = filterInsidePoly(triIndices, merged, polyVerts, numPolyVerts)
     return merged, triIndices
 end
 

@@ -610,9 +610,9 @@ function lib.drawSelectedSFixture()
             -- triangles. Recomputes on drag + clears the bind so the user
             -- re-binds once satisfied with the density.
             if state.triangulationMode == 'cdt' then
-                local defaultSpacing = state.cdtSpacing or 60
+                local defaultSpacing = state.cdtSpacing or 30
                 local newSpacing = ui.sliderWithInput(myID .. ' cdtSpacing', x, y, ROW_WIDTH,
-                    10, 200, defaultSpacing)
+                    10, 80, defaultSpacing)
                 ui.alignedLabel(x, y, ' cdt spacing (lo=dense)')
                 if newSpacing and tonumber(newSpacing) and tonumber(newSpacing) ~= defaultSpacing then
                     state.cdtSpacing = tonumber(newSpacing)
