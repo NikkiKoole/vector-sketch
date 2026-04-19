@@ -76,6 +76,12 @@ state.triangleEditor = {
     brushSize = 20,         -- Radius for triangle selection brush (tested against tri centroid)
 }
 
+-- state.stripMergeOverlay (Goal 4 debug render) is initialized lazily in
+-- editor-render.lua. Declaring it here as a table breaks lurker's
+-- lume.hotswap on first reload ("table index is nil" at lume.lua:693)
+-- because the old state table has no such key and hotswap can't descend
+-- into a nil old value. Lazy-init avoids the reload path entirely.
+
 --state.scrollers = {}    -- will be filled with scrollers ({value=0})
 
 -- Mode constants live in src/modes.lua — use modes.set/clear/is to manage this field

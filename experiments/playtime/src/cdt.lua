@@ -579,29 +579,66 @@ end
 --
 -- Returns true on success, false otherwise (missing data, triangulation
 -- failed, etc.).
+-- Ribbon polygons from freepath are stored as [top-left-to-right,
+-- bottom-right-to-left]. A ribbon with N ribs has 2N points: top row
+-- indices 1..N, bottom row indices N+1..2N (reversed). This emits
+-- rib-to-rib diagonal triangles — the clean strip topology that
+-- `shapes.triangulateRibbon` produces, but as 1-based indices into the
+-- polygon vertex array rather than packed coordinates.
+local function ribbonStripIndices(polyVerts)
+    local total = #polyVerts / 2
+    if total < 4 or (total % 2) ~= 0 then return nil end
+    local perEdge = total / 2
+    local tris = {}
+    for i = 1, perEdge - 1 do
+        local t1 = i
+        local t2 = i + 1
+        local b1 = 2 * perEdge - i + 1
+        local b2 = 2 * perEdge - i
+        tris[#tris + 1] = t1; tris[#tris + 1] = b1; tris[#tris + 1] = t2
+        tris[#tris + 1] = t2; tris[#tris + 1] = b1; tris[#tris + 1] = b2
+    end
+    return tris
+end
+
 function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     if not (ud and ud.extra and body and bd) then return false end
     local bodyUD = body:getUserData()
     if not (bodyUD and bodyUD.thing and bodyUD.thing.vertices) then return false end
     local origVerts = bodyUD.thing.vertices
 
+    -- Ribbon bodies have a guaranteed strip topology we want to preserve
+    -- (rib-to-rib diagonals, perpendicular to the bone axis). Ear-clip /
+    -- CDT on a ribbon polygon produces fans or arbitrary tris that
+    -- deform badly under multi-bone skinning. Short-circuit to strip.
+    local isRibbon = bodyUD.thing.shapeType == 'ribbon'
+
     local meshVerts, triIndices
-    if mode == 'cdt' then
-        meshVerts, triIndices = lib.triangulatePolyWithSteiner(origVerts, spacing, ud.extra.extraSteiner)
-        if not triIndices or #triIndices == 0 then
-            mode = 'basic'
+    if isRibbon then
+        triIndices = ribbonStripIndices(origVerts)
+        if triIndices and #triIndices > 0 then
             meshVerts = origVerts
-        end
-    elseif mode == 'refined' then
-        meshVerts, triIndices = lib.triangulatePolyRefined(origVerts, spacing, ud.extra.extraSteiner)
-        if not triIndices or #triIndices == 0 then
-            mode = 'basic'
-            meshVerts = origVerts
+            mode = 'strip'
         end
     end
-    if mode ~= 'cdt' and mode ~= 'refined' then
-        meshVerts = origVerts
-        triIndices = mathutils and mathutils.triangulateToIndices(origVerts) or nil
+    if not triIndices or #triIndices == 0 then
+        if mode == 'cdt' then
+            meshVerts, triIndices = lib.triangulatePolyWithSteiner(origVerts, spacing, ud.extra.extraSteiner)
+            if not triIndices or #triIndices == 0 then
+                mode = 'basic'
+                meshVerts = origVerts
+            end
+        elseif mode == 'refined' then
+            meshVerts, triIndices = lib.triangulatePolyRefined(origVerts, spacing, ud.extra.extraSteiner)
+            if not triIndices or #triIndices == 0 then
+                mode = 'basic'
+                meshVerts = origVerts
+            end
+        end
+        if mode ~= 'cdt' and mode ~= 'refined' then
+            meshVerts = origVerts
+            triIndices = mathutils and mathutils.triangulateToIndices(origVerts) or nil
+        end
     end
     if not triIndices or #triIndices == 0 then return false end
 

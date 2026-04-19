@@ -428,4 +428,68 @@ function lib.renderActiveEditorThings()
     love.graphics.setColor(1, 1, 1)  -- Reset color
 end
 
+-- Debug overlay for Goal 4 (strip merging). Draws the cached merge result
+-- in its host body's world space, each source ribbon tinted a distinct color.
+-- Populated via bridge /eval (see state.stripMergeOverlay); no UI yet.
+function lib.renderStripMergeOverlay()
+    local ov = state.stripMergeOverlay
+    if not ov or not ov.enabled or not ov.result or not ov.hostBodyId then return end
+    local hostBody = registry.getBodyByID(ov.hostBodyId)
+    if not hostBody or hostBody:isDestroyed() then return end
+
+    local verts = ov.result.verts
+    local tris = ov.result.tris
+    local meta = ov.result.meta or {}
+    if not verts or not tris or #tris < 3 then return end
+
+    -- triIdx → which ribbon owns it; same cheap hash as group-picker colors.
+    -- Triangles past the ribbon range (ownerByTri[t] == nil) are bridges.
+    local ownerByTri = {}
+    for r, m in ipairs(meta) do
+        for t = m.firstTri, m.firstTri + m.triCount - 1 do
+            ownerByTri[t] = r
+        end
+    end
+
+    local function ribbonColor(r)
+        return ((r * 73) % 256) / 255,
+               ((r * 151) % 256) / 255,
+               ((r * 211) % 256) / 255
+    end
+
+    local function worldAt(idx)
+        return hostBody:getWorldPoint(verts[(idx - 1) * 2 + 1], verts[(idx - 1) * 2 + 2])
+    end
+
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(1 / cam:getScale())
+    local numTris = math.floor(#tris / 3)
+    for t = 1, numTris do
+        local i1 = tris[(t - 1) * 3 + 1]
+        local i2 = tris[(t - 1) * 3 + 2]
+        local i3 = tris[(t - 1) * 3 + 3]
+        if i1 and i2 and i3 then
+            local x1, y1 = worldAt(i1)
+            local x2, y2 = worldAt(i2)
+            local x3, y3 = worldAt(i3)
+            local owner = ownerByTri[t]
+            if owner then
+                local r, g, b = ribbonColor(owner)
+                love.graphics.setColor(r, g, b, 0.30)
+                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                love.graphics.setColor(r, g, b, 0.9)
+                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+            else
+                -- bridge triangle: distinct high-contrast color so junctions pop
+                love.graphics.setColor(1, 1, 1, 0.55)
+                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+                love.graphics.setColor(1, 0.2, 0.2, 1.0)
+                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+            end
+        end
+    end
+    love.graphics.setLineWidth(lw)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 return lib
