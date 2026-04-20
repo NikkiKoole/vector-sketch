@@ -1070,16 +1070,23 @@ function lib.drawSelectedSFixture()
                                     local triIdx = rextra and rextra.triangles
                                     local allVerts = rextra and (rextra.meshVertices or rv:getBody():getUserData().thing.vertices)
                                     if triIdx and allVerts then
-                                        if not rextra.extraSteiner then rextra.extraSteiner = {} end
+                                        -- Path B: Steiner points live on the body in body-local
+                                        -- coords. allVerts may be either body-local (new code,
+                                        -- meshVertices) or authoring-world (thing.vertices or
+                                        -- legacy saves); subtracting its own centroid normalizes
+                                        -- to body-local either way.
+                                        local bodyThing = rv:getBody():getUserData().thing
+                                        local ocenX, ocenY = mathutils.computeCentroid(allVerts)
+                                        bodyThing.extraSteiner = bodyThing.extraSteiner or {}
                                         for _, t in ipairs(state.triangleEditor.selectedTriangles) do
                                             local i1 = triIdx[(t - 1) * 3 + 1]
                                             local i2 = triIdx[(t - 1) * 3 + 2]
                                             local i3 = triIdx[(t - 1) * 3 + 3]
                                             if i1 and i2 and i3 then
-                                                local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1] + allVerts[(i3-1)*2+1]) / 3
-                                                local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2] + allVerts[(i3-1)*2+2]) / 3
-                                                rextra.extraSteiner[#rextra.extraSteiner + 1] = cx
-                                                rextra.extraSteiner[#rextra.extraSteiner + 1] = cy
+                                                local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1] + allVerts[(i3-1)*2+1]) / 3 - ocenX
+                                                local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2] + allVerts[(i3-1)*2+2]) / 3 - ocenY
+                                                bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cx
+                                                bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cy
                                             end
                                         end
                                         -- Re-triangulate with the new points included
@@ -1311,17 +1318,19 @@ function lib.drawSelectedSFixture()
                     nextRow()
                 end
 
-                -- Clear splits: wipes extraSteiner on the linked RESOURCE and re-triangulates.
+                -- Clear splits: wipes thing.extraSteiner on the body and re-triangulates
+                -- the linked RESOURCE. (Path B: Steiners live on the body, not the RESOURCE.)
                 do
                     local lbl = ud.label or ''
                     for _, rv in pairs(registry.sfixtures) do
                         if not rv:isDestroyed() then
                             local rud = rv:getUserData()
                             if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
-                                if rud.extra.extraSteiner and #rud.extra.extraSteiner > 0 then
-                                    local numSplits = #rud.extra.extraSteiner / 2
+                                local rBodyThing = rv:getBody():getUserData().thing
+                                if rBodyThing.extraSteiner and #rBodyThing.extraSteiner > 0 then
+                                    local numSplits = #rBodyThing.extraSteiner / 2
                                     if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
-                                        rud.extra.extraSteiner = nil
+                                        rBodyThing.extraSteiner = nil
                                         local idx = rud.extra.selectedBGIndex
                                         local bd = idx and state.backdrops and state.backdrops[idx]
                                         if bd then
@@ -1423,14 +1432,17 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            if ud.extra.extraSteiner and #ud.extra.extraSteiner > 0 then
-                local numSplits = #ud.extra.extraSteiner / 2
+            -- Path B: Steiners live on the body, not the RESOURCE.
+            local resBody = state.selection.selectedSFixture:getBody()
+            local resBodyThing = resBody and resBody:getUserData() and resBody:getUserData().thing
+            if resBodyThing and resBodyThing.extraSteiner and #resBodyThing.extraSteiner > 0 then
+                local numSplits = #resBodyThing.extraSteiner / 2
                 if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
-                    ud.extra.extraSteiner = nil
+                    resBodyThing.extraSteiner = nil
                     local idx = ud.extra.selectedBGIndex
                     local bd = idx and state.backdrops and state.backdrops[idx]
                     if bd then
-                        cdt.computeResourceMesh(ud, state.selection.selectedSFixture:getBody(), bd,
+                        cdt.computeResourceMesh(ud, resBody, bd,
                             state.triangulationMode or 'cdt', state.cdtSpacing, mathutils)
                     end
                 end

@@ -652,6 +652,9 @@ function lib.recreateThingFromBody(body, newSettings)
                 ud.extra.triangleOrderDirty = false
             end
         end
+        -- Path B: thing.extraSteiner may reference positions that fall outside
+        -- the new polygon. Drop per the plan (docs/STEINER-OWNERSHIP-PLAN.md).
+        thing.extraSteiner = nil
     end
 
     registry.registerBody(thing.id, thing.body)

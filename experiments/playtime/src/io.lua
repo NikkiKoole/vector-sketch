@@ -30,6 +30,36 @@ local function clearWorld(world)
     registry.reset()
 end
 
+-- Path B migration (see docs/STEINER-OWNERSHIP-PLAN.md). Old saves carry
+-- `extraSteiner` on RESOURCE sfixtures in authoring-world coords. New code
+-- reads it at the body level in body-local coords. Walk the loaded save
+-- data, subtract centroid(body.vertices) from each pair, append onto
+-- body.extraSteiner, clear the RESOURCE copy. Idempotent: a second pass
+-- finds nothing to move. Safe on nil / empty / bodies without vertices.
+local function migrateExtraSteinerToBody(saveData)
+    if type(saveData) ~= 'table' then return end
+    local bodies = saveData.bodies
+    if type(bodies) ~= 'table' then return end
+    for _, body in ipairs(bodies) do
+        if type(body) == 'table' and type(body.vertices) == 'table'
+            and #body.vertices >= 6 and type(body.fixtures) == 'table' then
+            local cenX, cenY = mathutils.computeCentroid(body.vertices)
+            for _, fix in ipairs(body.fixtures) do
+                local extra = fix.userData and fix.userData.extra
+                local es = extra and extra.extraSteiner
+                if type(es) == 'table' and #es >= 2 then
+                    body.extraSteiner = body.extraSteiner or {}
+                    for i = 1, #es - 1, 2 do
+                        body.extraSteiner[#body.extraSteiner + 1] = es[i] - cenX
+                        body.extraSteiner[#body.extraSteiner + 1] = es[i + 1] - cenY
+                    end
+                    extra.extraSteiner = nil
+                end
+            end
+        end
+    end
+end
+
 local function restoreInfluenceBodies(influences)
     for i = 1, #influences do
         local inflList = influences[i]
@@ -373,6 +403,7 @@ function lib.buildWorld(data, world, cam)
             mirrorY = bodyData.mirrorY or 1,
             vertices = bodyData.vertices,
             behaviors = bodyData.behaviors,
+            extraSteiner = bodyData.extraSteiner, -- body-local Steiner points (Path B)
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
             -- textures = bodyData.textures or { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
@@ -636,6 +667,12 @@ function lib.load(data, world, cam)
             end
         end
     end
+
+    -- Path B migration: Steiner ownership moved from RESOURCE sfixtures
+    -- to the body. Old saves carry authoring-world coords on the
+    -- RESOURCE; convert to body-local and hoist up onto the body table.
+    -- See docs/STEINER-OWNERSHIP-PLAN.md.
+    migrateExtraSteinerToBody(jsonData)
     -- Clear existing world
     lib.buildWorld(jsonData, world, cam)
 
@@ -711,6 +748,7 @@ function lib.gatherSaveData(world, camera)
                 mirrorY = thing.mirrorY,
                 --radius = thing.radius,
                 vertices = thing.vertices,
+                extraSteiner = thing.extraSteiner, -- body-local Steiner points (Path B)
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
                 position = { utils.round_to_decimals(body:getX(), 4), utils.round_to_decimals(body:getY(), 4) },
                 angle = utils.round_to_decimals(body:getAngle(), 4),
@@ -1433,6 +1471,7 @@ lib._test = {
     pruneZeroWeightInfluences = pruneZeroWeightInfluences,
     normalizeBones = normalizeBones,
     restoreBones = restoreBones,
+    migrateExtraSteinerToBody = migrateExtraSteinerToBody,
 }
 
 return lib

@@ -610,6 +610,30 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     if not (bodyUD and bodyUD.thing and bodyUD.thing.vertices) then return false end
     local origVerts = bodyUD.thing.vertices
 
+    -- Path B: operate in body-local throughout. Convert polygon verts to
+    -- body-local up front (subtract the centroid that collision fixtures
+    -- were also built from), and read Steiner points from the body
+    -- (thing.extraSteiner is already body-local). The rest of the pipeline
+    -- — ribbon strip / CDT / basic triangulation — gets consistent local
+    -- coords and returns body-local meshVerts. UV mapping just applies the
+    -- body's current world transform once.
+    local mathutils2 = mathutils or require('src.math-utils')
+    local centX, centY = mathutils2.computeCentroid(origVerts)
+    local localPolyVerts = {}
+    for i = 1, #origVerts, 2 do
+        localPolyVerts[i] = origVerts[i] - centX
+        localPolyVerts[i + 1] = origVerts[i + 1] - centY
+    end
+    local extraSteiner = bodyUD.thing.extraSteiner
+
+    -- Auto-upgrade basic → cdt when the body has authored Steiner points.
+    -- Basic (ear-clip) ignores extraSteiner, so keeping it would silently
+    -- drop the user's input. Matches user intent; logged once via the
+    -- triangulationMode being different after this call.
+    if extraSteiner and #extraSteiner >= 2 and (not mode or mode == 'basic') then
+        mode = 'cdt'
+    end
+
     -- Ribbon bodies have a guaranteed strip topology we want to preserve
     -- (rib-to-rib diagonals, perpendicular to the bone axis). Ear-clip /
     -- CDT on a ribbon polygon produces fans or arbitrary tris that
@@ -618,49 +642,40 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
 
     local meshVerts, triIndices
     if isRibbon then
-        triIndices = ribbonStripIndices(origVerts)
+        triIndices = ribbonStripIndices(localPolyVerts)
         if triIndices and #triIndices > 0 then
-            meshVerts = origVerts
+            meshVerts = localPolyVerts
             mode = 'strip'
         end
     end
     if not triIndices or #triIndices == 0 then
         if mode == 'cdt' then
-            meshVerts, triIndices = lib.triangulatePolyWithSteiner(origVerts, spacing, ud.extra.extraSteiner)
+            meshVerts, triIndices = lib.triangulatePolyWithSteiner(localPolyVerts, spacing, extraSteiner)
             if not triIndices or #triIndices == 0 then
                 mode = 'basic'
-                meshVerts = origVerts
+                meshVerts = localPolyVerts
             end
         elseif mode == 'refined' then
-            meshVerts, triIndices = lib.triangulatePolyRefined(origVerts, spacing, ud.extra.extraSteiner)
+            meshVerts, triIndices = lib.triangulatePolyRefined(localPolyVerts, spacing, extraSteiner)
             if not triIndices or #triIndices == 0 then
                 mode = 'basic'
-                meshVerts = origVerts
+                meshVerts = localPolyVerts
             end
         end
         if mode ~= 'cdt' and mode ~= 'refined' then
-            meshVerts = origVerts
-            triIndices = mathutils and mathutils.triangulateToIndices(origVerts) or nil
+            meshVerts = localPolyVerts
+            triIndices = mathutils and mathutils.triangulateToIndices(localPolyVerts) or nil
         end
     end
     if not triIndices or #triIndices == 0 then return false end
 
-    -- UV mapping: map each vertex to its actual world position on the
-    -- backdrop. thing.vertices are in authoring-world space (frozen at
-    -- creation time); the body may have been moved since. To get the
-    -- vertex's current world position we compute:
-    --   body-local = vert - computeCentroid(verts)     [same as fixture creation]
-    --   world      = body:getWorldPoint(body-local)    [handles position + rotation]
-    -- Then UV = (world - backdrop_corner) / backdrop_size.
-    local mathutils2 = mathutils or require('src.math-utils')
-    local centX, centY = mathutils2.computeCentroid(origVerts)
+    -- UV mapping: meshVerts are in body-local, so applying the body's
+    -- current world transform gives us the world-space sample location
+    -- on the backdrop.  UV = (world - backdrop_corner) / backdrop_size.
     local bdW, bdH = bd.w, bd.h
-
     local uvs = {}
     for i = 1, #meshVerts, 2 do
-        local lx = meshVerts[i] - centX
-        local ly = meshVerts[i + 1] - centY
-        local wx, wy = body:getWorldPoint(lx, ly)
+        local wx, wy = body:getWorldPoint(meshVerts[i], meshVerts[i + 1])
         uvs[#uvs + 1] = (wx - bd.x) / bdW
         uvs[#uvs + 1] = (wy - bd.y) / bdH
     end
@@ -674,6 +689,9 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     ud.extra.triangleOrderDirty = false
     -- Only store meshVertices when it differs from the polygon's verts
     -- (saves data + lets legacy paths pick the polygon source directly).
+    -- Stored in body-local. The draw path normalizes with makePolygonRelativeToCenter
+    -- so it doesn't care whether meshVerts arrives body-local or authoring-world
+    -- (legacy saves).
     if mode == 'cdt' or mode == 'refined' then
         ud.extra.meshVertices = meshVerts
     else
