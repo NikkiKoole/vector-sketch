@@ -1097,3 +1097,84 @@ describe("io._test.normalizeBones / restoreBones", function()
         assert.has_no.errors(function() t.restoreBones(nil, {}) end)
     end)
 end)
+
+-- ─── migrateExtraSteinerToBody ───
+--
+-- Path B refactor (STEINER-OWNERSHIP-PLAN.md Phase 1): Steiner-point
+-- ownership moves from ud.extra.extraSteiner on RESOURCE sfixtures
+-- (authoring-world coords) to body.extraSteiner at the body level
+-- (body-local coords). This migration runs on load.
+
+describe("io._test.migrateExtraSteinerToBody", function()
+    local function makeBodyData(verts)
+        return {
+            id = 'bodyA',
+            vertices = verts,
+            shapeType = 'custom',
+            position = { 0, 0 },
+            fixtures = {},
+        }
+    end
+
+    local function addResource(body, extraSteiner)
+        body.fixtures[#body.fixtures + 1] = {
+            userData = { subtype = 'resource', extra = { extraSteiner = extraSteiner } },
+        }
+        return body.fixtures[#body.fixtures]
+    end
+
+    it("moves authoring-world extraSteiner to body-local on the body", function()
+        -- Unit square centered at (50, 50) → centroid = (50, 50)
+        local b = makeBodyData({ 0, 0, 100, 0, 100, 100, 0, 100 })
+        addResource(b, { 50, 50, 60, 40 })
+        local data = { bodies = { b } }
+        t.migrateExtraSteinerToBody(data)
+        assert.are.same({ 0, 0, 10, -10 }, b.extraSteiner)
+    end)
+
+    it("clears the old location on the RESOURCE after migrating", function()
+        local b = makeBodyData({ 0, 0, 100, 0, 100, 100, 0, 100 })
+        local res = addResource(b, { 50, 50 })
+        t.migrateExtraSteinerToBody({ bodies = { b } })
+        assert.is_nil(res.userData.extra.extraSteiner)
+    end)
+
+    it("concatenates lists across multiple RESOURCEs on the same body", function()
+        local b = makeBodyData({ 0, 0, 100, 0, 100, 100, 0, 100 })
+        addResource(b, { 50, 50 })
+        addResource(b, { 60, 40 })
+        t.migrateExtraSteinerToBody({ bodies = { b } })
+        assert.are.same({ 0, 0, 10, -10 }, b.extraSteiner)
+    end)
+
+    it("is idempotent — running twice is the same as once", function()
+        local b = makeBodyData({ 0, 0, 100, 0, 100, 100, 0, 100 })
+        addResource(b, { 50, 50 })
+        local data = { bodies = { b } }
+        t.migrateExtraSteinerToBody(data)
+        local after1 = { unpack(b.extraSteiner) }
+        t.migrateExtraSteinerToBody(data)
+        assert.are.same(after1, b.extraSteiner)
+    end)
+
+    it("leaves existing body.extraSteiner alone when no RESOURCE has the old data", function()
+        local b = makeBodyData({ 0, 0, 100, 0, 100, 100, 0, 100 })
+        b.extraSteiner = { 1, 2, 3, 4 }
+        addResource(b, nil)
+        t.migrateExtraSteinerToBody({ bodies = { b } })
+        assert.are.same({ 1, 2, 3, 4 }, b.extraSteiner)
+    end)
+
+    it("is a no-op when given nil / empty", function()
+        assert.has_no.errors(function() t.migrateExtraSteinerToBody(nil) end)
+        assert.has_no.errors(function() t.migrateExtraSteinerToBody({}) end)
+        assert.has_no.errors(function() t.migrateExtraSteinerToBody({ bodies = {} }) end)
+    end)
+
+    it("skips bodies without vertices (can't compute centroid)", function()
+        local b = { id = 'x', fixtures = {} }
+        addResource(b, { 1, 2 })
+        assert.has_no.errors(function() t.migrateExtraSteinerToBody({ bodies = { b } }) end)
+        assert.is_nil(b.extraSteiner)
+    end)
+end)

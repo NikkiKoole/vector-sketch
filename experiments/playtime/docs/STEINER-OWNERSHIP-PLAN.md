@@ -105,11 +105,11 @@ Goal: the visible body fill reflects the authored triangulation. Solves the fan 
 
 Each phase is one commit. TDD where it makes sense (Phase 1 migration especially).
 
-## Open decisions
+## Decisions (settled)
 
-- **Polygon-edit invalidation.** If the user drags a vertex of the polygon, existing Steiners may end up outside. Options: drop Steiners when polygon changes (simplest), or clamp/preserve them (more work). Simplest is fine — the user can re-add them. Decide before Phase 1 if we want the drop to happen automatically.
-- **CDT mode integration.** Today `computeResourceMesh` picks from `basic` / `cdt` / `refined` / `strip` modes. Steiners are only honored in `cdt` and `refined`. If a user places Steiners while the mode is `basic`, should we auto-upgrade to `cdt`, warn, or silently ignore? Probably auto-upgrade — matches the user's intent.
-- **Save-size impact.** Each Steiner adds 2 floats to `thing.extraSteiner`. With `roundFloats` at save time, ~20 bytes per point. Negligible for tens of Steiners per body.
+- **Polygon-edit invalidation → drop.** When `thing.vertices` changes count (vertex added/removed), drop `thing.extraSteiner` entirely. Hook into the existing polygon-vert-change invalidation that already nils `triangleGroups` / `triangleBones` on RESOURCE sfixtures (`src/object-manager.lua:recreateThingFromBody`). User re-adds points after editing the outline. Keeping stale points that may fall outside the new polygon is worse than losing them.
+- **CDT mode auto-upgrade.** Placing a Steiner on a body whose RESOURCE is in `basic` mode auto-switches the RESOURCE to `cdt` and re-triangulates. Matches intent; otherwise the user's clicks have no visible effect on the RESOURCE mesh. Document the behaviour in a log message the first time it happens per session.
+- **Save-size impact.** Negligible (~20 bytes per Steiner after `roundFloats`). Not a concern.
 
 ## What this doesn't do
 
