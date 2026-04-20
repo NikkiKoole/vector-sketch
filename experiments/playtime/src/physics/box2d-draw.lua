@@ -95,13 +95,12 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
         love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
     end
 
-    -- Inner triangulation edges when body is selected. Faint so it reads
-    -- as "authoring overlay" rather than "part of the sprite."
+    -- Inner triangulation edges when body is selected — same stroke style
+    -- as the outer outline so the whole mesh reads as one coherent shape.
     local isSelected = state.selection.selectedObj == thing
+    local outlineColor = state.world.darkMode and pal.creamy or pal.dark
     if isSelected then
-        local lw = love.graphics.getLineWidth()
-        love.graphics.setLineWidth(1 / cam:getScale())
-        love.graphics.setColor(0, 0, 0, alpha * 0.35)
+        love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
         for t = 1, #triIdx - 2, 3 do
             local i1, i2, i3 = triIdx[t], triIdx[t + 1], triIdx[t + 2]
             local x1, y1 = body:getWorldPoint(meshVerts[(i1 - 1) * 2 + 1], meshVerts[(i1 - 1) * 2 + 2])
@@ -109,12 +108,10 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
             local x3, y3 = body:getWorldPoint(meshVerts[(i3 - 1) * 2 + 1], meshVerts[(i3 - 1) * 2 + 2])
             love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
         end
-        love.graphics.setLineWidth(lw)
     end
 
     -- Outer polygon outline — single stroke, replaces the per-fixture outlines.
     if drawOutline then
-        local outlineColor = state.world.darkMode and pal.creamy or pal.dark
         love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
         local worldOutline = {}
         for i = 1, #verts, 2 do
