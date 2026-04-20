@@ -761,3 +761,196 @@ describe("double round-trip (all scene files)", function()
         end)
     end
 end)
+
+-- ─── roundFloats (save-time precision clamp) ───
+
+describe("io._test.roundFloats", function()
+    it("rounds positive floats to n decimals", function()
+        local result = t.roundFloats({ x = 1734.8215684197 }, 4)
+        assert.are.equal(1734.8216, result.x)
+    end)
+
+    it("rounds negative floats symmetrically", function()
+        local result = t.roundFloats({ x = -86.81404209137 }, 4)
+        assert.are.equal(-86.8140, result.x)
+    end)
+
+    it("leaves integers as integers", function()
+        local result = t.roundFloats({ x = 42 }, 4)
+        assert.are.equal(42, result.x)
+    end)
+
+    it("leaves strings and booleans untouched", function()
+        local result = t.roundFloats({ s = "hello", b = true, n = false }, 4)
+        assert.are.equal("hello", result.s)
+        assert.are.equal(true, result.b)
+        assert.are.equal(false, result.n)
+    end)
+
+    it("recurses into nested tables and lists", function()
+        local input = {
+            a = { 1.12345, 2.99999 },
+            b = { inner = { c = 3.33333 } },
+        }
+        local result = t.roundFloats(input, 2)
+        assert.are.equal(1.12, result.a[1])
+        assert.are.equal(3.00, result.a[2])
+        assert.are.equal(3.33, result.b.inner.c)
+    end)
+
+    it("handles zero and very small values without -0.0", function()
+        local result = t.roundFloats({ a = 0, b = -0.00001, c = 0.00001 }, 4)
+        assert.are.equal(0, result.a)
+        assert.are.equal(0, result.b)
+        assert.are.equal(0, result.c)
+    end)
+
+    it("does not mutate the input table", function()
+        local input = { x = 1.23456789 }
+        t.roundFloats(input, 2)
+        assert.are.equal(1.23456789, input.x)
+    end)
+
+    it("produces JSON with no floats beyond n decimal places", function()
+        local json = require('vendor.dkjson')
+        local data = {
+            vertices = { 1734.8215684197, 836.78543898645, -86.81404209137 },
+            nested = { { x = 0.123456789 }, { x = 987.654321 } },
+        }
+        local rounded = t.roundFloats(data, 4)
+        local encoded = json.encode(rounded)
+        local over = encoded:match('%-?%d+%.%d%d%d%d%d+')
+        assert.is_nil(over, "Found a number exceeding 4 decimals: " .. tostring(over))
+    end)
+end)
+
+-- ─── influence `dist` field (redundant with dx/dy) ───
+
+describe("io._test.stripInfluenceDist", function()
+    it("removes dist from every influence entry", function()
+        local influences = {
+            [1] = { { dx = 3, dy = 4, dist = 5, other = 1 } },
+            [2] = { { dx = 6, dy = 8, dist = 10 }, { dx = 1, dy = 0, dist = 1 } },
+        }
+        t.stripInfluenceDist(influences)
+        assert.is_nil(influences[1][1].dist)
+        assert.is_nil(influences[2][1].dist)
+        assert.is_nil(influences[2][2].dist)
+    end)
+
+    it("preserves other fields on each entry", function()
+        local influences = { [1] = { { dx = 3, dy = 4, dist = 5, w = 0.5, nodeId = 'abc' } } }
+        t.stripInfluenceDist(influences)
+        assert.are.equal(3, influences[1][1].dx)
+        assert.are.equal(0.5, influences[1][1].w)
+        assert.are.equal('abc', influences[1][1].nodeId)
+    end)
+
+    it("is a no-op when given nil", function()
+        assert.has_no.errors(function() t.stripInfluenceDist(nil) end)
+    end)
+
+    it("tolerates entries that already lack dist", function()
+        local influences = { [1] = { { dx = 3, dy = 4 } } }
+        assert.has_no.errors(function() t.stripInfluenceDist(influences) end)
+        assert.is_nil(influences[1][1].dist)
+    end)
+end)
+
+describe("io._test.restoreInfluenceDist", function()
+    it("computes dist = sqrt(dx^2 + dy^2) per entry when missing", function()
+        local influences = {
+            [1] = { { dx = 3, dy = 4 } },
+            [2] = { { dx = 6, dy = 8 }, { dx = 1, dy = 0 } },
+        }
+        t.restoreInfluenceDist(influences)
+        assert.are.equal(5, influences[1][1].dist)
+        assert.are.equal(10, influences[2][1].dist)
+        assert.are.equal(1, influences[2][2].dist)
+    end)
+
+    it("does not overwrite an existing dist value", function()
+        -- Old saves still ship dist — trust what's there.
+        local influences = { [1] = { { dx = 3, dy = 4, dist = 99 } } }
+        t.restoreInfluenceDist(influences)
+        assert.are.equal(99, influences[1][1].dist)
+    end)
+
+    it("leaves dist nil if dx or dy missing", function()
+        local influences = { [1] = { { dx = 3 } } }
+        t.restoreInfluenceDist(influences)
+        assert.is_nil(influences[1][1].dist)
+    end)
+
+    it("is a no-op when given nil", function()
+        assert.has_no.errors(function() t.restoreInfluenceDist(nil) end)
+    end)
+
+    it("round-trips with stripInfluenceDist", function()
+        local influences = {
+            [1] = { { dx = 3, dy = 4, dist = 5, w = 0.5 } },
+            [2] = { { dx = -6, dy = 8, dist = 10 }, { dx = 0, dy = 0, dist = 0 } },
+        }
+        t.stripInfluenceDist(influences)
+        t.restoreInfluenceDist(influences)
+        assert.are.equal(5, influences[1][1].dist)
+        assert.are.equal(10, influences[2][1].dist)
+        assert.are.equal(0, influences[2][2].dist)
+        assert.are.equal(0.5, influences[1][1].w)
+    end)
+end)
+
+-- ─── zero-weight influence pruning ───
+
+describe("io._test.pruneZeroWeightInfluences", function()
+    it("removes entries with w == 0", function()
+        local influences = {
+            [1] = { { w = 0.5, nodeId = 'a' }, { w = 0, nodeId = 'b' } },
+        }
+        t.pruneZeroWeightInfluences(influences)
+        assert.are.equal(1, #influences[1])
+        assert.are.equal('a', influences[1][1].nodeId)
+    end)
+
+    it("removes entries with missing w (nil treated as zero)", function()
+        local influences = { [1] = { { w = 0.5 }, { nodeId = 'x' } } }
+        t.pruneZeroWeightInfluences(influences)
+        assert.are.equal(1, #influences[1])
+        assert.are.equal(0.5, influences[1][1].w)
+    end)
+
+    it("keeps small-but-nonzero weights", function()
+        local influences = { [1] = { { w = 0.0001 }, { w = 0 } } }
+        t.pruneZeroWeightInfluences(influences)
+        assert.are.equal(1, #influences[1])
+        assert.are.equal(0.0001, influences[1][1].w)
+    end)
+
+    it("preserves per-vertex slot as empty when all entries zero-weight", function()
+        -- Don't leave holes in the outer array: vertex slot stays, just empty.
+        local influences = {
+            [1] = { { w = 0.5 } },
+            [2] = { { w = 0 }, { w = 0 } },
+            [3] = { { w = 0.3 } },
+        }
+        t.pruneZeroWeightInfluences(influences)
+        assert.are.equal(3, #influences)
+        assert.are.equal(0, #influences[2])
+        assert.are.equal(0.3, influences[3][1].w)
+    end)
+
+    it("is a no-op when given nil", function()
+        assert.has_no.errors(function() t.pruneZeroWeightInfluences(nil) end)
+    end)
+
+    it("handles all-zero entries across multiple verts", function()
+        local influences = {
+            [1] = { { w = 0, a = 1 }, { w = 0, a = 2 } },
+            [2] = { { w = 0, a = 3 } },
+        }
+        t.pruneZeroWeightInfluences(influences)
+        assert.are.equal(2, #influences)
+        assert.are.equal(0, #influences[1])
+        assert.are.equal(0, #influences[2])
+    end)
+end)

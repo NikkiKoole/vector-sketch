@@ -52,10 +52,12 @@ if not IS_WEB then
     bridge = require 'vendor.claude-bridge'
     lurker = require 'vendor.lurker'
     -- Scene scripts (scripts/*.playtime.lua) are loaded by scene-loader, not
-    -- require()'d as modules. Tell lurker to skip them so it doesn't try to
-    -- hotswap them as Lua modules and crash into its error overlay.
+    -- require()'d as modules. Busted spec files (spec/*_spec.lua) use
+    -- `describe` as a top-level call which is nil outside busted. Skip both
+    -- so lurker doesn't try to hotswap them into its error overlay.
     lurker.preswap = function(f)
         return f:match('scripts/.+%.playtime%.lua$') ~= nil
+            or f:match('spec/.+_spec%.lua$') ~= nil
     end
     local _lurker_onerror = lurker.onerror
     lurker.onerror = function(e, nostacktrace)

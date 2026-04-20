@@ -48,6 +48,11 @@ local function restoreInfluenceBodies(influences)
             if infl.bindAngle == nil and infl.body then
                 infl.bindAngle = infl.body:getAngle()
             end
+            -- Recompute dist if stripped on save (new) or restore for older
+            -- saves lacking it (defensive).
+            if infl.dist == nil and infl.dx ~= nil and infl.dy ~= nil then
+                infl.dist = math.sqrt(infl.dx * infl.dx + infl.dy * infl.dy)
+            end
         end
     end
 end
@@ -956,8 +961,21 @@ function lib.gatherSaveData(world, camera)
 end
 
 function lib.save(world, camera, filename)
-    -- Serialize the data to JSON
-    local saveData = lib.gatherSaveData(world, camera)
+    -- Serialize the data to JSON. Round numbers to 4 decimals before encode:
+    -- sub-pixel precision at any reasonable world scale, and cuts the file
+    -- size meaningfully by dropping the 13-digit tail that `tostring` emits.
+    -- Then strip `dist` from influence entries — it's sqrt(dx^2+dy^2),
+    -- recomputed on load. See docs/FILESIZE-ANALYSIS.md.
+    local saveData = roundFloats(lib.gatherSaveData(world, camera), 4)
+    for _, body in ipairs(saveData.bodies or {}) do
+        for _, fix in ipairs(body.fixtures or {}) do
+            local extra = fix.userData and fix.userData.extra
+            if extra and extra.influences then
+                pruneZeroWeightInfluences(extra.influences)
+                stripInfluenceDist(extra.influences)
+            end
+        end
+    end
     -- logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
@@ -1247,12 +1265,91 @@ function lib.cloneSelection(selectedBodies, world)
     --state.selection.selectedBodies = result
 end
 
+-- `dist` on an influence entry is defined as sqrt(dx^2 + dy^2) — purely
+-- redundant with dx/dy that are saved alongside. Strip on save, recompute
+-- on load. In-place mutation; caller has already duplicated the structure.
+local function stripInfluenceDist(influences)
+    if type(influences) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' then infl.dist = nil end
+            end
+        end
+    end
+end
+
+-- Remove entries whose weight is 0 (or missing). They contribute 0 to the
+-- DQS weighted sum, so pruning changes nothing at runtime. Preserves the
+-- outer per-vertex array shape: a vertex whose entries are all zero-weight
+-- ends up with an empty per-vertex list, not nil, to avoid holes.
+local function pruneZeroWeightInfluences(influences)
+    if type(influences) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            local kept = {}
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' and (infl.w or 0) ~= 0 then
+                    kept[#kept + 1] = infl
+                end
+            end
+            influences[i] = kept
+        end
+    end
+end
+
+local function restoreInfluenceDist(influences)
+    if type(influences) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' and infl.dist == nil
+                   and infl.dx ~= nil and infl.dy ~= nil then
+                    infl.dist = math.sqrt(infl.dx * infl.dx + infl.dy * infl.dy)
+                end
+            end
+        end
+    end
+end
+
+-- Recursively round every numeric leaf to `ndecimals` decimals and return a
+-- new table. Strings/booleans/non-number values pass through unchanged. Used
+-- at save-time to strip the 13-digit bloat that tostring() emits for floats
+-- — see docs/FILESIZE-ANALYSIS.md for why this is worth doing.
+local function roundFloats(x, ndecimals)
+    local fmt = '%.' .. tostring(ndecimals) .. 'f'
+    local function rec(v)
+        if type(v) == 'number' then
+            -- string.format handles negatives correctly and yields a clean
+            -- decimal (tonumber collapses -0 back to 0).
+            return tonumber(string.format(fmt, v)) or v
+        elseif type(v) == 'table' then
+            local out = {}
+            for k, val in pairs(v) do out[k] = rec(val) end
+            return out
+        else
+            return v
+        end
+    end
+    return rec(x)
+end
+
 -- Expose locals for testing (not part of public API)
 lib._test = {
     needsDimProperty = needsDimProperty,
     remapAndRestoreInfluences = remapAndRestoreInfluences,
     clearWorld = clearWorld,
     restoreInfluenceBodies = restoreInfluenceBodies,
+    roundFloats = roundFloats,
+    stripInfluenceDist = stripInfluenceDist,
+    restoreInfluenceDist = restoreInfluenceDist,
+    pruneZeroWeightInfluences = pruneZeroWeightInfluences,
 }
 
 return lib
