@@ -1,68 +1,79 @@
 -- main.lua — spine-mesh humanoid sandbox.
 --
--- Run: cd experiments/spine-humanoid-sandbox && love .
+-- Workflow:
+--   1. A polygon (procedural ribbon, cartoon arm, or loaded from a
+--      playtime JSON file) appears unbound at its authored position.
+--   2. Skeleton is visible in default T-pose — drag joints to place
+--      them on the polygon's correct spots (shoulder, elbow, wrist
+--      for a limb; head/pelvis/etc for a body).
+--   3. Press [r] to bind: the current chain becomes the rest spine.
+--   4. Drag any chain joint → polygon deforms around the live curve.
 --
--- Phase A: draggable skeleton, no meshes.
--- Phase B: one limb bound at startup, deforms as you drag its chain joints.
--- Phase C (future): all four limbs + torso.
--- Phase D (future): texturing.
---
--- Current state: Phase B — leftArm's limb ribbon is bound and redrawn
--- each frame as you drag its three chain joints (leftShoulder,
--- leftElbow, leftWrist).
+-- [t] toggles polygon kind. [space] resets skeleton + unbinds.
+-- [ / ] adjust bendiness on the active bind.
 
 local Skeleton = require('skeleton')
 local Limb     = require('limb')
 local SpineMesh = require('spine-mesh')
 
-local instance
-local activeBind   -- the bound mesh currently being rendered
-local activeLimb   -- which chain the bind is against (limb name)
-local dragging -- joint name currently being dragged, or nil
-local DOT_R = 8
-local bendiness = 2 -- 0 = rubbery, 4 = crisp corners
-local polyKind = 'cartoon' -- 'ribbon' | 'cartoon' | 'loaded'
-local LOADED_PATH = os.getenv('HOME') .. '/Library/Application Support/LOVE/playtime/shape.playtime.json'
+local SCREEN_CX, SCREEN_CY = 600, 400 -- where loaded polygon centers
 
--- Rebuild the bind for a limb from the instance's CURRENT chain. Call
--- this when starting fresh, or after an explicit "rebind at this pose"
--- operation. During normal drag we do NOT rebind; we re-evaluate the
--- existing bind against the moved chain.
--- Pick the chain appropriate for the current polygon kind.
---   loaded  → bodyAxis (whole-body polygon, body-axis chain)
---   ribbon/cartoon → leftArm (single limb demo)
+local instance
+local polygon     -- current polygon (unbound view)
+local bind        -- SpineMesh bind; nil until the user presses [r]
+local activeLimb  -- chain name that the bind is against
+
+local dragging    -- joint name currently being dragged, or nil
+local DOT_R = 8
+local bendiness = 2
+local polyKind = 'cartoon' -- 'ribbon' | 'cartoon' | 'loaded'
+local LOADED_PATH = os.getenv('HOME') ..
+    '/Library/Application Support/LOVE/playtime/shape.playtime.json'
+
 local function limbForKind(kind)
     if kind == 'loaded' then return 'bodyAxis' end
     return 'leftArm'
 end
 
-local function rebind()
-    local limbName = limbForKind(polyKind)
-    local chain = Skeleton.chainPoints(instance, limbName)
-    local poly, err
+-- Build the current unbound polygon for the selected kind. For procedural
+-- shapes (ribbon / cartoon) we base it on the limb's CURRENT chain so the
+-- polygon appears overlaid on the skeleton. For loaded, center at screen.
+local function buildPolygon()
+    activeLimb = limbForKind(polyKind)
     if polyKind == 'loaded' then
-        poly, err = Limb.loadFromPlaytimeJSON(LOADED_PATH, chain)
+        local poly, err = Limb.loadFromPlaytimeJSON(LOADED_PATH, SCREEN_CX, SCREEN_CY)
         if not poly then
-            print('load failed:', err, '— falling back to cartoon on leftArm')
+            print('load failed:', err, '— falling back to cartoon')
             polyKind = 'cartoon'
-            limbName = limbForKind(polyKind)
-            chain = Skeleton.chainPoints(instance, limbName)
-            poly = Limb.cartoonArmAroundChain(chain)
+            activeLimb = limbForKind(polyKind)
+        else
+            return poly
         end
-    elseif polyKind == 'cartoon' then
-        poly = Limb.cartoonArmAroundChain(chain)
-    else
-        poly = Limb.ribbonAroundChain(chain, 24)
     end
-    activeBind = SpineMesh.bind(poly, chain)
-    activeLimb = limbName
+    local chain = Skeleton.chainPoints(instance, activeLimb)
+    if polyKind == 'cartoon' then
+        return Limb.cartoonArmAroundChain(chain)
+    else
+        return Limb.ribbonAroundChain(chain, 24)
+    end
+end
+
+-- Snapshot the current chain as rest pose and build the (t, s) bind.
+local function doBind()
+    local chain = Skeleton.chainPoints(instance, activeLimb)
+    bind = SpineMesh.bind(polygon, chain)
+end
+
+local function resetAll()
+    instance = Skeleton.newInstance()
+    polygon = buildPolygon()
+    bind = nil
 end
 
 function love.load()
     love.window.setTitle('spine-mesh humanoid sandbox')
     love.window.setMode(1200, 768, { resizable = true })
-    instance = Skeleton.newInstance()
-    rebind()
+    resetAll()
 end
 
 local function hitJoint(x, y)
@@ -90,22 +101,17 @@ end
 
 function love.keypressed(key)
     if key == 'escape' then love.event.quit() end
-    if key == 'r' then
-        -- rebind current pose (freeze this as the new rest)
-        rebind()
-    end
-    if key == 'space' then
-        -- reset to default pose
-        instance = Skeleton.newInstance()
-        rebind()
-    end
+    if key == 'r' then doBind() end
+    if key == 'u' then bind = nil end -- unbind (show raw polygon again)
+    if key == 'space' then resetAll() end
     if key == '[' then bendiness = math.max(0, bendiness - 1) end
     if key == ']' then bendiness = math.min(6, bendiness + 1) end
     if key == 't' then
         polyKind = (polyKind == 'ribbon') and 'cartoon'
             or (polyKind == 'cartoon') and 'loaded'
             or 'ribbon'
-        rebind()
+        polygon = buildPolygon()
+        bind = nil -- polygon changed, require rebind
     end
 end
 
@@ -117,44 +123,63 @@ local function drawSkeleton()
         love.graphics.line(a.x, a.y, b.x, b.y)
     end
     love.graphics.setColor(1, 0.55, 0.1)
-    for name, p in pairs(instance.pos) do
+    for _, p in pairs(instance.pos) do
         love.graphics.circle('fill', p.x, p.y, DOT_R)
     end
     love.graphics.setColor(0.1, 0.1, 0.12)
     for name, p in pairs(instance.pos) do
         love.graphics.print(name, p.x + DOT_R + 2, p.y - 6)
     end
+    -- Highlight the active chain's joints so user knows which ones
+    -- become the rest spine on rebind.
+    local chain = Skeleton.limbs[activeLimb]
+    if chain then
+        love.graphics.setLineWidth(3)
+        love.graphics.setColor(0.2, 0.7, 1.0)
+        for i = 1, #chain - 1 do
+            local a, b = instance.pos[chain[i]], instance.pos[chain[i + 1]]
+            if a and b then love.graphics.line(a.x, a.y, b.x, b.y) end
+        end
+    end
 end
 
-local function drawLimb(bind, limbName, fill, outline)
-    local chain = Skeleton.chainPoints(instance, limbName)
-    local deformed = SpineMesh.evaluate(bind, chain, bendiness)
-    if not deformed or #deformed < 6 then return end
-
-    -- Rest polygon, faint grey — so you can see rest vs deformed.
-    love.graphics.setColor(0.55, 0.55, 0.55, 0.25)
-    love.graphics.polygon('line', bind.polygon)
-
-    -- Deformed polygon.
-    love.graphics.setColor(fill[1], fill[2], fill[3], fill[4] or 0.35)
-    love.graphics.polygon('fill', deformed)
-    love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)
-    love.graphics.setLineWidth(1.5)
-    love.graphics.polygon('line', deformed)
+local function drawPolygon()
+    if bind then
+        -- Bound: show deformed polygon + faint rest polygon.
+        local chain = Skeleton.chainPoints(instance, activeLimb)
+        local deformed = SpineMesh.evaluate(bind, chain, bendiness)
+        if deformed and #deformed >= 6 then
+            love.graphics.setColor(0.55, 0.55, 0.55, 0.2)
+            love.graphics.polygon('line', bind.polygon)
+            love.graphics.setColor(0.85, 0.72, 0.55, 0.35)
+            love.graphics.polygon('fill', deformed)
+            love.graphics.setColor(0.55, 0.35, 0.15, 1)
+            love.graphics.setLineWidth(1.5)
+            love.graphics.polygon('line', deformed)
+        end
+    else
+        -- Unbound: just show the polygon as-is.
+        love.graphics.setColor(0.85, 0.72, 0.55, 0.25)
+        love.graphics.polygon('fill', polygon)
+        love.graphics.setColor(0.55, 0.35, 0.15, 1)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.polygon('line', polygon)
+    end
 end
 
 function love.draw()
     love.graphics.setBackgroundColor(0.94, 0.94, 0.92)
 
-    -- Limb fill first so skeleton dots land on top.
-    drawLimb(activeBind, activeLimb,
-        { 0.85, 0.72, 0.55 },
-        { 0.55, 0.35, 0.15 })
-
+    drawPolygon()
     drawSkeleton()
 
     love.graphics.setColor(0.2, 0.2, 0.2)
-    love.graphics.print('drag dots | [r] rebind | [space] reset | [ / ] bendiness | [t] toggle poly | [esc] quit', 10, 10)
-    love.graphics.print('bound chain: ' .. (activeLimb or '?'), 10, 28)
-    love.graphics.print('bendiness: ' .. bendiness .. '  |  polygon: ' .. polyKind, 10, 46)
+    love.graphics.print(
+        'drag dots | [r] bind current pose as rest | [u] unbind | [space] reset | [ / ] bendiness | [t] poly | [esc] quit',
+        10, 10)
+    love.graphics.print('active chain: ' .. (activeLimb or '?') ..
+        '  |  polygon: ' .. polyKind ..
+        '  |  state: ' .. (bind and 'BOUND — dragging joints deforms' or 'UNBOUND — place joints, then press [r]'),
+        10, 28)
+    love.graphics.print('bendiness: ' .. bendiness, 10, 46)
 end
