@@ -5,6 +5,9 @@ local lib = {}
 local state = require 'src.state'
 local JT = require 'src.joint-types'
 local BT = require('src.body-types')
+local cdt = require 'src.cdt'
+local mathutils = require 'src.math-utils'
+local shapes = require 'src.shapes'
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -37,6 +40,73 @@ local function getEndpoint(x, y, angle, length)
     return endX, endY
 end
 
+-- Custom-body fill-draw that respects thing.extraSteiner. Replaces the
+-- per-Box2D-fixture polygon fill for CUSTOM bodies. Two wins:
+--   1. Fan artifact gone — one polygon outline instead of per-triangle outlines.
+--   2. Authored Steiners actually show up in the mesh (if any).
+-- Caches the triangulation on thing._fillCache, keyed by counts so
+-- polygon-edit or Steiner-add invalidates naturally. Love2D polygon('fill')
+-- is used per triangle (same pattern as fixtures today); seam anti-aliasing
+-- is usually invisible when all triangles share the fill color.
+local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
+    local verts = thing and thing.vertices
+    if not verts or #verts < 6 then return false end
+
+    local extraSteiner = thing.extraSteiner
+    local cacheKey = tostring(#verts) .. ':' .. tostring(extraSteiner and #extraSteiner or 0)
+    local cache = thing._fillCache
+    if not cache or cache.key ~= cacheKey then
+        local cenX, cenY = mathutils.computeCentroid(verts)
+        local localPoly = {}
+        for i = 1, #verts, 2 do
+            localPoly[i] = verts[i] - cenX
+            localPoly[i + 1] = verts[i + 1] - cenY
+        end
+        local meshVerts, triIdx
+        if extraSteiner and #extraSteiner >= 2 then
+            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, nil, extraSteiner)
+        end
+        if not triIdx or #triIdx == 0 then
+            -- No Steiners, or CDT declined: fall back to ear-clip
+            -- indexed triangulation (same output as makeTrianglesFromPolygon
+            -- uses, just as indices we can iterate).
+            meshVerts = localPoly
+            triIdx = mathutils.triangulateToIndices and
+                mathutils.triangulateToIndices(localPoly) or nil
+        end
+        cache = { key = cacheKey, verts = meshVerts, tris = triIdx, cenX = cenX, cenY = cenY }
+        thing._fillCache = cache
+    end
+
+    if not cache.tris or #cache.tris < 3 then return false end
+
+    -- Fill
+    love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
+    local mv = cache.verts
+    for t = 1, #cache.tris - 2, 3 do
+        local i1, i2, i3 = cache.tris[t], cache.tris[t + 1], cache.tris[t + 2]
+        local x1, y1 = body:getWorldPoint(mv[(i1 - 1) * 2 + 1], mv[(i1 - 1) * 2 + 2])
+        local x2, y2 = body:getWorldPoint(mv[(i2 - 1) * 2 + 1], mv[(i2 - 1) * 2 + 2])
+        local x3, y3 = body:getWorldPoint(mv[(i3 - 1) * 2 + 1], mv[(i3 - 1) * 2 + 2])
+        love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+    end
+
+    -- Single outline from thing.vertices (not per triangle) — the fan-killer.
+    if drawOutline then
+        local outlineColor = state.world.darkMode and pal.creamy or pal.dark
+        love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
+        local worldOutline = {}
+        for i = 1, #verts, 2 do
+            local wx, wy = body:getWorldPoint(verts[i] - cache.cenX, verts[i + 1] - cache.cenY)
+            worldOutline[#worldOutline + 1] = wx
+            worldOutline[#worldOutline + 1] = wy
+        end
+        love.graphics.polygon('line', worldOutline)
+    end
+
+    return true
+end
+
 
 
 function lib.drawWorld(world, drawOutline)
@@ -57,6 +127,16 @@ function lib.drawWorld(world, drawOutline)
 
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do
+            local bodyUD = body:getUserData()
+            local bodyThing = bodyUD and bodyUD.thing
+            -- CUSTOM bodies get a single unified fill+outline pass that honors
+            -- thing.extraSteiner (Phase 3 of STEINER-OWNERSHIP-PLAN.md). Kills
+            -- the fan outline artifact from the per-fixture draw below.
+            local customHandled = false
+            if bodyThing and bodyThing.shapeType == 'custom' then
+                customHandled = drawCustomBodyFill(body, bodyThing, getBodyColor(body), alpha, drawOutline)
+            end
+
             local fixtures = body:getFixtures()
 
             for _, fixture in ipairs(fixtures) do
@@ -66,6 +146,15 @@ function lib.drawWorld(world, drawOutline)
                 if fixture:getShape():type() == 'PolygonShape' then
                     local fillColor = getBodyColor(body)
                     love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
+                    local hasSpecialFixtureData = fixture:getUserData() and
+                        (fixture:getUserData().bodyType == "connector" or fixture:getUserData().type)
+                    -- Skip default per-fixture polygon fill/outline when the CUSTOM
+                    -- override already drew the body. Special fixtures (connector /
+                    -- typed) keep their per-fixture pass so their distinct color
+                    -- overlays the body fill as before.
+                    if customHandled and not hasSpecialFixtureData then
+                        goto polyEnd
+                    end
                     if (fixture:getUserData()) then
                         if fixture:getUserData().bodyType == "connector" then
                             love.graphics.setColor(1, 0, 0, alpha)
@@ -94,6 +183,7 @@ function lib.drawWorld(world, drawOutline)
                     if drawOutline then
                         love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
                     end
+                    ::polyEnd::
                 elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
                     love.graphics.setColor(0, 1, 1, alpha)
                     local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
