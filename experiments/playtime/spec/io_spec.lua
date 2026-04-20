@@ -954,3 +954,146 @@ describe("io._test.pruneZeroWeightInfluences", function()
         assert.are.equal(0, #influences[2])
     end)
 end)
+
+-- ─── bone metadata normalization (shared bones table) ───
+
+-- The fields nodeType, nodeId, offx, offy, bindAngle (and side for joints)
+-- are identical for every influence entry with the same (nodeIndex, side).
+-- Pull them out into a shared `bones` table keyed by "nodeIndex:side" and
+-- expand them back on load.
+
+describe("io._test.normalizeBones / restoreBones", function()
+    it("normalize extracts per-bone metadata into a table keyed by nodeIndex:side", function()
+        local influences = {
+            [1] = {
+                { nodeIndex = 3, nodeType = 'anchor', nodeId = 'a1',
+                  offx = 1, offy = 2, bindAngle = 0.5,
+                  w = 0.5, dx = 10, dy = 20 },
+            },
+        }
+        local bones = t.normalizeBones(influences)
+        assert.is_truthy(bones['3:'])
+        assert.are.equal('anchor', bones['3:'].nodeType)
+        assert.are.equal('a1', bones['3:'].nodeId)
+        assert.are.equal(1, bones['3:'].offx)
+        assert.are.equal(2, bones['3:'].offy)
+        assert.are.equal(0.5, bones['3:'].bindAngle)
+    end)
+
+    it("normalize strips per-bone metadata from each entry", function()
+        local influences = {
+            [1] = { { nodeIndex = 3, nodeType = 'anchor', nodeId = 'a1',
+                      offx = 1, offy = 2, bindAngle = 0.5,
+                      w = 0.5, dx = 10, dy = 20 } },
+        }
+        t.normalizeBones(influences)
+        local e = influences[1][1]
+        assert.is_nil(e.nodeType)
+        assert.is_nil(e.nodeId)
+        assert.is_nil(e.offx)
+        assert.is_nil(e.offy)
+        assert.is_nil(e.bindAngle)
+        -- Retained: nodeIndex + per-vertex data
+        assert.are.equal(3, e.nodeIndex)
+        assert.are.equal(0.5, e.w)
+        assert.are.equal(10, e.dx)
+        assert.are.equal(20, e.dy)
+    end)
+
+    it("keeps side on joint entries (part of the lookup key)", function()
+        local influences = {
+            [1] = {
+                { nodeIndex = 2, side = 'A', nodeType = 'joint', nodeId = 'j1',
+                  offx = 5, offy = 6, bindAngle = 0.1,
+                  w = 0.4, dx = 1, dy = 2 },
+                { nodeIndex = 2, side = 'B', nodeType = 'joint', nodeId = 'j1',
+                  offx = 7, offy = 8, bindAngle = 0.2,
+                  w = 0.6, dx = 3, dy = 4 },
+            },
+        }
+        local bones = t.normalizeBones(influences)
+        assert.is_truthy(bones['2:A'])
+        assert.is_truthy(bones['2:B'])
+        assert.are.equal(5, bones['2:A'].offx)
+        assert.are.equal(7, bones['2:B'].offx)
+        -- Influence entries still carry side (it's the key)
+        assert.are.equal('A', influences[1][1].side)
+        assert.are.equal('B', influences[1][2].side)
+    end)
+
+    it("dedupes identical (nodeIndex, side) across multiple verts", function()
+        local common = { nodeType = 'anchor', nodeId = 'a1',
+                         offx = 1, offy = 2, bindAngle = 0.5 }
+        local influences = {
+            [1] = { {
+                nodeIndex = 3, nodeType = common.nodeType, nodeId = common.nodeId,
+                offx = common.offx, offy = common.offy, bindAngle = common.bindAngle,
+                w = 0.5, dx = 10, dy = 20,
+            } },
+            [2] = { {
+                nodeIndex = 3, nodeType = common.nodeType, nodeId = common.nodeId,
+                offx = common.offx, offy = common.offy, bindAngle = common.bindAngle,
+                w = 0.3, dx = 11, dy = 21,
+            } },
+        }
+        local bones = t.normalizeBones(influences)
+        -- Only one bone entry; both vertex entries reference it.
+        local count = 0
+        for _ in pairs(bones) do count = count + 1 end
+        assert.are.equal(1, count)
+    end)
+
+    it("restore expands bone metadata back onto each influence entry", function()
+        local influences = {
+            [1] = { { nodeIndex = 3, w = 0.5, dx = 10, dy = 20 } },
+        }
+        local bones = { ['3:'] = { nodeType = 'anchor', nodeId = 'a1',
+                                   offx = 1, offy = 2, bindAngle = 0.5 } }
+        t.restoreBones(influences, bones)
+        local e = influences[1][1]
+        assert.are.equal('anchor', e.nodeType)
+        assert.are.equal('a1', e.nodeId)
+        assert.are.equal(1, e.offx)
+        assert.are.equal(2, e.offy)
+        assert.are.equal(0.5, e.bindAngle)
+    end)
+
+    it("normalize+restore roundtrip preserves every field", function()
+        local function freshInfluences()
+            return {
+                [1] = {
+                    { nodeIndex = 3, nodeType = 'anchor', nodeId = 'a1',
+                      offx = 1, offy = 2, bindAngle = 0.5,
+                      w = 0.5, dx = 10, dy = 20 },
+                },
+                [2] = {
+                    { nodeIndex = 2, side = 'A', nodeType = 'joint', nodeId = 'j1',
+                      offx = 5, offy = 6, bindAngle = 0.1,
+                      w = 0.4, dx = 1, dy = 2 },
+                    { nodeIndex = 2, side = 'B', nodeType = 'joint', nodeId = 'j1',
+                      offx = 7, offy = 8, bindAngle = 0.2,
+                      w = 0.6, dx = 3, dy = 4 },
+                },
+            }
+        end
+        local original = freshInfluences()
+        local roundtripped = freshInfluences()
+        local bones = t.normalizeBones(roundtripped)
+        t.restoreBones(roundtripped, bones)
+        assert.are.same(original, roundtripped)
+    end)
+
+    it("restoreBones is a no-op when bones is nil (old saves)", function()
+        local influences = {
+            [1] = { { nodeIndex = 1, nodeType = 'anchor', w = 0.5, dx = 1, dy = 2 } },
+        }
+        t.restoreBones(influences, nil)
+        -- Pre-existing metadata untouched; old saves pass through.
+        assert.are.equal('anchor', influences[1][1].nodeType)
+    end)
+
+    it("normalize and restore are both no-ops on nil influences", function()
+        assert.has_no.errors(function() t.normalizeBones(nil) end)
+        assert.has_no.errors(function() t.restoreBones(nil, {}) end)
+    end)
+end)

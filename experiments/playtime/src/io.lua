@@ -622,6 +622,20 @@ function lib.load(data, world, cam)
         logger:error('failed loading json')
         return
     end
+
+    -- Expand bone metadata back onto each influence entry so downstream
+    -- code (buildWorld, restoreInfluenceBodies, DQS draw path) sees the
+    -- shape it always has. Old saves without `extra.bones` pass through
+    -- untouched — restoreBones is a no-op when bones is nil.
+    for _, body in ipairs(jsonData.bodies or {}) do
+        for _, fix in ipairs(body.fixtures or {}) do
+            local extra = fix.userData and fix.userData.extra
+            if extra and extra.influences and extra.bones then
+                restoreBones(extra.influences, extra.bones)
+                extra.bones = nil
+            end
+        end
+    end
     -- Clear existing world
     lib.buildWorld(jsonData, world, cam)
 
@@ -973,6 +987,9 @@ function lib.save(world, camera, filename)
             if extra and extra.influences then
                 pruneZeroWeightInfluences(extra.influences)
                 stripInfluenceDist(extra.influences)
+                -- Must come after pruning so orphan bones (only referenced
+                -- by zero-weight entries) don't end up in the bones table.
+                extra.bones = normalizeBones(extra.influences)
             end
         end
     end
@@ -1265,6 +1282,70 @@ function lib.cloneSelection(selectedBodies, world)
     --state.selection.selectedBodies = result
 end
 
+-- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical
+-- for every influence entry pointing at the same (nodeIndex, side) pair.
+-- Extract into a shared table keyed by that pair; strip from each entry.
+-- On load, restoreBones expands the metadata back onto each entry so the
+-- runtime sees an unchanged shape. Keys "N:" (anchor, no side) and "N:A" /
+-- "N:B" (joint sides) are stable across save/load.
+local function boneKey(nodeIndex, side)
+    return tostring(nodeIndex or '') .. ':' .. tostring(side or '')
+end
+
+local function normalizeBones(influences)
+    if type(influences) ~= 'table' then return {} end
+    local bones = {}
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' then
+                    local key = boneKey(infl.nodeIndex, infl.side)
+                    if not bones[key] then
+                        bones[key] = {
+                            nodeType  = infl.nodeType,
+                            nodeId    = infl.nodeId,
+                            offx      = infl.offx,
+                            offy      = infl.offy,
+                            bindAngle = infl.bindAngle,
+                        }
+                    end
+                    infl.nodeType  = nil
+                    infl.nodeId    = nil
+                    infl.offx      = nil
+                    infl.offy      = nil
+                    infl.bindAngle = nil
+                end
+            end
+        end
+    end
+    return bones
+end
+
+local function restoreBones(influences, bones)
+    if type(influences) ~= 'table' then return end
+    if type(bones) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' then
+                    local bone = bones[boneKey(infl.nodeIndex, infl.side)]
+                    if bone then
+                        if infl.nodeType  == nil then infl.nodeType  = bone.nodeType  end
+                        if infl.nodeId    == nil then infl.nodeId    = bone.nodeId    end
+                        if infl.offx      == nil then infl.offx      = bone.offx      end
+                        if infl.offy      == nil then infl.offy      = bone.offy      end
+                        if infl.bindAngle == nil then infl.bindAngle = bone.bindAngle end
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- `dist` on an influence entry is defined as sqrt(dx^2 + dy^2) — purely
 -- redundant with dx/dy that are saved alongside. Strip on save, recompute
 -- on load. In-place mutation; caller has already duplicated the structure.
@@ -1350,6 +1431,8 @@ lib._test = {
     stripInfluenceDist = stripInfluenceDist,
     restoreInfluenceDist = restoreInfluenceDist,
     pruneZeroWeightInfluences = pruneZeroWeightInfluences,
+    normalizeBones = normalizeBones,
+    restoreBones = restoreBones,
 }
 
 return lib
