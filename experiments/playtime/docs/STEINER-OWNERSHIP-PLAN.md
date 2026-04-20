@@ -2,6 +2,8 @@
 
 Path B from `CODEBASE-CLEANUP.md` item #8-ish. Move authored Steiner points from `ud.extra.extraSteiner` on RESOURCE sfixtures (authoring-world coords) to `thing.extraSteiner` on the body (body-local coords). Make the body-level overlay POC actually drive downstream triangulation.
 
+**Status:** Phase 1 shipped (`50114f05`). Phase 2 dropped (see section). Phase 3 next.
+
 ## Current state
 
 - Body-level POC shipped (commit `f29cb96c`). User can click-to-place Steiners on any polygon body via the `PLACE_STEINER` mode + body-editor button. Data lives at `thing.extraSteiner` in **body-local** coords.
@@ -55,19 +57,16 @@ Goal: RESOURCE triangulation reads from `thing.extraSteiner`. Old scenes load wi
 - `meshVertices` frame change — `box2d-draw-textured.lua` already `makePolygonRelativeToCenter`s them, so idempotent. Spot-check one real scene to be sure.
 - `ud.extra.meshVertices` stored in old saves is authoring-world; after re-save it'll be body-local. Box2D draw path centers whatever it receives, so both work. No loader migration needed for `meshVertices` itself.
 
-## Phase 2 — MESHUSERT panel UX parity
+## Phase 2 — MESHUSERT panel UX parity — **DROPPED**
 
-Goal: user doesn't have to navigate to the body panel to place Steiners while working on a MESHUSERT.
+**Decision (after Phase 1 shipped):** skip. A MESHUSERT shouldn't carry a button that edits a different body's polygon — confusing ownership signal. The two real workflows are already covered:
 
-### Changes
-- In `src/ui/sfixture-editor.lua` MESHUSERT branch, add the same **place steiner** toggle + **clear steiner (N)** button that body-editor has. It operates on the MESHUSERT's body (`fixture:getBody()`), writing to `body:getUserData().thing.extraSteiner`.
-- Same `modes.PLACE_STEINER` mode. The existing input handler already looks up the selected body via `state.selection.selectedObj`; need to either (a) set `selectedObj` when a MESHUSERT is selected, or (b) teach input-manager to fall back to `selectedSFixture:getBody():getUserData().thing`.
-  - (a) is surgical but may collide with selection semantics.
-  - (b) is cleaner: `local thing = state.selection.selectedObj or (state.selection.selectedSFixture and state.selection.selectedSFixture:getBody():getUserData().thing)`. Prefer (b).
+1. **Free-form placement** — body-editor's "place steiner" button on the polygon-owning body.
+2. **Split a specific triangle** — MESHUSERT's EDIT_MESH_TRIS + "split selected", which (post Phase 1) writes to the body's `thing.extraSteiner`.
 
-### Verification
-- Toggle **place steiner** from MESHUSERT panel → click in world → new Steiner appears in overlay, body-editor's "clear steiner (N)" count increments.
-- Same Steiner visible from both panels (one source of truth).
+For the common case where MESHUSERT and RESOURCE live on the same body, navigating to body-editor already gets you there. For split-body setups, one extra click to select the other body. Neither is painful enough to justify duplicating the UI surface.
+
+If this ever becomes friction, the lightweight fix is a tiny "jump to source body" link on the MESHUSERT panel, not a re-implementation of the placement UI.
 
 ## Phase 3 — Body fill-draw honors `thing.extraSteiner`
 
@@ -99,9 +98,9 @@ Goal: the visible body fill reflects the authored triangulation. Solves the fan 
 
 ## Execution order
 
-1. **Phase 1 first.** It's the core ownership move. Without it, Phase 2 and 3 don't have a single source of truth to read from.
-2. **Phase 2 second.** Small UX win, low risk. Validates that the body-level data works from multiple authoring surfaces.
-3. **Phase 3 last.** Biggest visual change, touches the most-trafficked draw path. Defer until the data pipeline is solid.
+1. **Phase 1 first.** Core ownership move. Shipped in commit `50114f05`.
+2. **Phase 2 dropped** (see above).
+3. **Phase 3 next.** Body fill-draw picks up `thing.extraSteiner` so unrigged polygon bodies lose the fan artifact.
 
 Each phase is one commit. TDD where it makes sense (Phase 1 migration especially).
 
