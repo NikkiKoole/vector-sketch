@@ -20,6 +20,7 @@ local leftArmBind
 local dragging -- joint name currently being dragged, or nil
 local DOT_R = 8
 local bendiness = 2 -- 0 = rubbery, 4 = crisp corners
+local polyKind = 'cartoon' -- 'ribbon' or 'cartoon'
 
 -- Rebuild the bind for a limb from the instance's CURRENT chain. Call
 -- this when starting fresh, or after an explicit "rebind at this pose"
@@ -27,7 +28,12 @@ local bendiness = 2 -- 0 = rubbery, 4 = crisp corners
 -- existing bind against the moved chain.
 local function rebindLimb(limbName)
     local chain = Skeleton.chainPoints(instance, limbName)
-    local poly = Limb.ribbonAroundChain(chain, 24)
+    local poly
+    if polyKind == 'cartoon' then
+        poly = Limb.cartoonArmAroundChain(chain)
+    else
+        poly = Limb.ribbonAroundChain(chain, 24)
+    end
     return SpineMesh.bind(poly, chain)
 end
 
@@ -74,6 +80,10 @@ function love.keypressed(key)
     end
     if key == '[' then bendiness = math.max(0, bendiness - 1) end
     if key == ']' then bendiness = math.min(6, bendiness + 1) end
+    if key == 't' then
+        polyKind = (polyKind == 'ribbon') and 'cartoon' or 'ribbon'
+        leftArmBind = rebindLimb('leftArm')
+    end
 end
 
 local function drawSkeleton()
@@ -121,7 +131,7 @@ function love.draw()
     drawSkeleton()
 
     love.graphics.setColor(0.2, 0.2, 0.2)
-    love.graphics.print('drag any orange dot | [r] rebind | [space] reset | [ ] / ] ] bendiness | [esc] quit', 10, 10)
+    love.graphics.print('drag dots | [r] rebind | [space] reset | [ / ] bendiness | [t] toggle poly | [esc] quit', 10, 10)
     love.graphics.print('bound limb: leftArm (shoulder → elbow → wrist)', 10, 28)
-    love.graphics.print('bendiness: ' .. bendiness .. '  (0 = soft/rubbery, 6 = crisp corners)', 10, 46)
+    love.graphics.print('bendiness: ' .. bendiness .. '  |  polygon: ' .. polyKind, 10, 46)
 end

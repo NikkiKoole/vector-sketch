@@ -84,4 +84,63 @@ function M.ribbonAroundChain(chain, halfWidth, segments)
     return poly
 end
 
+-- Hand-authored "cartoon arm" polygon around a 3-joint chain: narrower
+-- at shoulder, biceps bulge mid-upper-arm, narrow at elbow, slight
+-- forearm taper, wider at fist. Shows how non-uniform traced polygons
+-- deform with the spine-mesh math — not uniform ribbons.
+--
+-- Generated procedurally from the rest chain so it scales. In real
+-- playtime usage this polygon would come from a freepath trace of the
+-- character illustration; here it's just a concrete example.
+function M.cartoonArmAroundChain(chain)
+    local arcs, total = arcLengths(chain)
+    if total < 1e-6 then return nil end
+    -- (arc-length-fraction, halfWidth) stops; piecewise-linear between.
+    local profile = {
+        { 0.00, 18 }, -- shoulder: narrow
+        { 0.15, 34 }, -- bicep bulge
+        { 0.30, 28 },
+        { 0.50, 14 }, -- elbow pinch
+        { 0.70, 20 },
+        { 0.90, 24 }, -- forearm swell
+        { 1.00, 28 }, -- fist
+    }
+    local function widthAt(u)
+        for i = 1, #profile - 1 do
+            local a, b = profile[i], profile[i + 1]
+            if u <= b[1] then
+                local span = b[1] - a[1]
+                local t = span > 1e-9 and (u - a[1]) / span or 0
+                return a[2] + t * (b[2] - a[2])
+            end
+        end
+        return profile[#profile][2]
+    end
+
+    local segments = 32
+    local left, right = {}, {}
+    for i = 0, segments do
+        local u = i / segments
+        local s = u * total
+        local x, y, tx, ty = polylineAt(chain, arcs, s)
+        local nx, ny = -ty, tx
+        local hw = widthAt(u)
+        left[#left + 1] = x + nx * hw
+        left[#left + 1] = y + ny * hw
+        right[#right + 1] = x - nx * hw
+        right[#right + 1] = y - ny * hw
+    end
+
+    local poly = {}
+    for i = 1, #left, 2 do
+        poly[#poly + 1] = left[i]
+        poly[#poly + 1] = left[i + 1]
+    end
+    for i = #right - 1, 1, -2 do
+        poly[#poly + 1] = right[i]
+        poly[#poly + 1] = right[i + 1]
+    end
+    return poly
+end
+
 return M
