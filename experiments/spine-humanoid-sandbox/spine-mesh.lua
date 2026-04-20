@@ -114,14 +114,19 @@ function M.bind(polygon, chain)
 end
 
 -- Evaluate a bind against new chain positions. Returns flat array of
--- deformed polygon coords (world).
-function M.evaluate(bind, newChain)
+-- deformed polygon coords (world). `bendiness` (0..4-ish) controls how
+-- tightly the Bezier hugs the chain joints:
+--   0 = very soft, rubbery (degree-N Bezier smooths across middles)
+--   2 = moderate (default)
+--   4+ = near-sharp corners at joints (curve hugs tightly)
+function M.evaluate(bind, newChain, bendiness)
     if #newChain < 4 then return nil end
+    bendiness = bendiness or 2
     local pts = newChain
     if #pts == 4 then
         pts = { pts[1], pts[2], (pts[1] + pts[3]) / 2, (pts[2] + pts[4]) / 2, pts[3], pts[4] }
     end
-    local ctrl = doubleControlPoints(pts, 2)
+    local ctrl = doubleControlPoints(pts, bendiness)
     local curve = love.math.newBezierCurve(ctrl)
     local deriv = curve:getDerivative()
 
