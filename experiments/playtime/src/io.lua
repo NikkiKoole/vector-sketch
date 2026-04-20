@@ -974,6 +974,145 @@ function lib.gatherSaveData(world, camera)
     return saveData
 end
 
+-- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical
+-- for every influence entry pointing at the same (nodeIndex, side) pair.
+-- Extract into a shared table keyed by that pair; strip from each entry.
+-- On load, restoreBones expands the metadata back onto each entry so the
+-- runtime sees an unchanged shape. Keys "N:" (anchor, no side) and "N:A" /
+-- "N:B" (joint sides) are stable across save/load.
+local function boneKey(nodeIndex, side)
+    return tostring(nodeIndex or '') .. ':' .. tostring(side or '')
+end
+
+local function normalizeBones(influences)
+    if type(influences) ~= 'table' then return {} end
+    local bones = {}
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' then
+                    local key = boneKey(infl.nodeIndex, infl.side)
+                    if not bones[key] then
+                        bones[key] = {
+                            nodeType  = infl.nodeType,
+                            nodeId    = infl.nodeId,
+                            offx      = infl.offx,
+                            offy      = infl.offy,
+                            bindAngle = infl.bindAngle,
+                        }
+                    end
+                    infl.nodeType  = nil
+                    infl.nodeId    = nil
+                    infl.offx      = nil
+                    infl.offy      = nil
+                    infl.bindAngle = nil
+                end
+            end
+        end
+    end
+    return bones
+end
+
+local function restoreBones(influences, bones)
+    if type(influences) ~= 'table' then return end
+    if type(bones) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' then
+                    local bone = bones[boneKey(infl.nodeIndex, infl.side)]
+                    if bone then
+                        if infl.nodeType  == nil then infl.nodeType  = bone.nodeType  end
+                        if infl.nodeId    == nil then infl.nodeId    = bone.nodeId    end
+                        if infl.offx      == nil then infl.offx      = bone.offx      end
+                        if infl.offy      == nil then infl.offy      = bone.offy      end
+                        if infl.bindAngle == nil then infl.bindAngle = bone.bindAngle end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- `dist` on an influence entry is defined as sqrt(dx^2 + dy^2) — purely
+-- redundant with dx/dy that are saved alongside. Strip on save, recompute
+-- on load. In-place mutation; caller has already duplicated the structure.
+local function stripInfluenceDist(influences)
+    if type(influences) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' then infl.dist = nil end
+            end
+        end
+    end
+end
+
+-- Remove entries whose weight is 0 (or missing). They contribute 0 to the
+-- DQS weighted sum, so pruning changes nothing at runtime. Preserves the
+-- outer per-vertex array shape: a vertex whose entries are all zero-weight
+-- ends up with an empty per-vertex list, not nil, to avoid holes.
+local function pruneZeroWeightInfluences(influences)
+    if type(influences) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            local kept = {}
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' and (infl.w or 0) ~= 0 then
+                    kept[#kept + 1] = infl
+                end
+            end
+            influences[i] = kept
+        end
+    end
+end
+
+local function restoreInfluenceDist(influences)
+    if type(influences) ~= 'table' then return end
+    for i = 1, #influences do
+        local inflList = influences[i]
+        if type(inflList) == 'table' then
+            for j = 1, #inflList do
+                local infl = inflList[j]
+                if type(infl) == 'table' and infl.dist == nil
+                   and infl.dx ~= nil and infl.dy ~= nil then
+                    infl.dist = math.sqrt(infl.dx * infl.dx + infl.dy * infl.dy)
+                end
+            end
+        end
+    end
+end
+
+-- Recursively round every numeric leaf to `ndecimals` decimals and return a
+-- new table. Strings/booleans/non-number values pass through unchanged. Used
+-- at save-time to strip the 13-digit bloat that tostring() emits for floats
+-- — see docs/FILESIZE-ANALYSIS.md for why this is worth doing.
+local function roundFloats(x, ndecimals)
+    local fmt = '%.' .. tostring(ndecimals) .. 'f'
+    local function rec(v)
+        if type(v) == 'number' then
+            -- string.format handles negatives correctly and yields a clean
+            -- decimal (tonumber collapses -0 back to 0).
+            return tonumber(string.format(fmt, v)) or v
+        elseif type(v) == 'table' then
+            local out = {}
+            for k, val in pairs(v) do out[k] = rec(val) end
+            return out
+        else
+            return v
+        end
+    end
+    return rec(x)
+end
+
 function lib.save(world, camera, filename)
     -- Serialize the data to JSON. Round numbers to 4 decimals before encode:
     -- sub-pixel precision at any reasonable world scale, and cuts the file
@@ -1280,145 +1419,6 @@ function lib.cloneSelection(selectedBodies, world)
     end
     return result
     --state.selection.selectedBodies = result
-end
-
--- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical
--- for every influence entry pointing at the same (nodeIndex, side) pair.
--- Extract into a shared table keyed by that pair; strip from each entry.
--- On load, restoreBones expands the metadata back onto each entry so the
--- runtime sees an unchanged shape. Keys "N:" (anchor, no side) and "N:A" /
--- "N:B" (joint sides) are stable across save/load.
-local function boneKey(nodeIndex, side)
-    return tostring(nodeIndex or '') .. ':' .. tostring(side or '')
-end
-
-local function normalizeBones(influences)
-    if type(influences) ~= 'table' then return {} end
-    local bones = {}
-    for i = 1, #influences do
-        local inflList = influences[i]
-        if type(inflList) == 'table' then
-            for j = 1, #inflList do
-                local infl = inflList[j]
-                if type(infl) == 'table' then
-                    local key = boneKey(infl.nodeIndex, infl.side)
-                    if not bones[key] then
-                        bones[key] = {
-                            nodeType  = infl.nodeType,
-                            nodeId    = infl.nodeId,
-                            offx      = infl.offx,
-                            offy      = infl.offy,
-                            bindAngle = infl.bindAngle,
-                        }
-                    end
-                    infl.nodeType  = nil
-                    infl.nodeId    = nil
-                    infl.offx      = nil
-                    infl.offy      = nil
-                    infl.bindAngle = nil
-                end
-            end
-        end
-    end
-    return bones
-end
-
-local function restoreBones(influences, bones)
-    if type(influences) ~= 'table' then return end
-    if type(bones) ~= 'table' then return end
-    for i = 1, #influences do
-        local inflList = influences[i]
-        if type(inflList) == 'table' then
-            for j = 1, #inflList do
-                local infl = inflList[j]
-                if type(infl) == 'table' then
-                    local bone = bones[boneKey(infl.nodeIndex, infl.side)]
-                    if bone then
-                        if infl.nodeType  == nil then infl.nodeType  = bone.nodeType  end
-                        if infl.nodeId    == nil then infl.nodeId    = bone.nodeId    end
-                        if infl.offx      == nil then infl.offx      = bone.offx      end
-                        if infl.offy      == nil then infl.offy      = bone.offy      end
-                        if infl.bindAngle == nil then infl.bindAngle = bone.bindAngle end
-                    end
-                end
-            end
-        end
-    end
-end
-
--- `dist` on an influence entry is defined as sqrt(dx^2 + dy^2) — purely
--- redundant with dx/dy that are saved alongside. Strip on save, recompute
--- on load. In-place mutation; caller has already duplicated the structure.
-local function stripInfluenceDist(influences)
-    if type(influences) ~= 'table' then return end
-    for i = 1, #influences do
-        local inflList = influences[i]
-        if type(inflList) == 'table' then
-            for j = 1, #inflList do
-                local infl = inflList[j]
-                if type(infl) == 'table' then infl.dist = nil end
-            end
-        end
-    end
-end
-
--- Remove entries whose weight is 0 (or missing). They contribute 0 to the
--- DQS weighted sum, so pruning changes nothing at runtime. Preserves the
--- outer per-vertex array shape: a vertex whose entries are all zero-weight
--- ends up with an empty per-vertex list, not nil, to avoid holes.
-local function pruneZeroWeightInfluences(influences)
-    if type(influences) ~= 'table' then return end
-    for i = 1, #influences do
-        local inflList = influences[i]
-        if type(inflList) == 'table' then
-            local kept = {}
-            for j = 1, #inflList do
-                local infl = inflList[j]
-                if type(infl) == 'table' and (infl.w or 0) ~= 0 then
-                    kept[#kept + 1] = infl
-                end
-            end
-            influences[i] = kept
-        end
-    end
-end
-
-local function restoreInfluenceDist(influences)
-    if type(influences) ~= 'table' then return end
-    for i = 1, #influences do
-        local inflList = influences[i]
-        if type(inflList) == 'table' then
-            for j = 1, #inflList do
-                local infl = inflList[j]
-                if type(infl) == 'table' and infl.dist == nil
-                   and infl.dx ~= nil and infl.dy ~= nil then
-                    infl.dist = math.sqrt(infl.dx * infl.dx + infl.dy * infl.dy)
-                end
-            end
-        end
-    end
-end
-
--- Recursively round every numeric leaf to `ndecimals` decimals and return a
--- new table. Strings/booleans/non-number values pass through unchanged. Used
--- at save-time to strip the 13-digit bloat that tostring() emits for floats
--- — see docs/FILESIZE-ANALYSIS.md for why this is worth doing.
-local function roundFloats(x, ndecimals)
-    local fmt = '%.' .. tostring(ndecimals) .. 'f'
-    local function rec(v)
-        if type(v) == 'number' then
-            -- string.format handles negatives correctly and yields a clean
-            -- decimal (tonumber collapses -0 back to 0).
-            return tonumber(string.format(fmt, v)) or v
-        elseif type(v) == 'table' then
-            local out = {}
-            for k, val in pairs(v) do out[k] = rec(val) end
-            return out
-        else
-            return v
-        end
-    end
-    return rec(x)
 end
 
 -- Expose locals for testing (not part of public API)
