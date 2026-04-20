@@ -16,6 +16,7 @@ local inputmanager = require 'src.input-manager'
 local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
 local NT = require('src.node-types')
+local cdt = require 'src.cdt'
 local lib = {}
 
 
@@ -488,6 +489,81 @@ function lib.renderStripMergeOverlay()
             end
         end
     end
+    love.graphics.setLineWidth(lw)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- POC: Steiner-point authoring overlay. When the selected body has
+-- `thing.extraSteiner` populated, draw each point as an orange dot and
+-- overlay the would-be triangulation in green. This is visual feedback
+-- only — nothing downstream is rebuilt. Collision + fill draw are
+-- unaffected. See docs/CODEBASE-CLEANUP.md #8-ish for the path to
+-- promoting this POC into a real feature.
+function lib.renderSteinerPOC()
+    local thing = state.selection.selectedObj
+    if not thing or not thing.body or thing.body:isDestroyed() then return end
+    if not thing.vertices or #thing.vertices < 6 then return end
+    if not thing.extraSteiner or #thing.extraSteiner < 2 then return end
+
+    local body = thing.body
+
+    -- Polygon verts are stored in authoring-world coords; the rendered body
+    -- uses `vert - centroid(thing.vertices)` as its body-local frame. Match
+    -- that frame so the overlay tracks the body when it moves.
+    local cenX, cenY = mathutils.computeCentroid(thing.vertices)
+    local localPoly = {}
+    for i = 1, #thing.vertices, 2 do
+        localPoly[i] = thing.vertices[i] - cenX
+        localPoly[i + 1] = thing.vertices[i + 1] - cenY
+    end
+
+    -- Use a spacing larger than the bbox so `generateSteinerGrid` emits no
+    -- points (we only want the user's Steiners, not a grid overlay). Do NOT
+    -- pass 0 — the grid generator's inner `y = y + spacing` loop hangs.
+    local minX, minY, maxX, maxY = nil, nil, nil, nil
+    for i = 1, #localPoly, 2 do
+        local px, py = localPoly[i], localPoly[i + 1]
+        if not minX or px < minX then minX = px end
+        if not minY or py < minY then minY = py end
+        if not maxX or px > maxX then maxX = px end
+        if not maxY or py > maxY then maxY = py end
+    end
+    local hugeSpacing = math.max(1, (maxX - minX), (maxY - minY)) * 4
+    local meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, hugeSpacing, thing.extraSteiner)
+
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(1 / cam:getScale())
+
+    if meshVerts and triIdx and #triIdx >= 3 then
+        love.graphics.setColor(0.2, 0.85, 0.35, 0.85)
+        for t = 1, #triIdx - 2, 3 do
+            local i1, i2, i3 = triIdx[t], triIdx[t + 1], triIdx[t + 2]
+            local x1, y1 = body:getWorldPoint(meshVerts[(i1 - 1) * 2 + 1], meshVerts[(i1 - 1) * 2 + 2])
+            local x2, y2 = body:getWorldPoint(meshVerts[(i2 - 1) * 2 + 1], meshVerts[(i2 - 1) * 2 + 2])
+            local x3, y3 = body:getWorldPoint(meshVerts[(i3 - 1) * 2 + 1], meshVerts[(i3 - 1) * 2 + 2])
+            love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+        end
+    end
+
+    -- Steiner points themselves — solid orange dot with a dark border so
+    -- they pop against any body color.
+    local dotR = 5 / cam:getScale()
+    for i = 1, #thing.extraSteiner, 2 do
+        local wx, wy = body:getWorldPoint(thing.extraSteiner[i], thing.extraSteiner[i + 1])
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.circle('fill', wx, wy, dotR * 1.4)
+        love.graphics.setColor(1, 0.55, 0.1, 1)
+        love.graphics.circle('fill', wx, wy, dotR)
+    end
+
+    -- Brush cursor in PLACE_STEINER mode so the user knows they're hot.
+    if modes.is(modes.PLACE_STEINER) then
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        love.graphics.setColor(1, 0.55, 0.1, 0.4)
+        love.graphics.circle('line', wx, wy, dotR * 1.6)
+    end
+
     love.graphics.setLineWidth(lw)
     love.graphics.setColor(1, 1, 1, 1)
 end

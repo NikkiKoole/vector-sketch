@@ -13,6 +13,7 @@ local objectManager = require('src.object-manager')
 local recorder = require('src.recorder')
 local state = require('src.state')
 local ST = require('src.shape-types')
+local modes = require('src.modes')
 local BT = require('src.body-types')
 
 local PANEL_WIDTH = 300
@@ -405,6 +406,28 @@ function lib.drawUpdateSelectedObjectUI()
                                         else
                                             state.polyEdit.tempVerts = nil
                                             state.polyEdit.centroid = nil
+                                        end
+                                    end
+
+                                    -- POC: Steiner-point authoring on the body's polygon. Stores
+                                    -- (x,y) pairs in body-local coords on thing.extraSteiner. Does
+                                    -- NOT rebuild collision fixtures or change the fill draw — the
+                                    -- overlay in editor-render renders the would-be triangulation
+                                    -- on top so the user can see the effect without committing.
+                                    local thing = state.selection.selectedObj
+                                    local steinerCount = thing.extraSteiner and #thing.extraSteiner / 2 or 0
+                                    local placing = modes.is(modes.PLACE_STEINER)
+                                    nextRow()
+                                    local label = placing and 'placing steiner (click inside, right-click remove)'
+                                        or 'place steiner'
+                                    local color = placing and { 0.2, 0.8, 0.2 } or nil
+                                    if ui.button(x, y, 260, label, BUTTON_HEIGHT, color) then
+                                        if placing then modes.clear() else modes.set(modes.PLACE_STEINER) end
+                                    end
+                                    if steinerCount > 0 then
+                                        nextRow()
+                                        if ui.button(x, y, 260, 'clear steiner (' .. steinerCount .. ')') then
+                                            thing.extraSteiner = nil
                                         end
                                     end
                                 end

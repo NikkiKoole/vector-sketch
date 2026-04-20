@@ -11,6 +11,7 @@ modes.SET_OFFSET_B           = 'setOffsetB'
 modes.POSITIONING_SFIXTURE   = 'positioningSFixture'
 modes.ADD_NODE_MESHUSERT     = 'addNodeToMeshUsert'
 modes.ADD_NODE_CONNECTED_TEX = 'addNodeToConnectedTexture'
+modes.PLACE_STEINER          = 'placeSteiner'
 
 -- Build reverse lookup for validation
 local validModes = {}

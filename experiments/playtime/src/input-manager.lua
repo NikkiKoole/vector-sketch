@@ -189,6 +189,38 @@ local function handlePointer(x, y, id, action, _button)
         state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
         -- this is a nice pattern, early return!
         if modes.is(modes.EDIT_MESH_TRIS) then return end
+
+        -- POC Steiner-placement on the selected body's polygon. Left click
+        -- adds a point in body-local coords to thing.extraSteiner; right
+        -- click removes the nearest existing one within a small radius.
+        if modes.is(modes.PLACE_STEINER) then
+            if not state.interaction.pressedOverUI
+                and state.selection.selectedObj
+                and state.selection.selectedObj.body then
+                local thing = state.selection.selectedObj
+                local body = thing.body
+                local wx, wy = cam:getWorldCoordinates(x, y)
+                local lx, ly = body:getLocalPoint(wx, wy)
+                thing.extraSteiner = thing.extraSteiner or {}
+                if _button == 1 then
+                    thing.extraSteiner[#thing.extraSteiner + 1] = lx
+                    thing.extraSteiner[#thing.extraSteiner + 1] = ly
+                elseif _button == 2 then
+                    local bestIdx, bestD = nil, 20 * 20 -- 20-unit remove radius in body-local
+                    for i = 1, #thing.extraSteiner, 2 do
+                        local dx = thing.extraSteiner[i] - lx
+                        local dy = thing.extraSteiner[i + 1] - ly
+                        local d = dx * dx + dy * dy
+                        if d < bestD then bestD = d; bestIdx = i end
+                    end
+                    if bestIdx then
+                        table.remove(thing.extraSteiner, bestIdx)
+                        table.remove(thing.extraSteiner, bestIdx)
+                    end
+                end
+            end
+            return
+        end
         -- Handle press logig
         --   -- this will block interacting on bodies when 'roughly' over the opened panel
         if state.panelVisibility.saveDialogOpened then return end
@@ -322,6 +354,7 @@ local function handlePointer(x, y, id, action, _button)
         end
     elseif action == "released" then
         if modes.is(modes.EDIT_MESH_TRIS) then return end
+        if modes.is(modes.PLACE_STEINER) then return end
 
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)

@@ -102,6 +102,9 @@ end
 -- on a grid with given spacing, and at least `minEdgeDist` pixels from any
 -- outline edge (to avoid sliver triangles near the boundary).
 function lib.generateSteinerGrid(poly, spacing, minEdgeDist)
+    -- spacing must be positive or the y+=spacing / x+=spacing loops below
+    -- never terminate. Hang-guard: return empty for bad input.
+    if not spacing or spacing <= 0 then return {} end
     minEdgeDist = minEdgeDist or (spacing * 0.25)
     local minX, minY, maxX, maxY = bbox(poly)
     local pts = {}

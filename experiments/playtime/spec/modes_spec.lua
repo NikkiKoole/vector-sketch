@@ -9,14 +9,14 @@ describe('modes', function()
     end)
 
     describe('constants', function()
-        it('has 11 mode constants', function()
+        it('has 12 mode constants', function()
             local count = 0
             for k, v in pairs(modes) do
                 if type(v) == 'string' and k == k:upper() then
                     count = count + 1
                 end
             end
-            assert.are.equal(11, count)
+            assert.are.equal(12, count)
         end)
 
         it('has expected mode values', function()
@@ -31,6 +31,7 @@ describe('modes', function()
             assert.are.equal('positioningSFixture', modes.POSITIONING_SFIXTURE)
             assert.are.equal('addNodeToMeshUsert', modes.ADD_NODE_MESHUSERT)
             assert.are.equal('addNodeToConnectedTexture', modes.ADD_NODE_CONNECTED_TEX)
+            assert.are.equal('placeSteiner', modes.PLACE_STEINER)
         end)
 
         it('has unique values for all constants', function()

@@ -405,6 +405,7 @@ function love.draw()
 
     editorRenderer.renderActiveEditorThings()
     editorRenderer.renderStripMergeOverlay()
+    editorRenderer.renderSteinerPOC()
     cam:pop()
     -- end)
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
