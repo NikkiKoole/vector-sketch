@@ -17,6 +17,44 @@ local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
 local cdt = require 'src.cdt'
 local subtypes = require 'src.subtypes'
+
+-- In-flight Steiner drag state. Non-zero = we're dragging thing.extraSteiner
+-- at this array index on state.selection.selectedObj. Cleared on release.
+local steinerDragIdx = 0
+
+-- Shared post-mutation refresh: re-triangulate any RESOURCE on the body,
+-- and drop bind data on label-matched MESHUSERTs since triangle indices
+-- moved. Called from both discrete (add/remove) and continuous (drag
+-- release) Steiner edits.
+local function refreshResourceAfterSteinerChange(body, thing)
+    for _, f in ipairs(body:getFixtures()) do
+        local fud = f:getUserData()
+        if type(fud) == 'table' and subtypes.is(fud, subtypes.RESOURCE) and fud.extra then
+            local idx = fud.extra.selectedBGIndex
+            local bd = idx and state.backdrops and state.backdrops[idx]
+            if bd then
+                cdt.computeResourceMesh(fud, body, bd,
+                    state.triangulationMode or 'cdt',
+                    state.cdtSpacing, mathutils)
+            end
+        end
+    end
+    local lbl = thing.label
+    if lbl and #lbl > 0 then
+        for _, v in pairs(registry.sfixtures) do
+            if not v:isDestroyed() then
+                local vud = v:getUserData()
+                if vud and vud.label == lbl and subtypes.is(vud, subtypes.MESHUSERT) then
+                    vud.extra.triangleBones = nil
+                    vud.extra.influences = nil
+                    vud.extra.bindVerts = nil
+                    vud.extra.rigidLookup = nil
+                    vud.extra.rigidBindCoords = nil
+                end
+            end
+        end
+    end
+end
 local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
 local joints = require 'src.joints'
@@ -192,12 +230,10 @@ local function handlePointer(x, y, id, action, _button)
         -- this is a nice pattern, early return!
         if modes.is(modes.EDIT_MESH_TRIS) then return end
 
-        -- POC Steiner-placement on the selected body's polygon. Left click
-        -- adds a point in body-local coords to thing.extraSteiner; right
-        -- click removes the nearest existing one within a small radius.
-        -- After mutating, refresh any RESOURCE sfixture on the body so the
-        -- MESHUSERT's rendered mesh reflects the new triangulation (and
-        -- not just the POC overlay).
+        -- POC Steiner-placement on the selected body's polygon.
+        --   Left-click on existing point  → start drag (commits on release)
+        --   Left-click away               → add a new point
+        --   Right-click near existing     → remove nearest within radius
         if modes.is(modes.PLACE_STEINER) then
             if not state.interaction.pressedOverUI
                 and state.selection.selectedObj
@@ -207,58 +243,34 @@ local function handlePointer(x, y, id, action, _button)
                 local wx, wy = cam:getWorldCoordinates(x, y)
                 local lx, ly = body:getLocalPoint(wx, wy)
                 thing.extraSteiner = thing.extraSteiner or {}
+
+                -- Nearest existing Steiner within grab radius.
+                local grabIdx, grabD = nil, 20 * 20
+                for i = 1, #thing.extraSteiner, 2 do
+                    local dx = thing.extraSteiner[i] - lx
+                    local dy = thing.extraSteiner[i + 1] - ly
+                    local d = dx * dx + dy * dy
+                    if d < grabD then grabD = d; grabIdx = i end
+                end
+
                 local changed = false
-                if _button == 1 then
+                if _button == 1 and grabIdx then
+                    -- Start drag — position updates in handleMouseMoved;
+                    -- RESOURCE refresh deferred until release.
+                    steinerDragIdx = grabIdx
+                elseif _button == 1 then
+                    -- Place a new point at click.
                     thing.extraSteiner[#thing.extraSteiner + 1] = lx
                     thing.extraSteiner[#thing.extraSteiner + 1] = ly
                     changed = true
-                elseif _button == 2 then
-                    local bestIdx, bestD = nil, 20 * 20 -- 20-unit remove radius in body-local
-                    for i = 1, #thing.extraSteiner, 2 do
-                        local dx = thing.extraSteiner[i] - lx
-                        local dy = thing.extraSteiner[i + 1] - ly
-                        local d = dx * dx + dy * dy
-                        if d < bestD then bestD = d; bestIdx = i end
-                    end
-                    if bestIdx then
-                        table.remove(thing.extraSteiner, bestIdx)
-                        table.remove(thing.extraSteiner, bestIdx)
-                        changed = true
-                    end
+                elseif _button == 2 and grabIdx then
+                    -- Remove nearest.
+                    table.remove(thing.extraSteiner, grabIdx)
+                    table.remove(thing.extraSteiner, grabIdx)
+                    changed = true
                 end
                 if changed then
-                    -- Refresh any RESOURCE on this body so the MESHUSERT
-                    -- render reflects the new Steiner immediately. Invalidate
-                    -- bone bindings on paired MESHUSERTs — topology changed.
-                    for _, f in ipairs(body:getFixtures()) do
-                        local fud = f:getUserData()
-                        if type(fud) == 'table' and subtypes.is(fud, subtypes.RESOURCE) and fud.extra then
-                            local idx = fud.extra.selectedBGIndex
-                            local bd = idx and state.backdrops and state.backdrops[idx]
-                            if bd then
-                                cdt.computeResourceMesh(fud, body, bd,
-                                    state.triangulationMode or 'cdt',
-                                    state.cdtSpacing, mathutils)
-                            end
-                        end
-                    end
-                    -- MESHUSERTs paired by label also need their bind data
-                    -- dropped since triangle indices moved.
-                    local lbl = thing.label
-                    if lbl and #lbl > 0 then
-                        for _, v in pairs(registry.sfixtures) do
-                            if not v:isDestroyed() then
-                                local vud = v:getUserData()
-                                if vud and vud.label == lbl and subtypes.is(vud, subtypes.MESHUSERT) then
-                                    vud.extra.triangleBones = nil
-                                    vud.extra.influences = nil
-                                    vud.extra.bindVerts = nil
-                                    vud.extra.rigidLookup = nil
-                                    vud.extra.rigidBindCoords = nil
-                                end
-                            end
-                        end
-                    end
+                    refreshResourceAfterSteinerChange(body, thing)
                 end
             end
             return
@@ -396,7 +408,18 @@ local function handlePointer(x, y, id, action, _button)
         end
     elseif action == "released" then
         if modes.is(modes.EDIT_MESH_TRIS) then return end
-        if modes.is(modes.PLACE_STEINER) then return end
+        if modes.is(modes.PLACE_STEINER) then
+            -- Commit any in-flight Steiner drag: refresh RESOURCE now that
+            -- the point has landed, and drop bindings since topology moved.
+            if steinerDragIdx > 0 then
+                local thing = state.selection.selectedObj
+                if thing and thing.body then
+                    refreshResourceAfterSteinerChange(thing.body, thing)
+                end
+                steinerDragIdx = 0
+            end
+            return
+        end
 
         -- Handle release logic
         local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
@@ -612,6 +635,21 @@ function lib.handleMouseMoved(x, y, dx, dy)
     --print('moved')
     --
     --
+
+    -- Steiner drag: live-update the grabbed point's body-local position.
+    -- RESOURCE refresh runs on release so we don't thrash bind data per
+    -- frame; the body fill + POC overlay recompute from thing.extraSteiner
+    -- each frame anyway, so the preview tracks the mouse.
+    if modes.is(modes.PLACE_STEINER) and steinerDragIdx > 0
+        and state.selection.selectedObj
+        and state.selection.selectedObj.body then
+        local thing = state.selection.selectedObj
+        local wx, wy = cam:getWorldCoordinates(x, y)
+        local lx, ly = thing.body:getLocalPoint(wx, wy)
+        thing.extraSteiner[steinerDragIdx] = lx
+        thing.extraSteiner[steinerDragIdx + 1] = ly
+        return
+    end
 
     -- TRIANGLE SELECTION FOR MESH EDITING
     if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture then
