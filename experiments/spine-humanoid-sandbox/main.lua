@@ -20,7 +20,8 @@ local leftArmBind
 local dragging -- joint name currently being dragged, or nil
 local DOT_R = 8
 local bendiness = 2 -- 0 = rubbery, 4 = crisp corners
-local polyKind = 'cartoon' -- 'ribbon' or 'cartoon'
+local polyKind = 'cartoon' -- 'ribbon' | 'cartoon' | 'loaded'
+local LOADED_PATH = os.getenv('HOME') .. '/Library/Application Support/LOVE/playtime/shape.playtime.json'
 
 -- Rebuild the bind for a limb from the instance's CURRENT chain. Call
 -- this when starting fresh, or after an explicit "rebind at this pose"
@@ -28,8 +29,14 @@ local polyKind = 'cartoon' -- 'ribbon' or 'cartoon'
 -- existing bind against the moved chain.
 local function rebindLimb(limbName)
     local chain = Skeleton.chainPoints(instance, limbName)
-    local poly
-    if polyKind == 'cartoon' then
+    local poly, err
+    if polyKind == 'loaded' then
+        poly, err = Limb.loadFromPlaytimeJSON(LOADED_PATH, chain)
+        if not poly then
+            print('load failed:', err, '— falling back to cartoon')
+            poly = Limb.cartoonArmAroundChain(chain)
+        end
+    elseif polyKind == 'cartoon' then
         poly = Limb.cartoonArmAroundChain(chain)
     else
         poly = Limb.ribbonAroundChain(chain, 24)
@@ -81,7 +88,9 @@ function love.keypressed(key)
     if key == '[' then bendiness = math.max(0, bendiness - 1) end
     if key == ']' then bendiness = math.min(6, bendiness + 1) end
     if key == 't' then
-        polyKind = (polyKind == 'ribbon') and 'cartoon' or 'ribbon'
+        polyKind = (polyKind == 'ribbon') and 'cartoon'
+            or (polyKind == 'cartoon') and 'loaded'
+            or 'ribbon'
         leftArmBind = rebindLimb('leftArm')
     end
 end

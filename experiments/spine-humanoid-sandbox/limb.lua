@@ -143,4 +143,40 @@ function M.cartoonArmAroundChain(chain)
     return poly
 end
 
+-- Load a polygon from a playtime `.playtime.json` scene file. Returns
+-- the first body's outline verts, translated so the polygon's centroid
+-- sits at the midpoint of the given chain. No scaling — polygon shows
+-- at its authored size so you can tell if it fits the skeleton.
+function M.loadFromPlaytimeJSON(path, chain)
+    local dkjson = require('dkjson')
+    local f = io.open(path, 'r')
+    if not f then return nil, 'file not found: ' .. path end
+    local text = f:read('*all'); f:close()
+    local data, _, err = dkjson.decode(text, 1, nil)
+    if err then return nil, err end
+    if not data or not data.bodies or not data.bodies[1] then
+        return nil, 'no body[1]'
+    end
+    local srcVerts = data.bodies[1].vertices
+    if not srcVerts or #srcVerts < 6 then return nil, 'body has no vertices' end
+
+    -- Centroid of the source polygon.
+    local cx, cy = 0, 0
+    local n = #srcVerts / 2
+    for i = 1, #srcVerts, 2 do cx = cx + srcVerts[i]; cy = cy + srcVerts[i + 1] end
+    cx, cy = cx / n, cy / n
+
+    -- Midpoint of the chain (where we'll center the polygon).
+    local arcs, total = arcLengths(chain)
+    local mx, my = polylineAt(chain, arcs, total * 0.5)
+
+    -- Translate so polygon centroid lands on chain midpoint.
+    local out = {}
+    for i = 1, #srcVerts, 2 do
+        out[#out + 1] = srcVerts[i] - cx + mx
+        out[#out + 1] = srcVerts[i + 1] - cy + my
+    end
+    return out
+end
+
 return M
