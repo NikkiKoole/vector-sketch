@@ -693,6 +693,16 @@ function ui.createSliderWithId(id, label, x, y, width, min, max, value, callback
     return newValue
 end
 
+--- Standardised z-offset slider for any sfixture's `extra` table. Used by
+--- all sfixture-editor panels that feed into the textured-draw z-sort
+--- (composedZ = zGroupOffset*1000 + zOffset in box2d-draw-textured.lua).
+--- Integer values, -180..180, matches the prior ad-hoc copies.
+function ui.zOffsetSlider(id, extra, x, y, width)
+    return ui.createSliderWithId(id, ' zOffset', x, y, width, -180, 180,
+        math.floor(extra.zOffset or 0),
+        function(v) extra.zOffset = math.floor(v) end)
+end
+
 -- Auto-restore font after lurker hot-reload
 if _persist.font and not ui.font then
     ui.init(_persist.font, _persist.fontHeight)

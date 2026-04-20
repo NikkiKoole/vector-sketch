@@ -475,11 +475,7 @@ function lib.drawSelectedSFixture()
                         fixtures.updateSFixtureDimensions(polyW, newHeight)
                     end
                 end
-                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
-                    math.floor(oldTexFixUD.extra.zOffset or 0),
-                    function(v)
-                        oldTexFixUD.extra.zOffset = math.floor(v)
-                    end)
+                ui.zOffsetSlider(myID, oldTexFixUD.extra, x, y, ROW_WIDTH)
             end)
             nextRow()
 
@@ -1391,6 +1387,8 @@ function lib.drawSelectedSFixture()
                 local meshRotDeg = ui.sliderWithInput(myID .. ' meshRot', x, y, ROW_WIDTH, -180, 180, math.deg(ud.extra.meshRot or 0))
                 ui.alignedLabel(x, y, ' meshRot')
                 if meshRotDeg then ud.extra.meshRot = math.rad(meshRotDeg) end
+                nextRow()
+                ui.zOffsetSlider(myID, ud.extra, x, y, ROW_WIDTH)
             end
         elseif subtypes.is(ud, subtypes.RESOURCE) then
             local selectedIndex
@@ -1579,11 +1577,7 @@ function lib.drawSelectedSFixture()
                 end
                 nextRow()
 
-                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
-                    math.floor(oldTexFixUD.extra.zOffset or 0),
-                    function(v)
-                        oldTexFixUD.extra.zOffset = math.floor(v)
-                    end)
+                ui.zOffsetSlider(myID, oldTexFixUD.extra, x, y, ROW_WIDTH)
                 nextRow()
                 nextRow()
                 local e = state.selection.selectedSFixture:getUserData().extra
@@ -1670,11 +1664,7 @@ function lib.drawSelectedSFixture()
 
                 nextRow()
 
-                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
-                    math.floor(oldTexFixUD.extra.zOffset or 0),
-                    function(v)
-                        oldTexFixUD.extra.zOffset = math.floor(v)
-                    end)
+                ui.zOffsetSlider(myID, oldTexFixUD.extra, x, y, ROW_WIDTH)
 
                 nextRow()
                 handleURLInput(myID, 'bgURL', x, y, 150, oldTexFixUD.extra.main.bgURL,
@@ -1736,11 +1726,7 @@ function lib.drawSelectedSFixture()
                         oldTexFixUD.extra.width = v
                     end)
                 nextRow()
-                ui.createSliderWithId(myID, ' texfixzOffset', x, y, ROW_WIDTH, -180, 180,
-                    math.floor(oldTexFixUD.extra.zOffset or 0),
-                    function(v)
-                        oldTexFixUD.extra.zOffset = math.floor(v)
-                    end)
+                ui.zOffsetSlider(myID, oldTexFixUD.extra, x, y, ROW_WIDTH)
                 nextRow()
                 nextRow()
                 local e = state.selection.selectedSFixture:getUserData().extra
