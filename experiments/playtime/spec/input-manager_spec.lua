@@ -135,9 +135,9 @@ describe("input-manager: handlePointer mode dispatch", function()
     -- ═══════════════════════════════════════════════════════
 
     describe("guard clauses", function()
-        it("ignores press in editMeshVertices mode", function()
+        it("ignores press in editMeshTriangles mode", function()
             addBodyAtScreen('rectangle', SX1, SY1, { width = 80, height = 80 })
-            state.currentMode = 'editMeshVertices'
+            state.currentMode = 'editMeshTriangles'
             press(SX1, SY1)
             assert.is_nil(state.selection.selectedObj)
         end)

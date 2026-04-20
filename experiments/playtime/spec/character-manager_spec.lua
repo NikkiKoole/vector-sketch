@@ -520,18 +520,15 @@ describe("character-manager", function()
     -- ─── Randomization ───
 
     describe("randomizeMipo", function()
-        local mipo
-        before_each(function()
-            package.loaded['src.ui.mipo-editor'] = nil
-            mipo = require('src.ui.mipo-editor')
-        end)
+        -- randomizeMipo lives on CharacterManager; src.ui.mipo-editor just
+        -- calls through to it from the UI button. Test the real source.
 
         it("should not crash", function()
-            mipo.randomizeMipo(instance)
+            CharacterManager.randomizeMipo(instance)
         end)
 
         it("should produce valid face DNA after randomization", function()
-            mipo.randomizeMipo(instance)
+            CharacterManager.randomizeMipo(instance)
 
             local faceOwner
             for partName, partData in pairs(instance.dna.parts) do
@@ -554,7 +551,7 @@ describe("character-manager", function()
         end)
 
         it("should keep ear zOffsets valid after randomization", function()
-            mipo.randomizeMipo(instance)
+            CharacterManager.randomizeMipo(instance)
 
             local learSkin = instance.dna.parts.lear.appearance.skin
             local rearSkin = instance.dna.parts.rear.appearance.skin
@@ -563,7 +560,7 @@ describe("character-manager", function()
         end)
 
         it("should produce valid fixtures with zGroupOffset after randomization", function()
-            mipo.randomizeMipo(instance)
+            CharacterManager.randomizeMipo(instance)
 
             for partName, part in pairs(instance.parts) do
                 if part.body and not part.body:isDestroyed() then
