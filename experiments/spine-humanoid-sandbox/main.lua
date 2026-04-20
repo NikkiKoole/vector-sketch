@@ -30,9 +30,21 @@ local polyKind = 'cartoon' -- 'ribbon' | 'cartoon' | 'loaded'
 local LOADED_PATH = os.getenv('HOME') ..
     '/Library/Application Support/LOVE/playtime/shape.playtime.json'
 
+-- For procedural polys we bind to a single chain. For loaded (whole-body)
+-- we bind to ALL 5 chains — each vertex picks its closest at bind time.
+local FULL_BODY_CHAINS = { 'bodyAxis', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg' }
+
 local function limbForKind(kind)
-    if kind == 'loaded' then return 'bodyAxis' end
+    if kind == 'loaded' then return 'multi' end
     return 'leftArm'
+end
+
+local function chainsForMulti()
+    local out = {}
+    for _, name in ipairs(FULL_BODY_CHAINS) do
+        out[name] = Skeleton.chainPoints(instance, name)
+    end
+    return out
 end
 
 -- Build the current unbound polygon for the selected kind. For procedural
@@ -58,10 +70,14 @@ local function buildPolygon()
     end
 end
 
--- Snapshot the current chain as rest pose and build the (t, s) bind.
+-- Snapshot the current chain(s) as rest pose and build the bind.
 local function doBind()
-    local chain = Skeleton.chainPoints(instance, activeLimb)
-    bind = SpineMesh.bind(polygon, chain)
+    if activeLimb == 'multi' then
+        bind = SpineMesh.bindMultiChain(polygon, chainsForMulti())
+    else
+        local chain = Skeleton.chainPoints(instance, activeLimb)
+        bind = SpineMesh.bind(polygon, chain)
+    end
 end
 
 local function resetAll()
@@ -130,24 +146,33 @@ local function drawSkeleton()
     for name, p in pairs(instance.pos) do
         love.graphics.print(name, p.x + DOT_R + 2, p.y - 6)
     end
-    -- Highlight the active chain's joints so user knows which ones
-    -- become the rest spine on rebind.
-    local chain = Skeleton.limbs[activeLimb]
-    if chain then
-        love.graphics.setLineWidth(3)
-        love.graphics.setColor(0.2, 0.7, 1.0)
+    -- Highlight the active chain(s). For multi, all 5 limb chains glow.
+    love.graphics.setLineWidth(3)
+    love.graphics.setColor(0.2, 0.7, 1.0)
+    local function highlight(chainName)
+        local chain = Skeleton.limbs[chainName]
+        if not chain then return end
         for i = 1, #chain - 1 do
             local a, b = instance.pos[chain[i]], instance.pos[chain[i + 1]]
             if a and b then love.graphics.line(a.x, a.y, b.x, b.y) end
         end
     end
+    if activeLimb == 'multi' then
+        for _, name in ipairs(FULL_BODY_CHAINS) do highlight(name) end
+    else
+        highlight(activeLimb)
+    end
 end
 
 local function drawPolygon()
     if bind then
-        -- Bound: show deformed polygon + faint rest polygon.
-        local chain = Skeleton.chainPoints(instance, activeLimb)
-        local deformed = SpineMesh.evaluate(bind, chain, bendiness)
+        local deformed
+        if bind.multi then
+            deformed = SpineMesh.evaluateMultiChain(bind, chainsForMulti(), bendiness)
+        else
+            local chain = Skeleton.chainPoints(instance, activeLimb)
+            deformed = SpineMesh.evaluate(bind, chain, bendiness)
+        end
         if deformed and #deformed >= 6 then
             love.graphics.setColor(0.55, 0.55, 0.55, 0.2)
             love.graphics.polygon('line', bind.polygon)

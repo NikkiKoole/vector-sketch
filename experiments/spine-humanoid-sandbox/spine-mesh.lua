@@ -147,4 +147,89 @@ function M.evaluate(bind, newChain, bendiness)
     return out
 end
 
+-- ─── multi-chain (hard assignment) ────────────────────────────────
+--
+-- Bind a single polygon against MULTIPLE chains. For each vertex, pick
+-- the chain whose polyline is closest; store (chainName, t, s). At
+-- runtime each vertex is evaluated on its own chain's live curve.
+--
+-- Caveat: hard assignment means a vertex is driven 100% by one chain.
+-- At region boundaries (torso↔arm, hip↔leg) adjacent vertices may be
+-- on different chains — the edge between them visibly stretches when
+-- those chains diverge. To smooth seams, switch to weighted blending
+-- (future work).
+--
+-- chainsByName = { [name] = {x1,y1,...}, ... }
+
+function M.bindMultiChain(polygon, chainsByName)
+    local cd = {}
+    for name, chain in pairs(chainsByName) do
+        local arcs, total = arcLengths(chain)
+        cd[name] = { chain = chain, arcs = arcs, total = total }
+    end
+
+    local perVert = {}
+    for i = 1, #polygon, 2 do
+        local px, py = polygon[i], polygon[i + 1]
+        local bestName, bestD2, bestT, bestS = nil, math.huge, 0, 0
+        for name, c in pairs(cd) do
+            local t, s = closestOnPolyline(px, py, c.chain, c.arcs, c.total)
+            local d2 = s * s -- closestOnPolyline returns s = sign * sqrt(d²)
+            if d2 < bestD2 then
+                bestD2 = d2
+                bestName = name
+                bestT = t
+                bestS = s
+            end
+        end
+        perVert[#perVert + 1] = { chain = bestName, t = bestT, s = bestS }
+    end
+
+    return {
+        polygon = polygon,
+        chainsRest = chainsByName,
+        perVert = perVert,
+        multi = true, -- marker so callers know which evaluate to use
+    }
+end
+
+function M.evaluateMultiChain(bind, chainsByName, bendiness)
+    bendiness = bendiness or 2
+    local curves = {}
+    for name, chain in pairs(chainsByName) do
+        if #chain >= 4 then
+            local pts = chain
+            if #pts == 4 then
+                pts = { pts[1], pts[2], (pts[1] + pts[3]) / 2, (pts[2] + pts[4]) / 2, pts[3], pts[4] }
+            end
+            local ctrl = doubleControlPoints(pts, bendiness)
+            local c = love.math.newBezierCurve(ctrl)
+            curves[name] = { curve = c, deriv = c:getDerivative() }
+        end
+    end
+
+    local out = {}
+    for _, v in ipairs(bind.perVert) do
+        local c = curves[v.chain]
+        local x, y
+        if c then
+            local t = v.t
+            if t < 0 then t = 0 elseif t > 1 then t = 1 end
+            local cx, cy = c.curve:evaluate(t)
+            local dx, dy = c.deriv:evaluate(t)
+            local dlen = math.sqrt(dx * dx + dy * dy)
+            local tx = dlen > 1e-9 and dx / dlen or 1
+            local ty = dlen > 1e-9 and dy / dlen or 0
+            local nx, ny = -ty, tx
+            x = cx + v.s * nx
+            y = cy + v.s * ny
+        else
+            x, y = 0, 0
+        end
+        out[#out + 1] = x
+        out[#out + 1] = y
+    end
+    return out
+end
+
 return M
