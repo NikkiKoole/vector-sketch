@@ -16,7 +16,8 @@ local Limb     = require('limb')
 local SpineMesh = require('spine-mesh')
 
 local instance
-local leftArmBind
+local activeBind   -- the bound mesh currently being rendered
+local activeLimb   -- which chain the bind is against (limb name)
 local dragging -- joint name currently being dragged, or nil
 local DOT_R = 8
 local bendiness = 2 -- 0 = rubbery, 4 = crisp corners
@@ -27,13 +28,25 @@ local LOADED_PATH = os.getenv('HOME') .. '/Library/Application Support/LOVE/play
 -- this when starting fresh, or after an explicit "rebind at this pose"
 -- operation. During normal drag we do NOT rebind; we re-evaluate the
 -- existing bind against the moved chain.
-local function rebindLimb(limbName)
+-- Pick the chain appropriate for the current polygon kind.
+--   loaded  → bodyAxis (whole-body polygon, body-axis chain)
+--   ribbon/cartoon → leftArm (single limb demo)
+local function limbForKind(kind)
+    if kind == 'loaded' then return 'bodyAxis' end
+    return 'leftArm'
+end
+
+local function rebind()
+    local limbName = limbForKind(polyKind)
     local chain = Skeleton.chainPoints(instance, limbName)
     local poly, err
     if polyKind == 'loaded' then
         poly, err = Limb.loadFromPlaytimeJSON(LOADED_PATH, chain)
         if not poly then
-            print('load failed:', err, '— falling back to cartoon')
+            print('load failed:', err, '— falling back to cartoon on leftArm')
+            polyKind = 'cartoon'
+            limbName = limbForKind(polyKind)
+            chain = Skeleton.chainPoints(instance, limbName)
             poly = Limb.cartoonArmAroundChain(chain)
         end
     elseif polyKind == 'cartoon' then
@@ -41,14 +54,15 @@ local function rebindLimb(limbName)
     else
         poly = Limb.ribbonAroundChain(chain, 24)
     end
-    return SpineMesh.bind(poly, chain)
+    activeBind = SpineMesh.bind(poly, chain)
+    activeLimb = limbName
 end
 
 function love.load()
     love.window.setTitle('spine-mesh humanoid sandbox')
     love.window.setMode(1200, 768, { resizable = true })
     instance = Skeleton.newInstance()
-    leftArmBind = rebindLimb('leftArm')
+    rebind()
 end
 
 local function hitJoint(x, y)
@@ -78,12 +92,12 @@ function love.keypressed(key)
     if key == 'escape' then love.event.quit() end
     if key == 'r' then
         -- rebind current pose (freeze this as the new rest)
-        leftArmBind = rebindLimb('leftArm')
+        rebind()
     end
     if key == 'space' then
         -- reset to default pose
         instance = Skeleton.newInstance()
-        leftArmBind = rebindLimb('leftArm')
+        rebind()
     end
     if key == '[' then bendiness = math.max(0, bendiness - 1) end
     if key == ']' then bendiness = math.min(6, bendiness + 1) end
@@ -91,7 +105,7 @@ function love.keypressed(key)
         polyKind = (polyKind == 'ribbon') and 'cartoon'
             or (polyKind == 'cartoon') and 'loaded'
             or 'ribbon'
-        leftArmBind = rebindLimb('leftArm')
+        rebind()
     end
 end
 
@@ -133,7 +147,7 @@ function love.draw()
     love.graphics.setBackgroundColor(0.94, 0.94, 0.92)
 
     -- Limb fill first so skeleton dots land on top.
-    drawLimb(leftArmBind, 'leftArm',
+    drawLimb(activeBind, activeLimb,
         { 0.85, 0.72, 0.55 },
         { 0.55, 0.35, 0.15 })
 
@@ -141,6 +155,6 @@ function love.draw()
 
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.print('drag dots | [r] rebind | [space] reset | [ / ] bendiness | [t] toggle poly | [esc] quit', 10, 10)
-    love.graphics.print('bound limb: leftArm (shoulder → elbow → wrist)', 10, 28)
+    love.graphics.print('bound chain: ' .. (activeLimb or '?'), 10, 28)
     love.graphics.print('bendiness: ' .. bendiness .. '  |  polygon: ' .. polyKind, 10, 46)
 end

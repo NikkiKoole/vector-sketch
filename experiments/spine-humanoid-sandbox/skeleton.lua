@@ -44,6 +44,9 @@ M.limbs = {
     rightArm = { 'rightShoulder', 'rightElbow', 'rightWrist' },
     leftLeg  = { 'leftHip',  'leftKnee',  'leftAnkle'  },
     rightLeg = { 'rightHip', 'rightKnee', 'rightAnkle' },
+    -- Body axis: top-to-bottom midline. Useful for binding a whole-body
+    -- silhouette to get soft sway (not independent limb articulation).
+    bodyAxis = { 'head', 'neck', 'chest', 'spine', 'pelvis' },
 }
 
 -- All parent-child edges, useful for rendering the skeleton as lines.
