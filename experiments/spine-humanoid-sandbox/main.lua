@@ -26,6 +26,8 @@ local activeLimb  -- chain name that the bind is against
 local dragging    -- joint name currently being dragged, or nil
 local DOT_R = 8
 local bendiness = 2
+local rootStrength = 0.6 -- 0 = no soft root, 1 = shoulder end fully anchored
+local rootFalloff  = 0.3 -- fraction of chain-length affected by soft root
 local polyKind = 'cartoon' -- 'ribbon' | 'cartoon' | 'loaded'
 local LOADED_PATH = os.getenv('HOME') ..
     '/Library/Application Support/LOVE/playtime/shape.playtime.json'
@@ -76,7 +78,8 @@ local function doBind()
         bind = SpineMesh.bindMultiChain(polygon, chainsForMulti())
     else
         local chain = Skeleton.chainPoints(instance, activeLimb)
-        bind = SpineMesh.bind(polygon, chain)
+        bind = SpineMesh.bind(polygon, chain,
+            { falloff = rootFalloff, strength = rootStrength })
     end
 end
 
@@ -122,6 +125,14 @@ function love.keypressed(key)
     if key == 'space' then resetAll() end
     if key == '[' then bendiness = math.max(0, bendiness - 1) end
     if key == ']' then bendiness = math.min(6, bendiness + 1) end
+    if key == ',' then
+        rootStrength = math.max(0, rootStrength - 0.1)
+        if bind and not bind.multi then doBind() end
+    end
+    if key == '.' then
+        rootStrength = math.min(1, rootStrength + 0.1)
+        if bind and not bind.multi then doBind() end
+    end
     if key == 't' then
         polyKind = (polyKind == 'ribbon') and 'cartoon'
             or (polyKind == 'cartoon') and 'loaded'
@@ -200,11 +211,12 @@ function love.draw()
 
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.print(
-        'drag dots | [r] bind current pose as rest | [u] unbind | [space] reset | [ / ] bendiness | [t] poly | [esc] quit',
+        'drag dots | [r] bind | [u] unbind | [space] reset | [ / ] bend | [ , / . ] rootStrength | [t] poly | [esc] quit',
         10, 10)
     love.graphics.print('active chain: ' .. (activeLimb or '?') ..
         '  |  polygon: ' .. polyKind ..
         '  |  state: ' .. (bind and 'BOUND — dragging joints deforms' or 'UNBOUND — place joints, then press [r]'),
         10, 28)
-    love.graphics.print('bendiness: ' .. bendiness, 10, 46)
+    love.graphics.print(string.format('bendiness: %d  |  rootStrength: %.1f  (single-chain only)',
+        bendiness, rootStrength), 10, 46)
 end

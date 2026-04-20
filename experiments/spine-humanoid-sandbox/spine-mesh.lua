@@ -92,17 +92,32 @@ end
 
 -- Bind a polygon to a chain at rest pose. Chain is the sequence of
 -- joint world positions (the skeleton's limb chain at rest).
-function M.bind(polygon, chain)
+--
+-- `softRoot` (optional): { falloff = 0..1, strength = 0..1 }. When set,
+-- computes a per-vertex `rootBlend` that pulls shoulder-end verts
+-- toward their rest position. Verts with t <= falloff get a blend
+-- ramped from `strength` at t=0 down to 0 at t=falloff. Rotating the
+-- chain then *stretches* the shoulder skin instead of pivoting it
+-- rigidly — a localized LBS-style soft attachment at the root.
+function M.bind(polygon, chain, softRoot)
     assert(type(polygon) == 'table' and #polygon >= 6, 'polygon needs >=6 coords')
     assert(type(chain) == 'table' and #chain >= 4, 'chain needs >=4 coords (>=2 points)')
     local arcs, total = arcLengths(chain)
     assert(total > 1e-6, 'chain has zero length')
 
     local tsPerVert = {}
+    local rootBlend = {}
+    local falloff = (softRoot and softRoot.falloff) or 0
+    local strength = (softRoot and softRoot.strength) or 0
     for i = 1, #polygon, 2 do
         local t, s = closestOnPolyline(polygon[i], polygon[i + 1], chain, arcs, total)
         tsPerVert[#tsPerVert + 1] = t
         tsPerVert[#tsPerVert + 1] = s
+        local blend = 0
+        if falloff > 0 and t < falloff then
+            blend = strength * (1 - t / falloff)
+        end
+        rootBlend[#rootBlend + 1] = blend
     end
     return {
         polygon = polygon,
@@ -110,6 +125,7 @@ function M.bind(polygon, chain)
         arcs = arcs,
         total = total,
         tsPerVert = tsPerVert,
+        rootBlend = rootBlend,
     }
 end
 
@@ -132,6 +148,8 @@ function M.evaluate(bind, newChain, bendiness)
 
     local out = {}
     local ts = bind.tsPerVert
+    local blends = bind.rootBlend
+    local poly = bind.polygon
     for i = 1, #ts, 2 do
         local t, s = ts[i], ts[i + 1]
         if t < 0 then t = 0 elseif t > 1 then t = 1 end
@@ -141,8 +159,21 @@ function M.evaluate(bind, newChain, bendiness)
         local tx = dlen > 1e-9 and dx / dlen or 1
         local ty = dlen > 1e-9 and dy / dlen or 0
         local nx, ny = -ty, tx -- left-normal
-        out[#out + 1] = cx + s * nx
-        out[#out + 1] = cy + s * ny
+        local armX = cx + s * nx
+        local armY = cy + s * ny
+        -- Soft-root blend: near t=0, pull toward rest position so the
+        -- shoulder end stretches instead of rotating rigidly.
+        local vi = (i + 1) / 2
+        local b = blends and blends[vi] or 0
+        if b > 0 then
+            local rx = poly[i]
+            local ry = poly[i + 1]
+            out[#out + 1] = armX + b * (rx - armX)
+            out[#out + 1] = armY + b * (ry - armY)
+        else
+            out[#out + 1] = armX
+            out[#out + 1] = armY
+        end
     end
     return out
 end
