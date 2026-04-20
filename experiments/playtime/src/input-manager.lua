@@ -227,8 +227,6 @@ local function handlePointer(x, y, id, action, _button)
                     end
                 end
                 if changed then
-                    -- Invalidate the body fill-draw cache (Phase 3).
-                    thing._fillCache = nil
                     -- Refresh any RESOURCE on this body so the MESHUSERT
                     -- render reflects the new Steiner immediately. Invalidate
                     -- bone bindings on paired MESHUSERTs — topology changed.

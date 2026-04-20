@@ -8,6 +8,7 @@ local BT = require('src.body-types')
 local cdt = require 'src.cdt'
 local mathutils = require 'src.math-utils'
 local shapes = require 'src.shapes'
+local cam = require('src.camera').getInstance()
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -41,79 +42,83 @@ local function getEndpoint(x, y, angle, length)
 end
 
 -- Custom-body fill-draw that respects thing.extraSteiner. Replaces the
--- per-Box2D-fixture polygon fill for CUSTOM bodies. Two wins:
+-- per-Box2D-fixture polygon fill for CUSTOM bodies. Wins:
 --   1. Fan artifact gone — one polygon outline instead of per-triangle outlines.
 --   2. Authored Steiners actually show up in the mesh (if any).
--- Caches the triangulation on thing._fillCache, keyed by counts so
--- polygon-edit or Steiner-add invalidates naturally. Love2D polygon('fill')
--- is used per triangle (same pattern as fixtures today); seam anti-aliasing
--- is usually invisible when all triangles share the fill color.
+--   3. Inner triangulation edges drawn faintly when the body is selected,
+--      so the author can see what they're shaping.
+-- No cross-frame cache. Detecting "did the polygon actually change" cheaply
+-- is fiddly (count-based keys miss vertex-drags); per-frame compute is
+-- cheap enough for typical bodies. Revisit if profiling disagrees.
 local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
     local verts = thing and thing.vertices
     if not verts or #verts < 6 then return false end
 
     local extraSteiner = thing.extraSteiner
-    local cacheKey = table.concat({
-        #verts,
-        extraSteiner and #extraSteiner or 0,
-        state.triangulationMode or 'basic',
-        state.cdtSpacing or 0,
-    }, ':')
-    local cache = thing._fillCache
-    if not cache or cache.key ~= cacheKey then
-        local cenX, cenY = mathutils.computeCentroid(verts)
-        local localPoly = {}
-        for i = 1, #verts, 2 do
-            localPoly[i] = verts[i] - cenX
-            localPoly[i + 1] = verts[i + 1] - cenY
-        end
-        -- Match the MESHUSERT's triangulation so body fill and deformed
-        -- render agree. Mode + cdtSpacing come from state; the branches
-        -- here mirror cdt.computeResourceMesh.
-        local tmode = state.triangulationMode or 'basic'
-        local hasSteiner = extraSteiner and #extraSteiner >= 2
-        if hasSteiner and tmode == 'basic' then tmode = 'authored' end -- same auto-upgrade
-
-        local meshVerts, triIdx
-        if tmode == 'cdt' and hasSteiner then
-            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, extraSteiner)
-        elseif tmode == 'cdt' then
-            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, nil)
-        elseif tmode == 'authored' and hasSteiner then
-            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, math.huge, extraSteiner)
-        end
-        if not triIdx or #triIdx == 0 then
-            -- No Steiners, mode=basic, or CDT declined: fall back to ear-clip
-            -- indexed triangulation (same output as makeTrianglesFromPolygon
-            -- uses, just as indices we can iterate).
-            meshVerts = localPoly
-            triIdx = mathutils.triangulateToIndices and
-                mathutils.triangulateToIndices(localPoly) or nil
-        end
-        cache = { key = cacheKey, verts = meshVerts, tris = triIdx, cenX = cenX, cenY = cenY }
-        thing._fillCache = cache
+    local cenX, cenY = mathutils.computeCentroid(verts)
+    local localPoly = {}
+    for i = 1, #verts, 2 do
+        localPoly[i] = verts[i] - cenX
+        localPoly[i + 1] = verts[i + 1] - cenY
     end
 
-    if not cache.tris or #cache.tris < 3 then return false end
+    -- Match the MESHUSERT's triangulation so body fill and deformed
+    -- render agree. Mode + cdtSpacing come from state; branches mirror
+    -- cdt.computeResourceMesh.
+    local tmode = state.triangulationMode or 'basic'
+    local hasSteiner = extraSteiner and #extraSteiner >= 2
+    if hasSteiner and tmode == 'basic' then tmode = 'authored' end -- auto-upgrade
 
-    -- Fill
+    local meshVerts, triIdx
+    if tmode == 'cdt' and hasSteiner then
+        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, extraSteiner)
+    elseif tmode == 'cdt' then
+        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, nil)
+    elseif tmode == 'authored' and hasSteiner then
+        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, math.huge, extraSteiner)
+    end
+    if not triIdx or #triIdx == 0 then
+        -- No Steiners, basic, or CDT declined: ear-clip fallback.
+        meshVerts = localPoly
+        triIdx = mathutils.triangulateToIndices and
+            mathutils.triangulateToIndices(localPoly) or nil
+    end
+    if not triIdx or #triIdx < 3 then return false end
+
+    -- Fill pass.
     love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
-    local mv = cache.verts
-    for t = 1, #cache.tris - 2, 3 do
-        local i1, i2, i3 = cache.tris[t], cache.tris[t + 1], cache.tris[t + 2]
-        local x1, y1 = body:getWorldPoint(mv[(i1 - 1) * 2 + 1], mv[(i1 - 1) * 2 + 2])
-        local x2, y2 = body:getWorldPoint(mv[(i2 - 1) * 2 + 1], mv[(i2 - 1) * 2 + 2])
-        local x3, y3 = body:getWorldPoint(mv[(i3 - 1) * 2 + 1], mv[(i3 - 1) * 2 + 2])
+    for t = 1, #triIdx - 2, 3 do
+        local i1, i2, i3 = triIdx[t], triIdx[t + 1], triIdx[t + 2]
+        local x1, y1 = body:getWorldPoint(meshVerts[(i1 - 1) * 2 + 1], meshVerts[(i1 - 1) * 2 + 2])
+        local x2, y2 = body:getWorldPoint(meshVerts[(i2 - 1) * 2 + 1], meshVerts[(i2 - 1) * 2 + 2])
+        local x3, y3 = body:getWorldPoint(meshVerts[(i3 - 1) * 2 + 1], meshVerts[(i3 - 1) * 2 + 2])
         love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
     end
 
-    -- Single outline from thing.vertices (not per triangle) — the fan-killer.
+    -- Inner triangulation edges when body is selected. Faint so it reads
+    -- as "authoring overlay" rather than "part of the sprite."
+    local isSelected = state.selection.selectedObj == thing
+    if isSelected then
+        local lw = love.graphics.getLineWidth()
+        love.graphics.setLineWidth(1 / cam:getScale())
+        love.graphics.setColor(0, 0, 0, alpha * 0.35)
+        for t = 1, #triIdx - 2, 3 do
+            local i1, i2, i3 = triIdx[t], triIdx[t + 1], triIdx[t + 2]
+            local x1, y1 = body:getWorldPoint(meshVerts[(i1 - 1) * 2 + 1], meshVerts[(i1 - 1) * 2 + 2])
+            local x2, y2 = body:getWorldPoint(meshVerts[(i2 - 1) * 2 + 1], meshVerts[(i2 - 1) * 2 + 2])
+            local x3, y3 = body:getWorldPoint(meshVerts[(i3 - 1) * 2 + 1], meshVerts[(i3 - 1) * 2 + 2])
+            love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+        end
+        love.graphics.setLineWidth(lw)
+    end
+
+    -- Outer polygon outline — single stroke, replaces the per-fixture outlines.
     if drawOutline then
         local outlineColor = state.world.darkMode and pal.creamy or pal.dark
         love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
         local worldOutline = {}
         for i = 1, #verts, 2 do
-            local wx, wy = body:getWorldPoint(verts[i] - cache.cenX, verts[i + 1] - cache.cenY)
+            local wx, wy = body:getWorldPoint(verts[i] - cenX, verts[i + 1] - cenY)
             worldOutline[#worldOutline + 1] = wx
             worldOutline[#worldOutline + 1] = wy
         end
