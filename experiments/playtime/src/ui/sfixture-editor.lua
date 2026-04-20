@@ -1434,6 +1434,7 @@ function lib.drawSelectedSFixture()
                         state.cdtSpacing, mathutils)
                 end
             end
+            nextRow()
 
             -- Path B: Steiners live on the body, not the RESOURCE.
             local resBody = state.selection.selectedSFixture:getBody()
