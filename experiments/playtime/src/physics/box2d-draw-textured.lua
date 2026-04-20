@@ -1824,12 +1824,20 @@ function lib.drawTexturedWorld(world)
                     love.graphics.setColor(0.2, 1.0, 0.4, 0.5)
                     love.graphics.setLineWidth(1)
                     if triIdx then
+                        -- Guard against stale indices pointing past the
+                        -- current vert count (e.g. during the single frame
+                        -- after a polygon-vert edit before invalidation
+                        -- has fully propagated).
+                        local numVerts = math.floor(#verts / 2)
                         for j = 1, #triIdx, 3 do
                             local i1, i2, i3 = triIdx[j], triIdx[j + 1], triIdx[j + 2]
-                            love.graphics.polygon('line',
-                                verts[(i1 - 1) * 2 + 1], verts[(i1 - 1) * 2 + 2],
-                                verts[(i2 - 1) * 2 + 1], verts[(i2 - 1) * 2 + 2],
-                                verts[(i3 - 1) * 2 + 1], verts[(i3 - 1) * 2 + 2])
+                            if i1 and i2 and i3
+                                and i1 <= numVerts and i2 <= numVerts and i3 <= numVerts then
+                                love.graphics.polygon('line',
+                                    verts[(i1 - 1) * 2 + 1], verts[(i1 - 1) * 2 + 2],
+                                    verts[(i2 - 1) * 2 + 1], verts[(i2 - 1) * 2 + 2],
+                                    verts[(i3 - 1) * 2 + 1], verts[(i3 - 1) * 2 + 2])
+                            end
                         end
                     else
                         for j = 1, #tris do

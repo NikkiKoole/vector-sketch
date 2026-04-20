@@ -646,7 +646,13 @@ function lib.recreateThingFromBody(body, newSettings)
             local ud = f:getUserData()
             if type(ud) == 'table' and subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
                 ud.extra.uvs = nil
-                -- triangleGroups/triangleBones index into the old triangulation; drop.
+                -- triangles/meshVertices/triangleGroups/triangleBones all
+                -- index into the old vertex count; any of them left behind
+                -- will crash the MESHUSERT / UVUSERT draw paths on the next
+                -- frame (bad argument to love.graphics.polygon). Drop them
+                -- all and let computeResourceMesh rebuild on next select.
+                ud.extra.triangles = nil
+                ud.extra.meshVertices = nil
                 ud.extra.triangleGroups = nil
                 ud.extra.triangleBones = nil
                 ud.extra.triangleOrderDirty = false
