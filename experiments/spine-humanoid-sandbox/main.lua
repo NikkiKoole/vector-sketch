@@ -95,6 +95,11 @@ local function drawLimb(bind, limbName, fill, outline)
     local deformed = SpineMesh.evaluate(bind, chain)
     if not deformed or #deformed < 6 then return end
 
+    -- Rest polygon, faint grey — so you can see rest vs deformed.
+    love.graphics.setColor(0.55, 0.55, 0.55, 0.25)
+    love.graphics.polygon('line', bind.polygon)
+
+    -- Deformed polygon.
     love.graphics.setColor(fill[1], fill[2], fill[3], fill[4] or 0.35)
     love.graphics.polygon('fill', deformed)
     love.graphics.setColor(outline[1], outline[2], outline[3], outline[4] or 1)

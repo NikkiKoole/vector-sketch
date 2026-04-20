@@ -1,41 +1,71 @@
--- limb.lua — generate a simple ribbon-like limb polygon around a chain.
+-- limb.lua — generate a smooth ribbon polygon around a chain.
 --
--- Sandbox Phase B: before the user can trace a limb by hand, hardcode a
--- uniform-width polygon around each limb's rest chain. This gives us
--- something bindable right now. Later, replace with traced polygons.
+-- Samples the chain as an arc-length parameterised polyline at N
+-- evenly-spaced steps, offsets by ±halfWidth along the local tangent.
+-- More samples = smoother bend, more polygon verts for the (t, s)
+-- decomposition to work with. Miter-clamped at sharp bends so the
+-- inner edge doesn't self-intersect.
 
 local M = {}
 
--- Build a ribbon polygon of constant halfWidth around a chain. Returns
--- flat array {x1,y1,...} with 2N points: N top (left-forward), N bottom
--- (right-backward). Matches playtime's polylineRibbon layout so (t, s)
--- signs land where expected.
-function M.ribbonAroundChain(chain, halfWidth)
-    local n = #chain / 2
-    assert(n >= 2, 'need >=2 chain points')
-
-    local function segNormal(x1, y1, x2, y2)
-        local dx, dy = x2 - x1, y2 - y1
-        local L = math.sqrt(dx * dx + dy * dy)
-        if L < 1e-9 then return 0, 0 end
-        return -dy / L, dx / L -- left-normal
+local function arcLengths(polyline)
+    local out = { 0 }
+    local total = 0
+    local n = #polyline / 2
+    for i = 1, n - 1 do
+        local ax, ay = polyline[(i - 1) * 2 + 1], polyline[(i - 1) * 2 + 2]
+        local bx, by = polyline[i * 2 + 1], polyline[i * 2 + 2]
+        local dx, dy = bx - ax, by - ay
+        total = total + math.sqrt(dx * dx + dy * dy)
+        out[i + 1] = total
     end
+    return out, total
+end
+
+-- Evaluate a polyline at arc-length `s`, return (x, y, tx, ty) where
+-- (tx, ty) is the unit tangent at that point.
+local function polylineAt(polyline, arcs, s)
+    local n = #polyline / 2
+    for i = 1, n - 1 do
+        if s <= arcs[i + 1] + 1e-9 then
+            local ax, ay = polyline[(i - 1) * 2 + 1], polyline[(i - 1) * 2 + 2]
+            local bx, by = polyline[i * 2 + 1], polyline[i * 2 + 2]
+            local segLen = arcs[i + 1] - arcs[i]
+            local u = segLen > 1e-9 and (s - arcs[i]) / segLen or 0
+            local x = ax + u * (bx - ax)
+            local y = ay + u * (by - ay)
+            local dx, dy = bx - ax, by - ay
+            local L = math.sqrt(dx * dx + dy * dy)
+            local tx = L > 1e-9 and dx / L or 1
+            local ty = L > 1e-9 and dy / L or 0
+            return x, y, tx, ty
+        end
+    end
+    -- past end: return last point, last tangent
+    local i = n - 1
+    local ax, ay = polyline[(i - 1) * 2 + 1], polyline[(i - 1) * 2 + 2]
+    local bx, by = polyline[i * 2 + 1], polyline[i * 2 + 2]
+    local dx, dy = bx - ax, by - ay
+    local L = math.sqrt(dx * dx + dy * dy)
+    return bx, by, L > 1e-9 and dx / L or 1, L > 1e-9 and dy / L or 0
+end
+
+-- Build a ribbon polygon by sampling the chain at `segments+1` points
+-- along its arc length, offsetting each ±halfWidth along the left-
+-- normal. Returns a closed polygon: first (N+1) coords are the left
+-- side (forward), last (N+1) coords are the right side (backward).
+-- N = segments. So polygon has 2*(N+1) coord pairs.
+function M.ribbonAroundChain(chain, halfWidth, segments)
+    segments = segments or 24
+    local arcs, total = arcLengths(chain)
+    if total < 1e-6 then return nil end
 
     local left, right = {}, {}
-    for i = 1, n do
-        local x, y = chain[(i - 1) * 2 + 1], chain[(i - 1) * 2 + 2]
-        local nx, ny
-        if i == 1 then
-            nx, ny = segNormal(x, y, chain[i * 2 + 1], chain[i * 2 + 2])
-        elseif i == n then
-            nx, ny = segNormal(chain[(i - 2) * 2 + 1], chain[(i - 2) * 2 + 2], x, y)
-        else
-            local nx1, ny1 = segNormal(chain[(i - 2) * 2 + 1], chain[(i - 2) * 2 + 2], x, y)
-            local nx2, ny2 = segNormal(x, y, chain[i * 2 + 1], chain[i * 2 + 2])
-            nx, ny = nx1 + nx2, ny1 + ny2
-            local L = math.sqrt(nx * nx + ny * ny)
-            if L > 1e-9 then nx, ny = nx / L, ny / L end
-        end
+    for i = 0, segments do
+        local s = (i / segments) * total
+        local x, y, tx, ty = polylineAt(chain, arcs, s)
+        -- left-normal of tangent
+        local nx, ny = -ty, tx
         left[#left + 1] = x + nx * halfWidth
         left[#left + 1] = y + ny * halfWidth
         right[#right + 1] = x - nx * halfWidth
