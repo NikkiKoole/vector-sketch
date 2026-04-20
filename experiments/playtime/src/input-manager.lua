@@ -15,6 +15,8 @@ local modes = require 'src.modes'
 local blob = require 'vendor.loveblobs'
 local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
+local cdt = require 'src.cdt'
+local subtypes = require 'src.subtypes'
 local subtypes = require 'src.subtypes'
 local ST = require 'src.shape-types'
 local joints = require 'src.joints'
@@ -193,6 +195,9 @@ local function handlePointer(x, y, id, action, _button)
         -- POC Steiner-placement on the selected body's polygon. Left click
         -- adds a point in body-local coords to thing.extraSteiner; right
         -- click removes the nearest existing one within a small radius.
+        -- After mutating, refresh any RESOURCE sfixture on the body so the
+        -- MESHUSERT's rendered mesh reflects the new triangulation (and
+        -- not just the POC overlay).
         if modes.is(modes.PLACE_STEINER) then
             if not state.interaction.pressedOverUI
                 and state.selection.selectedObj
@@ -202,9 +207,11 @@ local function handlePointer(x, y, id, action, _button)
                 local wx, wy = cam:getWorldCoordinates(x, y)
                 local lx, ly = body:getLocalPoint(wx, wy)
                 thing.extraSteiner = thing.extraSteiner or {}
+                local changed = false
                 if _button == 1 then
                     thing.extraSteiner[#thing.extraSteiner + 1] = lx
                     thing.extraSteiner[#thing.extraSteiner + 1] = ly
+                    changed = true
                 elseif _button == 2 then
                     local bestIdx, bestD = nil, 20 * 20 -- 20-unit remove radius in body-local
                     for i = 1, #thing.extraSteiner, 2 do
@@ -216,6 +223,43 @@ local function handlePointer(x, y, id, action, _button)
                     if bestIdx then
                         table.remove(thing.extraSteiner, bestIdx)
                         table.remove(thing.extraSteiner, bestIdx)
+                        changed = true
+                    end
+                end
+                if changed then
+                    -- Invalidate the body fill-draw cache (Phase 3).
+                    thing._fillCache = nil
+                    -- Refresh any RESOURCE on this body so the MESHUSERT
+                    -- render reflects the new Steiner immediately. Invalidate
+                    -- bone bindings on paired MESHUSERTs — topology changed.
+                    for _, f in ipairs(body:getFixtures()) do
+                        local fud = f:getUserData()
+                        if type(fud) == 'table' and subtypes.is(fud, subtypes.RESOURCE) and fud.extra then
+                            local idx = fud.extra.selectedBGIndex
+                            local bd = idx and state.backdrops and state.backdrops[idx]
+                            if bd then
+                                cdt.computeResourceMesh(fud, body, bd,
+                                    state.triangulationMode or 'cdt',
+                                    state.cdtSpacing, mathutils)
+                            end
+                        end
+                    end
+                    -- MESHUSERTs paired by label also need their bind data
+                    -- dropped since triangle indices moved.
+                    local lbl = thing.label
+                    if lbl and #lbl > 0 then
+                        for _, v in pairs(registry.sfixtures) do
+                            if not v:isDestroyed() then
+                                local vud = v:getUserData()
+                                if vud and vud.label == lbl and subtypes.is(vud, subtypes.MESHUSERT) then
+                                    vud.extra.triangleBones = nil
+                                    vud.extra.influences = nil
+                                    vud.extra.bindVerts = nil
+                                    vud.extra.rigidLookup = nil
+                                    vud.extra.rigidBindCoords = nil
+                                end
+                            end
+                        end
                     end
                 end
             end
