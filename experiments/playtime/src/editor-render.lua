@@ -568,4 +568,55 @@ function lib.renderSteinerPOC()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- POC overlay for SPINE-MESH-PLAN Phase 1. Reads _G._spineMeshDebug
+-- (populated by src.spine-mesh.debugBind). Draws the deformed mesh
+-- outline using the live Bezier through the bound nodes. No fill;
+-- this is authoring feedback, not final render.
+function lib.renderSpineMeshPOC()
+    local dbg = _G._spineMeshDebug
+    if not dbg or not dbg.bind or not dbg.nodes then return end
+    local sm = require('src.spine-mesh')
+    local worldVerts = sm.evaluate(dbg.bind, dbg.nodes)
+    if not worldVerts or #worldVerts < 6 then return end
+
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(1 / cam:getScale())
+    love.graphics.setColor(0.2, 0.85, 1.0, 0.9)
+    love.graphics.polygon('line', worldVerts)
+
+    -- Also draw the live Bezier spine so the deformation is visible.
+    local NT = require('src.node-types')
+    local pts = {}
+    for _, n in ipairs(dbg.nodes) do
+        if n.type == NT.ANCHOR then
+            local f = registry.getSFixtureByID(n.id)
+            if f then
+                local b = f:getBody()
+                local cx, cy = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
+                pts[#pts + 1] = cx; pts[#pts + 1] = cy
+            end
+        elseif n.type == NT.JOINT then
+            local j = registry.getJointByID(n.id)
+            if j and not j:isDestroyed() then
+                local x1, y1 = j:getAnchors()
+                pts[#pts + 1] = x1; pts[#pts + 1] = y1
+            end
+        end
+    end
+    if #pts >= 4 then
+        love.graphics.setColor(1, 0.8, 0.2, 0.9)
+        for i = 1, #pts - 2, 2 do
+            love.graphics.line(pts[i], pts[i + 1], pts[i + 2], pts[i + 3])
+        end
+        -- node dots
+        love.graphics.setColor(1, 0.55, 0.1, 1)
+        for i = 1, #pts, 2 do
+            love.graphics.circle('fill', pts[i], pts[i + 1], 4 / cam:getScale())
+        end
+    end
+
+    love.graphics.setLineWidth(lw)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 return lib

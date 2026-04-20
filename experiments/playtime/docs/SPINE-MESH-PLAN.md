@@ -2,6 +2,50 @@
 
 A hybrid between CONNECTED_TEXTURE (smooth bendy curve through joints) and MESHUSERT (arbitrary polygon with backdrop UVs). The goal: use limb-shaped traced meshes whose **silhouette** can be anything (traced from an illustration) and whose **deformation** comes from a live Bezier through the limb's joint anchors — no DQS weight painting, no manual Steiner-for-smoothness.
 
+**Started:** commit `78d7e127` (this plan). POC attempt followed in the same session.
+
+## Pivot — humanoid-first sandbox (added after first POC attempt)
+
+The original Phase 1 plan (generic polygon + arbitrary node chain, driven from inside playtime) produced layout pain: unsorted `pairs()` order for nodes, coordinate-frame ambiguity between body-local / authoring-world, forward-reference bugs, and visible wrong behaviour even when the math ran. Debugging inside the full playtime editor is hard because too many things move at once.
+
+**New plan:** skip straight to a **predefined humanoid skeleton** in a minimal standalone LÖVE app. Bounded topology, no ordering guesses, no playtime dependencies. Same spine-mesh math, but applied to known-named chains.
+
+### The humanoid skeleton schema
+
+~12 named joints with a fixed parent-child structure:
+
+```
+pelvis
+ ├── spine  → chest → neck → head
+ ├── leftShoulder  → leftElbow  → leftWrist
+ ├── rightShoulder → rightElbow → rightWrist
+ ├── leftHip  → leftKnee  → leftAnkle
+ └── rightHip → rightKnee → rightAnkle
+```
+
+Each limb is a fixed 3-point chain. No runtime inference of "which nodes form this limb" — it's data in the schema.
+
+### Sandbox plan
+
+Build `experiments/spine-humanoid-sandbox/` (parallel to playtime, zero deps on it):
+
+- `main.lua` — LÖVE entry, draggable joints, renders.
+- `skeleton.lua` — joint schema (names, defaults, parent-child table).
+- `spine-mesh.lua` — copy of bind/evaluate, simplified for hardcoded chains.
+- Maybe `limb.lua` — a hand-authored limb polygon for one arm to start.
+
+Phases inside the sandbox:
+- **A — Skeleton layout only.** 12 joints at sensible defaults. Drag any with the mouse. No meshes yet. Visual feedback on connectivity (draw lines between parent-child).
+- **B — One traced limb bound to its chain.** Spine-mesh math on just `[leftShoulder, leftElbow, leftWrist]` + a hardcoded arm polygon. Move the three joints, see the arm deform.
+- **C — All 4 limbs + torso.** Copy bindings; torso is a static polygon anchored to shoulders/hips.
+- **D — Texturing.** UVs from a backdrop image.
+
+When the math is solid in the sandbox, promote back into playtime by (1) replacing CONNECTED_TEXTURE's ribbon constraint with traced-mesh-per-limb in `src/character-manager.lua`, and (2) providing playtime-authoring tools for the polygon tracing step.
+
+### What changes in the original plan
+
+The "Phase 1 POC" section below was written assuming the generic-polygon-inside-playtime path. That's now replaced by sandbox Phase A–C. Phase 2 (subtype decision) and later still apply, after the sandbox proves the geometry. If you read beyond this section, treat the Phase 1 descriptions as historical — the live POC is now in the sandbox.
+
 ## Why
 
 The three existing paths each miss something:
