@@ -596,17 +596,20 @@ function lib.drawSelectedSFixture()
             end
 
             local tmode = state.triangulationMode or 'basic'
-            local tlabel = (tmode == 'cdt') and 'tri: CDT (Bowyer-Watson)'
+            local tlabel = (tmode == 'authored') and 'tri: authored (user Steiners only)'
+                or (tmode == 'cdt') and 'tri: CDT (grid + user Steiners)'
                 or (tmode == 'refined') and 'tri: refined (ear+subdivide)'
                 or 'tri: basic (ear-clip)'
             if ui.button(x, y, ROW_WIDTH, tlabel) then
-                state.triangulationMode = (tmode == 'basic') and 'cdt'
+                state.triangulationMode = (tmode == 'basic') and 'authored'
+                    or (tmode == 'authored') and 'cdt'
                     or (tmode == 'cdt') and 'refined' or 'basic'
                 recomputeLinkedResourceAndUnbind()
             end
             nextRow()
 
-            -- CDT Steiner-point spacing (only relevant when mode=='cdt').
+            -- CDT Steiner-point spacing (only relevant when mode=='cdt'
+            -- or 'refined' — 'authored' explicitly has no grid).
             -- Smaller = denser interior mesh = smoother deformation, more
             -- triangles. Recomputes on drag + clears the bind so the user
             -- re-binds once satisfied with the density.

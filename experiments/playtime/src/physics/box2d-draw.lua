@@ -53,7 +53,12 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
     if not verts or #verts < 6 then return false end
 
     local extraSteiner = thing.extraSteiner
-    local cacheKey = tostring(#verts) .. ':' .. tostring(extraSteiner and #extraSteiner or 0)
+    local cacheKey = table.concat({
+        #verts,
+        extraSteiner and #extraSteiner or 0,
+        state.triangulationMode or 'basic',
+        state.cdtSpacing or 0,
+    }, ':')
     local cache = thing._fillCache
     if not cache or cache.key ~= cacheKey then
         local cenX, cenY = mathutils.computeCentroid(verts)
@@ -62,12 +67,23 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
             localPoly[i] = verts[i] - cenX
             localPoly[i + 1] = verts[i + 1] - cenY
         end
+        -- Match the MESHUSERT's triangulation so body fill and deformed
+        -- render agree. Mode + cdtSpacing come from state; the branches
+        -- here mirror cdt.computeResourceMesh.
+        local tmode = state.triangulationMode or 'basic'
+        local hasSteiner = extraSteiner and #extraSteiner >= 2
+        if hasSteiner and tmode == 'basic' then tmode = 'authored' end -- same auto-upgrade
+
         local meshVerts, triIdx
-        if extraSteiner and #extraSteiner >= 2 then
-            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, nil, extraSteiner)
+        if tmode == 'cdt' and hasSteiner then
+            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, extraSteiner)
+        elseif tmode == 'cdt' then
+            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, nil)
+        elseif tmode == 'authored' and hasSteiner then
+            meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, math.huge, extraSteiner)
         end
         if not triIdx or #triIdx == 0 then
-            -- No Steiners, or CDT declined: fall back to ear-clip
+            -- No Steiners, mode=basic, or CDT declined: fall back to ear-clip
             -- indexed triangulation (same output as makeTrianglesFromPolygon
             -- uses, just as indices we can iterate).
             meshVerts = localPoly

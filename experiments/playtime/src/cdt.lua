@@ -626,12 +626,13 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     end
     local extraSteiner = bodyUD.thing.extraSteiner
 
-    -- Auto-upgrade basic → cdt when the body has authored Steiner points.
-    -- Basic (ear-clip) ignores extraSteiner, so keeping it would silently
-    -- drop the user's input. Matches user intent; logged once via the
-    -- triangulationMode being different after this call.
+    -- Auto-upgrade basic → authored when the body has user-placed Steiner
+    -- points. Basic (ear-clip) ignores extraSteiner, so keeping it would
+    -- silently drop the user's input. We pick 'authored' rather than 'cdt'
+    -- because the user authored a specific set of points — honor those
+    -- without silently adding a grid.
     if extraSteiner and #extraSteiner >= 2 and (not mode or mode == 'basic') then
-        mode = 'cdt'
+        mode = 'authored'
     end
 
     -- Ribbon bodies have a guaranteed strip topology we want to preserve
@@ -661,8 +662,22 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
                 mode = 'basic'
                 meshVerts = localPolyVerts
             end
+        elseif mode == 'authored' then
+            -- Honor ONLY the polygon outline + the user's Steiner points.
+            -- No auto-generated grid (huge spacing → generateSteinerGrid
+            -- returns {}). If the user has placed no points, fall back to
+            -- basic ear-clip — there's nothing to triangulate beyond the
+            -- outline.
+            if extraSteiner and #extraSteiner >= 2 then
+                meshVerts, triIndices = lib.triangulatePolyWithSteiner(
+                    localPolyVerts, math.huge, extraSteiner)
+            end
+            if not triIndices or #triIndices == 0 then
+                mode = 'basic'
+                meshVerts = localPolyVerts
+            end
         end
-        if mode ~= 'cdt' and mode ~= 'refined' then
+        if mode ~= 'cdt' and mode ~= 'refined' and mode ~= 'authored' then
             meshVerts = localPolyVerts
             triIndices = mathutils and mathutils.triangulateToIndices(localPolyVerts) or nil
         end
@@ -692,7 +707,7 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     -- Stored in body-local. The draw path normalizes with makePolygonRelativeToCenter
     -- so it doesn't care whether meshVerts arrives body-local or authoring-world
     -- (legacy saves).
-    if mode == 'cdt' or mode == 'refined' then
+    if mode == 'cdt' or mode == 'refined' or mode == 'authored' then
         ud.extra.meshVertices = meshVerts
     else
         ud.extra.meshVertices = nil
