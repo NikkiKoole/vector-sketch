@@ -657,6 +657,12 @@ function lib.recreateThingFromBody(body, newSettings)
                 ud.extra.triangleBones = nil
                 ud.extra.triangleOrderDirty = false
             end
+            -- MESHUSERT spineBind.tsPerVert has 2 entries per polygon vert;
+            -- vert-count change invalidates the whole bind. Drop so the
+            -- next evaluate falls through to the no-deformation path.
+            if type(ud) == 'table' and subtypes.is(ud, subtypes.MESHUSERT) and ud.extra then
+                ud.extra.spineBind = nil
+            end
         end
         -- Path B: thing.extraSteiner may reference positions that fall outside
         -- the new polygon. Drop per the plan (docs/STEINER-OWNERSHIP-PLAN.md).

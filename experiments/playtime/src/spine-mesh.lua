@@ -1,80 +1,29 @@
--- spine-mesh.lua
+-- src/spine-mesh.lua
 --
--- POC for Phase 1 of SPINE-MESH-PLAN.md. Decomposes a ribbon body's mesh
--- verts into (t, s) pairs relative to a rest spine, then evaluates a live
--- Bezier through moving joint anchors to produce deformed verts.
+-- Single-chain spine-bind: deforms a polygon via a Bezier curve through
+-- a chain of nodes. At bind time the Bezier is rendered to a dense
+-- polyline and each vertex is decomposed into (t, s) — arc-length
+-- parameter along that polyline + signed perpendicular distance. At
+-- runtime the Bezier is rendered again with the SAME bendiness and
+-- each vertex is placed at polyline(t) + s * left-normal.
 --
--- Not wired into the draw pipeline yet. Intended use:
+-- Binding against the dense-polyline (not the raw chain or the Bezier
+-- parameter) is what makes rest pose round-trip exactly: arc-length
+-- fraction and Bezier parameter aren't the same mapping, so mixing
+-- them shifts verts the moment you bind.
 --
---   local sm = require('src.spine-mesh')
---   local bind = sm.bindFromRibbon(body)                    -- captures rest spine + (t,s) per vert
---   state.spineMeshBind = { body = body, bind = bind }      -- remember for overlay
---   -- (editor-render.lua's overlay pass can then call sm.evaluate to see deformation)
---
--- POC scope: ribbon bodies only (they carry an implicit spine via the top
--- row of thing.vertices — first half of the closed polygon). Traced/custom
--- polygon bodies need an explicit spine source (Phase 3 deals with that).
+-- Used by MESHUSERT when spineBind is present. See
+-- docs/MESHUSERT-SPINE-BIND-PLAN.md.
 
 local lib = {}
 
-local registry = require 'src.registry'
-local mathutils = require 'src.math-utils'
+-- ─── internal helpers ──────────────────────────────────────────────
 
--- Return world (x, y) for a node (joint or anchor). Defined early so it's
--- in scope for every function below — avoids the Lua forward-reference
--- trap (local fn defined after its first use resolves to nil global).
-local function nodeWorldPos(n)
-    local NT = require('src.node-types')
-    if n.type == NT.ANCHOR then
-        local f = registry.getSFixtureByID(n.id)
-        if f then
-            local b = f:getBody()
-            return mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
-        end
-    elseif n.type == NT.JOINT then
-        local j = registry.getJointByID(n.id)
-        if j and not j:isDestroyed() then
-            local x1, y1 = j:getAnchors()
-            return x1, y1
-        end
-    end
-    return nil, nil
-end
-
--- Extract the rest spine from a ribbon body's polygon. For a freepath
--- ribbon the closed polygon is [top left→right, bottom right→left]. The
--- real centerline is the pairwise midpoint of top[i] and bottom[i] — use
--- that (NOT the top row alone, which is offset by halfWidth and makes
--- the deformed mesh appear shifted laterally).
-local function spineFromRibbon(thing)
-    local verts = thing.vertices
-    if not verts or #verts < 6 or (#verts % 2) ~= 0 then return nil end
-    local totalPts = #verts / 2
-    if totalPts % 2 ~= 0 then return nil end
-    local perEdge = totalPts / 2
-    if perEdge < 2 then return nil end
-    local spine = {}
-    for i = 1, perEdge do
-        local tx = verts[(i - 1) * 2 + 1]
-        local ty = verts[(i - 1) * 2 + 2]
-        -- bottom is stored reversed: bottom[k] (matching top[k]) is at
-        -- polygon index (2*perEdge - k + 1).
-        local bIdx = (2 * perEdge - i + 1)
-        local bx = verts[(bIdx - 1) * 2 + 1]
-        local by = verts[(bIdx - 1) * 2 + 2]
-        spine[#spine + 1] = (tx + bx) * 0.5
-        spine[#spine + 1] = (ty + by) * 0.5
-    end
-    return spine
-end
-
--- Cumulative arc length along a polyline. Returns an array of length
--- (numPoints), starting at 0, ending at total length. Used to map a
--- point on a segment to the global arc-length parameter.
 local function arcLengths(polyline)
     local out = { 0 }
     local total = 0
-    for i = 1, (#polyline / 2) - 1 do
+    local n = #polyline / 2
+    for i = 1, n - 1 do
         local ax, ay = polyline[(i - 1) * 2 + 1], polyline[(i - 1) * 2 + 2]
         local bx, by = polyline[i * 2 + 1], polyline[i * 2 + 2]
         local dx, dy = bx - ax, by - ay
@@ -84,9 +33,10 @@ local function arcLengths(polyline)
     return out, total
 end
 
--- Find the closest point on a polyline to (px, py). Returns (t, s) where
--- t is arc-length-normalised 0..1 and s is signed perpendicular distance
--- (positive = left of the spine direction, negative = right).
+-- Project (px, py) onto polyline, return t (arc-length fraction; can
+-- be <0 or >1 when the vert sits past an endpoint along the first/
+-- last segment tangent) and signed perpendicular s (positive = left
+-- of chain direction). pointOnPolyline mirrors the same extrapolation.
 local function closestOnPolyline(px, py, polyline, arcs, totalLen)
     local bestD2, bestT, bestS = math.huge, 0, 0
     local numSeg = (#polyline / 2) - 1
@@ -96,7 +46,6 @@ local function closestOnPolyline(px, py, polyline, arcs, totalLen)
         local dx, dy = bx - ax, by - ay
         local segLen2 = dx * dx + dy * dy
         if segLen2 < 1e-12 then
-            -- degenerate: treat as point
             local qx, qy = ax - px, ay - py
             local d2 = qx * qx + qy * qy
             if d2 < bestD2 then
@@ -106,7 +55,11 @@ local function closestOnPolyline(px, py, polyline, arcs, totalLen)
             end
         else
             local u = ((px - ax) * dx + (py - ay) * dy) / segLen2
-            if u < 0 then u = 0 elseif u > 1 then u = 1 end
+            -- Clamp only between segments; allow overshoot past the
+            -- first/last segment so end-of-chain verts record their
+            -- along-axis offset instead of collapsing to the endpoint.
+            if i > 1 and u < 0 then u = 0 end
+            if i < numSeg and u > 1 then u = 1 end
             local cx, cy = ax + u * dx, ay + u * dy
             local qx, qy = px - cx, py - cy
             local d2 = qx * qx + qy * qy
@@ -114,112 +67,20 @@ local function closestOnPolyline(px, py, polyline, arcs, totalLen)
                 bestD2 = d2
                 local segArc = arcs[i] + u * math.sqrt(segLen2)
                 bestT = segArc / math.max(totalLen, 1e-9)
-                -- signed perpendicular: left of segment direction is positive.
-                -- left-normal of (dx, dy) is (-dy, dx). Sign via dot with (qx, qy).
-                local nxn = -dy
-                local nyn = dx
-                local nlen = math.sqrt(nxn * nxn + nyn * nyn)
+                local nxn, nyn = -dy, dx -- left-normal
                 local sign = (qx * nxn + qy * nyn) >= 0 and 1 or -1
-                bestS = sign * math.sqrt(d2) * (nlen > 0 and 1 or 0)
+                bestS = sign * math.sqrt(d2)
             end
         end
     end
     return bestT, bestS
 end
 
--- Capture spine + (t, s) per vert from a body AND a list of live nodes.
--- The rest spine is the chain of node world positions at bind time. This
--- guarantees bind and runtime reference the same path — if nodes don't
--- sit on the ribbon's internal midline, the (t, s) values still correctly
--- describe where each vert is relative to the chain the user drew.
--- Works for any polygon shape, not just ribbon. Returns:
---   { spine, arcs, total, tsPerVert, nodeOrder }
--- `nodeOrder` is the ordered node list matching spine control-point order.
-function lib.bindFromBodyAndNodes(body, nodes)
-    if not body or body:isDestroyed() then return nil end
-    local ud = body:getUserData()
-    local thing = ud and ud.thing
-    if not thing or not thing.vertices then return nil end
-    if not nodes or #nodes < 2 then return nil end
-
-    -- Snapshot live node world positions → rest spine.
-    local spine = {}
-    local validNodes = {}
-    for _, n in ipairs(nodes) do
-        local wx, wy = nodeWorldPos(n)
-        if wx and wy then
-            spine[#spine + 1] = wx
-            spine[#spine + 1] = wy
-            validNodes[#validNodes + 1] = n
-        end
-    end
-    if #spine < 4 then return nil end
-
-    local arcs, total = arcLengths(spine)
-    if total < 1e-6 then return nil end
-
-    -- Polygon verts are in thing.vertices — their frame depends on shape
-    -- type (ribbon palette ⇒ body-local; freepath ⇒ authoring-world).
-    -- Going through body:getWorldPoint after subtracting the polygon
-    -- centroid gives us world coords that work either way, matching what
-    -- box2d-draw-textured uses elsewhere.
-    local cenX, cenY = mathutils.computeCentroid(thing.vertices)
-    local ts = {}
-    for i = 1, #thing.vertices, 2 do
-        local lx = thing.vertices[i] - cenX
-        local ly = thing.vertices[i + 1] - cenY
-        local wx, wy = body:getWorldPoint(lx, ly)
-        local t, s = closestOnPolyline(wx, wy, spine, arcs, total)
-        ts[#ts + 1] = t
-        ts[#ts + 1] = s
-    end
-
-    return { spine = spine, arcs = arcs, total = total, tsPerVert = ts, nodeOrder = validNodes }
-end
-
--- Build a Bezier-friendly control-point list from a node list. Matches
--- what CONNECTED_TEXTURE does (box2d-draw-textured.lua ~1071-1127) so we
--- share the same curve shape. Nodes may be anchors or joints.
-local function pointsFromNodes(nodes)
-    local NT = require('src.node-types')
-    local pts = {}
-    for j = 1, #nodes do
-        local n = nodes[j]
-        if n.type == NT.ANCHOR then
-            local f = registry.getSFixtureByID(n.id)
-            if f then
-                local b = f:getBody()
-                local cx, cy = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
-                pts[#pts + 1] = cx
-                pts[#pts + 1] = cy
-            end
-        elseif n.type == NT.JOINT then
-            local j_ = registry.getJointByID(n.id)
-            if j_ and not j_:isDestroyed() then
-                local x1, y1 = j_:getAnchors()
-                pts[#pts + 1] = x1
-                pts[#pts + 1] = y1
-            end
-        end
-    end
-    return pts
-end
-
--- Evaluate a Love2D Bezier at parameter t ∈ [0, 1], return point + tangent.
--- Tangent via its derivative curve.
-local function evalCurve(curve, derivCurve, t)
-    local x, y = curve:evaluate(t)
-    local dx, dy = derivCurve:evaluate(t)
-    local dlen = math.sqrt(dx * dx + dy * dy)
-    if dlen < 1e-9 then return x, y, 1, 0 end
-    return x, y, dx / dlen, dy / dlen
-end
-
--- Duplicate middle control points N times so a high-degree Bezier
--- hugs them instead of oscillating — matches CONNECTED_TEXTURE.
+-- Duplicate middle control points N times so the Bezier hugs them
+-- instead of smoothing them away. Mirrors what CONNECTED_TEXTURE does.
 local function doubleControlPoints(points, dups)
     local n = #points / 2
-    if n <= 2 then return points end
+    if n <= 2 or dups <= 0 then return points end
     local out = {}
     for i = 1, #points, 2 do
         local x, y = points[i], points[i + 1]
@@ -236,104 +97,245 @@ local function doubleControlPoints(points, dups)
     return out
 end
 
--- Apply the bind to live node positions: Bezier through nodes, per-vert
--- placement at curve(t) + s * left-normal. Returns flat world-vert array
--- aligned with the original polygon's vert order.
-function lib.evaluate(bind, nodes)
-    if not bind or not nodes or #nodes < 2 then return nil end
-    local pts = pointsFromNodes(nodes)
-    -- love.math.newBezierCurve needs at least 2 points; if we only have 2
-    -- we pad a midpoint so the curve is degree-2 (same trick CONNECTED_TEXTURE
-    -- uses).
-    if #pts < 4 then return nil end
+-- Render a chain+bendiness pair into a dense polyline (flat {x,y,...}).
+-- Bind and evaluate MUST go through this so the (t, s) parameterization
+-- matches between them. `depth` defaults to 5 → 2^5 + 1 = 33 samples.
+local function sampleChain(chain, bendiness, depth)
+    local pts = chain
     if #pts == 4 then
+        -- 2-node chain: pad with midpoint so Bezier has >=3 control points.
         pts = { pts[1], pts[2], (pts[1] + pts[3]) / 2, (pts[2] + pts[4]) / 2, pts[3], pts[4] }
     end
-    -- Duplicate middles so the Bezier tracks the node chain instead of
-    -- smoothing across it into wide oscillations (degree-10 Bezier with
-    -- 10 near-collinear control points was doing exactly that).
-    pts = doubleControlPoints(pts, 2)
-    local curve = love.math.newBezierCurve(pts)
-    local deriv = curve:getDerivative()
+    local ctrl = doubleControlPoints(pts, bendiness)
+    local curve = love.math.newBezierCurve(ctrl)
+    return curve:render(depth or 5)
+end
+
+-- Return (x, y) at arc-length fraction `t` along `polyline`, offset
+-- `s` along the left-normal of the local segment direction. t can be
+-- <0 or >1; the first/last segment is extrapolated tangentially so
+-- end-of-chain verts recorded with overshoot round-trip exactly.
+local function pointOnPolyline(polyline, arcs, total, t, s)
+    local target = t * total
+    local numSeg = #polyline / 2 - 1
+    local seg
+    if target <= arcs[1] then
+        seg = 1
+    elseif target >= arcs[numSeg + 1] then
+        seg = numSeg
+    else
+        seg = numSeg
+        for i = 1, numSeg do
+            if target <= arcs[i + 1] then
+                seg = i
+                break
+            end
+        end
+    end
+    local ax, ay = polyline[(seg - 1) * 2 + 1], polyline[(seg - 1) * 2 + 2]
+    local bx, by = polyline[seg * 2 + 1], polyline[seg * 2 + 2]
+    local segLen = arcs[seg + 1] - arcs[seg]
+    local u = segLen > 1e-9 and (target - arcs[seg]) / segLen or 0
+    local dx, dy = bx - ax, by - ay
+    local dlen = math.sqrt(dx * dx + dy * dy)
+    local tx = dlen > 1e-9 and dx / dlen or 1
+    local ty = dlen > 1e-9 and dy / dlen or 0
+    local nx, ny = -ty, tx
+    local cx, cy = ax + u * dx, ay + u * dy
+    return cx + s * nx, cy + s * ny
+end
+
+-- ─── public API ────────────────────────────────────────────────────
+
+-- Resolve a playtime node list (anchors + joints) to a flat world-coord
+-- chain { x1, y1, x2, y2, ... }. Skips nodes whose body/joint is gone.
+function lib.buildChainFromNodes(nodes)
+    local registry = require 'src.registry'
+    local mathutils = require 'src.math-utils'
+    local NT = require 'src.node-types'
+    local chain = {}
+    for i = 1, #nodes do
+        local n = nodes[i]
+        local nx, ny
+        if n.type == NT.ANCHOR then
+            local f = registry.getSFixtureByID(n.id)
+            if f and not f:isDestroyed() then
+                local b = f:getBody()
+                nx, ny = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
+            end
+        elseif n.type == NT.JOINT then
+            local j = registry.getJointByID(n.id)
+            if j and not j:isDestroyed() then
+                nx, ny = j:getAnchors()
+            end
+        end
+        if nx and ny then
+            chain[#chain + 1] = nx
+            chain[#chain + 1] = ny
+        end
+    end
+    return chain
+end
+
+-- Bind a polygon to a chain at rest pose. Both args are flat world-coord
+-- tables: polygon = {x1,y1,x2,y2,...}, chain = {x1,y1,x2,y2,...}.
+-- `bendiness` must match what evaluate will use or rest pose drifts — it
+-- is captured into the bind so evaluate can default to it.
+function lib.bind(polygon, chain, bendiness)
+    if type(polygon) ~= 'table' or #polygon < 6 then return nil, 'polygon needs >=6 coords' end
+    if type(chain) ~= 'table' or #chain < 4 then return nil, 'chain needs >=4 coords (>=2 points)' end
+    bendiness = bendiness or 2
+
+    local dense = sampleChain(chain, bendiness)
+    local arcs, total = arcLengths(dense)
+    if total < 1e-6 then return nil, 'chain has zero length' end
+
+    local tsPerVert = {}
+    for i = 1, #polygon, 2 do
+        local t, s = closestOnPolyline(polygon[i], polygon[i + 1], dense, arcs, total)
+        tsPerVert[#tsPerVert + 1] = t
+        tsPerVert[#tsPerVert + 1] = s
+    end
+
+    return { tsPerVert = tsPerVert, bendiness = bendiness }
+end
+
+-- Evaluate a bind against new chain positions. Returns flat array of
+-- deformed polygon coords (world). Defaults to the bind's captured
+-- bendiness — overriding drifts rest pose, which the caller may want
+-- when the user is live-tweaking the slider.
+function lib.evaluate(spineBind, newChain, bendiness)
+    if not spineBind or not spineBind.tsPerVert or #newChain < 4 then return nil end
+    bendiness = bendiness or spineBind.bendiness or 2
+
+    local dense = sampleChain(newChain, bendiness)
+    local arcs, total = arcLengths(dense)
+    if total < 1e-6 then return nil end
 
     local out = {}
-    local ts = bind.tsPerVert
+    local ts = spineBind.tsPerVert
     for i = 1, #ts, 2 do
-        local t, s = ts[i], ts[i + 1]
-        if t < 0 then t = 0 elseif t > 1 then t = 1 end
-        local cx, cy, tx, ty = evalCurve(curve, deriv, t)
-        -- left-normal of (tx, ty) is (-ty, tx)
-        local nx, ny = -ty, tx
-        out[#out + 1] = cx + s * nx
-        out[#out + 1] = cy + s * ny
+        -- No clamp on t — bind records overshoot past the chain ends
+        -- (t < 0 or t > 1) and pointOnPolyline extrapolates tangentially.
+        local x, y = pointOnPolyline(dense, arcs, total, ts[i], ts[i + 1])
+        out[#out + 1] = x
+        out[#out + 1] = y
     end
     return out
 end
 
--- POC bind. `nodes` is accepted in arbitrary order; we first build a
--- rough "nodes along polygon axis" ordering by projecting each onto a
--- scratch polygon-derived axis, then use the ordered chain itself as
--- the rest spine. This matches the runtime curve exactly by construction.
-function lib.debugBind(body, nodes)
-    if not body or not nodes or #nodes < 2 then
-        return { error = 'need body + ≥2 nodes' }
-    end
-
-    -- Step 1: rough ordering. Use polygon-midline (if it's a ribbon) or
-    -- the polygon's longest principal axis to get a monotonic order along
-    -- the limb. For the POC we can cheat by using polygon-top-row as axis.
-    local thing = body:getUserData() and body:getUserData().thing
-    if not thing or not thing.vertices then return { error = 'no thing.vertices' } end
-
-    local axis = spineFromRibbon(thing) -- centerline of ribbon polygon; OK as ordering heuristic
-    if not axis or #axis < 4 then
-        -- Fallback: order by world x+y as a lame projection. Good enough for
-        -- POC; real impl needs proper principal-axis.
-        local ordered = {}
-        for _, n in ipairs(nodes) do
-            local wx, wy = nodeWorldPos(n)
-            if wx then ordered[#ordered + 1] = { n = n, k = wx + wy } end
-        end
-        table.sort(ordered, function(a, b) return a.k < b.k end)
-        nodes = {}
-        for _, e in ipairs(ordered) do nodes[#nodes + 1] = e.n end
-    else
-        -- Transform axis points from polygon frame to world (for scoring
-        -- node positions against them).
-        local cenX, cenY = mathutils.computeCentroid(thing.vertices)
-        local axisWorld = {}
-        for i = 1, #axis, 2 do
-            local lx = axis[i] - cenX
-            local ly = axis[i + 1] - cenY
-            local wx, wy = body:getWorldPoint(lx, ly)
-            axisWorld[#axisWorld + 1] = wx
-            axisWorld[#axisWorld + 1] = wy
-        end
-        local axisArcs, axisTotal = arcLengths(axisWorld)
-        local ordered = {}
-        for _, n in ipairs(nodes) do
-            local wx, wy = nodeWorldPos(n)
-            if wx then
-                local t = select(1, closestOnPolyline(wx, wy, axisWorld, axisArcs, axisTotal))
-                ordered[#ordered + 1] = { n = n, t = t }
+-- ─── multi-chain (hard assignment) ────────────────────────────────
+--
+-- Split a flat node list into sub-chains at repeated IDs — the user's
+-- convention is to start each chain from a shared root anchor, so the
+-- same node ID recurs as a separator. Returns { [1] = { node, ... }, ... }.
+-- If no ID repeats, returns a single chain wrapping the whole list.
+function lib.splitChainsByRootRepeat(nodes)
+    if #nodes < 2 then return { nodes } end
+    local seen = {}
+    local chains = {}
+    local current
+    for _, n in ipairs(nodes) do
+        if seen[n.id] then
+            -- repeat of an already-seen id — start a new chain, and
+            -- seed it with this node so it's shared between chains.
+            current = { n }
+            chains[#chains + 1] = current
+        else
+            seen[n.id] = true
+            if not current then
+                current = { n }
+                chains[#chains + 1] = current
+            else
+                current[#current + 1] = n
             end
         end
-        table.sort(ordered, function(a, b) return a.t < b.t end)
-        nodes = {}
-        for _, e in ipairs(ordered) do nodes[#nodes + 1] = e.n end
+    end
+    return chains
+end
+
+-- Resolve a list of node sub-chains (from splitChainsByRootRepeat) to a
+-- map { [i] = { x1,y1,x2,y2,... } }. Skips destroyed nodes.
+function lib.buildChainsFromNodeLists(nodeLists)
+    local out = {}
+    for i, list in ipairs(nodeLists) do
+        out[i] = lib.buildChainFromNodes(list)
+    end
+    return out
+end
+
+-- Bind a polygon against multiple chains. For each vertex, pick the
+-- chain whose dense polyline projects closest (signed perpendicular
+-- distance). Store { chain = index, t, s } per vert. Hard assignment —
+-- seam triangles whose verts land on different chains will stretch
+-- when those chains diverge. Soft blending is a future extension.
+--
+-- chainsByIdx = { [1] = { x1,y1,x2,y2,... }, [2] = ... }
+function lib.bindMultiChain(polygon, chainsByIdx, bendiness)
+    if type(polygon) ~= 'table' or #polygon < 6 then return nil, 'polygon needs >=6 coords' end
+    bendiness = bendiness or 2
+
+    local dense = {}
+    for i, chain in pairs(chainsByIdx) do
+        if type(chain) == 'table' and #chain >= 4 then
+            local samples = sampleChain(chain, bendiness)
+            local arcs, total = arcLengths(samples)
+            if total > 1e-6 then
+                dense[i] = { samples = samples, arcs = arcs, total = total }
+            end
+        end
+    end
+    if not next(dense) then return nil, 'no valid chains' end
+
+    local perVert = {}
+    for i = 1, #polygon, 2 do
+        local px, py = polygon[i], polygon[i + 1]
+        local bestIdx, bestD2, bestT, bestS = nil, math.huge, 0, 0
+        for idx, d in pairs(dense) do
+            local t, s = closestOnPolyline(px, py, d.samples, d.arcs, d.total)
+            local d2 = s * s -- s = sign * sqrt(perp²), so s² == perp²
+            if d2 < bestD2 then
+                bestD2 = d2; bestIdx = idx; bestT = t; bestS = s
+            end
+        end
+        perVert[#perVert + 1] = { chain = bestIdx, t = bestT, s = bestS }
     end
 
-    -- Step 2: bind, using the ordered nodes as the actual rest spine.
-    local bind = lib.bindFromBodyAndNodes(body, nodes)
-    if not bind then return { error = 'bindFromBodyAndNodes failed' } end
+    return { perVert = perVert, bendiness = bendiness, multi = true }
+end
 
-    _G._spineMeshDebug = { body = body, bind = bind, nodes = nodes }
-    return {
-        spineLen = bind.total,
-        spinePts = #bind.spine / 2,
-        numVerts = #bind.tsPerVert / 2,
-        numNodes = #nodes,
-    }
+-- Evaluate a multi-chain bind against new chain positions. Each vert is
+-- placed on its assigned chain's live Bezier. Returns flat deformed coords.
+function lib.evaluateMultiChain(spineBind, chainsByIdx, bendiness)
+    if not spineBind or not spineBind.perVert then return nil end
+    bendiness = bendiness or spineBind.bendiness or 2
+
+    local dense = {}
+    for i, chain in pairs(chainsByIdx) do
+        if type(chain) == 'table' and #chain >= 4 then
+            local samples = sampleChain(chain, bendiness)
+            local arcs, total = arcLengths(samples)
+            if total > 1e-6 then
+                dense[i] = { samples = samples, arcs = arcs, total = total }
+            end
+        end
+    end
+
+    local out = {}
+    for _, v in ipairs(spineBind.perVert) do
+        local d = dense[v.chain]
+        if d then
+            local x, y = pointOnPolyline(d.samples, d.arcs, d.total, v.t, v.s)
+            out[#out + 1] = x
+            out[#out + 1] = y
+        else
+            -- chain missing (destroyed node?) — fall back to origin to
+            -- avoid crashes; user sees a visible glitch and can rebind.
+            out[#out + 1] = 0
+            out[#out + 1] = 0
+        end
+    end
+    return out
 end
 
 return lib

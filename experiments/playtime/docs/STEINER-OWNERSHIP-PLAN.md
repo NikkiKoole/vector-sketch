@@ -8,7 +8,7 @@ Path B from `CODEBASE-CLEANUP.md` item #8-ish. Move authored Steiner points from
 
 - Body-level POC shipped (commit `f29cb96c`). User can click-to-place Steiners on any polygon body via the `PLACE_STEINER` mode + body-editor button. Data lives at `thing.extraSteiner` in **body-local** coords.
 - Legacy location still in use: `ud.extra.extraSteiner` on RESOURCE sfixtures (**authoring-world** coords), written by the MESHUSERT "split selected" button, read by `cdt.computeResourceMesh`. Old saved scenes carry their data there.
-- Overlay in `editor-render.lua:renderSteinerPOC` is preview-only — nothing downstream reads the body-level Steiners yet. Collision fixtures, fill draw, RESOURCE triangulation all ignore them.
+- Overlay in `editor-render.lua:renderSteinerOverlay` is preview-only — nothing downstream reads the body-level Steiners yet. Collision fixtures, fill draw, RESOURCE triangulation all ignore them.
 
 ## The frame-of-reference issue (critical)
 
@@ -44,7 +44,7 @@ Goal: RESOURCE triangulation reads from `thing.extraSteiner`. Old scenes load wi
 1. **`src/io.lua`** — add local `migrateExtraSteinerToBody(saveData)`. Walk `saveData.bodies[].fixtures[]`; for each RESOURCE with `extra.extraSteiner`, subtract `centroid(body.vertices)` and append to `body.extraSteiner`. Clear the RESOURCE's copy. Call at the top of `lib.load`, right after `json.decode` + version check. Export via `lib._test`.
 2. **`src/cdt.lua:computeResourceMesh`** — read `bodyUD.thing.extraSteiner` instead of `ud.extra.extraSteiner`. Convert polygon verts to body-local (`origVerts - centroid`), pass alongside body-local Steiners to `triangulatePolyWithSteiner`. Fix UV calculation to use body-local→world (not `vert - centX` → world; now meshVerts is already body-local).
 3. **`src/ui/sfixture-editor.lua`** — MESHUSERT "split selected" writes body-local to `thing.extraSteiner`. Convert triangle centroid via `body:getLocalPoint` before appending. "Clear splits" + footer "clear splits (N)" buttons clear `thing.extraSteiner` instead of `ud.extra.extraSteiner`.
-4. **`src/editor-render.lua:renderSteinerPOC`** — still works; no change needed (it already reads `thing.extraSteiner` in body-local).
+4. **`src/editor-render.lua:renderSteinerOverlay`** — still works; no change needed (it already reads `thing.extraSteiner` in body-local).
 
 ### Verification
 - Full spec suite green.

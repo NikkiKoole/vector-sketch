@@ -12,6 +12,7 @@ local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
 local subtypes = require 'src.subtypes'
 local NT = require('src.node-types')
+local spineMesh = require 'src.spine-mesh'
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 
@@ -1374,17 +1375,18 @@ function lib.drawTexturedWorld(world)
                 local wxSum, wySum, wSum = 0, 0, 0
                 for k = 1, #inflList do
                     local infl = inflList[k]
-                    local body   = infl.body
+                    local body = infl.body
+                    if body and not body:isDestroyed() then
+                        local ax, ay = currentAnchorLocal(infl)
+                        local lx     = ax + infl.dx
+                        local ly     = ay + infl.dy
+                        local wx, wy = body:getWorldPoint(lx, ly)
 
-                    local ax, ay = currentAnchorLocal(infl)
-                    local lx     = ax + infl.dx
-                    local ly     = ay + infl.dy
-                    local wx, wy = body:getWorldPoint(lx, ly)
-
-                    local w      = infl.w
-                    wxSum        = wxSum + wx * w
-                    wySum        = wySum + wy * w
-                    wSum         = wSum + w
+                        local w      = infl.w
+                        wxSum        = wxSum + wx * w
+                        wySum        = wySum + wy * w
+                        wSum         = wSum + w
+                    end
                 end
 
                 if wSum > 0 then
@@ -1424,11 +1426,13 @@ function lib.drawTexturedWorld(world)
                     local wxSum, wySum, wSum = 0, 0, 0
                     for k = 1, #inflList do
                         local infl = inflList[k]
-                        local ax, ay = currentAnchorLocal(infl)
-                        local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                        wxSum = wxSum + wx * infl.w
-                        wySum = wySum + wy * infl.w
-                        wSum  = wSum + infl.w
+                        if infl.body and not infl.body:isDestroyed() then
+                            local ax, ay = currentAnchorLocal(infl)
+                            local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                            wxSum = wxSum + wx * infl.w
+                            wySum = wySum + wy * infl.w
+                            wSum  = wSum + infl.w
+                        end
                     end
                     if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
                     local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
@@ -1449,17 +1453,21 @@ function lib.drawTexturedWorld(world)
                             pxs = nil
                             break
                         end
-                        local body   = infl.body
-                        local ax, ay = currentAnchorLocal(infl)
-                        local wx, wy = body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                        local dTheta = body:getAngle() - infl.bindAngle
-                        local w      = infl.w
-                        pxs[k] = wx
-                        pys[k] = wy
-                        ws[k]  = w
-                        cosSum = cosSum + w * cos(dTheta)
-                        sinSum = sinSum + w * sin(dTheta)
-                        wSum   = wSum + w
+                        local body = infl.body
+                        if body and not body:isDestroyed() then
+                            local ax, ay = currentAnchorLocal(infl)
+                            local wx, wy = body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                            local dTheta = body:getAngle() - infl.bindAngle
+                            local w      = infl.w
+                            pxs[k] = wx
+                            pys[k] = wy
+                            ws[k]  = w
+                            cosSum = cosSum + w * cos(dTheta)
+                            sinSum = sinSum + w * sin(dTheta)
+                            wSum   = wSum + w
+                        else
+                            pxs[k] = 0; pys[k] = 0; ws[k] = 0
+                        end
                     end
 
                     if not pxs then
@@ -1467,11 +1475,13 @@ function lib.drawTexturedWorld(world)
                         local wxSum, wySum, wSum2 = 0, 0, 0
                         for k = 1, nInfl do
                             local infl = inflList[k]
-                            local ax, ay = currentAnchorLocal(infl)
-                            local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                            wxSum = wxSum + wx * infl.w
-                            wySum = wySum + wy * infl.w
-                            wSum2 = wSum2 + infl.w
+                            if infl.body and not infl.body:isDestroyed() then
+                                local ax, ay = currentAnchorLocal(infl)
+                                local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                                wxSum = wxSum + wx * infl.w
+                                wySum = wySum + wy * infl.w
+                                wSum2 = wSum2 + infl.w
+                            end
                         end
                         if wSum2 > 0 then wxSum = wxSum / wSum2; wySum = wySum / wSum2 end
                         local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
@@ -1534,6 +1544,7 @@ function lib.drawTexturedWorld(world)
                 if not row then return nil end
                 local entry = row[boneIndex]
                 if not entry then return nil end
+                if not entry.body or entry.body:isDestroyed() then return nil end
                 local wx, wy = entry.body:getWorldPoint(entry.lx, entry.ly)
                 return rootBody:getLocalPoint(wx, wy)
             else
@@ -1543,6 +1554,7 @@ function lib.drawTexturedWorld(world)
                 for k = 1, #inflList do
                     local infl = inflList[k]
                     if infl.nodeIndex == boneIndex then
+                        if not infl.body or infl.body:isDestroyed() then return nil end
                         local ax, ay = currentAnchorLocal(infl)
                         local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
                         return rootBody:getLocalPoint(wx, wy)
@@ -1601,21 +1613,52 @@ function lib.drawTexturedWorld(world)
 
 
                 -- Auto-unbind when polygon vert count changed since bind —
-                -- stale influences would crash (inflList nil for new verts).
+                -- stale influences / spine (t,s) would crash or misalign.
                 local numVerts = #verts / 2
                 if drawables[i].extra.influences and #drawables[i].extra.influences ~= numVerts then
                     drawables[i].extra.influences = nil
                     drawables[i].extra.bindVerts   = nil
                 end
+                local sb = drawables[i].extra.spineBind
+                if sb then
+                    local boundVerts = sb.multi and (sb.perVert and #sb.perVert)
+                        or (sb.tsPerVert and #sb.tsPerVert / 2)
+                    if boundVerts and boundVerts ~= numVerts then
+                        drawables[i].extra.spineBind = nil
+                    end
+                end
 
-                if drawables[i].extra.influences and #drawables[i].extra.influences > 0 then
-                    -- logger:inspect(drawables[i].extra.influences)
-                    -- we need to fill in the bodies for each influence, but ratehr not everyframe!
-                    --drawables[i].extra.influences = fillBodiesInInfluences(drawables[i].extra.influences, #verts/2)
-                    local newVerts = deformWorldVerts(drawables[i].extra.influences, drawables[i].extra.bindVerts, numVerts, drawables[i].body)
-                    -- local worldBindVerts = vertsToWorld(drawables[i].body, verts)
-                    -- logger:inspect(worldBindVerts)
-                    --logger:inspect(newVerts)
+                -- Two bind modes, mutually exclusive: spine (Bezier through
+                -- nodes) or DQS (per-vert weighted-bone transforms). Each
+                -- bind op clears the other; presence alone decides the path.
+                if drawables[i].extra.spineBind then
+                    local bendiness = drawables[i].extra.spineBendiness or 2
+                    local worldVerts
+                    if drawables[i].extra.spineBind.multi then
+                        local nodeLists = spineMesh.splitChainsByRootRepeat(drawables[i].extra.nodes or {})
+                        local chains = spineMesh.buildChainsFromNodeLists(nodeLists)
+                        worldVerts = spineMesh.evaluateMultiChain(drawables[i].extra.spineBind, chains, bendiness)
+                    else
+                        local liveChain = spineMesh.buildChainFromNodes(drawables[i].extra.nodes or {})
+                        if #liveChain >= 4 then
+                            worldVerts = spineMesh.evaluate(drawables[i].extra.spineBind, liveChain, bendiness)
+                        end
+                    end
+                    if worldVerts then
+                        -- Mesh is drawn with the body transform applied
+                        -- (love.graphics.draw(mesh, bx, by, ba)) so vert
+                        -- coords must be in body-local.
+                        local body = drawables[i].body
+                        local localVerts = {}
+                        for k = 1, #worldVerts, 2 do
+                            localVerts[k], localVerts[k + 1] =
+                                body:getLocalPoint(worldVerts[k], worldVerts[k + 1])
+                        end
+                        verts = localVerts
+                    end
+                elseif drawables[i].extra.influences and #drawables[i].extra.influences > 0 then
+                    local newVerts = deformWorldVerts(drawables[i].extra.influences,
+                        drawables[i].extra.bindVerts, numVerts, drawables[i].body)
                     verts = newVerts
                 end
 

@@ -429,77 +429,13 @@ function lib.renderActiveEditorThings()
     love.graphics.setColor(1, 1, 1)  -- Reset color
 end
 
--- Debug overlay for Goal 4 (strip merging). Draws the cached merge result
--- in its host body's world space, each source ribbon tinted a distinct color.
--- Populated via bridge /eval (see state.stripMergeOverlay); no UI yet.
-function lib.renderStripMergeOverlay()
-    local ov = state.stripMergeOverlay
-    if not ov or not ov.enabled or not ov.result or not ov.hostBodyId then return end
-    local hostBody = registry.getBodyByID(ov.hostBodyId)
-    if not hostBody or hostBody:isDestroyed() then return end
-
-    local verts = ov.result.verts
-    local tris = ov.result.tris
-    local meta = ov.result.meta or {}
-    if not verts or not tris or #tris < 3 then return end
-
-    -- triIdx → which ribbon owns it; same cheap hash as group-picker colors.
-    -- Triangles past the ribbon range (ownerByTri[t] == nil) are bridges.
-    local ownerByTri = {}
-    for r, m in ipairs(meta) do
-        for t = m.firstTri, m.firstTri + m.triCount - 1 do
-            ownerByTri[t] = r
-        end
-    end
-
-    local function ribbonColor(r)
-        return ((r * 73) % 256) / 255,
-               ((r * 151) % 256) / 255,
-               ((r * 211) % 256) / 255
-    end
-
-    local function worldAt(idx)
-        return hostBody:getWorldPoint(verts[(idx - 1) * 2 + 1], verts[(idx - 1) * 2 + 2])
-    end
-
-    local lw = love.graphics.getLineWidth()
-    love.graphics.setLineWidth(1 / cam:getScale())
-    local numTris = math.floor(#tris / 3)
-    for t = 1, numTris do
-        local i1 = tris[(t - 1) * 3 + 1]
-        local i2 = tris[(t - 1) * 3 + 2]
-        local i3 = tris[(t - 1) * 3 + 3]
-        if i1 and i2 and i3 then
-            local x1, y1 = worldAt(i1)
-            local x2, y2 = worldAt(i2)
-            local x3, y3 = worldAt(i3)
-            local owner = ownerByTri[t]
-            if owner then
-                local r, g, b = ribbonColor(owner)
-                love.graphics.setColor(r, g, b, 0.30)
-                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                love.graphics.setColor(r, g, b, 0.9)
-                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-            else
-                -- bridge triangle: distinct high-contrast color so junctions pop
-                love.graphics.setColor(1, 1, 1, 0.55)
-                love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                love.graphics.setColor(1, 0.2, 0.2, 1.0)
-                love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-            end
-        end
-    end
-    love.graphics.setLineWidth(lw)
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
--- POC: Steiner-point authoring overlay. When the selected body has
--- `thing.extraSteiner` populated, draw each point as an orange dot and
--- overlay the would-be triangulation in green. This is visual feedback
--- only — nothing downstream is rebuilt. Collision + fill draw are
--- unaffected. See docs/CODEBASE-CLEANUP.md #8-ish for the path to
--- promoting this POC into a real feature.
-function lib.renderSteinerPOC()
+-- Steiner-point authoring overlay. When the selected body has
+-- `thing.extraSteiner` populated, draws each point as an orange dot
+-- and the would-be triangulation in green. This is the authoring
+-- feedback for PLACE_STEINER mode. Steiners flow through MESHUSERT's
+-- triangulation on the paired RESOURCE — they affect textured-mesh
+-- detail, not body collision (by design).
+function lib.renderSteinerOverlay()
     local thing = state.selection.selectedObj
     if not thing or not thing.body or thing.body:isDestroyed() then return end
     if not thing.vertices or #thing.vertices < 6 then return end
@@ -562,57 +498,6 @@ function lib.renderSteinerPOC()
         local wx, wy = cam:getWorldCoordinates(mx, my)
         love.graphics.setColor(1, 0.55, 0.1, 0.4)
         love.graphics.circle('line', wx, wy, dotR * 1.6)
-    end
-
-    love.graphics.setLineWidth(lw)
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
--- POC overlay for SPINE-MESH-PLAN Phase 1. Reads _G._spineMeshDebug
--- (populated by src.spine-mesh.debugBind). Draws the deformed mesh
--- outline using the live Bezier through the bound nodes. No fill;
--- this is authoring feedback, not final render.
-function lib.renderSpineMeshPOC()
-    local dbg = _G._spineMeshDebug
-    if not dbg or not dbg.bind or not dbg.nodes then return end
-    local sm = require('src.spine-mesh')
-    local worldVerts = sm.evaluate(dbg.bind, dbg.nodes)
-    if not worldVerts or #worldVerts < 6 then return end
-
-    local lw = love.graphics.getLineWidth()
-    love.graphics.setLineWidth(1 / cam:getScale())
-    love.graphics.setColor(0.2, 0.85, 1.0, 0.9)
-    love.graphics.polygon('line', worldVerts)
-
-    -- Also draw the live Bezier spine so the deformation is visible.
-    local NT = require('src.node-types')
-    local pts = {}
-    for _, n in ipairs(dbg.nodes) do
-        if n.type == NT.ANCHOR then
-            local f = registry.getSFixtureByID(n.id)
-            if f then
-                local b = f:getBody()
-                local cx, cy = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
-                pts[#pts + 1] = cx; pts[#pts + 1] = cy
-            end
-        elseif n.type == NT.JOINT then
-            local j = registry.getJointByID(n.id)
-            if j and not j:isDestroyed() then
-                local x1, y1 = j:getAnchors()
-                pts[#pts + 1] = x1; pts[#pts + 1] = y1
-            end
-        end
-    end
-    if #pts >= 4 then
-        love.graphics.setColor(1, 0.8, 0.2, 0.9)
-        for i = 1, #pts - 2, 2 do
-            love.graphics.line(pts[i], pts[i + 1], pts[i + 2], pts[i + 3])
-        end
-        -- node dots
-        love.graphics.setColor(1, 0.55, 0.1, 1)
-        for i = 1, #pts, 2 do
-            love.graphics.circle('fill', pts[i], pts[i + 1], 4 / cam:getScale())
-        end
     end
 
     love.graphics.setLineWidth(lw)

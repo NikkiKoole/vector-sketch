@@ -633,6 +633,16 @@ function lib.drawSelectedSFixture()
             if br then ud.extra.bindRadius = br end
             nextRow()
 
+            -- Bind falloff: exponent on the smoothstep weight. 1 = default
+            -- cubic falloff; <1 = broader blend across bones (softer seams);
+            -- >1 = sharper cutoff (more rigid per-bone). Takes effect on
+            -- next `bind pose` — click it again after changing this.
+            local bf = ui.sliderWithInput(myID .. ' bindFalloff', x, y, ROW_WIDTH, 0.25, 4,
+                tonumber(ud.extra.bindFalloff) or 1)
+            ui.alignedLabel(x, y, ' bindFalloff')
+            if bf then ud.extra.bindFalloff = bf end
+            nextRow()
+
             local function getNodeLocal(node)
                 if node.type == NT.JOINT then
                     local joint = registry.getJointByID(node.id)
@@ -844,8 +854,9 @@ function lib.drawSelectedSFixture()
                         end
                         return segs
                     end
-                    local function applySegmentWeights(influences, nodes, worldVerts, radius)
+                    local function applySegmentWeights(influences, nodes, worldVerts, radius, falloff)
                         radius = radius or 80
+                        falloff = falloff or 1
                         local segments = buildSegments(nodes)
                         if #segments == 0 then
                             -- Fall back to point-based inverse-distance weights.
@@ -878,6 +889,7 @@ function lib.drawSelectedSFixture()
                                 local wbx, wby = seg.body:getWorldPoint(seg.lbx, seg.lby)
                                 local d = distToSegment(px, py, wax, way, wbx, wby)
                                 local w = 1 - smoothstep(0, radius, d)
+                                if falloff ~= 1 and w > 0 then w = w ^ falloff end
                                 if w > 0 and (not bodyW[seg.body] or bodyW[seg.body] < w) then
                                     bodyW[seg.body] = w
                                 end
@@ -953,7 +965,8 @@ function lib.drawSelectedSFixture()
 
                     if ud.extra.nodes and #ud.extra.nodes > 0 then
                         local influences = computeInfluences(verts, ud.extra.nodes)
-                        influences = applySegmentWeights(influences, ud.extra.nodes, verts, tonumber(ud.extra.bindRadius) or 80)
+                        influences = applySegmentWeights(influences, ud.extra.nodes, verts,
+                            tonumber(ud.extra.bindRadius) or 80, tonumber(ud.extra.bindFalloff) or 1)
 
                         -- optional but highly recommended:
                         influences = pruneTopK(influences, 3)
@@ -995,21 +1008,137 @@ function lib.drawSelectedSFixture()
                         end
                         ud.extra.rigidLookup = rigidLookup
                         ud.extra.rigidBindCoords = rigidBindCoords
+                        -- Bind modes are mutually exclusive — clear any spine bind.
+                        ud.extra.spineBind = nil
                         --logger:inspect(influences)
                     end
                 end
             end
 
-            -- Unbind: clear influences + bindVerts so the mesh falls back to
-            -- the undeformed draw path (drawn at bone position, no
-            -- deformation). Keeps the node list + transforms.
-            if ud.extra.influences and #ud.extra.influences > 0 then
+            -- Spine bind: alternate to DQS. Each vert gets (t, s) against
+            -- the node chain's rest polyline; draw-time rebuilds a Bezier
+            -- through live node positions and places verts at
+            -- curve(t) + s * normal. See docs/MESHUSERT-SPINE-BIND-PLAN.md.
+            --
+            -- Shared prep: resolve the paired RESOURCE polygon, apply the
+            -- mesh offset/scale/rot, convert to owner-body world coords.
+            -- Same framing the draw path uses, so bind round-trips exactly.
+            local function prepWorldVertsForBind()
+                local label = ud.label or ''
+                local mappert
+                for _, v in pairs(registry.sfixtures) do
+                    if not v:isDestroyed() then
+                        local vud = v:getUserData()
+                        if #vud.label > 0 and label == vud.label and subtypes.is(vud, subtypes.RESOURCE) then
+                            mappert = v
+                        end
+                    end
+                end
+                local nodes = ud.extra.nodes or {}
+                if not (mappert and #nodes >= 2) then return nil, nodes end
+                local mb = mappert:getBody()
+                local mud = mb:getUserData()
+                local mapperExtra = mappert:getUserData().extra
+                local verts = (mapperExtra and mapperExtra.meshVertices) or mud.thing.vertices
+                local vx, vy = mathutils.computeCentroid(verts)
+                verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
+                if ud.extra.meshX or ud.extra.meshY then
+                    verts = mathutils.transformPolygonPoints(verts,
+                        ud.extra.meshX or 0, ud.extra.meshY or 0)
+                end
+                if ud.extra.scaleX or ud.extra.scaleY then
+                    verts = mathutils.scalePolygonPoints(verts,
+                        ud.extra.scaleX or 1, ud.extra.scaleY or 1)
+                end
+                if ud.extra.meshRot and ud.extra.meshRot ~= 0 then
+                    verts = mathutils.rotatePolygonPoints(verts, ud.extra.meshRot)
+                end
+                local ownerBody = state.selection.selectedSFixture:getBody()
+                local worldVerts = {}
+                for i = 1, #verts, 2 do
+                    worldVerts[i], worldVerts[i + 1] = ownerBody:getWorldPoint(verts[i], verts[i + 1])
+                end
+                return worldVerts, nodes
+            end
+
+            local function clearOtherBindState()
+                -- Bind modes are mutually exclusive.
+                ud.extra.influences = nil
+                ud.extra.bindVerts = nil
+                ud.extra.rigidLookup = nil
+                ud.extra.rigidBindCoords = nil
+            end
+
+            nextRow()
+            local inSpineMode = ud.extra.spineBind ~= nil
+            local isMulti = inSpineMode and ud.extra.spineBind.multi
+            local spineBtnLabel = (inSpineMode and not isMulti) and 'rebind spine' or 'bind spine'
+            local spineBtnColor = (inSpineMode and not isMulti) and { 0.2, 0.7, 1.0 } or nil
+            if ui.button(x, y, ROW_WIDTH, spineBtnLabel, BUTTON_HEIGHT, spineBtnColor) then
+                local worldVerts, nodes = prepWorldVertsForBind()
+                if worldVerts then
+                    local spineMesh = require('src.spine-mesh')
+                    local chain = spineMesh.buildChainFromNodes(nodes)
+                    local bendiness = ud.extra.spineBendiness or 2
+                    local bind, err = spineMesh.bind(worldVerts, chain, bendiness)
+                    if bind then
+                        ud.extra.spineBind = bind
+                        clearOtherBindState()
+                        logger:info('spine-bind: ' .. #bind.tsPerVert / 2 .. ' verts, ' .. #nodes .. ' nodes')
+                    else
+                        logger:error('spine-bind failed: ' .. tostring(err))
+                    end
+                else
+                    logger:error('spine-bind: need a label-paired RESOURCE and >=2 nodes')
+                end
+            end
+
+            -- Multi-chain: split the node list at repeated IDs (user's root
+            -- anchor recurs as a chain separator — e.g. 4 limbs off one hub).
+            -- Each vert is hard-assigned to its closest chain. Seam triangles
+            -- between chains stretch on divergence — fix with soft blending.
+            nextRow()
+            local multiBtnLabel = isMulti and 'rebind spine (multi)' or 'bind spine (multi)'
+            local multiBtnColor = isMulti and { 0.2, 0.7, 1.0 } or nil
+            if ui.button(x, y, ROW_WIDTH, multiBtnLabel, BUTTON_HEIGHT, multiBtnColor) then
+                local worldVerts, nodes = prepWorldVertsForBind()
+                if worldVerts then
+                    local spineMesh = require('src.spine-mesh')
+                    local nodeLists = spineMesh.splitChainsByRootRepeat(nodes)
+                    local chains = spineMesh.buildChainsFromNodeLists(nodeLists)
+                    local bendiness = ud.extra.spineBendiness or 2
+                    local bind, err = spineMesh.bindMultiChain(worldVerts, chains, bendiness)
+                    if bind then
+                        ud.extra.spineBind = bind
+                        clearOtherBindState()
+                        logger:info('spine-bind (multi): ' .. #bind.perVert .. ' verts across ' .. #chains .. ' chains')
+                    else
+                        logger:error('spine-bind (multi) failed: ' .. tostring(err))
+                    end
+                else
+                    logger:error('spine-bind: need a label-paired RESOURCE and >=2 nodes')
+                end
+            end
+
+            if inSpineMode then
+                nextRow()
+                local newBend = ui.sliderWithInput(myID .. ' spineBendiness', x, y, ROW_WIDTH, 0, 6,
+                    ud.extra.spineBendiness or 2)
+                ui.alignedLabel(x, y, ' bendiness')
+                if newBend then ud.extra.spineBendiness = math.floor(newBend + 0.5) end
+            end
+
+            -- Unbind: clear whichever mode is active. Falls back to the
+            -- undeformed draw path (drawn at body transform, no deformation).
+            local hasDQS = ud.extra.influences and #ud.extra.influences > 0
+            if hasDQS or inSpineMode then
                 nextRow()
                 if ui.button(x, y, ROW_WIDTH, 'unbind (reset mesh)') then
                     ud.extra.influences = nil
                     ud.extra.bindVerts = nil
                     ud.extra.rigidLookup = nil
                     ud.extra.rigidBindCoords = nil
+                    ud.extra.spineBind = nil
                 end
             end
 
