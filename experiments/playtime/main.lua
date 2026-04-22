@@ -175,7 +175,7 @@ function love.load(_args)
 
     local cwd = love.filesystem.getWorkingDirectory()
 
-    local startScene = 'test'
+    local startScene = 'miposhader'
     for i = 1, #arg do
         if arg[i] == '--scene' and arg[i + 1] then
             startScene = arg[i + 1]

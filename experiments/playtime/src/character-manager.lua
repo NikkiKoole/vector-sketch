@@ -1983,6 +1983,35 @@ function lib.createCharacterFromJustDNA(mydna, x, y, scale)
     return lib.createCharacterFromExistingDNA(instance, x, y, false)
 end
 
+-- One-shot post-spawn pose: rigidly rotate each arm chain about its shoulder so
+-- the character appears in T-pose the moment it's added. No KEEP_ANGLE — physics
+-- takes over on the next step and the arms behave naturally.
+-- Assumes arms were created at angle 0 (hanging). Safe to call on a fresh instance.
+function lib.poseTpose(instance)
+    local chains = {
+        { parts = { 'luarm', 'llarm', 'lhand' }, delta = math.pi / 2 },
+        { parts = { 'ruarm', 'rlarm', 'rhand' }, delta = -math.pi / 2 },
+    }
+    for _, chain in ipairs(chains) do
+        local upper = instance.parts[chain.parts[1]]
+        if upper and upper.body and upper.height then
+            -- Shoulder = top of the upper arm in its hanging pose (local y = -h/2).
+            local sx, sy = upper.body:getWorldPoint(0, -upper.height / 2)
+            for _, partName in ipairs(chain.parts) do
+                local part = instance.parts[partName]
+                if part and part.body then
+                    local cx, cy = part.body:getPosition()
+                    local nx, ny = mathutils.rotatePoint(cx, cy, sx, sy, chain.delta)
+                    part.body:setPosition(nx, ny)
+                    part.body:setAngle(part.body:getAngle() + chain.delta)
+                    part.body:setAngularVelocity(0)
+                    part.body:setLinearVelocity(0, 0)
+                end
+            end
+        end
+    end
+end
+
 function lib.createCharacter(template, x, y, scale)
     if dna[template] then
         local instance = {

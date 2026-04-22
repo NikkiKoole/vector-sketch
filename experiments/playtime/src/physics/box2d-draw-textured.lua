@@ -327,6 +327,8 @@ local plasticineShader = love.graphics.newShader([[
     uniform float strength;
     uniform float scale;
     uniform float edgeDark;
+    uniform float bumpAmp;   // how "deep" thumb-dents look (drives fake normals)
+    uniform vec2  lightDir;  // 2D, implicit +z = out-of-screen; normalized in-shader
 
     float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -352,13 +354,33 @@ local plasticineShader = love.graphics.newShader([[
     vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
         vec4 base = Texel(tex, uv) * color;
         if (base.a < 0.01) return base;
-        float n = fbm(uv * scale);
-        float grain = mix(1.0 - strength, 1.0 + strength, n);
-        // Soft edge darken: distance from UV center, strongest near rim.
+
+        // Sample the height field at p and at two small offsets to get a gradient.
+        // Offsets are in noise-space (post-scale); half a cell is a good step.
+        vec2 p = uv * scale;
+        float h  = fbm(p);
+        float hx = fbm(p + vec2(0.5, 0.0));
+        float hy = fbm(p + vec2(0.0, 0.5));
+
+        // Fake normal from gradient. Flip signs so a *bump* (higher h) tilts toward
+        // the viewer, not away. z=1 keeps the normal mostly facing us for a matte feel.
+        vec3 n = normalize(vec3(-(hx - h) * bumpAmp, -(hy - h) * bumpAmp, 1.0));
+        vec3 L = normalize(vec3(lightDir, 0.9));
+        // Half-lambert: softer shading that keeps the dark side readable, like matte clay.
+        float lambert = dot(n, L) * 0.5 + 0.5;
+        lambert = lambert * lambert;
+        float shade = mix(1.0 - strength, 1.0 + strength * 0.5, lambert);
+
+        // Keep a tiny bit of pure height-darkening so deep pits read dark even when
+        // the slope is near-flat (concave pockets).
+        float pit = mix(1.0 - strength * 0.25, 1.0, smoothstep(0.15, 0.55, h));
+
+        // Soft edge darken: UV-center vignette. TODO: replace with mask-aware rim.
         vec2 d = uv - vec2(0.5);
         float r = clamp(length(d) * 2.0, 0.0, 1.0);
         float ao = mix(1.0, 1.0 - edgeDark, smoothstep(0.55, 1.0, r));
-        base.rgb *= grain * ao;
+
+        base.rgb *= shade * pit * ao;
         return base;
     }
 ]])
@@ -366,6 +388,8 @@ local plasticineShader = love.graphics.newShader([[
 lib.plasticineStrength = 0.18
 lib.plasticineScale    = 28.0
 lib.plasticineEdge     = 0.22
+lib.plasticineBump     = 2.5                    -- normal tilt per unit noise gradient
+lib.plasticineLight    = { -0.7, -0.7 }         -- UV-space: negative = upper-left
 
 
 
@@ -1318,9 +1342,11 @@ function lib.drawTexturedWorld(world)
             local plasticineOn = extra.plasticine
             if plasticineOn then
                 love.graphics.setShader(plasticineShader)
-                plasticineShader:send('strength', lib.plasticineStrength)
-                plasticineShader:send('scale',    lib.plasticineScale)
-                plasticineShader:send('edgeDark', lib.plasticineEdge)
+                plasticineShader:send('strength', extra.plasticineStrength or lib.plasticineStrength)
+                plasticineShader:send('scale',    extra.plasticineScale    or lib.plasticineScale)
+                plasticineShader:send('edgeDark', extra.plasticineEdge     or lib.plasticineEdge)
+                plasticineShader:send('bumpAmp',  extra.plasticineBump     or lib.plasticineBump)
+                plasticineShader:send('lightDir', extra.plasticineLight    or lib.plasticineLight)
             end
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main

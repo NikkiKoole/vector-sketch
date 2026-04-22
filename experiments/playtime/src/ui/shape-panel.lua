@@ -74,6 +74,7 @@ function lib.drawAddShapeUI()
             local instance = CharacterManager.createCharacter("humanoid", wx, wy, 0.3)
             if instance then
                 CharacterManager.randomizeMipo(instance)
+                CharacterManager.poseTpose(instance)
                 -- Set up drag: torso1 as the primary drag target, all parts as group
                 local torsoThing = instance.parts['torso1']
                 if torsoThing then

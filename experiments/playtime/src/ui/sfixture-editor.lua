@@ -495,6 +495,26 @@ function lib.drawSelectedSFixture()
 
                 nextRow()
 
+                if e.plasticine then
+                    local ps = ui.sliderWithInput(myID .. ' plasticineStrength', x, y, ROW_WIDTH,
+                        0, 0.6, e.plasticineStrength or box2dDrawTextured.plasticineStrength)
+                    ui.alignedLabel(x, y, ' grain strength')
+                    if ps and tonumber(ps) then e.plasticineStrength = tonumber(ps) end
+                    nextRow()
+
+                    local psc = ui.sliderWithInput(myID .. ' plasticineScale', x, y, ROW_WIDTH,
+                        4, 120, e.plasticineScale or box2dDrawTextured.plasticineScale)
+                    ui.alignedLabel(x, y, ' grain scale (hi=fine)')
+                    if psc and tonumber(psc) then e.plasticineScale = tonumber(psc) end
+                    nextRow()
+
+                    local ped = ui.sliderWithInput(myID .. ' plasticineEdge', x, y, ROW_WIDTH,
+                        0, 0.6, e.plasticineEdge or box2dDrawTextured.plasticineEdge)
+                    ui.alignedLabel(x, y, ' edge darken')
+                    if ped and tonumber(ped) then e.plasticineEdge = tonumber(ped) end
+                    nextRow()
+                end
+
 
                 --main patch1 patch2
                 --lineart, mask, pattern
