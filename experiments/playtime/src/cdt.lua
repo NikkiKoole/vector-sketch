@@ -42,44 +42,6 @@ local function pointInPoly(px, py, poly)
 end
 lib.pointInPoly = pointInPoly
 
--- Unsigned distance from (px,py) to segment (ax,ay)-(bx,by).
-local function distToSegment(px, py, ax, ay, bx, by)
-    local dx, dy = bx - ax, by - ay
-    local l2 = dx * dx + dy * dy
-    if l2 < 1e-12 then
-        local ex, ey = px - ax, py - ay
-        return math.sqrt(ex * ex + ey * ey)
-    end
-    local t = ((px - ax) * dx + (py - ay) * dy) / l2
-    if t < 0 then t = 0 elseif t > 1 then t = 1 end
-    local cx, cy = ax + dx * t, ay + dy * t
-    local ex, ey = px - cx, py - cy
-    return math.sqrt(ex * ex + ey * ey)
-end
-
--- Minimum distance from a point to the polygon's outline.
-local function distToPolyEdge(px, py, poly)
-    local best = math.huge
-    local n = math.floor(#poly / 2)
-    for i = 1, n do
-        local j = (i % n) + 1
-        local ax, ay = poly[(i - 1) * 2 + 1], poly[(i - 1) * 2 + 2]
-        local bx, by = poly[(j - 1) * 2 + 1], poly[(j - 1) * 2 + 2]
-        local d = distToSegment(px, py, ax, ay, bx, by)
-        if d < best then best = d end
-    end
-    return best
-end
-
-local function pointInTriangle(px, py, ax, ay, bx, by, cx, cy)
-    local d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by)
-    local d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy)
-    local d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay)
-    local hasNeg = (d1 < 0) or (d2 < 0) or (d3 < 0)
-    local hasPos = (d1 > 0) or (d2 > 0) or (d3 > 0)
-    return not (hasNeg and hasPos)
-end
-
 -- Bounding box.
 local function bbox(poly)
     local minX, minY = math.huge, math.huge
@@ -92,39 +54,6 @@ local function bbox(poly)
         if y > maxY then maxY = y end
     end
     return minX, minY, maxX, maxY
-end
-
----------------------------------------------------------------------------
--- Steiner point generation: grid-sampled interior points.
----------------------------------------------------------------------------
-
--- Returns a flat list {x1,y1,x2,y2,...} of interior points inside the polygon,
--- on a grid with given spacing, and at least `minEdgeDist` pixels from any
--- outline edge (to avoid sliver triangles near the boundary).
-function lib.generateSteinerGrid(poly, spacing, minEdgeDist)
-    -- spacing must be positive or the y+=spacing / x+=spacing loops below
-    -- never terminate. Hang-guard: return empty for bad input.
-    if not spacing or spacing <= 0 then return {} end
-    minEdgeDist = minEdgeDist or (spacing * 0.25)
-    local minX, minY, maxX, maxY = bbox(poly)
-    local pts = {}
-    local y = minY + spacing * 0.5
-    while y < maxY do
-        local x = minX + spacing * 0.5
-        -- Stagger every other row for a slightly better triangle shape
-        -- (hexagonal-ish packing).
-        local rowOffset = (math.floor((y - minY) / spacing) % 2 == 1) and (spacing * 0.5) or 0
-        while x < maxX do
-            local px = x + rowOffset
-            if pointInPoly(px, y, poly) and distToPolyEdge(px, y, poly) >= minEdgeDist then
-                pts[#pts + 1] = px
-                pts[#pts + 1] = y
-            end
-            x = x + spacing
-        end
-        y = y + spacing
-    end
-    return pts
 end
 
 ---------------------------------------------------------------------------
@@ -378,20 +307,13 @@ local function filterInsidePoly(triIndices, verts, poly, numPolyVerts)
     return out
 end
 
--- Returns (mergedVerts, triIndices). spacing in world-space units; auto-
--- picks a reasonable default based on polygon bbox if not given.
--- extraPoints: optional flat {x,y,x,y,...} array of additional Steiner points
--- (e.g. centroids of previously selected triangles for local refinement).
-function lib.triangulatePolyWithSteiner(polyVerts, spacing, extraPoints)
-    if not spacing then
-        local minX, minY, maxX, maxY = bbox(polyVerts)
-        local diag = math.sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
-        spacing = math.max(20, diag / 20)
-    end
-    local steiner = lib.generateSteinerGrid(polyVerts, spacing)
+-- Returns (mergedVerts, triIndices). extraPoints: optional flat
+-- {x,y,x,y,...} array of user-placed Steiner points in body-local coords.
+-- With no extraPoints, falls back to love's ear-clip (always correct for
+-- the outline; avoids Bowyer-Watson bridging concavities).
+function lib.triangulatePolyWithSteiner(polyVerts, extraPoints)
     local merged = {}
     for i = 1, #polyVerts do merged[i] = polyVerts[i] end
-    for i = 1, #steiner do merged[#merged + 1] = steiner[i] end
     if extraPoints then
         for i = 1, #extraPoints do merged[#merged + 1] = extraPoints[i] end
     end
@@ -425,155 +347,11 @@ function lib.triangulatePolyWithSteiner(polyVerts, spacing, extraPoints)
 end
 
 ---------------------------------------------------------------------------
--- Refined triangulation: ear-clip base + centroid subdivision.
---
--- Alternative to triangulatePolyWithSteiner. Starts from love.math.triangulate
--- (always covers the full polygon — no boundary erosion) then repeatedly splits
--- triangles larger than spacing² by inserting their centroid, until all
--- triangles are small enough. extraPoints are inserted into the triangulation
--- before the subdivision pass (used by "split selected").
----------------------------------------------------------------------------
-function lib.triangulatePolyRefined(polyVerts, spacing, extraPoints)
-    if not spacing then
-        local minX, minY, maxX, maxY = bbox(polyVerts)
-        local diag = math.sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
-        spacing = math.max(20, diag / 20)
-    end
-    local numPolyVerts = math.floor(#polyVerts / 2)
-
-    local ok, loveTris = pcall(love.math.triangulate, polyVerts)
-    if not ok or not loveTris or #loveTris == 0 then return polyVerts, {} end
-
-    -- Vertex pool: polygon verts first (preserves UV index alignment).
-    local verts = {}
-    for i = 1, #polyVerts do verts[i] = polyVerts[i] end
-    local function getXY(i) return verts[(i-1)*2+1], verts[(i-1)*2+2] end
-    local function addVert(x, y)
-        verts[#verts+1] = x; verts[#verts+1] = y
-        return math.floor(#verts / 2)
-    end
-
-    -- Convert love coord-triangles → {i1,i2,i3} tables referencing verts.
-    local tolSq = 0.01
-    local function findPolyIdx(x, y)
-        for i = 1, numPolyVerts do
-            local dx = verts[(i-1)*2+1] - x
-            local dy = verts[(i-1)*2+2] - y
-            if dx*dx + dy*dy <= tolSq then return i end
-        end
-        return nil
-    end
-    local tris = {}
-    for _, tri in ipairs(loveTris) do
-        local t = {}
-        local valid = true
-        for k = 0, 2 do
-            local idx = findPolyIdx(tri[k*2+1], tri[k*2+2])
-            if not idx then valid = false; break end
-            t[k+1] = idx
-        end
-        if valid then tris[#tris+1] = t end
-    end
-    if #tris == 0 then return polyVerts, {} end
-
-    -- Insert extraPoints (e.g. "split selected" centroids) into the
-    -- triangulation before the area-based subdivision pass.
-    if extraPoints then
-        for ep = 1, #extraPoints, 2 do
-            local px, py = extraPoints[ep], extraPoints[ep+1]
-            for j = 1, #tris do
-                local tri = tris[j]
-                local x1,y1 = getXY(tri[1])
-                local x2,y2 = getXY(tri[2])
-                local x3,y3 = getXY(tri[3])
-                if pointInTriangle(px, py, x1,y1, x2,y2, x3,y3) then
-                    local pi = addVert(px, py)
-                    table.remove(tris, j)
-                    tris[#tris+1] = {tri[1], tri[2], pi}
-                    tris[#tris+1] = {tri[2], tri[3], pi}
-                    tris[#tris+1] = {tri[3], tri[1], pi}
-                    break
-                end
-            end
-        end
-    end
-
-    -- Longest-edge bisection: find each oversized triangle's longest edge,
-    -- insert its midpoint, split into 2. The neighbor sharing that edge is
-    -- also split at the same midpoint — no T-junctions.
-    local threshold = spacing * spacing
-    local function eKey(a, b) return a < b and (a .. ',' .. b) or (b .. ',' .. a) end
-    for _ = 1, 30 do
-        -- Build edge→triangle adjacency for this pass.
-        local edgeAdj = {}
-        for j, tri in ipairs(tris) do
-            for e = 1, 3 do
-                local a, b = tri[e], tri[e % 3 + 1]
-                local k = eKey(a, b)
-                if not edgeAdj[k] then edgeAdj[k] = {} end
-                edgeAdj[k][#edgeAdj[k] + 1] = j
-            end
-        end
-
-        -- For each oversized triangle find its longest edge and insert midpoint.
-        local edgeMid = {}
-        for _, tri in ipairs(tris) do
-            local x1,y1 = getXY(tri[1]); local x2,y2 = getXY(tri[2]); local x3,y3 = getXY(tri[3])
-            local area = math.abs((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)) * 0.5
-            if area > threshold then
-                local e12 = (x2-x1)^2+(y2-y1)^2
-                local e23 = (x3-x2)^2+(y3-y2)^2
-                local e31 = (x1-x3)^2+(y1-y3)^2
-                local la, lb
-                if e12 >= e23 and e12 >= e31 then la,lb = tri[1],tri[2]
-                elseif e23 >= e31 then la,lb = tri[2],tri[3]
-                else la,lb = tri[3],tri[1] end
-                local k = eKey(la, lb)
-                if not edgeMid[k] then
-                    local ax,ay = getXY(la); local bx,by = getXY(lb)
-                    edgeMid[k] = addVert((ax+bx)*0.5, (ay+by)*0.5)
-                end
-            end
-        end
-
-        if not next(edgeMid) then break end
-
-        -- Split every triangle that touches a bisected edge (covers both the
-        -- original oversized triangle AND its neighbor automatically).
-        local newTris = {}
-        for _, tri in ipairs(tris) do
-            local sa, sb, mi
-            for e = 1, 3 do
-                local a, b = tri[e], tri[e % 3 + 1]
-                mi = edgeMid[eKey(a, b)]
-                if mi then sa, sb = a, b; break end
-            end
-            if mi then
-                local c
-                for _, v in ipairs(tri) do if v ~= sa and v ~= sb then c = v; break end end
-                newTris[#newTris+1] = {sa, mi, c}
-                newTris[#newTris+1] = {mi, sb, c}
-            else
-                newTris[#newTris+1] = tri
-            end
-        end
-        tris = newTris
-    end
-
-    local triIdx = {}
-    for _, tri in ipairs(tris) do
-        triIdx[#triIdx+1] = tri[1]
-        triIdx[#triIdx+1] = tri[2]
-        triIdx[#triIdx+1] = tri[3]
-    end
-    return verts, triIdx
-end
-
----------------------------------------------------------------------------
--- High-level helper: compute RESOURCE mesh data (verts, UVs, triangles)
--- in either `basic` or `cdt` mode. Called from io.lua on scene load, from
--- the RESOURCE UI when it's selected, and from the toggle-triangulation
--- button on MESHUSERT. Keeps the mesh-build policy in one place.
+-- High-level helper: compute RESOURCE mesh data (verts, UVs, triangles).
+-- Mode is auto-derived from body state: ribbons → strip topology; bodies
+-- with user-placed Steiner points → authored Delaunay; otherwise basic
+-- ear-clip on the outline. Called from io.lua on scene load and from the
+-- RESOURCE/MESHUSERT UI. Keeps the mesh-build policy in one place.
 ---------------------------------------------------------------------------
 
 -- Ensures `ud.extra` on a RESOURCE fixture has consistent `meshVertices`,
@@ -604,19 +382,17 @@ local function ribbonStripIndices(polyVerts)
     return tris
 end
 
-function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
+function lib.computeResourceMesh(ud, body, bd, mathutils)
     if not (ud and ud.extra and body and bd) then return false end
     local bodyUD = body:getUserData()
     if not (bodyUD and bodyUD.thing and bodyUD.thing.vertices) then return false end
     local origVerts = bodyUD.thing.vertices
 
-    -- Path B: operate in body-local throughout. Convert polygon verts to
-    -- body-local up front (subtract the centroid that collision fixtures
-    -- were also built from), and read Steiner points from the body
-    -- (thing.extraSteiner is already body-local). The rest of the pipeline
-    -- — ribbon strip / CDT / basic triangulation — gets consistent local
-    -- coords and returns body-local meshVerts. UV mapping just applies the
-    -- body's current world transform once.
+    -- Operate in body-local throughout. Convert polygon verts to body-local
+    -- up front (subtract the centroid that collision fixtures were also
+    -- built from), and read Steiner points from the body (thing.extraSteiner
+    -- is already body-local). The rest of the pipeline returns body-local
+    -- meshVerts. UV mapping just applies the body's current world transform.
     local mathutils2 = mathutils or require('src.math-utils')
     local centX, centY = mathutils2.computeCentroid(origVerts)
     local localPolyVerts = {}
@@ -626,22 +402,16 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     end
     local extraSteiner = bodyUD.thing.extraSteiner
 
-    -- Auto-upgrade basic → authored when the body has user-placed Steiner
-    -- points. Basic (ear-clip) ignores extraSteiner, so keeping it would
-    -- silently drop the user's input. We pick 'authored' rather than 'cdt'
-    -- because the user authored a specific set of points — honor those
-    -- without silently adding a grid.
-    if extraSteiner and #extraSteiner >= 2 and (not mode or mode == 'basic') then
-        mode = 'authored'
-    end
-
-    -- Ribbon bodies have a guaranteed strip topology we want to preserve
-    -- (rib-to-rib diagonals, perpendicular to the bone axis). Ear-clip /
-    -- CDT on a ribbon polygon produces fans or arbitrary tris that
-    -- deform badly under multi-bone skinning. Short-circuit to strip.
+    -- Mode is auto-derived from body state:
+    --   ribbon shapeType → 'strip' (rib-to-rib diagonals, perpendicular to
+    --                      the bone axis; ear-clip would deform badly under
+    --                      multi-bone skinning).
+    --   extraSteiner present → 'authored' (outline + user-placed points).
+    --   otherwise → 'basic' (love's ear-clip on the outline).
     local isRibbon = bodyUD.thing.shapeType == 'ribbon'
+    local hasSteiner = extraSteiner and #extraSteiner >= 2
 
-    local meshVerts, triIndices
+    local mode, meshVerts, triIndices
     if isRibbon then
         triIndices = ribbonStripIndices(localPolyVerts)
         if triIndices and #triIndices > 0 then
@@ -650,34 +420,12 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
         end
     end
     if not triIndices or #triIndices == 0 then
-        if mode == 'cdt' then
-            meshVerts, triIndices = lib.triangulatePolyWithSteiner(localPolyVerts, spacing, extraSteiner)
-            if not triIndices or #triIndices == 0 then
-                mode = 'basic'
-                meshVerts = localPolyVerts
-            end
-        elseif mode == 'refined' then
-            meshVerts, triIndices = lib.triangulatePolyRefined(localPolyVerts, spacing, extraSteiner)
-            if not triIndices or #triIndices == 0 then
-                mode = 'basic'
-                meshVerts = localPolyVerts
-            end
-        elseif mode == 'authored' then
-            -- Honor ONLY the polygon outline + the user's Steiner points.
-            -- No auto-generated grid (huge spacing → generateSteinerGrid
-            -- returns {}). If the user has placed no points, fall back to
-            -- basic ear-clip — there's nothing to triangulate beyond the
-            -- outline.
-            if extraSteiner and #extraSteiner >= 2 then
-                meshVerts, triIndices = lib.triangulatePolyWithSteiner(
-                    localPolyVerts, math.huge, extraSteiner)
-            end
-            if not triIndices or #triIndices == 0 then
-                mode = 'basic'
-                meshVerts = localPolyVerts
-            end
+        if hasSteiner then
+            meshVerts, triIndices = lib.triangulatePolyWithSteiner(localPolyVerts, extraSteiner)
+            if triIndices and #triIndices > 0 then mode = 'authored' end
         end
-        if mode ~= 'cdt' and mode ~= 'refined' and mode ~= 'authored' then
+        if not triIndices or #triIndices == 0 then
+            mode = 'basic'
             meshVerts = localPolyVerts
             triIndices = mathutils and mathutils.triangulateToIndices(localPolyVerts) or nil
         end
@@ -686,8 +434,11 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
 
     -- UV mapping: meshVerts are in body-local, so applying the body's
     -- current world transform gives us the world-space sample location
-    -- on the backdrop.  UV = (world - backdrop_corner) / backdrop_size.
-    local bdW, bdH = bd.w, bd.h
+    -- on the backdrop. The backdrop is drawn at (bd.x, bd.y) with
+    -- bd.scale (see main.lua drawOneBackdrop), so its on-screen size
+    -- is bd.w*scale × bd.h*scale — divide by that to get normalized UV.
+    local bdScale = bd.scale or 1
+    local bdW, bdH = bd.w * bdScale, bd.h * bdScale
     local uvs = {}
     for i = 1, #meshVerts, 2 do
         local wx, wy = body:getWorldPoint(meshVerts[i], meshVerts[i + 1])
@@ -707,7 +458,7 @@ function lib.computeResourceMesh(ud, body, bd, mode, spacing, mathutils)
     -- Stored in body-local. The draw path normalizes with makePolygonRelativeToCenter
     -- so it doesn't care whether meshVerts arrives body-local or authoring-world
     -- (legacy saves).
-    if mode == 'cdt' or mode == 'refined' or mode == 'authored' then
+    if mode == 'authored' then
         ud.extra.meshVertices = meshVerts
     else
         ud.extra.meshVertices = nil

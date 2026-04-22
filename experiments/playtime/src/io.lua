@@ -598,11 +598,11 @@ function lib.buildWorld(data, world, cam)
         end
     end
 
-    -- Auto-compute mesh (UVs + triangle indices, optionally with CDT Steiner
-    -- points) for RESOURCE sfixtures that have a backdrop selected but no
-    -- cached mesh. Without this, MESHUSERT meshes render untextured until
-    -- the user manually selects the RESOURCE. Uses the current
-    -- `state.triangulationMode`.
+    -- Auto-compute mesh (UVs + triangle indices, optionally with user-placed
+    -- Steiner points) for RESOURCE sfixtures that have a backdrop selected
+    -- but no cached mesh. Without this, MESHUSERT meshes render untextured
+    -- until the user manually selects the RESOURCE. Mode is auto-derived
+    -- from body state in computeResourceMesh.
     local cdt = require 'src.cdt'
     for _, v in pairs(registry.sfixtures) do
         if not v:isDestroyed() then
@@ -627,9 +627,7 @@ function lib.buildWorld(data, world, cam)
                 local needsUVs = not ud.extra.uvs or #ud.extra.uvs == 0
                 local needsTris = not ud.extra.triangles or #ud.extra.triangles == 0
                 if bd and bd.image and bd.w and bd.h and (needsUVs or needsTris) then
-                    cdt.computeResourceMesh(ud, v:getBody(), bd,
-                        state.triangulationMode or 'basic',
-                        state.cdtSpacing, mathutils)
+                    cdt.computeResourceMesh(ud, v:getBody(), bd, mathutils)
                 end
             end
         end

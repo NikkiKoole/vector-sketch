@@ -179,27 +179,32 @@ function lib.renderActiveEditorThings()
 
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
+        -- Scale marker sizes by camera zoom so they stay visually constant
+        -- (precise when zoomed in, not giant when zoomed out).
+        local invZoom = 1 / cam:getScale()
+        local hitR = 10 * invZoom
 
         for i = 1, #verts, 2 do
             local vx = verts[i]
             local vy = verts[i + 1]
             local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-            if dist < 10 then
+            if dist < hitR then
                 love.graphics.setColor(0, 0, 0)
-                love.graphics.circle('fill', vx, vy, 13)
+                love.graphics.circle('fill', vx, vy, 13 * invZoom)
                 love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('fill', vx, vy, 11)
+                love.graphics.circle('fill', vx, vy, 11 * invZoom)
             else
                 love.graphics.setColor(0, 0, 0)
-                love.graphics.circle('line', vx, vy, 12)
+                love.graphics.setLineWidth(invZoom)
+                love.graphics.circle('line', vx, vy, 12 * invZoom)
                 love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('line', vx, vy, 10)
+                love.graphics.circle('line', vx, vy, 10 * invZoom)
             end
 
             love.graphics.setColor(0, 0, 0)
-            love.graphics.print(math.ceil(i / 2), vx, vy)
+            love.graphics.print(math.ceil(i / 2), vx, vy, 0, invZoom, invZoom)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.print(math.ceil(i / 2), vx - 2, vy - 2)
+            love.graphics.print(math.ceil(i / 2), vx - 2 * invZoom, vy - 2 * invZoom, 0, invZoom, invZoom)
         end
     end
 
@@ -215,27 +220,30 @@ function lib.renderActiveEditorThings()
 
         local mx, my    = love.mouse:getPosition()
         local cx, cy    = cam:getWorldCoordinates(mx, my)
+        local invZoom   = 1 / cam:getScale()
+        local hitR      = 10 * invZoom
         -- logger:inspect(fixtureUD)
         for i = 1, #verts, 2 do
             local vx = verts[i]
             local vy = verts[i + 1]
             local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-            if dist < 10 then
+            if dist < hitR then
                 love.graphics.setColor(0, 0, 0)
-                love.graphics.circle('fill', vx, vy, 13)
+                love.graphics.circle('fill', vx, vy, 13 * invZoom)
                 love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('fill', vx, vy, 11)
+                love.graphics.circle('fill', vx, vy, 11 * invZoom)
             else
                 love.graphics.setColor(0, 0, 0)
-                love.graphics.circle('line', vx, vy, 12)
+                love.graphics.setLineWidth(invZoom)
+                love.graphics.circle('line', vx, vy, 12 * invZoom)
                 love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('line', vx, vy, 10)
+                love.graphics.circle('line', vx, vy, 10 * invZoom)
 
                 if (isMeta8) then
                     love.graphics.setColor(0, 0, 0)
-                    love.graphics.print(math.ceil(i / 2), vx, vy)
+                    love.graphics.print(math.ceil(i / 2), vx, vy, 0, invZoom, invZoom)
                     love.graphics.setColor(1, 1, 1)
-                    love.graphics.print(math.ceil(i / 2), vx - 2, vy - 2)
+                    love.graphics.print(math.ceil(i / 2), vx - 2 * invZoom, vy - 2 * invZoom, 0, invZoom, invZoom)
                 end
             end
         end
@@ -358,6 +366,7 @@ function lib.renderActiveEditorThings()
                     local targetBone     = state.triangleEditor.selectedBone or 1
                     local triangleBones  = ud.extra.triangleBones
                     local targetGroup    = state.triangleEditor.selectedGroup or 1
+                    local hoveredGroup   = state.triangleEditor.hoveredGroup
                     -- triangleGroups lives on the RESOURCE fixture
                     local triangleGroups = groups  -- already read above
 
@@ -373,11 +382,12 @@ function lib.renderActiveEditorThings()
                             if paintMode == 'groups' then
                                 local assignedGroup = triangleGroups and triangleGroups[t]
                                 if assignedGroup then
+                                    local isHovered = (assignedGroup == hoveredGroup)
                                     local r, gn, bl = groupColor(assignedGroup)
-                                    love.graphics.setColor(r, gn, bl, 0.6)
+                                    love.graphics.setColor(r, gn, bl, isHovered and 0.85 or 0.6)
                                     love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                                    love.graphics.setColor(r, gn, bl, 0.9)
-                                    love.graphics.setLineWidth(1)
+                                    love.graphics.setColor(r, gn, bl, isHovered and 1.0 or 0.9)
+                                    love.graphics.setLineWidth(isHovered and 3 or 1)
                                     love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
                                 end
                                 if selSet[t] then
@@ -453,19 +463,7 @@ function lib.renderSteinerOverlay()
         localPoly[i + 1] = thing.vertices[i + 1] - cenY
     end
 
-    -- Use a spacing larger than the bbox so `generateSteinerGrid` emits no
-    -- points (we only want the user's Steiners, not a grid overlay). Do NOT
-    -- pass 0 — the grid generator's inner `y = y + spacing` loop hangs.
-    local minX, minY, maxX, maxY = nil, nil, nil, nil
-    for i = 1, #localPoly, 2 do
-        local px, py = localPoly[i], localPoly[i + 1]
-        if not minX or px < minX then minX = px end
-        if not minY or py < minY then minY = py end
-        if not maxX or px > maxX then maxX = px end
-        if not maxY or py > maxY then maxY = py end
-    end
-    local hugeSpacing = math.max(1, (maxX - minX), (maxY - minY)) * 4
-    local meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, hugeSpacing, thing.extraSteiner)
+    local meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, thing.extraSteiner)
 
     local lw = love.graphics.getLineWidth()
     love.graphics.setLineWidth(1 / cam:getScale())

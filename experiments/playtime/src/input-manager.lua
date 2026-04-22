@@ -33,9 +33,7 @@ local function refreshResourceAfterSteinerChange(body, thing)
             local idx = fud.extra.selectedBGIndex
             local bd = idx and state.backdrops and state.backdrops[idx]
             if bd then
-                cdt.computeResourceMesh(fud, body, bd,
-                    state.triangulationMode or 'cdt',
-                    state.cdtSpacing, mathutils)
+                cdt.computeResourceMesh(fud, body, bd, mathutils)
             end
         end
     end

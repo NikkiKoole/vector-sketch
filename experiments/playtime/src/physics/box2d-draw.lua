@@ -62,23 +62,14 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
         localPoly[i + 1] = verts[i + 1] - cenY
     end
 
-    -- Match the MESHUSERT's triangulation so body fill and deformed
-    -- render agree. Mode + cdtSpacing come from state; branches mirror
-    -- cdt.computeResourceMesh.
-    local tmode = state.triangulationMode or 'basic'
+    -- Match the MESHUSERT's triangulation so body fill and deformed render
+    -- agree. With Steiners → outline + user points; without → ear-clip.
     local hasSteiner = extraSteiner and #extraSteiner >= 2
-    if hasSteiner and tmode == 'basic' then tmode = 'authored' end -- auto-upgrade
-
     local meshVerts, triIdx
-    if tmode == 'cdt' and hasSteiner then
-        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, extraSteiner)
-    elseif tmode == 'cdt' then
-        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, state.cdtSpacing, nil)
-    elseif tmode == 'authored' and hasSteiner then
-        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, math.huge, extraSteiner)
+    if hasSteiner then
+        meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, extraSteiner)
     end
     if not triIdx or #triIdx == 0 then
-        -- No Steiners, basic, or CDT declined: ear-clip fallback.
         meshVerts = localPoly
         triIdx = mathutils.triangulateToIndices and
             mathutils.triangulateToIndices(localPoly) or nil

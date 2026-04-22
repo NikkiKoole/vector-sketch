@@ -488,6 +488,10 @@ function lib.drawSelectedSFixture()
                 if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
                     e.OMP = not e.OMP
                 end
+                local slx2, sly2 = ui.sameLine(20)
+                if ui.checkbox(slx2, sly2, e.plasticine, 'Plasticine') then
+                    e.plasticine = not e.plasticine
+                end
 
                 nextRow()
 
@@ -572,59 +576,6 @@ function lib.drawSelectedSFixture()
             -- CDT+Steiner. Flipping it recomputes the linked RESOURCE's mesh
             -- (uvs/triangles/meshVertices) and unbinds this MESHUSERT so the
             -- user re-binds against the new topology.
-            local function recomputeLinkedResourceAndUnbind()
-                local lbl = ud.label or ''
-                for _, rv in pairs(registry.sfixtures) do
-                    if not rv:isDestroyed() then
-                        local rud = rv:getUserData()
-                        if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
-                            local idx = rud.extra and rud.extra.selectedBGIndex
-                            local bd = idx and state.backdrops and state.backdrops[idx]
-                            if bd then
-                                cdt.computeResourceMesh(rud, rv:getBody(), bd,
-                                    state.triangulationMode,
-                                    state.cdtSpacing, mathutils)
-                            end
-                        end
-                    end
-                end
-                ud.extra.influences = nil
-                ud.extra.bindVerts = nil
-                ud.extra.rigidLookup = nil
-                ud.extra.rigidBindCoords = nil
-                ud.extra.triangleBones = nil
-            end
-
-            local tmode = state.triangulationMode or 'basic'
-            local tlabel = (tmode == 'authored') and 'tri: authored (user Steiners only)'
-                or (tmode == 'cdt') and 'tri: CDT (grid + user Steiners)'
-                or (tmode == 'refined') and 'tri: refined (ear+subdivide)'
-                or 'tri: basic (ear-clip)'
-            if ui.button(x, y, ROW_WIDTH, tlabel) then
-                state.triangulationMode = (tmode == 'basic') and 'authored'
-                    or (tmode == 'authored') and 'cdt'
-                    or (tmode == 'cdt') and 'refined' or 'basic'
-                recomputeLinkedResourceAndUnbind()
-            end
-            nextRow()
-
-            -- CDT Steiner-point spacing (only relevant when mode=='cdt'
-            -- or 'refined' — 'authored' explicitly has no grid).
-            -- Smaller = denser interior mesh = smoother deformation, more
-            -- triangles. Recomputes on drag + clears the bind so the user
-            -- re-binds once satisfied with the density.
-            if state.triangulationMode == 'cdt' or state.triangulationMode == 'refined' then
-                local defaultSpacing = state.cdtSpacing or 30
-                local newSpacing = ui.sliderWithInput(myID .. ' cdtSpacing', x, y, ROW_WIDTH,
-                    10, 80, defaultSpacing)
-                ui.alignedLabel(x, y, ' cdt spacing (lo=dense)')
-                if newSpacing and tonumber(newSpacing) and tonumber(newSpacing) ~= defaultSpacing then
-                    state.cdtSpacing = tonumber(newSpacing)
-                    recomputeLinkedResourceAndUnbind()
-                end
-                nextRow()
-            end
-
             -- Bind radius: how far each bone segment's influence reaches.
             -- Larger = softer falloff / more blending; smaller = tighter
             -- skin-to-bone coupling. Applied at bind time.
@@ -1225,9 +1176,7 @@ function lib.drawSelectedSFixture()
                                         local idx = rextra.selectedBGIndex
                                         local bd = idx and state.backdrops and state.backdrops[idx]
                                         if bd then
-                                            cdt.computeResourceMesh(rud, rv:getBody(), bd,
-                                                state.triangulationMode or 'cdt',
-                                                state.cdtSpacing, mathutils)
+                                            cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
                                         end
                                         -- Invalidate bone assignments — topology changed
                                         ud.extra.triangleBones = nil
@@ -1253,16 +1202,24 @@ function lib.drawSelectedSFixture()
                     ui.label(x, y, 'Group (z-order):')
                     nextRow()
                     local btnW = (ROW_WIDTH + 50) / 8 - 2
+                    local hoveredGroup
                     for g = 1, 8 do
                         local isSel = (state.triangleEditor.selectedGroup == g)
+                        local gbx = x + (g - 1) * (btnW + 2)
+                        local isHover = ui.mouseX >= gbx and ui.mouseX <= gbx + btnW
+                            and ui.mouseY >= y and ui.mouseY <= y + BUTTON_HEIGHT
+                        if isHover then hoveredGroup = g end
                         local gx = ((g * 73) % 256) / 255
                         local gy = ((g * 151) % 256) / 255
                         local gz = ((g * 211) % 256) / 255
                         local col = isSel and { gx, gy, gz } or nil
-                        if ui.button(x + (g - 1) * (btnW + 2), y, btnW, tostring(g), BUTTON_HEIGHT, col) then
+                        if ui.button(gbx, y, btnW, tostring(g), BUTTON_HEIGHT, col) then
                             state.triangleEditor.selectedGroup = g
                         end
                     end
+                    -- Published for the triangle-painter render pass in editor-
+                    -- render.lua — emphasizes tris assigned to the hovered group.
+                    state.triangleEditor.hoveredGroup = hoveredGroup
                     nextRow()
 
                     if #state.triangleEditor.selectedTriangles > 0 then
@@ -1300,27 +1257,39 @@ function lib.drawSelectedSFixture()
                     ui.label(x, y, 'Bone:')
                     nextRow()
                     local boneBtnW = math.min(40, (ROW_WIDTH + 50) / #nodes - 2)
+                    local hoveredBone
                     for b = 1, #nodes do
                         local isSel = (state.triangleEditor.selectedBone == b)
+                        local bx = x + (b - 1) * (boneBtnW + 2)
+                        local isHover = ui.mouseX >= bx and ui.mouseX <= bx + boneBtnW
+                            and ui.mouseY >= y and ui.mouseY <= y + BUTTON_HEIGHT
+                        if isHover then hoveredBone = b end
                         local br = ((b * 97)  % 256) / 255
                         local bg = ((b * 163) % 256) / 255
                         local bb = ((b * 211) % 256) / 255
                         local col = isSel and { br, bg, bb } or nil
-                        if ui.button(x + (b - 1) * (boneBtnW + 2), y, boneBtnW, tostring(b), BUTTON_HEIGHT, col) then
+                        if ui.button(bx, y, boneBtnW, tostring(b), BUTTON_HEIGHT, col) then
                             state.triangleEditor.selectedBone = b
                         end
-                        if isSel then
-                            local wx, wy = nodeWorldPos(nodes[b])
-                            if wx then
-                                local sx, sy = cam:getScreenCoordinates(wx, wy)
-                                love.graphics.setColor(br, bg, bb, 0.9)
-                                love.graphics.setLineWidth(3)
-                                love.graphics.circle('line', sx, sy, 18)
-                                love.graphics.line(sx - 24, sy, sx + 24, sy)
-                                love.graphics.line(sx, sy - 24, sx, sy + 24)
-                                love.graphics.setColor(1, 1, 1)
-                                love.graphics.setLineWidth(1)
-                            end
+                    end
+                    -- Highlight the hovered bone (preview) or the selected one.
+                    -- Hover wins so the user sees the bone they're *about* to pick.
+                    local highlightBone = hoveredBone or state.triangleEditor.selectedBone
+                    if highlightBone and nodes[highlightBone] then
+                        local wx, wy = nodeWorldPos(nodes[highlightBone])
+                        if wx then
+                            local b = highlightBone
+                            local br = ((b * 97)  % 256) / 255
+                            local bg = ((b * 163) % 256) / 255
+                            local bb = ((b * 211) % 256) / 255
+                            local sx, sy = cam:getScreenCoordinates(wx, wy)
+                            love.graphics.setColor(br, bg, bb, 0.9)
+                            love.graphics.setLineWidth(3)
+                            love.graphics.circle('line', sx, sy, 18)
+                            love.graphics.line(sx - 24, sy, sx + 24, sy)
+                            love.graphics.line(sx, sy - 24, sx, sy + 24)
+                            love.graphics.setColor(1, 1, 1)
+                            love.graphics.setLineWidth(1)
                         end
                     end
                     nextRow()
@@ -1466,8 +1435,7 @@ function lib.drawSelectedSFixture()
                                         local idx = rud.extra.selectedBGIndex
                                         local bd = idx and state.backdrops and state.backdrops[idx]
                                         if bd then
-                                            cdt.computeResourceMesh(rud, rv:getBody(), bd,
-                                                state.triangulationMode or 'cdt', state.cdtSpacing, mathutils)
+                                            cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
                                         end
                                         ud.extra.triangleBones = nil
                                         ud.extra.influences = nil
@@ -1554,13 +1522,11 @@ function lib.drawSelectedSFixture()
                     local bod = state.selection.selectedSFixture:getBody()
 
                     -- Delegate UV + triangulation to the shared mesh builder
-                    -- in `src/cdt.lua`. Picks basic or CDT based on
-                    -- `state.triangulationMode`. Stores `ud.extra.uvs`,
-                    -- `ud.extra.triangles`, and optionally
-                    -- `ud.extra.meshVertices` (CDT mode only).
-                    cdt.computeResourceMesh(ud, bod, b,
-                        state.triangulationMode or 'basic',
-                        state.cdtSpacing, mathutils)
+                    -- in `src/cdt.lua`. Auto-picks strip (ribbons) / authored
+                    -- (has user Steiners) / basic (ear-clip). Stores
+                    -- `ud.extra.uvs`, `ud.extra.triangles`, and optionally
+                    -- `ud.extra.meshVertices` (authored mode only).
+                    cdt.computeResourceMesh(ud, bod, b, mathutils)
                 end
             end
             nextRow()
@@ -1575,8 +1541,7 @@ function lib.drawSelectedSFixture()
                     local idx = ud.extra.selectedBGIndex
                     local bd = idx and state.backdrops and state.backdrops[idx]
                     if bd then
-                        cdt.computeResourceMesh(ud, resBody, bd,
-                            state.triangulationMode or 'cdt', state.cdtSpacing, mathutils)
+                        cdt.computeResourceMesh(ud, resBody, bd, mathutils)
                     end
                 end
                 nextRow()

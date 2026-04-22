@@ -48,6 +48,7 @@ local shrinkFactor = 1
 lib.useDQS = true
 lib.drawMeshOutline = true -- debug: draw wireframe over deformed MESHUSERT meshes
 
+
 lib.setShrinkFactor = function(value)
     shrinkFactor = value
 end
@@ -317,6 +318,54 @@ local maskShader = love.graphics.newShader([[
         return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a  );
 	}
 ]])
+
+-- Plasticine POC: procedural grain + soft edge darkening.
+-- Noise samples in UV space so it rotates/translates with the body (noise stuck to
+-- the character, not the screen). fBm approximates thumbprint texture without an
+-- asset file. Tune via lib.plasticineStrength / lib.plasticineScale / lib.plasticineEdge.
+local plasticineShader = love.graphics.newShader([[
+    uniform float strength;
+    uniform float scale;
+    uniform float edgeDark;
+
+    float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    }
+    float vnoise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash(i);
+        float b = hash(i + vec2(1.0, 0.0));
+        float c = hash(i + vec2(0.0, 1.0));
+        float d = hash(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+    float fbm(vec2 p) {
+        float f = 0.0;
+        f += 0.5   * vnoise(p);
+        f += 0.25  * vnoise(p * 2.13 + vec2(3.7, 1.1));
+        f += 0.125 * vnoise(p * 4.71 + vec2(1.3, 5.2));
+        return f;
+    }
+
+    vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
+        vec4 base = Texel(tex, uv) * color;
+        if (base.a < 0.01) return base;
+        float n = fbm(uv * scale);
+        float grain = mix(1.0 - strength, 1.0 + strength, n);
+        // Soft edge darken: distance from UV center, strongest near rim.
+        vec2 d = uv - vec2(0.5);
+        float r = clamp(length(d) * 2.0, 0.0, 1.0);
+        float ao = mix(1.0, 1.0 - edgeDark, smoothstep(0.55, 1.0, r));
+        base.rgb *= grain * ao;
+        return base;
+    }
+]])
+
+lib.plasticineStrength = 0.18
+lib.plasticineScale    = 28.0
+lib.plasticineEdge     = 0.22
 
 
 
@@ -1266,6 +1315,13 @@ function lib.drawTexturedWorld(world)
             --if texfixture then
             local extra = drawables[i].extra
             --print(extra.dirty)
+            local plasticineOn = extra.plasticine
+            if plasticineOn then
+                love.graphics.setShader(plasticineShader)
+                plasticineShader:send('strength', lib.plasticineStrength)
+                plasticineShader:send('scale',    lib.plasticineScale)
+                plasticineShader:send('edgeDark', lib.plasticineEdge)
+            end
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
                 -- local cached = main.cached
@@ -1303,6 +1359,9 @@ function lib.drawTexturedWorld(world)
                     drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
                 --end
+            end
+            if plasticineOn then
+                love.graphics.setShader()
             end
         end
 
