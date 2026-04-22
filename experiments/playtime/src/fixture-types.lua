@@ -72,6 +72,20 @@ fixtureTypes[subtypes.DECAL] = {
     end,
 }
 
+fixtureTypes[subtypes.LIGHT] = {
+    subtype = subtypes.LIGHT,
+    density = 0,
+    getSize = function(cfg) return cfg.radius or 10, cfg.radius or 10 end,
+    getExtra = function()
+        return {
+            colorHex  = 'fff2d9ff',     -- warm off-white key
+            intensity = 1.0,
+            lightType = 'directional',  -- 'directional' | 'point'
+            range     = 500,            -- world units; only used by point lights
+        }
+    end,
+}
+
 -- Expose rect8 for updateSFixtureDimensions in fixtures.lua
 fixtureTypes.rect8 = rect8
 

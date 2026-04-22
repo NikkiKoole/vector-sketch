@@ -188,6 +188,7 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'uvusert', 'uvusert')
         handleFixtureButton(x, y, width, 'resource', 'resource')
         handleFixtureButton(x, y, width, 'meshusert', 'meshusert')
+        handleFixtureButton(x, y, width, 'light', 'light')
         if ui.button(x, y, width, 'auto-ropify') then
             -- todo make this work
             modes.set(modes.PICK_AUTO_ROPIFY)

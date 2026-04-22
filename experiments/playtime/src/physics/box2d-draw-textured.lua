@@ -323,12 +323,21 @@ local maskShader = love.graphics.newShader([[
 -- Noise samples in UV space so it rotates/translates with the body (noise stuck to
 -- the character, not the screen). fBm approximates thumbprint texture without an
 -- asset file. Tune via lib.plasticineStrength / lib.plasticineScale / lib.plasticineEdge.
+local MAX_LIGHTS = 4
 local plasticineShader = love.graphics.newShader([[
+    #define MAX_LIGHTS 4
     uniform float strength;
     uniform float scale;
     uniform float edgeDark;
-    uniform float bumpAmp;   // how "deep" thumb-dents look (drives fake normals)
-    uniform vec2  lightDir;  // 2D, implicit +z = out-of-screen; normalized in-shader
+    uniform float bumpAmp;       // micro-normal tilt (thumb-dent depth)
+    uniform float formStrength;  // macro-form tilt from alpha gradient (rounds the shape)
+    uniform float formRadius;    // UV-space step for the alpha gradient sample
+    uniform float useForm;       // 0/1 — gate macro-form contribution
+    uniform float rimStyle;      // 0=off, 1=silhouette, 2=UV vignette
+    uniform int   lightCount;    // number of active lights (0 → baked default)
+    uniform vec2  lightDir[MAX_LIGHTS];       // body-local (CPU-rotated)
+    uniform vec3  lightColor[MAX_LIGHTS];
+    uniform float lightIntensity[MAX_LIGHTS];
 
     float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -355,43 +364,226 @@ local plasticineShader = love.graphics.newShader([[
         vec4 base = Texel(tex, uv) * color;
         if (base.a < 0.01) return base;
 
-        // Sample the height field at p and at two small offsets to get a gradient.
-        // Offsets are in noise-space (post-scale); half a cell is a good step.
+        // --- Micro-normal from fBm (thumb-dents) ---
         vec2 p = uv * scale;
         float h  = fbm(p);
         float hx = fbm(p + vec2(0.5, 0.0));
         float hy = fbm(p + vec2(0.0, 0.5));
+        vec2 microTilt = vec2(-(hx - h), -(hy - h)) * bumpAmp;
 
-        // Fake normal from gradient. Flip signs so a *bump* (higher h) tilts toward
-        // the viewer, not away. z=1 keeps the normal mostly facing us for a matte feel.
-        vec3 n = normalize(vec3(-(hx - h) * bumpAmp, -(hy - h) * bumpAmp, 1.0));
-        vec3 L = normalize(vec3(lightDir, 0.9));
-        // Half-lambert: softer shading that keeps the dark side readable, like matte clay.
-        float lambert = dot(n, L) * 0.5 + 0.5;
-        lambert = lambert * lambert;
-        float shade = mix(1.0 - strength, 1.0 + strength * 0.5, lambert);
+        // --- Alpha neighborhood: gradient for form shading, average for rim ---
+        // Sample the texture's own alpha at ±formRadius in UV space. The gradient
+        // points outward at the silhouette (drives the macro-normal → rounded form).
+        // The average smoothly goes from 1 in the deep interior to 0 at the edge —
+        // use it for the rim so the darkening has a soft interior-to-edge falloff
+        // (like the old UV vignette) but tracks the actual shape.
+        float aR = Texel(tex, uv + vec2(formRadius, 0.0)).a;
+        float aL = Texel(tex, uv - vec2(formRadius, 0.0)).a;
+        float aU = Texel(tex, uv + vec2(0.0, formRadius)).a;
+        float aD = Texel(tex, uv - vec2(0.0, formRadius)).a;
+        vec2  gAlpha   = vec2(aR - aL, aU - aD) * 0.5;
+        float avgAlpha = (aR + aL + aU + aD) * 0.25;
+        vec2 macroTilt = (useForm > 0.5) ? (-gAlpha * formStrength) : vec2(0.0);
 
-        // Keep a tiny bit of pure height-darkening so deep pits read dark even when
-        // the slope is near-flat (concave pockets).
+        vec3 n = normalize(vec3(microTilt + macroTilt, 1.0));
+
+        // --- Multi-light accumulation ---
+        // Each light contributes (color * intensity * squared half-lambert).
+        // `weightSum` drives the brightness range; `totalLight` divided by it
+        // gives the per-pixel color tint from the dominant lights.
+        vec3  totalLight = vec3(0.0);
+        float weightSum  = 0.0;
+        if (lightCount <= 0) {
+            // Baked default so unconfigured scenes still shade.
+            vec3 L = normalize(vec3(-0.7, -0.7, 0.9));
+            float lambert = dot(n, L) * 0.5 + 0.5;
+            lambert *= lambert;
+            totalLight = vec3(lambert);
+            weightSum  = lambert;
+        } else {
+            for (int i = 0; i < MAX_LIGHTS; ++i) {
+                if (i >= lightCount) break;
+                vec3 L = normalize(vec3(lightDir[i], 0.9));
+                float lambert = dot(n, L) * 0.5 + 0.5;
+                lambert *= lambert;
+                float w = lambert * lightIntensity[i];
+                totalLight += lightColor[i] * w;
+                weightSum  += w;
+            }
+        }
+        vec3 tint  = (weightSum > 0.001) ? totalLight / weightSum : vec3(1.0);
+        float shade = mix(1.0 - strength, 1.0 + strength * 0.5, clamp(weightSum, 0.0, 1.0));
+
         float pit = mix(1.0 - strength * 0.25, 1.0, smoothstep(0.15, 0.55, h));
 
-        // Soft edge darken: UV-center vignette. TODO: replace with mask-aware rim.
-        vec2 d = uv - vec2(0.5);
-        float r = clamp(length(d) * 2.0, 0.0, 1.0);
-        float ao = mix(1.0, 1.0 - edgeDark, smoothstep(0.55, 1.0, r));
+        // Rim darkening — switchable for A/B: silhouette (shape-tracking, smooth
+        // via avgAlpha) vs old UV vignette (smooth but circle-shaped) vs off.
+        float rim = 0.0;
+        if (rimStyle > 1.5) {
+            vec2 dc = uv - vec2(0.5);
+            float r = clamp(length(dc) * 2.0, 0.0, 1.0);
+            rim = smoothstep(0.55, 1.0, r);
+        } else if (rimStyle > 0.5) {
+            rim = 1.0 - avgAlpha;
+        }
+        float ao = mix(1.0, 1.0 - edgeDark, rim);
 
-        base.rgb *= shade * pit * ao;
+        base.rgb *= shade * pit * ao * tint;
         return base;
     }
 ]])
 
-lib.plasticineStrength = 0.18
-lib.plasticineScale    = 28.0
-lib.plasticineEdge     = 0.22
-lib.plasticineBump     = 2.5                    -- normal tilt per unit noise gradient
-lib.plasticineLight    = { -0.7, -0.7 }         -- UV-space: negative = upper-left
+lib.plasticineStrength    = 0.18
+lib.plasticineScale       = 28.0
+lib.plasticineEdge        = 0.22
+lib.plasticineBump        = 2.5
+lib.plasticineLight       = { -0.7, -0.7 }
+lib.plasticineFormStrength = 2.0
+lib.plasticineFormRadius   = 0.08
 
+-- Hairs POC: noise-based strand variation + noisy frayed alpha at the edges.
+-- Stretched value-noise (low-freq along uv.x, high-freq along uv.y) gives "strand"
+-- cells running along the ribbon. Near the uv.y boundaries alpha is modulated by
+-- fresh noise so the silhouette looks frayed rather than cleanly cut. Assumes
+-- uv.y = across width; on surfaces where the axes are swapped, strands simply
+-- run the other way — tune density to taste.
+local hairsShader = love.graphics.newShader([[
+    uniform float strength;   // strand brightness variation
+    uniform float density;    // strand density (roughly: strands across the ribbon)
+    uniform float fuzz;       // edge frayness (0 = hard, ~0.3 = strong frays)
+    uniform float bush;       // 0..1: growth into transparent mesh outside the silhouette
 
+    float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    }
+    float vnoise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash(i);
+        float b = hash(i + vec2(1.0, 0.0));
+        float c = hash(i + vec2(0.0, 1.0));
+        float d = hash(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
+    vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
+        vec4 base = Texel(tex, uv) * color;
+
+        // --- Bushy growth: paint near-silhouette transparent pixels ---
+        // Sample full RGBA at ±(bush * 0.08) UV so we can both test alpha
+        // nearby AND pick up the actual hair RGB — for OMP textures the vertex
+        // color is (1,1,1) so we must pull pigment from the texture itself or
+        // the grown pixels come out white. For BG+FG, color.rgb is the layer
+        // tint and gets multiplied on top.
+        if (bush > 0.01 && base.a < 0.05) {
+            float r = bush * 0.08;
+            vec4 sR = Texel(tex, uv + vec2( r, 0.0));
+            vec4 sL = Texel(tex, uv + vec2(-r, 0.0));
+            vec4 sU = Texel(tex, uv + vec2(0.0,  r));
+            vec4 sD = Texel(tex, uv + vec2(0.0, -r));
+            float nearA = (sR.a + sL.a + sU.a + sD.a) * 0.25;
+            if (nearA > 0.02) {
+                float wSum = sR.a + sL.a + sU.a + sD.a;
+                vec3 avgRGB = (sR.rgb * sR.a + sL.rgb * sL.a
+                             + sU.rgb * sU.a + sD.rgb * sD.a) / wSum;
+                float bushN = vnoise(uv * density * 2.0) * 0.6
+                            + vnoise(uv * density * 8.0) * 0.4;
+                float growA = smoothstep(0.45, 0.75, bushN) * nearA * bush;
+                if (growA > base.a) {
+                    base.rgb = avgRGB * color.rgb;
+                    base.a   = growA;
+                }
+            }
+        }
+
+        if (base.a < 0.01) return base;
+
+        // Strand shading: cells stretched along uv.x so they read as hairs.
+        float n = vnoise(vec2(uv.x * density * 0.2, uv.y * density));
+        float shade = mix(1.0 - strength, 1.0 + strength * 0.5, n);
+        base.rgb *= shade;
+
+        // Frayed alpha near the uv.y edges.
+        float edgeY  = abs(uv.y - 0.5) * 2.0;
+        float inFray = smoothstep(1.0 - fuzz, 1.0, edgeY);
+        float frayN  = vnoise(vec2(uv.x * density * 3.0, uv.y * density * 3.0));
+        base.a *= 1.0 - inFray * (1.0 - frayN);
+
+        return base;
+    }
+]])
+
+lib.hairsStrength = 0.35
+lib.hairsDensity  = 8.0
+lib.hairsFuzz     = 0.15
+lib.hairsBush     = 0.0
+
+-- Reused per-draw buffers so we don't churn tables each frame.
+local lightDirBuf   = {{0,0}, {0,0}, {0,0}, {0,0}}
+local lightColorBuf = {{1,1,1}, {1,1,1}, {1,1,1}, {1,1,1}}
+local lightInBuf    = {0, 0, 0, 0}
+
+-- Send the plasticine shader's light arrays for a given drawable.
+-- Honors the legacy per-fixture `extra.plasticineLight` override (single
+-- body-local vec2, no scene-light gathering).
+local function sendPlasticineLights(body, extra)
+    if extra.plasticineLight then
+        lightDirBuf[1][1]   = extra.plasticineLight[1]
+        lightDirBuf[1][2]   = extra.plasticineLight[2]
+        lightColorBuf[1][1] = 1
+        lightColorBuf[1][2] = 1
+        lightColorBuf[1][3] = 1
+        lightInBuf[1]       = 1
+        plasticineShader:send('lightCount', 1)
+    else
+        local fx = (extra.main and extra.main.fx) or 1
+        local fy = (extra.main and extra.main.fy) or 1
+        -- body can be nil (CT ribbons) → gatherLights falls back to identity.
+        local count = lib.gatherLightsForBody(body, fx, fy)
+        plasticineShader:send('lightCount', count)
+    end
+    plasticineShader:send('lightDir',       unpack(lightDirBuf))
+    plasticineShader:send('lightColor',     unpack(lightColorBuf))
+    plasticineShader:send('lightIntensity', unpack(lightInBuf))
+end
+
+-- Gather scene LIGHT sfixtures and rotate each world-space direction into the
+-- target body's local UV frame. Returns count + (buffers reused every call).
+-- Capped at MAX_LIGHTS; extras silently ignored.
+function lib.gatherLightsForBody(body, fx, fy)
+    fx = fx or 1; fy = fy or 1
+    local cosA, sinA
+    if body then
+        local a = body:getAngle()
+        cosA, sinA = math.cos(-a), math.sin(-a)
+    else
+        cosA, sinA = 1, 0  -- identity: no rotation (for CT ribbons)
+    end
+    local count = 0
+    for _, f in pairs(registry.sfixtures) do
+        if count >= MAX_LIGHTS then break end
+        if not f:isDestroyed() then
+            local ud = f:getUserData()
+            if ud and subtypes.is(ud, subtypes.LIGHT) then
+                local lb = f:getBody()
+                local la = lb:getAngle()
+                local wdx, wdy = math.cos(la), math.sin(la)
+                local ldx = (wdx * cosA - wdy * sinA) * fx
+                local ldy = (wdx * sinA + wdy * cosA) * fy
+                count = count + 1
+                lightDirBuf[count][1] = ldx
+                lightDirBuf[count][2] = ldy
+                local r, g, b = lib.hexToColor(ud.extra.colorHex or 'ffffffff')
+                lightColorBuf[count][1] = r
+                lightColorBuf[count][2] = g
+                lightColorBuf[count][3] = b
+                lightInBuf[count]       = ud.extra.intensity or 1.0
+            end
+        end
+    end
+    return count, lightDirBuf, lightColorBuf, lightInBuf
+end
 
 local function getDrawParams(flipx, flipy, imgw, imgh)
     local sx = flipx
@@ -1339,14 +1531,26 @@ function lib.drawTexturedWorld(world)
             --if texfixture then
             local extra = drawables[i].extra
             --print(extra.dirty)
-            local plasticineOn = extra.plasticine
-            if plasticineOn then
+            local hairsOn = extra.hairs
+            local plasticineOn = extra.plasticine and not hairsOn
+            if hairsOn then
+                love.graphics.setShader(hairsShader)
+                hairsShader:send('strength', extra.hairsStrength or lib.hairsStrength)
+                hairsShader:send('density',  extra.hairsDensity  or lib.hairsDensity)
+                hairsShader:send('fuzz',     extra.hairsFuzz     or lib.hairsFuzz)
+                hairsShader:send('bush',     extra.hairsBush     or lib.hairsBush)
+            elseif plasticineOn then
                 love.graphics.setShader(plasticineShader)
-                plasticineShader:send('strength', extra.plasticineStrength or lib.plasticineStrength)
-                plasticineShader:send('scale',    extra.plasticineScale    or lib.plasticineScale)
-                plasticineShader:send('edgeDark', extra.plasticineEdge     or lib.plasticineEdge)
-                plasticineShader:send('bumpAmp',  extra.plasticineBump     or lib.plasticineBump)
-                plasticineShader:send('lightDir', extra.plasticineLight    or lib.plasticineLight)
+                plasticineShader:send('strength',     extra.plasticineStrength     or lib.plasticineStrength)
+                plasticineShader:send('scale',        extra.plasticineScale        or lib.plasticineScale)
+                plasticineShader:send('edgeDark',     extra.plasticineEdge         or lib.plasticineEdge)
+                plasticineShader:send('bumpAmp',      extra.plasticineBump         or lib.plasticineBump)
+                plasticineShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
+                plasticineShader:send('formRadius',   extra.plasticineFormRadius   or lib.plasticineFormRadius)
+                plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
+                local rimMap = { off = 0, silhouette = 1, vignette = 2 }
+                plasticineShader:send('rimStyle',     rimMap[extra.plasticineRimStyle or 'silhouette'])
+                sendPlasticineLights(texfixture and texfixture:getBody() or nil, extra)
             end
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
@@ -1386,7 +1590,7 @@ function lib.drawTexturedWorld(world)
                 end
                 --end
             end
-            if plasticineOn then
+            if plasticineOn or hairsOn then
                 love.graphics.setShader()
             end
         end
@@ -2114,6 +2318,27 @@ function lib.drawTexturedWorld(world)
             local curve = drawables[i].curve
             local derivate = curve:getDerivative()
             local extra = drawables[i].extra
+            local ctHairsOn = extra.hairs
+            local ctPlasticineOn = extra.plasticine and not ctHairsOn
+            if ctHairsOn then
+                love.graphics.setShader(hairsShader)
+                hairsShader:send('strength', extra.hairsStrength or lib.hairsStrength)
+                hairsShader:send('density',  extra.hairsDensity  or lib.hairsDensity)
+                hairsShader:send('fuzz',     extra.hairsFuzz     or lib.hairsFuzz)
+                hairsShader:send('bush',     extra.hairsBush     or lib.hairsBush)
+            elseif ctPlasticineOn then
+                love.graphics.setShader(plasticineShader)
+                plasticineShader:send('strength',     extra.plasticineStrength     or lib.plasticineStrength)
+                plasticineShader:send('scale',        extra.plasticineScale        or lib.plasticineScale)
+                plasticineShader:send('edgeDark',     extra.plasticineEdge         or lib.plasticineEdge)
+                plasticineShader:send('bumpAmp',      extra.plasticineBump         or lib.plasticineBump)
+                plasticineShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
+                plasticineShader:send('formRadius',   extra.plasticineFormRadius   or lib.plasticineFormRadius)
+                plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
+                local rimMap = { off = 0, silhouette = 1, vignette = 2 }
+                plasticineShader:send('rimStyle',     rimMap[extra.plasticineRimStyle or 'silhouette'])
+                sendPlasticineLights(nil, extra)  -- CT has no single host body; world-space lights
+            end
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
                 -- local cached = main.cached
@@ -2158,6 +2383,9 @@ function lib.drawTexturedWorld(world)
                     love.graphics.setColor(1, 1, 1, 1)
                     love.graphics.draw(mesh)
                 end
+            end
+            if ctPlasticineOn or ctHairsOn then
+                love.graphics.setShader()
             end
         end
 
@@ -2299,7 +2527,31 @@ function lib.drawTexturedWorld(world)
                         love.graphics.setColor(c.bgR, c.bgG, c.bgB, c.bgA)
                     end
                 end
+                local tvHairsOn = extra.hairs
+                local tvPlasticineOn = extra.plasticine and not tvHairsOn
+                if tvHairsOn then
+                    love.graphics.setShader(hairsShader)
+                    hairsShader:send('strength', extra.hairsStrength or lib.hairsStrength)
+                    hairsShader:send('density',  extra.hairsDensity  or lib.hairsDensity)
+                    hairsShader:send('fuzz',     extra.hairsFuzz     or lib.hairsFuzz)
+                    hairsShader:send('bush',     extra.hairsBush     or lib.hairsBush)
+                elseif tvPlasticineOn then
+                    love.graphics.setShader(plasticineShader)
+                    plasticineShader:send('strength',     extra.plasticineStrength     or lib.plasticineStrength)
+                    plasticineShader:send('scale',        extra.plasticineScale        or lib.plasticineScale)
+                    plasticineShader:send('edgeDark',     extra.plasticineEdge         or lib.plasticineEdge)
+                    plasticineShader:send('bumpAmp',      extra.plasticineBump         or lib.plasticineBump)
+                    plasticineShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
+                    plasticineShader:send('formRadius',   extra.plasticineFormRadius   or lib.plasticineFormRadius)
+                    plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
+                    local rimMap = { off = 0, silhouette = 1, vignette = 2 }
+                    plasticineShader:send('rimStyle',     rimMap[extra.plasticineRimStyle or 'silhouette'])
+                    sendPlasticineLights(body, extra)  -- TV: thing.body = local `body` above
+                end
                 love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
+                if tvHairsOn or tvPlasticineOn then
+                    love.graphics.setShader()
+                end
                 love.graphics.setColor(1, 1, 1, 1)
             end
             --logger:inspect(points)

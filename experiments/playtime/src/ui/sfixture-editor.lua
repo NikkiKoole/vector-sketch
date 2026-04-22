@@ -492,10 +492,51 @@ function lib.drawSelectedSFixture()
                 if ui.checkbox(slx2, sly2, e.plasticine, 'Plasticine') then
                     e.plasticine = not e.plasticine
                 end
+                local slx3, sly3 = ui.sameLine(20)
+                if ui.checkbox(slx3, sly3, e.hairs, 'Hairs') then
+                    e.hairs = not e.hairs
+                end
 
                 nextRow()
 
+                if e.hairs then
+                    local hs = ui.sliderWithInput(myID .. ' txHairsStrength', x, y, ROW_WIDTH,
+                        0, 1, e.hairsStrength or box2dDrawTextured.hairsStrength)
+                    ui.alignedLabel(x, y, ' hairs strength')
+                    if hs and tonumber(hs) then e.hairsStrength = tonumber(hs) end
+                    nextRow()
+
+                    local hd = ui.sliderWithInput(myID .. ' txHairsDensity', x, y, ROW_WIDTH,
+                        1, 30, e.hairsDensity or box2dDrawTextured.hairsDensity)
+                    ui.alignedLabel(x, y, ' hairs density')
+                    if hd and tonumber(hd) then e.hairsDensity = tonumber(hd) end
+                    nextRow()
+
+                    local hf = ui.sliderWithInput(myID .. ' txHairsFuzz', x, y, ROW_WIDTH,
+                        0, 0.5, e.hairsFuzz or box2dDrawTextured.hairsFuzz)
+                    ui.alignedLabel(x, y, ' hairs fuzz')
+                    if hf and tonumber(hf) then e.hairsFuzz = tonumber(hf) end
+                    nextRow()
+
+                    local hb = ui.sliderWithInput(myID .. ' txHairsBush', x, y, ROW_WIDTH,
+                        0, 3, e.hairsBush or box2dDrawTextured.hairsBush)
+                    ui.alignedLabel(x, y, ' hairs bush')
+                    if hb and tonumber(hb) then e.hairsBush = tonumber(hb) end
+                    nextRow()
+                end
+
                 if e.plasticine then
+                    if ui.checkbox(x, y, e.plasticineForm ~= false, 'Form') then
+                        e.plasticineForm = (e.plasticineForm == false)
+                    end
+                    local rimSlx, rimSly = ui.sameLine(20)
+                    local rimStyle = e.plasticineRimStyle or 'silhouette'
+                    if ui.button(rimSlx, rimSly, 140, 'rim: ' .. rimStyle) then
+                        e.plasticineRimStyle = (rimStyle == 'silhouette') and 'vignette'
+                            or (rimStyle == 'vignette') and 'off' or 'silhouette'
+                    end
+                    nextRow()
+
                     local ps = ui.sliderWithInput(myID .. ' plasticineStrength', x, y, ROW_WIDTH,
                         0, 0.6, e.plasticineStrength or box2dDrawTextured.plasticineStrength)
                     ui.alignedLabel(x, y, ' grain strength')
@@ -512,6 +553,18 @@ function lib.drawSelectedSFixture()
                         0, 0.6, e.plasticineEdge or box2dDrawTextured.plasticineEdge)
                     ui.alignedLabel(x, y, ' edge darken')
                     if ped and tonumber(ped) then e.plasticineEdge = tonumber(ped) end
+                    nextRow()
+
+                    local pfs = ui.sliderWithInput(myID .. ' plasticineFormStrength', x, y, ROW_WIDTH,
+                        0, 6, e.plasticineFormStrength or box2dDrawTextured.plasticineFormStrength)
+                    ui.alignedLabel(x, y, ' form strength')
+                    if pfs and tonumber(pfs) then e.plasticineFormStrength = tonumber(pfs) end
+                    nextRow()
+
+                    local pfr = ui.sliderWithInput(myID .. ' plasticineFormRadius', x, y, ROW_WIDTH,
+                        0.01, 0.2, e.plasticineFormRadius or box2dDrawTextured.plasticineFormRadius)
+                    ui.alignedLabel(x, y, ' form radius (UV)')
+                    if pfr and tonumber(pfr) then e.plasticineFormRadius = tonumber(pfr) end
                     nextRow()
                 end
 
@@ -1714,7 +1767,85 @@ function lib.drawSelectedSFixture()
                 if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
                     e.OMP = not e.OMP
                 end
+                local ctSlx, ctSly = ui.sameLine(20)
+                if ui.checkbox(ctSlx, ctSly, e.plasticine, 'Plasticine') then
+                    e.plasticine = not e.plasticine
+                end
+                local ctHslx, ctHsly = ui.sameLine(20)
+                if ui.checkbox(ctHslx, ctHsly, e.hairs, 'Hairs') then
+                    e.hairs = not e.hairs
+                end
                 nextRow()
+
+                if e.hairs then
+                    local hs = ui.sliderWithInput(myID .. ' hairsStrength', x, y, ROW_WIDTH,
+                        0, 1, e.hairsStrength or box2dDrawTextured.hairsStrength)
+                    ui.alignedLabel(x, y, ' hairs strength')
+                    if hs and tonumber(hs) then e.hairsStrength = tonumber(hs) end
+                    nextRow()
+
+                    local hd = ui.sliderWithInput(myID .. ' hairsDensity', x, y, ROW_WIDTH,
+                        1, 30, e.hairsDensity or box2dDrawTextured.hairsDensity)
+                    ui.alignedLabel(x, y, ' hairs density')
+                    if hd and tonumber(hd) then e.hairsDensity = tonumber(hd) end
+                    nextRow()
+
+                    local hf = ui.sliderWithInput(myID .. ' hairsFuzz', x, y, ROW_WIDTH,
+                        0, 0.5, e.hairsFuzz or box2dDrawTextured.hairsFuzz)
+                    ui.alignedLabel(x, y, ' hairs fuzz')
+                    if hf and tonumber(hf) then e.hairsFuzz = tonumber(hf) end
+                    nextRow()
+
+                    local hb = ui.sliderWithInput(myID .. ' hairsBush', x, y, ROW_WIDTH,
+                        0, 3, e.hairsBush or box2dDrawTextured.hairsBush)
+                    ui.alignedLabel(x, y, ' hairs bush')
+                    if hb and tonumber(hb) then e.hairsBush = tonumber(hb) end
+                    nextRow()
+                end
+
+                if e.plasticine then
+                    if ui.checkbox(x, y, e.plasticineForm ~= false, 'Form') then
+                        e.plasticineForm = (e.plasticineForm == false)
+                    end
+                    local rimSlx, rimSly = ui.sameLine(20)
+                    local rimStyle = e.plasticineRimStyle or 'silhouette'
+                    if ui.button(rimSlx, rimSly, 140, 'rim: ' .. rimStyle) then
+                        e.plasticineRimStyle = (rimStyle == 'silhouette') and 'vignette'
+                            or (rimStyle == 'vignette') and 'off' or 'silhouette'
+                    end
+                    nextRow()
+
+                    local ps = ui.sliderWithInput(myID .. ' ctPlasticineStrength', x, y, ROW_WIDTH,
+                        0, 0.6, e.plasticineStrength or box2dDrawTextured.plasticineStrength)
+                    ui.alignedLabel(x, y, ' grain strength')
+                    if ps and tonumber(ps) then e.plasticineStrength = tonumber(ps) end
+                    nextRow()
+
+                    local psc = ui.sliderWithInput(myID .. ' ctPlasticineScale', x, y, ROW_WIDTH,
+                        4, 120, e.plasticineScale or box2dDrawTextured.plasticineScale)
+                    ui.alignedLabel(x, y, ' grain scale (hi=fine)')
+                    if psc and tonumber(psc) then e.plasticineScale = tonumber(psc) end
+                    nextRow()
+
+                    local ped = ui.sliderWithInput(myID .. ' ctPlasticineEdge', x, y, ROW_WIDTH,
+                        0, 0.6, e.plasticineEdge or box2dDrawTextured.plasticineEdge)
+                    ui.alignedLabel(x, y, ' edge darken')
+                    if ped and tonumber(ped) then e.plasticineEdge = tonumber(ped) end
+                    nextRow()
+
+                    local pfs = ui.sliderWithInput(myID .. ' ctPlasticineFormStrength', x, y, ROW_WIDTH,
+                        0, 6, e.plasticineFormStrength or box2dDrawTextured.plasticineFormStrength)
+                    ui.alignedLabel(x, y, ' form strength')
+                    if pfs and tonumber(pfs) then e.plasticineFormStrength = tonumber(pfs) end
+                    nextRow()
+
+                    local pfr = ui.sliderWithInput(myID .. ' ctPlasticineFormRadius', x, y, ROW_WIDTH,
+                        0.01, 0.2, e.plasticineFormRadius or box2dDrawTextured.plasticineFormRadius)
+                    ui.alignedLabel(x, y, ' form radius (UV)')
+                    if pfr and tonumber(pfr) then e.plasticineFormRadius = tonumber(pfr) end
+                    nextRow()
+                end
+
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 ui.createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
                     oldTexFixUD.extra.main.wmul or 1,
@@ -1863,7 +1994,38 @@ function lib.drawSelectedSFixture()
                 if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
                     e.OMP = not e.OMP
                 end
+                local tvHslx, tvHsly = ui.sameLine(20)
+                if ui.checkbox(tvHslx, tvHsly, e.hairs, 'Hairs') then
+                    e.hairs = not e.hairs
+                end
                 nextRow()
+
+                if e.hairs then
+                    local hs = ui.sliderWithInput(myID .. ' tvHairsStrength', x, y, ROW_WIDTH,
+                        0, 1, e.hairsStrength or box2dDrawTextured.hairsStrength)
+                    ui.alignedLabel(x, y, ' hairs strength')
+                    if hs and tonumber(hs) then e.hairsStrength = tonumber(hs) end
+                    nextRow()
+
+                    local hd = ui.sliderWithInput(myID .. ' tvHairsDensity', x, y, ROW_WIDTH,
+                        1, 30, e.hairsDensity or box2dDrawTextured.hairsDensity)
+                    ui.alignedLabel(x, y, ' hairs density')
+                    if hd and tonumber(hd) then e.hairsDensity = tonumber(hd) end
+                    nextRow()
+
+                    local hf = ui.sliderWithInput(myID .. ' tvHairsFuzz', x, y, ROW_WIDTH,
+                        0, 0.5, e.hairsFuzz or box2dDrawTextured.hairsFuzz)
+                    ui.alignedLabel(x, y, ' hairs fuzz')
+                    if hf and tonumber(hf) then e.hairsFuzz = tonumber(hf) end
+                    nextRow()
+
+                    local hb = ui.sliderWithInput(myID .. ' tvHairsBush', x, y, ROW_WIDTH,
+                        0, 3, e.hairsBush or box2dDrawTextured.hairsBush)
+                    ui.alignedLabel(x, y, ' hairs bush')
+                    if hb and tonumber(hb) then e.hairsBush = tonumber(hb) end
+                    nextRow()
+                end
+
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 ui.createSliderWithId(myID, 'wmul', x + 50, y, ROW_WIDTH - 50, 0.1, 10.0,
                     oldTexFixUD.extra.main.wmul or 1,
@@ -1913,6 +2075,24 @@ function lib.drawSelectedSFixture()
                     handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
                         function(color) oldTexFixUD.extra.main.tint = color end, dirty)
                 end
+            end
+
+            if subtypes.is(oldUD, subtypes.LIGHT) then
+                oldTexFixUD.extra.colorHex  = oldTexFixUD.extra.colorHex or 'fff2d9ff'
+                oldTexFixUD.extra.intensity = oldTexFixUD.extra.intensity or 1.0
+
+                handlePaletteAndHex(myID, 'lightColor', x, y, 100, oldTexFixUD.extra.colorHex,
+                    function(c) oldTexFixUD.extra.colorHex = c end)
+                nextRow()
+
+                local li = ui.sliderWithInput(myID .. ' lightIntensity', x, y, ROW_WIDTH,
+                    0, 3, oldTexFixUD.extra.intensity)
+                ui.alignedLabel(x, y, ' intensity')
+                if li and tonumber(li) then oldTexFixUD.extra.intensity = tonumber(li) end
+                nextRow()
+
+                ui.label(x, y, 'aim: rotate this body (body +X = light dir)')
+                nextRow()
             end
         end
         nextRow()
