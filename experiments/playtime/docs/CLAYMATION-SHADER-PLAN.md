@@ -71,10 +71,18 @@ light, output the sum.
 Falls back to a single default "ambient key" direction when `lightCount == 0`
 so scenes without explicit lights still shade.
 
-### Point lights — deferred
-Out of scope for v1. Would need per-pixel world-space position (extra
-transform uniforms) or a body-center approximation (no falloff). Revisit
-once directional is in.
+### Point lights — landed (2026-04-23)
+LIGHT subtype supports `lightType = 'directional' | 'point'` with a `range`
+field in world units for point falloff. Point contributions use a
+smoothstep falloff over `range`. Directional lights ignore position.
+
+### Natural ceiling on light count
+`MAX_LIGHTS = 4` is a soft cap, not a hardware limit — picked to match a
+cinematic setup (key + fill + rim + one accent/kicker). For stylized
+children's-book scenes that covers nearly every composition, and the
+per-pixel shader loop stays fast. Raising to 8 is free if a scene calls
+for it; beyond that, switch to distance-culling point lights on the CPU
+before uploading the array rather than bumping the cap further.
 
 ### Ribbons — out of scope for first pass
 CONNECTED_TEXTURE / TRACE_VERTICES UVs are along-length / across-width, not
@@ -112,49 +120,68 @@ selectable/highlightable like anchors.
 
 ## Shader additions — ranked by claymation payoff
 
-All assume the world light is in place (1 and 2 especially).
+LIGHT system is in place (directional + point), so items below can now
+reference real light directions/colors instead of the baked default.
 
 1. **Warm/cool chromatic shading** — biggest tell separating stop-motion
    still from CG. Lit side shifts warm (amber/ivory), shadow side shifts
    cool (steel/blue). `shade = mix(coolColor, warmColor, lambert) * shade`.
    Uniforms: `warmColor`, `coolColor`. Pairs naturally with world light.
 
-2. **Specular sheen** — tight `pow(lambert, specPow) * specStrength` lobe
-   on top of diffuse. Catches the waxy plasticine highlight. Uniforms:
-   `specPow`, `specStrength`. With world light, the sheen moves across
-   bodies consistently as they rotate — strong claymation read.
+2. **Specular sheen** — tight `pow(max(nDotL, 0), specPow) * specStrength`
+   lobe on top of diffuse, summed per light. Catches the waxy plasticine
+   highlight. Uniforms: `specPow`, `specStrength`. With real lights, the
+   sheen moves across bodies consistently as they rotate — strong
+   claymation read. Cheapest-to-best-looking ratio; do this first.
 
-3. **Voronoi thumbprint dimples** — layer discrete craters over the fBm.
+3. **Terminator tightening** — one-line tweak to the half-lambert falloff
+   curve, e.g. `pow(nDotL * 0.5 + 0.5, 1.4)` instead of squaring. Gives
+   the tight, sculptural Disney/Pixar light-to-shadow transition that
+   reads as hand-posed rather than softly CG-lit. No new uniforms; just
+   a shape parameter on the existing lambert term.
+
+4. **Opposing-light rim tinting** — the existing rim darkening goes
+   black; replace with a tint driven by the light(s) whose direction
+   most *opposes* the macro-normal. Warm key on the front → cool rim
+   from a fill on the back is the classic stylized setup, essentially
+   free once lights are plumbed. Subsumes / refines item 5 below.
+
+5. **Voronoi thumbprint dimples** — layer discrete craters over the fBm.
    Current noise is too uniform; real plasticine has *hand-pressed* dents.
    Cellular / Voronoi noise at a larger scale, combined multiplicatively
    with the existing grain.
 
-4. **Subsurface edge glow** — brighten the silhouette band where the
+6. **Subsurface edge glow** — brighten the silhouette band where the
    form-normal tilts toward the light. Fake translucency. Cheap with the
    data we already have (alpha gradient + lambert).
 
-5. **Low-freq pigment mottling** — coarse RGB jitter across the shape.
+7. **Low-freq pigment mottling** — coarse RGB jitter across the shape.
    Breaks the "flat paint fill" read; makes pigment feel hand-mixed. Cheap.
 
-6. **Anisotropic tool marks** — stretched noise octave with a per-fixture
+8. **Anisotropic tool marks** — stretched noise octave with a per-fixture
    direction. Carving/smoothing strokes. Per-fixture `toolMarkAngle`.
 
-7. **Concavity AO** — sample alpha at a larger radius and compare to the
+9. **Concavity AO** — sample alpha at a larger radius and compare to the
    current `avgAlpha`. Where the larger radius is less full, we're in a
    fold — darken. Makes joints/seams pop.
 
 ## Proposed order of work
 
-1. **LIGHT sfixture subtype (directional only, TEXFIXTURE-only consumption).**
-   Register the subtype, serialize/load, build the add-light affordance and
-   inspector, draw the editor overlay glyph. Shader gets uniform-array light
-   support with a sensible default when `lightCount == 0`. This is the
-   infrastructure milestone — after this, additions 2–4 slot in naturally.
-2. **Warm/cool chromatic shading** — uses light color per-light, defaulting
-   to warm key + optional cool fill conventions.
-3. **Specular sheen** — reuses the same lambert per light.
-4. **Voronoi dimples** — orthogonal; layers on the grain path.
-5. 5–7 as time allows; each is independent.
+1. ~~**LIGHT sfixture subtype (directional, TEXFIXTURE consumption).**~~
+   ✅ Landed 2026-04-23. Directional + point with range, up to 4 lights
+   via uniform array, baked default when `lightCount == 0`.
+2. **Specular sheen** — cheapest visible win now that lights are real.
+   One dot product per light, summed into the output.
+3. **Terminator tightening** — one-line tweak to the lambert falloff
+   curve. No new state; can ship alongside specular.
+4. **Opposing-light rim tinting** — swap the black rim for a color
+   pulled from the most-opposing light. Reuses existing alpha-gradient
+   rim pipeline.
+5. **Warm/cool chromatic shading** — per-light color already flows
+   through the shader, so this becomes a mixing policy rather than new
+   plumbing.
+6. **Voronoi dimples** — orthogonal; layers on the grain path.
+7. Remaining items as time allows; each is independent.
 
 ## Non-goals (for this document)
 
