@@ -2077,23 +2077,42 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            if subtypes.is(oldUD, subtypes.LIGHT) then
-                oldTexFixUD.extra.colorHex  = oldTexFixUD.extra.colorHex or 'fff2d9ff'
-                oldTexFixUD.extra.intensity = oldTexFixUD.extra.intensity or 1.0
+        end
 
-                handlePaletteAndHex(myID, 'lightColor', x, y, 100, oldTexFixUD.extra.colorHex,
-                    function(c) oldTexFixUD.extra.colorHex = c end)
-                nextRow()
+        if subtypes.is(ud, subtypes.LIGHT) then
+            local lightUD = state.selection.selectedSFixture:getUserData()
+            lightUD.extra.colorHex  = lightUD.extra.colorHex  or 'fff2d9ff'
+            lightUD.extra.intensity = lightUD.extra.intensity or 1.0
+            lightUD.extra.lightType = lightUD.extra.lightType or 'directional'
+            lightUD.extra.range     = lightUD.extra.range     or 500
 
-                local li = ui.sliderWithInput(myID .. ' lightIntensity', x, y, ROW_WIDTH,
-                    0, 3, oldTexFixUD.extra.intensity)
-                ui.alignedLabel(x, y, ' intensity')
-                if li and tonumber(li) then oldTexFixUD.extra.intensity = tonumber(li) end
-                nextRow()
+            handlePaletteAndHex(myID, 'lightColor', x, y, 100, lightUD.extra.colorHex,
+                function(c) lightUD.extra.colorHex = c end)
+            nextRow()
 
-                ui.label(x, y, 'aim: rotate this body (body +X = light dir)')
-                nextRow()
+            local li = ui.sliderWithInput(myID .. ' lightIntensity', x, y, ROW_WIDTH,
+                0, 3, lightUD.extra.intensity)
+            ui.alignedLabel(x, y, ' intensity')
+            if li and tonumber(li) then lightUD.extra.intensity = tonumber(li) end
+            nextRow()
+
+            local ltype = lightUD.extra.lightType
+            if ui.button(x, y, ROW_WIDTH, 'type: ' .. ltype) then
+                lightUD.extra.lightType = (ltype == 'directional') and 'point' or 'directional'
             end
+            nextRow()
+
+            if ltype == 'point' then
+                local lr = ui.sliderWithInput(myID .. ' lightRange', x, y, ROW_WIDTH,
+                    10, 2000, lightUD.extra.range)
+                ui.alignedLabel(x, y, ' range')
+                if lr and tonumber(lr) then lightUD.extra.range = tonumber(lr) end
+                nextRow()
+                ui.label(x, y, 'origin: this body\'s position')
+            else
+                ui.label(x, y, 'aim: rotate this body (body +X = light dir)')
+            end
+            nextRow()
         end
         nextRow()
     end)

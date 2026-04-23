@@ -338,6 +338,10 @@ local plasticineShader = love.graphics.newShader([[
     uniform vec2  lightDir[MAX_LIGHTS];       // body-local (CPU-rotated)
     uniform vec3  lightColor[MAX_LIGHTS];
     uniform float lightIntensity[MAX_LIGHTS];
+    uniform int   lightType[MAX_LIGHTS];      // 0 = directional, 1 = point
+    uniform vec2  lightLocalPos[MAX_LIGHTS];  // body-local position for point lights
+    uniform float lightRange[MAX_LIGHTS];     // world-unit falloff distance for point lights
+    uniform vec2  texSize;       // body-local extent of this mesh; {0,0} disables point math
 
     float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -401,12 +405,29 @@ local plasticineShader = love.graphics.newShader([[
             totalLight = vec3(lambert);
             weightSum  = lambert;
         } else {
+            // Per-pixel body-local position — valid only when texSize was sent
+            // (TEXFIXTUREs). For ribbons, texSize == {0,0} forces the directional
+            // branch for every light regardless of its declared type.
+            vec2 fragLocal = (uv - vec2(0.5)) * texSize;
+            bool canPoint  = (texSize.x > 0.0 && texSize.y > 0.0);
+
             for (int i = 0; i < MAX_LIGHTS; ++i) {
                 if (i >= lightCount) break;
-                vec3 L = normalize(vec3(lightDir[i], 0.9));
+                vec3  L;
+                float atten = 1.0;
+                if (canPoint && lightType[i] == 1) {
+                    vec2  delta = lightLocalPos[i] - fragLocal;
+                    float dist  = length(delta);
+                    // Soft falloff: full intensity at 0, zero past `range`.
+                    atten = 1.0 - smoothstep(0.0, max(lightRange[i], 1.0), dist);
+                    vec2 dir2D = delta / max(dist, 0.001);
+                    L = normalize(vec3(dir2D, 0.9));
+                } else {
+                    L = normalize(vec3(lightDir[i], 0.9));
+                }
                 float lambert = dot(n, L) * 0.5 + 0.5;
                 lambert *= lambert;
-                float w = lambert * lightIntensity[i];
+                float w = lambert * lightIntensity[i] * atten;
                 totalLight += lightColor[i] * w;
                 weightSum  += w;
             }
@@ -523,11 +544,14 @@ lib.hairsBush     = 0.0
 local lightDirBuf   = {{0,0}, {0,0}, {0,0}, {0,0}}
 local lightColorBuf = {{1,1,1}, {1,1,1}, {1,1,1}, {1,1,1}}
 local lightInBuf    = {0, 0, 0, 0}
+local lightTypeBuf  = {0, 0, 0, 0}          -- 0 = directional, 1 = point
+local lightPosBuf   = {{0,0}, {0,0}, {0,0}, {0,0}}
+local lightRangeBuf = {1, 1, 1, 1}
 
 -- Send the plasticine shader's light arrays for a given drawable.
 -- Honors the legacy per-fixture `extra.plasticineLight` override (single
 -- body-local vec2, no scene-light gathering).
-local function sendPlasticineLights(body, extra)
+local function sendPlasticineLights(body, extra, texSize)
     if extra.plasticineLight then
         lightDirBuf[1][1]   = extra.plasticineLight[1]
         lightDirBuf[1][2]   = extra.plasticineLight[2]
@@ -535,6 +559,10 @@ local function sendPlasticineLights(body, extra)
         lightColorBuf[1][2] = 1
         lightColorBuf[1][3] = 1
         lightInBuf[1]       = 1
+        lightTypeBuf[1]     = 0
+        lightPosBuf[1][1]   = 0
+        lightPosBuf[1][2]   = 0
+        lightRangeBuf[1]    = 1
         plasticineShader:send('lightCount', 1)
     else
         local fx = (extra.main and extra.main.fx) or 1
@@ -546,6 +574,10 @@ local function sendPlasticineLights(body, extra)
     plasticineShader:send('lightDir',       unpack(lightDirBuf))
     plasticineShader:send('lightColor',     unpack(lightColorBuf))
     plasticineShader:send('lightIntensity', unpack(lightInBuf))
+    plasticineShader:send('lightType',      unpack(lightTypeBuf))
+    plasticineShader:send('lightLocalPos',  unpack(lightPosBuf))
+    plasticineShader:send('lightRange',     unpack(lightRangeBuf))
+    plasticineShader:send('texSize',        texSize or {0, 0})
 end
 
 -- Gather scene LIGHT sfixtures and rotate each world-space direction into the
@@ -553,12 +585,14 @@ end
 -- Capped at MAX_LIGHTS; extras silently ignored.
 function lib.gatherLightsForBody(body, fx, fy)
     fx = fx or 1; fy = fy or 1
-    local cosA, sinA
+    local cosA, sinA, bx, by
     if body then
         local a = body:getAngle()
         cosA, sinA = math.cos(-a), math.sin(-a)
+        bx, by = body:getPosition()
     else
         cosA, sinA = 1, 0  -- identity: no rotation (for CT ribbons)
+        bx, by = 0, 0
     end
     local count = 0
     for _, f in pairs(registry.sfixtures) do
@@ -579,6 +613,25 @@ function lib.gatherLightsForBody(body, fx, fy)
                 lightColorBuf[count][2] = g
                 lightColorBuf[count][3] = b
                 lightInBuf[count]       = ud.extra.intensity or 1.0
+
+                -- Point-light data: world position → body-local (same rotation).
+                -- For CT ribbons (body == nil) this is world-space and the shader
+                -- forces directional anyway via texSize={0,0}, so the data is unused.
+                local isPoint = (ud.extra.lightType == 'point') and 1 or 0
+                lightTypeBuf[count] = isPoint
+                if isPoint == 1 then
+                    local lwx, lwy = lb:getPosition()
+                    local dxw, dyw = lwx - bx, lwy - by
+                    local lpx = (dxw * cosA - dyw * sinA) * fx
+                    local lpy = (dxw * sinA + dyw * cosA) * fy
+                    lightPosBuf[count][1] = lpx
+                    lightPosBuf[count][2] = lpy
+                    lightRangeBuf[count]  = ud.extra.range or 500
+                else
+                    lightPosBuf[count][1] = 0
+                    lightPosBuf[count][2] = 0
+                    lightRangeBuf[count]  = 1
+                end
             end
         end
     end
@@ -1550,7 +1603,12 @@ function lib.drawTexturedWorld(world)
                 plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
                 local rimMap = { off = 0, silhouette = 1, vignette = 2 }
                 plasticineShader:send('rimStyle',     rimMap[extra.plasticineRimStyle or 'silhouette'])
-                sendPlasticineLights(texfixture and texfixture:getBody() or nil, extra)
+                local texBody = texfixture and texfixture:getBody() or nil
+                local texW, texH = 0, 0
+                if extra.vertices then
+                    texW, texH = mathutils.getPolygonDimensions(extra.vertices)
+                end
+                sendPlasticineLights(texBody, extra, { texW, texH })
             end
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
@@ -2337,7 +2395,7 @@ function lib.drawTexturedWorld(world)
                 plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
                 local rimMap = { off = 0, silhouette = 1, vignette = 2 }
                 plasticineShader:send('rimStyle',     rimMap[extra.plasticineRimStyle or 'silhouette'])
-                sendPlasticineLights(nil, extra)  -- CT has no single host body; world-space lights
+                sendPlasticineLights(nil, extra, {0, 0})  -- CT: no local frame; point lights degrade to directional
             end
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
@@ -2546,7 +2604,7 @@ function lib.drawTexturedWorld(world)
                     plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
                     local rimMap = { off = 0, silhouette = 1, vignette = 2 }
                     plasticineShader:send('rimStyle',     rimMap[extra.plasticineRimStyle or 'silhouette'])
-                    sendPlasticineLights(body, extra)  -- TV: thing.body = local `body` above
+                    sendPlasticineLights(body, extra, {0, 0})  -- TV: no simple local frame; directional only
                 end
                 love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
                 if tvHairsOn or tvPlasticineOn then
