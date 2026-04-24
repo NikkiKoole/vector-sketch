@@ -170,16 +170,15 @@ reference real light directions/colors instead of the baked default.
 1. ~~**LIGHT sfixture subtype (directional, TEXFIXTURE consumption).**~~
    ✅ Landed 2026-04-23. Directional + point with range, up to 4 lights
    via uniform array, baked default when `lightCount == 0`.
-2. **Specular sheen** — cheapest visible win now that lights are real.
-   One dot product per light, summed into the output.
-3. **Terminator tightening** — one-line tweak to the lambert falloff
-   curve. No new state; can ship alongside specular.
+2. ~~**Specular sheen**~~ ✅ Landed 2026-04-24. Blinn-Phong per light,
+   summed into output. Uniforms: `specPow`, `specStrength`.
+3. ~~**Terminator tightening**~~ ✅ Landed 2026-04-24. `pow(nDotL * 0.5 + 0.5, terminatorPow)`.
 4. **Opposing-light rim tinting** — swap the black rim for a color
    pulled from the most-opposing light. Reuses existing alpha-gradient
    rim pipeline.
-5. **Warm/cool chromatic shading** — per-light color already flows
-   through the shader, so this becomes a mixing policy rather than new
-   plumbing.
+5. ~~**Warm/cool chromatic shading**~~ ✅ Landed 2026-04-24. `mix(coolColor, rawTint * warmColor, attenBlend)`.
+   Also added SSS approximation (back-face scatter * thinEdge) and pigment mottling.
+   Full pipeline ported to hairs shader + CT ribbons. All params in UI.
 6. **Voronoi dimples** — orthogonal; layers on the grain path.
 7. Remaining items as time allows; each is independent.
 
