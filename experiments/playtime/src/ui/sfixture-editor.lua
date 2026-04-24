@@ -566,6 +566,66 @@ function lib.drawSelectedSFixture()
                     ui.alignedLabel(x, y, ' form radius (UV)')
                     if pfr and tonumber(pfr) then e.plasticineFormRadius = tonumber(pfr) end
                     nextRow()
+
+                    local pmot = ui.sliderWithInput(myID .. ' plasticineMottleStrength', x, y, ROW_WIDTH,
+                        0, 0.5, e.plasticineMottleStrength or box2dDrawTextured.plasticineMottleStrength)
+                    ui.alignedLabel(x, y, ' mottle strength')
+                    if pmot and tonumber(pmot) then e.plasticineMottleStrength = tonumber(pmot) end
+                    nextRow()
+
+                    local pmsc = ui.sliderWithInput(myID .. ' plasticineMottleScale', x, y, ROW_WIDTH,
+                        1, 20, e.plasticineMottleScale or box2dDrawTextured.plasticineMottleScale)
+                    ui.alignedLabel(x, y, ' mottle scale')
+                    if pmsc and tonumber(pmsc) then e.plasticineMottleScale = tonumber(pmsc) end
+                    nextRow()
+
+                    local psp = ui.sliderWithInput(myID .. ' plasticineSpecPow', x, y, ROW_WIDTH,
+                        2, 120, e.plasticineSpecPow or box2dDrawTextured.plasticineSpecPow)
+                    ui.alignedLabel(x, y, ' spec sharpness')
+                    if psp and tonumber(psp) then e.plasticineSpecPow = tonumber(psp) end
+                    nextRow()
+
+                    local pss = ui.sliderWithInput(myID .. ' plasticineSpecStrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSpecStrength or box2dDrawTextured.plasticineSpecStrength)
+                    ui.alignedLabel(x, y, ' spec strength')
+                    if pss and tonumber(pss) then e.plasticineSpecStrength = tonumber(pss) end
+                    nextRow()
+
+                    local pssp = ui.sliderWithInput(myID .. ' plasticineSSSpow', x, y, ROW_WIDTH,
+                        0.5, 8, e.plasticineSSSpow or box2dDrawTextured.plasticineSSSpow)
+                    ui.alignedLabel(x, y, ' sss falloff')
+                    if pssp and tonumber(pssp) then e.plasticineSSSpow = tonumber(pssp) end
+                    nextRow()
+
+                    local psss = ui.sliderWithInput(myID .. ' plasticineSSSstrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSSSstrength or box2dDrawTextured.plasticineSSSstrength)
+                    ui.alignedLabel(x, y, ' sss strength')
+                    if psss and tonumber(psss) then e.plasticineSSSstrength = tonumber(psss) end
+                    nextRow()
+
+                    local ptp = ui.sliderWithInput(myID .. ' plasticineTerminator', x, y, ROW_WIDTH,
+                        0.5, 6, e.plasticineTerminator or box2dDrawTextured.plasticineTerminator)
+                    ui.alignedLabel(x, y, ' terminator')
+                    if ptp and tonumber(ptp) then e.plasticineTerminator = tonumber(ptp) end
+                    nextRow()
+
+                    local useLit = e.plasticineUseLighting ~= false
+                    if ui.checkbox(x, y, useLit, 'Lighting') then
+                        e.plasticineUseLighting = not useLit
+                    end
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'plasticineWarmHex', x, y, 100,
+                        e.plasticineWarmHex or box2dDrawTextured.plasticineWarmHex,
+                        function(c) e.plasticineWarmHex = c end)
+                    ui.alignedLabel(x, y, ' warm (lit)')
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'plasticineCoolHex', x, y, 100,
+                        e.plasticineCoolHex or box2dDrawTextured.plasticineCoolHex,
+                        function(c) e.plasticineCoolHex = c end)
+                    ui.alignedLabel(x, y, ' cool (env/shadow)')
+                    nextRow()
                 end
 
 
@@ -1844,6 +1904,54 @@ function lib.drawSelectedSFixture()
                     ui.alignedLabel(x, y, ' form radius (UV)')
                     if pfr and tonumber(pfr) then e.plasticineFormRadius = tonumber(pfr) end
                     nextRow()
+
+                    local pmot = ui.sliderWithInput(myID .. ' ctPlasticineMottleStrength', x, y, ROW_WIDTH,
+                        0, 0.5, e.plasticineMottleStrength or box2dDrawTextured.plasticineMottleStrength)
+                    ui.alignedLabel(x, y, ' mottle strength')
+                    if pmot and tonumber(pmot) then e.plasticineMottleStrength = tonumber(pmot) end
+                    nextRow()
+
+                    local pmsc = ui.sliderWithInput(myID .. ' ctPlasticineMottleScale', x, y, ROW_WIDTH,
+                        1, 20, e.plasticineMottleScale or box2dDrawTextured.plasticineMottleScale)
+                    ui.alignedLabel(x, y, ' mottle scale')
+                    if pmsc and tonumber(pmsc) then e.plasticineMottleScale = tonumber(pmsc) end
+                    nextRow()
+
+                    local psp = ui.sliderWithInput(myID .. ' ctPlasticineSpecPow', x, y, ROW_WIDTH,
+                        2, 120, e.plasticineSpecPow or box2dDrawTextured.plasticineSpecPow)
+                    ui.alignedLabel(x, y, ' spec sharpness')
+                    if psp and tonumber(psp) then e.plasticineSpecPow = tonumber(psp) end
+                    nextRow()
+
+                    local pss = ui.sliderWithInput(myID .. ' ctPlasticineSpecStrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSpecStrength or box2dDrawTextured.plasticineSpecStrength)
+                    ui.alignedLabel(x, y, ' spec strength')
+                    if pss and tonumber(pss) then e.plasticineSpecStrength = tonumber(pss) end
+                    nextRow()
+
+                    local ptp = ui.sliderWithInput(myID .. ' ctPlasticineTerminator', x, y, ROW_WIDTH,
+                        0.5, 6, e.plasticineTerminator or box2dDrawTextured.plasticineTerminator)
+                    ui.alignedLabel(x, y, ' terminator')
+                    if ptp and tonumber(ptp) then e.plasticineTerminator = tonumber(ptp) end
+                    nextRow()
+
+                    local useLit = e.plasticineUseLighting ~= false
+                    if ui.checkbox(x, y, useLit, 'Lighting') then
+                        e.plasticineUseLighting = not useLit
+                    end
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'ctPlasticineWarmHex', x, y, 100,
+                        e.plasticineWarmHex or box2dDrawTextured.plasticineWarmHex,
+                        function(c) e.plasticineWarmHex = c end)
+                    ui.alignedLabel(x, y, ' warm (lit)')
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'ctPlasticineCoolHex', x, y, 100,
+                        e.plasticineCoolHex or box2dDrawTextured.plasticineCoolHex,
+                        function(c) e.plasticineCoolHex = c end)
+                    ui.alignedLabel(x, y, ' cool (env/shadow)')
+                    nextRow()
                 end
 
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
@@ -2024,6 +2132,139 @@ function lib.drawSelectedSFixture()
                     ui.alignedLabel(x, y, ' hairs bush')
                     if hb and tonumber(hb) then e.hairsBush = tonumber(hb) end
                     nextRow()
+
+                    local pmot = ui.sliderWithInput(myID .. ' tvMottleStrength', x, y, ROW_WIDTH,
+                        0, 0.5, e.plasticineMottleStrength or box2dDrawTextured.plasticineMottleStrength)
+                    ui.alignedLabel(x, y, ' mottle strength')
+                    if pmot and tonumber(pmot) then e.plasticineMottleStrength = tonumber(pmot) end
+                    nextRow()
+
+                    local pmsc = ui.sliderWithInput(myID .. ' tvMottleScale', x, y, ROW_WIDTH,
+                        1, 20, e.plasticineMottleScale or box2dDrawTextured.plasticineMottleScale)
+                    ui.alignedLabel(x, y, ' mottle scale')
+                    if pmsc and tonumber(pmsc) then e.plasticineMottleScale = tonumber(pmsc) end
+                    nextRow()
+
+                    local psp = ui.sliderWithInput(myID .. ' tvSpecPow', x, y, ROW_WIDTH,
+                        2, 120, e.plasticineSpecPow or box2dDrawTextured.plasticineSpecPow)
+                    ui.alignedLabel(x, y, ' spec sharpness')
+                    if psp and tonumber(psp) then e.plasticineSpecPow = tonumber(psp) end
+                    nextRow()
+
+                    local pss = ui.sliderWithInput(myID .. ' tvSpecStrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSpecStrength or box2dDrawTextured.plasticineSpecStrength)
+                    ui.alignedLabel(x, y, ' spec strength')
+                    if pss and tonumber(pss) then e.plasticineSpecStrength = tonumber(pss) end
+                    nextRow()
+
+                    local pssp = ui.sliderWithInput(myID .. ' tvSSSpow', x, y, ROW_WIDTH,
+                        0.5, 6, e.plasticineSSSpow or box2dDrawTextured.plasticineSSSpow)
+                    ui.alignedLabel(x, y, ' SSS falloff')
+                    if pssp and tonumber(pssp) then e.plasticineSSSpow = tonumber(pssp) end
+                    nextRow()
+
+                    local psss = ui.sliderWithInput(myID .. ' tvSSSstrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSSSstrength or box2dDrawTextured.plasticineSSSstrength)
+                    ui.alignedLabel(x, y, ' SSS strength')
+                    if psss and tonumber(psss) then e.plasticineSSSstrength = tonumber(psss) end
+                    nextRow()
+
+                    local ptp = ui.sliderWithInput(myID .. ' tvTerminator', x, y, ROW_WIDTH,
+                        0.5, 6, e.plasticineTerminator or box2dDrawTextured.plasticineTerminator)
+                    ui.alignedLabel(x, y, ' terminator')
+                    if ptp and tonumber(ptp) then e.plasticineTerminator = tonumber(ptp) end
+                    nextRow()
+
+                    local useLit = e.plasticineUseLighting ~= false
+                    if ui.checkbox(x, y, useLit, 'Lighting') then
+                        e.plasticineUseLighting = not useLit
+                    end
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'tvWarmHex', x, y, 100,
+                        e.plasticineWarmHex or box2dDrawTextured.plasticineWarmHex,
+                        function(c) e.plasticineWarmHex = c end)
+                    ui.alignedLabel(x, y, ' warm (lit)')
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'tvCoolHex', x, y, 100,
+                        e.plasticineCoolHex or box2dDrawTextured.plasticineCoolHex,
+                        function(c) e.plasticineCoolHex = c end)
+                    ui.alignedLabel(x, y, ' cool (env/shadow)')
+                    nextRow()
+                end
+
+                if ui.checkbox(x, y, e.plasticine, 'Plasticine') then
+                    e.plasticine = not e.plasticine
+                end
+                nextRow()
+
+                if e.plasticine then
+                    local ps = ui.sliderWithInput(myID .. ' tvPlasticineStrength', x, y, ROW_WIDTH,
+                        0, 0.6, e.plasticineStrength or box2dDrawTextured.plasticineStrength)
+                    ui.alignedLabel(x, y, ' strength')
+                    if ps and tonumber(ps) then e.plasticineStrength = tonumber(ps) end
+                    nextRow()
+
+                    local ptp = ui.sliderWithInput(myID .. ' tvPlasticineTerminator', x, y, ROW_WIDTH,
+                        0.5, 6, e.plasticineTerminator or box2dDrawTextured.plasticineTerminator)
+                    ui.alignedLabel(x, y, ' terminator')
+                    if ptp and tonumber(ptp) then e.plasticineTerminator = tonumber(ptp) end
+                    nextRow()
+
+                    local ppsp = ui.sliderWithInput(myID .. ' tvPlasticineSpecPow', x, y, ROW_WIDTH,
+                        2, 120, e.plasticineSpecPow or box2dDrawTextured.plasticineSpecPow)
+                    ui.alignedLabel(x, y, ' spec sharpness')
+                    if ppsp and tonumber(ppsp) then e.plasticineSpecPow = tonumber(ppsp) end
+                    nextRow()
+
+                    local ppss = ui.sliderWithInput(myID .. ' tvPlasticineSpecStrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSpecStrength or box2dDrawTextured.plasticineSpecStrength)
+                    ui.alignedLabel(x, y, ' spec strength')
+                    if ppss and tonumber(ppss) then e.plasticineSpecStrength = tonumber(ppss) end
+                    nextRow()
+
+                    local ppssp = ui.sliderWithInput(myID .. ' tvPlasticineSSSpow', x, y, ROW_WIDTH,
+                        0.5, 6, e.plasticineSSSpow or box2dDrawTextured.plasticineSSSpow)
+                    ui.alignedLabel(x, y, ' SSS falloff')
+                    if ppssp and tonumber(ppssp) then e.plasticineSSSpow = tonumber(ppssp) end
+                    nextRow()
+
+                    local ppssstr = ui.sliderWithInput(myID .. ' tvPlasticineSSSstrength', x, y, ROW_WIDTH,
+                        0, 1, e.plasticineSSSstrength or box2dDrawTextured.plasticineSSSstrength)
+                    ui.alignedLabel(x, y, ' SSS strength')
+                    if ppssstr and tonumber(ppssstr) then e.plasticineSSSstrength = tonumber(ppssstr) end
+                    nextRow()
+
+                    local ppmot = ui.sliderWithInput(myID .. ' tvPlasticineMottleStrength', x, y, ROW_WIDTH,
+                        0, 0.8, e.plasticineMottleStrength or box2dDrawTextured.plasticineMottleStrength)
+                    ui.alignedLabel(x, y, ' mottle strength')
+                    if ppmot and tonumber(ppmot) then e.plasticineMottleStrength = tonumber(ppmot) end
+                    nextRow()
+
+                    local ppmsc = ui.sliderWithInput(myID .. ' tvPlasticineMottleScale', x, y, ROW_WIDTH,
+                        0.5, 20, e.plasticineMottleScale or box2dDrawTextured.plasticineMottleScale)
+                    ui.alignedLabel(x, y, ' mottle scale')
+                    if ppmsc and tonumber(ppmsc) then e.plasticineMottleScale = tonumber(ppmsc) end
+                    nextRow()
+
+                    local useLitP = e.plasticineUseLighting ~= false
+                    if ui.checkbox(x, y, useLitP, 'Lighting') then
+                        e.plasticineUseLighting = not useLitP
+                    end
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'tvPlasticineWarmHex', x, y, 100,
+                        e.plasticineWarmHex or box2dDrawTextured.plasticineWarmHex,
+                        function(c) e.plasticineWarmHex = c end)
+                    ui.alignedLabel(x, y, ' warm (lit)')
+                    nextRow()
+
+                    handlePaletteAndHex(myID, 'tvPlasticineCoolHex', x, y, 100,
+                        e.plasticineCoolHex or box2dDrawTextured.plasticineCoolHex,
+                        function(c) e.plasticineCoolHex = c end)
+                    ui.alignedLabel(x, y, ' cool (env/shadow)')
+                    nextRow()
                 end
 
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
@@ -2102,12 +2343,13 @@ function lib.drawSelectedSFixture()
             end
             nextRow()
 
+            local lr = ui.sliderWithInput(myID .. ' lightRange', x, y, ROW_WIDTH,
+                10, 2000, lightUD.extra.range)
+            ui.alignedLabel(x, y, ' range')
+            if lr and tonumber(lr) then lightUD.extra.range = tonumber(lr) end
+            nextRow()
+
             if ltype == 'point' then
-                local lr = ui.sliderWithInput(myID .. ' lightRange', x, y, ROW_WIDTH,
-                    10, 2000, lightUD.extra.range)
-                ui.alignedLabel(x, y, ' range')
-                if lr and tonumber(lr) then lightUD.extra.range = tonumber(lr) end
-                nextRow()
                 ui.label(x, y, 'origin: this body\'s position')
             else
                 ui.label(x, y, 'aim: rotate this body (body +X = light dir)')
