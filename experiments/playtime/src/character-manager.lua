@@ -184,7 +184,7 @@ end
 -- browShape, browBgHex, browWMul, browHMul, browBend, browY,
 -- noseShape, noseBgHex, noseFgHex, noseWMul, noseHMul, noseY,
 -- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
--- mouthBackdropHex, mouthLipScale, mouthWMul, mouthHMul, mouthY,
+-- mouthBackdropHex, mouthUpperLipScale, mouthLowerLipScale, mouthWMul, mouthHMul, mouthY,
 -- teethShape, teethHMul, teethStickOut, teethBgHex, teethFgHex
 function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
@@ -226,7 +226,8 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.mouthLowerLipShape then face.mouth.lowerLipShape = values.mouthLowerLipShape end
     if values.mouthLipHex then face.mouth.lipHex = values.mouthLipHex end
     if values.mouthBackdropHex then face.mouth.backdropHex = values.mouthBackdropHex end
-    if values.mouthLipScale then face.mouth.lipScale = values.mouthLipScale end
+    if values.mouthUpperLipScale then face.mouth.upperLipScale = values.mouthUpperLipScale end
+    if values.mouthLowerLipScale then face.mouth.lowerLipScale = values.mouthLowerLipScale end
     if values.mouthWMul then face.mouth.wMul = values.mouthWMul end
     if values.mouthHMul then face.mouth.hMul = values.mouthHMul end
     if values.mouthY then face.positioners.mouth.y = values.mouthY end
@@ -507,7 +508,8 @@ local function randomizeFace(instance, hairColor)
         mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
         mouthLipHex = 'cc5555ff',
         mouthBackdropHex = '00000033',
-        mouthLipScale = D.randomInRangeWeighted('mouthLipScale'),
+        mouthUpperLipScale = D.randomInRangeWeighted('mouthUpperLipScale'),
+        mouthLowerLipScale = D.randomInRangeWeighted('mouthLowerLipScale'),
         mouthWMul = D.randomInRangeWeighted('mouthWMul'),
         mouthHMul = D.randomInRangeWeighted('mouthHMul'),
         mouthY = randomMouthY,
@@ -548,6 +550,213 @@ function lib.randomizeMipo(instance)
 
     -- Disable physics nose when overlay nose is randomized
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
+    lib.addTexturesFromInstance2(instance)
+end
+
+-- Randomize a single part (or its symmetric group) by name.
+-- ears/feet/hands always randomize both sides together.
+-- arms/legs randomize all connected-skin/hair for that limb group.
+function lib.randomizePart(instance, partName)
+    if not instance or not partName then return end
+    local hairColor = utils.randomHexColor()
+
+    if partName == 'head' then
+        local url = C.torsoHeadShapes[math.ceil(math.random() * #C.torsoHeadShapes)]
+        local s = D.randomInRangeWeighted('bodyScale')
+        lib.updatePart('head',
+            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            instance)
+        lib.updateSkinOfPart(instance, 'head',
+            { bgHex = '000000ff', fgHex = utils.randomHexColor(),
+              pHex = utils.randomHexColor(), pURL = randomPatternURL() })
+        local hcUrl = C.haircutTextures[math.ceil(math.random() * #C.haircutTextures)]
+        local hcBgURL = hcUrl .. '.png'
+        local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
+        lib.updateHaircutOfPart(instance, 'head',
+            { bgURL = hcBgURL, fgURL = hcFgURL,
+              bgHex = hairColor, width = D.randomInRangeWeighted('haircutWidth') })
+        randomizeFace(instance, hairColor)
+
+    elseif partName:match('^torso') then
+        local url = C.torsoHeadShapes[math.ceil(math.random() * #C.torsoHeadShapes)]
+        local s = D.randomInRangeWeighted('bodyScale')
+        lib.updatePart(partName,
+            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            instance)
+        lib.updateSkinOfPart(instance, partName,
+            { bgHex = '000000ff', fgHex = utils.randomHexColor(),
+              pHex = utils.randomHexColor(), pURL = randomPatternURL() })
+        local bhUrl = C.bodyhairTextures[math.ceil(math.random() * #C.bodyhairTextures)]
+        lib.updateBodyhairOfPart(instance, partName,
+            { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
+              bgHex = hairColor, fgHex = utils.randomHexColor(),
+              pHex = utils.randomHexColor(), pURL = randomPatternURL() })
+
+    elseif partName == 'lear' or partName == 'rear' then
+        randomizeEars(instance)
+
+    elseif partName == 'lfoot' or partName == 'rfoot' then
+        local fUrl = C.handShapes[math.ceil(math.random() * #C.handShapes)]
+        local fS = D.randomInRangeWeighted('feetScale')
+        lib.updatePart('lfoot', { shape8URL = fUrl .. '.png', sy = fS, sx = fS }, instance)
+        lib.updatePart('rfoot', { shape8URL = fUrl .. '.png', sy = fS, sx = -fS }, instance)
+        local fgHex = utils.randomHexColor()
+        local pHex = utils.randomHexColor()
+        local pURL = randomPatternURL()
+        for _, p in ipairs({'lfoot', 'rfoot'}) do
+            lib.updateSkinOfPart(instance, p,
+                { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+        end
+
+    elseif partName == 'lhand' or partName == 'rhand' then
+        local hUrl = C.handShapes[math.ceil(math.random() * #C.handShapes)]
+        local hS = D.randomInRangeWeighted('handScale')
+        lib.updatePart('lhand', { shape8URL = hUrl .. '.png', sy = hS, sx = hS }, instance)
+        lib.updatePart('rhand', { shape8URL = hUrl .. '.png', sy = hS, sx = -hS }, instance)
+        local fgHex = utils.randomHexColor()
+        local pHex = utils.randomHexColor()
+        local pURL = randomPatternURL()
+        for _, p in ipairs({'lhand', 'rhand'}) do
+            lib.updateSkinOfPart(instance, p,
+                { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+        end
+
+    elseif partName:match('arm') then
+        local skinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
+        local fgHex = utils.randomHexColor()
+        local pHex = utils.randomHexColor()
+        local pURL = randomPatternURL()
+        for _, p in ipairs({'luarm', 'ruarm'}) do
+            lib.updateConnectedAppearance(instance, p, 'connected-skin',
+                { bgURL = skinUrl .. '.png', fgURL = skinUrl .. '-mask.png',
+                  fgHex = fgHex, pHex = pHex, pURL = pURL })
+        end
+        local hairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
+        for _, p in ipairs({'luarm', 'ruarm'}) do
+            lib.updateConnectedAppearance(instance, p, 'connected-hair',
+                { bgURL = hairUrl .. '.png', bgHex = hairColor })
+        end
+
+    elseif partName:match('leg') then
+        local skinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
+        local fgHex = utils.randomHexColor()
+        local pHex = utils.randomHexColor()
+        local pURL = randomPatternURL()
+        for _, p in ipairs({'luleg', 'ruleg'}) do
+            lib.updateConnectedAppearance(instance, p, 'connected-skin',
+                { bgURL = skinUrl .. '.png', fgURL = skinUrl .. '-mask.png',
+                  fgHex = fgHex, pHex = pHex, pURL = pURL })
+        end
+        local hairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
+        for _, p in ipairs({'luleg', 'ruleg'}) do
+            lib.updateConnectedAppearance(instance, p, 'connected-hair',
+                { bgURL = hairUrl .. '.png', bgHex = hairColor })
+        end
+    end
+
+    lib.addTexturesFromInstance2(instance)
+end
+
+-- Jitter all size/proportion values of a mipo while keeping shapes and colors identical.
+-- Useful for generating genetic variants of a character.
+local MUTATE_JITTER = 0.35  -- fraction of global range applied as ± offset
+
+local function jitterInRange(value, key)
+    local r = D.randomRanges[key]
+    if not r then return value end
+    local delta = (math.random() * 2 - 1) * (r.max - r.min) * MUTATE_JITTER
+    return math.max(r.min, math.min(r.max, value + delta))
+end
+
+-- Jitter relative to the current value (for dims without global ranges, e.g. limb h).
+local function jitterRelative(value, factor)
+    local delta = (math.random() * 2 - 1) * value * factor
+    return math.max(value * 0.3, value + delta)
+end
+
+function lib.mutateSizes(instance)
+    if not instance then return end
+    local creation = instance.dna.creation
+
+    -- Body/head shape scales (preserve flip sign on sy)
+    for i = 1, creation.torsoSegments do
+        local dims = instance.dna.parts['torso' .. i] and instance.dna.parts['torso' .. i].dims
+        if dims then
+            local s = jitterInRange(math.abs(dims.sx or 1), 'bodyScale')
+            lib.updatePart('torso' .. i, { sx = s, sy = s * (dims.sy < 0 and -1 or 1) }, instance)
+        end
+    end
+    local hd = instance.dna.parts.head and instance.dna.parts.head.dims
+    if hd then
+        local s = jitterInRange(math.abs(hd.sx or 1), 'bodyScale')
+        lib.updatePart('head', { sx = s, sy = s * ((hd.sy or 1) < 0 and -1 or 1) }, instance)
+    end
+
+    -- Ears (always symmetric pair)
+    local ed = instance.dna.parts.lear and instance.dna.parts.lear.dims
+    if ed then
+        local esx = jitterInRange(math.abs(ed.sx or 1), 'earScale')
+        local esy = jitterInRange(math.abs(ed.sy or 1), 'earScale')
+        lib.updatePart('lear', { sx = -esx, sy = esy }, instance)
+        lib.updatePart('rear', { sx =  esx, sy = esy }, instance)
+    end
+
+    -- Feet
+    local ffd = instance.dna.parts.lfoot and instance.dna.parts.lfoot.dims
+    if ffd then
+        local fS = jitterInRange(math.abs(ffd.sx or 1), 'feetScale')
+        lib.updatePart('lfoot', { sx =  fS, sy = fS }, instance)
+        lib.updatePart('rfoot', { sx = -fS, sy = fS }, instance)
+    end
+
+    -- Hands
+    local fhd = instance.dna.parts.lhand and instance.dna.parts.lhand.dims
+    if fhd then
+        local hS = jitterInRange(math.abs(fhd.sx or 1), 'handScale')
+        lib.updatePart('lhand', { sx =  hS, sy = hS }, instance)
+        lib.updatePart('rhand', { sx = -hS, sy = hS }, instance)
+    end
+
+    -- Face sizes
+    local faceOwner = creation.isPotatoHead and 'torso1' or 'head'
+    local fp = instance.dna.parts[faceOwner]
+    if fp and fp.appearance and fp.appearance.face then
+        local face = fp.appearance.face
+        lib.updateFaceOfPart(instance, faceOwner, {
+            eyeWMul          = jitterInRange(face.eye.wMul,                          'eyeWMul'),
+            eyeHMul          = jitterInRange(face.eye.hMul,                          'eyeHMul'),
+            pupilWMul        = jitterInRange(face.pupil.wMul,                        'pupilWMul'),
+            pupilHMul        = jitterInRange(face.pupil.hMul,                        'pupilHMul'),
+            browWMul         = jitterInRange(face.brow.wMul,                         'browWMul'),
+            browHMul         = jitterInRange(face.brow.hMul,                         'browHMul'),
+            noseWMul         = jitterInRange(face.nose.wMul,                         'noseWMul'),
+            noseHMul         = jitterInRange(face.nose.hMul,                         'noseHMul'),
+            mouthWMul        = jitterInRange(face.mouth.wMul,                        'mouthWMul'),
+            mouthHMul        = jitterInRange(face.mouth.hMul,                        'mouthHMul'),
+            mouthUpperLipScale = jitterInRange(face.mouth.upperLipScale or 0.15,     'mouthUpperLipScale'),
+            mouthLowerLipScale = jitterInRange(face.mouth.lowerLipScale or 0.2,      'mouthLowerLipScale'),
+        })
+    end
+
+    -- Limb lengths (arms and legs vary independently, left/right always symmetric)
+    -- Floor at 60 to prevent capsule polygons from going degenerate under Box2D
+    local legH = nil
+    local armH = nil
+    for _, pname in ipairs({'luleg', 'ruleg', 'llleg', 'rlleg'}) do
+        local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
+        if dims and dims.h then
+            if not legH then legH = math.max(60, jitterRelative(dims.h, MUTATE_JITTER)) end
+            lib.updatePart(pname, { h = legH }, instance)
+        end
+    end
+    for _, pname in ipairs({'luarm', 'ruarm', 'llarm', 'rlarm'}) do
+        local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
+        if dims and dims.h then
+            if not armH then armH = math.max(60, jitterRelative(dims.h, MUTATE_JITTER)) end
+            lib.updatePart(pname, { h = armH }, instance)
+        end
+    end
+
     lib.addTexturesFromInstance2(instance)
 end
 
@@ -1687,7 +1896,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
             udLower.extra.zOffset = 252
             udLower.extra.mouthCurve = 'lower'
             udLower.extra.curvePoints = curvePoints
-            udLower.extra.lipScale = mouth.lipScale
+            udLower.extra.lipScale = mouth.lowerLipScale or mouth.lipScale or 0.2
             udLower.extra.backdropHex = mouth.backdropHex
             udLower.extra.OMP = true
             udLower.extra.dirty = true
@@ -1710,7 +1919,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
             udUpper.extra.zOffset = 253
             udUpper.extra.mouthCurve = 'upper'
             udUpper.extra.curvePoints = curvePoints
-            udUpper.extra.lipScale = mouth.lipScale
+            udUpper.extra.lipScale = mouth.upperLipScale or mouth.lipScale or 0.15
             udUpper.extra.OMP = true
             udUpper.extra.dirty = true
             udUpper.extra.main = {
@@ -1801,7 +2010,9 @@ function lib.addTexturesFromInstance2(instance)
                     elseif k2 == 'bodyhair' then
                         addBodyhairTexture(relevant.body, k, v, v2, scale)
                     elseif k2 == 'connected-skin' or k2 == 'connected-hair' then
-                        addConnectedTexture(relevant.body, k, v, v2, instance, scale)
+                        if v2.main and v2.main.bgURL and v2.main.bgURL ~= '' then
+                            addConnectedTexture(relevant.body, k, v, v2, instance, scale)
+                        end
                     elseif k2 == 'haircut' then
                         addHaircutTexture(relevant.body, k, v, v2, instance, scale)
                     elseif k2 == 'face' then

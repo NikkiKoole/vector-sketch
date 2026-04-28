@@ -60,8 +60,8 @@ lib.teeth = {
 
 lib.mouth = {
     shape = 2, upperLipShape = 1, lowerLipShape = 1,
-    lipHex = 'cc5555ff', backdropHex = '00000033',
-    lipScale = 0.25, wMul = 1, hMul = 1,
+    lipHex = 'cc5555ff', backdropHex = '00000099',
+    upperLipScale = 0.15, lowerLipScale = 0.25, wMul = 1, hMul = 1,
 }
 
 lib.facePositioners = {
@@ -115,8 +115,9 @@ lib.randomRanges = {
     eyeHMul       = { min = 0.5, max = 1.5 },
     pupilWMul     = { min = 0.2, max = 0.8 },
     pupilHMul     = { min = 0.2, max = 0.8 },
-    mouthYOffset  = { min = 0.15, max = 0.35 },
-    mouthLipScale = { min = 0.1, max = 0.4 },
+    mouthYOffset  = { min = 0.2, max = 0.4 },
+    mouthUpperLipScale = { min = 0.07, max = 0.18 },
+    mouthLowerLipScale = { min = 0.1, max = 0.25 },
     mouthWMul     = { min = 0.5, max = 1.5 },
     mouthHMul     = { min = 0.5, max = 1.5 },
     browWMul      = { min = 0.8, max = 1.3 },
@@ -170,7 +171,7 @@ lib.faceSchema = {
               hMul = 'number', stickOut = 'boolean' },
     mouth = { shape = 'number', upperLipShape = 'number', lowerLipShape = 'number',
               lipHex = 'string', backdropHex = 'string',
-              lipScale = 'number', wMul = 'number', hMul = 'number' },
+              upperLipScale = 'number', lowerLipScale = 'number', wMul = 'number', hMul = 'number' },
     positioners = {
         eye = { x = 'number', y = 'number', r = 'number' },
         brow = { y = 'number' },

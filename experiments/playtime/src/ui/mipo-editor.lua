@@ -596,11 +596,20 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     y = y + ROW
 
     -- Lip thickness
-    local lipScale = ui.sliderWithInput('mipo_lip_scale', x, y, 120, 0.05, 0.5, mouth.lipScale)
-    ui.alignedLabel(x, y, '  lip thickness')
-    lipScale = lipScale and tonumber(lipScale)
-    if lipScale and lipScale ~= mouth.lipScale then
-        CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLipScale = lipScale })
+    local upperLipScale = ui.sliderWithInput('mipo_upper_lip_scale', x, y, 120, 0.02, 0.4, mouth.upperLipScale or mouth.lipScale or 0.15)
+    ui.alignedLabel(x, y, '  upper lip')
+    upperLipScale = upperLipScale and tonumber(upperLipScale)
+    if upperLipScale and upperLipScale ~= mouth.upperLipScale then
+        CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthUpperLipScale = upperLipScale })
+        CharacterManager.addTexturesFromInstance2(instance)
+    end
+    y = y + ROW
+
+    local lowerLipScale = ui.sliderWithInput('mipo_lower_lip_scale', x, y, 120, 0.02, 0.4, mouth.lowerLipScale or mouth.lipScale or 0.25)
+    ui.alignedLabel(x, y, '  lower lip')
+    lowerLipScale = lowerLipScale and tonumber(lowerLipScale)
+    if lowerLipScale and lowerLipScale ~= mouth.lowerLipScale then
+        CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLowerLipScale = lowerLipScale })
         CharacterManager.addTexturesFromInstance2(instance)
     end
     y = y + ROW
@@ -1797,12 +1806,28 @@ function lib.drawMipoEditor(instance, partName)
             end)
         end
 
-        -- === RANDOMIZE BUTTON ===
+        -- === RANDOMIZE BUTTONS ===
         y = y + BUTTON_SPACING
         love.graphics.line(x, y, x + panelWidth - 40, y)
         y = y + BUTTON_SPACING
-        if ui.button(x, y, panelWidth - 40, 'randomize') then
+
+        local partLabel = partName
+        if partName == 'lear' or partName == 'rear' then partLabel = 'ears'
+        elseif partName == 'lfoot' or partName == 'rfoot' then partLabel = 'feet'
+        elseif partName == 'lhand' or partName == 'rhand' then partLabel = 'hands'
+        elseif partName:match('arm') then partLabel = 'arms'
+        elseif partName:match('leg') then partLabel = 'legs'
+        end
+        if ui.button(x, y, panelWidth - 40, 'randomize ' .. partLabel) then
+            CharacterManager.randomizePart(instance, partName)
+        end
+        y = y + ROW
+        if ui.button(x, y, panelWidth - 40, 'randomize all') then
             CharacterManager.randomizeMipo(instance)
+        end
+        y = y + ROW
+        if ui.button(x, y, panelWidth - 40, 'mutate sizes') then
+            CharacterManager.mutateSizes(instance)
         end
         y = y + ROW
 
