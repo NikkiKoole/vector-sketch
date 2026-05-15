@@ -1697,8 +1697,8 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
 
         local eyeW = baseEyeW * eye.wMul
         local eyeH = baseEyeH * eye.hMul
-        local pupilW = baseEyeW * pupil.wMul
-        local pupilH = baseEyeH * pupil.hMul
+        local pupilW = eyeW * pupil.wMul
+        local pupilH = eyeH * pupil.hMul
 
         local eyeBgURL = 'eye' .. eye.shape .. '.png'
         local eyeFgURL = 'eye' .. eye.shape .. '-mask.png'
@@ -1729,6 +1729,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
             ud.extra.mirror = side.mirror or false
             ud.extra.rot = side.rot or 0
             ud.extra.zOffset = eyeZOffset
+            ud.extra.isEye = true
             ud.extra.OMP = true
             ud.extra.dirty = true
             ud.extra.main = {
@@ -1761,6 +1762,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
             ud.extra.h = pupilH
             ud.extra.mirror = side.mirror or false
             ud.extra.zOffset = pupilZOffset
+            ud.extra.isEye = true
             ud.extra.eyeW = eyeW
             ud.extra.eyeH = eyeH
             ud.extra.eyeMaskURL = eyeFgURL
@@ -1793,7 +1795,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
         local browW = headW * 0.2 * brow.wMul * fm
         local browH = headH * 0.1 * brow.hMul * fm
         local browURL = 'brow' .. brow.shape .. '.png'
-        local browZOffset = 249
+        local browZOffset = 252
         local browSides = {
             { ox = leftEyeX, label = 'lbrow', mirror = false },
             { ox = rightEyeX, label = 'rbrow', mirror = true },
@@ -1896,6 +1898,10 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
             udLower.extra.zOffset = 252
             udLower.extra.mouthCurve = 'lower'
             udLower.extra.curvePoints = curvePoints
+            udLower.extra.mouthScaleX = mouthScaleX
+            udLower.extra.mouthScaleY = mouthScaleY
+            udLower.extra.mouthX = mouthX
+            udLower.extra.mouthY = mouthY
             udLower.extra.lipScale = mouth.lowerLipScale or mouth.lipScale or 0.2
             udLower.extra.backdropHex = mouth.backdropHex
             udLower.extra.OMP = true
@@ -1919,6 +1925,10 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
             udUpper.extra.zOffset = 253
             udUpper.extra.mouthCurve = 'upper'
             udUpper.extra.curvePoints = curvePoints
+            udUpper.extra.mouthScaleX = mouthScaleX
+            udUpper.extra.mouthScaleY = mouthScaleY
+            udUpper.extra.mouthX = mouthX
+            udUpper.extra.mouthY = mouthY
             udUpper.extra.lipScale = mouth.upperLipScale or mouth.lipScale or 0.15
             udUpper.extra.OMP = true
             udUpper.extra.dirty = true

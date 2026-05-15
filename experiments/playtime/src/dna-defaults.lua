@@ -35,7 +35,7 @@ end
 -- Individual face sub-structure defaults
 lib.eye = {
     shape = 1, bgHex = '000000ff', fgHex = 'ffffffff',
-    wMul = 1, hMul = 1, lookAtMouse = false,
+    wMul = 1, hMul = 1, lookAtMouse = true,
 }
 
 lib.pupil = {
@@ -67,7 +67,7 @@ lib.mouth = {
 lib.facePositioners = {
     eye = { x = 0.2, y = 0.5, r = 0 },
     brow = { y = 0.3 },
-    nose = { y = 0.35 },
+    nose = { y = 0.5 },
     mouth = { y = 0.7 },
 }
 
@@ -126,7 +126,7 @@ lib.randomRanges = {
     browY         = { min = 0.25, max = 0.35 },
     noseWMul      = { min = 0.5, max = 2.5 },
     noseHMul      = { min = 0.5, max = 2.5 },
-    noseY         = { min = 0.3, max = 0.5 },
+    noseY         = { min = 0.4, max = 0.6 },
     teethHMul     = { min = 0.5, max = 2.5 },
     teethChance   = 0.3,
     teethStickOut = 0.2,

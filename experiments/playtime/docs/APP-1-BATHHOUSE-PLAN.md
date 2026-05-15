@@ -11,8 +11,9 @@
 
 ## Current status
 
-**Current step:** Sequence #1 — Close the face gap (`FACE-SYSTEM-PLAN.md` Step A: not started)
-**Last touched:** 2026-05-14
+**Current step:** Sequence #2 — Tech spike: physics-cluster mud + thorn-pull reveal
+**Last touched:** 2026-05-15
+**Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
 
 *Update these two lines after each working session. They're the canonical "where am I?" so resume doesn't require re-derivation. When step 1 finishes, mark it ✓ and bump current step to Sequence #2.*
 

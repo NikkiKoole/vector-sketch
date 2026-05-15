@@ -22,28 +22,45 @@ Live-codebase verification narrowed the gap considerably. The agent's biggest wo
 
 **✗ Remaining work (the actual gap):**
 
-### Step A — Port the tween/controller variables (~2 dev days)
+### ✓ Step A — Gaze system (done, in renderer)
 
-Puppetmaker2's `main.lua` lines 177–206 maintain these per-character:
-- `eyesOpen` (0–1, blink amplitude)
-- `mouthWide` (>1 surprised)
-- `mouthOpen` (0–1.25+ open)
-- `blinkCounter` (frames-until-next-blink)
-- `lookAtPosX`, `lookAtPosY`, `lookAtCounter`
+**Reference point fix:** each pupil previously computed its angle from its own eye socket (`body:getWorldPoint(ox, oy)`), causing wall-eye divergence. Fixed to use `body:getPosition()` (head center) — both pupils share one angle. Lives in `src/physics/box2d-draw-textured.lua`.
 
-Grep across `src/` confirms **none of these strings exist anywhere in playtime.** Plain numbers with simple defaults — no rig changes needed.
+**Distance-based blend:** `t = max(0, 1 - dist / gazeRadius)`. Cursor within `gazeRadius = 1000` world units → tracking; outside → pupils centered. Smooth lerp between the two. No state machine needed.
 
-**Action:** add the fields to the character instance struct in `character-manager.lua`. Initialize defaults on character creation.
+**Walleye:** shelved. May revisit as an occasional expression beat later.
 
-### Step B — Wire the game-loop tick (~1 dev day)
+### ✓ Step B — Blink system (done, in renderer)
 
-Puppetmaker2 ticks blink/look-at counters each frame, fires `eyeBlink()` / `mouthSay()` to tween values when timers expire.
+Implemented as a module-level ticker (`tickBlink`) called at the top of `drawTexturedWorld`. Uses wall-clock time (`love.timer.getTime()`) so it's framerate-independent.
 
-**Action:** add a per-character face-tick in `src/game-loop.lua` (or a dedicated `face-animator.lua`). Decrement timers, fire blink/look-at tweens. No tween library is required — simple math (lerp, sine, exponential decay) is enough; `lume.lua` is available in `vendor/` if a helper is wanted.
+- Blink interval: 2–6 seconds (randomized per character)
+- Close: 80ms, open: 120ms
+- Drives `thing.eyesOpen` (0–1) on the body's userData thing
+- Renderer reads `extra.isEye` on decals and multiplies `dh * eyesOpen` — squishes both eye bg and pupil decals together
+- `isEye = true` is now set in `character-manager.lua` on both eye bg and pupil decals at creation
 
-### Polish budget (~0.5–1 dev day)
+### ✓ Step C — Auto-init (done)
 
-After A and B land, expect to tune blink rhythm, look-at responsiveness, and mouth-state transitions to feel right. Bake this into the estimate before claiming "done."
+`initFaceDecals(body)` runs on first blink tick for any head body — sets `lookAtMouse = true` and `isEye = true` on the correct decals automatically. No manual bridge patching needed on load. `lookAtMouse` default also changed to `true` in `src/dna-defaults.lua` for newly created characters.
+
+### ✓ Step D — Brow expressions (done)
+
+Brows fully animated — position and shape both tween smoothly. All state lives on `thing`, driven by `tickBrowLerp` in `tickBlink`.
+
+**Position:** `thing.lbrowYOffset` / `thing.rbrowYOffset` — left and right independently. Range ±20px feels good. Negative = raised, positive = lowered.
+
+**Shape:** `thing.lbrowVec` / `thing.rbrowVec` — stored as `{p1, p2, p3}` floats, lerped directly. 10 named presets in `browBendVecs` table. Useful ones: 1=flat, 2=outer corners down, 4=raised both ends, 5=lowered both ends.
+
+**Tween:** 0.1s duration, wall-clock time (`love.timer.getTime()`), framerate-independent. `setBrows(thing, lY, rY, bendIdx)` is the API — stores from/target and fires the tween.
+
+**Click to randomize:** clicking within 200 world units of a head calls `randomizeBrows()` — random ±20px per brow, random bend from weighted options (biased toward flat/neutral).
+
+**z-order:** brows at zOffset=252, above eyes (250) and pupils (251).
+
+### Remaining — mouth animation
+
+`mouthOpen` / `mouthWide` still not wired. The mouth shape system (15 bezier phoneme variants in `src/mouth-shapes.lua`) is built but nothing drives it yet. Lower priority than gaze+blink for the Bathhouse app — Mipo's reaction beat is mostly visual (eyes wide, brief expression), not speech.
 
 ---
 

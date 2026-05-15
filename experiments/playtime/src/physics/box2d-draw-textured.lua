@@ -16,6 +16,243 @@ local spineMesh = require 'src.spine-mesh'
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 
+local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
+local mouthShapes = require('src.mouth-shapes')
+
+-- Blink system. Keyed by body:getUserData().thing, using wall-clock time.
+local blinkStates = {}
+local prevMouseDown = false
+local closedNorm  -- lazy-init: normalized 'closed' mouth shape for tween start
+
+local browTweenDuration = 0.1 -- seconds
+
+-- Bend shapes as {p1, p2, p3} control point Y factors
+local browBendVecs = {
+    { 0,  0,  0 },   -- 1: flat
+    { 1,  0, -1 },   -- 2: outer corners down
+    {-1,  0,  1 },   -- 3: outer corners up
+    { 1,  0,  1 },   -- 4: raised both ends
+    {-1,  0, -1 },   -- 5: lowered both ends
+    { 1,  0,  0 },   -- 6: left up
+    {-1,  0,  0 },   -- 7: left down
+    { 0, -1,  1 },   -- 8
+    { 0,  1,  1 },   -- 9
+    {-1,  1,  1 },   -- 10
+}
+local browBendOptions = { 1, 1, 2, 3, 4, 5 } -- weighted toward neutral/flat
+
+local function initBrowState(thing)
+    thing.lbrowYOffset = 0;  thing.lbrowYFrom = 0;  thing.lbrowYTarget = 0
+    thing.rbrowYOffset = 0;  thing.rbrowYFrom = 0;  thing.rbrowYTarget = 0
+    thing.lbrowVec = {0,0,0};  thing.lbrowVecFrom = {0,0,0};  thing.lbrowVecTarget = {0,0,0}
+    thing.rbrowVec = {0,0,0};  thing.rbrowVecFrom = {0,0,0};  thing.rbrowVecTarget = {0,0,0}
+    thing.browTweenStart = nil
+end
+
+local function setBrows(thing, lY, rY, bendIdx)
+    local vec = browBendVecs[bendIdx] or browBendVecs[1]
+    thing.lbrowYFrom = thing.lbrowYOffset or 0
+    thing.rbrowYFrom = thing.rbrowYOffset or 0
+    thing.lbrowYTarget = lY;  thing.rbrowYTarget = rY
+    thing.lbrowVecFrom = { (thing.lbrowVec or browBendVecs[1])[1], (thing.lbrowVec or browBendVecs[1])[2], (thing.lbrowVec or browBendVecs[1])[3] }
+    thing.rbrowVecFrom = { (thing.rbrowVec or browBendVecs[1])[1], (thing.rbrowVec or browBendVecs[1])[2], (thing.rbrowVec or browBendVecs[1])[3] }
+    thing.lbrowVecTarget = vec;  thing.rbrowVecTarget = vec
+    thing.browTweenStart = love.timer.getTime()
+end
+
+local function neutralBrows(thing)  setBrows(thing, 0, 0, 1) end
+
+local function randomizeBrows(thing)
+    setBrows(thing,
+        math.random(-20, 20),
+        math.random(-20, 20),
+        browBendOptions[math.random(#browBendOptions)]
+    )
+end
+
+local function tickBrowLerp(thing, dt)
+    if not thing.browTweenStart then return end
+    local t = math.min((love.timer.getTime() - thing.browTweenStart) / browTweenDuration, 1)
+    local function lerp(a, b) return a + (b - a) * t end
+    thing.lbrowYOffset = lerp(thing.lbrowYFrom or 0, thing.lbrowYTarget or 0)
+    thing.rbrowYOffset = lerp(thing.rbrowYFrom or 0, thing.rbrowYTarget or 0)
+    local lf, lt = thing.lbrowVecFrom or browBendVecs[1], thing.lbrowVecTarget or browBendVecs[1]
+    local rf, rt = thing.rbrowVecFrom or browBendVecs[1], thing.rbrowVecTarget or browBendVecs[1]
+    thing.lbrowVec = { lerp(lf[1], lt[1]), lerp(lf[2], lt[2]), lerp(lf[3], lt[3]) }
+    thing.rbrowVec = { lerp(rf[1], rt[1]), lerp(rf[2], rt[2]), lerp(rf[3], rt[3]) }
+    if t >= 1 then thing.browTweenStart = nil end
+end
+
+local mouthTweenDuration = 0.15
+local mouthNormalized = mouthShapes.normalized
+
+local function setMouthShape(thing, shapeIdx)
+    local shape = mouthNormalized[shapeIdx]
+    if not shape then return end
+    if thing.mouthShapeVec then
+        thing.mouthShapeFrom = { unpack(thing.mouthShapeVec) }
+    else
+        if not closedNorm then
+            for _, s in ipairs(mouthNormalized) do
+                if s.name == 'closed' then closedNorm = s; break end
+            end
+        end
+        thing.mouthShapeFrom = closedNorm and closedNorm.points or shape.points
+    end
+    thing.mouthShapeTarget = shape.points
+    thing.mouthTweenStart = love.timer.getTime()
+end
+
+local function neutralMouth(thing)
+    -- find 'closed' shape index
+    for i, s in ipairs(mouthNormalized) do
+        if s.name == 'closed' then setMouthShape(thing, i); break end
+    end
+    thing.mouthIsRandom = false
+end
+
+local function randomizeMouth(thing)
+    setMouthShape(thing, math.random(#mouthNormalized))
+    thing.mouthIsRandom = true
+end
+
+local function tickMouthTween(thing)
+    if not thing.mouthTweenStart then return end
+    local t = math.min((love.timer.getTime() - thing.mouthTweenStart) / mouthTweenDuration, 1)
+    local from = thing.mouthShapeFrom
+    local to   = thing.mouthShapeTarget
+    if not from or not to then return end
+    local vec = {}
+    for i = 1, 16 do vec[i] = from[i] + (to[i] - from[i]) * t end
+    thing.mouthShapeVec = vec
+    if t >= 1 then thing.mouthTweenStart = nil end
+end
+
+local function lsq1D(nx, wy)
+    local n = #nx
+    local snx, swy = 0, 0
+    for i = 1, n do snx = snx + nx[i]; swy = swy + wy[i] end
+    local mnx, mwy = snx / n, swy / n
+    local num, den = 0, 0
+    for i = 1, n do
+        local dx = nx[i] - mnx
+        num = num + dx * (wy[i] - mwy); den = den + dx * dx
+    end
+    local scale = den > 0.001 and (num / den) or 1
+    return scale, mwy - scale * mnx
+end
+
+local function initFaceDecals(body)
+    if not closedNorm then
+        for _, s in ipairs(mouthNormalized) do
+            if s.name == 'closed' then closedNorm = s; break end
+        end
+    end
+    for _, f in ipairs(body:getFixtures()) do
+        local fud = f:getUserData()
+        if fud and fud.subtype == 'decal' then
+            if fud.extra.eyeW then fud.extra.lookAtMouse = true end
+            local l = fud.label
+            if l == 'leye' or l == 'reye' or l == 'lpupil' or l == 'rpupil' then
+                fud.extra.isEye = true
+            end
+            -- Migrate old mouth decals missing scale transform
+            if fud.extra.mouthCurve and closedNorm then
+                local cp = fud.extra.curvePoints
+                if cp and #cp == 16 and not fud.extra.mouthScaleX then
+                    local nx, wx = {}, {}
+                    for ci = 1, 16, 2 do
+                        nx[#nx + 1] = closedNorm.points[ci]
+                        wx[#wx + 1] = cp[ci]
+                    end
+                    local scaleX, offX = lsq1D(nx, wx)
+                    local sumy = 0
+                    for ci = 2, 8, 2 do sumy = sumy + cp[ci] end
+                    fud.extra.mouthScaleX = scaleX
+                    fud.extra.mouthScaleY = scaleX
+                    fud.extra.mouthX = offX
+                    fud.extra.mouthY = sumy / 4
+                end
+                if fud.extra.mouthCurve == 'lower' then
+                    fud.extra.backdropHex = '00000099'
+                end
+            end
+        end
+    end
+end
+
+local function isFaceOwner(label)
+    return label == 'head' or label == 'torso1'
+end
+
+local function tickBlink(world, dt)
+    local now = love.timer.getTime()
+    for _, body in ipairs(world:getBodies()) do
+        local ud = body:getUserData()
+        if ud and ud.thing then
+            local thing = ud.thing
+            local s = blinkStates[thing]
+            if not s then
+                s = { expiresAt = now + 2 + math.random() * 4 }
+                blinkStates[thing] = s
+                if isFaceOwner(ud.thing.label) then
+                    initFaceDecals(body)
+                    initBrowState(thing)
+                end
+            end
+            if now >= s.expiresAt then
+                -- trigger a blink: squish down then back up
+                s.expiresAt = now + 2 + math.random() * 4
+                s.blinkStart = now
+            end
+            if s.blinkStart then
+                local elapsed = now - s.blinkStart
+                local closeTime, openTime = 0.08, 0.12
+                if elapsed < closeTime then
+                    thing.eyesOpen = 1 - (elapsed / closeTime)
+                elseif elapsed < closeTime + openTime then
+                    thing.eyesOpen = (elapsed - closeTime) / openTime
+                else
+                    thing.eyesOpen = 1
+                    s.blinkStart = nil
+                end
+            else
+                thing.eyesOpen = 1
+            end
+            if isFaceOwner(ud.thing.label) then
+                tickBrowLerp(thing, dt)
+                tickMouthTween(thing)
+            end
+        end
+    end
+
+    -- Click on head/torso1 (potato head) → randomize brows + mouth
+    local mouseDown = love.mouse.isDown(1)
+    if mouseDown and not prevMouseDown then
+        local mx, my = love.mouse.getPosition()
+        local wmx, wmy = cam:getWorldCoordinates(mx, my)
+        for _, body in ipairs(world:getBodies()) do
+            local ud = body:getUserData()
+            if ud and ud.thing and isFaceOwner(ud.thing.label) then
+                local bx, by = body:getPosition()
+                local dx, dy = wmx - bx, wmy - by
+                if dx * dx + dy * dy < 200 * 200 then
+                    if ud.thing.browIsRandom then
+                        neutralBrows(ud.thing)
+                        neutralMouth(ud.thing)
+                        ud.thing.browIsRandom = false
+                    else
+                        randomizeBrows(ud.thing)
+                        randomizeMouth(ud.thing)
+                        ud.thing.browIsRandom = true
+                    end
+                end
+            end
+        end
+    end
+    prevMouseDown = mouseDown
+end
+
 local function safeLoadImage(path)
     local info = love.filesystem.getInfo(path)
     if not info then return nil end
@@ -1413,6 +1650,7 @@ local function lookupUV(vx, vy, vertexIndex, uvs)
 end
 
 function lib.drawTexturedWorld(world)
+    tickBlink(world, love.timer.getDelta() or 0)
     local bodies = world:getBodies()
 
 
@@ -2803,22 +3041,31 @@ function lib.drawTexturedWorld(world)
                 if extra.lookAtMouse and extra.eyeW then
                     local mx, my = love.mouse.getPosition()
                     local wmx, wmy = cam:getWorldCoordinates(mx, my)
-                    local ecx, ecy = body:getWorldPoint(ox, oy)
+                    local ecx, ecy = body:getPosition()
                     local dx, dy = wmx - ecx, wmy - ecy
-                    local angle = math.atan2(dy, dx)
-                    local localAngle = angle - body:getAngle()
-                    local dw = extra.w or 0
-                    local dh = extra.h or 0
-                    local maxX = math.max(0, (extra.eyeW - dw) / 2)
-                    local maxY = math.max(0, (extra.eyeH - dh) / 2)
-                    ox = ox + math.cos(localAngle) * maxX
-                    oy = oy + math.sin(localAngle) * maxY
+                    local dist = math.sqrt(dx * dx + dy * dy)
+                    local t = math.max(0, 1 - dist / gazeRadius)
+                    if t > 0 then
+                        local angle = math.atan2(dy, dx)
+                        local localAngle = angle - body:getAngle()
+                        local dw = extra.w or 0
+                        local dh = extra.h or 0
+                        local maxX = math.max(0, (extra.eyeW - dw) / 2) * 0.8
+                        local maxY = math.max(0, (extra.eyeH - dh) / 2) * 0.8
+                        ox = ox + math.cos(localAngle) * maxX * t
+                        oy = oy + math.sin(localAngle) * maxY * t
+                    end
                 end
                 local wx, wy = body:getWorldPoint(ox, oy)
                 local angle = body:getAngle() + (extra.rot or 0)
                 local dw = extra.w or 50
                 local dh = extra.h or 50
                 local mirrorX = extra.mirror and -1 or 1
+                if extra.isEye then
+                    local ud = body:getUserData()
+                    local eyesOpen = (ud and ud.thing and ud.thing.eyesOpen) or 1
+                    dh = dh * eyesOpen
+                end
 
                 if extra.OMP and extra.ompImage then
                     -- Pre-composited OMP image (has proper alpha)
@@ -2871,13 +3118,17 @@ function lib.drawTexturedWorld(world)
                 if browImg then
                     local w = extra.w or 20
                     local h = extra.h or 10
-                    local bendIdx = extra.browBend or 1
-                    local bend = browBends[bendIdx] or browBends[1]
+                    local bud = body:getUserData()
+                    local thing = bud and bud.thing
+                    local vecKey = extra.browMirror and 'rbrowVec' or 'lbrowVec'
+                    local bend = (thing and thing[vecKey]) or browBends[extra.browBend or 1] or browBends[1]
                     local bendMul = w / 5
 
                     -- Build curve at origin, same for both sides
                     local ox = extra.ox or 0
                     local oy = extra.oy or 0
+                    local yKey = extra.browMirror and 'rbrowYOffset' or 'lbrowYOffset'
+                    oy = oy + (thing and thing[yKey] or 0)
 
                     local p1x = -w / 2
                     local p1y = bend[1] * bendMul
@@ -2922,8 +3173,28 @@ function lib.drawTexturedWorld(world)
                 love.graphics.translate(bx, by)
                 love.graphics.rotate(angle)
 
-                local cleaned = buildMouthPolygon(extra.curvePoints)
-                local downCurve = love.math.newBezierCurve(curveData)
+                -- Use animated mouth shape if available
+                local bud = body:getUserData()
+                local thing = bud and bud.thing
+                local vec = thing and thing.mouthShapeVec
+                local curvePoints = extra.curvePoints
+                if vec and extra.mouthScaleX then
+                    curvePoints = {}
+                    for ci = 1, 16, 2 do
+                        curvePoints[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
+                        curvePoints[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
+                    end
+                end
+
+                local cleaned = buildMouthPolygon(curvePoints)
+                local s = curvePoints
+                local activeCurveData = vec and extra.mouthScaleX and {
+                    s[1], s[2], s[15], s[16],
+                    s[15], s[16], s[13], s[14],
+                    s[13], s[14], s[11], s[12],
+                    s[11], s[12], s[9], s[10],
+                } or curveData
+                local downCurve = love.math.newBezierCurve(activeCurveData)
 
                 if cleaned then
                     local tris = shapes.makeTrianglesFromPolygon(cleaned)
@@ -2960,7 +3231,10 @@ function lib.drawTexturedWorld(world)
                     local mesh = getStrip(lipImg, extra.lipScale or 0.25)
                     love.graphics.setColor(1, 1, 1, 1)
                     texturedCurve(downCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
+                    love.graphics.push()
+                    love.graphics.translate(0, -8)
                     love.graphics.draw(mesh)
+                    love.graphics.pop()
                 end
 
                 love.graphics.pop()
@@ -2980,7 +3254,24 @@ function lib.drawTexturedWorld(world)
                 love.graphics.translate(bx, by)
                 love.graphics.rotate(angle)
 
-                local upCurve = love.math.newBezierCurve(curveData)
+                local bud = body:getUserData()
+                local thing = bud and bud.thing
+                local vec = thing and thing.mouthShapeVec
+                local activeCurveData = curveData
+                if vec and extra.mouthScaleX then
+                    local s = {}
+                    for ci = 1, 16, 2 do
+                        s[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
+                        s[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
+                    end
+                    activeCurveData = {
+                        s[1], s[2], s[3], s[4],
+                        s[3], s[4], s[5], s[6],
+                        s[5], s[6], s[7], s[8],
+                        s[7], s[8], s[9], s[10],
+                    }
+                end
+                local upCurve = love.math.newBezierCurve(activeCurveData)
                 local lipImg = extra.ompImage
                 if not lipImg and extra.main and extra.main.bgURL then
                     lipImg = getLoveImage('textures/' .. extra.main.bgURL)
@@ -2989,7 +3280,10 @@ function lib.drawTexturedWorld(world)
                     local mesh = getStrip(lipImg, extra.lipScale or 0.25)
                     love.graphics.setColor(1, 1, 1, 1)
                     texturedCurve(upCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
+                    love.graphics.push()
+                    love.graphics.translate(0, 8)
                     love.graphics.draw(mesh)
+                    love.graphics.pop()
                 end
 
                 love.graphics.pop()
