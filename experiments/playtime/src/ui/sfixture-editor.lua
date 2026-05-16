@@ -1969,6 +1969,15 @@ function lib.drawSelectedSFixture()
                 end
                 nextRow()
 
+                -- bendiness: 0 = rubbery (smooth across joints), 6 = crisp corners
+                ui.createSliderWithId(myID, 'bendiness', x + 50, y, ROW_WIDTH - 50, 0, 6,
+                    oldTexFixUD.extra.main.bendiness or 2,
+                    function(v)
+                        oldTexFixUD.extra.main.bendiness = math.floor(v + 0.5)
+                    end)
+                ui.alignedLabel(x, y, 'bend')
+                nextRow()
+
 
                 if not e.OMP then
                     local dirty = function() oldTexFixUD.extra.dirty = true end

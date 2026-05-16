@@ -555,6 +555,39 @@ local function randomizeFace(instance, hairColor, opts)
 end
 
 -- Randomize all visual aspects of a character instance.
+-- Randomize limb lengths (arm + leg, symmetric L/R, upper/lower share like mutateSizes)
+-- and visual fatness via wmul on each upper limb's connected-skin.
+local function randomizeLimbs(instance)
+    local armH = D.randomInRangeWeighted('limbH')
+    local legH = D.randomInRangeWeighted('limbH')
+    local armWMul = D.randomInRangeWeighted('limbWMul')
+    local legWMul = D.randomInRangeWeighted('limbWMul')
+
+    for _, p in ipairs({'luarm', 'ruarm', 'llarm', 'rlarm'}) do
+        if instance.dna.parts[p] then
+            lib.updatePart(p, { h = armH }, instance)
+        end
+    end
+    for _, p in ipairs({'luleg', 'ruleg', 'llleg', 'rlleg'}) do
+        if instance.dna.parts[p] then
+            lib.updatePart(p, { h = legH }, instance)
+        end
+    end
+    -- wmul lives on the upper limb's connected-skin (covers the whole chain via getLimbRoot)
+    for _, p in ipairs({'luarm', 'ruarm'}) do
+        if instance.dna.parts[p] and instance.dna.parts[p].appearance
+            and instance.dna.parts[p].appearance['connected-skin'] then
+            lib.updateConnectedAppearance(instance, p, 'connected-skin', { wmul = armWMul })
+        end
+    end
+    for _, p in ipairs({'luleg', 'ruleg'}) do
+        if instance.dna.parts[p] and instance.dna.parts[p].appearance
+            and instance.dna.parts[p].appearance['connected-skin'] then
+            lib.updateConnectedAppearance(instance, p, 'connected-skin', { wmul = legWMul })
+        end
+    end
+end
+
 function lib.randomizeMipo(instance)
     if not instance then return end
 
@@ -565,6 +598,7 @@ function lib.randomizeMipo(instance)
     randomizeLimbLengths(instance)
     randomizeEars(instance)
     randomizeFeetAndHands(instance)
+    randomizeLimbs(instance)
     randomizeTextures(instance, hairColor)
     randomizeFace(instance, hairColor)
 
@@ -1006,7 +1040,7 @@ local dna = {
                         zOffset = 301,
                     }
                 },
-                dims = { w = 80, h = 200, w2 = 4 },
+                dims = { w = 80, h = 400, w2 = 4 },
                 shape = ST.CAPSULE,
                 behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } }
@@ -1024,15 +1058,15 @@ local dna = {
                         zOffset = 301,
                     }
                 },
-                dims = { w = 80, h = 200, w2 = 4 },
+                dims = { w = 80, h = 400, w2 = 4 },
                 shape = ST.CAPSULE,
                 behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } }
             },
-            ['llleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
+            ['llleg'] = { dims = { w = 80, h = 400, w2 = 4 }, shape = ST.CAPSULE,
                 behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 2, up = 0 } } },
-            ['rlleg'] = { dims = { w = 80, h = 200, w2 = 4 }, shape = ST.CAPSULE,
+            ['rlleg'] = { dims = { w = 80, h = 400, w2 = 4 }, shape = ST.CAPSULE,
                 behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } },
                 j = { type = JT.REVOLUTE, limits = { low = 0, up = math.pi / 2 } } },
             ['luarm'] = {

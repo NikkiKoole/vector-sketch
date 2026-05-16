@@ -284,6 +284,7 @@ local shrinkFactor = 1
 -- using the loaded pose as bind pose. Falls back to LBS gracefully per-vertex if data is missing.
 lib.useDQS = true
 lib.drawMeshOutline = true -- debug: draw wireframe over deformed MESHUSERT meshes
+lib.useRibbonMiterClamp = true -- A/B toggle: per-sample bend-aware half-width in texturedCurve
 
 
 lib.setShrinkFactor = function(value)
@@ -1239,6 +1240,15 @@ function lib.makeCombinedImages()
                 end
                 local cached = main.cached
 
+                -- bgURL can be deliberately cleared by the Mipo editor's "null"
+                -- thumbnail. Drop ompImage and skip recompose so the renderer's
+                -- non-OMP fallback path also short-circuits cleanly.
+                if not main.bgURL or main.bgURL == '' then
+                    ud.extra.ompImage = nil
+                    ud.extra.dirty = false
+                    goto continue_omp_compose
+                end
+
                 local outlineImage = getLoveImage('textures/' .. main.bgURL)
                 local hasFgURL = main.fgURL and main.fgURL ~= ''
                 local maskImage = hasFgURL and getLoveImage('textures/' .. main.fgURL) or nil
@@ -1270,6 +1280,7 @@ function lib.makeCombinedImages()
                 fixtures[i]:setUserData(ud)
 
                 ud.extra.dirty = false
+                ::continue_omp_compose::
             end
         end
         --for i = 1, #fixtures do fixtures[i] = nil end
@@ -1441,8 +1452,10 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
         local ny   = _tcDX[i]
 
         -- Adaptive half-width: clamp to prevent inner-edge crossover at sharp bends.
+        -- A/B toggle (lib.useRibbonMiterClamp): false skips the clamp, restoring the
+        -- pre-2026-04-13 constant-width behaviour (bow-tie at flexed elbows).
         local hw   = absHW
-        if i > 1 and i < segments then
+        if lib.useRibbonMiterClamp and i > 1 and i < segments then
             local ax = x - _tcX[i - 1]
             local ay = y - _tcY[i - 1]
             local bx = _tcX[i + 1] - x
@@ -1846,7 +1859,12 @@ function lib.drawTexturedWorld(world)
                         points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
 
 
-                        points = doubleControlPoints(points, 2)
+                        -- bendiness controls control-point duplication for the bezier through
+                        -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
+                        -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
+                        -- pre-knob behaviour. See doubleControlPoints above.
+                        local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
+                        points = doubleControlPoints(points, bendiness)
 
 
                         local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
@@ -2951,7 +2969,14 @@ function lib.drawTexturedWorld(world)
                 if useOMP then
                     img = extra.ompImage
                 else
-                    img = getLoveImage('textures/' .. (extra.main.bgURL))
+                    -- Haircut/limb-hair can be deliberately cleared (Mipo editor "null"
+                    -- thumbnail). nil/empty bgURL means "no hair" — skip drawing rather
+                    -- than crash on the textures/ concat or fall through to a default.
+                    local bg = extra.main.bgURL
+                    if not bg or bg == '' then
+                        goto continue_trace_vertices
+                    end
+                    img = getLoveImage('textures/' .. bg)
                     if not img then
                         img = getLoveImage('textures/' .. 'hair7.png')
                     end
@@ -3031,6 +3056,7 @@ function lib.drawTexturedWorld(world)
             end
             --logger:inspect(points)
             --logger:inspect()
+            ::continue_trace_vertices::
         end
 
         if drawables[i].type == 'decal' then

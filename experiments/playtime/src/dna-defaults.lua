@@ -132,6 +132,8 @@ lib.randomRanges = {
     teethHMul     = { min = 0.5, max = 2.5 },
     teethChance   = 0.3,
     teethStickOut = 0.2,
+    limbH         = { min = 120, max = 800 },
+    limbWMul      = { min = 0.2, max = 0.5 },
 }
 
 function lib.randomInRange(key)

@@ -564,7 +564,16 @@ function lib.recreateThingFromBody(body, newSettings)
         settings
     )
 
-
+    -- If shape construction produced nothing (degenerate polygon after scaling,
+    -- pcall'd failure in shapes.lua), abort the recreate cleanly: throw away
+    -- the empty newBody and leave the old body and its joints untouched.
+    -- Otherwise we'd end up with a body that has zero collision fixtures.
+    if not shapeList or #shapeList == 0 then
+        logger:warn("recreateThingFromBody: no shapes for " ..
+            tostring(thing.label or "?") .. " — keeping old body")
+        newBody:destroy()
+        return thing
+    end
 
     local _, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
 

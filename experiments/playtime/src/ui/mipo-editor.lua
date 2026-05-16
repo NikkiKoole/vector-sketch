@@ -1669,6 +1669,24 @@ function lib.drawMipoEditor(instance, partName)
                     end
                     y = y + ROW
 
+                    -- bendiness: 0 = rubbery (smooth across joints), 6 = crisp corners
+                    local currentBendiness = cs.bendiness or 2
+                    local bendVal = ui.sliderWithInput('mipo_cs_bend_' .. partName, x, y, 120, 0, 6,
+                        currentBendiness)
+                    ui.alignedLabel(x, y, '  bendiness')
+                    bendVal = bendVal and tonumber(bendVal)
+                    if bendVal then bendVal = math.floor(bendVal + 0.5) end
+                    if bendVal and bendVal ~= currentBendiness then
+                        CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
+                            { bendiness = bendVal })
+                        if csMirror and instance.dna.parts[csMirror] then
+                            CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin',
+                                { bendiness = bendVal })
+                        end
+                        CharacterManager.addTexturesFromInstance2(instance)
+                    end
+                    y = y + ROW
+
                     handlePaletteButton('mipo_cs_bg_' .. partName,
                         x + 30, y, 140, cs.bgHex, function(color)
                             CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',

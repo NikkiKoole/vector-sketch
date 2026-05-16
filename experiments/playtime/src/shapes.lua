@@ -288,7 +288,15 @@ local function makeShapeListFromPolygon(polygon)
             table.insert(localVertices, x)
             table.insert(localVertices, y)
         end
-        table.insert(shapesList, love.physics.newPolygonShape(localVertices))
+        -- Box2D asserts on degenerate polygons (vertices closer than b2_linearSlop
+        -- ≈ 0.005m / ~0.15px). Scaling a shape down via slider/W+wheel can produce
+        -- these. Match the pcall pattern used at lines 337 and 478 below.
+        local shapeOk, shape = pcall(love.physics.newPolygonShape, localVertices)
+        if shapeOk then
+            table.insert(shapesList, shape)
+        else
+            logger:error("Failed to create polygon shape (simple-direct path): " .. tostring(shape))
+        end
     else                     -- ok we are not the simplest polygons we need more work,
         if allowComplex then -- when this is true we also solve, self intersecting and everythign
             local result = {}
