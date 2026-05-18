@@ -65,17 +65,14 @@ function lib.drawAddShapeUI()
                 contentFunc(clicked)
             end
         end
-        local _, mipoPressed, mipoReleased = ui.button(x, y, panelWidth - 20, 'add mipo')
-        if mipoPressed then
-            ui.draggingActive = ui.activeElementID
+        local function spawnMipo(randomizeFn)
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             local CharacterManager = require('src.character-manager')
             local instance = CharacterManager.createCharacter("humanoid", wx, wy, 0.3)
             if instance then
-                CharacterManager.randomizeMipo(instance)
+                randomizeFn(instance)
                 CharacterManager.poseTpose(instance)
-                -- Set up drag: torso1 as the primary drag target, all parts as group
                 local torsoThing = instance.parts['torso1']
                 if torsoThing then
                     state.interaction.draggingObj = torsoThing
@@ -88,10 +85,23 @@ function lib.drawAddShapeUI()
                 end
             end
         end
-        if mipoReleased then
-            ui.draggingActive = nil
-            state.selection.selectedBodies = nil
+
+        local hw = math.floor((panelWidth - 24) / 2)
+        local _, mipoPressed, mipoReleased = ui.button(x, y, hw, 'add mipo')
+        if mipoPressed then
+            ui.draggingActive = ui.activeElementID
+            local CM = require('src.character-manager')
+            spawnMipo(CM.randomizeMipo)
         end
+        if mipoReleased then ui.draggingActive = nil; state.selection.selectedBodies = nil end
+
+        local _, mipoCPressed, mipoCReleased = ui.button(x + hw + 4, y, hw, 'add mipo ✦')
+        if mipoCPressed then
+            ui.draggingActive = ui.activeElementID
+            local CM = require('src.character-manager')
+            spawnMipo(CM.randomizeMipoConstrained)
+        end
+        if mipoCReleased then ui.draggingActive = nil; state.selection.selectedBodies = nil end
         nextRow()
         drawAccordion('more', function() end)
         nextRow()

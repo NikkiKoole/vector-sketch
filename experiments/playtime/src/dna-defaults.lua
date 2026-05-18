@@ -105,6 +105,8 @@ lib.faceMagnitude = 1
 
 lib.randomRanges = {
     bodyScale     = { min = 1, max = 2 },
+    legH          = { min = 60, max = 800 },
+    armH          = { min = 60, max = 800 },
     earScale      = { min = 0.5, max = 2 },
     feetScale     = { min = 1, max = 2 },
     handScale     = { min = 1, max = 2 },
@@ -124,8 +126,8 @@ lib.randomRanges = {
     browHMul      = { min = 0.6, max = 1.4 },
     browBend      = { min = 1, max = 10 },
     browY         = { min = 0.25, max = 0.35 },
-    noseWMul      = { min = 0.5, max = 2.5 },
-    noseHMul      = { min = 0.5, max = 2.5 },
+    noseWMul      = { min = 0.5, max = 5 },
+    noseHMul      = { min = 0.5, max = 5 },
     noseY         = { min = 0.4, max = 0.6 },
     teethHMul     = { min = 0.5, max = 2.5 },
     teethChance   = 0.3,

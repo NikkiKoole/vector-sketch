@@ -333,6 +333,17 @@ local function randomizeShapes(instance)
     end
 end
 
+local function randomizeLimbLengths(instance)
+    local legH = D.randomInRangeWeighted('legH')
+    local armH = D.randomInRangeWeighted('armH')
+    for _, pname in ipairs({ 'luleg', 'ruleg', 'llleg', 'rlleg' }) do
+        lib.updatePart(pname, { h = legH }, instance)
+    end
+    for _, pname in ipairs({ 'luarm', 'ruarm', 'llarm', 'rlarm' }) do
+        lib.updatePart(pname, { h = armH }, instance)
+    end
+end
+
 -- Randomize ear shapes, scales, and colors.
 local function randomizeEars(instance)
     local randomHexColor = utils.randomHexColor
@@ -407,7 +418,8 @@ end
 
 -- Randomize haircut, bodyhair, connected-skin, and connected-hair textures.
 -- hairColor: shared hex color for all hair-related parts.
-local function randomizeTextures(instance, hairColor)
+-- opts: optional overrides table. opts.limbSkin = url string to lock limb skin texture.
+local function randomizeTextures(instance, hairColor, opts)
     local randomHexColor = utils.randomHexColor
     local count = instance.dna.creation.torsoSegments
 
@@ -436,7 +448,7 @@ local function randomizeTextures(instance, hairColor)
     end
 
     -- Random arm connected-skin
-    local armSkinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
+    local armSkinUrl = (opts and opts.limbSkin) or C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
     local armSkinFgHex = randomHexColor()
     local armSkinPHex = randomHexColor()
     local armSkinPURL = randomPatternURL()
@@ -447,7 +459,7 @@ local function randomizeTextures(instance, hairColor)
     end
 
     -- Random leg connected-skin
-    local legSkinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
+    local legSkinUrl = (opts and opts.limbSkin) or C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
     local legSkinFgHex = randomHexColor()
     local legSkinPHex = randomHexColor()
     local legSkinPURL = randomPatternURL()
@@ -487,19 +499,26 @@ end
 
 -- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
 -- hairColor: shared hex color used for brow color.
-local function randomizeFace(instance, hairColor)
+local function randomizeFace(instance, hairColor, opts)
     local randomHexColor = utils.randomHexColor
     local randomEyeY = D.randomInRangeWeighted('eyeY')
     local randomMouthY = randomEyeY + D.randomInRangeWeighted('mouthYOffset')
+    local eyeScale = D.randomInRangeWeighted('eyeWMul')
+    local pupilScale = D.randomInRangeWeighted('pupilWMul')
+    local uniform = opts and opts.uniformEyeScale
+    local allowedPupils = opts and opts.allowedPupilShapes
+    local pupilShapeIdx = allowedPupils
+        and allowedPupils[math.ceil(math.random() * #allowedPupils)]
+        or math.ceil(math.random() * #C.pupilShapes)
     local faceValues = {
         eyeShape = math.ceil(math.random() * #C.eyeShapes),
-        pupilShape = math.ceil(math.random() * #C.pupilShapes),
+        pupilShape = pupilShapeIdx,
         eyeX = D.randomInRangeWeighted('eyeX'),
         eyeY = randomEyeY,
-        eyeWMul = D.randomInRangeWeighted('eyeWMul'),
-        eyeHMul = D.randomInRangeWeighted('eyeHMul'),
-        pupilWMul = D.randomInRangeWeighted('pupilWMul'),
-        pupilHMul = D.randomInRangeWeighted('pupilHMul'),
+        eyeWMul = eyeScale,
+        eyeHMul = uniform and eyeScale or D.randomInRangeWeighted('eyeHMul'),
+        pupilWMul = pupilScale,
+        pupilHMul = uniform and pupilScale or D.randomInRangeWeighted('pupilHMul'),
         eyeBgHex = '000000ff',
         eyeFgHex = 'ffffffff',
         pupilBgHex = '000000ff',
@@ -543,12 +562,29 @@ function lib.randomizeMipo(instance)
     local hairColor = utils.randomHexColor()
 
     randomizeShapes(instance)
+    randomizeLimbLengths(instance)
     randomizeEars(instance)
     randomizeFeetAndHands(instance)
     randomizeTextures(instance, hairColor)
     randomizeFace(instance, hairColor)
 
     -- Disable physics nose when overlay nose is randomized
+    lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
+    lib.addTexturesFromInstance2(instance)
+end
+
+-- Constrained randomize: limb skin locked to leg1, limb lengths use full range.
+-- Use this for Bathhouse Mipos or any context where you want coherent-but-varied characters.
+-- Add more constraints here over time as the Mipo DNA language matures.
+function lib.randomizeMipoConstrained(instance)
+    if not instance then return end
+    local hairColor = utils.randomHexColor()
+    randomizeShapes(instance)
+    randomizeLimbLengths(instance)
+    randomizeEars(instance)
+    randomizeFeetAndHands(instance)
+    randomizeTextures(instance, hairColor, { limbSkin = C.limbSkinTextures[1] })
+    randomizeFace(instance, hairColor, { uniformEyeScale = true, allowedPupilShapes = { 1, 2, 3, 6, 7, 8 } })
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
     lib.addTexturesFromInstance2(instance)
 end
@@ -745,14 +781,14 @@ function lib.mutateSizes(instance)
     for _, pname in ipairs({'luleg', 'ruleg', 'llleg', 'rlleg'}) do
         local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
         if dims and dims.h then
-            if not legH then legH = math.max(60, jitterRelative(dims.h, MUTATE_JITTER)) end
+            if not legH then legH = math.max(60, math.min(800, jitterRelative(dims.h, MUTATE_JITTER))) end
             lib.updatePart(pname, { h = legH }, instance)
         end
     end
     for _, pname in ipairs({'luarm', 'ruarm', 'llarm', 'rlarm'}) do
         local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
         if dims and dims.h then
-            if not armH then armH = math.max(60, jitterRelative(dims.h, MUTATE_JITTER)) end
+            if not armH then armH = math.max(60, math.min(800, jitterRelative(dims.h, MUTATE_JITTER))) end
             lib.updatePart(pname, { h = armH }, instance)
         end
     end

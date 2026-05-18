@@ -1822,8 +1822,12 @@ function lib.drawMipoEditor(instance, partName)
             CharacterManager.randomizePart(instance, partName)
         end
         y = y + ROW
-        if ui.button(x, y, panelWidth - 40, 'randomize all') then
+        local hw = math.floor((panelWidth - 40) / 2) - 2
+        if ui.button(x, y, hw, 'randomize all') then
             CharacterManager.randomizeMipo(instance)
+        end
+        if ui.button(x + hw + 4, y, hw, 'randomize ✦') then
+            CharacterManager.randomizeMipoConstrained(instance)
         end
         y = y + ROW
         if ui.button(x, y, panelWidth - 40, 'mutate sizes') then
