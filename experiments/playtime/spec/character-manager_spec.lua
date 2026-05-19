@@ -236,7 +236,8 @@ describe("character-manager", function()
             CharacterManager.updateFaceOfPart(instance, faceOwner, {
                 mouthShape = 5,
                 mouthLipHex = 'ff00ffff',
-                mouthLipScale = 0.3,
+                mouthUpperLipScale = 0.12,
+                mouthLowerLipScale = 0.22,
                 mouthWMul = 1.2,
                 mouthHMul = 0.8,
                 mouthY = 0.85,
@@ -244,7 +245,8 @@ describe("character-manager", function()
             local mouth = instance.dna.parts[faceOwner].appearance.face.mouth
             assert.are.equal(5, mouth.shape)
             assert.are.equal('ff00ffff', mouth.lipHex)
-            assert.are.equal(0.3, mouth.lipScale)
+            assert.are.equal(0.12, mouth.upperLipScale)
+            assert.are.equal(0.22, mouth.lowerLipScale)
             assert.are.equal(1.2, mouth.wMul)
             assert.are.equal(0.8, mouth.hMul)
             assert.are.equal(0.85, instance.dna.parts[faceOwner].appearance.face.positioners.mouth.y)
@@ -411,9 +413,9 @@ describe("character-manager", function()
             assert.is_truthy(rpupil.extra.eyeW, "rpupil should have eyeW")
             assert.is_truthy(rpupil.extra.eyeH, "rpupil should have eyeH")
 
-            -- lookAtMouse defaults to false
-            assert.are.equal(false, lpupil.extra.lookAtMouse)
-            assert.are.equal(false, rpupil.extra.lookAtMouse)
+            -- lookAtMouse defaults to true (matches lib.eye default)
+            assert.are.equal(true, lpupil.extra.lookAtMouse)
+            assert.are.equal(true, rpupil.extra.lookAtMouse)
         end)
 
         it("enabling lookAtMouse should propagate to pupil extras after rebuild", function()

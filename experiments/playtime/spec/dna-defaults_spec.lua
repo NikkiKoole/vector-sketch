@@ -112,7 +112,8 @@ describe('dna-defaults', function()
 
         it('has mouth defaults', function()
             assert.equal(2, D.mouth.shape)
-            assert.equal(0.25, D.mouth.lipScale)
+            assert.equal(0.15, D.mouth.upperLipScale)
+            assert.equal(0.25, D.mouth.lowerLipScale)
             assert.equal('cc5555ff', D.mouth.lipHex)
         end)
 
@@ -121,7 +122,7 @@ describe('dna-defaults', function()
             assert.equal(0.5, D.facePositioners.eye.y)
             assert.equal(0, D.facePositioners.eye.r)
             assert.equal(0.3, D.facePositioners.brow.y)
-            assert.equal(0.35, D.facePositioners.nose.y)
+            assert.equal(0.5, D.facePositioners.nose.y)
             assert.equal(0.7, D.facePositioners.mouth.y)
         end)
 
@@ -164,11 +165,11 @@ describe('dna-defaults', function()
                 teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
                 mouth = { shape = 2, upperLipShape = 1, lowerLipShape = 1,
                           lipHex = 'cc5555ff', backdropHex = '00000033',
-                          lipScale = 0.25, wMul = 1, hMul = 1 },
+                          upperLipScale = 0.15, lowerLipScale = 0.25, wMul = 1, hMul = 1 },
                 positioners = {
                     eye = { x = 0.2, y = 0.5, r = 0 },
                     brow = { y = 0.3 },
-                    nose = { y = 0.35 },
+                    nose = { y = 0.5 },
                     mouth = { y = 0.7 },
                 },
             }
@@ -184,10 +185,10 @@ describe('dna-defaults', function()
                 teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
                 mouth = { shape = 2, upperLipShape = 1, lowerLipShape = 1,
                           lipHex = 'cc5555ff', backdropHex = '00000033',
-                          lipScale = 0.25, wMul = 1, hMul = 1 },
+                          upperLipScale = 0.15, lowerLipScale = 0.25, wMul = 1, hMul = 1 },
                 positioners = {
                     eye = { x = 0.2, y = 0.5, r = 0 },
-                    brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 },
+                    brow = { y = 0.3 }, nose = { y = 0.5 }, mouth = { y = 0.7 },
                 },
             }
             -- eye is missing
@@ -206,10 +207,10 @@ describe('dna-defaults', function()
                 teeth = { shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff', hMul = 1, stickOut = false },
                 mouth = { shape = 2, upperLipShape = 1, lowerLipShape = 1,
                           lipHex = 'cc5555ff', backdropHex = '00000033',
-                          lipScale = 0.25, wMul = 1, hMul = 1 },
+                          upperLipScale = 0.15, lowerLipScale = 0.25, wMul = 1, hMul = 1 },
                 positioners = {
                     eye = { x = 0.2, y = 0.5, r = 0 },
-                    brow = { y = 0.3 }, nose = { y = 0.35 }, mouth = { y = 0.7 },
+                    brow = { y = 0.3 }, nose = { y = 0.5 }, mouth = { y = 0.7 },
                 },
             }
             local issues = D.validateFace(face)
@@ -307,9 +308,9 @@ describe('dna-defaults', function()
     describe('randomRanges', function()
         it('has all expected range keys', function()
             local expectedKeys = {
-                'bodyScale', 'earScale', 'feetScale', 'handScale', 'haircutWidth',
+                'bodyScale', 'legH', 'armH', 'earScale', 'feetScale', 'handScale', 'haircutWidth',
                 'eyeY', 'eyeX', 'eyeWMul', 'eyeHMul', 'pupilWMul', 'pupilHMul',
-                'mouthYOffset', 'mouthLipScale', 'mouthWMul', 'mouthHMul',
+                'mouthYOffset', 'mouthUpperLipScale', 'mouthLowerLipScale', 'mouthWMul', 'mouthHMul',
                 'browWMul', 'browHMul', 'browBend', 'browY',
                 'noseWMul', 'noseHMul', 'noseY', 'teethHMul',
             }
