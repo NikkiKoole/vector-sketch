@@ -947,7 +947,7 @@ function lib.drawMipoEditor(instance, partName)
                 y = y + gridHeight + BUTTON_SPACING
 
                 -- sx slider
-                local sxVal = ui.sliderWithInput('mipo_sx', x, y, 120, -3, 3, partData.dims.sx or 1)
+                local sxVal = ui.sliderWithInput('mipo_sx', x, y, 120, -10, 10, partData.dims.sx or 1)
                 ui.alignedLabel(x, y, '  sx')
                 sxVal = sxVal and tonumber(sxVal)
                 if sxVal and sxVal ~= (partData.dims.sx or 1) then
@@ -969,7 +969,7 @@ function lib.drawMipoEditor(instance, partName)
                 y = y + ROW
 
                 -- sy slider
-                local syVal = ui.sliderWithInput('mipo_sy', x, y, 120, -3, 3, partData.dims.sy or 1)
+                local syVal = ui.sliderWithInput('mipo_sy', x, y, 120, -10, 10, partData.dims.sy or 1)
                 ui.alignedLabel(x, y, '  sy')
                 syVal = syVal and tonumber(syVal)
                 if syVal and syVal ~= (partData.dims.sy or 1) then

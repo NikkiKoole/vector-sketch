@@ -542,7 +542,7 @@ local function randomizeFace(instance, hairColor, opts)
         mouthUpperLipShape = math.ceil(math.random() * #C.upperLipShapes),
         mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
         mouthLipHex = 'cc5555ff',
-        mouthBackdropHex = '00000033',
+        mouthBackdropHex = '00000099',
         mouthUpperLipScale = D.randomInRangeWeighted('mouthUpperLipScale'),
         mouthLowerLipScale = D.randomInRangeWeighted('mouthLowerLipScale'),
         mouthWMul = D.randomInRangeWeighted('mouthWMul'),
