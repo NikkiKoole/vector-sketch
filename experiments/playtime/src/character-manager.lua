@@ -2304,4 +2304,50 @@ function lib.createCharacter(template, x, y, scale)
     end
 end
 
+-- Serialize all registered character instances to a plain-table array suitable
+-- for JSON encoding. Each entry is versioned so future loaders can migrate.
+-- dna.metadata is preserved verbatim — use it for archetype kind, mipo codes, etc.
+function lib.serializeCharacters()
+    local result = {}
+    for _, instance in pairs(mipoRegistry.getAll()) do
+        result[#result + 1] = {
+            version = 1,
+            id = instance.id,
+            scale = instance.scale or 1,
+            zGroupOffset = instance.zGroupOffset,
+            dna = utils.deepCopy(instance.dna),
+        }
+    end
+    return result
+end
+
+-- Reconstruct a character instance from saved data and a map of already-loaded bodies.
+-- partBodies: { [partName] = body } — the bodies that were just recreated by io.buildWorld.
+-- Ensures DNA defaults so new fields added to dna-defaults are auto-populated on old saves.
+function lib.reconstructInstance(charData, partBodies)
+    if not partBodies then return nil end
+    local instance = {
+        id = charData.id,
+        dna = utils.deepCopy(charData.dna),
+        scale = charData.scale or 1,
+        zGroupOffset = charData.zGroupOffset,
+        parts = {},
+        joints = {},
+        textures = {},
+        positioners = {},
+    }
+    D.ensureDefaults(instance.dna.creation, D.creation)
+    if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
+    if not instance.dna.positioners then instance.dna.positioners = {} end
+    D.ensureDefaults(instance.dna.positioners, D.positioners)
+    for partName, body in pairs(partBodies) do
+        local ud = body:getUserData()
+        if ud and ud.thing then
+            instance.parts[partName] = ud.thing
+        end
+    end
+    mipoRegistry.register(instance)
+    return instance
+end
+
 return lib

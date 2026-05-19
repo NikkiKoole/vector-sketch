@@ -404,6 +404,8 @@ function lib.buildWorld(data, world, cam)
             vertices = bodyData.vertices,
             behaviors = bodyData.behaviors,
             extraSteiner = bodyData.extraSteiner, -- body-local Steiner points (Path B)
+            mipoId = bodyData.mipoId,
+            mipoPartName = bodyData.mipoPartName,
             --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
             fixture = body:getFixtures()[1], -- this is used in clone.
             -- textures = bodyData.textures or { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
@@ -632,6 +634,25 @@ function lib.buildWorld(data, world, cam)
             end
         end
     end
+
+    -- Reconstruct character instances from saved DNA.
+    -- Group bodies by mipoId, then call reconstructInstance per saved character.
+    if data.characters and #data.characters > 0 then
+        local bodyGroups = {}  -- { [mipoId] = { [partName] = body } }
+        for _, body in ipairs(world:getBodies()) do
+            local ud = body:getUserData()
+            if ud and ud.thing and ud.thing.mipoId then
+                local mid = ud.thing.mipoId
+                local pname = ud.thing.mipoPartName
+                if not bodyGroups[mid] then bodyGroups[mid] = {} end
+                bodyGroups[mid][pname] = body
+            end
+        end
+        local CharacterManager = require('src.character-manager')
+        for _, charData in ipairs(data.characters) do
+            CharacterManager.reconstructInstance(charData, bodyGroups[charData.id])
+        end
+    end
 end
 
 -- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical
@@ -848,6 +869,7 @@ function lib.gatherSaveData(world, camera)
         joints = {},
         camera = {},
         backdrops = {},
+        characters = {},
     }
     for _, b in ipairs(state.backdrops or {}) do
         table.insert(saveData.backdrops, {
@@ -886,6 +908,8 @@ function lib.gatherSaveData(world, camera)
                 --radius = thing.radius,
                 vertices = thing.vertices,
                 extraSteiner = thing.extraSteiner, -- body-local Steiner points (Path B)
+                mipoId = thing.mipoId,
+                mipoPartName = thing.mipoPartName,
                 bodyType = body:getType(), -- 'dynamic', 'kinematic', or 'static'
                 position = { utils.round_to_decimals(body:getX(), 4), utils.round_to_decimals(body:getY(), 4) },
                 angle = utils.round_to_decimals(body:getAngle(), 4),
@@ -1034,6 +1058,10 @@ function lib.gatherSaveData(world, camera)
             table.insert(saveData.bodies, bodyData)
         end
     end
+
+    -- Serialize character instances from the mipo registry
+    local CharacterManager = require('src.character-manager')
+    saveData.characters = CharacterManager.serializeCharacters()
 
     -- Iterate through all joints in the world
     for _, joint in pairs(world:getJoints()) do
