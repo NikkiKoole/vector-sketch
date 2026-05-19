@@ -292,6 +292,19 @@ describe("CharacterManager.reconstructInstance", function()
         assert.are.equal('torso1', partName)
     end)
 
+    it("reconstructed instance has childrenMap, topology, and entryMap", function()
+        local partBodies = {}
+        for partName, part in pairs(instance.parts) do
+            partBodies[partName] = part.body
+        end
+        local charData = { version = 1, id = instance.id, dna = utils.deepCopy(instance.dna), scale = instance.scale, zGroupOffset = instance.zGroupOffset }
+        mipoRegistry.reset()
+        local result = CharacterManager.reconstructInstance(charData, partBodies)
+        assert.is_table(result.childrenMap, "should have childrenMap for updatePart/mutateSizes")
+        assert.is_table(result.topology, "should have topology")
+        assert.is_table(result.entryMap, "should have entryMap")
+    end)
+
     it("fills missing DNA fields with defaults (forward compat)", function()
         local partBodies = {}
         for partName, part in pairs(instance.parts) do
@@ -416,6 +429,27 @@ describe("character persistence round-trip", function()
             end
         end
         assert.is_true(found, "should find at least one body linkable to an instance")
+
+        destroyWorld(newWorld)
+    end)
+
+    it("loading a second scene clears instances from the first", function()
+        local decoded1 = saveAndDecode()
+        local newWorld = buildFreshWorld(decoded1)
+
+        -- Verify first scene has an instance
+        local count1 = 0
+        for _ in pairs(mipoRegistry.getAll()) do count1 = count1 + 1 end
+        assert.are.equal(1, count1)
+
+        -- Load an empty second scene (no characters) into the same world
+        local emptyData = { version = "1.0", bodies = {}, joints = {}, camera = {}, backdrops = {} }
+        sceneIO.buildWorld(emptyData, newWorld, camera)
+
+        -- Registry should be empty — old destroyed bodies gone
+        local count2 = 0
+        for _ in pairs(mipoRegistry.getAll()) do count2 = count2 + 1 end
+        assert.are.equal(0, count2, "mipo registry should be cleared after loading new scene")
 
         destroyWorld(newWorld)
     end)

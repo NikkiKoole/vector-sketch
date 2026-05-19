@@ -2340,6 +2340,10 @@ function lib.reconstructInstance(charData, partBodies)
     if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
     if not instance.dna.positioners then instance.dna.positioners = {} end
     D.ensureDefaults(instance.dna.positioners, D.positioners)
+    local topo = topology.resolve(instance.dna.creation)
+    instance.topology = topo
+    instance.entryMap = topology.buildEntryMap(topo)
+    instance.childrenMap = topology.buildChildrenMap(topo)
     for partName, body in pairs(partBodies) do
         local ud = body:getUserData()
         if ud and ud.thing then

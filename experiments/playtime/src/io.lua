@@ -28,6 +28,8 @@ local function clearWorld(world)
         body:destroy()
     end
     registry.reset()
+    local mipoRegistry = require('src.mipo-registry')
+    mipoRegistry.reset()
 end
 
 -- Path B migration (see docs/STEINER-OWNERSHIP-PLAN.md). Old saves carry
@@ -1365,6 +1367,50 @@ function lib.cloneSelection(selectedBodies, world)
 
             -- Store in the map for joint cloning
             clonedBodiesMap[originalThing.id] = clonedThing
+        end
+    end
+
+    -- Step 1.5: Mipo-aware clone — detect mipo parts among cloned bodies and
+    -- reconstruct proper instances so the clone is a real Mipo, not just plain bodies.
+    do
+        local mipoReg = require('src.mipo-registry')
+        local CharacterManager = require('src.character-manager')
+        -- Group cloned bodies by original mipoId: { [origMipoId] = { [partName] = clonedBody } }
+        local mipoGroups = {}
+        for _, originals in ipairs(selectedBodies) do
+            local originalBody = originals.body
+            local ud = originalBody:getUserData()
+            if ud and ud.thing and ud.thing.mipoId then
+                local origMipoId = ud.thing.mipoId
+                local partName = ud.thing.mipoPartName
+                if not mipoGroups[origMipoId] then
+                    mipoGroups[origMipoId] = {}
+                end
+                local clonedThing = clonedBodiesMap[ud.thing.id]
+                if clonedThing then
+                    mipoGroups[origMipoId][partName] = clonedThing.body
+                end
+            end
+        end
+        for origMipoId, partBodies in pairs(mipoGroups) do
+            local origInstance = mipoReg.getById(origMipoId)
+            if origInstance then
+                local newMipoId = uuid.generateID()
+                for partName, body in pairs(partBodies) do
+                    local ud = body:getUserData()
+                    if ud and ud.thing then
+                        ud.thing.mipoId = newMipoId
+                        ud.thing.mipoPartName = partName
+                    end
+                end
+                local charData = {
+                    id = newMipoId,
+                    dna = utils.deepCopy(origInstance.dna),
+                    scale = origInstance.scale,
+                    zGroupOffset = origInstance.zGroupOffset,
+                }
+                CharacterManager.reconstructInstance(charData, partBodies)
+            end
         end
     end
 
