@@ -27,6 +27,7 @@ local uiShapePanel = require('src.ui.shape-panel')
 local uiRecordingPanel = require('src.ui.recording-panel')
 local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
+local fileBrowser  = require('src.file-browser')
 local uiMipoEditor = require('src.ui.mipo-editor')
 local mipoRegistry = require('src.mipo-registry')
 local PANEL_WIDTH = 300
@@ -671,6 +672,8 @@ function lib.drawUI()
         love.graphics.circle('fill', x, y, 10)
         love.graphics.setColor(1, 1, 1)
     end
+
+    fileBrowser:draw()
 end
 
 return lib

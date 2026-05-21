@@ -183,8 +183,13 @@ function lib.drawSelectedSFixture()
         local function handleURLInput(id, labelText, px, py, pw, currentValue, updateCallback)
             local urlShow = ui.button(px - 10, py, 20, '', BUTTON_HEIGHT, { 1, 1, 1, 0.2 })
             if urlShow then
-                fileBrowser:loadFiles('/textures', { includes = '-mask' })
-                --fileBrowser:loadFiles('/textures', {excludes='-mask'})
+                fileBrowser:open('/textures', { excludes = '-mask' }, function(path)
+                    -- renderer prepends 'textures/' so store just the filename
+                    local filename = path:match('/textures/(.+)$') or path
+                    updateCallback(filename)
+                    oldTexFixUD.extra.dirty = true
+                    state.selection.selectedSFixture:setUserData(oldTexFixUD)
+                end)
             end
             local newValue = ui.textinput(id .. labelText, px + 10, py, pw, BUTTON_HEIGHT, "", currentValue or '')
             if newValue and newValue ~= currentValue then
