@@ -645,6 +645,17 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.vertices = newVertices
     thing.behaviors = newSettings.behaviors or thing.behaviors
 
+    -- Vertex positions changed: invalidate tile-repeat cached triangulation and mesh.
+    -- The draw loop caches thing._tris and extra._mesh on first draw and never rebuilds
+    -- them, so stale data would persist until the scene is reloaded.
+    thing._tris = nil
+    for _, f in ipairs(newBody:getFixtures()) do
+        local ud = f:getUserData()
+        if type(ud) == 'table' and subtypes.is(ud, subtypes.TILE_REPEAT) and ud.extra then
+            ud.extra._mesh = nil
+        end
+    end
+
     -- If the polygon vertex count changed, any RESOURCE sfixture on this body
     -- has a stale UV array (uvs length is pinned to the old vertex count).
     -- Drop it so the RESOURCE editor re-computes UVs next time it's selected,

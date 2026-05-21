@@ -2301,7 +2301,7 @@ function lib.drawSelectedSFixture()
                     local dirty = function() oldTexFixUD.extra.dirty = true end
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
                         function(c)
-                            oldTexFixUD.extra.main.bgHex = c
+                            oldTexFixUD.extra.main.bgHex = c; oldTexFixUD.extra.main.cached = nil
                         end, dirty)
                     local slx, sly = ui.sameLine(20)
                     handleURLInput(myID, 'bgURL', slx, sly, 150, oldTexFixUD.extra.main.bgURL,
@@ -2310,7 +2310,7 @@ function lib.drawSelectedSFixture()
                         end)
                     nextRow()
                     handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
-                        function(c) oldTexFixUD.extra.main.fgHex = c end, dirty)
+                        function(c) oldTexFixUD.extra.main.fgHex = c; oldTexFixUD.extra.main.cached = nil end, dirty)
                     slx, sly = ui.sameLine(20)
                     handleURLInput(myID, 'fgURL', slx, sly, 150, oldTexFixUD.extra.main.fgURL,
                         function(u)
