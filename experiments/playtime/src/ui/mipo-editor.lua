@@ -713,6 +713,18 @@ local function ensureKeepAngle(part, angle, kp)
     return b
 end
 
+local function isGrounded(instance)
+    for _, pname in ipairs({ 'lfoot', 'rfoot', 'llleg', 'rlleg' }) do
+        local p = instance.parts and instance.parts[pname]
+        if p and p.body and not p.body:isDestroyed() then
+            for _, contact in pairs(p.body:getContactList()) do
+                if contact:isTouching() then return true end
+            end
+        end
+    end
+    return false
+end
+
 function lib.drawMipoEditor(instance, partName)
     local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
@@ -949,6 +961,42 @@ function lib.drawMipoEditor(instance, partName)
                 local torso = instance.parts and instance.parts.torso1
                 if torso and torso.body and not torso.body:isDestroyed() then
                     torso.body:applyLinearImpulse(0, -1000)
+                end
+            end
+            y = y + ROW
+
+            -- pending jump: fires after crouch wind-up
+            if instance._jumpAt and love.timer.getTime() >= instance._jumpAt then
+                instance._jumpAt = nil
+                local torso = instance.parts and instance.parts.torso1
+                if torso and torso.body and not torso.body:isDestroyed() then
+                    torso.body:applyLinearImpulse(0, -4000)
+                end
+                if not (instance._isRagdoll) then
+                    local flipped = instance._isFlipped
+                    for _, pname in ipairs({ 'luleg', 'ruleg', 'llleg', 'rlleg' }) do
+                        local b = getKeepAngle(instance.parts[pname])
+                        if b then
+                            if flipped then
+                                b.enabled = false
+                            else
+                                b.enabled = nil
+                            end
+                        end
+                    end
+                end
+            end
+
+            local grounded = isGrounded(instance)
+            if ui.button(x, y, panelWidth - 40, grounded and 'jump' or 'jump (not grounded)') then
+                if grounded and not instance._jumpAt then
+                    if not (instance._isRagdoll) then
+                        for _, pname in ipairs({ 'luleg', 'ruleg', 'llleg', 'rlleg' }) do
+                            local b = getKeepAngle(instance.parts[pname])
+                            if b then b.enabled = false end
+                        end
+                    end
+                    instance._jumpAt = love.timer.getTime() + 0.1
                 end
             end
             y = y + ROW
