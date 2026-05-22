@@ -1001,6 +1001,7 @@ function lib.drawMipoEditor(instance, partName)
             end
             y = y + ROW
 
+
             local creation = instance.dna.creation
             local allKAPartNames = { 'torso1', 'head' }
             for i = 2, (creation.torsoSegments or 1) do table.insert(allKAPartNames, 'torso' .. i) end
