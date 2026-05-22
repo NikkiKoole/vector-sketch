@@ -1,7 +1,10 @@
 -- Mouth shape presets ported from mipomi-lang.
 -- 15 phoneme shapes, each with 8 control points (16 floats).
 -- Points 1-4 = upper lip (left to right), points 5-8 = lower lip (right to left).
--- Normalized so upper lip center is at (0,0).
+-- Normalized so the full-shape centroid (all 8 points) is at (0,0).
+-- Was previously upper-lip-only centroid, but the lower lip artwork extends
+-- further right than left in most shapes, so the perceived visual centre
+-- drifted right.
 
 local lib = {}
 
@@ -72,24 +75,27 @@ for k, v in pairs(phonemeKeys) do
     end
 end
 
--- Normalize shapes so upper lip center is at (0,0)
-local function normalizeShapesByUpperLip(shapes)
+-- Normalize shapes so the full-shape centroid (all 8 control points) is at (0,0).
+-- Centering on the centroid (rather than the upper lip alone) keeps each shape's
+-- visual centre of mass on the placement anchor, fixing a slight right bias that
+-- arose from lower-lip artwork extending further right than left.
+local function normalizeShapesByCentroid(shapes)
     local normalized = {}
     for _, shape in ipairs(shapes) do
         local pts = shape.points
-        -- Upper lip = first 4 points (indices 1-8)
-        local upX, upY = 0, 0
-        for i = 1, 8, 2 do
-            upX = upX + pts[i]
-            upY = upY + pts[i + 1]
+        local cx, cy = 0, 0
+        for i = 1, #pts, 2 do
+            cx = cx + pts[i]
+            cy = cy + pts[i + 1]
         end
-        upX = upX / 4
-        upY = upY / 4
+        local n = #pts / 2
+        cx = cx / n
+        cy = cy / n
 
         local newPts = {}
         for i = 1, #pts, 2 do
-            newPts[#newPts + 1] = pts[i] - upX
-            newPts[#newPts + 1] = pts[i + 1] - upY
+            newPts[#newPts + 1] = pts[i] - cx
+            newPts[#newPts + 1] = pts[i + 1] - cy
         end
 
         local entry = { name = shape.name, points = newPts }
@@ -104,7 +110,7 @@ local function normalizeShapesByUpperLip(shapes)
 end
 
 lib.raw = raw
-lib.normalized = normalizeShapesByUpperLip(raw)
+lib.normalized = normalizeShapesByCentroid(raw)
 lib.phonemeIndex = phonemeIndex
 lib.phonemeKeys = phonemeKeys
 
