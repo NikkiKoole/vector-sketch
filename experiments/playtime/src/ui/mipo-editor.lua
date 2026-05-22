@@ -1852,6 +1852,13 @@ function lib.drawMipoEditor(instance, partName)
             CharacterManager.mutateSizes(instance)
         end
         y = y + ROW
+        if ui.button(x, y, panelWidth - 40, 'breathe') then
+            local torso = instance.parts and instance.parts.torso1
+            if torso and torso.body and not torso.body:isDestroyed() then
+                torso.body:applyLinearImpulse(0, -1000)
+            end
+        end
+        y = y + ROW
 
         -- === DISSOLVE BUTTON ===
         if ui.button(x, y, panelWidth - 40, 'dissolve') then
