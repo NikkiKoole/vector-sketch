@@ -79,6 +79,10 @@ function love.keypressed(key)
         song.swing = song.swing + 1
         if song.swing > 75 then song.swing = 75 end
     end
+    if key == "t" then
+        tapeOn = not tapeOn
+        audioHelper.sendMessageToAudioThread({ type = "tape", data = { on = tapeOn } })
+    end
 
     if key == "1" then
         if (not song.pages[1]) then
@@ -122,6 +126,7 @@ function love.load()
     paused   = false
     playing  = true
     playhead = 0
+    tapeOn   = false
 
 
     local w, h           = love.graphics.getDimensions()
@@ -732,5 +737,5 @@ function love.draw()
     love.graphics.print(
         'bpm: ' ..
         song.bpm .. ', octave: ' .. octave .. ', tuning: ' .. song.tuning .. ', swing: ' .. song.swing .. ', paused: ' ..
-        bool2str(paused), 0, 0)
+        bool2str(paused) .. ', tape: ' .. bool2str(tapeOn), 0, 0)
 end

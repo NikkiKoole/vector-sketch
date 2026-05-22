@@ -20,6 +20,13 @@ local paused       = false
 local pattern      = {}
 local samples      = {}
 
+-- tape effect: two summed LFOs per live source
+local tapeOn         = false
+local tapeWowRate    = 0.8   -- Hz   (slow drift)
+local tapeWowDepth   = 16    -- cents
+local tapeFlutterRate  = 6.5 -- Hz   (fast shimmer)
+local tapeFlutterDepth = 4   -- cents
+
 local channel      = {};
 channel.audio2main = love.thread.getChannel("audio2main"); -- from thread
 channel.main2audio = love.thread.getChannel("main2audio"); --from main
@@ -235,7 +242,15 @@ while (true) do
             if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(t) then
                --print('actually missed a tick that i needed!!!!')
                table.remove(queue, i)
-               table.insert(sources, { source = q.source, index = q.index })
+               table.insert(sources, {
+                  source     = q.source,
+                  index      = q.index,
+                  basePitch  = q.pitch,
+                  wowPhase   = love.math.random() * 2 * math.pi,
+                  fltPhase   = love.math.random() * 2 * math.pi,
+                  wowRateMul = 0.85 + love.math.random() * 0.3,
+                  fltRateMul = 0.85 + love.math.random() * 0.3,
+               })
                --print(samples[q.index].p)
                -- love.audio.setVolume(volume)
                q.source:setVolume(volume)
@@ -253,7 +268,15 @@ while (true) do
          local q = queue[i]
          if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
             table.remove(queue, i)
-            table.insert(sources, { source = q.source, index = q.index })
+            table.insert(sources, {
+               source     = q.source,
+               index      = q.index,
+               basePitch  = q.pitch,
+               wowPhase   = love.math.random() * 2 * math.pi,
+               fltPhase   = love.math.random() * 2 * math.pi,
+               wowRateMul = 0.85 + love.math.random() * 0.3,
+               fltRateMul = 0.85 + love.math.random() * 0.3,
+            })
             -- todo parametrize
             --chokeGroup(q.index)
             --print(volume)
@@ -270,6 +293,21 @@ while (true) do
 
       lastBeat = beat
       lastTick = tick
+   end
+
+   -- tape: two-LFO pitch modulation across all currently-playing sources
+   if tapeOn and #sources > 0 then
+      local tw = time * tapeWowRate * 2 * math.pi
+      local tf = time * tapeFlutterRate * 2 * math.pi
+      for i = 1, #sources do
+         local s = sources[i]
+         if s.basePitch then
+            local wow = tapeWowDepth     * math.sin(tw * s.wowRateMul + s.wowPhase)
+            local flt = tapeFlutterDepth * math.sin(tf * s.fltRateMul + s.fltPhase)
+            local cents = wow + flt
+            s.source:setPitch(s.basePitch * (2 ^ (cents / 1200)))
+         end
+      end
    end
 
    love.timer.sleep(1.0 / (96 * 2))
@@ -300,6 +338,21 @@ while (true) do
       end
       if (v.type == 'volume') then
          volume = v.data
+      end
+      if (v.type == 'tape') then
+         tapeOn = v.data.on
+         if v.data.wowRate    then tapeWowRate    = v.data.wowRate    end
+         if v.data.wowDepth   then tapeWowDepth   = v.data.wowDepth   end
+         if v.data.fltRate    then tapeFlutterRate  = v.data.fltRate  end
+         if v.data.fltDepth   then tapeFlutterDepth = v.data.fltDepth end
+         -- when turning off, snap live sources back to their base pitch
+         if not tapeOn then
+            for i = 1, #sources do
+               if sources[i].basePitch then
+                  sources[i].source:setPitch(sources[i].basePitch)
+               end
+            end
+         end
       end
       if v.type == 'song' then
          local song = v.data
