@@ -45,7 +45,7 @@ function lib.update(dt, hitted)
             for _, vb in pairs(behaviors) do
                 -- figure out if im touching this body
 
-                if vb.name == 'KEEP_ANGLE' and not same then
+                if vb.name == 'KEEP_ANGLE' and vb.enabled ~= false and not same then
                     -- if same then vb.kp = 0.15 end
 
                     -- logger:inspect(same, vb)
