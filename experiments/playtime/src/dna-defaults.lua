@@ -54,8 +54,8 @@ lib.nose = {
 }
 
 lib.teeth = {
-    shape = 0, bgHex = 'ffffffff', fgHex = 'eeeeeeff',
-    hMul = 1, stickOut = false,
+    shape = 0, bgHex = '000000ff', fgHex = 'eeeeeeff',
+    wMul = 1, hMul = 1, stickOut = false,
 }
 
 lib.mouth = {
@@ -129,6 +129,7 @@ lib.randomRanges = {
     noseWMul      = { min = 0.5, max = 5 },
     noseHMul      = { min = 0.5, max = 5 },
     noseY         = { min = 0.4, max = 0.6 },
+    teethWMul     = { min = 0.5, max = 3 },
     teethHMul     = { min = 0.5, max = 2.5 },
     teethChance   = 0.3,
     teethStickOut = 0.2,
@@ -171,7 +172,7 @@ lib.faceSchema = {
     nose = { shape = 'number', bgHex = 'string', fgHex = 'string',
              wMul = 'number', hMul = 'number' },
     teeth = { shape = 'number', bgHex = 'string', fgHex = 'string',
-              hMul = 'number', stickOut = 'boolean' },
+              wMul = 'number', hMul = 'number', stickOut = 'boolean' },
     mouth = { shape = 'number', upperLipShape = 'number', lowerLipShape = 'number',
               lipHex = 'string', backdropHex = 'string',
               upperLipScale = 'number', lowerLipScale = 'number', wMul = 'number', hMul = 'number' },

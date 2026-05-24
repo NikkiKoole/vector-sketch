@@ -1791,6 +1791,16 @@ function lib.drawTexturedWorld(world)
                                     body = body,
                                     curveData = curveData,
                                 })
+                                if ud.extra.mouthCurve == 'lower' then
+                                    -- Dark interior fill renders below teeth so teeth always
+                                    -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
+                                    table.insert(drawables, {
+                                        type = 'mouth-backdrop',
+                                        z = composedZ - 2,
+                                        extra = ud.extra,
+                                        body = body,
+                                    })
+                                end
                             end
                         end
                     else
@@ -3186,7 +3196,61 @@ function lib.drawTexturedWorld(world)
             end
         end
 
-        -- Mouth lower lip: stencil-fill interior + draw lower lip curve
+        -- Mouth backdrop: dark interior fill. Drawn below teeth (z = mouth-lower - 2)
+        -- so teeth always render on top of the void.
+        if drawables[i].type == 'mouth-backdrop' then
+            local extra = drawables[i].extra
+            local body = drawables[i].body
+            if body and not body:isDestroyed() then
+                local angle = body:getAngle()
+                local bx, by = body:getPosition()
+
+                love.graphics.push()
+                love.graphics.translate(bx, by)
+                love.graphics.rotate(angle)
+
+                local bud = body:getUserData()
+                local thing = bud and bud.thing
+                local vec = thing and thing.mouthShapeVec
+                local curvePoints = extra.curvePoints
+                if vec and extra.mouthScaleX then
+                    curvePoints = {}
+                    for ci = 1, 16, 2 do
+                        curvePoints[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
+                        curvePoints[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
+                    end
+                end
+
+                local cleaned = buildMouthPolygon(curvePoints)
+                if cleaned then
+                    local tris = shapes.makeTrianglesFromPolygon(cleaned)
+                    if tris and #tris > 0 then
+                        love.graphics.stencil(function()
+                            for ti = 1, #tris do
+                                love.graphics.polygon("fill", tris[ti])
+                            end
+                        end, "replace", 1)
+                        love.graphics.setStencilTest("equal", 1)
+
+                        local br, bg, bb, ba = lib.hexToColor(extra.backdropHex or '00000099')
+                        love.graphics.setColor(br, bg, bb, ba)
+                        local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]
+                        for pi = 3, #cleaned, 2 do
+                            if cleaned[pi] < minX then minX = cleaned[pi] end
+                            if cleaned[pi + 1] < minY then minY = cleaned[pi + 1] end
+                            if cleaned[pi] > maxX then maxX = cleaned[pi] end
+                            if cleaned[pi + 1] > maxY then maxY = cleaned[pi + 1] end
+                        end
+                        love.graphics.rectangle("fill", minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4)
+                        love.graphics.setStencilTest()
+                    end
+                end
+
+                love.graphics.pop()
+            end
+        end
+
+        -- Mouth lower lip: lip curve only (interior fill moved to mouth-backdrop)
         if drawables[i].type == 'mouth-lower' then
             local extra = drawables[i].extra
             local body = drawables[i].body
@@ -3212,7 +3276,6 @@ function lib.drawTexturedWorld(world)
                     end
                 end
 
-                local cleaned = buildMouthPolygon(curvePoints)
                 local s = curvePoints
                 local activeCurveData = vec and extra.mouthScaleX and {
                     s[1], s[2], s[15], s[16],
@@ -3222,33 +3285,6 @@ function lib.drawTexturedWorld(world)
                 } or curveData
                 local downCurve = love.math.newBezierCurve(activeCurveData)
 
-                if cleaned then
-                    local tris = shapes.makeTrianglesFromPolygon(cleaned)
-                    if tris and #tris > 0 then
-                        -- Stencil fill with backdrop color
-                        love.graphics.stencil(function()
-                            for ti = 1, #tris do
-                                love.graphics.polygon("fill", tris[ti])
-                            end
-                        end, "replace", 1)
-                        love.graphics.setStencilTest("equal", 1)
-
-                        local br, bg, bb, ba = lib.hexToColor(extra.backdropHex or '00000099')
-                        love.graphics.setColor(br, bg, bb, ba)
-                        -- Fill bounding rect
-                        local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]
-                        for pi = 3, #cleaned, 2 do
-                            if cleaned[pi] < minX then minX = cleaned[pi] end
-                            if cleaned[pi + 1] < minY then minY = cleaned[pi + 1] end
-                            if cleaned[pi] > maxX then maxX = cleaned[pi] end
-                            if cleaned[pi + 1] > maxY then maxY = cleaned[pi + 1] end
-                        end
-                        love.graphics.rectangle("fill", minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4)
-                        love.graphics.setStencilTest()
-                    end
-                end
-
-                -- Draw lower lip curve (outside stencil block so it renders even for closed mouths)
                 local lipImg = extra.ompImage
                 if not lipImg and extra.main and extra.main.bgURL then
                     lipImg = getLoveImage('textures/' .. extra.main.bgURL)
@@ -3342,29 +3378,60 @@ function lib.drawTexturedWorld(world)
                     local scaleX = w / imgW
                     local scaleY = h / imgH
 
-                    if not extra.teethStickOut then
-                        -- Clip teeth to mouth polygon interior
-                        local cleaned = buildMouthPolygon(extra.curvePoints)
-                        if cleaned then
-                            local tris = shapes.makeTrianglesFromPolygon(cleaned)
-                            if tris and #tris > 0 then
-                                love.graphics.stencil(function()
-                                    for ti = 1, #tris do
-                                        love.graphics.polygon("fill", tris[ti])
-                                    end
-                                end, "replace", 1)
-                                love.graphics.setStencilTest("equal", 1)
-
-                                love.graphics.setColor(1, 1, 1, 1)
-                                love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
-
-                                love.graphics.setStencilTest()
-                            end
+                    -- Build a local curvePoints copy. Animated from mouthShapeVec when
+                    -- available, otherwise copied from bind so we can safely mutate.
+                    local bud = body:getUserData()
+                    local thing = bud and bud.thing
+                    local vec = thing and thing.mouthShapeVec
+                    local curvePoints
+                    if vec and extra.mouthScaleX and extra.curvePoints then
+                        curvePoints = {}
+                        for ci = 1, 16, 2 do
+                            curvePoints[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
+                            curvePoints[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
                         end
-                    else
-                        -- Stick out: draw freely, no stencil clipping
-                        love.graphics.setColor(1, 1, 1, 1)
-                        love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
+                        -- Anchor at corner midpoint (stable) with a small pull toward
+                        -- p3 (top of opening) so teeth follow lip motion subtly.
+                        local cmx = (curvePoints[1] + curvePoints[9])  * 0.5
+                        local cmy = (curvePoints[2] + curvePoints[10]) * 0.5
+                        local k = 0.3
+                        ox = cmx * (1 - k) + curvePoints[5] * k
+                        oy = cmy * (1 - k) + curvePoints[6] * k
+                    elseif extra.curvePoints then
+                        curvePoints = {}
+                        for ci = 1, #extra.curvePoints do
+                            curvePoints[ci] = extra.curvePoints[ci]
+                        end
+                    end
+
+                    -- For stickOut: push the lower-arc Y values (p6, p7, p8) down by
+                    -- ~teeth height BEFORE the polygon is built. Preserves the natural
+                    -- top of the curve (including dips in weird mouth shapes — front
+                    -- teeth show through below the dip) and creates vertical room.
+                    if curvePoints and extra.teethStickOut and #curvePoints == 16 then
+                        local drop = h * 0.8
+                        curvePoints[12] = curvePoints[12] + drop  -- p6.y
+                        curvePoints[14] = curvePoints[14] + drop  -- p7.y
+                        curvePoints[16] = curvePoints[16] + drop  -- p8.y
+                    end
+
+                    local cleaned = buildMouthPolygon(curvePoints)
+
+                    if cleaned then
+                        local tris = shapes.makeTrianglesFromPolygon(cleaned)
+                        if tris and #tris > 0 then
+                            love.graphics.stencil(function()
+                                for ti = 1, #tris do
+                                    love.graphics.polygon("fill", tris[ti])
+                                end
+                            end, "replace", 1)
+                            love.graphics.setStencilTest("equal", 1)
+
+                            love.graphics.setColor(1, 1, 1, 1)
+                            love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
+
+                            love.graphics.setStencilTest()
+                        end
                     end
                 end
 

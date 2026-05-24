@@ -11,11 +11,40 @@
 
 ## Current status
 
-**Current step:** Sequence #2 — Tech spike: physics-cluster mud + thorn-pull reveal
-**Last touched:** 2026-05-15
+**Current step:** Sequence #2 prerequisite — Mipo pre-spike polish (deadline 2026-05-31, see section below). Teeth done — next is eyelashes (wimpers).
+**Last touched:** 2026-05-24
 **Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
 
-*Update these two lines after each working session. They're the canonical "where am I?" so resume doesn't require re-derivation. When step 1 finishes, mark it ✓ and bump current step to Sequence #2.*
+*Update these two lines after each working session. They're the canonical "where am I?" so resume doesn't require re-derivation. When the Mipo polish list is empty (or 2026-05-31 hits — whichever comes first), bump current step to Sequence #2 — Tech spike.*
+
+---
+
+## Mipo pre-spike polish (deadline: 2026-05-31)
+
+The Mipo is the reveal payload. If it doesn't read at small size mid-bubble-burst, the iconic beat lands flat — so a focused round of polish before the spike is *not* drift, it's prep. The risk is "almost there" being unbounded, hence the time-box.
+
+**Time-box: 2026-05-24 → 2026-05-31 (1 week).** When this list is empty, spike starts.
+
+- [x] ~~**Teeth**~~ — done 2026-05-24. Outline visibility (black `bgHex`), width slider (`teethWMul`, max 3), z-order split (new `mouth-backdrop` drawable at z=250), stickOut clipping (shift lower-arc curve points down by `h*0.8` *before* polygon build — preserves natural upper-arc dip, gives front teeth room in weird shapes), animated tracking (corner midpoint + 0.3 pull toward p3).
+  - [ ] **(5) Upper gum.** Teeth currently grow from the void; an upper-gum decal would give them an attachment surface. Needs asset(s): one or more gum images (likely OMP — outline + mask). Renders just above the teeth, clipped to (or contained within) the mouth polygon. *Asset friction — will probably slip past 2026-05-31 unless drawing block happens soon. App-#2 polish if it does.*
+- [ ] **Eyelashes (wimpers)** — add to eyes for cuter read
+- [ ] **Missing hand/foot images** — fill gaps in the texture set
+- [ ] **Stronger DNA boundaries** — tighten constrained ranges so randomization stays on-brand
+- [ ] **Hair de-duplication** — face *and* body currently both spawn hairy parts; only one should
+- [ ] **Patches** — enable + tune until they look good
+- [ ] **Mipo breeds** — define a handful of archetypes (potato / chunk / long / hairy etc.). Draft already exists in `MIPO-CODE-IDEA.md` lines 19–44 (BLOB, SPUD, TALL, TWIG, CHUNK, WIDE) — pick which ones ship in app #1 and lock the constraint ranges
+
+### If 2026-05-31 hits and the list isn't empty
+
+Pre-approved exit, no shame debate:
+
+- Anything still open becomes **app #2 polish**, not an app-#1 blocker
+- Spike starts on 2026-06-01 regardless — the cluster mechanic doesn't care about teeth outlines or patches
+- Re-evaluate only if a remaining item *materially blocks the reveal beat* (e.g. Mipos still unrecognisable at thumb size)
+
+### Friction heads-up
+
+A few items need new image assets (drawing tablet, export pipeline). That's a "hassle" tax — schedule those for an **anchor block** (focused session), not a low-energy fill-in. Don't let asset prep become its own sub-project that eats the week.
 
 ---
 

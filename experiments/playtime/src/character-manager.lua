@@ -233,6 +233,7 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.mouthY then face.positioners.mouth.y = values.mouthY end
 
     if values.teethShape then face.teeth.shape = values.teethShape end
+    if values.teethWMul then face.teeth.wMul = values.teethWMul end
     if values.teethHMul then face.teeth.hMul = values.teethHMul end
     if values.teethStickOut ~= nil then face.teeth.stickOut = values.teethStickOut end
     if values.teethBgHex then face.teeth.bgHex = values.teethBgHex end
@@ -561,9 +562,10 @@ local function randomizeFace(instance, hairColor, opts)
         noseHMul = D.randomInRangeWeighted('noseHMul'),
         noseY = D.randomInRangeWeighted('noseY'),
         teethShape = math.random() < D.randomRanges.teethChance and math.ceil(math.random() * #C.teethShapes) or 0,
+        teethWMul = D.randomInRangeWeighted('teethWMul'),
         teethHMul = D.randomInRangeWeighted('teethHMul'),
         teethStickOut = math.random() < D.randomRanges.teethStickOut,
-        teethBgHex = 'ffffffff',
+        teethBgHex = '000000ff',
         teethFgHex = 'eeeeeeff',
     }
     lib.updateFaceOfPart(instance, 'head', faceValues)
@@ -2003,7 +2005,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 -- Calculate teeth dimensions: scale to mouth width, preserve aspect ratio
                 local teethImgPath = 'textures/' .. teethURL
                 local teethImg = love.filesystem.getInfo(teethImgPath) and love.graphics.newImage(teethImgPath)
-                local teethW = mouthScaleX * 100
+                local teethW = mouthScaleX * 100 * (teeth.wMul or 1)
                 local teethH = teethW * 0.5 * teeth.hMul -- default aspect ratio 2:1
                 if teethImg then
                     local imgW, imgH = teethImg:getDimensions()
@@ -2021,6 +2023,10 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 udTeeth.extra.zOffset = teethZOffset
                 udTeeth.extra.mouthCurve = 'teeth'
                 udTeeth.extra.curvePoints = curvePoints
+                udTeeth.extra.mouthScaleX = mouthScaleX
+                udTeeth.extra.mouthScaleY = mouthScaleY
+                udTeeth.extra.mouthX = mouthX
+                udTeeth.extra.mouthY = mouthY
                 udTeeth.extra.teethStickOut = teeth.stickOut
                 udTeeth.extra.OMP = true
                 udTeeth.extra.dirty = true
