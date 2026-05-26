@@ -38,10 +38,11 @@ local SHOWER_RATE   = 0.04   -- seconds between drops
 local SHOWER_SPREAD = 50     -- horizontal spread
 local SHOWER_DMG    = 4      -- health damage per drop hit
 
-local showerDroplets = {}
-local showerTimer    = 0
-local showerX        = nil
-local showerY        = nil
+local showerDroplets  = {}
+local showerTimer     = 0
+local showerX         = 0
+local showerY         = 0
+local showerDetected  = false
 
 local mudJoints    = {}
 local anchorBodies = {}  -- { body, centerR, ballCount, totalBalls } per anchor
@@ -198,9 +199,10 @@ function s.onStart()
             if x2 > x1 then
                 waterXmin = x1
                 waterXmax = x2
-                waterY    = y1 + (y2 - y1) * 0.52
-                showerX   = (x1 + x2) * 0.5
-                showerY   = y1 - 80
+                waterY       = y1 + (y2 - y1) * 0.52
+                showerX      = (x1 + x2) * 0.5
+                showerY      = y1 - 80
+                showerDetected = true
                 break
             end
         end
@@ -225,7 +227,7 @@ function s.update(dt)
     lastMx, lastMy = mx, my
 
     -- Shower: spawn drops
-    if showerX then
+    if showerDetected then
         showerTimer = showerTimer - dt
         if showerTimer <= 0 then
             showerTimer = SHOWER_RATE
@@ -451,7 +453,7 @@ function s.draw()
         end
         love.graphics.setColor(0.4, 0.75, 1.0, 0.7)
         love.graphics.setLineWidth(3)
-        love.graphics.line(wpts)
+        if #wpts >= 4 then love.graphics.line(wpts) end
         love.graphics.setLineWidth(1)
     end
 
@@ -506,11 +508,10 @@ function s.draw()
     end
 
     -- Showerhead + drops
-    if showerX then
+    if showerDetected then
         -- Pipe
         love.graphics.setColor(0.65, 0.65, 0.72, 1)
-        love.graphics.setLineWidth(6)
-        love.graphics.line(showerX, showerY - 120, showerX, showerY - 10)
+        love.graphics.rectangle('fill', showerX - 3, showerY - 120, 6, 110)
         love.graphics.setLineWidth(1)
         -- Head
         love.graphics.rectangle('fill', showerX - 35, showerY - 12, 70, 14, 4)
@@ -576,33 +577,35 @@ function s.drawUI()
 
         local x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
         local v = ui.sliderWithInput('density', x, y, 200, 0.1, 4.0, FLUID_DENSITY)
-        if v then FLUID_DENSITY = v end
+        if v then FLUID_DENSITY = v + 0 end
         ui.label(x, y, ' density')
 
         x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
         v = ui.sliderWithInput('drag', x, y, 200, 0.0, 3.0, FLUID_DRAG)
-        if v then FLUID_DRAG = v end
+        if v then FLUID_DRAG = v + 0 end
         ui.label(x, y, ' drag')
 
         x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
         v = ui.sliderWithInput('angdamp', x, y, 200, 0.0, 3.0, FLUID_ANGDAMP)
-        if v then FLUID_ANGDAMP = v end
+        if v then FLUID_ANGDAMP = v + 0 end
         ui.label(x, y, ' ang.damp')
 
         x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
         if waterY then
             v = ui.sliderWithInput('waterlvl', x, y, 200, -500, 1500, waterY)
-            if v then waterY = v end
+            if v then waterY = v + 0 end
             ui.label(x, y, ' water level')
         else
             ui.label(x, y, ' water: not found')
         end
 
         x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
-        if showerX then
+        if showerDetected then
             v = ui.sliderWithInput('showerx', x, y, 200, waterXmin or 0, waterXmax or 2000, showerX)
-            if v then showerX = v end
+            if v then showerX = v + 0 end
             ui.label(x, y, ' shower pos')
+        else
+            ui.label(x, y, ' shower: not found')
         end
     end)
 end

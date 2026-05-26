@@ -11,7 +11,7 @@
 
 ## Current status
 
-**Current step:** Sequence #2 — Tech spike complete. Day 1 ✓ (cluster + sponge scrub). Day 2 thorn-pull tried and dropped (see Explicit skips). Next: decide spike verdict (Day 3) — does pure sponge scrub feel satisfying enough to ship? If yes → build phase step 1.
+**Current step:** Sequence #2 — Tech spike ✓ COMPLETE. Verdict: **go**. Sponge scrub + shower feel satisfying; water + buoyancy adds life. Next: build phase step 1 (smoke-test scene — bathhouse Mipo attendant with face animation running in a real scene).
 **Last touched:** 2026-05-26
 **Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
 **Polish phase status:** ✓ closed 2026-05-26, 5 days ahead of the 2026-05-31 deadline. Teeth done; head bodyhair outline unified with hair color; gum tried-and-dropped (see below). Remaining polish items (eyelashes, hand/foot images, DNA boundaries, patches, Mipo breeds) deferred to app #2 per the pre-approved exit.
@@ -65,6 +65,7 @@ A few items need new image assets (drawing tablet, export pipeline). That's a "h
 - **Mud blobs:** arrive, get scrubbed, reveal what's inside, leave clean. New blob arrives.
 - **What's inside:** procedural via the Mipo DNA system. Each blob hides a uniquely-generated Mipo (face, color, size variation — DNA already supports this). No hand-authored library of reveals.
 - **Reward loop:** blob arrives → kid scrubs → reveal → both Mipos react → next blob.
+- **Two affordances, one verb:** sponge (direct scrub) + showerhead (kid drags Mipo under it). Both are WASH — the kid is always the agent. The shower handles bulk removal; the sponge handles detail. Neither works without the kid actively doing something. Not an "and also" — the sponge alone is tedious for a full clean.
 - **No fail state. No levels. No menus.**
 
 ---
@@ -72,8 +73,8 @@ A few items need new image assets (drawing tablet, export pipeline). That's a "h
 ## Sequence
 
 1. Close the face gap (~2–3 dev days / ~1–2 calendar weeks part-time, see `FACE-SYSTEM-PLAN.md` — verified 2026-05-14)
-2. **Tech spike: physics-cluster mud + thorn-pull reveal** (2–3 days, see below)
-3. If spike succeeds → build the app (~3–4 weeks)
+2. **Tech spike: physics-cluster mud + sponge scrub reveal** ✓ DONE 2026-05-26 (see below)
+3. **Build the app** (~3–4 weeks)
 4. **Fallback 1 (if cluster fails on performance or feel):** swap to canvas-alpha erosion. Well-trodden mechanic, ships safe, no spike needed.
 5. **Fallback 2 (if neither cleaning mechanic feels right):** abandon Bathhouse, swap to **Drop-the-Mipo** — pure rigid-body physics Pachinko-for-toddlers, similar verb purity, similar scope.
 
@@ -88,7 +89,7 @@ Total budget: 4–6 dev weeks per manifesto → **~3–4 calendar months at ~12�
 1. **Smoke-test scene.** One bathhouse Mipo (attendant), faces animating, in an empty scene. Integration check that face system + scene context work together. *0.5d*
 2. **Spike mechanic in the real scene.** Place a static placeholder blob; verify scrubbing erases dirt in scene context, not just the sandbox. *0.5d*
 3. **DNA-procedural Mipo inside the cluster.** Central body of the mud cluster is a randomly-generated Mipo via the DNA system. Scrubbing breaks joints, mud balls fall away, inner Mipo gradually exposed. **When this lands, you have a playable game.** *1–2d*
-4. **Thorn-pull reveal + face reaction.** At ~70% joints broken, the handle/thorn becomes grab-able. Player grabs via MouseJoint, drags free, remaining joints snap, Mipo pops out, both Mipos express via the face system. *This is the magic moment — the iconic Spirited Away beat.* *1d*
+4. **Face reaction on full reveal.** When all mud balls are cleared, attendant Mipo and the newly-revealed Mipo both express via the face system. *The emotional beat — no grab mechanic needed.* *0.5d*
 5. **Blob lifecycle.** Cleaned blob exits, new blob arrives. The infinite loop. *1d*
 6. **Particle polish.** Soap bubbles, splashes, water droplets. Reuse playtime's particle system where possible. *1–2d*
 7. **Hand-drawn art pass.** Bathhouse background, blob silhouette/dirt texture, scrub brush/sponge. **Up until now you've been working with placeholder rectangles.** *3–5d*
@@ -104,30 +105,25 @@ Total budget: 4–6 dev weeks per manifesto → **~3–4 calendar months at ~12�
 
 ---
 
-## Tech spike: physics-cluster mud + thorn-pull reveal
+## Tech spike: physics-cluster mud + sponge scrub reveal ✓ DONE 2026-05-26
 
-**Why this over canvas-alpha erosion:** the cleaning verb *is* physics, not a visual overlay. Scrubbing breaks the nearest joint(s) → mud balls fall away → the reveal is a physical extraction, not an alpha mask. Plays to playtime's actual strength (Box2D + character DNA). The mud aesthetic emerges automatically from overlapping circles, no authored "mud canvas" needed.
+**Why this over canvas-alpha erosion:** the cleaning verb *is* physics, not a visual overlay. Scrubbing breaks the nearest joint(s) → mud balls fall away → the reveal emerges naturally as the cluster clears. Plays to playtime's actual strength (Box2D + character DNA). The mud aesthetic emerges automatically from overlapping circles, no authored "mud canvas" needed.
 
-**Approach:**
-- Mud blob = cluster of ~15–25 Box2D circle bodies connected to a central "treasure" body via DistanceJoints (stiffness + damping for springy hold).
-- Inside the cluster: a randomly-generated Mipo (via DNA system), with a "handle" / "thorn" that becomes grab-able only once cleaning passes ~70%.
-- Player drag = nearest-joint break (spatial query within scrub-radius).
-- Broken-off mud balls fall away with gravity, exit screen, get cleaned up.
-- At ~70% joints broken: the **thorn-pull** beat — player grabs the central treasure via MouseJoint, drags it free against the remaining joints, those joints snap, the Mipo pops out, particle burst + sound. *This is the iconic Spirited Away moment.*
+**What was built (script: `scripts/mudready.playtime.lua`):**
+- Mud clusters on every Mipo body part (16 anchors: torso, head, ears, arms, hands, legs, feet). Each cluster is **auto-sized** from the body part's collision fixture bounding box — big parts get more/bigger balls, small parts fewer/smaller ones.
+- Ball count per anchor: 4–16, computed as `floor(r * 0.18)`, capped to stay reasonable.
+- Distance joints (frequency 4, damping 0.6) + angular restoring spring (`ANGLE_SPRING = 700`) keeps balls spread even when Mipo moves — prevents collapse into a pile.
+- Sponge scrub (mouse drag + speed threshold) damages nearest balls; balls pop with splatter + jiggle neighbours.
+- **Showerhead** (static, above tub) rains droplets that also damage mud balls on contact — secondary cleaning verb.
+- **Water fill** with animated wave surface; buoyancy + linear/angular damping applied to Mipo bodies when submerged (`FLUID_DENSITY`, `FLUID_DRAG`, `FLUID_ANGDAMP`).
+- Water-crossing splash particles: entry fires a crown upward, exit fires a sheet outward.
+- Sponge moving in water generates disturbance droplets (no click needed).
+- Root anchor circles shrink and disappear when their last ball is popped.
+- Tuning UI panel: density, drag, ang.damp, water level, shower position.
 
-**Day-by-day spike scope (all on macOS — no iOS needed yet):**
-- **Day 1:** Minimal cluster (15–25 circles, distance joints), scrub = break nearest joint within radius. Validate the mechanic exists end-to-end on macOS.
-- **Day 2:** Scrub-tool mapping, falling-chunks feel, integrate the thorn-pull (MouseJoint grab + drag-to-extract) as the climax.
-- **Day 3:** Decide — feels satisfying on macOS? If yes → ships as the Bathhouse mechanic. If no → Fallback 1.
+**Verdict: go.** Sponge scrub is satisfying as the sole verb. Water + buoyancy adds life. Thorn-pull tried and dropped (see Explicit skips).
 
-**iPad performance check is deferred to build phase step 9** (when there's a playable app to bundle anyway). 15–25 bodies + 30–60 joints per blob is *low* by Box2D standards — modern iPads handle hundreds. The doc previously called for iPad-on-Day-1, which was overcautious for this body-count. If it later turns out to be too slow on older (2018-era) iPads, the recoverable fallback is setting a minimum iPad requirement in the App Store listing — standard practice for kids' app developers.
-
-**Risks to verify in the spike (macOS-only):**
-- **Feel** — does scrubbing feel satisfying? Does the thorn-pull moment land?
-- **Spatial-query for "nearest body within radius"** — not built-in to Box2D, but standard fare via the spatial partition (`world:queryBoundingBox` + filter).
-- **Joint topology** — distance joints alone might not feel right. Possible refinement: outer-layer distance joints (visible, scrub targets) + inner-layer weld joints (structural skeleton). Don't pre-design; let the spike inform.
-
-**Spike deliverable:** a single LÖVE scene with one cluster-blob; scrubbing breaks joints; chunks fall away; at threshold, the thorn-pull triggers and reveals the inner Mipo. No app structure yet, just proof of the full reveal arc end-to-end.
+**iPad performance check is deferred to build phase step 9.** ~4–16 balls × 16 anchors = well under 300 bodies max — low by Box2D standards.
 
 ---
 
@@ -155,7 +151,7 @@ Pure rigid-body Pachinko-for-toddlers: kid drops Mipos from the top, they bounce
 - **LiquidFun / Box2D particle extension** — not natively in LÖVE 11.x; wrappers are unmaintained; particle liquids are GPU-heavy on mobile. Hard no.
 - **Metaball shaders** — not needed; overlapping cluster circles produce the metaball aesthetic automatically.
 - **Realistic mud soft-body simulation** — the cluster *is* a soft body, but we're not chasing photorealism. The cleaning verb defines the simulation, not the other way around.
-- **Thorn-pull / MouseJoint extract mechanic** — tried on Day 2 of the spike (2026-05-26). Didn't feel right. The sponge scrub is already satisfying as the sole verb; a grab-and-yank finale didn't add to it. The reveal beat will come from the DNA Mipo being exposed as mud clears, not from a physical extraction gesture.
+- **Thorn-pull / MouseJoint extract mechanic** — tried on Day 2 of the spike (2026-05-26). Didn't feel right. The sponge scrub is already satisfying as the sole verb; a grab-and-yank finale didn't add to it. The reveal beat comes from the DNA Mipo being exposed as mud clears, not from a physical extraction gesture.
 
 If you find yourself reaching for any of these mid-build, the manifesto is being violated. Write the idea on a separate list and walk away.
 
