@@ -182,7 +182,7 @@ function love.load(_args)
             break
         end
     end
-    sceneLoader.loadScene(cwd .. '/scripts/' .. startScene .. '.playtime.json')
+    sceneLoader.loadScriptAndScene(startScene)
     -- sceneLoader.loadAndRunScript(cwd .. '/scripts/mesh_test.playtime.lua')
 
     --loadScriptAndScene('elasto')

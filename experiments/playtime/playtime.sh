@@ -49,7 +49,7 @@ do_stop() {
 }
 
 do_start() {
-    local scene="${1:-}"
+    local scene="${1:-mudready}"
 
     if is_running; then
         echo "already running (port $PORT)"
@@ -102,7 +102,7 @@ do_start() {
     fi
 
     # No error — restart for the user
-    "$LOVE" "$DIR" --bridge >>"$LOGFILE" 2>&1 &
+    "$LOVE" "$DIR" --bridge $scene_args >>"$LOGFILE" 2>&1 &
     disown
     echo "started but bridge not responding yet"
 }
@@ -130,7 +130,7 @@ do_errors() {
 
 do_restart() {
     do_stop
-    do_start "${1:-}"
+    do_start "${1:-mudready}"
 }
 
 case "${1:-status}" in
