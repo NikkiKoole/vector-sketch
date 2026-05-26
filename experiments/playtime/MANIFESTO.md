@@ -25,6 +25,9 @@ Playtime, the IAP layer, the Mipo character system — these are the foundation,
 **Each app is its own win.**
 Don't make app #1 a stepping stone to app #5. Each one stands alone, ships alone, succeeds or fails alone. That's how the portfolio compounds.
 
+**World juice is not a second verb.**
+A rubber duck bobbing in the bath is not a mechanic. A floaty boat that the sponge-wake pushes around is not a mechanic. These are physics making the world feel inhabited. The rule protects the *verb* — the intentional action with a goal and a consequence. Ambient things that respond to the kid's presence without having their own goal or lifecycle are texture, not scope. The line: if it has a win state, a dirty/clean state, or needs a tutorial — it's a mechanic. If it just exists and reacts — it's world juice. Add it freely.
+
 ---
 
 *If in doubt: what would Sago cut?*
