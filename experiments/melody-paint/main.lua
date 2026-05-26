@@ -314,6 +314,14 @@ function love.load()
         { 'kangaroo',    'legowelt/Bass SimpleSloppy3' },
         { 'kangaroo',    'legowelt/BASS-JojabiBass' },
 
+        { 'tarsier',     'morsels/1' },
+        { 'theo',        'morsels/2' },
+        { 'herman',      'morsels/3' },
+        { 'snake2',      'morsels/4' },
+        { 'spider',      'morsels/rhythm-1' },
+        { 'lion',        'rscott/bass1' },
+        { 'wolf',        'rscott/bass2' },
+        { 'duck',        'rscott/plonk' },
 
     }
 
