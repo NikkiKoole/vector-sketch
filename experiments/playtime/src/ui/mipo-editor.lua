@@ -655,6 +655,15 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     y = y + teethGridHeight + BUTTON_SPACING
 
     if teeth.shape and teeth.shape > 0 then
+        local twMul = ui.sliderWithInput('mipo_teeth_wmul', x, y, 120, 0.3, 3, teeth.wMul or 1)
+        ui.alignedLabel(x, y, '  teeth width')
+        twMul = twMul and tonumber(twMul)
+        if twMul and twMul ~= (teeth.wMul or 1) then
+            CharacterManager.updateFaceOfPart(instance, faceOwner, { teethWMul = twMul })
+            CharacterManager.addTexturesFromInstance2(instance)
+        end
+        y = y + ROW
+
         local thMul = ui.sliderWithInput('mipo_teeth_hmul', x, y, 120, 0.5, 3, teeth.hMul)
         ui.alignedLabel(x, y, '  teeth height')
         thMul = thMul and tonumber(thMul)
