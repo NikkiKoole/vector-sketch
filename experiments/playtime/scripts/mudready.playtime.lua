@@ -19,11 +19,12 @@ local JIGGLE_IMPULSE = 25
 local JIGGLE_RADIUS  = 250
 local SPLATTER_COUNT = 8
 local FREED_SHRINK   = 2.2
+local ANGLE_SPRING   = 700  -- restoring force toward initial spawn angle
 
 local HIT_HEALTH = 10
 
 local mudJoints    = {}
-local anchorBodies = {}  -- { body, centerR, ballCount } per anchor
+local anchorBodies = {}  -- { body, centerR, ballCount, totalBalls } per anchor
 local freed        = {}
 local freedAnchors = {}  -- { x, y, radius, scale } — shrinking center circles
 local splatter     = {}
@@ -101,7 +102,7 @@ local function spawnCluster()
         local anchor = found[1] and found[1].body or nil
         if anchor and not anchor:isDestroyed() then
             local ax, ay = anchor:getPosition()
-            table.insert(anchorBodies, { body = anchor, centerR = def.centerR, ballCount = def.count })
+            table.insert(anchorBodies, { body = anchor, centerR = def.centerR, ballCount = def.count, totalBalls = def.count })
 
             for i = 1, def.count do
                 local angle = (i / def.count) * math.pi * 2 + (math.random()-0.5) * 0.9
@@ -125,11 +126,13 @@ local function spawnCluster()
                 joint:setDampingRatio(0.6)
 
                 table.insert(mudJoints, {
-                    joint  = joint,
-                    body   = body,
-                    radius = ballR,
-                    health = HIT_HEALTH,
-                    anchor = anchor,
+                    joint      = joint,
+                    body       = body,
+                    radius     = ballR,
+                    health     = HIT_HEALTH,
+                    anchor     = anchor,
+                    initAngle  = math.atan2(by - ay, bx - ax),
+                    initDist   = math.sqrt((bx-ax)^2+(by-ay)^2),
                 })
             end
         end
@@ -188,6 +191,17 @@ function s.update(dt)
                 age = 0, life = 0.3 + math.random()*0.3,
                 r = 4 + math.random()*8,
             })
+        end
+    end
+
+    -- Angular restoring force — push each ball back toward its initial angle
+    for _, e in ipairs(mudJoints) do
+        if not e.joint:isDestroyed() then
+            local ax, ay = e.anchor:getPosition()
+            local bx, by = e.body:getPosition()
+            local idealX = ax + math.cos(e.initAngle) * e.initDist
+            local idealY = ay + math.sin(e.initAngle) * e.initDist
+            e.body:applyForce((idealX - bx) * ANGLE_SPRING, (idealY - by) * ANGLE_SPRING)
         end
     end
 

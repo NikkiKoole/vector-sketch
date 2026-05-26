@@ -11,7 +11,7 @@
 
 ## Current status
 
-**Current step:** Sequence #2 — Tech spike: physics-cluster mud + thorn-pull reveal. Day 1 ready to start (minimal cluster + scrub-breaks-nearest-joint sandbox).
+**Current step:** Sequence #2 — Tech spike complete. Day 1 ✓ (cluster + sponge scrub). Day 2 thorn-pull tried and dropped (see Explicit skips). Next: decide spike verdict (Day 3) — does pure sponge scrub feel satisfying enough to ship? If yes → build phase step 1.
 **Last touched:** 2026-05-26
 **Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
 **Polish phase status:** ✓ closed 2026-05-26, 5 days ahead of the 2026-05-31 deadline. Teeth done; head bodyhair outline unified with hair color; gum tried-and-dropped (see below). Remaining polish items (eyelashes, hand/foot images, DNA boundaries, patches, Mipo breeds) deferred to app #2 per the pre-approved exit.
@@ -155,6 +155,7 @@ Pure rigid-body Pachinko-for-toddlers: kid drops Mipos from the top, they bounce
 - **LiquidFun / Box2D particle extension** — not natively in LÖVE 11.x; wrappers are unmaintained; particle liquids are GPU-heavy on mobile. Hard no.
 - **Metaball shaders** — not needed; overlapping cluster circles produce the metaball aesthetic automatically.
 - **Realistic mud soft-body simulation** — the cluster *is* a soft body, but we're not chasing photorealism. The cleaning verb defines the simulation, not the other way around.
+- **Thorn-pull / MouseJoint extract mechanic** — tried on Day 2 of the spike (2026-05-26). Didn't feel right. The sponge scrub is already satisfying as the sole verb; a grab-and-yank finale didn't add to it. The reveal beat will come from the DNA Mipo being exposed as mud clears, not from a physical extraction gesture.
 
 If you find yourself reaching for any of these mid-build, the manifesto is being violated. Write the idea on a separate list and walk away.
 
