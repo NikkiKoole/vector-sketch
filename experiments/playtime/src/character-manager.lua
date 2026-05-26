@@ -451,17 +451,19 @@ local function randomizeTextures(instance, hairColor, opts)
     lib.updateHaircutOfPart(instance, 'head', hcValues)
     lib.updateHaircutOfPart(instance, 'torso1', hcValues)
 
-    -- Random bodyhair (shared hairColor for bgHex, independent fgHex/pHex for variety)
+    -- Random bodyhair (shared hairColor for bgHex, independent fgHex/pHex for variety).
+    -- Head gets the same bodyhair as torsos so outline/colors are consistent across the body.
     local bhUrls = C.bodyhairTextures
     local bhUrlIndex = math.ceil(math.random() * #bhUrls)
     local bhUrl = bhUrls[bhUrlIndex]
     local bhFgHex = randomHexColor()
     local bhPHex = randomHexColor()
     local bhPURL = randomPatternURL()
+    local bhValues = { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
+                       bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL }
+    lib.updateBodyhairOfPart(instance, 'head', bhValues)
     for i = 1, count do
-        lib.updateBodyhairOfPart(instance, 'torso' .. i,
-            { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
-              bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL })
+        lib.updateBodyhairOfPart(instance, 'torso' .. i, bhValues)
     end
 
     -- Random arm connected-skin

@@ -11,11 +11,12 @@
 
 ## Current status
 
-**Current step:** Sequence #2 prerequisite — Mipo pre-spike polish (deadline 2026-05-31, see section below). Teeth done — next is eyelashes (wimpers).
-**Last touched:** 2026-05-24
+**Current step:** Sequence #2 — Tech spike: physics-cluster mud + thorn-pull reveal. Day 1 ready to start (minimal cluster + scrub-breaks-nearest-joint sandbox).
+**Last touched:** 2026-05-26
 **Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
+**Polish phase status:** ✓ closed 2026-05-26, 5 days ahead of the 2026-05-31 deadline. Teeth done; head bodyhair outline unified with hair color; gum tried-and-dropped (see below). Remaining polish items (eyelashes, hand/foot images, DNA boundaries, patches, Mipo breeds) deferred to app #2 per the pre-approved exit.
 
-*Update these two lines after each working session. They're the canonical "where am I?" so resume doesn't require re-derivation. When the Mipo polish list is empty (or 2026-05-31 hits — whichever comes first), bump current step to Sequence #2 — Tech spike.*
+*Update these lines after each working session. They're the canonical "where am I?" so resume doesn't require re-derivation.*
 
 ---
 
@@ -26,7 +27,7 @@ The Mipo is the reveal payload. If it doesn't read at small size mid-bubble-burs
 **Time-box: 2026-05-24 → 2026-05-31 (1 week).** When this list is empty, spike starts.
 
 - [x] ~~**Teeth**~~ — done 2026-05-24. Outline visibility (black `bgHex`), width slider (`teethWMul`, max 3), z-order split (new `mouth-backdrop` drawable at z=250), stickOut clipping (shift lower-arc curve points down by `h*0.8` *before* polygon build — preserves natural upper-arc dip, gives front teeth room in weird shapes), animated tracking (corner midpoint + 0.3 pull toward p3).
-  - [ ] **(5) Upper gum.** Teeth currently grow from the void; an upper-gum decal would give them an attachment surface. Needs asset(s): one or more gum images (likely OMP — outline + mask). Renders just above the teeth, clipped to (or contained within) the mouth polygon. *Asset friction — will probably slip past 2026-05-31 unless drawing block happens soon. App-#2 polish if it does.*
+  - ~~**(5) Upper gum.**~~ — *tried and dropped 2026-05-25.* Asset drawn (`textures/gum1.png` retained for future), DNA + decal + render + UI fully wired (`mouth-gum` drawable at z=250.5, tint via `setColor`, anchored at p3 of animated curve, clipped to mouth polygon). Issue: gum moves independently of teeth as the mouth shape changes — the two anchors don't share a rig, so they slide apart visually. Fixing properly would require attaching gum to teeth's frame of reference, which is more rig work than this polish window allows. Reverted via `git restore` on the 5 modified src files; `gum1.png` kept for revisit. Not app-#1 blocker.
 - [ ] **Eyelashes (wimpers)** — add to eyes for cuter read
 - [ ] **Missing hand/foot images** — fill gaps in the texture set
 - [ ] **Stronger DNA boundaries** — tighten constrained ranges so randomization stays on-brand
