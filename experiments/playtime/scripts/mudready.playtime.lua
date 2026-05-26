@@ -1,18 +1,18 @@
 local s = {}
 
 -- Per-anchor cluster definitions
-local ANCHOR_DEFS = {
-    { label = 'torso1', count = 36, centerR = 65, rMin = 30, rMax = 55 },
-    { label = 'head',   count = 27, centerR = 50, rMin = 22, rMax = 45 },
-    { label = 'lhand',  count = 18, centerR = 28, rMin = 16, rMax = 32 },
-    { label = 'rhand',  count = 18, centerR = 28, rMin = 16, rMax = 32 },
-    { label = 'lfoot',  count = 18, centerR = 28, rMin = 16, rMax = 32 },
-    { label = 'rfoot',  count = 18, centerR = 28, rMin = 16, rMax = 32 },
+local ANCHOR_LABELS = {
+    'torso1',
+    'head', 'lear', 'rear',
+    'luarm', 'ruarm', 'llarm', 'rlarm',
+    'lhand', 'rhand',
+    'luleg', 'ruleg', 'llleg', 'rlleg',
+    'lfoot', 'rfoot',
 }
 
 local SPONGE_R    = 70
 local MIN_SPEED   = 40
-local DAMAGE_RATE = 12
+local DAMAGE_RATE = 24
 local FOAM_COUNT  = 3
 
 local JIGGLE_IMPULSE = 25
@@ -22,6 +22,26 @@ local FREED_SHRINK   = 2.2
 local ANGLE_SPRING   = 700  -- restoring force toward initial spawn angle
 
 local HIT_HEALTH = 10
+
+local waterY     = nil   -- world Y of water surface
+local waterXmin  = nil
+local waterXmax  = nil
+local waterTime  = 0
+local waterSplash = {}   -- { x, y, vx, vy, age, life, r }
+local prevBodyY  = {}    -- [body] = last y, for crossing detection
+
+local FLUID_DENSITY = 1.0
+local FLUID_DRAG    = 0.8
+local FLUID_ANGDAMP = 0.4
+
+local SHOWER_RATE   = 0.04   -- seconds between drops
+local SHOWER_SPREAD = 50     -- horizontal spread
+local SHOWER_DMG    = 4      -- health damage per drop hit
+
+local showerDroplets = {}
+local showerTimer    = 0
+local showerX        = nil
+local showerY        = nil
 
 local mudJoints    = {}
 local anchorBodies = {}  -- { body, centerR, ballCount, totalBalls } per anchor
@@ -97,17 +117,32 @@ local function spawnCluster()
     foam         = {}
     lastMx, lastMy = nil, nil
 
-    for _, def in ipairs(ANCHOR_DEFS) do
-        local found = getObjectsByLabel(def.label)
+    for _, label in ipairs(ANCHOR_LABELS) do
+        local found  = getObjectsByLabel(label)
         local anchor = found[1] and found[1].body or nil
         if anchor and not anchor:isDestroyed() then
             local ax, ay = anchor:getPosition()
-            table.insert(anchorBodies, { body = anchor, centerR = def.centerR, ballCount = def.count, totalBalls = def.count })
 
-            for i = 1, def.count do
-                local angle = (i / def.count) * math.pi * 2 + (math.random()-0.5) * 0.9
-                local ballR = def.rMin + math.random() * (def.rMax - def.rMin)
-                local dist  = def.centerR + ballR * (0.5 + math.random() * 0.7)
+            -- Measure body size from collision fixtures only (no userData = not an sfixture)
+            local maxHalf = 0
+            for _, fix in ipairs(anchor:getFixtures()) do
+                if not fix:getUserData() and not fix:isSensor() then
+                    local x1, y1, x2, y2 = fix:getBoundingBox(1)
+                    maxHalf = math.max(maxHalf, (x2-x1)/2, (y2-y1)/2)
+                end
+            end
+            local r       = math.max(maxHalf, 10)
+            local centerR = r * 0.35
+            local rMin    = r * 0.3
+            local rMax    = r * 0.65
+            local count   = math.max(4, math.min(16, math.floor(r * 0.18)))
+
+            table.insert(anchorBodies, { body = anchor, centerR = centerR, ballCount = count, totalBalls = count })
+
+            for i = 1, count do
+                local angle = (i / count) * math.pi * 2 + (math.random()-0.5) * 0.9
+                local ballR = rMin + math.random() * (rMax - rMin)
+                local dist  = centerR + ballR * (0.5 + math.random() * 0.7)
                 local bx    = ax + math.cos(angle) * dist
                 local by    = ay + math.sin(angle) * dist
 
@@ -126,13 +161,13 @@ local function spawnCluster()
                 joint:setDampingRatio(0.6)
 
                 table.insert(mudJoints, {
-                    joint      = joint,
-                    body       = body,
-                    radius     = ballR,
-                    health     = HIT_HEALTH,
-                    anchor     = anchor,
-                    initAngle  = math.atan2(by - ay, bx - ax),
-                    initDist   = math.sqrt((bx-ax)^2+(by-ay)^2),
+                    joint     = joint,
+                    body      = body,
+                    radius    = ballR,
+                    health    = HIT_HEALTH,
+                    anchor    = anchor,
+                    initAngle = math.atan2(by - ay, bx - ax),
+                    initDist  = math.sqrt((bx-ax)^2+(by-ay)^2),
                 })
             end
         end
@@ -150,6 +185,27 @@ function s.onStart()
     for _, body in ipairs(toDestroy) do
         if not body:isDestroyed() then body:destroy() end
     end
+
+    -- Find the static tub body and compute water level from its bounding box
+    for _, body in ipairs(world:getBodies()) do
+        if body:getType() == 'static' and not body:isDestroyed() then
+            local x1, y1, x2, y2 = 1e9, 1e9, -1e9, -1e9
+            for _, fix in ipairs(body:getFixtures()) do
+                local fx1,fy1,fx2,fy2 = fix:getBoundingBox(1)
+                x1=math.min(x1,fx1); y1=math.min(y1,fy1)
+                x2=math.max(x2,fx2); y2=math.max(y2,fy2)
+            end
+            if x2 > x1 then
+                waterXmin = x1
+                waterXmax = x2
+                waterY    = y1 + (y2 - y1) * 0.52
+                showerX   = (x1 + x2) * 0.5
+                showerY   = y1 - 80
+                break
+            end
+        end
+    end
+
     spawnCluster()
 end
 
@@ -167,6 +223,61 @@ function s.update(dt)
         speed = math.sqrt(dx*dx + dy*dy) / dt
     end
     lastMx, lastMy = mx, my
+
+    -- Shower: spawn drops
+    if showerX then
+        showerTimer = showerTimer - dt
+        if showerTimer <= 0 then
+            showerTimer = SHOWER_RATE
+            table.insert(showerDroplets, {
+                x = showerX + (math.random()-0.5) * SHOWER_SPREAD,
+                y = showerY,
+                vx = (math.random()-0.5) * 15,
+                vy = 80 + math.random() * 60,
+                r  = 3 + math.random() * 4,
+                hit = false,
+            })
+        end
+
+        for i = #showerDroplets, 1, -1 do
+            local d = showerDroplets[i]
+            d.x  = d.x + d.vx * dt
+            d.y  = d.y + d.vy * dt
+            d.vy = d.vy + 500 * dt
+
+            if not d.hit then
+                for j = #mudJoints, 1, -1 do
+                    local e = mudJoints[j]
+                    if not e.joint:isDestroyed() then
+                        local bx, by = e.body:getPosition()
+                        if math.sqrt((d.x-bx)^2+(d.y-by)^2) < e.radius + d.r then
+                            e.health = e.health - SHOWER_DMG
+                            d.hit = true
+                            if e.health <= 0 then breakBall(j) end
+                            break
+                        end
+                    end
+                end
+            end
+
+            if d.y > showerY + 1200 then table.remove(showerDroplets, i) end
+        end
+    end
+
+    -- Sponge water disturbance (no click needed)
+    if waterY and my > waterY and speed > MIN_SPEED then
+        for _ = 1, 2 do
+            local side = (math.random() > 0.5) and 1 or -1
+            table.insert(waterSplash, {
+                x   = mx + (math.random()-0.5) * SPONGE_R,
+                y   = my - math.random() * SPONGE_R * 0.5,
+                vx  = side * (30 + math.random() * 120),
+                vy  = -40 - math.random() * 100,
+                age = 0, life = 0.2 + math.random() * 0.2,
+                r   = 2 + math.random() * 5,
+            })
+        end
+    end
 
     if mouseDown and speed > MIN_SPEED then
         for j = #mudJoints, 1, -1 do
@@ -191,6 +302,83 @@ function s.update(dt)
                 age = 0, life = 0.3 + math.random()*0.3,
                 r = 4 + math.random()*8,
             })
+        end
+    end
+
+    waterTime = waterTime + dt
+
+    -- Water crossing detection → splash particles
+    if waterY then
+        for _, body in ipairs(world:getBodies()) do
+            local ud = body:getUserData()
+            if ud and ud.thing and not body:isDestroyed() then
+                local bx, by = body:getPosition()
+                local prevY  = prevBodyY[body]
+                if prevY then
+                    local entered = prevY <= waterY and by > waterY
+                    local exited  = prevY >= waterY and by < waterY
+                    if entered then
+                        -- Entry: crown splash — droplets shoot straight up
+                        for _ = 1, 14 do
+                            local a   = (math.random() - 0.5) * math.pi * 0.6
+                            local spd = 150 + math.random() * 280
+                            table.insert(waterSplash, {
+                                x = bx + (math.random()-0.5) * 50,
+                                y = waterY,
+                                vx = math.sin(a) * spd,
+                                vy = -math.cos(a) * spd,
+                                age = 0, life = 0.35 + math.random() * 0.3,
+                                r   = 5 + math.random() * 9,
+                            })
+                        end
+                    elseif exited then
+                        -- Exit: sheet spray — droplets fly outward and drip back down
+                        for _ = 1, 10 do
+                            local side = (math.random() > 0.5) and 1 or -1
+                            local spd  = 60 + math.random() * 160
+                            table.insert(waterSplash, {
+                                x = bx + (math.random()-0.5) * 60,
+                                y = waterY,
+                                vx = side * (40 + math.random() * spd),
+                                vy = -20 - math.random() * 80,
+                                age = 0, life = 0.25 + math.random() * 0.25,
+                                r   = 3 + math.random() * 6,
+                            })
+                        end
+                    end
+                end
+                prevBodyY[body] = by
+            end
+        end
+    end
+
+    -- Water buoyancy & drag for Mipo's body parts
+    if waterY then
+        local _, g_y = world:getGravity()
+        for _, body in ipairs(world:getBodies()) do
+            local ud = body:getUserData()
+            if ud and ud.thing and not body:isDestroyed() then
+                local _, by = body:getPosition()
+                -- Estimate half-height from collision fixture
+                local halfH = 30
+                for _, fix in ipairs(body:getFixtures()) do
+                    if not fix:getUserData() and not fix:isSensor() then
+                        local _,fy1,_,fy2 = fix:getBoundingBox(1)
+                        halfH = math.max(halfH, (fy2 - fy1) * 0.5)
+                        break
+                    end
+                end
+                local subFrac = math.min(1.0, math.max(0.0, (by - waterY + halfH) / (halfH * 2)))
+                if subFrac > 0 then
+                    -- Buoyancy cancels gravity, FLUID_DENSITY > 1 makes it float up
+                    body:applyForce(0, -body:getMass() * g_y * subFrac * FLUID_DENSITY)
+                    body:setLinearDamping(FLUID_DRAG * subFrac)
+                    body:setAngularDamping(FLUID_ANGDAMP * subFrac)
+                else
+                    body:setLinearDamping(0)
+                    body:setAngularDamping(0)
+                end
+            end
         end
     end
 
@@ -230,11 +418,42 @@ function s.update(dt)
         p.age = p.age + dt
         if p.age >= p.life then table.remove(foam, i) end
     end
+
+    for i = #waterSplash, 1, -1 do
+        local p = waterSplash[i]
+        p.x = p.x + p.vx*dt; p.y = p.y + p.vy*dt
+        p.vy = p.vy + 400*dt
+        p.age = p.age + dt
+        if p.age >= p.life then table.remove(waterSplash, i) end
+    end
 end
 
 function s.draw()
     local mx, my    = mouseWorldPos()
     local mouseDown = love.mouse.isDown(1)
+
+    -- Water fill
+    if waterY and waterXmin then
+        local depth = 1200  -- draw well below screen bottom
+        love.graphics.setColor(0.15, 0.45, 0.75, 0.38)
+        love.graphics.rectangle('fill', waterXmin, waterY, waterXmax - waterXmin, depth)
+
+        -- Animated surface
+        local steps = 48
+        local wpts  = {}
+        for i = 0, steps do
+            local t  = i / steps
+            local wx = waterXmin + t * (waterXmax - waterXmin)
+            local wy = waterY
+                     + math.sin(t * math.pi * 5 + waterTime * 1.8) * 6
+                     + math.sin(t * math.pi * 9 - waterTime * 2.7) * 3
+            table.insert(wpts, wx); table.insert(wpts, wy)
+        end
+        love.graphics.setColor(0.4, 0.75, 1.0, 0.7)
+        love.graphics.setLineWidth(3)
+        love.graphics.line(wpts)
+        love.graphics.setLineWidth(1)
+    end
 
     -- Center mud masses at each anchor (only while they still have balls)
     for _, a in ipairs(anchorBodies) do
@@ -286,6 +505,34 @@ function s.draw()
         love.graphics.circle('line', p.x, p.y, p.r * (1 - t*0.3))
     end
 
+    -- Showerhead + drops
+    if showerX then
+        -- Pipe
+        love.graphics.setColor(0.65, 0.65, 0.72, 1)
+        love.graphics.setLineWidth(6)
+        love.graphics.line(showerX, showerY - 120, showerX, showerY - 10)
+        love.graphics.setLineWidth(1)
+        -- Head
+        love.graphics.rectangle('fill', showerX - 35, showerY - 12, 70, 14, 4)
+        -- Nozzle dots
+        love.graphics.setColor(0.35, 0.45, 0.6, 1)
+        for i = -3, 3 do
+            love.graphics.circle('fill', showerX + i * 9, showerY + 2, 2.5)
+        end
+        -- Drops
+        for _, d in ipairs(showerDroplets) do
+            love.graphics.setColor(0.4, 0.75, 1.0, d.hit and 0.3 or 0.75)
+            love.graphics.circle('fill', d.x, d.y, d.r)
+        end
+    end
+
+    -- Water splash droplets
+    for _, p in ipairs(waterSplash) do
+        local t = p.age / p.life
+        love.graphics.setColor(0.4, 0.75, 1.0, (1-t) * 0.85)
+        love.graphics.circle('fill', p.x, p.y, p.r * (1 - t * 0.4))
+    end
+
     -- Sponge
     local squeeze = mouseDown and 0.82 or 1.0
     love.graphics.setColor(1, 0.85, 0.25, 0.85)
@@ -309,6 +556,55 @@ function s.draw()
     end
 
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+function s.drawUI()
+    local w, h    = love.graphics.getDimensions()
+    local BH      = 40
+    local BSPC    = 10
+    local margin  = 20
+    local pW      = 320
+    local pH      = BH * 6 + BSPC * 2
+    local startX  = margin
+    local startY  = h - pH - margin
+
+    ui.panel(startX, startY, pW, pH, '•• water ••', function()
+        local layout = ui.createLayout({
+            type = 'columns', spacing = BSPC,
+            startX = startX + BSPC, startY = startY + BSPC,
+        })
+
+        local x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
+        local v = ui.sliderWithInput('density', x, y, 200, 0.1, 4.0, FLUID_DENSITY)
+        if v then FLUID_DENSITY = v end
+        ui.label(x, y, ' density')
+
+        x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
+        v = ui.sliderWithInput('drag', x, y, 200, 0.0, 3.0, FLUID_DRAG)
+        if v then FLUID_DRAG = v end
+        ui.label(x, y, ' drag')
+
+        x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
+        v = ui.sliderWithInput('angdamp', x, y, 200, 0.0, 3.0, FLUID_ANGDAMP)
+        if v then FLUID_ANGDAMP = v end
+        ui.label(x, y, ' ang.damp')
+
+        x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
+        if waterY then
+            v = ui.sliderWithInput('waterlvl', x, y, 200, -500, 1500, waterY)
+            if v then waterY = v end
+            ui.label(x, y, ' water level')
+        else
+            ui.label(x, y, ' water: not found')
+        end
+
+        x, y = ui.nextLayoutPosition(layout, pW - 20, BH)
+        if showerX then
+            v = ui.sliderWithInput('showerx', x, y, 200, waterXmin or 0, waterXmax or 2000, showerX)
+            if v then showerX = v end
+            ui.label(x, y, ' shower pos')
+        end
+    end)
 end
 
 return s

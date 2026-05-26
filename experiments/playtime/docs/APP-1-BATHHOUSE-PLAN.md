@@ -161,6 +161,26 @@ If you find yourself reaching for any of these mid-build, the manifesto is being
 
 ---
 
+## Scenario / interaction loop (brainstormed 2026-05-26)
+
+Each play interaction has a clear start and end:
+
+**Beginning:** mud blob slides/drops into the tub with a splash.
+**Middle:** player scrubs mud off with the sponge.
+**End:** last mud ball pops → clean Mipo floats up to the surface, reacts (face animation) → exits. Attendant Mipo reacts too. Next blob arrives.
+
+Preferred flow: **slide in / float out** — blob arrives down one side of the tub, clean Mipo floats up from buoyancy when fully clean, climbs/slides out the other side. No button needed; the water surface is the "done" signal.
+
+Water surface crossing already fires **splash particles** (blue droplets, arc upward on entry/exit). This is the transition visual for both arrival and departure.
+
+---
+
+## Open visual questions
+
+- **Root node circle** — the filled brown circle drawn at each anchor point (center of each mud cluster) doesn't feel right. It's currently a plain filled circle that shrinks away when the last ball pops. Unclear what would be better: maybe no center circle at all (balls alone cover the body), maybe a rough blob outline, maybe it's only visible when balls are present and fades fast. Needs a try-it session before build phase step 7 (art pass).
+
+---
+
 ## Asset list (full app, not the spike)
 
 - 1 bathhouse interior background
