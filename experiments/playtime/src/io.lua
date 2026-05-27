@@ -254,16 +254,25 @@ function lib.buildWorld(data, world, cam)
     if data.camera then
         cam:setTranslation(data.camera.x, data.camera.y)
         cam:setScale(data.camera.scale)
+    else
+        -- No saved view: reset to the default (pan 0,0, zoom 1) so a
+        -- camera-less scene doesn't inherit the previous scene's framing
+        -- (same stale-state pattern as backdrops below).
+        cam:setTranslation(0, 0)
+        cam:setScale(1)
     end
 
+    -- Scene-persisted backdrops replace session backdrops wholesale. Reset
+    -- *before* the guard so a scene with no `backdrops` key doesn't inherit
+    -- the previously loaded scene's backdrop — the reset used to live inside
+    -- the `if`, so loading a backdrop-less scene left the old bg on screen.
+    state.backdrops = {}
     if data.backdrops then
-        -- Scene-persisted backdrops replace session backdrops wholesale.
         -- Image/w/h aren't saved (just url+world position). Eagerly load
         -- the image here so dimensions are known before draw — UV compute
         -- and any width/height-dependent code can run on scene load
         -- without waiting for the first draw frame (was fragility #7 in
         -- docs/UV-BACKDROP-FRAGILITY.md).
-        state.backdrops = {}
         for _, b in ipairs(data.backdrops) do
             local entry = {
                 url = b.url,

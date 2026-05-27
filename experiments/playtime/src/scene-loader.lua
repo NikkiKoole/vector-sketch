@@ -37,6 +37,19 @@ function lib.loadScene(name)
     state.selection.selectedObj = nil
     state.selection.selectedSFixture = nil
     state.selection.selectedBodies = nil
+    -- Tear down any script still running from the previous scene before its
+    -- bodies are destroyed below: fire its unload hook (so it can clean up
+    -- while its bodies still exist), then drop the reference so its
+    -- update/draw/contact callbacks stop firing. Without this, loading a
+    -- script-less scene left the old script's update() running against freed
+    -- Box2D bodies (e.g. maan.lua:22 "Attempt to use destroyed body"). A
+    -- scene that brings its own script re-populates these immediately after,
+    -- via loadAndRunScript.
+    if state.scene.sceneScript then
+        script.call(SE.ON_UNLOAD)
+        state.scene.sceneScript = nil
+        state.scene.scriptPath = nil
+    end
     sceneIO.load(data, state.physicsWorld, cam)
     logger:info("Scene loaded: " .. name)
     return data
@@ -86,10 +99,15 @@ end
 
 function lib.loadAndRunScript(name)
     local data = getFiledata(name):getString()
+    -- Fire the outgoing script's unload hook before swapping in the new one,
+    -- so a reload/replace tears the old one down first. (This previously ran
+    -- after the new script was assigned, firing ON_UNLOAD on the wrong target.)
+    if state.scene.sceneScript then
+        script.call(SE.ON_UNLOAD)
+    end
     state.scene.sceneScript = script.loadScript(data, name)()
     state.scene.scriptPath = name
     script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
-    script.call(SE.ON_UNLOAD)
     script.call(SE.ON_START)
 
     lastModTime = getFileModificationTime(name)
