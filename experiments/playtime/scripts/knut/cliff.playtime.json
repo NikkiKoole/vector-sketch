@@ -279,7 +279,7 @@
   "backdrops":[{
       "x":-500,
       "y":-363,
-      "url":"gevaarland.jpg",
+      "url":"knut-is-dead/gevaarland.jpg",
       "scale":0.5,
       "foreground":false,
       "border":true

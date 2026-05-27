@@ -190,8 +190,8 @@ function love.load(_args)
     -- sceneLoader.loadScriptAndScene('straight')
 
     --local cwd = love.filesystem.getWorkingDirectory()
-    --sceneLoader.loadScene(cwd .. '/scripts/empty2.playtime.json')
-    --   sceneLoader.loadScene(cwd .. '/scripts/knutjump.playtime.json')
+    --sceneLoader.loadScene(cwd .. '/scripts/scratch/empty2.playtime.json')
+    --   sceneLoader.loadScene(cwd .. '/scripts/knut/knutjump.playtime.json')
 
 
     -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
