@@ -34,15 +34,43 @@ local FLUID_DENSITY = 1.0
 local FLUID_DRAG    = 0.8
 local FLUID_ANGDAMP = 0.4
 
-local SHOWER_RATE   = 0.04   -- seconds between drops
-local SHOWER_SPREAD = 50     -- horizontal spread
-local SHOWER_DMG    = 4      -- health damage per drop hit
+local SHOWER_RATE      = 0.02   -- seconds between spawn bursts
+local SHOWER_BURST     = 3      -- drops per burst
+local SHOWER_SPREAD    = 80     -- horizontal spread
+local SHOWER_DMG       = 4      -- health damage per drop hit
+local SHOWER_BODY_SPLAT_CHANCE = 0.4  -- fraction of drops that splat on body hits;
+                                      -- the rest pass through so lower parts get washed too
 
 local showerDroplets  = {}
 local showerTimer     = 0
 local showerX         = 0
 local showerY         = 0
 local showerDetected  = false
+local showerDragging  = false
+local showerDragDX    = 0
+local showerDragDY    = 0
+local wasMouseDown    = false
+
+local SHOWER_HEAD_HW  = 35   -- head half-width (matches draw)
+local SHOWER_HEAD_HH  = 12   -- head half-height
+local SHOWER_GRAB_PAD = 20   -- extra padding on the head hit-box
+local SHOWER_PIPE_PAD = 14   -- pipe hit-box half-width
+
+local function pointInShowerGrab(mx, my)
+    -- Generous head box
+    if mx >= showerX - SHOWER_HEAD_HW - SHOWER_GRAB_PAD
+       and mx <= showerX + SHOWER_HEAD_HW + SHOWER_GRAB_PAD
+       and my >= showerY - SHOWER_HEAD_HH - SHOWER_GRAB_PAD
+       and my <= showerY + SHOWER_HEAD_HH + SHOWER_GRAB_PAD then
+        return true
+    end
+    -- Pipe column above the head
+    if mx >= showerX - SHOWER_PIPE_PAD and mx <= showerX + SHOWER_PIPE_PAD
+       and my >= showerY - 120 and my <= showerY - 10 then
+        return true
+    end
+    return false
+end
 
 local mudJoints    = {}
 local anchorBodies = {}  -- { body, centerR, ballCount, totalBalls } per anchor
@@ -226,19 +254,40 @@ function s.update(dt)
     end
     lastMx, lastMy = mx, my
 
+    -- Showerhead drag (press-transition detection)
+    if showerDetected then
+        if mouseDown and not wasMouseDown and pointInShowerGrab(mx, my) then
+            showerDragging = true
+            showerDragDX   = showerX - mx
+            showerDragDY   = showerY - my
+        end
+        if showerDragging then
+            if mouseDown then
+                showerX = mx + showerDragDX
+                showerY = my + showerDragDY
+            else
+                showerDragging = false
+            end
+        end
+    end
+    wasMouseDown = mouseDown
+
     -- Shower: spawn drops
     if showerDetected then
         showerTimer = showerTimer - dt
         if showerTimer <= 0 then
             showerTimer = SHOWER_RATE
-            table.insert(showerDroplets, {
-                x = showerX + (math.random()-0.5) * SHOWER_SPREAD,
-                y = showerY,
-                vx = (math.random()-0.5) * 15,
-                vy = 80 + math.random() * 60,
-                r  = 3 + math.random() * 4,
-                hit = false,
-            })
+            for _ = 1, SHOWER_BURST do
+                table.insert(showerDroplets, {
+                    x = showerX + (math.random()-0.5) * SHOWER_SPREAD,
+                    y = showerY,
+                    vx = (math.random()-0.5) * 30,
+                    vy = 120 + math.random() * 100,
+                    r  = 5 + math.random() * 7,
+                    hit = false,
+                    bodySplat = math.random() < SHOWER_BODY_SPLAT_CHANCE,
+                })
+            end
         end
 
         for i = #showerDroplets, 1, -1 do
@@ -246,6 +295,8 @@ function s.update(dt)
             d.x  = d.x + d.vx * dt
             d.y  = d.y + d.vy * dt
             d.vy = d.vy + 500 * dt
+
+            local removed = false
 
             if not d.hit then
                 for j = #mudJoints, 1, -1 do
@@ -262,12 +313,63 @@ function s.update(dt)
                 end
             end
 
-            if d.y > showerY + 1200 then table.remove(showerDroplets, i) end
+            -- Body impact: splatter into small bouncing droplets, drop disappears.
+            -- Only a fraction of drops are flagged for body-splat — the rest pass
+            -- through so lower body parts get washed too. Skip if already underwater.
+            if not removed and d.bodySplat and (not waterY or d.y < waterY) then
+                for _, body in ipairs(world:getBodies()) do
+                    if removed then break end
+                    local ud = body:getUserData()
+                    if ud and ud.thing and not body:isDestroyed() then
+                        for _, fix in ipairs(body:getFixtures()) do
+                            if not fix:getUserData() and not fix:isSensor()
+                               and fix:testPoint(d.x, d.y) then
+                                for _ = 1, 5 do
+                                    local a   = -math.pi*0.5 + (math.random()-0.5) * math.pi * 1.1
+                                    local spd = 40 + math.random() * 120
+                                    table.insert(waterSplash, {
+                                        x = d.x, y = d.y,
+                                        vx = math.cos(a) * spd,
+                                        vy = math.sin(a) * spd,
+                                        age = 0, life = 0.2 + math.random() * 0.25,
+                                        r   = 2 + math.random() * 3,
+                                    })
+                                end
+                                table.remove(showerDroplets, i)
+                                removed = true
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Water-surface impact: small crown of droplets, drop disappears.
+            if not removed and waterY and d.y >= waterY then
+                for _ = 1, 4 do
+                    local a   = (math.random() - 0.5) * math.pi * 0.7
+                    local spd = 60 + math.random() * 140
+                    table.insert(waterSplash, {
+                        x = d.x + (math.random()-0.5) * 8,
+                        y = waterY,
+                        vx = math.sin(a) * spd,
+                        vy = -math.cos(a) * spd,
+                        age = 0, life = 0.2 + math.random() * 0.2,
+                        r   = 2 + math.random() * 4,
+                    })
+                end
+                table.remove(showerDroplets, i)
+                removed = true
+            end
+
+            if not removed and d.y > showerY + 1200 then
+                table.remove(showerDroplets, i)
+            end
         end
     end
 
     -- Sponge water disturbance (no click needed)
-    if waterY and my > waterY and speed > MIN_SPEED then
+    if not showerDragging and waterY and my > waterY and speed > MIN_SPEED then
         for _ = 1, 2 do
             local side = (math.random() > 0.5) and 1 or -1
             table.insert(waterSplash, {
@@ -281,7 +383,7 @@ function s.update(dt)
         end
     end
 
-    if mouseDown and speed > MIN_SPEED then
+    if mouseDown and not showerDragging and speed > MIN_SPEED then
         for j = #mudJoints, 1, -1 do
             local e = mudJoints[j]
             if not e.joint:isDestroyed() then
@@ -509,6 +611,7 @@ function s.draw()
 
     -- Showerhead + drops
     if showerDetected then
+        local hovering = pointInShowerGrab(mx, my)
         -- Pipe
         love.graphics.setColor(0.65, 0.65, 0.72, 1)
         love.graphics.rectangle('fill', showerX - 3, showerY - 120, 6, 110)
@@ -519,6 +622,13 @@ function s.draw()
         love.graphics.setColor(0.35, 0.45, 0.6, 1)
         for i = -3, 3 do
             love.graphics.circle('fill', showerX + i * 9, showerY + 2, 2.5)
+        end
+        -- Hover/drag highlight
+        if hovering or showerDragging then
+            love.graphics.setColor(1.0, 0.95, 0.2, showerDragging and 1.0 or 0.7)
+            love.graphics.setLineWidth(3)
+            love.graphics.rectangle('line', showerX - 39, showerY - 16, 78, 22, 5)
+            love.graphics.setLineWidth(1)
         end
         -- Drops
         for _, d in ipairs(showerDroplets) do
