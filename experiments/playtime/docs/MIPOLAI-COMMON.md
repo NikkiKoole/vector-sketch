@@ -28,25 +28,76 @@ Strategy backdrop: `STUDIO-STRATEGY.md`. First consumer: `APP-1-BATHHOUSE-PLAN.m
   camera) — additive, not a replacement. *Inter-scene* transitions are
   handled by the Scene manager (below), not here.
 
-### Scene manager + inter-scene transitions
+### Game state machine — the spine of every app
 
-- **State:** partial, not extracted.
-- **Lives in:** `experiments/puppet-maker2/main.lua` +
-  `experiments/puppet-maker2/scenes/` — `splash.lua`, `intro.lua`,
-  `outside.lua`, `editGuy.lua`. An active-scene pointer + per-scene lifecycle
-  (load / update / draw / unload) + transition glue between screens. Also
-  some structure in `experiments/physics-testbed/scenes/`.
-- **Gap:** playtime is single-scene by design — `sceneLoader.loadScriptAndScene(id)`
-  wholesale-replaces the running scene with no transition between. Every app
-  that needs more than one screen (splash → gameplay → gallery, settings
-  overlay, end-of-session beat) re-implements this from scratch.
-- **Reusable shape (when extracted):** `lib/screens.lua` with
-  `push(name, args)`, `pop()`, `replace(name, args)`,
-  `transition(from, to, kind, dur)`. Each screen has its own
-  `onLoad / update / draw / onUnload` (mirrors the existing scene-script
-  lifecycle). Transition kinds: cut / fade / slide / iris / wipe — the
-  studio's visual vocabulary for moving between screens. Composes with the
-  Scene-script lifecycle that's already in playtime (`scene-loader.lua`).
+- **State:** **BUILT** 2026-05-28. `src/statemachine.lua` (~100 lines) + 18
+  passing specs in `spec/statemachine_spec.lua`. Predecessor: `vendor/SceneMgr.lua`
+  used by `puppet-maker2` (same intent, fewer footguns — real `leave` hook,
+  data threaded through transitions, push/pop overlays, history, inspectability).
+- **What it is:** a game is its top-level state machine; this makes that
+  explicit. Each state has `enter / update / draw / leave / resume` hooks.
+  Navigation: `transition(to, data)` for linear flow, `push/pop` for overlays,
+  `back(data)` for back-navigation via history, `clear()` as an escape hatch.
+  Data is threaded through every navigation op — `app:transition('gallery',
+  { highlight = mipo })` is received by `gallery.enter(data)`. App-scope state
+  lives as plain locals at the top of the app's script.
+- **Canonical use** (Bathhouse-shaped):
+
+  ```lua
+  local sm = require('src.statemachine')
+  local app = sm.new()
+  local discovered = {}   -- app-scope state, just locals
+
+  app:state('splash', {
+      enter  = function()    worldState.paused = true end,
+      update = function(dt)  if pressed then app:transition('bath') end end,
+  })
+
+  app:state('bath', {
+      enter  = function()    spawnCluster(); currentMipo = pickMipo() end,
+      update = function(dt)  if mudFullyClean() then app:transition('reveal') end end,
+      leave  = function()    table.insert(discovered, currentMipo) end,
+  })
+
+  app:state('gallery', {
+      enter = function(data) highlighted = data and data.highlight end,
+  })
+
+  function s.onStart()  app:transition('splash') end
+  function s.update(dt) app:update(dt) end
+  function s.draw()     app:draw() end
+  ```
+
+- **Folder convention:** when an app has 2+ scene JSONs, group under
+  `scripts/<app>/`. Single-scene apps stay flat. The folder is the *signal*
+  "this is an app, not a one-off mechanic demo." First app to use this:
+  Bathhouse — adopt the folder when the second scene JSON arrives.
+- **Pairs with:** the visual transitions entry below (the state machine
+  handles *logic*, scene manager handles the *visual* fade/slide/iris between
+  states).
+
+### Scene manager — visual transitions between states (fade / slide / iris)
+
+- **State:** partial, not extracted. The logical navigation is now handled by
+  the Game state machine above; what's still missing is the *visual* part —
+  the fade / slide / iris primitives the state machine can invoke during a
+  transition to make it feel like a transition, not a snap.
+- **Lives in:** ad-hoc tweens scattered across `experiments/puppet-maker2/`
+  scenes (e.g. `splash.lua` uses `Timer.tween` on a `fluxObject` with
+  `out-bounce` easing and `Timer.after` to chain into the next `SM.load`).
+  No shared library — each scene rolls its own fade.
+- **Reusable shape (when extracted):** `lib/transitions.lua` with
+  `play(kind, duration, onMidpoint)` for one-shot visual effects driven from
+  a state's `leave` (call it, then on midpoint do the actual `app:transition`,
+  finishing the visual on the other side). Kinds: `cut / fade / slide / iris
+  / wipe` — the studio's visual vocabulary. Frame-accurate, runs over a
+  full-screen canvas so it's scene-agnostic.
+- **Engine change still pending** (gated on an app actually needing it):
+  `sceneLoader.loadScene(path, { keepScript = true })` — when a state's
+  `enter` brings in a *different* scene JSON, the script must not be cleared
+  by the lifecycle fix from earlier. Two-line opt-in, default behavior
+  (full teardown) stays safe. Most Bathhouse-shaped apps probably stay on
+  one scene JSON and never need this.
 
 ### Mipo sounds + speech (mipomi-lang)
 
