@@ -11,10 +11,11 @@
 
 ## Current status
 
-**Current step:** Sequence #2 — Tech spike ✓ COMPLETE. Verdict: **go**. Sponge scrub + shower feel satisfying; water + buoyancy adds life. Next: build phase step 1 (smoke-test scene — bathhouse Mipo attendant with face animation running in a real scene).
-**Last touched:** 2026-05-26
+**Current step:** Build phase step 3 — spawn a new mud-coated procedural Mipo into the scene. (`'n'` key in `mudready.playtime.lua` calls `spawnNewMudMipo()` — clears mud, destroys old Mipo, creates + randomizes a new one and re-coats it. `characterManager` now exposed in scriptEnv.)
+**Last touched:** 2026-05-28
 **Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
 **Polish phase status:** ✓ closed 2026-05-26, 5 days ahead of the 2026-05-31 deadline. Teeth done; head bodyhair outline unified with hair color; gum tried-and-dropped (see below). Remaining polish items (eyelashes, hand/foot images, DNA boundaries, patches, Mipo breeds) deferred to app #2 per the pre-approved exit.
+**Attendant Mipo:** dropped — the player *is* the attendant. No separate attendant character needed.
 
 *Update these lines after each working session. They're the canonical "where am I?" so resume doesn't require re-derivation.*
 
@@ -60,13 +61,28 @@ A few items need new image assets (drawing tablet, export pipeline). That's a "h
 
 ## Approach
 
-- **Setting:** one screen, one bathhouse interior. No camera movement, no scene changes.
-- **Mipo:** stays as the bathhouse attendant. Reacts to reveals via the face animation system (this is what `FACE-SYSTEM-PLAN.md` is *for*).
-- **Mud blobs:** arrive, get scrubbed, reveal what's inside, leave clean. New blob arrives.
+- **Setting:** one screen, full-bleed tub. No room, no door — the ceiling is the outside. No camera movement, no scene changes.
+- **Mipo:** no separate attendant — the player *is* the attendant. The revealed Mipo reacts on clean via the face animation system.
+- **Mud blobs:** arrive from above, get scrubbed, reveal what's inside, float away. New blob arrives.
 - **What's inside:** procedural via the Mipo DNA system. Each blob hides a uniquely-generated Mipo (face, color, size variation — DNA already supports this). No hand-authored library of reveals.
-- **Reward loop:** blob arrives → kid scrubs → reveal → both Mipos react → next blob.
-- **Two affordances, one verb:** sponge (direct scrub) + showerhead (kid drags Mipo under it). Both are WASH — the kid is always the agent. The shower handles bulk removal; the sponge handles detail. Neither works without the kid actively doing something. Not an "and also" — the sponge alone is tedious for a full clean.
+- **Three affordances, one verb:** sponge (direct scrub) + soapbar (spread-and-wait lather) + showerhead (kid drags Mipo under it). All three are WASH — different rhythm, same agent. Not an "and also."
+  - **Sponge:** active, direct. Scrub-scrub-scrub. Good for detail and finishing.
+  - **Soapbar:** spread lather across mud balls, then watch the foam eat away at them. Clings visibly to the mud and slowly drains health without the kid needing to stay on it. Different pace — satisfying to smear everywhere and step back.
+  - **Showerhead:** bulk removal from above, draggable. Good for rinsing loose mud and the foam left by the soapbar.
 - **No fail state. No levels. No menus.**
+
+### Full interaction loop
+
+1. **Doorbell rings.** A mud blob drops from the top of the screen, splashes into the tub.
+2. **Wash.** Player scrubs with sponge and/or shower. Water gradually browns as mud dissolves (tint water fill proportional to mud cleared). The dirty water is visible progress.
+3. **Rinse (optional player action).** Player can drag the water level down (dirty water drains) and back up (clean water refills). Natural signal that they're ready for the next customer — but not forced.
+4. **Reveal + tadaa moment.** Last mud ball pops → a balloon magically appears and ties itself to the Mipo → rainbow burst + floating balloons fill the screen for a moment. The Mipo's face reacts (face animation system). This is the payoff beat and the shareable clip moment.
+5. **Departure.** The balloon slowly lifts the Mipo upward. Player can let it drift on its own, or play with it in the tub a bit longer — the balloon provides gentle upward buoyancy but doesn't force an exit. Eventually the Mipo floats up and off the top of the screen.
+6. **Loop.** Tub is empty and clean. Doorbell rings. Repeat.
+
+**Three beats, one verb:** WASH → REVEAL → RELEASE. The balloon is the resolution beat, not a second mechanic — the player's only choice is when to stop playing with the cleaned Mipo.
+
+**Why balloon over a jump:** a jump is automatic and over in a frame. A balloon gives the player a moment of "aww" and the choice of when to let go. A Mipo floating away with a balloon is the image that ends up on a book cover — and a natural 10-second clip.
 
 ---
 

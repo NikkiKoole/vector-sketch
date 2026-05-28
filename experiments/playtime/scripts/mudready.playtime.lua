@@ -34,6 +34,27 @@ local FLUID_DENSITY = 2.0
 local FLUID_DRAG    = 1.5
 local FLUID_ANGDAMP = 1.5
 
+local SOAP_R           = 55    -- contact radius for lathering
+local SOAP_DAMAGE_RATE = 5     -- health/sec drained while lathered
+local LATHER_DURATION  = 10    -- seconds lather stays active after last contact (water cuts this short)
+local SOAP_HW          = 22    -- half-width of bar (matches draw)
+local SOAP_HH          = 14    -- half-height of bar
+local SOAP_GRAB_PAD    = 18
+
+local soapX           = 0
+local soapY           = 0
+local soapDetected    = false
+local soapDragging    = false
+local soapDragDX      = 0
+local soapDragDY      = 0
+
+local function pointInSoapGrab(mx, my)
+    return mx >= soapX - SOAP_HW - SOAP_GRAB_PAD
+       and mx <= soapX + SOAP_HW + SOAP_GRAB_PAD
+       and my >= soapY - SOAP_HH - SOAP_GRAB_PAD
+       and my <= soapY + SOAP_HH + SOAP_GRAB_PAD
+end
+
 local SHOWER_RATE      = 0.02   -- seconds between spawn bursts
 local SHOWER_BURST     = 3      -- drops per burst
 local SHOWER_SPREAD    = 80     -- horizontal spread
@@ -78,8 +99,11 @@ local freed        = {}
 local freedAnchors = {}  -- { x, y, radius, scale } — shrinking center circles
 local splatter     = {}
 local foam         = {}
+local stickyFoam   = {}  -- { body, lx, ly, r, age, life } — foam clinging to Mipo body parts
 local totalJoints  = 0
 local lastMx, lastMy = nil, nil
+
+local currentMipoInstance = nil  -- tracks the procedurally-spawned Mipo, if any
 
 local function breakBall(j)
     local e      = mudJoints[j]
@@ -132,77 +156,122 @@ local function breakBall(j)
     end
 end
 
-local function spawnCluster()
+local function spawnCluster(instance)
     for _, e in ipairs(mudJoints) do
         if not e.joint:isDestroyed() then e.joint:destroy() end
         if not e.body:isDestroyed()  then e.body:destroy()  end
     end
-    for _, f in ipairs(freed) do end  -- already destroyed bodies
     mudJoints    = {}
     anchorBodies = {}
     freed        = {}
     freedAnchors = {}
     splatter     = {}
     foam         = {}
+    stickyFoam   = {}
     lastMx, lastMy = nil, nil
 
-    for _, label in ipairs(ANCHOR_LABELS) do
-        local found  = getObjectsByLabel(label)
-        local anchor = found[1] and found[1].body or nil
-        if anchor and not anchor:isDestroyed() then
-            local ax, ay = anchor:getPosition()
-
-            -- Measure body size from collision fixtures only (no userData = not an sfixture)
-            local maxHalf = 0
-            for _, fix in ipairs(anchor:getFixtures()) do
-                if not fix:getUserData() and not fix:isSensor() then
-                    local x1, y1, x2, y2 = fix:getBoundingBox(1)
-                    maxHalf = math.max(maxHalf, (x2-x1)/2, (y2-y1)/2)
-                end
+    local anchorsToCoat = {}
+    if instance then
+        for _, thing in pairs(instance.parts) do
+            if thing.body and not thing.body:isDestroyed() then
+                table.insert(anchorsToCoat, thing.body)
             end
-            local r       = math.max(maxHalf, 10)
-            local centerR = r * 0.35
-            local rMin    = r * 0.3
-            local rMax    = r * 0.65
-            local count   = math.max(4, math.min(16, math.floor(r * 0.18)))
-
-            table.insert(anchorBodies, { body = anchor, centerR = centerR, ballCount = count, totalBalls = count })
-
-            for i = 1, count do
-                local angle = (i / count) * math.pi * 2 + (math.random()-0.5) * 0.9
-                local ballR = rMin + math.random() * (rMax - rMin)
-                local dist  = centerR + ballR * (0.5 + math.random() * 0.7)
-                local bx    = ax + math.cos(angle) * dist
-                local by    = ay + math.sin(angle) * dist
-
-                local body = love.physics.newBody(world, bx, by, 'dynamic')
-                body:setGravityScale(0)
-                body:setLinearDamping(8)
-                body:setAngularDamping(20)
-                body:setFixedRotation(true)
-                local fix = love.physics.newFixture(body, love.physics.newCircleShape(ballR), 0.5)
-                fix:setSensor(true)
-
-                local joint = love.physics.newDistanceJoint(
-                    anchor, body, ax, ay, bx, by, false
-                )
-                joint:setFrequency(4)
-                joint:setDampingRatio(0.6)
-
-                table.insert(mudJoints, {
-                    joint     = joint,
-                    body      = body,
-                    radius    = ballR,
-                    health    = HIT_HEALTH,
-                    anchor    = anchor,
-                    initAngle = math.atan2(by - ay, bx - ax),
-                    initDist  = math.sqrt((bx-ax)^2+(by-ay)^2),
-                })
+        end
+    else
+        for _, label in ipairs(ANCHOR_LABELS) do
+            local found  = getObjectsByLabel(label)
+            local anchor = found[1] and found[1].body or nil
+            if anchor and not anchor:isDestroyed() then
+                table.insert(anchorsToCoat, anchor)
             end
         end
     end
 
+    for _, anchor in ipairs(anchorsToCoat) do
+        local ax, ay = anchor:getPosition()
+
+        -- Measure body size from collision fixtures only (no userData = not an sfixture)
+        local maxHalf = 0
+        for _, fix in ipairs(anchor:getFixtures()) do
+            if not fix:getUserData() and not fix:isSensor() then
+                local x1, y1, x2, y2 = fix:getBoundingBox(1)
+                maxHalf = math.max(maxHalf, (x2-x1)/2, (y2-y1)/2)
+            end
+        end
+        local r       = math.max(maxHalf, 10)
+        local centerR = r * 0.35
+        local rMin    = r * 0.3
+        local rMax    = r * 0.65
+        local count   = math.max(4, math.min(16, math.floor(r * 0.18)))
+
+        table.insert(anchorBodies, { body = anchor, centerR = centerR, ballCount = count, totalBalls = count })
+
+        for i = 1, count do
+            local angle = (i / count) * math.pi * 2 + (math.random()-0.5) * 0.9
+            local ballR = rMin + math.random() * (rMax - rMin)
+            local dist  = centerR + ballR * (0.5 + math.random() * 0.7)
+            local bx    = ax + math.cos(angle) * dist
+            local by    = ay + math.sin(angle) * dist
+
+            local body = love.physics.newBody(world, bx, by, 'dynamic')
+            body:setGravityScale(0)
+            body:setLinearDamping(8)
+            body:setAngularDamping(20)
+            body:setFixedRotation(true)
+            local fix = love.physics.newFixture(body, love.physics.newCircleShape(ballR), 0.5)
+            fix:setSensor(true)
+
+            local joint = love.physics.newDistanceJoint(
+                anchor, body, ax, ay, bx, by, false
+            )
+            joint:setFrequency(4)
+            joint:setDampingRatio(0.6)
+
+            table.insert(mudJoints, {
+                joint     = joint,
+                body      = body,
+                radius    = ballR,
+                health    = HIT_HEALTH,
+                anchor    = anchor,
+                initAngle = math.atan2(by - ay, bx - ax),
+                initDist  = math.sqrt((bx-ax)^2+(by-ay)^2),
+            })
+        end
+    end
+
     totalJoints = #mudJoints
+end
+
+local function destroyCurrentMipo()
+    if currentMipoInstance then
+        for _, thing in pairs(currentMipoInstance.parts) do
+            if thing.body and not thing.body:isDestroyed() then
+                objectManager.destroyBody(thing.body)
+            end
+        end
+        currentMipoInstance = nil
+    else
+        -- destroy the scene-loaded Mipo (first call)
+        for _, label in ipairs(ANCHOR_LABELS) do
+            local found = getObjectsByLabel(label)
+            for _, thing in ipairs(found) do
+                if thing.body and not thing.body:isDestroyed() then
+                    objectManager.destroyBody(thing.body)
+                end
+            end
+        end
+    end
+end
+
+local function spawnNewMudMipo(x, y)
+    spawnCluster()  -- clear mud before destroying bodies to avoid dangling joint refs
+    destroyCurrentMipo()
+    local inst = characterManager.createCharacter("humanoid", x or 6600, y or 0, 0.3)
+    if inst then
+        characterManager.randomizeMipoConstrained(inst)
+        currentMipoInstance = inst
+        spawnCluster(inst)
+    end
 end
 
 function s.onStart()
@@ -231,6 +300,9 @@ function s.onStart()
                 showerX      = (x1 + x2) * 0.5
                 showerY      = y1 - 80
                 showerDetected = true
+                soapX        = x1 + 120
+                soapY        = y1 - 35
+                soapDetected = true
                 break
             end
         end
@@ -241,6 +313,7 @@ end
 
 function s.onKeyPress(key)
     if key == 'r' then spawnCluster() end
+    if key == 'n' then spawnNewMudMipo() end
 end
 
 function s.update(dt)
@@ -270,6 +343,62 @@ function s.update(dt)
             end
         end
     end
+    -- Soapbar drag
+    if soapDetected then
+        if mouseDown and not wasMouseDown and not showerDragging and pointInSoapGrab(mx, my) then
+            soapDragging = true
+            soapDragDX   = soapX - mx
+            soapDragDY   = soapY - my
+        end
+        if soapDragging then
+            if mouseDown then
+                soapX = mx + soapDragDX
+                soapY = my + soapDragDY
+                -- lather mud balls within reach
+                for _, e in ipairs(mudJoints) do
+                    if not e.joint:isDestroyed() then
+                        local bx, by = e.body:getPosition()
+                        if math.sqrt((soapX-bx)^2+(soapY-by)^2) < SOAP_R + e.radius then
+                            e.lather = LATHER_DURATION
+                        end
+                    end
+                end
+                -- sticky foam on Mipo body parts within reach
+                for _, body in ipairs(world:getBodies()) do
+                    local ud = body:getUserData()
+                    if ud and ud.thing and not body:isDestroyed() then
+                        local bx, by = body:getPosition()
+                        if math.sqrt((soapX-bx)^2+(soapY-by)^2) < SOAP_R + 60 then
+                            local lx, ly = body:getLocalPoint(
+                                soapX + (math.random()-0.5) * SOAP_HW,
+                                soapY + (math.random()-0.5) * SOAP_HH
+                            )
+                            table.insert(stickyFoam, {
+                                body = body,
+                                lx = lx, ly = ly,
+                                r   = 6 + math.random() * 10,
+                                age = 0,
+                                life = 5 + math.random() * 4,
+                            })
+                        end
+                    end
+                end
+            else
+                soapDragging = false
+            end
+        end
+    end
+
+    -- Lather damage: lathered balls lose health over time
+    for j = #mudJoints, 1, -1 do
+        local e = mudJoints[j]
+        if not e.joint:isDestroyed() and e.lather and e.lather > 0 then
+            e.lather  = e.lather - dt
+            e.health  = e.health - SOAP_DAMAGE_RATE * dt
+            if e.health <= 0 then breakBall(j) end
+        end
+    end
+
     wasMouseDown = mouseDown
 
     -- Shower: spawn drops
@@ -305,6 +434,7 @@ function s.update(dt)
                         local bx, by = e.body:getPosition()
                         if math.sqrt((d.x-bx)^2+(d.y-by)^2) < e.radius + d.r then
                             e.health = e.health - SHOWER_DMG
+                            e.lather = math.max(0, (e.lather or 0) - 1.5)  -- water rinses lather
                             d.hit = true
                             if e.health <= 0 then breakBall(j) end
                             break
@@ -334,6 +464,16 @@ function s.update(dt)
                                         age = 0, life = 0.2 + math.random() * 0.25,
                                         r   = 2 + math.random() * 3,
                                     })
+                                end
+                                -- water rinses sticky foam off this body
+                                for k = #stickyFoam, 1, -1 do
+                                    local sf = stickyFoam[k]
+                                    if sf.body == body then
+                                        local wx, wy = body:getWorldPoint(sf.lx, sf.ly)
+                                        if math.sqrt((d.x-wx)^2+(d.y-wy)^2) < 40 then
+                                            sf.life = sf.age + 0.3  -- quick fade out
+                                        end
+                                    end
                                 end
                                 table.remove(showerDroplets, i)
                                 removed = true
@@ -516,6 +656,12 @@ function s.update(dt)
         if p.age >= p.life then table.remove(splatter, i) end
     end
 
+    for i = #stickyFoam, 1, -1 do
+        local f = stickyFoam[i]
+        f.age = f.age + dt
+        if f.age >= f.life or f.body:isDestroyed() then table.remove(stickyFoam, i) end
+    end
+
     for i = #foam, 1, -1 do
         local p = foam[i]
         p.x = p.x + p.vx*dt; p.y = p.y + p.vy*dt
@@ -602,11 +748,57 @@ function s.draw()
         love.graphics.circle('fill', p.x, p.y, p.r * (1 - t*0.5))
     end
 
-    -- Foam
+    -- Foam (floating, from sponge)
     for _, p in ipairs(foam) do
         local t = p.age / p.life
         love.graphics.setColor(1, 1, 1, (1-t) * 0.75)
         love.graphics.circle('line', p.x, p.y, p.r * (1 - t*0.3))
+    end
+
+    -- Sticky foam clinging to clean Mipo body parts
+    for _, f in ipairs(stickyFoam) do
+        if not f.body:isDestroyed() then
+            local wx, wy = f.body:getWorldPoint(f.lx, f.ly)
+            local t = f.age / f.life
+            love.graphics.setColor(1, 1, 1, (1 - t) * 0.8)
+            love.graphics.circle('fill', wx, wy, f.r * (1 - t * 0.4))
+            love.graphics.setColor(0.85, 0.95, 1.0, (1 - t) * 0.5)
+            love.graphics.circle('fill', wx - f.r * 0.3, wy - f.r * 0.3, f.r * 0.4)
+        end
+    end
+
+    -- Lather foam clinging to soaped mud balls
+    for _, e in ipairs(mudJoints) do
+        if not e.joint:isDestroyed() and e.lather and e.lather > 0 then
+            local bx, by = e.body:getPosition()
+            local t      = math.min(1, e.lather / LATHER_DURATION)
+            love.graphics.setColor(1, 1, 1, t * 0.85)
+            love.graphics.circle('fill', bx, by, e.radius * 0.9)
+            love.graphics.setColor(0.85, 0.95, 1.0, t * 0.6)
+            love.graphics.circle('fill', bx - e.radius * 0.3, by - e.radius * 0.25, e.radius * 0.45)
+            love.graphics.circle('fill', bx + e.radius * 0.25, by - e.radius * 0.35, e.radius * 0.3)
+        end
+    end
+
+    -- Soapbar
+    if soapDetected then
+        local hovering = pointInSoapGrab(mx, my) and not showerDragging
+        love.graphics.setColor(0.98, 0.95, 0.88, 1)
+        love.graphics.rectangle('fill', soapX - SOAP_HW, soapY - SOAP_HH, SOAP_HW*2, SOAP_HH*2, 6)
+        love.graphics.setColor(0.88, 0.82, 0.72, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle('line', soapX - SOAP_HW, soapY - SOAP_HH, SOAP_HW*2, SOAP_HH*2, 6)
+        -- indentation line
+        love.graphics.setColor(0.80, 0.74, 0.64, 0.8)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.line(soapX - SOAP_HW + 8, soapY, soapX + SOAP_HW - 8, soapY)
+        love.graphics.setLineWidth(1)
+        if hovering or soapDragging then
+            love.graphics.setColor(1.0, 0.95, 0.2, soapDragging and 1.0 or 0.7)
+            love.graphics.setLineWidth(3)
+            love.graphics.rectangle('line', soapX - SOAP_HW - 4, soapY - SOAP_HH - 4, SOAP_HW*2+8, SOAP_HH*2+8, 8)
+            love.graphics.setLineWidth(1)
+        end
     end
 
     -- Showerhead + drops

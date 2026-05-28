@@ -12,6 +12,7 @@ local registry = require 'src.registry'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local statemachine = require 'src.statemachine'
+local characterManager = require('src.character-manager')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -58,6 +59,7 @@ local scriptEnv = {
     getmetatable             = getmetatable,
     registry                 = registry,
     statemachine             = statemachine,
+    characterManager         = characterManager,
     tostring                 = tostring,
     tonumber                 = tonumber
     -- Add global utilities like NeedManager, etc.
