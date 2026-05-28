@@ -41,11 +41,11 @@ Strategy backdrop: `STUDIO-STRATEGY.md`. First consumer: `APP-1-BATHHOUSE-PLAN.m
   Data is threaded through every navigation op — `app:transition('gallery',
   { highlight = mipo })` is received by `gallery.enter(data)`. App-scope state
   lives as plain locals at the top of the app's script.
-- **Canonical use** (Bathhouse-shaped):
+- **Canonical use** (Bathhouse-shaped). Scene scripts get `statemachine` in
+  their sandbox env (see `src/script.lua` `scriptEnv`) — no `require` needed:
 
   ```lua
-  local sm = require('src.statemachine')
-  local app = sm.new()
+  local app = statemachine.new()
   local discovered = {}   -- app-scope state, just locals
 
   app:state('splash', {

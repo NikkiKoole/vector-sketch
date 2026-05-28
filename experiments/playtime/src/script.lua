@@ -11,6 +11,7 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
+local statemachine = require 'src.statemachine'
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -55,7 +56,10 @@ local scriptEnv = {
     worldState               = state.world,
     unpack                   = unpack,
     getmetatable             = getmetatable,
-    registry                 = registry
+    registry                 = registry,
+    statemachine             = statemachine,
+    tostring                 = tostring,
+    tonumber                 = tonumber
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting
