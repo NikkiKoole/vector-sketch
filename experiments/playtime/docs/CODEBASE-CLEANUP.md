@@ -58,7 +58,7 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 
 ## 7. Retire UVUSERT
 **Status:** TODO
-**Why:** UVUSERT is the ancestor of MESHUSERT — textured polygon riding a body, no skinning. MESHUSERT with no bound influences does the same thing, with cached triangulation and access to z-order groups. UVUSERT re-runs ear-clip every frame, so it's also slower at runtime. Kept around only because `scripts/uvs.playtime.json` and `scripts/resources.playtime.json` still reference it.
+**Why:** UVUSERT is the ancestor of MESHUSERT — textured polygon riding a body, no skinning. MESHUSERT with no bound influences does the same thing, with cached triangulation and access to z-order groups. UVUSERT re-runs ear-clip every frame, so it's also slower at runtime. Kept around only because `scripts/tech/uvs.playtime.json` and `scripts/tech/resources.playtime.json` still reference it.
 **Where:** `src/physics/box2d-draw-textured.lua:1851-1975` (draw path, ~125 lines incl. commented debug blocks), `src/subtypes.lua:11`, `src/object-manager.lua` creation path.
 **Task:** Migrate UVUSERT → MESHUSERT-without-bones on load (`src/io.lua` subtypes.migrate already has the pattern — see `uvmappert` → `uvusert` rename). Delete the UVUSERT draw branch. Delete UVUSERT from `shape-panel.lua` UI if exposed. Retire the constant.
 **Win:** ~125 lines off the draw path, one less sfixture variant to maintain, DECAL stays as the one "simple textured thing."

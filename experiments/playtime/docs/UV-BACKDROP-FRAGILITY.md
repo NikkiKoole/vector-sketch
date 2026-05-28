@@ -160,5 +160,5 @@ For anyone actively rigging in the current system:
 - `src/io.lua:105-225` (`buildWorld`), `~436-470` (`gatherSaveData`),
   `574-622` (fixture userData save), around the `subtypes.migrate` call — URL backup logic
 - `main.lua:311-400` — draw loop, backdrop rendering, pre-world / post-world passes
-- `scripts/uvs.playtime.json`, `scripts/resources.playtime.json`,
-  `scripts/beginmesh.playtime.json` — real-world example scenes using the system
+- `scripts/tech/uvs.playtime.json`, `scripts/tech/resources.playtime.json`,
+  `scripts/scratch/beginmesh.playtime.json` — real-world example scenes using the system
