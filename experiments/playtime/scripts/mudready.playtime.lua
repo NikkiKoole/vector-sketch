@@ -30,9 +30,9 @@ local waterTime  = 0
 local waterSplash = {}   -- { x, y, vx, vy, age, life, r }
 local prevBodyY  = {}    -- [body] = last y, for crossing detection
 
-local FLUID_DENSITY = 1.0
-local FLUID_DRAG    = 0.8
-local FLUID_ANGDAMP = 0.4
+local FLUID_DENSITY = 2.0
+local FLUID_DRAG    = 1.5
+local FLUID_ANGDAMP = 1.5
 
 local SHOWER_RATE      = 0.02   -- seconds between spawn bursts
 local SHOWER_BURST     = 3      -- drops per burst
