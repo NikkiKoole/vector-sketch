@@ -20,6 +20,11 @@ Each entry below is annotated with *what it is* and *when to consult it*.
 - **`STUDIO-STRATEGY.md`** — Mipolai-the-studio framing: studio (not company),
   format sequencing (video → book → YouTube), monetization (free + ~€2.99
   unlock), launch plan. The *why* behind Bathhouse and everything after.
+- **`MIPOLAI-COMMON.md`** — the cross-app template: studio-shared engine
+  primitives (camera, mipomi-lang speech, emotion layer, physical actions,
+  tuning panel) and studio-shared mechanics (breeds, shelf+paywall, payoff
+  beat, footage capture). Catalog with file pointers + gap analysis per item.
+  Read this whenever a new app is being planned.
 - **`MIPO-CODE-IDEA.md`** — Mipo breeds (BLOB / SPUD / TALL / TWIG / CHUNK /
   WIDE, more TBD) + a portable cross-app code format (`KIND-XXXXX-YYYYY`).
   The breed system is the studio-level shared IP mechanism. Being extended to
