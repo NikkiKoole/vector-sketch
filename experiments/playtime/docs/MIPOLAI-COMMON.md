@@ -14,17 +14,39 @@ Strategy backdrop: `STUDIO-STRATEGY.md`. First consumer: `APP-1-BATHHOUSE-PLAN.m
 
 ## Runtime / engine primitives
 
-### Camera system (follow / zoom / screen transition)
+### Camera system (intra-scene viewport — follow / zoom / pan)
 
 - **State:** partial, not extracted.
-- **Lives in:** `experiments/puppet-maker2/scenes/editGuy.lua` (scene mgmt +
-  camera + physics setup); also pieces in `experiments/physics-testbed/scenes/`.
+- **Lives in:** `experiments/puppet-maker2/scenes/editGuy.lua` (camera control
+  inside a scene — pan/zoom on the active view); also pieces in
+  `experiments/physics-testbed/scenes/`.
 - **Gap:** no shared library. Each app re-implements follow / zoom-to-object /
-  screen transition primitives.
+  pan-and-ease primitives.
 - **Reusable shape (when extracted):** `lib/camera-stack.lua` (or similar) with
-  `followBody(b, lag)`, `zoomTo(target, duration)`, `transition(kind, dur)`.
-  Built on top of `vendor/brady` (the existing camera) — additive, not a
-  replacement.
+  `followBody(b, lag)`, `zoomTo(target, duration)`, `panTo(x, y, ease)`,
+  `shake(intensity, dur)`. Built on top of `vendor/brady` (the existing
+  camera) — additive, not a replacement. *Inter-scene* transitions are
+  handled by the Scene manager (below), not here.
+
+### Scene manager + inter-scene transitions
+
+- **State:** partial, not extracted.
+- **Lives in:** `experiments/puppet-maker2/main.lua` +
+  `experiments/puppet-maker2/scenes/` — `splash.lua`, `intro.lua`,
+  `outside.lua`, `editGuy.lua`. An active-scene pointer + per-scene lifecycle
+  (load / update / draw / unload) + transition glue between screens. Also
+  some structure in `experiments/physics-testbed/scenes/`.
+- **Gap:** playtime is single-scene by design — `sceneLoader.loadScriptAndScene(id)`
+  wholesale-replaces the running scene with no transition between. Every app
+  that needs more than one screen (splash → gameplay → gallery, settings
+  overlay, end-of-session beat) re-implements this from scratch.
+- **Reusable shape (when extracted):** `lib/screens.lua` with
+  `push(name, args)`, `pop()`, `replace(name, args)`,
+  `transition(from, to, kind, dur)`. Each screen has its own
+  `onLoad / update / draw / onUnload` (mirrors the existing scene-script
+  lifecycle). Transition kinds: cut / fade / slide / iris / wipe — the
+  studio's visual vocabulary for moving between screens. Composes with the
+  Scene-script lifecycle that's already in playtime (`scene-loader.lua`).
 
 ### Mipo sounds + speech (mipomi-lang)
 
