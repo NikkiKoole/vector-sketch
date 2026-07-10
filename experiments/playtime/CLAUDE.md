@@ -73,7 +73,7 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks 
 luacheck src/ main.lua --std "lua51+love"                   # full check
 ```
 
-Global leaks: **0** across 62 files. The full check has ~60 style warnings (shadowing, long lines, unused vars) that crept in after the May 2026 cleanup — see `docs/CODE-AUDIT-2026-07.md` §C.
+Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (verified 2026-07-10, after the July 2026 audit §C cleanup).
 
 ## Architecture
 
@@ -175,9 +175,7 @@ Global leaks: **0** across 62 files. The full check has ~60 style warnings (shad
 See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 
 **Bugs:**
-- Cloned OMP texfixtures not marked `dirty` — composite texture won't regenerate on first render
-- Unused `swapBodies` parameter in `joints.recreateJoint()` — dead code
-- Redundant reference angle read during clone — reads old joint twice
+- Cloned OMP texfixtures not marked `dirty` — composite texture won't regenerate on first render (deferred: proper fix needs the Phase 8 OMP image cache)
 
 **Architectural risks:**
 - Box2D doesn't guarantee fixture ordering — the ordering invariant can break silently
@@ -190,7 +188,8 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 ## Further documentation
 
 Deep-dive docs live in `docs/`:
-- `PLAN-OF-ATTACK.md` — master work plan with phase status
+- `NEXT-STEPS-2026-07.md` — post-audit direction: play mode, tween layer, Bathhouse resume order, code-strengthening list
+- `PLAN-OF-ATTACK.md` — master work plan with phase status (remaining open: 7d, Phase 8)
 - `DEEPER-ISSUES.md` — bugs, hidden constraints, architectural risks
 - `CODE-AUDIT-2026-07.md` — third-pass audit: prioritized fix list (broken → risks → cleanup → test gaps)
 - `BLIND-SPOTS.md` — undocumented systems (thing structure, fixture subtypes, OMP pipeline)

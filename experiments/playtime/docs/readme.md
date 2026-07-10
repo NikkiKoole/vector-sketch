@@ -11,6 +11,12 @@ Each entry below is annotated with *what it is* and *when to consult it*.
 
 ## Start here (active — currently driving work)
 
+- **`NEXT-STEPS-2026-07.md`** — post-audit direction (written 2026-07-10,
+  right after CODE-AUDIT-2026-07 closed out). Maps the three goals (make
+  Mipos / build their world / carve scenes into apps) to current reality;
+  recommended order: play mode → tween layer → continue Bathhouse build.
+  Includes the code-strengthening shortlist and flags the paid-vs-free+unlock
+  pricing conflict.
 - **`APP-1-BATHHOUSE-PLAN.md`** — *canonical* plan for the first app (Mipo's
   Bathhouse). The status block at the top is the source of truth for "where am
   I?". Includes the spike verdict (DONE, **go**), build-phase steps with
@@ -41,9 +47,12 @@ Each entry below is annotated with *what it is* and *when to consult it*.
 
 ## Studio / product context
 
-- **`APPELFLAP-ISSUES.md`** — StoreKit 1 IAP fork (`appelflap`) known bugs.
-  Non-blocking for paid apps without IAP, but the iOS bundle path runs through
-  it.
+- **`APPELFLAP-ISSUES.md`** — StoreKit 1 IAP fork (`appelflap`) known bugs
+  (three one-liners). ⚠️ Whether these block launch depends on an unresolved
+  pricing decision: `APP-1-BATHHOUSE-PLAN.md` assumed paid-no-IAP, but
+  `STUDIO-STRATEGY.md` recommends free + one-time €2.99 unlock — which
+  requires IAP and makes these bugs pre-launch fixes. Decide before
+  Bathhouse build step 9.
 
 ## Architecture & reference (consult when touching the area)
 
@@ -54,7 +63,8 @@ Each entry below is annotated with *what it is* and *when to consult it*.
   subtypes, OMP pipeline).
 - **`DEEPER-ISSUES.md`** — known bugs and architectural risks.
 - **`CODE-AUDIT-2026-07.md`** — third-pass audit (July 2026): new bugs,
-  risks, cleanup batch, test gaps. Prioritized A→D; check off as fixed.
+  risks, cleanup batch, test gaps. **Complete as of 2026-07-10** — all A→D
+  items fixed; follow-on direction lives in `NEXT-STEPS-2026-07.md`.
 - **`DEEP-DIVE-NOTES.md`** — DNA/character + texture deformation + UI flow
   analysis.
 - **`UV-BACKDROP-FRAGILITY.md`** — RESOURCE/backdrop/UV duct-tape seams. Read

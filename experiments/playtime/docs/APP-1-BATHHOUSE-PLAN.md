@@ -12,7 +12,7 @@
 ## Current status
 
 **Current step:** Build phase step 3 — spawn a new mud-coated procedural Mipo into the scene. (`'n'` key in `mudready.playtime.lua` calls `spawnNewMudMipo()` — clears mud, destroys old Mipo, creates + randomizes a new one and re-coats it. `characterManager` now exposed in scriptEnv.)
-**Last touched:** 2026-05-28
+**Last touched:** 2026-05-28 (Bathhouse-side). Engine-side 2026-07-10: CODE-AUDIT-2026-07 fully closed out (726 tests, luacheck 0/0, all listed risks fixed); `docs/NEXT-STEPS-2026-07.md` recommends two small engine tasks alongside the build — a `--play` mode (editor-chrome-free scene launch, makes every build step viewable as "the app") and a tween/timer layer (unblocks idle behaviors + emotion layer).
 **Face gap status:** ✓ Gaze (distance-based blend) + blink (random interval, squish) both working. Mouth animation not wired but not needed for Bathhouse MVP.
 **Polish phase status:** ✓ closed 2026-05-26, 5 days ahead of the 2026-05-31 deadline. Teeth done; head bodyhair outline unified with hair color; gum tried-and-dropped (see below). Remaining polish items (eyelashes, hand/foot images, DNA boundaries, patches, Mipo breeds) deferred to app #2 per the pre-approved exit.
 **Attendant Mipo:** dropped — the player *is* the attendant. No separate attendant character needed.
@@ -226,4 +226,4 @@ The verb is **wash**. The resolution is **reveal**. Anything else is a different
 
 - Principles: `MANIFESTO.md` (Sago Rule)
 - Prerequisite tech work: `docs/FACE-SYSTEM-PLAN.md`
-- IAP layer status: paid app, no in-app IAP needed → `APPELFLAP-ISSUES.md` is non-blocking for this app
+- IAP layer status: ⚠️ **unresolved pricing conflict.** This plan assumed a paid app (no IAP → `APPELFLAP-ISSUES.md` non-blocking), but `STUDIO-STRATEGY.md` recommends **free + one-time ~€2.99 unlock after 2–3 discoveries** — which requires IAP, making the three appelflap one-line bugs (first purchase lost, restore wipes entitlements, late observer registration) launch blockers. Decide before build step 9; if free+unlock, fix the three bugs during the iOS window.

@@ -18,13 +18,9 @@ When cloning bodies with OMP texfixtures, the `extra.dirty` flag is not set to `
 
 Nose segments simplified from SHAPE8 to CAPSULE with connected-skin texture. `noseChain` strategy replaced with `parentTop`.
 
-### Bug: Unused `swapBodies` parameter (joints.lua:162)
+### ~~Bug: Unused `swapBodies` parameter (joints.lua)~~ — FIXED
 
-```lua
-function lib.recreateJoint(joint, newSettings, swapBodies)
-```
-
-The `swapBodies` parameter is accepted but never read inside the function. Either dead code from a removed feature, or an unfinished feature.
+Parameter removed; signature is now `lib.recreateJoint(joint, newSettings)` (joints.lua:168).
 
 ### ~~Bug: Debug print left in production code (joints.lua:104)~~ — FIXED
 
@@ -160,14 +156,9 @@ When cloning, `remapAndRestoreInfluences` remaps node IDs through `idMapping`. I
 
 Line 899 skips any joint where both connected bodies aren't in the cloned set. This is correct behavior but provides **no feedback** to the user. If you select 3 bodies connected by 4 joints but miss one body, some joints silently disappear from the clone.
 
-### Redundant reference angle read (line 932)
+### ~~Redundant reference angle read~~ — FIXED
 
-```lua
-local oldRef = originalJoint:getReferenceAngle()
-local newRef = originalJoint:getReferenceAngle()  -- reads OLD joint again
-```
-
-Gets reference angle from the original joint twice instead of reading the new joint's value. The variable `newRef` is misleading.
+The double `getReferenceAngle()` read on the original joint was removed from the clone path.
 
 ### Disabled collision detection
 
@@ -333,7 +324,7 @@ RESOURCE sfixture's `uvs` array was sized by vertex count at compute time but ne
 
 | Category | Original | Fixed | Remaining | Examples of remaining |
 |----------|----------|-------|-----------|----------------------|
-| Actual bugs | 8 | 6 | 2 | OMP dirty flag, unused swapBodies, redundant reference angle |
+| Actual bugs | 8 | 7 | 1 | OMP dirty flag (deferred — needs Phase 8 OMP image cache) |
 | Hidden constraints | 2 | 0 | 2 | Fixture ordering invariant, z-sort instability |
 | Global leaks | 87 | 68 | 19 | Intentional globals in main.lua/script.lua (Phase 3 work) |
 | State mutation risks | 4 | 0 | 4 | currentMode (27 writers), paused (3 writers), selection, setUserData bypass |
