@@ -142,6 +142,17 @@ Original list kept below for reference.
 
 ## D. Highest-leverage tests to add
 
+**TOP FOUR DONE 2026-07-10** — new specs (41 tests, suite now 709):
+`spine-mesh_spec.lua` (bind/evaluate round-trip incl. overshoot + bent
+chains, multi-chain assignment/fallback, chain splitting),
+`recorder_spec.lua` (record→replay round-trip, inexact-dt dispatch,
+cursor no-refire, orphaned-update guard), `script-loading_spec.lua`
+(exec-once, sandbox isolation, env injection, error paths),
+`joints-recreate_spec.lua` (id/limit/offset/body continuity, overrides,
+rope maxLength, destroyed-joint nil). Still open: snap core
+(`checkForSnaps`/`checkForJointBreaks`) and `box2d-pointerjoints`
+lifecycle (item 5 below).
+
 In order of value:
 
 1. **`spine-mesh`** — zero coverage, pure deterministic math
