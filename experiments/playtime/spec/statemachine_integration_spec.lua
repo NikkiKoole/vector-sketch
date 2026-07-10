@@ -9,11 +9,30 @@ local state = require('src.state')
 
 describe('statemachine integration (via sm-demo)', function()
     local prevScript
+    local ownWorld = false
 
-    setup(function() prevScript = state.scene.scriptPath end)
+    setup(function()
+        prevScript = state.scene.scriptPath
+        -- In a fresh `love . --specs` run there is no live app world (and
+        -- earlier specs destroy theirs); loadScriptAndScene needs one.
+        if not state.physicsWorld or state.physicsWorld:isDestroyed() then
+            state.physicsWorld = love.physics.newWorld(0, 9.81 * 100, true)
+            ownWorld = true
+        end
+    end)
 
     teardown(function()
-        -- Restore the default scene so we don't leave the app on the demo.
+        if ownWorld then
+            -- Fresh spec run: nothing to restore, just tear down what we made.
+            state.scene.sceneScript = nil
+            state.scene.scriptPath = nil
+            if state.physicsWorld and not state.physicsWorld:isDestroyed() then
+                state.physicsWorld:destroy()
+            end
+            state.physicsWorld = nil
+            return
+        end
+        -- Live app (via bridge): restore the scene we displaced.
         local sl = require('src.scene-loader')
         if prevScript then
             local id = prevScript:match('([^/]+)%.playtime%.lua$')

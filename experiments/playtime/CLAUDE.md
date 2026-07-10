@@ -45,7 +45,7 @@ Lurker watches files every 0.5s and hot-swaps Lua modules. Check `/errors` after
 
 ## Testing
 
-Busted is the primary test framework. Specs live in `spec/`. Full suite: **8 spec files, 367 tests**.
+Busted is the primary test framework. Specs live in `spec/`. Full suite: **17 spec files, ~670 tests** (pure subset via `busted spec/`: ~300).
 
 ```bash
 # Pure unit specs (no LÖVE needed)
@@ -70,15 +70,15 @@ curl -X POST localhost:8001/specs -d '{"fresh":true}'                          #
 
 ```bash
 luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks (currently 0)
-luacheck src/ main.lua --std "lua51+love"                   # full check (0 warnings, 0 errors)
+luacheck src/ main.lua --std "lua51+love"                   # full check
 ```
 
-Fully clean: **0 warnings / 0 errors** across 42 files.
+Global leaks: **0** across 62 files. The full check has ~60 style warnings (shadowing, long lines, unused vars) that crept in after the May 2026 cleanup — see `docs/CODE-AUDIT-2026-07.md` §C.
 
 ## Architecture
 
 - `main.lua` — entry point, keybindings, UI callbacks
-- `src/` — core modules (42 files across src/, src/ui/, src/physics/)
+- `src/` — core modules (61 files across src/, src/ui/, src/physics/)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, loveblobs, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
@@ -192,6 +192,7 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 Deep-dive docs live in `docs/`:
 - `PLAN-OF-ATTACK.md` — master work plan with phase status
 - `DEEPER-ISSUES.md` — bugs, hidden constraints, architectural risks
+- `CODE-AUDIT-2026-07.md` — third-pass audit: prioritized fix list (broken → risks → cleanup → test gaps)
 - `BLIND-SPOTS.md` — undocumented systems (thing structure, fixture subtypes, OMP pipeline)
 - `MODULE-ANALYSIS.md` — full module inventory, dependency map, serialization pipeline
 - `CLAUDE-BRIDGE.md` — complete bridge API reference

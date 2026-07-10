@@ -53,6 +53,8 @@ Each entry below is annotated with *what it is* and *when to consult it*.
 - **`BLIND-SPOTS.md`** — undocumented systems (`thing` structure, fixture
   subtypes, OMP pipeline).
 - **`DEEPER-ISSUES.md`** — known bugs and architectural risks.
+- **`CODE-AUDIT-2026-07.md`** — third-pass audit (July 2026): new bugs,
+  risks, cleanup batch, test gaps. Prioritized A→D; check off as fixed.
 - **`DEEP-DIVE-NOTES.md`** — DNA/character + texture deformation + UI flow
   analysis.
 - **`UV-BACKDROP-FRAGILITY.md`** — RESOURCE/backdrop/UV duct-tape seams. Read
