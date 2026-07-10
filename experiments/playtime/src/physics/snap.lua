@@ -44,7 +44,9 @@ local function createRevoluteJoint(body1, body2, x, y, x2, y2, _index1, _index2)
     local xa, ya = body1:getLocalPoint(x, y)
     local offsetA = { x = xa, y = ya }
 
-    local xb, yb = body1:getLocalPoint(x2, y2)
+    -- offsetB belongs in body2's local frame (it was body1's, which fed
+    -- wrong anchor metadata to joint recreate / the offset UI).
+    local xb, yb = body2:getLocalPoint(x2, y2)
 
     local offsetB = { x = xb, y = yb }
 

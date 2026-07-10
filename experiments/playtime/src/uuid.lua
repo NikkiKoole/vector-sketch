@@ -2,9 +2,13 @@
 
 
 
--- very important keep this on, ids will start clashing otherwise since we will be generating the SAME 'random' numbers
-math.randomseed(love.timer.getTime())
-local random = love.math.random
+-- IDs must differ ACROSS sessions. Don't use the global love.math.random
+-- here: game-loop.lua seeds it to a constant (123456) for deterministic
+-- replay, so every session generated the exact same id sequence. (The old
+-- math.randomseed call seeded the wrong RNG and protected nothing.)
+-- A private generator keeps ids random without breaking replay determinism.
+local rng = love.math.newRandomGenerator(os.time() * 1000 + math.floor((os.clock() % 1) * 1000))
+local function random(a, b) return rng:random(a, b) end
 
 local lib = {}
 require 'string'

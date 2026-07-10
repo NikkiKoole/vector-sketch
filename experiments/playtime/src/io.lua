@@ -1000,12 +1000,15 @@ function lib.gatherSaveData(world, camera)
 
                 if fixture:getUserData() then
                     if subtypes.is(fixture:getUserData(), subtypes.SNAP) then
-                        local ud             = fixture:getUserData()
+                        -- Copy FIRST, then strip. Converting at/to on the live
+                        -- userData corrupted the running snap system: snap.lua
+                        -- keeps calling methods on these refs after a save.
+                        -- (deepCopy passes userdata through by reference.)
+                        local ud             = utils.deepCopy(fixture:getUserData())
 
                         ud.extra.fixture     = 'fixture'
-                        -- NOTE: at/to were runtime fixture references from an older snap system.
-                        -- They may be stale (destroyed Box2D objects) or nil after load.
-                        -- Safely extract IDs if they're live objects, otherwise clear them.
+                        -- NOTE: at/to are runtime object references. Persist
+                        -- them as thing IDs; clear if stale/unreadable.
                         if ud.extra.at and type(ud.extra.at) ~= 'string' then
                             local atok, atid = pcall(function() return ud.extra.at:getUserData().thing.id end)
                             ud.extra.at = atok and atid or nil
@@ -1014,7 +1017,7 @@ function lib.gatherSaveData(world, camera)
                             local otok, otid = pcall(function() return ud.extra.to:getUserData().thing.id end)
                             ud.extra.to = otok and otid or nil
                         end
-                        fixtureData.userData = utils.deepCopy(ud)
+                        fixtureData.userData = ud
                     else
                         local ud = fixture:getUserData()
                         if ud and ud.extra and ud.extra._mesh then

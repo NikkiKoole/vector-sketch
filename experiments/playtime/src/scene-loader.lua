@@ -105,7 +105,7 @@ function lib.loadAndRunScript(name)
     if state.scene.sceneScript then
         script.call(SE.ON_UNLOAD)
     end
-    state.scene.sceneScript = script.loadScript(data, name)()
+    state.scene.sceneScript = script.loadScript(data, name)
     state.scene.scriptPath = name
     script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
     script.call(SE.ON_START)

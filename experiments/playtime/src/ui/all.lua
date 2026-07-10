@@ -228,8 +228,14 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
 
 
     if dirty then
-        value = tonumber(numericInputText)
-        returnValue = value
+        -- Clamp typed values to the slider's range and ignore garbage/NaN:
+        -- callers feed this straight into Box2D (width/radius/density),
+        -- where 0 or negative means a degenerate shape.
+        local typed = tonumber(numericInputText)
+        if typed and typed == typed then
+            value = math.max(min, math.min(max, typed))
+            returnValue = value
+        end
     end
 
     -- Cursor spans slider + gap + text input

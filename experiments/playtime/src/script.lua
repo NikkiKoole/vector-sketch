@@ -107,23 +107,22 @@ function script.loadScript(data, filePath)
             error("Error loading script: " .. err)
         end
 
-        local success, execErr = pcall(chunk)
+        -- Run the chunk exactly once and return its result (the script
+        -- table). Returning the chunk itself made the caller execute it a
+        -- second time, doubling every top-level side effect on load/reload.
+        local success, result = pcall(chunk)
         if not success then
-            error("Error executing script: " .. execErr)
+            error("Error executing script: " .. result)
         end
 
         logger:info("Script loaded: " .. filePath)
-        if success then
-            return chunk
-        end
+        return result
     end
 
-    return function()
-        local s = {}
-        s.onStart = function() logger:error("error: " .. err .. "\nError in script: " .. filePath) end
-        s.foundError = err -- utils.insertNewlines(err, 100)
-        return s
-    end
+    return {
+        onStart = function() logger:error("error: " .. err .. "\nError in script: " .. filePath) end,
+        foundError = err, -- utils.insertNewlines(err, 100)
+    }
 end
 
 return script

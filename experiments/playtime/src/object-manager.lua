@@ -528,7 +528,16 @@ function lib.recreateThingFromBody(body, newSettings)
     local velocityX, velocityY = body:getLinearVelocity()
     local angularVelocity = body:getAngularVelocity()
     local bodyType = newSettings.bodyType or body:getType()
+    -- Read restitution/friction from the first COLLISION fixture (nil
+    -- userData). getFixtures()[1] is a sensor sfixture on bodies that carry
+    -- them (ordering invariant), which silently reset these to defaults.
     local firstFixture = body:getFixtures()[1]
+    for _, fixture in ipairs(body:getFixtures()) do
+        if fixture:getUserData() == nil then
+            firstFixture = fixture
+            break
+        end
+    end
     local restitution = firstFixture:getRestitution()
     local friction = firstFixture:getFriction()
     local fixedRotation = body:isFixedRotation() -- Capture fixed angle state
