@@ -863,39 +863,6 @@ function lib.drawSelectedSFixture()
 
                         return influences
                     end
-                    local function applyWeights(influences, params)
-                        local eps = params and params.eps or 1e-6
-                        local mode = params and params.mode or "inverse"
-                        local sigma = params and params.sigma or 0.5
-                        local R = params and params.R or 1.0
-
-                        for vi = 1, #influences do
-                            local infl = influences[vi]
-
-                            local sum = 0
-                            for k = 1, #infl do
-                                local d = infl[k].dist
-                                local wt
-                                if mode == "inverse" then
-                                    wt = 1 / (d + eps)
-                                elseif mode == "gaussian" then
-                                    wt = math.exp(-(d * d) / (2 * sigma * sigma))
-                                elseif mode == "linear" then
-                                    wt = (d < R) and (1 - d / R) or 0
-                                end
-                                infl[k].w = wt
-                                sum = sum + wt
-                            end
-
-                            if sum > 0 then
-                                for k = 1, #infl do
-                                    infl[k].w = infl[k].w / sum
-                                end
-                            end
-                        end
-
-                        return influences
-                    end
                     -- Segment-based weighting (ported from
                     -- experiments/deform-textured/main.lua:570). For each
                     -- consecutive pair of nodes that share a body, treat that
@@ -922,10 +889,10 @@ function lib.drawSelectedSFixture()
                         local dx, dy = px - cx, py - cy
                         return math.sqrt(dx * dx + dy * dy), t
                     end
-                    local function smoothstep(e0, e1, x)
-                        if x <= e0 then return 0 end
-                        if x >= e1 then return 1 end
-                        local t = (x - e0) / (e1 - e0)
+                    local function smoothstep(e0, e1, v)
+                        if v <= e0 then return 0 end
+                        if v >= e1 then return 1 end
+                        local t = (v - e0) / (e1 - e0)
                         return t * t * (3 - 2 * t)
                     end
                     local function buildSegments(nodes)
@@ -981,10 +948,10 @@ function lib.drawSelectedSFixture()
                                 local wax, way = seg.body:getWorldPoint(seg.lax, seg.lay)
                                 local wbx, wby = seg.body:getWorldPoint(seg.lbx, seg.lby)
                                 local d = distToSegment(px, py, wax, way, wbx, wby)
-                                local w = 1 - smoothstep(0, radius, d)
-                                if falloff ~= 1 and w > 0 then w = w ^ falloff end
-                                if w > 0 and (not bodyW[seg.body] or bodyW[seg.body] < w) then
-                                    bodyW[seg.body] = w
+                                local weight = 1 - smoothstep(0, radius, d)
+                                if falloff ~= 1 and weight > 0 then weight = weight ^ falloff end
+                                if weight > 0 and (not bodyW[seg.body] or bodyW[seg.body] < weight) then
+                                    bodyW[seg.body] = weight
                                 end
                             end
 
@@ -1293,7 +1260,8 @@ function lib.drawSelectedSFixture()
                                 if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
                                     local rextra = rud.extra
                                     local triIdx = rextra and rextra.triangles
-                                    local allVerts = rextra and (rextra.meshVertices or rv:getBody():getUserData().thing.vertices)
+                                    local allVerts = rextra
+                                        and (rextra.meshVertices or rv:getBody():getUserData().thing.vertices)
                                     if triIdx and allVerts then
                                         -- Path B: Steiner points live on the body in body-local
                                         -- coords. allVerts may be either body-local (new code,
@@ -1308,8 +1276,10 @@ function lib.drawSelectedSFixture()
                                             local i2 = triIdx[(t - 1) * 3 + 2]
                                             local i3 = triIdx[(t - 1) * 3 + 3]
                                             if i1 and i2 and i3 then
-                                                local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1] + allVerts[(i3-1)*2+1]) / 3 - ocenX
-                                                local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2] + allVerts[(i3-1)*2+2]) / 3 - ocenY
+                                                local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1]
+                                                    + allVerts[(i3-1)*2+1]) / 3 - ocenX
+                                                local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2]
+                                                    + allVerts[(i3-1)*2+2]) / 3 - ocenY
                                                 bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cx
                                                 bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cy
                                             end
@@ -1406,10 +1376,10 @@ function lib.drawSelectedSFixture()
                         local isHover = ui.mouseX >= bx and ui.mouseX <= bx + boneBtnW
                             and ui.mouseY >= y and ui.mouseY <= y + BUTTON_HEIGHT
                         if isHover then hoveredBone = b end
-                        local br = ((b * 97)  % 256) / 255
-                        local bg = ((b * 163) % 256) / 255
-                        local bb = ((b * 211) % 256) / 255
-                        local col = isSel and { br, bg, bb } or nil
+                        local boneR = ((b * 97)  % 256) / 255
+                        local boneG = ((b * 163) % 256) / 255
+                        local boneB = ((b * 211) % 256) / 255
+                        local col = isSel and { boneR, boneG, boneB } or nil
                         if ui.button(bx, y, boneBtnW, tostring(b), BUTTON_HEIGHT, col) then
                             state.triangleEditor.selectedBone = b
                         end
@@ -1421,11 +1391,11 @@ function lib.drawSelectedSFixture()
                         local wx, wy = nodeWorldPos(nodes[highlightBone])
                         if wx then
                             local b = highlightBone
-                            local br = ((b * 97)  % 256) / 255
-                            local bg = ((b * 163) % 256) / 255
-                            local bb = ((b * 211) % 256) / 255
+                            local boneR = ((b * 97)  % 256) / 255
+                            local boneG = ((b * 163) % 256) / 255
+                            local boneB = ((b * 211) % 256) / 255
                             local sx, sy = cam:getScreenCoordinates(wx, wy)
-                            love.graphics.setColor(br, bg, bb, 0.9)
+                            love.graphics.setColor(boneR, boneG, boneB, 0.9)
                             love.graphics.setLineWidth(3)
                             love.graphics.circle('line', sx, sy, 18)
                             love.graphics.line(sx - 24, sy, sx + 24, sy)
@@ -1478,8 +1448,8 @@ function lib.drawSelectedSFixture()
                                         end
                                     end
                                     local bestBone, bestW = 1, -1
-                                    for boneIdx, w in pairs(boneTotals) do
-                                        if w > bestW then bestBone, bestW = boneIdx, w end
+                                    for boneIdx, total in pairs(boneTotals) do
+                                        if total > bestW then bestBone, bestW = boneIdx, total end
                                     end
                                     newBones[t] = bestBone
                                 end
@@ -1492,7 +1462,7 @@ function lib.drawSelectedSFixture()
                     -- node anchor within bindRadius. Triangles outside all radii
                     -- stay nil (DQS fallback). Use manual painting to fix edges.
                     if ui.button(x, y, ROW_WIDTH + 50, 'auto assign by proximity') then
-                        local nodes = ud.extra.nodes
+                        local proxNodes = ud.extra.nodes
                         local radius = tonumber(ud.extra.bindRadius) or 80
                         local lbl = ud.label or ''
                         local mappert2
@@ -1504,7 +1474,7 @@ function lib.drawSelectedSFixture()
                                 end
                             end
                         end
-                        if nodes and #nodes > 0 and mappert2 then
+                        if proxNodes and #proxNodes > 0 and mappert2 then
                             local mud2 = mappert2:getBody():getUserData()
                             local mextra2 = mappert2:getUserData().extra
                             local triIdx2 = mextra2 and mextra2.triangles
@@ -1539,7 +1509,7 @@ function lib.drawSelectedSFixture()
                                 for t = 1, numTris2 do
                                     local tcx, tcy = triCentroidWorld(t)
                                     local bestNode, bestDist = nil, math.huge
-                                    for nj, node in ipairs(nodes) do
+                                    for nj, node in ipairs(proxNodes) do
                                         for _, info in ipairs(getNodeLocal(node)) do
                                             local wx, wy = info.body:getWorldPoint(info.offx, info.offy)
                                             local d = math.sqrt((tcx-wx)^2 + (tcy-wy)^2)
@@ -1635,7 +1605,8 @@ function lib.drawSelectedSFixture()
                 ui.alignedLabel(x, y, ' scaleY')
                 if scaleY then ud.extra.scaleY = scaleY end
                 nextRow()
-                local meshRotDeg = ui.sliderWithInput(myID .. ' meshRot', x, y, ROW_WIDTH, -180, 180, math.deg(ud.extra.meshRot or 0))
+                local meshRotDeg = ui.sliderWithInput(myID .. ' meshRot', x, y, ROW_WIDTH, -180, 180,
+                    math.deg(ud.extra.meshRot or 0))
                 ui.alignedLabel(x, y, ' meshRot')
                 if meshRotDeg then ud.extra.meshRot = math.rad(meshRotDeg) end
                 nextRow()
@@ -1794,7 +1765,6 @@ function lib.drawSelectedSFixture()
                 end
 
                 if ui.button(x + ROW_WIDTH, y, ROW_WIDTH / 2, 'auto ') then
-                    print('todo auto node')
                     local body = state.selection.selectedSFixture:getBody()
                     local connectedBodies = {}
                     ud.extra.nodes = {}

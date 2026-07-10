@@ -51,21 +51,10 @@ function lib.renderActiveEditorThings()
     if state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed() then
         local body = state.selection.selectedSFixture:getBody()
         local centroid = fixtures.getCentroidOfFixture(body, state.selection.selectedSFixture)
-        local x2, y2 = body:getWorldPoint(centroid[1], centroid[2])
-        love.graphics.circle('line', x2, y2, 3)
-    end
+        local cwx, cwy = body:getWorldPoint(centroid[1], centroid[2])
+        love.graphics.circle('line', cwx, cwy, 3)
 
-    if state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed() then
         local ud = state.selection.selectedSFixture:getUserData()
-        if false and ud.subtype == 'resource' then
-            local bod = state.selection.selectedSFixture:getBody()
-            local bodyData = bod:getUserData()
-            love.graphics.polygon('line', bodyData.thing.vertices)
-            local b = state.backdrops[ud.extra.selectedBGIndex]
-            local x1l, y1l = bod:getLocalPoint(b.x, b.y)
-            local x2l, y2l = bod:getLocalPoint(b.x + b.w, b.y + b.h)
-            love.graphics.rectangle('line', x1l, y1l, x2l - x1l, y2l - y1l)
-        end
 
         -- Render bone-segment influence capsules for MESHUSERT so the user can
         -- see what `bindRadius` actually covers in world space. A capsule is

@@ -280,7 +280,6 @@ end
 
 -- Randomize torso/head shapes, scales, colors, and clear skin patches.
 local function randomizeShapes(instance)
-    local randomHexColor = utils.randomHexColor
     local urls = C.torsoHeadShapes
     local urlIndex = math.ceil(math.random() * #urls)
     local url = urls[urlIndex]
@@ -363,7 +362,6 @@ end
 
 -- Randomize ear shapes, scales, and colors.
 local function randomizeEars(instance)
-    local randomHexColor = utils.randomHexColor
     local earUrls = C.earShapes
     local earUrlIndex = math.ceil(math.random() * #earUrls)
     local earUrl = earUrls[earUrlIndex]
@@ -391,7 +389,6 @@ end
 
 -- Randomize feet/hand shapes, scales, and colors.
 local function randomizeFeetAndHands(instance)
-    local randomHexColor = utils.randomHexColor
     local fhUrls = C.handShapes
     local fUrlIndex = math.ceil(math.random() * #fhUrls)
     local fUrl = fhUrls[fUrlIndex]
@@ -437,7 +434,6 @@ end
 -- hairColor: shared hex color for all hair-related parts.
 -- opts: optional overrides table. opts.limbSkin = url string to lock limb skin texture.
 local function randomizeTextures(instance, hairColor, opts)
-    local randomHexColor = utils.randomHexColor
     local count = instance.dna.creation.torsoSegments
 
     -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
@@ -519,7 +515,6 @@ end
 -- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
 -- hairColor: shared hex color used for brow color.
 local function randomizeFace(instance, hairColor, opts)
-    local randomHexColor = utils.randomHexColor
     local randomEyeY = D.randomInRangeWeighted('eyeY')
     local randomMouthY = randomEyeY + D.randomInRangeWeighted('mouthYOffset')
     local eyeScale = D.randomInRangeWeighted('eyeWMul')
@@ -1210,20 +1205,6 @@ end
 -- copy pasted from playtime-ui.lua
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
-local function recenterPoints(vertices)
-    local bbox = getBoundingBox(vertices)
-    local result = {}
-    for i = 1, #vertices, 2 do
-        local x = vertices[i]
-        local y = vertices[i + 1]
-        local newX = x - (bbox.x + bbox.width / 2)
-        local newY = y - (bbox.y + bbox.height / 2)
-        table.insert(result, newX)
-        table.insert(result, newY)
-    end
-    return result
-end
-
 local makeTransformedVertices = mathutils.scalePolygonPoints
 
 local lerp = mathutils.clampedLerp
@@ -1571,7 +1552,7 @@ local function addSkinTexture(body, partData, skinData, scale)
     end
 end
 
-local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
+local function addBodyhairTexture(body, _partName, partData, bodyhairData, scale)
     local _, _, w, h = getCenterAndDimensions(body)
     local growfactor = bodyhairData.growfactor or 1.2
     local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
@@ -1596,7 +1577,7 @@ local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
     ud.extra.vertexCount = #vertices / 2
 end
 
-local function addConnectedTexture(body, partName, partData, connData, instance, scale)
+local function addConnectedTexture(body, partName, _partData, connData, instance, scale)
     local torsoSegments = instance.dna.creation.torsoSegments
     local noseSegments  = instance.dna.creation.noseSegments
     local jointLabels   = {}

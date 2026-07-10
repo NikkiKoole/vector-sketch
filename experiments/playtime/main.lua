@@ -114,7 +114,6 @@ local bodyRotate = require 'src.body-rotate'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
-local CharacterManager = require('src.character-manager')
 
 
 
@@ -173,8 +172,6 @@ function love.load(_args)
     state.physicsWorld:setCallbacks(unpack(state.physicsCallbacks))
 
 
-    local cwd = love.filesystem.getWorkingDirectory()
-
     local startScene = 'miposhader'
     for i = 1, #arg do
         if arg[i] == '--scene' and arg[i + 1] then
@@ -199,7 +196,8 @@ function love.load(_args)
     -- Dev scaffolding (off by default): a static ground at (300,550) and a
     -- starter humanoid mipo. The mipo's DNA is what `c` in character-experiments
     -- clones from, so leave this disabled for non-character scenes.
-    -- objectManager.addThing('rectangle', { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
+    -- objectManager.addThing('rectangle',
+    --     { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
     -- humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
     -- if humanoidInstance then
     --     CharacterManager.randomizeMipo(humanoidInstance)

@@ -92,12 +92,16 @@ function lib.createJoint(data)
         data.p1 = { 0, 0 }
         data.p2 = { 0, 0 }
     end
+    -- rope/distance created without click-set anchors (e.g. from a script)
+    -- still need defaults — data.p1[1] would index nil below
+    data.p1 = data.p1 or { 0, 0 }
+    data.p2 = data.p2 or { 0, 0 }
 
-    local offsetA = data.offsetA or { x = data.p1[1], y = data.p1[2] } or { x = 0, y = 0 }
+    local offsetA = data.offsetA or { x = data.p1[1], y = data.p1[2] }
     local rx, ry = mathutils.rotatePoint(offsetA.x, offsetA.y, 0, 0, bodyA:getAngle())
     x1, y1 = x1 + rx, y1 + ry
 
-    local offsetB = data.offsetB or { x = data.p2[1], y = data.p2[2] } or { x = 0, y = 0 }
+    local offsetB = data.offsetB or { x = data.p2[1], y = data.p2[2] }
     rx, ry = mathutils.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
     --print(inspect(offsetA), inspect(offsetB))

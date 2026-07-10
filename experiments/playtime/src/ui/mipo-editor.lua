@@ -4,7 +4,6 @@ local ui = require('src.ui.all')
 local state = require('src.state')
 local CharacterManager = require('src.character-manager')
 local mipoRegistry = require('src.mipo-registry')
-local registry = require('src.registry')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local mouthShapes = require('src.mouth-shapes')
 local ST = require('src.shape-types')
@@ -598,7 +597,8 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     y = y + ROW
 
     -- Lip thickness
-    local upperLipScale = ui.sliderWithInput('mipo_upper_lip_scale', x, y, 120, 0.02, 0.4, mouth.upperLipScale or mouth.lipScale or 0.15)
+    local upperLipScale = ui.sliderWithInput('mipo_upper_lip_scale', x, y, 120, 0.02, 0.4,
+        mouth.upperLipScale or mouth.lipScale or 0.15)
     ui.alignedLabel(x, y, '  upper lip')
     upperLipScale = upperLipScale and tonumber(upperLipScale)
     if upperLipScale and upperLipScale ~= mouth.upperLipScale then
@@ -607,7 +607,8 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     end
     y = y + ROW
 
-    local lowerLipScale = ui.sliderWithInput('mipo_lower_lip_scale', x, y, 120, 0.02, 0.4, mouth.lowerLipScale or mouth.lipScale or 0.25)
+    local lowerLipScale = ui.sliderWithInput('mipo_lower_lip_scale', x, y, 120, 0.02, 0.4,
+        mouth.lowerLipScale or mouth.lipScale or 0.25)
     ui.alignedLabel(x, y, '  lower lip')
     lowerLipScale = lowerLipScale and tonumber(lowerLipScale)
     if lowerLipScale and lowerLipScale ~= mouth.lowerLipScale then
@@ -840,15 +841,14 @@ function lib.drawMipoEditor(instance, partName)
                 local val = math.floor(noses)
                 if val ~= creation.noseSegments then
                     local updates = { noseSegments = val }
-                    if val == 0 then
-                        -- No nose — nothing extra
-                    elseif val == 1 then
+                    -- val == 0: no nose — nothing extra
+                    if val == 1 then
                         -- Keep current noseMode; disable overlay if switching to physics
                         if (creation.noseMode or 'overlay') == 'physics' then
                             local startParent = creation.isPotatoHead and 'torso1' or 'head'
                             CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
                         end
-                    else
+                    elseif val >= 2 then
                         -- 2+ → segmented, disable overlay
                         updates.noseMode = 'physics'
                         local startParent = creation.isPotatoHead and 'torso1' or 'head'
@@ -1052,10 +1052,10 @@ function lib.drawMipoEditor(instance, partName)
             local isFlipped = instance._isFlipped or false
             if ui.button(x, y, panelWidth - 40, isFlipped and 'flip: on' or 'flip: off') then
                 local armPartNames = { 'luarm', 'ruarm', 'llarm', 'rlarm' }
-                local creation = instance.dna.creation
+                local flipCreation = instance.dna.creation
                 local flipPartNames = { 'torso1', 'head' }
-                for i = 2, (creation.torsoSegments or 1) do table.insert(flipPartNames, 'torso' .. i) end
-                for i = 1, (creation.neckSegments or 0) do table.insert(flipPartNames, 'neck' .. i) end
+                for i = 2, (flipCreation.torsoSegments or 1) do table.insert(flipPartNames, 'torso' .. i) end
+                for i = 1, (flipCreation.neckSegments or 0) do table.insert(flipPartNames, 'neck' .. i) end
                 local legPartNames = { 'luleg', 'ruleg', 'llleg', 'rlleg' }
                 local ragdolled = instance._isRagdoll or false
 
@@ -1569,7 +1569,8 @@ function lib.drawMipoEditor(instance, partName)
                                 local gridHeight = drawThumbnailGrid(limbSkinTextures, currentURL, panelX, y, cellSize,
                                     function(url)
                                         local vals = { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') }
-                                        CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin', vals)
+                                        CharacterManager.updateConnectedAppearance(instance, 'nose1',
+                                            'connected-skin', vals)
                                         CharacterManager.addTexturesFromInstance2(instance)
                                     end)
                                 y = y + gridHeight + BUTTON_SPACING
@@ -1614,7 +1615,8 @@ function lib.drawMipoEditor(instance, partName)
 
                         -- Connected-hair texture controls (segmented nose, 2+)
                         if noseSegs >= 2 and nose1Data.appearance then
-                            local ch = nose1Data.appearance['connected-hair'] and nose1Data.appearance['connected-hair'].main
+                            local ch = nose1Data.appearance['connected-hair']
+                                and nose1Data.appearance['connected-hair'].main
                             ui.label(x, y, 'connected hair')
                             y = y + ROW
 
@@ -1626,12 +1628,16 @@ function lib.drawMipoEditor(instance, partName)
                                         local fgUrl = hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
                                         if not nose1Data.appearance['connected-hair'] then
                                             nose1Data.appearance['connected-hair'] = {
-                                                main = { bgURL = url, fgURL = fgUrl, bgHex = '020202ff', fgHex = 'ff0000ff', pURL = 'type2t.png', pHex = 'ffff00ff' },
+                                                main = {
+                                                    bgURL = url, fgURL = fgUrl,
+                                                    bgHex = '020202ff', fgHex = 'ff0000ff',
+                                                    pURL = 'type2t.png', pHex = 'ffff00ff',
+                                                },
                                                 zOffset = 491,
                                             }
                                         else
-                                            CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
-                                                { bgURL = url, fgURL = fgUrl })
+                                            CharacterManager.updateConnectedAppearance(instance, 'nose1',
+                                                'connected-hair', { bgURL = url, fgURL = fgUrl })
                                         end
                                     else
                                         nose1Data.appearance['connected-hair'] = nil
@@ -1665,8 +1671,8 @@ function lib.drawMipoEditor(instance, partName)
                                 if ch.fgURL and ch.fgURL ~= '' then
                                     handlePaletteButton('mipo_nose_ch_fg',
                                         x + 30, y, 140, ch.fgHex or 'ffffffff', function(color)
-                                            CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
-                                                { fgHex = color })
+                                            CharacterManager.updateConnectedAppearance(instance, 'nose1',
+                                                'connected-hair', { fgHex = color })
                                             CharacterManager.addTexturesFromInstance2(instance)
                                         end)
                                     ui.alignedLabel(x + 180, y, 'fill')
@@ -1674,8 +1680,8 @@ function lib.drawMipoEditor(instance, partName)
 
                                     y = drawPatternControls(ch, 'mipo_nose_ch_pat', panelX, y,
                                         function(key, value)
-                                            CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
-                                                { [key] = value })
+                                            CharacterManager.updateConnectedAppearance(instance, 'nose1',
+                                                'connected-hair', { [key] = value })
                                             CharacterManager.addTexturesFromInstance2(instance)
                                         end)
                                 end
@@ -1839,7 +1845,8 @@ function lib.drawMipoEditor(instance, partName)
             and connSkinData.appearance['connected-skin'].endNode
         local hideConnSkin = connSkinEndNode == 'head'
             and instance.dna.creation.neckSegments == 0
-        if not hideConnSkin and connSkinData and connSkinData.appearance and connSkinData.appearance['connected-skin'] then
+        if not hideConnSkin and connSkinData and connSkinData.appearance
+            and connSkinData.appearance['connected-skin'] then
             local connLabel = connSkinData.appearance['connected-skin'].endNode
                 and (partName .. ' > ' .. connSkinData.appearance['connected-skin'].endNode .. ' skin')
                 or (partName .. ' connected skin')
@@ -1949,7 +1956,8 @@ function lib.drawMipoEditor(instance, partName)
             and connHairData.appearance['connected-hair'].endNode
         local hideConnHair = connHairEndNode == 'head'
             and instance.dna.creation.neckSegments == 0
-        if not hideConnHair and connHairData and connHairData.appearance and connHairData.appearance['connected-hair'] then
+        if not hideConnHair and connHairData and connHairData.appearance
+            and connHairData.appearance['connected-hair'] then
             local connHairLabel = connHairData.appearance['connected-hair'].endNode
                 and (partName .. ' > ' .. connHairData.appearance['connected-hair'].endNode .. ' hair')
                 or (partName .. ' connected hair')

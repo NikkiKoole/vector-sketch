@@ -1,5 +1,4 @@
 local lib = {}
-local logger = require 'src.logger'
 local registry = require 'src.registry'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
@@ -17,6 +16,9 @@ local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
 local cdt = require 'src.cdt'
 local subtypes = require 'src.subtypes'
+local ST = require 'src.shape-types'
+local joints = require 'src.joints'
+local NT = require('src.node-types')
 
 -- In-flight Steiner drag state. Non-zero = we're dragging thing.extraSteiner
 -- at this array index on state.selection.selectedObj. Cleared on release.
@@ -53,11 +55,6 @@ local function refreshResourceAfterSteinerChange(body, thing)
         end
     end
 end
-local subtypes = require 'src.subtypes'
-local ST = require 'src.shape-types'
-local joints = require 'src.joints'
-local NT = require('src.node-types')
-
 local distanceSquared = function(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
@@ -221,7 +218,6 @@ local function releasedDrawFreePoly()
 end
 
 local function releasedDrawFreePath()
-    print('todo')
     objectManager.finalizePath()
 end
 
@@ -230,7 +226,7 @@ local releasedHandlers = {
     [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
 }
 
-local function handlePointer(x, y, id, action, _button)
+local function handlePointer(x, y, id, action, button)
     if action == "pressed" then
         -- Track whether press originated over a UI element
         state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
@@ -261,16 +257,16 @@ local function handlePointer(x, y, id, action, _button)
                 end
 
                 local changed = false
-                if _button == 1 and grabIdx then
+                if button == 1 and grabIdx then
                     -- Start drag — position updates in handleMouseMoved;
                     -- RESOURCE refresh deferred until release.
                     steinerDragIdx = grabIdx
-                elseif _button == 1 then
+                elseif button == 1 then
                     -- Place a new point at click.
                     thing.extraSteiner[#thing.extraSteiner + 1] = lx
                     thing.extraSteiner[#thing.extraSteiner + 1] = ly
                     changed = true
-                elseif _button == 2 and grabIdx then
+                elseif button == 2 and grabIdx then
                     -- Remove nearest.
                     table.remove(thing.extraSteiner, grabIdx)
                     table.remove(thing.extraSteiner, grabIdx)
@@ -443,7 +439,8 @@ local function handlePointer(x, y, id, action, _button)
         end
 
         if state.interaction.pressMissedEverything then
-            local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel or state.interaction.pressedOverUI
+            local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
+                or state.interaction.pressedOverUI
             local wasSpawning = state.interaction.draggingObj ~= nil
             if not wasOverUI and not wasSpawning then
                 if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then

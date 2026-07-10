@@ -188,30 +188,13 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
             end
 
             local function offsetSliders()
+                -- Ensure offsets exist
                 if not joints.getJointMetaSetting(joint, 'offsetA') then
                     joints.setJointMetaSetting(joint, 'offsetA', { x = 0, y = 0 })
                 end
-                local offsetA = joints.getJointMetaSetting(joint, 'offsetA') or 0
-
                 if not joints.getJointMetaSetting(joint, 'offsetB') then
                     joints.setJointMetaSetting(joint, 'offsetB', { x = 0, y = 0 })
                 end
-
-                local function updateOffsetA(ox, oy)
-                    --local rx, ry = rotatePoint(ox, oy, 0, 0, bodyA:getAngle())
-
-                    offsetA.x = ox
-                    offsetA.y = oy
-                    joints.setJointMetaSetting(joint, 'offsetA', { x = offsetA.x, y = offsetA.y })
-                    state.selection.selectedJoint = joints.recreateJoint(joint)
-                    joint = state.selection.selectedJoint
-
-
-                    return joint
-                end
-
-                -- Ensure offsets exist
-
 
                 nextRow()
                 if ui.button(x, y, BUTTON_HEIGHT, '∆') then
@@ -223,47 +206,7 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
                     end
                 end
                 nextRow()
-
-                local bodyARef = joint:getBodies()
-                local ud = bodyARef:getUserData()
-
-
-                if false and ud and ud.thing then
-                    --print(inspect(ud.thing))
-                    if ud.thing.width and ud.thing.height then
-                        if ui.button(x, y, 30, '0', 30) then
-                            updateOffsetA(0, -ud.thing.height / 2)
-                        end
-                        if ui.button(x + 30, y, 30, '1', 30) then
-                            updateOffsetA(ud.thing.width / 2, -ud.thing.height / 2)
-                        end
-                        if ui.button(x + 60, y, 30, '2', 30) then
-                            updateOffsetA(ud.thing.width / 2, 0)
-                        end
-                        if ui.button(x + 90, y, 30, '3', 30) then
-                            updateOffsetA(ud.thing.width / 2, ud.thing.height / 2)
-                        end
-                        if ui.button(x + 120, y, 30, '4', 30) then
-                            updateOffsetA(0, ud.thing.height / 2)
-                        end
-                        if ui.button(x + 150, y, 30, '5', 30) then
-                            updateOffsetA(-ud.thing.width / 2, ud.thing.height / 2)
-                        end
-                        if ui.button(x + 180, y, 30, '6', 30) then
-                            updateOffsetA(-ud.thing.width / 2, 0)
-                        end
-                        if ui.button(x + 210, y, 30, '7', 30) then
-                            updateOffsetA(-ud.thing.width / 2, -ud.thing.height / 2)
-                        end
-                    end
-                    if ui.button(x + 240, y, 30, '8', 30) then
-                        updateOffsetA(0, 0)
-                    end
-                end
-
                 nextRow()
-
-
 
                 return joint
             end

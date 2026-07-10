@@ -42,20 +42,6 @@ local function pointInPoly(px, py, poly)
 end
 lib.pointInPoly = pointInPoly
 
--- Bounding box.
-local function bbox(poly)
-    local minX, minY = math.huge, math.huge
-    local maxX, maxY = -math.huge, -math.huge
-    for i = 1, #poly, 2 do
-        local x, y = poly[i], poly[i + 1]
-        if x < minX then minX = x end
-        if y < minY then minY = y end
-        if x > maxX then maxX = x end
-        if y > maxY then maxY = y end
-    end
-    return minX, minY, maxX, maxY
-end
-
 ---------------------------------------------------------------------------
 -- Bowyer-Watson Delaunay triangulation.
 ---------------------------------------------------------------------------

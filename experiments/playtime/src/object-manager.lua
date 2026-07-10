@@ -6,7 +6,6 @@ local uuid = require 'src.uuid'
 local registry = require 'src.registry'
 local joints = require 'src.joints'
 local jointHandlers = require 'src.joint-handlers'
-local inspect = require 'vendor.inspect'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
@@ -27,8 +26,9 @@ function lib.finalizePolygonAsSoftSurface()
         table.insert(state.world.softbodies, b)
         b:setJointFrequency(10)
         b:setJointDamping(10)
+    else
+        logger:warn('finalizePolygonAsSoftSurface: not enough points for a surface')
     end
-    logger:warn('blob surface wanted instead?')
     -- Reset the drawing state
 
     modes.clear()
@@ -292,47 +292,6 @@ function lib.removeCustomPolygonVertex(x, y)
         end
         -- mathutils.insertValuesAt(state.polyEdit.tempVerts, edge * 2 + 1, px, py)
     end
-
-
-    -- local obj = state.selection.selectedObj
-    -- if obj then
-    --     local offx, offy = obj.body:getPosition()
-    --     local px, py = mathutils.worldToLocal(x - offx, y - offy, obj.body:getAngle(),
-    --         state.polyEdit.centroid.x, state.polyEdit.centroid.y)
-
-    --     -- Step 2: Find the closest vertex index
-    --     local closestVertexIndex = mathutils.findClosestVertex(state.polyEdit.tempVerts, px, py)
-
-    --     if closestVertexIndex then
-    --         -- Optional: Define a maximum allowable distance to consider for deletion
-    --         local maxDeletionDistanceSq = 100 -- Adjust as needed (e.g., 10 units squared)
-    --         local vx = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 1]
-    --         local vy = state.polyEdit.tempVerts[(closestVertexIndex - 1) * 2 + 2]
-    --         local dx = px - vx
-    --         local dy = py - vy
-    --         local distSq = dx * dx + dy * dy
-
-    --         if distSq <= maxDeletionDistanceSq then
-    --             -- Step 3: Remove the vertex from the vertex list
-
-    --             -- Step 4: Ensure the polygon has a minimum number of vertices (e.g., 3)
-    --             if #state.polyEdit.tempVerts <= 6 then
-    --                 logger:error("Cannot delete vertex: A polygon must have at least three vertices.")
-    --                 -- Optionally, you can restore the removed vertex or prevent deletion
-    --                 return
-    --             end
-    --             mathutils.removeVertexAt(state.polyEdit.tempVerts, closestVertexIndex)
-    --             lib.maybeUpdateCustomPolygonVertices()
-
-    --             -- Debugging Output
-    --             logger:info(string.format("Removed vertex at local coordinates: (%.2f, %.2f)", vx, vy))
-    --         else
-    --             logger:error("No vertex close enough to delete.")
-    --         end
-    --     else
-    --         logger:error("No vertex found to delete.")
-    --     end
-    -- end
 end
 
 function lib.maybeUpdateCustomPolygonVertices()
@@ -357,15 +316,10 @@ function lib.maybeUpdateCustomPolygonVertices()
 end
 
 function lib.maybeUpdateTexFixtureVertices()
-    -- print('we need todo stuff here!')
-    local points = { state.selection.selectedSFixture:getShape():getPoints() }
-
-
     local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
     local body = state.selection.selectedSFixture:getBody()
     state.selection.selectedSFixture:destroy()
 
-    mathutils.getCenterOfPoints(points)
     local shape = love.physics.newPolygonShape(state.texFixtureEdit.tempVerts)
     local newfixture = love.physics.newFixture(body, shape)
     newfixture:setSensor(true) -- Sensor so it doesn't collide
@@ -446,7 +400,7 @@ local function createThing(shapeType, conf)
         vertices = vertices, -- Store vertices if needed
         -- textures = { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
         behaviors = conf.behaviors,
-        zOffset = 0,
+        -- NOTE: z-order lives on sfixture extra.zOffset, not on the thing
         id = uuid.generateID(),
     }
 
@@ -791,7 +745,6 @@ function lib.autoRopify(ud)
                 end
                 thing = newthing
             else
-                print(inspect(thing))
                 logger:error("autoRopify: Invalid 'thing' provided. (it needs a height)")
                 return
             end
@@ -903,7 +856,7 @@ function lib.flipThing(thing, axis, recursive)
                 -- Create a new shape with flipped vertices
                 local success, newShape = pcall(love.physics.newPolygonShape, unpack(points))
                 if not success then
-                    print("flipThing: Failed to create new PolygonShape:", newShape)
+                    logger:error("flipThing: Failed to create new PolygonShape:", newShape)
                 else
                     -- Preserve fixture properties
                     local density = fixture:getDensity()
@@ -964,9 +917,7 @@ function lib.flipThing(thing, axis, recursive)
 
             if not jointUserData or not jointUserData.id then
                 logger:error("flipThing: Joint without valid user data encountered.")
-            elseif processedJoints[jointUserData.id] then
-                -- already processed, skip
-            else
+            elseif not processedJoints[jointUserData.id] then
                 processedJoints[jointUserData.id] = true
 
                 -- Extract joint data using the handler
@@ -1013,9 +964,9 @@ function lib.flipThing(thing, axis, recursive)
                         end
                         if axis == 'y' then
                             -- as long as you build your joints in the right order this just works like this.
-                            -- the reason is quite subtle (before we did lowerlimit  +math.pi and higherlimit + math.pi), but
-                            -- because the axis is flipped, the order between the joint becomes
-                            -- flipped too, which offsets that math.pi back to 0
+                            -- the reason is quite subtle (before we did lowerlimit +math.pi and
+                            -- higherlimit + math.pi), but because the axis is flipped, the order
+                            -- between the joint becomes flipped too, which offsets that math.pi back to 0
 
                             -- TLDR dont make the joints in the wrong order, then everything works great!
                             newJoint:setLimits(-upper, -lower)

@@ -54,8 +54,10 @@ local function setBrows(thing, lY, rY, bendIdx)
     thing.lbrowYFrom = thing.lbrowYOffset or 0
     thing.rbrowYFrom = thing.rbrowYOffset or 0
     thing.lbrowYTarget = lY;  thing.rbrowYTarget = rY
-    thing.lbrowVecFrom = { (thing.lbrowVec or browBendVecs[1])[1], (thing.lbrowVec or browBendVecs[1])[2], (thing.lbrowVec or browBendVecs[1])[3] }
-    thing.rbrowVecFrom = { (thing.rbrowVec or browBendVecs[1])[1], (thing.rbrowVec or browBendVecs[1])[2], (thing.rbrowVec or browBendVecs[1])[3] }
+    local lbrowVec = thing.lbrowVec or browBendVecs[1]
+    local rbrowVec = thing.rbrowVec or browBendVecs[1]
+    thing.lbrowVecFrom = { lbrowVec[1], lbrowVec[2], lbrowVec[3] }
+    thing.rbrowVecFrom = { rbrowVec[1], rbrowVec[2], rbrowVec[3] }
     thing.lbrowVecTarget = vec;  thing.rbrowVecTarget = vec
     thing.browTweenStart = love.timer.getTime()
 end
@@ -70,7 +72,7 @@ local function randomizeBrows(thing)
     )
 end
 
-local function tickBrowLerp(thing, dt)
+local function tickBrowLerp(thing, _dt)
     if not thing.browTweenStart then return end
     local t = math.min((love.timer.getTime() - thing.browTweenStart) / browTweenDuration, 1)
     local function lerp(a, b) return a + (b - a) * t end
@@ -2551,7 +2553,8 @@ function lib.drawTexturedWorld(world)
                         if vertBoneWeights and vertBoneWeights[vi] then
                             local wxSum, wySum, wSum = 0, 0, 0
                             for nodeIndex, w in pairs(vertBoneWeights[vi]) do
-                                local bx, by = rigidBoneVertLocal(vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
+                                local bx, by = rigidBoneVertLocal(
+                                    vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
                                 if bx then
                                     wxSum = wxSum + bx * w
                                     wySum = wySum + by * w
@@ -2593,7 +2596,8 @@ function lib.drawTexturedWorld(world)
                             if vertBoneWeights and vertBoneWeights[vi] then
                                 local wxSum, wySum, wSum = 0, 0, 0
                                 for nodeIndex, w in pairs(vertBoneWeights[vi]) do
-                                    local bx, by = rigidBoneVertLocal(vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
+                                    local bx, by = rigidBoneVertLocal(
+                                    vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
                                     if bx then
                                         wxSum = wxSum + bx * w
                                         wySum = wySum + by * w
@@ -2656,11 +2660,11 @@ function lib.drawTexturedWorld(world)
                         -- current vert count (e.g. during the single frame
                         -- after a polygon-vert edit before invalidation
                         -- has fully propagated).
-                        local numVerts = math.floor(#verts / 2)
+                        local wireVertCount = math.floor(#verts / 2)
                         for j = 1, #triIdx, 3 do
                             local i1, i2, i3 = triIdx[j], triIdx[j + 1], triIdx[j + 2]
                             if i1 and i2 and i3
-                                and i1 <= numVerts and i2 <= numVerts and i3 <= numVerts then
+                                and i1 <= wireVertCount and i2 <= wireVertCount and i3 <= wireVertCount then
                                 love.graphics.polygon('line',
                                     verts[(i1 - 1) * 2 + 1], verts[(i1 - 1) * 2 + 2],
                                     verts[(i2 - 1) * 2 + 1], verts[(i2 - 1) * 2 + 2],
@@ -3160,16 +3164,16 @@ function lib.drawTexturedWorld(world)
                     local w = extra.w or 20
                     local h = extra.h or 10
                     local bud = body:getUserData()
-                    local thing = bud and bud.thing
+                    local bodyThing = bud and bud.thing
                     local vecKey = extra.browMirror and 'rbrowVec' or 'lbrowVec'
-                    local bend = (thing and thing[vecKey]) or browBends[extra.browBend or 1] or browBends[1]
+                    local bend = (bodyThing and bodyThing[vecKey]) or browBends[extra.browBend or 1] or browBends[1]
                     local bendMul = w / 5
 
                     -- Build curve at origin, same for both sides
                     local ox = extra.ox or 0
                     local oy = extra.oy or 0
                     local yKey = extra.browMirror and 'rbrowYOffset' or 'lbrowYOffset'
-                    oy = oy + (thing and thing[yKey] or 0)
+                    oy = oy + (bodyThing and bodyThing[yKey] or 0)
 
                     local p1x = -w / 2
                     local p1y = bend[1] * bendMul
@@ -3215,8 +3219,8 @@ function lib.drawTexturedWorld(world)
                 love.graphics.rotate(angle)
 
                 local bud = body:getUserData()
-                local thing = bud and bud.thing
-                local vec = thing and thing.mouthShapeVec
+                local bodyThing = bud and bud.thing
+                local vec = bodyThing and bodyThing.mouthShapeVec
                 local curvePoints = extra.curvePoints
                 if vec and extra.mouthScaleX then
                     curvePoints = {}
@@ -3270,8 +3274,8 @@ function lib.drawTexturedWorld(world)
 
                 -- Use animated mouth shape if available
                 local bud = body:getUserData()
-                local thing = bud and bud.thing
-                local vec = thing and thing.mouthShapeVec
+                local bodyThing = bud and bud.thing
+                local vec = bodyThing and bodyThing.mouthShapeVec
                 local curvePoints = extra.curvePoints
                 if vec and extra.mouthScaleX then
                     curvePoints = {}
@@ -3322,8 +3326,8 @@ function lib.drawTexturedWorld(world)
                 love.graphics.rotate(angle)
 
                 local bud = body:getUserData()
-                local thing = bud and bud.thing
-                local vec = thing and thing.mouthShapeVec
+                local bodyThing = bud and bud.thing
+                local vec = bodyThing and bodyThing.mouthShapeVec
                 local activeCurveData = curveData
                 if vec and extra.mouthScaleX then
                     local s = {}
@@ -3386,8 +3390,8 @@ function lib.drawTexturedWorld(world)
                     -- Build a local curvePoints copy. Animated from mouthShapeVec when
                     -- available, otherwise copied from bind so we can safely mutate.
                     local bud = body:getUserData()
-                    local thing = bud and bud.thing
-                    local vec = thing and thing.mouthShapeVec
+                    local bodyThing = bud and bud.thing
+                    local vec = bodyThing and bodyThing.mouthShapeVec
                     local curvePoints
                     if vec and extra.mouthScaleX and extra.curvePoints then
                         curvePoints = {}

@@ -109,6 +109,13 @@ findings kept below for reference.
 
 ## C. One boring cleanup session
 
+**ALL DONE 2026-07-10.** Luacheck: 0 warnings / 0 errors across 62 files.
+Dead `if false` blocks, commented-out relics, stray prints, duplicate
+requires, and dead data fields (`registry.groups`, `thing.fixture`,
+`thing.zOffset`, the doubled joint button) all removed. Verified: suite
+green, app boots and renders the mipo scene with zero bridge errors.
+Original list kept below for reference.
+
 - Luacheck back to 0 (61 warnings; run
   `luacheck src/ main.lua --std "lua51+love"`).
 - Delete dead `if false` blocks: `editor-render.lua:60` (RESOURCE outline,

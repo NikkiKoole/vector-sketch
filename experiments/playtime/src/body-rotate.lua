@@ -45,7 +45,7 @@ end
 -- there's no parent, return the body's own center (rotate in place).
 function lib.findParentPivot(body)
     for _, j in ipairs(body:getJoints()) do
-        local ba, bb = j:getBodies()
+        local _, bb = j:getBodies()
         if bb == body then
             local _, _, x2, y2 = j:getAnchors()
             return x2, y2

@@ -417,8 +417,8 @@ function lib.drawUpdateSelectedObjectUI()
                                     -- NOT rebuild collision fixtures or change the fill draw — the
                                     -- overlay in editor-render renders the would-be triangulation
                                     -- on top so the user can see the effect without committing.
-                                    local thing = state.selection.selectedObj
-                                    local steinerCount = thing.extraSteiner and #thing.extraSteiner / 2 or 0
+                                    local selThing = state.selection.selectedObj
+                                    local steinerCount = selThing.extraSteiner and #selThing.extraSteiner / 2 or 0
                                     local placing = modes.is(modes.PLACE_STEINER)
                                     nextRow()
                                     local label = placing and 'placing steiner (click inside, right-click remove)'
@@ -430,7 +430,7 @@ function lib.drawUpdateSelectedObjectUI()
                                     if steinerCount > 0 then
                                         nextRow()
                                         if ui.button(x, y, 260, 'clear steiner (' .. steinerCount .. ')') then
-                                            thing.extraSteiner = nil
+                                            selThing.extraSteiner = nil
                                         end
                                     end
                                 end
@@ -592,11 +592,6 @@ function lib.drawUpdateSelectedObjectUI()
                                     x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
                                     local jointLabel = string.format("%s %s", jointType,
                                         string.sub(joint:getUserData().id, 1, 3))
-
-                                    if ui.button(x, y, 260, jointLabel) then
-                                        state.selection.selectedJoint = joint
-                                        --  state.selection.selectedObj = nil
-                                    end
 
                                     local clicked, _, _, isHover = ui.button(x, y, 260, jointLabel)
 

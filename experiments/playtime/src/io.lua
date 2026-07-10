@@ -432,10 +432,6 @@ function lib.buildWorld(data, world, cam)
             extraSteiner = bodyData.extraSteiner, -- body-local Steiner points (Path B)
             mipoId = bodyData.mipoId,
             mipoPartName = bodyData.mipoPartName,
-            --  shape = body:getFixtures()[1]:getShape(), -- Assuming one fixture per body
-            fixture = body:getFixtures()[1], -- this is used in clone.
-            -- textures = bodyData.textures or { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
-            -- zOffset = bodyData.zOffset or 0,
         }
 
         -- Assign the 'thing' to the body's user data
@@ -955,40 +951,36 @@ function lib.gatherSaveData(world, camera)
             -- to save data i am assuming all fixtures are the same type and have the same settings.
             local bodyFixtures = body:getFixtures()
             if #bodyFixtures >= 1 then
-                if #bodyFixtures >= 1 then
-                    -- local fixtures = fb:getFixtures()
-                    -- local ff = fixtures[1]
-                    local first = nil
+                local first = nil
 
-                    for k = 1, #bodyFixtures do
-                        local fixture = bodyFixtures[k]
-                        if fixture:getUserData() == nil then
-                            first = fixture
-                            break
-                        end
+                for k = 1, #bodyFixtures do
+                    local fixture = bodyFixtures[k]
+                    if fixture:getUserData() == nil then
+                        first = fixture
+                        break
                     end
+                end
 
-                    if not first then
-                        logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), '
-                            .. 'using first fixture as fallback', thing.id)
-                        first = bodyFixtures[1]
-                    end
+                if not first then
+                    logger:warn('gatherSaveData: body %s has no normal fixture (only sfixtures), '
+                        .. 'using first fixture as fallback', thing.id)
+                    first = bodyFixtures[1]
+                end
 
-                    bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
-                    bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
-                    bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
-                    bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
+                bodyData.sharedFixtureData.density = utils.round_to_decimals(first:getDensity(), 4)
+                bodyData.sharedFixtureData.friction = utils.round_to_decimals(first:getFriction(), 4)
+                bodyData.sharedFixtureData.restitution = utils.round_to_decimals(first:getRestitution(), 4)
+                bodyData.sharedFixtureData.groupIndex = first:getGroupIndex()
 
-                    bodyData.sharedFixtureData.sensor = first:isSensor()
+                bodyData.sharedFixtureData.sensor = first:isSensor()
 
-                    -- todo this shape type name isnt really used anymore...
-                    -- can we just delete it ?
-                    local shape = first:getShape()
-                    if shape:typeOf("CircleShape") then
-                        bodyData.sharedFixtureData.shapeType = require('src.shape-types').CIRCLE
-                    elseif shape:typeOf("PolygonShape") then
-                        bodyData.sharedFixtureData.shapeType = 'polygon'
-                    end
+                -- todo this shape type name isnt really used anymore...
+                -- can we just delete it ?
+                local shape = first:getShape()
+                if shape:typeOf("CircleShape") then
+                    bodyData.sharedFixtureData.shapeType = require('src.shape-types').CIRCLE
+                elseif shape:typeOf("PolygonShape") then
+                    bodyData.sharedFixtureData.shapeType = 'polygon'
                 end
             end
 

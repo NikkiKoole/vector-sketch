@@ -16,6 +16,9 @@
 -- docs/MESHUSERT-SPINE-BIND-PLAN.md.
 
 local lib = {}
+local registry = require 'src.registry'
+local mathutils = require 'src.math-utils'
+local NT = require 'src.node-types'
 
 -- ─── internal helpers ──────────────────────────────────────────────
 
@@ -150,9 +153,6 @@ end
 -- Resolve a playtime node list (anchors + joints) to a flat world-coord
 -- chain { x1, y1, x2, y2, ... }. Skips nodes whose body/joint is gone.
 function lib.buildChainFromNodes(nodes)
-    local registry = require 'src.registry'
-    local mathutils = require 'src.math-utils'
-    local NT = require 'src.node-types'
     local chain = {}
     for i = 1, #nodes do
         local n = nodes[i]

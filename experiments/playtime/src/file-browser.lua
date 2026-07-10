@@ -62,7 +62,7 @@ local function navigate(path)
     state.files, state.dirs = loadDir(path, state.filterRules)
 end
 
-function lib:open(path, filterRules, callback)
+function lib.open(_self, path, filterRules, callback)
     state.open        = true
     state.basePath    = path
     state.filterRules = filterRules
@@ -70,16 +70,16 @@ function lib:open(path, filterRules, callback)
     navigate(path)
 end
 
-function lib:close()
+function lib.close(_self)
     state.open     = false
     state.callback = nil
 end
 
-function lib:isOpen()
+function lib.isOpen(_self)
     return state.open
 end
 
-function lib:draw()
+function lib.draw(_self)
     if not state.open then return end
 
     -- Filter files by search query (dirs always shown unfiltered)
