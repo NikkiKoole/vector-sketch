@@ -5,6 +5,8 @@ local state = require('src.state')
 local sceneIO = require('src.io')
 local utils = require('src.utils')
 local recorder = require('src.recorder')
+local script = require('src.script')
+local SE = require('src.script-events')
 local Peeker = require('vendor.peeker')
 local camera = require('src.camera')
 local cam = camera.getInstance()
@@ -43,7 +45,7 @@ function lib.drawRecordingUI()
             sceneIO.buildWorld(checkpoint.saveData, state.physicsWorld, cam, true)
             --
 
-            if state.scene.sceneScript then state.scene.sceneScript.onStart() end
+            script.call(SE.ON_START)
         end
 
         local addcheckpointbutton = ui.button(x, y, width, 'add checkpoint')
@@ -54,7 +56,7 @@ function lib.drawRecordingUI()
         nextRow()
         local chars = { 'A', 'B', 'C', 'D', 'E', 'F' }
         for i = 1, #state.scene.checkpoints do
-            if ui.button(x + (i - 1) * 45, y, 40, chars[i]) then
+            if ui.button(x + (i - 1) * 45, y, 40, chars[i] or tostring(i)) then
                 if state.scene.activeCheckpointIndex > 0 then
                     state.scene.checkpoints[state.scene.activeCheckpointIndex].recordings = utils.deepCopy(recorder
                         .recordings)

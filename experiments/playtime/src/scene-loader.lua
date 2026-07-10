@@ -32,7 +32,12 @@ local function getFiledata(filename)
 end
 
 function lib.loadScene(name)
-    local data = getFiledata(name):getString()
+    local filedata = getFiledata(name)
+    if not filedata then
+        logger:error('Scene file not found: ' .. tostring(name))
+        return
+    end
+    local data = filedata:getString()
     state.selection.selectedJoint = nil
     state.selection.selectedObj = nil
     state.selection.selectedSFixture = nil
@@ -98,7 +103,12 @@ local function getFileModificationTime(path)
 end
 
 function lib.loadAndRunScript(name)
-    local data = getFiledata(name):getString()
+    local filedata = getFiledata(name)
+    if not filedata then
+        logger:error('Script file not found: ' .. tostring(name))
+        return
+    end
+    local data = filedata:getString()
     -- Fire the outgoing script's unload hook before swapping in the new one,
     -- so a reload/replace tears the old one down first. (This previously ran
     -- after the new script was assigned, firing ON_UNLOAD on the wrong target.)

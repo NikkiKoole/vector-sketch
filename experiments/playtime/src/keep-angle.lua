@@ -31,7 +31,7 @@ function lib.update(dt, hitted)
     local bods = registry.bodies
     for _, v in pairs(bods) do
         local ud = v:getUserData()
-        if ud.thing and ud.thing.behaviors then
+        if ud and ud.thing and ud.thing.behaviors then
             local behaviors = ud.thing.behaviors
             local same = false
             if hitted and #hitted > 0 then
@@ -48,8 +48,9 @@ function lib.update(dt, hitted)
                 if vb.name == 'KEEP_ANGLE' and vb.enabled ~= false and not same then
                     -- if same then vb.kp = 0.15 end
 
-                    -- logger:inspect(same, vb)
-                    rotateBodyTowards(ud.thing.body, dt, vb.angle or 0, vb)
+                    -- Drive the live registry body (v), not ud.thing.body —
+                    -- that ref can be stale after a recreate.
+                    rotateBodyTowards(v, dt, vb.angle or 0, vb)
                 end
             end
         end

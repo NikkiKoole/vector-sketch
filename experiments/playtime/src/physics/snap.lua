@@ -1,7 +1,6 @@
 -- general usage snap logic
 --
 local logger = require 'src.logger'
-local inspect = require 'vendor.inspect'
 local registry = require 'src.registry'
 local uuid = require 'src.uuid'
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
@@ -114,12 +113,12 @@ local function checkForSnaps(interacted, snapFix)
         -- else this snap point is already connected and it cannot be connected more then once
         if snapInfoA.to == nil and not isInCooldown(snapInfoA.fixture, currentTime) then
             local body1 = snapInfoA.at
-            if not body1 then
-                logger:error('body1 is nil!    ')
-                logger:info(inspect(snapInfoA))
-            end
-
-            -- todo , src/snap.lua:119: attempt to call method 'getWorldPoint' (a nil value)
+            -- Skip stale entries: `at` is nil or destroyed when its body was
+            -- removed without a snap-fixture rebuild (observed crash:
+            -- "attempt to call method 'getWorldPoint' (a nil value)").
+            if not body1 or body1:isDestroyed() then
+                logger:warn('checkForSnaps: stale snap fixture (body gone), skipping')
+            else
 
             local x1, y1 = body1:getWorldPoint(snapInfoA.xOffset, snapInfoA.yOffset)
 
@@ -127,7 +126,8 @@ local function checkForSnaps(interacted, snapFix)
                 if j ~= i then                                                           -- else you check it against it
                     local snapInfoB = snapFix[j]:getUserData().extra
                     -- else snapInfoB is already connected,
-                    if snapInfoB.to == nil and not isInCooldown(snapInfoB.fixture, currentTime) then
+                    if snapInfoB.to == nil and not isInCooldown(snapInfoB.fixture, currentTime)
+                        and snapInfoB.at and not snapInfoB.at:isDestroyed() then
                         local body2 = snapInfoB.at
                         local x2, y2 = body2:getWorldPoint(snapInfoB.xOffset, snapInfoB.yOffset)
 
@@ -153,6 +153,7 @@ local function checkForSnaps(interacted, snapFix)
                         end
                     end
                 end
+            end
             end
         end
     end

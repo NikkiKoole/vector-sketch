@@ -54,6 +54,15 @@ the untested corners.
 
 ## B. Risks — worth one focused pass
 
+**ALL FIXED 2026-07-10** (one pass; suite green, app verified live via the
+bridge — sandbox isolation, 4-scene round-trip, no bridge errors). Notes on
+the non-obvious ones: recorder replay now uses per-layer cursors firing
+everything due up to `currentTime`; `registry.beginBatch()/endBatch()`
+defer the snap rebuild only during `buildWorld` (synchronous semantics kept
+everywhere else — specs rely on it); recreate recovers sfixtures by scan
+when the ordering invariant is broken instead of dropping them. Original
+findings kept below for reference.
+
 - **Recorder replay**: events dispatch on exact float equality
   (`recorder.lua:69`), then the mouse joint is dereffed unguarded (`:200`) —
   a skipped `mousejoint-start` crashes replay. Fix: `>=` cursor dispatch

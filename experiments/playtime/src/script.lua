@@ -33,7 +33,7 @@ end
 
 -- end collection
 
-local scriptEnv = {
+local baseEnv = {
     generateID               = uuid.generateID,
     objectManager            = objectManager,
     ui                       = ui,
@@ -68,7 +68,20 @@ local scriptEnv = {
     --end,
 }
 
+-- Sandbox env of the most recently loaded script. Built fresh per load so
+-- an un-`local` assignment in one scene script can't leak into the next.
+local scriptEnv = nil
+
+local function freshEnv()
+    local env = {}
+    for key, value in pairs(baseEnv) do
+        env[key] = value
+    end
+    return env
+end
+
 function script.setEnv(newEnv)
+    if not scriptEnv then return end
     for key, value in pairs(newEnv) do
         scriptEnv[key] = value
     end
@@ -89,6 +102,8 @@ function script.loadScript(data, filePath)
         error("Script not found: " .. filePath)
     end
 
+
+    scriptEnv = freshEnv()
 
     -- load() with 4 args is Lua 5.2+/LuaJIT; Lua 5.1 needs loadstring + setfenv
     local chunk, err

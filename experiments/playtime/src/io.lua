@@ -229,6 +229,21 @@ local function remapAndRestoreInfluences(influences, idMapping)
 end
 
 function lib.buildWorld(data, world, cam)
+    -- Tolerate saves missing bodies/joints (hand-edited or partial JSON)
+    -- instead of crashing on ipairs(nil).
+    if type(data.bodies) ~= 'table' then
+        logger:warn('buildWorld: save data has no bodies array')
+        data.bodies = {}
+    end
+    if type(data.joints) ~= 'table' then
+        logger:warn('buildWorld: save data has no joints array')
+        data.joints = {}
+    end
+
+    -- One snap-fixture rebuild at the end of the load instead of one per
+    -- registered sfixture (O(N²) on big scenes). endBatch below rebuilds.
+    registry.beginBatch()
+
     -- todo is this actually needed, i *think* its a premature optimization,
     -- getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well always use the oldid....
@@ -664,6 +679,8 @@ function lib.buildWorld(data, world, cam)
             CharacterManager.reconstructInstance(charData, bodyGroups[charData.id])
         end
     end
+
+    registry.endBatch()
 end
 
 -- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical
@@ -1288,11 +1305,19 @@ function lib.cloneSelection(selectedBodies, world)
             if ok and offset > -1 then
                 for i = 1 + offset, #oldFixtures do
                     local oldF = oldFixtures[i]
-                    local newFixture = love.physics.newFixture(newBody, newShapeList[i - (offset)], oldF:getDensity())
-                    newFixture:setRestitution(oldF:getRestitution())
-                    newFixture:setFriction(oldF:getFriction())
-                    newFixture:setGroupIndex(oldF:getGroupIndex())
-                    newFixture:setSensor(oldF:isSensor())
+                    -- createShape can yield fewer shapes than the original
+                    -- body had (polygon decomposition isn't count-stable);
+                    -- skip the excess instead of newFixture(nil) crashing.
+                    local newShape = newShapeList[i - (offset)]
+                    if newShape then
+                        local newFixture = love.physics.newFixture(newBody, newShape, oldF:getDensity())
+                        newFixture:setRestitution(oldF:getRestitution())
+                        newFixture:setFriction(oldF:getFriction())
+                        newFixture:setGroupIndex(oldF:getGroupIndex())
+                        newFixture:setSensor(oldF:isSensor())
+                    else
+                        logger:warn('cloneSelection: fewer shapes than original fixtures, skipping one')
+                    end
                 end
                 if offset > 0 then
                     -- here we should recreate the special fixtures..

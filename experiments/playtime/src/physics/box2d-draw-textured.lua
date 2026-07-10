@@ -302,15 +302,20 @@ local function getLoveImage(path, settings)
             return nil, nil, nil
         end
         local img = love.graphics.newImage(path)
-        if (settings) then
-            if settings.wrapX and settings.wrapY then
-                img:setWrap(settings.wrapX, settings.wrapY)
-            end
-        end
         if img then
             local imgw, imgh = img:getDimensions()
             imageCache[path] = { img = img, imgw = imgw, imgh = imgh }
         end
+    end
+
+    -- Apply wrap on cache hits too: the cache is keyed by path only, so an
+    -- image first loaded without settings would otherwise never get its
+    -- wrap mode. Only touch the image when the mode actually changes.
+    local entry = imageCache[path]
+    if entry and settings and settings.wrapX and settings.wrapY
+        and (entry.wrapX ~= settings.wrapX or entry.wrapY ~= settings.wrapY) then
+        entry.img:setWrap(settings.wrapX, settings.wrapY)
+        entry.wrapX, entry.wrapY = settings.wrapX, settings.wrapY
     end
 
     if imageCache[path] then

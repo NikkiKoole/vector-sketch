@@ -48,7 +48,10 @@ jointHandlers[JT.REVOLUTE] = {
     create = function(data, x1, y1, _x2, _y2)
         local joint = love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, data.collideConnected)
         if data.lowerLimit or data.upperLimit then
-            joint:setLimits(data.lowerLimit, data.upperLimit)
+            -- setLimits errors on nil or lower > upper; normalize both
+            local lower = data.lowerLimit or data.upperLimit
+            local upper = data.upperLimit or data.lowerLimit
+            joint:setLimits(math.min(lower, upper), math.max(lower, upper))
             joint:setLimitsEnabled(data.areLimitsEnabled)
         end
 
@@ -128,20 +131,26 @@ jointHandlers[JT.PRISMATIC] = {
 }
 jointHandlers[JT.PULLEY] = {
     create = function(data, _x1, _y1, _x2, _y2)
-        local groundAnchorA = data.groundAnchor1 or { 0, 0 }
-        local groundAnchorB = data.groundAnchor2 or { 0, 0 }
         local bodyA_centerX, bodyA_centerY = data.body1:getWorldCenter()
         local bodyB_centerX, bodyB_centerY = data.body2:getWorldCenter()
+        -- Ground anchors arrive array-form {x, y} from extract() and keyed
+        -- {x=, y=} from saved scenes; accept both. Default: above each body.
+        -- (The old code passed body-center X where ground-anchor X belonged.)
+        local ga1 = data.groundAnchor1 or {}
+        local ga2 = data.groundAnchor2 or {}
+        local gx1 = ga1[1] or ga1.x or bodyA_centerX
+        local gy1 = ga1[2] or ga1.y or (bodyA_centerY - 100)
+        local gx2 = ga2[1] or ga2.x or bodyB_centerX
+        local gy2 = ga2[2] or ga2.y or (bodyB_centerY - 100)
         local ratio = data.ratio or 1
 
         local joint = love.physics.newPulleyJoint(
             data.body1, data.body2,
-            bodyA_centerX or groundAnchorA[1], groundAnchorA[2],
-            bodyB_centerX or groundAnchorB[1], groundAnchorB[2],
+            gx1, gy1, gx2, gy2,
             bodyA_centerX, bodyA_centerY,
             bodyB_centerX, bodyB_centerY,
             ratio,
-            false
+            data.collideConnected
         )
         return joint
     end,

@@ -394,7 +394,11 @@ function lib.drawSelectedSFixture()
                         local info = love.filesystem.getInfo('textures/' .. path)
 
                         if (info and info.type ~= 'directory') then
-                            local img = love.graphics.newImage('textures/' .. path)
+                            local imgOK, img = pcall(love.graphics.newImage, 'textures/' .. path)
+                            if not imgOK then
+                                logger:error('failed to load texture: textures/' .. tostring(path))
+                                img = nil
+                            end
                             if img then
                                 local imgW, imgH = img:getDimensions()
                                 logger:info('texture dimensions:', imgW, imgH)

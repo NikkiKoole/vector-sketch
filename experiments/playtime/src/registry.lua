@@ -56,9 +56,32 @@ function registry.getJointByID(id)
 end
 
 -- sfixtures
+-- Rebuilding the snap-fixture list on every (un)register is O(N) per call —
+-- O(N²) across a scene load. beginBatch/endBatch defer it to one rebuild;
+-- outside a batch the rebuild stays synchronous (specs and editor code rely
+-- on state.snap.fixtures being current right after a register).
+local batchDepth = 0
+
+function registry.beginBatch()
+    batchDepth = batchDepth + 1
+end
+
+function registry.endBatch()
+    batchDepth = math.max(0, batchDepth - 1)
+    if batchDepth == 0 then
+        getSnap().rebuildSnapFixtures(registry.sfixtures)
+    end
+end
+
+local function maybeRebuildSnap()
+    if batchDepth == 0 then
+        getSnap().rebuildSnapFixtures(registry.sfixtures)
+    end
+end
+
 function registry.registerSFixture(id, sfix)
     registry.sfixtures[id] = sfix
-    getSnap().rebuildSnapFixtures(registry.sfixtures)
+    maybeRebuildSnap()
 end
 
 function registry.unregisterSFixture(id)
@@ -66,7 +89,7 @@ function registry.unregisterSFixture(id)
         logger:info('no s fixture to unregister here')
     end
     registry.sfixtures[id] = nil
-    getSnap().rebuildSnapFixtures(registry.sfixtures)
+    maybeRebuildSnap()
 end
 
 function registry.getSFixtureByID(id)
@@ -82,6 +105,7 @@ function registry.reset()
     registry.bodies = {}
     registry.joints = {}
     registry.sfixtures = {}
+    batchDepth = 0 -- recover from a load that errored mid-batch
     getSnap().rebuildSnapFixtures(registry.sfixtures)
 end
 

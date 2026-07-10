@@ -584,7 +584,7 @@ function lib.recreateThingFromBody(body, newSettings)
         return thing
     end
 
-    local _, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
+    local orderOK, offset = fixtures.hasFixturesWithUserDataAtBeginning(oldFixtures)
 
     for _, shape in ipairs(shapeList) do
         local fixture = love.physics.newFixture(newBody, shape, 1)
@@ -592,10 +592,24 @@ function lib.recreateThingFromBody(body, newSettings)
         fixture:setFriction(newSettings.friction or friction)
     end
 
-    if offset > 0 then
+    -- Collect the sfixtures to carry over. When the ordering invariant holds
+    -- they are the first `offset` fixtures; when it's broken (offset == -1)
+    -- recover them by scanning instead of silently dropping them all.
+    local oldSFixtures = {}
+    if orderOK and offset > 0 then
+        for i = 1, offset do table.insert(oldSFixtures, oldFixtures[i]) end
+    elseif not orderOK then
+        logger:error("recreateThingFromBody: fixture-ordering invariant broken on "
+            .. tostring(thing.label or thing.id) .. " — recovering sfixtures by scan")
+        for i = 1, #oldFixtures do
+            if oldFixtures[i]:getUserData() then table.insert(oldSFixtures, oldFixtures[i]) end
+        end
+    end
+
+    if #oldSFixtures > 0 then
         -- here we should recreate the special fixtures..
-        for i = 1, offset do
-            local oldF = oldFixtures[i]
+        for i = 1, #oldSFixtures do
+            local oldF = oldSFixtures[i]
             local points = { oldF:getShape():getPoints() }
 
             local abs = oldF:getShape()

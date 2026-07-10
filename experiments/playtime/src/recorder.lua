@@ -56,23 +56,18 @@ function recorder:update(dt)
     self.currentTime = self.currentTime + dt
 
     if self.isReplaying then
-        -- Process all recordings
+        -- Process all recordings. Cursor per layer, fire everything due up
+        -- to currentTime: exact float-equality dispatch silently skipped
+        -- events whenever replay's dt accumulation diverged from recording
+        -- (panic cap, speed multiplier), orphaning mouse joints.
         for layerIdx = 1, #self.recordings do
             local events = self.recordings[layerIdx]
-            --for layerIdx, events in ipairs(self.recordings) do
-            --  local startIdx = self.replayIndices[layerIdx]
-            --  local batchSize = 3
-            -- local endIdx = math.min(startIdx + batchSize, #events)
-            for i = 1, #events do
-                local evt = events[i]
-                -- print(evt.timestamp, self.currentTime)
-                if evt.timestamp == self.currentTime then
-                    --print('event at index ', i, #events)
-                    recorder:processEvent(evt, layerIdx)
-                    self.replayIndices[layerIdx] = i
-                end
+            local i = self.replayIndices[layerIdx] or 1
+            while i <= #events and events[i].timestamp <= self.currentTime do
+                recorder:processEvent(events[i], layerIdx)
+                i = i + 1
             end
-            -- self:processEventsAtCurrentTime(events)
+            self.replayIndices[layerIdx] = i
         end
     end
 end
@@ -188,17 +183,20 @@ function recorder:processEvent(event, layerIdx)
                 data.pointerId, registry.getBodyByID(data.objectId), data.wx, data.wy,
                 data.force, data.damp)
 
-            self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] =
-            {
-                joint = created.joint,
-                body = created.jointBody,
-                objectId = data.objectId
-            }
+            if created and created.joint then
+                self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] =
+                {
+                    joint = created.joint,
+                    body = created.jointBody,
+                    objectId = data.objectId
+                }
+            end
         elseif event.action == 'mousejoint-update' then
             local data = event.data
-
-            self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx].joint:setTarget(data.x, data
-                .y)
+            local mj = self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx]
+            if mj and mj.joint and not mj.joint:isDestroyed() then
+                mj.joint:setTarget(data.x, data.y)
+            end
         elseif event.action == 'mousejoint-end' then
             local data = event.data
             local is = self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx]

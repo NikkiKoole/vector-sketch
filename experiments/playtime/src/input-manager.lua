@@ -75,19 +75,28 @@ local function pressedDrawClickMode(cx, cy, x)
 end
 
 local function pressedSetOffsetA(cx, cy)
-    local bodyA = state.selection.selectedJoint:getBodies()
+    local joint = state.selection.selectedJoint
+    if not joint or joint:isDestroyed() then
+        modes.clear()
+        return
+    end
+    local bodyA = joint:getBodies()
     local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
     state.selection.selectedJoint =
-        joints.updateJointOffsetA(state.selection.selectedJoint, fx, fy)
-    print('got here!')
+        joints.updateJointOffsetA(joint, fx, fy)
     modes.clear()
 end
 
 local function pressedSetOffsetB(cx, cy)
-    local _, bodyB = state.selection.selectedJoint:getBodies()
+    local joint = state.selection.selectedJoint
+    if not joint or joint:isDestroyed() then
+        modes.clear()
+        return
+    end
+    local _, bodyB = joint:getBodies()
     local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
     state.selection.selectedJoint =
-        joints.updateJointOffsetB(state.selection.selectedJoint, fx, fy)
+        joints.updateJointOffsetB(joint, fx, fy)
     modes.clear()
 end
 

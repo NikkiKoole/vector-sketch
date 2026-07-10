@@ -290,11 +290,14 @@ function lib.drawUpdateSelectedObjectUI()
                         ui.alignedLabel(x, y, ' width')
                         nextRow()
 
-                        local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800, thing.width2)
+                        -- fallbacks: old saves can miss the extra torso dims
+                        local newWidth2 = ui.sliderWithInput(myID .. ' width2', x, y, ROW_WIDTH, 1, 800,
+                            (thing.width2 or thing.width))
                         ui.alignedLabel(x, y, ' width2')
                         nextRow()
 
-                        local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800, thing.width3)
+                        local newWidth3 = ui.sliderWithInput(myID .. ' width3', x, y, ROW_WIDTH, 1, 800,
+                            (thing.width3 or thing.width))
                         ui.alignedLabel(x, y, ' width3')
                         nextRow()
 
@@ -302,15 +305,15 @@ function lib.drawUpdateSelectedObjectUI()
                         ui.alignedLabel(x, y, ' height')
                         nextRow()
                         local newHeight2 = ui.sliderWithInput(
-                            myID .. ' height2', x, y, ROW_WIDTH, 1, 800, thing.height2)
+                            myID .. ' height2', x, y, ROW_WIDTH, 1, 800, (thing.height2 or thing.height))
                         ui.alignedLabel(x, y, ' height2')
                         nextRow()
                         local newHeight3 = ui.sliderWithInput(
-                            myID .. ' height3', x, y, ROW_WIDTH, 1, 800, thing.height3)
+                            myID .. ' height3', x, y, ROW_WIDTH, 1, 800, (thing.height3 or thing.height))
                         ui.alignedLabel(x, y, ' height3')
                         nextRow()
                         local newHeight4 = ui.sliderWithInput(
-                            myID .. ' height4', x, y, ROW_WIDTH, 1, 800, thing.height4)
+                            myID .. ' height4', x, y, ROW_WIDTH, 1, 800, (thing.height4 or thing.height))
                         ui.alignedLabel(x, y, ' height4')
                         nextRow()
 
