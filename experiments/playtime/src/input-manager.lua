@@ -106,22 +106,23 @@ local function pressedPositioningSFixture(cx, cy)
     modes.clear()
 end
 
-local function pressedAddNode(cx, cy)
-    -- we need to walk trough all anchor fitures and all joints to see if im very close to one?
+-- Nearest anchor-sfixture or joint anchor to (cx, cy), or nil when nothing
+-- is within maxDist. Shared by node-adding (pressedAddNode) and the hover
+-- indicator (showCloseNode).
+local function findClosestNode(cx, cy, maxDist)
     local closest = nil
     local closestDistanceSquared = math.huge
     for _, f in pairs(registry.sfixtures) do
         local body = f:getBody()
         local ud = f:getUserData()
         if subtypes.is(ud, subtypes.ANCHOR) then
-            -- todo this will find ALL sfitures bot just anchors
             local centerX, centerY = mathutils.getCenterOfPoints(
                 { body:getWorldPoints(f:getShape():getPoints()) })
 
             local d = distanceSquared(centerX, centerY, cx, cy)
             if d < closestDistanceSquared then
                 closestDistanceSquared = d
-                closest = { type = NT.ANCHOR, id = f:getUserData().id }
+                closest = { type = NT.ANCHOR, id = ud.id, x = centerX, y = centerY }
             end
         end
     end
@@ -131,17 +132,25 @@ local function pressedAddNode(cx, cy)
         local d = distanceSquared(x1, y1, cx, cy)
         if d < closestDistanceSquared then
             closestDistanceSquared = d
-            closest = { type = NT.JOINT, id = j:getUserData().id }
+            closest = { type = NT.JOINT, id = j:getUserData().id, x = x1, y = y1 }
         end
     end
 
-    if math.sqrt(closestDistanceSquared) < 30 then
+    if closest and math.sqrt(closestDistanceSquared) < maxDist then
+        return closest
+    end
+    return nil
+end
+
+local function pressedAddNode(cx, cy)
+    local closest = findClosestNode(cx, cy, 30)
+    if closest then
         local ud = state.selection.selectedSFixture:getUserData()
         ud.extra.nodes = ud.extra.nodes or {}
 
         local lastAdded = ud.extra.nodes[#ud.extra.nodes]
-        if (closest and lastAdded and lastAdded.id ~= closest.id) or not lastAdded then
-            table.insert(ud.extra.nodes, closest)
+        if not lastAdded or lastAdded.id ~= closest.id then
+            table.insert(ud.extra.nodes, { type = closest.type, id = closest.id })
         end
 
         state.selection.selectedSFixture:setUserData(ud)
@@ -605,32 +614,9 @@ end
 function lib.showCloseNode()
     local mx, my = love.mouse.getPosition()
     local cx, cy = cam:getWorldCoordinates(mx, my)
-    local closest = nil
-    local closestDistanceSquared = math.huge
-    for _, f in pairs(registry.sfixtures) do
-        local body = f:getBody()
-        local ud = f:getUserData()
-        if subtypes.is(ud, subtypes.ANCHOR) then
-            -- todo this will find ALL sfitures bot just anchors
-            local centerX, centerY = mathutils.getCenterOfPoints({ body:getWorldPoints(f:getShape():getPoints()) })
-
-            local d = distanceSquared(centerX, centerY, cx, cy)
-            if d < closestDistanceSquared then
-                closestDistanceSquared = d
-                closest = { centerX, centerY }
-            end
-        end
-    end
-    for _, j in pairs(registry.joints) do
-        local x1, y1 = j:getAnchors()
-        local d = distanceSquared(x1, y1, cx, cy)
-        if d < closestDistanceSquared then
-            closestDistanceSquared = d
-            closest = { x1, y1 }
-        end
-    end
-    if math.sqrt(closestDistanceSquared) < 30 then
-        return closest
+    local node = findClosestNode(cx, cy, 30)
+    if node then
+        return { node.x, node.y }
     end
     return nil
 end
@@ -704,23 +690,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
                     return false
                 end
 
-                local mx = ud.extra.meshX or 0
-                local my = ud.extra.meshY or 0
-                local sx = ud.extra.scaleX or 1
-                local sy = ud.extra.scaleY or 1
-                local mr = ud.extra.meshRot or 0
-                local cosR, sinR = math.cos(mr), math.sin(mr)
-
-                local function worldAt(vertIndex)
-                    local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
-                    local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
-                    lx = (lx + mx) * sx
-                    ly = (ly + my) * sy
-                    if mr ~= 0 then
-                        lx, ly = lx * cosR - ly * sinR, lx * sinR + ly * cosR
-                    end
-                    return body:getWorldPoint(lx, ly)
-                end
+                local worldAt = fixtures.makeMeshVertexMapper(ud.extra, centeredVerts, body)
 
                 local numTris = math.floor(#triIdx / 3)
                 for t = 1, numTris do

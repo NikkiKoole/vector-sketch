@@ -256,8 +256,16 @@ function lib.drawUI()
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
     love.graphics.setColor(1, 1, 1)
 
-    -- "Add Shape" Button
-    if ui.button(20, 20, 200, 'add shape') then
+    -- Top toolbar flows left→right; each button advances the cursor, so
+    -- adding/resizing buttons no longer means recomputing absolute x's.
+    local toolbarX = 20
+    local function toolbarButton(width, label)
+        local clicked = ui.button(toolbarX, 20, width, label)
+        toolbarX = toolbarX + width + 10
+        return clicked
+    end
+
+    if toolbarButton(200, 'add shape') then
         state.panelVisibility.addShapeOpened = not state.panelVisibility.addShapeOpened
     end
 
@@ -265,8 +273,7 @@ function lib.drawUI()
         lib.drawAddShapeUI()
     end
 
-    -- "Add Joint" Button
-    if ui.button(230, 20, 200, 'add joint') then
+    if toolbarButton(200, 'add joint') then
         state.panelVisibility.addJointOpened = not state.panelVisibility.addJointOpened
     end
 
@@ -274,27 +281,24 @@ function lib.drawUI()
         lib.drawAddJointUI()
     end
 
-    -- "World Settings" Button
-    if ui.button(440, 20, 120, 'settings') then
+    if toolbarButton(120, 'settings') then
         state.panelVisibility.worldSettingsOpened = not state.panelVisibility.worldSettingsOpened
     end
     if state.panelVisibility.worldSettingsOpened then
         lib.drawWorldSettingsUI()
     end
-    if ui.button(570, 20, 70, 'bg') then
+    if toolbarButton(70, 'bg') then
         state.panelVisibility.bgSettingsOpened = not state.panelVisibility.bgSettingsOpened
     end
     if state.panelVisibility.bgSettingsOpened then
         lib.drawBGSettingsUI()
     end
 
-
-    -- Play/Pause Button
-    if ui.button(650, 20, 150, state.world.paused and 'play' or 'pause') then
+    if toolbarButton(150, state.world.paused and 'play' or 'pause') then
         state.world.paused = not state.world.paused
     end
 
-    if ui.button(810, 20, 150, state.world.isRecordingPointers and 'recording' or 'record') then
+    if toolbarButton(150, state.world.isRecordingPointers and 'recording' or 'record') then
         state.panelVisibility.recordingPanelOpened = not state.panelVisibility.recordingPanelOpened
         -- state.world.isRecordingPointers = not state.world.isRecordingPointers
     end
@@ -303,7 +307,7 @@ function lib.drawUI()
     end
 
     if state.scene.sceneScript and state.scene.sceneScript.onStart then
-        if ui.button(970, 20, 50, 'R') then
+        if toolbarButton(50, 'R') then
             -- todo actually reread the file itself!
             sceneLoader.loadAndRunScript(state.scene.scriptPath)
             script.call(SE.ON_START) --state.scene.sceneScript.onStart()

@@ -117,7 +117,7 @@ end
 
 
 function lib.drawWorld(world, drawOutline)
-    local debugIds = {}
+    local debugIds -- lazily allocated, only needed when showDebugIds is on
     if drawOutline == nil then drawOutline = true end
     if drawOutline == true then
         if state.world.drawOutline == false then
@@ -147,14 +147,15 @@ function lib.drawWorld(world, drawOutline)
             local fixtures = body:getFixtures()
 
             for _, fixture in ipairs(fixtures) do
-                --if fixture:getUserData() then
-                --     print(inspect(fixture:getUserData()))
-                --end
-                if fixture:getShape():type() == 'PolygonShape' then
+                -- hot loop: cache the FFI-crossing getters once per fixture
+                local ud = fixture:getUserData()
+                local shape = fixture:getShape()
+                local shapeType = shape:type()
+                if shapeType == 'PolygonShape' then
                     local fillColor = getBodyColor(body)
                     love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
-                    local hasSpecialFixtureData = fixture:getUserData() and
-                        (fixture:getUserData().bodyType == "connector" or fixture:getUserData().type)
+                    local hasSpecialFixtureData = ud and
+                        (ud.bodyType == "connector" or ud.type)
                     -- Skip default per-fixture polygon fill/outline when the CUSTOM
                     -- override already drew the body. Special fixtures (connector /
                     -- typed) keep their per-fixture pass so their distinct color
@@ -162,48 +163,45 @@ function lib.drawWorld(world, drawOutline)
                     if customHandled and not hasSpecialFixtureData then
                         goto polyEnd
                     end
-                    if (fixture:getUserData()) then
-                        if fixture:getUserData().bodyType == "connector" then
+                    if ud then
+                        if ud.bodyType == "connector" then
                             love.graphics.setColor(1, 0, 0, alpha)
                         end
-                        if fixture:getUserData().type then
+                        if ud.type then
                             local typeColor = pal.orange
                             love.graphics.setColor(typeColor[1], typeColor[2], typeColor[3], alpha)
                         end
                         --else
                         if state.world.drawFixtures then
-                            love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+                            love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
                         end
                     else
-                        love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+                        love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
                     end
 
 
                     local outlineColor = state.world.darkMode and pal.creamy or pal.dark
                     love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
-                    if (fixture:getUserData()) then
-                        if fixture:getUserData().bodyType == "connector" then
-                            love.graphics.setColor(1, 0, 0, alpha)
-                        end
-                        --  print(inspect(fixture:getUserData() ))
+                    if ud and ud.bodyType == "connector" then
+                        love.graphics.setColor(1, 0, 0, alpha)
                     end
                     if drawOutline then
-                        love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
+                        love.graphics.polygon('line', body:getWorldPoints(shape:getPoints()))
                     end
                     ::polyEnd::
-                elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
+                elseif shapeType == 'EdgeShape' or shapeType == 'ChainShape' then
                     love.graphics.setColor(0, 1, 1, alpha)
-                    local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
+                    local points = { body:getWorldPoints(shape:getPoints()) }
                     for i = 1, #points, 2 do
                         if i < #points - 2 then
                             love.graphics.line(points[i], points[i + 1], points[i + 2], points
                                 [i + 3])
                         end
                     end
-                elseif fixture:getShape():type() == 'CircleShape' then
+                elseif shapeType == 'CircleShape' then
                     local body_x, body_y = body:getPosition()
-                    local shape_x, shape_y = fixture:getShape():getPoint()
-                    local radius = fixture:getShape():getRadius()
+                    local shape_x, shape_y = shape:getPoint()
+                    local radius = shape:getRadius()
                     local circleFillColor = getBodyColor(body)
                     local segments = 180
                     love.graphics.setColor(circleFillColor[1], circleFillColor[2], circleFillColor[3], alpha)
@@ -216,9 +214,9 @@ function lib.drawWorld(world, drawOutline)
                     end
                 end
                 if state.world.showDebugIds then
-                    local ud = fixture:getUserData()
                     if ud and ud.id then
                         local x1, y1 = body:getPosition()
+                        debugIds = debugIds or {}
                         if debugIds[ud.id] == true then
                             print('id already drawn in this loop', ud.id)
                         end

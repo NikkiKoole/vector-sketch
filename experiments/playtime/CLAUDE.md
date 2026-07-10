@@ -45,7 +45,7 @@ Lurker watches files every 0.5s and hot-swaps Lua modules. Check `/errors` after
 
 ## Testing
 
-Busted is the primary test framework. Specs live in `spec/`. Full suite: **21 spec files, ~710 tests** (pure subset via `busted spec/`: ~300).
+Busted is the primary test framework. Specs live in `spec/`. Full suite: **23 spec files, ~726 tests** (pure subset via `busted spec/`: ~300).
 
 ```bash
 # Pure unit specs (no LÖVE needed)

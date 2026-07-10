@@ -1669,254 +1669,527 @@ local function lookupUV(vx, vy, vertexIndex, uvs)
     return uvs[(vi - 1) * 2 + 1], uvs[(vi - 1) * 2 + 2]
 end
 
+-- ─── hoisted drawTexturedWorld helpers ─────────────────────────────
+-- These were closures re-created inside drawTexturedWorld every frame
+-- (the deform/anchor ones per DRAWABLE per frame). None of them capture
+-- per-call state, so they live at module scope now — pure GC churn win.
+
+local function sorter(a, b) return a.z < b.z end
+
+local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
+    -- print('jo!')
+    local img = getLoveImage('textures/' .. url)
+    local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+
+    if (vertices and img) then
+        local body = texfixture:getBody()
+        --local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+        local sx = 1 --ww / imgw
+        local sy = 1 --hh / imgh
+        --local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
+        -- local r, g, b, a = lib.hexToColor(hex)
+        --logger:info(r, g, b, a)
+        love.graphics.setColor(r, g, b, a)
+        --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
+    end
+end
+
+local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
+    local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+    local img = ompImage
+    if vertices and img then
+        local body = texfixture:getBody()
+        -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
+        local sx = 1 --ww / imgw
+        local sy = 1 --hh / imgh
+
+
+        love.graphics.setColor(1, 1, 1, 1)
+
+        if (extra.main.tint) then
+            --                print('optimize this away, tint')
+            local r, g, b, a = lib.hexToColor(extra.main.tint)
+            love.graphics.setColor(r, g, b, a)
+        end
+
+        --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
+        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
+    end
+end
+
+local function currentAnchorLocal(infl)
+    if infl.nodeType == NT.ANCHOR then
+        local f = registry.getSFixtureByID(infl.nodeId)
+        if not f then return infl.offx, infl.offy end
+        local bp = f:getBody()
+
+        local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
+        local cx, cy = mathutils.getCenterOfPoints(pts)
+        return bp:getLocalPoint(cx, cy)
+    end
+
+    if infl.nodeType == NT.JOINT then
+        local joint = registry.getJointByID(infl.nodeId)
+        if not joint then return infl.offx, infl.offy end
+
+        local x1, y1, x2, y2 = joint:getAnchors()
+        local bodyA, bodyB = joint:getBodies()
+
+        if infl.side == SIDES.A then
+            return bodyA:getLocalPoint(x1, y1)
+        else
+            return bodyB:getLocalPoint(x2, y2)
+        end
+    end
+
+    return infl.offx, infl.offy
+end
+
+-- Linear Blend Skinning: averages per-bone world positions directly.
+-- Causes "candy wrapper" / bowtie collapse at joints when influencing bodies
+-- rotate in opposite directions (the averaged midpoint falls inside the joint).
+local function deformWorldVertsLBS(influences, numVerts, rootBody)
+    local out = {}
+
+    for vi = 1, numVerts do
+        local inflList = influences[vi]
+        local wxSum, wySum, wSum = 0, 0, 0
+        for k = 1, #inflList do
+            local infl = inflList[k]
+            local body = infl.body
+            if body and not body:isDestroyed() then
+                local ax, ay = currentAnchorLocal(infl)
+                local lx     = ax + infl.dx
+                local ly     = ay + infl.dy
+                local wx, wy = body:getWorldPoint(lx, ly)
+
+                local w      = infl.w
+                wxSum        = wxSum + wx * w
+                wySum        = wySum + wy * w
+                wSum         = wSum + w
+            end
+        end
+
+        if wSum > 0 then
+            wxSum = wxSum / wSum; wySum = wySum / wSum
+        end
+
+        local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
+        out[(vi - 1) * 2 + 1] = rx
+        out[(vi - 1) * 2 + 2] = ry
+    end
+
+    return out
+end
+
+-- Dual Quaternion Skinning (2D):
+-- 1. Compute each bone's delta rotation from bind pose (Δθ_i = θ_i_now - θ_i_bind).
+-- 2. Circular-mean blend the delta angles weighted by influence weight.
+-- 3. Apply the single blended rotation to the bind vertex (around world origin).
+-- 4. Add a rotation-compensated translation: Σ w_i·(P_i_now - R_blend·bindVert).
+--
+-- Requires per-influence `bindAngle` and per-vertex `bindVerts`. Falls back to LBS
+-- if either is missing (old scenes that were never rebound).
+local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
+    local atan2, cos, sin = math.atan2, math.cos, math.sin
+    local out = {}
+
+    for vi = 1, numVerts do
+        local inflList = influences[vi]
+        local bv       = bindVerts and bindVerts[vi]
+
+        -- Safety: stale influences (vert count mismatch) — skip vertex.
+        if not inflList then
+            out[(vi - 1) * 2 + 1] = 0
+            out[(vi - 1) * 2 + 2] = 0
+        -- Fallback path: no bind data for this vertex → LBS for this vertex only.
+        elseif not bv then
+            local wxSum, wySum, wSum = 0, 0, 0
+            for k = 1, #inflList do
+                local infl = inflList[k]
+                if infl.body and not infl.body:isDestroyed() then
+                    local ax, ay = currentAnchorLocal(infl)
+                    local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                    wxSum = wxSum + wx * infl.w
+                    wySum = wySum + wy * infl.w
+                    wSum  = wSum + infl.w
+                end
+            end
+            if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
+            local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
+            out[(vi - 1) * 2 + 1] = rx
+            out[(vi - 1) * 2 + 2] = ry
+        else
+            local bx, by = bv[1], bv[2]
+
+            -- Pass 1: blended delta rotation + per-bone current world positions.
+            local cosSum, sinSum, wSum = 0, 0, 0
+            local nInfl = #inflList
+            local pxs, pys, ws = {}, {}, {}
+
+            for k = 1, nInfl do
+                local infl = inflList[k]
+                if infl.bindAngle == nil then
+                    -- Missing bind angle on this influence → bail to LBS for this vertex.
+                    pxs = nil
+                    break
+                end
+                local body = infl.body
+                if body and not body:isDestroyed() then
+                    local ax, ay = currentAnchorLocal(infl)
+                    local wx, wy = body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                    local dTheta = body:getAngle() - infl.bindAngle
+                    local w      = infl.w
+                    pxs[k] = wx
+                    pys[k] = wy
+                    ws[k]  = w
+                    cosSum = cosSum + w * cos(dTheta)
+                    sinSum = sinSum + w * sin(dTheta)
+                    wSum   = wSum + w
+                else
+                    pxs[k] = 0; pys[k] = 0; ws[k] = 0
+                end
+            end
+
+            if not pxs then
+                -- Fallback for this vertex: LBS
+                local wxSum, wySum, wSum2 = 0, 0, 0
+                for k = 1, nInfl do
+                    local infl = inflList[k]
+                    if infl.body and not infl.body:isDestroyed() then
+                        local ax, ay = currentAnchorLocal(infl)
+                        local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                        wxSum = wxSum + wx * infl.w
+                        wySum = wySum + wy * infl.w
+                        wSum2 = wSum2 + infl.w
+                    end
+                end
+                if wSum2 > 0 then wxSum = wxSum / wSum2; wySum = wySum / wSum2 end
+                local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
+                out[(vi - 1) * 2 + 1] = rx
+                out[(vi - 1) * 2 + 2] = ry
+            else
+                -- Blended delta rotation (circular mean).
+                local len = (cosSum * cosSum + sinSum * sinSum) ^ 0.5
+                local blendAngle
+                if len > 1e-9 then
+                    blendAngle = atan2(sinSum / len, cosSum / len)
+                else
+                    blendAngle = 0
+                end
+
+                -- R_blend · bindVert (rotate bind world pos by blended delta, around origin).
+                local cosB, sinB = cos(blendAngle), sin(blendAngle)
+                local rbx = cosB * bx - sinB * by
+                local rby = sinB * bx + cosB * by
+
+                -- Translation: Σ w_i · (P_i_now - R_blend · bindVert).
+                local txBlend, tyBlend = 0, 0
+                for k = 1, nInfl do
+                    txBlend = txBlend + ws[k] * (pxs[k] - rbx)
+                    tyBlend = tyBlend + ws[k] * (pys[k] - rby)
+                end
+                if wSum > 0 then
+                    txBlend = txBlend / wSum
+                    tyBlend = tyBlend / wSum
+                end
+
+                -- Final world position, then map to root-local.
+                local fx = rbx + txBlend
+                local fy = rby + tyBlend
+                local rx, ry = rootBody:getLocalPoint(fx, fy)
+                out[(vi - 1) * 2 + 1] = rx
+                out[(vi - 1) * 2 + 2] = ry
+            end
+        end
+    end
+
+    return out
+end
+
+local function deformWorldVerts(influences, bindVerts, numVerts, rootBody)
+    if lib.useDQS then
+        return deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
+    else
+        return deformWorldVertsLBS(influences, numVerts, rootBody)
+    end
+end
+
+-- Rigid single-bone position for vert vi: look up the unpruned rigidLookup
+-- table (built at bind time) so any painted bone works regardless of
+-- pruneTopK ranking. Falls back to the pruned influences path if rigidLookup
+-- is absent (old scene compatibility).
+local function rigidBoneVertLocal(vi, boneIndex, rigidLookupOrInfluences, rootBody, isLookup)
+    if isLookup then
+        local row = rigidLookupOrInfluences[vi]
+        if not row then return nil end
+        local entry = row[boneIndex]
+        if not entry then return nil end
+        if not entry.body or entry.body:isDestroyed() then return nil end
+        local wx, wy = entry.body:getWorldPoint(entry.lx, entry.ly)
+        return rootBody:getLocalPoint(wx, wy)
+    else
+        -- legacy path: pruned influences table
+        local inflList = rigidLookupOrInfluences[vi]
+        if not inflList then return nil end
+        for k = 1, #inflList do
+            local infl = inflList[k]
+            if infl.nodeIndex == boneIndex then
+                if not infl.body or infl.body:isDestroyed() then return nil end
+                local ax, ay = currentAnchorLocal(infl)
+                local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+                return rootBody:getLocalPoint(wx, wy)
+            end
+        end
+        return nil
+    end
+end
+
+-- One drawables array reused across frames (cleared in place); only the
+-- small per-drawable tables still allocate per frame.
+local drawablesList = {}
+
+local function createDrawables(bodies)
+    local drawables = drawablesList
+    for i = #drawables, 1, -1 do drawables[i] = nil end
+    for _, body in ipairs(bodies) do
+        -- local ud = body:getUserData()
+        -- if (ud and ud.thing) then
+        --     local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
+        --     table.insert(drawables, { z = composedZ, body = body, thing = ud.thing })
+        -- end
+        -- todo instead of having to check all the fixtures every frame
+        -- we should mark a thing that has these type of specialfixtures.
+        local fixtures = body:getFixtures()
+        for i = 1, #fixtures do
+            local ud = fixtures[i]:getUserData()
+            if type(ud) ~= 'table' then -- vanwege softbodies bullshit
+                ud = nil
+            end
+            if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+
+                table.insert(drawables, {
+                    type = 'trace-vertices',
+                    z = composedZ,
+                    extra = ud.extra,
+                    thing = body:getUserData().thing
+                })
+            end
+
+            if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+
+                table.insert(drawables, {
+                    type = 'tile-repeat',
+                    z = composedZ,
+                    extra = ud.extra,
+                    thing = body:getUserData().thing
+                })
+            end
+
+            if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                table.insert(drawables,
+                    {
+                        type = 'texfixture',
+                        z = composedZ,
+                        texfixture = fixtures[i],
+                        extra = ud.extra,
+                        body = body,
+                        thing = body:getUserData().thing
+                    })
+            end
+            if ud and subtypes.is(ud, subtypes.MESHUSERT) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                table.insert(drawables,
+                    {
+                        type = 'meshusert',
+                        z = composedZ,
+                        texfixture = fixtures[i],
+                        label = ud.label,
+                        extra = ud.extra,
+                        body = body,
+                        thing = body:getUserData().thing
+                    })
+            end
+            if ud and subtypes.is(ud, subtypes.UVUSERT) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                table.insert(drawables,
+                    {
+                        type = 'uvusert',
+                        z = composedZ,
+                        texfixture = fixtures[i],
+                        label = ud.label,
+                        extra = ud.extra,
+                        body = body,
+                        thing = body:getUserData().thing
+                    })
+            end
+            if ud and subtypes.is(ud, subtypes.DECAL) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                if ud.extra.browCurve then
+                    table.insert(drawables, {
+                        type = 'brow',
+                        z = composedZ,
+                        extra = ud.extra,
+                        body = body,
+                    })
+                elseif ud.extra.mouthCurve then
+                    if ud.extra.mouthCurve == 'teeth' then
+                        -- Teeth: positioned image, optionally clipped to mouth polygon
+                        table.insert(drawables, {
+                            type = 'mouth-teeth',
+                            z = composedZ,
+                            extra = ud.extra,
+                            body = body,
+                        })
+                    else
+                        -- Mouth bezier curve decal (upper or lower lip)
+                        local pts = ud.extra.curvePoints
+                        if pts and #pts == 16 then
+                            local s = pts
+                            local curveData
+                            if ud.extra.mouthCurve == 'upper' then
+                                curveData = {
+                                    s[1], s[2], s[3], s[4],
+                                    s[3], s[4], s[5], s[6],
+                                    s[5], s[6], s[7], s[8],
+                                    s[7], s[8], s[9], s[10],
+                                }
+                            else
+                                -- Reverse lower lip curve to go left-to-right
+                                -- (matching upper lip direction) so texture orientation is consistent
+                                curveData = {
+                                    s[1], s[2], s[15], s[16],
+                                    s[15], s[16], s[13], s[14],
+                                    s[13], s[14], s[11], s[12],
+                                    s[11], s[12], s[9], s[10],
+                                }
+                            end
+                            table.insert(drawables, {
+                                type = 'mouth-' .. ud.extra.mouthCurve,
+                                z = composedZ,
+                                extra = ud.extra,
+                                body = body,
+                                curveData = curveData,
+                            })
+                            if ud.extra.mouthCurve == 'lower' then
+                                -- Dark interior fill renders below teeth so teeth always
+                                -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
+                                table.insert(drawables, {
+                                    type = 'mouth-backdrop',
+                                    z = composedZ - 2,
+                                    extra = ud.extra,
+                                    body = body,
+                                })
+                            end
+                        end
+                    end
+                else
+                    table.insert(drawables, {
+                        type = 'decal',
+                        z = composedZ,
+                        extra = ud.extra,
+                        body = body,
+                    })
+                end
+            end
+
+            if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
+                -- logger:inspect(ud)
+                --logger:info('got some new kind of combined drawing todo!')
+                local points = {}
+                for j = 1, #ud.extra.nodes do
+                    local it = ud.extra.nodes[j]
+                    if it.type == NT.ANCHOR then
+                        local f = registry.getSFixtureByID(it.id)
+                        if f then
+                            local b = f:getBody()
+                            local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                                :getPoints()) })
+                            table.insert(points, centerX)
+                            table.insert(points, centerY)
+                        else
+                            print('issue with finding achor, id:', it.id)
+                        end
+                    end
+                    if it.type == NT.JOINT then
+                        local jnt = registry.getJointByID(it.id)
+                        if jnt and not jnt:isDestroyed() then
+                            local x1, y1, _, _ = jnt:getAnchors()
+                            table.insert(points, x1)
+                            table.insert(points, y1)
+                        end
+                    end
+                end
+
+                if #points == 4 then
+                    -- here we will just introduce a little midle thingie
+                    -- -- becaue i cannot draw a curve of 2 points
+                    local function addMidpoint(pts)
+                        if #pts ~= 4 then
+                            error("Expected array of exactly 2 points (4 numbers)")
+                        end
+
+                        local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
+                        local midX = (x1 + x2) / 2
+                        local midY = (y1 + y2) / 2
+
+                        return { x1, y1, midX, midY, x2, y2 }
+                    end
+
+                    points = addMidpoint(points)
+                end
+
+                if #points >= 6 then
+                    -- todo here we might want to grow the curve... so it will stick a little bit from the sides
+
+
+                    -- todo parameterize this
+                    local growLength = ud.extra.growExtra or 20
+                    points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
+                    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+
+
+                    -- bendiness controls control-point duplication for the bezier through
+                    -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
+                    -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
+                    -- pre-knob behaviour. See doubleControlPoints above.
+                    local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
+                    points = doubleControlPoints(points, bendiness)
+
+
+                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                    --print(inspect(ud.extra))
+                    table.insert(drawables,
+                        {
+                            z = composedZ,
+                            type = 'connected-texture',
+                            curve = love.math.newBezierCurve(points),
+                            --texfixture = fixtures[i],
+                            extra = ud.extra,
+                            --body = body,
+                            -- thing = body:getUserData().thing
+                        })
+                end
+            end
+        end
+    end
+    return drawables
+end
+
 function lib.drawTexturedWorld(world)
     tickBlink(world, love.timer.getDelta() or 0)
     local bodies = world:getBodies()
 
 
-    local function createDrawables()
-        local drawables = {}
-        for _, body in ipairs(bodies) do
-            -- local ud = body:getUserData()
-            -- if (ud and ud.thing) then
-            --     local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
-            --     table.insert(drawables, { z = composedZ, body = body, thing = ud.thing })
-            -- end
-            -- todo instead of having to check all the fixtures every frame
-            -- we should mark a thing that has these type of specialfixtures.
-            local fixtures = body:getFixtures()
-            for i = 1, #fixtures do
-                local ud = fixtures[i]:getUserData()
-                if type(ud) ~= 'table' then -- vanwege softbodies bullshit
-                    ud = nil
-                end
-                if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
-                    table.insert(drawables, {
-                        type = 'trace-vertices',
-                        z = composedZ,
-                        extra = ud.extra,
-                        thing = body:getUserData().thing
-                    })
-                end
-
-                if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-
-                    table.insert(drawables, {
-                        type = 'tile-repeat',
-                        z = composedZ,
-                        extra = ud.extra,
-                        thing = body:getUserData().thing
-                    })
-                end
-
-                if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    table.insert(drawables,
-                        {
-                            type = 'texfixture',
-                            z = composedZ,
-                            texfixture = fixtures[i],
-                            extra = ud.extra,
-                            body = body,
-                            thing = body:getUserData().thing
-                        })
-                end
-                if ud and subtypes.is(ud, subtypes.MESHUSERT) then
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    table.insert(drawables,
-                        {
-                            type = 'meshusert',
-                            z = composedZ,
-                            texfixture = fixtures[i],
-                            label = ud.label,
-                            extra = ud.extra,
-                            body = body,
-                            thing = body:getUserData().thing
-                        })
-                end
-                if ud and subtypes.is(ud, subtypes.UVUSERT) then
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    table.insert(drawables,
-                        {
-                            type = 'uvusert',
-                            z = composedZ,
-                            texfixture = fixtures[i],
-                            label = ud.label,
-                            extra = ud.extra,
-                            body = body,
-                            thing = body:getUserData().thing
-                        })
-                end
-                if ud and subtypes.is(ud, subtypes.DECAL) then
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    if ud.extra.browCurve then
-                        table.insert(drawables, {
-                            type = 'brow',
-                            z = composedZ,
-                            extra = ud.extra,
-                            body = body,
-                        })
-                    elseif ud.extra.mouthCurve then
-                        if ud.extra.mouthCurve == 'teeth' then
-                            -- Teeth: positioned image, optionally clipped to mouth polygon
-                            table.insert(drawables, {
-                                type = 'mouth-teeth',
-                                z = composedZ,
-                                extra = ud.extra,
-                                body = body,
-                            })
-                        else
-                            -- Mouth bezier curve decal (upper or lower lip)
-                            local pts = ud.extra.curvePoints
-                            if pts and #pts == 16 then
-                                local s = pts
-                                local curveData
-                                if ud.extra.mouthCurve == 'upper' then
-                                    curveData = {
-                                        s[1], s[2], s[3], s[4],
-                                        s[3], s[4], s[5], s[6],
-                                        s[5], s[6], s[7], s[8],
-                                        s[7], s[8], s[9], s[10],
-                                    }
-                                else
-                                    -- Reverse lower lip curve to go left-to-right
-                                    -- (matching upper lip direction) so texture orientation is consistent
-                                    curveData = {
-                                        s[1], s[2], s[15], s[16],
-                                        s[15], s[16], s[13], s[14],
-                                        s[13], s[14], s[11], s[12],
-                                        s[11], s[12], s[9], s[10],
-                                    }
-                                end
-                                table.insert(drawables, {
-                                    type = 'mouth-' .. ud.extra.mouthCurve,
-                                    z = composedZ,
-                                    extra = ud.extra,
-                                    body = body,
-                                    curveData = curveData,
-                                })
-                                if ud.extra.mouthCurve == 'lower' then
-                                    -- Dark interior fill renders below teeth so teeth always
-                                    -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
-                                    table.insert(drawables, {
-                                        type = 'mouth-backdrop',
-                                        z = composedZ - 2,
-                                        extra = ud.extra,
-                                        body = body,
-                                    })
-                                end
-                            end
-                        end
-                    else
-                        table.insert(drawables, {
-                            type = 'decal',
-                            z = composedZ,
-                            extra = ud.extra,
-                            body = body,
-                        })
-                    end
-                end
-
-                if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
-                    -- logger:inspect(ud)
-                    --logger:info('got some new kind of combined drawing todo!')
-                    local points = {}
-                    for j = 1, #ud.extra.nodes do
-                        local it = ud.extra.nodes[j]
-                        if it.type == NT.ANCHOR then
-                            local f = registry.getSFixtureByID(it.id)
-                            if f then
-                                local b = f:getBody()
-                                local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
-                                    :getPoints()) })
-                                table.insert(points, centerX)
-                                table.insert(points, centerY)
-                            else
-                                print('issue with finding achor, id:', it.id)
-                            end
-                        end
-                        if it.type == NT.JOINT then
-                            local jnt = registry.getJointByID(it.id)
-                            if jnt and not jnt:isDestroyed() then
-                                local x1, y1, _, _ = jnt:getAnchors()
-                                table.insert(points, x1)
-                                table.insert(points, y1)
-                            end
-                        end
-                    end
-
-                    if #points == 4 then
-                        -- here we will just introduce a little midle thingie
-                        -- -- becaue i cannot draw a curve of 2 points
-                        local function addMidpoint(pts)
-                            if #pts ~= 4 then
-                                error("Expected array of exactly 2 points (4 numbers)")
-                            end
-
-                            local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
-                            local midX = (x1 + x2) / 2
-                            local midY = (y1 + y2) / 2
-
-                            return { x1, y1, midX, midY, x2, y2 }
-                        end
-
-                        points = addMidpoint(points)
-                    end
-
-                    if #points >= 6 then
-                        -- todo here we might want to grow the curve... so it will stick a little bit from the sides
-
-
-                        -- todo parameterize this
-                        local growLength = ud.extra.growExtra or 20
-                        points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
-                        points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
-
-
-                        -- bendiness controls control-point duplication for the bezier through
-                        -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
-                        -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
-                        -- pre-knob behaviour. See doubleControlPoints above.
-                        local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
-                        points = doubleControlPoints(points, bendiness)
-
-
-                        local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                        --print(inspect(ud.extra))
-                        table.insert(drawables,
-                            {
-                                z = composedZ,
-                                type = 'connected-texture',
-                                curve = love.math.newBezierCurve(points),
-                                --texfixture = fixtures[i],
-                                extra = ud.extra,
-                                --body = body,
-                                -- thing = body:getUserData().thing
-                            })
-                    end
-                end
-            end
-        end
-        return drawables
-    end
-
-    local drawables = createDrawables()
-    -- todo this list needs to be kept around and sorted in place,
-    -- resetting and doing all the work every frame is heavy!
-    -- optimally i dont want to sort at all every frame, maybe i can
-    -- add a flag to indicate that the list is sorted and only sort
-    -- when necessary (when adding/removing)
-
-    local function sorter(a, b) return a.z < b.z end
-
-    local function sortDrawables()
-        --print(#drawables)
-        table.sort(drawables, sorter)
-    end
-    sortDrawables()
+    local drawables = createDrawables(bodies)
+    -- todo: optimally keep the list sorted and only resort when
+    -- drawables are added/removed or a z changes.
+    table.sort(drawables, sorter)
 
 
 
@@ -1944,24 +2217,6 @@ function lib.drawTexturedWorld(world)
     --         drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
     --     end
     -- end
-    local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
-        -- print('jo!')
-        local img = getLoveImage('textures/' .. url)
-        local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-
-        if (vertices and img) then
-            local body = texfixture:getBody()
-            --local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-            local sx = 1 --ww / imgw
-            local sy = 1 --hh / imgh
-            --local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-            -- local r, g, b, a = lib.hexToColor(hex)
-            --logger:info(r, g, b, a)
-            love.graphics.setColor(r, g, b, a)
-            --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-            drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
-        end
-    end
 
 
 
@@ -1990,28 +2245,6 @@ function lib.drawTexturedWorld(world)
     --     end
     -- end
 
-    local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
-        local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-        local img = ompImage
-        if vertices and img then
-            local body = texfixture:getBody()
-            -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-            local sx = 1 --ww / imgw
-            local sy = 1 --hh / imgh
-
-
-            love.graphics.setColor(1, 1, 1, 1)
-
-            if (extra.main.tint) then
-                --                print('optimize this away, tint')
-                local r, g, b, a = lib.hexToColor(extra.main.tint)
-                love.graphics.setColor(r, g, b, a)
-            end
-
-            --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-            drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
-        end
-    end
 
 
     for i = 1, #drawables do
@@ -2093,33 +2326,6 @@ function lib.drawTexturedWorld(world)
             end
         end
 
-        local function currentAnchorLocal(infl)
-            if infl.nodeType == NT.ANCHOR then
-                local f = registry.getSFixtureByID(infl.nodeId)
-                if not f then return infl.offx, infl.offy end
-                local bp = f:getBody()
-
-                local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
-                local cx, cy = mathutils.getCenterOfPoints(pts)
-                return bp:getLocalPoint(cx, cy)
-            end
-
-            if infl.nodeType == NT.JOINT then
-                local joint = registry.getJointByID(infl.nodeId)
-                if not joint then return infl.offx, infl.offy end
-
-                local x1, y1, x2, y2 = joint:getAnchors()
-                local bodyA, bodyB = joint:getBodies()
-
-                if infl.side == SIDES.A then
-                    return bodyA:getLocalPoint(x1, y1)
-                else
-                    return bodyB:getLocalPoint(x2, y2)
-                end
-            end
-
-            return infl.offx, infl.offy
-        end
 
         -- this is all wrong, the code works but this shouldbnt  be a responnsible in the drawloop, do this outside!
         -- really we want to do this on load or something.
@@ -2151,205 +2357,9 @@ function lib.drawTexturedWorld(world)
         --     return influences
         -- end
 
-        -- Linear Blend Skinning: averages per-bone world positions directly.
-        -- Causes "candy wrapper" / bowtie collapse at joints when influencing bodies
-        -- rotate in opposite directions (the averaged midpoint falls inside the joint).
-        local function deformWorldVertsLBS(influences, numVerts, rootBody)
-            local out = {}
 
-            for vi = 1, numVerts do
-                local inflList = influences[vi]
-                local wxSum, wySum, wSum = 0, 0, 0
-                for k = 1, #inflList do
-                    local infl = inflList[k]
-                    local body = infl.body
-                    if body and not body:isDestroyed() then
-                        local ax, ay = currentAnchorLocal(infl)
-                        local lx     = ax + infl.dx
-                        local ly     = ay + infl.dy
-                        local wx, wy = body:getWorldPoint(lx, ly)
 
-                        local w      = infl.w
-                        wxSum        = wxSum + wx * w
-                        wySum        = wySum + wy * w
-                        wSum         = wSum + w
-                    end
-                end
 
-                if wSum > 0 then
-                    wxSum = wxSum / wSum; wySum = wySum / wSum
-                end
-
-                local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-                out[(vi - 1) * 2 + 1] = rx
-                out[(vi - 1) * 2 + 2] = ry
-            end
-
-            return out
-        end
-
-        -- Dual Quaternion Skinning (2D):
-        -- 1. Compute each bone's delta rotation from bind pose (Δθ_i = θ_i_now - θ_i_bind).
-        -- 2. Circular-mean blend the delta angles weighted by influence weight.
-        -- 3. Apply the single blended rotation to the bind vertex (around world origin).
-        -- 4. Add a rotation-compensated translation: Σ w_i·(P_i_now - R_blend·bindVert).
-        --
-        -- Requires per-influence `bindAngle` and per-vertex `bindVerts`. Falls back to LBS
-        -- if either is missing (old scenes that were never rebound).
-        local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
-            local atan2, cos, sin = math.atan2, math.cos, math.sin
-            local out = {}
-
-            for vi = 1, numVerts do
-                local inflList = influences[vi]
-                local bv       = bindVerts and bindVerts[vi]
-
-                -- Safety: stale influences (vert count mismatch) — skip vertex.
-                if not inflList then
-                    out[(vi - 1) * 2 + 1] = 0
-                    out[(vi - 1) * 2 + 2] = 0
-                -- Fallback path: no bind data for this vertex → LBS for this vertex only.
-                elseif not bv then
-                    local wxSum, wySum, wSum = 0, 0, 0
-                    for k = 1, #inflList do
-                        local infl = inflList[k]
-                        if infl.body and not infl.body:isDestroyed() then
-                            local ax, ay = currentAnchorLocal(infl)
-                            local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                            wxSum = wxSum + wx * infl.w
-                            wySum = wySum + wy * infl.w
-                            wSum  = wSum + infl.w
-                        end
-                    end
-                    if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
-                    local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-                    out[(vi - 1) * 2 + 1] = rx
-                    out[(vi - 1) * 2 + 2] = ry
-                else
-                    local bx, by = bv[1], bv[2]
-
-                    -- Pass 1: blended delta rotation + per-bone current world positions.
-                    local cosSum, sinSum, wSum = 0, 0, 0
-                    local nInfl = #inflList
-                    local pxs, pys, ws = {}, {}, {}
-
-                    for k = 1, nInfl do
-                        local infl = inflList[k]
-                        if infl.bindAngle == nil then
-                            -- Missing bind angle on this influence → bail to LBS for this vertex.
-                            pxs = nil
-                            break
-                        end
-                        local body = infl.body
-                        if body and not body:isDestroyed() then
-                            local ax, ay = currentAnchorLocal(infl)
-                            local wx, wy = body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                            local dTheta = body:getAngle() - infl.bindAngle
-                            local w      = infl.w
-                            pxs[k] = wx
-                            pys[k] = wy
-                            ws[k]  = w
-                            cosSum = cosSum + w * cos(dTheta)
-                            sinSum = sinSum + w * sin(dTheta)
-                            wSum   = wSum + w
-                        else
-                            pxs[k] = 0; pys[k] = 0; ws[k] = 0
-                        end
-                    end
-
-                    if not pxs then
-                        -- Fallback for this vertex: LBS
-                        local wxSum, wySum, wSum2 = 0, 0, 0
-                        for k = 1, nInfl do
-                            local infl = inflList[k]
-                            if infl.body and not infl.body:isDestroyed() then
-                                local ax, ay = currentAnchorLocal(infl)
-                                local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                                wxSum = wxSum + wx * infl.w
-                                wySum = wySum + wy * infl.w
-                                wSum2 = wSum2 + infl.w
-                            end
-                        end
-                        if wSum2 > 0 then wxSum = wxSum / wSum2; wySum = wySum / wSum2 end
-                        local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-                        out[(vi - 1) * 2 + 1] = rx
-                        out[(vi - 1) * 2 + 2] = ry
-                    else
-                        -- Blended delta rotation (circular mean).
-                        local len = (cosSum * cosSum + sinSum * sinSum) ^ 0.5
-                        local blendAngle
-                        if len > 1e-9 then
-                            blendAngle = atan2(sinSum / len, cosSum / len)
-                        else
-                            blendAngle = 0
-                        end
-
-                        -- R_blend · bindVert (rotate bind world pos by blended delta, around origin).
-                        local cosB, sinB = cos(blendAngle), sin(blendAngle)
-                        local rbx = cosB * bx - sinB * by
-                        local rby = sinB * bx + cosB * by
-
-                        -- Translation: Σ w_i · (P_i_now - R_blend · bindVert).
-                        local txBlend, tyBlend = 0, 0
-                        for k = 1, nInfl do
-                            txBlend = txBlend + ws[k] * (pxs[k] - rbx)
-                            tyBlend = tyBlend + ws[k] * (pys[k] - rby)
-                        end
-                        if wSum > 0 then
-                            txBlend = txBlend / wSum
-                            tyBlend = tyBlend / wSum
-                        end
-
-                        -- Final world position, then map to root-local.
-                        local fx = rbx + txBlend
-                        local fy = rby + tyBlend
-                        local rx, ry = rootBody:getLocalPoint(fx, fy)
-                        out[(vi - 1) * 2 + 1] = rx
-                        out[(vi - 1) * 2 + 2] = ry
-                    end
-                end
-            end
-
-            return out
-        end
-
-        local function deformWorldVerts(influences, bindVerts, numVerts, rootBody)
-            if lib.useDQS then
-                return deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
-            else
-                return deformWorldVertsLBS(influences, numVerts, rootBody)
-            end
-        end
-
-        -- Rigid single-bone position for vert vi: look up the unpruned rigidLookup
-        -- table (built at bind time) so any painted bone works regardless of
-        -- pruneTopK ranking. Falls back to the pruned influences path if rigidLookup
-        -- is absent (old scene compatibility).
-        local function rigidBoneVertLocal(vi, boneIndex, rigidLookupOrInfluences, rootBody, isLookup)
-            if isLookup then
-                local row = rigidLookupOrInfluences[vi]
-                if not row then return nil end
-                local entry = row[boneIndex]
-                if not entry then return nil end
-                if not entry.body or entry.body:isDestroyed() then return nil end
-                local wx, wy = entry.body:getWorldPoint(entry.lx, entry.ly)
-                return rootBody:getLocalPoint(wx, wy)
-            else
-                -- legacy path: pruned influences table
-                local inflList = rigidLookupOrInfluences[vi]
-                if not inflList then return nil end
-                for k = 1, #inflList do
-                    local infl = inflList[k]
-                    if infl.nodeIndex == boneIndex then
-                        if not infl.body or infl.body:isDestroyed() then return nil end
-                        local ax, ay = currentAnchorLocal(infl)
-                        local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                        return rootBody:getLocalPoint(wx, wy)
-                    end
-                end
-                return nil
-            end
-        end
 
         if drawables[i].type == subtypes.MESHUSERT then
             -- now we need to find a mapping file..

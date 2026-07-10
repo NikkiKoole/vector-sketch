@@ -167,4 +167,27 @@ end
 
 --function lib.createTexFixtureShape(vertexCount)
 
+-- Build a vertIndex -> world (x, y) mapper for a MESHUSERT mesh preview:
+-- centered mesh verts transformed by the sfixture's meshX/Y, scaleX/Y and
+-- meshRot, then into the owning body's world space. Shared by the triangle
+-- editor's hit-testing (input-manager) and its overlay (editor-render).
+function lib.makeMeshVertexMapper(extra, centeredVerts, body)
+    local mx = extra.meshX or 0
+    local my = extra.meshY or 0
+    local sx = extra.scaleX or 1
+    local sy = extra.scaleY or 1
+    local mr = extra.meshRot or 0
+    local cosR, sinR = math.cos(mr), math.sin(mr)
+    return function(vertIndex)
+        local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
+        local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
+        lx = (lx + mx) * sx
+        ly = (ly + my) * sy
+        if mr ~= 0 then
+            lx, ly = lx * cosR - ly * sinR, lx * sinR + ly * cosR
+        end
+        return body:getWorldPoint(lx, ly)
+    end
+end
+
 return lib

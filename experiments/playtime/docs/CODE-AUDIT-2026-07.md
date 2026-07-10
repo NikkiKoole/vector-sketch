@@ -149,9 +149,14 @@ chains, multi-chain assignment/fallback, chain splitting),
 cursor no-refire, orphaned-update guard), `script-loading_spec.lua`
 (exec-once, sandbox isolation, env injection, error paths),
 `joints-recreate_spec.lua` (id/limit/offset/body continuity, overrides,
-rope maxLength, destroyed-joint nil). Still open: snap core
-(`checkForSnaps`/`checkForJointBreaks`) and `box2d-pointerjoints`
-lifecycle (item 5 below).
+rope maxLength, destroyed-joint nil).
+
+**ITEM 5 ALSO DONE 2026-07-10** — `snap_spec.lua` (snap within distance,
+cooldowns, onlyConnectWhenInteracted, stale-body skip, force break +
+cooldown, onSceneLoaded relink; note: break tests must stress with
+opposing velocities — teleports are absorbed by the position solver and
+report ~zero reaction force) and `pointerjoints_spec.lua` (press/release
+lifecycle, sensor-only miss, dead-ref cleanup). Suite: 726.
 
 In order of value:
 
@@ -168,6 +173,16 @@ In order of value:
    `box2d-pointerjoints` lifecycle — the stale-ref failure mode's home turf.
 
 ## Perf notes (behind correctness for an editor)
+
+**ALL DONE 2026-07-10** — debug draw caches `ud`/`shape` once per fixture;
+`debugIds` allocates lazily; drawTexturedWorld's nine per-frame closures
+(incl. the DQS/LBS deform ones, re-created per DRAWABLE) hoisted to module
+scope and the drawables array is reused across frames (per-frame sort
+kept — see DEEPER-ISSUES §3 for the stable-sort question); toolbar is a
+flowing layout (`toolbarButton` cursor) instead of absolute x literals;
+the three duplicated geometry blocks are now shared helpers:
+`fixtures.makeMeshVertexMapper`, `findClosestNode` (input-manager),
+`drawVertexHandles` (editor-render). Original notes below.
 
 - `box2d-draw.lua:158-193` — up to 6 `fixture:getUserData()` FFI calls per
   fixture per frame in debug draw; cache once per fixture.

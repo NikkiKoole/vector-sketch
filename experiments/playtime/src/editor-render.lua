@@ -19,6 +19,38 @@ local NT = require('src.node-types')
 local cdt = require 'src.cdt'
 local lib = {}
 
+-- Grab handles for a flat vertex array, highlighting the one under the
+-- mouse. labels: 'always' prints every vertex index, 'unhovered' prints
+-- only next to non-hovered handles (meta8 flow), nil prints none.
+-- Shared by the polyEdit and texFixtureEdit overlays.
+local function drawVertexHandles(verts, cx, cy, invZoom, labels)
+    local hitR = 10 * invZoom
+    for i = 1, #verts, 2 do
+        local vx = verts[i]
+        local vy = verts[i + 1]
+        local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
+        local hovered = dist < hitR
+        if hovered then
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.circle('fill', vx, vy, 13 * invZoom)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.circle('fill', vx, vy, 11 * invZoom)
+        else
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.setLineWidth(invZoom)
+            love.graphics.circle('line', vx, vy, 12 * invZoom)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.circle('line', vx, vy, 10 * invZoom)
+        end
+        if labels == 'always' or (labels == 'unhovered' and not hovered) then
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.print(math.ceil(i / 2), vx, vy, 0, invZoom, invZoom)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(math.ceil(i / 2), vx - 2 * invZoom, vy - 2 * invZoom, 0, invZoom, invZoom)
+        end
+    end
+end
+
 
 -- drawGrid renders in WORLD space so it must be called inside cam:push().
 -- Line width is divided by the camera scale so grid lines stay visually 1px
@@ -171,30 +203,8 @@ function lib.renderActiveEditorThings()
         -- Scale marker sizes by camera zoom so they stay visually constant
         -- (precise when zoomed in, not giant when zoomed out).
         local invZoom = 1 / cam:getScale()
-        local hitR = 10 * invZoom
 
-        for i = 1, #verts, 2 do
-            local vx = verts[i]
-            local vy = verts[i + 1]
-            local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-            if dist < hitR then
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.circle('fill', vx, vy, 13 * invZoom)
-                love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('fill', vx, vy, 11 * invZoom)
-            else
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.setLineWidth(invZoom)
-                love.graphics.circle('line', vx, vy, 12 * invZoom)
-                love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('line', vx, vy, 10 * invZoom)
-            end
-
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.print(math.ceil(i / 2), vx, vy, 0, invZoom, invZoom)
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.print(math.ceil(i / 2), vx - 2 * invZoom, vy - 2 * invZoom, 0, invZoom, invZoom)
-        end
+        drawVertexHandles(verts, cx, cy, invZoom, 'always')
     end
 
 
@@ -210,32 +220,7 @@ function lib.renderActiveEditorThings()
         local mx, my    = love.mouse:getPosition()
         local cx, cy    = cam:getWorldCoordinates(mx, my)
         local invZoom   = 1 / cam:getScale()
-        local hitR      = 10 * invZoom
-        -- logger:inspect(fixtureUD)
-        for i = 1, #verts, 2 do
-            local vx = verts[i]
-            local vy = verts[i + 1]
-            local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-            if dist < hitR then
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.circle('fill', vx, vy, 13 * invZoom)
-                love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('fill', vx, vy, 11 * invZoom)
-            else
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.setLineWidth(invZoom)
-                love.graphics.circle('line', vx, vy, 12 * invZoom)
-                love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('line', vx, vy, 10 * invZoom)
-
-                if (isMeta8) then
-                    love.graphics.setColor(0, 0, 0)
-                    love.graphics.print(math.ceil(i / 2), vx, vy, 0, invZoom, invZoom)
-                    love.graphics.setColor(1, 1, 1)
-                    love.graphics.print(math.ceil(i / 2), vx - 2 * invZoom, vy - 2 * invZoom, 0, invZoom, invZoom)
-                end
-            end
-        end
+        drawVertexHandles(verts, cx, cy, invZoom, isMeta8 and 'unhovered' or nil)
 
         if (isMeta8) then
             -- index 1 -> 5
@@ -314,23 +299,7 @@ function lib.renderActiveEditorThings()
                 local polyCx, polyCy = mathutils.computeCentroid(baseVerts)
                 local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, polyCx, polyCy)
 
-                local mx = ud.extra.meshX or 0
-                local my = ud.extra.meshY or 0
-                local sx = ud.extra.scaleX or 1
-                local sy = ud.extra.scaleY or 1
-                local mr = ud.extra.meshRot or 0
-                local cosR, sinR = math.cos(mr), math.sin(mr)
-
-                local function worldAt(vertIndex)
-                    local lx = centeredVerts[(vertIndex - 1) * 2 + 1]
-                    local ly = centeredVerts[(vertIndex - 1) * 2 + 2]
-                    lx = (lx + mx) * sx
-                    ly = (ly + my) * sy
-                    if mr ~= 0 then
-                        lx, ly = lx * cosR - ly * sinR, lx * sinR + ly * cosR
-                    end
-                    return body:getWorldPoint(lx, ly)
-                end
+                local worldAt = fixtures.makeMeshVertexMapper(ud.extra, centeredVerts, body)
 
                 if triIdx and #triIdx >= 3 then
                     local selSet = {}
