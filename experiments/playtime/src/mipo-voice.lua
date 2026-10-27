@@ -277,7 +277,10 @@ end
 function lib.update(dt)
     tickFlaps()
     local synth = getSynth()
-    if synth then synth.update(dt, require('src.camera').getInstance()) end
+    if synth then
+        synth.update(dt, require('src.camera').getInstance())
+        require('src.slide-sound').update(synth, now())
+    end
     local t = now()
     for key, at in pairs(impactPairs) do
         if t - at > lib.impactPairCooldown then impactPairs[key] = nil end

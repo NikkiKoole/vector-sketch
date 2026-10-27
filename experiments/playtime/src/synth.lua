@@ -17,12 +17,14 @@ lib.reverbDamping = 0.5  -- 0 bright .. 1 dark tail
 -- instrument ids from dreamengine runtime/studio.h (#defines don't come through FFI)
 lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
-    PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22,
+    PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, PIPE = 25,
     GUITAR = 26, PIANO = 27, BOWED = 28, MODAL = 31, METAL = 34,
 }
 
 -- Named patches in instrument slots 5..47: wave, attack/decay ms, sustain 0..7, release ms, macros,
--- reverb send 0..1, level 0..1 (balances engines: some run much hotter), optional engine modes and filter.
+-- reverb send 0..1, level 0..1 (balances engines: some run much hotter), optional engine modes and filter,
+-- glide ms (held notes slide to a new pitch over this long), tape { wow, flutter, saturation, warble } 0..1
+-- (a cassette on just this slot; warble = a worn tape that sags now and then).
 lib.patches = {
     tom  = { slot = 5, wave = 'MEMBRANE', adsr = { 0, 400, 0, 200 },
              harmonics = 0.3, timbre = 0.35, morph = 0, reverb = 0.3 },
@@ -33,6 +35,11 @@ lib.patches = {
     bass = { slot = 7, wave = 'BOWED', adsr = { 4, 0, 7, 475 },
              harmonics = 0.3, timbre = 0.3, morph = 0.45, reverb = 0.2, level = 0.8,
              modes = { [0] = 1, [1] = 0.85, [2] = 1 }, filter = { mode = 1, cutoff = 1490, resonance = 3 } },
+    -- slide whistle: the blown pipe (in tune at morph 0.7), held and glided (src/slide-sound.lua).
+    -- Breathy (timbre = breath air) and on a wobbly cassette, so it sounds less like a pure synth.
+    whistle = { slot = 8, wave = 'PIPE', adsr = { 30, 0, 7, 120 },
+                harmonics = 0.3, timbre = 0.65, morph = 0.7, reverb = 0.25, level = 0.25, glide = 40,
+                tape = { wow = 0.5, flutter = 0.3, saturation = 0.3, warble = 0.3 } },
 }
 
 local CDEF = [[
@@ -52,6 +59,14 @@ void reverb(float size, float damping);
 void instrument_reverb(int slot, float send);
 void instrument_mode(int slot, int idx, float value);
 void instrument_filter(int slot, int mode, int cutoff_hz, int resonance);
+void instrument_glide(int slot, int ms);
+void instrument_tape(int slot, float wow, float flutter, float saturation);
+void instrument_tape_warble(int slot, float amount);
+int  note_on(int midi, int instr, int vol);
+void note_off(int handle);
+void note_pitch(int handle, float midi);
+void note_vol(int handle, float vol);
+void note_pos(int handle, float x, float y);
 ]]
 -- At load, so a hot reload can add functions. Redeclaring an identical function is allowed.
 pcall(ffi.cdef, CDEF)
@@ -73,6 +88,11 @@ local function definePatches()
         for idx, value in pairs(patch.modes or {}) do S.C.instrument_mode(patch.slot, idx, value) end
         local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
         S.C.instrument_filter(patch.slot, filter.mode, filter.cutoff, filter.resonance)
+        S.C.instrument_glide(patch.slot, patch.glide or 0)
+        if patch.tape then
+            S.C.instrument_tape(patch.slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
+            S.C.instrument_tape_warble(patch.slot, patch.tape.warble or 0)
+        end
     end
 end
 
@@ -150,6 +170,29 @@ function lib.hit(patchName, midi, vol, durMs, x, y)
     else
         S.C.hit(midi, patch.slot, vol, durMs)
     end
+end
+
+-- Held notes. noteOn returns a handle (nil when the synth isn't running); vol 0..7, fractions OK.
+-- A handle whose voice was stolen just stops responding, so a stale one is harmless.
+function lib.noteOn(patchName, midi, vol, x, y)
+    if not S.started then return nil end
+    local patch = lib.patches[patchName]
+    if not patch then return nil end
+    local handle = S.C.note_on(midi, patch.slot, math.max(0, math.min(7, math.floor(vol + 0.5))))
+    if x then S.C.note_pos(handle, x, y) end
+    return handle
+end
+
+-- Changes a held note live; pass nil to leave a value as it is. The engine slews each change.
+function lib.noteSet(handle, midi, vol, x, y)
+    if not (S.started and handle) then return end
+    if midi then S.C.note_pitch(handle, midi) end
+    if vol then S.C.note_vol(handle, math.max(0, math.min(7, vol))) end
+    if x then S.C.note_pos(handle, x, y) end
+end
+
+function lib.noteOff(handle)
+    if S.started and handle then S.C.note_off(handle) end
 end
 
 -- A hot reload (lurker) of this file re-applies the patches, so saving a tweak is audible right away.
