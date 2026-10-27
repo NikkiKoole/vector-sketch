@@ -3101,12 +3101,23 @@ function lib.drawTexturedWorld(world)
             if body and not body:isDestroyed() then
                 local ox, oy = extra.ox or 0, extra.oy or 0
                 if extra.lookAtMouse and extra.eyeW then
-                    local mx, my = love.mouse.getPosition()
-                    local wmx, wmy = cam:getWorldCoordinates(mx, my)
+                    -- per-Mipo gaze (src/mipo-actions.lua) looks fully that way;
+                    -- without one, follow the mouse with a distance falloff
+                    local bud = body:getUserData()
+                    local gazeThing = bud and bud.thing
                     local ecx, ecy = body:getPosition()
-                    local dx, dy = wmx - ecx, wmy - ecy
-                    local dist = math.sqrt(dx * dx + dy * dy)
-                    local t = math.max(0, 1 - dist / gazeRadius)
+                    local dx, dy, t
+                    if gazeThing and gazeThing.gazeX then
+                        dx, dy = gazeThing.gazeX - ecx, gazeThing.gazeY - ecy
+                        local dist = math.sqrt(dx * dx + dy * dy)
+                        t = math.min(1, dist / 40)
+                    else
+                        local mx, my = love.mouse.getPosition()
+                        local wmx, wmy = cam:getWorldCoordinates(mx, my)
+                        dx, dy = wmx - ecx, wmy - ecy
+                        local dist = math.sqrt(dx * dx + dy * dy)
+                        t = math.max(0, 1 - dist / gazeRadius)
+                    end
                     if t > 0 then
                         local angle = math.atan2(dy, dx)
                         local localAngle = angle - body:getAngle()

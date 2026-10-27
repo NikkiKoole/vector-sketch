@@ -30,7 +30,10 @@ tick it here when it's done.
 - [ ] **F4. Load *your* Mipo**: spawn characters from saved DNA/JSON
   (`characterManager.createCharacterFromJustDNA`). Puppetmaker-style continuity:
   the Mipo you made shows up in the world.
-- [ ] **F5. Per-Mipo gaze target** (the "aware" part): right now the pupils follow the
+- [x] **F5. Per-Mipo gaze target** (2026-10-27): `mipoActions.lookAt(mipo, target)` / `stopLooking`.
+  Without one: what it points at, else the cursor/finger within 1000, else it looks around
+  every 1.5-4s. Pupils read `thing.gazeX/Y` on the face part; the head tilts up to 20 deg
+  toward the gaze. Original note: (the "aware" part): right now the pupils follow the
   **mouse**, and that's hardwired in the renderer
   (`box2d-draw-textured.lua` ~3096, `love.mouse.getPosition()`). Change this to
   `instance.gazeTarget = {x, y}` (or nil). Then a small "attention" function

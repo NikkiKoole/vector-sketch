@@ -115,6 +115,16 @@ describe('src.mipo-actions', function()
         assert.is_false(mipoActions.isPointing(instance))
     end)
 
+    it('looks at a lookAt target and tilts its head toward it', function()
+        local hx, hy = instance.parts.head.body:getPosition()
+        mipoActions.lookAt(instance, { hx - 800, hy })
+        for _ = 1, 30 do mipoActions.update() end
+        local head = instance.parts.head
+        assert.is_true(head.gazeX < hx)
+        assert.is_true(mipoActions.getKeepAngle(head).angle < 0)
+        mipoActions.stopLooking(instance)
+    end)
+
     it('knows which limb a part belongs to', function()
         assert.are.equal('lleg', mipoActions.limbOf('lfoot'))
         assert.are.equal('rarm', mipoActions.limbOf('rlarm'))

@@ -490,6 +490,76 @@ local function poseArms(instance)
     instance._pointedSide = pointingSide and 'both' or nil
 end
 
+-- Gaze: each Mipo looks at something. An explicit lookAt target first, else
+-- what it points at, else the cursor/finger when near, else it looks around.
+-- The pupils (src/physics/box2d-draw-textured.lua) read thing.gazeX/gazeY on
+-- the face-owner part; the head tilts a little toward the gaze.
+lib.gaze = true
+lib.gazeCursorRadius = 1000      -- the cursor/finger is noticed within this distance
+lib.gazeWanderEvery = { 1.5, 4 } -- seconds between idle look-arounds
+lib.gazeWanderRadius = 500       -- how far around itself it looks when idle
+lib.gazeSpeed = 8                -- how fast the gaze follows (1/s)
+lib.headTilt = 20                -- max head tilt toward the gaze (degrees)
+lib.headTiltRange = 600          -- horizontal distance that gives the full tilt
+
+function lib.lookAt(instance, target)
+    instance._lookTarget = target
+end
+
+function lib.stopLooking(instance)
+    instance._lookTarget = nil
+end
+
+local function facePart(instance)
+    return instance.parts.head or instance.parts.torso1
+end
+
+local function gazeGoal(instance, now)
+    local face = facePart(instance)
+    if not face or not face.body or face.body:isDestroyed() then return nil end
+    local fx, fy = face.body:getPosition()
+    local x, y = resolveTarget(instance._lookTarget)
+    if x then return x, y end
+    x, y = resolveTarget(instance._pointTarget)
+    if x then return x, y end
+    x, y = resolveTarget('cursor')
+    if x and (x - fx) ^ 2 + (y - fy) ^ 2 < lib.gazeCursorRadius ^ 2 then return x, y end
+    if not instance._wanderAt or now >= instance._wanderAt then
+        local angle = love.math.random() * 2 * math.pi
+        local r = lib.gazeWanderRadius * (0.3 + 0.7 * love.math.random())
+        instance._wanderDX, instance._wanderDY = math.cos(angle) * r, math.sin(angle) * r * 0.5
+        instance._wanderAt = now + randomIn(lib.gazeWanderEvery)
+    end
+    return fx + instance._wanderDX, fy + instance._wanderDY
+end
+
+local function updateGaze(instance, now)
+    local face = facePart(instance)
+    if not lib.gaze or not face then return end
+    local gx, gy = gazeGoal(instance, now)
+    if not gx then return end
+    local dt = math.min(0.1, now - (instance._gazeTime or now))
+    instance._gazeTime = now
+    if not face.gazeX then face.gazeX, face.gazeY = gx, gy end
+    local k = math.min(1, lib.gazeSpeed * dt)
+    face.gazeX = face.gazeX + (gx - face.gazeX) * k
+    face.gazeY = face.gazeY + (gy - face.gazeY) * k
+
+    -- head tilt: top of the head leans toward what it looks at
+    local head = instance.parts.head
+    local b = head and lib.getKeepAngle(head)
+    if b then
+        local tilt = 0
+        if not instance._isRagdoll and not instance._isFlipped and not instance._dazedUntil then
+            local hx = head.body:getPosition()
+            local f = math.max(-1, math.min(1, (face.gazeX - hx) / lib.headTiltRange))
+            tilt = f * lib.headTilt
+        end
+        local base = instance._isFlipped and 180 or 0
+        b.angle = base + tilt
+    end
+end
+
 -- A part is limp (thing.limp, honoured by keep-angle) while its limb is held or
 -- the Mipo slumps (legs only).
 local function updateLimp(now)
@@ -510,6 +580,7 @@ local function updateLimp(now)
     end
     for _, instance in pairs(mipoRegistry.getAll()) do
         updateIdle(instance, now)
+        updateGaze(instance, now)
         local held = heldLimbs[instance] or {}
         local slumping = instance._slumpUntil ~= nil
         for limb, names in pairs(limbs) do
