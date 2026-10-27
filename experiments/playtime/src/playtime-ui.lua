@@ -21,7 +21,6 @@ local sceneLoader = require 'src.scene-loader'
 local subtypes = require 'src.subtypes'
 local SE = require('src.script-events')
 local behaviors = require 'src.behaviors'
-local signals = require('src.signals')
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
 local uiShapePanel = require('src.ui.shape-panel')
@@ -528,17 +527,13 @@ function lib.drawUI()
                             state.panelVisibility.customBehaviorDescription = lookup.description
                         end
                     end
-                    -- compare the generic inspector with the old hand-made panel (plan slice 1)
-                    if lookup.params and ui.button(285, 50, 55, inspector.enabled and 'new' or 'old') then
-                        inspector.enabled = not inspector.enabled
-                    end
                 end
 
 
                 ui.scrollableList('custombehaviors', 50, 100, 280, 250,
                     function(baseX, baseY, listW, _h, offsetY)
                         local behaviorBody = state.panelVisibility.customBehavior.body
-                        if lookup and lookup.params and inspector.enabled then
+                        if lookup and lookup.params then
                             local bodyThing = behaviorBody:getUserData().thing
                             local target
                             for _, behavior in ipairs(bodyThing.behaviors or {}) do
@@ -559,92 +554,6 @@ function lib.drawUI()
                             end
                             return used + inspector.rowHeight + 10
                         end
-                        if state.panelVisibility.customBehavior.name == 'KEEP_ANGLE' then
-                            local myID        = state.selection.selectedObj.id
-                            local myUD        = state.panelVisibility.customBehavior.body:getUserData()
-                            local myBehaviors = myUD.thing.behaviors or {}
-                            local b           = nil
-                            for i = 1, #myBehaviors do
-                                if (myBehaviors[i].name == 'KEEP_ANGLE') then
-                                    b = myBehaviors[i]
-                                end
-                            end
-                            --logger:inspect(myBehaviors)
-
-                            if b then
-                                ui.createSliderWithId(myID, 'speed', 100, 100, 100, 0, 500,
-                                    b.speed or 0,
-                                    function(v) b.speed = v end)
-                            end
-
-                            if b then
-                                ui.createSliderWithId(myID, 'angle', 100, 150, 100, -360, 360,
-                                    b.angle or 0,
-                                    function(v) b.angle = v end)
-                            end
-                            if b then
-                                if ui.button(100, 200, 150, 'remove') then
-                                    myUD.thing.behaviors = {}
-                                end
-                            end
-                        end
-
-                        if state.panelVisibility.customBehavior.name == 'SQUISHY' then
-                            local myUD = state.panelVisibility.customBehavior.body:getUserData()
-                            if ui.button(100, 100, 150, 'remove') then
-                                local kept = {}
-                                for _, behavior in ipairs(myUD.thing.behaviors or {}) do
-                                    if behavior.name ~= 'SQUISHY' then table.insert(kept, behavior) end
-                                end
-                                myUD.thing.behaviors = kept
-                                state.panelVisibility.customBehavior = false
-                            end
-                        end
-
-
-                        local signalBehaviorName = state.panelVisibility.customBehavior.name
-                        if signalBehaviorName == 'SIGNAL_BUTTON' or signalBehaviorName == 'SIGNAL_GATE'
-                            or signalBehaviorName == 'SIGNAL_PLATE' or signalBehaviorName == 'SIGNAL_SOCKET' then
-                            local sigBody = state.panelVisibility.customBehavior.body
-                            local sigUD = sigBody:getUserData()
-                            local sb
-                            for _, behavior in ipairs(sigUD.thing.behaviors or {}) do
-                                if behavior.name == signalBehaviorName then sb = behavior end
-                            end
-                            if sb then
-                                ui.label(100, 100, 'signal')
-                                local t = ui.textinput('signal_' .. tostring(sigUD.thing.id), 170, 95, 150, 40,
-                                    'signal1', sb.signal or '')
-                                if t then sb.signal = t:gsub('%s', '') end
-                                if signalBehaviorName == 'SIGNAL_BUTTON' then
-                                    if ui.button(100, 150, 150, 'send now') then signals.emit(sb.signal) end
-                                elseif signalBehaviorName == 'SIGNAL_PLATE'
-                                    or signalBehaviorName == 'SIGNAL_SOCKET' then
-                                    if ui.button(100, 150, 150, 'mode: ' .. (sb.mode or 'hold')) then
-                                        sb.mode = (sb.mode == 'toggle') and 'hold' or 'toggle'
-                                    end
-                                    if signalBehaviorName == 'SIGNAL_SOCKET' then
-                                        ui.label(260, 150, 'accepts')
-                                        local acc = ui.textinput('accepts_' .. tostring(sigUD.thing.id), 340, 145,
-                                            110, 40, 'any', sb.accepts or '')
-                                        if acc then sb.accepts = acc:gsub('%s', '') end
-                                    end
-                                else
-                                    if ui.button(100, 150, 150, sb.open and 'open' or 'closed') then
-                                        signals.setGate(sigBody, not sb.open)
-                                    end
-                                end
-                                if ui.button(100, 200, 150, 'remove') then
-                                    local kept = {}
-                                    for _, behavior in ipairs(sigUD.thing.behaviors or {}) do
-                                        if behavior ~= sb then table.insert(kept, behavior) end
-                                    end
-                                    sigUD.thing.behaviors = kept
-                                    state.panelVisibility.customBehavior = false
-                                end
-                            end
-                        end
-
                         if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
                             -- we can assume all these type of other things are attached via revolute joints
                             local me = state.panelVisibility.customBehavior.body

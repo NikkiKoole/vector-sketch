@@ -68,9 +68,12 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
   Not yet: clicking. The UI reads `love.mouse` directly, so neither specs nor the bridge's
   `/input/click` can press a button; a fake-pointer hook in `ui.startFrame` would fix both.
 
+- **Kept (2026-10-27)**: Nikki liked the behavior, joint and body panels; the old
+  hand-made code and the old/new buttons are deleted (`src/ui/joint-update.lua` 380 -> 28
+  lines, `src/ui/body-editor.lua` 658 -> ~290, the SIGNAL_*/KEEP_ANGLE/SQUISHY branches in
+  `src/playtime-ui.lua`).
+
 ## Next step
 
-Play with both (behavior + joint panels) for a session: keep → delete the old branches
-(`src/playtime-ui.lua` SIGNAL_*/KEEP_ANGLE, the old bodies of `src/ui/joint-update.lua` and
-`src/ui/body-editor.lua`),
-or revert. Then slice 3 (library v0), and add the fake-pointer hook when it needs clicks.
+Convert the rest the same way: sfixtures (`src/ui/sfixture-editor.lua`, 9 kinds, the big
+one) and world settings. Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.

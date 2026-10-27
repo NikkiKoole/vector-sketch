@@ -6,7 +6,6 @@ local ui = require('src.ui.all')
 
 local lib = {}
 
-lib.enabled = true -- false: the old hand-made behavior panels (src/playtime-ui.lua)
 lib.labelWidth = 90
 lib.rowHeight = 45
 

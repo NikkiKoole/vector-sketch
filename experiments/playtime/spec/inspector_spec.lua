@@ -2,7 +2,7 @@
 -- The inspector (src/ui/inspector.lua) draws settings declared as data
 -- (src/joint-params.lua, src/body-params.lua, src/behaviors.lua), so one loop tests them all:
 --   round trip: set(value) on a real joint, then get() returns it;
---   drawing: every panel, '+ more' open, draws without errors (old panels too).
+--   drawing: every panel, '+ more' open, draws without errors.
 -- Run with: love . --specs spec/inspector_spec.lua
 
 if not love then return end
@@ -34,7 +34,7 @@ local function renderToCanvas(fn)
 end
 
 describe('inspector', function()
-    local world, savedEnabled, savedMode
+    local world, savedMode
 
     setup(function()
         local font = love.graphics.newFont(12)
@@ -46,12 +46,12 @@ describe('inspector', function()
         world = love.physics.newWorld(0, 0, true)
         state.physicsWorld = world
         registry.reset()
-        savedEnabled, savedMode = inspector.enabled, state.currentMode
+        savedMode = state.currentMode
         ui.startFrame()
     end)
 
     after_each(function()
-        inspector.enabled, state.currentMode = savedEnabled, savedMode
+        state.currentMode = savedMode
         state.selection.selectedJoint = nil
         state.selection.selectedObj = nil
         if world and not world:isDestroyed() then world:destroy() end
@@ -104,7 +104,7 @@ describe('inspector', function()
             end
         end)
 
-        it(jointType .. ': the panel draws, new (all rows open) and old', function()
+        it(jointType .. ': the panel draws with all rows open', function()
             local joint = makeJoint(jointType)
             state.selection.selectedObj = joint:getBodies():getUserData().thing
             -- show every row: limits and motor on
@@ -112,13 +112,10 @@ describe('inspector', function()
                 if row.key == 'limits' or row.key == 'motor' then row.set(joint, true) end
             end
             inspector.setFoldOpen('joint_' .. tostring(joints.getJointId(joint)), true)
-            for _, enabled in ipairs({ true, false }) do
-                inspector.enabled = enabled
-                local ok, err = renderToCanvas(function()
-                    uiJointUpdate.drawJointUpdateUI(joint, 880, 20, 300, 728)
-                end)
-                assert.is_true(ok, jointType .. (enabled and ' new' or ' old') .. ': ' .. tostring(err))
-            end
+            local ok, err = renderToCanvas(function()
+                uiJointUpdate.drawJointUpdateUI(joint, 880, 20, 300, 728)
+            end)
+            assert.is_true(ok, jointType .. ': ' .. tostring(err))
         end)
     end
 
@@ -199,14 +196,11 @@ describe('inspector', function()
             end
         end)
 
-        it('body (' .. shape .. '): the panel draws, new (all rows open) and old', function()
+        it('body (' .. shape .. '): the panel draws with all rows open', function()
             local thing = makeThing()
             inspector.setFoldOpen('body_' .. tostring(thing.id), true)
-            for _, enabled in ipairs({ true, false }) do
-                inspector.enabled = enabled
-                local ok, err = renderToCanvas(function() bodyEditor.drawUpdateSelectedObjectUI() end)
-                assert.is_true(ok, shape .. (enabled and ' new' or ' old') .. ': ' .. tostring(err))
-            end
+            local ok, err = renderToCanvas(function() bodyEditor.drawUpdateSelectedObjectUI() end)
+            assert.is_true(ok, shape .. ': ' .. tostring(err))
         end)
     end
 
