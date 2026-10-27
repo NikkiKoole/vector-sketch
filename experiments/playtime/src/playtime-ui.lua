@@ -577,7 +577,7 @@ function lib.drawUI()
 
                         local signalBehaviorName = state.panelVisibility.customBehavior.name
                         if signalBehaviorName == 'SIGNAL_BUTTON' or signalBehaviorName == 'SIGNAL_GATE'
-                            or signalBehaviorName == 'SIGNAL_PLATE' then
+                            or signalBehaviorName == 'SIGNAL_PLATE' or signalBehaviorName == 'SIGNAL_SOCKET' then
                             local sigBody = state.panelVisibility.customBehavior.body
                             local sigUD = sigBody:getUserData()
                             local sb
@@ -591,9 +591,16 @@ function lib.drawUI()
                                 if t then sb.signal = t:gsub('%s', '') end
                                 if signalBehaviorName == 'SIGNAL_BUTTON' then
                                     if ui.button(100, 150, 150, 'send now') then signals.emit(sb.signal) end
-                                elseif signalBehaviorName == 'SIGNAL_PLATE' then
+                                elseif signalBehaviorName == 'SIGNAL_PLATE'
+                                    or signalBehaviorName == 'SIGNAL_SOCKET' then
                                     if ui.button(100, 150, 150, 'mode: ' .. (sb.mode or 'hold')) then
                                         sb.mode = (sb.mode == 'toggle') and 'hold' or 'toggle'
+                                    end
+                                    if signalBehaviorName == 'SIGNAL_SOCKET' then
+                                        ui.label(260, 150, 'accepts')
+                                        local acc = ui.textinput('accepts_' .. tostring(sigUD.thing.id), 340, 145,
+                                            110, 40, 'any', sb.accepts or '')
+                                        if acc then sb.accepts = acc:gsub('%s', '') end
                                     end
                                 else
                                     if ui.button(100, 150, 150, sb.open and 'open' or 'closed') then

@@ -11,6 +11,8 @@ lib.allBehaviors = {
       description = 'tap it to send its signal (default gate1) to receivers (src/signals.lua).' },
     { name = 'SIGNAL_PLATE',
       description = 'pressure plate: anything resting on it sends its signal; hold mode sends again when free.' },
+    { name = 'SIGNAL_SOCKET',
+      description = 'socket: something snapped onto it (not a Mipo hand; label = accepts if set) sends its signal.' },
     { name = 'SIGNAL_GATE',
       description = 'a body on a prismatic joint; toggles open/closed on its signal (src/signals.lua).' },
     { name = 'SQUISHY',

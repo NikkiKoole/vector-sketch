@@ -218,7 +218,9 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
 - [x] **Climbing wall + snap blocks** (2026-10-27): `props.makeClimbingWall` (sensor board + 28 holds with
   snap points), `props.makeSnapBlock` (snap points on 4 sides). Both are in the toy box.
 - [ ] **Hats**: a snap point on the head, and a hat that clicks on.
-- [ ] **Snap as a trigger**: a socket that sends a signal when something snaps in.
+- [x] **Snap as a trigger**: a socket that sends a signal when something snaps in.
+  `SIGNAL_SOCKET` behavior (`signal`, `mode` hold/toggle, `accepts` = label, empty = anything);
+  Mipo hands don't count. Toys: `socket` + `key` (`props.makeSocket` / `props.makeKey`).
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
 

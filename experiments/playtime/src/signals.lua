@@ -6,6 +6,8 @@
 --   { name = 'SIGNAL_BUTTON', signal = 'gate1' }             tap it -> sends 'gate1'
 --   { name = 'SIGNAL_PLATE',  signal = 'gate1', mode = 'hold' } something resting on it
 --        sends 'gate1'; 'hold' sends again when it's free (gate closes), 'toggle' only on press
+--   { name = 'SIGNAL_SOCKET', signal = 'gate1', mode = 'hold', accepts = 'key' } something
+--        snapped onto it (src/physics/snap.lua; not a Mipo hand, label = accepts if set)
 --   { name = 'SIGNAL_GATE',   signal = 'gate1', open = false } prismatic gate: toggles
 local state = require('src.state')
 
@@ -124,7 +126,7 @@ end
 -- Editor overlay (drawn in world space while paused): a line from every trigger
 -- to every receiver on the same signal, its name halfway. Wires touching the
 -- selected body are drawn thicker.
-local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true }
+local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true, SIGNAL_SOCKET = true }
 
 function lib.drawWires(selectedBody)
     if not state.physicsWorld then return end
@@ -177,24 +179,54 @@ local function plateIsPressed(body)
     return false
 end
 
+-- Sockets: filled while something is snapped onto the body. Mipo hands don't
+-- count (grabbing the lock isn't a key); `accepts` limits it to one label.
+local socketWasFilled = setmetatable({}, { __mode = 'k' }) -- [body] = bool
+
+local function socketIsFilled(body, socket, snapJoints)
+    local mipoRegistry = require('src.mipo-registry')
+    for _, joint in ipairs(snapJoints) do
+        local a, b = joint:getBodies()
+        local other = (a == body and b) or (b == body and a) or nil
+        if other and not mipoRegistry.getFromBody(other) then
+            local oud = other:getUserData()
+            local label = oud and oud.thing and oud.thing.label
+            if not socket.accepts or socket.accepts == '' or label == socket.accepts then return true end
+        end
+    end
+    return false
+end
+
+-- A trigger changed state: on -> click + send; off -> send again unless 'toggle'.
+local function edge(store, body, behavior, now)
+    local was = store[body]
+    if was == nil then
+        store[body] = now -- first look after a load: no signal
+    elseif now ~= was then
+        store[body] = now
+        if now or behavior.mode ~= 'toggle' then
+            if now then playClick() end
+            lib.emit(behavior.signal)
+        end
+    end
+end
+
 function lib.update()
     if not state.physicsWorld then return end
+    local snapJoints = nil
     for _, body in ipairs(state.physicsWorld:getBodies()) do
+        local socket = findBehavior(body, 'SIGNAL_SOCKET')
+        if socket then
+            snapJoints = snapJoints or require('src.physics.snap').joints()
+            edge(socketWasFilled, body, socket, socketIsFilled(body, socket, snapJoints))
+        end
         local plate = findBehavior(body, 'SIGNAL_PLATE')
         if plate then
             local touching = plateIsPressed(body)
             plateFreeFrames[body] = touching and 0 or (plateFreeFrames[body] or 0) + 1
             local was = plateWasPressed[body]
             local pressed = touching or (was and plateFreeFrames[body] < lib.plateReleaseFrames) or false
-            if was == nil then
-                plateWasPressed[body] = touching -- first look after a load: no signal
-            elseif pressed ~= was then
-                plateWasPressed[body] = pressed
-                if pressed or plate.mode ~= 'toggle' then
-                    if pressed then playClick() end
-                    lib.emit(plate.signal)
-                end
-            end
+            edge(plateWasPressed, body, plate, was == nil and touching or pressed)
         end
     end
 end

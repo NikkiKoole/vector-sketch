@@ -123,6 +123,8 @@ function lib.drawAddShapeUI()
                 end },
                 { 'plate', function(wx, wy) return { props.makePlate(wx, wy, 'signal1', 'hold', 1) } end },
                 { 'snap block', function(wx, wy) return { props.makeSnapBlock(wx, wy, 1) } end },
+                { 'socket', function(wx, wy) return { props.makeSocket(wx, wy, 'signal1', 'key', 'hold', 1) } end },
+                { 'key', function(wx, wy) return { props.makeKey(wx, wy, 1) } end },
                 { 'climbing wall', function(wx, wy)
                     local board, holds = props.makeClimbingWall(wx, wy, 1)
                     local things = { board }

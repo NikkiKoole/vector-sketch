@@ -209,6 +209,32 @@ function lib.makeClimbingWall(x, floorY, scale)
     return board, holds
 end
 
+-- A socket: a fixed holder with a snap point on top. Something clicked onto it
+-- (not a Mipo hand; only label `accepts` if given) sends `signal`.
+function lib.makeSocket(x, floorY, signal, accepts, mode, scale)
+    local s = scale or 1
+    local h = 160 * s
+    local socket = objectManager.addThing('rectangle', {
+        x = x, y = floorY - h / 2, width = 140 * s, height = h, bodyType = 'static', label = 'socket' })
+    if not socket then return nil end
+    setMaterial(socket.body, 0.9, 0, nil)
+    require('src.physics.snap').addPoint(socket.body, 0, -h / 2, 12 * s)
+    socket.behaviors = { { name = 'SIGNAL_SOCKET', signal = signal or 'gate1', mode = mode or 'hold',
+        accepts = accepts } }
+    return socket
+end
+
+-- A key: a small block with a snap point underneath, for a socket that accepts 'key'.
+function lib.makeKey(x, y, scale)
+    local s = scale or 1
+    local w, h = 90 * s, 120 * s
+    local key = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h, label = 'key' })
+    if not key then return nil end
+    setMaterial(key.body, 0.8, 0.1, 1)
+    require('src.physics.snap').addPoint(key.body, 0, h / 2, 12 * s)
+    return key
+end
+
 -- A block with snap points on all four sides: click blocks together into rows,
 -- towers or a train (the rectangles from the snap test scene).
 function lib.makeSnapBlock(x, y, scale)

@@ -9,6 +9,7 @@ local props = require('src.props')
 local signals = require('src.signals')
 local joints = require('src.joints')
 local objectManager = require('src.object-manager')
+local snap = require('src.physics.snap')
 
 describe('src.signals + props gate/button', function()
     local world, base
@@ -110,5 +111,50 @@ describe('src.signals + props gate/button', function()
         props.makeBall(-300, -82, 50) -- resting on the plate from the start
         step(30)
         assert.is_false(gate.behaviors[1].open)
+    end)
+
+    describe('sockets (snap as a trigger)', function()
+        local savedConnect
+        before_each(function()
+            savedConnect = state.snap.onlyConnectWhenInteracted
+            state.snap.onlyConnectWhenInteracted = false
+            snap.reset()
+        end)
+        after_each(function() state.snap.onlyConnectWhenInteracted = savedConnect end)
+
+        local function tick(n)
+            for _ = 1, n or 1 do
+                world:update(1 / 60)
+                snap.update(1 / 60)
+                signals.update()
+            end
+        end
+
+        it('a key clicked into the socket opens the gate; pulled out (hold) closes it', function()
+            local gate = props.makeGate(base, 300, -20, 's1')
+            local socket = props.makeSocket(-300, -20, 's1', 'key', 'hold')
+            tick()
+            local sx, sy = socket.body:getPosition()
+            local key = props.makeKey(sx, sy - 80 - 60 - 20)
+            key.body:setGravityScale(0)
+            tick(2)
+            assert.are.equal(1, #snap.joints())
+            assert.is_true(gate.behaviors[1].open)
+            snap.destroySnapJointAboutBody(key.body)
+            tick(2)
+            assert.is_false(gate.behaviors[1].open)
+        end)
+
+        it('a block that is not a key does nothing in a key-only socket', function()
+            local gate = props.makeGate(base, 300, -20, 's2')
+            local socket = props.makeSocket(-300, -20, 's2', 'key', 'hold')
+            tick()
+            local sx, sy = socket.body:getPosition()
+            local block = props.makeSnapBlock(sx, sy - 80 - 55 - 15)
+            block.body:setGravityScale(0)
+            tick(2)
+            assert.is_true(#snap.joints() >= 1)
+            assert.is_false(gate.behaviors[1].open)
+        end)
     end)
 end)
