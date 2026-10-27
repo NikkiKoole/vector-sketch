@@ -138,6 +138,14 @@ recording and tuning happen; playtime gets a copy of the engine and the cut samp
 - [ ] **V6. `mipo:say("mi mo jo")`**: full phrases plus the script-sandbox API. The
   glossary (`MI` = I, `MO` = love, `JO` = you) makes the babble mean something.
 
+### Sound library (in `assets/sounds/`, see its README for sources)
+
+- In use: rubber plonks + Minipops `tom1/tom2/wood1` mixed as the impact pool.
+- Waiting for an interaction: Minipops `bd1-3` (heavy thud on big landings?), `sd1-3`,
+  `hihat1-2`; Casio MT70 drums, `hat-clave`/`snare-clave` (switches, buttons?),
+  `vibraphone hi/mid/low` (2s tones for a reveal or a happy moment).
+- Before shipping: confirm the Minipops source and the Legowelt terms.
+
 ## Other ideas (shooting, not committing)
 
 - **Carry-over from Puppetmaker**: a "made in Puppetmaker" import code (see

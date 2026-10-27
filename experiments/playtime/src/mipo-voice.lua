@@ -16,10 +16,13 @@ lib.volume = 0.8
 lib.cooldown = 0.15      -- seconds between squeaks of the same Mipo
 lib.impactCooldown = 0.5 -- seconds between impact 'oof's of the same Mipo
 lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured: small hop ~550, 800-unit drop ~2500
--- Impact sounds. Speeds are velocity changes (world units/s); a hit at `soft`
+-- Impact sounds (files relative to assets/sounds/, see its README for sources).
+-- Speeds are velocity changes (world units/s); a hit at `soft`
 -- plays at pitch[1]/volume[1], at `hard` and above at pitch[2]/volume[2].
 lib.impactSounds = {
-    plonk = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3' },
+    -- rubber plonks mixed with Korg Minipops toms/wood block (short wooden 'toks')
+    plonk = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3',
+                        'korg-minipops/tom1', 'korg-minipops/tom2', 'korg-minipops/wood1' },
               soft = 400, hard = 4000, pitch = { 2, 1 }, volume = { 0.2, 0.8 } },
     kiss  = { files = { 'winegum-kiss1', 'winegum-kiss2', 'winegum-kiss3', 'winegum-kiss4', 'winegum-kiss5' },
               soft = 150, hard = 1500, pitch = { 2, 0.25 }, volume = { 0.2, 1 } },
