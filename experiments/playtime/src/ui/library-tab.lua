@@ -53,7 +53,12 @@ function lib.draw(x, y, w, h)
                 rowY = rowY + rowH + 6
             end
 
-            ui.label(rowX, rowY, 'prefabs')
+            ui.alignedLabel(rowX, rowY, 'prefabs')
+            -- rename or delete prefabs in Finder
+            if ui.button(rowX + rowW - 110, rowY, 110, 'open folder') then
+                love.filesystem.createDirectory(library.DIR)
+                love.system.openURL('file://' .. love.filesystem.getSaveDirectory() .. '/' .. library.DIR)
+            end
             rowY = rowY + rowH + 4
             local names = library.list()
             if #names == 0 then
