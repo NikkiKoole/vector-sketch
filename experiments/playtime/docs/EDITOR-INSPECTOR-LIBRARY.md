@@ -152,10 +152,11 @@ button + gate stayed on `gate1` and worked the original gate too. Now `signals.r
 gives a copy its own name (`gate1 -> gate2`) for each signal it holds *both* ends of; a copy
 with one end (a second button) keeps the name and joins that circuit. Used by place and clone.
 Clone also no longer shares the original's `behaviors` table, and copies joints from its
-argument (not `state.selection`). Same family, not fixed: MESHUSERT <-> RESOURCE sfixtures
-pair by equal sfixture label (`box2d-draw-textured.lua` ~2379), so a copied skinned body could
-pick up the original's texture mesh; socket `accepts` and script label lookups are meant to be
-shared kinds, leave them.
+argument (not `state.selection`). MESHUSERT/UVUSERT -> RESOURCE used to pair by equal sfixture
+label (a copy could draw with the original's mesh). Now `src/resource-link.lua`: `extra.resourceId`
+links them (an sfixture id, so clone and place renew it); label match is only the fallback for
+old scenes and fills in the link. A mesh copied with its RESOURCE uses the copy, alone it keeps
+the original's. Socket `accepts` and script label lookups are meant to be shared kinds, left as is.
 
 **Next: slice 4, the real test:** build the next contraption with the library + inspector only.
 

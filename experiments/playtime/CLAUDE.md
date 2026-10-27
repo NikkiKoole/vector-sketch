@@ -174,6 +174,8 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 
 **UV lookup** for MESHUSERT/UVUSERT uses pair-keyed vertex matching (`buildPolyVertexIndex` + `lookupUV` in `box2d-draw-textured.lua`) — maps triangle vertices to source polygon by full (x,y) pair, not individual coordinate slots.
 
+**MESHUSERT/UVUSERT -> RESOURCE pairing** goes through `src/resource-link.lua` (`resourceLink.find(ud)`): linked by `extra.resourceId`, label match only as the fallback for old scenes. Don't add new label loops over `registry.sfixtures`.
+
 **Polygon-dirty UV invalidation**: when polygon vertex count changes via `recreateThingFromBody` in `object-manager.lua`, any RESOURCE sfixture on the body has its `uvs` nulled so stale UV arrays don't persist.
 
 ## Known issues

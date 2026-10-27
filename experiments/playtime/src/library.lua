@@ -14,6 +14,7 @@ local sceneIO = require('src.io')
 local snap = require('src.physics.snap')
 local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
+local resourceLink = require('src.resource-link')
 
 lib.DIR = 'library'
 
@@ -48,6 +49,11 @@ function lib.gather(things)
         end
     end
     if count == 0 then return nil end
+    local bodies = {}
+    for _, thing in ipairs(things) do
+        if ids[thing.id] then table.insert(bodies, thing.body) end
+    end
+    resourceLink.linkBodies(bodies) -- meshes carry their RESOURCE link
 
     return lib.trim(sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance()), ids)
 end

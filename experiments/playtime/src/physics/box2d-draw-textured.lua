@@ -11,6 +11,7 @@ local mathutils = require 'src.math-utils'
 local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
 local subtypes = require 'src.subtypes'
+local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local spineMesh = require 'src.spine-mesh'
 local SIDES = require('src.sides')
@@ -2371,16 +2372,7 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == subtypes.MESHUSERT then
             -- now we need to find a mapping file..
 
-            local mappert
-            for _, v in pairs(registry.sfixtures) do
-                if not v:isDestroyed() then
-                    local ud = v:getUserData()
-
-                    if (#ud.label > 0 and drawables[i].label == ud.label and subtypes.is(ud, subtypes.RESOURCE)) then
-                        mappert = v
-                    end
-                end
-            end
+            local mappert = resourceLink.find(drawables[i].texfixture:getUserData())
 
             local data = mappert and mappert:getUserData().extra
             if data then
@@ -2708,13 +2700,7 @@ function lib.drawTexturedWorld(world)
         if drawables[i].type == subtypes.UVUSERT then
             -- now we need to find a mapping file..
 
-            local mappert
-            for _, v in pairs(registry.sfixtures) do
-                local ud = v:getUserData()
-                if (drawables[i].label == ud.label and subtypes.is(ud, subtypes.RESOURCE)) then
-                    mappert = v
-                end
-            end
+            local mappert = resourceLink.find(drawables[i].texfixture:getUserData())
             local data = mappert and mappert:getUserData().extra
             if data and data.uvs then
                 --print(inspect(data))

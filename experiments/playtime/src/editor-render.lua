@@ -14,6 +14,7 @@ local cam = camera.getInstance()
 local utils = require 'src.utils'
 local inputmanager = require 'src.input-manager'
 local subtypes = require 'src.subtypes'
+local resourceLink = require('src.resource-link')
 local ST = require 'src.shape-types'
 local NT = require('src.node-types')
 local cdt = require 'src.cdt'
@@ -277,16 +278,7 @@ function lib.renderActiveEditorThings()
     if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture then
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
-            local mappert = nil
-            for _, v in pairs(registry.sfixtures) do
-                if not v:isDestroyed() then
-                    local vud = v:getUserData()
-                    if #vud.label > 0 and vud.label == ud.label and subtypes.is(vud, subtypes.RESOURCE) then
-                        mappert = v
-                        break
-                    end
-                end
-            end
+            local mappert = resourceLink.find(ud)
 
             if mappert then
                 local mextra = mappert:getUserData().extra

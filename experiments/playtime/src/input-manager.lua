@@ -19,6 +19,7 @@ local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
 local cdt = require 'src.cdt'
 local subtypes = require 'src.subtypes'
+local resourceLink = require('src.resource-link')
 local ST = require 'src.shape-types'
 local joints = require 'src.joints'
 local NT = require('src.node-types')
@@ -28,10 +29,10 @@ local NT = require('src.node-types')
 local steinerDragIdx = 0
 
 -- Shared post-mutation refresh: re-triangulate any RESOURCE on the body,
--- and drop bind data on label-matched MESHUSERTs since triangle indices
+-- and drop bind data on the MESHUSERTs linked to it since triangle indices
 -- moved. Called from both discrete (add/remove) and continuous (drag
 -- release) Steiner edits.
-local function refreshResourceAfterSteinerChange(body, thing)
+local function refreshResourceAfterSteinerChange(body)
     for _, f in ipairs(body:getFixtures()) do
         local fud = f:getUserData()
         if type(fud) == 'table' and subtypes.is(fud, subtypes.RESOURCE) and fud.extra then
@@ -42,18 +43,16 @@ local function refreshResourceAfterSteinerChange(body, thing)
             end
         end
     end
-    local lbl = thing.label
-    if lbl and #lbl > 0 then
-        for _, v in pairs(registry.sfixtures) do
-            if not v:isDestroyed() then
-                local vud = v:getUserData()
-                if vud and vud.label == lbl and subtypes.is(vud, subtypes.MESHUSERT) then
-                    vud.extra.triangleBones = nil
-                    vud.extra.influences = nil
-                    vud.extra.bindVerts = nil
-                    vud.extra.rigidLookup = nil
-                    vud.extra.rigidBindCoords = nil
-                end
+    for _, v in pairs(registry.sfixtures) do
+        if not v:isDestroyed() then
+            local vud = v:getUserData()
+            local resource = vud and subtypes.is(vud, subtypes.MESHUSERT) and resourceLink.find(vud)
+            if resource and resource:getBody() == body then
+                vud.extra.triangleBones = nil
+                vud.extra.influences = nil
+                vud.extra.bindVerts = nil
+                vud.extra.rigidLookup = nil
+                vud.extra.rigidBindCoords = nil
             end
         end
     end
@@ -298,7 +297,7 @@ local function handlePointer(x, y, id, action, button)
                     changed = true
                 end
                 if changed then
-                    refreshResourceAfterSteinerChange(body, thing)
+                    refreshResourceAfterSteinerChange(body)
                 end
             end
             return
@@ -453,7 +452,7 @@ local function handlePointer(x, y, id, action, button)
             if steinerDragIdx > 0 then
                 local thing = state.selection.selectedObj
                 if thing and thing.body then
-                    refreshResourceAfterSteinerChange(thing.body, thing)
+                    refreshResourceAfterSteinerChange(thing.body)
                 end
                 steinerDragIdx = 0
             end
@@ -673,18 +672,8 @@ function lib.handleMouseMoved(x, y, dx, dy)
         local cx, cy = cam:getWorldCoordinates(x, y)
         local ud = state.selection.selectedSFixture:getUserData()
         if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
-            -- Find the RESOURCE fixture with matching label — it owns the
-            -- triangle index array (ud.extra.triangles).
-            local mappert = nil
-            for _, v in pairs(registry.sfixtures) do
-                if not v:isDestroyed() then
-                    local vud = v:getUserData()
-                    if #vud.label > 0 and vud.label == ud.label and subtypes.is(vud, subtypes.RESOURCE) then
-                        mappert = v
-                        break
-                    end
-                end
-            end
+            -- The linked RESOURCE fixture owns the triangle index array (ud.extra.triangles).
+            local mappert = resourceLink.find(ud)
             local button = nil
             if love.mouse.isDown(1) then button = 1 end
             if love.mouse.isDown(2) then button = 2 end

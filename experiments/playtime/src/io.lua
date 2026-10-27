@@ -15,6 +15,7 @@ local state = require 'src.state'
 
 local snap = require 'src.physics.snap'
 local subtypes = require 'src.subtypes'
+local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local FEXT = require('src.file-extensions')
@@ -599,6 +600,13 @@ function lib.buildWorld(data, world, cam, opts)
     -- we want to look through all bodeis
 
     local builtSFixtures = additive and recreatedSFixtures or registry.sfixtures
+    if additive then
+        -- a placed prefab saved before resourceId existed: link its meshes to its own RESOURCE
+        for _, v in ipairs(recreatedSFixtures) do
+            local ud = v:getUserData()
+            if resourceLink.isUser(ud) then resourceLink.find(ud, recreatedSFixtures) end
+        end
+    end
     for _, v in pairs(builtSFixtures) do
         local ud = v:getUserData()
 
@@ -1236,6 +1244,11 @@ function lib.cloneSelection(selectedBodies, world)
     -- mapping from old ids (of bodies and fixtures) to new cloned ids
     local idMapping = {}
 
+    -- meshes find their RESOURCE by link, not label, so the copies can't mix them up
+    local originalBodies = {}
+    for _, thing in ipairs(selectedBodies) do table.insert(originalBodies, thing.body) end
+    resourceLink.linkBodies(originalBodies)
+
     -- Step 1: Clone Bodies
     for _, originals in ipairs(selectedBodies) do
         local originalBody = originals.body
@@ -1554,6 +1567,15 @@ function lib.cloneSelection(selectedBodies, world)
         table.insert(result, v)
         clonedBodies[v.body] = true
         if v.behaviors then table.insert(behaviorLists, v.behaviors) end
+    end
+    -- a mesh cloned with its RESOURCE uses the cloned RESOURCE; alone it keeps the original's
+    for _, thing in ipairs(result) do
+        for _, fixture in ipairs(thing.body:getFixtures()) do
+            local ud = fixture:getUserData()
+            if resourceLink.isUser(ud) and ud.extra and idMapping[ud.extra.resourceId] then
+                ud.extra.resourceId = idMapping[ud.extra.resourceId]
+            end
+        end
     end
     -- a cloned contraption gets its own signal names (src/signals.lua)
     local signals = require('src.signals')

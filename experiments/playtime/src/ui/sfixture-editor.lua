@@ -14,6 +14,7 @@ local state = require('src.state')
 local modes = require('src.modes')
 local fileBrowser = require('src.file-browser')
 local subtypes = require('src.subtypes')
+local resourceLink = require('src.resource-link')
 local inspector = require('src.ui.inspector')
 local sfixtureParams = require('src.sfixture-params')
 local texfixtureParams = require('src.texfixture-params')
@@ -68,18 +69,9 @@ function lib.setAllAccordions(open) forceOpen = open end
 function lib.assignTrianglesToGroup(meshusertFixture, triIndices, group)
     if not meshusertFixture or meshusertFixture:isDestroyed() then return end
     local ud = meshusertFixture:getUserData()
-    if not ud or not ud.label or #ud.label == 0 then return end
+    if not ud then return end
 
-    local mappert
-    for _, v in pairs(registry.sfixtures) do
-        if not v:isDestroyed() then
-            local vud = v:getUserData()
-            if #vud.label > 0 and vud.label == ud.label and subtypes.is(vud, subtypes.RESOURCE) then
-                mappert = v
-                break
-            end
-        end
-    end
+    local mappert = resourceLink.find(ud)
     if not mappert then return end
 
     local mextra = mappert:getUserData().extra
@@ -401,20 +393,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             end
 
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
-                local label = ud.label or ""
-
-
-                -- todo extract this!!
-                local mappert
-                for _, v in pairs(registry.sfixtures) do
-                    if not v:isDestroyed() then
-                        local vud = v:getUserData()
-
-                        if (#vud.label > 0 and label == vud.label and subtypes.is(vud, subtypes.RESOURCE)) then
-                            mappert = v
-                        end
-                    end
-                end
+                local mappert = resourceLink.find(ud)
 
 
 
@@ -723,16 +702,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             -- mesh offset/scale/rot, convert to owner-body world coords.
             -- Same framing the draw path uses, so bind round-trips exactly.
             local function prepWorldVertsForBind()
-                local label = ud.label or ''
-                local mappert
-                for _, v in pairs(registry.sfixtures) do
-                    if not v:isDestroyed() then
-                        local vud = v:getUserData()
-                        if #vud.label > 0 and label == vud.label and subtypes.is(vud, subtypes.RESOURCE) then
-                            mappert = v
-                        end
-                    end
-                end
+                local mappert = resourceLink.find(ud)
                 local nodes = ud.extra.nodes or {}
                 if not (mappert and #nodes >= 2) then return nil, nodes end
                 local mb = mappert:getBody()
@@ -892,11 +862,10 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
 
                 if #state.triangleEditor.selectedTriangles > 0 then
                     if ui.button(x, y, ROW_WIDTH + 50, 'split selected') then
-                        local lbl = ud.label or ''
-                        for _, rv in pairs(registry.sfixtures) do
+                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
                             if not rv:isDestroyed() then
                                 local rud = rv:getUserData()
-                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                if rud then
                                     local rextra = rud.extra
                                     local triIdx = rextra and rextra.triangles
                                     local allVerts = rextra
@@ -987,11 +956,10 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     end
 
                     if ui.button(x, y, ROW_WIDTH + 50, 'clear all groups') then
-                        local lbl = ud.label or ''
-                        for _, rv in pairs(registry.sfixtures) do
+                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
                             if not rv:isDestroyed() then
                                 local rud = rv:getUserData()
-                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                if rud then
                                     rud.extra.triangleGroups = nil
                                     rud.extra.triangleOrderDirty = true
                                 end
@@ -1062,12 +1030,11 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     -- highest total influence weight across its 3 verts.
                     if ui.button(x, y, ROW_WIDTH + 50, 'auto assign bones') then
                         local influences = ud.extra.influences
-                        local lbl = ud.label or ''
                         local mappert2
-                        for _, rv in pairs(registry.sfixtures) do
+                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
                             if not rv:isDestroyed() then
                                 local rud = rv:getUserData()
-                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                if rud then
                                     mappert2 = rv; break
                                 end
                             end
@@ -1105,12 +1072,11 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     if ui.button(x, y, ROW_WIDTH + 50, 'auto assign by proximity') then
                         local proxNodes = ud.extra.nodes
                         local radius = tonumber(ud.extra.bindRadius) or 80
-                        local lbl = ud.label or ''
                         local mappert2
-                        for _, rv in pairs(registry.sfixtures) do
+                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
                             if not rv:isDestroyed() then
                                 local rud = rv:getUserData()
-                                if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                                if rud then
                                     mappert2 = rv; break
                                 end
                             end
@@ -1175,11 +1141,10 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 -- Clear splits: wipes thing.extraSteiner on the body and re-triangulates
                 -- the linked RESOURCE. (Path B: Steiners live on the body, not the RESOURCE.)
                 do
-                    local lbl = ud.label or ''
-                    for _, rv in pairs(registry.sfixtures) do
+                    for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
                         if not rv:isDestroyed() then
                             local rud = rv:getUserData()
-                            if #rud.label > 0 and rud.label == lbl and subtypes.is(rud, subtypes.RESOURCE) then
+                            if rud then
                                 local rBodyThing = rv:getBody():getUserData().thing
                                 if rBodyThing.extraSteiner and #rBodyThing.extraSteiner > 0 then
                                     local numSplits = #rBodyThing.extraSteiner / 2
