@@ -21,7 +21,8 @@ lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured
 -- Speeds are velocity changes (world units/s); a hit at `soft`
 -- plays at pitch[1]/volume[1], at `hard` and above at pitch[2]/volume[2].
 -- `synth` lists src/synth.lua patches to use instead of the files when synthImpacts is on
--- (`transpose` semitones on lib.plonkNotes, `durMs` how long the note is held, default 400).
+-- (`transpose` semitones on lib.plonkNotes, `durMs` how long the note is held, default 400;
+-- `perBody`: the sounding body keeps one patch and its size picks the octave, see smallSize/bigSize).
 lib.impactSounds = {
     -- rubber plonks mixed with Korg Minipops toms/wood block (short wooden 'toks')
     plonk = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3',
@@ -32,6 +33,11 @@ lib.impactSounds = {
     ball  = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3' },
               soft = 300, hard = 3000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
               synth = { 'bass' }, transpose = -24, durMs = 150 },
+    -- a box (label 'box') hitting anything: a drum skin. Each box keeps one drum (picked from
+    -- its id); small boxes play an octave up, big ones an octave down.
+    box   = { files = { 'korg-minipops/tom1', 'korg-minipops/tom2' },
+              soft = 300, hard = 3000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
+              synth = { 'conga', 'djembe', 'tabla' }, perBody = true, smallSize = 140, bigSize = 240 },
     kiss  = { files = { 'winegum-kiss1', 'winegum-kiss2', 'winegum-kiss3', 'winegum-kiss4', 'winegum-kiss5' },
               soft = 150, hard = 1500, pitch = { 2, 0.25 }, volume = { 0.2, 1 } },
 }
@@ -299,7 +305,8 @@ local function mapInto(x, inMin, inMax, outMin, outMax)
     return outMin + (outMax - outMin) * t
 end
 
-local function playImpact(kind, body1, body2, speed)
+-- `source` is the body making the sound (for perBody sounds).
+local function playImpact(kind, body1, body2, speed, source)
     local sound = lib.impactSounds[kind]
     if not sound or speed < sound.soft or not (love and love.audio) then return end
     local a, b = tostring(body1), tostring(body2)
@@ -316,7 +323,15 @@ local function playImpact(kind, body1, body2, speed)
         local x2, y2 = body2:getPosition()
         local vol = mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume * 14
         local patch = sound.synth[love.math.random(#sound.synth)]
-        synth.hit(patch, notes[index] + (sound.transpose or 0), vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
+        local transpose = sound.transpose or 0
+        local thing = sound.perBody and source and source:getUserData().thing
+        if thing then
+            patch = sound.synth[hashString(thing.id or '') % #sound.synth + 1]
+            local size = math.sqrt((thing.width or 0) * (thing.height or 0))
+            if size < sound.smallSize then transpose = transpose + 12 end
+            if size > sound.bigSize then transpose = transpose - 12 end
+        end
+        synth.hit(patch, notes[index] + transpose, vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
         return
     end
     if not impactSources[kind] then
@@ -361,9 +376,9 @@ function lib.onEndContact(fix1, fix2)
     freshContacts[fixturePairKey(fix1, fix2)] = nil
 end
 
-local function isBall(body)
+local function hasLabel(body, label)
     local ud = body:getUserData()
-    return ud and ud.thing and ud.thing.label == 'ball'
+    return ud and ud.thing and ud.thing.label == label
 end
 
 function lib.isSquishy(body)
@@ -405,8 +420,10 @@ function lib.onImpact(fix1, fix2, normalImpulse)
                     lib.squeak(instance, 'oof')
                 end
             end
-        elseif speed > 0 and isBall(body) then -- squishy balls too
+        elseif speed > 0 and hasLabel(body, 'ball') then -- squishy balls too
             playImpact('ball', body1, body2, speed)
+        elseif speed > 0 and hasLabel(body, 'box') then
+            playImpact('box', body1, body2, speed, body)
         elseif speed > 0 and lib.isSquishy(body) then
             playImpact('kiss', body1, body2, speed)
         end

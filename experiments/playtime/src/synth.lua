@@ -35,6 +35,14 @@ lib.patches = {
     bass = { slot = 7, wave = 'BOWED', adsr = { 4, 0, 7, 475 },
              harmonics = 0.3, timbre = 0.3, morph = 0.45, reverb = 0.2, level = 0.8,
              modes = { [0] = 1, [1] = 0.85, [2] = 1 }, filter = { mode = 1, cutoff = 1490, resonance = 3 } },
+    -- drum skins (the membrane engine) for boxes: harmonics = head (tuned -> inharmonic),
+    -- timbre = strike (center thump -> edge slap), morph = the tabla's downward pitch bend
+    conga  = { slot = 9, wave = 'MEMBRANE', adsr = { 0, 500, 0, 250 },
+               harmonics = 0.15, timbre = 0.3, morph = 0, reverb = 0.3 },
+    djembe = { slot = 10, wave = 'MEMBRANE', adsr = { 0, 500, 0, 250 },
+               harmonics = 0.75, timbre = 0.6, morph = 0, reverb = 0.3 },
+    tabla  = { slot = 11, wave = 'MEMBRANE', adsr = { 0, 500, 0, 250 },
+               harmonics = 0, timbre = 0.5, morph = 0.4, reverb = 0.3 },
     -- slide whistle: the blown pipe (in tune at morph 0.7), held and glided (src/slide-sound.lua).
     -- Breathy (timbre = breath air) and on a wobbly cassette, so it sounds less like a pure synth.
     whistle = { slot = 8, wave = 'PIPE', adsr = { 30, 0, 7, 120 },
