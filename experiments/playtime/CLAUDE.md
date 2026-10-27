@@ -205,6 +205,7 @@ Deep-dive docs live in `docs/`:
 - `CLAUDE-BRIDGE.md` — complete bridge API reference
 - `DEEP-DIVE-NOTES.md` — analysis of DNA/character system, texture deformation, UI flow
 - `UV-BACKDROP-FRAGILITY.md` — RESOURCE/backdrop/UV duct-tape seams and hardening order
+- `SOUND-SYNTH.md` — dreamengine synth via FFI: setup on a new machine (build.sh), API, music, gotchas; ideas in `MUSIC-IDEAS.md`
 - `TEXTURE-DEFORMATION-RESEARCH.md` — skeletal mesh deformation research + integration plan
 - `AI-COLLABORATION-PLAN.md` — strategy and completed phases
 - `TOOLING-SETUP.md` — dev tool setup (luacheck, busted, profiling)
