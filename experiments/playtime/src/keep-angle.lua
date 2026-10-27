@@ -1,11 +1,34 @@
 local lib = {}
 local registry = require 'src.registry'
 
--- Max angular acceleration (rad/s^2) the controller may ask for, as a torque
--- (inertia * alpha). Strong enough to stand, weak enough to yield in a pile.
-lib.maxAlpha = 1000 -- swept: 300 let 2 of 3 Mipos sink into a split, 3000 overshot
+-- While a part touches another Mipo or a prop, the controller only gets a
+-- bounded torque (inertia * maxAlpha) so it yields instead of drilling through.
+-- Otherwise it sets the angular velocity directly (full strength): a leg must
+-- carry the whole body, and a torque sized by the leg's own inertia let heavy
+-- Mipos sink into a split.
+lib.maxAlpha = 1000
 
--- PD controller on angular velocity, applied as a bounded torque
+-- Touching a dynamic body that isn't part of the same Mipo (static floors are fine).
+local function touchingOthers(body)
+    local ud = body:getUserData()
+    local ownMipo = ud and ud.thing and ud.thing.mipoId
+    for _, contact in ipairs(body:getContacts()) do
+        if contact:isTouching() then
+            local fixtureA, fixtureB = contact:getFixtures()
+            if not fixtureA:isSensor() and not fixtureB:isSensor() then
+                local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
+                if other:getType() == 'dynamic' then
+                    local oud = other:getUserData()
+                    local otherMipo = oud and oud.thing and oud.thing.mipoId
+                    if not ownMipo or otherMipo ~= ownMipo then return true end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- PD controller on angular velocity
 local function rotateBodyTowards(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = math.rad(targetAngle) - currentAngle
@@ -27,7 +50,11 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
     if omega_cmd > maxOmega then omega_cmd = maxOmega end
     if omega_cmd < -maxOmega then omega_cmd = -maxOmega end
 
-    -- Reach omega_cmd through a bounded torque instead of setAngularVelocity.
+    if not touchingOthers(body) then
+        body:setAngularVelocity(omega_cmd)
+        return
+    end
+
     -- Setting the velocity is infinitely strong: in a pile of Mipos a leg turned
     -- straight through its neighbours, the contact solver shoved them apart, and
     -- the pile gained energy until one was launched out of the world.

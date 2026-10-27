@@ -130,7 +130,7 @@ do_errors() {
 
 do_restart() {
     do_stop
-    do_start "${1:-mudready}"
+    do_start "${1:-dollhouse}"
 }
 
 case "${1:-status}" in

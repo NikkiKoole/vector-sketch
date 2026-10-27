@@ -12,6 +12,9 @@
 --   Only while the Mipo is held (and just after release): in a resting pile,
 --   squashed joints passed the threshold and healing teleported limbs into
 --   neighbours, pumping energy in until the pile exploded out of the world.
+-- standUp: a Mipo that lands in a split can't get up by turning its legs alone
+--   (they'd have to lift the whole body), so after a moment of splayed legs it
+--   hops, again after a pause if needed. Not while held or leaning on others.
 local JT = require('src.joint-types')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
@@ -25,9 +28,18 @@ lib.healDistance = 40 -- world units between joint anchors before a limb is pull
                       -- (recorded: up to ~12 while fine, 60-1000 once torn)
 lib.healAfterRelease = 1.0 -- seconds healing stays on after a Mipo is let go (throws)
 
-local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
+lib.standUp = true
+lib.splayedAngle = math.rad(50) -- a leg part further than this from upright counts as splayed
+lib.splayedFor = 0.6            -- seconds of splayed legs before a hop
+lib.standUpPause = 1.2          -- seconds between hops
+lib.standUpSpeed = 500          -- hop speed (world units/s), like the grab hop
 
-lib.stats = { unwound = 0, healed = 0 }
+local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
+local splayedSince = {} -- [mipoId] = time its legs became splayed
+local lastStandUp = {}  -- [mipoId] = time of its last stand-up hop
+local legParts = { 'luleg', 'ruleg', 'llleg', 'rlleg' }
+
+lib.stats = { unwound = 0, healed = 0, standUps = 0 }
 
 local TWO_PI = 2 * math.pi
 
@@ -112,8 +124,62 @@ local function recentlyHeld(joint, now)
     return held ~= nil and now - held <= lib.healAfterRelease
 end
 
+local function isSplayed(instance)
+    for _, name in ipairs(legParts) do
+        local part = instance.parts[name]
+        if part and part.body and not part.body:isDestroyed() then
+            local angle = (part.body:getAngle() + math.pi) % TWO_PI - math.pi
+            if math.abs(angle) > lib.splayedAngle then return true end
+        end
+    end
+    return false
+end
+
+-- Any part resting against a dynamic body of another Mipo or a prop.
+local function leaningOnOthers(instance)
+    for _, part in pairs(instance.parts) do
+        local body = part.body
+        if body and not body:isDestroyed() then
+            for _, contact in ipairs(body:getContacts()) do
+                if contact:isTouching() then
+                    local fixtureA, fixtureB = contact:getFixtures()
+                    local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
+                    if other:getType() == 'dynamic' and mipoRegistry.getFromBody(other) ~= instance
+                        and not fixtureA:isSensor() and not fixtureB:isSensor() then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function standUpMipos(now)
+    for id, instance in pairs(mipoRegistry.getAll()) do
+        local torso = instance.parts.torso1
+        local held = lastHeld[id] and now - lastHeld[id] <= lib.healAfterRelease
+        if not torso or held or not isSplayed(instance) then
+            splayedSince[id] = nil
+        elseif not splayedSince[id] then
+            splayedSince[id] = now
+        elseif now - splayedSince[id] >= lib.splayedFor
+            and (not lastStandUp[id] or now - lastStandUp[id] >= lib.standUpPause)
+            and not leaningOnOthers(instance) then
+            local mass = 0
+            for _, part in pairs(instance.parts) do mass = mass + part.body:getMass() end
+            torso.body:applyLinearImpulse(0, -mass * lib.standUpSpeed)
+            lastStandUp[id] = now
+            lib.stats.standUps = lib.stats.standUps + 1
+        end
+    end
+end
+
 function lib.update()
     if not state.physicsWorld then return end
+    local now = love.timer.getTime()
+    markHeldMipos(now)
+    if lib.standUp then standUpMipos(now) end
     if not lib.unwind and not lib.heal then return end
     local revolute, limited = {}, {}
     for _, joint in ipairs(state.physicsWorld:getJoints()) do
@@ -123,8 +189,6 @@ function lib.update()
         end
     end
     if lib.heal then
-        local now = love.timer.getTime()
-        markHeldMipos(now)
         for _, joint in ipairs(revolute) do
             if recentlyHeld(joint, now) then healJoint(joint) end
         end
