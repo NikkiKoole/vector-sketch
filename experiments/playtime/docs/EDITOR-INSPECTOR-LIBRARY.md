@@ -116,7 +116,27 @@ Each is its own keep/revert moment.
 - **Hot reload fix**: `src/ui/all.lua` keeps one ui table across reloads (a reload used to
   split it, so panels missed `overPanel` and closed on any click).
 
-## Next step
+## Next step (pick up here)
 
-Still hand-made: meshusert, resource, connected-texture, trace-vertices (mostly tools; convert
-only their plain settings, if at all). Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.
+**Where we are (end of 2026-10-27):** the inspector is in every settings panel (behaviors,
+joints, body, sfixtures, world, backdrop). Layout direction chosen (see "Layout direction"
+above). Nothing half-done; all specs green (876), luacheck clean.
+
+**Next: step (a) of the layout: the right column with three tabs, properties only.**
+Budget: 1-2 sessions. Keep/revert check: does switching tabs feel better than panels popping up?
+
+1. New `src/ui/right-column.lua`: a fixed rect on the right (today's panels use
+   x = w - 300 - 20, y = 20, 300 wide, h - 40 tall) with a tab bar on top:
+   `properties | on stage | library`. Tab choice lives on `state` (survives hot reload).
+2. The properties tab draws what `src/playtime-ui.lua` draws now in the selection branch
+   (around line 377-402): Mipo editor, body panel, multi-selection, sfixture panel, joint
+   panel. Nothing selected: a short hint ("click something on the stage").
+3. Those panels place themselves (`ui.panel(w - panelWidth - 20, ...)` and their own
+   `ui.scrollPanel` rects in body-editor, sfixture-editor, joint-update, mipo-editor). Shift
+   them down below the tab bar: first look how each takes its rect, then pass one rect in.
+4. "on stage" and "library" tabs: an empty placeholder for now (they are steps b and c).
+5. Specs: the overflow spec still passes for every panel inside the column; a tab-switch spec.
+
+**After that:** (b) on-stage list, (c) library v0 (slice 3), (d) left tool rail.
+Still hand-made and fine for now: meshusert, resource, connected-texture, trace-vertices panels
+(mostly tools). Add the fake-pointer hook when a spec needs real clicks.
