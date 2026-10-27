@@ -128,33 +128,43 @@ end
 -- selected body are drawn thicker.
 local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true, SIGNAL_SOCKET = true }
 
-function lib.drawWires(selectedBody)
-    if not state.physicsWorld then return end
-    local triggers, receivers2 = {}, {}
+-- Every wire: { signal, from = trigger body, to = receiver body }.
+function lib.wires()
+    local wires = {}
+    if not state.physicsWorld then return wires end
+    local triggers, listeners = {}, {}
     for _, body in ipairs(state.physicsWorld:getBodies()) do
         for _, b in ipairs(behaviorsOf(body) or {}) do
             if b.signal and b.name:find('^SIGNAL_') then
-                local list = triggerNames[b.name] and triggers or receivers2
+                local list = triggerNames[b.name] and triggers or listeners
                 list[b.signal] = list[b.signal] or {}
                 table.insert(list[b.signal], body)
             end
         end
     end
-    local r, g, b, a = love.graphics.getColor()
-    local lineWidth = love.graphics.getLineWidth()
     for signal, from in pairs(triggers) do
         for _, t in ipairs(from) do
-            local tx, ty = t:getPosition()
-            for _, rcv in ipairs(receivers2[signal] or {}) do
-                local rx, ry = rcv:getPosition()
-                local selected = selectedBody and (t == selectedBody or rcv == selectedBody)
-                love.graphics.setColor(1, 0.85, 0.2, selected and 1 or 0.5)
-                love.graphics.setLineWidth(selected and 8 or 3)
-                love.graphics.line(tx, ty, rx, ry)
-                love.graphics.circle('fill', rx, ry, selected and 14 or 8)
-                love.graphics.print(signal, (tx + rx) / 2, (ty + ry) / 2, 0, 3, 3)
+            for _, rcv in ipairs(listeners[signal] or {}) do
+                table.insert(wires, { signal = signal, from = t, to = rcv })
             end
         end
+    end
+    table.sort(wires, function(a, b) return a.signal < b.signal end)
+    return wires
+end
+
+function lib.drawWires(selectedBody)
+    local r, g, b, a = love.graphics.getColor()
+    local lineWidth = love.graphics.getLineWidth()
+    for _, wire in ipairs(lib.wires()) do
+        local tx, ty = wire.from:getPosition()
+        local rx, ry = wire.to:getPosition()
+        local selected = selectedBody and (wire.from == selectedBody or wire.to == selectedBody)
+        love.graphics.setColor(1, 0.85, 0.2, selected and 1 or 0.5)
+        love.graphics.setLineWidth(selected and 8 or 3)
+        love.graphics.line(tx, ty, rx, ry)
+        love.graphics.circle('fill', rx, ry, selected and 14 or 8)
+        love.graphics.print(wire.signal, (tx + rx) / 2, (ty + ry) / 2, 0, 3, 3)
     end
     love.graphics.setLineWidth(lineWidth)
     love.graphics.setColor(r, g, b, a)

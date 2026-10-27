@@ -128,9 +128,15 @@ instead of a full-height panel, so the stage stays visible. The draw-click and a
 panels still draw their own right-edge panel, so the column is hidden in those modes.
 Specs: `spec/right-column_spec.lua` (tab clicks, rect) plus "in column" checks in the overflow spec.
 
+**Step (b) done too (2026-10-28):** the on-stage tab (`src/ui/on-stage.lua`) lists Mipos (one row
+each, lit up for any of its parts), wires (`button -> gate1 -> gate`, from `signals.wires()`, which
+the wire overlay now uses too) and the other bodies grouped by label (`hold  x28`). Clicking a
+row selects it and pans the camera if it's off screen. Clicking a group again steps to the next
+one. You stay on the list; the properties are one tab over. Spec: `spec/on-stage_spec.lua`.
+
 **Keep/revert check still open:** use it for a session. Does switching tabs feel better than
 panels popping up?
 
-**After that:** (b) on-stage list, (c) library v0 (slice 3), (d) left tool rail.
+**After that:** (c) library v0 (slice 3), (d) left tool rail.
 Still hand-made and fine for now: meshusert, resource, connected-texture, trace-vertices panels
 (mostly tools). Add the fake-pointer hook when a spec needs real clicks.

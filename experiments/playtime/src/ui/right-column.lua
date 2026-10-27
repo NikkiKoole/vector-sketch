@@ -5,6 +5,7 @@ local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
+local onStage = require('src.ui.on-stage')
 
 lib.TABS = { 'properties', 'on stage', 'library' }
 lib.WIDTH = 300
@@ -69,7 +70,7 @@ function lib.draw(drawProperties)
             end
         end
     elseif tab == 'on stage' then
-        drawNote('on stage', 'coming soon')
+        onStage.draw(lib.contentRect())
     elseif tab == 'library' then
         drawNote('library', 'coming soon')
     end
