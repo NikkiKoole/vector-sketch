@@ -1,5 +1,9 @@
 -- ui-all.lua
-local ui = {}
+-- One ui table for the whole session: a hot reload re-runs this file, and a fresh
+-- table here would leave its functions writing state (overPanel, ...) that the
+-- other modules, still holding the old table, never see.
+local ui = rawget(_G, '_ui_module') or {} -- luacheck: ignore 113
+rawset(_G, '_ui_module', ui)              -- luacheck: ignore 112
 
 require('src.ui.textinput')(ui)
 
