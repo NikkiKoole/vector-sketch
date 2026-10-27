@@ -103,6 +103,53 @@ function lib.drawAddShapeUI()
         end
         if mipoCReleased then ui.draggingActive = nil; state.selection.selectedBodies = nil end
         nextRow()
+        -- Toy box: press to spawn a src/props.lua recipe at the mouse, drag to place,
+        -- release to drop (like 'add mipo'). Buttons and gates start on 'signal1'.
+        drawAccordion('toys', function()
+            local props = require('src.props')
+            local toys = {
+                { 'ball', function(wx, wy) return { props.makeBall(wx, wy, 80, { squishy = true }) } end },
+                { 'skateboard', function(wx, wy)
+                    local deck, wheels = props.makeSkateboard(wx, wy, 1)
+                    return { deck, wheels and wheels[1], wheels and wheels[2] }
+                end },
+                { 'slide', function(wx, wy)
+                    local slide = props.makeSlide(wx, wy, 1)
+                    return { slide.ladder, slide.deck }
+                end },
+                { 'button', function(wx, wy)
+                    local button, post = props.makeButton(wx, wy, 450, 'signal1', 1)
+                    return { button, post }
+                end },
+                { 'gate', function(wx, wy)
+                    local base = objectManager.addThing('rectangle', { x = wx, y = wy, width = 300, height = 30,
+                        bodyType = 'static', label = 'gate-base' })
+                    return { base, base and props.makeGate(base.body, wx, wy - 15, 'signal1', 1) }
+                end },
+            }
+            local tw = math.floor((panelWidth - 28) / 2)
+            for index, toy in ipairs(toys) do
+                local column = (index - 1) % 2
+                local _, pressed, released = ui.button(x + column * (tw + 4), y, tw, toy[1])
+                if pressed then
+                    ui.draggingActive = ui.activeElementID
+                    local mx, my = love.mouse.getPosition()
+                    local wx, wy = cam:getWorldCoordinates(mx, my)
+                    local things = {}
+                    for _, thing in pairs(toy[2](wx, wy)) do
+                        if thing then things[#things + 1] = thing end
+                    end
+                    if things[1] then
+                        state.interaction.draggingObj = things[1]
+                        state.interaction.offsetDragging = { 0, 0 }
+                        state.selection.selectedBodies = things
+                    end
+                end
+                if released then ui.draggingActive = nil; state.selection.selectedBodies = nil end
+                if column == 1 or index == #toys then nextRow() end
+            end
+        end)
+        nextRow()
         drawAccordion('more', function() end)
         nextRow()
         for _, shape in ipairs(shapeTypes) do

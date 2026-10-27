@@ -196,9 +196,12 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
   "send now" (button) or an open/closed toggle (gate). While paused, wires are drawn from every
   trigger to the receivers on the same signal, with the name halfway; the selected body's wires
   are thicker.
-- [ ] **Prismatic joints from "add joint"** start with limits 0..0 (stuck); give gates sensible
-  default limits so an editor-made gate works without the props recipe.
-- [ ] **Toy box** panel: place props.* recipes at the mouse from the editor.
+- [x] **Editor-made gates work** (2026-10-27): a gate opens toward world-down along its prismatic axis
+  (either way it was drawn), and an 'add joint' prismatic (limits 0..0) gets a range of the
+  gate's height.
+- [x] **Toy box** (2026-10-27): add shape, then **toys**: ball, skateboard, slide, button, gate. Press to
+  spawn at the mouse, drag to place, release. Button and gate start on `signal1`, so a fresh
+  pair is wired already.
 - [ ] **Pressure plate**: a trigger a Mipo or ball steps on.
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
