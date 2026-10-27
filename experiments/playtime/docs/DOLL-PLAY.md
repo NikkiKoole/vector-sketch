@@ -84,6 +84,33 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 
 ---
 
+### Voice (mipomi-lang → playtime)
+
+Source repo: `~/Projects/love/mipomi-lang` (GitHub private). It stays the lab where
+recording and tuning happen; playtime gets a copy of the engine and the cut samples.
+
+- [ ] **V1. Samples in**: copy the cut syllables to `assets/voices/{nikki,theo,herman}/`
+  and the fx to `assets/voices/fx/` (about 1.2 MB). Skip the raw takes (`*-uncut*`,
+  root `*.ogg`, `blah4`). Note: mipomi's `main.lua` only ever loads
+  `samples-nikki`. The other two voices are recorded but have never been used in code.
+- [ ] **V2. `src/mipomi.lua`**: extract the *engine* half of mipomi `main.lua`
+  (`parseInput`, per-speaker `sayQueue`, `playSyllable`/`playSFX`,
+  pitch curves, personalities, stutter) into a module with no globals and no
+  draw/keypress code. A speaker is created per Mipo.
+- [ ] **V3. `mipo:squeak(emotion)`**: one syllable or fx with a pitch shift. This is
+  the cheap 80%; hook it to poke, pick-up and land reactions.
+- [ ] **V4. Lipsync**: don't port mipomi's `mouth/mouth.lua`. Playtime already
+  has the same 15 shapes (`src/mouth-shapes.lua`), and the renderer reads
+  the lip decals' `extra.curvePoints` every frame
+  (`box2d-draw-textured.lua` ~2050). So the voice module only reports
+  "current phoneme + blend t", and a small adapter lerps the normalized shapes
+  into `curvePoints` (scaled by the decal's `mouthScaleX/Y`, `mouthX/Y`).
+  Restore the DNA's own mouth shape when it falls silent.
+- [ ] **V5. Voice in DNA**: `voice = { set = 'theo', root = 'c5', personality = 'party' }`.
+  It's saved with the Mipo, picked by randomize and shown in the Mipo editor.
+- [ ] **V6. `mipo:say("mi mo jo")`**: full phrases plus the script-sandbox API. The
+  glossary (`MI` = I, `MO` = love, `JO` = you) makes the babble mean something.
+
 ## Other ideas (shooting, not committing)
 
 - **Carry-over from Puppetmaker**: a "made in Puppetmaker" import code (see
