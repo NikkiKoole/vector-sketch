@@ -102,7 +102,11 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
   KEEP_ANGLE (spin only) is the stable way.
 
 ### World
-- [ ] **Throwable props**: ball, block, fruit, hat. They're just bodies, so mostly art.
+- [x] **Toys** `src/props.lua` (2026-10-27): `props.makeBall(x, y, r, {squishy})`,
+  `makeSkateboard(x, y, scale)` (deck + 2 wheel joints with suspension), `makeSlide(x, floorY, scale)`
+  (static ladder, platform and curved ribbon chute). Greybox. 3 balls, a skateboard and a slide are
+  saved in the dollhouse. `props` is in the script env.
+- [ ] **More throwables**: block, fruit, hat.
 - [ ] **Containers**: box, bed, bathtub, cupboard. A sensor area that "holds" what's
   dropped in (dampens it, maybe closes a lid). Kids love putting things in things.
 - [ ] **Seats / slots**: chair, swing, bed. Use **snap fixtures** so a Mipo
