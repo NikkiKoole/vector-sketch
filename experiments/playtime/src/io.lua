@@ -240,10 +240,6 @@ function lib.buildWorld(data, world, cam)
         data.joints = {}
     end
 
-    -- One snap-fixture rebuild at the end of the load instead of one per
-    -- registered sfixture (O(N²) on big scenes). endBatch below rebuilds.
-    registry.beginBatch()
-
     -- todo is this actually needed, i *think* its a premature optimization,
     -- getting ready to load a file into an exitsing situation, button
     -- this isnt really used. so we just might as well always use the oldid....
@@ -264,7 +260,7 @@ function lib.buildWorld(data, world, cam)
     -- should we mabe move this out ?
     clearWorld(world)
 
-    snap.resetList()
+    snap.reset()
 
     if data.camera then
         cam:setTranslation(data.camera.x, data.camera.y)
@@ -676,7 +672,6 @@ function lib.buildWorld(data, world, cam)
         end
     end
 
-    registry.endBatch()
 end
 
 -- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical
@@ -1009,24 +1004,9 @@ function lib.gatherSaveData(world, camera)
 
                 if fixture:getUserData() then
                     if subtypes.is(fixture:getUserData(), subtypes.SNAP) then
-                        -- Copy FIRST, then strip. Converting at/to on the live
-                        -- userData corrupted the running snap system: snap.lua
-                        -- keeps calling methods on these refs after a save.
-                        -- (deepCopy passes userdata through by reference.)
-                        local ud             = utils.deepCopy(fixture:getUserData())
-
-                        ud.extra.fixture     = 'fixture'
-                        -- NOTE: at/to are runtime object references. Persist
-                        -- them as thing IDs; clear if stale/unreadable.
-                        if ud.extra.at and type(ud.extra.at) ~= 'string' then
-                            local atok, atid = pcall(function() return ud.extra.at:getUserData().thing.id end)
-                            ud.extra.at = atok and atid or nil
-                        end
-                        if ud.extra.to and type(ud.extra.to) ~= 'string' then
-                            local otok, otid = pcall(function() return ud.extra.to:getUserData().thing.id end)
-                            ud.extra.to = otok and otid or nil
-                        end
-                        fixtureData.userData = ud
+                        -- snap points hold no runtime refs any more (links live on the
+                        -- snap joint, src/physics/snap.lua)
+                        fixtureData.userData = utils.deepCopy(fixture:getUserData())
                     else
                         local ud = fixture:getUserData()
                         if ud and ud.extra and ud.extra._mesh then
@@ -1340,12 +1320,6 @@ function lib.cloneSelection(selectedBodies, world)
                         oldUD.id = newFixID
 
                         idMapping[oldid] = oldUD.id
-                        if subtypes.is(oldUD, subtypes.SNAP) then
-                            oldUD.extra.at = nil
-                            oldUD.extra.to = nil
-                            oldUD.extra.fixture = nil
-                        end
-
                         newFixture:setUserData(oldUD)
                         --print('jozers')
 
@@ -1507,8 +1481,15 @@ function lib.cloneSelection(selectedBodies, world)
                                 local newud = newJoint:getUserData()
                                 newud.scriptmeta = utils.shallowCopy(ud.scriptmeta)
                                 newJoint:setUserData(newud)
-                                if ud.scriptmeta.type and ud.scriptmeta.type == 'snap' then
-                                    snap.addSnapJoint(newJoint)
+                                if ud.scriptmeta.type == 'snap' then
+                                    -- point the clone's snap joint at the cloned snap points
+                                    local a = idMapping[ud.scriptmeta.a]
+                                    local b = idMapping[ud.scriptmeta.b]
+                                    if a and b then
+                                        newud.scriptmeta.a, newud.scriptmeta.b = a, b
+                                    else
+                                        newud.scriptmeta = nil -- its snap points weren't cloned: plain joint
+                                    end
                                 end
                             end
                             -- Register the new joint

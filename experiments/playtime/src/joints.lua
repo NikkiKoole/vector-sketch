@@ -120,7 +120,8 @@ function lib.createJoint(data)
     end
 
     local setId = data.id or uuid.generateID()
-    joint:setUserData({ id = setId })
+    -- scriptmeta (e.g. a snap joint's { type = 'snap', a, b }) survives recreates
+    joint:setUserData({ id = setId, scriptmeta = data.scriptmeta })
     lib.setJointMetaSetting(joint, 'offsetA', offsetA)
     lib.setJointMetaSetting(joint, 'offsetB', offsetB)
 
@@ -144,6 +145,7 @@ function lib.extractJoints(body)
             id = lib.getJointId(joint),
             jointType = jointType,
             otherBody = otherBody,
+            scriptmeta = (joint:getUserData() or {}).scriptmeta,
             collideConnected = joint:getCollideConnected(),
             originalBodyOrder = isBodyA and SIDES.BODY_A or SIDES.BODY_B,
         }
@@ -189,7 +191,8 @@ function lib.recreateJoint(joint, newSettings)
         offsetA = offsetA,
         offsetB = offsetB,
         collideConnected =
-            joint:getCollideConnected()
+            joint:getCollideConnected(),
+        scriptmeta = (joint:getUserData() or {}).scriptmeta,
     }
 
     -- Add new settings to the data

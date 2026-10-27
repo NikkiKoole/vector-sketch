@@ -9,7 +9,6 @@ local jointHandlers = require 'src.joint-handlers'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
-local snap = require 'src.physics.snap'
 local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
 local modes = require 'src.modes'
@@ -327,9 +326,7 @@ function lib.maybeUpdateTexFixtureVertices()
     newfixture:setUserData(oldUD)
 
     state.selection.selectedSFixture = newfixture
-    --snap.updateFixture(newfixture)
     registry.registerSFixture(oldUD.id, newfixture)
-    --snap.rebuildSnapFixtures(registry.sfixtures)
 end
 
 -- Helper function to create and configure a physics body with shapes
@@ -599,7 +596,6 @@ function lib.recreateThingFromBody(body, newSettings)
             newFixture:setUserData(utils.shallowCopy(oldF:getUserData()))
 
             registry.registerSFixture(oldF:getUserData().id, newFixture)
-            snap.rebuildSnapFixtures(registry.sfixtures)
         end
     end
 
@@ -670,8 +666,6 @@ function lib.recreateThingFromBody(body, newSettings)
     newBody:setUserData({ thing = thing })
 
     joints.reattachJoints(jointData, newBody, oldVertices)
-
-    snap.maybeUpdateSnapJoints(jointData)
 
     -- Destroy the old body
     body:destroy()
@@ -870,7 +864,6 @@ function lib.flipThing(thing, axis, recursive)
                     if (fixture:getUserData()) then
                         newFixture:setUserData(utils.deepCopy(fixture:getUserData()))
                         registry.registerSFixture(fixture:getUserData().id, newFixture)
-                        snap.maybeUpdateSFixture(newFixture:getUserData().id)
                     end
 
 
@@ -955,7 +948,6 @@ function lib.flipThing(thing, axis, recursive)
                         local limitsEnabled = joint:areLimitsEnabled()
                         local lower, upper = joint:getLimits()
 
-                        local id = joint:getUserData().id
                         local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
 
                         if axis == 'x' then
@@ -972,7 +964,6 @@ function lib.flipThing(thing, axis, recursive)
                             newJoint:setLimits(-upper, -lower)
                             newJoint:setLimitsEnabled(limitsEnabled)
                         end
-                        snap.maybeUpdateSnapJointWithId(id)
                     end
                 end
             end
@@ -985,7 +976,6 @@ function lib.flipThing(thing, axis, recursive)
     -- Phase 2: Flip All Joints
     flipJoints()
 
-    -- snap.rebuildSnapFixtures(registry.sfixtures)
     --print('************* Flip Completed *************')
     return thing
 end

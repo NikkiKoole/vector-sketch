@@ -141,7 +141,6 @@ function lib.updateSFixtureDimensions(w, h)
     newfixture:setUserData(oldUD)
 
     state.selection.selectedSFixture = newfixture
-    --snap.updateFixture(newfixture)
     registry.registerSFixture(oldUD.id, newfixture)
 
     return newfixture

@@ -1,6 +1,6 @@
--- Specs for src/physics/snap.lua core logic — snap-joint creation,
--- force breaking, cooldowns, stale-body guards, and scene-load rebuild.
--- Previously only resetList/registration were covered.
+-- Specs for src/physics/snap.lua: snap-joint creation, force breaking,
+-- cooldowns, destroyed bodies, loading old scenes, and the bugs the old
+-- design had (stuck partner points after a delete, links lost on recreate).
 
 if not love then return end
 
@@ -9,11 +9,13 @@ local fixtures = require('src.fixtures')
 local registry = require('src.registry')
 local state = require('src.state')
 local subtypes = require('src.subtypes')
-local utils = require('src.utils')
+local joints = require('src.joints')
+local objectManager = require('src.object-manager')
 
 describe('snap core', function()
     local world
     local prevSnapConfig
+    local simTime, realGetTime
 
     local function makeBody(id, x, y)
         local body = love.physics.newBody(world, x, y, 'dynamic')
@@ -23,26 +25,24 @@ describe('snap core', function()
         return body
     end
 
-    -- state.snap.fixtures is rebuilt from a hash on every registration, so
-    -- its order is not stable — always look a body's snap point up by owner.
-    local function snapPointOf(body)
-        for i = 1, #state.snap.fixtures do
-            if state.snap.fixtures[i]:getUserData().extra.at == body then
-                return state.snap.fixtures[i]
-            end
-        end
+    local function addSnapPoint(body, lx, ly)
+        local fixture = fixtures.createSFixture(body, lx or 0, ly or 0, subtypes.SNAP, { radius = 8 })
+        return fixture:getUserData().id
     end
 
-    local function addSnapPoint(body)
-        fixtures.createSFixture(body, 0, 0, subtypes.SNAP, { radius = 8 })
-        return snapPointOf(body)
+    local function step(seconds)
+        simTime = simTime + (seconds or 1 / 60)
+        snap.update(1 / 60)
     end
 
     before_each(function()
         world = love.physics.newWorld(0, 0, true)
         state.physicsWorld = world
         registry.reset()
-        snap.resetList()
+        snap.reset()
+        simTime = 0
+        realGetTime = love.timer.getTime
+        love.timer.getTime = function() return simTime end -- luacheck: ignore 122
         prevSnapConfig = {
             onlyConnect = state.snap.onlyConnectWhenInteracted,
             onlyBreak = state.snap.onlyBreakWhenInteracted,
@@ -53,10 +53,11 @@ describe('snap core', function()
     end)
 
     after_each(function()
+        love.timer.getTime = realGetTime -- luacheck: ignore 122
         state.snap.onlyConnectWhenInteracted = prevSnapConfig.onlyConnect
         state.snap.onlyBreakWhenInteracted = prevSnapConfig.onlyBreak
         state.snap.jointBreakThreshold = prevSnapConfig.threshold
-        snap.resetList()
+        snap.reset()
         if state.physicsWorld and not state.physicsWorld:isDestroyed() then
             state.physicsWorld:destroy()
         end
@@ -64,146 +65,149 @@ describe('snap core', function()
         registry.reset()
     end)
 
-    describe('checkForSnaps (via update)', function()
-        it('joins two nearby free snap points with a revolute joint', function()
-            local bodyA = makeBody('snap-a', 0, 0)
-            local bodyB = makeBody('snap-b', 50, 0)
-            local fixA = addSnapPoint(bodyA)
-            addSnapPoint(bodyB)
-
-            snap.update(1 / 60)
-
-            assert.equal(1, #state.snap.activeJoints)
-            local joint = state.snap.activeJoints[1]
-            assert.equal('revolute', joint:getType())
-            -- both snap points marked connected, pointing at each other's body
-            assert.equal(bodyB, fixA:getUserData().extra.to)
-            -- and the joint is registered under its generated id
-            local id = joint:getUserData().id
-            assert.equal(joint, registry.getJointByID(id))
+    describe('snapping', function()
+        it('joins two nearby free snap points with a revolute joint naming both', function()
+            local a, b = makeBody('A', 0, 0), makeBody('B', 50, 0)
+            local pa, pb = addSnapPoint(a), addSnapPoint(b)
+            step()
+            local js = snap.joints()
+            assert.are.equal(1, #js)
+            assert.are.equal('revolute', js[1]:getType())
+            local meta = js[1]:getUserData().scriptmeta
+            local ids = { [meta.a] = true, [meta.b] = true }
+            assert.is_true(ids[pa] and ids[pb])
         end)
 
         it('does not join snap points beyond snapDistance', function()
-            addSnapPoint(makeBody('snap-a', 0, 0))
-            addSnapPoint(makeBody('snap-b', state.snap.snapDistance + 200, 0))
+            local a, b = makeBody('A', 0, 0), makeBody('B', state.snap.snapDistance + 50, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            step()
+            assert.are.equal(0, #snap.joints())
+        end)
 
-            snap.update(1 / 60)
-
-            assert.equal(0, #state.snap.activeJoints)
+        it('does not join two snap points on the same body', function()
+            local a = makeBody('A', 0, 0)
+            addSnapPoint(a, -5, 0)
+            addSnapPoint(a, 5, 0)
+            step()
+            assert.are.equal(0, #snap.joints())
         end)
 
         it('respects onlyConnectWhenInteracted', function()
             state.snap.onlyConnectWhenInteracted = true
-            addSnapPoint(makeBody('snap-a', 0, 0))
-            addSnapPoint(makeBody('snap-b', 50, 0))
-
-            snap.update(1 / 60) -- nothing is grabbed by a pointer
-
-            assert.equal(0, #state.snap.activeJoints)
+            local a, b = makeBody('A', 0, 0), makeBody('B', 50, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            step()
+            assert.are.equal(0, #snap.joints())
         end)
 
-        it('respects cooldowns and snaps again once they expire', function()
-            local bodyA = makeBody('snap-a', 0, 0)
-            local bodyB = makeBody('snap-b', 50, 0)
-            local fixA = addSnapPoint(bodyA)
-            local fixB = addSnapPoint(bodyB)
-
-            local farFuture = love.timer.getTime() + 999
-            state.snap.cooldownList[fixA] = farFuture
-            state.snap.cooldownList[fixB] = farFuture
-            snap.update(1 / 60)
-            assert.equal(0, #state.snap.activeJoints)
-
-            state.snap.cooldownList = {}
-            snap.update(1 / 60)
-            assert.equal(1, #state.snap.activeJoints)
-        end)
-
-        it('skips snap points whose bound body was destroyed (stale ref)', function()
-            local bodyA = makeBody('snap-a', 0, 0)
-            local bodyB = makeBody('snap-b', 50, 0)
-            local fixA = addSnapPoint(bodyA)
-            addSnapPoint(bodyB)
-
-            -- Simulate the stale state the old crash TODO recorded: extra.at
-            -- pointing at a destroyed body without a rebuild in between.
-            local doomed = love.physics.newBody(world, 0, 0, 'dynamic')
-            doomed:destroy()
-            local ud = fixA:getUserData()
-            ud.extra.at = doomed
-            fixA:setUserData(ud)
-
-            assert.has_no.errors(function() snap.update(1 / 60) end)
-            assert.equal(0, #state.snap.activeJoints)
+        it('a linked snap point does not link a second time', function()
+            local a, b, c = makeBody('A', 0, 0), makeBody('B', 50, 0), makeBody('C', -50, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            addSnapPoint(c)
+            step()
+            step()
+            assert.are.equal(1, #snap.joints())
         end)
     end)
 
-    describe('checkForJointBreaks (via update)', function()
-        it('breaks an overstressed snap joint and puts its points in cooldown', function()
-            local bodyA = makeBody('snap-a', 0, 0)
-            local bodyB = makeBody('snap-b', 50, 0)
-            local fixA = addSnapPoint(bodyA)
-            local fixB = addSnapPoint(bodyB)
-
-            snap.update(1 / 60)
-            assert.equal(1, #state.snap.activeJoints)
-            local joint = state.snap.activeJoints[1]
-            local jointId = joint:getUserData().id
-
-            -- Rip the bodies apart with opposing velocities: the joint
-            -- resists with a large velocity impulse that getReactionForce
-            -- reports. (Teleporting instead is corrected by the position
-            -- solver and reports ~zero force.)
-            state.snap.jointBreakThreshold = 100
-            bodyA:setLinearVelocity(-1000, 0)
-            bodyB:setLinearVelocity(1000, 0)
-            world:update(1 / 60)
-            snap.update(1 / 60)
-
-            assert.equal(0, #state.snap.activeJoints)
-            assert.is_true(joint:isDestroyed())
-            assert.is_nil(registry.getJointByID(jointId))
-            assert.is_nil(fixA:getUserData().extra.to)
-            assert.is_nil(fixB:getUserData().extra.to)
-            -- both points are cooling down
-            assert.is_true(utils.tablelength(state.snap.cooldownList) >= 2)
+    describe('breaking', function()
+        it('breaks an overstressed snap joint, cools its points down, then they snap again', function()
+            local a, b = makeBody('A', 0, 0), makeBody('B', 50, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            step()
+            assert.are.equal(1, #snap.joints())
+            state.snap.jointBreakThreshold = -1 -- any force breaks it
+            step()
+            assert.are.equal(0, #snap.joints())
+            state.snap.jointBreakThreshold = 1e12
+            step() -- still cooling down
+            assert.are.equal(0, #snap.joints())
+            step(state.snap.cooldownTime + 0.1)
+            assert.are.equal(1, #snap.joints())
         end)
     end)
 
-    describe('onSceneLoaded', function()
-        it('re-adopts loaded snap-type joints and relinks their snap points', function()
-            local bodyA = makeBody('snap-a', 0, 0)
-            local bodyB = makeBody('snap-b', 50, 0)
-            local fixA = addSnapPoint(bodyA)
-            local fixB = addSnapPoint(bodyB)
+    describe('destroyed bodies', function()
+        it('a snap point on a destroyed body is skipped', function()
+            local a, b = makeBody('A', 0, 0), makeBody('B', 50, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            b:destroy()
+            step()
+            assert.are.equal(0, #snap.joints())
+        end)
 
-            -- A snap joint as io.load would recreate it: revolute with
-            -- scriptmeta.type == 'snap', registered, but not yet adopted.
-            local joint = love.physics.newRevoluteJoint(bodyA, bodyB, 0, 0, 50, 0)
-            joint:setUserData({ id = 'loaded-snap-1', scriptmeta = { type = 'snap' } })
-            registry.registerJoint('loaded-snap-1', joint)
+        it('deleting a body frees its partner point (old design left it stuck as linked)', function()
+            local a, b, c = makeBody('A', 0, 0), makeBody('B', 50, 0), makeBody('C', -300, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            addSnapPoint(c)
+            step()
+            assert.are.equal(1, #snap.joints())
+            snap.destroySnapJointAboutBody(b)
+            b:destroy()
+            c:setPosition(-50, 0)
+            step(state.snap.cooldownTime + 0.1)
+            assert.are.equal(1, #snap.joints()) -- A snapped to C
+            local ja, jb = snap.joints()[1]:getBodies()
+            assert.is_true((ja == a and jb == c) or (ja == c and jb == a))
+        end)
+    end)
 
+    describe('joint recreate', function()
+        it('a recreated snap joint keeps naming its snap points (scriptmeta survives)', function()
+            local a, b = makeBody('A', 0, 0), makeBody('B', 50, 0)
+            addSnapPoint(a)
+            addSnapPoint(b)
+            step()
+            local meta = snap.joints()[1]:getUserData().scriptmeta
+            local recreated = joints.recreateJoint(snap.joints()[1], {})
+            local m2 = recreated:getUserData().scriptmeta
+            assert.are.equal('snap', m2.type)
+            assert.are.equal(meta.a, m2.a)
+            assert.are.equal(meta.b, m2.b)
+        end)
+    end)
+
+    describe('onSceneLoaded (scenes saved by the old design)', function()
+        it('names the nearest snap points for an old { type = snap } joint and drops at/to', function()
+            local a, b = makeBody('A', 0, 0), makeBody('B', 60, 0)
+            local near = addSnapPoint(a, 25, 0)
+            addSnapPoint(a, -25, 0) -- a second point on A, further from the joint
+            local pb = addSnapPoint(b, -25, 0)
+            local sf = registry.getSFixtureByID(near)
+            sf:getUserData().extra.at = 'A' -- leftover old link data
+            local joint = love.physics.newRevoluteJoint(a, b, 30, 0, 30, 0)
+            joint:setUserData({ id = 'J1', scriptmeta = { type = 'snap' } })
+            registry.registerJoint('J1', joint)
             snap.onSceneLoaded()
-
-            assert.equal(1, #state.snap.activeJoints)
-            assert.equal(joint, state.snap.activeJoints[1])
-            assert.equal(bodyB, fixA:getUserData().extra.to)
-            assert.equal(bodyA, fixB:getUserData().extra.to)
+            local meta = joint:getUserData().scriptmeta
+            local ids = { [meta.a] = true, [meta.b] = true }
+            assert.is_true(ids[near] and ids[pb])
+            assert.is_nil(sf:getUserData().extra.at)
         end)
 
         it('ignores non-snap joints', function()
-            local bodyA = makeBody('snap-a', 0, 0)
-            local bodyB = makeBody('snap-b', 50, 0)
-            addSnapPoint(bodyA)
-            addSnapPoint(bodyB)
-
-            local joint = love.physics.newRevoluteJoint(bodyA, bodyB, 0, 0, 50, 0)
-            joint:setUserData({ id = 'plain-1' })
-            registry.registerJoint('plain-1', joint)
-
+            local a, b = makeBody('A', 0, 0), makeBody('B', 60, 0)
+            local joint = love.physics.newRevoluteJoint(a, b, 30, 0, 30, 0)
+            joint:setUserData({ id = 'J2' })
+            registry.registerJoint('J2', joint)
             snap.onSceneLoaded()
-
-            assert.equal(0, #state.snap.activeJoints)
+            assert.are.equal(0, #snap.joints())
         end)
+    end)
+
+    it('works with objectManager bodies too (snap points via the editor path)', function()
+        local t1 = objectManager.addThing('rectangle', { x = 0, y = 0, width = 40, height = 40 })
+        local t2 = objectManager.addThing('rectangle', { x = 60, y = 0, width = 40, height = 40 })
+        addSnapPoint(t1.body, 20, 0)
+        addSnapPoint(t2.body, -20, 0)
+        step()
+        assert.are.equal(1, #snap.joints())
     end)
 end)

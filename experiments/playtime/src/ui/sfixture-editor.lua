@@ -9,7 +9,6 @@ local camera = require('src.camera')
 local cam = camera.getInstance()
 local utils = require('src.utils')
 local fixtures = require('src.fixtures')
-local snap = require('src.physics.snap')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local state = require('src.state')
 local modes = require('src.modes')
@@ -1700,8 +1699,7 @@ function lib.drawSelectedSFixture()
                 ui.alignedLabel(x, y, ' radius')
                 if newRadius and newRadius ~= dim then
                     fixtures.updateSFixtureDimensions(newRadius, newRadius)
-                    snap.rebuildSnapFixtures(registry.sfixtures)
-                end
+                        end
 
                 nextRow()
                 local function handleOffset(xMultiplier, yMultiplier)

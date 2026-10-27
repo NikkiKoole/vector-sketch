@@ -116,9 +116,6 @@ state.backdrops = {}
 
 
 state.snap = {
-    fixtures = {},
-    activeJoints = {},
-    cooldownList = {},
     snapDistance = 140,
     jointBreakThreshold = 100000,
     cooldownTime = 0.5,
