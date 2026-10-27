@@ -23,8 +23,36 @@ local topology = require('src.character-topology')
 -- Each character gets a unique negative index so its fixtures never collide
 -- with each other, but fixtures from different characters (different indices)
 -- still collide normally.
+-- Both counters restart every session, while characters loaded from a scene keep
+-- their saved values, so allocation skips anything already in use (a shared
+-- group index means two Mipos pass through each other).
 local nextGroupIndex = -1
 local nextZGroupOffset = 1
+
+local function allocateGroupIndex()
+    local candidate = nextGroupIndex
+    if state.physicsWorld then
+        for _, body in ipairs(state.physicsWorld:getBodies()) do
+            for _, fixture in ipairs(body:getFixtures()) do
+                local gi = fixture:getGroupIndex()
+                if gi <= candidate then candidate = gi - 1 end
+            end
+        end
+    end
+    nextGroupIndex = candidate - 1
+    return candidate
+end
+
+local function allocateZGroupOffset(instance)
+    local candidate = nextZGroupOffset
+    for _, other in pairs(mipoRegistry.getAll()) do
+        if other ~= instance and other.zGroupOffset and other.zGroupOffset >= candidate then
+            candidate = other.zGroupOffset + 1
+        end
+    end
+    nextZGroupOffset = candidate + 1
+    return candidate
+end
 
 -- todo,
 -- the curves for the limbs need a grow parameter, now its just some hardcoded value in lib.drawTexturedWorld(world)
@@ -2204,14 +2232,12 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- Assign a unique negative group index to prevent self-collision.
     -- Reuse existing index if this is a rebuild, otherwise allocate a new one.
     if not instance.groupIndex then
-        instance.groupIndex = nextGroupIndex
-        nextGroupIndex = nextGroupIndex - 1
+        instance.groupIndex = allocateGroupIndex()
     end
     -- Assign a unique zGroupOffset so each character's textures occupy a
     -- separate z-range (composedZ = zGroupOffset * 1000 + zOffset).
     if not instance.zGroupOffset then
-        instance.zGroupOffset = nextZGroupOffset
-        nextZGroupOffset = nextZGroupOffset + 1
+        instance.zGroupOffset = allocateZGroupOffset(instance)
     end
     for _, part in pairs(instance.parts) do
         local bodyFixtures = part.body:getFixtures()
@@ -2337,6 +2363,31 @@ function lib.reconstructInstance(charData, partBodies)
         local ud = body:getUserData()
         if ud and ud.thing then
             instance.parts[partName] = ud.thing
+        end
+        -- keep the saved group index so a rebuild doesn't hand out a new one
+        local first = body:getFixtures()[1]
+        if not instance.groupIndex and first and first:getGroupIndex() < 0 then
+            instance.groupIndex = first:getGroupIndex()
+        end
+    end
+    -- repair scenes saved before allocation skipped values in use: two Mipos
+    -- sharing a group index never collide, sharing a zGroupOffset interleaves textures
+    local groupTaken, zTaken = false, false
+    for id, other in pairs(mipoRegistry.getAll()) do
+        if id ~= instance.id then
+            if instance.groupIndex and other.groupIndex == instance.groupIndex then groupTaken = true end
+            if instance.zGroupOffset and other.zGroupOffset == instance.zGroupOffset then zTaken = true end
+        end
+    end
+    if groupTaken then instance.groupIndex = allocateGroupIndex() end
+    if zTaken then instance.zGroupOffset = allocateZGroupOffset(instance) end
+    if groupTaken or zTaken then
+        for _, part in pairs(instance.parts) do
+            for _, fixture in ipairs(part.body:getFixtures()) do
+                if groupTaken then fixture:setGroupIndex(instance.groupIndex) end
+                local fud = fixture:getUserData()
+                if zTaken and fud and fud.extra then fud.extra.zGroupOffset = instance.zGroupOffset end
+            end
         end
     end
     mipoRegistry.register(instance)

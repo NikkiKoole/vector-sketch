@@ -7,12 +7,14 @@ local mipoVoice = require('src.mipo-voice')
 local function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
     bridge.logCollision(SE.BEGIN_CONTACT, fix1, fix2, contact)
+    mipoVoice.onBeginContact(fix1, fix2, contact)
     script.call(SE.BEGIN_CONTACT, fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 
 local function endContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
     bridge.logCollision(SE.END_CONTACT, fix1, fix2, contact)
+    mipoVoice.onEndContact(fix1, fix2)
     script.call(SE.END_CONTACT, fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 

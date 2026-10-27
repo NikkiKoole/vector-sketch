@@ -6,6 +6,7 @@ local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
 local recorder = require 'src.recorder'
 local mipoVoice = require('src.mipo-voice')
+local mipoRegistry = require('src.mipo-registry')
 local utils = require 'src.utils'
 local script = require 'src.script'
 local selectrect = require 'src.selection-rect'
@@ -236,6 +237,19 @@ local releasedHandlers = {
     [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
 }
 
+-- Grabbing a Mipo makes it hop a little (puppet-maker2 outside.lua: torso impulse on tap).
+-- The impulse scales with the Mipo's total mass so every Mipo hops about the same.
+lib.mipoHopSpeed = 500
+local function hopMipo(mipo)
+    local torso = mipo.parts and mipo.parts.torso1
+    if not torso or not torso.body or torso.body:isDestroyed() then return end
+    local mass = 0
+    for _, part in pairs(mipo.parts) do
+        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
+    end
+    torso.body:applyLinearImpulse(0, -mass * lib.mipoHopSpeed)
+end
+
 local function handlePointer(x, y, id, action, button)
     if action == "pressed" then
         -- Track whether press originated over a UI element
@@ -413,7 +427,12 @@ local function handlePointer(x, y, id, action, button)
                 end)
                 script.call('onPressed', newHitted)
                 for _, fixture in ipairs(hitted) do
-                    if mipoVoice.squeakBody(fixture:getBody(), 'pickup') then break end
+                    local mipo = mipoRegistry.getFromBody(fixture:getBody())
+                    if mipo then
+                        mipoVoice.squeak(mipo, 'pickup')
+                        hopMipo(mipo)
+                        break
+                    end
                 end
             end
         else

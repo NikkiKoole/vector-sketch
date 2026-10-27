@@ -483,3 +483,59 @@ describe("character persistence round-trip", function()
         destroyWorld(newWorld)
     end)
 end)
+
+describe("character group index + zGroupOffset allocation", function()
+    local world, instances
+
+    before_each(function()
+        world = makeWorld()
+        registry.reset()
+        mipoRegistry.reset()
+        instances = {}
+    end)
+
+    after_each(function()
+        for _, inst in ipairs(instances) do destroyInstance(inst) end
+        if world and not world:isDestroyed() then world:destroy() end
+    end)
+
+    it("skips group indices already used in the world (e.g. a Mipo loaded from a scene)", function()
+        -- simulate a saved Mipo in group -1 that the session counter doesn't know about
+        local loaded = love.physics.newBody(world, 0, 0, 'dynamic')
+        love.physics.newFixture(loaded, love.physics.newCircleShape(10)):setGroupIndex(-1)
+        local deeper = love.physics.newBody(world, 0, 0, 'dynamic')
+        love.physics.newFixture(deeper, love.physics.newCircleShape(10)):setGroupIndex(-3)
+        local inst = createHumanoid(world)
+        instances[#instances + 1] = inst
+        assert.is_true(inst.groupIndex < -3)
+    end)
+
+    it("gives two new Mipos different group indices and z offsets", function()
+        local a = createHumanoid(world)
+        local b = createHumanoid(world)
+        instances[#instances + 1] = a
+        instances[#instances + 1] = b
+        assert.are_not.equal(a.groupIndex, b.groupIndex)
+        assert.are_not.equal(a.zGroupOffset, b.zGroupOffset)
+    end)
+
+    it("repairs a reconstructed Mipo that shares a group index with another", function()
+        local a = createHumanoid(world)
+        local b = createHumanoid(world)
+        instances[#instances + 1] = a
+        instances[#instances + 1] = b
+        -- make b look like an old save that collided with a
+        for _, part in pairs(b.parts) do
+            for _, f in ipairs(part.body:getFixtures()) do f:setGroupIndex(a.groupIndex) end
+        end
+        local partBodies = {}
+        for partName, part in pairs(b.parts) do partBodies[partName] = part.body end
+        mipoRegistry.unregister(b.id)
+        local charData = { version = 1, id = b.id, dna = utils.deepCopy(b.dna), scale = b.scale,
+                           zGroupOffset = a.zGroupOffset }
+        local result = CharacterManager.reconstructInstance(charData, partBodies)
+        assert.are_not.equal(a.groupIndex, result.groupIndex)
+        assert.are_not.equal(a.zGroupOffset, result.zGroupOffset)
+        assert.are.equal(result.groupIndex, result.parts.torso1.body:getFixtures()[1]:getGroupIndex())
+    end)
+end)

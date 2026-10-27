@@ -63,6 +63,21 @@ describe("src.mipo-voice", function()
         end)
     end)
 
+    describe("isSquishy", function()
+        local function fakeBody(behaviors)
+            return { getUserData = function() return { thing = { behaviors = behaviors } } end }
+        end
+
+        it("is true for a body with the SQUISHY behavior", function()
+            assert.is_true(mipoVoice.isSquishy(fakeBody({ { name = 'KEEP_ANGLE' }, { name = 'SQUISHY' } })))
+        end)
+
+        it("is false without it", function()
+            assert.is_false(mipoVoice.isSquishy(fakeBody({ { name = 'KEEP_ANGLE' } })))
+            assert.is_false(mipoVoice.isSquishy(fakeBody(nil)))
+        end)
+    end)
+
     describe("squeak", function()
         it("is a no-op without an instance", function()
             assert.is_nil(mipoVoice.squeak(nil, 'poke'))

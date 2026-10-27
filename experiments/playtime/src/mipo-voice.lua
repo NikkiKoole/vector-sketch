@@ -3,8 +3,9 @@
 -- Samples come from the mipomi-lang repo (~/Projects/love/mipomi-lang), copied
 -- into assets/voices/{nikki,theo,herman,fx}. Full mipomi speech (say + lipsync)
 -- is a later step, see docs/DOLL-PLAY.md "Voice".
--- Also: mouth flap while a squeak plays, and rubber plonks on impacts
--- (both after puppet-maker2's mouthSay() and postSolve plonks).
+-- Also: mouth flap while a squeak plays, rubber plonks when Mipos hit things and
+-- winegum kisses when SQUISHY-behavior bodies hit things (all after puppet-maker2's
+-- mouthSay() and postSolve sounds).
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 
@@ -15,10 +16,19 @@ lib.volume = 0.8
 lib.cooldown = 0.15      -- seconds between squeaks of the same Mipo
 lib.impactCooldown = 0.5 -- seconds between impact 'oof's of the same Mipo
 lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured: small hop ~550, 800-unit drop ~2500
-lib.plonkSpeed = 400     -- velocity change for a rubber plonk (lower than oof: small hops plonk too)
-lib.plonkHardSpeed = 4000 -- at and above this a plonk is lowest and loudest
-lib.plonkVolume = 0.8
-lib.plonkPairCooldown = 0.5 -- the same two bodies plonk at most this often
+-- Impact sounds. Speeds are velocity changes (world units/s); a hit at `soft`
+-- plays at pitch[1]/volume[1], at `hard` and above at pitch[2]/volume[2].
+lib.impactSounds = {
+    plonk = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3' },
+              soft = 400, hard = 4000, pitch = { 2, 1 }, volume = { 0.2, 0.8 } },
+    kiss  = { files = { 'winegum-kiss1', 'winegum-kiss2', 'winegum-kiss3', 'winegum-kiss4', 'winegum-kiss5' },
+              soft = 150, hard = 1500, pitch = { 2, 0.25 }, volume = { 0.2, 1 } },
+}
+lib.impactPairCooldown = 0.5 -- the same two bodies make the same impact sound at most this often
+-- A contact only sounds when its parts approach faster than this. Measured: real
+-- drops hit at 400-1100, tangled/jittering limbs re-touch at ~100 (90% under 360).
+lib.minApproachSpeed = 350
+lib.plonkMipoCooldown = 0.25 -- one Mipo plonks at most this often (catches jitter spikes)
 lib.mouthFlap = true
 
 lib.voiceSets = { 'nikki', 'theo', 'herman' }
@@ -42,8 +52,10 @@ local lastSqueak = {}  -- [mipoId] = time
 local lastImpact = {}  -- [mipoId] = time
 local playing = {}     -- [mipoId] = Source; a Mipo says one thing at a time
 local flaps = {}       -- [mipoId] = { thing, start, duration, from, target, amount, wide, restore }
-local plonkPairs = {}  -- [pairKey] = time
-local plonkSources = nil
+local impactPairs = {} -- [kind .. pairKey] = time
+local freshContacts = {} -- [fixturePairKey] = approach speed, between beginContact and the first postSolve
+local lastPlonk = {}     -- [mipoId] = time
+local impactSources = {} -- [kind] = { Source, ... }
 
 local function now()
     return love and love.timer and love.timer.getTime() or os.clock()
@@ -238,8 +250,8 @@ end
 function lib.update(_dt)
     tickFlaps()
     local t = now()
-    for key, at in pairs(plonkPairs) do
-        if t - at > lib.plonkPairCooldown then plonkPairs[key] = nil end
+    for key, at in pairs(impactPairs) do
+        if t - at > lib.impactPairCooldown then impactPairs[key] = nil end
     end
 end
 
@@ -255,53 +267,95 @@ local function mapInto(x, inMin, inMax, outMin, outMax)
     return outMin + (outMax - outMin) * t
 end
 
-local function plonk(body1, body2, speed)
-    if not (love and love.audio) then return end
+local function playImpact(kind, body1, body2, speed)
+    local sound = lib.impactSounds[kind]
+    if not sound or speed < sound.soft or not (love and love.audio) then return end
     local a, b = tostring(body1), tostring(body2)
-    local key = a < b and (a .. b) or (b .. a)
-    if plonkPairs[key] then return end
-    plonkPairs[key] = now()
-    if not plonkSources then
-        plonkSources = {}
-        for i = 1, 3 do
-            local path = 'assets/sounds/rubber-plonk' .. i .. '.ogg'
+    local key = kind .. (a < b and (a .. b) or (b .. a))
+    if impactPairs[key] then return end
+    impactPairs[key] = now()
+    if not impactSources[kind] then
+        impactSources[kind] = {}
+        for _, name in ipairs(sound.files) do
+            local path = 'assets/sounds/' .. name .. '.ogg'
             if love.filesystem.getInfo(path) then
-                plonkSources[#plonkSources + 1] = love.audio.newSource(path, 'static')
+                table.insert(impactSources[kind], love.audio.newSource(path, 'static'))
             end
         end
     end
-    if #plonkSources == 0 then return end
-    local clone = plonkSources[love.math.random(#plonkSources)]:clone()
-    -- harder hit = lower and louder (puppet-maker2: pitch 2 → 1, volume .2 → 1)
-    clone:setPitch(mapInto(speed, lib.plonkSpeed, lib.plonkHardSpeed, 2, 1))
-    clone:setVolume(mapInto(speed, lib.plonkSpeed, lib.plonkHardSpeed, 0.2, 1) * lib.plonkVolume)
+    local sources = impactSources[kind]
+    if #sources == 0 then return end
+    local clone = sources[love.math.random(#sources)]:clone()
+    clone:setPitch(mapInto(speed, sound.soft, sound.hard, sound.pitch[1], sound.pitch[2]))
+    clone:setVolume(mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]))
     clone:play()
 end
 
--- Called from postSolve. A Mipo part that changes velocity plonks; a hard
--- change also makes the Mipo say 'oof'. Collisions between parts of the same
--- Mipo are ignored.
+local function fixturePairKey(fix1, fix2)
+    local a, b = tostring(fix1), tostring(fix2)
+    return a < b and (a .. b) or (b .. a)
+end
+
+-- Only the first solve of a new contact makes a sound. Bodies that stay pressed
+-- together (tangled Mipos, a Mipo held into the floor) keep reporting big
+-- impulses every step and would otherwise sound forever.
+function lib.onBeginContact(fix1, fix2, contact)
+    if fix1:isSensor() or fix2:isSensor() or not contact then return end
+    local x, y = contact:getPositions()
+    if not x then return end
+    local nx, ny = contact:getNormal()
+    local ax, ay = fix1:getBody():getLinearVelocityFromWorldPoint(x, y)
+    local bx, by = fix2:getBody():getLinearVelocityFromWorldPoint(x, y)
+    local approach = math.abs((ax - bx) * nx + (ay - by) * ny)
+    if approach >= lib.minApproachSpeed then
+        freshContacts[fixturePairKey(fix1, fix2)] = approach
+    end
+end
+
+function lib.onEndContact(fix1, fix2)
+    freshContacts[fixturePairKey(fix1, fix2)] = nil
+end
+
+function lib.isSquishy(body)
+    local ud = body:getUserData()
+    local behaviors = ud and ud.thing and ud.thing.behaviors
+    if not behaviors then return false end
+    for _, behavior in ipairs(behaviors) do
+        if behavior.name == 'SQUISHY' then return true end
+    end
+    return false
+end
+
+-- Called from postSolve (first solve of a new contact only). A Mipo part that changes velocity plonks, and a hard
+-- change also makes the Mipo say 'oof'. A SQUISHY body kisses. Collisions
+-- between parts of the same Mipo are ignored.
 function lib.onImpact(fix1, fix2, normalImpulse)
     if not lib.enabled or not normalImpulse then return end
+    local key = fixturePairKey(fix1, fix2)
+    if not freshContacts[key] then return end
+    freshContacts[key] = nil
     local body1, body2 = fix1:getBody(), fix2:getBody()
     local mipo1 = mipoRegistry.getFromBody(body1)
     local mipo2 = mipoRegistry.getFromBody(body2)
     if mipo1 and mipo1 == mipo2 then return end
     for _, pair in ipairs({ { mipo1, body1 }, { mipo2, body2 } }) do
         local instance, body = pair[1], pair[2]
+        local mass = body:getMass()
+        local speed = mass > 0 and normalImpulse / mass or 0
         if instance then
-            local mass = body:getMass()
-            local speed = mass > 0 and normalImpulse / mass or 0
-            if speed > lib.plonkSpeed then
-                plonk(body1, body2, speed)
+            local t = now()
+            if not lastPlonk[instance.id] or t - lastPlonk[instance.id] > lib.plonkMipoCooldown then
+                lastPlonk[instance.id] = t
+                playImpact('plonk', body1, body2, speed)
             end
             if speed > lib.impactSpeed then
-                local t = now()
                 if not lastImpact[instance.id] or t - lastImpact[instance.id] > lib.impactCooldown then
                     lastImpact[instance.id] = t
                     lib.squeak(instance, 'oof')
                 end
             end
+        elseif speed > 0 and lib.isSquishy(body) then
+            playImpact('kiss', body1, body2, speed)
         end
     end
 end
@@ -312,7 +366,9 @@ function lib.reset()
     playing = {}
     for _, flap in pairs(flaps) do flap.thing.mouthShapeVec = flap.restore end
     flaps = {}
-    plonkPairs = {}
+    impactPairs = {}
+    freshContacts = {}
+    lastPlonk = {}
 end
 
 return lib

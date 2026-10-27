@@ -561,6 +561,18 @@ function lib.drawUI()
                             end
                         end
 
+                        if state.panelVisibility.customBehavior.name == 'SQUISHY' then
+                            local myUD = state.panelVisibility.customBehavior.body:getUserData()
+                            if ui.button(100, 100, 150, 'remove') then
+                                local kept = {}
+                                for _, behavior in ipairs(myUD.thing.behaviors or {}) do
+                                    if behavior.name ~= 'SQUISHY' then table.insert(kept, behavior) end
+                                end
+                                myUD.thing.behaviors = kept
+                                state.panelVisibility.customBehavior = false
+                            end
+                        end
+
 
                         if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
                             -- we can assume all these type of other things are attached via revolute joints

@@ -46,6 +46,10 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 ## Menu: pick and choose
 
 ### Handling (how it feels in your hand)
+- [x] **Mipos collide with each other** (fixed 2026-10-27): the group-index counter
+  restarted every session, so a Mipo loaded from a scene and a new one shared
+  group -1 and passed through each other. Allocation now skips indices in use,
+  and loading repairs duplicates. The same applies to `zGroupOffset` (texture interleaving).
 - [ ] **Pick up / carry**: the grab already works. Tune it so a held Mipo hangs
   nicely (a stiffer joint on torso grabs, softer on limbs) and doesn't jitter.
 - [ ] **Throw**: on release, keep the velocity but clamp it (and maybe boost it a
@@ -106,8 +110,12 @@ recording and tuning happen; playtime gets a copy of the engine and the cut samp
     the sound's length via `thing.mouthShapeVec`, then restores it (`flapMouth`).
   - *Rubber plonks*: Mipo-part impacts play `assets/sounds/rubber-plonk1-3.ogg`.
     Harder hits are lower and louder (speed 400 to 4000), and each body pair is deduped for 0.5s.
-  - Not yet: `winegum-kiss1-5` for soft props, and *hop on grab* (`outside.lua`
-    torso impulse).
+  - *Winegum kisses*: bodies with the new `SQUISHY` behavior (body editor, then "add
+    behavior") kiss on impact.
+  - *Hop on grab*: `input-manager.lua` `hopMipo`, a torso impulse scaled by the Mipo's
+    total mass (`mipoHopSpeed` 500, about 200 units high).
+  - Impact sounds only fire on the first solve of a *new* contact that approaches
+    faster than 350, and plonks are capped per Mipo. Tangled Mipos used to plonk nonstop.
 - [ ] **V4. Lipsync**: don't port mipomi's `mouth/mouth.lua`. Playtime already
   has the same 15 shapes (`src/mouth-shapes.lua`), and the renderer reads
   the lip decals' `extra.curvePoints` every frame
