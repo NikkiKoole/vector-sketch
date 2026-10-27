@@ -17,8 +17,9 @@ tick it here when it's done.
 
 ## Foundation (do first, about a week)
 
-- [ ] **F1. Play scene** `scripts/dollhouse.playtime.lua`: a floor, 2 or 3 Mipos,
-  a few props. This is the one scene where every menu item gets tried.
+- [x] **F1. Play scene** `scripts/dollhouse.playtime.json` + `.lua` (2026-10-27): ribbon
+  floor/walls and 2 Mipos, built in the editor. The default for `./playtime.sh start`.
+  No props yet. The Mipos start high and drop to the floor.
 - [ ] **F2. Play mode** `--play <scene>`: no editor chrome, overlays or editor
   input. Gate `drawUI` / editor overlays in `main.lua`, take the play path
   straight away in `input-manager.lua` `handlePointer`, and remove the

@@ -49,7 +49,7 @@ do_stop() {
 }
 
 do_start() {
-    local scene="${1:-mudready}"
+    local scene="${1:-dollhouse}"
 
     if is_running; then
         echo "already running (port $PORT)"
