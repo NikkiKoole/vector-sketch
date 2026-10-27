@@ -136,4 +136,57 @@ describe('resource link', function()
         canvas:release()
         assert.is_true(ok, tostring(err))
     end)
+
+    describe('the RESOURCE image', function()
+        local savedBackdrops
+        before_each(function() savedBackdrops = state.backdrops end)
+        after_each(function() state.backdrops = savedBackdrops end)
+
+        it('falls back to the saved backdrop URL, then the backdrop at the index', function()
+            state.backdrops = { { url = 'a.png' }, { url = 'b.png' } }
+            assert.are.equal('x.png', resourceLink.imageURL({ extra = { selectedBGURL = 'x.png', selectedBGIndex = 1 } }))
+            assert.are.equal('b.png', resourceLink.imageURL({ extra = { selectedBGIndex = 2 } }))
+            assert.are.equal('own.png', resourceLink.imageURL({ extra = { imageURL = 'own.png', selectedBGIndex = 1 } }))
+        end)
+
+        it('traces from the backdrop showing its image, never another picture', function()
+            state.backdrops = { { url = 'a.png' }, { url = 'knut.png' } }
+            local ud = { extra = { imageURL = 'knut.png', selectedBGIndex = 1 } }
+            assert.are.equal(state.backdrops[2], resourceLink.backdrop(ud))
+            assert.are.equal(2, ud.extra.selectedBGIndex)
+            state.backdrops = { { url = 'a.png' } }
+            assert.is_nil(resourceLink.backdrop(ud))
+        end)
+
+        it('a skinned Knut draws textured with no backdrops on stage', function()
+            local camera = require('src.camera')
+            local box2dDrawTextured = require('src.physics.box2d-draw-textured')
+            sceneIO.load(love.filesystem.read('scripts/knut/workmoreclean.playtime.json'), world, camera.getInstance())
+            for _, v in pairs(registry.sfixtures) do
+                local ud = v:getUserData()
+                if ud.subtype == 'resource' then
+                    assert.are.equal('knut-is-dead/gevaarland.jpg', ud.extra.imageURL)
+                end
+            end
+            state.backdrops = {}
+            local newMesh, meshes = love.graphics.newMesh, {}
+            love.graphics.newMesh = function(...)
+                local mesh = newMesh(...)
+                table.insert(meshes, mesh)
+                return mesh
+            end
+            local canvas = love.graphics.newCanvas(400, 300)
+            love.graphics.setCanvas(canvas)
+            local ok, err = pcall(box2dDrawTextured.drawTexturedWorld, world)
+            love.graphics.setCanvas()
+            love.graphics.newMesh = newMesh
+            canvas:release()
+            assert.is_true(ok, tostring(err))
+            local textured = 0
+            for _, mesh in ipairs(meshes) do
+                if mesh:getTexture() then textured = textured + 1 end
+            end
+            assert.is_true(textured > 0, 'no textured mesh drawn')
+        end)
+    end)
 end)

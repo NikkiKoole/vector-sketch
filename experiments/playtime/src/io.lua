@@ -388,17 +388,10 @@ function lib.buildWorld(data, world, cam, opts)
                     -- Migrate old/middle-era subtype formats to current era
                     subtypes.migrate(oldUD)
 
-                    -- RESOURCE sfixtures reference backdrops by array index.
-                    -- If a URL was saved alongside the index, resolve it now so
-                    -- reordering/adding backdrops doesn't silently break the ref.
-                    if subtypes.is(oldUD, subtypes.RESOURCE) and oldUD.extra
-                        and oldUD.extra.selectedBGURL and state.backdrops then
-                        for bi, b in ipairs(state.backdrops) do
-                            if b.url == oldUD.extra.selectedBGURL then
-                                oldUD.extra.selectedBGIndex = bi
-                                break
-                            end
-                        end
+                    -- A RESOURCE draws its own image file (extra.imageURL); scenes
+                    -- from before that get it from the backdrop they pointed at.
+                    if subtypes.is(oldUD, subtypes.RESOURCE) then
+                        resourceLink.imageURL(oldUD)
                     end
 
                     -- make it recreate the image!
@@ -659,8 +652,7 @@ function lib.buildWorld(data, world, cam, opts)
                         ud.extra.triangleGroups = fixed
                     end
                 end
-                local idx = ud.extra.selectedBGIndex
-                local bd = idx and state.backdrops and state.backdrops[idx]
+                local bd = resourceLink.backdrop(ud)
                 local needsUVs = not ud.extra.uvs or #ud.extra.uvs == 0
                 local needsTris = not ud.extra.triangles or #ud.extra.triangles == 0
                 if bd and bd.image and bd.w and bd.h and (needsUVs or needsTris) then
@@ -1040,13 +1032,9 @@ function lib.gatherSaveData(world, camera)
                             ud.extra.dirty = true
                             if ud.extra.ompImage then ud.extra.ompImage = nil end
                         end
-                        -- Stash the backdrop URL alongside the array index so the
-                        -- reference survives backdrop reordering across sessions.
+                        -- selectedBGURL mirrors imageURL for older builds reading this file.
                         if subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
-                            local idx = ud.extra.selectedBGIndex
-                            if idx and state.backdrops and state.backdrops[idx] then
-                                ud.extra.selectedBGURL = state.backdrops[idx].url
-                            end
+                            ud.extra.selectedBGURL = resourceLink.imageURL(ud)
                         end
                         if ud.extra and ud.extra.ompImage then
                             ud.extra.dirty = true

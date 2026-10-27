@@ -36,8 +36,7 @@ local function refreshResourceAfterSteinerChange(body)
     for _, f in ipairs(body:getFixtures()) do
         local fud = f:getUserData()
         if type(fud) == 'table' and subtypes.is(fud, subtypes.RESOURCE) and fud.extra then
-            local idx = fud.extra.selectedBGIndex
-            local bd = idx and state.backdrops and state.backdrops[idx]
+            local bd = resourceLink.backdrop(fud)
             if bd then
                 cdt.computeResourceMesh(fud, body, bd, mathutils)
             end

@@ -1,5 +1,21 @@
 # Backdrops-as-UV-textures: fragility notes
 
+> **Update 2026-10-28:** most of this is fixed. A RESOURCE now owns its picture,
+> `extra.imageURL`, and the draw loads that file itself (`src/resource-link.lua`
+> `imageURL`, through the draw module's image cache). A backdrop is only the
+> tracing aid while UVs are made: `resourceLink.backdrop(ud)` finds the one
+> showing the RESOURCE's image (by URL, any index, never another picture).
+> MESHUSERT/UVUSERT find their RESOURCE by `extra.resourceId`, not label.
+> Old scenes fill in imageURL from `selectedBGURL` / the index on load;
+> `selectedBGURL` is still written, mirroring imageURL. Status per fragility:
+> #1 index coupling: fixed (URL is the identity). #2 old default-backdrop scenes:
+> still untextured until you put the image on stage and pick it once. #3 UVs
+> pinned to backdrop position: moving or deleting the backdrop no longer breaks
+> drawing; *selecting* the RESOURCE still re-traces UVs every frame from wherever
+> its backdrop is now. #4: fixed earlier (pair-keyed lookup). #5: fixed (id link).
+> #6 polygon edits vs UV count: unchanged. #7: images load at scene load / on
+> first draw by path; a missing file draws untextured.
+
 Briefing compiled for future agents working with the RESOURCE/MESHUSERT/UVUSERT
 + backdrop system. Read this before touching the UV/texture path for meshes.
 

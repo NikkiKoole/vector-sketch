@@ -174,7 +174,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 
 **UV lookup** for MESHUSERT/UVUSERT uses pair-keyed vertex matching (`buildPolyVertexIndex` + `lookupUV` in `box2d-draw-textured.lua`) — maps triangle vertices to source polygon by full (x,y) pair, not individual coordinate slots.
 
-**MESHUSERT/UVUSERT -> RESOURCE pairing** goes through `src/resource-link.lua` (`resourceLink.find(ud)`): linked by `extra.resourceId`, label match only as the fallback for old scenes. Don't add new label loops over `registry.sfixtures`.
+**MESHUSERT/UVUSERT -> RESOURCE pairing** goes through `src/resource-link.lua` (`resourceLink.find(ud)`): linked by `extra.resourceId`, label match only as the fallback for old scenes. Don't add new label loops over `registry.sfixtures`. A RESOURCE owns its picture (`extra.imageURL`, `resourceLink.imageURL`); a backdrop is only needed while tracing UVs (`resourceLink.backdrop`), not to draw. Don't read `state.backdrops[selectedBGIndex]` directly.
 
 **Polygon-dirty UV invalidation**: when polygon vertex count changes via `recreateThingFromBody` in `object-manager.lua`, any RESOURCE sfixture on the body has its `uvs` nulled so stale UV arrays don't persist.
 
@@ -191,7 +191,7 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 - `state.currentMode` has 27 writers across 3 files with no state machine
 - Image/OMP/canvas caches never cleared — memory grows over long sessions
 - Clone pipeline: influence references can become nil silently when cloning partial selections
-- Backdrop/UV system has several fragilities — see `docs/UV-BACKDROP-FRAGILITY.md`
+- Backdrop/UV system: mostly fixed 2026-10-28 (imageURL + id link); what's left in `docs/UV-BACKDROP-FRAGILITY.md`
 
 ## Further documentation
 

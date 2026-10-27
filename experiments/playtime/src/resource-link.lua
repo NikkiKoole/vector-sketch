@@ -5,10 +5,47 @@
 -- `extra.resourceId` links them: an sfixture id, renewed on clone and library
 -- place like every id. Label match stays as the fallback for scenes saved
 -- before the link, and fills in the link the first time.
+--
+-- The RESOURCE's picture is `extra.imageURL`, its own. A backdrop is only the
+-- tracing aid while UVs are made (src/cdt.lua computeResourceMesh needs its
+-- world rect); after that the mesh draws without it, so prefabs and clones
+-- carry their texture and the backdrop can move or go.
 local lib = {}
 
 local registry = require('src.registry')
 local subtypes = require('src.subtypes')
+local state = require('src.state')
+
+-- The image file a RESOURCE userData draws with, or nil. Scenes from before
+-- imageURL fall back to the backdrop URL saved next to the index, then to the
+-- backdrop at that index, and keep the answer.
+function lib.imageURL(ud)
+    local extra = ud and ud.extra
+    if not extra then return nil end
+    if not extra.imageURL then
+        local bd = extra.selectedBGIndex and state.backdrops and state.backdrops[extra.selectedBGIndex]
+        extra.imageURL = extra.selectedBGURL or (bd and bd.url)
+    end
+    return extra.imageURL
+end
+
+-- The backdrop a RESOURCE traces its UVs from: the one showing its image, at
+-- any index. nil when it isn't on stage; never another picture's backdrop,
+-- which would remap the UVs onto the wrong image. (Only a RESOURCE with no
+-- image at all falls back to its stored index.)
+function lib.backdrop(ud)
+    local extra = ud and ud.extra
+    if not extra or not state.backdrops then return nil end
+    local url = lib.imageURL(ud)
+    if not url then return extra.selectedBGIndex and state.backdrops[extra.selectedBGIndex] end
+    for i, bd in ipairs(state.backdrops) do
+        if bd.url == url then
+            extra.selectedBGIndex = i
+            return bd
+        end
+    end
+    return nil
+end
 
 local function byLabel(label, fixtures)
     for _, v in pairs(fixtures) do

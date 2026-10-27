@@ -893,8 +893,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                             end
                                         end
                                         -- Re-triangulate with the new points included
-                                        local idx = rextra.selectedBGIndex
-                                        local bd = idx and state.backdrops and state.backdrops[idx]
+                                        local bd = resourceLink.backdrop(rud)
                                         if bd then
                                             cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
                                         end
@@ -1150,8 +1149,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                     local numSplits = #rBodyThing.extraSteiner / 2
                                     if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
                                         rBodyThing.extraSteiner = nil
-                                        local idx = rud.extra.selectedBGIndex
-                                        local bd = idx and state.backdrops and state.backdrops[idx]
+                                        local bd = resourceLink.backdrop(rud)
                                         if bd then
                                             cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
                                         end
@@ -1219,17 +1217,25 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 ui.zOffsetSlider(myID, ud.extra, x, y, ROW_WIDTH)
             end
         elseif subtypes.is(ud, subtypes.RESOURCE) then
-            local selectedIndex
             if #state.backdrops then
                 ui.label(x, y, 'backdrop index (for uvmap)')
                 nextRow()
-                local numericInputText = ui.textinput(myID .. 'backdropindex', x, y, 90, BUTTON_HEIGHT, ".",
-                    "" .. (ud.extra.selectedBGIndex or 0),
-                    true)
-                selectedIndex = tonumber(numericInputText)
-                ud.extra.selectedBGIndex = selectedIndex
-                if selectedIndex and selectedIndex >= 1 and selectedIndex <= #state.backdrops then
-                    local b = state.backdrops[selectedIndex]
+                -- shows the backdrop with this RESOURCE's image (0: not on stage);
+                -- typing another index makes that backdrop's image its picture
+                local b = resourceLink.backdrop(ud)
+                local shownIndex = 0
+                for i, bd in ipairs(state.backdrops) do
+                    if bd == b then shownIndex = i end
+                end
+                local numericInputText, changed = ui.textinput(myID .. 'backdropindex', x, y, 90, BUTTON_HEIGHT, ".",
+                    "" .. shownIndex, true)
+                local typedIndex = changed and tonumber(numericInputText)
+                if typedIndex and state.backdrops[typedIndex] then
+                    b = state.backdrops[typedIndex]
+                    ud.extra.imageURL = b.url
+                    ud.extra.selectedBGIndex = typedIndex
+                end
+                if b then
 
                     -- first we draw a YELLOW border around the backdrop
                     ui.onStage(function()
@@ -1259,8 +1265,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 local numSplits = #resBodyThing.extraSteiner / 2
                 if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
                     resBodyThing.extraSteiner = nil
-                    local idx = ud.extra.selectedBGIndex
-                    local bd = idx and state.backdrops and state.backdrops[idx]
+                    local bd = resourceLink.backdrop(ud)
                     if bd then
                         cdt.computeResourceMesh(ud, resBody, bd, mathutils)
                     end

@@ -2642,10 +2642,11 @@ function lib.drawTexturedWorld(world)
                     end
                 end
                 local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
-                 if data and data.uvs then
-                    local bd = state.backdrops and state.backdrops[data.selectedBGIndex]
-                    if bd and bd.image then mesh:setTexture(bd.image) end
-                 end
+                if data and data.uvs then
+                    local url = resourceLink.imageURL(mappert:getUserData())
+                    local img = url and getLoveImage(url)
+                    if img then mesh:setTexture(img) end
+                end
                 local bx, by = drawables[i].body:getPosition()
                 local ba = drawables[i].body:getAngle()
                 -- Reset global color: previous TEXFIXTURE drawables leave
@@ -2763,8 +2764,9 @@ function lib.drawTexturedWorld(world)
 
 
                 local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
-                local bd = state.backdrops and state.backdrops[data.selectedBGIndex]
-                if bd and bd.image then mesh:setTexture(bd.image) end
+                local url = resourceLink.imageURL(mappert:getUserData())
+                local img = url and getLoveImage(url)
+                if img then mesh:setTexture(img) end
 
                 --local mesh = love.graphics.newMesh(p)
                 love.graphics.setColor(1, 1, 1)
