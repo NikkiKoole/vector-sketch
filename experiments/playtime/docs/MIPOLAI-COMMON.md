@@ -102,7 +102,7 @@ Strategy backdrop: `STUDIO-STRATEGY.md`. First consumer: `APP-1-BATHHOUSE-PLAN.m
 ### Mipo sounds + speech (mipomi-lang)
 
 - **State:** real experiment, partially integrated.
-- **Lives in:** `experiments/mipomi-lang/` — `grammar.txt`, `glossary.txt`,
+- **Lives in:** `~/Projects/love/mipomi-lang/` (separate repo, not under vector-sketch) — `grammar.txt`, `glossary.txt`,
   `mouth/` (15 phoneme shapes), voice samples (`samples-nikki`, `samples-theo`,
   `samples-herman`). Playtime's editor already uses *"15 mouth shape presets
   (from mipomi-lang phoneme system)"* — see `MIPO-EDITOR-TODO.md` §1 Mouth.

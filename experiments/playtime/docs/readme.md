@@ -26,6 +26,11 @@ Each entry below is annotated with *what it is* and *when to consult it*.
 - **`STUDIO-STRATEGY.md`** — Mipolai-the-studio framing: studio (not company),
   format sequencing (video → book → YouTube), monetization (free + ~€2.99
   unlock), launch plan. The *why* behind Bathhouse and everything after.
+- **`DOLL-PLAY.md`**: the Puppetmaker follow-up. Doll-play world (Sago/Fiete
+  style): foundation checklist + a pick-and-choose menu of interactions.
+- **`KING-ROLLO.md`**: the notebook for a season of Mipo shorts, inspired
+  by *King Rollo* (1980). Watch-note cards per episode + Season 1 episode
+  cards (each = one verb, a game AND a video). Bathhouse is S1E1.
 - **`MIPOLAI-COMMON.md`** — the cross-app template: studio-shared engine
   primitives (game state machine [BUILT], camera, scene manager visual
   transitions, mipomi-lang speech, emotion layer, physical actions, tuning
