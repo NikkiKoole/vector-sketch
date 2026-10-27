@@ -18,7 +18,7 @@ lib.reverbDamping = 0.5  -- 0 bright .. 1 dark tail
 lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
     PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, PIPE = 25,
-    GUITAR = 26, PIANO = 27, BOWED = 28, MODAL = 31, METAL = 34,
+    GUITAR = 26, PIANO = 27, BOWED = 28, MODAL = 31, METAL = 34, WAVESCAN = 36,
 }
 
 -- Named patches in instrument slots 5..47: wave, attack/decay ms, sustain 0..7, release ms, macros,
@@ -55,6 +55,28 @@ lib.patches = {
     musicBass = { slot = 14, wave = 'BOWED', adsr = { 4, 0, 7, 475 },
                   harmonics = 0.3, timbre = 0.3, morph = 0.45, reverb = 0.15, level = 0.45,
                   modes = { [0] = 1, [1] = 0.85, [2] = 1 }, filter = { mode = 1, cutoff = 1200, resonance = 3 } },
+    -- the music's melody: the piano model's top voicing (harmonics ~1 = celesta), a music box
+    celesta = { slot = 18, wave = 'PIANO', adsr = { 1, 0, 7, 300 },
+                harmonics = 0.97, timbre = 0.5, morph = 0.3, reverb = 0.4, level = 0.8,
+                tape = { wow = 0.2, flutter = 0.05, saturation = 0, warble = 0 } },
+    -- other melody voices: the Rhodes a little brighter for a tune on top, and two kalimbas: a
+    -- mallet halfway between wood and bell, and the wavescan voice through its low-pass gate
+    -- (darker as it fades: a soft thumb 'plonk')
+    rhodesLead = { slot = 19, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
+                   harmonics = 0.15, timbre = 0.35, morph = 0.15, reverb = 0.3, level = 0.8,
+                   autopan = { rate = 4, depth = 0.4 } },
+    kalimba = { slot = 20, wave = 'MALLET', adsr = { 0, 600, 0, 300 },
+                harmonics = 0.45, timbre = 0.35, morph = 0.2, reverb = 0.3, level = 0.6 },
+    kalimbaPlonk = { slot = 21, wave = 'WAVESCAN', adsr = { 2, 500, 0, 250 },
+                     harmonics = 0.05, timbre = 0, morph = 1, reverb = 0.3, level = 0.42 },
+    -- the music's rhythm section (bossa): a soft kick (a drumhead struck in the centre), the
+    -- cross-stick rim click (a hard wooden tick) and a shaker (short high-passed noise)
+    kick   = { slot = 15, wave = 'MEMBRANE', adsr = { 0, 220, 0, 80 },
+               harmonics = 0.25, timbre = 0.1, morph = 0, reverb = 0.05, level = 0.6 },
+    rim    = { slot = 16, wave = 'MALLET', adsr = { 0, 50, 0, 30 },
+               harmonics = 0.0, timbre = 0.95, morph = 0, reverb = 0.15, level = 0.35 },
+    shaker = { slot = 17, wave = 'NOISE', adsr = { 3, 45, 0, 25 }, reverb = 0.1, level = 0.12,
+               filter = { mode = 2, cutoff = 6500, resonance = 1 } },
     -- slide whistle: the blown pipe (in tune at morph 0.7), held and glided (src/slide-sound.lua).
     -- Breathy (timbre = breath air) and on a wobbly cassette, so it sounds less like a pure synth.
     whistle = { slot = 8, wave = 'PIPE', adsr = { 30, 0, 7, 120 },
