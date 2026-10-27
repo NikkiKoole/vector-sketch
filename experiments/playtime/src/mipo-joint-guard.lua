@@ -13,6 +13,7 @@
 --   squashed joints passed the threshold and healing teleported limbs into
 --   neighbours, pumping energy in until the pile exploded out of the world.
 -- standUp: a Mipo that lands in a split can't get up by turning its legs alone
+--   (or its arms, in a handstand)
 --   (they'd have to lift the whole body), so after a moment of splayed legs it
 --   hops, again after a pause if needed. Only on the ground, not while held or
 --   leaning on others.
@@ -38,9 +39,10 @@ lib.standUpSpeed = 500          -- hop speed (world units/s), like the grab hop
 local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
 local splayedSince = {} -- [mipoId] = time its legs became splayed
 local lastStandUp = {}  -- [mipoId] = time of its last stand-up hop
-local legParts = { 'luleg', 'ruleg', 'llleg', 'rlleg' }
+-- Parts that can carry the Mipo: legs normally, arms in a handstand (flip).
+local supportParts = { 'luleg', 'ruleg', 'llleg', 'rlleg', 'luarm', 'ruarm', 'llarm', 'rlarm' }
 
-lib.stats = { unwound = 0, healed = 0, standUps = 0 }
+lib.stats = { unwound = 0, healed = 0, standUps = 0, standUpsByMipo = {} }
 
 local TWO_PI = 2 * math.pi
 
@@ -125,12 +127,21 @@ local function recentlyHeld(joint, now)
     return held ~= nil and now - held <= lib.healAfterRelease
 end
 
+-- Splayed: a supporting part that is holding a target (KEEP_ANGLE enabled) is
+-- far from that target. Follows the actions in src/mipo-actions.lua: upright
+-- legs normally, down-pointing arms when flipped, nothing when ragdolled.
 local function isSplayed(instance)
-    for _, name in ipairs(legParts) do
+    for _, name in ipairs(supportParts) do
         local part = instance.parts[name]
         if part and part.body and not part.body:isDestroyed() then
-            local angle = (part.body:getAngle() + math.pi) % TWO_PI - math.pi
-            if math.abs(angle) > lib.splayedAngle then return true end
+            local ud = part.body:getUserData()
+            for _, behavior in ipairs(ud and ud.thing and ud.thing.behaviors or {}) do
+                if behavior.name == 'KEEP_ANGLE' and behavior.enabled ~= false then
+                    local diff = part.body:getAngle() - math.rad(behavior.angle or 0)
+                    diff = (diff + math.pi) % TWO_PI - math.pi
+                    if math.abs(diff) > lib.splayedAngle then return true end
+                end
+            end
         end
     end
     return false
@@ -191,6 +202,7 @@ local function standUpMipos(now)
             torso.body:applyLinearImpulse(0, -mass * lib.standUpSpeed)
             lastStandUp[id] = now
             lib.stats.standUps = lib.stats.standUps + 1
+            lib.stats.standUpsByMipo[id] = (lib.stats.standUpsByMipo[id] or 0) + 1
         end
     end
 end
