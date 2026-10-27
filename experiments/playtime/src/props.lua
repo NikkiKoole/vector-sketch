@@ -252,6 +252,33 @@ function lib.makeSnapBlock(x, y, scale)
     return block
 end
 
+-- Snap-together cart: a wheel (snap point at its centre: the snap joint is a
+-- hinge, so it spins freely) and a plank (two axle points underneath, one at
+-- each end to hook carts into a train). Snap joints only break while you drag
+-- one of the pieces, so a cart that crashes stays together.
+function lib.makeWheel(x, y, scale)
+    local s = scale or 1
+    local wheel = objectManager.addThing('circle', { x = x, y = y, radius = 70 * s, label = 'wheel' })
+    if not wheel then return nil end
+    setMaterial(wheel.body, 0.9, 0.1, 1)
+    require('src.physics.snap').addPoint(wheel.body, 0, 0)
+    return wheel
+end
+
+function lib.makePlank(x, y, scale)
+    local s = scale or 1
+    local w, h = 600 * s, 40 * s
+    local plank = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h, label = 'plank' })
+    if not plank then return nil end
+    setMaterial(plank.body, 0.9, 0.1, 1)
+    local snap = require('src.physics.snap')
+    snap.addPoint(plank.body, -w / 2 + 90 * s, h / 2)
+    snap.addPoint(plank.body, w / 2 - 90 * s, h / 2)
+    snap.addPoint(plank.body, -w / 2, 0)
+    snap.addPoint(plank.body, w / 2, 0)
+    return plank
+end
+
 -- A pressure plate lying on the floor at (x, floorY): anything resting on it
 -- sends `signal`. mode 'hold' (default) sends again when it's free, 'toggle'
 -- only on each press (src/signals.lua).

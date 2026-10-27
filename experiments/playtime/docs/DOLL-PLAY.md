@@ -221,6 +221,11 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
 - [x] **Snap as a trigger**: a socket that sends a signal when something snaps in.
   `SIGNAL_SOCKET` behavior (`signal`, `mode` hold/toggle, `accepts` = label, empty = anything);
   Mipo hands don't count. Toys: `socket` + `key` (`props.makeSocket` / `props.makeKey`).
+- [x] **Snap-together cart**: toys `wheel` (snap point at its centre: the snap joint is a free
+  axle) + `plank` (2 axle points underneath, 1 at each end to hook carts into a train).
+  Crashing never breaks it (snap joints only break while dragged). Carrying by the plank,
+  measured on the wheel joints vs the 100k break threshold: held still 19k, slow circles
+  52k, hard shaking 128k -> the wheels pop off. spec/snap-cart_spec.lua.
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
 
