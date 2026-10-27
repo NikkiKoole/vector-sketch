@@ -25,8 +25,6 @@ end
 
 -- TODO z-order for characters is predefined
 -- TODO characters could be facing 3 ways (facingleft/facingright/facingfront)
--- TODO group id < 0 but different per character
-
 -- TODO how to handle referebce to humanoid after reload? maybe do a first humanoid for debug?
 --
 -- TODO some sfixtures end up with sensor=false , i dunno why yet.

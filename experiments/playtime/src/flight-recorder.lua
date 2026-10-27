@@ -3,8 +3,9 @@
 -- (limbs stretching, getting stuck) can be inspected frame by frame afterwards.
 -- Arm it, reproduce the problem, then dump:
 --   curl -X POST localhost:8001/eval -d '{"code":"return require(\"src.flight-recorder\").arm()"}'
---   curl -X POST localhost:8001/eval -d '{"code":"return require(\"src.flight-recorder\").dump(\"circles\")"}'
--- The dump is JSON in the LÖVE save directory (flight/<name>.json).
+--   curl -X POST localhost:8001/exec -d '{"code":"require(\"src.flight-recorder\").dump(\"circles\")"}'
+-- The dump is JSON in the LÖVE save directory (flight/<name>.json); dumping
+-- also disarms and frees the buffer.
 local json = require('vendor.dkjson')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
@@ -81,7 +82,10 @@ local function capture(dt)
     end
 
     head = head % lib.maxFrames + 1
-    frames[head] = frame
+    -- one string per frame instead of ~200 small tables: the garbage collector
+    -- would otherwise sweep hundreds of thousands of tables (70 MB with 5 Mipos)
+    -- and full collections made every update ~40 ms
+    frames[head] = json.encode(frame)
     count = math.min(count + 1, lib.maxFrames)
 end
 
@@ -97,11 +101,11 @@ end
 
 function lib.disarm()
     lib.armed = false
-    return 'disarmed'
+    return 'disarmed (buffer kept until the next arm or dump)'
 end
 
--- Frames in order, oldest first.
-function lib.getFrames()
+-- Encoded frames in order, oldest first.
+local function orderedFrames()
     local ordered = {}
     for i = 1, count do
         local idx = (head - count + i - 1) % lib.maxFrames + 1
@@ -110,11 +114,22 @@ function lib.getFrames()
     return ordered
 end
 
+-- Decoded frames, oldest first (slow for a full buffer; use dump for files).
+function lib.getFrames()
+    local decoded = {}
+    for _, encoded in ipairs(orderedFrames()) do decoded[#decoded + 1] = json.decode(encoded) end
+    return decoded
+end
+
+-- Writes the buffer and frees it (and disarms), so a forgotten recorder doesn't
+-- keep costing memory.
 function lib.dump(name)
-    local ordered = lib.getFrames()
+    local ordered = orderedFrames()
     love.filesystem.createDirectory('flight')
     local path = 'flight/' .. (name or ('dump-' .. frameNumber)) .. '.json'
-    love.filesystem.write(path, json.encode({ frames = ordered }))
+    love.filesystem.write(path, '{"frames":[' .. table.concat(ordered, ',') .. ']}')
+    lib.armed = false
+    frames, head, count = {}, 0, 0
     return { path = love.filesystem.getSaveDirectory() .. '/' .. path, frames = #ordered }
 end
 
