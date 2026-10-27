@@ -176,6 +176,56 @@ function lib.makeGate(baseBody, x, surfaceY, signal, scale)
     return gate
 end
 
+local function makeSensor(thing)
+    for _, fixture in ipairs(thing.body:getFixtures()) do fixture:setSensor(true) end
+end
+
+-- A climbing wall standing on the floor at (x, floorY): a backboard with holds
+-- in a loose grid. Board and holds are sensors (the wall is 'behind' the Mipo);
+-- each hold has a snap point, so a Mipo hand grabs it (src/physics/snap.lua).
+function lib.makeClimbingWall(x, floorY, scale)
+    local s = scale or 1
+    local w, h = 800 * s, 1400 * s
+    local board = objectManager.addThing('rectangle', {
+        x = x, y = floorY - h / 2, width = w, height = h, bodyType = 'static', label = 'climbing-wall' })
+    if board then makeSensor(board) end
+    local holds = {}
+    local rows, cols = 7, 4
+    for r = 1, rows do
+        for c = 1, cols do
+            local jx = (love.math.random() - 0.5) * 80 * s
+            local jy = (love.math.random() - 0.5) * 60 * s
+            local hx = x - w / 2 + (c - 0.5) * w / cols + jx + ((r % 2 == 0) and w / cols / 2 * 0.5 or 0)
+            local hy = floorY - (r - 0.3) * h / rows + jy
+            local hold = objectManager.addThing('rectangle', {
+                x = hx, y = hy, width = 60 * s, height = 34 * s, bodyType = 'static', label = 'hold' })
+            if hold then
+                makeSensor(hold)
+                require('src.physics.snap').addPoint(hold.body, 0, 0, 12 * s)
+                holds[#holds + 1] = hold
+            end
+        end
+    end
+    return board, holds
+end
+
+-- A block with snap points on all four sides: click blocks together into rows,
+-- towers or a train (the rectangles from the snap test scene).
+function lib.makeSnapBlock(x, y, scale)
+    local s = scale or 1
+    local w, h = 200 * s, 110 * s
+    local block = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h, label = 'snap-block' })
+    if not block then return nil end
+    setMaterial(block.body, 0.8, 0.1, 1)
+    block.body:setBullet(true)
+    local snap = require('src.physics.snap')
+    snap.addPoint(block.body, w / 2, 0)
+    snap.addPoint(block.body, -w / 2, 0)
+    snap.addPoint(block.body, 0, -h / 2)
+    snap.addPoint(block.body, 0, h / 2)
+    return block
+end
+
 -- A pressure plate lying on the floor at (x, floorY): anything resting on it
 -- sends `signal`. mode 'hold' (default) sends again when it's free, 'toggle'
 -- only on each press (src/signals.lua).

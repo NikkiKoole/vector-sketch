@@ -11,6 +11,8 @@ local state = require('src.state')
 local subtypes = require('src.subtypes')
 local joints = require('src.joints')
 local objectManager = require('src.object-manager')
+local CharacterManager = require('src.character-manager')
+local mipoRegistry = require('src.mipo-registry')
 
 describe('snap core', function()
     local world
@@ -209,5 +211,78 @@ describe('snap core', function()
         addSnapPoint(t2.body, -20, 0)
         step()
         assert.are.equal(1, #snap.joints())
+    end)
+
+    describe('Mipo hands', function()
+        before_each(function() mipoRegistry.reset() end)
+
+        local function moveMipo(instance, dx, dy)
+            for _, part in pairs(instance.parts) do
+                local x, y = part.body:getPosition()
+                part.body:setPosition(x + dx, y + dy)
+            end
+        end
+
+        it('two Mipos hold hands when a hand comes near the other one', function()
+            local a = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local b = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local ax, ay = a.parts.lhand.body:getWorldCenter()
+            local bx, by = b.parts.rhand.body:getWorldCenter()
+            moveMipo(b, ax - bx + 20, ay - by)
+            step()
+            local found = false
+            for _, joint in ipairs(snap.joints()) do
+                local j1, j2 = joint:getBodies()
+                if (j1 == a.parts.lhand.body and j2 == b.parts.rhand.body)
+                    or (j2 == a.parts.lhand.body and j1 == b.parts.rhand.body) then found = true end
+            end
+            assert.is_true(found)
+        end)
+
+        it("a Mipo's hands never grab its own Mipo", function()
+            local a = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local rx, ry = a.parts.rhand.body:getWorldCenter()
+            a.parts.lhand.body:setPosition(rx + 10, ry)
+            step()
+            assert.are.equal(0, #snap.joints())
+        end)
+
+        it('a hand grabs a fixed hold and lets go when pulled past handBreakThreshold', function()
+            local a = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local hx, hy = a.parts.lhand.body:getWorldCenter()
+            local hold = love.physics.newBody(world, hx + 30, hy, 'static')
+            local f = love.physics.newFixture(hold, love.physics.newCircleShape(10))
+            f:setSensor(true)
+            hold:setUserData({ thing = { id = 'HOLD', body = hold } })
+            registry.registerBody('HOLD', hold)
+            addSnapPoint(hold)
+            step()
+            assert.are.equal(1, #snap.joints())
+            local before = snap.handBreakThreshold
+            snap.handBreakThreshold = -1 -- any force: a hand lets go
+            step()
+            snap.handBreakThreshold = before
+            assert.are.equal(0, #snap.joints())
+        end)
+    
+        it('dragging a Mipo by its torso lets its hand grab a hold (per-Mipo interaction)', function()
+            state.snap.onlyConnectWhenInteracted = true
+            local pointerJoints = require('src.physics.box2d-pointerjoints')
+            pointerJoints.resetPointerJoints()
+            local a = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local hx, hy = a.parts.lhand.body:getWorldCenter()
+            local hold = love.physics.newBody(world, hx + 30, hy, 'static')
+            love.physics.newFixture(hold, love.physics.newCircleShape(10)):setSensor(true)
+            hold:setUserData({ thing = { id = 'HOLD2', body = hold } })
+            registry.registerBody('HOLD2', hold)
+            addSnapPoint(hold)
+            step()
+            assert.are.equal(0, #snap.joints()) -- nobody holds the Mipo
+            local tx, ty = a.parts.torso1.body:getPosition()
+            pointerJoints.handlePointerPressed(tx, ty, 'mouse')
+            step()
+            assert.are.equal(1, #snap.joints())
+            pointerJoints.resetPointerJoints()
+        end)
     end)
 end)

@@ -9,6 +9,11 @@
 -- it; nothing else is stored, so nothing can drift. Snap points are found by
 -- subtype in the registry each frame; cooldowns are keyed by sfixture id.
 --
+-- Mipo hands are snap points too (no fixture: id = the hand part's thing id),
+-- so a hand grabs a climbing hold, a snap block, or another Mipo's hand.
+-- Hands snap from closer by and let go more easily (handSnapDistance,
+-- handBreakThreshold); a hand never grabs its own Mipo.
+--
 -- (Before: links lived in each snap point as live body refs (at/to) plus two
 -- cached arrays kept in sync by hand. Deleting a body left its partner point
 -- marked as linked forever, saving had to convert refs to ids, and loading
@@ -20,8 +25,13 @@ local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
 local subtypes = require 'src.subtypes'
 local state = require('src.state')
+local mipoRegistry = require('src.mipo-registry')
 
 local lib = {}
+
+lib.mipoHands = true
+lib.handSnapDistance = 70     -- a hand grabs from this close (snap points use state.snap.snapDistance)
+lib.handBreakThreshold = 40000 -- a hand lets go above this joint force (a pull, a hard fall)
 
 local cooldownUntil = {} -- [sfixture id] = time
 
@@ -56,8 +66,28 @@ function lib.points()
             out[#out + 1] = { id = id, fixture = fixture, body = body, x = x, y = y }
         end
     end
+    if lib.mipoHands then
+        for mipoId, instance in pairs(mipoRegistry.getAll()) do
+            for _, name in ipairs({ 'lhand', 'rhand' }) do
+                local hand = instance.parts and instance.parts[name]
+                if hand and hand.body and not hand.body:isDestroyed() and hand.id then
+                    local x, y = hand.body:getWorldCenter()
+                    out[#out + 1] = { id = hand.id, body = hand.body, x = x, y = y, hand = true, mipo = mipoId }
+                end
+            end
+        end
+    end
     table.sort(out, function(p, q) return p.id < q.id end) -- deterministic pairing
     return out
+end
+
+-- Is this snap-point id a Mipo hand? (for joints: hands break more easily)
+local function isHandId(id)
+    if not id then return false end
+    local body = registry.getBodyByID(id)
+    if not body then return false end
+    local _, partName = mipoRegistry.getFromBody(body)
+    return partName == 'lhand' or partName == 'rhand'
 end
 
 -- All live snap joints.
@@ -88,9 +118,17 @@ local function bodiesJoined(snapJoints, body1, body2)
     return false
 end
 
+-- Held by a pointer, counted per Mipo: dragging a Mipo by its torso lets its
+-- hands grab (the hand itself isn't the body under the finger).
 local function isInteracted(body1, body2, interacted)
     for i = 1, #interacted do
-        if interacted[i] == body1 or interacted[i] == body2 then return true end
+        local held = interacted[i]
+        if held == body1 or held == body2 then return true end
+        local heldMipo = mipoRegistry.getFromBody(held)
+        if heldMipo and (mipoRegistry.getFromBody(body1) == heldMipo
+            or mipoRegistry.getFromBody(body2) == heldMipo) then
+            return true
+        end
     end
     return false
 end
@@ -131,21 +169,32 @@ local function checkForSnaps(points, snapJoints, interacted)
             free[#free + 1] = p
         end
     end
-    local maxDist = state.snap.snapDistance
+    -- every candidate pair within range, nearest first: a hand near two holds
+    -- grabs the closest (first-in-id-order made pairing depend on random ids)
+    local function sameMipo(p, q)
+        local mp = p.mipo or (mipoRegistry.getFromBody(p.body) or {}).id
+        local mq = q.mipo or (mipoRegistry.getFromBody(q.body) or {}).id
+        return mp ~= nil and mp == mq
+    end
+    local candidates = {}
     for i = 1, #free do
-        local p = free[i]
-        if not linked[p.id] then
-            for j = i + 1, #free do
-                local q = free[j]
-                if not linked[q.id] and p.body ~= q.body
-                    and (p.x - q.x) ^ 2 + (p.y - q.y) ^ 2 <= maxDist * maxDist
-                    and (not state.snap.onlyConnectWhenInteracted or isInteracted(p.body, q.body, interacted))
-                    and not bodiesJoined(snapJoints, p.body, q.body) then
-                    snapJoints[#snapJoints + 1] = createSnapJoint(p, q)
-                    linked[p.id], linked[q.id] = true, true
-                    break
-                end
+        for j = i + 1, #free do
+            local p, q = free[i], free[j]
+            local dist = (p.hand or q.hand) and lib.handSnapDistance or state.snap.snapDistance
+            local d2 = (p.x - q.x) ^ 2 + (p.y - q.y) ^ 2
+            if p.body ~= q.body and d2 <= dist * dist and not sameMipo(p, q) then
+                candidates[#candidates + 1] = { p = p, q = q, d2 = d2 }
             end
+        end
+    end
+    table.sort(candidates, function(c1, c2) return c1.d2 < c2.d2 end)
+    for _, c in ipairs(candidates) do
+        local p, q = c.p, c.q
+        if not linked[p.id] and not linked[q.id]
+            and (not state.snap.onlyConnectWhenInteracted or isInteracted(p.body, q.body, interacted))
+            and not bodiesJoined(snapJoints, p.body, q.body) then
+            snapJoints[#snapJoints + 1] = createSnapJoint(p, q)
+            linked[p.id], linked[q.id] = true, true
         end
     end
 end
@@ -154,7 +203,10 @@ local function checkForBreaks(dt, snapJoints, interacted)
     for _, joint in ipairs(snapJoints) do
         if not joint:isDestroyed() then
             local fx, fy = joint:getReactionForce(1 / dt)
-            if math.max(math.abs(fx), math.abs(fy)) > state.snap.jointBreakThreshold then
+            local meta = snapMeta(joint)
+            local threshold = (isHandId(meta.a) or isHandId(meta.b)) and lib.handBreakThreshold
+                or state.snap.jointBreakThreshold
+            if math.max(math.abs(fx), math.abs(fy)) > threshold then
                 local a, b = joint:getBodies()
                 if not state.snap.onlyBreakWhenInteracted or isInteracted(a, b, interacted) then
                     destroySnapJoint(joint)

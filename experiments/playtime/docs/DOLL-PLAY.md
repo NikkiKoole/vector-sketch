@@ -207,6 +207,16 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
   free (gate closes); 'toggle' only on presses. Release is debounced for 15 frames so a bouncing
   ball doesn't chatter; something already on it at load doesn't fire. In the toy box, and the mode
   is switchable in the behavior panel.
+- [x] **Snap, cleaned up** (2026-10-27): the snap joint is the single source of truth (`scriptmeta = { type = 'snap', a, b }`).
+- [x] **Hands grab** (2026-10-27): Mipo hands are snap points (no fixture; id = the hand part's id). They grab
+  holds, snap blocks and other Mipos' hands (holding hands), never their own Mipo. Hands use
+  `handSnapDistance` 70 and `handBreakThreshold` 40000 (a firm pull lets go). Snapping only happens
+  while a Mipo is held, counted per Mipo, so dragging by the torso lets the hands grab. Pairing is
+  nearest first.
+- [x] **Climbing wall + snap blocks** (2026-10-27): `props.makeClimbingWall` (sensor board + 28 holds with
+  snap points), `props.makeSnapBlock` (snap points on 4 sides). Both are in the toy box.
+- [ ] **Hats**: a snap point on the head, and a hat that clicks on.
+- [ ] **Snap as a trigger**: a socket that sends a signal when something snaps in.
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
 

@@ -122,6 +122,13 @@ function lib.drawAddShapeUI()
                     return { button, post }
                 end },
                 { 'plate', function(wx, wy) return { props.makePlate(wx, wy, 'signal1', 'hold', 1) } end },
+                { 'snap block', function(wx, wy) return { props.makeSnapBlock(wx, wy, 1) } end },
+                { 'climbing wall', function(wx, wy)
+                    local board, holds = props.makeClimbingWall(wx, wy, 1)
+                    local things = { board }
+                    for _, hold in ipairs(holds or {}) do things[#things + 1] = hold end
+                    return things
+                end },
                 { 'gate', function(wx, wy)
                     local base = objectManager.addThing('rectangle', { x = wx, y = wy, width = 300, height = 30,
                         bodyType = 'static', label = 'gate-base' })
