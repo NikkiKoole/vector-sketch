@@ -286,6 +286,8 @@ function lib.update(dt)
     if synth then
         synth.update(dt, require('src.camera').getInstance())
         require('src.slide-sound').update(synth, now())
+        require('src.snap-sound').update(synth)
+        require('src.music').update(synth, now())
     end
     local t = now()
     for key, at in pairs(impactPairs) do
@@ -316,7 +318,8 @@ local function playImpact(kind, body1, body2, speed, source)
     local synth = sound.synth and getSynth()
     if synth then
         -- soft hits high, hard hits low (like the samples' pitch 2 -> 1), a step of jitter either way
-        local notes = lib.plonkNotes
+        -- in the background music's current chord when it plays, else the fixed pentatonic
+        local notes = require('src.music').chordNotes(57, 74) or lib.plonkNotes
         local index = math.floor(mapInto(speed, sound.soft, sound.hard, #notes, 1) + 0.5) + love.math.random(-1, 1)
         index = math.max(1, math.min(#notes, index))
         local x1, y1 = body1:getPosition()
@@ -332,6 +335,7 @@ local function playImpact(kind, body1, body2, speed, source)
             if size > sound.bigSize then transpose = transpose - 12 end
         end
         synth.hit(patch, notes[index] + transpose, vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
+        require('src.music').bump(1) -- busy play brings the upright into the background music
         return
     end
     if not impactSources[kind] then

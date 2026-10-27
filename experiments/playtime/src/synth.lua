@@ -24,7 +24,7 @@ lib.INSTR = {
 -- Named patches in instrument slots 5..47: wave, attack/decay ms, sustain 0..7, release ms, macros,
 -- reverb send 0..1, level 0..1 (balances engines: some run much hotter), optional engine modes and filter,
 -- glide ms (held notes slide to a new pitch over this long), tape { wow, flutter, saturation, warble } 0..1
--- (a cassette on just this slot; warble = a worn tape that sags now and then).
+-- (a cassette on just this slot; warble = a worn tape that sags now and then), autopan, phaser.
 lib.patches = {
     tom  = { slot = 5, wave = 'MEMBRANE', adsr = { 0, 400, 0, 200 },
              harmonics = 0.3, timbre = 0.35, morph = 0, reverb = 0.3 },
@@ -43,6 +43,18 @@ lib.patches = {
                harmonics = 0.75, timbre = 0.6, morph = 0, reverb = 0.3 },
     tabla  = { slot = 11, wave = 'MEMBRANE', adsr = { 0, 500, 0, 250 },
                harmonics = 0, timbre = 0.5, morph = 0.4, reverb = 0.3 },
+    -- a tiny wooden click (a hard mallet on a wooden bar, ~35 ms) for snapping, src/snap-sound.lua
+    click  = { slot = 12, wave = 'MALLET', adsr = { 0, 40, 0, 20 },
+               harmonics = 0.05, timbre = 0.9, morph = 0, reverb = 0.1, level = 0.5 },
+    -- background music (src/music.lua). The Rhodes is the epiano cart's 'suitcase' preset: mellow
+    -- (harmonics 0.15 = the Rhodes detent), stereo vibrato (autopan) and a slow phaser swirl.
+    rhodes = { slot = 13, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
+               harmonics = 0.15, timbre = 0.2, morph = 0.12, reverb = 0.3, level = 0.35,
+               autopan = { rate = 4, depth = 0.5 }, phaser = { rate = 0.8, depth = 0.65, feedback = 0.5, mix = 0.5 },
+               tape = { wow = 0.25, flutter = 0.1, saturation = 0, warble = 0 } },
+    musicBass = { slot = 14, wave = 'BOWED', adsr = { 4, 0, 7, 475 },
+                  harmonics = 0.3, timbre = 0.3, morph = 0.45, reverb = 0.15, level = 0.45,
+                  modes = { [0] = 1, [1] = 0.85, [2] = 1 }, filter = { mode = 1, cutoff = 1200, resonance = 3 } },
     -- slide whistle: the blown pipe (in tune at morph 0.7), held and glided (src/slide-sound.lua).
     -- Breathy (timbre = breath air) and on a wobbly cassette, so it sounds less like a pure synth.
     whistle = { slot = 8, wave = 'PIPE', adsr = { 30, 0, 7, 120 },
@@ -70,6 +82,10 @@ void instrument_filter(int slot, int mode, int cutoff_hz, int resonance);
 void instrument_glide(int slot, int ms);
 void instrument_tape(int slot, float wow, float flutter, float saturation);
 void instrument_tape_warble(int slot, float amount);
+void instrument_autopan(int slot, float rate, float depth, int shape);
+void instrument_phaser(int slot, float rate, float depth, float feedback, float mix, int stages);
+double audio_time(void);
+void schedule_at(double t, int midi, int instr, int vol, int dur_ms);
 int  note_on(int midi, int instr, int vol);
 void note_off(int handle);
 void note_pitch(int handle, float midi);
@@ -100,6 +116,11 @@ local function definePatches()
         if patch.tape then
             S.C.instrument_tape(patch.slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
             S.C.instrument_tape_warble(patch.slot, patch.tape.warble or 0)
+        end
+        if patch.autopan then S.C.instrument_autopan(patch.slot, patch.autopan.rate, patch.autopan.depth, 0) end
+        if patch.phaser then
+            local ph = patch.phaser
+            S.C.instrument_phaser(patch.slot, ph.rate, ph.depth, ph.feedback, ph.mix, 6)
         end
     end
 end
@@ -178,6 +199,20 @@ function lib.hit(patchName, midi, vol, durMs, x, y)
     else
         S.C.hit(midi, patch.slot, vol, durMs)
     end
+end
+
+-- The engine's clock: seconds of sound actually played. Book notes against it with scheduleAt.
+function lib.audioTime()
+    return S.started and S.C.audio_time() or nil
+end
+
+-- A note at audio time t exactly (sample-accurate; book it at least a buffer ahead). Not placed in the world.
+function lib.scheduleAt(patchName, t, midi, vol, durMs)
+    if not S.started then return end
+    local patch = lib.patches[patchName]
+    if not patch then return end
+    vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
+    S.C.schedule_at(t, midi, patch.slot, vol, math.max(1, math.floor(durMs)))
 end
 
 -- Held notes. noteOn returns a handle (nil when the synth isn't running); vol 0..7, fractions OK.
