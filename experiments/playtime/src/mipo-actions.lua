@@ -287,7 +287,7 @@ lib.idle = true
 lib.idleAfter = 1.5            -- seconds after the last touch before idling starts
 lib.breatheEvery = { 3, 4.5 }  -- seconds between breaths (random in range)
 lib.breatheSpeed = 60          -- breath lift (world units/s for the whole Mipo)
-lib.slumpEvery = { 12, 25 }    -- seconds between slumps
+lib.slumpEvery = { 45, 90 }    -- seconds between slumps (12-25 was too often)
 lib.slumpFor = 0.5             -- seconds the knees stay slack
 lib.slumpPush = 350            -- downward push at the start (straight limp legs don't buckle alone);
                                -- measured: 250 = 20 deg dip, 350 = 30 deg, 500 collapses (hops to get up)

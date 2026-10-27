@@ -73,9 +73,9 @@ function lib.removeDeadPointerJoints()
 end
 
 -- A grabbed Mipo follows the pointer at most this fast (world units/s); false = off.
--- Without it a fast drag pulled the torso at Box2D's 12000/s cap and tore the
--- limb joints (flight recording, see src/mipo-joint-guard.lua). Props stay uncapped.
-lib.maxMipoDragSpeed = 3000
+-- Added when fast drags tore limb joints; off since unwind + heal (mipo-joint-guard)
+-- handle that and the cap made dragging feel laggy. 3000 if it's ever needed again.
+lib.maxMipoDragSpeed = false
 
 -- Move a target toward (wx, wy), at most maxStep far.
 function lib.stepToward(tx, ty, wx, wy, maxStep)

@@ -67,8 +67,9 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
   ~6 turns past its limit. There are three switchable fixes, all kept after play-testing:
   - `mipoJointGuard.unwind`: un-twist joints wound whole turns past their limits.
   - `mipoJointGuard.heal`: torn joints (> 40 apart) snap the limb subtree back.
-  - `box2dPointerJoints.maxMipoDragSpeed` = 3000: a grabbed Mipo follows the pointer at
-    most this fast (props uncapped). The grab now saturates 5% of frames, down from 52-72%.
+  - `box2dPointerJoints.maxMipoDragSpeed`: a cap on how fast a grabbed Mipo follows the
+    pointer. 3000 at first (grab saturation dropped from 52-72% of frames to 5%), now
+    switched off (`false`), since unwind + heal cope and the cap felt laggy.
   - Noticed: physics slowed (30s of steps took 42s) with 3-4 Mipos on screen. Check on iPad.
 
 ### Awareness and reactions (feels alive)
@@ -87,7 +88,7 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 - [x] **Held limb goes limp** (2026-10-27): holding a hand/foot/limb part makes that whole limb
   slack (`thing.limp`, honoured by keep-angle), and the rest keeps its pose. It recovers on release.
 - [x] **Idle relaxing** (2026-10-27): untouched for 1.5s, a Mipo breathes (tiny lift every 3-4.5s)
-  and every 12-25s slumps (knees slack 0.5s plus a push, ~30 deg dip), then straightens.
+  and every 45-90s slumps (knees slack 0.5s plus a push, ~30 deg dip), then straightens.
   Not while held, dazed, ragdolled, flipped or jumping.
 - [x] **Arms hang on their own side** (2026-10-27): real shoulder/elbow ranges (the DNA ones were
   T-pose relative and only allowed the upper half) plus a soft spring toward hanging.
