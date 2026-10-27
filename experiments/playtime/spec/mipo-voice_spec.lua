@@ -47,6 +47,22 @@ describe("src.mipo-voice", function()
         end)
     end)
 
+    describe("flapEnvelope", function()
+        it("is closed at both ends", function()
+            assert.are.equal(0, mipoVoice.flapEnvelope(0))
+            assert.are.equal(0, mipoVoice.flapEnvelope(1))
+        end)
+
+        it("is fully open in the middle third", function()
+            assert.are.equal(1, mipoVoice.flapEnvelope(0.5))
+        end)
+
+        it("rises then falls", function()
+            assert.is_true(mipoVoice.flapEnvelope(0.1) < mipoVoice.flapEnvelope(0.3))
+            assert.is_true(mipoVoice.flapEnvelope(0.75) > mipoVoice.flapEnvelope(0.95))
+        end)
+    end)
+
     describe("squeak", function()
         it("is a no-op without an instance", function()
             assert.is_nil(mipoVoice.squeak(nil, 'poke'))

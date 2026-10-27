@@ -3,7 +3,10 @@
 -- Samples come from the mipomi-lang repo (~/Projects/love/mipomi-lang), copied
 -- into assets/voices/{nikki,theo,herman,fx}. Full mipomi speech (say + lipsync)
 -- is a later step, see docs/DOLL-PLAY.md "Voice".
+-- Also: mouth flap while a squeak plays, and rubber plonks on impacts
+-- (both after puppet-maker2's mouthSay() and postSolve plonks).
 local mipoRegistry = require('src.mipo-registry')
+local mouthShapes = require('src.mouth-shapes')
 
 local lib = {}
 
@@ -12,6 +15,11 @@ lib.volume = 0.8
 lib.cooldown = 0.15      -- seconds between squeaks of the same Mipo
 lib.impactCooldown = 0.5 -- seconds between impact 'oof's of the same Mipo
 lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured: small hop ~550, 800-unit drop ~2500
+lib.plonkSpeed = 400     -- velocity change for a rubber plonk (lower than oof: small hops plonk too)
+lib.plonkHardSpeed = 4000 -- at and above this a plonk is lowest and loudest
+lib.plonkVolume = 0.8
+lib.plonkPairCooldown = 0.5 -- the same two bodies plonk at most this often
+lib.mouthFlap = true
 
 lib.voiceSets = { 'nikki', 'theo', 'herman' }
 
@@ -33,6 +41,9 @@ local sampleCache = {} -- [setName] = { keys = {...}, sources = { [key] = Source
 local lastSqueak = {}  -- [mipoId] = time
 local lastImpact = {}  -- [mipoId] = time
 local playing = {}     -- [mipoId] = Source; a Mipo says one thing at a time
+local flaps = {}       -- [mipoId] = { thing, start, duration, from, target, amount, wide, restore }
+local plonkPairs = {}  -- [pairKey] = time
+local plonkSources = nil
 
 local function now()
     return love and love.timer and love.timer.getTime() or os.clock()
@@ -128,8 +139,108 @@ function lib.squeak(instance, emotionName)
 
     lastSqueak[instance.id] = t
     if playing[instance.id] then playing[instance.id]:stop() end
-    playing[instance.id] = play(pick.set, pick.key, voice.pitch * emotion.pitch * jitter)
+    local pitch = voice.pitch * emotion.pitch * jitter
+    playing[instance.id] = play(pick.set, pick.key, pitch)
+    if playing[instance.id] then
+        lib.flapMouth(instance, playing[instance.id]:getDuration() / pitch)
+    end
     return playing[instance.id]
+end
+
+-- The face-owner thing of a Mipo (head, or torso1 for potato heads) and its upper lip decal.
+local function findMouth(instance)
+    for _, partName in ipairs({ 'head', 'torso1' }) do
+        local part = instance.parts and instance.parts[partName]
+        local body = part and part.body
+        if body and not body:isDestroyed() then
+            for _, fixture in ipairs(body:getFixtures()) do
+                local ud = fixture:getUserData()
+                local extra = ud and ud.extra
+                if extra and extra.mouthCurve == 'upper' and extra.curvePoints and extra.mouthScaleX then
+                    return part, extra
+                end
+            end
+        end
+    end
+    return nil, nil
+end
+
+local function shapeByName(name)
+    for _, shape in ipairs(mouthShapes.normalized) do
+        if shape.name == name then return shape.points end
+    end
+    return nil
+end
+
+local openShapes = { 'O_U_agh', 'open_tween', 'A_I' }
+
+-- Open the mouth for `duration` seconds, then close it again:
+-- rise over the first third, hold, fall over the last third (puppet-maker2 mouthSay).
+function lib.flapMouth(instance, duration)
+    if not lib.mouthFlap or not instance then return end
+    local thing, lip = findMouth(instance)
+    if not thing then return end
+    local existing = flaps[instance.id]
+    local restore = existing and existing.restore or thing.mouthShapeVec
+    local from = restore
+    if not from then
+        -- the DNA mouth, recovered from the lip decal's scaled curve points
+        from = {}
+        local cp = lip.curvePoints
+        for i = 1, 16, 2 do
+            from[i] = (cp[i] - lip.mouthX) / lip.mouthScaleX
+            from[i + 1] = (cp[i + 1] - lip.mouthY) / lip.mouthScaleY
+        end
+    end
+    local target = shapeByName(openShapes[love.math.random(#openShapes)])
+    if not target then return end
+    flaps[instance.id] = {
+        thing = thing,
+        start = now(),
+        duration = math.max(duration, 0.15),
+        from = from,
+        target = target,
+        amount = 0.7 + love.math.random() * 0.3,
+        wide = 0.8 + love.math.random() * 0.5,
+        restore = restore,
+    }
+end
+
+-- 0 → 1 → 0 over the duration, eased out on the way up and down.
+function lib.flapEnvelope(t)
+    if t <= 0 or t >= 1 then return 0 end
+    local function outQuad(x) return 1 - (1 - x) * (1 - x) end
+    if t < 1 / 3 then return outQuad(t * 3) end
+    if t < 2 / 3 then return 1 end
+    return 1 - outQuad((t - 2 / 3) * 3)
+end
+
+local function tickFlaps()
+    local t = now()
+    for id, flap in pairs(flaps) do
+        local progress = (t - flap.start) / flap.duration
+        if progress >= 1 then
+            flap.thing.mouthShapeVec = flap.restore
+            flaps[id] = nil
+        else
+            local e = lib.flapEnvelope(progress) * flap.amount
+            local wide = 1 + (flap.wide - 1) * e
+            local vec = {}
+            for i = 1, 16 do
+                vec[i] = flap.from[i] + (flap.target[i] - flap.from[i]) * e
+            end
+            for i = 1, 16, 2 do vec[i] = vec[i] * wide end
+            flap.thing.mouthShapeVec = vec
+        end
+    end
+end
+
+function lib.update(_dt)
+    tickFlaps()
+    local t = now()
+    for key, at in pairs(plonkPairs) do
+        if t - at > lib.plonkPairCooldown then plonkPairs[key] = nil end
+    end
 end
 
 function lib.squeakBody(body, emotionName)
@@ -138,8 +249,38 @@ function lib.squeakBody(body, emotionName)
     return nil
 end
 
--- Called from postSolve: a Mipo part that changes velocity hard says 'oof'.
--- Collisions between parts of the same Mipo are ignored.
+local function mapInto(x, inMin, inMax, outMin, outMax)
+    local t = (x - inMin) / (inMax - inMin)
+    t = math.max(0, math.min(1, t))
+    return outMin + (outMax - outMin) * t
+end
+
+local function plonk(body1, body2, speed)
+    if not (love and love.audio) then return end
+    local a, b = tostring(body1), tostring(body2)
+    local key = a < b and (a .. b) or (b .. a)
+    if plonkPairs[key] then return end
+    plonkPairs[key] = now()
+    if not plonkSources then
+        plonkSources = {}
+        for i = 1, 3 do
+            local path = 'assets/sounds/rubber-plonk' .. i .. '.ogg'
+            if love.filesystem.getInfo(path) then
+                plonkSources[#plonkSources + 1] = love.audio.newSource(path, 'static')
+            end
+        end
+    end
+    if #plonkSources == 0 then return end
+    local clone = plonkSources[love.math.random(#plonkSources)]:clone()
+    -- harder hit = lower and louder (puppet-maker2: pitch 2 → 1, volume .2 → 1)
+    clone:setPitch(mapInto(speed, lib.plonkSpeed, lib.plonkHardSpeed, 2, 1))
+    clone:setVolume(mapInto(speed, lib.plonkSpeed, lib.plonkHardSpeed, 0.2, 1) * lib.plonkVolume)
+    clone:play()
+end
+
+-- Called from postSolve. A Mipo part that changes velocity plonks; a hard
+-- change also makes the Mipo say 'oof'. Collisions between parts of the same
+-- Mipo are ignored.
 function lib.onImpact(fix1, fix2, normalImpulse)
     if not lib.enabled or not normalImpulse then return end
     local body1, body2 = fix1:getBody(), fix2:getBody()
@@ -150,7 +291,11 @@ function lib.onImpact(fix1, fix2, normalImpulse)
         local instance, body = pair[1], pair[2]
         if instance then
             local mass = body:getMass()
-            if mass > 0 and normalImpulse / mass > lib.impactSpeed then
+            local speed = mass > 0 and normalImpulse / mass or 0
+            if speed > lib.plonkSpeed then
+                plonk(body1, body2, speed)
+            end
+            if speed > lib.impactSpeed then
                 local t = now()
                 if not lastImpact[instance.id] or t - lastImpact[instance.id] > lib.impactCooldown then
                     lastImpact[instance.id] = t
@@ -165,6 +310,9 @@ function lib.reset()
     lastSqueak = {}
     lastImpact = {}
     playing = {}
+    for _, flap in pairs(flaps) do flap.thing.mouthShapeVec = flap.restore end
+    flaps = {}
+    plonkPairs = {}
 end
 
 return lib

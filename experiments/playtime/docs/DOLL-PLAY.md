@@ -101,13 +101,13 @@ recording and tuning happen; playtime gets a copy of the engine and the cut samp
   (puppet-maker2's growl pool), hard impact → `oof` (threshold measured live),
   `mipoVoice` in the script env.: one syllable or fx with a pitch shift. This is
   the cheap 80%; hook it to poke, pick-up and land reactions.
-- [ ] **V3b. From puppet-maker2** (`main.lua` growl / postSolve):
-  - *Mouth flap*: `mouthSay(guy, length)` opens and widens the mouth for the sound's
-    duration, then closes it. It's cheaper than V4 and gives most of the effect.
-  - *Rubber plonks*: impacts play `rubber-plonk1-3.wav` (physical, not voice),
-    pitch and volume scaled by impulse, with each body pair deduped for 0.5s.
-    `winegum-kiss1-5` for soft props. The files are in `puppet-maker2/assets/sounds/fx`.
-  - *Hop on grab*: `outside.lua` gives the torso an upward impulse when tapped.
+- [x] **V3b. From puppet-maker2** (2026-10-27), in `src/mipo-voice.lua`:
+  - *Mouth flap*: every squeak opens the mouth (random open shape + width) for
+    the sound's length via `thing.mouthShapeVec`, then restores it (`flapMouth`).
+  - *Rubber plonks*: Mipo-part impacts play `assets/sounds/rubber-plonk1-3.ogg`.
+    Harder hits are lower and louder (speed 400 to 4000), and each body pair is deduped for 0.5s.
+  - Not yet: `winegum-kiss1-5` for soft props, and *hop on grab* (`outside.lua`
+    torso impulse).
 - [ ] **V4. Lipsync**: don't port mipomi's `mouth/mouth.lua`. Playtime already
   has the same 15 shapes (`src/mouth-shapes.lua`), and the renderer reads
   the lip decals' `extra.curvePoints` every frame
