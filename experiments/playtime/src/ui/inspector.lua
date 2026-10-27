@@ -21,6 +21,8 @@ local function labelOf(row, target)
     return label
 end
 
+-- Kinds: text (keepSpaces = true keeps spaces), number (slider + field), numberText
+-- (field only), bool, choice, action.
 -- A row reads/writes `target[key]`, or calls row.get(target) / row.set(target, v)
 -- (Box2D objects). A set may return a replacement target (a rebuilt joint).
 local function valueOf(row, target)
@@ -45,9 +47,14 @@ local function drawRow(id, row, target, body, x, y, w)
     local wx = x + lib.labelWidth
     if row.kind ~= 'action' then ui.alignedLabel(x, y + 7, labelOf(row, target)) end
     if row.kind == 'text' then
-        local t = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, 40, row.default or '',
+        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, 40, row.default or '',
             valueOf(row, target) or '')
-        if t then return setValue(row, target, (t:gsub('%s', ''))) end
+        if t and dirty then return setValue(row, target, row.keepSpaces and t or (t:gsub('%s', ''))) end
+    elseif row.kind == 'numberText' then -- a plain number field, for values without a sensible range
+        local v = valueOf(row, target)
+        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, 40, '',
+            tostring(math.floor(v * 100 + 0.5) / 100), true)
+        if dirty and tonumber(t) then return setValue(row, target, tonumber(t)) end
     elseif row.kind == 'number' then
         local shown = valueOf(row, target)
         if type(shown) == 'number' then shown = math.floor(shown * 100 + 0.5) / 100 end -- not -209.9999

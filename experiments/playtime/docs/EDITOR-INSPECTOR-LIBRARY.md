@@ -57,6 +57,11 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
   settings as get/set rows (a set that rebuilds the joint returns the new one; `visible`
   hides limit/motor sliders while off). `src/ui/joint-update.lua` uses it, with the same
   old/new button. Collide, max force/torque and axis sit behind '+ more'.
+- **Body panel (2026-10-27)**: `src/body-params.lua`: type, label, size (per shape; rebuilds
+  the body), density/bounce/friction, flip x/y; '+ more': fixed angle, angle, x, y, sensor,
+  group, damping, sleep ok, bullet, spin. Behaviors/joints/sfixtures lists and the polygon
+  tools stay custom in `src/ui/body-editor.lua`. Density now resets the mass at once (the old
+  slider only took effect after a rebuild). New inspector kind `numberText` (field only).
 - **UI regression specs**: `spec/inspector_spec.lua` — per joint type, every setting is set
   and read back on a real joint (caught a planted degrees/radians bug), and every panel
   (new with all rows open, and old) draws without errors; every behavior panel too.
@@ -66,5 +71,6 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
 ## Next step
 
 Play with both (behavior + joint panels) for a session: keep → delete the old branches
-(`src/playtime-ui.lua` SIGNAL_*/KEEP_ANGLE, the old body of `src/ui/joint-update.lua`),
+(`src/playtime-ui.lua` SIGNAL_*/KEEP_ANGLE, the old bodies of `src/ui/joint-update.lua` and
+`src/ui/body-editor.lua`),
 or revert. Then slice 3 (library v0), and add the fake-pointer hook when it needs clicks.

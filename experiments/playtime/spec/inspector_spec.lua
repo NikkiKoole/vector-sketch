@@ -1,6 +1,6 @@
 -- spec/inspector_spec.lua
 -- The inspector (src/ui/inspector.lua) draws settings declared as data
--- (src/joint-params.lua, src/behaviors.lua), so one loop tests them all:
+-- (src/joint-params.lua, src/body-params.lua, src/behaviors.lua), so one loop tests them all:
 --   round trip: set(value) on a real joint, then get() returns it;
 --   drawing: every panel, '+ more' open, draws without errors (old panels too).
 -- Run with: love . --specs spec/inspector_spec.lua
@@ -12,6 +12,8 @@ local registry = require('src.registry')
 local joints = require('src.joints')
 local objectManager = require('src.object-manager')
 local jointParams = require('src.joint-params')
+local bodyParams = require('src.body-params')
+local bodyEditor = require('src.ui.body-editor')
 local behaviors = require('src.behaviors')
 local ui = require('src.ui.all')
 local inspector = require('src.ui.inspector')
@@ -51,6 +53,7 @@ describe('inspector', function()
     after_each(function()
         inspector.enabled, state.currentMode = savedEnabled, savedMode
         state.selection.selectedJoint = nil
+        state.selection.selectedObj = nil
         if world and not world:isDestroyed() then world:destroy() end
     end)
 
@@ -133,4 +136,86 @@ describe('inspector', function()
             end)
         end
     end
+
+    -- every shape the size rows know about
+    local shapes = {
+        rectangle = { width = 100, height = 60 },
+        circle = { radius = 40 },
+        hexagon = { radius = 40 },
+        torso = { width = 100, width2 = 90, width3 = 80, height = 120, height2 = 40, height3 = 40, height4 = 40 },
+        capsule = { width = 60, width2 = 10, height = 120 },
+        trapezium = { width = 100, width2 = 60, height = 80 },
+    }
+
+    for shape, dims in pairs(shapes) do
+        local function makeThing()
+            local opts = { x = 300, y = 200 }
+            for k, v in pairs(dims) do opts[k] = v end
+            local thing = objectManager.addThing(shape, opts)
+            state.selection.selectedObj = thing
+            return thing
+        end
+
+        it('body (' .. shape .. '): every visible setting reads back what was set', function()
+            local thing = makeThing()
+            assert.is_not_nil(thing, shape)
+            for _, row in ipairs(bodyParams.rows) do
+                if not row.visible or row.visible(thing) then
+                    local name = shape .. ' ' .. tostring(row.key or row.label)
+                    local replaced, v
+                    if row.kind == 'number' then
+                        local min, max = resolve(row.min, thing), resolve(row.max, thing)
+                        v = min + (max - min) * 0.75
+                        if row.step then v = math.floor(v) end
+                    elseif row.kind == 'numberText' then
+                        v = 123
+                    elseif row.kind == 'bool' then
+                        v = not row.get(thing)
+                    elseif row.kind == 'choice' then
+                        v = row.options[#row.options]
+                    elseif row.kind == 'text' then
+                        v = 'a label'
+                    end
+                    if row.kind == 'action' then
+                        replaced = row.run(thing.body, thing)
+                    else
+                        replaced = row.set(thing, v)
+                    end
+                    thing = replaced or thing
+                    if v ~= nil then
+                        local got = row.get(thing)
+                        if type(v) == 'number' then
+                            assert.is_true(math.abs(got - v) <= 1e-3 * math.max(1, math.abs(v)),
+                                name .. ': set ' .. v .. ', got ' .. tostring(got))
+                        else
+                            assert.are.equal(v, got, name)
+                        end
+                    end
+                    if replaced then
+                        assert.is_false(replaced.body:isDestroyed(), name)
+                        assert.are.equal(replaced, state.selection.selectedObj, name)
+                    end
+                end
+            end
+        end)
+
+        it('body (' .. shape .. '): the panel draws, new (all rows open) and old', function()
+            local thing = makeThing()
+            inspector.setFoldOpen('body_' .. tostring(thing.id), true)
+            for _, enabled in ipairs({ true, false }) do
+                inspector.enabled = enabled
+                local ok, err = renderToCanvas(function() bodyEditor.drawUpdateSelectedObjectUI() end)
+                assert.is_true(ok, shape .. (enabled and ' new' or ' old') .. ': ' .. tostring(err))
+            end
+        end)
+    end
+
+    it('density changes the body mass at once (the old slider needed a rebuild)', function()
+        local thing = objectManager.addThing('rectangle', { x = 0, y = 0, width = 100, height = 100 })
+        local before = thing.body:getMass()
+        for _, row in ipairs(bodyParams.rows) do
+            if row.key == 'density' then row.set(thing, row.get(thing) * 2) end
+        end
+        assert.is_true(math.abs(thing.body:getMass() - 2 * before) < 1e-3 * before)
+    end)
 end)

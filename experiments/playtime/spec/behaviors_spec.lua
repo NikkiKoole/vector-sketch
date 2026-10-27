@@ -4,7 +4,7 @@
 
 local behaviors = require('src.behaviors')
 
-local kinds = { text = true, number = true, bool = true, choice = true, action = true }
+local kinds = { text = true, numberText = true, number = true, bool = true, choice = true, action = true }
 
 describe('behavior params (inspector schema)', function()
     for _, behavior in ipairs(behaviors.allBehaviors) do
