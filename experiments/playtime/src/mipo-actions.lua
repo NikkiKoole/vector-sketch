@@ -338,7 +338,6 @@ lib.armHangKp = 40      -- spring (1/s^2)
 lib.armHangKd = 12      -- damping (1/s)
 lib.armHangMaxAlpha = 80 -- rad/s^2 cap, keeps it soft
 
-local armHangTargets = { luarm = 1, llarm = 1, ruarm = -1, rlarm = -1 } -- side sign
 local armParent = { luarm = 'torso1', ruarm = 'torso1', llarm = 'luarm', rlarm = 'ruarm' }
 
 local function jointBetween(parentBody, childBody)
@@ -375,21 +374,120 @@ function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, m
     local alpha = kp * diff - kd * (childBody:getAngularVelocity() - parentBody:getAngularVelocity())
     if alpha > maxAlpha then alpha = maxAlpha end
     if alpha < -maxAlpha then alpha = -maxAlpha end
-    childBody:applyTorque(childBody:getInertia() * alpha)
+    -- equal and opposite on the parent, like a muscle: a torque on the arm alone
+    -- is an outside force that spins the whole Mipo
+    local torque = childBody:getInertia() * alpha
+    childBody:applyTorque(torque)
+    parentBody:applyTorque(-torque)
 end
 
-local function hangArms(instance)
-    if not lib.armHang or instance._isRagdoll or instance._isFlipped or instance._dazedUntil then return end
-    local target = math.rad(lib.armHangAngle)
-    for name, side in pairs(armHangTargets) do
+-- Pointing: the arm on the target's side stretches toward it (upper and lower
+-- arm aimed the same way); the other arm keeps hanging.
+lib.pointKp = 40        -- KEEP_ANGLE gain for the pointing arm (20 drooped: ~45 deg off on average)
+lib.pointMaxOmega = 12  -- rad/s cap, so the arm swings up instead of snapping
+
+-- target: { x, y }, 'cursor' (mouse / last touch), a Box2D body, or a function
+-- returning x, y. nil stops pointing.
+function lib.pointAt(instance, target)
+    instance._pointTarget = target
+end
+
+function lib.stopPointing(instance)
+    instance._pointTarget = nil
+end
+
+function lib.isPointing(instance)
+    return instance._pointTarget ~= nil
+end
+
+local function resolveTarget(target)
+    if target == 'cursor' then
+        local camera = require('src.camera')
+        local touches = love.touch and love.touch.getTouches() or {}
+        local sx, sy
+        if #touches > 0 then
+            sx, sy = love.touch.getPosition(touches[#touches])
+        else
+            sx, sy = love.mouse.getPosition()
+        end
+        return camera.getInstance():getWorldCoordinates(sx, sy)
+    elseif type(target) == 'function' then
+        return target()
+    elseif type(target) == 'table' and target.x then
+        return target.x, target.y
+    elseif type(target) == 'table' then
+        return target[1], target[2]
+    elseif type(target) == 'userdata' and target.getPosition and not target:isDestroyed() then
+        return target:getPosition()
+    end
+    return nil
+end
+
+-- World angle that makes an arm point along (dx, dy): 0 = down, + = toward the left.
+function lib.pointAngle(dx, dy)
+    return math.atan2(-dx, dy)
+end
+
+local function steerArm(instance, side, angle, kp, kd, maxAlpha)
+    for _, name in ipairs({ side .. 'uarm', side .. 'larm' }) do
         local part = instance.parts[name]
         local parent = instance.parts[armParent[name]]
         if part and parent and part.body and parent.body and not part.body:isDestroyed()
             and not parent.body:isDestroyed() and not part.limp then
-            lib.steerJointToward(parent.body, part.body, side * target,
-                lib.armHangKp, lib.armHangKd, lib.armHangMaxAlpha)
+            lib.steerJointToward(parent.body, part.body, angle, kp, kd, maxAlpha)
         end
     end
+end
+
+-- The pointing arm uses KEEP_ANGLE (src/keep-angle.lua), like the legs and the
+-- flip's handstand arms: it steers the spin only. Setting arm velocities from
+-- here pumped momentum into the Mipo and it flew toward what it pointed at.
+local function setArmKeepAngle(instance, side, degrees)
+    -- the hand too: hanging loose at the end it dragged the whole arm down
+    for _, name in ipairs({ side .. 'uarm', side .. 'larm', side .. 'hand' }) do
+        local part = instance.parts[name]
+        if part and part.body and not part.body:isDestroyed() then
+            local b = lib.ensureKeepAngle(part, degrees or 0, lib.pointKp)
+            if b then
+                if degrees then
+                    b.angle, b.kp, b.maxOmega, b.enabled = degrees, lib.pointKp, lib.pointMaxOmega, nil
+                else
+                    b.enabled = false
+                end
+            end
+        end
+    end
+end
+
+local function poseArms(instance)
+    if instance._isRagdoll or instance._isFlipped or instance._dazedUntil then return end
+    local pointingSide
+    if instance._pointTarget then
+        local tx, ty = resolveTarget(instance._pointTarget)
+        local torso = instance.parts.torso1
+        if tx and torso and torso.body and not torso.body:isDestroyed() then
+            local cx = torso.body:getPosition()
+            -- the Mipo's left (+angle) is screen -x
+            pointingSide = (tx < cx) and 'l' or 'r'
+            local shoulder = instance.parts[pointingSide .. 'uarm']
+            if shoulder and shoulder.body then
+                local sx, sy = shoulder.body:getPosition()
+                setArmKeepAngle(instance, pointingSide, math.deg(lib.pointAngle(tx - sx, ty - sy)))
+            end
+        end
+    end
+    for _, side in ipairs({ 'l', 'r' }) do
+        if side ~= pointingSide then
+            if instance._pointedSide == side or instance._pointedSide == 'both' then
+                setArmKeepAngle(instance, side, nil)
+            end
+            if lib.armHang then
+                local hang = math.rad(lib.armHangAngle) * (side == 'l' and 1 or -1)
+                steerArm(instance, side, hang, lib.armHangKp, lib.armHangKd, lib.armHangMaxAlpha)
+            end
+        end
+    end
+    instance._pointedSide = pointingSide and 'both' or nil
 end
 
 -- A part is limp (thing.limp, honoured by keep-angle) while its limb is held or
@@ -421,7 +519,7 @@ local function updateLimp(now)
                 if part then part.limp = (held[limb] or (slumping and isLeg)) or nil end
             end
         end
-        hangArms(instance)
+        poseArms(instance)
     end
 end
 

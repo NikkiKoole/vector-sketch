@@ -89,8 +89,13 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 - [x] **Idle relaxing** (2026-10-27): untouched for 1.5s, a Mipo breathes (tiny lift every 3-4.5s)
   and every 12-25s slumps (knees slack 0.5s plus a push, ~30 deg dip), then straightens.
   Not while held, dazed, ragdolled, flipped or jumping.
-- [ ] **Pointing**: `mipoActions.pointAt(mipo, target)`. The nearest arm points at a spot, the
-  cursor/finger, or a body.
+- [x] **Arms hang on their own side** (2026-10-27): real shoulder/elbow ranges (the DNA ones were
+  T-pose relative and only allowed the upper half) plus a soft spring toward hanging.
+- [x] **Pointing** (2026-10-27): `mipoActions.pointAt(mipo, target)`, where target is `{x,y}`,
+  `'cursor'`, a body or a function, and `stopPointing`. Editor: "point at cursor". The arm on
+  the target's side gets KEEP_ANGLE on upper arm + forearm + hand. Aim is ~25 deg off on average
+  (heavy hands droop). Lessons: own torques/velocities on the arm flung the Mipo around;
+  KEEP_ANGLE (spin only) is the stable way.
 
 ### World
 - [ ] **Throwable props**: ball, block, fruit, hat. They're just bodies, so mostly art.

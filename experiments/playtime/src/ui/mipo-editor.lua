@@ -958,6 +958,12 @@ function lib.drawMipoEditor(instance, partName)
                 mipoActions.setFlipped(instance, not isFlipped)
             end
             y = y + ROW
+
+            local isPointing = mipoActions.isPointing(instance)
+            if ui.button(x, y, panelWidth - 40, isPointing and 'point at cursor: on' or 'point at cursor: off') then
+                if isPointing then mipoActions.stopPointing(instance) else mipoActions.pointAt(instance, 'cursor') end
+            end
+            y = y + ROW
         end)
 
         -- === SHAPE ACCORDION ===
