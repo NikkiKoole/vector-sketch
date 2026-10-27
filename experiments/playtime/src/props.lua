@@ -36,40 +36,6 @@ function lib.makeBall(x, y, radius, opts)
     return thing
 end
 
--- A board on two wheels (wheel joints with a little suspension).
-function lib.makeSkateboard(x, y, scale)
-    local s = scale or 1
-    local deckW, deckH, wheelR = 420 * s, 26 * s, 38 * s
-    local deck = objectManager.addThing('rectangle',
-        { x = x, y = y, width = deckW, height = deckH, label = 'skateboard' })
-    if not deck then return nil end
-    setMaterial(deck.body, 0.9, 0.05, 1)
-    local wheels = {}
-    for _, side in ipairs({ -1, 1 }) do
-        local wx, wy = side * deckW * 0.33, deckH / 2 + wheelR * 0.9
-        local wheel = objectManager.addThing('circle',
-            { x = x + wx, y = y + wy, radius = wheelR, label = 'skateboard-wheel' })
-        if wheel then
-            setMaterial(wheel.body, 1.0, 0.1, 1)
-            joints.createJoint({
-                body1 = deck.body,
-                body2 = wheel.body,
-                jointType = JT.WHEEL,
-                id = uuid.generateID(),
-                offsetA = { x = wx, y = wy },
-                offsetB = { x = 0, y = 0 },
-                axisX = 0,
-                axisY = 1,
-                springFrequency = 6,
-                springDampingRatio = 0.7,
-                collideConnected = false,
-            })
-            wheels[#wheels + 1] = wheel
-        end
-    end
-    return deck, wheels
-end
-
 -- Ribbon vertices along a path: top edge left -> right, then the bottom edge
 -- (offset by thickness) right -> left, relative to (x, y).
 local function ribbonAlong(points, thickness)
@@ -83,6 +49,50 @@ local function ribbonAlong(points, thickness)
         verts[#verts + 1] = points[i][2] + thickness
     end
     return verts
+end
+
+-- A skateboard: a long deck whose ends curl up (kicktails, so a sliding foot
+-- is stopped) on two wheel joints with a little suspension. 800 long fits the
+-- widest Mipo stance measured (~640); a 420 flat board let feet slide off.
+function lib.makeSkateboard(x, y, scale)
+    local s = scale or 1
+    local half, tail, tailHeight, thickness, wheelR = 400 * s, 70 * s, 70 * s, 34 * s, 40 * s
+    local points = {}
+    for i = 0, 20 do
+        local px = -half + 2 * half * i / 20
+        local over = math.max(0, math.abs(px) - (half - tail)) / tail
+        points[#points + 1] = { px, -tailHeight * over * over }
+    end
+    local verts = ribbonAlong(points, thickness)
+    local cx, cy = mathutils.computeCentroid(verts)
+    local deck = objectManager.addThing('ribbon',
+        { x = x + cx, y = y + cy, vertices = verts, label = 'skateboard' })
+    if not deck then return nil end
+    setMaterial(deck.body, 0.9, 0.05, 1)
+    local wheels = {}
+    for _, side in ipairs({ -1, 1 }) do
+        local wx, wy = side * half * 0.65, thickness + wheelR * 0.9
+        local wheel = objectManager.addThing('circle',
+            { x = x + wx, y = y + wy, radius = wheelR, label = 'skateboard-wheel' })
+        if wheel then
+            setMaterial(wheel.body, 1.0, 0.1, 1)
+            joints.createJoint({
+                body1 = deck.body,
+                body2 = wheel.body,
+                jointType = JT.WHEEL,
+                id = uuid.generateID(),
+                offsetA = { x = wx - cx, y = wy - cy },
+                offsetB = { x = 0, y = 0 },
+                axisX = 0,
+                axisY = 1,
+                springFrequency = 10,
+                springDampingRatio = 0.8,
+                collideConnected = false,
+            })
+            wheels[#wheels + 1] = wheel
+        end
+    end
+    return deck, wheels
 end
 
 -- A fixed slide standing on the floor at (x, floorY): ladder on the left,
