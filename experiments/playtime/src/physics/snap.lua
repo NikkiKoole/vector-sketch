@@ -245,8 +245,8 @@ function lib.onSceneLoaded()
     cooldownUntil = {}
     local points = lib.points()
     for _, p in ipairs(points) do
-        local ud = p.fixture:getUserData()
-        if ud.extra then ud.extra.at, ud.extra.to, ud.extra.fixture = nil, nil, nil end
+        local ud = p.fixture and p.fixture:getUserData() -- Mipo hands have no fixture
+        if ud and ud.extra then ud.extra.at, ud.extra.to, ud.extra.fixture = nil, nil, nil end
     end
     local taken = linkedIds(lib.joints())
     for _, joint in ipairs(lib.joints()) do

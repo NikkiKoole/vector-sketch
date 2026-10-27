@@ -50,4 +50,12 @@ describe('snap test scenes', function()
         local points, joints = summary()
         print(string.format('[snap scenes] tech/snap2: %d points, %d snap joints', points, joints))
     end)
+
+    it('dollhouse (Mipos = hand snap points without fixtures) loads', function()
+        sceneLoader.loadScriptAndScene('dollhouse')
+        local hands = 0
+        for _, p in ipairs(snap.points()) do if p.hand then hands = hands + 1 end end
+        print(string.format('[snap scenes] dollhouse: %d hand snap points', hands))
+        assert.is_true(hands >= 2)
+    end)
 end)
