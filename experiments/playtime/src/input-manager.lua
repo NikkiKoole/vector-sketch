@@ -5,6 +5,7 @@ local cam = camera.getInstance()
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local mathutils = require 'src.math-utils'
 local recorder = require 'src.recorder'
+local mipoVoice = require('src.mipo-voice')
 local utils = require 'src.utils'
 local script = require 'src.script'
 local selectrect = require 'src.selection-rect'
@@ -411,6 +412,9 @@ local function handlePointer(x, y, id, action, button)
                     return hthing
                 end)
                 script.call('onPressed', newHitted)
+                for _, fixture in ipairs(hitted) do
+                    if mipoVoice.squeakBody(fixture:getBody(), 'pickup') then break end
+                end
             end
         else
             state.interaction.pressMissedEverything = true

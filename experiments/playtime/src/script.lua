@@ -13,6 +13,7 @@ local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local statemachine = require 'src.statemachine'
 local characterManager = require('src.character-manager')
+local mipoVoice = require('src.mipo-voice')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -60,6 +61,7 @@ local baseEnv = {
     registry                 = registry,
     statemachine             = statemachine,
     characterManager         = characterManager,
+    mipoVoice                = mipoVoice,
     tostring                 = tostring,
     tonumber                 = tonumber
     -- Add global utilities like NeedManager, etc.

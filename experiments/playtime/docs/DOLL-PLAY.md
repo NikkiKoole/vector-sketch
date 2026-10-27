@@ -89,7 +89,7 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 Source repo: `~/Projects/love/mipomi-lang` (GitHub private). It stays the lab where
 recording and tuning happen; playtime gets a copy of the engine and the cut samples.
 
-- [ ] **V1. Samples in**: copy the cut syllables to `assets/voices/{nikki,theo,herman}/`
+- [x] **V1. Samples in** (2026-10-27): copy the cut syllables to `assets/voices/{nikki,theo,herman}/`
   and the fx to `assets/voices/fx/` (about 1.2 MB). Skip the raw takes (`*-uncut*`,
   root `*.ogg`, `blah4`). Note: mipomi's `main.lua` only ever loads
   `samples-nikki`. The other two voices are recorded but have never been used in code.
@@ -97,8 +97,17 @@ recording and tuning happen; playtime gets a copy of the engine and the cut samp
   (`parseInput`, per-speaker `sayQueue`, `playSyllable`/`playSFX`,
   pitch curves, personalities, stutter) into a module with no globals and no
   draw/keypress code. A speaker is created per Mipo.
-- [ ] **V3. `mipo:squeak(emotion)`**: one syllable or fx with a pitch shift. This is
+- [x] **V3. `mipo:squeak(emotion)`** (2026-10-27): `src/mipo-voice.lua`. Grab → `pickup`
+  (puppet-maker2's growl pool), hard impact → `oof` (threshold measured live),
+  `mipoVoice` in the script env.: one syllable or fx with a pitch shift. This is
   the cheap 80%; hook it to poke, pick-up and land reactions.
+- [ ] **V3b. From puppet-maker2** (`main.lua` growl / postSolve):
+  - *Mouth flap*: `mouthSay(guy, length)` opens and widens the mouth for the sound's
+    duration, then closes it. It's cheaper than V4 and gives most of the effect.
+  - *Rubber plonks*: impacts play `rubber-plonk1-3.wav` (physical, not voice),
+    pitch and volume scaled by impulse, with each body pair deduped for 0.5s.
+    `winegum-kiss1-5` for soft props. The files are in `puppet-maker2/assets/sounds/fx`.
+  - *Hop on grab*: `outside.lua` gives the torso an upward impulse when tapped.
 - [ ] **V4. Lipsync**: don't port mipomi's `mouth/mouth.lua`. Playtime already
   has the same 15 shapes (`src/mouth-shapes.lua`), and the renderer reads
   the lip decals' `extra.curvePoints` every frame
