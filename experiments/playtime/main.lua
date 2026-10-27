@@ -114,6 +114,7 @@ local mipoVoice = require('src.mipo-voice')
 local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
+local signals = require('src.signals')
 mipoVoice.onHardImpact = function(...) return mipoActions.onHardImpact(...) end -- late-bound for hot reload
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local camera = require 'src.camera'
@@ -435,6 +436,10 @@ function love.draw()
 
     editorRenderer.renderActiveEditorThings()
     editorRenderer.renderSteinerOverlay()
+    if state.world.paused then
+        local selected = state.selection.selectedObj and state.selection.selectedObj.body
+        signals.drawWires(selected)
+    end
     cam:pop()
     -- end)
     -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)

@@ -21,6 +21,7 @@ local sceneLoader = require 'src.scene-loader'
 local subtypes = require 'src.subtypes'
 local SE = require('src.script-events')
 local behaviors = require 'src.behaviors'
+local signals = require('src.signals')
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
 local uiShapePanel = require('src.ui.shape-panel')
@@ -574,6 +575,37 @@ function lib.drawUI()
                         end
 
 
+                        local signalBehaviorName = state.panelVisibility.customBehavior.name
+                        if signalBehaviorName == 'SIGNAL_BUTTON' or signalBehaviorName == 'SIGNAL_GATE' then
+                            local sigBody = state.panelVisibility.customBehavior.body
+                            local sigUD = sigBody:getUserData()
+                            local sb
+                            for _, behavior in ipairs(sigUD.thing.behaviors or {}) do
+                                if behavior.name == signalBehaviorName then sb = behavior end
+                            end
+                            if sb then
+                                ui.label(100, 100, 'signal')
+                                local t = ui.textinput('signal_' .. tostring(sigUD.thing.id), 170, 95, 150, 40,
+                                    'signal1', sb.signal or '')
+                                if t then sb.signal = t:gsub('%s', '') end
+                                if signalBehaviorName == 'SIGNAL_BUTTON' then
+                                    if ui.button(100, 150, 150, 'send now') then signals.emit(sb.signal) end
+                                else
+                                    if ui.button(100, 150, 150, sb.open and 'open' or 'closed') then
+                                        signals.setGate(sigBody, not sb.open)
+                                    end
+                                end
+                                if ui.button(100, 200, 150, 'remove') then
+                                    local kept = {}
+                                    for _, behavior in ipairs(sigUD.thing.behaviors or {}) do
+                                        if behavior ~= sb then table.insert(kept, behavior) end
+                                    end
+                                    sigUD.thing.behaviors = kept
+                                    state.panelVisibility.customBehavior = false
+                                end
+                            end
+                        end
+
                         if state.panelVisibility.customBehavior.name == 'LIMB_HUB' then
                             -- we can assume all these type of other things are attached via revolute joints
                             local me = state.panelVisibility.customBehavior.body
@@ -669,7 +701,9 @@ function lib.drawUI()
                         if not myUD.thing.behaviors then
                             myUD.thing.behaviors = {}
                         end
-                        table.insert(myUD.thing.behaviors, { name = option })
+                        local added = { name = option }
+                        if option:find('^SIGNAL_') then added.signal = 'signal1' end
+                        table.insert(myUD.thing.behaviors, added)
                         state.panelVisibility.addBehavior.body:setUserData(myUD)
                         local body = state.panelVisibility.addBehavior.body
                         state.panelVisibility.addBehavior = false

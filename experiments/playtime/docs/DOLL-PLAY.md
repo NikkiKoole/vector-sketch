@@ -191,6 +191,14 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
 - [x] **Slide with starting deck**: 1000-long deck at 3 deg into a smoothstep chute (one ribbon).
   Dollhouse: skateboard parked against the gate, button beside the ladder. Put a Mipo on the
   board and tap the button.
+- [x] **Wiring in the editor** (2026-10-27): body editor, then behaviors, then `SIGNAL_BUTTON` /
+  `SIGNAL_GATE`. New ones start on signal `signal1`. Their panel has a signal-name field, plus
+  "send now" (button) or an open/closed toggle (gate). While paused, wires are drawn from every
+  trigger to the receivers on the same signal, with the name halfway; the selected body's wires
+  are thicker.
+- [ ] **Prismatic joints from "add joint"** start with limits 0..0 (stuck); give gates sensible
+  default limits so an editor-made gate works without the props recipe.
+- [ ] **Toy box** panel: place props.* recipes at the mouse from the editor.
 - [ ] **Pressure plate**: a trigger a Mipo or ball steps on.
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).

@@ -91,6 +91,43 @@ function lib.onPressed(bodies)
     return false
 end
 
+-- Editor overlay (drawn in world space while paused): a line from every trigger
+-- to every receiver on the same signal, its name halfway. Wires touching the
+-- selected body are drawn thicker.
+local triggerNames = { SIGNAL_BUTTON = true }
+
+function lib.drawWires(selectedBody)
+    if not state.physicsWorld then return end
+    local triggers, receivers2 = {}, {}
+    for _, body in ipairs(state.physicsWorld:getBodies()) do
+        for _, b in ipairs(behaviorsOf(body) or {}) do
+            if b.signal and b.name:find('^SIGNAL_') then
+                local list = triggerNames[b.name] and triggers or receivers2
+                list[b.signal] = list[b.signal] or {}
+                table.insert(list[b.signal], body)
+            end
+        end
+    end
+    local r, g, b, a = love.graphics.getColor()
+    local lineWidth = love.graphics.getLineWidth()
+    for signal, from in pairs(triggers) do
+        for _, t in ipairs(from) do
+            local tx, ty = t:getPosition()
+            for _, rcv in ipairs(receivers2[signal] or {}) do
+                local rx, ry = rcv:getPosition()
+                local selected = selectedBody and (t == selectedBody or rcv == selectedBody)
+                love.graphics.setColor(1, 0.85, 0.2, selected and 1 or 0.5)
+                love.graphics.setLineWidth(selected and 8 or 3)
+                love.graphics.line(tx, ty, rx, ry)
+                love.graphics.circle('fill', rx, ry, selected and 14 or 8)
+                love.graphics.print(signal, (tx + rx) / 2, (ty + ry) / 2, 0, 3, 3)
+            end
+        end
+    end
+    love.graphics.setLineWidth(lineWidth)
+    love.graphics.setColor(r, g, b, a)
+end
+
 -- After a scene loads, drive every gate to its saved state.
 function lib.applySavedStates()
     if not state.physicsWorld then return end
