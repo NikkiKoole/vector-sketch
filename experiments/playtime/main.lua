@@ -31,8 +31,8 @@ end
 
 --- strategy of performance tuning
 --- for the 'vendor.jprof' to give clear result it needs to be off.
---- to see the memory churn the best you should turn off manual_gc too.
---- when you are happy you can turn back on the jit and manual_gc to improve framerate.
+--- when you are happy you can turn back on the jit to improve framerate.
+--- (manual_gc was removed 2026-10: Lua's own incremental GC is cheaper here, see love.update)
 
 
 -- local ffi = require "ffi"
@@ -90,7 +90,6 @@ end
 local _logger = require 'src.logger'      -- luacheck: ignore 211
 local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
 local prof = require 'vendor.jprof'
-local manual_gc = require 'vendor.batteries.manual_gc'
 if jit then jit.off() end                -- luacheck: ignore 113 (jit is a LuaJIT global)
 local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 
@@ -335,9 +334,10 @@ function love.update(dt)
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
-    -- 2ms of incremental GC per update; a full collect only above 64 MB (was 2 MB,
-    -- which the game is always over, so it did a full collect every update)
-    manual_gc(0.002, 64)
+    -- No manual_gc: the game makes ~1.6 KB of garbage per frame, and Lua's own
+    -- incremental collector does work in proportion to that. manual_gc(0.002, x)
+    -- burned its whole 2 ms budget every update (1000 steps, ~2 full cycles per
+    -- frame) and with ceiling 2 MB even forced a full collect every update.
     prof.pop('frame')
 end
 
