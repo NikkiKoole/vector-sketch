@@ -694,7 +694,8 @@ function lume.hotswap(modname)
     local oldmt, newmt = getmetatable(old), getmetatable(new)
     if oldmt and newmt then update(oldmt, newmt) end
     for k, v in pairs(new) do
-      if type(v) == "table" then update(old[k], v) else old[k] = v end
+      -- (playtime) a table field the old module didn't have is copied, not recursed into (was: "table index is nil")
+      if type(v) == "table" and type(old[k]) == "table" then update(old[k], v) else old[k] = v end
     end
   end
   local err = nil

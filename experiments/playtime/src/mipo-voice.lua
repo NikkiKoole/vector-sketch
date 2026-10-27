@@ -20,11 +20,18 @@ lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured
 -- Impact sounds (files relative to assets/sounds/, see its README for sources).
 -- Speeds are velocity changes (world units/s); a hit at `soft`
 -- plays at pitch[1]/volume[1], at `hard` and above at pitch[2]/volume[2].
+-- `synth` lists src/synth.lua patches to use instead of the files when synthImpacts is on
+-- (`transpose` semitones on lib.plonkNotes, `durMs` how long the note is held, default 400).
 lib.impactSounds = {
     -- rubber plonks mixed with Korg Minipops toms/wood block (short wooden 'toks')
     plonk = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3',
                         'korg-minipops/tom1', 'korg-minipops/tom2', 'korg-minipops/wood1' },
-              soft = 400, hard = 4000, pitch = { 2, 1 }, volume = { 0.2, 0.8 } },
+              soft = 400, hard = 4000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
+              synth = { 'tom', 'wood' } },
+    -- a ball bouncing off anything: the upright bass, two octaves down; rubber plonks without the synth
+    ball  = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3' },
+              soft = 300, hard = 3000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
+              synth = { 'bass' }, transpose = -24, durMs = 150 },
     kiss  = { files = { 'winegum-kiss1', 'winegum-kiss2', 'winegum-kiss3', 'winegum-kiss4', 'winegum-kiss5' },
               soft = 150, hard = 1500, pitch = { 2, 0.25 }, volume = { 0.2, 1 } },
 }
@@ -34,6 +41,18 @@ lib.impactPairCooldown = 0.5 -- the same two bodies make the same impact sound a
 lib.minApproachSpeed = 350
 lib.plonkMipoCooldown = 0.25 -- one Mipo plonks at most this often (catches jitter spikes)
 lib.mouthFlap = true
+
+-- Impacts from dreamengine's synth (src/synth.lua: modeled instruments placed in the
+-- world) instead of the samples. Falls back to the samples when the library isn't built.
+lib.synthImpacts = true
+lib.plonkNotes = { 57, 60, 62, 64, 67, 69, 72, 74 } -- pentatonic: a pile of impacts sounds like a tune
+
+-- Required lazily: src/synth.lua needs LuaJIT's ffi, which the pure busted specs don't have.
+local function getSynth()
+    if not lib.synthImpacts then return nil end
+    local synth = require('src.synth')
+    return synth.start() and synth or nil
+end
 
 -- Optional hook, called with (instance, speed) for every hit above impactSpeed
 -- (main.lua wires it to mipoActions.onHardImpact for the daze).
@@ -255,8 +274,10 @@ local function tickFlaps()
     end
 end
 
-function lib.update(_dt)
+function lib.update(dt)
     tickFlaps()
+    local synth = getSynth()
+    if synth then synth.update(dt, require('src.camera').getInstance()) end
     local t = now()
     for key, at in pairs(impactPairs) do
         if t - at > lib.impactPairCooldown then impactPairs[key] = nil end
@@ -282,6 +303,19 @@ local function playImpact(kind, body1, body2, speed)
     local key = kind .. (a < b and (a .. b) or (b .. a))
     if impactPairs[key] then return end
     impactPairs[key] = now()
+    local synth = sound.synth and getSynth()
+    if synth then
+        -- soft hits high, hard hits low (like the samples' pitch 2 -> 1), a step of jitter either way
+        local notes = lib.plonkNotes
+        local index = math.floor(mapInto(speed, sound.soft, sound.hard, #notes, 1) + 0.5) + love.math.random(-1, 1)
+        index = math.max(1, math.min(#notes, index))
+        local x1, y1 = body1:getPosition()
+        local x2, y2 = body2:getPosition()
+        local vol = mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume * 14
+        local patch = sound.synth[love.math.random(#sound.synth)]
+        synth.hit(patch, notes[index] + (sound.transpose or 0), vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
+        return
+    end
     if not impactSources[kind] then
         impactSources[kind] = {}
         for _, name in ipairs(sound.files) do
@@ -324,6 +358,11 @@ function lib.onEndContact(fix1, fix2)
     freshContacts[fixturePairKey(fix1, fix2)] = nil
 end
 
+local function isBall(body)
+    local ud = body:getUserData()
+    return ud and ud.thing and ud.thing.label == 'ball'
+end
+
 function lib.isSquishy(body)
     local ud = body:getUserData()
     local behaviors = ud and ud.thing and ud.thing.behaviors
@@ -363,6 +402,8 @@ function lib.onImpact(fix1, fix2, normalImpulse)
                     lib.squeak(instance, 'oof')
                 end
             end
+        elseif speed > 0 and isBall(body) then -- squishy balls too
+            playImpact('ball', body1, body2, speed)
         elseif speed > 0 and lib.isSquishy(body) then
             playImpact('kiss', body1, body2, speed)
         end

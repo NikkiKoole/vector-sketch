@@ -2,3 +2,4 @@ profilingReport.txt
 ./profilingReport.txt
 .playtime.log
 .playtime-error.log
+native/desound/libdesound.dylib
