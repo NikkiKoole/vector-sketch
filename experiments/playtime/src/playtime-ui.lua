@@ -30,6 +30,7 @@ local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
 local fileBrowser  = require('src.file-browser')
 local uiMipoEditor = require('src.ui.mipo-editor')
+local inspector = require('src.ui.inspector')
 local mipoRegistry = require('src.mipo-registry')
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -527,11 +528,37 @@ function lib.drawUI()
                             state.panelVisibility.customBehaviorDescription = lookup.description
                         end
                     end
+                    -- compare the generic inspector with the old hand-made panel (plan slice 1)
+                    if lookup.params and ui.button(285, 50, 55, inspector.enabled and 'new' or 'old') then
+                        inspector.enabled = not inspector.enabled
+                    end
                 end
 
 
                 ui.scrollableList('custombehaviors', 50, 100, 280, 250,
-                    function(baseX, baseY, _w, _h, offsetY)
+                    function(baseX, baseY, listW, _h, offsetY)
+                        local behaviorBody = state.panelVisibility.customBehavior.body
+                        if lookup and lookup.params and inspector.enabled then
+                            local bodyThing = behaviorBody:getUserData().thing
+                            local target
+                            for _, behavior in ipairs(bodyThing.behaviors or {}) do
+                                if behavior.name == lookup.name then target = behavior end
+                            end
+                            if not target then return 0 end
+                            local x, y = baseX + 10, baseY + offsetY + 5
+                            local used = inspector.drawParams(lookup.name .. '_' .. tostring(bodyThing.id),
+                                lookup.params, target, behaviorBody, x, y, listW - 20)
+                            if ui.button(x + inspector.labelWidth, y + used + 7, listW - 20 - inspector.labelWidth,
+                                    'remove') then
+                                local kept = {}
+                                for _, behavior in ipairs(bodyThing.behaviors) do
+                                    if behavior ~= target then table.insert(kept, behavior) end
+                                end
+                                bodyThing.behaviors = kept
+                                state.panelVisibility.customBehavior = false
+                            end
+                            return used + inspector.rowHeight + 10
+                        end
                         if state.panelVisibility.customBehavior.name == 'KEEP_ANGLE' then
                             local myID        = state.selection.selectedObj.id
                             local myUD        = state.panelVisibility.customBehavior.body:getUserData()

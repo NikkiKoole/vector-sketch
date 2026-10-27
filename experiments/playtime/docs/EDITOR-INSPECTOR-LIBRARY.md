@@ -43,8 +43,17 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
 - Nested prefabs / linked instances (edit one, all update): too deep for now.
 - Wire tool (drag trigger → receiver): nice, but third in line; revisit after slice 4.
 
+## Status
+
+- **Slice 1 built (2026-10-27)**: `src/ui/inspector.lua` (`drawParams`), `params` on
+  KEEP_ANGLE, SIGNAL_BUTTON/PLATE/SOCKET/GATE and SQUISHY in `src/behaviors.lua`,
+  `spec/behaviors_spec.lua` checks the rows. The behavior panel has an `old`/`new` button
+  (top right) to compare with the hand-made panels, which are still there.
+  Side effects: KEEP_ANGLE's old `speed` slider is gone (nothing read it), it now shows
+  `enabled`, plus `strength` (kp) and `max spin` behind '+ more'; the old KEEP_ANGLE
+  'remove' wiped *all* behaviors of the body, the new one removes just that one.
+
 ## Next step
 
-Slice 1: add a `params` list to SIGNAL_SOCKET in `src/behaviors.lua` and write
-`drawParams` in a new `src/ui/inspector.lua`; show it under the old signal panel so
-both can be compared side by side.
+Play with it for one session and decide: keep (then delete the old SIGNAL_* /
+KEEP_ANGLE branches in `src/playtime-ui.lua`) or revert. If kept: slice 2, joint settings.
