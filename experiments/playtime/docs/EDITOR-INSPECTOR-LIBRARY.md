@@ -41,6 +41,7 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
 - Code editing inside the editor: code stays in files.
 - Rewriting all panels in one go, or a new UI framework/library.
 - Nested prefabs / linked instances (edit one, all update): too deep for now.
+- Comic Shanns (compact, 16px) as the editor font: tried live, said no 2026-10-27; Arial Narrow stays.
 - Wire tool (drag trigger → receiver): nice, but third in line; revisit after slice 4.
 
 ## Status
