@@ -9,6 +9,8 @@ lib.allBehaviors = {
         .. 'by its edge number and a lerp between vertex -1 and vertex.' },
     { name = 'SIGNAL_BUTTON',
       description = 'tap it to send its signal (default gate1) to receivers (src/signals.lua).' },
+    { name = 'SIGNAL_PLATE',
+      description = 'pressure plate: anything resting on it sends its signal; hold mode sends again when free.' },
     { name = 'SIGNAL_GATE',
       description = 'a body on a prismatic joint; toggles open/closed on its signal (src/signals.lua).' },
     { name = 'SQUISHY',

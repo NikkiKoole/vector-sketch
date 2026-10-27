@@ -202,7 +202,11 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
 - [x] **Toy box** (2026-10-27): add shape, then **toys**: ball, skateboard, slide, button, gate. Press to
   spawn at the mouse, drag to place, release. Button and gate start on `signal1`, so a fresh
   pair is wired already.
-- [ ] **Pressure plate**: a trigger a Mipo or ball steps on.
+- [x] **Pressure plate** (2026-10-27): `props.makePlate(x, floorY, signal, mode)`, `SIGNAL_PLATE`. Anything
+  that isn't fixed resting on it sends the signal (with a click). Mode 'hold' sends again when it's
+  free (gate closes); 'toggle' only on presses. Release is debounced for 15 frames so a bouncing
+  ball doesn't chatter; something already on it at load doesn't fire. In the toy box, and the mode
+  is switchable in the behavior panel.
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
 

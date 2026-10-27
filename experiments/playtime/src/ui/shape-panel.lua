@@ -121,6 +121,7 @@ function lib.drawAddShapeUI()
                     local button, post = props.makeButton(wx, wy, 450, 'signal1', 1)
                     return { button, post }
                 end },
+                { 'plate', function(wx, wy) return { props.makePlate(wx, wy, 'signal1', 'hold', 1) } end },
                 { 'gate', function(wx, wy)
                     local base = objectManager.addThing('rectangle', { x = wx, y = wy, width = 300, height = 30,
                         bodyType = 'static', label = 'gate-base' })

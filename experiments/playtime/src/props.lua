@@ -176,6 +176,20 @@ function lib.makeGate(baseBody, x, surfaceY, signal, scale)
     return gate
 end
 
+-- A pressure plate lying on the floor at (x, floorY): anything resting on it
+-- sends `signal`. mode 'hold' (default) sends again when it's free, 'toggle'
+-- only on each press (src/signals.lua).
+function lib.makePlate(x, floorY, signal, mode, scale)
+    local s = scale or 1
+    local plate = objectManager.addThing('rectangle', {
+        x = x, y = floorY - 12 * s, width = 320 * s, height = 24 * s, bodyType = 'static', label = 'plate' })
+    if plate then
+        setMaterial(plate.body, 0.9, 0, nil)
+        plate.behaviors = { { name = 'SIGNAL_PLATE', signal = signal or 'gate1', mode = mode or 'hold' } }
+    end
+    return plate
+end
+
 -- A button on a post standing on the floor at (x, floorY), `height` up.
 -- Tapping it sends `signal`.
 function lib.makeButton(x, floorY, height, signal, scale)

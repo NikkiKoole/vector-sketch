@@ -69,4 +69,46 @@ describe('src.signals + props gate/button', function()
         local _, yClosed = gate.body:getPosition()
         assert.is_near(y0, yClosed, 5)
     end)
+
+    local function step(n)
+        for _ = 1, n do
+            world:update(1 / 60)
+            signals.update()
+        end
+    end
+
+    it('a pressure plate (hold) opens its gate while something rests on it', function()
+        local gate = props.makeGate(base, 300, -20, 'p1')
+        local plate = props.makePlate(-300, -20, 'p1', 'hold')
+        step(2) -- first look: nothing on it
+        local ball = props.makeBall(-300, -200, 50)
+        step(90)
+        assert.is_true(gate.behaviors[1].open)
+        ball.body:destroy()
+        step(5)
+        assert.is_true(gate.behaviors[1].open) -- release is debounced (plateReleaseFrames)
+        step(20)
+        assert.is_false(gate.behaviors[1].open)
+        assert.are.equal('hold', plate.behaviors[1].mode)
+    end)
+
+    it('a toggle plate keeps the gate open after the ball rolls off', function()
+        local gate = props.makeGate(base, 300, -20, 'p2')
+        props.makePlate(-300, -20, 'p2', 'toggle')
+        step(2)
+        local ball = props.makeBall(-300, -200, 50)
+        step(90)
+        assert.is_true(gate.behaviors[1].open)
+        ball.body:destroy()
+        step(25)
+        assert.is_true(gate.behaviors[1].open)
+    end)
+
+    it("something already on the plate when the scene loads doesn't fire", function()
+        local gate = props.makeGate(base, 300, -20, 'p3')
+        props.makePlate(-300, -20, 'p3', 'hold')
+        props.makeBall(-300, -82, 50) -- resting on the plate from the start
+        step(30)
+        assert.is_false(gate.behaviors[1].open)
+    end)
 end)

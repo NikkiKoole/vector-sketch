@@ -311,6 +311,7 @@ function love.update(dt)
         script.call('update', scaled_dt)
         mipoJointGuard.update()
         mipoActions.update()
+        signals.update()
         mipoVoice.update(scaled_dt)
         flightRecorder.update(scaled_dt)
         --for i = 1, #joints do

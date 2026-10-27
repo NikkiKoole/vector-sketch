@@ -4,6 +4,8 @@
 -- the body's thing, so they save with the scene and show up in the editor's
 -- "add behavior" list:
 --   { name = 'SIGNAL_BUTTON', signal = 'gate1' }             tap it -> sends 'gate1'
+--   { name = 'SIGNAL_PLATE',  signal = 'gate1', mode = 'hold' } something resting on it
+--        sends 'gate1'; 'hold' sends again when it's free (gate closes), 'toggle' only on press
 --   { name = 'SIGNAL_GATE',   signal = 'gate1', open = false } prismatic gate: toggles
 local state = require('src.state')
 
@@ -122,7 +124,7 @@ end
 -- Editor overlay (drawn in world space while paused): a line from every trigger
 -- to every receiver on the same signal, its name halfway. Wires touching the
 -- selected body are drawn thicker.
-local triggerNames = { SIGNAL_BUTTON = true }
+local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true }
 
 function lib.drawWires(selectedBody)
     if not state.physicsWorld then return end
@@ -154,6 +156,47 @@ function lib.drawWires(selectedBody)
     end
     love.graphics.setLineWidth(lineWidth)
     love.graphics.setColor(r, g, b, a)
+end
+
+-- Pressure plates: pressed while anything that isn't fixed (a Mipo, a ball, a
+-- board) touches the plate body. Polled every frame from main.lua. A press
+-- counts at once, a release only after the plate has been free for
+-- plateReleaseFrames (a bouncing ball or a wobbling Mipo made the gate chatter).
+lib.plateReleaseFrames = 15 -- 0.25s at 60 fps
+local plateWasPressed = setmetatable({}, { __mode = 'k' }) -- [body] = bool
+local plateFreeFrames = setmetatable({}, { __mode = 'k' }) -- [body] = frames free in a row
+
+local function plateIsPressed(body)
+    for _, contact in ipairs(body:getContacts()) do
+        if contact:isTouching() then
+            local a, b = contact:getFixtures()
+            local other = a:getBody() == body and b:getBody() or a:getBody()
+            if other:getType() == 'dynamic' and not a:isSensor() and not b:isSensor() then return true end
+        end
+    end
+    return false
+end
+
+function lib.update()
+    if not state.physicsWorld then return end
+    for _, body in ipairs(state.physicsWorld:getBodies()) do
+        local plate = findBehavior(body, 'SIGNAL_PLATE')
+        if plate then
+            local touching = plateIsPressed(body)
+            plateFreeFrames[body] = touching and 0 or (plateFreeFrames[body] or 0) + 1
+            local was = plateWasPressed[body]
+            local pressed = touching or (was and plateFreeFrames[body] < lib.plateReleaseFrames) or false
+            if was == nil then
+                plateWasPressed[body] = touching -- first look after a load: no signal
+            elseif pressed ~= was then
+                plateWasPressed[body] = pressed
+                if pressed or plate.mode ~= 'toggle' then
+                    if pressed then playClick() end
+                    lib.emit(plate.signal)
+                end
+            end
+        end
+    end
 end
 
 -- After a scene loads, drive every gate to its saved state.
