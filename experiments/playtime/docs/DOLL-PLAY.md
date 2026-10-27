@@ -178,6 +178,23 @@ recording and tuning happen; playtime gets a copy of the engine and the cut samp
   `vibraphone hi/mid/low` (2s tones for a reveal or a happy moment).
 - Before shipping: confirm the Minipops source and the Legowelt terms.
 
+### Contraption kit (puzzle-like things built from joints)
+
+Wiring is `src/signals.lua`: triggers send a named signal, receivers listening to that name
+act on it. Both are behaviors (`SIGNAL_BUTTON`, `SIGNAL_GATE`, ...), so they save with the
+scene and can be added in the editor. Pieces live in `src/props.lua`.
+
+- [x] **Button + gate** (2026-10-27): `makeButton(x, floorY, height, signal)`, a block on a post;
+  tapping it plays a Casio clave and sends the signal. `makeGate(baseBody, x, surfaceY, signal)`
+  is a bar on a prismatic joint with a motor: closed it stands up, open it sinks into its base.
+  Gates are driven to their saved state after a scene load.
+- [x] **Slide with starting deck**: 1000-long deck at 3 deg into a smoothstep chute (one ribbon).
+  Dollhouse: skateboard parked against the gate, button beside the ladder. Put a Mipo on the
+  board and tap the button.
+- [ ] **Pressure plate**: a trigger a Mipo or ball steps on.
+- [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
+  counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
+
 ## Other ideas (shooting, not committing)
 
 - **Carry-over from Puppetmaker**: a "made in Puppetmaker" import code (see

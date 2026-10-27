@@ -56,6 +56,7 @@ function lib.loadScene(name)
         state.scene.scriptPath = nil
     end
     sceneIO.load(data, state.physicsWorld, cam)
+    require('src.signals').applySavedStates() -- gates back to their saved open/closed
     logger:info("Scene loaded: " .. name)
     return data
 end

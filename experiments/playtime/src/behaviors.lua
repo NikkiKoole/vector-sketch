@@ -7,6 +7,10 @@ lib.allBehaviors = {
     { name = 'LIMB_HUB',
       description = 'a polygon that has things attached, the location where is defined in here, '
         .. 'by its edge number and a lerp between vertex -1 and vertex.' },
+    { name = 'SIGNAL_BUTTON',
+      description = 'tap it to send its signal (default gate1) to receivers (src/signals.lua).' },
+    { name = 'SIGNAL_GATE',
+      description = 'a body on a prismatic joint; toggles open/closed on its signal (src/signals.lua).' },
     { name = 'SQUISHY',
       description = 'soft prop: plays a winegum-kiss sound when it hits something (src/mipo-voice.lua).' },
 }
