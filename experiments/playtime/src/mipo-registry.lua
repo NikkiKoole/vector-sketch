@@ -28,7 +28,22 @@ function lib.getFromBody(body)
     return nil, nil
 end
 
+-- A Mipo whose bodies were all destroyed some other way (e.g. selecting it in
+-- the editor and pressing destroy) would otherwise stay listed and be saved into
+-- the scene as a ghost character.
+local function hasLiveParts(instance)
+    for _, part in pairs(instance.parts or {}) do
+        if part.body and not part.body:isDestroyed() then return true end
+    end
+    return false
+end
+
 function lib.getAll()
+    for id, instance in pairs(instances) do
+        if instance.parts and next(instance.parts) and not hasLiveParts(instance) then
+            instances[id] = nil
+        end
+    end
     return instances
 end
 
