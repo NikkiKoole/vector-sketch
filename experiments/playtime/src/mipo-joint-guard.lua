@@ -6,6 +6,9 @@
 -- unwind: Box2D counts a revolute joint's angle cumulatively. A limb spun whole
 --   turns past its limit gets pulled back the long way round and stays twisted.
 --   Turning the limb by whole turns looks identical but un-twists the joint.
+-- heal: when a joint is torn open (anchors far apart), move the child part and
+--   everything hanging below it back onto the parent's anchor, moving at the
+--   parent's speed. Stops limbs flying far out or ending up through the floor.
 local JT = require('src.joint-types')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
@@ -13,8 +16,11 @@ local mipoRegistry = require('src.mipo-registry')
 local lib = {}
 
 lib.unwind = true
+lib.heal = true
+lib.healDistance = 40 -- world units between joint anchors before a limb is pulled back
+                      -- (recorded: up to ~12 while fine, 60-1000 once torn)
 
-lib.stats = { unwound = 0 }
+lib.stats = { unwound = 0, healed = 0 }
 
 local TWO_PI = 2 * math.pi
 
@@ -53,15 +59,49 @@ local function unwindJoints(joints)
     end
 end
 
-function lib.update()
-    if not lib.unwind or not state.physicsWorld then return end
-    local limited = {}
-    for _, joint in ipairs(state.physicsWorld:getJoints()) do
-        if joint:getType() == JT.REVOLUTE and joint:areLimitsEnabled() and isMipoJoint(joint) then
-            limited[#limited + 1] = joint
+local function collectSubtree(instance, partName, out)
+    out[#out + 1] = partName
+    for _, child in ipairs(instance.childrenMap and instance.childrenMap[partName] or {}) do
+        collectSubtree(instance, child, out)
+    end
+    return out
+end
+
+-- Joints are made parent (body A) -> child (body B), see character-manager.
+local function healJoint(joint)
+    local x1, y1, x2, y2 = joint:getAnchors()
+    local dx, dy = x1 - x2, y1 - y2
+    if dx * dx + dy * dy < lib.healDistance * lib.healDistance then return end
+    local bodyA, bodyB = joint:getBodies()
+    local instance, childName = mipoRegistry.getFromBody(bodyB)
+    if not instance then return end
+    local vx, vy = bodyA:getLinearVelocityFromWorldPoint(x1, y1)
+    for _, name in ipairs(collectSubtree(instance, childName, {})) do
+        local part = instance.parts[name]
+        local body = part and part.body
+        if body and not body:isDestroyed() then
+            local bx, by = body:getPosition()
+            body:setPosition(bx + dx, by + dy)
+            body:setLinearVelocity(vx, vy)
         end
     end
-    unwindJoints(limited)
+    lib.stats.healed = lib.stats.healed + 1
+end
+
+function lib.update()
+    if not state.physicsWorld then return end
+    if not lib.unwind and not lib.heal then return end
+    local revolute, limited = {}, {}
+    for _, joint in ipairs(state.physicsWorld:getJoints()) do
+        if joint:getType() == JT.REVOLUTE and isMipoJoint(joint) then
+            revolute[#revolute + 1] = joint
+            if joint:areLimitsEnabled() then limited[#limited + 1] = joint end
+        end
+    end
+    if lib.heal then
+        for _, joint in ipairs(revolute) do healJoint(joint) end
+    end
+    if lib.unwind then unwindJoints(limited) end
 end
 
 return lib
