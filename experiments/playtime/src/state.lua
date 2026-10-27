@@ -40,6 +40,8 @@ state.panelVisibility = {
     bgSettingsOpened = false
 }
 
+state.rightColumn = { tab = 'properties' } -- src/ui/right-column.lua
+
 state.editorPreferences = { -- Less volatile state
     showGrid = false,
     nextType = BT.DYNAMIC,

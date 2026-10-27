@@ -19,6 +19,7 @@ local inspector = require('src.ui.inspector')
 local bodyEditor = require('src.ui.body-editor')
 local sfixtureEditor = require('src.ui.sfixture-editor')
 local uiJointUpdate = require('src.ui.joint-update')
+local rightColumn = require('src.ui.right-column')
 
 local WINDOW_H = 768
 
@@ -81,6 +82,9 @@ describe('panels fit the window (1200x768, fully open)', function()
             state.selection.selectedObj = thing
             inspector.setFoldOpen('body_' .. tostring(thing.id), true)
             check('body ' .. shape, measure(function() bodyEditor.drawUpdateSelectedObjectUI() end))
+            check('body in column ' .. shape, measure(function()
+                bodyEditor.drawUpdateSelectedObjectUI(rightColumn.contentRect())
+            end))
         end)
     end
 
@@ -97,6 +101,9 @@ describe('panels fit the window (1200x768, fully open)', function()
             check('joint ' .. jointType, measure(function()
                 uiJointUpdate.drawJointUpdateUI(joint, 880, 20, 300, WINDOW_H - 40)
             end))
+            check('joint in column ' .. jointType, measure(function()
+                uiJointUpdate.drawJointUpdateUI(joint, rightColumn.contentRect())
+            end))
         end)
     end
 
@@ -108,6 +115,9 @@ describe('panels fit the window (1200x768, fully open)', function()
             assert.is_not_nil(fixture, subtype)
             state.selection.selectedSFixture = fixture
             check('sfixture ' .. subtype, measure(function() sfixtureEditor.drawSelectedSFixture() end))
+            check('sfixture in column ' .. subtype, measure(function()
+                sfixtureEditor.drawSelectedSFixture(rightColumn.contentRect())
+            end))
         end)
     end
 

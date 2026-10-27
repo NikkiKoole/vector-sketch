@@ -31,6 +31,7 @@ local fileBrowser  = require('src.file-browser')
 local uiMipoEditor = require('src.ui.mipo-editor')
 local inspector = require('src.ui.inspector')
 local mipoRegistry = require('src.mipo-registry')
+local rightColumn = require('src.ui.right-column')
 local PANEL_WIDTH = 300
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
@@ -111,16 +112,18 @@ function lib.drawWorldSettingsUI(...) return uiWorldSettings.drawWorldSettingsUI
 
 function lib.drawSelectedSFixture(...) return uiSFixtureEditor.drawSelectedSFixture(...) end
 
-function lib.drawSelectedBodiesUI()
-    local panelWidth = PANEL_WIDTH
+-- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
+function lib.drawSelectedBodiesUI(panelX, panelY, panelWidth, panelH)
     local w, h = love.graphics.getDimensions()
-    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ selection ∞', function()
+    panelWidth = panelWidth or PANEL_WIDTH
+    panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
+    ui.panel(panelX, panelY, panelWidth, panelH, '∞ selection ∞', function()
         local padding = BUTTON_SPACING
         local layout = ui.createLayout({
             type = 'columns',
             spacing = BUTTON_SPACING,
-            startX = w - panelWidth,
-            startY = 100 + padding
+            startX = panelX + 20,
+            startY = panelY + 80 + padding
         })
 
         local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
@@ -178,6 +181,29 @@ function lib.drawSelectedBodiesUI()
         -- end
         nextRow()
     end)
+end
+
+-- the properties tab of the right column: the panel for what's selected, in the
+-- given rect. Returns false when nothing is selected.
+function lib.drawSelectionProperties(x, y, panelWidth, panelH)
+    local selection = state.selection
+    if selection.selectedSFixture then
+        lib.drawSelectedSFixture(x, y, panelWidth, panelH)
+    elseif selection.selectedObj and selection.selectedJoint then
+        lib.drawJointUpdateUI(selection.selectedJoint, x, y, panelWidth, panelH)
+    elseif selection.selectedBodies and #selection.selectedBodies > 0 then
+        lib.drawSelectedBodiesUI(x, y, panelWidth, panelH)
+    elseif selection.selectedObj then
+        local mipoInstance, mipoPartName = mipoRegistry.getFromBody(selection.selectedObj.body)
+        if mipoInstance then
+            uiMipoEditor.drawMipoEditor(mipoInstance, mipoPartName, x, y, panelWidth, panelH)
+        else
+            lib.drawUpdateSelectedObjectUI(x, y, panelWidth, panelH)
+        end
+    else
+        return false
+    end
+    return true
 end
 
 function lib.drawUpdateSelectedObjectUI(...) return uiBodyEditor.drawUpdateSelectedObjectUI(...) end
@@ -374,31 +400,13 @@ function lib.drawUI()
         end)
     end
 
-    if state.selection.selectedObj and not state.selection.selectedJoint and not state.selection.selectedSFixture then
-        local body = state.selection.selectedObj.body
-        local mipoInstance, mipoPartName = mipoRegistry.getFromBody(body)
-        if mipoInstance then
-            uiMipoEditor.drawMipoEditor(mipoInstance, mipoPartName)
-        else
-            lib.drawUpdateSelectedObjectUI()
-        end
-    end
-
-    if state.selection.selectedBodies and #state.selection.selectedBodies > 0 then
-        lib.drawSelectedBodiesUI()
+    -- the draw-click and autoropify panels above use the right edge themselves
+    if not modes.is(modes.DRAW_CLICK) and not modes.is(modes.PICK_AUTO_ROPIFY) then
+        rightColumn.draw(lib.drawSelectionProperties)
     end
 
     if modes.is(modes.JOINT_CREATION) and state.jointParams.body1 and state.jointParams.body2 then
         lib.drawJointCreateUI(500, 100, 400, 150)
-    end
-
-    if state.selection.selectedSFixture then
-        lib.drawSelectedSFixture()
-    end
-
-    if state.selection.selectedObj and state.selection.selectedJoint then
-        -- (w - panelWidth - 20, 20, panelWidth, h - 40
-        lib.drawJointUpdateUI(state.selection.selectedJoint, w - PANEL_WIDTH - 20, 20, PANEL_WIDTH, h - 40)
     end
 
     if modes.is(modes.SET_OFFSET_A) or modes.is(modes.SET_OFFSET_B)

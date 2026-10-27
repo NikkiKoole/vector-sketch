@@ -37,15 +37,15 @@ local accordionStatesSO = {
 local forceOpen = false
 function lib.setAllAccordions(open) forceOpen = open end
 
-function lib.drawUpdateSelectedObjectUI()
-    -- Define a table to keep track of accordion states
-
+-- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
+function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
     if recorder.isRecording then return end
-    local panelWidth = PANEL_WIDTH
     local w, h = love.graphics.getDimensions()
-    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ body props ∞', function()
+    panelWidth = panelWidth or PANEL_WIDTH
+    panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
+    ui.panel(panelX, panelY, panelWidth, panelH, '∞ body props ∞', function()
         -- content scrolls when it doesn't fit (spec/ui-overflow_spec.lua)
-        ui.scrollPanel('body-panel', w - panelWidth - 20, 60, panelWidth, h - 85, function()
+        ui.scrollPanel('body-panel', panelX, panelY + 40, panelWidth, panelH - 45, function()
             local body = state.selection.selectedObj.body
             -- local angleDegrees = body:getAngle() * 180 / math.pi
             local myID = state.selection.selectedObj.id
@@ -55,8 +55,8 @@ function lib.drawUpdateSelectedObjectUI()
             local layout = ui.createLayout({
                 type = 'columns',
                 spacing = BUTTON_SPACING,
-                startX = w - panelWidth,
-                startY = 100 + padding
+                startX = panelX + 20,
+                startY = panelY + 80 + padding
             })
 
             if body:isDestroyed() then return end

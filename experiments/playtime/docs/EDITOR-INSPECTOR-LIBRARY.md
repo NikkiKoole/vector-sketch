@@ -118,24 +118,18 @@ Each is its own keep/revert moment.
 
 ## Next step (pick up here)
 
-**Where we are (end of 2026-10-27):** the inspector is in every settings panel (behaviors,
-joints, body, sfixtures, world, backdrop). Layout direction chosen (see "Layout direction"
-above). Nothing half-done; all specs green (876), luacheck clean.
+**Where we are (2026-10-28):** step (a) is done. `src/ui/right-column.lua` draws the tabs
+`properties | on stage | library` at y 70 (under the toolbar row, so the tab bar doesn't
+collide with the toolbar buttons), and the tab is saved in `state.rightColumn.tab`. The properties tab calls
+`playtime-ui.drawSelectionProperties(x, y, w, h)`. The body, multi-selection, sfixture, joint and
+Mipo panels all take an optional rect now (defaults to the old right-edge rect, so old specs
+keep working). With nothing selected, and on the two empty tabs, a short note panel shows
+instead of a full-height panel, so the stage stays visible. The draw-click and autoropify mode
+panels still draw their own right-edge panel, so the column is hidden in those modes.
+Specs: `spec/right-column_spec.lua` (tab clicks, rect) plus "in column" checks in the overflow spec.
 
-**Next: step (a) of the layout: the right column with three tabs, properties only.**
-Budget: 1-2 sessions. Keep/revert check: does switching tabs feel better than panels popping up?
-
-1. New `src/ui/right-column.lua`: a fixed rect on the right (today's panels use
-   x = w - 300 - 20, y = 20, 300 wide, h - 40 tall) with a tab bar on top:
-   `properties | on stage | library`. Tab choice lives on `state` (survives hot reload).
-2. The properties tab draws what `src/playtime-ui.lua` draws now in the selection branch
-   (around line 377-402): Mipo editor, body panel, multi-selection, sfixture panel, joint
-   panel. Nothing selected: a short hint ("click something on the stage").
-3. Those panels place themselves (`ui.panel(w - panelWidth - 20, ...)` and their own
-   `ui.scrollPanel` rects in body-editor, sfixture-editor, joint-update, mipo-editor). Shift
-   them down below the tab bar: first look how each takes its rect, then pass one rect in.
-4. "on stage" and "library" tabs: an empty placeholder for now (they are steps b and c).
-5. Specs: the overflow spec still passes for every panel inside the column; a tab-switch spec.
+**Keep/revert check still open:** use it for a session. Does switching tabs feel better than
+panels popping up?
 
 **After that:** (b) on-stage list, (c) library v0 (slice 3), (d) left tool rail.
 Still hand-made and fine for now: meshusert, resource, connected-texture, trace-vertices panels

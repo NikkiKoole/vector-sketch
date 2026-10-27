@@ -105,9 +105,11 @@ function lib.assignTrianglesToBone(meshusertFixture, triIndices, boneIndex)
     logger:info('Assigned ' .. #triIndices .. ' triangles to bone ' .. tostring(boneIndex))
 end
 
-function lib.drawSelectedSFixture()
-    local panelWidth = PANEL_WIDTH
+-- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
+function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
     local w, h = love.graphics.getDimensions()
+    panelWidth = panelWidth or PANEL_WIDTH
+    panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     if lastSFixtureForCleanup ~= state.selection.selectedSFixture then
         lastSFixtureForCleanup = state.selection.selectedSFixture
         if state.panelVisibility.showPalette then
@@ -150,8 +152,8 @@ function lib.drawSelectedSFixture()
         local layout = ui.createLayout({
             type = 'columns',
             spacing = BUTTON_SPACING,
-            startX = w - panelWidth,
-            startY = 100 + padding
+            startX = panelX + 20,
+            startY = panelY + 80 + padding
         })
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local nextRow = function()
@@ -1906,9 +1908,9 @@ function lib.drawSelectedSFixture()
         nextRow()
     end
 
-    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
+    ui.panel(panelX, panelY, panelWidth, panelH, '∞ ' .. sfixtureType .. ' ∞', function()
         -- content scrolls when it doesn't fit (spec/ui-overflow_spec.lua)
-        ui.scrollPanel('sfixture-panel', w - panelWidth - 20, 60, panelWidth, h - 85, drawContent)
+        ui.scrollPanel('sfixture-panel', panelX, panelY + 40, panelWidth, panelH - 45, drawContent)
     end)
 end
 

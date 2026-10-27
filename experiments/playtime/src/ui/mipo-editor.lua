@@ -705,13 +705,11 @@ end
 
 
 
-function lib.drawMipoEditor(instance, partName)
-    local panelWidth = PANEL_WIDTH
+-- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
+function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, panelH)
     local w, h = love.graphics.getDimensions()
-    local panelX = w - panelWidth - 20
-
-    local panelY = 20
-    local panelH = h - 40
+    panelWidth = panelWidth or PANEL_WIDTH
+    panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     ui.scrollableList('mipo_scroll', panelX, panelY, panelWidth, panelH,
         function(_sx, _sy, _sw, _sh, scrollOffset)
         local padding = BUTTON_SPACING
