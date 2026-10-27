@@ -2,6 +2,7 @@
 local lib = {}
 local state = require 'src.state'
 local BT = require('src.body-types')
+local mipoRegistry = require('src.mipo-registry')
 local pointerJoints = {}
 
 local function getPointerPosition(id)
@@ -71,7 +72,21 @@ function lib.removeDeadPointerJoints()
     end
 end
 
-function lib.handlePointerUpdate(_dt, cam)
+-- A grabbed Mipo follows the pointer at most this fast (world units/s); false = off.
+-- Without it a fast drag pulled the torso at Box2D's 12000/s cap and tore the
+-- limb joints (flight recording, see src/mipo-joint-guard.lua). Props stay uncapped.
+lib.maxMipoDragSpeed = 3000
+
+-- Move a target toward (wx, wy), at most maxStep far.
+function lib.stepToward(tx, ty, wx, wy, maxStep)
+    local dx, dy = wx - tx, wy - ty
+    local dist = math.sqrt(dx * dx + dy * dy)
+    if dist <= maxStep or dist == 0 then return wx, wy end
+    local k = maxStep / dist
+    return tx + dx * k, ty + dy * k
+end
+
+function lib.handlePointerUpdate(dt, cam)
     lib.removeDeadPointerJoints()
     -- connect connectors
     for i = 1, #pointerJoints do
@@ -79,6 +94,10 @@ function lib.handlePointerUpdate(_dt, cam)
         if (mj.joint) then
             local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
+            if lib.maxMipoDragSpeed and dt and mipoRegistry.getFromBody(mj.jointBody) then
+                local tx, ty = mj.joint:getTarget()
+                wx, wy = lib.stepToward(tx, ty, wx, wy, lib.maxMipoDragSpeed * dt)
+            end
             mj.joint:setTarget(wx, wy)
 
             local fixtures = mj.jointBody:getFixtures()

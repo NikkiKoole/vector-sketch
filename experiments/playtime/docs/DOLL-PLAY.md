@@ -60,6 +60,16 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 - [ ] **Multi-finger**: two kids, two Mipos. The pointer IDs already support it,
   it just needs testing on iPad.
 
+- [x] **Ragdoll stays sane under rough handling** (2026-10-27). Found with the flight
+  recorder (`src/flight-recorder.lua`, `claudetools/flight-*.py`): fast circles pulled the
+  torso at Box2D's 12000/s cap, tore joints up to 1055 units apart and wound a shoulder
+  ~6 turns past its limit. There are three switchable fixes, all kept after play-testing:
+  - `mipoJointGuard.unwind`: un-twist joints wound whole turns past their limits.
+  - `mipoJointGuard.heal`: torn joints (> 40 apart) snap the limb subtree back.
+  - `box2dPointerJoints.maxMipoDragSpeed` = 3000: a grabbed Mipo follows the pointer at
+    most this fast (props uncapped). The grab now saturates 5% of frames, down from 52-72%.
+  - Noticed: physics slowed (30s of steps took 42s) with 3-4 Mipos on screen. Check on iPad.
+
 ### Awareness and reactions (feels alive)
 - [ ] **Head turn** toward the gaze target (a small torque on the head and neck, not only the pupils).
 - [ ] **Look at what's moving**: a thrown object or a falling friend steals attention for a moment.
