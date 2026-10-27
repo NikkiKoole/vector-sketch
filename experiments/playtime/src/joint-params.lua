@@ -29,9 +29,9 @@ local collide = { key = 'collide', kind = 'bool', advanced = true,
     get = function(joint) return joint:getCollideConnected() end,
     set = function(joint, v) return recreate(joint, { collideConnected = v }) end }
 
-local anchorA = { kind = 'action', label = 'move anchor',
+local anchorA = { kind = 'action', label = '∆ move anchor',
     run = function() local modes = require('src.modes'); modes.set(modes.SET_OFFSET_A) end }
-local anchorB = { kind = 'action', label = 'move anchor B',
+local anchorB = { kind = 'action', label = '∆ move anchor B',
     run = function() local modes = require('src.modes'); modes.set(modes.SET_OFFSET_B) end }
 
 local function limitsOn(joint) return joint:areLimitsEnabled() end
