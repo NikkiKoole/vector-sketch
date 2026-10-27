@@ -1332,6 +1332,29 @@ lib.armRange = {
     llarm = { -10, 150 }, rlarm = { -150, 10 }, -- elbow: bends outward/up only
 } -- degrees
 
+-- Legs, feet, hands, ears: the DNA limits are meant relative to the rest pose
+-- (0 = in line with the parent; ears at their stanceAngle), but a joint's limits
+-- count from its reference angle, which is whatever angle the part had when the
+-- joint was made. Rebuilt while bent, 'upright' fell outside the hip limits and
+-- feet got locked upside down (ankle references of 179 / -111 deg); keep-angle
+-- then fought the limits at full spin (shaking, noise). Convert the DNA limits
+-- with the actual reference angle.
+local restPoseParts = {
+    luleg = true, ruleg = true, llleg = true, rlleg = true,
+    lfoot = true, rfoot = true, lhand = true, rhand = true, lear = true, rear = true,
+}
+
+local function applyLegLimits(instance, joint, partName)
+    if not restPoseParts[partName] or not joint or joint:isDestroyed() or joint:getType() ~= 'revolute' then return end
+    local partDNA = instance.dna.parts[partName]
+    local limits = partDNA and partDNA.j and partDNA.j.limits
+    if not (limits and limits.low and limits.up) then return end
+    local rest = partDNA.stanceAngle or 0
+    local ref = joint:getReferenceAngle()
+    joint:setLimits(rest + limits.low - ref, rest + limits.up - ref)
+    joint:setLimitsEnabled(true)
+end
+
 local function applyShoulderLimits(joint, partName)
     local range = lib.armRange[partName]
     if not range or not joint or joint:isDestroyed() or joint:getType() ~= 'revolute' then return end
@@ -1342,7 +1365,8 @@ end
 
 -- Feet grip and don't bounce. With LÖVE's default friction (0.2) on both feet
 -- and floor, Mipos stood on ice and slid into a split.
-lib.footFriction = 1.0
+lib.footFriction = 1.0 -- spec/standing_spec.lua, 3 x 12 random Mipos: 1.0 -> 6/36 unsettled,
+                       -- 0.45 -> 12/36 (a single 12-run said otherwise: physics here is chaotic)
 lib.footRestitution = 0
 
 local function applyFootMaterial(thing, partName)
@@ -1435,6 +1459,7 @@ local function makePart(partName, instance, settings)
                 joint:setLimitsEnabled(true)
             end
             applyShoulderLimits(joint, partName)
+            applyLegLimits(instance, joint, partName)
         end
     end
 end
@@ -2492,10 +2517,13 @@ function lib.reconstructInstance(charData, partBodies)
                     end
                 end
             end
-            if lib.armRange[partName] then -- scenes saved with T-pose shoulder / no elbow limits
+            if lib.armRange[partName] or restPoseParts[partName] then -- limits relative to the rest pose
                 for _, joint in ipairs(body:getJoints()) do
                     local _, bodyB = joint:getBodies()
-                    if bodyB == body then applyShoulderLimits(joint, partName) end
+                    if bodyB == body then
+                        applyShoulderLimits(joint, partName)
+                        applyLegLimits(instance, joint, partName)
+                    end
                 end
             end
         end
@@ -2505,6 +2533,37 @@ function lib.reconstructInstance(charData, partBodies)
             instance.groupIndex = first:getGroupIndex()
         end
     end
+    -- instance.joints ('parent->child' = joint id) is what texture rebuilds use
+    -- for connected-texture nodes. It isn't saved, so rebuild it from the bodies;
+    -- left empty, redrawing textures on a loaded Mipo pointed leg textures at
+    -- missing joints (untextured legs).
+    for parentName, children in pairs(instance.childrenMap or {}) do
+        local parent = instance.parts[parentName]
+        for _, childName in ipairs(children) do
+            local child = instance.parts[childName]
+            if parent and child and parent.body and child.body then
+                for _, joint in ipairs(child.body:getJoints()) do
+                    local a, b = joint:getBodies()
+                    local jud = joint:getUserData()
+                    if a == parent.body and b == child.body and jud and jud.id then
+                        instance.joints[parentName .. '->' .. childName] = jud.id
+                    end
+                end
+            end
+        end
+    end
+    -- connected textures saved with missing joints (from the bug above): redraw
+    local registry = require('src.registry')
+    local brokenTextures = false
+    for _, part in pairs(instance.parts) do
+        for _, fixture in ipairs(part.body:getFixtures()) do
+            local fud = fixture:getUserData()
+            for _, node in ipairs(fud and fud.extra and fud.extra.nodes or {}) do
+                if node.type == NT.JOINT and not registry.getJointByID(node.id) then brokenTextures = true end
+            end
+        end
+    end
+
     -- repair scenes saved before allocation skipped values in use: two Mipos
     -- sharing a group index never collide, sharing a zGroupOffset interleaves textures
     local groupTaken, zTaken = false, false
@@ -2526,6 +2585,17 @@ function lib.reconstructInstance(charData, partBodies)
         end
     end
     mipoRegistry.register(instance)
+    if brokenTextures then
+        lib.addTexturesFromInstance2(instance)
+        -- the redrawn texture fixtures start in group 0; put them in the Mipo's group
+        for _, part in pairs(instance.parts) do
+            for _, fixture in ipairs(part.body:getFixtures()) do
+                if instance.groupIndex then fixture:setGroupIndex(instance.groupIndex) end
+                local fud = fixture:getUserData()
+                if fud and fud.extra and instance.zGroupOffset then fud.extra.zGroupOffset = instance.zGroupOffset end
+            end
+        end
+    end
     return instance
 end
 

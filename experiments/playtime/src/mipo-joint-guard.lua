@@ -31,7 +31,8 @@ lib.healDistance = 40 -- world units between joint anchors before a limb is pull
 lib.healAfterRelease = 1.0 -- seconds healing stays on after a Mipo is let go (throws)
 
 lib.standUp = true
-lib.splayedAngle = math.rad(50) -- a leg part further than this from upright counts as splayed
+lib.splayedAngle = math.rad(30) -- further than this from its target counts as splayed (50 let a
+                                -- wide stance on grippy feet tug forever instead of hopping to reset)
 lib.splayedFor = 0.6            -- seconds of splayed legs before a hop
 lib.standUpPause = 1.2          -- seconds between hops
 lib.standUpSpeed = 500          -- hop speed (world units/s), like the grab hop
@@ -148,7 +149,7 @@ local function isSplayed(instance)
     return false
 end
 
--- Any part resting against a dynamic body of another Mipo or a prop.
+-- Any part resting against another Mipo (a pile). Props like a skateboard don't count.
 local function leaningOnOthers(instance)
     for _, part in pairs(instance.parts) do
         local body = part.body
@@ -157,7 +158,8 @@ local function leaningOnOthers(instance)
                 if contact:isTouching() then
                     local fixtureA, fixtureB = contact:getFixtures()
                     local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
-                    if other:getType() == 'dynamic' and mipoRegistry.getFromBody(other) ~= instance
+                    local otherMipo = mipoRegistry.getFromBody(other)
+                    if otherMipo and otherMipo ~= instance
                         and not fixtureA:isSensor() and not fixtureB:isSensor() then
                         return true
                     end
@@ -168,7 +170,8 @@ local function leaningOnOthers(instance)
     return false
 end
 
--- Any part resting on a static body (floor, wall): no stand-up hops mid-air.
+-- Any part resting on something that isn't a Mipo (floor, wall, skateboard,
+-- slide): no stand-up hops mid-air. Static-only missed a Mipo on a skateboard.
 local function onGround(instance)
     for _, part in pairs(instance.parts) do
         local body = part.body
@@ -177,7 +180,8 @@ local function onGround(instance)
                 if contact:isTouching() then
                     local fixtureA, fixtureB = contact:getFixtures()
                     local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
-                    if other:getType() == 'static' and not fixtureA:isSensor() and not fixtureB:isSensor() then
+                    if not mipoRegistry.getFromBody(other) and not fixtureA:isSensor()
+                        and not fixtureB:isSensor() then
                         return true
                     end
                 end

@@ -8,7 +8,13 @@ local registry = require 'src.registry'
 -- Mipos sink into a split.
 lib.maxAlpha = 1000
 
--- Touching a dynamic body that isn't part of the same Mipo (static floors are fine).
+-- Legs within this of their target are left alone. 0 (off): with foot friction
+-- 0.45 the legs settle by themselves; a 15 deg band let heavy Mipos sag into
+-- repeated hops (spec/standing_spec.lua).
+lib.legDeadband = 0
+local deadbandParts = { luleg = true, ruleg = true, llleg = true, rlleg = true }
+
+-- Touching another Mipo (props and floors are fine).
 local function touchingOthers(body)
     local ud = body:getUserData()
     local ownMipo = ud and ud.thing and ud.thing.mipoId
@@ -17,11 +23,11 @@ local function touchingOthers(body)
             local fixtureA, fixtureB = contact:getFixtures()
             if not fixtureA:isSensor() and not fixtureB:isSensor() then
                 local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
-                if other:getType() == 'dynamic' then
-                    local oud = other:getUserData()
-                    local otherMipo = oud and oud.thing and oud.thing.mipoId
-                    if not ownMipo or otherMipo ~= ownMipo then return true end
-                end
+                -- only another Mipo counts (piles); standing on a skateboard or
+                -- leaning on a ball needs full strength
+                local oud = other:getUserData()
+                local otherMipo = oud and oud.thing and oud.thing.mipoId
+                if otherMipo and otherMipo ~= ownMipo then return true end
             end
         end
     end
@@ -36,6 +42,10 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
     diff = (diff + math.pi) % (2 * math.pi) - math.pi
 
     local omega = body:getAngularVelocity()
+
+    local ud = body:getUserData()
+    local partName = ud and ud.thing and ud.thing.mipoPartName
+    if partName and deadbandParts[partName] and math.abs(diff) < lib.legDeadband then return end
 
     -- Tunables (or read from data)
 
