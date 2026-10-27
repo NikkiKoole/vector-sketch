@@ -958,7 +958,7 @@ local dna = {
             ['nose-single-template'] = {
                 appearance = {
                     ['skin'] = {
-                        zOffset = 490,
+                        zOffset = 350, -- physics nose: in front of body/legs, behind arms (402) and hands (500)
                         main = initBlock('shapeA2'),
                     },
                 },
@@ -1933,7 +1933,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
                 noseFgURL = 'nose' .. noseShape .. '-mask.png'
             end
             local hasNoseMask = noseFgURL ~= ''
-            local noseZOffset = 490
+            local noseZOffset = 254 -- on the face: above mouth (253), below arms (402); was 490
 
             local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
             local ud = f:getUserData()
@@ -2159,6 +2159,13 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     -- Ensure all DNA sub-tables have their defaults filled in
     D.ensureDefaults(instance.dna.creation, D.creation)
+    for partName, partDNA in pairs(instance.dna.parts or {}) do
+        if partName:find('^nose') and partDNA.appearance then
+            for _, block in pairs(partDNA.appearance) do
+                if type(block) == 'table' and block.zOffset == 490 then block.zOffset = 350 end
+            end
+        end
+    end
     if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
     if not instance.dna.positioners then instance.dna.positioners = {} end
     D.ensureDefaults(instance.dna.positioners, D.positioners)
@@ -2216,7 +2223,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             if not nose1.appearance['connected-skin'] then
                 nose1.appearance['connected-skin'] = {
                     main = initBlock('leg5'),
-                    zOffset = 490,
+                    zOffset = 350, -- trunk: in front of body/legs, behind arms and hands
                 }
             end
             -- connected-hair is optional; added via UI when the user picks a hair texture
@@ -2400,6 +2407,17 @@ function lib.reconstructInstance(charData, partBodies)
         if ud and ud.thing then
             instance.parts[partName] = ud.thing
             applyFootMaterial(ud.thing, partName) -- scenes saved before feet had grip
+            -- scenes saved when every nose was drawn at z 490, above the arms
+            for _, fixture in ipairs(body:getFixtures()) do
+                local fud = fixture:getUserData()
+                if fud and fud.extra and fud.extra.zOffset == 490 then
+                    if fud.label == 'nose' then
+                        fud.extra.zOffset = 254
+                    elseif partName:find('^nose') then
+                        fud.extra.zOffset = 350
+                    end
+                end
+            end
             if lib.armRange[partName] then -- scenes saved with T-pose shoulder / no elbow limits
                 for _, joint in ipairs(body:getJoints()) do
                     local _, bodyB = joint:getBodies()
