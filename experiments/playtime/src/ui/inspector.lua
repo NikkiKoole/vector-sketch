@@ -21,7 +21,8 @@ local function labelOf(row, target)
 end
 
 -- Kinds: text (keepSpaces = true keeps spaces), number (slider + field), numberText
--- (field only), bool, choice, action.
+-- (field only), bool, choice, action, buttons (one per option), note (label only),
+-- color (swatch + hex), file (texture browser + name).
 -- A row reads/writes `target[key]`, or calls row.get(target) / row.set(target, v)
 -- (Box2D objects). A set may return a replacement target (a rebuilt joint).
 local function valueOf(row, target)
@@ -44,7 +45,7 @@ end
 -- Returns a replacement target when the row's set rebuilt it.
 local function drawRow(id, row, target, body, x, y, w)
     local wx = x + lib.labelWidth
-    if row.kind ~= 'action' then ui.alignedLabel(x, y + 7, labelOf(row, target)) end
+    if row.kind ~= 'action' and row.kind ~= 'note' then ui.alignedLabel(x, y + 7, labelOf(row, target)) end
     if row.kind == 'text' then
         local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, 40, row.default or '',
             valueOf(row, target) or '')
@@ -73,6 +74,37 @@ local function drawRow(id, row, target, body, x, y, w)
         end
     elseif row.kind == 'action' then
         if ui.button(wx, y + 7, w - lib.labelWidth, labelOf(row, target)) then return row.run(body, target) end
+    elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option)
+        local bw = (w - lib.labelWidth) / #row.options
+        for i, option in ipairs(row.options) do
+            if ui.button(wx + (i - 1) * bw, y + 7, bw - 4, option) then return row.run(body, target, option) end
+        end
+    elseif row.kind == 'note' then
+        ui.alignedLabel(x, y + 7, labelOf(row, target), { 1, 1, 1, 0.6 })
+    elseif row.kind == 'color' then -- swatch (opens the palette) + hex field
+        local hex = valueOf(row, target)
+        local r, g, b, a = require('src.physics.box2d-draw-textured').hexToColor(hex or 'ffffffff')
+        if ui.button(wx, y + 7, 30, '', nil, { r, g, b, a }) then
+            local state = require('src.state')
+            if state.panelVisibility.showPalette then
+                state.panelVisibility.showPalette = nil
+                state.showPaletteFunc = nil
+            else
+                state.panelVisibility.showPalette = true
+                state.showPaletteFunc = function(color) setValue(row, target, color) end
+            end
+        end
+        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, 40, 'hex', hex or '')
+        if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
+    elseif row.kind == 'file' then -- '…' opens the texture browser + the file name
+        if ui.button(wx, y + 7, 30, '...') then
+            require('src.file-browser'):open('/textures', { excludes = '-mask' }, function(path)
+                setValue(row, target, path:match('/textures/(.+)$') or path) -- the renderer prepends textures/
+            end)
+        end
+        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, 40, '',
+            valueOf(row, target) or '')
+        if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
     end
 end
 

@@ -14,6 +14,8 @@ local state = require('src.state')
 local modes = require('src.modes')
 local fileBrowser = require('src.file-browser')
 local subtypes = require('src.subtypes')
+local inspector = require('src.ui.inspector')
+local sfixtureParams = require('src.sfixture-params')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local cdt = require('src.cdt')
@@ -157,7 +159,6 @@ function lib.drawSelectedSFixture()
         end
 
         local myID = state.selection.selectedSFixture:getUserData().id
-        local myLabel = state.selection.selectedSFixture:getUserData().label or ''
         local oldTexFixUD = state.selection.selectedSFixture:getUserData()
 
         local function handlePaletteAndHex(idPrefix, postFix, px, py, pw, currentHex, onColorChange, _setDirty)
@@ -338,21 +339,19 @@ function lib.drawSelectedSFixture()
             nextRow()
         end
 
-        local newLabel = ui.textinput(myID .. ' label', x, y, 260, BUTTON_HEIGHT, "", myLabel)
-        if newLabel and newLabel ~= myLabel then
-            local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-            oldUD.label = newLabel
-
-            state.selection.selectedSFixture:setUserData(oldUD)
+        -- label + destroy for every kind; the simple kinds draw all their settings
+        -- from src/sfixture-params.lua, the rest keep their hand-made sections below
+        local subtypeRows = sfixtureParams.bySubtype[ud.subtype]
+        local rows = sfixtureParams.header
+        if subtypeRows then
+            rows = {}
+            for _, row in ipairs(sfixtureParams.header) do rows[#rows + 1] = row end
+            for _, row in ipairs(subtypeRows) do rows[#rows + 1] = row end
         end
-        nextRow()
-
-
-        if ui.button(x, y, ROW_WIDTH, 'destroy') then
-            fixtures.destroyFixture(state.selection.selectedSFixture)
-            state.selection.selectedSFixture = nil
-            return
-        end
+        local used, replaced = inspector.drawParams('sfixture_' .. tostring(myID), rows,
+            state.selection.selectedSFixture, nil, x, y, 270)
+        if replaced ~= nil or subtypeRows then return end
+        layout.curY = y + used
         nextRow()
 
 
@@ -1998,51 +1997,6 @@ function lib.drawSelectedSFixture()
                 end
             end
 
-            if subtypes.is(oldUD, subtypes.TILE_REPEAT) then
-                oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
-                oldTexFixUD.extra.tileWidthM = oldTexFixUD.extra.tileWidthM or 1
-                oldTexFixUD.extra.tileHeightM = oldTexFixUD.extra.tileHeightM or 1
-                oldTexFixUD.extra.tileRotation = oldTexFixUD.extra.tileRotation or 0
-                ui.createSliderWithId(myID, 'twm', x, y, 160, 0.01,
-                    100,
-                    oldTexFixUD.extra.tileWidthM, function(v)
-                        oldTexFixUD.extra.tileWidthM = v
-                        oldTexFixUD.extra._mesh = nil
-                    end)
-                nextRow()
-                nextRow()
-                ui.createSliderWithId(myID, 'thm', x, y, 160, 0.01,
-                    100,
-                    oldTexFixUD.extra.tileHeightM, function(v)
-                        oldTexFixUD.extra.tileHeightM = v
-                        oldTexFixUD.extra._mesh = nil
-                    end)
-                nextRow()
-
-                ui.createSliderWithId(myID, 'tr', x, y, 160, 0,
-                    2 * math.pi,
-                    oldTexFixUD.extra.tileRotation, function(v)
-                        oldTexFixUD.extra.tileRotation = v
-                        oldTexFixUD.extra._mesh = nil
-                    end)
-
-                nextRow()
-
-                ui.zOffsetSlider(myID, oldTexFixUD.extra, x, y, ROW_WIDTH)
-
-                nextRow()
-                handleURLInput(myID, 'bgURL', x, y, 150, oldTexFixUD.extra.main.bgURL,
-                    function(u)
-                        oldTexFixUD.extra.main.bgURL = u
-                    end)
-                nextRow()
-                local dirty = function() oldTexFixUD.extra.dirty = true end
-                handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
-                    function(color) oldTexFixUD.extra.main.tint = color end, dirty)
-            end
-
-
-
             if subtypes.is(oldUD, subtypes.TRACE_VERTICES) then
                 oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
                 oldTexFixUD.extra.startIndex = oldTexFixUD.extra.startIndex or 1
@@ -2315,42 +2269,6 @@ function lib.drawSelectedSFixture()
 
         end
 
-        if subtypes.is(ud, subtypes.LIGHT) then
-            local lightUD = state.selection.selectedSFixture:getUserData()
-            lightUD.extra.colorHex  = lightUD.extra.colorHex  or 'fff2d9ff'
-            lightUD.extra.intensity = lightUD.extra.intensity or 1.0
-            lightUD.extra.lightType = lightUD.extra.lightType or 'directional'
-            lightUD.extra.range     = lightUD.extra.range     or 500
-
-            handlePaletteAndHex(myID, 'lightColor', x, y, 100, lightUD.extra.colorHex,
-                function(c) lightUD.extra.colorHex = c end)
-            nextRow()
-
-            local li = ui.sliderWithInput(myID .. ' lightIntensity', x, y, ROW_WIDTH,
-                0, 3, lightUD.extra.intensity)
-            ui.alignedLabel(x, y, ' intensity')
-            if li and tonumber(li) then lightUD.extra.intensity = tonumber(li) end
-            nextRow()
-
-            local ltype = lightUD.extra.lightType
-            if ui.button(x, y, ROW_WIDTH, 'type: ' .. ltype) then
-                lightUD.extra.lightType = (ltype == 'directional') and 'point' or 'directional'
-            end
-            nextRow()
-
-            local lr = ui.sliderWithInput(myID .. ' lightRange', x, y, ROW_WIDTH,
-                10, 2000, lightUD.extra.range)
-            ui.alignedLabel(x, y, ' range')
-            if lr and tonumber(lr) then lightUD.extra.range = tonumber(lr) end
-            nextRow()
-
-            if ltype == 'point' then
-                ui.label(x, y, 'origin: this body\'s position')
-            else
-                ui.label(x, y, 'aim: rotate this body (body +X = light dir)')
-            end
-            nextRow()
-        end
         nextRow()
     end
 

@@ -13,6 +13,9 @@ local joints = require('src.joints')
 local objectManager = require('src.object-manager')
 local jointParams = require('src.joint-params')
 local bodyParams = require('src.body-params')
+local sfixtureParams = require('src.sfixture-params')
+local sfixtureEditor = require('src.ui.sfixture-editor')
+local fixtures = require('src.fixtures')
 local bodyEditor = require('src.ui.body-editor')
 local behaviors = require('src.behaviors')
 local ui = require('src.ui.all')
@@ -54,6 +57,7 @@ describe('inspector', function()
         state.currentMode = savedMode
         state.selection.selectedJoint = nil
         state.selection.selectedObj = nil
+        state.selection.selectedSFixture = nil
         if world and not world:isDestroyed() then world:destroy() end
     end)
 
@@ -212,4 +216,72 @@ describe('inspector', function()
         end
         assert.is_true(math.abs(thing.body:getMass() - 2 * before) < 1e-3 * before)
     end)
+
+    for subtype, subtypeRows in pairs(sfixtureParams.bySubtype) do
+        local function makeFixture()
+            local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 100, height = 100 })
+            local fixture = fixtures.createSFixture(thing.body, 0, 0, subtype, { radius = 20, width = 40, height = 40 })
+            state.selection.selectedSFixture = fixture
+            return fixture
+        end
+
+        it('sfixture (' .. subtype .. '): every setting reads back; moves keep it registered', function()
+            local fixture = makeFixture()
+            local id = fixture:getUserData().id
+            local rows = {}
+            for _, row in ipairs(sfixtureParams.header) do rows[#rows + 1] = row end
+            for _, row in ipairs(subtypeRows) do rows[#rows + 1] = row end
+            for _, row in ipairs(rows) do
+                local name = subtype .. ' ' .. tostring(row.key or row.label)
+                local results = {}
+                if row.kind == 'number' then
+                    local v = row.min + (row.max - row.min) * 0.75
+                    if row.step then v = math.floor(v) end
+                    fixture = row.set(fixture, v) or fixture
+                    local got = row.get(fixture)
+                    assert.is_true(math.abs(got - v) <= 1e-3 * math.max(1, math.abs(v)),
+                        name .. ': set ' .. v .. ', got ' .. tostring(got))
+                elseif row.kind == 'text' or row.kind == 'file' or row.kind == 'color' or row.kind == 'choice' then
+                    local v = ({ text = 'a label', file = 'x.png', color = 'ff0000ff' })[row.kind]
+                        or row.options[#row.options]
+                    fixture = row.set(fixture, v) or fixture
+                    assert.are.equal(v, row.get(fixture), name)
+                elseif row.kind == 'buttons' then
+                    for _, option in ipairs(row.options) do
+                        fixture = row.run(nil, fixture, option) or fixture
+                        results[#results + 1] = fixture
+                    end
+                elseif row.kind == 'action' and row.label ~= 'destroy' then
+                    results[1] = row.run(nil, fixture)
+                end
+                for _, replaced in ipairs(results) do
+                    if replaced then fixture = replaced end
+                end
+                if #results > 0 or row.kind == 'number' then
+                    -- a replaced fixture: alive, selected, registered, same id and label
+                    assert.is_false(fixture:isDestroyed(), name)
+                    assert.are.equal(fixture, state.selection.selectedSFixture, name)
+                    assert.are.equal(fixture, registry.getSFixtureByID(id), name)
+                    assert.are.equal(id, fixture:getUserData().id, name)
+                end
+            end
+            assert.are.equal('a label', fixture:getUserData().label)
+        end)
+
+        it('sfixture (' .. subtype .. '): destroy removes it and clears the selection', function()
+            local fixture = makeFixture()
+            for _, row in ipairs(sfixtureParams.header) do
+                if row.label == 'destroy' then assert.is_true(row.run(nil, fixture)) end
+            end
+            assert.is_true(fixture:isDestroyed())
+            assert.is_nil(state.selection.selectedSFixture)
+        end)
+
+        it('sfixture (' .. subtype .. '): the panel draws with all rows open', function()
+            local fixture = makeFixture()
+            inspector.setFoldOpen('sfixture_' .. tostring(fixture:getUserData().id), true)
+            local ok, err = renderToCanvas(function() sfixtureEditor.drawSelectedSFixture() end)
+            assert.is_true(ok, subtype .. ': ' .. tostring(err))
+        end)
+    end
 end)

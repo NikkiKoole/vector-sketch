@@ -73,7 +73,17 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
   lines, `src/ui/body-editor.lua` 658 -> ~290, the SIGNAL_*/KEEP_ANGLE/SQUISHY branches in
   `src/playtime-ui.lua`).
 
+- **Sfixtures, step 1 (2026-10-27)**: `src/sfixture-params.lua`: label + destroy for every
+  kind; snap, anchor, uvusert, tile-repeat and light fully from data (position: ∆ move,
+  centre, radius, N/E/S/W/C placement). New inspector kinds: color, file, buttons, note.
+  N/E/S/W/C now re-registers the new fixture (the old code didn't). Still hand-made:
+  texfixture, meshusert, resource, connected-texture, trace-vertices (mostly tools).
+  Known: resizing/moving an sfixture recreates it *after* the collision fixtures, which
+  breaks the sfixtures-first ordering invariant (old behaviour, not fixed here).
+- **Scrolling panels**: `ui.scrollPanel` (body, joint, sfixture panels) +
+  `spec/ui-overflow_spec.lua`, which draws every panel fully open and checks it fits or scrolls.
+
 ## Next step
 
-Convert the rest the same way: sfixtures (`src/ui/sfixture-editor.lua`, 9 kinds, the big
-one) and world settings. Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.
+Convert the rest the same way: the remaining sfixture kinds (texfixture's layer settings
+first; the tools stay custom) and world settings. Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.
