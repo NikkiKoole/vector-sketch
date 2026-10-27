@@ -53,7 +53,18 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
   `enabled`, plus `strength` (kp) and `max spin` behind '+ more'; the old KEEP_ANGLE
   'remove' wiped *all* behaviors of the body, the new one removes just that one.
 
+- **Slice 2 built (2026-10-27)**: joints. `src/joint-params.lua` lists every joint type's
+  settings as get/set rows (a set that rebuilds the joint returns the new one; `visible`
+  hides limit/motor sliders while off). `src/ui/joint-update.lua` uses it, with the same
+  old/new button. Collide, max force/torque and axis sit behind '+ more'.
+- **UI regression specs**: `spec/inspector_spec.lua` — per joint type, every setting is set
+  and read back on a real joint (caught a planted degrees/radians bug), and every panel
+  (new with all rows open, and old) draws without errors; every behavior panel too.
+  Not yet: clicking. The UI reads `love.mouse` directly, so neither specs nor the bridge's
+  `/input/click` can press a button; a fake-pointer hook in `ui.startFrame` would fix both.
+
 ## Next step
 
-Play with it for one session and decide: keep (then delete the old SIGNAL_* /
-KEEP_ANGLE branches in `src/playtime-ui.lua`) or revert. If kept: slice 2, joint settings.
+Play with both (behavior + joint panels) for a session: keep → delete the old branches
+(`src/playtime-ui.lua` SIGNAL_*/KEEP_ANGLE, the old body of `src/ui/joint-update.lua`),
+or revert. Then slice 3 (library v0), and add the fake-pointer hook when it needs clicks.

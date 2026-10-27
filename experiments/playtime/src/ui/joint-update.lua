@@ -7,6 +7,8 @@ local registry = require('src.registry')
 local joints = require('src.joints')
 local mathutils = require('src.math-utils')
 local JT = require('src.joint-types')
+local inspector = require('src.ui.inspector')
+local jointParams = require('src.joint-params')
 
 local BUTTON_HEIGHT = ui.theme.lineHeight
 
@@ -41,11 +43,21 @@ function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
             local width = 280
 
 
-            if ui.button(x, y, width, 'destroy') then
+            local params = jointParams.byType[jointType]
+            if params and ui.button(panelX + w - 70, panelY + 10, 60, inspector.enabled and 'new' or 'old') then
+                inspector.enabled = not inspector.enabled -- compare with the old panel below (plan slice 2)
+            end
+            if ui.button(x, y, params and width - 70 or width, 'destroy') then
                 local setId = joints.getJointId(joint)
                 registry.unregisterJoint(setId)
                 joint:destroy()
                 return;
+            end
+
+            if params and inspector.enabled then
+                inspector.drawParams('joint_' .. tostring(jointId), params, joint, nil,
+                    panelX + 10, y + BUTTON_HEIGHT + 20, w - 20)
+                return
             end
 
             local function axisFunctionality()
