@@ -58,6 +58,11 @@ end
 -- Tag a set of triangle indices with a group number on the RESOURCE fixture
 -- that owns this MESHUSERT's triangle list. Groups drive triangle render
 -- order (lower group drawn first → behind).
+
+-- Draw every accordion open (spec/ui-overflow_spec.lua measures the fully open panel).
+local forceOpen = false
+function lib.setAllAccordions(open) forceOpen = open end
+
 function lib.assignTrianglesToGroup(meshusertFixture, triIndices, group)
     if not meshusertFixture or meshusertFixture:isDestroyed() then return end
     local ud = meshusertFixture:getUserData()
@@ -130,7 +135,7 @@ function lib.drawSelectedSFixture()
         y = y + BUTTON_HEIGHT + BUTTON_SPACING
 
 
-        if accordionStatesSF[key] then
+        if accordionStatesSF[key] or forceOpen then
             contentFunc(clicked)
         end
     end
@@ -138,7 +143,7 @@ function lib.drawSelectedSFixture()
 
 
 
-    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
+    local function drawContent()
         local padding = BUTTON_SPACING
         local layout = ui.createLayout({
             type = 'columns',
@@ -1393,14 +1398,16 @@ function lib.drawSelectedSFixture()
                             local boneR = ((b * 97)  % 256) / 255
                             local boneG = ((b * 163) % 256) / 255
                             local boneB = ((b * 211) % 256) / 255
-                            local sx, sy = cam:getScreenCoordinates(wx, wy)
-                            love.graphics.setColor(boneR, boneG, boneB, 0.9)
-                            love.graphics.setLineWidth(3)
-                            love.graphics.circle('line', sx, sy, 18)
-                            love.graphics.line(sx - 24, sy, sx + 24, sy)
-                            love.graphics.line(sx, sy - 24, sx, sy + 24)
-                            love.graphics.setColor(1, 1, 1)
-                            love.graphics.setLineWidth(1)
+                            ui.onStage(function()
+                                local sx, sy = cam:getScreenCoordinates(wx, wy)
+                                love.graphics.setColor(boneR, boneG, boneB, 0.9)
+                                love.graphics.setLineWidth(3)
+                                love.graphics.circle('line', sx, sy, 18)
+                                love.graphics.line(sx - 24, sy, sx + 24, sy)
+                                love.graphics.line(sx, sy - 24, sx, sy + 24)
+                                love.graphics.setColor(1, 1, 1)
+                                love.graphics.setLineWidth(1)
+                            end)
                         end
                     end
                     nextRow()
@@ -1625,11 +1632,13 @@ function lib.drawSelectedSFixture()
                     local b = state.backdrops[selectedIndex]
 
                     -- first we draw a YELLOW border around the backdrop
-                    local x1, y1 = cam:getScreenCoordinates(b.x, b.y)
-                    local x2, y2 = cam:getScreenCoordinates(b.x + b.w, b.y + b.h)
-                    love.graphics.setColor(1, 1, 0)
-                    love.graphics.rectangle('line', x1, y1, x2 - x1, y2 - y1)
-                    love.graphics.setColor(1, 1, 1)
+                    ui.onStage(function()
+                        local x1, y1 = cam:getScreenCoordinates(b.x, b.y)
+                        local x2, y2 = cam:getScreenCoordinates(b.x + b.w, b.y + b.h)
+                        love.graphics.setColor(1, 1, 0)
+                        love.graphics.rectangle('line', x1, y1, x2 - x1, y2 - y1)
+                        love.graphics.setColor(1, 1, 1)
+                    end)
 
                     local bod = state.selection.selectedSFixture:getBody()
 
@@ -2343,6 +2352,11 @@ function lib.drawSelectedSFixture()
             nextRow()
         end
         nextRow()
+    end
+
+    ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ ' .. sfixtureType .. ' ∞', function()
+        -- content scrolls when it doesn't fit (spec/ui-overflow_spec.lua)
+        ui.scrollPanel('sfixture-panel', w - panelWidth - 20, 60, panelWidth, h - 85, drawContent)
     end)
 end
 

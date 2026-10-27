@@ -435,7 +435,7 @@ return function(ui)
         local lineHeight = ui.font:getHeight()
 
         -- Set up scissor to clip text inside the TextInput area
-        love.graphics.setScissor(x, y, width, height)
+        ui.pushClip(x, y, width, height)
 
         -- Draw selection background
         local selStartLine = state.selectionStart.line
@@ -480,7 +480,7 @@ return function(ui)
         end
 
         -- Remove scissor
-        love.graphics.setScissor()
+        ui.popClip()
 
         -- Reset color
         love.graphics.setColor(1, 1, 1)

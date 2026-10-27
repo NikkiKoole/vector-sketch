@@ -70,6 +70,22 @@ local _persist = rawget(_G, '_ui_persist') or {} -- luacheck: ignore 113
 rawset(_G, '_ui_persist', _persist)              -- luacheck: ignore 112
 
 --- Initializes the UI module.
+-- Clip drawing to a rectangle given in UI coordinates, within whatever clip is
+-- already active (a scroll panel's region), and restore it afterwards. A plain
+-- setScissor()/setScissor() pair would wipe the outer clip, and scissor
+-- rectangles ignore the scroll panel's translate (ui._scrollShift).
+local clipStack = {}
+function ui.pushClip(x, y, w, h)
+    local sx, sy, sw, sh = love.graphics.getScissor()
+    clipStack[#clipStack + 1] = { sx, sy, sw, sh }
+    love.graphics.intersectScissor(x, y - (ui._scrollShift or 0), math.max(0, w), math.max(0, h))
+end
+
+function ui.popClip()
+    local c = table.remove(clipStack) or {}
+    love.graphics.setScissor(c[1], c[2], c[3], c[4])
+end
+
 function ui.init(font, fontHeight)
     ui.nextID = 1               -- Unique ID counter
     ui.dragOffset = { x = 0, y = 0 }
@@ -189,9 +205,11 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
     local isHover = ui.mouseX >= x and ui.mouseX <= x + w and
         ui.mouseY >= y and ui.mouseY <= y + h
 
-    love.graphics.setScissor(x, y, w, h)
+    ui.pushClip(x, y, w, h)
 
+    ui._inScroll = (ui._inScroll or 0) + 1 -- scrolled content may run past the bottom
     local maxContentY = drawFunc(x, y, w, h, -scrollY.value) or 0
+    ui._inScroll = ui._inScroll - 1
 
     if isHover and maxContentY > h and ui.mouseWheelDy ~= 0 then
         local contentHeight = maxContentY
@@ -200,7 +218,7 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
         ui.mouseWheelDy = 0
     end
     scrollY.value = math.max(0, math.min(scrollY.value, maxContentY - h))
-    love.graphics.setScissor()
+    ui.popClip()
     return maxContentY
     -- -- love.graphics.pop()
 end
@@ -558,14 +576,14 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
 
 
     -- Set scissor to restrict rendering to the track area
-    love.graphics.setScissor(x, y, isHorizontal and length or thickness, isHorizontal and thickness or length)
+    ui.pushClip(x, y, isHorizontal and length or thickness, isHorizontal and thickness or length)
 
     -- Render the thumb using the existing button function
     local thumbLabel = ''
     local _, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
 
     -- Remove scissor after rendering the thumb
-    love.graphics.setScissor()
+    ui.popClip()
 
 
 
@@ -707,6 +725,86 @@ function ui.zOffsetSlider(id, extra, x, y, width)
     return ui.createSliderWithId(id, ' zOffset', x, y, width, -180, 180,
         math.floor(extra.zOffset or 0),
         function(v) extra.zOffset = math.floor(v) end)
+end
+
+-- Overflow check: the lowest widget edge drawn since ui.contentBottom was last
+-- reset (spec/ui-overflow_spec.lua compares it with the window height). Content
+-- inside a scroll area doesn't count. [name] = { y argument, height argument or
+-- fixed height }.
+ui.contentBottom = 0
+local extents = {
+    button = { 2, 5, theme.button.height },
+    header_button = { 2, nil, theme.button.height },
+    toggleButton = { 2, 4 },
+    textinput = { 3, 5 },
+    label = { 2, nil, 20 },
+}
+for name, e in pairs(extents) do
+    local f = ui[name]
+    ui[name] = function(...)
+        local args = { ... }
+        local y = args[e[1]]
+        local hgt = (e[2] and args[e[2]]) or e[3] or 0
+        if type(y) == 'number' and type(hgt) == 'number' then
+            if ui._regionBottom and y + hgt > ui._regionBottom then ui._regionBottom = y + hgt end
+            if (ui._inScroll or 0) == 0 and y + hgt > ui.contentBottom then ui.contentBottom = y + hgt end
+        end
+        return f(...)
+    end
+end
+
+-- A region (x, y, w, h) whose content scrolls when it is taller than the region,
+-- with the mouse wheel or a bar on the right. drawFunc draws at its normal
+-- coordinates: the drawing is shifted up by the scroll and the pointer down by
+-- the same amount, so widgets need no changes. Outside the region the pointer
+-- is moved far away (hidden widgets can't be clicked). Drawing that belongs on
+-- the stage (hover highlights in world coordinates) goes through ui.onStage.
+local stageDraws = {}
+function ui.onStage(fn)
+    if (ui._inScrollPanel or 0) > 0 then stageDraws[#stageDraws + 1] = fn else fn() end
+end
+
+function ui.scrollPanel(id, x, y, w, h, drawFunc)
+    local scroll = ui._scrollers[id] or { value = 0, contentHeight = 0 }
+    ui._scrollers[id] = scroll
+    local mx, my = ui.mouseX, ui.mouseY
+    local inside = mx >= x and mx <= x + w and my >= y and my <= y + h
+    local overflow = scroll.contentHeight - h
+    if inside and overflow > 0 and ui.mouseWheelDy ~= 0 then
+        scroll.value = scroll.value - ui.mouseWheelDy * 30
+        ui.mouseWheelDy = 0
+    end
+    scroll.value = math.max(0, math.min(scroll.value, math.max(0, overflow)))
+
+    ui.pushClip(x, y, w, h)
+    love.graphics.push()
+    love.graphics.translate(0, -scroll.value)
+    ui._scrollShift = (ui._scrollShift or 0) + scroll.value
+    ui.mouseY = inside and (my + scroll.value) or -1e6
+    local savedRegion = ui._regionBottom
+    ui._regionBottom = y
+    ui._inScroll = (ui._inScroll or 0) + 1
+    ui._inScrollPanel = (ui._inScrollPanel or 0) + 1
+    local ok, err = pcall(drawFunc)
+    ui._inScrollPanel = ui._inScrollPanel - 1
+    ui._inScroll = ui._inScroll - 1
+    scroll.contentHeight = ui._regionBottom - y + 10
+    ui._regionBottom = savedRegion
+    ui.mouseY = my
+    ui._scrollShift = ui._scrollShift - scroll.value
+    love.graphics.pop()
+    ui.popClip()
+    if (ui._inScrollPanel or 0) == 0 then
+        local draws = stageDraws
+        stageDraws = {}
+        for _, fn in ipairs(draws) do fn() end
+    end
+    if not ok then error(err, 0) end
+
+    if scroll.contentHeight > h then
+        local v = ui.slider(x + w - 14, y, h, 14, 'vertical', scroll.contentHeight - h, 0, scroll.value, id .. ':bar')
+        if v then scroll.value = v end
+    end
 end
 
 -- Auto-restore font after lurker hot-reload
