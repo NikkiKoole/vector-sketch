@@ -6,6 +6,8 @@ function lib.register(instance)
 end
 
 function lib.unregister(id)
+    -- diagnostic, see object-manager.destroyBody
+    print('[mipo-registry] unregister ' .. tostring(id) .. ' from ' .. debug.traceback('', 2):gsub('\n%s*', ' <- '))
     instances[id] = nil
 end
 

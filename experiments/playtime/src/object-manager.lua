@@ -679,8 +679,25 @@ function lib.recreateThingFromBody(body, newSettings)
     return thing
 end
 
+-- Short call stack (a few frames) for diagnostic log lines.
+local function shortTrace()
+    local lines = {}
+    for line in debug.traceback('', 3):gmatch('[^\n]+') do
+        if #lines >= 5 then break end
+        if not line:find('stack traceback') then lines[#lines + 1] = line:gsub('^%s+', '') end
+    end
+    return table.concat(lines, ' <- ')
+end
+lib.shortTrace = shortTrace
+
 function lib.destroyBody(body)
     local thing = body:getUserData().thing
+    -- diagnostic: Mipos were found half-destroyed (head + textures gone, group reset)
+    -- with no known cause; log who destroys Mipo parts
+    if thing and thing.mipoId then
+        logger:info('destroyBody on Mipo part ' .. thing.mipoId .. '.' .. tostring(thing.mipoPartName)
+            .. ' from ' .. shortTrace())
+    end
     local bjoints = body:getJoints()
     for i = 1, #bjoints do
         local ud = bjoints[i]:getUserData()

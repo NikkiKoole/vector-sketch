@@ -318,7 +318,9 @@ function love.update(dt)
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
-    manual_gc(0.002, 2)
+    -- 2ms of incremental GC per update; a full collect only above 64 MB (was 2 MB,
+    -- which the game is always over, so it did a full collect every update)
+    manual_gc(0.002, 64)
     prof.pop('frame')
 end
 
