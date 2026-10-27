@@ -75,6 +75,11 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
     switched off (`false`), since unwind + heal cope and the cap felt laggy.
   - Noticed: physics slowed (30s of steps took 42s) with 3-4 Mipos on screen. Check on iPad.
 
+- [x] **Design rule: hands never reach the floor** (2026-10-27): arm (upper + forearm + hand reach)
+  <= torso (shoulder->hip) + leg (hip->knee->ankle), measured on the built joints
+  (`characterManager.armReach` / `limitArmReach`). Both randomizers enforce it: they shorten the
+  arms, down to 40%, then shrink the hand. 19 of 30 random Mipos needed it. Editor sliders stay free.
+
 ### Awareness and reactions (feels alive)
 - [ ] **Head turn** toward the gaze target (a small torque on the head and neck, not only the pupils).
 - [ ] **Look at what's moving**: a thrown object or a falling friend steals attention for a moment.

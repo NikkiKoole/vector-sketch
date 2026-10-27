@@ -598,6 +598,78 @@ local function randomizeFace(instance, hairColor, opts)
 end
 
 -- Randomize all visual aspects of a character instance.
+-- Design rule: a hanging hand never reaches the floor.
+--   arm (shoulder->elbow + elbow->wrist + hand past the wrist)
+--   <= torso (shoulder->hip) + leg (hip->knee + knee->ankle)
+-- Measured on the built bodies (joint anchors), so body scale, hand image and
+-- pose don't matter. Returns arm length, limit (nil when parts are missing).
+local function jointAnchor(instance, parentName, childName)
+    local parent, child = instance.parts[parentName], instance.parts[childName]
+    if not (parent and child and parent.body and child.body) then return nil end
+    for _, joint in ipairs(child.body:getJoints()) do
+        local a, b = joint:getBodies()
+        if a == parent.body and b == child.body then return joint:getAnchors() end
+    end
+    return nil
+end
+
+local function dist(x1, y1, x2, y2)
+    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+end
+
+function lib.armReach(instance)
+    local sx, sy = jointAnchor(instance, 'torso1', 'luarm')
+    local ex, ey = jointAnchor(instance, 'luarm', 'llarm')
+    local wx, wy = jointAnchor(instance, 'llarm', 'lhand')
+    local hx, hy = jointAnchor(instance, 'torso1', 'luleg')
+    local kx, ky = jointAnchor(instance, 'luleg', 'llleg')
+    local ax, ay = jointAnchor(instance, 'llleg', 'lfoot')
+    if not (sx and ex and wx and hx and kx and ax) then return nil end
+    local hand = 0
+    local handBody = instance.parts.lhand.body
+    for _, fixture in ipairs(handBody:getFixtures()) do
+        local shape = fixture:getShape()
+        if not fixture:isSensor() and shape.getPoints then
+            local pts = { handBody:getWorldPoints(shape:getPoints()) }
+            for i = 1, #pts, 2 do hand = math.max(hand, dist(wx, wy, pts[i], pts[i + 1])) end
+        end
+    end
+    local segments = dist(sx, sy, ex, ey) + dist(ex, ey, wx, wy)
+    local limit = dist(sx, sy, hx, hy) + dist(hx, hy, kx, ky) + dist(kx, ky, ax, ay)
+    return segments + hand, limit, segments, hand
+end
+
+-- Shorten upper arm + forearm (DNA h) so the arm fits the rule; when the hand
+-- alone is too big for that (arms would drop below 40%), shrink the hand too.
+-- Measured again after each pass since the hand's reach isn't linear in scale.
+lib.minArmFactor = 0.4
+
+function lib.limitArmReach(instance)
+    local changed = false
+    for _ = 1, 3 do
+        local arm, limit, segments, hand = lib.armReach(instance)
+        if not arm or arm <= limit + 1 or segments <= 0 then return changed end
+        local factor = (limit - hand) / segments
+        if factor < lib.minArmFactor then
+            factor = lib.minArmFactor
+            local handFactor = math.max(0.3, (limit - segments * factor) / hand)
+            for _, pname in ipairs({ 'lhand', 'rhand' }) do
+                local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
+                if dims then
+                    lib.updatePart(pname, { sx = (dims.sx or 1) * handFactor, sy = (dims.sy or 1) * handFactor },
+                        instance)
+                end
+            end
+        end
+        for _, pname in ipairs({ 'luarm', 'ruarm', 'llarm', 'rlarm' }) do
+            local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
+            if dims and dims.h then lib.updatePart(pname, { h = dims.h * factor }, instance) end
+        end
+        changed = true
+    end
+    return changed
+end
+
 function lib.randomizeMipo(instance)
     if not instance then return end
 
@@ -613,6 +685,7 @@ function lib.randomizeMipo(instance)
 
     -- Disable physics nose when overlay nose is randomized
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
+    lib.limitArmReach(instance)
     lib.addTexturesFromInstance2(instance)
 end
 
@@ -629,6 +702,7 @@ function lib.randomizeMipoConstrained(instance)
     randomizeTextures(instance, hairColor, { limbSkin = C.limbSkinTextures[1] })
     randomizeFace(instance, hairColor, { uniformEyeScale = true, allowedPupilShapes = { 1, 2, 3, 6, 7, 8 } })
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
+    lib.limitArmReach(instance)
     lib.addTexturesFromInstance2(instance)
 end
 

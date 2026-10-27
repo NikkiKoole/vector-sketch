@@ -521,6 +521,25 @@ describe("character-manager", function()
 
     -- ─── Randomization ───
 
+    describe("arm reach rule (hands never reach the floor)", function()
+        it("randomized Mipos have arm <= torso + leg", function()
+            for seed = 1, 6 do
+                love.math.setRandomSeed(seed * 101)
+                math.randomseed(seed * 101)
+                local world = makeWorld()
+                registry.reset()
+                mipoRegistry.reset()
+                local instance = createHumanoid(world)
+                CharacterManager.randomizeMipoConstrained(instance)
+                local arm, limit = CharacterManager.armReach(instance)
+                assert.is_truthy(arm)
+                assert.is_true(arm <= limit + 1, string.format('seed %d: arm %d > limit %d', seed, arm, limit))
+                destroyInstance(instance)
+                world:destroy()
+            end
+        end)
+    end)
+
     describe("randomizeMipo", function()
         -- randomizeMipo lives on CharacterManager; src.ui.mipo-editor just
         -- calls through to it from the UI button. Test the real source.
