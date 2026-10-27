@@ -224,11 +224,49 @@ function lib.setFlipped(instance, on)
     end
 end
 
--- Pending jumps fire here (they used to fire only while the editor drew that Mipo).
+-- Dazed: a hard landing knocks a Mipo limp for a moment; then it straightens
+-- up again (and the stand-up hop in src/mipo-joint-guard.lua gets it on its feet).
+lib.daze = true
+lib.dazeSpeed = 2000      -- impact speed that dazes (the 'oof' starts at 1200)
+lib.dazeMin = 1.0         -- seconds limp for a hit at dazeSpeed
+lib.dazeMax = 2.5         -- seconds limp for the hardest hits, and the cap
+lib.dazeHardSpeed = 6000  -- impact speed that gives dazeMax
+
+function lib.isDazed(instance)
+    return instance._dazedUntil ~= nil
+end
+
+function lib.onHardImpact(instance, speed)
+    if not lib.daze or speed < lib.dazeSpeed then return end
+    local t = math.min(1, (speed - lib.dazeSpeed) / (lib.dazeHardSpeed - lib.dazeSpeed))
+    local duration = lib.dazeMin + (lib.dazeMax - lib.dazeMin) * t
+    local now = love.timer.getTime()
+    if not instance._dazedUntil then
+        -- only undo a ragdoll the daze made itself, never one switched on by hand
+        if lib.isRagdoll(instance) then return end
+        lib.setRagdoll(instance, true)
+        instance._dazeStart = now
+        instance._dazedUntil = now + duration
+    else
+        -- another hard hit while dazed: longer, up to dazeMax from the first hit
+        instance._dazedUntil = math.min(math.max(instance._dazedUntil, now + duration),
+            instance._dazeStart + lib.dazeMax)
+    end
+end
+
+local function wakeUp(instance)
+    instance._dazedUntil = nil
+    instance._dazeStart = nil
+    lib.setRagdoll(instance, false)
+end
+
+-- Pending jumps and dazes resolve here (jumps used to fire only while the
+-- editor drew that Mipo).
 function lib.update()
     local now = love.timer.getTime()
     for _, instance in pairs(mipoRegistry.getAll()) do
         if instance._jumpAt and now >= instance._jumpAt then fireJump(instance) end
+        if instance._dazedUntil and now >= instance._dazedUntil then wakeUp(instance) end
     end
 end
 

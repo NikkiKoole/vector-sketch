@@ -79,6 +79,14 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 - [ ] **Picked-up face**: surprised/happy while held, dizzy after a big throw.
 - [ ] **Idle loop**: blink, breathe, shift weight, small look-arounds (puppet-maker2 `breathBody` / `eyeBlink`).
 
+- [x] **Actions module** `src/mipo-actions.lua` (2026-10-27): breathe / jump / ragdoll / flip,
+  moved out of the Mipo editor so scenes can call them (`mipoActions` in the script env).
+- [x] **Dazed after a hard landing** (2026-10-27): impact > `dazeSpeed` (2000) makes the Mipo limp
+  for 1-2.5s (harder hits last longer), then it straightens and stands up. A ragdoll switched
+  on by hand is never undone.
+- [ ] **Held limb goes limp**: the arm or leg you hold goes limp, the rest stays upright.
+- [ ] **Idle relaxing**: relaxed arms, now and then a short slump.
+
 ### World
 - [ ] **Throwable props**: ball, block, fruit, hat. They're just bodies, so mostly art.
 - [ ] **Containers**: box, bed, bathtub, cupboard. A sensor area that "holds" what's

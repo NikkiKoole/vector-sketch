@@ -35,6 +35,10 @@ lib.minApproachSpeed = 350
 lib.plonkMipoCooldown = 0.25 -- one Mipo plonks at most this often (catches jitter spikes)
 lib.mouthFlap = true
 
+-- Optional hook, called with (instance, speed) for every hit above impactSpeed
+-- (main.lua wires it to mipoActions.onHardImpact for the daze).
+lib.onHardImpact = nil
+
 lib.voiceSets = { 'nikki', 'theo', 'herman' }
 
 -- Each emotion: which samples to pick from, and a pitch multiplier on top of the Mipo's own pitch.
@@ -353,6 +357,7 @@ function lib.onImpact(fix1, fix2, normalImpulse)
                 playImpact('plonk', body1, body2, speed)
             end
             if speed > lib.impactSpeed then
+                if lib.onHardImpact then lib.onHardImpact(instance, speed) end
                 if not lastImpact[instance.id] or t - lastImpact[instance.id] > lib.impactCooldown then
                     lastImpact[instance.id] = t
                     lib.squeak(instance, 'oof')

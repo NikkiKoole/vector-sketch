@@ -55,6 +55,38 @@ describe('src.mipo-actions', function()
         assert.are.equal(false, enabledOf(instance, 'luarm'))
     end)
 
+    it('a hard landing dazes (limp), a soft one does not', function()
+        mipoActions.onHardImpact(instance, mipoActions.dazeSpeed - 1)
+        assert.is_false(mipoActions.isDazed(instance))
+        mipoActions.onHardImpact(instance, mipoActions.dazeSpeed + 1000)
+        assert.is_true(mipoActions.isDazed(instance))
+        assert.is_true(mipoActions.isRagdoll(instance))
+    end)
+
+    it('wakes up after the daze and straightens again', function()
+        mipoActions.onHardImpact(instance, mipoActions.dazeSpeed + 1000)
+        instance._dazedUntil = love.timer.getTime() - 0.01
+        mipoActions.update()
+        assert.is_false(mipoActions.isDazed(instance))
+        assert.is_false(mipoActions.isRagdoll(instance))
+        assert.is_nil(enabledOf(instance, 'luleg'))
+    end)
+
+    it('never undoes a ragdoll switched on by hand', function()
+        mipoActions.setRagdoll(instance, true)
+        mipoActions.onHardImpact(instance, mipoActions.dazeSpeed + 1000)
+        assert.is_false(mipoActions.isDazed(instance))
+        mipoActions.update()
+        assert.is_true(mipoActions.isRagdoll(instance))
+    end)
+
+    it('dazes no longer than dazeMax however often it is hit', function()
+        mipoActions.onHardImpact(instance, 1e9)
+        local start = instance._dazeStart
+        for _ = 1, 5 do mipoActions.onHardImpact(instance, 1e9) end
+        assert.is_true(instance._dazedUntil <= start + mipoActions.dazeMax + 1e-9)
+    end)
+
     it('setting the same state twice is a no-op', function()
         mipoActions.setFlipped(instance, true)
         local angle = instance.parts.torso1.body:getAngle()

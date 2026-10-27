@@ -114,6 +114,7 @@ local mipoVoice = require('src.mipo-voice')
 local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
+mipoVoice.onHardImpact = function(...) return mipoActions.onHardImpact(...) end -- late-bound for hot reload
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
