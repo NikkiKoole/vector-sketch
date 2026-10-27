@@ -9,7 +9,11 @@
 -- heal: when a joint is torn open (anchors far apart), move the child part and
 --   everything hanging below it back onto the parent's anchor, moving at the
 --   parent's speed. Stops limbs flying far out or ending up through the floor.
+--   Only while the Mipo is held (and just after release): in a resting pile,
+--   squashed joints passed the threshold and healing teleported limbs into
+--   neighbours, pumping energy in until the pile exploded out of the world.
 local JT = require('src.joint-types')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 
@@ -19,6 +23,9 @@ lib.unwind = true
 lib.heal = true
 lib.healDistance = 40 -- world units between joint anchors before a limb is pulled back
                       -- (recorded: up to ~12 while fine, 60-1000 once torn)
+lib.healAfterRelease = 1.0 -- seconds healing stays on after a Mipo is let go (throws)
+
+local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
 
 lib.stats = { unwound = 0, healed = 0 }
 
@@ -88,6 +95,23 @@ local function healJoint(joint)
     lib.stats.healed = lib.stats.healed + 1
 end
 
+local function markHeldMipos(now)
+    for _, pointerJoint in ipairs(box2dPointerJoints.getPointerJoints()) do
+        local body = pointerJoint.jointBody
+        if body and not body:isDestroyed() then
+            local instance = mipoRegistry.getFromBody(body)
+            if instance then lastHeld[instance.id] = now end
+        end
+    end
+end
+
+local function recentlyHeld(joint, now)
+    local _, bodyB = joint:getBodies()
+    local instance = mipoRegistry.getFromBody(bodyB)
+    local held = instance and lastHeld[instance.id]
+    return held ~= nil and now - held <= lib.healAfterRelease
+end
+
 function lib.update()
     if not state.physicsWorld then return end
     if not lib.unwind and not lib.heal then return end
@@ -99,7 +123,11 @@ function lib.update()
         end
     end
     if lib.heal then
-        for _, joint in ipairs(revolute) do healJoint(joint) end
+        local now = love.timer.getTime()
+        markHeldMipos(now)
+        for _, joint in ipairs(revolute) do
+            if recentlyHeld(joint, now) then healJoint(joint) end
+        end
     end
     if lib.unwind then unwindJoints(limited) end
 end

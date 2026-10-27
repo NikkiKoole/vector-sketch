@@ -12,7 +12,8 @@ local mouthShapes = require('src.mouth-shapes')
 local lib = {}
 
 lib.enabled = true
-lib.volume = 0.8
+lib.masterVolume = 0.5 -- scales every Mipo sound (voices, plonks, kisses)
+lib.volume = 0.8       -- voices, before masterVolume
 lib.cooldown = 0.15      -- seconds between squeaks of the same Mipo
 lib.impactCooldown = 0.5 -- seconds between impact 'oof's of the same Mipo
 lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured: small hop ~550, 800-unit drop ~2500
@@ -132,7 +133,7 @@ local function play(setName, key, pitch)
     if not source then return nil end
     local clone = source:clone()
     clone:setPitch(pitch)
-    clone:setVolume(lib.volume)
+    clone:setVolume(lib.volume * lib.masterVolume)
     clone:play()
     return clone
 end
@@ -290,7 +291,7 @@ local function playImpact(kind, body1, body2, speed)
     if #sources == 0 then return end
     local clone = sources[love.math.random(#sources)]:clone()
     clone:setPitch(mapInto(speed, sound.soft, sound.hard, sound.pitch[1], sound.pitch[2]))
-    clone:setVolume(mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]))
+    clone:setVolume(mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume)
     clone:play()
 end
 

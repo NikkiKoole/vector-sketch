@@ -1,8 +1,12 @@
 local lib = {}
 local registry = require 'src.registry'
 
--- Minimal PD version: still sets angular velocity directly
-local function rotateBodyTowards(body, _dt, targetAngle, data)
+-- Max angular acceleration (rad/s^2) the controller may ask for, as a torque
+-- (inertia * alpha). Strong enough to stand, weak enough to yield in a pile.
+lib.maxAlpha = 1000 -- swept: 300 let 2 of 3 Mipos sink into a split, 3000 overshot
+
+-- PD controller on angular velocity, applied as a bounded torque
+local function rotateBodyTowards(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = math.rad(targetAngle) - currentAngle
     -- wrap to [-pi, pi]
@@ -23,7 +27,15 @@ local function rotateBodyTowards(body, _dt, targetAngle, data)
     if omega_cmd > maxOmega then omega_cmd = maxOmega end
     if omega_cmd < -maxOmega then omega_cmd = -maxOmega end
 
-    body:setAngularVelocity(omega_cmd)
+    -- Reach omega_cmd through a bounded torque instead of setAngularVelocity.
+    -- Setting the velocity is infinitely strong: in a pile of Mipos a leg turned
+    -- straight through its neighbours, the contact solver shoved them apart, and
+    -- the pile gained energy until one was launched out of the world.
+    local maxAlpha = (data and data.maxAlpha) or lib.maxAlpha
+    local alpha = (omega_cmd - omega) / math.max(dt or 1 / 60, 1e-4)
+    if alpha > maxAlpha then alpha = maxAlpha end
+    if alpha < -maxAlpha then alpha = -maxAlpha end
+    body:applyTorque(body:getInertia() * alpha)
 end
 
 function lib.update(dt, hitted)
