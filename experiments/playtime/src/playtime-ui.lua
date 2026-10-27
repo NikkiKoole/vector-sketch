@@ -229,15 +229,8 @@ function lib.drawBGSettingsUI()
         -- Per-backdrop controls for the selected one.
         if selectedBD then
             nextRow()
-            local newScale = ui.sliderWithInput('bdScale', x, y, ROW_WIDTH, 0.05, 3, selectedBD.scale or 1)
-            ui.alignedLabel(x, y, ' scale')
-            if newScale then selectedBD.scale = tonumber(newScale) or selectedBD.scale end
-            nextRow()
-            local fgChanged, fgValue = ui.checkbox(x, y, selectedBD.foreground or false, 'foreground')
-            if fgChanged then selectedBD.foreground = fgValue end
-            nextRow()
-            local borderChanged, borderValue = ui.checkbox(x, y, selectedBD.border or false, 'border')
-            if borderChanged then selectedBD.border = borderValue end
+            inspector.drawParams('backdrop', require('src.world-params').backdropRows, selectedBD, nil,
+                x, y, width)
         end
     end
     )

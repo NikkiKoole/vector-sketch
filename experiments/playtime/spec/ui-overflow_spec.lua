@@ -111,6 +111,14 @@ describe('panels fit the window (1200x768, fully open)', function()
         end)
     end
 
+    it('world settings panel', function()
+        inspector.setFoldOpen('world', true)
+        local uiWorldSettings = require('src.ui.world-settings')
+        measure(function() uiWorldSettings.drawWorldSettingsUI() end) -- first frame sizes the panel
+        check('world settings', measure(function() uiWorldSettings.drawWorldSettingsUI() end))
+        inspector.setFoldOpen('world', false)
+    end)
+
     describe('ui.scrollPanel', function()
         local function frame(mx, my, pressed, released, draw)
             ui.startFrame()

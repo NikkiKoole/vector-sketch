@@ -802,7 +802,7 @@ function ui.scrollPanel(id, x, y, w, h, drawFunc)
     if not ok then error(err, 0) end
 
     if scroll.contentHeight > h then
-        local v = ui.slider(x + w - 14, y, h, 14, 'vertical', scroll.contentHeight - h, 0, scroll.value, id .. ':bar')
+        local v = ui.slider(x + w - 10, y, h, 10, 'vertical', scroll.contentHeight - h, 0, scroll.value, id .. ':bar')
         if v then scroll.value = v end
     end
 end

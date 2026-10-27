@@ -284,4 +284,50 @@ describe('inspector', function()
             assert.is_true(ok, subtype .. ': ' .. tostring(err))
         end)
     end
+
+    describe('world settings', function()
+        local worldParams = require('src.world-params')
+        local uiWorldSettings = require('src.ui.world-settings')
+
+        it('every setting round-trips (gravity reaches the physics world)', function()
+            local target = {}
+            for k, v in pairs(state.world) do target[k] = v end
+            local savedGrid = state.editorPreferences.showGrid
+            for _, row in ipairs(worldParams.rows) do
+                if row.kind == 'number' then
+                    local v = (resolve(row.min, target) + resolve(row.max, target)) / 2
+                    row.set(target, v)
+                    assert.are.equal(v, row.get(target), row.key)
+                elseif row.kind == 'bool' then
+                    for _, v in ipairs({ true, false }) do
+                        row.set(target, v)
+                        assert.are.equal(v, row.get(target), row.key)
+                    end
+                end
+            end
+            local _, gy = world:getGravity()
+            assert.is_true(math.abs(target.gravity * target.meter - gy) < 0.01)
+            state.editorPreferences.showGrid = savedGrid
+        end)
+
+        it('the panel draws with all rows open', function()
+            inspector.setFoldOpen('world', true)
+            local ok, err = renderToCanvas(function() uiWorldSettings.drawWorldSettingsUI() end)
+            inspector.setFoldOpen('world', false)
+            assert.is_true(ok, tostring(err))
+        end)
+
+        it('backdrop rows default to scale 1, off, and write the backdrop', function()
+            local bd = { url = 'x.png' }
+            local byKey = {}
+            for _, row in ipairs(worldParams.backdropRows) do byKey[row.key] = row end
+            assert.are.equal(false, byKey.foreground.get(bd))
+            local ok = renderToCanvas(function()
+                inspector.drawParams('backdrop', worldParams.backdropRows, bd, nil, 0, 0, 280)
+            end)
+            assert.is_true(ok)
+            bd.foreground, bd.border = true, true
+            assert.is_true(byKey.foreground.get(bd) and byKey.border.get(bd))
+        end)
+    end)
 end)

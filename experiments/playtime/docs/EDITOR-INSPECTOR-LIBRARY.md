@@ -84,7 +84,14 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
 - **Scrolling panels**: `ui.scrollPanel` (body, joint, sfixture panels) +
   `spec/ui-overflow_spec.lua`, which draws every panel fully open and checks it fits or scrolls.
 
+- **World settings + backdrop (2026-10-27)**: `src/world-params.lua`. Basic: gravity, speed,
+  grid, textures, dark; '+ more': debug draw switches (now checkboxes that show their state,
+  were blind toggle buttons), alpha, drag force/damp, profile, stats. The panel sizes itself
+  to its content and scrolls. The selected backdrop's scale/foreground/border use the
+  inspector too (the backdrop list stays custom). Scrollbars are 10 px now, inside the
+  panel margin, so they no longer cover number fields.
+
 ## Next step
 
 Convert the rest the same way: the remaining sfixture kinds (texfixture's layer settings
-first; the tools stay custom) and world settings. Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.
+first; the tools stay custom). Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.
