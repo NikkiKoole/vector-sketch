@@ -43,6 +43,18 @@ local function drawNote(title, text)
     end)
 end
 
+-- while a scene script plays, a click drags instead of selecting
+-- (src/input-manager.lua), so the empty properties tab offers a pause button
+local function drawPauseToEdit()
+    local x, y, w = lib.contentRect()
+    ui.panel(x, y, w, 120, 'properties', function()
+        ui.label(x + 10, y + 40, 'pause to edit')
+        if ui.button(x + 10, y + 75, w - 20, 'pause') then
+            state.world.paused = true
+        end
+    end)
+end
+
 -- drawProperties(x, y, w, h) draws the selection's panel and returns true,
 -- or returns false when nothing is selected
 function lib.draw(drawProperties)
@@ -50,7 +62,11 @@ function lib.draw(drawProperties)
     local tab = state.rightColumn.tab
     if tab == 'properties' then
         if not drawProperties(lib.contentRect()) then
-            drawNote('properties', 'click something on the stage')
+            if state.scene.sceneScript and not state.world.paused then
+                drawPauseToEdit()
+            else
+                drawNote('properties', 'click something on the stage')
+            end
         end
     elseif tab == 'on stage' then
         drawNote('on stage', 'coming soon')

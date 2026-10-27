@@ -1,7 +1,8 @@
 -- spec/right-column_spec.lua
 -- The right column: clicking a tab switches it, the properties tab hands its
--- rect (below the tab bar, inside the window) to the selection's panel, and
--- the other tabs don't draw properties.
+-- rect (below the tab bar, inside the window) to the selection's panel, the
+-- empty properties tab offers pause while a scene script plays, and the other
+-- tabs don't draw properties.
 -- Run with: love . --specs spec/right-column_spec.lua
 
 if not love then return end
@@ -69,6 +70,19 @@ describe('right column', function()
         assert.are.equal(cx, got[1])
         assert.is_true(got[2] > cy + ui.theme.button.height)
         assert.is_true(got[1] + got[3] <= ww and got[2] + got[4] <= wh - 20)
+    end)
+
+    it('while a scene script plays, the empty properties tab pauses', function()
+        state.rightColumn.tab = 'properties'
+        local oldScript, oldPaused = state.scene.sceneScript, state.world.paused
+        state.scene.sceneScript, state.world.paused = {}, false
+        local x, y, w = rightColumn.contentRect()
+        local mx, my = x + w / 2, y + 80 -- the pause button
+        frame(mx, my, true, false)
+        frame(mx, my, false, true)
+        local paused = state.world.paused
+        state.scene.sceneScript, state.world.paused = oldScript, oldPaused
+        assert.is_true(paused)
     end)
 
     it('other tabs leave the properties alone', function()
