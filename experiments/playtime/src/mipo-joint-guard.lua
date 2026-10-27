@@ -91,10 +91,29 @@ local function collectSubtree(instance, partName, out)
 end
 
 -- Joints are made parent (body A) -> child (body B), see character-manager.
+-- Is there a wall (anything static) between the two points? Healing is a
+-- teleport (setPosition), which skips Box2D's tunnelling protection: a limb
+-- torn across a thin wall was put straight into it and got stuck.
+local function wallBetween(x1, y1, x2, y2)
+    local blocked = false
+    state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
+        if fixture:getBody():getType() == 'static' and not fixture:isSensor() then
+            blocked = true
+            return 0
+        end
+        return -1
+    end)
+    return blocked
+end
+
 local function healJoint(joint)
     local x1, y1, x2, y2 = joint:getAnchors()
     local dx, dy = x1 - x2, y1 - y2
     if dx * dx + dy * dy < lib.healDistance * lib.healDistance then return end
+    if wallBetween(x2, y2, x1, y1) then
+        lib.stats.healBlocked = (lib.stats.healBlocked or 0) + 1
+        return -- leave it to the joint itself; it pulls the limb around the wall
+    end
     local bodyA, bodyB = joint:getBodies()
     local instance, childName = mipoRegistry.getFromBody(bodyB)
     if not instance then return end
