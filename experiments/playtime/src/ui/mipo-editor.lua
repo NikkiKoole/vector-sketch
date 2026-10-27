@@ -4,6 +4,7 @@ local ui = require('src.ui.all')
 local state = require('src.state')
 local CharacterManager = require('src.character-manager')
 local mipoRegistry = require('src.mipo-registry')
+local mipoActions = require('src.mipo-actions')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local mouthShapes = require('src.mouth-shapes')
 local ST = require('src.shape-types')
@@ -701,39 +702,8 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     return y
 end
 
-local function getKeepAngle(part)
-    if not (part and part.body and not part.body:isDestroyed()) then return nil end
-    local ud = part.body:getUserData()
-    if not (ud and ud.thing and ud.thing.behaviors) then return nil end
-    for _, b in ipairs(ud.thing.behaviors) do
-        if b.name == 'KEEP_ANGLE' then return b end
-    end
-    return nil
-end
 
-local function ensureKeepAngle(part, angle, kp)
-    if not (part and part.body and not part.body:isDestroyed()) then return nil end
-    local ud = part.body:getUserData()
-    if not (ud and ud.thing) then return nil end
-    ud.thing.behaviors = ud.thing.behaviors or {}
-    local b = getKeepAngle(part)
-    if b then return b end
-    b = { name = 'KEEP_ANGLE', angle = angle or 0, kp = kp or 40, enabled = false }
-    table.insert(ud.thing.behaviors, b)
-    return b
-end
 
-local function isGrounded(instance)
-    for _, pname in ipairs({ 'lfoot', 'rfoot', 'llleg', 'rlleg' }) do
-        local p = instance.parts and instance.parts[pname]
-        if p and p.body and not p.body:isDestroyed() then
-            for _, contact in pairs(p.body:getContactList()) do
-                if contact:isTouching() then return true end
-            end
-        end
-    end
-    return false
-end
 
 function lib.drawMipoEditor(instance, partName)
     local panelWidth = PANEL_WIDTH
@@ -967,163 +937,25 @@ function lib.drawMipoEditor(instance, partName)
         -- === ACTIONS ACCORDION ===
         drawAccordion('actions', function()
             if ui.button(x, y, panelWidth - 40, 'breathe') then
-                local torso = instance.parts and instance.parts.torso1
-                if torso and torso.body and not torso.body:isDestroyed() then
-                    torso.body:applyLinearImpulse(0, -1000)
-                end
+                mipoActions.breathe(instance)
             end
             y = y + ROW
 
-            -- pending jump: fires after crouch wind-up
-            if instance._jumpAt and love.timer.getTime() >= instance._jumpAt then
-                instance._jumpAt = nil
-                local torso = instance.parts and instance.parts.torso1
-                if torso and torso.body and not torso.body:isDestroyed() then
-                    torso.body:applyLinearImpulse(0, -4000)
-                end
-                if not (instance._isRagdoll) then
-                    local flipped = instance._isFlipped
-                    for _, pname in ipairs({ 'luleg', 'ruleg', 'llleg', 'rlleg' }) do
-                        local b = getKeepAngle(instance.parts[pname])
-                        if b then
-                            if flipped then
-                                b.enabled = false
-                            else
-                                b.enabled = nil
-                            end
-                        end
-                    end
-                end
-            end
-
-            local grounded = isGrounded(instance)
+            local grounded = mipoActions.isGrounded(instance)
             if ui.button(x, y, panelWidth - 40, grounded and 'jump' or 'jump (not grounded)') then
-                if grounded and not instance._jumpAt then
-                    if not (instance._isRagdoll) then
-                        for _, pname in ipairs({ 'luleg', 'ruleg', 'llleg', 'rlleg' }) do
-                            local b = getKeepAngle(instance.parts[pname])
-                            if b then b.enabled = false end
-                        end
-                    end
-                    instance._jumpAt = love.timer.getTime() + 0.1
-                end
+                mipoActions.jump(instance)
             end
             y = y + ROW
 
-
-            local creation = instance.dna.creation
-            local allKAPartNames = { 'torso1', 'head' }
-            for i = 2, (creation.torsoSegments or 1) do table.insert(allKAPartNames, 'torso' .. i) end
-            for i = 1, (creation.neckSegments or 0) do table.insert(allKAPartNames, 'neck' .. i) end
-            for _, pn in ipairs({ 'luleg', 'ruleg', 'llleg', 'rlleg', 'luarm', 'ruarm', 'llarm', 'rlarm' }) do
-                table.insert(allKAPartNames, pn)
-            end
-
-            local isRagdoll = instance._isRagdoll or false
-
+            local isRagdoll = mipoActions.isRagdoll(instance)
             if ui.button(x, y, panelWidth - 40, isRagdoll and 'ragdoll: on' or 'ragdoll: off') then
-                if not isRagdoll then
-                    for _, pname in ipairs(allKAPartNames) do
-                        local b = getKeepAngle(instance.parts[pname])
-                        if b then b.enabled = false end
-                    end
-                    instance._isRagdoll = true
-                else
-                    local flipped = instance._isFlipped
-                    for _, pname in ipairs(allKAPartNames) do
-                        local b = getKeepAngle(instance.parts[pname])
-                        if b then
-                            local isLeg = pname=='luleg' or pname=='ruleg' or pname=='llleg' or pname=='rlleg'
-                            local isArm = pname=='luarm' or pname=='ruarm' or pname=='llarm' or pname=='rlarm'
-                            if isLeg then
-                                if flipped then b.enabled = false else b.enabled = nil end
-                            elseif isArm then
-                                if flipped then b.enabled = nil else b.enabled = false end
-                            else
-                                b.enabled = nil
-                            end
-                        end
-                    end
-                    instance._isRagdoll = false
-                end
+                mipoActions.setRagdoll(instance, not isRagdoll)
             end
             y = y + ROW
 
-            local isFlipped = instance._isFlipped or false
+            local isFlipped = mipoActions.isFlipped(instance)
             if ui.button(x, y, panelWidth - 40, isFlipped and 'flip: on' or 'flip: off') then
-                local armPartNames = { 'luarm', 'ruarm', 'llarm', 'rlarm' }
-                local flipCreation = instance.dna.creation
-                local flipPartNames = { 'torso1', 'head' }
-                for i = 2, (flipCreation.torsoSegments or 1) do table.insert(flipPartNames, 'torso' .. i) end
-                for i = 1, (flipCreation.neckSegments or 0) do table.insert(flipPartNames, 'neck' .. i) end
-                local legPartNames = { 'luleg', 'ruleg', 'llleg', 'rlleg' }
-                local ragdolled = instance._isRagdoll or false
-
-                if not isFlipped then
-                    for _, pname in ipairs(flipPartNames) do
-                        local part = instance.parts[pname]
-                        if part and part.body and not part.body:isDestroyed() then
-                            local b = getKeepAngle(part)
-                            if b then b.angle = b.angle + 180 end
-                            if not ragdolled then
-                                part.body:setAngle(part.body:getAngle() + math.pi)
-                            end
-                        end
-                    end
-                    local armTargets = { luarm = 350, ruarm = 10, llarm = 350, rlarm = 10 }
-                    for pname, targetDeg in pairs(armTargets) do
-                        local part = instance.parts[pname]
-                        if part and part.body and not part.body:isDestroyed() then
-                            local b = ensureKeepAngle(part, targetDeg, 200)
-                            if b then b.angle = targetDeg; b.maxOmega = 50 end
-                            if not ragdolled then
-                                part.body:setAngle(math.rad(targetDeg))
-                                if b then b.enabled = nil end
-                            end
-                        end
-                    end
-                    if not ragdolled then
-                        for _, pname in ipairs(legPartNames) do
-                            local b = getKeepAngle(instance.parts[pname])
-                            if b then b.enabled = false end
-                        end
-                    end
-                    instance._isFlipped = true
-                else
-                    for _, pname in ipairs(flipPartNames) do
-                        local part = instance.parts[pname]
-                        if part and part.body and not part.body:isDestroyed() then
-                            local b = getKeepAngle(part)
-                            if b then
-                                b.angle = b.angle - 180
-                                if not ragdolled then
-                                    part.body:setAngle(math.rad(b.angle))
-                                end
-                            else
-                                if not ragdolled then
-                                    part.body:setAngle(part.body:getAngle() + math.pi)
-                                end
-                            end
-                        end
-                    end
-                    if not ragdolled then
-                        for _, pname in ipairs(legPartNames) do
-                            local part = instance.parts[pname]
-                            local b = getKeepAngle(part)
-                            if b then
-                                if part and part.body and not part.body:isDestroyed() then
-                                    part.body:setAngle(math.rad(b.angle or 0))
-                                end
-                                b.enabled = nil
-                            end
-                        end
-                        for _, pname in ipairs(armPartNames) do
-                            local b = getKeepAngle(instance.parts[pname])
-                            if b then b.enabled = false end
-                        end
-                    end
-                    instance._isFlipped = false
-                end
+                mipoActions.setFlipped(instance, not isFlipped)
             end
             y = y + ROW
         end)

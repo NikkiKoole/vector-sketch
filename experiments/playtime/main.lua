@@ -113,6 +113,7 @@ local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 local mipoVoice = require('src.mipo-voice')
 local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
+local mipoActions = require('src.mipo-actions')
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
@@ -307,6 +308,7 @@ function love.update(dt)
 
         script.call('update', scaled_dt)
         mipoJointGuard.update()
+        mipoActions.update()
         mipoVoice.update(scaled_dt)
         flightRecorder.update(scaled_dt)
         --for i = 1, #joints do
