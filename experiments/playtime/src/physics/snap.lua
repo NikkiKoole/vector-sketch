@@ -11,8 +11,8 @@
 --
 -- Mipo hands are snap points too (no fixture: id = the hand part's thing id),
 -- so a hand grabs a climbing hold, a snap block, or another Mipo's hand.
--- Hands snap from closer by and let go more easily (handSnapDistance,
--- handBreakThreshold); a hand never grabs its own Mipo.
+-- A hand grabs what it touches (reach radius + handMargin), holds on where it
+-- touches, and lets go more easily (handBreakThreshold); never its own Mipo.
 --
 -- (Before: links lived in each snap point as live body refs (at/to) plus two
 -- cached arrays kept in sync by hand. Deleting a body left its partner point
@@ -30,7 +30,9 @@ local mipoRegistry = require('src.mipo-registry')
 local lib = {}
 
 lib.mipoHands = true
-lib.handSnapDistance = 70     -- a hand grabs from this close (snap points use state.snap.snapDistance)
+lib.handMargin = 30           -- a hand grabs what it touches: centres within both reach radii + this
+                              -- (a fixed 70 was less than one hand's own radius, 100-124: two
+                              -- solid hands could never get that close, so never held hands)
 lib.handBreakThreshold = 40000 -- a hand lets go above this joint force (a pull, a hard fall)
 
 local cooldownUntil = {} -- [sfixture id] = time
@@ -72,13 +74,32 @@ function lib.points()
                 local hand = instance.parts and instance.parts[name]
                 if hand and hand.body and not hand.body:isDestroyed() and hand.id then
                     local x, y = hand.body:getWorldCenter()
-                    out[#out + 1] = { id = hand.id, body = hand.body, x = x, y = y, hand = true, mipo = mipoId }
+                    out[#out + 1] = { id = hand.id, body = hand.body, x = x, y = y, hand = true, mipo = mipoId,
+                        radius = lib.reachRadius(hand.body, x, y) }
                 end
             end
         end
     end
     table.sort(out, function(p, q) return p.id < q.id end) -- deterministic pairing
     return out
+end
+
+-- How far a body's solid shapes reach from (cx, cy).
+function lib.reachRadius(body, cx, cy)
+    local r = 0
+    for _, fixture in ipairs(body:getFixtures()) do
+        local shape = fixture:getShape()
+        if not fixture:isSensor() then
+            if shape.getPoints then
+                local pts = { body:getWorldPoints(shape:getPoints()) }
+                for k = 1, #pts, 2 do r = math.max(r, math.sqrt((pts[k] - cx) ^ 2 + (pts[k + 1] - cy) ^ 2)) end
+            elseif shape.getRadius then
+                local sx, sy = body:getWorldPoint(shape:getPoint())
+                r = math.max(r, math.sqrt((sx - cx) ^ 2 + (sy - cy) ^ 2) + shape:getRadius())
+            end
+        end
+    end
+    return r
 end
 
 -- Is this snap-point id a Mipo hand? (for joints: hands break more easily)
@@ -147,9 +168,17 @@ end
 
 local function createSnapJoint(p, q)
     local id = uuid.generateID()
-    local joint = love.physics.newRevoluteJoint(p.body, q.body, p.x, p.y, q.x, q.y)
-    local ax, ay = p.body:getLocalPoint(p.x, p.y)
-    local bx, by = q.body:getLocalPoint(q.x, q.y)
+    -- snap points click together (anchors pull into one point); a hand holds on
+    -- where it touches (one shared anchor between them), or two solid hands
+    -- would be pulled into each other
+    local px, py, qx, qy = p.x, p.y, q.x, q.y
+    if p.hand or q.hand then
+        px, py = (p.x + q.x) / 2, (p.y + q.y) / 2
+        qx, qy = px, py
+    end
+    local joint = love.physics.newRevoluteJoint(p.body, q.body, px, py, qx, qy)
+    local ax, ay = p.body:getLocalPoint(px, py)
+    local bx, by = q.body:getLocalPoint(qx, qy)
     joint:setUserData({
         id = id,
         offsetA = { x = ax, y = ay },
@@ -180,7 +209,8 @@ local function checkForSnaps(points, snapJoints, interacted)
     for i = 1, #free do
         for j = i + 1, #free do
             local p, q = free[i], free[j]
-            local dist = (p.hand or q.hand) and lib.handSnapDistance or state.snap.snapDistance
+            local dist = (p.hand or q.hand) and ((p.radius or 0) + (q.radius or 0) + lib.handMargin)
+                or state.snap.snapDistance
             local d2 = (p.x - q.x) ^ 2 + (p.y - q.y) ^ 2
             if p.body ~= q.body and d2 <= dist * dist and not sameMipo(p, q) then
                 candidates[#candidates + 1] = { p = p, q = q, d2 = d2 }

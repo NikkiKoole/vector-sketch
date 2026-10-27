@@ -116,7 +116,7 @@ state.backdrops = {}
 
 
 state.snap = {
-    snapDistance = 140,
+    snapDistance = 40, -- snap points click together when they nearly touch (140 grabbed from afar)
     jointBreakThreshold = 100000,
     cooldownTime = 0.5,
     onlyConnectWhenInteracted = true,

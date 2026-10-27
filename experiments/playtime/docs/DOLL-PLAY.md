@@ -209,8 +209,10 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
   is switchable in the behavior panel.
 - [x] **Snap, cleaned up** (2026-10-27): the snap joint is the single source of truth (`scriptmeta = { type = 'snap', a, b }`).
 - [x] **Hands grab** (2026-10-27): Mipo hands are snap points (no fixture; id = the hand part's id). They grab
-  holds, snap blocks and other Mipos' hands (holding hands), never their own Mipo. Hands use
-  `handSnapDistance` 70 and `handBreakThreshold` 40000 (a firm pull lets go). Snapping only happens
+  holds, snap blocks and other Mipos' hands (holding hands), never their own Mipo. A hand grabs what it
+  touches (centres within both reach radii + `handMargin` 30; a fixed 70 was less than a hand's own
+  ~110 radius, so solid hands never got close enough) and holds on where it touches.
+  `handBreakThreshold` 40000 (a firm pull lets go). Snap points: `snapDistance` 40 (was 140). Snapping only happens
   while a Mipo is held, counted per Mipo, so dragging by the torso lets the hands grab. Pairing is
   nearest first.
 - [x] **Climbing wall + snap blocks** (2026-10-27): `props.makeClimbingWall` (sensor board + 28 holds with

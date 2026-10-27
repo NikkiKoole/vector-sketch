@@ -886,7 +886,7 @@ describe("integration: object lifecycle", function()
         end)
 
         it("snap config values have correct defaults", function()
-            assert.are.equal(140, state.snap.snapDistance)
+            assert.are.equal(40, state.snap.snapDistance)
             assert.are.equal(100000, state.snap.jointBreakThreshold)
             assert.are.equal(0.5, state.snap.cooldownTime)
             assert.is_true(state.snap.onlyConnectWhenInteracted)
