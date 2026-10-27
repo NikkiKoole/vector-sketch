@@ -84,7 +84,8 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 - [x] **Dazed after a hard landing** (2026-10-27): impact > `dazeSpeed` (2000) makes the Mipo limp
   for 1-2.5s (harder hits last longer), then it straightens and stands up. A ragdoll switched
   on by hand is never undone.
-- [ ] **Held limb goes limp**: the arm or leg you hold goes limp, the rest stays upright.
+- [x] **Held limb goes limp** (2026-10-27): holding a hand/foot/limb part makes that whole limb
+  slack (`thing.limp`, honoured by keep-angle), and the rest keeps its pose. It recovers on release.
 - [ ] **Idle relaxing**: relaxed arms, now and then a short slump.
 
 ### World

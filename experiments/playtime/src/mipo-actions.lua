@@ -6,6 +6,7 @@
 -- Actions work by toggling the KEEP_ANGLE behaviors on the parts (src/keep-angle.lua):
 -- enabled = false makes a part limp, enabled = nil (default) keeps it upright.
 local mipoRegistry = require('src.mipo-registry')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 
 local lib = {}
 
@@ -260,10 +261,57 @@ local function wakeUp(instance)
     lib.setRagdoll(instance, false)
 end
 
+-- Held limb goes limp: while a pointer holds an arm or leg part, that whole
+-- limb is slack (thing.limp, honoured by src/keep-angle.lua); the rest of the
+-- body keeps its pose. Separate from the enabled flags that ragdoll/flip/daze use.
+lib.limpHeldLimb = true
+
+local limbs = {
+    larm = { 'luarm', 'llarm', 'lhand' },
+    rarm = { 'ruarm', 'rlarm', 'rhand' },
+    lleg = { 'luleg', 'llleg', 'lfoot' },
+    rleg = { 'ruleg', 'rlleg', 'rfoot' },
+}
+local limbOfPart = {}
+for limb, parts in pairs(limbs) do
+    for _, name in ipairs(parts) do limbOfPart[name] = limb end
+end
+
+function lib.limbOf(partName)
+    return limbOfPart[partName]
+end
+
+local function updateHeldLimbs()
+    local held = {} -- [instance] = { [limb] = true }
+    if lib.limpHeldLimb then
+        for _, pointerJoint in ipairs(box2dPointerJoints.getPointerJoints()) do
+            local body = pointerJoint.jointBody
+            if body and not body:isDestroyed() then
+                local instance, partName = mipoRegistry.getFromBody(body)
+                local limb = instance and limbOfPart[partName]
+                if limb then
+                    held[instance] = held[instance] or {}
+                    held[instance][limb] = true
+                end
+            end
+        end
+    end
+    for _, instance in pairs(mipoRegistry.getAll()) do
+        local heldLimbs = held[instance] or {}
+        for limb, names in pairs(limbs) do
+            for _, name in ipairs(names) do
+                local part = instance.parts[name]
+                if part then part.limp = heldLimbs[limb] or nil end
+            end
+        end
+    end
+end
+
 -- Pending jumps and dazes resolve here (jumps used to fire only while the
 -- editor drew that Mipo).
 function lib.update()
     local now = love.timer.getTime()
+    updateHeldLimbs()
     for _, instance in pairs(mipoRegistry.getAll()) do
         if instance._jumpAt and now >= instance._jumpAt then fireJump(instance) end
         if instance._dazedUntil and now >= instance._dazedUntil then wakeUp(instance) end
