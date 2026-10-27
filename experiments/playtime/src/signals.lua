@@ -31,16 +31,44 @@ local function prismaticOf(body)
     return nil
 end
 
--- Gate: a body on a prismatic joint whose upper limit is 'closed' and lower
--- limit 'open'. The motor drives it to one end.
+-- Opening moves a gate toward world-down along its prismatic axis, whichever
+-- way the axis was drawn (+1: along the axis, -1: against it).
+local function openDirection(joint)
+    local _, ay = joint:getAxis()
+    return ay >= 0 and 1 or -1
+end
+
+-- A prismatic joint made with the editor's 'add joint' has limits 0..0 (or
+-- none). Give it a usable range: from where the gate stands now (closed) to
+-- the gate's own height further down (open).
+local function ensureGateLimits(body, joint)
+    if joint:areLimitsEnabled() and joint:getUpperLimit() - joint:getLowerLimit() > 1 then return end
+    local y1, y2 = math.huge, -math.huge
+    for _, fixture in ipairs(body:getFixtures()) do
+        if not fixture:isSensor() then
+            local _, top, _, bottom = fixture:getBoundingBox(1)
+            y1, y2 = math.min(y1, top), math.max(y2, bottom)
+        end
+    end
+    local travel = (y2 > y1) and (y2 - y1 + 10) or 200
+    local t = joint:getJointTranslation()
+    local dir = openDirection(joint)
+    joint:setLimits(math.min(t, t + dir * travel), math.max(t, t + dir * travel))
+    joint:setLimitsEnabled(true)
+end
+
+-- Gate: a body on a prismatic joint; the motor drives it to the closed end or
+-- to the open (world-down) end of its limits.
 function lib.setGate(body, open)
     local b = findBehavior(body, 'SIGNAL_GATE')
     local joint = prismaticOf(body)
     if not b or not joint then return end
+    ensureGateLimits(body, joint)
     b.open = open
+    local dir = openDirection(joint)
     joint:setMotorEnabled(true)
     joint:setMaxMotorForce(lib.gateForce)
-    joint:setMotorSpeed(open and -lib.gateSpeed or lib.gateSpeed)
+    joint:setMotorSpeed((open and dir or -dir) * lib.gateSpeed)
     body:setAwake(true)
 end
 

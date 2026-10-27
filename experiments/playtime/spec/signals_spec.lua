@@ -7,6 +7,8 @@ local state = require('src.state')
 local registry = require('src.registry')
 local props = require('src.props')
 local signals = require('src.signals')
+local joints = require('src.joints')
+local objectManager = require('src.object-manager')
 
 describe('src.signals + props gate/button', function()
     local world, base
@@ -50,5 +52,21 @@ describe('src.signals + props gate/button', function()
         local button = props.makeButton(-300, 500, 300, 'g1')
         assert.is_true(signals.onPressed({ button.body }))
         assert.is_true(gate.behaviors[1].open)
+    end)
+
+    it('an editor-made gate (add-joint prismatic, limits 0..0, axis down) drops and rises', function()
+        local gate = objectManager.addThing('rectangle', { x = 0, y = -120, width = 30, height = 200, label = 'g' })
+        gate.behaviors = { { name = 'SIGNAL_GATE', signal = 'e1' } }
+        joints.createJoint({ body1 = base, body2 = gate.body, jointType = 'prismatic',
+            offsetA = { x = 0, y = -120 }, offsetB = { x = 0, y = 0 }, collideConnected = false })
+        local _, y0 = gate.body:getPosition()
+        signals.emit('e1')
+        for _ = 1, 120 do world:update(1 / 60) end
+        local _, yOpen = gate.body:getPosition()
+        assert.is_true(yOpen > y0 + 150, string.format('open: %d -> %d', y0, yOpen))
+        signals.emit('e1')
+        for _ = 1, 120 do world:update(1 / 60) end
+        local _, yClosed = gate.body:getPosition()
+        assert.is_near(y0, yClosed, 5)
     end)
 end)
