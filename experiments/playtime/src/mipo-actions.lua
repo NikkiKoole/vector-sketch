@@ -51,7 +51,7 @@ function lib.isGrounded(instance)
     for _, pname in ipairs({ 'lfoot', 'rfoot', 'llleg', 'rlleg' }) do
         local p = instance.parts and instance.parts[pname]
         if p and p.body and not p.body:isDestroyed() then
-            for _, contact in pairs(p.body:getContactList()) do
+            for _, contact in pairs(p.body:getContacts()) do
                 if contact:isTouching() then return true end
             end
         end
@@ -328,6 +328,70 @@ local function updateIdle(instance, now)
     if instance._slumpUntil and now >= instance._slumpUntil then instance._slumpUntil = nil end
 end
 
+-- Arms hang: arms have no KEEP_ANGLE, so they swung free and often both ended
+-- up on one side. A soft spring (bounded torque) pulls each arm toward hanging
+-- slightly outward on its own side; it still swings with the body.
+-- Angles are world angles: 0 = hanging straight down, + = toward the left.
+lib.armHang = true
+lib.armHangAngle = 15   -- degrees outward from straight down
+lib.armHangKp = 40      -- spring (1/s^2)
+lib.armHangKd = 12      -- damping (1/s)
+lib.armHangMaxAlpha = 80 -- rad/s^2 cap, keeps it soft
+
+local armHangTargets = { luarm = 1, llarm = 1, ruarm = -1, rlarm = -1 } -- side sign
+local armParent = { luarm = 'torso1', ruarm = 'torso1', llarm = 'luarm', rlarm = 'ruarm' }
+
+local function jointBetween(parentBody, childBody)
+    for _, joint in ipairs(childBody:getJoints()) do
+        if joint:getType() == 'revolute' then
+            local bodyA, bodyB = joint:getBodies()
+            if bodyA == parentBody and bodyB == childBody then return joint end
+        end
+    end
+    return nil
+end
+
+-- Steer a part toward a world angle through its joint to the parent: the target
+-- is moved into the joint's allowed range, so the part goes the long way round
+-- instead of pushing against a limit (shortest-path steering left right arms
+-- stuck pointing left).
+function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, maxAlpha)
+    local joint = jointBetween(parentBody, childBody)
+    if not joint then
+        return lib.steerToward(childBody, targetWorldAngle, kp, kd, maxAlpha)
+    end
+    local jointAngle = joint:getJointAngle()
+    local desired = targetWorldAngle - parentBody:getAngle() - joint:getReferenceAngle()
+    local diff
+    if joint:areLimitsEnabled() then
+        local lower, upper = joint:getLowerLimit(), joint:getUpperLimit()
+        local mid = (lower + upper) / 2
+        desired = desired - 2 * math.pi * math.floor((desired - mid) / (2 * math.pi) + 0.5)
+        desired = math.max(lower, math.min(upper, desired))
+        diff = desired - jointAngle
+    else
+        diff = (desired - jointAngle + math.pi) % (2 * math.pi) - math.pi
+    end
+    local alpha = kp * diff - kd * (childBody:getAngularVelocity() - parentBody:getAngularVelocity())
+    if alpha > maxAlpha then alpha = maxAlpha end
+    if alpha < -maxAlpha then alpha = -maxAlpha end
+    childBody:applyTorque(childBody:getInertia() * alpha)
+end
+
+local function hangArms(instance)
+    if not lib.armHang or instance._isRagdoll or instance._isFlipped or instance._dazedUntil then return end
+    local target = math.rad(lib.armHangAngle)
+    for name, side in pairs(armHangTargets) do
+        local part = instance.parts[name]
+        local parent = instance.parts[armParent[name]]
+        if part and parent and part.body and parent.body and not part.body:isDestroyed()
+            and not parent.body:isDestroyed() and not part.limp then
+            lib.steerJointToward(parent.body, part.body, side * target,
+                lib.armHangKp, lib.armHangKd, lib.armHangMaxAlpha)
+        end
+    end
+end
+
 -- A part is limp (thing.limp, honoured by keep-angle) while its limb is held or
 -- the Mipo slumps (legs only).
 local function updateLimp(now)
@@ -357,6 +421,7 @@ local function updateLimp(now)
                 if part then part.limp = (held[limb] or (slumping and isLeg)) or nil end
             end
         end
+        hangArms(instance)
     end
 end
 
