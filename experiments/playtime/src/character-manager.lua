@@ -1248,6 +1248,22 @@ local function extractTorsoIndex(name)
 end
 
 
+-- Feet grip and don't bounce. With LÖVE's default friction (0.2) on both feet
+-- and floor, Mipos stood on ice and slid into a split.
+lib.footFriction = 1.0
+lib.footRestitution = 0
+
+local function applyFootMaterial(thing, partName)
+    if partName ~= 'lfoot' and partName ~= 'rfoot' then return end
+    if not thing or not thing.body or thing.body:isDestroyed() then return end
+    for _, fixture in ipairs(thing.body:getFixtures()) do
+        if not fixture:isSensor() then
+            fixture:setFriction(lib.footFriction)
+            fixture:setRestitution(lib.footRestitution)
+        end
+    end
+end
+
 local function makePart(partName, instance, settings)
     local entry = instance.entryMap[partName]
     if not entry then return end
@@ -1279,6 +1295,7 @@ local function makePart(partName, instance, settings)
         thing.body:setAngle(prevA + xangle)
         thing.mipoId = instance.id
         thing.mipoPartName = partName
+        applyFootMaterial(thing, partName)
 
         if extractNeckIndex(partName) then
             thing.body:setAngularDamping(.1)
@@ -2363,6 +2380,7 @@ function lib.reconstructInstance(charData, partBodies)
         local ud = body:getUserData()
         if ud and ud.thing then
             instance.parts[partName] = ud.thing
+            applyFootMaterial(ud.thing, partName) -- scenes saved before feet had grip
         end
         -- keep the saved group index so a rebuild doesn't hand out a new one
         local first = body:getFixtures()[1]
