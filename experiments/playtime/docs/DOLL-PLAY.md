@@ -86,7 +86,11 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
   on by hand is never undone.
 - [x] **Held limb goes limp** (2026-10-27): holding a hand/foot/limb part makes that whole limb
   slack (`thing.limp`, honoured by keep-angle), and the rest keeps its pose. It recovers on release.
-- [ ] **Idle relaxing**: relaxed arms, now and then a short slump.
+- [x] **Idle relaxing** (2026-10-27): untouched for 1.5s, a Mipo breathes (tiny lift every 3-4.5s)
+  and every 12-25s slumps (knees slack 0.5s plus a push, ~30 deg dip), then straightens.
+  Not while held, dazed, ragdolled, flipped or jumping.
+- [ ] **Pointing**: `mipoActions.pointAt(mipo, target)`. The nearest arm points at a spot, the
+  cursor/finger, or a body.
 
 ### World
 - [ ] **Throwable props**: ball, block, fruit, hat. They're just bodies, so mostly art.

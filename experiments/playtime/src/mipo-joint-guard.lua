@@ -136,7 +136,8 @@ local function isSplayed(instance)
         if part and part.body and not part.body:isDestroyed() then
             local ud = part.body:getUserData()
             for _, behavior in ipairs(ud and ud.thing and ud.thing.behaviors or {}) do
-                if behavior.name == 'KEEP_ANGLE' and behavior.enabled ~= false then
+                -- limp parts (held limb, idle slump) are slack on purpose
+                if behavior.name == 'KEEP_ANGLE' and behavior.enabled ~= false and not part.limp then
                     local diff = part.body:getAngle() - math.rad(behavior.angle or 0)
                     diff = (diff + math.pi) % TWO_PI - math.pi
                     if math.abs(diff) > lib.splayedAngle then return true end

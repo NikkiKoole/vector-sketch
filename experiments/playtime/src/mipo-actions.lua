@@ -281,27 +281,80 @@ function lib.limbOf(partName)
     return limbOfPart[partName]
 end
 
-local function updateHeldLimbs()
-    local held = {} -- [instance] = { [limb] = true }
-    if lib.limpHeldLimb then
-        for _, pointerJoint in ipairs(box2dPointerJoints.getPointerJoints()) do
-            local body = pointerJoint.jointBody
-            if body and not body:isDestroyed() then
-                local instance, partName = mipoRegistry.getFromBody(body)
-                local limb = instance and limbOfPart[partName]
-                if limb then
-                    held[instance] = held[instance] or {}
-                    held[instance][limb] = true
+-- Idle: when nobody touches a Mipo it breathes (a tiny torso lift now and then)
+-- and every so often slumps (knees give for a moment, then it straightens).
+lib.idle = true
+lib.idleAfter = 1.5            -- seconds after the last touch before idling starts
+lib.breatheEvery = { 3, 4.5 }  -- seconds between breaths (random in range)
+lib.breatheSpeed = 60          -- breath lift (world units/s for the whole Mipo)
+lib.slumpEvery = { 12, 25 }    -- seconds between slumps
+lib.slumpFor = 0.5             -- seconds the knees stay slack
+lib.slumpPush = 350            -- downward push at the start (straight limp legs don't buckle alone);
+                               -- measured: 250 = 20 deg dip, 350 = 30 deg, 500 collapses (hops to get up)
+
+local function randomIn(range)
+    return range[1] + love.math.random() * (range[2] - range[1])
+end
+
+local function canIdle(instance, now)
+    return lib.idle and not instance._isRagdoll and not instance._isFlipped
+        and not instance._dazedUntil and not instance._jumpAt
+        and (not instance._lastHeld or now - instance._lastHeld > lib.idleAfter)
+        and lib.isGrounded(instance)
+end
+
+local function updateIdle(instance, now)
+    if not canIdle(instance, now) then
+        instance._nextBreath, instance._nextSlump, instance._slumpUntil = nil, nil, nil
+        return
+    end
+    instance._nextBreath = instance._nextBreath or now + randomIn(lib.breatheEvery)
+    instance._nextSlump = instance._nextSlump or now + randomIn(lib.slumpEvery)
+    if now >= instance._nextBreath then
+        local torso = instance.parts.torso1
+        if torso and torso.body and not torso.body:isDestroyed() then
+            torso.body:applyLinearImpulse(0, -totalMass(instance) * lib.breatheSpeed)
+        end
+        instance._nextBreath = now + randomIn(lib.breatheEvery)
+    end
+    if now >= instance._nextSlump then
+        local torso = instance.parts.torso1
+        if torso and torso.body and not torso.body:isDestroyed() then
+            torso.body:applyLinearImpulse(0, totalMass(instance) * lib.slumpPush)
+        end
+        instance._slumpUntil = now + lib.slumpFor
+        instance._nextSlump = now + randomIn(lib.slumpEvery)
+    end
+    if instance._slumpUntil and now >= instance._slumpUntil then instance._slumpUntil = nil end
+end
+
+-- A part is limp (thing.limp, honoured by keep-angle) while its limb is held or
+-- the Mipo slumps (legs only).
+local function updateLimp(now)
+    local heldLimbs = {} -- [instance] = { [limb] = true }
+    for _, pointerJoint in ipairs(box2dPointerJoints.getPointerJoints()) do
+        local body = pointerJoint.jointBody
+        if body and not body:isDestroyed() then
+            local instance, partName = mipoRegistry.getFromBody(body)
+            if instance then
+                instance._lastHeld = now
+                local limb = limbOfPart[partName]
+                if limb and lib.limpHeldLimb then
+                    heldLimbs[instance] = heldLimbs[instance] or {}
+                    heldLimbs[instance][limb] = true
                 end
             end
         end
     end
     for _, instance in pairs(mipoRegistry.getAll()) do
-        local heldLimbs = held[instance] or {}
+        updateIdle(instance, now)
+        local held = heldLimbs[instance] or {}
+        local slumping = instance._slumpUntil ~= nil
         for limb, names in pairs(limbs) do
+            local isLeg = limb == 'lleg' or limb == 'rleg'
             for _, name in ipairs(names) do
                 local part = instance.parts[name]
-                if part then part.limp = heldLimbs[limb] or nil end
+                if part then part.limp = (held[limb] or (slumping and isLeg)) or nil end
             end
         end
     end
@@ -311,7 +364,7 @@ end
 -- editor drew that Mipo).
 function lib.update()
     local now = love.timer.getTime()
-    updateHeldLimbs()
+    updateLimp(now)
     for _, instance in pairs(mipoRegistry.getAll()) do
         if instance._jumpAt and now >= instance._jumpAt then fireJump(instance) end
         if instance._dazedUntil and now >= instance._dazedUntil then wakeUp(instance) end
