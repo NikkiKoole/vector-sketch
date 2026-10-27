@@ -35,12 +35,29 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
 5. **Later, only if 4 was a yes:** library thumbnails + drag to the stage; the inspector
    replaces the old panel per area (sfixtures and the Mipo editor last, they're big).
 
+## Layout direction (2026-10-27)
+
+Claude Desktop sketched directions A-E (`~/Downloads/playtime-editor-handoff/`, HANDOFF.md +
+mockups). Nikki's pick, not E's bottom strip:
+
+- **Left: tool rail.** Tools instead of the "add shape" / "add joint" panels (pick a joint type,
+  drag body A -> B; pick an sfixture kind, click a body). Tool options sit next to the rail/top bar.
+- **Right: one column, three tabs, one at a time:** **properties** (the inspector panels we
+  have) | **on stage** (one row per object, duplicates grouped, wires shown `button -> gate1`,
+  click selects) | **library** (saved contraptions + toys; slice 3).
+- Stage gets the middle. Toolbars on the right where it helps.
+
+Order: (a) right column with the three tabs, properties first (move today's panels in); (b) the
+on-stage list; (c) library v0 (slice 3); (d) left rail replacing add shape/add joint.
+Each is its own keep/revert moment.
+
 ## Not doing (considered, said no)
 
 - Timeline, onion skinning (said no 2026-10-27).
 - Code editing inside the editor: code stays in files.
 - Rewriting all panels in one go, or a new UI framework/library.
 - Nested prefabs / linked instances (edit one, all update): too deep for now.
+- Bottom-strip inspector (HANDOFF direction E): said no 2026-10-27, a busy body runs out of width.
 - Comic Shanns (compact, 16px) as the editor font: tried live, said no 2026-10-27; Arial Narrow stays.
 - Wire tool (drag trigger → receiver): nice, but third in line; revisit after slice 4.
 
