@@ -228,7 +228,11 @@ local function remapAndRestoreInfluences(influences, idMapping)
     end
 end
 
-function lib.buildWorld(data, world, cam)
+-- opts.additive: build the bodies and joints next to what's already in the
+-- world (a library prefab, src/library.lua): no clearing, camera or backdrops.
+-- Returns the things it built.
+function lib.buildWorld(data, world, cam, opts)
+    local additive = opts and opts.additive
     -- Tolerate saves missing bodies/joints (hand-edited or partial JSON)
     -- instead of crashing on ipairs(nil).
     if type(data.bodies) ~= 'table' then
@@ -257,59 +261,62 @@ function lib.buildWorld(data, world, cam)
     local function getNewId(oldId)
         return oldId
     end
-    -- should we mabe move this out ?
-    clearWorld(world)
+    if not additive then
+        -- should we mabe move this out ?
+        clearWorld(world)
 
-    snap.reset()
+        snap.reset()
 
-    if data.camera then
-        cam:setTranslation(data.camera.x, data.camera.y)
-        cam:setScale(data.camera.scale)
-    else
-        -- No saved view: reset to the default (pan 0,0, zoom 1) so a
-        -- camera-less scene doesn't inherit the previous scene's framing
-        -- (same stale-state pattern as backdrops below).
-        cam:setTranslation(0, 0)
-        cam:setScale(1)
-    end
+        if data.camera then
+            cam:setTranslation(data.camera.x, data.camera.y)
+            cam:setScale(data.camera.scale)
+        else
+            -- No saved view: reset to the default (pan 0,0, zoom 1) so a
+            -- camera-less scene doesn't inherit the previous scene's framing
+            -- (same stale-state pattern as backdrops below).
+            cam:setTranslation(0, 0)
+            cam:setScale(1)
+        end
 
-    -- Scene-persisted backdrops replace session backdrops wholesale. Reset
-    -- *before* the guard so a scene with no `backdrops` key doesn't inherit
-    -- the previously loaded scene's backdrop — the reset used to live inside
-    -- the `if`, so loading a backdrop-less scene left the old bg on screen.
-    state.backdrops = {}
-    if data.backdrops then
-        -- Image/w/h aren't saved (just url+world position). Eagerly load
-        -- the image here so dimensions are known before draw — UV compute
-        -- and any width/height-dependent code can run on scene load
-        -- without waiting for the first draw frame (was fragility #7 in
-        -- docs/UV-BACKDROP-FRAGILITY.md).
-        for _, b in ipairs(data.backdrops) do
-            local entry = {
-                url = b.url,
-                x = b.x,
-                y = b.y,
-                scale = b.scale,
-                border = b.border,
-                foreground = b.foreground,
-            }
-            if b.url and love.filesystem.getInfo(b.url) then
-                local ok, img = pcall(love.graphics.newImage, b.url)
-                if ok and img then
-                    entry.image = img
-                    entry.w = img:getWidth()
-                    entry.h = img:getHeight()
+        -- Scene-persisted backdrops replace session backdrops wholesale. Reset
+        -- *before* the guard so a scene with no `backdrops` key doesn't inherit
+        -- the previously loaded scene's backdrop — the reset used to live inside
+        -- the `if`, so loading a backdrop-less scene left the old bg on screen.
+        state.backdrops = {}
+        if data.backdrops then
+            -- Image/w/h aren't saved (just url+world position). Eagerly load
+            -- the image here so dimensions are known before draw — UV compute
+            -- and any width/height-dependent code can run on scene load
+            -- without waiting for the first draw frame (was fragility #7 in
+            -- docs/UV-BACKDROP-FRAGILITY.md).
+            for _, b in ipairs(data.backdrops) do
+                local entry = {
+                    url = b.url,
+                    x = b.x,
+                    y = b.y,
+                    scale = b.scale,
+                    border = b.border,
+                    foreground = b.foreground,
+                }
+                if b.url and love.filesystem.getInfo(b.url) then
+                    local ok, img = pcall(love.graphics.newImage, b.url)
+                    if ok and img then
+                        entry.image = img
+                        entry.w = img:getWidth()
+                        entry.h = img:getHeight()
+                    else
+                        logger:error("Failed to load backdrop image: " .. tostring(b.url))
+                    end
                 else
-                    logger:error("Failed to load backdrop image: " .. tostring(b.url))
+                    logger:error("Backdrop URL not found: " .. tostring(b.url))
                 end
-            else
-                logger:error("Backdrop URL not found: " .. tostring(b.url))
+                table.insert(state.backdrops, entry)
             end
-            table.insert(state.backdrops, entry)
         end
     end
 
     local recreatedSFixtures = {}
+    local builtThings = {}
     -- Iterate through saved bodies and recreate them
     for _, bodyData in ipairs(data.bodies) do
         -- Create a new body
@@ -434,6 +441,7 @@ function lib.buildWorld(data, world, cam)
         body:setUserData({ thing = thing })
         --  print(thing.id, inspect(body:getUserData()))
         registry.registerBody(thing.id, body)
+        table.insert(builtThings, thing)
     end
 
     -- todo now we have all the sfixtures and bodies
@@ -590,7 +598,8 @@ function lib.buildWorld(data, world, cam)
     -- only after making the bodies and joints can we patch up the influences to have bodies.
     -- we want to look through all bodeis
 
-    for _, v in pairs(registry.sfixtures) do
+    local builtSFixtures = additive and recreatedSFixtures or registry.sfixtures
+    for _, v in pairs(builtSFixtures) do
         local ud = v:getUserData()
 
         if subtypes.is(ud, subtypes.MESHUSERT) then
@@ -624,7 +633,7 @@ function lib.buildWorld(data, world, cam)
     -- until the user manually selects the RESOURCE. Mode is auto-derived
     -- from body state in computeResourceMesh.
     local cdt = require 'src.cdt'
-    for _, v in pairs(registry.sfixtures) do
+    for _, v in pairs(builtSFixtures) do
         if not v:isDestroyed() then
             local ud = v:getUserData()
             if subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
@@ -671,7 +680,7 @@ function lib.buildWorld(data, world, cam)
             CharacterManager.reconstructInstance(charData, bodyGroups[charData.id])
         end
     end
-
+    return builtThings
 end
 
 -- Per-bone metadata (nodeType, nodeId, offx, offy, bindAngle) is identical

@@ -134,9 +134,20 @@ the wire overlay now uses too) and the other bodies grouped by label (`hold  x28
 row selects it and pans the camera if it's off screen. Clicking a group again steps to the next
 one. You stay on the list; the properties are one tab over. Spec: `spec/on-stage_spec.lua`.
 
+**Step (c) / slice 3, library v0 (2026-10-28):** the library tab (`src/ui/library-tab.lua`):
+type a name, "save selection" writes the selected bodies + the joints between them to
+`library/<name>.playtime.json` in the save directory (`src/library.lua`; Mipo parts are left
+out). Each prefab is a button: press spawns a copy at the mouse, drag, release (like the toys).
+Placing gives every body/sfixture/joint id a new uuid wherever it appears in the data, then
+builds with `sceneIO.buildWorld(data, world, cam, { additive = true })` (new: no clearing, camera
+or backdrops; post-passes only touch the new sfixtures; returns the built things). Spec:
+`spec/library_spec.lua`. Not yet: delete/rename a prefab (remove the file by hand), thumbnails,
+Mipos in prefabs, world positions inside sfixture `extra` aren't shifted.
+**Next: slice 4, the real test:** build the next contraption with the library + inspector only.
+
 **Keep/revert check still open:** use it for a session. Does switching tabs feel better than
 panels popping up?
 
-**After that:** (c) library v0 (slice 3), (d) left tool rail.
+**After that:** slice 4 (use it for real), (d) left tool rail.
 Still hand-made and fine for now: meshusert, resource, connected-texture, trace-vertices panels
 (mostly tools). Add the fake-pointer hook when a spec needs real clicks.
