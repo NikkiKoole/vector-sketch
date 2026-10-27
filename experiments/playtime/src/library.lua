@@ -48,18 +48,26 @@ function lib.gather(things)
     end
     if count == 0 then return nil end
 
-    local all = sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance())
-    local prefab = { version = all.version, bodies = {}, joints = {} }
+    return lib.trim(sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance()), ids)
+end
+
+-- Save data -> prefab: the bodies whose id is in ids (all non-Mipo bodies when
+-- ids is nil), the joints between them, centred. nil when no body is left.
+function lib.trim(data, ids)
+    local prefab = { version = data.version, bodies = {}, joints = {} }
+    local kept = {}
     local cx, cy = 0, 0
-    for _, bodyData in ipairs(all.bodies) do
-        if ids[bodyData.id] then
+    for _, bodyData in ipairs(data.bodies or {}) do
+        if (ids and ids[bodyData.id]) or (not ids and not bodyData.mipoId) then
             table.insert(prefab.bodies, bodyData)
+            kept[bodyData.id] = true
             cx, cy = cx + bodyData.position[1], cy + bodyData.position[2]
         end
     end
+    if #prefab.bodies == 0 then return nil end
     cx, cy = cx / #prefab.bodies, cy / #prefab.bodies
-    for _, jointData in ipairs(all.joints) do
-        if ids[jointData.bodyA] and ids[jointData.bodyB] then
+    for _, jointData in ipairs(data.joints or {}) do
+        if kept[jointData.bodyA] and kept[jointData.bodyB] then
             table.insert(prefab.joints, jointData)
         end
     end
@@ -122,6 +130,21 @@ function lib.save(name, things)
     if name == '' then return false, 'no name' end
     local prefab = lib.gather(things)
     if not prefab then return false, 'nothing to save (Mipos are left out)' end
+    love.filesystem.createDirectory(lib.DIR)
+    local ok, err = love.filesystem.write(pathOf(name), json.encode(prefab, { indent = true }))
+    return ok, err or name
+end
+
+-- A scene file (or prefab) dropped on the library tab: its non-Mipo bodies and
+-- their joints become a prefab named after the file.
+function lib.import(filename, contents)
+    local name = lib.cleanName(filename:match('([^/\\]+)$'):gsub('%.playtime%.json$', ''))
+    local data = type(contents) == 'string' and json.decode(contents)
+    if type(data) ~= 'table' or type(data.bodies) ~= 'table' then return false, 'not a scene file' end
+    sceneIO.prepareLoaded(data)
+    local prefab = lib.trim(data)
+    if not prefab then return false, 'no bodies in it (Mipos are left out)' end
+    if name == '' then name = 'imported' end
     love.filesystem.createDirectory(lib.DIR)
     local ok, err = love.filesystem.write(pathOf(name), json.encode(prefab, { indent = true }))
     return ok, err or name

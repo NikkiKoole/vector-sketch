@@ -822,24 +822,9 @@ local function roundFloats(x, ndecimals)
     return rec(x)
 end
 
-function lib.load(data, world, cam)
-    local jsonData, _, err = json.decode(data, 1, nil)
-    if err then
-        logger:error("Error decoding JSON:", err)
-        return
-    end
-
-    -- Verify version
-    if jsonData then
-        if jsonData.version ~= "1.0" then
-            logger:error("Unsupported save version:", jsonData.version)
-            return
-        end
-    else
-        logger:error('failed loading json')
-        return
-    end
-
+-- Bring decoded save data into the shape buildWorld expects (bone metadata
+-- expanded, old Steiner points migrated). Also used for library imports.
+function lib.prepareLoaded(jsonData)
     -- Expand bone metadata back onto each influence entry so downstream
     -- code (buildWorld, restoreInfluenceBodies, DQS draw path) sees the
     -- shape it always has. Old saves without `extra.bones` pass through
@@ -859,6 +844,27 @@ function lib.load(data, world, cam)
     -- RESOURCE; convert to body-local and hoist up onto the body table.
     -- See docs/STEINER-OWNERSHIP-PLAN.md.
     migrateExtraSteinerToBody(jsonData)
+end
+
+function lib.load(data, world, cam)
+    local jsonData, _, err = json.decode(data, 1, nil)
+    if err then
+        logger:error("Error decoding JSON:", err)
+        return
+    end
+
+    -- Verify version
+    if jsonData then
+        if jsonData.version ~= "1.0" then
+            logger:error("Unsupported save version:", jsonData.version)
+            return
+        end
+    else
+        logger:error('failed loading json')
+        return
+    end
+
+    lib.prepareLoaded(jsonData)
     -- Clear existing world
     lib.buildWorld(jsonData, world, cam)
 

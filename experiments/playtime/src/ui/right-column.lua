@@ -57,6 +57,13 @@ local function drawPauseToEdit()
     end)
 end
 
+-- a file dropped on the open library tab goes to the library; true when taken
+function lib.fileDropped(file)
+    if state.rightColumn.tab ~= 'library' then return false end
+    local x, y, w, h = lib.rect()
+    return libraryTab.fileDropped(file, x, y, w, h)
+end
+
 -- drawProperties(x, y, w, h) draws the selection's panel and returns true,
 -- or returns false when nothing is selected
 function lib.draw(drawProperties)

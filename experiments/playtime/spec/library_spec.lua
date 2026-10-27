@@ -2,6 +2,7 @@
 -- Prefabs (src/library.lua): saving a selection keeps its bodies, behaviors,
 -- sfixtures and inner joints (not joints to the outside, not Mipo parts), and
 -- placing one twice builds two independent copies with fresh ids where asked.
+-- A scene file dropped on the library tab is imported the same way.
 -- Run with: love . --specs spec/library_spec.lua
 
 if not love then return end
@@ -67,6 +68,28 @@ describe('library prefabs', function()
         assert.are.equal('my-cart-2', library.cleanName('  My Cart #2 '))
         assert.is_false((library.save('', {})))
         assert.is_false((library.save(NAME, {})))
+    end)
+
+    it('a dropped scene file becomes a prefab, without Mipo parts or their joints', function()
+        local json = require('vendor.dkjson')
+        local scene = {
+            version = '1.0', camera = { x = 0, y = 0, scale = 1 }, backdrops = {}, characters = {},
+            bodies = {
+                { id = 'a', position = { 0, 0 }, fixtures = {} },
+                { id = 'b', position = { 200, 0 }, fixtures = {} },
+                { id = 'm', position = { 900, 0 }, fixtures = {}, mipoId = 'mipo1' },
+            },
+            joints = { { id = 'j1', bodyA = 'a', bodyB = 'b' }, { id = 'j2', bodyA = 'b', bodyB = 'm' } },
+        }
+        local ok, name = library.import('/some/dir/' .. NAME .. '.playtime.json', json.encode(scene))
+        assert.is_true(ok)
+        assert.are.equal(NAME, name)
+        local prefab = library.load(NAME)
+        assert.are.equal(2, #prefab.bodies)
+        assert.are.equal(1, #prefab.joints)
+        assert.are.equal(-100, prefab.bodies[1].position[1])
+        assert.is_nil(prefab.camera)
+        assert.is_false((library.import('x.playtime.json', 'not json')))
     end)
 
     it('placing twice builds two copies with their own ids, joints and wires', function()

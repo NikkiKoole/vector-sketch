@@ -29,6 +29,21 @@ local function spawn(name)
     end
 end
 
+-- A .playtime.json dropped on this tab becomes a prefab (instead of loading
+-- as a scene, src/main.lua). Returns true when it took the file.
+function lib.fileDropped(file, x, y, w, h)
+    local mx, my = love.mouse.getPosition()
+    if mx < x or mx > x + w or my < y or my > y + h then return false end
+    local filename = file:getFilename()
+    if not filename:find('%.playtime%.json$') then return false end
+    file:open('r')
+    local contents = file:read()
+    file:close()
+    local ok, result = library.import(filename, contents)
+    message = ok and ('added ' .. result) or ('not added: ' .. tostring(result))
+    return true
+end
+
 function lib.draw(x, y, w, h)
     local rowH = ui.theme.button.height
     ui.panel(x, y, w, h, 'library', function()

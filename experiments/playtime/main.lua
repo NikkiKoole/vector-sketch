@@ -134,6 +134,7 @@ local bodyRotate = require 'src.body-rotate'
 local state = require 'src.state'
 local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
+local rightColumn = require('src.ui.right-column')
 
 
 
@@ -545,6 +546,7 @@ local function getRelativePath(absPath, cwd)
     return nil -- not inside working directory
 end
 function love.filedropped(file)
+    if rightColumn.fileDropped(file) then return end
     local name = file:getFilename()
     if string.find(name, '.playtime.json') then
         script.call('onSceneUnload')

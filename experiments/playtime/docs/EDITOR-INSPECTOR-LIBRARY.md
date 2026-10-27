@@ -141,7 +141,10 @@ out). Each prefab is a button: press spawns a copy at the mouse, drag, release (
 Placing gives every body/sfixture/joint id a new uuid wherever it appears in the data, then
 builds with `sceneIO.buildWorld(data, world, cam, { additive = true })` (new: no clearing, camera
 or backdrops; post-passes only touch the new sfixtures; returns the built things). Spec:
-`spec/library_spec.lua`. Not yet: delete/rename a prefab (remove the file by hand), thumbnails,
+`spec/library_spec.lua`. A `.playtime.json` dropped on the open library tab is imported as a
+prefab (non-Mipo bodies + their joints, centred; `library.import`, uses `sceneIO.prepareLoaded`);
+dropped anywhere else it still loads as the scene. 'open folder' opens `library/` in Finder for
+renaming/deleting. Not yet: thumbnails,
 Mipos in prefabs, world positions inside sfixture `extra` aren't shifted.
 **Next: slice 4, the real test:** build the next contraption with the library + inspector only.
 
