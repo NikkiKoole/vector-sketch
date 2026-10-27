@@ -115,13 +115,16 @@ describe('src.mipo-actions', function()
         assert.is_false(mipoActions.isPointing(instance))
     end)
 
-    it('looks at a lookAt target and tilts its head toward it', function()
-        local hx, hy = instance.parts.head.body:getPosition()
-        mipoActions.lookAt(instance, { hx - 800, hy })
+    it('looks at a lookAt target (and tilts its head toward it, if it has one)', function()
+        -- potato-head Mipos have their face on torso1 and no head part
+        local face = instance.parts.head or instance.parts.torso1
+        local fx, fy = face.body:getPosition()
+        mipoActions.lookAt(instance, { fx - 800, fy })
         for _ = 1, 30 do mipoActions.update() end
-        local head = instance.parts.head
-        assert.is_true(head.gazeX < hx)
-        assert.is_true(mipoActions.getKeepAngle(head).angle < 0)
+        assert.is_true(face.gazeX < fx)
+        if instance.parts.head then
+            assert.is_true(mipoActions.getKeepAngle(instance.parts.head).angle < 0)
+        end
         mipoActions.stopLooking(instance)
     end)
 
