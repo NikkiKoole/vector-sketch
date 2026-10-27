@@ -14,7 +14,8 @@
 --   neighbours, pumping energy in until the pile exploded out of the world.
 -- standUp: a Mipo that lands in a split can't get up by turning its legs alone
 --   (they'd have to lift the whole body), so after a moment of splayed legs it
---   hops, again after a pause if needed. Not while held or leaning on others.
+--   hops, again after a pause if needed. Only on the ground, not while held or
+--   leaning on others.
 local JT = require('src.joint-types')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
@@ -155,11 +156,30 @@ local function leaningOnOthers(instance)
     return false
 end
 
+-- Any part resting on a static body (floor, wall): no stand-up hops mid-air.
+local function onGround(instance)
+    for _, part in pairs(instance.parts) do
+        local body = part.body
+        if body and not body:isDestroyed() then
+            for _, contact in ipairs(body:getContacts()) do
+                if contact:isTouching() then
+                    local fixtureA, fixtureB = contact:getFixtures()
+                    local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
+                    if other:getType() == 'static' and not fixtureA:isSensor() and not fixtureB:isSensor() then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
 local function standUpMipos(now)
     for id, instance in pairs(mipoRegistry.getAll()) do
         local torso = instance.parts.torso1
         local held = lastHeld[id] and now - lastHeld[id] <= lib.healAfterRelease
-        if not torso or held or not isSplayed(instance) then
+        if not torso or held or not isSplayed(instance) or not onGround(instance) then
             splayedSince[id] = nil
         elseif not splayedSince[id] then
             splayedSince[id] = now
