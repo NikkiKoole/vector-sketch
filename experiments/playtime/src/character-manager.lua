@@ -1248,6 +1248,24 @@ local function extractTorsoIndex(name)
 end
 
 
+-- Shoulders and elbows: range relative to the parent part (0 = hanging straight
+-- in line, + = toward the Mipo's left), converted with the joint's own reference
+-- angle. The DNA shoulder limits were relative to a T-pose (reference +-90),
+-- which only allowed the upper half: arms rested horizontal and tipped over to
+-- the other side. Elbows had no limits, so forearms crossed under the body.
+lib.armRange = {
+    luarm = { 0, 180 }, ruarm = { -180, 0 },   -- shoulder: from hanging down, out, up
+    llarm = { -10, 150 }, rlarm = { -150, 10 }, -- elbow: bends outward/up only
+} -- degrees
+
+local function applyShoulderLimits(joint, partName)
+    local range = lib.armRange[partName]
+    if not range or not joint or joint:isDestroyed() or joint:getType() ~= 'revolute' then return end
+    local ref = joint:getReferenceAngle()
+    joint:setLimits(math.rad(range[1]) - ref, math.rad(range[2]) - ref)
+    joint:setLimitsEnabled(true)
+end
+
 -- Feet grip and don't bounce. With LÖVE's default friction (0.2) on both feet
 -- and floor, Mipos stood on ice and slid into a split.
 lib.footFriction = 1.0
@@ -1342,6 +1360,7 @@ local function makePart(partName, instance, settings)
                 joint:setLimits(limits.low, limits.up)
                 joint:setLimitsEnabled(true)
             end
+            applyShoulderLimits(joint, partName)
         end
     end
 end
@@ -2381,6 +2400,12 @@ function lib.reconstructInstance(charData, partBodies)
         if ud and ud.thing then
             instance.parts[partName] = ud.thing
             applyFootMaterial(ud.thing, partName) -- scenes saved before feet had grip
+            if lib.armRange[partName] then -- scenes saved with T-pose shoulder / no elbow limits
+                for _, joint in ipairs(body:getJoints()) do
+                    local _, bodyB = joint:getBodies()
+                    if bodyB == body then applyShoulderLimits(joint, partName) end
+                end
+            end
         end
         -- keep the saved group index so a rebuild doesn't hand out a new one
         local first = body:getFixtures()[1]
