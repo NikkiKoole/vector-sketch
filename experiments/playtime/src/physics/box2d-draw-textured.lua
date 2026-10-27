@@ -285,6 +285,11 @@ local shrinkFactor = 1
 -- (re-running "edit vertices" → weights) capture these; old scenes are backfilled on load in io.lua
 -- using the loaded pose as bind pose. Falls back to LBS gracefully per-vertex if data is missing.
 lib.useDQS = true
+-- Composited textures made since the last full GC. Replaced textures are only
+-- freed by the GC, which barely notices them (GPU memory, tiny Lua objects):
+-- 25 randomizes took texture memory from 41 to 105 MB. main.lua runs a full
+-- collect once this passes a threshold.
+lib.texturesCreated = 0
 lib.drawMeshOutline = true -- debug: draw wireframe over deformed MESHUSERT meshes
 lib.useRibbonMiterClamp = true -- A/B toggle: per-sample bend-aware half-width in texturedCurve
 
@@ -1213,6 +1218,7 @@ local function makePatch(name, ud)
                 ud.extra[name].fx or 1, -- flipx (normal)
                 ud.extra[name].fy or 1  -- flipy (normal)
             )
+            lib.texturesCreated = lib.texturesCreated + 1
             result = {
                 img = love.graphics.newImage(imgData),
                 --img = getLoveImage('textures/' .. ud.extra.patch1URL),
@@ -1282,6 +1288,7 @@ function lib.makeCombinedImages()
                         { patch1 or false, patch2 or false, patch3 or false } -- renderPatch (avoid sparse table)
                     )
                     local image = love.graphics.newImage(imgData)
+                    lib.texturesCreated = lib.texturesCreated + 1
                     ud.extra.ompImage = image
                 end
                 fixtures[i]:setUserData(ud)

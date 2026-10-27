@@ -338,6 +338,12 @@ function love.update(dt)
     -- incremental collector does work in proportion to that. manual_gc(0.002, x)
     -- burned its whole 2 ms budget every update (1000 steps, ~2 full cycles per
     -- frame) and with ceiling 2 MB even forced a full collect every update.
+    -- Exception: replaced textures hold GPU memory the GC doesn't feel, so after
+    -- a batch of new ones (randomize, editor tweaks) do one full collect.
+    if box2dDrawTextured.texturesCreated >= 32 then
+        box2dDrawTextured.texturesCreated = 0
+        collectgarbage('collect')
+    end
     prof.pop('frame')
 end
 
