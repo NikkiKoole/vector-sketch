@@ -91,7 +91,15 @@ Today: ~7,800 lines of UI across `src/playtime-ui.lua` and `src/ui/` (sfixture-e
   inspector too (the backdrop list stays custom). Scrollbars are 10 px now, inside the
   panel margin, so they no longer cover number fields.
 
+- **Texfixture (2026-10-27)**: `src/texfixture-params.lua`, one list per accordion: position
+  (∆ move, centre, size from body/image, edit verts, corners; '+ more' width/height/z),
+  texture (mode, hairs, plasticine, images + colours; OMP pattern transform behind '+ more'),
+  hairs and plasticine (only while switched on; the fine shader knobs behind '+ more'),
+  patch1-3. sfixture-editor 2281 -> ~1940 lines. The 'dims' checkbox is gone ('+ more' does that).
+- **Hot reload fix**: `src/ui/all.lua` keeps one ui table across reloads (a reload used to
+  split it, so panels missed `overPanel` and closed on any click).
+
 ## Next step
 
-Convert the rest the same way: the remaining sfixture kinds (texfixture's layer settings
-first; the tools stay custom). Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.
+Still hand-made: meshusert, resource, connected-texture, trace-vertices (mostly tools; convert
+only their plain settings, if at all). Then slice 3 (library v0); add the fake-pointer hook when it needs clicks.

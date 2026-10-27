@@ -16,6 +16,7 @@ local fileBrowser = require('src.file-browser')
 local subtypes = require('src.subtypes')
 local inspector = require('src.ui.inspector')
 local sfixtureParams = require('src.sfixture-params')
+local texfixtureParams = require('src.texfixture-params')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local cdt = require('src.cdt')
@@ -25,7 +26,6 @@ local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = 160
 local BUTTON_SPACING = 10
 
-local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
 -- Per-MESHUSERT toggle: show transform sliders (meshX/Y, scaleX/Y) even when
 -- bound. They're baked into bindVerts, so toggling this on is "I want to
@@ -206,49 +206,6 @@ function lib.drawSelectedSFixture()
             return newValue or currentValue
         end
 
-        local function patchTransformUI(layer)
-            local oldId = myID
-            myID = myID .. ':' .. layer
-            ui.createSliderWithId(myID, 'r', x, y, ROW_WIDTH, 0, math.pi * 2,
-                oldTexFixUD.extra[layer].r or 0,
-                function(v)
-                    oldTexFixUD.extra[layer].r = v
-                    oldTexFixUD.extra.dirty = true
-                end)
-
-            nextRow()
-            ui.createSliderWithId(myID, 'sx', x, y, 50, 0.01, 3, oldTexFixUD.extra[layer].sx or 1,
-                function(v)
-                    oldTexFixUD.extra[layer].sx = v
-                    oldTexFixUD.extra.dirty = true
-                end)
-
-            local slx, sly = ui.sameLine()
-            ui.createSliderWithId(myID, 'sy', slx, sly, 50, 0.01, 3,
-                oldTexFixUD.extra[layer].sy or 1,
-                function(v)
-                    oldTexFixUD.extra[layer].sy = v
-                    oldTexFixUD.extra.dirty = true
-                end)
-
-            nextRow()
-            ui.createSliderWithId(myID, 'tx', x, y, 50, -1, 1, oldTexFixUD.extra[layer].tx or 0,
-                function(v)
-                    oldTexFixUD.extra[layer].tx = v
-                    oldTexFixUD.extra.dirty = true
-                end)
-
-            local slx2, sly2 = ui.sameLine()
-            ui.createSliderWithId(myID, 'ty', slx2, sly2, 50, -1, 1, oldTexFixUD.extra[layer].ty or 0,
-                function(v)
-                    oldTexFixUD.extra[layer].ty = v
-                    oldTexFixUD.extra.dirty = true
-                end)
-
-            nextRow()
-            myID = oldId
-        end
-
         local function combineImageUI(layer)
             local oldId = myID
             myID = myID .. ':' .. layer
@@ -359,351 +316,28 @@ function lib.drawSelectedSFixture()
 
 
         if subtypes.is(ud, subtypes.TEXFIXTURE) then
-            oldTexFixUD = state.selection.selectedSFixture:getUserData()
-            drawAccordion('position', function()
-                if ui.button(x, y, BUTTON_HEIGHT, '∆') then
-                    modes.set(modes.POSITIONING_SFIXTURE)
-                end
-                nextRow()
-                local slx, sly = ui.sameLine()
-                if ui.button(slx, sly, ROW_WIDTH - 100, 'c') then
-                    local body = state.selection.selectedSFixture:getBody()
-                    state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
-                        body:getX(), body:getY())
-                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                    state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-                end
-
-                slx, sly = ui.sameLine()
-                if ui.button(slx, sly, ROW_WIDTH - 100, 'd') then
-                    local body = state.selection.selectedSFixture:getBody()
-                    --   logger:info('should look up the native dimensions of this texture')
-                    --   logger:inspect(state.selection.selectedSFixture:getUserData())
-                    local _, _, bw, bh = getCenterAndDimensions(body)
-                    fixtures.updateSFixtureDimensions(bw, bh)
-                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                    state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-                end
-
-                slx, sly = ui.sameLine()
-                if ui.button(slx, sly, ROW_WIDTH - 100, 'x') then
-                    --  local body = state.selection.selectedSFixture:getBody()
-                    --   logger:info('should look up the native dimensions of this texture')
-                    --   logger:inspect(state.selection.selectedSFixture:getUserData())
-                    local sfUD = state.selection.selectedSFixture:getUserData()
-                    if sfUD.extra and sfUD.extra.main and sfUD.extra.main.bgURL then
-                        local path = sfUD.extra.main.bgURL
-                        --print('finding: ', 'textures/' .. path)
-                        local info = love.filesystem.getInfo('textures/' .. path)
-
-                        if (info and info.type ~= 'directory') then
-                            local imgOK, img = pcall(love.graphics.newImage, 'textures/' .. path)
-                            if not imgOK then
-                                logger:error('failed to load texture: textures/' .. tostring(path))
-                                img = nil
-                            end
-                            if img then
-                                local imgW, imgH = img:getDimensions()
-                                logger:info('texture dimensions:', imgW, imgH)
-                                logger:info('still nedds to update the body too!')
-                                local bud = state.selection.selectedSFixture:getBody():getUserData()
-                                if bud and bud.thing then
-                                    if bud.thing.shapeType == 'rectangle' then
-                                        bud.thing.width = imgW
-                                        bud.thing.height = imgH
-
-                                        --objectManager.recreateThingFromBody(
-                                        --    state.selection.selectedSFixture:getBody(),
-                                        --    bud.thing)
-                                        --bud.thing.vertices = nil
-                                        --bud.thing.dirty = true
-                                        -- state.selection.selectedObj = objectManager.recreateThingFromBody(
-                                        --     state.selection.selectedSFixture:getBody(),
-                                        --     bud.thing)
-                                        -- state.editorPreferences.lastUsedRadius = newRadius
-                                        -- body = state.selection.selectedObj.body
-                                    end
-                                    logger:inspect(bud.thing)
-                                end
-
-                                fixtures.updateSFixtureDimensions(imgW, imgH)
-                            end
-                        end
-                    end
-                    -- local cx, cy, w, h = getCenterAndDimensions(body)
-                    -- fixtures.updateSFixtureDimensions(w, h)
-                    -- local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                    -- state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-                end
-                nextRow()
-
-
-
-                local points = oldTexFixUD.extra.vertices or { state.selection.selectedSFixture:getShape():getPoints() }
-                local polyW, polyH = mathutils.getPolygonDimensions(points)
-
-                if ui.checkbox(x, y, state.editorPreferences.showTexFixtureDim, 'dims') then
-                    state.editorPreferences.showTexFixtureDim = not state.editorPreferences.showTexFixtureDim
-                end
-                nextRow()
-
-                if ui.button(x, y, 200, state.texFixtureEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
-                    oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                    state.texFixtureEdit.lockedVerts = not state.texFixtureEdit.lockedVerts
-
-                    if state.texFixtureEdit.lockedVerts == false then
-                        state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
-                    else
-                        state.texFixtureEdit.tempVerts = nil
-                        state.texFixtureEdit.centroid = nil
-                    end
-                end
-
-                slx, sly = ui.sameLine()
-                if ui.button(slx, sly, 40, oldTexFixUD.extra.vertexCount or '') then
-                    if oldTexFixUD.extra.vertexCount == 4 then
-                        oldTexFixUD.extra.vertexCount = 8
-                    elseif oldTexFixUD.extra.vertexCount == 8 then
-                        oldTexFixUD.extra.vertexCount = 4
-                    end
-                end
-
-                nextRow()
-
-                if (state.editorPreferences.showTexFixtureDim) then
-                    local newWidth = ui.sliderWithInput(myID .. 'texfix width', x, y, ROW_WIDTH, 1, 1000, polyW)
-                    ui.alignedLabel(x, y, ' width')
-                    nextRow()
-
-                    local newHeight = ui.sliderWithInput(myID .. ' texfix height', x, y, ROW_WIDTH, 1, 1000, polyH)
-                    ui.alignedLabel(x, y, ' height')
-                    nextRow()
-
-                    if newWidth and math.abs(newWidth - polyW) > 1 then
-                        fixtures.updateSFixtureDimensions(newWidth, polyH)
-                        polyW, polyH = mathutils.getPolygonDimensions(points)
-                    end
-                    if newHeight and math.abs(newHeight - polyH) > 1 then
-                        fixtures.updateSFixtureDimensions(polyW, newHeight)
-                    end
-                end
-                ui.zOffsetSlider(myID, oldTexFixUD.extra, x, y, ROW_WIDTH)
-            end)
-            nextRow()
-
-
-
-
-            drawAccordion("texture", function()
-                nextRow()
-                local e = state.selection.selectedSFixture:getUserData().extra
-                if ui.checkbox(x, y, true, (e.OMP == false or e.OMP == nil) and 'BG + FG' or 'OMP') then
-                    e.OMP = not e.OMP
-                end
-                local slx2, sly2 = ui.sameLine(20)
-                if ui.checkbox(slx2, sly2, e.plasticine, 'Plasticine') then
-                    e.plasticine = not e.plasticine
-                end
-                local slx3, sly3 = ui.sameLine(20)
-                if ui.checkbox(slx3, sly3, e.hairs, 'Hairs') then
-                    e.hairs = not e.hairs
-                end
-
-                nextRow()
-
-                if e.hairs then
-                    local hs = ui.sliderWithInput(myID .. ' txHairsStrength', x, y, ROW_WIDTH,
-                        0, 1, e.hairsStrength or box2dDrawTextured.hairsStrength)
-                    ui.alignedLabel(x, y, ' hairs strength')
-                    if hs and tonumber(hs) then e.hairsStrength = tonumber(hs) end
-                    nextRow()
-
-                    local hd = ui.sliderWithInput(myID .. ' txHairsDensity', x, y, ROW_WIDTH,
-                        1, 30, e.hairsDensity or box2dDrawTextured.hairsDensity)
-                    ui.alignedLabel(x, y, ' hairs density')
-                    if hd and tonumber(hd) then e.hairsDensity = tonumber(hd) end
-                    nextRow()
-
-                    local hf = ui.sliderWithInput(myID .. ' txHairsFuzz', x, y, ROW_WIDTH,
-                        0, 0.5, e.hairsFuzz or box2dDrawTextured.hairsFuzz)
-                    ui.alignedLabel(x, y, ' hairs fuzz')
-                    if hf and tonumber(hf) then e.hairsFuzz = tonumber(hf) end
-                    nextRow()
-
-                    local hb = ui.sliderWithInput(myID .. ' txHairsBush', x, y, ROW_WIDTH,
-                        0, 3, e.hairsBush or box2dDrawTextured.hairsBush)
-                    ui.alignedLabel(x, y, ' hairs bush')
-                    if hb and tonumber(hb) then e.hairsBush = tonumber(hb) end
-                    nextRow()
-                end
-
-                if e.plasticine then
-                    if ui.checkbox(x, y, e.plasticineForm ~= false, 'Form') then
-                        e.plasticineForm = (e.plasticineForm == false)
-                    end
-                    local rimSlx, rimSly = ui.sameLine(20)
-                    local rimStyle = e.plasticineRimStyle or 'silhouette'
-                    if ui.button(rimSlx, rimSly, 140, 'rim: ' .. rimStyle) then
-                        e.plasticineRimStyle = (rimStyle == 'silhouette') and 'vignette'
-                            or (rimStyle == 'vignette') and 'off' or 'silhouette'
-                    end
-                    nextRow()
-
-                    local ps = ui.sliderWithInput(myID .. ' plasticineStrength', x, y, ROW_WIDTH,
-                        0, 0.6, e.plasticineStrength or box2dDrawTextured.plasticineStrength)
-                    ui.alignedLabel(x, y, ' grain strength')
-                    if ps and tonumber(ps) then e.plasticineStrength = tonumber(ps) end
-                    nextRow()
-
-                    local psc = ui.sliderWithInput(myID .. ' plasticineScale', x, y, ROW_WIDTH,
-                        4, 120, e.plasticineScale or box2dDrawTextured.plasticineScale)
-                    ui.alignedLabel(x, y, ' grain scale (hi=fine)')
-                    if psc and tonumber(psc) then e.plasticineScale = tonumber(psc) end
-                    nextRow()
-
-                    local ped = ui.sliderWithInput(myID .. ' plasticineEdge', x, y, ROW_WIDTH,
-                        0, 0.6, e.plasticineEdge or box2dDrawTextured.plasticineEdge)
-                    ui.alignedLabel(x, y, ' edge darken')
-                    if ped and tonumber(ped) then e.plasticineEdge = tonumber(ped) end
-                    nextRow()
-
-                    local pfs = ui.sliderWithInput(myID .. ' plasticineFormStrength', x, y, ROW_WIDTH,
-                        0, 6, e.plasticineFormStrength or box2dDrawTextured.plasticineFormStrength)
-                    ui.alignedLabel(x, y, ' form strength')
-                    if pfs and tonumber(pfs) then e.plasticineFormStrength = tonumber(pfs) end
-                    nextRow()
-
-                    local pfr = ui.sliderWithInput(myID .. ' plasticineFormRadius', x, y, ROW_WIDTH,
-                        0.01, 0.2, e.plasticineFormRadius or box2dDrawTextured.plasticineFormRadius)
-                    ui.alignedLabel(x, y, ' form radius (UV)')
-                    if pfr and tonumber(pfr) then e.plasticineFormRadius = tonumber(pfr) end
-                    nextRow()
-
-                    local pmot = ui.sliderWithInput(myID .. ' plasticineMottleStrength', x, y, ROW_WIDTH,
-                        0, 0.5, e.plasticineMottleStrength or box2dDrawTextured.plasticineMottleStrength)
-                    ui.alignedLabel(x, y, ' mottle strength')
-                    if pmot and tonumber(pmot) then e.plasticineMottleStrength = tonumber(pmot) end
-                    nextRow()
-
-                    local pmsc = ui.sliderWithInput(myID .. ' plasticineMottleScale', x, y, ROW_WIDTH,
-                        1, 20, e.plasticineMottleScale or box2dDrawTextured.plasticineMottleScale)
-                    ui.alignedLabel(x, y, ' mottle scale')
-                    if pmsc and tonumber(pmsc) then e.plasticineMottleScale = tonumber(pmsc) end
-                    nextRow()
-
-                    local psp = ui.sliderWithInput(myID .. ' plasticineSpecPow', x, y, ROW_WIDTH,
-                        2, 120, e.plasticineSpecPow or box2dDrawTextured.plasticineSpecPow)
-                    ui.alignedLabel(x, y, ' spec sharpness')
-                    if psp and tonumber(psp) then e.plasticineSpecPow = tonumber(psp) end
-                    nextRow()
-
-                    local pss = ui.sliderWithInput(myID .. ' plasticineSpecStrength', x, y, ROW_WIDTH,
-                        0, 1, e.plasticineSpecStrength or box2dDrawTextured.plasticineSpecStrength)
-                    ui.alignedLabel(x, y, ' spec strength')
-                    if pss and tonumber(pss) then e.plasticineSpecStrength = tonumber(pss) end
-                    nextRow()
-
-                    local pssp = ui.sliderWithInput(myID .. ' plasticineSSSpow', x, y, ROW_WIDTH,
-                        0.5, 8, e.plasticineSSSpow or box2dDrawTextured.plasticineSSSpow)
-                    ui.alignedLabel(x, y, ' sss falloff')
-                    if pssp and tonumber(pssp) then e.plasticineSSSpow = tonumber(pssp) end
-                    nextRow()
-
-                    local psss = ui.sliderWithInput(myID .. ' plasticineSSSstrength', x, y, ROW_WIDTH,
-                        0, 1, e.plasticineSSSstrength or box2dDrawTextured.plasticineSSSstrength)
-                    ui.alignedLabel(x, y, ' sss strength')
-                    if psss and tonumber(psss) then e.plasticineSSSstrength = tonumber(psss) end
-                    nextRow()
-
-                    local ptp = ui.sliderWithInput(myID .. ' plasticineTerminator', x, y, ROW_WIDTH,
-                        0.5, 6, e.plasticineTerminator or box2dDrawTextured.plasticineTerminator)
-                    ui.alignedLabel(x, y, ' terminator')
-                    if ptp and tonumber(ptp) then e.plasticineTerminator = tonumber(ptp) end
-                    nextRow()
-
-                    local useLit = e.plasticineUseLighting ~= false
-                    if ui.checkbox(x, y, useLit, 'Lighting') then
-                        e.plasticineUseLighting = not useLit
-                    end
-                    nextRow()
-
-                    handlePaletteAndHex(myID, 'plasticineWarmHex', x, y, 100,
-                        e.plasticineWarmHex or box2dDrawTextured.plasticineWarmHex,
-                        function(c) e.plasticineWarmHex = c end)
-                    ui.alignedLabel(x, y, ' warm (lit)')
-                    nextRow()
-
-                    handlePaletteAndHex(myID, 'plasticineCoolHex', x, y, 100,
-                        e.plasticineCoolHex or box2dDrawTextured.plasticineCoolHex,
-                        function(c) e.plasticineCoolHex = c end)
-                    ui.alignedLabel(x, y, ' cool (env/shadow)')
-                    nextRow()
-                end
-
-
-                --main patch1 patch2
-                --lineart, mask, pattern
-
-
-
-                if not e.OMP then
-                    oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
-                    local dirty = function() oldTexFixUD.extra.dirty = true end
-
-                    handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
-                        function(c)
-                            oldTexFixUD.extra.main.bgHex = c; oldTexFixUD.extra.main.cached = nil
-                        end, dirty)
-                    local slx, sly = ui.sameLine(20)
-                    handleURLInput(myID, 'bgURL', slx, sly, 150, oldTexFixUD.extra.main.bgURL,
-                        function(u)
-                            oldTexFixUD.extra.main.bgURL = u
-                        end)
-                    nextRow()
-                    handlePaletteAndHex(myID, 'fgHex', x, y, 100, oldTexFixUD.extra.main.fgHex,
-                        function(c)
-                            oldTexFixUD.extra.main.fgHex = c; oldTexFixUD.extra.main.cached = nil;
-                        end, dirty)
-                    slx, sly = ui.sameLine(20)
-                    handleURLInput(myID, 'fgURL', slx, sly, 150, oldTexFixUD.extra.main.fgURL,
-                        function(u)
-                            oldTexFixUD.extra.main.fgURL = u
-                        end)
-
-                    nextRow()
-                end
-
-                if e.OMP then
-                    oldTexFixUD.extra.main = oldTexFixUD.extra.main or {}
-
-                    combineImageUI('main')
-                    flipWholeUI('main')
-
-                    local dirty = function() oldTexFixUD.extra.dirty = true end
-                    handlePaletteAndHex(myID, 'maintint', x, y, 100, oldTexFixUD.extra.main.tint,
-                        function(color) oldTexFixUD.extra.main.tint = color end, dirty)
-                end
-            end)
-            nextRow()
-
-            local function drawPatchAccordion(layer)
-                drawAccordion(layer, function()
-                    oldTexFixUD.extra[layer] = oldTexFixUD.extra[layer] or {}
-                    nextRow()
-                    combineImageUI(layer)
-                    nextRow()
-                    patchTransformUI(layer)
-                    flipWholeUI(layer)
-                    local dirty = function() oldTexFixUD.extra.dirty = true end
-                    handlePaletteAndHex(myID, layer .. 'tint', x, y, 100, oldTexFixUD.extra[layer].tint,
-                        function(color) oldTexFixUD.extra[layer].tint = color end, dirty)
+            -- every setting from src/texfixture-params.lua, one inspector list per accordion
+            local fixture = state.selection.selectedSFixture
+            local function section(name, sectionRows)
+                local gone
+                drawAccordion(name, function()
+                    local height, newFixture = inspector.drawParams('texfix_' .. name .. '_' .. tostring(myID),
+                        sectionRows, fixture, nil, x, y, 270)
+                    y = y + height
+                    gone = newFixture ~= nil
                 end)
+                layout.curY = y
+                nextRow()
+                return gone
             end
-            drawPatchAccordion('patch1')
-            nextRow()
-            drawPatchAccordion('patch2')
-            nextRow()
-            drawPatchAccordion('patch3')
+            if section('position', texfixtureParams.position) then return end
+            if section('texture', texfixtureParams.texture) then return end
+            local e = fixture:getUserData().extra
+            if e.hairs and section('hairs', texfixtureParams.hairs) then return end
+            if e.plasticine and section('plasticine', texfixtureParams.plasticine) then return end
+            for _, layer in ipairs({ 'patch1', 'patch2', 'patch3' }) do
+                if section(layer, texfixtureParams.patch(layer)) then return end
+            end
         elseif subtypes.is(ud, subtypes.MESHUSERT) then
             nextRow()
             if ui.button(x, y, ROW_WIDTH, 'add node ' .. (ud.extra.nodes and #ud.extra.nodes or '')) then

@@ -125,7 +125,9 @@ function lib.drawParams(id, params, target, body, x, y, w)
     local replaced = rows(false)
     if replaced then return cy - y, replaced end
     local hasAdvanced = false
-    for _, row in ipairs(params) do hasAdvanced = hasAdvanced or row.advanced or false end
+    for _, row in ipairs(params) do
+        hasAdvanced = hasAdvanced or (row.advanced and (not row.visible or row.visible(target))) or false
+    end
     if hasAdvanced then
         local open = openFolds[id]
         if ui.button(x, cy + 7, w, open and '- less' or '+ more') then openFolds[id] = not open end

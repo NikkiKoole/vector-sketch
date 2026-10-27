@@ -285,6 +285,102 @@ describe('inspector', function()
         end)
     end
 
+    describe('texfixture', function()
+        local texfixtureParams = require('src.texfixture-params')
+
+        local function makeTexfixture()
+            local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 100, height = 100 })
+            local fixture = fixtures.createSFixture(thing.body, 0, 0, 'texfixture', { width = 40, height = 40 })
+            state.selection.selectedSFixture = fixture
+            return fixture
+        end
+
+        local sections = {
+            position = texfixtureParams.position, texture = texfixtureParams.texture,
+            hairs = texfixtureParams.hairs, plasticine = texfixtureParams.plasticine,
+            patch1 = texfixtureParams.patch('patch1'),
+        }
+
+        for name, rows in pairs(sections) do
+            it(name .. ': every setting round-trips', function()
+                local fixture = makeTexfixture()
+                local savedEdit = { lockedVerts = state.texFixtureEdit.lockedVerts }
+                for _, row in ipairs(rows) do
+                    local value
+                    if row.kind == 'number' then
+                        value = math.floor((resolve(row.min, fixture) + resolve(row.max, fixture)) / 2)
+                    elseif row.kind == 'bool' then
+                        value = not row.get(fixture)
+                    elseif row.kind == 'choice' then
+                        value = row.options[#row.options]
+                    elseif row.kind == 'color' then
+                        value = 'ff0000ff'
+                    elseif row.kind == 'file' then
+                        value = 'spec.png'
+                    end
+                    if value ~= nil then
+                        local replaced = row.set(fixture, value)
+                        if replaced then fixture = replaced end
+                        local got = row.get(fixture)
+                        if type(value) == 'number' then
+                            assert.is_true(math.abs(got - value) <= 1, name .. ' ' .. row.key .. ': ' .. tostring(got))
+                        else
+                            assert.are.equal(value, got, name .. ' ' .. row.key)
+                        end
+                    end
+                end
+                state.texFixtureEdit.lockedVerts = savedEdit.lockedVerts
+                state.texFixtureEdit.tempVerts = nil
+            end)
+        end
+
+        it('a new image marks the texture dirty; a colour drops the cached composite', function()
+            local fixture = makeTexfixture()
+            local extra = fixture:getUserData().extra
+            extra.dirty = false
+            extra.main = { cached = 'old' }
+            for _, row in ipairs(texfixtureParams.texture) do
+                if row.label == 'bg' then row.set(fixture, 'a.png') end
+            end
+            assert.is_true(extra.dirty)
+            for _, row in ipairs(texfixtureParams.texture) do
+                if row.label == 'bg color' then row.set(fixture, 'ffffffff') end
+            end
+            assert.is_nil(extra.main.cached)
+        end)
+
+        it('size from body replaces the fixture and selects it', function()
+            local fixture = makeTexfixture()
+            for _, row in ipairs(texfixtureParams.position) do
+                if row.key == 'size from' then
+                    local newFixture = row.run(nil, fixture, 'body')
+                    assert.is_true(fixture:isDestroyed())
+                    assert.are.equal(newFixture, state.selection.selectedSFixture)
+                    local w = select(1, require('src.math-utils').getPolygonDimensions({ newFixture:getShape():getPoints() }))
+                    assert.is_true(math.abs(w - 100) < 1, 'width ' .. w)
+                end
+            end
+            state.texFixtureEdit.tempVerts = nil
+        end)
+
+        it('the panel draws with everything open (hairs, plasticine, OMP)', function()
+            local fixture = makeTexfixture()
+            local extra = fixture:getUserData().extra
+            extra.hairs, extra.plasticine = true, true
+            sfixtureEditor.setAllAccordions(true)
+            local id = tostring(fixture:getUserData().id)
+            for _, name in ipairs({ 'position', 'texture', 'hairs', 'plasticine', 'patch1', 'patch2', 'patch3' }) do
+                inspector.setFoldOpen('texfix_' .. name .. '_' .. id, true)
+            end
+            for _, omp in ipairs({ false, true }) do
+                extra.OMP = omp
+                local ok, err = renderToCanvas(function() sfixtureEditor.drawSelectedSFixture() end)
+                assert.is_true(ok, tostring(err))
+            end
+            sfixtureEditor.setAllAccordions(false)
+        end)
+    end)
+
     describe('world settings', function()
         local worldParams = require('src.world-params')
         local uiWorldSettings = require('src.ui.world-settings')
