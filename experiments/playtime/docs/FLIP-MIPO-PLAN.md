@@ -1,6 +1,10 @@
 # Mipo flip / stand-on-hands button
 
-**Status:** experiment reverted 2026-05-22. Next attempt needs a different mechanic — see below.
+**Status:** BUILT 2026-05-22 (commit `e03c6905`, after the reverted first try below): the
+"flip: on/off" button in the Mipo editor's actions accordion, next to breathe / jump / ragdoll.
+It follows the "recommended next attempt" at the bottom. The actions still live inside
+`src/ui/mipo-editor.lua`; moving them into a reusable module is tracked in `DOLL-PLAY.md`.
+No cartwheel exists yet. The rest of this doc is the original handover note.
 
 **Goal:** per-Mipo button in the sidebar (next to "breathe") that inverts the body so it's standing on its hands. Toggle: click again to right-itself.
 
