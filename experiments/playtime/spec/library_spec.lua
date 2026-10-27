@@ -2,7 +2,8 @@
 -- Prefabs (src/library.lua): saving a selection keeps its bodies, behaviors,
 -- sfixtures and inner joints (not joints to the outside, not Mipo parts), and
 -- placing one twice builds two independent copies with fresh ids where asked.
--- A scene file dropped on the library tab is imported the same way.
+-- A scene file dropped on the library tab is imported the same way. Copies
+-- that hold both ends of a wire get their own signal name (src/signals.lua).
 -- Run with: love . --specs spec/library_spec.lua
 
 if not love then return end
@@ -127,8 +128,33 @@ describe('library prefabs', function()
             assert.is_true((a == copy[1].body and b == copy[2].body) or (a == copy[2].body and b == copy[1].body))
         end
 
-        -- behaviors came along: all three buttons reach all three gates on 'door'
-        assert.are.equal(9, #signals.wires())
-        assert.is_true(wiresBefore < #signals.wires())
+        -- behaviors came along, and each copy got its own signal (door2, door3):
+        -- its button opens its own gate only
+        assert.are.equal(wiresBefore + 2, #signals.wires())
+        local names = {}
+        for _, wire in ipairs(signals.wires()) do names[wire.signal] = true end
+        assert.is_true(names.door and names.door2 and names.door3)
+    end)
+
+    it('a copy with one end of a wire keeps the name and joins that circuit', function()
+        local button, gate = contraption()
+        assert.is_true((library.save(NAME, { button })))
+        local copy = library.place(NAME, 1000, 1000)
+        assert.are.equal('door', copy[1].behaviors[1].signal)
+        assert.are.equal(2, #signals.wires())
+        assert.is_not_nil(gate)
+    end)
+
+    it('editor clone: own behaviors table, own signal for a whole contraption', function()
+        local sceneIO = require('src.io')
+        local button, gate = contraption()
+        local cloned = sceneIO.cloneSelection({ button, gate }, world)
+        local names = {}
+        for _, thing in ipairs(cloned) do
+            assert.are_not.equal(button.behaviors, thing.behaviors)
+            names[thing.behaviors[1].signal] = true
+        end
+        assert.is_true(names.door2)
+        assert.are.equal('door', button.behaviors[1].signal)
     end)
 end)

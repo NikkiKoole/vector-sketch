@@ -13,6 +13,7 @@ local camera = require('src.camera')
 local sceneIO = require('src.io')
 local snap = require('src.physics.snap')
 local FEXT = require('src.file-extensions')
+local signals = require('src.signals')
 
 lib.DIR = 'library'
 
@@ -164,6 +165,11 @@ function lib.place(name, x, y)
     local prefab = lib.load(name)
     if not prefab then return {} end
     lib.renewIds(prefab)
+    local behaviorLists = {}
+    for _, bodyData in ipairs(prefab.bodies) do
+        if bodyData.behaviors then table.insert(behaviorLists, bodyData.behaviors) end
+    end
+    signals.renameForCopy(behaviorLists, signals.namesInUse())
     lib.move(prefab, x, y)
     local things = sceneIO.buildWorld(prefab, state.physicsWorld, camera.getInstance(), { additive = true })
     snap.onSceneLoaded()

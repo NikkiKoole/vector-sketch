@@ -1370,7 +1370,7 @@ function lib.cloneSelection(selectedBodies, world)
                 label = originalThing.label,
                 mirrorX = originalThing.mirrorX,
                 mirrorY = originalThing.mirrorY,
-                behaviors = originalThing.behaviors,
+                behaviors = utils.deepCopy(originalThing.behaviors), -- not shared with the original
                 body = newBody,
                 shapes = newShapeList,
                 vertices = newVertices,
@@ -1434,7 +1434,7 @@ function lib.cloneSelection(selectedBodies, world)
 
     local doneJoints = {}
     -- Step 2: Clone Joints
-    for _, originalThing in ipairs(state.selection.selectedBodies) do
+    for _, originalThing in ipairs(selectedBodies) do
         local originalBody = originalThing.body
         local bodyJoints = originalBody:getJoints()
         for _, originalJoint in ipairs(bodyJoints) do
@@ -1549,9 +1549,15 @@ function lib.cloneSelection(selectedBodies, world)
 
 
     local result = {}
+    local clonedBodies, behaviorLists = {}, {}
     for _, v in pairs(clonedBodiesMap) do
         table.insert(result, v)
+        clonedBodies[v.body] = true
+        if v.behaviors then table.insert(behaviorLists, v.behaviors) end
     end
+    -- a cloned contraption gets its own signal names (src/signals.lua)
+    local signals = require('src.signals')
+    signals.renameForCopy(behaviorLists, signals.namesInUse(clonedBodies))
     return result
     --state.selection.selectedBodies = result
 end

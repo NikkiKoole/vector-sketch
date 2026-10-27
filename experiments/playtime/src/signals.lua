@@ -16,6 +16,8 @@ local lib = {}
 lib.gateSpeed = 600      -- how fast a gate moves (world units/s)
 lib.gateForce = 1e7      -- motor force: enough to hold up a skateboard with a Mipo
 
+local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true, SIGNAL_SOCKET = true }
+
 local function behaviorsOf(body)
     local ud = body:getUserData()
     return ud and ud.thing and ud.thing.behaviors or nil
@@ -126,7 +128,51 @@ end
 -- Editor overlay (drawn in world space while paused): a line from every trigger
 -- to every receiver on the same signal, its name halfway. Wires touching the
 -- selected body are drawn thicker.
-local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true, SIGNAL_SOCKET = true }
+
+-- Signal names in use on the stage, skipping the bodies in skip (a set).
+function lib.namesInUse(skip)
+    local names = {}
+    if not state.physicsWorld then return names end
+    for _, body in ipairs(state.physicsWorld:getBodies()) do
+        if not (skip and skip[body]) then
+            for _, b in ipairs(behaviorsOf(body) or {}) do
+                if b.signal and b.name:find('^SIGNAL_') then names[b.signal] = true end
+            end
+        end
+    end
+    return names
+end
+
+-- A copy (library prefab, clone) gets its own name (gate1 -> gate2) for each
+-- signal it holds both ends of, a trigger and a receiver, when that name is
+-- already in use. A copy with one end only (a second button for the same gate)
+-- keeps the name and joins that circuit. Renames the behaviors in place.
+function lib.renameForCopy(behaviorLists, inUse)
+    local hasTrigger, hasReceiver = {}, {}
+    for _, behaviors in ipairs(behaviorLists) do
+        for _, b in ipairs(behaviors) do
+            if b.signal and b.name:find('^SIGNAL_') then
+                if triggerNames[b.name] then hasTrigger[b.signal] = true else hasReceiver[b.signal] = true end
+            end
+        end
+    end
+    local taken, renamed = {}, {}
+    for name in pairs(inUse) do taken[name] = true end
+    for name in pairs(hasTrigger) do
+        if hasReceiver[name] and inUse[name] then
+            local base, n = name:gsub('%d+$', ''), 2
+            while taken[base .. n] do n = n + 1 end
+            renamed[name] = base .. n
+            taken[base .. n] = true
+        end
+    end
+    for _, behaviors in ipairs(behaviorLists) do
+        for _, b in ipairs(behaviors) do
+            if b.signal and renamed[b.signal] and b.name:find('^SIGNAL_') then b.signal = renamed[b.signal] end
+        end
+    end
+    return renamed
+end
 
 -- Every wire: { signal, from = trigger body, to = receiver body }.
 function lib.wires()

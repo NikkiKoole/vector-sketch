@@ -146,6 +146,17 @@ prefab (non-Mipo bodies + their joints, centred; `library.import`, uses `sceneIO
 dropped anywhere else it still loads as the scene. 'open folder' opens `library/` in Finder for
 renaming/deleting. Not yet: thumbnails,
 Mipos in prefabs, world positions inside sfixture `extra` aren't shifted.
+**Copies and names (2026-10-28):** ids are renewed on every copy (clone: `idMapping` in
+`io.cloneSelection`; place: `library.renewIds`). Names that link things were not: a placed
+button + gate stayed on `gate1` and worked the original gate too. Now `signals.renameForCopy`
+gives a copy its own name (`gate1 -> gate2`) for each signal it holds *both* ends of; a copy
+with one end (a second button) keeps the name and joins that circuit. Used by place and clone.
+Clone also no longer shares the original's `behaviors` table, and copies joints from its
+argument (not `state.selection`). Same family, not fixed: MESHUSERT <-> RESOURCE sfixtures
+pair by equal sfixture label (`box2d-draw-textured.lua` ~2379), so a copied skinned body could
+pick up the original's texture mesh; socket `accepts` and script label lookups are meant to be
+shared kinds, leave them.
+
 **Next: slice 4, the real test:** build the next contraption with the library + inspector only.
 
 **Keep/revert check still open:** use it for a session. Does switching tabs feel better than
