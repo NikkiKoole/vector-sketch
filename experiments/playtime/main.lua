@@ -57,6 +57,23 @@ if not IS_WEB then
         return f:match('scripts/.+%.playtime%.lua$') ~= nil
             or f:match('spec/.+_spec%.lua$') ~= nil
     end
+    -- Only watch src/ and the top-level .lua files. The default walks the whole
+    -- project (2200+ files incl. textures/) every 0.5s: a 25 ms frame hitch.
+    -- Scene scripts hot-reload through scene-loader, specs are skipped above.
+    lurker.getchanged = function()
+        local candidates = lurker.listdir('src', true, true)
+        for _, f in ipairs(love.filesystem.getDirectoryItems('')) do
+            candidates[#candidates + 1] = f
+        end
+        local changed = {}
+        for _, f in ipairs(candidates) do
+            if f:match('%.lua$') then
+                local info = love.filesystem.getInfo(f, 'file')
+                if info and lurker.files[f] ~= info.modtime then changed[#changed + 1] = f end
+            end
+        end
+        return changed
+    end
     local _lurker_onerror = lurker.onerror
     lurker.onerror = function(e, nostacktrace)
         bridge.recordError("lurker", e)

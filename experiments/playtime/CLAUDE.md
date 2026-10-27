@@ -36,12 +36,18 @@ HTTP JSON API for interacting with the running game. All endpoints return `{ok, 
 ### Important
 - Always quote URLs with `?` in zsh: `curl 'localhost:8001/console?n=5'`
 - Must clear Box2D callbacks before destroying bodies to avoid SEGFAULT
+- `/eval` has an instruction limit and aborts *mid-function* when it's hit, leaving half-done state. Creating + randomizing several Mipos in one eval got cut off inside `rebuildFromCreation` and left headless, untextured, unregistered Mipos (group 0, self-colliding). Create one Mipo per eval call and always check the response for `"ok":false`. Big dumps: use `/exec`
+- zsh `echo` expands `\n` inside JSON payloads; send eval bodies with `curl --data-binary @file.json`
 - `playtime.sh start` passes `--bridge` which skips the start screen automatically
 - macOS buffers stderr from .app bundles until process exit; `playtime.sh` handles this by killing the process to flush errors on startup failure
 
 ## Hot Reload
 
 Lurker watches files every 0.5s and hot-swaps Lua modules. Check `/errors` after changes.
+It only watches `src/` and top-level `.lua` files (override in `main.lua`; walking the whole
+project was a 25 ms hitch). Scene scripts reload via scene-loader instead.
+A hot-swap re-runs the file, so module-local state (`local cache = {}`) starts empty again.
+State that must survive belongs on `state` (see `src/mipo-registry.lua`).
 
 ## Testing
 

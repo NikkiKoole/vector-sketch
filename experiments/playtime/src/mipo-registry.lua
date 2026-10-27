@@ -1,13 +1,16 @@
 local lib = {}
-local instances = {}
+local state = require('src.state')
+
+-- Kept on state (not a module local) so a lurker hot-reload of this file doesn't
+-- start a fresh, empty table and silently drop every live Mipo.
+state.mipoInstances = state.mipoInstances or {}
+local instances = state.mipoInstances
 
 function lib.register(instance)
     instances[instance.id] = instance
 end
 
 function lib.unregister(id)
-    -- diagnostic, see object-manager.destroyBody
-    print('[mipo-registry] unregister ' .. tostring(id) .. ' from ' .. debug.traceback('', 2):gsub('\n%s*', ' <- '))
     instances[id] = nil
 end
 
@@ -30,7 +33,7 @@ function lib.getAll()
 end
 
 function lib.reset()
-    instances = {}
+    for id in pairs(instances) do instances[id] = nil end
 end
 
 return lib
