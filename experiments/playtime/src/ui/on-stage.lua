@@ -138,13 +138,21 @@ function lib.draw(x, y, w, h)
         ui.scrollPanel('on-stage-panel', x, y + ui.theme.panelHeader, w, h - ui.theme.panelHeader - 5, function()
             local rowX, rowY, rowW = x + 10, y + ui.theme.panelHeader + ui.theme.spacing, w - 20
             local current = selectedBody()
+            local rowH = ui.theme.button.height
             for _, row in ipairs(lib.rows()) do
                 if row.header then
                     ui.label(rowX, rowY, row.header)
-                elseif ui.header_button(rowX, rowY, rowW, ' ' .. row.label, isSelected(row, current)) then
-                    lib.select(lib.nextBody(row))
+                else
+                    -- hovering a row outlines its bodies on the stage (src/editor-render.lua)
+                    if ui.mouseX >= rowX and ui.mouseX <= rowX + rowW and ui.mouseY >= rowY
+                        and ui.mouseY <= rowY + rowH then
+                        state.interaction.hoverBodies = row.bodies
+                    end
+                    if ui.header_button(rowX, rowY, rowW, ' ' .. row.label, isSelected(row, current)) then
+                        lib.select(lib.nextBody(row))
+                    end
                 end
-                rowY = rowY + ui.theme.button.height + 4
+                rowY = rowY + rowH + 4
             end
         end)
     end)

@@ -395,20 +395,19 @@ end
 -- feedback for PLACE_STEINER mode. Steiners flow through MESHUSERT's
 -- triangulation on the paired RESOURCE — they affect textured-mesh
 -- detail, not body collision (by design).
--- A box around the selection on the stage, whatever the view: the selected
--- body, or every part of a selected Mipo (in the 'tex/body' view their own
--- body shapes aren't drawn, so without this a selected Mipo looked unselected).
-function lib.renderSelectionBox()
-    local thing = state.selection.selectedObj
-    if not thing or not thing.body or thing.body:isDestroyed() then return end
-    local bodies = { thing.body }
-    local instance = require('src.mipo-registry').getFromBody(thing.body)
-    if instance then
-        bodies = {}
-        for _, part in pairs(instance.parts) do
-            if part.body and not part.body:isDestroyed() then table.insert(bodies, part.body) end
-        end
+-- What one box goes around: a body, or every part of the Mipo it belongs to.
+local function boxBodies(body)
+    local instance = require('src.mipo-registry').getFromBody(body)
+    if not instance then return { body }, nil end
+    local bodies = {}
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then table.insert(bodies, part.body) end
     end
+    return bodies, instance
+end
+
+-- A rounded box around these bodies' collision shapes, the same thickness at any zoom.
+local function drawBox(bodies, alpha, width)
     local minX, minY, maxX, maxY
     for _, body in ipairs(bodies) do
         for _, fixture in ipairs(body:getFixtures()) do
@@ -424,12 +423,36 @@ function lib.renderSelectionBox()
     local pad = 8 / scale
     local r, g, b, a = love.graphics.getColor()
     local lineWidth = love.graphics.getLineWidth()
-    love.graphics.setColor(242 / 255, 133 / 255, 0, 0.9) -- the UI's orange
-    love.graphics.setLineWidth(3 / scale)
+    love.graphics.setColor(242 / 255, 133 / 255, 0, alpha) -- the UI's orange
+    love.graphics.setLineWidth(width / scale)
     love.graphics.rectangle('line', minX - pad, minY - pad, maxX - minX + 2 * pad, maxY - minY + 2 * pad,
         6 / scale, 6 / scale)
     love.graphics.setLineWidth(lineWidth)
     love.graphics.setColor(r, g, b, a)
+end
+
+-- Boxes on the stage, whatever the view (in 'tex/body' a Mipo's own shapes
+-- aren't drawn): a strong one around the selection (a whole Mipo for a Mipo
+-- part), light ones around what the hovered on-stage row stands for.
+function lib.renderSelectionBox()
+    local thing = state.selection.selectedObj
+    if thing and thing.body and not thing.body:isDestroyed() then
+        drawBox((boxBodies(thing.body)), 0.9, 3)
+    end
+    -- set by the on-stage list while its row is hovered; used up here so it
+    -- doesn't linger once the pointer leaves
+    local hovered = state.interaction.hoverBodies
+    state.interaction.hoverBodies = nil
+    local mipoDone = {}
+    for _, body in ipairs(hovered or {}) do
+        if not body:isDestroyed() then
+            local bodies, instance = boxBodies(body)
+            if not (instance and mipoDone[instance]) then
+                if instance then mipoDone[instance] = true end
+                drawBox(bodies, 0.75, 2)
+            end
+        end
+    end
 end
 
 function lib.renderSteinerOverlay()
