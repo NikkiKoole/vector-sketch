@@ -1,8 +1,8 @@
 -- tool-rail.lua — the left tool rail (docs/EDITOR-INSPECTOR-LIBRARY.md, step d).
 -- One button per tool group. The button reuses the group's last pick; the small tab
 -- next to it opens a flyout with the whole group in two columns. A group either
--- spawns on press (shapes: press and drag one out, from the rail or the flyout) or
--- starts a mode on click (joints: then click body A and body B).
+-- works by press-drag-release (shapes: drag one out; attach: drop an sfixture on a
+-- body) or starts a mode on click (joints: then click body A and body B).
 -- Picks and the open flyout live on state.toolRail so they survive hot reloads.
 local lib = {}
 
@@ -14,6 +14,9 @@ local cam = camera.getInstance()
 local ST = require('src.shape-types')
 local JT = require('src.joint-types')
 local modes = require('src.modes')
+local fixtures = require('src.fixtures')
+local mathutils = require('src.math-utils')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 
 local RAIL_X = 10
 local RAIL_TOP = 60
@@ -27,6 +30,10 @@ lib.SHORT_NAMES = {
     [ST.HEXAGON] = '6-gon',
     [ST.HEPTAGON] = '7-gon',
     [ST.OCTAGON] = '8-gon',
+    ['texfixture'] = 'texture',
+    ['connected-texture'] = 'connected',
+    ['tile-repeat'] = 'tile',
+    ['trace-vertices'] = 'trace',
 }
 
 -- The thing a rail/flyout press spawned, so a release back over the rail can undo it.
@@ -39,6 +46,55 @@ local function spawnShape(shapeType)
     spawned = state.interaction.draggingObj
 end
 
+local function inRect(rect, x, y)
+    return rect and x >= rect.x and x <= rect.x + rect.w and y >= rect.y and y <= rect.y + rect.h
+end
+
+-- Rects of the rail and the open flyout, from the last draw.
+local railRect, flyoutRect = nil, nil
+
+function lib.isOver(x, y)
+    return inRect(railRect, x, y) or inRect(flyoutRect, x, y)
+end
+
+local function finishSpawn()
+    ui.draggingActive = nil
+    local thing = spawned
+    spawned = nil
+    -- a click without a drag drops the shape on the rail: take it back
+    if thing and thing.body and not thing.body:isDestroyed() and lib.isOver(ui.mouseX, ui.mouseY) then
+        if state.interaction.draggingObj == thing then state.interaction.draggingObj = nil end
+        objectManager.destroyBody(thing.body)
+    end
+end
+
+local function startAttach()
+    ui.draggingActive = ui.activeElementID
+    state.interaction.offsetDragging = { 0, 0 }
+end
+
+-- texfixtures start as big as the body they land on; the rest as a 30 radius circle
+local ATTACH_EXTRA = {
+    ['texfixture'] = function(body)
+        local _, _, w, h = mathutils.getCenterAndDimensions(body)
+        return { width = w, height = h }
+    end,
+}
+
+-- Drop an sfixture of this kind on the body under the mouse (topmost), if any.
+local function dropAttach(subtype)
+    ui.draggingActive = nil
+    if lib.isOver(ui.mouseX, ui.mouseY) then return end
+    local wx, wy = cam:getWorldCoordinates(ui.mouseX, ui.mouseY)
+    local _, hitted = box2dPointerJoints.handlePointerPressed(wx, wy, 'mouse', {}, not state.world.paused)
+    if #hitted > 0 then
+        local body = hitted[#hitted]:getBody()
+        local localX, localY = body:getLocalPoint(wx, wy)
+        local extraData = ATTACH_EXTRA[subtype] and ATTACH_EXTRA[subtype](body) or { radius = 30 }
+        state.selection.selectedSFixture = fixtures.createSFixture(body, localX, localY, subtype, extraData)
+    end
+end
+
 lib.groups = {
     {
         key = 'shape',
@@ -49,6 +105,7 @@ lib.groups = {
                 ST.PENTAGON, ST.HEXAGON, ST.HEPTAGON, ST.OCTAGON },
         },
         onPress = spawnShape,
+        onRelease = finishSpawn,
     },
     {
         key = 'joint',
@@ -69,6 +126,17 @@ lib.groups = {
             modes.set(modes.JOINT_CREATION)
         end,
         isActive = function() return modes.is(modes.JOINT_CREATION) end,
+    },
+    {
+        key = 'attach',
+        default = 'snap',
+        sections = {
+            { title = 'play', 'snap', 'anchor' },
+            { title = 'looks', 'texfixture', 'connected-texture', 'tile-repeat', 'light' },
+            { title = 'skin', 'resource', 'meshusert', 'uvusert', 'trace-vertices' },
+        },
+        onPress = startAttach,
+        onRelease = dropAttach,
     },
 }
 
@@ -142,6 +210,13 @@ local function drawIcon(item, cx, cy, r)
             cx + r, cy + r * 0.5)
         lg.circle('fill', cx - r, cy - r * 0.5, r * 0.2)
         lg.circle('fill', cx + r, cy + r * 0.5, r * 0.2)
+    elseif item == 'snap' then
+        lg.circle('line', cx, cy, r)
+        lg.circle('fill', cx, cy, r * 0.3)
+    elseif item == 'anchor' then
+        lg.circle('line', cx, cy, r * 0.6)
+        lg.line(cx - r, cy, cx + r, cy)
+        lg.line(cx, cy - r, cx, cy + r)
     elseif lib.groupOf(item) ~= 'shape' then
         lg.printf(item:sub(1, 4), cx - r * 2, cy - ui.font:getHeight() / 2, r * 4, 'center')
     else
@@ -150,27 +225,6 @@ local function drawIcon(item, cx, cy, r)
     end
 end
 
-local function inRect(rect, x, y)
-    return rect and x >= rect.x and x <= rect.x + rect.w and y >= rect.y and y <= rect.y + rect.h
-end
-
--- Rects of the rail and the open flyout, from the last draw.
-local railRect, flyoutRect = nil, nil
-
-function lib.isOver(x, y)
-    return inRect(railRect, x, y) or inRect(flyoutRect, x, y)
-end
-
-local function finishSpawn()
-    ui.draggingActive = nil
-    local thing = spawned
-    spawned = nil
-    -- a click without a drag drops the shape on the rail: take it back
-    if thing and thing.body and not thing.body:isDestroyed() and lib.isOver(ui.mouseX, ui.mouseY) then
-        if state.interaction.draggingObj == thing then state.interaction.draggingObj = nil end
-        objectManager.destroyBody(thing.body)
-    end
-end
 
 function lib.flyoutSize(group)
     local gap = ui.theme.spacing
@@ -206,7 +260,7 @@ local function drawFlyout(group, x, y)
                 end
                 if released then
                     rs.open = nil
-                    if group.onPress then finishSpawn() end
+                    if group.onRelease then group.onRelease(item) end
                 end
                 if clicked and group.onClick then
                     rs.last[group.key] = item
@@ -244,7 +298,7 @@ function lib.draw()
             drawIcon(lib.lastPick(group), x + BUTTON / 2, y + BUTTON / 2, BUTTON * 0.3)
             if group.onPress then
                 if pressed then group.onPress(lib.lastPick(group)) end
-                if released then finishSpawn() end
+                if released and group.onRelease then group.onRelease(lib.lastPick(group)) end
             elseif clicked then
                 group.onClick(lib.lastPick(group))
             end

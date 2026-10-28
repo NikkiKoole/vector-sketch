@@ -3,7 +3,8 @@
 -- becomes the group's last pick (what the rail button spawns next), a press
 -- elsewhere closes the flyout, and a click on the rail button without a drag
 -- leaves no body behind. The joint button starts picking bodies for its last
--- pick; clicking it again cancels.
+-- pick; clicking it again cancels. Attach drops an sfixture on the body under
+-- the mouse, and nothing when let go over the rail.
 -- Run with: love . --specs spec/tool-rail_spec.lua
 
 if not love then return end
@@ -13,6 +14,8 @@ local ui = require('src.ui.all')
 local registry = require('src.registry')
 local toolRail = require('src.ui.tool-rail')
 local modes = require('src.modes')
+local objectManager = require('src.object-manager')
+local camera = require('src.camera')
 
 describe('tool rail', function()
     local canvas
@@ -120,5 +123,22 @@ describe('tool rail', function()
         assert.are.equal('weld', state.jointParams.jointType)
         state.jointParams = nil
         modes.clear()
+    end)
+    it('attach drops an sfixture on the body under the mouse', function()
+        local attachY = buttonY + 2 * (56 + gap)
+        local wx, wy = camera.getInstance():getWorldCoordinates(600, 400)
+        local thing = objectManager.addThing('rectangle', { x = wx, y = wy, width = 200, height = 200 })
+        local before = #thing.body:getFixtures()
+        -- let go over the rail: nothing
+        click(buttonX, attachY)
+        assert.are.equal(before, #thing.body:getFixtures())
+        -- press on the rail, let go over the body: a snap sfixture
+        frame(buttonX, attachY, true, false)
+        frame(600, 400, false, true)
+        assert.are.equal(before + 1, #thing.body:getFixtures())
+        local ud = state.selection.selectedSFixture:getUserData()
+        assert.are.equal('snap', ud.subtype)
+        objectManager.destroyBody(thing.body)
+        state.selection.selectedSFixture = nil
     end)
 end)
