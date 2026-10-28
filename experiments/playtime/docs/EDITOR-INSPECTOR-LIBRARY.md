@@ -58,8 +58,9 @@ Toys (2026-10-28): the library tab has two shelves, `toys | mine`. Toys are the 
 The old 'add shape' / 'add joint' panels are deleted (2026-10-28): the rail + library cover them.
 Settings (2026-10-28): a plain rail button (bottom, no flyout) opens one settings panel with
 folding sections world | backdrops | music (`src/ui/world-settings.lua`; music rows in
-`src/music-params.lua`). The 'settings' and 'bg' toolbar buttons are gone. No music volume yet
-(synth volume is only applied when patches are defined). Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
+`src/music-params.lua`, incl. a volume slider: `synth.setVolume`, all sound). The top bar is
+empty now: the rail's first button plays/pauses, its flyout runs actions (record, restart script).
+Rail order: play, shape, draw, joint, attach, mipo, settings. Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
 icons drawn from the shape), old add panels still there. Spec: `spec/tool-rail_spec.lua`.
 
 Order: (a) right column with the three tabs, properties first (move today's panels in); (b) the
