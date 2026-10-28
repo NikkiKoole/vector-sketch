@@ -41,6 +41,7 @@ state.panelVisibility = {
 }
 
 state.rightColumn = { tab = 'properties' } -- src/ui/right-column.lua
+state.toolRail = { open = nil, last = {} } -- src/ui/tool-rail.lua
 
 state.editorPreferences = { -- Less volatile state
     showGrid = false,

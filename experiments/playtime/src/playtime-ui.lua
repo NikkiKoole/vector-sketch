@@ -32,6 +32,7 @@ local uiMipoEditor = require('src.ui.mipo-editor')
 local inspector = require('src.ui.inspector')
 local mipoRegistry = require('src.mipo-registry')
 local rightColumn = require('src.ui.right-column')
+local toolRail = require('src.ui.tool-rail')
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = ui.theme.rowWidth
@@ -275,6 +276,9 @@ function lib.drawUI()
 
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
     love.graphics.setColor(1, 1, 1)
+
+    -- drawn first so the old add-shape/add-joint panels still sit on top while both exist
+    toolRail.draw()
 
     -- Top toolbar flows left→right; each button advances the cursor, so
     -- adding/resizing buttons no longer means recomputing absolute x's.

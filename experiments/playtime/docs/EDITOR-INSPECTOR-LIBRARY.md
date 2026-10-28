@@ -47,6 +47,13 @@ mockups). Nikki's pick, not E's bottom strip:
   click selects) | **library** (saved contraptions + toys; slice 3).
 - Stage gets the middle. Toolbars on the right where it helps.
 
+**Rail design (2026-10-28):** each rail button is a tool *group* (select, shape, draw, joint,
+attach, mipo). The button reuses the group's last pick; a small ▸ tab next to it reopens a flyout
+with the whole group in **two columns**, with small section headers (shape: basics / more; joint:
+common / more; attach: play / looks / skin). Toys become built-in library items; auto-ropify is
+dropped until it works. Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
+icons drawn from the shape), old add panels still there. Spec: `spec/tool-rail_spec.lua`.
+
 Order: (a) right column with the three tabs, properties first (move today's panels in); (b) the
 on-stage list; (c) library v0 (slice 3); (d) left rail replacing add shape/add joint.
 Each is its own keep/revert moment.
