@@ -223,11 +223,19 @@ lib.groups = {
         onPress = spawnMipo,
         onRelease = finishMipo,
     },
+    {
+        key = 'settings', -- a plain button: no picks, no flyout
+        onClick = function()
+            local pv = state.panelVisibility
+            pv.worldSettingsOpened = not pv.worldSettingsOpened
+        end,
+        isActive = function() return state.panelVisibility.worldSettingsOpened end,
+    },
 }
 
 function lib.groupOf(item)
     for _, group in ipairs(lib.groups) do
-        for _, section in ipairs(group.sections) do
+        for _, section in ipairs(group.sections or {}) do
             for _, it in ipairs(section) do
                 if it == item then return group.key end
             end
@@ -312,6 +320,14 @@ local function drawIcon(item, cx, cy, r)
         local pts = { cx - r, cy + r * 0.6, cx - r * 0.2, cy - r, cx + r, cy + r * 0.2 }
         lg.polygon('line', pts)
         for i = 1, #pts, 2 do lg.circle('fill', pts[i], pts[i + 1], r * 0.18) end
+    elseif item == 'settings' then
+        for i = 0, 7 do
+            local a = i * math.pi / 4
+            local c, sn = math.cos(a), math.sin(a)
+            lg.line(cx + c * r * 0.55, cy + sn * r * 0.55, cx + c * r, cy + sn * r)
+        end
+        lg.circle('line', cx, cy, r * 0.55)
+        lg.circle('fill', cx, cy, r * 0.2)
     elseif item == 'mipo' or item == 'mipo *' then
         lg.circle('line', cx, cy - r * 0.35, r * 0.45)
         lg.line(cx, cy + r * 0.1, cx, cy + r * 0.6)
@@ -399,7 +415,8 @@ function lib.draw()
             local active = group.isActive and group.isActive()
             local clicked, pressed, released = ui.button(x, y, BUTTON, '', BUTTON,
                 active and ui.theme.header.active or nil)
-            drawIcon(lib.lastPick(group), x + BUTTON / 2, y + BUTTON / 2, BUTTON * 0.3)
+            drawIcon(group.sections and lib.lastPick(group) or group.key, x + BUTTON / 2, y + BUTTON / 2,
+                BUTTON * 0.3)
             if group.onPress then
                 if pressed then group.onPress(lib.lastPick(group)) end
                 if released and group.onRelease then group.onRelease(lib.lastPick(group)) end
@@ -407,13 +424,16 @@ function lib.draw()
                 group.onClick(lib.lastPick(group))
             end
 
-            local isOpen = rs.open == group.key
-            local tabClicked = ui.button(x + BUTTON, y, TAB, '', BUTTON, isOpen and ui.theme.header.active or nil)
-            love.graphics.setColor(ui.theme.button.text_default)
-            local tx, ty = x + BUTTON + TAB / 2, y + BUTTON / 2
-            love.graphics.polygon('fill', tx - 3, ty - 6, tx - 3, ty + 6, tx + 4, ty)
-            if tabClicked then rs.open = (not isOpen) and group.key or nil end
-            if rs.open == group.key then openGroup, openY = group, y end
+            if group.sections then
+                local isOpen = rs.open == group.key
+                local tabClicked = ui.button(x + BUTTON, y, TAB, '', BUTTON,
+                    isOpen and ui.theme.header.active or nil)
+                love.graphics.setColor(ui.theme.button.text_default)
+                local tx, ty = x + BUTTON + TAB / 2, y + BUTTON / 2
+                love.graphics.polygon('fill', tx - 3, ty - 6, tx - 3, ty + 6, tx + 4, ty)
+                if tabClicked then rs.open = (not isOpen) and group.key or nil end
+                if rs.open == group.key then openGroup, openY = group, y end
+            end
         end
     end)
 

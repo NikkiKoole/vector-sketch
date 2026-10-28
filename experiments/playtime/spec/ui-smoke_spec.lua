@@ -141,12 +141,14 @@ describe("UI smoke tests", function()
         assert.is_true(ok, "drawWorldSettingsUI failed: " .. tostring(err))
     end)
 
-    it("drawBGSettingsUI renders", function()
+    it("settings renders with every section open", function()
+        state.panelVisibility.worldSettingsOpened = true
         state.panelVisibility.bgSettingsOpened = true
+        state.settingsFolds = { world = true, music = true }
         local ok, err = renderToCanvas(function()
             playtimeui.drawUI()
         end)
-        assert.is_true(ok, "drawBGSettingsUI failed: " .. tostring(err))
+        assert.is_true(ok, "settings sections failed: " .. tostring(err))
     end)
 
     it("drawRecordingUI renders", function()

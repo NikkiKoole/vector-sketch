@@ -5,7 +5,7 @@
 -- leaves no body behind. The joint button starts picking bodies for its last
 -- pick; clicking it again cancels. Attach drops an sfixture on the body under
 -- the mouse, and nothing when let go over the rail. Draw toggles its mode; a
--- Mipo dropped back on the rail is taken back.
+-- Mipo dropped back on the rail is taken back. Settings is a plain button.
 -- Run with: love . --specs spec/tool-rail_spec.lua
 
 if not love then return end
@@ -163,5 +163,14 @@ describe('tool rail', function()
         click(buttonX, groupY('mipo'))
         assert.are.equal(before, countBodies())
         assert.is_nil(state.selection.selectedBodies)
+    end)
+    it('the settings button opens and closes settings, without a flyout tab', function()
+        local before = state.panelVisibility.worldSettingsOpened
+        click(buttonX, groupY('settings'))
+        assert.are.equal(not before, state.panelVisibility.worldSettingsOpened)
+        click(buttonX, groupY('settings'))
+        assert.are.equal(before, state.panelVisibility.worldSettingsOpened)
+        click(tabX, groupY('settings'))
+        assert.is_nil(state.toolRail.open)
     end)
 end)

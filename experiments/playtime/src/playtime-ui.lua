@@ -175,60 +175,6 @@ end
 
 function lib.drawUpdateSelectedObjectUI(...) return uiBodyEditor.drawUpdateSelectedObjectUI(...) end
 
-function lib.drawBGSettingsUI()
-    local startX = 540
-    local startY = 70
-    local panelWidth = PANEL_WIDTH
-    --local panelHeight = 255
-    local buttonHeight = ui.theme.button.height
-
-    local titleHeight = ui.font:getHeight() + BUTTON_SPACING
-    local panelHeight = titleHeight + titleHeight + (14 * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
-
-    ui.panel(startX, startY, panelWidth, panelHeight, '• backdrops •', function()
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = BUTTON_SPACING,
-            startX = startX + BUTTON_SPACING,
-            startY = startY + titleHeight + BUTTON_SPACING
-        })
-        local width = panelWidth - BUTTON_SPACING * 2
-        local x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-        local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, width, BUTTON_HEIGHT)
-        end
-        local toDelete -- or nil
-        local selectedBD
-        for i = 1, #state.backdrops do
-            if ui.button(x, y, ROW_WIDTH, state.backdrops[i].url) then
-                if not state.backdrops[i].selected then
-                    for j = 1, #state.backdrops do
-                        state.backdrops[j].selected = false
-                    end
-                end
-                state.backdrops[i].selected = not state.backdrops[i].selected
-            end
-            if ui.button(x + ROW_WIDTH + 10, y, 50, 'x') then
-                -- want to delete from the array.
-                toDelete = i
-            end
-            if state.backdrops[i].selected then selectedBD = state.backdrops[i] end
-            nextRow()
-        end
-        if toDelete then
-            table.remove(state.backdrops, toDelete)
-        end
-
-        -- Per-backdrop controls for the selected one.
-        if selectedBD then
-            nextRow()
-            inspector.drawParams('backdrop', require('src.world-params').backdropRows, selectedBD, nil,
-                x, y, width)
-        end
-    end
-    )
-end
-
 function lib.drawUI()
     ui.startFrame()
     local w, h = love.graphics.getDimensions()
@@ -256,17 +202,9 @@ function lib.drawUI()
         return clicked
     end
 
-    if toolbarButton(120, 'settings') then
-        state.panelVisibility.worldSettingsOpened = not state.panelVisibility.worldSettingsOpened
-    end
+    -- settings (world, backdrops, music) opens from the rail's settings button
     if state.panelVisibility.worldSettingsOpened then
         lib.drawWorldSettingsUI()
-    end
-    if toolbarButton(70, 'bg') then
-        state.panelVisibility.bgSettingsOpened = not state.panelVisibility.bgSettingsOpened
-    end
-    if state.panelVisibility.bgSettingsOpened then
-        lib.drawBGSettingsUI()
     end
 
     if toolbarButton(150, state.world.paused and 'play' or 'pause') then
