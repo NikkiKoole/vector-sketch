@@ -1,12 +1,16 @@
--- The "library" tab of the right column: save the selection as a prefab
--- (src/library.lua), and press a prefab to drop a copy: it spawns at the
--- mouse, drag to place, release to drop (like the toys in add shape).
+-- The "library" tab of the right column, two shelves: 'toys' (the built-in
+-- src/toys.lua recipes) and 'mine' (save the selection as a prefab,
+-- src/library.lua). Press a toy or prefab to drop a copy: it spawns at the
+-- mouse, drag to place, release to drop.
 local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
 local camera = require('src.camera')
 local library = require('src.library')
+local toys = require('src.toys')
+
+lib.SHELVES = { 'toys', 'mine' }
 
 local message = ''
 
@@ -17,9 +21,10 @@ local function selectedThings()
     return {}
 end
 
-local function spawn(name)
+local function spawn(name, isToy)
     local mx, my = love.mouse.getPosition()
-    local things = library.place(name, camera.getInstance():getWorldCoordinates(mx, my))
+    local wx, wy = camera.getInstance():getWorldCoordinates(mx, my)
+    local things = isToy and toys.make(name, wx, wy) or library.place(name, wx, wy)
     if things[1] then
         state.interaction.draggingObj = things[1]
         state.interaction.offsetDragging = { 0, 0 }
@@ -44,11 +49,48 @@ function lib.fileDropped(file, x, y, w, h)
     return true
 end
 
+function lib.shelf()
+    return state.rightColumn.shelf or 'toys'
+end
+
+-- Two columns of toy buttons; returns the y below them.
+local function drawToys(rowX, rowY, rowW, rowH)
+    local gap = ui.theme.spacing
+    local tw = math.floor((rowW - gap) / 2)
+    for index, toy in ipairs(toys.LIST) do
+        local column = (index - 1) % 2
+        local _, pressed, released = ui.button(rowX + column * (tw + gap), rowY, tw, toy[1])
+        if pressed then
+            ui.draggingActive = ui.activeElementID
+            spawn(toy[1], true)
+        end
+        if released then ui.draggingActive = nil; state.selection.selectedBodies = nil end
+        if column == 1 or index == #toys.LIST then rowY = rowY + rowH + gap end
+    end
+    return rowY
+end
+
 function lib.draw(x, y, w, h)
     local rowH = ui.theme.button.height
     ui.panel(x, y, w, h, 'library', function()
         ui.scrollPanel('library-panel', x, y + ui.theme.panelHeader, w, h - ui.theme.panelHeader - 5, function()
             local rowX, rowY, rowW = x + 10, y + ui.theme.panelHeader + ui.theme.spacing, w - 20
+
+            -- shelf switch: toys | mine
+            local gap = ui.theme.spacing
+            local sw = math.floor((rowW - gap) / #lib.SHELVES)
+            for i, shelf in ipairs(lib.SHELVES) do
+                local fill = lib.shelf() == shelf and ui.theme.header.active or nil
+                if ui.button(rowX + (i - 1) * (sw + gap), rowY, sw, shelf, nil, fill) then
+                    state.rightColumn.shelf = shelf
+                end
+            end
+            rowY = rowY + rowH + gap * 2
+
+            if lib.shelf() == 'toys' then
+                drawToys(rowX, rowY, rowW, rowH)
+                return
+            end
 
             ui.alignedLabel(rowX, rowY, 'name')
             local name = ui.textinput('prefab-name', rowX + 60, rowY, rowW - 60, rowH, 'prefab name...',
