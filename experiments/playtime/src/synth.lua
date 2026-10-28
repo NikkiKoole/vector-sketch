@@ -77,6 +77,24 @@ lib.patches = {
                harmonics = 0.0, timbre = 0.95, morph = 0, reverb = 0.15, level = 0.35 },
     shaker = { slot = 17, wave = 'NOISE', adsr = { 3, 45, 0, 25 }, reverb = 0.1, level = 0.12,
                filter = { mode = 2, cutoff = 6500, resonance = 1 } },
+    -- the guaraldi style (src/music.lua): a felt grand (piano.c's 'grand' preset, a little softer
+    -- hammer, lowpassed warm) and dreamengine cocktail.c's brushes kit: a brushed ride ping, a
+    -- closed hat on 2 and 4, the circular brush sweep. The kick is the bossa one, feathered.
+    -- Levels balanced on rendered stems (claudetools/render-music.lua SOLO=...) against the Rhodes.
+    piano = { slot = 22, wave = 'PIANO', adsr = { 1, 0, 7, 1200 },
+              harmonics = 0.08, timbre = 0.4, morph = 0.55, reverb = 0.3, level = 1.6,
+              filter = { mode = 1, cutoff = 3400, resonance = 1 },
+              tape = { wow = 0.15, flutter = 0.03, saturation = 0, warble = 0 } },
+    pianoLead = { slot = 26, wave = 'PIANO', adsr = { 1, 0, 7, 1200 },   -- the same piano, for the tune
+                  harmonics = 0.08, timbre = 0.45, morph = 0.55, reverb = 0.3, level = 2.8,
+                  filter = { mode = 1, cutoff = 4200, resonance = 1 },
+                  tape = { wow = 0.15, flutter = 0.03, saturation = 0, warble = 0 } },
+    ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
+              filter = { mode = 2, cutoff = 5400, resonance = 3 } },
+    hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,
+              filter = { mode = 2, cutoff = 8200, resonance = 3 } },
+    brush = { slot = 25, wave = 'NOISE', adsr = { 60, 300, 2, 200 }, reverb = 0.15, level = 0.2,
+              filter = { mode = 2, cutoff = 4800, resonance = 1 } },
     -- slide whistle: the blown pipe (in tune at morph 0.7), held and glided (src/slide-sound.lua).
     -- Breathy (timbre = breath air) and on a wobbly cassette, so it sounds less like a pure synth.
     whistle = { slot = 8, wave = 'PIPE', adsr = { 30, 0, 7, 120 },

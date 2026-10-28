@@ -1,76 +1,137 @@
 -- music.lua
--- Background music on a Rhodes, played rather than stamped. Two styles:
---   bossa  - straight eighths at 116, the piano comping short chords on the bossa clave, a bass
---            on root and fifth (1 and the and-of-2), kick under it, cross-stick rim on the clave,
---            a quiet shaker
---   ballad - slow (76): each chord drifts in note by note, fingers lift at their own time, a
---            little melody moves inside the chord
--- Harmony and voicing follow dreamengine's lofi.c: four-voice rootless voicings that move least
--- and never stack a minor ninth.
+-- Background music, arranged the way dreamengine's lofi.c is (dreamengine
+-- docs/design/radio-arranger-lessons.md): it plans first and then plays the plan.
+--   the SONG is planned when it starts: key, form (intro, A, B, outro), an A and a B progression,
+--     the comping taste, the tune's motif. Each part has a role per section: the first A has no
+--     tune, B moves more, the outro rings home.
+--   every BAR is planned knowing the next one: the push (the next chord comped early, on the
+--     and-of-4), a fill into a new section, the bass walking into the next root.
+--   the TUNE is seeded by its place in the form, so every A sings the same melody and B its own:
+--     a hook that comes back. A motif of note groups is stated over two bars, bar 3 breathes,
+--     bar 4 answers. Strong beats land on chord tones, passing tones fill the thirds, long notes
+--     stay off the held chord's semitones, and the tune sits above the chord.
+-- Styles are data (lib.styles): bossa (straight, Rhodes, clave), guaraldi (swung, a felt piano,
+-- open fifths in the left hand, brushes) and ballad. style = 'set' plays lib.set as a live set:
+-- each song ends on home, takes a breath, and the next one starts in a related key.
 --
--- The arrangement follows the play: calm, the Rhodes plays alone and its left hand takes the
--- bass; busy (impacts call music.bump), the rhythm section joins (the drums in bossa; the upright
--- too when lib.upright is on, and then the left hand lifts). rhythmSection forces it on or off.
--- It only changes at a chord change. lib.chordNotes lets sound effects play in the current
--- chord. Notes are booked ahead on the synth's audio clock, so frame hitches don't shake the
--- groove. Driven by mipo-voice.update while synth impacts are on.
+-- The arrangement follows the play: calm, the keys play alone and the left hand takes the bass;
+-- busy (impacts call music.bump), the drums join where the form lets them (the upright too when
+-- lib.upright is on). rhythmSection forces that on or off. lib.chordNotes lets sound effects play
+-- in the current chord. Notes are booked ahead on the synth's audio clock, a bar at a time.
+-- Driven by mipo-voice.update while synth impacts are on.
 
 local state = require('src.state')
 
 local lib = {}
 
 lib.enabled = true
-lib.style = 'bossa'          -- 'bossa' or 'ballad' (lib.styles)
+lib.style = 'set'            -- 'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'ballad'
+lib.set = { 'bossa', 'guaraldi' }
 lib.rhythmSection = 'auto'   -- 'auto' (joins when play gets busy), 'on' or 'off'
-lib.upright = false          -- the upright in the rhythm section; off: the Rhodes' left hand keeps the bass
-lib.melody = true            -- a little tune on top: a motif, then its answer
-lib.melodyPatch = 'rhodesLead' -- the tune's voice: rhodesLead, kalimba, kalimbaPlonk, celesta (src/synth.lua)
-lib.melodyRest = 0.25        -- chance a phrase rests (the first of each four always plays)
-lib.lydianChance = 0.6       -- a song's major chords get the raised fourth (maj7#11): floaty, a bit magical
-lib.sidestepChance = 0.25    -- a chord's last stab slides into the next chord from a half-step above
+lib.upright = false          -- the upright in the rhythm section; off: the left hand keeps the bass
+lib.melody = true            -- the tune on top
+lib.melodyPatch = nil        -- force the tune's voice (rhodesLead, pianoLead, kalimba, ...); nil: the style's
 lib.lookahead = 0.3          -- seconds of music booked ahead
-lib.chordsPerSong = 16       -- then a new loop in a new key
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
 lib.bandLeaves = 1.5         -- ...and below which it leaves again
 
-lib.keys = { 5, 10, 3, 8 }   -- F, Bb, Eb, Ab: warm Rhodes keys
--- lofi.c's qualities (rootless: the bass owns the root)
+lib.keys = { 5, 10, 3, 8 }   -- F, Bb, Eb, Ab: warm keys, a fourth apart, so the set walks between them
+-- rootless four-voice qualities (the bass owns the root)
 lib.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10, 14, 21 },
                   maj7 = { 4, 7, 11, 12 }, m7 = { 3, 7, 10, 12 },
-                  lydian = { 4, 11, 14, 18 } } -- maj9#11: third, seventh, ninth, raised fourth
--- the melody's rhythm cells, in eighth steps within one bar; a song picks one as its motif
-lib.melodyCells = { { 0, 2, 3, 6 }, { 1, 3, 4, 7 }, { 0, 3, 5 }, { 2, 3, 4, 6 }, { 0, 1, 3, 5, 6 } }
--- loops: { degree from the key, quality } per chord
+                  lydian = { 4, 11, 14, 18 },  -- maj9#11: third, seventh, ninth, raised fourth
+                  maj69 = { 4, 7, 9, 14 },     -- the sixth and ninth: Guaraldi's sunny tonic
+                  sus = { 5, 7, 10, 14 } }     -- 9sus4: a dominant that floats instead of pulls
+
+-- the forms, { section, bars }; songs grow no longer than this (a minute or so: a set keeps moving)
+lib.forms = {
+    { { 'intro', 2 }, { 'A', 8 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'outro', 4 } }, -- AABA, the standard
+    { { 'intro', 4 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'B', 8 }, { 'outro', 4 } },
+}
+
+-- Progressions are { degree from the key, quality } (A: each chord lasts the song's chordBars) or
+-- { degree, quality, beats } (B). Comps are two-bar cells { step, length, vol } in 16ths (0..31).
 lib.styles = {
     bossa = {
-        bpm = 116, barsPerChord = { 2 },
-        loops = {
+        bpm = 116, swing = 0.5, chordBars = { 2 }, lydianChance = 0.6, pushOdds = 15, sidestepOdds = 25,
+        strumMs = 8, keys = 'rhodes', lead = 'rhodesLead', bass = 'bossa', drums = 'bossa', home = 'maj9',
+        A = {
             { { 0, 'maj9' }, { 2, 'dom9' }, { 2, 'm9' }, { 7, 'dom9' } },   -- Imaj7 II7 iim7 V7 (Ipanema)
             { { 0, 'maj9' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'dom9' } },     -- I vi ii V
             { { 0, 'maj9' }, { 5, 'm9' }, { 0, 'maj9' }, { 10, 'dom9' } },  -- I ivm I bVII7, the dreamy one
             { { 2, 'm9' }, { 7, 'dom9' }, { 0, 'maj9' }, { 9, 'dom9' } },   -- ii V I VI7
-            { { 0, 'maj9' }, { 1, 'maj9' } },                               -- I bIImaj7, the half-step float
         },
-        -- the piano's comp over two bars, in eighth steps (0..15); the clave is the first
-        comps = { { 0, 3, 6, 10, 13 }, { 0, 3, 7, 10, 12 }, { 2, 5, 8, 10, 13 } },
-        clave = { 0, 3, 6, 10, 13 },
+        B = {
+            { { 5, 'maj9', 8 }, { 5, 'm9', 8 }, { 0, 'maj9', 8 }, { 9, 'm9', 8 } },     -- IV iv I vi, the sigh
+            { { 2, 'm9', 8 }, { 7, 'dom9', 8 }, { 4, 'm9', 8 }, { 9, 'dom9', 8 } },     -- ii V iii VI7
+            { { 8, 'maj9', 8 }, { 7, 'dom9', 8 }, { 0, 'maj9', 16 } },                  -- bVI V I
+            { { 0, 'maj9', 8 }, { 1, 'maj9', 8 } },                                     -- the half-step float
+        },
+        -- the comp on the bossa clave and its cousins, short stabs
+        comps = {
+            { { 0, 3, 4 }, { 6, 3, 4 }, { 12, 3, 4 }, { 20, 3, 4 }, { 26, 3, 4 } },
+            { { 0, 3, 4 }, { 6, 3, 4 }, { 14, 3, 4 }, { 20, 3, 4 }, { 24, 3, 4 } },
+            { { 4, 3, 4 }, { 10, 3, 4 }, { 16, 3, 4 }, { 20, 3, 4 }, { 26, 3, 4 } },
+        },
+    },
+    guaraldi = {
+        bpm = 132, swing = 0.62, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 35, motifRepeat = 30,
+        strumMs = 12, keys = 'piano', lead = 'pianoLead', bass = 'guaraldi', drums = 'brushes', home = 'maj69',
+        A = {
+            { { 0, 'maj69' }, { 5, 'dom9' } },                                -- I6/9 IV9, the rocking vamp
+            { { 0, 'maj7' }, { 2, 'm7' }, { 4, 'm7' }, { 5, 'maj7' } },       -- I ii iii IV, stepping up
+            { { 0, 'maj69' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'sus' } },       -- I vi ii V9sus
+            { { 0, 'maj7' }, { 5, 'dom9' }, { 0, 'maj7' }, { 7, 'dom9' } },   -- I IV7 I V7, the bluesy one
+        },
+        B = {
+            { { 5, 'maj7', 8 }, { 5, 'm9', 8 }, { 0, 'maj69', 8 }, { 9, 'm9', 4 }, { 7, 'dom9', 4 } }, -- IV iv I vi V
+            { { 2, 'm9', 4 }, { 7, 'dom9', 4 }, { 4, 'm7', 4 }, { 9, 'dom9', 4 },
+              { 2, 'm9', 4 }, { 7, 'sus', 4 }, { 0, 'maj69', 8 } },                         -- ii V iii VI ii V I
+            { { 5, 'dom9', 8 }, { 0, 'maj69', 8 }, { 5, 'dom9', 8 }, { 7, 'dom9', 8 } },               -- the blues turn
+        },
+        -- Charleston, the anticipations (the and-of-2 and the and-of-4), a held chord with a lift
+        comps = {
+            { { 0, 3, 4 }, { 6, 4, 3 }, { 16, 3, 4 }, { 22, 4, 3 } },
+            { { 6, 2, 3 }, { 14, 4, 4 }, { 22, 2, 3 }, { 30, 2, 4 } },
+            { { 0, 8, 4 }, { 14, 2, 3 }, { 16, 8, 4 }, { 26, 4, 3 } },
+        },
     },
     ballad = {
-        bpm = 76, barsPerChord = { 1, 2 },
-        loops = {
+        bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
+        strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',
+        A = {
             { { 0, 'maj9' }, { 9, 'm9' } },                                 -- Imaj9 vi9
             { { 2, 'm9' }, { 7, 'dom9' }, { 0, 'maj9' }, { 0, 'maj9' } },   -- ii V I
-            { { 9, 'm9' }, { 2, 'm9' }, { 7, 'dom9' }, { 0, 'maj9' } },     -- vi ii V I
             { { 0, 'maj9' }, { 5, 'm7' }, { 8, 'dom9' }, { 0, 'maj9' } },   -- the jazzy loop
-            { { 5, 'maj9' }, { 5, 'm9' }, { 0, 'maj9' }, { 9, 'm9' } },     -- IV iv I vi, the sigh
         },
+        B = {
+            { { 5, 'maj9', 4 }, { 5, 'm9', 4 }, { 0, 'maj9', 4 }, { 9, 'm9', 4 } },     -- IV iv I vi, the sigh
+            { { 9, 'm9', 4 }, { 2, 'm9', 4 }, { 7, 'dom9', 4 }, { 0, 'maj9', 4 } },     -- vi ii V I
+        },
+        comps = { { { 0, 16, 4 }, { 16, 16, 4 } } },
     },
 }
 
+-- the tune's rhythm: GROUPS of two to four notes a 16th or an 8th apart, then a breath (lofi.c's
+-- MOTIFS). { steps over two bars, group per note }
+lib.motifs = {
+    { { 0, 2, 4, 10, 12 }, { 0, 0, 0, 1, 1 } },          -- three up, two answer
+    { { 0, 3, 6, 8, 16 }, { 0, 0, 0, 0, 1 } },           -- a four-note run, one long note
+    { { 2, 4, 6, 12, 14, 20 }, { 0, 0, 0, 1, 1, 2 } },   -- off the beat, three groups
+    { { 0, 2, 3, 6, 14, 16 }, { 0, 0, 0, 0, 1, 1 } },    -- a turn, then a pair
+    { { 1, 4, 6, 8, 18 }, { 0, 0, 0, 0, 1 } },           -- a pickup into the run
+    { { 0, 4, 6, 8, 10, 22 }, { 0, 1, 1, 1, 1, 2 } },    -- a stab, a run, a tail
+    { { 4, 6, 8, 14, 16 }, { 0, 0, 0, 1, 1 } },          -- late: the space first
+}
+-- the answer's rhythms in bar 4, grouped the same way
+lib.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 12 }, { 0, 3, 6, 8 } }
+
+local VERSION = 2
 -- On `state` so a hot reload keeps the song going where it was.
-state.music = state.music or { activity = 0, withBand = false, chordsLeft = 0 }
+state.music = state.music or { activity = 0, withBand = false }
 local M = state.music
+if M.version ~= VERSION then M.version, M.song, M.barAt = VERSION, nil, nil end
 M.booked = M.booked or {} -- the last few booked chords: { at = audio time, pcs = { pitch classes } }
 
 -- Gameplay calls this (impacts); enough of it brings the rhythm section in.
@@ -78,9 +139,24 @@ function lib.bump(amount)
     M.activity = M.activity + (amount or 1)
 end
 
+-- A seeded stream: rnd(n) is 0..n-1, rnd() is 0..1. Every planning concern draws from its own
+-- stream (song seed + a number), so a decision added to one never reshuffles another, and a phrase
+-- seeded by its place in the form comes out the same each time that place comes round.
+local function stream(seed, k)
+    local s = (seed * 69069 + k * 2654435 + 1) % 2147483647
+    if s == 0 then s = 1 end
+    local function rnd(n)
+        s = (s * 16807) % 2147483647
+        if n then return s % n end
+        return s / 2147483647
+    end
+    rnd(); rnd()
+    return rnd
+end
+
 -- lofi.c's lead_to4: every rotation and drop-2 of the chord in every octave, bottom note in
--- lo..lo+12, top at most hi, no minor ninth between any two notes, no low clusters; the one that
--- moves least from the previous voicing (top-voice leaps over 4 cost extra), pulled toward 62.
+-- lo..lo+12, top at most hi, no semitone or minor ninth between any two notes, no low clusters; the
+-- one that moves least from the previous voicing (top-voice leaps over 4 cost extra), pulled toward 62.
 local function voiceChord(rootPc, intervals, lo, hi, previous)
     local pcs = {}
     for _, interval in ipairs(intervals) do
@@ -111,7 +187,7 @@ local function voiceChord(rootPc, intervals, lo, hi, previous)
                     for a = 1, n do
                         for b = a + 1, n do
                             local d = v[b] - v[a]
-                            if d == 13 or d == 25 then bad = true end
+                            if d == 1 or d == 13 or d == 25 then bad = true end
                         end
                         if a > 1 and v[a] - v[a - 1] < 3 and v[a - 1] < 52 then bad = true end
                     end
@@ -133,31 +209,15 @@ local function voiceChord(rootPc, intervals, lo, hi, previous)
     return best or previous
 end
 
-local function currentStyle()
-    return lib.styles[lib.style] or lib.styles.bossa
-end
-
-local function newSong()
-    local style = currentStyle()
-    M.style = lib.style
-    M.key = lib.keys[love.math.random(#lib.keys)]
-    M.loop = style.loops[love.math.random(#style.loops)]
-    M.barsPerChord = style.barsPerChord[love.math.random(#style.barsPerChord)]
-    M.chordIndex = 0
-    M.chordsLeft = lib.chordsPerSong
-    M.lydian = love.math.random() < lib.lydianChance
-    M.cell = lib.melodyCells[love.math.random(#lib.melodyCells)]
-    M.phrase = 0
-end
-
 -- MIDI note of pitch class pc in lo..lo+11
 local function inRange(pc, lo)
     return lo + (pc - lo) % 12
 end
 
--- a few milliseconds of human timing
-local function humanize()
-    return (love.math.random() - 0.5) * 0.012
+-- performance, not composition: a few ms of human timing (a sum of uniforms, roughly Gaussian)
+local function humanize(sigma)
+    local r = love.math.random
+    return (r() + r() + r() - 1.5) * 2 * sigma
 end
 
 local function bandPlays()
@@ -168,190 +228,541 @@ local function bandPlays()
     return M.withBand
 end
 
--- Ballad: the chord drifts in, the left hand (or the upright) holds the root.
-local function bookBallad(synth, t0, chord)
-    local beat, chordLength, v = chord.beat, chord.length, chord.voicing
-    local barLength = 4 * beat
-    if chord.band and lib.upright then
-        -- the upright: root on 1, fifth on 3 of every bar, walking into the next root from a half-step
-        local root = inRange(chord.rootPc, 34)
-        for bar = 0, M.barsPerChord - 1 do
-            local tb = t0 + bar * barLength
-            synth.scheduleAt('musicBass', tb, root, 6, 500)
-            synth.scheduleAt('musicBass', tb + 2 * beat, root + 7, 5, 500)
-        end
-        local nextRoot = inRange(chord.nextRootPc, 34)
-        if nextRoot ~= root and love.math.random() < 0.6 then
-            local approach = nextRoot + (love.math.random() < 0.5 and 1 or -1)
-            synth.scheduleAt('musicBass', t0 + chordLength - beat * 0.38, approach, 4, 200)
-        end
-    else
-        -- alone, the Rhodes' left hand plays the root low and holds it
-        synth.scheduleAt('rhodes', t0, inRange(chord.rootPc, 40), 5, chordLength * 1000)
-    end
+---------------------------------------------------------------------------------------------------
+-- The song plan
 
-    -- the right hand comes just after: the notes drift in one by one, not always bottom-up
-    local rh = t0 + 0.12 * beat
-    local order = { 1 }
-    local rest = {}
-    for k = 2, #v do rest[#rest + 1] = k end
-    if love.math.random() < 0.5 then
-        for i = #rest, 2, -1 do
-            local j = love.math.random(i)
-            rest[i], rest[j] = rest[j], rest[i]
-        end
-    end
-    for _, k in ipairs(rest) do order[#order + 1] = k end
-    local spread = (0.25 + love.math.random() * 0.5) * beat
-    for i, k in ipairs(order) do
-        local t = rh + (i - 1) / (#order - 1) * spread + (love.math.random() - 0.5) * 0.02
-        local hold = chordLength * (0.55 + love.math.random() * 0.45) - (t - t0) -- some fingers lift early
-        local vol = (k == #v) and 5 or (love.math.random() < 0.3 and 3 or 4)
-        synth.scheduleAt('rhodes', t, v[k], vol, hold * 1000)
-    end
-    -- a little melody inside the chord: the top note again, or a step down to the next chord tone
-    if love.math.random() < 0.6 then
-        local t = t0 + (1.5 + love.math.random(0, 2)) * beat
-        local top = v[#v]
-        local note = top
-        if love.math.random() < 0.5 then note = v[#v - 1] + 12 <= top + 5 and v[#v - 1] + 12 or top - 2 end
-        synth.scheduleAt('rhodes', t, note, 4, (chordLength - (t - t0)) * 800)
-    end
+local function progAdd(prog, degree, quality, beats)
+    prog[#prog + 1] = { degree = degree % 12, quality = quality, steps = beats * 4 }
+    prog.steps = (prog.steps or 0) + beats * 4
 end
 
--- Bossa: short comped chords on a two-bar pattern; the bass (or the left hand) on root and fifth.
-local function bookBossa(synth, t0, chord)
-    local style = currentStyle()
-    local beat, chordLength, v = chord.beat, chord.length, chord.voicing
-    local eighth = beat / 2
-    local steps = math.floor(chordLength / eighth + 0.5)
-
-    -- the bass rhythm, every bar: root on 1 (a dotted quarter), fifth on the and-of-2, held over 3
-    for bar = 0, steps / 8 - 1 do
-        local tb = t0 + bar * 8 * eighth
-        if chord.band and lib.upright then
-            local root = inRange(chord.rootPc, 34)
-            synth.scheduleAt('musicBass', tb + humanize(), root, 6, eighth * 2.8 * 1000)
-            synth.scheduleAt('musicBass', tb + 3 * eighth + humanize(), root + 7, 5, eighth * 4.8 * 1000)
+-- the last bar of B becomes a ii-V back to the top
+local function progTurnaround(prog)
+    local cut = 16
+    while cut > 0 and #prog > 0 do
+        local last = prog[#prog]
+        if last.steps > cut then
+            last.steps, cut = last.steps - cut, 0
         else
-            local root = inRange(chord.rootPc, 40)
-            synth.scheduleAt('rhodes', tb + humanize(), root, 4, eighth * 2.8 * 1000)
-            synth.scheduleAt('rhodes', tb + 3 * eighth + humanize(), root + 7, 3, eighth * 4.8 * 1000)
-        end
-        if chord.band then
-            synth.scheduleAt('kick', tb, 36, 4, 150)
-            synth.scheduleAt('kick', tb + 3 * eighth, 36, 3, 150)
-            for step = 0, 7 do -- the shaker: every eighth, the off-beats leaning
-                synth.scheduleAt('shaker', tb + step * eighth + humanize(), 84, step % 2 == 1 and 3 or 2, 40)
-            end
+            cut = cut - last.steps
+            prog[#prog] = nil
         end
     end
-    if chord.band then -- the cross-stick on the clave
-        for _, step in ipairs(style.clave) do
-            if step < steps then synth.scheduleAt('rim', t0 + step * eighth + humanize(), 79, 4, 40) end
-        end
-    end
-
-    -- the right hand comps: short chords, a quick roll, now and then lighter (the bottom note left out)
-    local comp = style.comps[love.math.random(#style.comps)]
-    -- the side-step: the last stab is the NEXT chord a half-step high, sliding down into it
-    local sidestep
-    if chord.nextRootPc ~= chord.rootPc and love.math.random() < lib.sidestepChance then
-        sidestep = voiceChord(chord.nextRootPc, chord.nextQuality, 48, 76, v)
-    end
-    for i, step in ipairs(comp) do
-        if step < steps then
-            local t = t0 + step * eighth + humanize()
-            local light = i > 1 and love.math.random() < 0.35
-            local hitVoicing = (sidestep and i == #comp) and sidestep or v
-            for k = light and 2 or 1, #hitVoicing do
-                local note = hitVoicing[k] + (hitVoicing == sidestep and 1 or 0)
-                -- the last hit sometimes lets the top note step down to the next chord tone
-                if hitVoicing == v and k == #v and i == #comp and love.math.random() < 0.4 then
-                    note = v[#v - 1] + 12 <= v[#v] + 5 and v[#v - 1] + 12 or v[#v] - 2
-                end
-                synth.scheduleAt('rhodes', t + (k - 1) * 0.008, note, k == #hitVoicing and 5 or 4, eighth * 1.3 * 1000)
-            end
-        end
-    end
+    prog.steps = prog.steps - 16
+    progAdd(prog, prog[1].degree + 2, 'm9', 2)
+    progAdd(prog, prog[1].degree + 7, 'dom9', 2)
 end
 
--- The celesta: the song's rhythm cell as a motif (odd phrases, first bar), answered a bar later
--- with the contour turned around (even phrases). Chord notes only, mostly steps between
--- neighbours, now and then a grace note from a half-step below.
-local function bookMelody(synth, t0, chord)
-    M.phrase = (M.phrase or 0) + 1
-    local answer = M.phrase % 2 == 0
-    if M.phrase % 4 ~= 1 and love.math.random() < lib.melodyRest then return end
-    local notes = {}
-    local inChord = {}
-    for _, pc in ipairs(chord.pcs) do inChord[pc] = true end
-    for midi = 72, 91 do
-        if inChord[midi % 12] then notes[#notes + 1] = midi end
-    end
-    -- start on the chord note nearest to where the tune last was
-    local index, nearest = 1, math.huge
-    for i, note in ipairs(notes) do
-        local d = math.abs(note - (M.melodyNote or 79))
-        if d < nearest then index, nearest = i, d end
-    end
-    local eighth = chord.beat / 2
-    local steps = math.floor(chord.length / eighth + 0.5)
-    local offset = (answer and steps >= 16) and 8 or 0 -- the answer comes in the second bar (if there is one)
-    local direction = answer and -(M.melodyDirection or 1) or (love.math.random() < 0.5 and 1 or -1)
-    M.melodyDirection = direction
-    local cell = M.cell or lib.melodyCells[1]
-    for i, step in ipairs(cell) do
-        if i > 1 then
-            index = index + direction * (love.math.random() < 0.75 and 1 or 2)
-            if index < 1 or index > #notes then
-                direction = -direction
-                index = math.max(1, math.min(#notes, index + 2 * direction))
-            end
-            if love.math.random() < 0.2 then direction = -direction end
-        end
-        local note = notes[index]
-        local t = t0 + (offset + step) * eighth + humanize()
-        if love.math.random() < 0.2 then synth.scheduleAt(lib.melodyPatch, t - 0.05, note - 1, 3, 45) end -- grace note
-        local length = (i == #cell) and eighth * 3 or eighth * 1.2
-        synth.scheduleAt(lib.melodyPatch, t, note, i == 1 and 5 or 4, length * 1000)
-        M.melodyNote = note
-    end
+local function nextStyleName()
+    if lib.style ~= 'set' then return lib.styles[lib.style] and lib.style or 'bossa' end
+    M.setIndex = (M.setIndex or 0) % #lib.set + 1
+    return lib.set[M.setIndex]
 end
 
--- Books one chord starting at audio time t0; returns its length in seconds.
-local function bookChord(synth, t0)
-    if not M.loop or M.chordsLeft <= 0 or M.style ~= lib.style then newSong() end
-    M.chordIndex = M.chordIndex % #M.loop + 1
-    M.chordsLeft = M.chordsLeft - 1
+-- a related key: up a fourth or a fifth when one of lib.keys is there, else any other
+local function nextKey(previous)
+    if not previous then return lib.keys[love.math.random(#lib.keys)] end
+    local related, others = {}, {}
+    for _, key in ipairs(lib.keys) do
+        local d = (key - previous) % 12
+        if d == 5 or d == 7 then related[#related + 1] = key elseif d ~= 0 then others[#others + 1] = key end
+    end
+    local pool = #related > 0 and related or others
+    return #pool > 0 and pool[love.math.random(#pool)] or previous
+end
 
-    local style = currentStyle()
-    local beat = 60 / style.bpm
-    local loopChord = M.loop[M.chordIndex]
-    local rootPc = (M.key + loopChord[1]) % 12
-    local quality = lib.qualities[(M.lydian and loopChord[2] == 'maj9') and 'lydian' or loopChord[2]]
-    local nextLoopChord = M.loop[M.chordIndex % #M.loop + 1]
-    local nextQuality = lib.qualities[(M.lydian and nextLoopChord[2] == 'maj9') and 'lydian' or nextLoopChord[2]]
-    local chord = {
-        beat = beat,
-        length = M.barsPerChord * 4 * beat,
-        rootPc = rootPc,
-        nextRootPc = (M.key + nextLoopChord[1]) % 12,
-        nextQuality = nextQuality,
-        band = bandPlays(),
+local function planSong()
+    local styleName = nextStyleName()
+    local style = lib.styles[styleName]
+    local seed = love.math.random(1, 2147483646)
+    local song = {
+        version = VERSION, style = styleName, seed = seed,
+        key = nextKey(M.song and M.song.key), beat = 60 / style.bpm, swing = style.swing or 0.5,
     }
-    chord.voicing = voiceChord(rootPc, quality, 48, 76, M.voicing)
-    M.voicing = chord.voicing
+    song.barLength = 4 * song.beat
 
-    local pcs = { rootPc }
-    for _, interval in ipairs(quality) do pcs[#pcs + 1] = (rootPc + interval) % 12 end
-    chord.pcs = pcs
-    table.insert(M.booked, { at = t0, pcs = pcs })
-    if #M.booked > 3 then table.remove(M.booked, 1) end
+    local rnd = stream(seed, 1)
+    song.lydian = rnd() < (style.lydianChance or 0)
+    local chordBars = style.chordBars[rnd(#style.chordBars) + 1]
+    song.A = {}
+    for _, chord in ipairs(style.A[rnd(#style.A) + 1]) do progAdd(song.A, chord[1], chord[2], 4 * chordBars) end
+    song.B = {}
+    if rnd(100) < 35 then -- B is A with a ii-V turnaround...
+        for _, chord in ipairs(song.A) do progAdd(song.B, chord.degree, chord.quality, chord.steps / 4) end
+        progTurnaround(song.B)
+    else                  -- ...or a move of its own
+        for _, chord in ipairs(style.B[rnd(#style.B) + 1]) do progAdd(song.B, chord[1], chord[2], chord[3]) end
+    end
 
-    if lib.style == 'ballad' then bookBallad(synth, t0, chord) else bookBossa(synth, t0, chord) end
-    if lib.melody then bookMelody(synth, t0, chord) end
-    return chord.length
+    -- the form, and each part's role per section
+    song.sections, song.barSection, song.barIndex = {}, {}, {}
+    local aCount = 0
+    for _, entry in ipairs(lib.forms[rnd(#lib.forms) + 1]) do
+        local kind, bars = entry[1], entry[2]
+        local roles = { keys = 'comp', drums = 'full', lead = true }
+        if kind == 'intro' then roles = { keys = 'hold', drums = 'none', lead = false }
+        elseif kind == 'A' then aCount = aCount + 1; roles.lead = aCount >= 2 -- the band plays the changes once first
+        elseif kind == 'outro' then roles = { keys = 'outro', drums = 'outro', lead = false } end
+        local section = { kind = kind, bars = bars, roles = roles }
+        song.sections[#song.sections + 1] = section
+        for j = 0, bars - 1 do
+            song.barSection[#song.barSection + 1] = section
+            song.barIndex[#song.barIndex + 1] = j
+        end
+    end
+    song.bars = #song.barSection
+
+    -- the comp cell per two bars, and per bar (knowing the next): the push and a fill
+    song.comp, song.push, song.fill = {}, {}, {}
+    rnd = stream(seed, 2)
+    for b = 1, song.bars do
+        song.comp[b] = rnd(#style.comps) + 1
+        song.push[b] = rnd(100) < (style.pushOdds or 0)
+        local section = song.barSection[b]
+        song.fill[b] = b < song.bars and section.roles.drums == 'full'
+            and song.barIndex[b] == section.bars - 1 and rnd(100) < 60
+    end
+
+    -- the tune: the song's motif rhythm and its cell's anchor pitches; a ladder of the key's
+    -- pentatonic above the chord (median ~76, lofi's 67..86)
+    rnd = stream(seed, 9)
+    local motif = lib.motifs[rnd(#lib.motifs) + 1]
+    song.motif = { steps = motif[1], groups = motif[2], dir = {} }
+    local repeatOdds = style.motifRepeat or 18
+    local run, d = 0, rnd(100) < 55 and 1 or -1
+    for i = 2, #motif[1] do
+        if motif[2][i] ~= motif[2][i - 1] then
+            run, d = 0, rnd(100) < 55 and 1 or -1 -- a new group, a new direction
+            song.motif.dir[i] = 0
+        else
+            run = run + 1
+            local u = rnd(100) -- a run turns back at its end, and sometimes repeats a note
+            song.motif.dir[i] = (run >= 3 or u < 18) and -d or (u < 18 + repeatOdds) and 0 or d
+        end
+    end
+    song.cellDegrees = { 0, rnd(6) - 2, rnd(6) - 1 }
+    song.ladder = {}
+    for midi = 67, 86 do
+        local pc = (midi - song.key) % 12
+        if pc == 0 or pc == 2 or pc == 4 or pc == 7 or pc == 9 then song.ladder[#song.ladder + 1] = midi end
+    end
+    song.hookStart = { A = 4 + rnd(3), B = 3 + rnd(4) } -- ladder index where each section's tune starts
+
+    song.bar = 0
+    return song
+end
+
+local function qualityOf(song, name)
+    if song.lydian and name == 'maj9' then name = 'lydian' end
+    return lib.qualities[name]
+end
+
+local function chordPcs(song, chord)
+    local root = (song.key + chord.degree) % 12
+    local pcs = { root }
+    for _, interval in ipairs(qualityOf(song, chord.quality)) do pcs[#pcs + 1] = (root + interval) % 12 end
+    return pcs
+end
+
+-- the chords inside bar b: { degree, quality, s = start step, len = steps }
+local function barChords(song, b)
+    if b < 1 or b > song.bars then b = math.max(1, math.min(song.bars, b)) end
+    local section, j = song.barSection[b], song.barIndex[b]
+    if section.kind == 'outro' and j >= 2 then -- the outro rings on home
+        return { { degree = 0, quality = lib.styles[song.style].home, s = 0, len = 16 } }
+    end
+    local prog = section.kind == 'B' and song.B or song.A
+    local b0, at, out = (j * 16) % prog.steps, 0, {}
+    for _, chord in ipairs(prog) do
+        local cs, ce = at, at + chord.steps
+        at = ce
+        local s, e = math.max(cs, b0), math.min(ce, b0 + 16)
+        if e > s then out[#out + 1] = { degree = chord.degree, quality = chord.quality, s = s - b0, len = e - s } end
+    end
+    return out
+end
+
+local function chordAtStep(song, b, s)
+    local chords = barChords(song, b + math.floor(s / 16))
+    s = s % 16
+    for i = #chords, 1, -1 do
+        if s >= chords[i].s then return chords[i] end
+    end
+    return chords[1]
+end
+
+---------------------------------------------------------------------------------------------------
+-- The tune
+
+local function isChordTone(song, midi, chord)
+    local pc = midi % 12
+    for _, chordPc in ipairs(chordPcs(song, chord)) do
+        if chordPc == pc or (chordPc + 7) % 12 == pc and chordPc == (song.key + chord.degree) % 12 then return true end
+    end
+    return false
+end
+
+-- an avoid note: a semitone above a chord tone
+local function isAvoid(song, midi, chord)
+    return not isChordTone(song, midi, chord) and isChordTone(song, midi - 1, chord)
+end
+
+-- a semitone from a note the chord holds: fine for a passing 16th, not for a long note
+local function rubs(song, midi, chord)
+    local root = (song.key + chord.degree) % 12
+    for _, interval in ipairs(qualityOf(song, chord.quality)) do
+        local d = (midi - root - interval) % 12
+        if d == 1 or d == 11 then return true end
+    end
+    return false
+end
+
+local function snapChord(song, li, chord)
+    local ladder = song.ladder
+    for d = 0, 3 do
+        if ladder[li - d] and isChordTone(song, ladder[li - d], chord) then return li - d end
+        if ladder[li + d] and isChordTone(song, ladder[li + d], chord) then return li + d end
+    end
+    return li
+end
+
+local function inKey(song, midi)
+    local pc = (midi - song.key) % 12
+    return pc == 0 or pc == 2 or pc == 4 or pc == 5 or pc == 7 or pc == 9 or pc == 11
+end
+
+-- One phrase over four bars from bar b (the first of them): the motif stated over bars 1-2, bar 3
+-- breathes, bar 4 answers. Seeded by its place (section kind + which four bars), so it comes back
+-- the same every time that place does. Notes are { step 0..63, midi, vol, len in steps, grace }.
+local function buildPhrase(song, b)
+    local section, j = song.barSection[b], song.barIndex[b]
+    local slot = math.floor(j / 4)
+    local rnd = stream(song.seed, 5000 + (section.kind == 'B' and 100 or 0) + slot)
+    local notes = {}
+    if slot % 2 == 1 and rnd(100) < 30 then return notes end -- a phrase of space
+    local ladder = song.ladder
+    local function clampIndex(i) return math.max(1, math.min(#ladder, i)) end
+    local start = section.lastLadder
+    if slot == 0 or not start then start = song.hookStart[section.kind == 'B' and 'B' or 'A'] end
+    local invert, shift = section.kind == 'B', section.kind == 'B' and 2 or 0
+    local motif, x = song.motif, start
+    for i, step in ipairs(motif.steps) do
+        local s = step + shift
+        if s < 30 then
+            local group = motif.groups[i]
+            local first = i == 1 or motif.groups[i - 1] ~= group
+            if first then -- the cell's pitch anchors the group
+                local d = song.cellDegrees[group % #song.cellDegrees + 1]
+                x = start + (invert and -d or d)
+            else          -- inside a group: a scale step
+                x = x + (invert and -motif.dir[i] or motif.dir[i])
+            end
+            x = clampIndex(x)
+            local chord = chordAtStep(song, b, s)
+            if s % 8 == 0 or isAvoid(song, ladder[x], chord) then x = snapChord(song, x, chord) end
+            notes[#notes + 1] = { s = s, li = x, vol = first and 5 or 4 }
+        end
+    end
+    local at = #notes > 0 and notes[#notes].li or start
+    if slot % 3 == 2 and at > 1 then -- now and then a pickup into the answer's bar
+        local x2 = at - 1
+        local chord = chordAtStep(song, b, 31)
+        if isAvoid(song, ladder[x2], chord) then x2 = snapChord(song, x2, chord) end
+        notes[#notes + 1] = { s = 31, li = x2, vol = 3 }
+    end
+    local answer = lib.answers[rnd(#lib.answers) + 1]
+    for k, step in ipairs(answer) do
+        local s = 48 + step -- bar 4: bar 3 is the breath
+        local leap = rnd(100) < 75 and 1 or 2 -- answers mostly fall, mostly by step
+        at = clampIndex(at + (rnd(100) < 60 and -leap or leap))
+        local chord = chordAtStep(song, b, s)
+        if s % 8 == 0 or k == #answer or isAvoid(song, ladder[at], chord) then at = snapChord(song, at, chord) end
+        notes[#notes + 1] = { s = s, li = at, vol = k == #answer and 4 or 3 }
+    end
+    for _, note in ipairs(notes) do note.midi = ladder[note.li] end
+
+    -- passing tones: a third with room gives its second half to the key's scale step between
+    local out = {}
+    for k, note in ipairs(notes) do
+        out[#out + 1] = note
+        local nextNote = notes[k + 1]
+        if nextNote then
+            local iv, gap = nextNote.midi - note.midi, nextNote.s - note.s
+            if math.abs(iv) >= 3 and math.abs(iv) <= 4 and gap >= 2 and gap <= 8 and rnd(100) < 60 then
+                local dir = iv > 0 and 1 or -1
+                local p = note.midi + dir
+                if not inKey(song, p) then p = p + dir end
+                local s = note.s + math.floor(gap / 2)
+                local fits = p ~= nextNote.midi and inKey(song, p) and s % 8 ~= 0
+                if fits and not isAvoid(song, p, chordAtStep(song, b, s)) then
+                    out[#out + 1] = { s = s, li = note.li, midi = p, vol = math.max(2, note.vol - 1) }
+                end
+            end
+        end
+    end
+    notes = out
+
+    -- each note lasts to the next (the last rings); long notes keep off the chord's semitones;
+    -- a long note may get a quick scale neighbour flicked in just before it
+    for k, note in ipairs(notes) do
+        local nextS = notes[k + 1] and notes[k + 1].s or 64
+        note.len = math.min(nextS - note.s, notes[k + 1] and 6 or 10)
+        local chord = chordAtStep(song, b, note.s)
+        if note.len >= 2 and rubs(song, note.midi, chord) then
+            for d = 1, 2 do
+                local down, up = ladder[note.li - d], ladder[note.li + d]
+                if down and not rubs(song, down, chord) then note.midi = down break end
+                if up and not rubs(song, up, chord) then note.midi = up break end
+            end
+        end
+        if note.len * song.beat / 4 >= 0.3 and rnd(100) < 40 then
+            local dir = rnd(100) < 62 and 1 or -1
+            local grace = note.midi + dir
+            if not inKey(song, grace) then grace = grace + dir end
+            local previous = notes[k - 1]
+            if not previous or previous.s + previous.len <= note.s - 1 then note.grace = grace end
+        end
+    end
+    section.lastLadder = #notes > 0 and notes[#notes].li or section.lastLadder
+    return notes
+end
+
+---------------------------------------------------------------------------------------------------
+-- Booking a bar
+
+-- the audio time of 16th step s in a bar starting at t0, swung on the off-beat 8ths
+local function stepTime(song, t0, s)
+    local beat, sw = song.beat, song.swing
+    local r = s % 4
+    local off = r == 0 and 0 or r == 1 and sw * beat / 2 or r == 2 and sw * beat or sw * beat + (1 - sw) * beat / 2
+    return t0 + math.floor(s / 4) * beat + off
+end
+
+-- how long steps s..s+len last, in ms: on the swung grid, not in straight 16ths (a swung off-beat
+-- 8th is short, so a straight length rings into the next downbeat)
+local function lengthMs(song, s, len)
+    return (stepTime(song, 0, s + len) - stepTime(song, 0, s)) * 1000
+end
+
+-- every note goes through here; lib.trace(part, t, midi, vol, durMs), when set, sees them all
+-- (claudetools/render-music.lua counts rubs with it)
+local function play(synth, part, patch, t, midi, vol, durMs)
+    synth.scheduleAt(patch, t, midi, vol, durMs)
+    if lib.trace then lib.trace(part, t, midi, vol, durMs) end
+end
+
+-- the left hand (or the upright, with lane = 'musicBass') under one chord inside the bar
+local bassLines = {
+    -- root on 1 held a dotted quarter, the fifth on the and-of-2 held over 3
+    bossa = function(hit, chord, lo)
+        local root = inRange(chord.root, lo)
+        local fifth = chord.lydian and root or root + 7 -- the fifth would rub the raised fourth, the octave the seventh
+        if chord.s == 0 then hit(0, root, 4, 5) end
+        if chord.s <= 6 and chord.s + chord.len > 6 then hit(6, fifth, 3, 10) end
+        if chord.s == 8 then hit(8, root, 4, 8) end
+    end,
+    -- open fifths, bouncing: the fifth on 1 and 3, the fifth again on the and-of-2 and a half-step
+    -- walk into the next root on the and-of-4
+    guaraldi = function(hit, chord, lo, lastBar, nextRoot)
+        local root = inRange(chord.root, lo)
+        local function fifth(s, vol, len) hit(s, root, vol, len); hit(s, root + 7, vol - 1, len) end
+        local e = chord.s + chord.len
+        if chord.s == 0 then fifth(0, 5, 5) end
+        if chord.s <= 6 and e > 6 then hit(6, root + 7, 3, 2) end
+        if chord.s <= 8 and e > 8 then fifth(8, 4, 5) end
+        if e == 16 then
+            if lastBar and nextRoot and nextRoot ~= chord.root then
+                local target = inRange(nextRoot, lo)
+                hit(14, target + (target > root and -1 or 1), 3, 2)
+            else
+                hit(14, root + 7, 3, 2)
+            end
+        end
+    end,
+    hold = function(hit, chord, lo)
+        hit(chord.s, inRange(chord.root, lo), 5, chord.len)
+    end,
+}
+
+-- the drums for one bar: hit(step, patch, midi, vol, durMs); section = 'A' / 'B' / 'outro'
+local drumKits = {
+    bossa = function(hit, _, kind, j, fill)
+        hit(0, 'kick', 36, 4, 150)
+        hit(6, 'kick', 36, 3, 150)
+        for s = 0, 14, 2 do hit(s, 'shaker', 84, s % 4 == 2 and 3 or 2, 40) end -- the off-beats lean
+        if kind == 'B' then -- the cross-stick on the clave joins in B
+            local clave = j % 2 == 0 and { 0, 6, 12 } or { 4, 10 }
+            for _, s in ipairs(clave) do hit(s, 'rim', 79, 4, 40) end
+        end
+        if fill then
+            hit(12, 'rim', 79, 3, 40); hit(14, 'rim', 79, 4, 40); hit(15, 'rim', 79, 3, 40)
+            hit(14, 'kick', 36, 3, 150)
+        end
+    end,
+    -- cocktail.c's brushes: the hat snaps 2 and 4, the sweep every other bar, a feathered kick;
+    -- in B the ride carries the time, ding ding-ga ding
+    brushes = function(hit, rnd, kind, j, fill)
+        hit(4, 'hat', 60, 3, 40)
+        hit(12, 'hat', 60, 3, 40)
+        if j % 2 == 0 then hit(0, 'brush', 70, 2, 900) end
+        for s = 0, 12, 4 do
+            if rnd(100) < 30 then hit(s, 'kick', 33, 3, 60) end
+        end
+        if kind == 'B' or fill then
+            for s = 0, 12, 4 do hit(s, 'ride', 81, s % 8 == 0 and 3 or 2, 220) end
+            hit(6, 'ride', 81, 2, 120)
+            hit(14, 'ride', 81, 2, 120)
+        end
+        if fill then hit(10, 'ride', 81, 3, 120); hit(14, 'kick', 33, 3, 60) end
+    end,
+}
+
+local function bookBar(synth, t0, song, b)
+    local style = lib.styles[song.style]
+    local section, j = song.barSection[b], song.barIndex[b]
+    local roles = section.roles
+    local band = bandPlays()
+    local rnd = stream(song.seed, 1000 + b)
+    local chords = barChords(song, b)
+    local nextChords = b < song.bars and barChords(song, b + 1) or nil
+    for _, chord in ipairs(chords) do
+        chord.root = (song.key + chord.degree) % 12
+        chord.lydian = song.lydian and chord.quality == 'maj9'
+    end
+    local keysPatch = style.keys
+
+    for _, chord in ipairs(chords) do
+        table.insert(M.booked, { at = stepTime(song, t0, chord.s), pcs = chordPcs(song, chord) })
+        if #M.booked > 4 then table.remove(M.booked, 1) end
+    end
+
+    -- the keys: the comp cell clipped to the chords, held chords in the intro and outro, the push
+    local hits, sidestepAt = {}, nil
+    local pushedInto = b > 1 and song.pushed and song.pushed[b - 1]
+    local pushes = roles.keys == 'comp' and song.push[b] and nextChords
+        and song.barSection[b + 1].roles.keys == 'comp'
+        and (nextChords[1].degree ~= chords[#chords].degree or nextChords[1].quality ~= chords[#chords].quality)
+    if roles.keys == 'hold' or (roles.keys == 'outro' and j < 2) then
+        for _, chord in ipairs(chords) do hits[#hits + 1] = { s = chord.s, len = chord.len, vol = 4, chord = chord } end
+    elseif roles.keys == 'outro' then
+        if j == 2 then hits[1] = { s = 0, len = (section.bars - 2) * 16, vol = 4, chord = chords[1], ring = true } end
+    else
+        local cell = style.comps[song.comp[b - j % 2] or 1]
+        local half = (j % 2) * 16
+        for _, chord in ipairs(chords) do
+            local c0, c1, own = chord.s, chord.s + chord.len, 0
+            for _, h in ipairs(cell) do
+                local s = h[1] - half
+                if s >= c0 and s < c1 and not (pushedInto and s == 0) and not (pushes and s >= 14) then
+                    own = own + 1
+                    hits[#hits + 1] = { s = s, len = math.min(h[2], c1 - s), vol = h[3], chord = chord,
+                                        light = rnd(100) < 30 }
+                end
+            end
+            if own == 0 and not (pushedInto and c0 == 0) then -- a change always sounds
+                hits[#hits + 1] = { s = c0, len = math.min(4, c1 - c0), vol = 4, chord = chord }
+            end
+        end
+        if pushes then -- anticipate: the next chord on the and-of-4, the next bar skips its downbeat
+            local nextChord = nextChords[1]
+            nextChord.root = (song.key + nextChord.degree) % 12
+            hits[#hits + 1] = { s = 14, len = 2 + math.min(nextChord.len, 6), vol = 4, chord = nextChord }
+            song.pushed = song.pushed or {}
+            song.pushed[b] = true
+        elseif nextChords and style.sidestepOdds and rnd(100) < style.sidestepOdds
+            and nextChords[1].degree ~= chords[#chords].degree then
+            -- the side-step: the bar's last stab is the next chord a half-step high, sliding into it
+            local last = hits[#hits]
+            if last and last.s >= 8 then last.sidestep, sidestepAt = nextChords[1], last.s end
+        end
+    end
+    table.sort(hits, function(a, c) return a.s < c.s end)
+    for _, h in ipairs(hits) do
+        local chord = h.sidestep or h.chord
+        local root = (song.key + chord.degree) % 12
+        local voicing = voiceChord(root, qualityOf(song, chord.quality), 48, 76, M.voicing)
+        if not h.sidestep then M.voicing = voicing end
+        local t = stepTime(song, t0, h.s) + humanize(0.005)
+        local strum = (style.strumMs or 8) / 1000
+        for k = h.light and 2 or 1, #voicing do
+            local note = voicing[k] + (h.sidestep and 1 or 0)
+            local vol = (k == #voicing) and h.vol + 1 or h.vol
+            local dur = lengthMs(song, h.s, h.len) * (h.ring and 1 or 0.9)
+            play(synth, 'keys', keysPatch, t + (k - 1) * strum, note, math.min(7, vol), dur)
+        end
+    end
+
+    -- the bass: the left hand, or the upright when the band plays with it; the outro's last bar rests
+    local upright = band and lib.upright and roles.drums ~= 'none'
+    local bassPatch = upright and 'musicBass' or keysPatch
+    local lo = upright and 34 or (style.bass == 'guaraldi' and 38 or 40)
+    local bassLine = bassLines[style.bass] or bassLines.hold
+        if section.kind == 'outro' and j == 2 then
+        play(synth, 'bass', bassPatch, t0, inRange(chords[1].root, lo), 5, lengthMs(song, 0, 32))
+    elseif not (section.kind == 'outro' and j > 2) then
+        local stop = pushes and 14 or sidestepAt or 16 -- the bass lets go when the next chord comes in early
+        local function hit(s, midi, vol, len)
+            len = math.min(len, stop - s)
+            if len <= 0 then return end
+            local t = stepTime(song, t0, s) + humanize(0.004)
+            play(synth, 'bass', bassPatch, t, midi, vol, lengthMs(song, s, len) * 0.95)
+        end
+        local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
+        for _, chord in ipairs(chords) do
+            bassLine(hit, chord, lo, chord.s + chord.len == 16, nextRoot)
+        end
+    end
+
+    -- the drums, where the form and the play let them
+    local kit = style.drums and drumKits[style.drums]
+    local drums = roles.drums == 'full' or (roles.drums == 'outro' and j < 2)
+    if kit and band and drums then
+        local function hit(s, patch, midi, vol, dur)
+            local drag = (style.swing > 0.5 and s % 8 == 4) and 0.008 or 0 -- the backbeat lays back a hair
+            play(synth, 'drums', patch, stepTime(song, t0, s) + drag + humanize(0.003), midi, vol, dur)
+        end
+        kit(hit, rnd, section.kind, j, song.fill[b])
+    end
+
+    -- the tune
+    if lib.melody and roles.lead then
+        local phraseBar = b - j % 4
+        if song.phraseBar ~= phraseBar then song.phrase, song.phraseBar = buildPhrase(song, phraseBar), phraseBar end
+        local patch = lib.melodyPatch or style.lead
+        local barInPhrase = j % 4
+        for _, note in ipairs(song.phrase) do
+            if math.floor(note.s / 16) == barInPhrase then
+                local t = stepTime(song, t0, note.s % 16) + humanize(0.003)
+                if note.grace then play(synth, 'lead', patch, t - 0.05, note.grace, math.max(1, note.vol - 2), 45) end
+                play(synth, 'lead', patch, t, note.midi, note.vol, lengthMs(song, note.s % 16, note.len) * 0.9)
+            end
+        end
+    end
+end
+
+-- Books the next bar at audio time t0; returns its length in seconds. Past the song's last bar:
+-- one bar's breath (in a set), then the next song.
+local function bookNext(synth, t0)
+    local song = M.song
+    local wrongStyle = song and ((lib.style ~= 'set' and song.style ~= lib.style)
+        or (lib.style == 'set' and not (function()
+            for _, name in ipairs(lib.set) do if name == song.style then return true end end
+            return false
+        end)()))
+    if not song or wrongStyle then
+        M.song = planSong()
+        song = M.song
+    elseif song.bar >= song.bars then
+        if lib.style == 'set' and not song.breathed then
+            song.breathed = true
+            return song.barLength
+        end
+        M.song = planSong()
+        song = M.song
+    end
+    song.bar = song.bar + 1
+    bookBar(synth, t0, song, song.bar)
+    return song.barLength
 end
 
 -- The notes from lo to hi (MIDI) that belong to the chord sounding right now, low to high, so
@@ -373,6 +784,14 @@ function lib.chordNotes(lo, hi)
     return #notes > 0 and notes or nil
 end
 
+-- what is playing, for a console or a HUD: style, key, section
+function lib.nowPlaying()
+    local song = M.song
+    if not song then return nil end
+    local section = song.barSection[math.max(1, math.min(song.bars, song.bar))]
+    return { style = song.style, key = song.key, section = section and section.kind, bar = song.bar, bars = song.bars }
+end
+
 function lib.update(synth, now)
     if M.lastNow then M.activity = M.activity * 0.5 ^ ((now - M.lastNow) / lib.activityHalfLife) end
     M.lastNow = now
@@ -381,9 +800,9 @@ function lib.update(synth, now)
     if not t then return end
     M.audioTime = t
     -- first call, or back from a pause: start fresh a moment from now
-    if not M.chordAt or M.chordAt < t then M.chordAt = t + 0.2 end
-    while M.chordAt < t + lib.lookahead do
-        M.chordAt = M.chordAt + bookChord(synth, M.chordAt)
+    if not M.barAt or M.barAt < t then M.barAt = t + 0.2 end
+    while M.barAt < t + lib.lookahead do
+        M.barAt = M.barAt + bookNext(synth, M.barAt)
     end
 end
 
