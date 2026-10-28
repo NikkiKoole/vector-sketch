@@ -82,6 +82,26 @@ describe('inspector', function()
         return joint
     end
 
+    it('body panel: changing the width while it draws does not touch the destroyed body', function()
+        -- a size change rebuilds the body inside the same thing; the panel used to
+        -- go on with the old body and crash ("Attempt to use destroyed body")
+        local bodyEditor = require('src.ui.body-editor')
+        local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 50, height = 50 })
+        state.selection.selectedObj = thing
+        local oldBody = thing.body
+        local slider = ui.sliderWithInput
+        ui.sliderWithInput = function(id, ...)
+            local v = slider(id, ...)
+            if id:find('width$') then return 120 end
+            return v
+        end
+        local ok, err = renderToCanvas(function() bodyEditor.drawUpdateSelectedObjectUI() end)
+        ui.sliderWithInput = slider
+        assert.is_true(ok, tostring(err))
+        assert.is_true(oldBody:isDestroyed())
+        assert.are.equal(120, thing.width)
+    end)
+
     it('body: label comes first, clone selects the copy, destroy removes the body', function()
         assert.are.equal('label', bodyParams.rows[1].key)
         local byLabel = {}

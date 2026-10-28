@@ -135,7 +135,10 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
             if thing then
                 local used, replaced = inspector.drawParams('body_' .. tostring(myID), bodyParams.rows, thing, body,
                     x, y, 270)
-                if replaced then return end -- rebuilt or flipped: the new thing draws next frame
+                -- rebuilt or flipped: the new thing draws next frame. A size change rebuilds
+                -- the body inside the same thing (thing.body is new), so check the body too:
+                -- going on with the old, destroyed one crashed on width changes.
+                if replaced or body:isDestroyed() then return end
                 layout.curY = y + used
                 nextRow()
             end
