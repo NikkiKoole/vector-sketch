@@ -12,6 +12,12 @@ lib.maxAlpha = 1000
 -- 0.45 the legs settle by themselves; a 15 deg band let heavy Mipos sag into
 -- repeated hops (spec/standing_spec.lua).
 lib.legDeadband = 0
+
+-- Gains per Mipo part, over the kp saved in each part's KEEP_ANGLE (so saved
+-- Mipos get them too). How firmly a Mipo stands: a higher kp leaves less lean.
+-- Legs 40 -> 70 (standing measure, chaotic, several runs: lean ~20 -> ~12 deg,
+-- feet flatter, unsettled 2-3/12 -> 1-2/12). A stronger torso (40) didn't help.
+lib.partKp = { luleg = 70, ruleg = 70, llleg = 70, rlleg = 70 }
 local deadbandParts = { luleg = true, ruleg = true, llleg = true, rlleg = true }
 
 -- Touching another Mipo (props and floors are fine).
@@ -49,7 +55,7 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
 
     -- Tunables (or read from data)
 
-    local kp = (data and data.kp) or 20.0    -- P gain (1/s)  --was 8
+    local kp = (partName and lib.partKp[partName]) or (data and data.kp) or 20.0 -- P gain (1/s)  --was 8
     local kd = (data and data.kd) or .000015 -- D gain (unitless) -- was 1.5
     local maxOmega = (data and data.maxOmega) or 15.0
 
