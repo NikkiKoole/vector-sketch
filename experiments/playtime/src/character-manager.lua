@@ -1339,6 +1339,11 @@ lib.armRange = {
 -- feet got locked upside down (ankle references of 179 / -111 deg); keep-angle
 -- then fought the limits at full spin (shaking, noise). Convert the DNA limits
 -- with the actual reference angle.
+-- Ankles: how far a foot may tip either way from in line with the shin, for
+-- every Mipo (overrides the DNA, like armRange). The DNA's +-22.5 deg with the
+-- shins held straight (keep-angle) pinned feet at a limit: stiff, flat feet.
+lib.ankleRange = 45 -- degrees
+
 local restPoseParts = {
     luleg = true, ruleg = true, llleg = true, rlleg = true,
     lfoot = true, rfoot = true, lhand = true, rhand = true, lear = true, rear = true,
@@ -1351,7 +1356,11 @@ local function applyLegLimits(instance, joint, partName)
     if not (limits and limits.low and limits.up) then return end
     local rest = partDNA.stanceAngle or 0
     local ref = joint:getReferenceAngle()
-    joint:setLimits(rest + limits.low - ref, rest + limits.up - ref)
+    local low, up = limits.low, limits.up
+    if partName == 'lfoot' or partName == 'rfoot' then
+        low, up = -math.rad(lib.ankleRange), math.rad(lib.ankleRange)
+    end
+    joint:setLimits(rest + low - ref, rest + up - ref)
     joint:setLimitsEnabled(true)
 end
 
