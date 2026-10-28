@@ -27,8 +27,6 @@ state.interaction = { -- State directly related to ongoing user actions
 }
 
 state.panelVisibility = {
-    addShapeOpened = false,
-    addJointOpened = false,
     worldSettingsOpened = false,
     recordingPanelOpened = false,
     saveDialogOpened = false,

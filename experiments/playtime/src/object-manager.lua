@@ -699,6 +699,9 @@ function lib.destroyBody(body)
     body:destroy()
 end
 
+-- Clone a body x10 below itself, chained with revolute joints. Parked (2026-10-28):
+-- no button since the add-shape panel went; the PICK_AUTO_ROPIFY mode still works.
+-- If we miss it: a 'chain x 10' button next to clone in the body panel.
 function lib.autoRopify(ud)
     if not ud.thing or not ud.thing.body then
         logger:error("autoRopify: Invalid 'thing' provided.")

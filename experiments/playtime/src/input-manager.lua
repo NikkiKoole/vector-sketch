@@ -504,8 +504,6 @@ local function handlePointer(x, y, id, action, button)
                 -- todo this is dumb..
                 state.panelVisibility.addBehavior = false
                 state.panelVisibility.customBehavior = false
-                state.panelVisibility.addJointOpened = false
-                state.panelVisibility.addShapeOpened = false
                 state.panelVisibility.bgSettingsOpened = false
                 state.panelVisibility.worldSettingsOpened = false
                 state.panelVisibility.recordingPanelOpened = false

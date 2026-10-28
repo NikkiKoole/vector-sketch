@@ -106,7 +106,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 
 **UI:**
 - `src/playtime-ui.lua` — editor UI orchestrator (~648 lines)
-- `src/ui/` — extracted UI panels: all.lua, textinput.lua, body-editor.lua, sfixture-editor.lua, joint-update.lua, world-settings.lua, shape-panel.lua, recording-panel.lua
+- `src/ui/` — extracted UI panels: all.lua, textinput.lua, body-editor.lua, sfixture-editor.lua, joint-update.lua, world-settings.lua, tool-rail.lua (left rail: shape/draw/joint/attach/mipo), right-column.lua, library-tab.lua, on-stage.lua, recording-panel.lua
 
 **Physics & rendering:**
 - `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)

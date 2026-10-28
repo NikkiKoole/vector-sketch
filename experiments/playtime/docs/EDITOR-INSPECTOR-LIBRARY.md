@@ -51,11 +51,11 @@ mockups). Nikki's pick, not E's bottom strip:
 attach, mipo). The button reuses the group's last pick; a small ▸ tab next to it reopens a flyout
 with the whole group in **two columns**, with small section headers (shape: basics / more; joint:
 common / more; attach: play / looks / skin). Toys become built-in library items. auto-ropify
-(clone x10 + chain with revolute joints) is parked: button commented out in `shape-panel.lua`,
+(clone x10 + chain with revolute joints) is parked: no button (the add-shape panel is gone),
 function and mode kept; if missed, it becomes 'chain x 10' next to clone in the body panel.
 Toys (2026-10-28): the library tab has two shelves, `toys | mine`. Toys are the built-in
 `src/toys.lua` recipes (code, always there, can't be deleted); mine are the saved prefabs.
-The old add-shape panel's toy box uses the same list until that panel goes. Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
+The old 'add shape' / 'add joint' panels are deleted (2026-10-28): the rail + library cover them. Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
 icons drawn from the shape), old add panels still there. Spec: `spec/tool-rail_spec.lua`.
 
 Order: (a) right column with the three tabs, properties first (move today's panels in); (b) the

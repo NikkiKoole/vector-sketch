@@ -23,7 +23,6 @@ local SE = require('src.script-events')
 local behaviors = require 'src.behaviors'
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
-local uiShapePanel = require('src.ui.shape-panel')
 local uiRecordingPanel = require('src.ui.recording-panel')
 local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
@@ -74,39 +73,6 @@ function lib.drawJointCreateUI(panelX, panelY, w, h)
 end
 
 function lib.drawJointUpdateUI(...) return uiJointUpdate.drawJointUpdateUI(...) end
-
-function lib.drawAddShapeUI(...) return uiShapePanel.drawAddShapeUI(...) end
-
-function lib.drawAddJointUI()
-    local JT = require 'src.joint-types'
-    local jointTypes = { JT.DISTANCE, JT.WELD, JT.ROPE, JT.REVOLUTE, JT.WHEEL, JT.MOTOR, JT.PRISMATIC, JT.PULLEY,
-        JT.FRICTION }
-    local startX = 230
-    local startY = 70
-    local panelWidth = 200
-    local buttonSpacing = BUTTON_SPACING
-    local buttonHeight = ui.theme.button.height
-    local panelHeight = (#jointTypes * (buttonHeight + BUTTON_SPACING) + BUTTON_SPACING)
-
-    ui.panel(startX, startY, panelWidth, panelHeight, '', function()
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = buttonSpacing,
-            startX = startX + BUTTON_SPACING,
-            startY = startY + BUTTON_SPACING
-        })
-        for _, joint in ipairs(jointTypes) do
-            local width = panelWidth - 20
-            local height = buttonHeight
-            local x, y = ui.nextLayoutPosition(layout, width, height)
-            local jointStarted = ui.button(x, y, width, joint)
-            if jointStarted then
-                state.jointParams = { body1 = nil, body2 = nil, jointType = joint }
-                modes.set(modes.JOINT_CREATION)
-            end
-        end
-    end)
-end
 
 function lib.drawRecordingUI(...) return uiRecordingPanel.drawRecordingUI(...) end
 function lib.drawWorldSettingsUI(...) return uiWorldSettings.drawWorldSettingsUI(...) end
@@ -277,7 +243,7 @@ function lib.drawUI()
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
     love.graphics.setColor(1, 1, 1)
 
-    -- drawn first so the old add-shape/add-joint panels still sit on top while both exist
+    -- the left tool rail: shapes, draw, joints, attach, mipos (toys are on the library tab)
     toolRail.draw()
 
     -- Top toolbar flows left→right; each button advances the cursor, so
@@ -288,22 +254,6 @@ function lib.drawUI()
         local clicked = ui.button(toolbarX, 20, width, label)
         toolbarX = toolbarX + width + 10
         return clicked
-    end
-
-    if toolbarButton(200, 'add shape') then
-        state.panelVisibility.addShapeOpened = not state.panelVisibility.addShapeOpened
-    end
-
-    if state.panelVisibility.addShapeOpened then
-        lib.drawAddShapeUI()
-    end
-
-    if toolbarButton(200, 'add joint') then
-        state.panelVisibility.addJointOpened = not state.panelVisibility.addJointOpened
-    end
-
-    if state.panelVisibility.addJointOpened then
-        lib.drawAddJointUI()
     end
 
     if toolbarButton(120, 'settings') then

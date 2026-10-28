@@ -84,8 +84,6 @@ local function resetInteractionState()
     state.panelVisibility.showPalette = false
     state.panelVisibility.addBehavior = false
     state.panelVisibility.customBehavior = false
-    state.panelVisibility.addJointOpened = false
-    state.panelVisibility.addShapeOpened = false
     state.panelVisibility.bgSettingsOpened = false
     state.panelVisibility.worldSettingsOpened = false
     state.panelVisibility.recordingPanelOpened = false
@@ -464,15 +462,11 @@ describe("input-manager: handlePointer mode dispatch", function()
         end)
 
         it("clears panel visibility on miss", function()
-            state.panelVisibility.addShapeOpened = true
-            state.panelVisibility.addJointOpened = true
             state.panelVisibility.worldSettingsOpened = true
 
             press(EMPTY_SX, EMPTY_SY)
             release(EMPTY_SX, EMPTY_SY)
 
-            assert.is_false(state.panelVisibility.addShapeOpened)
-            assert.is_false(state.panelVisibility.addJointOpened)
             assert.is_false(state.panelVisibility.worldSettingsOpened)
         end)
     end)

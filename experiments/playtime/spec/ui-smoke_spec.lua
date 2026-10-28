@@ -63,8 +63,6 @@ describe("UI smoke tests", function()
         state.selection.selectedBodies = nil
 
         -- Clear all panel visibility
-        state.panelVisibility.addShapeOpened = false
-        state.panelVisibility.addJointOpened = false
         state.panelVisibility.worldSettingsOpened = false
         state.panelVisibility.bgSettingsOpened = false
         state.panelVisibility.recordingPanelOpened = false
@@ -123,20 +121,16 @@ describe("UI smoke tests", function()
         assert.is_true(ok, "drawUI base failed: " .. tostring(err))
     end)
 
-    it("drawAddShapeUI renders", function()
-        state.panelVisibility.addShapeOpened = true
-        local ok, err = renderToCanvas(function()
-            playtimeui.drawUI()
-        end)
-        assert.is_true(ok, "drawAddShapeUI failed: " .. tostring(err))
-    end)
-
-    it("drawAddJointUI renders", function()
-        state.panelVisibility.addJointOpened = true
-        local ok, err = renderToCanvas(function()
-            playtimeui.drawUI()
-        end)
-        assert.is_true(ok, "drawAddJointUI failed: " .. tostring(err))
+    it("every tool rail flyout renders", function()
+        local toolRail = require('src.ui.tool-rail')
+        for _, group in ipairs(toolRail.groups) do
+            state.toolRail.open = group.key
+            local ok, err = renderToCanvas(function()
+                playtimeui.drawUI()
+            end)
+            assert.is_true(ok, group.key .. " flyout failed: " .. tostring(err))
+        end
+        state.toolRail.open = nil
     end)
 
     it("drawWorldSettingsUI renders", function()
@@ -344,7 +338,7 @@ describe("UI smoke tests", function()
     -- === Combined panels (stress test) ===
 
     it("multiple panels open simultaneously", function()
-        state.panelVisibility.addShapeOpened = true
+        state.toolRail.open = 'shape'
         state.panelVisibility.worldSettingsOpened = true
         state.panelVisibility.recordingPanelOpened = true
         local ok, err = renderToCanvas(function()
@@ -356,12 +350,12 @@ describe("UI smoke tests", function()
     it("body panel with all toolbar panels open", function()
         local thing = createBody(world, 'rectangle')
         state.selection.selectedObj = thing
-        state.panelVisibility.addShapeOpened = true
-        state.panelVisibility.addJointOpened = true
+        state.toolRail.open = 'attach'
         state.panelVisibility.worldSettingsOpened = true
         local ok, err = renderToCanvas(function()
             playtimeui.drawUI()
         end)
+        state.toolRail.open = nil
         assert.is_true(ok, "body + toolbars failed: " .. tostring(err))
     end)
 end)
