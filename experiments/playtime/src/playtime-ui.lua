@@ -16,10 +16,7 @@ local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 
 local state = require 'src.state'
 local modes = require 'src.modes'
-local script = require 'src.script'
-local sceneLoader = require 'src.scene-loader'
 local subtypes = require 'src.subtypes'
-local SE = require('src.script-events')
 local behaviors = require 'src.behaviors'
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
@@ -192,43 +189,14 @@ function lib.drawUI()
     -- the left tool rail: shapes, draw, joints, attach, mipos (toys are on the library tab)
     toolRail.draw()
 
-    -- Top toolbar flows left→right; each button advances the cursor, so
-    -- adding/resizing buttons no longer means recomputing absolute x's.
-    local toolbarX = 20
-    local function toolbarButton(width, label)
-        width = math.floor(width * ui.theme.toolbarScale)
-        local clicked = ui.button(toolbarX, 20, width, label)
-        toolbarX = toolbarX + width + 10
-        return clicked
-    end
-
     -- settings (world, backdrops, music) opens from the rail's settings button
     if state.panelVisibility.worldSettingsOpened then
         lib.drawWorldSettingsUI()
     end
-
-    if toolbarButton(150, state.world.paused and 'play' or 'pause') then
-        state.world.paused = not state.world.paused
-    end
-
-    if toolbarButton(150, state.world.isRecordingPointers and 'recording' or 'record') then
-        state.panelVisibility.recordingPanelOpened = not state.panelVisibility.recordingPanelOpened
-        -- state.world.isRecordingPointers = not state.world.isRecordingPointers
-    end
+    -- play / record / restart script live on the rail's play button
     if state.panelVisibility.recordingPanelOpened then
         lib.drawRecordingUI()
     end
-
-    if state.scene.sceneScript and state.scene.sceneScript.onStart then
-        if toolbarButton(50, 'R') then
-            -- todo actually reread the file itself!
-            sceneLoader.loadAndRunScript(state.scene.scriptPath)
-            script.call(SE.ON_START) --state.scene.sceneScript.onStart()
-        end
-    end
-
-
-
 
     if modes.is(modes.PICK_AUTO_ROPIFY) then
         local panelWidth = PANEL_WIDTH

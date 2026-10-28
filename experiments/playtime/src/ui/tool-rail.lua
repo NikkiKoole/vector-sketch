@@ -4,6 +4,8 @@
 -- works by press-drag-release (shapes: drag one out; attach: drop an sfixture on a
 -- body; mipo: drag one out) or starts a mode on click (joints: then click body A
 -- and body B; draw: draw on the stage). Clicking an active mode's button again ends it.
+-- Play is the odd one: its button plays/pauses and its flyout holds one-off actions
+-- (record, restart the scene script), not picks. Settings is a plain button.
 -- Picks and the open flyout live on state.toolRail so they survive hot reloads.
 local lib = {}
 
@@ -18,6 +20,9 @@ local modes = require('src.modes')
 local fixtures = require('src.fixtures')
 local mathutils = require('src.math-utils')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local sceneLoader = require('src.scene-loader')
+local script = require('src.script')
+local SE = require('src.script-events')
 
 local RAIL_X = 10
 local RAIL_TOP = 60
@@ -159,7 +164,38 @@ local function drawDrawOptions(x, y, w)
     end
 end
 
+local function hasStartScript()
+    return state.scene.sceneScript and state.scene.sceneScript.onStart
+end
+
+local function playAction(item)
+    if item == 'record' then
+        local pv = state.panelVisibility
+        pv.recordingPanelOpened = not pv.recordingPanelOpened
+    elseif item == 'restart script' then
+        -- todo actually reread the file itself!
+        sceneLoader.loadAndRunScript(state.scene.scriptPath)
+        script.call(SE.ON_START)
+    end
+end
+
 lib.groups = {
+    {
+        key = 'play',
+        sections = function()
+            local items = { 'record' }
+            if hasStartScript() then items[#items + 1] = 'restart script' end
+            return { items }
+        end,
+        onClick = function() state.world.paused = not state.world.paused end,
+        onAction = playAction,
+        icon = function() return state.world.paused and 'play' or 'pause' end,
+        labelOf = function(item)
+            if item == 'record' and state.world.isRecordingPointers then return 'recording' end
+            if item == 'restart script' then return 'restart' end
+            return item
+        end,
+    },
     {
         key = 'shape',
         default = ST.RECTANGLE,
@@ -233,9 +269,16 @@ lib.groups = {
     },
 }
 
+-- A group's sections: a list, or a function that returns one (play's depend on the scene).
+function lib.sectionsOf(group)
+    local sections = group.sections
+    if type(sections) == 'function' then sections = sections() end
+    return sections
+end
+
 function lib.groupOf(item)
     for _, group in ipairs(lib.groups) do
-        for _, section in ipairs(group.sections or {}) do
+        for _, section in ipairs(lib.sectionsOf(group) or {}) do
             for _, it in ipairs(section) do
                 if it == item then return group.key end
             end
@@ -320,6 +363,11 @@ local function drawIcon(item, cx, cy, r)
         local pts = { cx - r, cy + r * 0.6, cx - r * 0.2, cy - r, cx + r, cy + r * 0.2 }
         lg.polygon('line', pts)
         for i = 1, #pts, 2 do lg.circle('fill', pts[i], pts[i + 1], r * 0.18) end
+    elseif item == 'play' then
+        lg.polygon('fill', cx - r * 0.5, cy - r * 0.7, cx - r * 0.5, cy + r * 0.7, cx + r * 0.7, cy)
+    elseif item == 'pause' then
+        lg.rectangle('fill', cx - r * 0.55, cy - r * 0.7, r * 0.4, r * 1.4)
+        lg.rectangle('fill', cx + r * 0.15, cy - r * 0.7, r * 0.4, r * 1.4)
     elseif item == 'settings' then
         for i = 0, 7 do
             local a = i * math.pi / 4
@@ -347,7 +395,7 @@ end
 function lib.flyoutSize(group)
     local gap = ui.theme.spacing
     local h = gap
-    for _, section in ipairs(group.sections) do
+    for _, section in ipairs(lib.sectionsOf(group)) do
         if section.title then h = h + ui.theme.lineHeight + gap end
         h = h + math.ceil(#section / 2) * (ui.theme.button.height + gap)
     end
@@ -362,7 +410,7 @@ local function drawFlyout(group, x, y)
     flyoutRect = { x = x, y = y, w = w, h = h }
     ui.panel(x, y, w, h, nil, function()
         local cy = y + gap
-        for _, section in ipairs(group.sections) do
+        for _, section in ipairs(lib.sectionsOf(group)) do
             if section.title then
                 ui.label(x + gap, cy, '— ' .. section.title)
                 cy = cy + ui.theme.lineHeight + gap
@@ -370,9 +418,9 @@ local function drawFlyout(group, x, y)
             for i, item in ipairs(section) do
                 local column = (i - 1) % 2
                 local bx = x + gap + column * (COLUMN + gap)
-                local fill = item == lib.lastPick(group) and ui.theme.header.active or nil
-                local clicked, pressed, released = ui.button(bx, cy, COLUMN, lib.SHORT_NAMES[item] or item, nil,
-                    fill)
+                local fill = not group.onAction and item == lib.lastPick(group) and ui.theme.header.active or nil
+                local label = group.labelOf and group.labelOf(item) or lib.SHORT_NAMES[item] or item
+                local clicked, pressed, released = ui.button(bx, cy, COLUMN, label, nil, fill)
                 if pressed and group.onPress then
                     rs.last[group.key] = item
                     group.onPress(item)
@@ -381,7 +429,9 @@ local function drawFlyout(group, x, y)
                     rs.open = nil
                     if group.onRelease then group.onRelease(item) end
                 end
-                if clicked and group.onClick then
+                if clicked and group.onAction then
+                    group.onAction(item)
+                elseif clicked and group.onClick then
                     rs.last[group.key] = item
                     group.onClick(item)
                 end
@@ -415,8 +465,8 @@ function lib.draw()
             local active = group.isActive and group.isActive()
             local clicked, pressed, released = ui.button(x, y, BUTTON, '', BUTTON,
                 active and ui.theme.header.active or nil)
-            drawIcon(group.sections and lib.lastPick(group) or group.key, x + BUTTON / 2, y + BUTTON / 2,
-                BUTTON * 0.3)
+            local icon = group.icon and group.icon() or (group.sections and lib.lastPick(group)) or group.key
+            drawIcon(icon, x + BUTTON / 2, y + BUTTON / 2, BUTTON * 0.3)
             if group.onPress then
                 if pressed then group.onPress(lib.lastPick(group)) end
                 if released and group.onRelease then group.onRelease(lib.lastPick(group)) end

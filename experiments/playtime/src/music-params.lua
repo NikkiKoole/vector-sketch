@@ -5,6 +5,7 @@
 local lib = {}
 
 local function music() return require('src.music') end
+local function synth() return require('src.synth') end
 
 local function field(key, label, kind, options, advanced)
     return { key = label, kind = kind, options = options, advanced = advanced,
@@ -20,6 +21,10 @@ lib.rows = {
             if not now then return 'starts soon' end
             return now.style .. ' · ' .. tostring(now.section or '') .. ' · bar ' .. now.bar .. '/' .. now.bars
         end },
+    -- all sound, not just the music: it scales every synth patch
+    { key = 'volume', kind = 'number', min = 0, max = 1,
+        get = function() return synth().volume end,
+        set = function(_, v) synth().setVolume(v) end },
     field('enabled', 'music', 'bool'),
     field('melody', 'melody', 'bool'),
     field('style', 'style', 'choice', { 'set', 'bossa', 'guaraldi', 'ballad' }),

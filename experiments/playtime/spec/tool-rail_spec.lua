@@ -5,7 +5,8 @@
 -- leaves no body behind. The joint button starts picking bodies for its last
 -- pick; clicking it again cancels. Attach drops an sfixture on the body under
 -- the mouse, and nothing when let go over the rail. Draw toggles its mode; a
--- Mipo dropped back on the rail is taken back. Settings is a plain button.
+-- Mipo dropped back on the rail is taken back. Settings is a plain button; play
+-- plays/pauses and its flyout runs actions without becoming a pick.
 -- Run with: love . --specs spec/tool-rail_spec.lua
 
 if not love then return end
@@ -58,7 +59,7 @@ describe('tool rail', function()
 
     -- rail geometry, mirrored from tool-rail.lua (button 56 + tab 18 at x 10, y 60)
     local gap = ui.theme.spacing
-    local buttonX, buttonY = 10 + gap + 28, 60 + gap + 28
+    local buttonX = 10 + gap + 28
     local tabX = 10 + gap + 56 + 9
 
     local function groupIndex(key)
@@ -69,6 +70,7 @@ describe('tool rail', function()
     -- top and middle of a group's rail button
     local function groupTop(key) return 60 + gap + (groupIndex(key) - 1) * (56 + gap) end
     local function groupY(key) return groupTop(key) + 28 end
+    local buttonY = groupY('shape')
 
     local function countBodies()
         local n = 0
@@ -91,7 +93,7 @@ describe('tool rail', function()
     end)
 
     it('the rail button reuses the default pick and a click without a drag leaves nothing', function()
-        assert.are.equal('rectangle', toolRail.lastPick(toolRail.groups[1]))
+        assert.are.equal('rectangle', toolRail.lastPick(toolRail.groups[groupIndex('shape')]))
         local before = countBodies()
         click(buttonX, buttonY)
         assert.are.equal(before, countBodies())
@@ -102,10 +104,10 @@ describe('tool rail', function()
         -- 'circle' is the second item of the first row: right column
         local flyoutX = 10 + gap * 2 + 56 + 18 + gap
         local circleX = flyoutX + gap + 110 + gap + 55
-        local circleY = 60 + gap + gap + ui.theme.button.height / 2
+        local circleY = groupTop('shape') + gap + ui.theme.button.height / 2
         local before = countBodies()
         click(circleX, circleY)
-        assert.are.equal('circle', toolRail.lastPick(toolRail.groups[1]))
+        assert.are.equal('circle', toolRail.lastPick(toolRail.groups[groupIndex('shape')]))
         assert.is_nil(state.toolRail.open)
         assert.are.equal(before, countBodies())
     end)
@@ -172,5 +174,22 @@ describe('tool rail', function()
         assert.are.equal(before, state.panelVisibility.worldSettingsOpened)
         click(tabX, groupY('settings'))
         assert.is_nil(state.toolRail.open)
+    end)
+    it('the play button pauses and plays, its flyout opens the recording panel', function()
+        local paused = state.world.paused
+        click(buttonX, groupY('play'))
+        assert.are.equal(not paused, state.world.paused)
+        click(buttonX, groupY('play'))
+        assert.are.equal(paused, state.world.paused)
+
+        local recording = state.panelVisibility.recordingPanelOpened
+        click(tabX, groupY('play'))
+        assert.are.equal('play', state.toolRail.open)
+        local flyoutX = 10 + gap * 2 + 56 + 18 + gap
+        click(flyoutX + gap + 55, groupTop('play') + gap + ui.theme.button.height / 2)
+        assert.are.equal(not recording, state.panelVisibility.recordingPanelOpened)
+        assert.is_nil(state.toolRail.open)
+        assert.is_nil(state.toolRail.last.play)
+        state.panelVisibility.recordingPanelOpened = recording
     end)
 end)

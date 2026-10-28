@@ -260,7 +260,19 @@ function lib.noteOff(handle)
     if S.started and handle then S.C.note_off(handle) end
 end
 
+-- Overall level (settings panel, music section): scales every patch's level.
+function lib.setVolume(v)
+    lib.volume = v
+    S.volume = v
+    if not S.started then return end
+    for _, patch in pairs(lib.patches) do
+        S.C.instrument_level(patch.slot, v * (patch.level or 1))
+    end
+end
+
 -- A hot reload (lurker) of this file re-applies the patches, so saving a tweak is audible right away.
+-- The volume set in settings lives on state, so it survives that.
+lib.volume = S.volume or lib.volume
 if S.started then definePatches() end
 
 return lib
