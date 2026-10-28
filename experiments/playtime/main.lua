@@ -115,6 +115,7 @@ local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local signals = require('src.signals')
+local doors = require('src.doors')
 mipoVoice.onHardImpact = function(...) return mipoActions.onHardImpact(...) end -- late-bound for hot reload
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local camera = require 'src.camera'
@@ -283,6 +284,7 @@ function love.update(dt)
 
     Peeker.update(dt)
     sceneLoader.maybeHotReload(dt)
+    doors.update(dt) -- going through a door happens here, outside input and physics
 
     local scaled_dt = dt * state.world.speedMultiplier
     prof.push('physics-update')
@@ -426,6 +428,7 @@ function love.draw()
     end
     prof.pop('drawtexturedworld')
     script.call('draw')
+    doors.draw()
 
     if state.backdrops then
         for i = 1, #state.backdrops do
@@ -452,6 +455,7 @@ function love.draw()
     end
 
 
+    doors.drawFade()
     playtimeui.drawUI()
     script.call('drawUI')
 

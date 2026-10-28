@@ -60,6 +60,12 @@ home, and the Puppetmaker Mipo (DOLL-PLAY F4) can move in.
 
 ## Slices
 
+- [x] **W1 built (2026-10-28), not played yet.** A door is a DOOR *behavior* (door, to,
+  arrive), not an attach kind: behaviors already save and get inspector rows. `src/doors.lua`
+  (tap / open / go, split the Mipo off the room, enter, fade), `sceneLoader.loadSceneData`,
+  `state.scene.id` = the room you're in. Test rooms from `claudetools/make-door-rooms.lua`:
+  `overworld` (two doors, a Mipo), `bakery`, `treehouse`. Spec: `spec/doors_spec.lua`.
+  Start with `./playtime.sh start overworld`.
 - [ ] **W1. Two rooms, one door each, in memory.** Overworld + one room, built
   in the editor (also the slice 4 kill check of `EDITOR-INSPECTOR-LIBRARY.md`).
   `door` sfixture with `to` / `arrive` (inspector rows). Tap door → open, drop a

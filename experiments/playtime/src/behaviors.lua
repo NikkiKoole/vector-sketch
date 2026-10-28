@@ -47,6 +47,14 @@ lib.allBehaviors = {
           { kind = 'action', label = function(b) return b.open and 'open' or 'closed' end,
             run = function(body, b) signals().setGate(body, not b.open) end },
       } },
+    { name = 'DOOR',
+      description = 'a door to another room (src/doors.lua): tap to open, drop a Mipo on it, tap to go in. '
+        .. 'door = its own name, to = the room (scripts/<to>.playtime.json), arrive = the door you come out of there.',
+      params = {
+          { key = 'door', kind = 'text', default = 'door1' },
+          { key = 'to', kind = 'text', default = '' },
+          { key = 'arrive', kind = 'text', default = '' },
+      } },
     { name = 'SQUISHY',
       description = 'soft prop: plays a winegum-kiss sound when it hits something (src/mipo-voice.lua).',
       params = {} },

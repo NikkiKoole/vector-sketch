@@ -37,7 +37,12 @@ function lib.loadScene(name)
         logger:error('Scene file not found: ' .. tostring(name))
         return
     end
-    local data = filedata:getString()
+    return lib.loadSceneData(filedata:getString(), name)
+end
+
+-- Load a scene from its JSON text (a file's contents, or a room kept in memory by
+-- src/doors.lua). name is only for the log.
+function lib.loadSceneData(data, name)
     state.selection.selectedJoint = nil
     state.selection.selectedObj = nil
     state.selection.selectedSFixture = nil
@@ -62,6 +67,7 @@ function lib.loadScene(name)
 end
 
 function lib.loadScriptAndScene(id)
+    state.scene.id = id -- the room you're in (src/doors.lua)
     local jsonPath = '/scripts/' .. id .. FEXT.SCENE_JSON
     local luaPath = '/scripts/' .. id .. FEXT.SCENE_LUA
     local jsoninfo = love.filesystem.getInfo(jsonPath)

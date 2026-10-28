@@ -8,6 +8,7 @@ local recorder = require 'src.recorder'
 local mipoVoice = require('src.mipo-voice')
 local mipoRegistry = require('src.mipo-registry')
 local signals = require('src.signals')
+local doors = require('src.doors')
 local utils = require 'src.utils'
 local script = require 'src.script'
 local selectrect = require 'src.selection-rect'
@@ -428,6 +429,7 @@ local function handlePointer(x, y, id, action, button)
                 local pressedBodies = {}
                 for _, fixture in ipairs(hitted) do pressedBodies[#pressedBodies + 1] = fixture:getBody() end
                 signals.onPressed(pressedBodies)
+                doors.onPressed(pressedBodies)
                 for _, fixture in ipairs(hitted) do
                     local mipo, partName = mipoRegistry.getFromBody(fixture:getBody())
                     if mipo then
