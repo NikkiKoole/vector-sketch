@@ -158,10 +158,8 @@ function love.load(_args)
 
     --love.math.setRandomSeed(love.timer.getTime())
     -- logger:info('uuid:', uuid.generateID())
-    -- Arial Narrow at the roomy or compact size (src/ui/density.lua)
-    local density = require('src.ui.density')
-    local fontHeight = density.sizes().fontSize
-    local font = density.makeFont()
+    local fontHeight = 25
+    local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
 
     love.keyboard.setKeyRepeat(true)
     love.graphics.setFont(font)
@@ -270,10 +268,6 @@ local _physicsCallbacks = require('src.physics.physics-callbacks') -- luacheck: 
 local beginframetime = love.timer.getTime()
 
 function love.update(dt)
-    if state.pendingDensity then -- the 'compact ui' checkbox: switch between frames, not mid-panel
-        require('src.ui.density').set(state.pendingDensity)
-        state.pendingDensity = nil
-    end
     bridge.update()
     lurker.update()
     prof.push('frame')

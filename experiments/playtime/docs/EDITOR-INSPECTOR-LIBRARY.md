@@ -163,13 +163,11 @@ RESOURCE now owns its picture (`extra.imageURL`), so a placed or cloned skinned 
 textured in any scene, no backdrop needed (`docs/UV-BACKDROP-FRAGILITY.md`, update at the top).
 
 **Kept (2026-10-28):** Nikki likes the library.
-**Compact switch (2026-10-28, keep/revert open):** `src/ui/density.lua`, settings → 'compact'
-(saved in `editor-density.txt`, applied between frames by re-running the UI modules). First try
-also shrank the font (25 -> 17); Nikki: keep the 25 px font, it's the *padding* that feels big.
-So compact = same font, rows and outlines; less padding: gaps 10 -> 6, inspector rows 45 -> 31
-(fields 40 -> 29), panel title band 40 -> 32, hand-placed content starts 36 below the panel top
-(was 80), column top 70 -> 52, toolbar buttons 70% wide. 'roomy' is exactly the old numbers.
-Next look, if compact stays: flatter buttons (ghost/outline), muted labels, handoff palette.
+**Compact UI (2026-10-28, kept):** Nikki keeps the 25 px Arial Narrow; it was the *padding* that
+felt big. A roomy/compact switch was tried, compact won and is now the only size (theme in
+`src/ui/all.lua`): gaps 10 -> 6, inspector rows 45 -> 31 (fields 40 -> 29), panel title band
+40 -> 32, hand-placed content 36 below the panel top (was 80), right column top 70 -> 52, toolbar
+buttons 70% wide. A first try that also shrank the font to 17 px: said no.
 
 **Next: slice 4, the real test:** build the next contraption with the library + inspector only.
 

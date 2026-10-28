@@ -3,11 +3,10 @@
 -- src/behaviors.lua): a label column plus one widget per row, basic rows first,
 -- advanced rows behind a 'more' fold. Plan: docs/EDITOR-INSPECTOR-LIBRARY.md.
 local ui = require('src.ui.all')
-local density = require('src.ui.density')
 
 local lib = {}
 
-local sizes = density.sizes()
+local sizes = ui.theme.inspector
 lib.labelWidth = sizes.labelWidth
 lib.rowHeight = sizes.rowHeight
 local FIELD_H = sizes.fieldHeight -- text field height

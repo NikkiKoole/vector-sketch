@@ -67,7 +67,15 @@ local theme   = {
     lineWidth = 3, -- General line width
 }
 
-require('src.ui.density').applyTheme(theme) -- roomy or compact sizes
+-- Layout sizes: the 25 px font with little padding (compact, since 2026-10-28)
+theme.spacing = 6         -- gap between widgets
+theme.panelWidth = 300
+theme.rowWidth = 160      -- slider width in hand-placed panels
+theme.columnTop = 52      -- the right column, below the toolbar row
+theme.toolbarScale = 0.7
+theme.panelHeader = 32    -- panel title band
+theme.contentTop = 36     -- where hand-placed panel content starts, below the panel top
+theme.inspector = { rowHeight = 31, fieldHeight = 29, widgetDY = 3, labelWidth = 90 }
 ui.theme      = theme
 
 -- Persistent store that survives lurker hot-reload (global, not on ui table)
