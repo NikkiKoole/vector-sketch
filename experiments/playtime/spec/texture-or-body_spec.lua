@@ -1,6 +1,7 @@
 -- spec/texture-or-body_spec.lua
 -- The 'tex/body' view (src/physics/box2d-draw.lua): a body with a texture
--- sfixture shows only its texture, other bodies still draw as bodies.
+-- sfixture shows only its texture, other bodies still draw as bodies; with
+-- 'mipo body' on, Mipo parts keep their body shapes too.
 -- Run with: love . --specs spec/texture-or-body_spec.lua
 
 if not love then return end
@@ -34,6 +35,20 @@ describe('tex/body view', function()
         assert.is_false(box2dDraw.hasTexture(plain.body))
         assert.is_false(box2dDraw.hasTexture(snapped.body))
         assert.is_true(box2dDraw.hasTexture(textured.body))
+    end)
+
+    it("'mipo body' keeps Mipo parts drawn as bodies, other textured bodies not", function()
+        local textured = objectManager.addThing('rectangle', { x = 200, y = 0, width = 40, height = 40 })
+        fixtures.createSFixture(textured.body, 0, 0, 'texfixture', { width = 40, height = 40 })
+        local part = objectManager.addThing('rectangle', { x = 300, y = 0, width = 40, height = 40 })
+        fixtures.createSFixture(part.body, 0, 0, 'texfixture', { width = 40, height = 40 })
+        part.mipoId = 'mipo1'
+        state.world.mipoBodies = false
+        assert.is_false(box2dDraw.showsBody(part.body))
+        state.world.mipoBodies = true
+        assert.is_true(box2dDraw.showsBody(part.body))
+        assert.is_false(box2dDraw.showsBody(textured.body))
+        state.world.mipoBodies = nil
     end)
 
     it('draws with the view on', function()

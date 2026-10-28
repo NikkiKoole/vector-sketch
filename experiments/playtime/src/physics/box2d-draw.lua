@@ -133,6 +133,14 @@ function lib.hasTexture(body)
     return false
 end
 
+-- In the 'tex/body' view: does this body still draw as a body? Untextured ones
+-- do; textured ones don't, except Mipo parts while 'mipo body' is on.
+function lib.showsBody(body)
+    if not lib.hasTexture(body) then return true end
+    local ud = body:getUserData()
+    return state.world.mipoBodies == true and ud ~= nil and ud.thing ~= nil and ud.thing.mipoId ~= nil
+end
+
 function lib.drawWorld(world, drawOutline)
     local debugIds -- lazily allocated, only needed when showDebugIds is on
     if drawOutline == nil then drawOutline = true end
@@ -147,15 +155,15 @@ function lib.drawWorld(world, drawOutline)
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
     local DRAW_BODIES = state.world.debugDrawBodies
-    -- 'texture or body' view: a body with a texture shows only the texture
+    -- 'tex/body' view: a body with a texture shows only the texture (see showsBody)
     local skipTextured = state.world.showTextures and state.world.textureOrBody
 
 
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do
-            if skipTextured and lib.hasTexture(body) then goto nextBody end
             local bodyUD = body:getUserData()
             local bodyThing = bodyUD and bodyUD.thing
+            if skipTextured and not lib.showsBody(body) then goto nextBody end
             -- CUSTOM bodies get a single unified fill+outline pass that honors
             -- thing.extraSteiner (Phase 3 of STEINER-OWNERSHIP-PLAN.md). Kills
             -- the fan outline artifact from the per-fixture draw below.

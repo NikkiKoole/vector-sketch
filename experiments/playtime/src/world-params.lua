@@ -52,6 +52,7 @@ lib.rows = {
       set = function(_, v) state().editorPreferences.showGrid = v end },
     flag('showTextures', 'textures'),
     flag('textureOrBody', 'tex/body'), -- textured bodies show only their texture (src/physics/box2d-draw.lua)
+    flag('mipoBodies', 'mipo body'),   -- ...except Mipo parts, which keep their body shapes
     flag('darkMode', 'dark'),
     -- advanced
     flag('debugDrawMode', 'debug', true),
