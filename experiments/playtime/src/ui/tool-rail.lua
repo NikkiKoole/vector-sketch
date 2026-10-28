@@ -263,9 +263,11 @@ lib.groups = {
     {
         key = 'settings', -- no picks; the tab opens the settings panel like a flyout
         tabClicks = true,
+        -- one thing open at a time: settings closes the flyouts (and a flyout closes settings)
         onClick = function()
             local pv = state.panelVisibility
             pv.worldSettingsOpened = not pv.worldSettingsOpened
+            if pv.worldSettingsOpened and state.toolRail then state.toolRail.open = nil end
         end,
         isActive = function() return state.panelVisibility.worldSettingsOpened end,
     },
@@ -490,7 +492,10 @@ function lib.draw()
                 love.graphics.setColor(ui.theme.button.text_default)
                 local tx, ty = x + BUTTON + TAB / 2, y + BUTTON / 2
                 love.graphics.polygon('fill', tx - 3, ty - 6, tx - 3, ty + 6, tx + 4, ty)
-                if tabClicked then rs.open = (not isOpen) and group.key or nil end
+                if tabClicked then
+                    rs.open = (not isOpen) and group.key or nil
+                    if rs.open then state.panelVisibility.worldSettingsOpened = false end
+                end
                 if rs.open == group.key then openGroup, openY = group, y end
             end
         end

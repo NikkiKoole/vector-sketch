@@ -195,4 +195,16 @@ describe('tool rail', function()
         assert.is_nil(state.toolRail.last.play)
         state.panelVisibility.recordingPanelOpened = recording
     end)
+    it('settings and the flyouts close each other', function()
+        state.panelVisibility.worldSettingsOpened = false
+        click(tabX, groupY('shape'))
+        assert.are.equal('shape', state.toolRail.open)
+        click(tabX, groupY('settings'))
+        assert.is_true(state.panelVisibility.worldSettingsOpened)
+        assert.is_nil(state.toolRail.open)
+        click(tabX, groupY('joint'))
+        assert.are.equal('joint', state.toolRail.open)
+        assert.is_false(state.panelVisibility.worldSettingsOpened)
+        state.toolRail.open = nil
+    end)
 end)
