@@ -2,7 +2,9 @@
 -- Prefabs: a saved selection of bodies + the joints between them, as data in
 -- library/<name>.playtime.json (in the save directory). Placing one builds a
 -- fresh copy next to what's on the stage. Props stay code (src/props.lua);
--- prefabs are data. Mipo parts are left out: a Mipo is more than its bodies.
+-- prefabs are data. A Mipo is saved as its DNA (`mipos`: dna, scale, torso
+-- position), not its bodies, and placing grows it fresh from that DNA, standing
+-- in T-pose like 'add mipo'. Any selected part saves the whole Mipo.
 -- See docs/EDITOR-INSPECTOR-LIBRARY.md, slice 3.
 local lib = {}
 
@@ -38,41 +40,61 @@ function lib.list()
     return names
 end
 
--- The save data of these things (Mipo parts skipped) and the joints between
--- them, positions relative to their centre. Returns nil when nothing is left.
+-- The save data of these things, the joints between them and the Mipos any of
+-- them belong to, positions relative to their centre. nil when nothing is left.
 function lib.gather(things)
-    local ids, count = {}, 0
+    local ids, mipoIds = {}, {}
     for _, thing in ipairs(things) do
-        if thing.body and not thing.body:isDestroyed() and not thing.mipoId then
-            ids[thing.id] = true
-            count = count + 1
+        if thing.body and not thing.body:isDestroyed() then
+            if thing.mipoId then mipoIds[thing.mipoId] = true else ids[thing.id] = true end
         end
     end
-    if count == 0 then return nil end
+    if not next(ids) and not next(mipoIds) then return nil end
     local bodies = {}
     for _, thing in ipairs(things) do
         if ids[thing.id] then table.insert(bodies, thing.body) end
     end
     resourceLink.linkBodies(bodies) -- meshes carry their RESOURCE link
 
-    return lib.trim(sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance()), ids)
+    return lib.trim(sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance()), ids, mipoIds)
 end
 
--- Save data -> prefab: the bodies whose id is in ids (all non-Mipo bodies when
--- ids is nil), the joints between them, centred. nil when no body is left.
-function lib.trim(data, ids)
-    local prefab = { version = data.version, bodies = {}, joints = {} }
-    local kept = {}
-    local cx, cy = 0, 0
+-- where a saved Mipo stands: its torso's position in the save data
+local function mipoPosition(data, mipoId)
+    local fallback
     for _, bodyData in ipairs(data.bodies or {}) do
-        if (ids and ids[bodyData.id]) or (not ids and not bodyData.mipoId) then
-            table.insert(prefab.bodies, bodyData)
-            kept[bodyData.id] = true
-            cx, cy = cx + bodyData.position[1], cy + bodyData.position[2]
+        if bodyData.mipoId == mipoId then
+            if bodyData.mipoPartName == 'torso1' then return bodyData.position end
+            fallback = fallback or bodyData.position
         end
     end
-    if #prefab.bodies == 0 then return nil end
-    cx, cy = cx / #prefab.bodies, cy / #prefab.bodies
+    return fallback
+end
+
+-- Save data -> prefab: the bodies whose id is in ids and the Mipos whose id is
+-- in mipoIds (when nil: every body and every Mipo), the joints between the
+-- bodies, centred. nil when nothing is left.
+function lib.trim(data, ids, mipoIds)
+    local prefab = { version = data.version, bodies = {}, joints = {}, mipos = {} }
+    local kept = {}
+    local cx, cy, n = 0, 0, 0
+    for _, bodyData in ipairs(data.bodies or {}) do
+        if not bodyData.mipoId and (not ids or ids[bodyData.id]) then
+            table.insert(prefab.bodies, bodyData)
+            kept[bodyData.id] = true
+            cx, cy, n = cx + bodyData.position[1], cy + bodyData.position[2], n + 1
+        end
+    end
+    for _, character in ipairs(data.characters or {}) do
+        local position = (not mipoIds or mipoIds[character.id]) and mipoPosition(data, character.id)
+        if position then
+            table.insert(prefab.mipos, { dna = character.dna, scale = character.scale,
+                position = { position[1], position[2] } })
+            cx, cy, n = cx + position[1], cy + position[2], n + 1
+        end
+    end
+    if n == 0 then return nil end
+    cx, cy = cx / n, cy / n
     for _, jointData in ipairs(data.joints or {}) do
         if kept[jointData.bodyA] and kept[jointData.bodyB] then
             table.insert(prefab.joints, jointData)
@@ -84,6 +106,9 @@ end
 
 -- shift every world position in the prefab data
 function lib.move(prefab, dx, dy)
+    for _, mipo in ipairs(prefab.mipos or {}) do
+        mipo.position[1], mipo.position[2] = mipo.position[1] + dx, mipo.position[2] + dy
+    end
     for _, bodyData in ipairs(prefab.bodies) do
         bodyData.position[1], bodyData.position[2] = bodyData.position[1] + dx, bodyData.position[2] + dy
     end
@@ -136,7 +161,7 @@ function lib.save(name, things)
     name = lib.cleanName(name)
     if name == '' then return false, 'no name' end
     local prefab = lib.gather(things)
-    if not prefab then return false, 'nothing to save (Mipos are left out)' end
+    if not prefab then return false, 'nothing to save' end
     love.filesystem.createDirectory(lib.DIR)
     local ok, err = love.filesystem.write(pathOf(name), json.encode(prefab, { indent = true }))
     return ok, err or name
@@ -150,7 +175,7 @@ function lib.import(filename, contents)
     if type(data) ~= 'table' or type(data.bodies) ~= 'table' then return false, 'not a scene file' end
     sceneIO.prepareLoaded(data)
     local prefab = lib.trim(data)
-    if not prefab then return false, 'no bodies in it (Mipos are left out)' end
+    if not prefab then return false, 'nothing in it' end
     if name == '' then name = 'imported' end
     love.filesystem.createDirectory(lib.DIR)
     local ok, err = love.filesystem.write(pathOf(name), json.encode(prefab, { indent = true }))
@@ -177,9 +202,22 @@ function lib.place(name, x, y)
     end
     signals.renameForCopy(behaviorLists, signals.namesInUse())
     lib.move(prefab, x, y)
-    local things = sceneIO.buildWorld(prefab, state.physicsWorld, camera.getInstance(), { additive = true })
-    snap.onSceneLoaded()
-    return things or {}
+    local things = {}
+    if #prefab.bodies > 0 then
+        things = sceneIO.buildWorld(prefab, state.physicsWorld, camera.getInstance(), { additive = true }) or {}
+        snap.onSceneLoaded()
+    end
+    -- Mipos grow fresh from their DNA, with their own id, collision group and z-range
+    local CharacterManager = require('src.character-manager')
+    for _, mipo in ipairs(prefab.mipos or {}) do
+        local instance = CharacterManager.createCharacterFromJustDNA(mipo.dna, mipo.position[1], mipo.position[2],
+            mipo.scale)
+        if instance then
+            CharacterManager.poseTpose(instance)
+            for _, part in pairs(instance.parts) do table.insert(things, part) end
+        end
+    end
+    return things
 end
 
 function lib.delete(name)

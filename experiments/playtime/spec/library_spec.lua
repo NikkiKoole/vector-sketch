@@ -1,6 +1,6 @@
 -- spec/library_spec.lua
 -- Prefabs (src/library.lua): saving a selection keeps its bodies, behaviors,
--- sfixtures and inner joints (not joints to the outside, not Mipo parts), and
+-- sfixtures and inner joints (not joints to the outside), Mipos as DNA, and
 -- placing one twice builds two independent copies with fresh ids where asked.
 -- A scene file dropped on the library tab is imported the same way. Copies
 -- that hold both ends of a wire get their own signal name (src/signals.lua).
@@ -71,14 +71,15 @@ describe('library prefabs', function()
         assert.is_false((library.save(NAME, {})))
     end)
 
-    it('a dropped scene file becomes a prefab, without Mipo parts or their joints', function()
+    it('a dropped scene file becomes a prefab: Mipos as DNA, not their bodies or joints', function()
         local json = require('vendor.dkjson')
         local scene = {
-            version = '1.0', camera = { x = 0, y = 0, scale = 1 }, backdrops = {}, characters = {},
+            version = '1.0', camera = { x = 0, y = 0, scale = 1 }, backdrops = {},
+            characters = { { id = 'mipo1', scale = 0.5, dna = { creation = { torso1 = { shape = 'blob' } } } } },
             bodies = {
                 { id = 'a', position = { 0, 0 }, fixtures = {} },
                 { id = 'b', position = { 200, 0 }, fixtures = {} },
-                { id = 'm', position = { 900, 0 }, fixtures = {}, mipoId = 'mipo1' },
+                { id = 'm', position = { 700, 0 }, fixtures = {}, mipoId = 'mipo1', mipoPartName = 'torso1' },
             },
             joints = { { id = 'j1', bodyA = 'a', bodyB = 'b' }, { id = 'j2', bodyA = 'b', bodyB = 'm' } },
         }
@@ -88,7 +89,11 @@ describe('library prefabs', function()
         local prefab = library.load(NAME)
         assert.are.equal(2, #prefab.bodies)
         assert.are.equal(1, #prefab.joints)
-        assert.are.equal(-100, prefab.bodies[1].position[1])
+        -- centre of a (0), b (200) and the Mipo's torso (700) is 300
+        assert.are.equal(-300, prefab.bodies[1].position[1])
+        assert.are.equal(1, #prefab.mipos)
+        assert.are.equal(400, prefab.mipos[1].position[1])
+        assert.are.equal('blob', prefab.mipos[1].dna.creation.torso1.shape)
         assert.is_nil(prefab.camera)
         assert.is_false((library.import('x.playtime.json', 'not json')))
     end)
@@ -143,6 +148,31 @@ describe('library prefabs', function()
         assert.are.equal('door', copy[1].behaviors[1].signal)
         assert.are.equal(2, #signals.wires())
         assert.is_not_nil(gate)
+    end)
+
+    it('a Mipo is saved as DNA (one part selected is enough) and grows fresh when placed', function()
+        local CharacterManager = require('src.character-manager')
+        local mipoRegistry = require('src.mipo-registry')
+        mipoRegistry.reset()
+        local mipo = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+        local board = add('board', 300)
+        assert.is_true((library.save(NAME, { mipo.parts.torso1, board })))
+        local prefab = library.load(NAME)
+        assert.are.equal(1, #prefab.mipos)
+        assert.are.equal(1, #prefab.bodies) -- the board; the Mipo's bodies aren't saved
+        assert.are.equal(0.3, prefab.mipos[1].scale)
+
+        local placed = library.place(NAME, 2000, 0)
+        assert.are.equal(1 + count(mipo.parts), #placed)
+        local copy
+        for id, instance in pairs(mipoRegistry.getAll()) do
+            if id ~= mipo.id then copy = instance end
+        end
+        assert.is_not_nil(copy, 'no new Mipo registered')
+        assert.are_not.equal(mipo.groupIndex, copy.groupIndex)
+        assert.are.same(mipo.dna.creation, copy.dna.creation)
+        assert.is_true(copy.parts.torso1.body:getX() > 1500)
+        mipoRegistry.reset()
     end)
 
     it('editor clone: own behaviors table, own signal for a whole contraption', function()
