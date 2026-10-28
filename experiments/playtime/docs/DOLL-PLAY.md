@@ -74,6 +74,15 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
     pointer. 3000 at first (grab saturation dropped from 52-72% of frames to 5%), now
     switched off (`false`), since unwind + heal cope and the cap felt laggy.
   - Noticed: physics slowed (30s of steps took 42s) with 3-4 Mipos on screen. Check on iPad.
+  - `mipoJointGuard.unstick` (2026-10-28): a part on the wrong side of a wall or floor. A
+    hard drag beats a thin wall for a moment and pushes a small end part through; the joint
+    then holds it against the far side forever. Seen as something static and solid across
+    the limb (parent centre -> joint -> child centre); the smaller side becomes a ghost
+    (sensor), is pulled back, solid again once clear. In the dollhouse: 25 cases in one
+    session, all while held, all through the thin ribbon walls/floor, mostly ears, then
+    hands and lower arms, once a leg and a foot; none visible in play. Logged as
+    `[unstick] <part> through <body>, <gap> apart, held|not held`. Not needed yet: a softer
+    drag while a held Mipo touches something static (the prevention, if it ever looks jumpy).
 
 - [x] **Design rule: hands never reach the floor** (2026-10-27): arm (upper + forearm + hand reach)
   <= torso (shoulder->hip) + leg (hip->knee->ankle), measured on the built joints
