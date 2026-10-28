@@ -162,6 +162,7 @@ the original's. Socket `accepts` and script label lookups are meant to be shared
 RESOURCE now owns its picture (`extra.imageURL`), so a placed or cloned skinned body draws
 textured in any scene, no backdrop needed (`docs/UV-BACKDROP-FRAGILITY.md`, update at the top).
 
+**Kept (2026-10-28):** Nikki likes the library.
 **Next: slice 4, the real test:** build the next contraption with the library + inspector only.
 
 **Keep/revert check still open:** use it for a session. Does switching tabs feel better than
