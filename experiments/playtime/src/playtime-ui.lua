@@ -39,34 +39,19 @@ local BUTTON_SPACING = ui.theme.spacing
 function lib.assignTrianglesToGroup(...) return uiSFixtureEditor.assignTrianglesToGroup(...) end
 
 
-function lib.drawJointCreateUI(panelX, panelY, w, h)
-    ui.panel(panelX, panelY, w, h, '∞ ' .. state.jointParams.jointType .. ' ∞', function()
-        local layout = ui.createLayout({
-            type = 'columns',
-            spacing = 10,
-            startX = panelX + 10,
-            startY = panelY + 10
-        })
-
-        local width = 180
-        local x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
-        local nextRow = function()
-            x, y = ui.nextLayoutPosition(layout, 160, BUTTON_HEIGHT)
-        end
-        nextRow()
-        if ui.button(x, y, width, 'Create') then
-            local joint = joints.createJoint(state.jointParams)
-            state.selection.selectedJoint = joint
-            state.selection.selectedObject = nil
-            state.jointParams = nil
-            modes.clear()
-        end
-
-        if ui.button(x + width + 10, y, width, 'Cancel') then
-            state.jointParams = nil
-            modes.clear()
-        end
-    end)
+function lib.drawJointCreateUI()
+    local text = '• ' .. (state.jointParams.jointType or 'joint') .. ': both bodies picked •'
+    local clicked = ui.topPrompt(text, { 'create', 'cancel' })
+    if clicked == 'create' then
+        local joint = joints.createJoint(state.jointParams)
+        state.selection.selectedJoint = joint
+        state.selection.selectedObject = nil
+        state.jointParams = nil
+        modes.clear()
+    elseif clicked == 'cancel' then
+        state.jointParams = nil
+        modes.clear()
+    end
 end
 
 function lib.drawJointUpdateUI(...) return uiJointUpdate.drawJointUpdateUI(...) end
@@ -222,88 +207,46 @@ function lib.drawUI()
 
 
     if modes.is(modes.DRAW_CLICK) then
-        local panelWidth = PANEL_WIDTH
-        w, h = love.graphics.getDimensions()
-        ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ click draw vertex polygon ∞', function()
-            local padding = BUTTON_SPACING
-            local layout = ui.createLayout({
-                type = 'columns',
-                spacing = BUTTON_SPACING,
-                startX = w - panelWidth,
-                startY = 100 + padding
-            })
-            local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-
-
-            if ui.button(x, y, 260, 'finalize') then
-                logger:info('finalize clicked')
-                objectManager.finalizePolygon()
+        local clicked = ui.topPrompt('• click to place points •', { 'finalize', 'soft-surface', 'uv-mappert' }, 140)
+        if clicked == 'finalize' then
+            logger:info('finalize clicked')
+            objectManager.finalizePolygon()
+        elseif clicked == 'soft-surface' then
+            objectManager.finalizePolygonAsSoftSurface()
+        elseif clicked == 'uv-mappert' then
+            local thing = objectManager.finalizePolygon()
+            if thing and thing.body then
+                fixtures.createSFixture(thing.body, 0, 0, subtypes.RESOURCE, { width = 20, height = 20 })
             end
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-            if ui.button(x, y, 260, 'soft-surface') then
-                objectManager.finalizePolygonAsSoftSurface()
-            end
-            x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-            if ui.button(x, y, 260, 'uv-mappert') then
-                local thing = objectManager.finalizePolygon()
-                --logger:inspect(thing)
-                -- local body =
-                if thing and thing.body then
-                    fixtures.createSFixture(thing.body, 0, 0, subtypes.RESOURCE,
-                        { width = 20, height = 20 })
-                end
-                --objectManager.finalizePolygonAsSoftSurface()
-            end
-            -- x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
-            -- if ui.button(x, y, 260, 'blob') then
-            --     objectManager.finalizePolygonAsBlob()
-            -- end
-        end)
+        end
     end
 
-    -- the draw-click and autoropify panels above use the right edge themselves
-    if not modes.is(modes.DRAW_CLICK) and not modes.is(modes.PICK_AUTO_ROPIFY) then
+    -- the (parked) autoropify panel above uses the right edge itself
+    if not modes.is(modes.PICK_AUTO_ROPIFY) then
         rightColumn.draw(lib.drawSelectionProperties)
     end
 
     if modes.is(modes.JOINT_CREATION) and state.jointParams.body1 and state.jointParams.body2 then
-        lib.drawJointCreateUI(500, 100, 400, 150)
+        lib.drawJointCreateUI()
     end
 
     if modes.is(modes.SET_OFFSET_A) or modes.is(modes.SET_OFFSET_B)
         or modes.is(modes.POSITIONING_SFIXTURE) then
-        ui.panel(500, 100, 300, 60, '• click point ∆', function()
-        end)
+        ui.topPrompt('• click point ∆')
     end
 
     if modes.is(modes.ADD_NODE_CONNECTED_TEX) or modes.is(modes.ADD_NODE_MESHUSERT) then
-        ui.panel(500, 100, 400, 60, '• click anchor or joint to add ', function()
-        end)
+        ui.topPrompt('• click anchor or joint to add •')
     end
 
 
     if modes.is(modes.JOINT_CREATION)
         and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
-        if (state.jointParams.body1 == nil) then
-            ui.panel(500, 100, 300, 100, '• pick 1st body •', function()
-                local x = 510
-                local y = 150
-                local width = 280
-                if ui.button(x, y, width, 'cancel') then
-                    state.jointParams = nil
-                    modes.clear()
-                end
-            end)
-        elseif (state.jointParams.body2 == nil) then
-            ui.panel(500, 100, 300, 100, '• pick 2nd body •', function()
-                local x = 510
-                local y = 150
-                local width = 280
-                if ui.button(x, y, width, 'cancel') then
-                    state.jointParams = nil
-                    modes.clear()
-                end
-            end)
+        local which = state.jointParams.body1 == nil and '1st' or '2nd'
+        local jointType = state.jointParams.jointType or 'joint'
+        if ui.topPrompt('• ' .. jointType .. ': pick ' .. which .. ' body •', { 'cancel' }) then
+            state.jointParams = nil
+            modes.clear()
         end
     end
 

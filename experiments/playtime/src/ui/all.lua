@@ -315,6 +315,34 @@ function ui.panel(x, y, width, height, label, drawFunc, optionalFillColor)
     -- love.graphics.setColor(1, 1, 1)
 end
 
+--- Where a prompt or small dialog goes: centred at the top, in the strip the old
+-- toolbar used (the tool rail is on the left, the right column on the right).
+function ui.topCenter(width)
+    return math.floor((love.graphics.getWidth() - width) / 2), 20
+end
+
+--- A one-line prompt at the top centre, wide not tall: the text, then its buttons
+-- on the same line. Returns the label of the button clicked this frame, if any.
+function ui.topPrompt(text, buttons, buttonWidth)
+    buttons = buttons or {}
+    buttonWidth = buttonWidth or 120
+    local gap = theme.spacing
+    local textW = ui.font:getWidth(text)
+    local w = gap * 5 + textW + #buttons * (buttonWidth + gap)
+    local h = theme.button.height + gap * 2
+    local x, y = ui.topCenter(w)
+    local clicked
+    ui.panel(x, y, w, h, nil, function()
+        ui.alignedLabel(x + gap * 2, y + gap, text)
+        local bx = x + gap * 4 + textW
+        for _, label in ipairs(buttons) do
+            if ui.button(bx, y + gap, buttonWidth, label) then clicked = label end
+            bx = bx + buttonWidth + gap
+        end
+    end)
+    return clicked
+end
+
 --- Creates a checkbox with a label.
 function ui.checkbox(x, y, checked, label)
     local size = theme.slider.height
