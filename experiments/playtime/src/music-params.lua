@@ -21,9 +21,10 @@ lib.rows = {
             if not now then return 'starts soon' end
             return now.style .. ' · ' .. tostring(now.section or '') .. ' · bar ' .. now.bar .. '/' .. now.bars
         end },
-    -- all sound, not just the music: it scales every synth patch
+    -- all sound, not just the music: it scales every synth patch. Read from state
+    -- (where setVolume keeps it): after a hot reload synth's module table is a copy.
     { key = 'volume', kind = 'number', min = 0, max = 1,
-        get = function() return synth().volume end,
+        get = function() return require('src.state').synth.volume or synth().volume end,
         set = function(_, v) synth().setVolume(v) end },
     field('enabled', 'music', 'bool'),
     field('melody', 'melody', 'bool'),
