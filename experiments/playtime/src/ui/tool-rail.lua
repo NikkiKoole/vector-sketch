@@ -5,7 +5,8 @@
 -- body; mipo: drag one out) or starts a mode on click (joints: then click body A
 -- and body B; draw: draw on the stage). Clicking an active mode's button again ends it.
 -- Play is the odd one: its button plays/pauses and its flyout holds one-off actions
--- (record, restart the scene script), not picks. Settings is a plain button.
+-- (record, restart the scene script), not picks. Settings has no flyout: its button
+-- and its tab both open the settings panel, which stands in for one.
 -- Picks and the open flyout live on state.toolRail so they survive hot reloads.
 local lib = {}
 
@@ -260,7 +261,8 @@ lib.groups = {
         onRelease = finishMipo,
     },
     {
-        key = 'settings', -- a plain button: no picks, no flyout
+        key = 'settings', -- no picks; the tab opens the settings panel like a flyout
+        tabClicks = true,
         onClick = function()
             local pv = state.panelVisibility
             pv.worldSettingsOpened = not pv.worldSettingsOpened
@@ -474,7 +476,14 @@ function lib.draw()
                 group.onClick(lib.lastPick(group))
             end
 
-            if group.sections then
+            if group.tabClicks then
+                local tabClicked = ui.button(x + BUTTON, y, TAB, '', BUTTON,
+                    active and ui.theme.header.active or nil)
+                love.graphics.setColor(ui.theme.button.text_default)
+                local tx, ty = x + BUTTON + TAB / 2, y + BUTTON / 2
+                love.graphics.polygon('fill', tx - 3, ty - 6, tx - 3, ty + 6, tx + 4, ty)
+                if tabClicked then group.onClick() end
+            elseif group.sections then
                 local isOpen = rs.open == group.key
                 local tabClicked = ui.button(x + BUTTON, y, TAB, '', BUTTON,
                     isOpen and ui.theme.header.active or nil)
