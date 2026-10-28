@@ -117,7 +117,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
     local ud = state.selection.selectedSFixture:getUserData()
 
     --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
-    local sfixtureType = ud.type .. ' ' .. (ud.subtype and ud.subtype or '')
+    local sfixtureType = ud.subtype or ud.type -- the panel title: what kind of fixture
     local x, y
     -- Function to create an accordion
     local function drawAccordion(key, contentFunc)
@@ -293,12 +293,10 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
         -- label + destroy for every kind; the simple kinds draw all their settings
         -- from src/sfixture-params.lua, the rest keep their hand-made sections below
         local subtypeRows = sfixtureParams.bySubtype[ud.subtype]
-        local rows = sfixtureParams.header
-        if subtypeRows then
-            rows = {}
-            for _, row in ipairs(sfixtureParams.header) do rows[#rows + 1] = row end
-            for _, row in ipairs(subtypeRows) do rows[#rows + 1] = row end
-        end
+        local rows = {}
+        for _, row in ipairs(sfixtureParams.header) do rows[#rows + 1] = row end
+        for _, row in ipairs(subtypeRows or {}) do rows[#rows + 1] = row end
+        for _, row in ipairs(sfixtureParams.footer) do rows[#rows + 1] = row end
         local used, replaced = inspector.drawParams('sfixture_' .. tostring(myID), rows,
             state.selection.selectedSFixture, nil, x, y, 270)
         if replaced ~= nil or subtypeRows then return end

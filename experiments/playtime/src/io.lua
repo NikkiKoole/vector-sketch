@@ -578,6 +578,7 @@ function lib.buildWorld(data, world, cam, opts)
                 }
 
                 if jointData.scriptmeta then ud.scriptmeta = jointData.scriptmeta end
+                ud.label = jointData.label
 
                 joint:setUserData(ud)
 
@@ -1109,6 +1110,7 @@ function lib.gatherSaveData(world, camera)
                 if (jointUserData.scriptmeta) then
                     jointData.scriptmeta = utils.shallowCopy(jointUserData.scriptmeta)
                 end
+                jointData.label = jointUserData.label
 
                 -- Extract joint-specific properties
                 local JT = require 'src.joint-types'
@@ -1492,6 +1494,7 @@ function lib.cloneSelection(selectedBodies, world)
                             --newJoint:setUpperLimit(upper)
                             --newJoint:setLowerLimit(lower)
                             newJoint:setLimitsEnabled(limitsEnabled)
+                            newJoint:getUserData().label = ud.label
 
                             if ud.scriptmeta then
                                 local newud = newJoint:getUserData()

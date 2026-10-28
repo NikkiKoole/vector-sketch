@@ -19,6 +19,7 @@ local function selectFixture(fixture)
     return fixture
 end
 
+-- Every sfixture panel starts with its name (header) and ends with destroy (footer).
 lib.header = {
     { key = 'label', kind = 'text', keepSpaces = true,
       get = function(fixture) return fixture:getUserData().label or '' end,
@@ -27,6 +28,9 @@ lib.header = {
           ud.label = v
           fixture:setUserData(ud)
       end },
+}
+
+lib.footer = {
     { kind = 'action', label = 'destroy',
       run = function(_, fixture)
           require('src.fixtures').destroyFixture(fixture)
@@ -58,7 +62,7 @@ end
 local position = {
     { kind = 'action', label = '∆ move',
       run = function() local modes = require('src.modes'); modes.set(modes.POSITIONING_SFIXTURE) end },
-    { kind = 'action', label = 'centre on body',
+    { kind = 'action', label = 'centre',
       run = function(_, fixture)
           local body = fixture:getBody()
           return selectFixture(require('src.fixtures').updateSFixturePosition(fixture, body:getX(), body:getY()))

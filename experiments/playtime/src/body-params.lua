@@ -73,12 +73,27 @@ local function flip(axis)
 end
 
 lib.rows = {
-    { key = 'type', kind = 'choice', options = { 'static', 'dynamic', 'kinematic' },
-      get = function(thing) return thing.body:getType() end,
-      set = function(thing, v) thing.body:setType(v); thing.body:setAwake(true) end },
+    -- its name first, then clone | destroy (a pair), then the settings
     { key = 'label', kind = 'text', keepSpaces = true,
       get = function(thing) return thing.label or '' end,
       set = function(thing, v) thing.label = v end },
+    { kind = 'action', label = 'clone',
+      run = function(_, thing)
+          local state = require('src.state')
+          state.selection.selectedBodies = require('src.io').cloneSelection({ thing }, state.physicsWorld)
+          state.selection.selectedObj = nil
+          return true -- the selection moved to the clone
+      end },
+    { kind = 'action', label = 'destroy',
+      run = function(body)
+          require('src.physics.snap').destroySnapJointAboutBody(body)
+          require('src.object-manager').destroyBody(body)
+          require('src.state').selection.selectedObj = nil
+          return true -- gone: stop drawing this panel
+      end },
+    { key = 'type', kind = 'choice', options = { 'static', 'dynamic', 'kinematic' },
+      get = function(thing) return thing.body:getType() end,
+      set = function(thing, v) thing.body:setType(v); thing.body:setAwake(true) end },
     size('radius', 200, isRound),
     size('width', 800, isBox),
     size('width2', 800, hasWidth2, width),

@@ -82,6 +82,39 @@ describe('inspector', function()
         return joint
     end
 
+    it('body: label comes first, clone selects the copy, destroy removes the body', function()
+        assert.are.equal('label', bodyParams.rows[1].key)
+        local byLabel = {}
+        for _, row in ipairs(bodyParams.rows) do if row.label then byLabel[row.label] = row end end
+        local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 50, height = 50 })
+        thing.label = 'crate'
+        assert.is_true(byLabel.clone.run(thing.body, thing))
+        local copy = state.selection.selectedBodies and state.selection.selectedBodies[1]
+        assert.is_not_nil(copy)
+        assert.are_not.equal(thing, copy)
+        assert.are.equal('crate', copy.label)
+        state.selection.selectedBodies = nil
+        state.selection.selectedObj = thing
+        assert.is_true(byLabel.destroy.run(thing.body, thing))
+        assert.is_true(thing.body:isDestroyed())
+        assert.is_nil(state.selection.selectedObj)
+    end)
+
+    it('joint: label reads back and survives a rebuild; destroy removes it', function()
+        local joint = makeJoint('revolute')
+        local labelRow, destroyRow = jointParams.header[1], jointParams.header[2]
+        labelRow.set(joint, 'hinge')
+        assert.are.equal('hinge', labelRow.get(joint))
+        local rebuilt = joints.recreateJoint(joint, { collideConnected = true })
+        assert.are.equal('hinge', labelRow.get(rebuilt))
+        local saved = require('src.io').gatherSaveData(world, require('src.camera').getInstance())
+        assert.are.equal('hinge', saved.joints[1].label) -- saved with the scene
+        local id = joints.getJointId(rebuilt)
+        assert.is_true(destroyRow.run(nil, rebuilt))
+        assert.is_true(rebuilt:isDestroyed())
+        assert.is_nil(registry.getJointByID(id))
+    end)
+
     for jointType, params in pairs(jointParams.byType) do
         it(jointType .. ': every setting reads back what was set', function()
             local joint = makeJoint(jointType)
@@ -173,7 +206,8 @@ describe('inspector', function()
             local thing = makeThing()
             assert.is_not_nil(thing, shape)
             for _, row in ipairs(bodyParams.rows) do
-                if not row.visible or row.visible(thing) then
+                local endsPanel = row.label == 'clone' or row.label == 'destroy' -- own spec below
+                if not endsPanel and (not row.visible or row.visible(thing)) then
                     local name = shape .. ' ' .. tostring(row.key or row.label)
                     local replaced, v
                     if row.kind == 'number' then
@@ -282,7 +316,7 @@ describe('inspector', function()
 
         it('sfixture (' .. subtype .. '): destroy removes it and clears the selection', function()
             local fixture = makeFixture()
-            for _, row in ipairs(sfixtureParams.header) do
+            for _, row in ipairs(sfixtureParams.footer) do
                 if row.label == 'destroy' then assert.is_true(row.run(nil, fixture)) end
             end
             assert.is_true(fixture:isDestroyed())

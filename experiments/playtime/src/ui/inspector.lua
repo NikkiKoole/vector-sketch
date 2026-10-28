@@ -76,8 +76,8 @@ local function drawRow(id, row, target, body, x, y, w, labelWidth)
             for k, o in ipairs(opts) do if o == current then i = k end end
             return setValue(row, target, opts[i % #opts + 1])
         end
-    elseif row.kind == 'action' then
-        if ui.button(wx, y + DY, w - lib.labelWidth, labelOf(row, target)) then return row.run(body, target) end
+    elseif row.kind == 'action' then -- no label column: the button is the label, full width
+        if ui.button(x, y + DY, w - 4, labelOf(row, target)) then return row.run(body, target) end
     elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option)
         local bw = (w - lib.labelWidth) / #row.options
         for i, option in ipairs(row.options) do
@@ -128,7 +128,15 @@ function lib.drawParams(id, params, target, body, x, y, w)
         while i <= #shown do
             local row, nextRow = shown[i], shown[i + 1]
             local replaced
-            if row.kind == 'bool' and nextRow and nextRow.kind == 'bool' then
+            if row.kind == 'action' and nextRow and nextRow.kind == 'action' then
+                -- two buttons side by side
+                local half = w / 2
+                replaced = drawRow(id, row, target, body, x, cy, half)
+                if replaced == nil or replaced == target then
+                    replaced = drawRow(id, nextRow, target, body, x + half, cy, half)
+                end
+                i = i + 2
+            elseif row.kind == 'bool' and nextRow and nextRow.kind == 'bool' then
                 -- two checkboxes side by side: label, then its box at the end of each half
                 local half = w / 2
                 local boxAt = half - ui.theme.slider.height - 12

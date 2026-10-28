@@ -6,9 +6,6 @@ local camera = require('src.camera')
 local cam = camera.getInstance()
 local utils = require('src.utils')
 local fixtures = require('src.fixtures')
-local snap = require('src.physics.snap')
-local sceneIO = require('src.io')
-local objectManager = require('src.object-manager')
 local recorder = require('src.recorder')
 local state = require('src.state')
 local ST = require('src.shape-types')
@@ -43,7 +40,9 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
     local w, h = love.graphics.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
-    ui.panel(panelX, panelY, panelWidth, panelH, '∞ body props ∞', function()
+    -- title: what kind of thing it is (its name is the first row)
+    local shapeType = state.selection.selectedObj and state.selection.selectedObj.shapeType or ''
+    ui.panel(panelX, panelY, panelWidth, panelH, '∞ ' .. shapeType .. ' body ∞', function()
         -- content scrolls when it doesn't fit (spec/ui-overflow_spec.lua)
         local header = ui.theme.panelHeader
         ui.scrollPanel('body-panel', panelX, panelY + header, panelWidth, panelH - header - 5, function()
@@ -130,22 +129,6 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                 end
                 return false
             end
-
-            if ui.button(x, y, 100, 'clone') then
-                state.selection.selectedBodies = { state.selection.selectedObj }
-                local cloned = sceneIO.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
-                state.selection.selectedBodies = cloned
-                state.selection.selectedObj = nil
-            end
-
-            local slx, sly = ui.sameLine()
-            if ui.button(slx, sly, 140, 'destroy') then
-                snap.destroySnapJointAboutBody(body)
-                objectManager.destroyBody(body)
-                state.selection.selectedObj = nil
-                return
-            end
-            nextRow()
 
             local userData = body:getUserData()
             local thing = userData and userData.thing

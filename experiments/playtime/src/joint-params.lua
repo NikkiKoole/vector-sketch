@@ -16,6 +16,25 @@ local function recreate(joint, settings)
     return newJoint
 end
 
+-- On top of every joint panel: its name, then destroy.
+lib.header = {
+    { key = 'label', kind = 'text', keepSpaces = true,
+      get = function(joint) return (joint:getUserData() or {}).label or '' end,
+      set = function(joint, v)
+          local ud = joint:getUserData() or {}
+          ud.label = v
+          joint:setUserData(ud)
+      end },
+    { kind = 'action', label = 'destroy',
+      run = function(_, joint)
+          local joints = require('src.joints')
+          require('src.registry').unregisterJoint(joints.getJointId(joint))
+          joint:destroy()
+          require('src.state').selection.selectedJoint = nil
+          return true -- gone: stop drawing this panel
+      end },
+}
+
 local function number(key, min, max, get, set, extra)
     local row = { key = key, kind = 'number', min = min, max = max,
         get = get, set = function(joint, v) set(joint, v) end }
@@ -29,9 +48,9 @@ local collide = { key = 'collide', kind = 'bool', advanced = true,
     get = function(joint) return joint:getCollideConnected() end,
     set = function(joint, v) return recreate(joint, { collideConnected = v }) end }
 
-local anchorA = { kind = 'action', label = '∆ move anchor',
+local anchorA = { kind = 'action', label = '∆ anchor',
     run = function() local modes = require('src.modes'); modes.set(modes.SET_OFFSET_A) end }
-local anchorB = { kind = 'action', label = '∆ move anchor B',
+local anchorB = { kind = 'action', label = '∆ anchor B',
     run = function() local modes = require('src.modes'); modes.set(modes.SET_OFFSET_B) end }
 
 local function limitsOn(joint) return joint:areLimitsEnabled() end
@@ -125,7 +144,7 @@ lib.byType = {
     [JT.WHEEL] = concat({
         number('spring', 0, 100, function(joint) return joint:getSpringFrequency() end,
             function(joint, v) joint:setSpringFrequency(v) end),
-        number('spring damp', 0, 1, function(joint) return joint:getSpringDampingRatio() end,
+        number('damp', 0, 1, function(joint) return joint:getSpringDampingRatio() end,
             function(joint, v) joint:setSpringDampingRatio(v) end),
     }, motor(false), { anchorA, anchorB, collide }, axis),
     [JT.DISTANCE] = concat({

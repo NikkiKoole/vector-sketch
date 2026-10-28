@@ -80,7 +80,8 @@ function lib.draw(x, y, w, h)
                 ui.label(rowX, rowY, '(none yet)')
             end
             for _, prefabName in ipairs(names) do
-                local _, pressed, released = ui.button(rowX, rowY, rowW, prefabName)
+                -- flat list rows, like the on-stage list
+                local _, pressed, released = ui.header_button(rowX, rowY, rowW, ' ' .. prefabName)
                 if pressed then
                     ui.draggingActive = ui.activeElementID
                     spawn(prefabName)

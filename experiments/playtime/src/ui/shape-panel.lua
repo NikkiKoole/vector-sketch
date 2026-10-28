@@ -95,7 +95,7 @@ function lib.drawAddShapeUI()
         end
         if mipoReleased then ui.draggingActive = nil; state.selection.selectedBodies = nil end
 
-        local _, mipoCPressed, mipoCReleased = ui.button(x + hw + 4, y, hw, 'add mipo ✦')
+        local _, mipoCPressed, mipoCReleased = ui.button(x + hw + 4, y, hw, 'add mipo *')
         if mipoCPressed then
             ui.draggingActive = ui.activeElementID
             local CM = require('src.character-manager')

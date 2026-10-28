@@ -934,31 +934,25 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
 
         -- === ACTIONS ACCORDION ===
         drawAccordion('actions', function()
-            if ui.button(x, y, panelWidth - 40, 'breathe') then
+            -- two per row: one-shot actions as buttons, on/off states as checkboxes
+            local hw = math.floor((panelWidth - 40) / 2) - 2
+            if ui.button(x, y, hw, 'breathe') then
                 mipoActions.breathe(instance)
             end
-            y = y + ROW
-
             local grounded = mipoActions.isGrounded(instance)
-            if ui.button(x, y, panelWidth - 40, grounded and 'jump' or 'jump (not grounded)') then
+            if ui.button(x + hw + 4, y, hw, grounded and 'jump' or 'jump (air)') then
                 mipoActions.jump(instance)
             end
             y = y + ROW
 
-            local isRagdoll = mipoActions.isRagdoll(instance)
-            if ui.button(x, y, panelWidth - 40, isRagdoll and 'ragdoll: on' or 'ragdoll: off') then
-                mipoActions.setRagdoll(instance, not isRagdoll)
-            end
-            y = y + ROW
-
-            local isFlipped = mipoActions.isFlipped(instance)
-            if ui.button(x, y, panelWidth - 40, isFlipped and 'flip: on' or 'flip: off') then
-                mipoActions.setFlipped(instance, not isFlipped)
-            end
+            local ragdollClicked = ui.checkbox(x, y, mipoActions.isRagdoll(instance), 'ragdoll')
+            if ragdollClicked then mipoActions.setRagdoll(instance, not mipoActions.isRagdoll(instance)) end
+            local flipClicked = ui.checkbox(x + hw + 4, y, mipoActions.isFlipped(instance), 'flip')
+            if flipClicked then mipoActions.setFlipped(instance, not mipoActions.isFlipped(instance)) end
             y = y + ROW
 
             local isPointing = mipoActions.isPointing(instance)
-            if ui.button(x, y, panelWidth - 40, isPointing and 'point at cursor: on' or 'point at cursor: off') then
+            if ui.checkbox(x, y, isPointing, 'point at cursor') then
                 if isPointing then mipoActions.stopPointing(instance) else mipoActions.pointAt(instance, 'cursor') end
             end
             y = y + ROW
@@ -1897,17 +1891,16 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         if ui.button(x, y, hw, 'randomize all') then
             CharacterManager.randomizeMipo(instance)
         end
-        if ui.button(x + hw + 4, y, hw, 'randomize ✦') then
+        if ui.button(x + hw + 4, y, hw, 'randomize *') then
             CharacterManager.randomizeMipoConstrained(instance)
         end
         y = y + ROW
-        if ui.button(x, y, panelWidth - 40, 'mutate sizes') then
+        if ui.button(x, y, hw, 'mutate sizes') then
             CharacterManager.mutateSizes(instance)
         end
-        y = y + ROW
 
-        -- === DISSOLVE BUTTON ===
-        if ui.button(x, y, panelWidth - 40, 'dissolve') then
+        -- === DISSOLVE BUTTON === (next to mutate sizes)
+        if ui.button(x + hw + 4, y, hw, 'dissolve') then
             for pName, part in pairs(instance.parts) do
                 if part and part.body and not part.body:isDestroyed() then
                     local ud = part.body:getUserData()
