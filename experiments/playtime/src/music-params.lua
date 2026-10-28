@@ -31,7 +31,8 @@ lib.rows = {
         set = function(_, v) synth().setVolume(v) end },
     field('enabled', 'music', 'bool'),
     field('melody', 'melody', 'bool'),
-    field('style', 'style', 'choice', { 'set', 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'ballad' }),
+    field('style', 'style', 'choice',
+          { 'set', 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'ballad' }),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
     field('upright', 'upright', 'bool', nil, true),
 }

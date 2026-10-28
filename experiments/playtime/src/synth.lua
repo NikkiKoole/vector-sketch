@@ -106,6 +106,14 @@ lib.patches = {
                  harmonics = 0.7, timbre = 0.5, morph = 0.4, reverb = 0.35, level = 0.9 },
     clap = { slot = 32, wave = 'NOISE', adsr = { 0, 70, 0, 60 }, reverb = 0.6, level = 0.35,
              filter = { mode = 2, cutoff = 1400, resonance = 2 } },
+    -- the herbs style (boom-bap): a hard kick (a looser, longer drumhead than the soft kick), a
+    -- snare's noise (its body is that kick tuned up) and vinyl crackle (tiny high-passed ticks)
+    bapKick = { slot = 31, wave = 'MEMBRANE', adsr = { 0, 300, 0, 100 },
+                harmonics = 0.1, timbre = 0.05, morph = 0, reverb = 0.05, level = 1.8 },
+    snare = { slot = 33, wave = 'NOISE', adsr = { 0, 130, 0, 90 }, reverb = 0.25, level = 0.6,
+              filter = { mode = 2, cutoff = 1200, resonance = 1 } },
+    crackle = { slot = 34, wave = 'NOISE', adsr = { 0, 4, 0, 4 }, reverb = 0, level = 0.3,
+                filter = { mode = 2, cutoff = 3500, resonance = 1 } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,

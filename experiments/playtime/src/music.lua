@@ -14,7 +14,8 @@
 -- open fifths in the left hand, brushes), island (Animal Crossing's hourly music: short loops, a
 -- plinky marimba riff, a bouncy bass, a kalimba tune), dumont (Domenique Dumont's dubby synth-pop:
 -- funky minor vamps, a busy syncopated bass, a marimba riff, a steel-pan tune, claps with an echo),
--- supermarket (Mr. Lucky's ii7 - V11 vamp, staccato and bouncy, a music-box tune) and ballad.
+-- supermarket (Mr. Lucky's ii7 - V11 vamp, staccato and bouncy, a marimba tune), herbs (MF DOOM's
+-- Special Herbs: a dusty swung boom-bap loop, chopped Rhodes, a sub bass on the kick) and ballad.
 -- style = 'set' plays lib.set as a live set: each song ends on home, takes a breath, and the next
 -- one starts in a related key.
 --
@@ -30,8 +31,8 @@ local lib = {}
 
 lib.enabled = true
 lib.style = 'set'            -- 'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
-                             -- 'supermarket', 'ballad'
-lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket' }
+                             -- 'supermarket', 'herbs', 'ballad'
+lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs' }
 lib.rhythmSection = 'auto'   -- 'auto' (joins when play gets busy), 'on' or 'off'
 lib.upright = false          -- the upright in the rhythm section; off: the left hand keeps the bass
 lib.melody = true            -- the tune on top
@@ -177,6 +178,31 @@ lib.styles = {
         B = {
             { { 5, 'maj7', 4 }, { 4, 'm7', 4 }, { 2, 'm7', 4 }, { 7, 'sus', 4 } },   -- IV iii ii V11
             { { 0, 'maj69', 4 }, { 9, 'dom9', 4 }, { 2, 'm7', 4 }, { 7, 'sus', 4 } }, -- I VI7 ii V11
+        },
+    },
+    -- MF DOOM's Special Herbs: a dusty soul-jazz loop on an MPC. Minor loops of one or two bars a
+    -- chord that just keep going (B is the switch-up), the Rhodes chopped like a sample (held
+    -- chunks retriggered on the 16ths), a sub bass on the kick, a hard kick and a snare on 2 and 4
+    -- laid back, swung hats, a sparse piano phrase that loops, vinyl crackle.
+    herbs = {
+        bpm = 88, swing = 0.6, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 0, motifRepeat = 40,
+        mode = 'dorian', strumMs = 3, keys = 'rhodes', lead = 'pianoLead', bass = 'boom', bassPatch = 'dubBass',
+        bassLo = 33, drums = 'boombap', home = 'm9',
+        A = {
+            { { 0, 'm9' }, { 5, 'm9' } },                                    -- i9 iv9, the dark soul loop
+            { { 0, 'm9' }, { 10, 'm7' }, { 8, 'maj9' }, { 7, 'm7' } },       -- i bVII bVI v, walking down
+            { { 0, 'm9' }, { 3, 'maj9' } },                                  -- i bIII
+            { { 0, 'm9' }, { 8, 'maj9' }, { 0, 'm9' }, { 10, 'sus' } },      -- i bVI i bVII9sus
+        },
+        B = {
+            { { 8, 'maj9', 8 }, { 7, 'm7', 8 }, { 0, 'm9', 16 } },   -- bVI v i, the switch-up
+            { { 5, 'm9', 16 }, { 0, 'm9', 16 } },                    -- iv i, slower
+        },
+        -- the chop: held chunks of the chord, retriggered a 16th or a dotted 8th later
+        comps = {
+            { { 0, 6, 4 }, { 7, 3, 3 }, { 10, 4, 4 }, { 16, 6, 4 }, { 23, 3, 3 }, { 26, 6, 3 } },
+            { { 0, 3, 4 }, { 3, 3, 3 }, { 8, 6, 4 }, { 16, 3, 4 }, { 19, 3, 3 }, { 24, 6, 4 } },
+            { { 0, 10, 4 }, { 10, 2, 3 }, { 14, 2, 3 }, { 16, 10, 4 }, { 26, 6, 3 } },
         },
     },
     ballad = {
@@ -720,6 +746,19 @@ local bassLines = {
             at(14, fifth, 3, 2)
         end
     end,
+    -- boom: a sub under the kick, the root long on 1 and again on the and-of-3, now and then a
+    -- step into the next root
+    boom = function(hit, chord, lo, lastBar, nextRoot, fits)
+        local root = inRange(chord.root, lo)
+        local e = chord.s + chord.len
+        if chord.s == 0 then hit(0, root, 5, 6) end
+        if chord.s <= 10 and e > 10 then hit(10, root, 4, 4) end
+        if e == 16 and lastBar and nextRoot and nextRoot ~= chord.root then
+            local target = inRange(nextRoot, lo)
+            local pickup = target + (target > root and -2 or 2)
+            if fits(pickup, chord) then hit(14, pickup, 3, 2) end
+        end
+    end,
     hold = function(hit, chord, lo)
         hit(chord.s, inRange(chord.root, lo), 5, chord.len)
     end,
@@ -763,6 +802,20 @@ local drumKits = {
         hit(14, 'conga', 59, 3, 200)
         if kind == 'B' then hit(7, 'conga', 64, 3, 200); if rnd(100) < 50 then hit(11, 'conga', 64, 2, 200) end end
         if fill then hit(13, 'conga', 64, 3, 200); hit(14, 'conga', 61, 4, 200); hit(15, 'conga', 59, 4, 200) end
+    end,
+    -- boom-bap: a hard kick on 1 and the and-of-3 (and the a-of-2 now and then), a snare on 2 and
+    -- 4 (noise over a tuned-up kick for its body) dragged by the swing, a ghost snare, swung 8th
+    -- hats, an open hat on the and-of-4 now and then, vinyl crackle
+    boombap = function(hit, rnd, kind, _, fill)
+        hit(0, 'bapKick', 36, 6, 220)
+        hit(10, 'bapKick', 36, 5, 220)
+        if rnd(100) < 40 then hit(7, 'bapKick', 36, 4, 180) end
+        for _, s in ipairs({ 4, 12 }) do hit(s, 'snare', 60, 5, 140); hit(s, 'bapKick', 50, 3, 90) end
+        if rnd(100) < 35 then hit(15, 'snare', 60, 2, 60) end
+        for s = 0, 14, 2 do hit(s, 'hat', 60, s % 4 == 0 and 3 or 2, 30) end
+        if kind == 'B' and rnd(100) < 50 then hit(14, 'hat', 60, 2, 160) end
+        for _ = 1, 5 do hit(rnd(16), 'crackle', 90 + rnd(12), 1, 8) end
+        if fill then hit(13, 'snare', 60, 3, 60); hit(14, 'snare', 60, 4, 60); hit(15, 'bapKick', 36, 4, 160) end
     end,
     -- a light 70s kit: kick on 1 and 3, the rim on 2 and 4, closed hats in 8ths with a lift on the
     -- off-beats, a skip on the a-of-4 into B

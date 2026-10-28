@@ -354,6 +354,9 @@ function love.update(dt)
 end
 
 function love.quit()
+    -- stop the synth's render thread first: left running, it calls into the audio source while
+    -- LÖVE tears audio down, and that aborts the process on the way out
+    require('src.synth').stop()
     -- this takes annoyingly long
     local time = love.timer.getTime()
     prof.write("prof.mpack")
