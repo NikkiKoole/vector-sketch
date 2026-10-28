@@ -50,8 +50,9 @@ mockups). Nikki's pick, not E's bottom strip:
 **Rail design (2026-10-28):** each rail button is a tool *group* (select, shape, draw, joint,
 attach, mipo). The button reuses the group's last pick; a small ▸ tab next to it reopens a flyout
 with the whole group in **two columns**, with small section headers (shape: basics / more; joint:
-common / more; attach: play / looks / skin). Toys become built-in library items; auto-ropify is
-dropped until it works. Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
+common / more; attach: play / looks / skin). Toys become built-in library items. auto-ropify
+(clone x10 + chain with revolute joints) is parked: button commented out in `shape-panel.lua`,
+function and mode kept; if missed, it becomes 'chain x 10' next to clone in the body panel. Started: `src/ui/tool-rail.lua` with the shape group only (placeholder
 icons drawn from the shape), old add panels still there. Spec: `spec/tool-rail_spec.lua`.
 
 Order: (a) right column with the three tabs, properties first (move today's panels in); (b) the

@@ -258,10 +258,12 @@ function lib.drawAddShapeUI()
         handleFixtureButton(x, y, width, 'resource', 'resource')
         handleFixtureButton(x, y, width, 'meshusert', 'meshusert')
         handleFixtureButton(x, y, width, 'light', 'light')
-        if ui.button(x, y, width, 'auto-ropify') then
-            -- todo make this work
-            modes.set(modes.PICK_AUTO_ROPIFY)
-        end
+        -- auto-ropify (clone a body x10 and chain them with revolute joints) is parked
+        -- until we miss it; objectManager.autoRopify and its pick mode are still there.
+        -- Its home when it comes back: a 'chain x 10' button next to clone in the body panel.
+        -- if ui.button(x, y, width, 'auto-ropify') then
+        --     modes.set(modes.PICK_AUTO_ROPIFY)
+        -- end
         nextRow()
         love.graphics.line(x, y + 10, x + panelWidth - 40, y + 10)
         nextRow()

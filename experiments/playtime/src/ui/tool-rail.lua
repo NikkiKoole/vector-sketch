@@ -155,7 +155,7 @@ local function drawDrawOptions(x, y, w)
     local minDist = ui.sliderWithInput('minDistance', x + labelW, y, w - labelW - 90, 1, 150,
         state.editorPreferences.minPointDistance or 10)
     if minDist then
-        state.editorPreferences.minPointDistance = minDist
+        state.editorPreferences.minPointDistance = tonumber(minDist) or 50
     end
 end
 
