@@ -88,6 +88,10 @@ describe('doors', function()
         local front = doors.findDoor('front')
         assert.are.equal(mipoId, doors.mipoOn(front))
         assert.is_not_nil(arrived.parts['torso1'].body)
+        -- standing in the room, not with its legs in the floor (bakery floor top: 550)
+        for name, part in pairs(arrived.parts) do
+            assert.is_true(part.body:getY() < 550, name .. ' arrived under the floor')
+        end
     end)
 
     it('and back out: the overworld as it was, the Mipo at the bakery door', function()

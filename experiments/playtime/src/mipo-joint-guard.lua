@@ -12,6 +12,14 @@
 --   Only while the Mipo is held (and just after release): in a resting pile,
 --   squashed joints passed the threshold and healing teleported limbs into
 --   neighbours, pumping energy in until the pile exploded out of the world.
+-- unstick: a part on the wrong side of a wall or floor (a foot or an ear pushed
+--   through, the rest of the Mipo on the other side) can't come back: the joint
+--   pulls it against the wall forever. Seen as something static and solid across
+--   the limb (parent centre -> joint -> child centre). The smaller side (the
+--   stuck part and what hangs off it) turns into a ghost (its collision shapes
+--   become sensors) so the joint pulls it back through; it gets its collision
+--   back once it's clear, or after unstickMaxTime. Logged ('[unstick] ...') with
+--   whether the Mipo was held, to learn when it happens. Not held or held alike.
 -- standUp: a Mipo that lands in a split can't get up by turning its legs alone
 --   (or its arms, in a handstand)
 --   (they'd have to lift the whole body), so after a moment of splayed legs it
@@ -30,6 +38,10 @@ lib.healDistance = 40 -- world units between joint anchors before a limb is pull
                       -- (recorded: up to ~12 while fine, 60-1000 once torn)
 lib.healAfterRelease = 1.0 -- seconds healing stays on after a Mipo is let go (throws)
 
+lib.unstick = true
+lib.unstickDistance = 15  -- joint halves further apart than this, with a wall between, is stuck
+lib.unstickMaxTime = 2.0  -- seconds a part stays a ghost at most
+
 lib.standUp = true
 lib.splayedAngle = math.rad(30) -- further than this from its target counts as splayed (50 let a
                                 -- wide stance on grippy feet tug forever instead of hopping to reset)
@@ -43,7 +55,13 @@ local lastStandUp = {}  -- [mipoId] = time of its last stand-up hop
 -- Parts that can carry the Mipo: legs normally, arms in a handstand (flip).
 local supportParts = { 'luleg', 'ruleg', 'llleg', 'rlleg', 'luarm', 'ruarm', 'llarm', 'rlarm' }
 
-lib.stats = { unwound = 0, healed = 0, standUps = 0, standUpsByMipo = {} }
+lib.stats = { unwound = 0, healed = 0, standUps = 0, standUpsByMipo = {}, unstuck = 0 }
+lib.unstuckLog = {} -- the last few cases: { part, through, distance, held, at }
+
+-- [joint] = { fixtures = {...}, since = time }: parts made ghosts by unstick.
+-- On state so a hot reload doesn't leave parts as sensors forever.
+state.mipoGhosts = state.mipoGhosts or {}
+local ghosts = state.mipoGhosts
 
 local TWO_PI = 2 * math.pi
 
@@ -95,6 +113,7 @@ end
 -- teleport (setPosition), which skips Box2D's tunnelling protection: a limb
 -- torn across a thin wall was put straight into it and got stuck.
 local function wallBetween(x1, y1, x2, y2)
+    if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return false end
     local blocked = false
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
         if fixture:getBody():getType() == 'static' and not fixture:isSensor() then
@@ -128,6 +147,154 @@ local function healJoint(joint)
         end
     end
     lib.stats.healed = lib.stats.healed + 1
+end
+
+-- The static, solid fixture between two points, if any.
+local function wallFixtureBetween(x1, y1, x2, y2)
+    -- Box2D asserts on a zero-length ray (anchors exactly on top of each other)
+    if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return nil end
+    local found
+    state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
+        if fixture:getBody():getType() == 'static' and not fixture:isSensor() then
+            found = fixture
+            return 0
+        end
+        return -1
+    end)
+    return found
+end
+
+local function fixtureLabel(fixture)
+    local ud = fixture:getBody():getUserData()
+    local thing = ud and ud.thing
+    return thing and (thing.label ~= '' and thing.label or thing.shapeType) or '?'
+end
+
+-- The parts on the smaller side of a joint: the child's subtree, or everything
+-- else when that's smaller (the torso went through, a limb stayed behind).
+local function smallerSide(instance, childName)
+    local subtree = collectSubtree(instance, childName, {})
+    local total = 0
+    for _ in pairs(instance.parts) do total = total + 1 end
+    if #subtree <= total / 2 then return subtree, childName end
+    local inSubtree, rest = {}, {}
+    for _, name in ipairs(subtree) do inSubtree[name] = true end
+    for name in pairs(instance.parts) do
+        if not inSubtree[name] then rest[#rest + 1] = name end
+    end
+    return rest, 'rest of ' .. tostring(instance.id)
+end
+
+local function partBodies(instance, names)
+    local bodies = {}
+    for _, name in ipairs(names) do
+        local part = instance.parts[name]
+        if part and part.body and not part.body:isDestroyed() then bodies[#bodies + 1] = part.body end
+    end
+    return bodies
+end
+
+-- Is the body overlapping something static and solid? (A ghost is a sensor, and
+-- sensors still get contacts.)
+local function touchingWall(body)
+    for _, contact in ipairs(body:getContacts()) do
+        if contact:isTouching() then
+            local fa, fb = contact:getFixtures()
+            local other = fa:getBody() == body and fb or fa
+            if other:getBody():getType() == 'static' and not other:isSensor() then return true end
+        end
+    end
+    return false
+end
+
+-- A wall across the limb: on the path parent centre -> joint -> child centre.
+-- (Only the anchors apart missed the resting case: the joint closed at the
+-- floor's surface, the foot hanging under it.)
+local function wallAcrossLimb(joint)
+    local bodyA, bodyB = joint:getBodies()
+    local x1, y1, x2, y2 = joint:getAnchors()
+    local ax, ay = bodyA:getPosition()
+    local bx, by = bodyB:getPosition()
+    return wallFixtureBetween(ax, ay, x1, y1) or wallFixtureBetween(x1, y1, x2, y2)
+        or wallFixtureBetween(x2, y2, bx, by)
+end
+
+local function jointKey(joint)
+    local _, bodyB = joint:getBodies()
+    local ud = bodyB:getUserData()
+    return ud and ud.thing and ud.thing.id
+end
+
+local function ghost(joint, instance, childName, wall, distance, now)
+    local names, what = smallerSide(instance, childName)
+    local fixtures = {}
+    for _, body in ipairs(partBodies(instance, names)) do
+        for _, fixture in ipairs(body:getFixtures()) do
+            if not fixture:getUserData() and not fixture:isSensor() then
+                fixture:setSensor(true)
+                fixtures[#fixtures + 1] = fixture
+            end
+        end
+    end
+    -- moving the child side pulls it to the parent's anchor; moving the rest, the other way
+    ghosts[jointKey(joint)] = { joint = joint, instance = instance, names = names, fixtures = fixtures,
+        since = now, childSide = what == childName }
+    lib.stats.unstuck = lib.stats.unstuck + 1
+    local held = lastHeld[instance.id] ~= nil and now - lastHeld[instance.id] < 0.1
+    local case = { part = what, through = fixtureLabel(wall), distance = math.floor(distance), held = held, at = now }
+    table.insert(lib.unstuckLog, case)
+    if #lib.unstuckLog > 20 then table.remove(lib.unstuckLog, 1) end
+    print(string.format('[unstick] %s through %s, %d apart, %s', case.part, case.through, case.distance,
+        held and 'held' or 'not held'))
+end
+
+local function unghost(key)
+    for _, fixture in ipairs(ghosts[key].fixtures) do
+        if not fixture:isDestroyed() then fixture:setSensor(false) end
+    end
+    ghosts[key] = nil
+end
+
+lib.unstickPull = 6 -- a ghost moves toward the good side's centre at this many times the gap per second
+
+local function unstickJoints(joints, now)
+    -- ghosts first: pull them toward the good side, solid again once they're clear
+    for key, entry in pairs(ghosts) do
+        local joint = entry.joint
+        if not joint or joint:isDestroyed() or not entry.instance then -- gone, or left by an older version
+            unghost(key)
+        else
+            local bodyA, bodyB = joint:getBodies()
+            local good = entry.childSide and bodyA or bodyB
+            local gx, gy = good:getPosition()
+            local bodies = partBodies(entry.instance, entry.names)
+            local clear = not wallAcrossLimb(joint)
+            for _, body in ipairs(bodies) do
+                if clear and touchingWall(body) then clear = false end
+            end
+            if clear or now - entry.since > lib.unstickMaxTime then
+                unghost(key)
+            else
+                local vx, vy = good:getLinearVelocity()
+                for _, body in ipairs(bodies) do
+                    local x, y = body:getPosition()
+                    body:setLinearVelocity(vx + (gx - x) * lib.unstickPull, vy + (gy - y) * lib.unstickPull)
+                end
+            end
+        end
+    end
+    for _, joint in ipairs(joints) do
+        if not ghosts[jointKey(joint)] then
+            local wall = wallAcrossLimb(joint)
+            if wall then
+                local _, bodyB = joint:getBodies()
+                local instance, childName = mipoRegistry.getFromBody(bodyB)
+                local x1, y1, x2, y2 = joint:getAnchors()
+                local gap = math.sqrt((x1 - x2) ^ 2 + (y1 - y2) ^ 2)
+                if instance then ghost(joint, instance, childName, wall, gap, now) end
+            end
+        end
+    end
 end
 
 local function markHeldMipos(now)
@@ -236,7 +403,7 @@ function lib.update()
     local now = love.timer.getTime()
     markHeldMipos(now)
     if lib.standUp then standUpMipos(now) end
-    if not lib.unwind and not lib.heal then return end
+    if not lib.unwind and not lib.heal and not lib.unstick then return end
     local revolute, limited = {}, {}
     for _, joint in ipairs(state.physicsWorld:getJoints()) do
         if joint:getType() == JT.REVOLUTE and isMipoJoint(joint) then
@@ -250,6 +417,7 @@ function lib.update()
         end
     end
     if lib.unwind then unwindJoints(limited) end
+    if lib.unstick then unstickJoints(revolute, now) end
 end
 
 return lib

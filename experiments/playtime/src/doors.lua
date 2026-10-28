@@ -21,6 +21,7 @@ local R = state.rooms
 
 local FADE_SECONDS = 0.5
 local DOOR_MARGIN = 40 -- a Mipo's torso this close to the door's box counts as on it
+local ARRIVE_CLEARANCE = 80 -- the lowest part's centre this far above the door's bottom
 
 local function doorOf(body)
     if body:isDestroyed() then return nil end
@@ -172,16 +173,24 @@ local function enterRoom(to, arrive, traveler)
     state.interaction.draggingObj = nil
     state.selection.selectedBodies = nil
 
-    -- the Mipo steps out of the arrival door
+    -- the Mipo steps out of the arrival door: centred on it, its lowest part just
+    -- above the door's bottom (the torso at the door's centre put the legs in the floor)
     local doorBody = lib.findDoor(arrive)
     local ax, ay = 0, 0
+    local bottom
     if doorBody then
-        ax, ay = doorBody:getPosition()
+        local x1, _, x2, y2 = lib.box(doorBody)
+        ax, ay, bottom = (x1 + x2) / 2, doorBody:getY(), y2
     else
         logger:info('doors: no door "' .. tostring(arrive) .. '" in ' .. to)
     end
     if #traveler.bodies > 0 then
         local tx, ty = torsoPosition(traveler)
+        if bottom then
+            local lowest = ty
+            for _, bodyData in ipairs(traveler.bodies) do lowest = math.max(lowest, bodyData.position[2]) end
+            ay = bottom - ARRIVE_CLEARANCE - (lowest - ty)
+        end
         require('src.library').move(traveler, ax - tx, ay - ty)
         local data = json.decode(json.encode(traveler))
         sceneIO.prepareLoaded(data)
