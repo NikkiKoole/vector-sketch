@@ -66,7 +66,7 @@ lib.patches = {
                    harmonics = 0.15, timbre = 0.35, morph = 0.15, reverb = 0.3, level = 0.8,
                    autopan = { rate = 4, depth = 0.4 } },
     kalimba = { slot = 20, wave = 'MALLET', adsr = { 0, 600, 0, 300 },
-                harmonics = 0.45, timbre = 0.35, morph = 0.2, reverb = 0.3, level = 0.6 },
+                harmonics = 0.45, timbre = 0.35, morph = 0.2, reverb = 0.3, level = 1.0 },
     kalimbaPlonk = { slot = 21, wave = 'WAVESCAN', adsr = { 2, 500, 0, 250 },
                      harmonics = 0.05, timbre = 0, morph = 1, reverb = 0.3, level = 0.42 },
     -- the music's rhythm section (bossa): a soft kick (a drumhead struck in the centre), the
@@ -89,6 +89,23 @@ lib.patches = {
                   harmonics = 0.08, timbre = 0.45, morph = 0.55, reverb = 0.3, level = 2.8,
                   filter = { mode = 1, cutoff = 4200, resonance = 1 },
                   tape = { wow = 0.15, flutter = 0.03, saturation = 0, warble = 0 } },
+    -- the island style: a soft wooden marimba for the plinky riff (a mallet on a wooden bar,
+    -- softer than the box 'wood' and ringing longer)
+    marimba = { slot = 27, wave = 'MALLET', adsr = { 0, 500, 0, 250 },
+                harmonics = 0.08, timbre = 0.35, morph = 0.35, reverb = 0.3, level = 1.0 },
+    -- the dumont style: a soft synth stab (a lowpassed saw), a funk bass
+    -- (a triangle, lowpassed with a bit of bite), a steel pan for the tune (a mallet toward the bell,
+    -- ringing), and a drum machine clap (high-passed noise, a big room).
+    -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
+    -- (SOUND_FX_BUSES), and six are already taken (rhodes, celesta, rhodesLead, piano, pianoLead, whistle).
+    stab = { slot = 28, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
+             filter = { mode = 1, cutoff = 1500, resonance = 2 } },
+    dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
+                filter = { mode = 1, cutoff = 1100, resonance = 3 } },
+    steelpan = { slot = 30, wave = 'MALLET', adsr = { 0, 700, 0, 350 },
+                 harmonics = 0.7, timbre = 0.5, morph = 0.4, reverb = 0.35, level = 0.9 },
+    clap = { slot = 32, wave = 'NOISE', adsr = { 0, 70, 0, 60 }, reverb = 0.6, level = 0.35,
+             filter = { mode = 2, cutoff = 1400, resonance = 2 } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,

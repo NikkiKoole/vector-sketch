@@ -41,5 +41,6 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - **Keep the render thread outside `src/`.** Lurker would hot-swap it into the main thread, where `ffi.load` breaks.
 - **A new FFI function must go in synth.lua's `CDEF`.** It's declared once at module load, so the next hot reload picks it up. Redeclaring an identical function is fine.
 - **Module state goes on `state.synth` / `state.music` / `state.snapSound`.** A hot reload would wipe module-local state.
+- **Only 7 slots can have inserts (tape, autopan, phaser, chorus, echo, ...).** Each slot with one takes an aux FX bus (`SOUND_FX_BUSES` 8 = master + 7), never freed. 6 are used (rhodes, celesta, rhodesLead, piano, pianoLead, whistle). Past that the effect is silently absent and `sound_tick` prints a warning. Until 2026-10-28 that warning **segfaulted the app**: `printh` was unresolved in libdesound (NULL under `-undefined dynamic_lookup`). desound.c now defines it (stderr). Rebuild with `native/desound/build.sh` while the app is stopped.
 - **Measure loudness before choosing levels.** Render offline and compare peaks. One instrument (MODAL) came out 10× louder than the rest.
 - **The user's taste so far:** likes the Rhodes, the drums, the membrane boxes and the click. Disliked the celesta, the slide whistle and (in the music) the upright.

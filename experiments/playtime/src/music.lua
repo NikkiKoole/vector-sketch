@@ -11,8 +11,12 @@
 --     bar 4 answers. Strong beats land on chord tones, passing tones fill the thirds, long notes
 --     stay off the held chord's semitones, and the tune sits above the chord.
 -- Styles are data (lib.styles): bossa (straight, Rhodes, clave), guaraldi (swung, a felt piano,
--- open fifths in the left hand, brushes) and ballad. style = 'set' plays lib.set as a live set:
--- each song ends on home, takes a breath, and the next one starts in a related key.
+-- open fifths in the left hand, brushes), island (Animal Crossing's hourly music: short loops, a
+-- plinky marimba riff, a bouncy bass, a kalimba tune), dumont (Domenique Dumont's dubby synth-pop:
+-- funky minor vamps, a busy syncopated bass, a marimba riff, a steel-pan tune, claps with an echo),
+-- supermarket (Mr. Lucky's ii7 - V11 vamp, staccato and bouncy, a music-box tune) and ballad.
+-- style = 'set' plays lib.set as a live set: each song ends on home, takes a breath, and the next
+-- one starts in a related key.
 --
 -- The arrangement follows the play: calm, the keys play alone and the left hand takes the bass;
 -- busy (impacts call music.bump), the drums join where the form lets them (the upright too when
@@ -25,8 +29,9 @@ local state = require('src.state')
 local lib = {}
 
 lib.enabled = true
-lib.style = 'set'            -- 'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'ballad'
-lib.set = { 'bossa', 'guaraldi' }
+lib.style = 'set'            -- 'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
+                             -- 'supermarket', 'ballad'
+lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket' }
 lib.rhythmSection = 'auto'   -- 'auto' (joins when play gets busy), 'on' or 'off'
 lib.upright = false          -- the upright in the rhythm section; off: the left hand keeps the bass
 lib.melody = true            -- the tune on top
@@ -48,6 +53,18 @@ lib.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10
 lib.forms = {
     { { 'intro', 2 }, { 'A', 8 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'outro', 4 } }, -- AABA, the standard
     { { 'intro', 4 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'B', 8 }, { 'outro', 4 } },
+}
+
+-- Comps shared between styles by name (a style's comps = 'name'): how the chords are played,
+-- kept apart from which chords, so another song can reuse the feel.
+lib.comps = {
+    -- the supermarket bounce (70s library music): short staccato stabs, the chick on 2 and 4 with
+    -- a skip into it (the a-of-2, the and-of-1), a stab pushed a 16th early now and then
+    bounce = {
+        { { 4, 1, 4 }, { 7, 1, 3 }, { 12, 1, 4 }, { 20, 1, 4 }, { 23, 1, 3 }, { 28, 1, 4 } },
+        { { 2, 1, 3 }, { 4, 1, 4 }, { 10, 1, 3 }, { 12, 1, 4 }, { 18, 1, 3 }, { 20, 1, 4 }, { 26, 2, 4 } },
+        { { 0, 2, 4 }, { 6, 1, 3 }, { 12, 1, 4 }, { 15, 1, 3 }, { 20, 1, 4 }, { 24, 2, 4 }, { 30, 1, 3 } },
+    },
 }
 
 -- Progressions are { degree from the key, quality } (A: each chord lasts the song's chordBars) or
@@ -97,6 +114,71 @@ lib.styles = {
             { { 0, 8, 4 }, { 14, 2, 3 }, { 16, 8, 4 }, { 26, 4, 3 } },
         },
     },
+    -- Animal Crossing's hourly music: one-bar chords in short loops, the Rhodes only holding, a
+    -- marimba riff (the song's own, lib.riffs) carrying the groove, a bouncy root and fifth, a
+    -- kalimba tune, a soft kick, a rim on 2 and 4 and a shaker. Cozy, with one odd chord per loop.
+    island = {
+        bpm = 104, swing = 0.56, chordBars = { 1 }, lydianChance = 0, pushOdds = 0, motifRepeat = 30,
+        strumMs = 10, keys = 'rhodes', lead = 'kalimba', bass = 'bounce', drums = 'island', home = 'maj9',
+        riff = 'marimba',
+        A = {
+            { { 0, 'maj9' }, { 4, 'm7' }, { 5, 'maj9' }, { 5, 'm9' } },     -- I iii IV iv, the wistful one
+            { { 0, 'maj9' }, { 10, 'maj9' }, { 5, 'maj9' }, { 0, 'maj9' } }, -- I bVII IV I
+            { { 0, 'maj9' }, { 2, 'dom9' }, { 5, 'maj9' }, { 0, 'maj9' } },  -- I II7 IV I, a bit bright
+            { { 0, 'maj9' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'sus' } },       -- I vi ii V9sus
+        },
+        B = {
+            { { 5, 'maj9', 4 }, { 4, 'm7', 4 }, { 2, 'm9', 4 }, { 7, 'sus', 4 } },     -- IV iii ii V
+            { { 9, 'm9', 4 }, { 8, 'maj9', 4 }, { 5, 'maj9', 4 }, { 7, 'dom9', 4 } },  -- vi bVI IV V, the odd one
+        },
+        comps = { { { 0, 14, 3 }, { 16, 14, 3 } } }, -- the Rhodes holds, quietly: the riff is the comp
+    },
+    -- Domenique Dumont (Comme Ca, 2015): funky, pastel synth-pop on a homemade drum machine, not
+    -- slow. Two-chord dorian vamps (the IV is major), a busy syncopated bass with ghost notes and
+    -- octave pops, a marimba riff, the tune on a steel pan in short notes, 16th-note synth stabs
+    -- with a dotted-8th echo kept inside the chord, a flammed clap, 16th hats, congas.
+    dumont = {
+        bpm = 116, swing = 0.56, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 0, motifRepeat = 15,
+        mode = 'dorian', strumMs = 4, keys = 'stab', lead = 'steelpan', bass = 'funk', bassPatch = 'dubBass',
+        bassLo = 36, drums = 'machine', home = 'm9', riff = 'marimba', riffs = 'dumont', echo = { keys = true },
+        staccato = 3,
+        A = {
+            { { 0, 'm9' }, { 5, 'dom9' }, { 0, 'm9' }, { 5, 'dom9' } },     -- i9 IV9, the dorian vamp
+            { { 0, 'm9' }, { 10, 'maj9' }, { 8, 'maj9' }, { 10, 'maj9' } }, -- i bVII bVI bVII, Mediterranean
+            { { 0, 'm9' }, { 5, 'dom9' }, { 10, 'maj9' }, { 5, 'dom9' } },  -- i IV bVII IV
+            { { 0, 'm9' }, { 8, 'maj9' }, { 0, 'm9' }, { 10, 'sus' } },     -- i bVI i bVII9sus
+        },
+        B = {
+            { { 8, 'maj9', 8 }, { 10, 'maj9', 8 }, { 0, 'm9', 16 } },                 -- bVI bVII i, the lift
+            { { 5, 'dom9', 8 }, { 10, 'maj9', 8 }, { 8, 'maj9', 8 }, { 10, 'sus', 8 } }, -- IV bVII bVI bVII
+        },
+        -- funk stabs on the 16ths around the beat; the echo fills the holes
+        comps = {
+            { { 3, 1, 3 }, { 6, 1, 4 }, { 14, 1, 4 }, { 19, 1, 3 }, { 22, 1, 4 }, { 27, 1, 3 }, { 30, 1, 4 } },
+            { { 2, 1, 4 }, { 7, 1, 3 }, { 10, 1, 4 }, { 18, 1, 4 }, { 23, 1, 3 }, { 26, 2, 4 } },
+            { { 0, 1, 4 }, { 6, 1, 4 }, { 11, 1, 3 }, { 14, 1, 4 }, { 22, 1, 4 }, { 27, 1, 3 }, { 30, 1, 3 } },
+        },
+    },
+    -- supermarket music after Karl Jenkins' Mr. Lucky (Sounds for the Supermarket): the ii7 - V11
+    -- vamp (V11 = the sus quality) with a secondary dominant now and then, straight and bouncy,
+    -- staccato Rhodes stabs (lib.comps.bounce), the left hand bouncing root and fifth, a marimba
+    -- tune (vibes-ish) that runs by step over a wide range in short syncopated notes. Its own tune:
+    -- the chords and the feel are borrowed, the melody is not.
+    supermarket = {
+        bpm = 89, swing = 0.5, chordBars = { 1 }, lydianChance = 0, pushOdds = 20, sidestepOdds = 15,
+        motifRepeat = 10, strumMs = 4, keys = 'rhodes', lead = 'marimba', bass = 'bounce',
+        drums = 'lounge', home = 'maj69', comps = 'bounce',
+        range = { 62, 88 }, staccato = 2,
+        A = {
+            { { 2, 'm7' }, { 7, 'sus' }, { 2, 'm7' }, { 7, 'sus' } },     -- ii7 V11, the vamp
+            { { 2, 'm7' }, { 7, 'sus' }, { 4, 'm7' }, { 9, 'dom9' } },    -- ii V11 iii VI7, back into ii
+            { { 2, 'm9' }, { 7, 'sus' }, { 2, 'm9' }, { 2, 'dom9' } },    -- ii V11 ii II7, a cheeky lift
+        },
+        B = {
+            { { 5, 'maj7', 4 }, { 4, 'm7', 4 }, { 2, 'm7', 4 }, { 7, 'sus', 4 } },   -- IV iii ii V11
+            { { 0, 'maj69', 4 }, { 9, 'dom9', 4 }, { 2, 'm7', 4 }, { 7, 'sus', 4 } }, -- I VI7 ii V11
+        },
+    },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',
@@ -124,8 +206,28 @@ lib.motifs = {
     { { 0, 4, 6, 8, 10, 22 }, { 0, 1, 1, 1, 1, 2 } },    -- a stab, a run, a tail
     { { 4, 6, 8, 14, 16 }, { 0, 0, 0, 1, 1 } },          -- late: the space first
 }
+-- the island riff: per eighth, which voice of the chord's voicing (1 = lowest, 0 = rest)
+lib.riffs = {
+    { 1, 3, 2, 4, 1, 3, 2, 4 },   -- the rolling one
+    { 1, 2, 3, 4, 3, 2, 1, 0 },   -- up and down
+    { 4, 0, 3, 1, 4, 0, 3, 2 },   -- hopping from the top
+    { 1, 0, 3, 0, 2, 4, 0, 3 },   -- with holes
+    { 2, 4, 0, 4, 1, 4, 0, 3 },   -- the top note keeps coming back
+}
+-- dumont's pan riffs: sparser, around the off-beats, the way a steel pan part sits in dub-pop
+lib.dumontRiffs = {
+    { 0, 3, 0, 4, 0, 3, 2, 0 },
+    { 4, 0, 3, 0, 0, 4, 3, 2 },
+    { 0, 2, 4, 0, 3, 0, 4, 0 },
+    { 3, 0, 0, 4, 0, 2, 0, 3 },
+}
 -- the answer's rhythms in bar 4, grouped the same way
 lib.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 12 }, { 0, 3, 6, 8 } }
+
+-- a style's comp cells: its own, or a shared set from lib.comps by name
+function lib.compsOf(style)
+    return type(style.comps) == 'string' and lib.comps[style.comps] or style.comps
+end
 
 local VERSION = 2
 -- On `state` so a hot reload keeps the song going where it was.
@@ -316,7 +418,7 @@ local function planSong()
     song.comp, song.push, song.fill = {}, {}, {}
     rnd = stream(seed, 2)
     for b = 1, song.bars do
-        song.comp[b] = rnd(#style.comps) + 1
+        song.comp[b] = rnd(#lib.compsOf(style)) + 1
         song.push[b] = rnd(100) < (style.pushOdds or 0)
         local section = song.barSection[b]
         song.fill[b] = b < song.bars and section.roles.drums == 'full'
@@ -341,10 +443,18 @@ local function planSong()
         end
     end
     song.cellDegrees = { 0, rnd(6) - 2, rnd(6) - 1 }
+    local riffs = style.riffs == 'dumont' and lib.dumontRiffs or lib.riffs
+    song.riff = riffs[stream(seed, 3)(#riffs) + 1]
+    -- the scale and the tune's pentatonic: major, or dorian (minor, with the major sixth)
+    local minor = style.mode == 'dorian'
+    song.scale = minor and { [0] = true, [2] = true, [3] = true, [5] = true, [7] = true, [9] = true, [10] = true }
+        or { [0] = true, [2] = true, [4] = true, [5] = true, [7] = true, [9] = true, [11] = true }
+    local penta = minor and { [0] = true, [3] = true, [5] = true, [7] = true, [10] = true }
+        or { [0] = true, [2] = true, [4] = true, [7] = true, [9] = true }
     song.ladder = {}
-    for midi = 67, 86 do
-        local pc = (midi - song.key) % 12
-        if pc == 0 or pc == 2 or pc == 4 or pc == 7 or pc == 9 then song.ladder[#song.ladder + 1] = midi end
+    local range = style.range or { 67, 86 }
+    for midi = range[1], range[2] do
+        if penta[(midi - song.key) % 12] then song.ladder[#song.ladder + 1] = midi end
     end
     song.hookStart = { A = 4 + rnd(3), B = 3 + rnd(4) } -- ladder index where each section's tune starts
 
@@ -427,8 +537,7 @@ local function snapChord(song, li, chord)
 end
 
 local function inKey(song, midi)
-    local pc = (midi - song.key) % 12
-    return pc == 0 or pc == 2 or pc == 4 or pc == 5 or pc == 7 or pc == 9 or pc == 11
+    return song.scale[(midi - song.key) % 12] == true
 end
 
 -- One phrase over four bars from bar b (the first of them): the motif stated over bars 1-2, bar 3
@@ -438,6 +547,7 @@ local function buildPhrase(song, b)
     local section, j = song.barSection[b], song.barIndex[b]
     local slot = math.floor(j / 4)
     local rnd = stream(song.seed, 5000 + (section.kind == 'B' and 100 or 0) + slot)
+    local style = lib.styles[song.style]
     local notes = {}
     if slot % 2 == 1 and rnd(100) < 30 then return notes end -- a phrase of space
     local ladder = song.ladder
@@ -506,7 +616,7 @@ local function buildPhrase(song, b)
     -- a long note may get a quick scale neighbour flicked in just before it
     for k, note in ipairs(notes) do
         local nextS = notes[k + 1] and notes[k + 1].s or 64
-        note.len = math.min(nextS - note.s, notes[k + 1] and 6 or 10)
+        note.len = math.min(nextS - note.s, notes[k + 1] and (style.staccato or 6) or 10)
         local chord = chordAtStep(song, b, note.s)
         if note.len >= 2 and rubs(song, note.midi, chord) then
             for d = 1, 2 do
@@ -579,6 +689,37 @@ local bassLines = {
             end
         end
     end,
+    -- root on 1, fifth on 3, a pickup on the and-of-4 now and then (the step before the next root)
+    bounce = function(hit, chord, lo, lastBar, nextRoot, fits)
+        local root = inRange(chord.root, lo)
+        if chord.s == 0 then hit(0, root, 5, 5) end
+        if chord.s <= 8 and chord.s + chord.len > 8 then hit(8, root + 7, 4, 5) end
+        if chord.s + chord.len == 16 and lastBar and nextRoot and nextRoot ~= chord.root then
+            local target = inRange(nextRoot, lo)
+            local pickup = target + (target > root and -2 or 2)
+            hit(14, fits(pickup, chord) and pickup or root + 7, 3, 2)
+        end
+    end,
+    -- funk: the root short on 1, a ghost on the a-of-1, the octave popping on the and-of-2 and
+    -- the a-of-4, the root again just after the pop, the fifth on the and-of-3, a step into the next
+    -- root; any note that would rub the chord gives way to the root or the fifth
+    funk = function(hit, chord, lo, lastBar, nextRoot, fits)
+        local root = inRange(chord.root, lo)
+        local fifth = fits(root + 7, chord) and root + 7 or root
+        local pop = fits(root + 12, chord) and root + 12 or fifth -- the octave would rub a maj7 in the keys
+        local e = chord.s + chord.len
+        local function at(s, midi, vol, len) if s >= chord.s and s < e then hit(s, midi, vol, len) end end
+        at(0, root, 5, 2); at(3, root, 2, 1); at(6, pop, 4, 1); at(7, root, 3, 1)
+        if chord.s == 8 then at(8, root, 5, 2) end
+        at(10, fifth, 4, 2); at(12, root, 3, 1); at(13, pop, 3, 1)
+        if e == 16 and lastBar and nextRoot and nextRoot ~= chord.root then
+            local target = inRange(nextRoot, lo)
+            local pickup = target + (target > root and -2 or 2)
+            at(14, fits(pickup, chord) and pickup or fifth, 4, 2)
+        else
+            at(14, fifth, 3, 2)
+        end
+    end,
     hold = function(hit, chord, lo)
         hit(chord.s, inRange(chord.root, lo), 5, chord.len)
     end,
@@ -598,6 +739,42 @@ local drumKits = {
             hit(12, 'rim', 79, 3, 40); hit(14, 'rim', 79, 4, 40); hit(15, 'rim', 79, 3, 40)
             hit(14, 'kick', 36, 3, 150)
         end
+    end,
+    island = function(hit, rnd, kind, _, fill)
+        hit(0, 'kick', 36, 4, 150)
+        hit(8, 'kick', 36, 3, 150)
+        hit(4, 'rim', 79, 4, 40)
+        hit(12, 'rim', 79, 4, 40)
+        for s = 0, 14, 2 do hit(s, 'shaker', 84, s % 4 == 2 and 2 or 1, 40) end
+        if kind == 'B' and rnd(100) < 40 then hit(14, 'kick', 36, 2, 120) end
+        if fill then hit(10, 'rim', 79, 2, 40); hit(14, 'rim', 79, 3, 40); hit(15, 'rim', 79, 3, 40) end
+    end,
+    -- a homemade drum machine, funky: kick on 1, the and-of-2 and the and-of-3, a flammed clap
+    -- on 2 and 4 with a quiet echo, 16th hats leaning on the off-beats, a conga answering
+    machine = function(hit, rnd, kind, _, fill)
+        hit(0, 'kick', 36, 5, 140)
+        hit(6, 'kick', 36, 3, 120)
+        hit(10, 'kick', 36, 4, 140)
+        for _, s in ipairs({ 4, 12 }) do
+            hit(s, 'clap', 72, 4, 60); hit(s, 'clap', 72, 3, 60, 0.011); hit(s, 'clap', 72, 3, 80, 0.022)
+        end
+        hit(15, 'clap', 72, 2, 80, 0.011) -- the echo of 4
+        for s = 0, 15 do hit(s, 'hat', 60, s % 4 == 2 and 3 or s % 2 == 0 and 2 or 1, 25) end
+        hit(14, 'conga', 59, 3, 200)
+        if kind == 'B' then hit(7, 'conga', 64, 3, 200); if rnd(100) < 50 then hit(11, 'conga', 64, 2, 200) end end
+        if fill then hit(13, 'conga', 64, 3, 200); hit(14, 'conga', 61, 4, 200); hit(15, 'conga', 59, 4, 200) end
+    end,
+    -- a light 70s kit: kick on 1 and 3, the rim on 2 and 4, closed hats in 8ths with a lift on the
+    -- off-beats, a skip on the a-of-4 into B
+    lounge = function(hit, rnd, kind, _, fill)
+        hit(0, 'kick', 36, 4, 150)
+        hit(8, 'kick', 36, 3, 150)
+        if rnd(100) < 30 then hit(14, 'kick', 36, 2, 120) end
+        hit(4, 'rim', 79, 4, 40)
+        hit(12, 'rim', 79, 4, 40)
+        for s = 0, 14, 2 do hit(s, 'hat', 60, s % 4 == 2 and 2 or 1, 30) end
+        if kind == 'B' then for s = 1, 15, 4 do hit(s + 2, 'shaker', 84, 1, 30) end end
+        if fill then hit(13, 'rim', 79, 3, 40); hit(14, 'rim', 79, 3, 40); hit(15, 'rim', 79, 4, 40) end
     end,
     -- cocktail.c's brushes: the hat snaps 2 and 4, the sweep every other bar, a feathered kick;
     -- in B the ride carries the time, ding ding-ga ding
@@ -647,7 +824,7 @@ local function bookBar(synth, t0, song, b)
     elseif roles.keys == 'outro' then
         if j == 2 then hits[1] = { s = 0, len = (section.bars - 2) * 16, vol = 4, chord = chords[1], ring = true } end
     else
-        local cell = style.comps[song.comp[b - j % 2] or 1]
+        local cell = lib.compsOf(style)[song.comp[b - j % 2] or 1]
         local half = (j % 2) * 16
         for _, chord in ipairs(chords) do
             local c0, c1, own = chord.s, chord.s + chord.len, 0
@@ -689,13 +866,22 @@ local function bookBar(synth, t0, song, b)
             local vol = (k == #voicing) and h.vol + 1 or h.vol
             local dur = lengthMs(song, h.s, h.len) * (h.ring and 1 or 0.9)
             play(synth, 'keys', keysPatch, t + (k - 1) * strum, note, math.min(7, vol), dur)
+            -- the dub echo: the stab again a dotted 8th later, quieter, only while its chord lasts
+            if style.echo and style.echo.keys and not h.sidestep then
+                for e = 1, 2 do
+                    local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
+                    if s >= chordEnd or vol - 2 * e < 1 then break end
+                    local echoDur = math.min(dur, lengthMs(song, s, chordEnd - s) * 0.9) -- not into the next chord
+                    play(synth, 'keys', keysPatch, stepTime(song, t0, s) + (k - 1) * strum, note, vol - 2 * e, echoDur)
+                end
+            end
         end
     end
 
     -- the bass: the left hand, or the upright when the band plays with it; the outro's last bar rests
     local upright = band and lib.upright and roles.drums ~= 'none'
-    local bassPatch = upright and 'musicBass' or keysPatch
-    local lo = upright and 34 or (style.bass == 'guaraldi' and 38 or 40)
+    local bassPatch = upright and 'musicBass' or style.bassPatch or keysPatch
+    local lo = upright and 34 or style.bassLo or (style.bass == 'guaraldi' and 38 or 40)
     local bassLine = bassLines[style.bass] or bassLines.hold
         if section.kind == 'outro' and j == 2 then
         play(synth, 'bass', bassPatch, t0, inRange(chords[1].root, lo), 5, lengthMs(song, 0, 32))
@@ -708,8 +894,27 @@ local function bookBar(synth, t0, song, b)
             play(synth, 'bass', bassPatch, t, midi, vol, lengthMs(song, s, len) * 0.95)
         end
         local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
+        local function fits(midi, chord) return not rubs(song, midi, chord) end
         for _, chord in ipairs(chords) do
-            bassLine(hit, chord, lo, chord.s + chord.len == 16, nextRoot)
+            bassLine(hit, chord, lo, chord.s + chord.len == 16, nextRoot, fits)
+        end
+    end
+
+    -- the riff: the song's own pattern over the chord's voicing, in eighths; it starts the intro
+    -- alone and rings out in the outro
+    if style.riff and not (section.kind == 'outro' and j >= 2) then
+        for i, voice in ipairs(song.riff) do
+            local s = (i - 1) * 2
+            if voice > 0 then
+                local chord = chordAtStep(song, b, s)
+                local root = (song.key + chord.degree) % 12
+                local voicing = voiceChord(root, qualityOf(song, chord.quality), 48, 76, M.voicing)
+                local note = voicing[math.min(voice, #voicing)]
+                local vol = (s % 4 == 0) and 4 or 3
+                local t = stepTime(song, t0, s) + humanize(0.004)
+                local len = math.min(3, chord.s + chord.len - s) -- rings a little, never into the next chord
+                play(synth, 'riff', style.riff, t, note, vol, lengthMs(song, s, len) * 0.95)
+            end
         end
     end
 
@@ -717,9 +922,10 @@ local function bookBar(synth, t0, song, b)
     local kit = style.drums and drumKits[style.drums]
     local drums = roles.drums == 'full' or (roles.drums == 'outro' and j < 2)
     if kit and band and drums then
-        local function hit(s, patch, midi, vol, dur)
+        local function hit(s, patch, midi, vol, dur, dt)
             local drag = (style.swing > 0.5 and s % 8 == 4) and 0.008 or 0 -- the backbeat lays back a hair
-            play(synth, 'drums', patch, stepTime(song, t0, s) + drag + humanize(0.003), midi, vol, dur)
+            local t = stepTime(song, t0, s) + drag + (dt or 0) + humanize(0.003)
+            play(synth, 'drums', patch, t, midi, vol, dur)
         end
         kit(hit, rnd, section.kind, j, song.fill[b])
     end

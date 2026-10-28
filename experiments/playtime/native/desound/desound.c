@@ -8,6 +8,7 @@
 // thread (src/synth-thread.lua).
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "raylib_compat.h"
 #include "studio.h"
 #include "sound.h"
@@ -16,6 +17,17 @@
 
 // studio.c provides rnd(); sound.h needs it for a few randomized voices.
 DESOUND_API int rnd(int n) { return n > 0 ? rand() % n : 0; }
+
+// studio.c provides printh() too; sound_tick() calls it for its warnings (a full FX-bus pool,
+// a dropped request). Without it the symbol resolves to NULL under -undefined dynamic_lookup and
+// the first warning segfaults the app (2026-10-28: an 8th tape insert). Print to stderr instead.
+DESOUND_API void printh(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    fputc('\n', stderr);
+}
 
 static int desound_ready = 0;
 
