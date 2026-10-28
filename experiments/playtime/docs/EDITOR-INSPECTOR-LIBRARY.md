@@ -146,8 +146,8 @@ prefab (non-Mipo bodies + their joints, centred; `library.import`, uses `sceneIO
 dropped anywhere else it still loads as the scene. 'open folder' opens `library/` in Finder for
 renaming/deleting. Mipos (2026-10-28): saved as DNA in a `mipos` list (dna, scale, torso position); any
 selected part saves the whole Mipo; placing grows it fresh with `createCharacterFromJustDNA` +
-T-pose (own id, collision group, z-range). Its pose isn't kept. Not yet: thumbnails,
-Mipos in prefabs, world positions inside sfixture `extra` aren't shifted.
+T-pose (own id, collision group, z-range). Its pose isn't kept. Not yet: thumbnails;
+world positions inside sfixture `extra` aren't shifted.
 **Copies and names (2026-10-28):** ids are renewed on every copy (clone: `idMapping` in
 `io.cloneSelection`; place: `library.renewIds`). Names that link things were not: a placed
 button + gate stayed on `gate1` and worked the original gate too. Now `signals.renameForCopy`
