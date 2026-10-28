@@ -67,6 +67,12 @@ function lib.isOver(x, y)
     return inRect(railRect, x, y) or inRect(flyoutRect, x, y)
 end
 
+-- After taking a spawned thing back: don't leave its destroyed body selected.
+local function deselectDestroyed()
+    local obj = state.selection.selectedObj
+    if obj and obj.body and obj.body:isDestroyed() then state.selection.selectedObj = nil end
+end
+
 local function finishSpawn()
     ui.draggingActive = nil
     local thing = spawned
@@ -75,6 +81,7 @@ local function finishSpawn()
     if thing and thing.body and not thing.body:isDestroyed() and lib.isOver(ui.mouseX, ui.mouseY) then
         if state.interaction.draggingObj == thing then state.interaction.draggingObj = nil end
         objectManager.destroyBody(thing.body)
+        deselectDestroyed()
     end
 end
 
@@ -140,6 +147,7 @@ local function finishMipo()
         for _, part in pairs(instance.parts) do
             if part.body and not part.body:isDestroyed() then objectManager.destroyBody(part.body) end
         end
+        deselectDestroyed()
     end
 end
 

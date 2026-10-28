@@ -87,7 +87,7 @@ end
 
 local function selectedBody()
     local obj = state.selection.selectedObj
-    return obj and obj.body
+    if obj and obj.body and not obj.body:isDestroyed() then return obj.body end
 end
 
 local function indexOf(list, value)

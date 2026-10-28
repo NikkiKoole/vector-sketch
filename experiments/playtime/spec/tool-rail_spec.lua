@@ -162,9 +162,13 @@ describe('tool rail', function()
 
     it('a Mipo clicked out of the rail without a drag leaves no bodies', function()
         local before = countBodies()
-        click(buttonX, groupY('mipo'))
+        frame(buttonX, groupY('mipo'), true, false)
+        -- the stage selects what's being dragged; taking it back must not leave it selected
+        state.selection.selectedObj = state.interaction.draggingObj
+        frame(buttonX, groupY('mipo'), false, true)
         assert.are.equal(before, countBodies())
         assert.is_nil(state.selection.selectedBodies)
+        assert.is_nil(state.selection.selectedObj)
     end)
     it('the settings button and its tab both open and close settings', function()
         local before = state.panelVisibility.worldSettingsOpened
