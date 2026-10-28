@@ -329,6 +329,22 @@ describe("UI smoke tests", function()
 
     -- === Modal dialogs ===
 
+    it("add behavior grid and behavior editor render", function()
+        local thing = createBody(world, 'rectangle')
+        state.panelVisibility.addBehavior = { body = thing.body }
+        local ok, err = renderToCanvas(function() playtimeui.drawUI() end)
+        assert.is_true(ok, "add behavior failed: " .. tostring(err))
+        state.panelVisibility.addBehavior = false
+
+        thing.behaviors = { { name = 'SIGNAL_BUTTON', signal = 'signal1' } }
+        state.panelVisibility.customBehavior = { name = 'SIGNAL_BUTTON', body = thing.body }
+        state.panelVisibility.customBehaviorDescription = "description"
+        ok, err = renderToCanvas(function() playtimeui.drawUI() end)
+        assert.is_true(ok, "behavior editor failed: " .. tostring(err))
+        state.panelVisibility.customBehavior = false
+        state.panelVisibility.customBehaviorDescription = false
+    end)
+
     it("customBehaviorDescription modal renders", function()
         state.panelVisibility.customBehaviorDescription = "This is a test behavior description."
         local ok, err = renderToCanvas(function()

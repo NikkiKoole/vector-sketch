@@ -318,14 +318,17 @@ function lib.drawUI()
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
 
-        ui.panel(50, 50, 300, 300, state.panelVisibility.customBehavior.name,
+        -- top centre, like the other prompts; '?' sits in the title band, the description opens beside
+        local panelW, panelH = 420, 320
+        local px, py = ui.topCenter(panelW)
+        ui.panel(px, py, panelW, panelH, state.panelVisibility.customBehavior.name,
 
             function()
                 local lookup = utils.findByField(behaviors.allBehaviors, 'name',
                     state.panelVisibility.customBehavior.name)
                 --print(inspect(lookedup))
                 if lookup then
-                    if ui.button(50, 50, 50, '?') then
+                    if ui.button(px + panelW - 40, py + 4, 30, '?') then
                         if state.panelVisibility.customBehaviorDescription then
                             state.panelVisibility.customBehaviorDescription = false
                         else
@@ -335,7 +338,8 @@ function lib.drawUI()
                 end
 
 
-                ui.scrollableList('custombehaviors', 50, 100, 280, 250,
+                ui.scrollableList('custombehaviors', px + 10, py + ui.theme.contentTop, panelW - 20,
+                    panelH - ui.theme.contentTop - 10,
                     function(baseX, baseY, listW, _h, offsetY)
                         local behaviorBody = state.panelVisibility.customBehavior.body
                         if lookup and lookup.params then
@@ -404,8 +408,10 @@ function lib.drawUI()
     end
 
     if state.panelVisibility.customBehaviorDescription then
-        ui.panel(100, 50, 300, 300, '', function()
-            love.graphics.printf(state.panelVisibility.customBehaviorDescription, 110, 100, 280)
+        local editorX = ui.topCenter(420)
+        local dx, dy = editorX + 420 + BUTTON_SPACING, 20
+        ui.panel(dx, dy, 300, 320, '', function()
+            love.graphics.printf(state.panelVisibility.customBehaviorDescription, dx + 10, dy + 10, 280)
         end, { .5, .5, .9 })
     end
 
@@ -446,10 +452,20 @@ function lib.drawUI()
 
         local possible_options = updatePossibleOptions()
 
-        ui.panel(50, 50, 300, 300, 'add behavior',
+        -- wide, not tall: the options in a grid of up to 4 columns, top centre
+        local columns = math.max(1, math.min(4, #possible_options))
+        local optionW = 200
+        local rows = math.ceil(#possible_options / columns)
+        local panelW = columns * (optionW + BUTTON_SPACING) + BUTTON_SPACING
+        local panelH = ui.theme.contentTop + rows * (BUTTON_HEIGHT + BUTTON_SPACING) + BUTTON_SPACING
+        local px, py = ui.topCenter(panelW)
+        ui.panel(px, py, panelW, panelH, 'add behavior',
             function()
                 for i, option in ipairs(possible_options) do
-                    if ui.button(50, 100 + (i - 1) * 40, 200, option) then
+                    local column, row = (i - 1) % columns, math.floor((i - 1) / columns)
+                    local ox = px + BUTTON_SPACING + column * (optionW + BUTTON_SPACING)
+                    local oy = py + ui.theme.contentTop + row * (BUTTON_HEIGHT + BUTTON_SPACING)
+                    if ui.button(ox, oy, optionW, option) then
                         --local newUD = utils.deepCopy(myUD)
                         if not myUD.thing.behaviors then
                             myUD.thing.behaviors = {}
