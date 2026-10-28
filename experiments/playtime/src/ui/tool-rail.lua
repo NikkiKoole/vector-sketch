@@ -2,7 +2,8 @@
 -- One button per tool group. The button reuses the group's last pick; the small tab
 -- next to it opens a flyout with the whole group in two columns. A group either
 -- works by press-drag-release (shapes: drag one out; attach: drop an sfixture on a
--- body) or starts a mode on click (joints: then click body A and body B).
+-- body; mipo: drag one out) or starts a mode on click (joints: then click body A
+-- and body B; draw: draw on the stage). Clicking an active mode's button again ends it.
 -- Picks and the open flyout live on state.toolRail so they survive hot reloads.
 local lib = {}
 
@@ -34,6 +35,9 @@ lib.SHORT_NAMES = {
     ['connected-texture'] = 'connected',
     ['tile-repeat'] = 'tile',
     ['trace-vertices'] = 'trace',
+    [modes.DRAW_FREE_PATH] = 'freepath',
+    [modes.DRAW_FREE_POLY] = 'freeform',
+    [modes.DRAW_CLICK] = 'click',
 }
 
 -- The thing a rail/flyout press spawned, so a release back over the rail can undo it.
@@ -95,6 +99,66 @@ local function dropAttach(subtype)
     end
 end
 
+-- A Mipo dropped back on the rail is taken back too (the mipo registry drops
+-- instances whose parts are all gone).
+local spawnedMipo = nil
+
+local function spawnMipo(kind)
+    ui.draggingActive = ui.activeElementID
+    local CM = require('src.character-manager')
+    local wx, wy = cam:getWorldCoordinates(love.mouse.getPosition())
+    local instance = CM.createCharacter('humanoid', wx, wy, 0.3)
+    if not instance then return end
+    if kind == 'mipo *' then CM.randomizeMipoConstrained(instance) else CM.randomizeMipo(instance) end
+    CM.poseTpose(instance)
+    local torsoThing = instance.parts['torso1']
+    if torsoThing then
+        state.interaction.draggingObj = torsoThing
+        state.interaction.offsetDragging = { 0, 0 }
+        local allThings = {}
+        for _, part in pairs(instance.parts) do
+            table.insert(allThings, part)
+        end
+        state.selection.selectedBodies = allThings
+    end
+    spawnedMipo = instance
+end
+
+local function finishMipo()
+    ui.draggingActive = nil
+    state.selection.selectedBodies = nil
+    local instance = spawnedMipo
+    spawnedMipo = nil
+    if instance and lib.isOver(ui.mouseX, ui.mouseY) then
+        state.interaction.draggingObj = nil
+        for _, part in pairs(instance.parts) do
+            if part.body and not part.body:isDestroyed() then objectManager.destroyBody(part.body) end
+        end
+    end
+end
+
+local function startDraw(mode)
+    if modes.is(mode) then
+        modes.clear()
+    else
+        modes.set(mode)
+    end
+    state.interaction.polyVerts = {}
+    state.interaction.lastPolyPt = nil
+end
+
+-- the draw tools' one option, under the flyout: how far apart freehand points are
+local function drawDrawOptions(x, y, w)
+    -- label, slider, then sliderWithInput's own 80 px box 10 px after the slider
+    local labelW = 40
+    ui.alignedLabel(x, y, 'dis')
+    local minDist = ui.sliderWithInput('minDistance', x + labelW, y, w - labelW - 90, 1, 150,
+        state.editorPreferences.minPointDistance or 10)
+    if minDist then
+        state.editorPreferences.minPointDistance = minDist
+    end
+end
+
 lib.groups = {
     {
         key = 'shape',
@@ -106,6 +170,18 @@ lib.groups = {
         },
         onPress = spawnShape,
         onRelease = finishSpawn,
+    },
+    {
+        key = 'draw',
+        default = modes.DRAW_FREE_POLY,
+        sections = {
+            { modes.DRAW_FREE_POLY, modes.DRAW_FREE_PATH, modes.DRAW_CLICK },
+        },
+        onClick = startDraw,
+        isActive = function()
+            return modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) or modes.is(modes.DRAW_CLICK)
+        end,
+        drawOptions = drawDrawOptions,
     },
     {
         key = 'joint',
@@ -137,6 +213,15 @@ lib.groups = {
         },
         onPress = startAttach,
         onRelease = dropAttach,
+    },
+    {
+        key = 'mipo',
+        default = 'mipo',
+        sections = {
+            { 'mipo', 'mipo *' },
+        },
+        onPress = spawnMipo,
+        onRelease = finishMipo,
     },
 }
 
@@ -217,6 +302,23 @@ local function drawIcon(item, cx, cy, r)
         lg.circle('line', cx, cy, r * 0.6)
         lg.line(cx - r, cy, cx + r, cy)
         lg.line(cx, cy - r, cx, cy + r)
+    elseif item == modes.DRAW_FREE_POLY then
+        lg.polygon('line', cx - r, cy + r * 0.3, cx - r * 0.4, cy - r, cx + r * 0.6, cy - r * 0.6,
+            cx + r, cy + r * 0.5, cx, cy + r * 0.8)
+    elseif item == modes.DRAW_FREE_PATH then
+        lg.line(cx - r, cy + r * 0.6, cx - r * 0.5, cy - r * 0.3, cx, cy + r * 0.2, cx + r * 0.5, cy - r * 0.6,
+            cx + r, cy - r * 0.2)
+    elseif item == modes.DRAW_CLICK then
+        local pts = { cx - r, cy + r * 0.6, cx - r * 0.2, cy - r, cx + r, cy + r * 0.2 }
+        lg.polygon('line', pts)
+        for i = 1, #pts, 2 do lg.circle('fill', pts[i], pts[i + 1], r * 0.18) end
+    elseif item == 'mipo' or item == 'mipo *' then
+        lg.circle('line', cx, cy - r * 0.35, r * 0.45)
+        lg.line(cx, cy + r * 0.1, cx, cy + r * 0.6)
+        lg.line(cx - r * 0.7, cy + r * 0.25, cx + r * 0.7, cy + r * 0.25)
+        lg.line(cx, cy + r * 0.6, cx - r * 0.5, cy + r)
+        lg.line(cx, cy + r * 0.6, cx + r * 0.5, cy + r)
+        if item == 'mipo *' then lg.print('*', cx + r * 0.5, cy - r) end
     elseif lib.groupOf(item) ~= 'shape' then
         lg.printf(item:sub(1, 4), cx - r * 2, cy - ui.font:getHeight() / 2, r * 4, 'center')
     else
@@ -233,6 +335,7 @@ function lib.flyoutSize(group)
         if section.title then h = h + ui.theme.lineHeight + gap end
         h = h + math.ceil(#section / 2) * (ui.theme.button.height + gap)
     end
+    if group.drawOptions then h = h + ui.theme.lineHeight + gap end
     return gap * 3 + COLUMN * 2, h
 end
 
@@ -271,6 +374,7 @@ local function drawFlyout(group, x, y)
                 end
             end
         end
+        if group.drawOptions then group.drawOptions(x + gap, cy, w - gap * 2) end
     end)
 end
 
