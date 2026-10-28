@@ -190,6 +190,10 @@ buttons 70% wide. A first try that also shrank the font to 17 px: said no.
 **Keep/revert check still open:** use it for a session. Does switching tabs feel better than
 panels popping up?
 
-**After that:** slice 4 (use it for real), (d) left tool rail.
+**(d) left tool rail: done (2026-10-28).** Layout steps (a)-(d) are all built; the top bar is empty.
+**Still open:** slice 4 (use it for real: the kill check). Leftovers, small: joint creation is
+still click A, click B, 'Create' (drag A -> B?); the mode prompts ('pick 1st body', click-draw's
+finalize panel, the recording panel) are old floating panels; placeholder icons and round rail
+buttons; library thumbnails.
 Still hand-made and fine for now: meshusert, resource, connected-texture, trace-vertices panels
 (mostly tools). Add the fake-pointer hook when a spec needs real clicks.
