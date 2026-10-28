@@ -236,7 +236,7 @@ local releasedHandlers = {
     [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
 }
 
--- Grabbing a Mipo makes it hop a little (puppet-maker2 outside.lua: torso impulse on tap).
+-- Grabbing a Mipo by its torso makes it hop a little (puppet-maker2 outside.lua: torso impulse on tap).
 -- The impulse scales with the Mipo's total mass so every Mipo hops about the same.
 lib.mipoHopSpeed = 500
 local function hopMipo(mipo)
@@ -429,10 +429,11 @@ local function handlePointer(x, y, id, action, button)
                 for _, fixture in ipairs(hitted) do pressedBodies[#pressedBodies + 1] = fixture:getBody() end
                 signals.onPressed(pressedBodies)
                 for _, fixture in ipairs(hitted) do
-                    local mipo = mipoRegistry.getFromBody(fixture:getBody())
+                    local mipo, partName = mipoRegistry.getFromBody(fixture:getBody())
                     if mipo then
                         mipoVoice.squeak(mipo, 'pickup')
-                        hopMipo(mipo)
+                        -- only grabbing the torso hops; a hand or foot is just picked up
+                        if partName == 'torso1' then hopMipo(mipo) end
                         break
                     end
                 end
