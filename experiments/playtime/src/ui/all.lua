@@ -67,6 +67,7 @@ local theme   = {
     lineWidth = 3, -- General line width
 }
 
+require('src.ui.density').applyTheme(theme) -- roomy or compact sizes
 ui.theme      = theme
 
 -- Persistent store that survives lurker hot-reload (global, not on ui table)

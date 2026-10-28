@@ -11,8 +11,8 @@ local BUTTON_HEIGHT = ui.theme.lineHeight
 function lib.drawJointUpdateUI(joint, panelX, panelY, w, h)
     if joint:isDestroyed() then return end
     ui.panel(panelX, panelY, w, h, '∞ ' .. joint:getType() .. ' ∞', function()
-        ui.scrollPanel('joint-panel', panelX, panelY + 40, w, h - 45, function()
-            local x, y = panelX + 10, panelY + 55
+        ui.scrollPanel('joint-panel', panelX, panelY + ui.theme.panelHeader, w, h - ui.theme.panelHeader - 5, function()
+            local x, y = panelX + 10, panelY + ui.theme.panelHeader + ui.theme.spacing + 5
             if ui.button(x, y, w - 20, 'destroy') then
                 registry.unregisterJoint(joints.getJointId(joint))
                 joint:destroy()

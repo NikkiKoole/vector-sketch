@@ -16,10 +16,10 @@ local modes = require('src.modes')
 local inspector = require('src.ui.inspector')
 local bodyParams = require('src.body-params')
 
-local PANEL_WIDTH = 300
+local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
-local ROW_WIDTH = 160
-local BUTTON_SPACING = 10
+local ROW_WIDTH = ui.theme.rowWidth
+local BUTTON_SPACING = ui.theme.spacing
 
 local accordionStatesSO = {
     behaviors = false,
@@ -45,7 +45,8 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     ui.panel(panelX, panelY, panelWidth, panelH, '∞ body props ∞', function()
         -- content scrolls when it doesn't fit (spec/ui-overflow_spec.lua)
-        ui.scrollPanel('body-panel', panelX, panelY + 40, panelWidth, panelH - 45, function()
+        local header = ui.theme.panelHeader
+        ui.scrollPanel('body-panel', panelX, panelY + header, panelWidth, panelH - header - 5, function()
             local body = state.selection.selectedObj.body
             -- local angleDegrees = body:getAngle() * 180 / math.pi
             local myID = state.selection.selectedObj.id
@@ -56,7 +57,7 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                 type = 'columns',
                 spacing = BUTTON_SPACING,
                 startX = panelX + 20,
-                startY = panelY + 80 + padding
+                startY = panelY + ui.theme.contentTop + padding
             })
 
             if body:isDestroyed() then return end

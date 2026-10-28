@@ -11,9 +11,9 @@ local Peeker = require('vendor.peeker')
 local camera = require('src.camera')
 local cam = camera.getInstance()
 
-local PANEL_WIDTH = 300
+local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
-local BUTTON_SPACING = 10
+local BUTTON_SPACING = ui.theme.spacing
 local FPS = 60
 
 function lib.drawRecordingUI()

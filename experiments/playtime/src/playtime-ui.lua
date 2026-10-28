@@ -32,10 +32,10 @@ local uiMipoEditor = require('src.ui.mipo-editor')
 local inspector = require('src.ui.inspector')
 local mipoRegistry = require('src.mipo-registry')
 local rightColumn = require('src.ui.right-column')
-local PANEL_WIDTH = 300
+local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
-local ROW_WIDTH = 160
-local BUTTON_SPACING = 10
+local ROW_WIDTH = ui.theme.rowWidth
+local BUTTON_SPACING = ui.theme.spacing
 
 
 
@@ -123,7 +123,7 @@ function lib.drawSelectedBodiesUI(panelX, panelY, panelWidth, panelH)
             type = 'columns',
             spacing = BUTTON_SPACING,
             startX = panelX + 20,
-            startY = panelY + 80 + padding
+            startY = panelY + ui.theme.contentTop + padding
         })
 
         local x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
@@ -280,6 +280,7 @@ function lib.drawUI()
     -- adding/resizing buttons no longer means recomputing absolute x's.
     local toolbarX = 20
     local function toolbarButton(width, label)
+        width = math.floor(width * ui.theme.toolbarScale)
         local clicked = ui.button(toolbarX, 20, width, label)
         toolbarX = toolbarX + width + 10
         return clicked

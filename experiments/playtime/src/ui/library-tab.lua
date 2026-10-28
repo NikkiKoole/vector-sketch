@@ -47,8 +47,8 @@ end
 function lib.draw(x, y, w, h)
     local rowH = ui.theme.button.height
     ui.panel(x, y, w, h, 'library', function()
-        ui.scrollPanel('library-panel', x, y + 40, w, h - 45, function()
-            local rowX, rowY, rowW = x + 10, y + 50, w - 20
+        ui.scrollPanel('library-panel', x, y + ui.theme.panelHeader, w, h - ui.theme.panelHeader - 5, function()
+            local rowX, rowY, rowW = x + 10, y + ui.theme.panelHeader + ui.theme.spacing, w - 20
 
             ui.alignedLabel(rowX, rowY, 'name')
             local name = ui.textinput('prefab-name', rowX + 60, rowY, rowW - 60, rowH, 'prefab name...',

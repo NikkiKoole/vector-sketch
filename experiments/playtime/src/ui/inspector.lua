@@ -3,11 +3,15 @@
 -- src/behaviors.lua): a label column plus one widget per row, basic rows first,
 -- advanced rows behind a 'more' fold. Plan: docs/EDITOR-INSPECTOR-LIBRARY.md.
 local ui = require('src.ui.all')
+local density = require('src.ui.density')
 
 local lib = {}
 
-lib.labelWidth = 90
-lib.rowHeight = 45
+local sizes = density.sizes()
+lib.labelWidth = sizes.labelWidth
+lib.rowHeight = sizes.rowHeight
+local FIELD_H = sizes.fieldHeight -- text field height
+local DY = sizes.widgetDY         -- buttons, checkboxes and labels sit this far down the row
 
 local openFolds = {} -- [foldId] = true; losing it on hot reload is harmless
 
@@ -45,14 +49,14 @@ end
 -- Returns a replacement target when the row's set rebuilt it.
 local function drawRow(id, row, target, body, x, y, w)
     local wx = x + lib.labelWidth
-    if row.kind ~= 'action' and row.kind ~= 'note' then ui.alignedLabel(x, y + 7, labelOf(row, target)) end
+    if row.kind ~= 'action' and row.kind ~= 'note' then ui.alignedLabel(x, y + DY, labelOf(row, target)) end
     if row.kind == 'text' then
-        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, 40, row.default or '',
+        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, FIELD_H, row.default or '',
             valueOf(row, target) or '')
         if t and dirty then return setValue(row, target, row.keepSpaces and t or (t:gsub('%s', ''))) end
     elseif row.kind == 'numberText' then -- a plain number field, for values without a sensible range
         local v = valueOf(row, target)
-        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, 40, '',
+        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, FIELD_H, '',
             tostring(math.floor(v * 100 + 0.5) / 100), true)
         if dirty and tonumber(t) then return setValue(row, target, tonumber(t)) end
     elseif row.kind == 'number' then
@@ -62,29 +66,29 @@ local function drawRow(id, row, target, body, x, y, w)
             resolve(row.max, target), shown, nil, row.step)
         if v then return setValue(row, target, tonumber(v)) end
     elseif row.kind == 'bool' then
-        local clicked, checked = ui.checkbox(wx, y + 7, valueOf(row, target) ~= false, '')
+        local clicked, checked = ui.checkbox(wx, y + DY, valueOf(row, target) ~= false, '')
         if clicked then return setValue(row, target, checked) end
     elseif row.kind == 'choice' then
         local current = valueOf(row, target)
-        if ui.button(wx, y + 7, w - lib.labelWidth, tostring(current)) then
+        if ui.button(wx, y + DY, w - lib.labelWidth, tostring(current)) then
             local opts = row.options
             local i = 1
             for k, o in ipairs(opts) do if o == current then i = k end end
             return setValue(row, target, opts[i % #opts + 1])
         end
     elseif row.kind == 'action' then
-        if ui.button(wx, y + 7, w - lib.labelWidth, labelOf(row, target)) then return row.run(body, target) end
+        if ui.button(wx, y + DY, w - lib.labelWidth, labelOf(row, target)) then return row.run(body, target) end
     elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option)
         local bw = (w - lib.labelWidth) / #row.options
         for i, option in ipairs(row.options) do
-            if ui.button(wx + (i - 1) * bw, y + 7, bw - 4, option) then return row.run(body, target, option) end
+            if ui.button(wx + (i - 1) * bw, y + DY, bw - 4, option) then return row.run(body, target, option) end
         end
     elseif row.kind == 'note' then
-        ui.alignedLabel(x, y + 7, labelOf(row, target), { 1, 1, 1, 0.6 })
+        ui.alignedLabel(x, y + DY, labelOf(row, target), { 1, 1, 1, 0.6 })
     elseif row.kind == 'color' then -- swatch (opens the palette) + hex field
         local hex = valueOf(row, target)
         local r, g, b, a = require('src.physics.box2d-draw-textured').hexToColor(hex or 'ffffffff')
-        if ui.button(wx, y + 7, 30, '', nil, { r, g, b, a }) then
+        if ui.button(wx, y + DY, 30, '', nil, { r, g, b, a }) then
             local state = require('src.state')
             if state.panelVisibility.showPalette then
                 state.panelVisibility.showPalette = nil
@@ -94,15 +98,15 @@ local function drawRow(id, row, target, body, x, y, w)
                 state.showPaletteFunc = function(color) setValue(row, target, color) end
             end
         end
-        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, 40, 'hex', hex or '')
+        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, FIELD_H, 'hex', hex or '')
         if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
     elseif row.kind == 'file' then -- '…' opens the texture browser + the file name
-        if ui.button(wx, y + 7, 30, '...') then
+        if ui.button(wx, y + DY, 30, '...') then
             require('src.file-browser'):open('/textures', { excludes = '-mask' }, function(path)
                 setValue(row, target, path:match('/textures/(.+)$') or path) -- the renderer prepends textures/
             end)
         end
-        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, 40, '',
+        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, FIELD_H, '',
             valueOf(row, target) or '')
         if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
     end
@@ -130,7 +134,7 @@ function lib.drawParams(id, params, target, body, x, y, w)
     end
     if hasAdvanced then
         local open = openFolds[id]
-        if ui.button(x, cy + 7, w, open and '- less' or '+ more') then openFolds[id] = not open end
+        if ui.button(x, cy + DY, w, open and '- less' or '+ more') then openFolds[id] = not open end
         cy = cy + lib.rowHeight
         if open then
             replaced = rows(true)

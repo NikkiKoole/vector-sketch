@@ -14,7 +14,7 @@ local ST = require('src.shape-types')
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
 local BUTTON_HEIGHT = ui.theme.lineHeight
-local BUTTON_SPACING = 10
+local BUTTON_SPACING = ui.theme.spacing
 
 local accordeonStatesAS = {
     ['more'] = false

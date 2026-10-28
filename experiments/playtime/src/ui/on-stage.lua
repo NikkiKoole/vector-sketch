@@ -135,8 +135,8 @@ end
 
 function lib.draw(x, y, w, h)
     ui.panel(x, y, w, h, 'on stage', function()
-        ui.scrollPanel('on-stage-panel', x, y + 40, w, h - 45, function()
-            local rowX, rowY, rowW = x + 10, y + 50, w - 20
+        ui.scrollPanel('on-stage-panel', x, y + ui.theme.panelHeader, w, h - ui.theme.panelHeader - 5, function()
+            local rowX, rowY, rowW = x + 10, y + ui.theme.panelHeader + ui.theme.spacing, w - 20
             local current = selectedBody()
             for _, row in ipairs(lib.rows()) do
                 if row.header then

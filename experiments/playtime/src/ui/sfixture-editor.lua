@@ -22,10 +22,10 @@ local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local cdt = require('src.cdt')
 
-local PANEL_WIDTH = 300
+local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
-local ROW_WIDTH = 160
-local BUTTON_SPACING = 10
+local ROW_WIDTH = ui.theme.rowWidth
+local BUTTON_SPACING = ui.theme.spacing
 
 
 -- Per-MESHUSERT toggle: show transform sliders (meshX/Y, scaleX/Y) even when
@@ -145,7 +145,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             type = 'columns',
             spacing = BUTTON_SPACING,
             startX = panelX + 20,
-            startY = panelY + 80 + padding
+            startY = panelY + ui.theme.contentTop + padding
         })
         x, y = ui.nextLayoutPosition(layout, ROW_WIDTH, BUTTON_HEIGHT)
         local nextRow = function()
@@ -1880,7 +1880,8 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
 
     ui.panel(panelX, panelY, panelWidth, panelH, '∞ ' .. sfixtureType .. ' ∞', function()
         -- content scrolls when it doesn't fit (spec/ui-overflow_spec.lua)
-        ui.scrollPanel('sfixture-panel', panelX, panelY + 40, panelWidth, panelH - 45, drawContent)
+        local header = ui.theme.panelHeader
+        ui.scrollPanel('sfixture-panel', panelX, panelY + header, panelWidth, panelH - header - 5, drawContent)
     end)
 end
 

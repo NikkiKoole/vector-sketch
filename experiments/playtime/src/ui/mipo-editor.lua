@@ -11,9 +11,9 @@ local ST = require('src.shape-types')
 
 local C = require('src.shape-catalogs')
 
-local PANEL_WIDTH = 300
+local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
-local BUTTON_SPACING = 10
+local BUTTON_SPACING = ui.theme.spacing
 
 local imageCache = {}
 

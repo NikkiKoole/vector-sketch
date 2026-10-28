@@ -9,20 +9,18 @@ local onStage = require('src.ui.on-stage')
 local libraryTab = require('src.ui.library-tab')
 
 lib.TABS = { 'properties', 'on stage', 'library' }
-lib.WIDTH = 300
-local TOP = 70 -- below the toolbar row, like the other panels
-local GAP = 10
 
 -- the whole column: x, y, w, h
 function lib.rect()
     local w, h = love.graphics.getDimensions()
-    return w - lib.WIDTH - 20, TOP, lib.WIDTH, h - TOP - 20
+    local top, width = ui.theme.columnTop, ui.theme.panelWidth -- below the toolbar row
+    return w - width - 20, top, width, h - top - 20
 end
 
 -- the area under the tab bar, where a tab draws its panel
 function lib.contentRect()
     local x, y, w, h = lib.rect()
-    local tabH = ui.theme.button.height + GAP
+    local tabH = ui.theme.button.height + ui.theme.spacing
     return x, y + tabH, w, h - tabH
 end
 

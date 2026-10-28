@@ -404,6 +404,7 @@ describe('inspector', function()
             local _, gy = world:getGravity()
             assert.is_true(math.abs(target.gravity * target.meter - gy) < 0.01)
             state.editorPreferences.showGrid = savedGrid
+            state.pendingDensity = nil -- the 'compact ui' row only queues a switch; don't let it happen
         end)
 
         it('the panel draws with all rows open', function()
