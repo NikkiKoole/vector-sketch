@@ -395,6 +395,43 @@ end
 -- feedback for PLACE_STEINER mode. Steiners flow through MESHUSERT's
 -- triangulation on the paired RESOURCE — they affect textured-mesh
 -- detail, not body collision (by design).
+-- A box around the selection on the stage, whatever the view: the selected
+-- body, or every part of a selected Mipo (in the 'tex/body' view their own
+-- body shapes aren't drawn, so without this a selected Mipo looked unselected).
+function lib.renderSelectionBox()
+    local thing = state.selection.selectedObj
+    if not thing or not thing.body or thing.body:isDestroyed() then return end
+    local bodies = { thing.body }
+    local instance = require('src.mipo-registry').getFromBody(thing.body)
+    if instance then
+        bodies = {}
+        for _, part in pairs(instance.parts) do
+            if part.body and not part.body:isDestroyed() then table.insert(bodies, part.body) end
+        end
+    end
+    local minX, minY, maxX, maxY
+    for _, body in ipairs(bodies) do
+        for _, fixture in ipairs(body:getFixtures()) do
+            if fixture:getUserData() == nil then -- collision shapes, not sfixtures
+                local x1, y1, x2, y2 = fixture:getBoundingBox()
+                minX, minY = math.min(minX or x1, x1), math.min(minY or y1, y1)
+                maxX, maxY = math.max(maxX or x2, x2), math.max(maxY or y2, y2)
+            end
+        end
+    end
+    if not minX then return end
+    local scale = cam:getScale()
+    local pad = 8 / scale
+    local r, g, b, a = love.graphics.getColor()
+    local lineWidth = love.graphics.getLineWidth()
+    love.graphics.setColor(242 / 255, 133 / 255, 0, 0.9) -- the UI's orange
+    love.graphics.setLineWidth(3 / scale)
+    love.graphics.rectangle('line', minX - pad, minY - pad, maxX - minX + 2 * pad, maxY - minY + 2 * pad,
+        6 / scale, 6 / scale)
+    love.graphics.setLineWidth(lineWidth)
+    love.graphics.setColor(r, g, b, a)
+end
+
 function lib.renderSteinerOverlay()
     local thing = state.selection.selectedObj
     if not thing or not thing.body or thing.body:isDestroyed() then return end

@@ -63,4 +63,20 @@ describe('tex/body view', function()
         canvas:release()
         assert.is_true(ok, tostring(err))
     end)
+
+    it('the selection box draws for a plain body and for nothing selected', function()
+        local editorRender = require('src.editor-render')
+        local thing = objectManager.addThing('rectangle', { x = 0, y = 0, width = 40, height = 40 })
+        local canvas = love.graphics.newCanvas(200, 200)
+        love.graphics.setCanvas(canvas)
+        state.selection.selectedObj = nil
+        local ok1, err1 = pcall(editorRender.renderSelectionBox)
+        state.selection.selectedObj = thing
+        local ok2, err2 = pcall(editorRender.renderSelectionBox)
+        state.selection.selectedObj = nil
+        love.graphics.setCanvas()
+        canvas:release()
+        assert.is_true(ok1, tostring(err1))
+        assert.is_true(ok2, tostring(err2))
+    end)
 end)

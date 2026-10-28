@@ -436,6 +436,7 @@ function love.draw()
 
     editorRenderer.renderActiveEditorThings()
     editorRenderer.renderSteinerOverlay()
+    editorRenderer.renderSelectionBox()
     if state.world.paused then
         local selected = state.selection.selectedObj and state.selection.selectedObj.body
         signals.drawWires(selected)
