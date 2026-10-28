@@ -141,6 +141,8 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 
 ### Voice (mipomi-lang → playtime)
 
+Puppetmaker 2's whole sound setup (band, growl, chatter) and the plan to bring the rest in: `PUPPETMAKER-SOUND.md`.
+
 Source repo: `~/Projects/love/mipomi-lang` (GitHub private). It stays the lab where
 recording and tuning happen; playtime gets a copy of the engine and the cut samples.
 
