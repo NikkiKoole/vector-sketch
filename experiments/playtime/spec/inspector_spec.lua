@@ -61,6 +61,18 @@ describe('inspector', function()
         if world and not world:isDestroyed() then world:destroy() end
     end)
 
+    it('puts two checkboxes in a row, a lone one gets its own row', function()
+        local target = { a = true, b = false, c = true, n = 1 }
+        local params = {
+            { key = 'a', kind = 'bool' }, { key = 'b', kind = 'bool' }, { key = 'c', kind = 'bool' },
+            { key = 'n', kind = 'number', min = 0, max = 2 },
+        }
+        local used
+        local ok, err = renderToCanvas(function() used = inspector.drawParams('pairs', params, target, nil, 0, 0, 280) end)
+        assert.is_true(ok, tostring(err))
+        assert.are.equal(3 * inspector.rowHeight, used) -- a+b, c, n
+    end)
+
     local function makeJoint(jointType)
         local a = objectManager.addThing('rectangle', { x = 100, y = 100, width = 40, height = 40 })
         local b = objectManager.addThing('rectangle', { x = 200, y = 160, width = 40, height = 40 })

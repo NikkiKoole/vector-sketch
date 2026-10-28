@@ -45,9 +45,10 @@ local function resolve(v, target)
     return v
 end
 
--- Returns a replacement target when the row's set rebuilt it.
-local function drawRow(id, row, target, body, x, y, w)
-    local wx = x + lib.labelWidth
+-- Returns a replacement target when the row's set rebuilt it. labelWidth: the
+-- label column (default lib.labelWidth; a checkbox pair uses its own).
+local function drawRow(id, row, target, body, x, y, w, labelWidth)
+    local wx = x + (labelWidth or lib.labelWidth)
     if row.kind ~= 'action' and row.kind ~= 'note' then ui.alignedLabel(x, y + DY, labelOf(row, target)) end
     if row.kind == 'text' then
         local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, FIELD_H, row.default or '',
@@ -117,12 +118,31 @@ end
 function lib.drawParams(id, params, target, body, x, y, w)
     local cy = y
     local function rows(advanced)
+        local shown = {}
         for _, row in ipairs(params) do
             if (row.advanced or false) == advanced and (not row.visible or row.visible(target)) then
-                local replaced = drawRow(id, row, target, body, x, cy, w)
-                cy = cy + lib.rowHeight
-                if replaced ~= nil and replaced ~= target then return replaced end
+                table.insert(shown, row)
             end
+        end
+        local i = 1
+        while i <= #shown do
+            local row, nextRow = shown[i], shown[i + 1]
+            local replaced
+            if row.kind == 'bool' and nextRow and nextRow.kind == 'bool' then
+                -- two checkboxes side by side: label, then its box at the end of each half
+                local half = w / 2
+                local boxAt = half - ui.theme.slider.height - 12
+                replaced = drawRow(id, row, target, body, x, cy, half, boxAt)
+                if replaced == nil or replaced == target then
+                    replaced = drawRow(id, nextRow, target, body, x + half, cy, half, boxAt)
+                end
+                i = i + 2
+            else
+                replaced = drawRow(id, row, target, body, x, cy, w)
+                i = i + 1
+            end
+            cy = cy + lib.rowHeight
+            if replaced ~= nil and replaced ~= target then return replaced end
         end
     end
     local replaced = rows(false)
