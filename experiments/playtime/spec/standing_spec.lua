@@ -71,6 +71,36 @@ local function simulate(seed, seconds)
     return lateWorst, motion / math.max(1, counted), hops -- motion: degrees per frame, 4 legs summed
 end
 
+describe('Mipo feet', function()
+    -- A foot is built turned a quarter turn from its shin (flat). Its ankle range
+    -- used to be counted from 'in line with the shin', so it was centred on a foot
+    -- pointing straight down: Mipos stood on the tips of their feet.
+    it('the ankle range is centred on flat, not on pointing down', function()
+        local world = love.physics.newWorld(0, 980, true)
+        state.physicsWorld = world
+        registry.reset()
+        mipoRegistry.reset()
+        for _, seed in ipairs({ 11, 37 }) do
+            love.math.setRandomSeed(seed)
+            math.randomseed(seed)
+            local instance = CharacterManager.createCharacter('humanoid', 0, 500, 0.3)
+            CharacterManager.randomizeMipoConstrained(instance)
+            for foot, flat in pairs({ lfoot = 90, rfoot = -90 }) do
+                local body = instance.parts[foot].body
+                for _, joint in ipairs(body:getJoints()) do
+                    local _, b = joint:getBodies()
+                    if b == body and joint:getType() == 'revolute' then
+                        local low, up = joint:getLimits()
+                        local centre = math.deg((low + up) / 2 + joint:getReferenceAngle())
+                        assert.is_true(math.abs(centre - flat) < 1, foot .. ' range centred on ' .. centre)
+                    end
+                end
+            end
+        end
+        world:destroy()
+    end)
+end)
+
 describe('Mipos standing on a grippy floor', function()
         -- Outcomes are chaotic (Mipo ids are random, so part creation order and the
     -- landing differ per run): measured ~2 of 12 unsettled on average. Guard with

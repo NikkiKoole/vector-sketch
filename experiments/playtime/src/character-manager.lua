@@ -1339,12 +1339,12 @@ lib.armRange = {
 -- feet got locked upside down (ankle references of 179 / -111 deg); keep-angle
 -- then fought the limits at full spin (shaking, noise). Convert the DNA limits
 -- with the actual reference angle.
--- Ankles: how far a foot may tip from in line with the shin, for every Mipo
--- (overrides the DNA, like armRange). Toes up a lot, toes down only a little:
--- the DNA's +-22.5 deg pinned feet stiffly at a limit, a loose +-45 let a Mipo
--- stand on its toes with its feet hanging down. Degrees.
-lib.ankleToesUp = 45
-lib.ankleToesDown = 10
+-- A foot's rest pose is flat: it is built turned a quarter turn from its shin
+-- (character-topology.lua angleOffset). Counting the ankle range from 'in line
+-- with the shin' (0) centred it on a foot pointing straight down: Mipos stood
+-- on the tips of their feet.
+local footRest = { lfoot = math.pi / 2, rfoot = -math.pi / 2 }
+
 local restPoseParts = {
     luleg = true, ruleg = true, llleg = true, rlleg = true,
     lfoot = true, rfoot = true, lhand = true, rhand = true, lear = true, rear = true,
@@ -1355,17 +1355,9 @@ local function applyLegLimits(instance, joint, partName)
     local partDNA = instance.dna.parts[partName]
     local limits = partDNA and partDNA.j and partDNA.j.limits
     if not (limits and limits.low and limits.up) then return end
-    local rest = partDNA.stanceAngle or 0
+    local rest = footRest[partName] or partDNA.stanceAngle or 0
     local ref = joint:getReferenceAngle()
-    local low, up = limits.low, limits.up
-    -- the feet are mirrored: a positive turn lowers the left foot's toes and
-    -- lifts the right foot's (measured in spec/standing_spec.lua)
-    if partName == 'lfoot' then
-        low, up = -math.rad(lib.ankleToesUp), math.rad(lib.ankleToesDown)
-    elseif partName == 'rfoot' then
-        low, up = -math.rad(lib.ankleToesDown), math.rad(lib.ankleToesUp)
-    end
-    joint:setLimits(rest + low - ref, rest + up - ref)
+    joint:setLimits(rest + limits.low - ref, rest + limits.up - ref)
     joint:setLimitsEnabled(true)
 end
 
