@@ -2,7 +2,8 @@
 -- The left tool rail: the tab opens/closes a group's flyout, a flyout pick
 -- becomes the group's last pick (what the rail button spawns next), a press
 -- elsewhere closes the flyout, and a click on the rail button without a drag
--- leaves no body behind.
+-- leaves no body behind. The joint button starts picking bodies for its last
+-- pick; clicking it again cancels.
 -- Run with: love . --specs spec/tool-rail_spec.lua
 
 if not love then return end
@@ -11,6 +12,7 @@ local state = require('src.state')
 local ui = require('src.ui.all')
 local registry = require('src.registry')
 local toolRail = require('src.ui.tool-rail')
+local modes = require('src.modes')
 
 describe('tool rail', function()
     local canvas
@@ -93,5 +95,30 @@ describe('tool rail', function()
         assert.are.equal('circle', toolRail.lastPick(toolRail.groups[1]))
         assert.is_nil(state.toolRail.open)
         assert.are.equal(before, countBodies())
+    end)
+    it('the joint button starts picking bodies, a second click cancels', function()
+        local jointY = buttonY + 56 + gap
+        click(buttonX, jointY)
+        assert.is_true(modes.is(modes.JOINT_CREATION))
+        assert.are.equal('revolute', state.jointParams.jointType)
+        click(buttonX, jointY)
+        assert.is_false(modes.is(modes.JOINT_CREATION))
+        assert.is_nil(state.jointParams)
+    end)
+
+    it('a joint flyout pick starts that joint and becomes the last pick', function()
+        local jointTop = 60 + gap + 56 + gap
+        click(tabX, jointTop + 28)
+        assert.are.equal('joint', state.toolRail.open)
+        local flyoutX = 10 + gap * 2 + 56 + 18 + gap
+        local weldX = flyoutX + gap + 110 + gap + 55
+        local weldY = jointTop + gap + ui.theme.button.height / 2
+        click(weldX, weldY)
+        assert.is_nil(state.toolRail.open)
+        assert.are.equal('weld', toolRail.lastPick(toolRail.groups[2]))
+        assert.is_true(modes.is(modes.JOINT_CREATION))
+        assert.are.equal('weld', state.jointParams.jointType)
+        state.jointParams = nil
+        modes.clear()
     end)
 end)

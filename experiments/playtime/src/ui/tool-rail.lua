@@ -1,7 +1,8 @@
 -- tool-rail.lua — the left tool rail (docs/EDITOR-INSPECTOR-LIBRARY.md, step d).
--- One button per tool group. The button reuses the group's last pick (press and
--- drag a shape out); the small tab next to it opens a flyout with the whole group
--- in two columns. Pick + drag works from the flyout too; it closes on release.
+-- One button per tool group. The button reuses the group's last pick; the small tab
+-- next to it opens a flyout with the whole group in two columns. A group either
+-- spawns on press (shapes: press and drag one out, from the rail or the flyout) or
+-- starts a mode on click (joints: then click body A and body B).
 -- Picks and the open flyout live on state.toolRail so they survive hot reloads.
 local lib = {}
 
@@ -11,6 +12,8 @@ local objectManager = require('src.object-manager')
 local camera = require('src.camera')
 local cam = camera.getInstance()
 local ST = require('src.shape-types')
+local JT = require('src.joint-types')
+local modes = require('src.modes')
 
 local RAIL_X = 10
 local RAIL_TOP = 60
@@ -45,9 +48,39 @@ lib.groups = {
             { title = 'more', ST.TRIANGLE, ST.ITRIANGLE, ST.TORSO, ST.TRAPEZIUM,
                 ST.PENTAGON, ST.HEXAGON, ST.HEPTAGON, ST.OCTAGON },
         },
-        start = spawnShape,
+        onPress = spawnShape,
+    },
+    {
+        key = 'joint',
+        default = JT.REVOLUTE,
+        sections = {
+            { JT.REVOLUTE, JT.WELD, JT.DISTANCE, JT.ROPE },
+            { title = 'more', JT.WHEEL, JT.MOTOR, JT.PRISMATIC, JT.PULLEY, JT.FRICTION },
+        },
+        -- clicking the button again while picking bodies cancels
+        onClick = function(jointType)
+            if modes.is(modes.JOINT_CREATION) and state.jointParams
+                and state.jointParams.jointType == jointType then
+                state.jointParams = nil
+                modes.clear()
+                return
+            end
+            state.jointParams = { body1 = nil, body2 = nil, jointType = jointType }
+            modes.set(modes.JOINT_CREATION)
+        end,
+        isActive = function() return modes.is(modes.JOINT_CREATION) end,
     },
 }
+
+function lib.groupOf(item)
+    for _, group in ipairs(lib.groups) do
+        for _, section in ipairs(group.sections) do
+            for _, it in ipairs(section) do
+                if it == item then return group.key end
+            end
+        end
+    end
+end
 
 local function railState()
     state.toolRail = state.toolRail or { open = nil, last = {} }
@@ -93,6 +126,24 @@ local function drawIcon(item, cx, cy, r)
     elseif item == ST.TRAPEZIUM then
         lg.polygon('line', cx - r * 0.5, cy - r * 0.6, cx + r * 0.5, cy - r * 0.6,
             cx + r, cy + r * 0.6, cx - r, cy + r * 0.6)
+    elseif item == JT.REVOLUTE then
+        lg.line(cx - r, cy + r * 0.6, cx, cy)
+        lg.line(cx, cy, cx + r, cy + r * 0.6)
+        lg.circle('fill', cx, cy, r * 0.25)
+    elseif item == JT.WELD then
+        lg.rectangle('line', cx - r, cy - r * 0.5, r, r)
+        lg.rectangle('line', cx, cy - r * 0.5, r, r)
+    elseif item == JT.DISTANCE then
+        lg.line(cx - r, cy, cx + r, cy)
+        lg.circle('fill', cx - r, cy, r * 0.2)
+        lg.circle('fill', cx + r, cy, r * 0.2)
+    elseif item == JT.ROPE then
+        lg.line(cx - r, cy - r * 0.5, cx - r * 0.3, cy + r * 0.5, cx + r * 0.3, cy - r * 0.5,
+            cx + r, cy + r * 0.5)
+        lg.circle('fill', cx - r, cy - r * 0.5, r * 0.2)
+        lg.circle('fill', cx + r, cy + r * 0.5, r * 0.2)
+    elseif lib.groupOf(item) ~= 'shape' then
+        lg.printf(item:sub(1, 4), cx - r * 2, cy - ui.font:getHeight() / 2, r * 4, 'center')
     else
         local sides = { [ST.PENTAGON] = 5, [ST.HEXAGON] = 6, [ST.HEPTAGON] = 7, [ST.OCTAGON] = 8 }
         lg.polygon('line', regularPolygon(cx, cy, r, sides[item] or 6, up))
@@ -147,14 +198,19 @@ local function drawFlyout(group, x, y)
                 local column = (i - 1) % 2
                 local bx = x + gap + column * (COLUMN + gap)
                 local fill = item == lib.lastPick(group) and ui.theme.header.active or nil
-                local _, pressed, released = ui.button(bx, cy, COLUMN, lib.SHORT_NAMES[item] or item, nil, fill)
-                if pressed then
+                local clicked, pressed, released = ui.button(bx, cy, COLUMN, lib.SHORT_NAMES[item] or item, nil,
+                    fill)
+                if pressed and group.onPress then
                     rs.last[group.key] = item
-                    group.start(item)
+                    group.onPress(item)
                 end
                 if released then
                     rs.open = nil
-                    finishSpawn()
+                    if group.onPress then finishSpawn() end
+                end
+                if clicked and group.onClick then
+                    rs.last[group.key] = item
+                    group.onClick(item)
                 end
                 if column == 1 or i == #section then
                     cy = cy + ui.theme.button.height + gap
@@ -182,10 +238,16 @@ function lib.draw()
         for i, group in ipairs(lib.groups) do
             local x = RAIL_X + gap
             local y = RAIL_TOP + gap + (i - 1) * (BUTTON + gap)
-            local _, pressed, released = ui.button(x, y, BUTTON, '', BUTTON)
+            local active = group.isActive and group.isActive()
+            local clicked, pressed, released = ui.button(x, y, BUTTON, '', BUTTON,
+                active and ui.theme.header.active or nil)
             drawIcon(lib.lastPick(group), x + BUTTON / 2, y + BUTTON / 2, BUTTON * 0.3)
-            if pressed then group.start(lib.lastPick(group)) end
-            if released then finishSpawn() end
+            if group.onPress then
+                if pressed then group.onPress(lib.lastPick(group)) end
+                if released then finishSpawn() end
+            elseif clicked then
+                group.onClick(lib.lastPick(group))
+            end
 
             local isOpen = rs.open == group.key
             local tabClicked = ui.button(x + BUTTON, y, TAB, '', BUTTON, isOpen and ui.theme.header.active or nil)
