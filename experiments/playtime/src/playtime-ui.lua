@@ -472,6 +472,13 @@ function lib.drawUI()
                         end
                         local added = { name = option }
                         if option:find('^SIGNAL_') then added.signal = 'signal1' end
+                        if option == 'DOOR' then
+                            -- a door doesn't collide: Mipos walk past it (sfixtures keep their own setting)
+                            added.door = 'door1'
+                            for _, fixture in ipairs(state.panelVisibility.addBehavior.body:getFixtures()) do
+                                if not fixture:getUserData() then fixture:setSensor(true) end
+                            end
+                        end
                         table.insert(myUD.thing.behaviors, added)
                         state.panelVisibility.addBehavior.body:setUserData(myUD)
                         local body = state.panelVisibility.addBehavior.body
