@@ -16,7 +16,7 @@ lib.presets = {
         rowHeight = 45, fieldHeight = 40, widgetDY = 7, labelWidth = 90,
     },
     compact = {
-        fontSize = 25, lineHeight = 25, lineWidth = 3, spacing = 4, panelWidth = 300, rowWidth = 160,
+        fontSize = 25, lineHeight = 25, lineWidth = 3, spacing = 6, panelWidth = 300, rowWidth = 160,
         columnTop = 52, toolbarScale = 0.7,
         panelHeader = 32, contentTop = 36,
         rowHeight = 31, fieldHeight = 29, widgetDY = 3, labelWidth = 90,

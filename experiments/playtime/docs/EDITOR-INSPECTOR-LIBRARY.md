@@ -166,7 +166,7 @@ textured in any scene, no backdrop needed (`docs/UV-BACKDROP-FRAGILITY.md`, upda
 **Compact switch (2026-10-28, keep/revert open):** `src/ui/density.lua`, settings → 'compact'
 (saved in `editor-density.txt`, applied between frames by re-running the UI modules). First try
 also shrank the font (25 -> 17); Nikki: keep the 25 px font, it's the *padding* that feels big.
-So compact = same font, rows and outlines; less padding: gaps 10 -> 4, inspector rows 45 -> 31
+So compact = same font, rows and outlines; less padding: gaps 10 -> 6, inspector rows 45 -> 31
 (fields 40 -> 29), panel title band 40 -> 32, hand-placed content starts 36 below the panel top
 (was 80), column top 70 -> 52, toolbar buttons 70% wide. 'roomy' is exactly the old numbers.
 Next look, if compact stays: flatter buttons (ghost/outline), muted labels, handoff palette.
