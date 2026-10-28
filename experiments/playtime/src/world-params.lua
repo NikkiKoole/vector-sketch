@@ -51,8 +51,9 @@ lib.rows = {
       get = function() return state().editorPreferences.showGrid == true end,
       set = function(_, v) state().editorPreferences.showGrid = v end },
     flag('showTextures', 'textures'),
+    flag('textureOrBody', 'tex/body'), -- textured bodies show only their texture (src/physics/box2d-draw.lua)
     flag('darkMode', 'dark'),
-    { key = 'compact ui', kind = 'bool', -- src/ui/density.lua; applied between frames (main.lua)
+    { key = 'compact', kind = 'bool', -- src/ui/density.lua; applied between frames (main.lua)
       get = function() return (state().pendingDensity or require('src.ui.density').name()) == 'compact' end,
       set = function(_, v) state().pendingDensity = v and 'compact' or 'roomy' end },
     -- advanced

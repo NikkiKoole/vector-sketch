@@ -3,7 +3,7 @@
 -- same font and row height but takes out padding (Nikki likes the 25 px font,
 -- the padding felt too much). A keep/revert experiment:
 -- the choice is saved in editor-density.txt in the save directory, and the
--- 'compact ui' checkbox in settings switches it live.
+-- 'compact' checkbox in settings switches it live.
 local lib = {}
 
 lib.presets = {

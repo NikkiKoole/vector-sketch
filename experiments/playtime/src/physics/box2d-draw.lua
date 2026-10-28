@@ -7,6 +7,7 @@ local JT = require 'src.joint-types'
 local BT = require('src.body-types')
 local cdt = require 'src.cdt'
 local mathutils = require 'src.math-utils'
+local subtypes = require 'src.subtypes'
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -116,6 +117,22 @@ end
 
 
 
+-- sfixture kinds that draw a texture over their own body (src/physics/box2d-draw-textured.lua);
+-- a connected-texture is a ribbon between joints, so it doesn't count
+local texturedKinds = {}
+for _, kind in ipairs({ subtypes.TEXFIXTURE, subtypes.MESHUSERT, subtypes.UVUSERT, subtypes.TILE_REPEAT,
+    subtypes.DECAL, subtypes.TRACE_VERTICES }) do
+    texturedKinds[kind] = true
+end
+
+function lib.hasTexture(body)
+    for _, fixture in ipairs(body:getFixtures()) do
+        local ud = fixture:getUserData()
+        if type(ud) == 'table' and texturedKinds[ud.subtype] then return true end
+    end
+    return false
+end
+
 function lib.drawWorld(world, drawOutline)
     local debugIds -- lazily allocated, only needed when showDebugIds is on
     if drawOutline == nil then drawOutline = true end
@@ -130,10 +147,13 @@ function lib.drawWorld(world, drawOutline)
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
     local DRAW_BODIES = state.world.debugDrawBodies
+    -- 'texture or body' view: a body with a texture shows only the texture
+    local skipTextured = state.world.showTextures and state.world.textureOrBody
 
 
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do
+            if skipTextured and lib.hasTexture(body) then goto nextBody end
             local bodyUD = body:getUserData()
             local bodyThing = bodyUD and bodyUD.thing
             -- CUSTOM bodies get a single unified fill+outline pass that honors
@@ -225,6 +245,7 @@ function lib.drawWorld(world, drawOutline)
                     end
                 end
             end
+            ::nextBody::
         end
     end
     love.graphics.setColor(255, 255, 255, alpha)

@@ -163,7 +163,7 @@ RESOURCE now owns its picture (`extra.imageURL`), so a placed or cloned skinned 
 textured in any scene, no backdrop needed (`docs/UV-BACKDROP-FRAGILITY.md`, update at the top).
 
 **Kept (2026-10-28):** Nikki likes the library.
-**Compact switch (2026-10-28, keep/revert open):** `src/ui/density.lua`, settings → 'compact ui'
+**Compact switch (2026-10-28, keep/revert open):** `src/ui/density.lua`, settings → 'compact'
 (saved in `editor-density.txt`, applied between frames by re-running the UI modules). First try
 also shrank the font (25 -> 17); Nikki: keep the 25 px font, it's the *padding* that feels big.
 So compact = same font, rows and outlines; less padding: gaps 10 -> 4, inspector rows 45 -> 31
