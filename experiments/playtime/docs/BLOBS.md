@@ -49,9 +49,22 @@ generated at runtime from settings stored on an sfixture:
   transform the rim); the inspector gets the stiffness/damping/nodes sliders from the
   sfixture params, like grass.
 
+## Spike result (2026-10-29, `experiments/blob-spike`)
+
+Squish and texture both work. What the real thing has to carry over from it:
+- **Pressure is required**, not "later": with spokes alone 2 of 5 blobs collapsed for good
+  after a hard landing (rim points ended up on the wrong side of the centre).
+- **Draw from a smoothed rim**: the physics rim kinks under a squash and a kink folds the
+  edge triangles (flicker). Taubin-smooth the rim positions for drawing, add soft bend
+  springs (3 Hz; 10 Hz+ made a blob cave in), normals from the winding.
+- **Mesh fixed at rest** (middle, 3 inner rings, rim), inner vertices rebuilt from the rim
+  with mean value coordinates; a fan from one centre point folds.
+- Measured over drop + kick: folded frames 1749 -> 173, flicker 214 -> 31, shape 3-5% off
+  at rest. Numbers and history in `experiments/blob-spike/README.md`.
+
 ## Order
 
-1. **Spike (S, ~half a day)**: a scene script that makes one blob from `shapeA1` with a baked OMP
+1. ~~**Spike**~~ done, see above. Was: **Spike (S, ~half a day)**: a scene script that makes one blob from `shapeA1` with a baked OMP
    texture and the fan mesh draw. Answers the only real unknowns: does it look good squashed,
    and does it hold the head shape (the 8-point outlines are not round; spokes should hold it,
    otherwise add pressure).
