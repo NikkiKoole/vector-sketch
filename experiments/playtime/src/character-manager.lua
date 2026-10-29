@@ -1352,13 +1352,12 @@ lib.armRange = {
 -- on the tips of their feet.
 local footRest = { lfoot = math.pi / 2, rfoot = -math.pi / 2 }
 
-local restPoseParts = {
-    luleg = true, ruleg = true, llleg = true, rlleg = true,
-    lfoot = true, rfoot = true, lhand = true, rhand = true, lear = true, rear = true,
-}
-
+-- Not only legs and feet: every part with DNA limits (torso segments, spine bands, neck,
+-- head). A scene saved before joints kept their reference angle came back with each joint
+-- counting from the pose it was saved in: a spine saved mid-sway was held crooked by its
+-- motor and the Mipo hopped forever; necks and heads were limited off-centre.
 local function applyLegLimits(instance, joint, partName)
-    if not restPoseParts[partName] or not joint or joint:isDestroyed() or joint:getType() ~= 'revolute' then return end
+    if not joint or joint:isDestroyed() or joint:getType() ~= 'revolute' then return end
     local partDNA = instance.dna.parts[partName]
     local limits = partDNA and partDNA.j and partDNA.j.limits
     if not (limits and limits.low and limits.up) then return end
@@ -2674,7 +2673,7 @@ function lib.reconstructInstance(charData, partBodies)
                     end
                 end
             end
-            if lib.armRange[partName] or restPoseParts[partName] then -- limits relative to the rest pose
+            do -- limits relative to the rest pose
                 for _, joint in ipairs(body:getJoints()) do
                     local _, bodyB = joint:getBodies()
                     if bodyB == body then

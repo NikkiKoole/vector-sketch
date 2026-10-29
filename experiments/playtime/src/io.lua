@@ -470,12 +470,22 @@ function lib.buildWorld(data, world, cam, opts)
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
             elseif jointData.type == "revolute" then
-                joint = love.physics.newRevoluteJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    --anchorB[1], anchorB[2],
-                    collideConnected
-                )
+                local referenceAngle = jointData.properties and jointData.properties.referenceAngle
+                if referenceAngle then
+                    joint = love.physics.newRevoluteJoint(
+                        bodyA, bodyB,
+                        anchorA[1], anchorA[2],
+                        anchorA[1], anchorA[2],
+                        collideConnected, referenceAngle
+                    )
+                else -- scenes saved before the reference angle was kept: counts from the saved pose
+                    joint = love.physics.newRevoluteJoint(
+                        bodyA, bodyB,
+                        anchorA[1], anchorA[2],
+                        --anchorB[1], anchorB[2],
+                        collideConnected
+                    )
+                end
                 joint:setMotorEnabled(jointData.properties.motorEnabled)
                 if jointData.properties.motorEnabled then
                     joint:setMotorSpeed(jointData.properties.motorSpeed)
@@ -1131,6 +1141,9 @@ function lib.gatherSaveData(world, camera)
                 elseif joint:getType() == JT.ROPE then
                     jointData.properties.maxLength = joint:getMaxLength()
                 elseif joint:getType() == JT.REVOLUTE then
+                    -- the angle its limits count from: without it a loaded joint counts from
+                    -- the pose it was saved in, and its limits come back shifted
+                    jointData.properties.referenceAngle = joint:getReferenceAngle()
                     jointData.properties.motorEnabled = joint:isMotorEnabled()
                     if jointData.properties.motorEnabled then
                         jointData.properties.motorSpeed = joint:getMotorSpeed()

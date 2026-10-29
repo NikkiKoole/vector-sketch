@@ -650,7 +650,10 @@ local function spineSpring(instance, now)
                 else
                     local ax, ay = joint:getAnchors()
                     joint:setMotorEnabled(true)
-                    joint:setMotorSpeed(units.rate(lib.spineReturn) * (sway - joint:getJointAngle()))
+                    -- straight = the two bands at the same angle (not joint angle 0: that counts
+                    -- from the joint's reference, the pose it was made or loaded in)
+                    local bend = part.body:getAngle() - parent.body:getAngle()
+                    joint:setMotorSpeed(units.rate(lib.spineReturn) * (sway - bend))
                     joint:setMaxMotorTorque(lib.spineStrength
                         * weightTorque(subtreeBodies(instance, 'torso' .. i, {}), ax, ay))
                 end

@@ -68,6 +68,39 @@ describe('the spine room', function()
             string.format('torso leans %.0f degrees', math.deg(torso:getAngle())))
     end)
 
+    -- the scene file keeps a revolute joint's reference angle: without it a joint saved bent
+    -- came back counting from the bent pose (limits shifted, a spine motor holding it crooked)
+    it('saved and loaded while bent, a joint keeps its reference angle and limits', function()
+        local sceneIO = require('src.io')
+        local cam = require('src.camera').getInstance()
+        local instance = mipoRegistry.getAll().P4re5
+        local t1, t2 = instance.parts.torso1.body, instance.parts.torso2.body
+        local before
+        for _, j in ipairs(t2:getJoints()) do
+            local a, b = j:getBodies()
+            if a == t1 and b == t2 then before = j end
+        end
+        assert.is_truthy(before)
+        t2:setAngle(t2:getAngle() + 0.3) -- bent when saved
+        local data = sceneIO.gatherSaveData(world, cam)
+        local ref, low, up = before:getReferenceAngle(), before:getLowerLimit(), before:getUpperLimit()
+        local world2 = love.physics.newWorld(0, 0, true)
+        registry.reset()
+        sceneIO.buildWorld(data, world2, cam)
+        local found
+        for _, j in ipairs(world2:getJoints()) do
+            local a, b = j:getBodies()
+            local ua, ub = a:getUserData(), b:getUserData()
+            if ua and ub and ua.thing and ub.thing and ua.thing.mipoPartName == 'torso1'
+                and ub.thing.mipoPartName == 'torso2' then found = j end
+        end
+        assert.is_truthy(found)
+        assert.is_near(ref, found:getReferenceAngle(), 1e-4)
+        assert.is_near(low, found:getLowerLimit(), 1e-4)
+        assert.is_near(up, found:getUpperLimit(), 1e-4)
+        world2:destroy()
+    end)
+
     describe('with a spine', function()
         local instance
 
