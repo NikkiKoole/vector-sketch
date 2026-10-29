@@ -43,6 +43,9 @@ lib.defaults = {
 local RINGS = 3 -- inner mesh rings between the middle and the rim
 local HANDLE_HZ = 8 -- the body's pull toward the rim's middle
 local HANDLE_MASS = 2 -- the body's mass, in rim masses
+-- Rims live on `state` and outlive a hot reload of this file; one built by an older
+-- version of it is rebuilt. Bump when the runtime's layout changes.
+local BUILD = 2
 
 -- runtime per SOFTBODY sfixture id; on state so a hot reload keeps the blobs
 state.blobs = state.blobs or {}
@@ -193,7 +196,7 @@ local function build(fixture)
     local cosA, sinA = math.cos(angle), math.sin(angle)
     local vx, vy = body:getLinearVelocity()
 
-    local rt = { id = ud.id, fixture = fixture, body = body, nodes = {}, rimFixtures = {}, uvs = {},
+    local rt = { build = BUILD, id = ud.id, fixture = fixture, body = body, nodes = {}, rimFixtures = {}, uvs = {},
         rest = {}, links = {}, bends = {}, r = r, signature = signature(extra), rim = {}, rimVerts = {},
         centreUV = { cxs / dw + 0.5, cys / dh + 0.5 } }
 
@@ -404,7 +407,8 @@ function lib.beforeStep(paused, dt)
                 if type(ud) == 'table' and subtypes.is(ud, subtypes.SOFTBODY) and ud.extra then
                     seen[ud.id] = true
                     local rt = state.blobs[ud.id]
-                    if rt and (rt.body ~= body or not rimIntact(rt) or rt.signature ~= signature(ud.extra)) then
+                    if rt and (rt.build ~= BUILD or rt.body ~= body or not rimIntact(rt)
+                            or rt.signature ~= signature(ud.extra)) then
                         destroy(rt)
                         rt = nil
                     end
