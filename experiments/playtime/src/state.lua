@@ -102,6 +102,10 @@ state.world = {
     mouseForce = 500000,
     mouseDamping = 0.5,
     speedMultiplier = 1.0,
+    -- Box2D solver iterations per step (its defaults are 8 and 3); more is stiffer joints and
+    -- steadier piles, at a cost in every step
+    velocityIterations = 16,
+    positionIterations = 6,
     showTextures = true,
     showDebugIds = false,
 }

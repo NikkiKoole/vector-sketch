@@ -287,18 +287,11 @@ function love.update(dt)
     prof.push('physics-update')
     blobs.beforeStep(state.world.paused, scaled_dt) -- blob rims: build/follow, pressure (src/blob.lua)
     if not state.world.paused then
-        local velocityiterations = 8 --* 2
-        local positioniterations = 3 --* 2 -- 3
-        -- for i = 1, 1 do
-        --     state.physicsWorld:update(scaled_dt, velocityiterations, positioniterations)
-        -- end
-
-
         local substeps = 1
         local step = scaled_dt / substeps
         prof.push('physicsWorld:update')
         for _ = 1, substeps do
-            state.physicsWorld:update(step, velocityiterations * 2, positioniterations * 2)
+            state.physicsWorld:update(step, state.world.velocityIterations, state.world.positionIterations)
         end
         prof.pop('physicsWorld:update')
 
