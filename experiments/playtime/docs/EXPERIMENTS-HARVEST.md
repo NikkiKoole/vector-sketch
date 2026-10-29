@@ -120,8 +120,11 @@ accelerate / brake / chain-lift / flip, carts follow by arc length (`Track:getPo
   Measured in `experiments/omp-bench` on the dollhouse Mipos: 4.5 → 1.1 MB per Mipo
   (50 Mipos: 225 → 56 MB baked, plus 31 MB of shared sources), bakes 28 → 17 ms per Mipo,
   no frame-time change on the Mac; only close up the grain is a little softer. Patches stay
-  put (`--patch-check`). Still open from the lab: release-on-rebake (small: +7 → +0.6 MB while
-  randomizing), r8 sources (the fixed 31 MB), shader compositing, markings.
+  put (`--patch-check`). Still open from the lab: r8 sources (the fixed 31 MB), shader
+  compositing, markings.
+- [x] **Release replaced OMP images on re-bake** (2026-10-29, d8da2e08): randomizing no longer
+  leaves old textures to the GC (+5 MB → 0 per 25 rebakes); images a clone still shares are kept.
+  Still left to the GC: the full rebake after every save (`io.gatherSaveData` drops all `ompImage`).
 - **R8 masks** (S–M): `r8/main.lua:247 makeR8Image` stores masks single-channel, ¼ the VRAM, for the
   ~290 OMP textures and the "caches grow" known issue. Has a bug (`a * 255` on a byte, inverted
   alpha): fix before use.
