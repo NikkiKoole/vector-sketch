@@ -1,6 +1,6 @@
 # Puppetmaker sound — how Mipo Puppetmaker 2 sounds, and bringing it here
 
-**Started:** 2026-10-28. **Status:** samples copied in; P1 and P5 built (2026-10-29), P2–P4 wait for `music.lua`.
+**Started:** 2026-10-28. **Status:** P1–P5 and P7 built (2026-10-29); P8 (voice size on the synth) next.
 
 **Goal:** Mipos that feel as alive as in Puppetmaker: the hmpfs when you touch
 or change them, the mi… po… chatter, and a band they sing along with and move to.
@@ -160,11 +160,11 @@ It's a function call, not a field on the module (hot reload). `t` is booked ~0.3
 `synth.audioTime()`. `music.nowPlaying()` gets `stepTime` + `stepLen` for the swung grid. P3/P4
 start once that lands.
 
-- [ ] **P2. A "note played" event from `music.lua`.** Report the instrument, step and length,
+- [x] **P2. A "note played" event from `music.lua`** (2026-10-29, by the music side: `music.onNote`). Report the instrument, step and length,
   e.g. `music.onNote(fn)`. Everything below needs it.
-- [ ] **P3. Mipos move to the music.** A breath on a soft beat, a doink on a
+- [x] **P3. Mipos move to the music** (2026-10-29, `src/mipo-band.lua`: triangle → a breath, the rolled chord → a doink, on a random free Mipo). A breath on a soft beat, a doink on a
   chord hit, only for Mipos that aren't held or dazed.
-- [ ] **P4. A Mipo voice in the band.** A sparse mi/po part, Puppetmaker-style chances and
+- [x] **P4. A Mipo voice in the band** (2026-10-29: the music books `sample:pi` / `sample:po3` on Puppetmaker's steps and odds, dense page only; `src/mipo-band.lua` has a free on-stage Mipo sing them in its own voice, two or more needed; ba/bi/biep play as the band's samples. `spec/mipo-band_spec.lua`). A sparse mi/po part, Puppetmaker-style chances and
   rnd, using `assets/voices/puppetmaker/`, pitched into the song's key. A Mipo on stage mouths each note:
   - with several Mipos, a random one sings;
   - with one Mipo you're editing, nobody sings (the page 2 rule).
