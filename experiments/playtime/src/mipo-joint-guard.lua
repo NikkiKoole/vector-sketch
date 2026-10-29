@@ -31,6 +31,7 @@ local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local registry = require('src.registry')
 local units = require('src.physics-units') -- speeds below are as at 100 px per metre
+local contactTracker = require('src.physics.contact-tracker')
 
 local lib = {}
 
@@ -422,46 +423,34 @@ local function isSplayed(instance)
     return false
 end
 
--- Any part resting against another Mipo (a pile). Props like a skateboard don't count.
-local function leaningOnOthers(instance)
+local function solidOtherMipo(own, other, otherBody, instance)
+    if own:isSensor() or other:isSensor() then return false end
+    local otherMipo = mipoRegistry.getFromBody(otherBody)
+    return otherMipo ~= nil and otherMipo ~= instance
+end
+
+local function solidNotMipo(own, other, otherBody)
+    return not own:isSensor() and not other:isSensor() and not mipoRegistry.getFromBody(otherBody)
+end
+
+-- Does any part of the Mipo touch something `test` likes (src/physics/contact-tracker.lua)?
+local function partsTouch(instance, test)
     for _, part in pairs(instance.parts) do
         local body = part.body
-        if body and not body:isDestroyed() then
-            for _, contact in ipairs(body:getContacts()) do
-                if contact:isTouching() then
-                    local fixtureA, fixtureB = contact:getFixtures()
-                    local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
-                    local otherMipo = mipoRegistry.getFromBody(other)
-                    if otherMipo and otherMipo ~= instance
-                        and not fixtureA:isSensor() and not fixtureB:isSensor() then
-                        return true
-                    end
-                end
-            end
-        end
+        if body and not body:isDestroyed() and contactTracker.any(body, test, instance) then return true end
     end
     return false
+end
+
+-- Any part resting against another Mipo (a pile). Props like a skateboard don't count.
+local function leaningOnOthers(instance)
+    return partsTouch(instance, solidOtherMipo)
 end
 
 -- Any part resting on something that isn't a Mipo (floor, wall, skateboard,
 -- slide): no stand-up hops mid-air. Static-only missed a Mipo on a skateboard.
 local function onGround(instance)
-    for _, part in pairs(instance.parts) do
-        local body = part.body
-        if body and not body:isDestroyed() then
-            for _, contact in ipairs(body:getContacts()) do
-                if contact:isTouching() then
-                    local fixtureA, fixtureB = contact:getFixtures()
-                    local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
-                    if not mipoRegistry.getFromBody(other) and not fixtureA:isSensor()
-                        and not fixtureB:isSensor() then
-                        return true
-                    end
-                end
-            end
-        end
-    end
-    return false
+    return partsTouch(instance, solidNotMipo)
 end
 
 local function standUpMipo(id, instance, now)

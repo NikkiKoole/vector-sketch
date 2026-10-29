@@ -8,6 +8,7 @@
 local mipoRegistry = require('src.mipo-registry')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local units = require('src.physics-units')
+local contactTracker = require('src.physics.contact-tracker')
 
 local lib = {}
 
@@ -51,13 +52,15 @@ function lib.ensureKeepAngle(part, angle, kp)
     return b
 end
 
+local function anything() return true end
+local groundParts = { 'lfoot', 'rfoot', 'llleg', 'rlleg' }
+
+-- A foot or lower leg touches something (anything, sensors too).
 function lib.isGrounded(instance)
-    for _, pname in ipairs({ 'lfoot', 'rfoot', 'llleg', 'rlleg' }) do
+    for _, pname in ipairs(groundParts) do
         local p = instance.parts and instance.parts[pname]
-        if p and p.body and not p.body:isDestroyed() then
-            for _, contact in pairs(p.body:getContacts()) do
-                if contact:isTouching() then return true end
-            end
+        if p and p.body and not p.body:isDestroyed() and contactTracker.any(p.body, anything) then
+            return true
         end
     end
     return false

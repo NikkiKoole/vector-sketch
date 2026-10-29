@@ -3,6 +3,8 @@
 
 if not love then return end
 
+local contactTracker = require('src.physics.contact-tracker')
+
 local CharacterManager = require('src.character-manager')
 local mipoActions = require('src.mipo-actions')
 local mipoRegistry = require('src.mipo-registry')
@@ -20,6 +22,7 @@ describe('src.mipo-actions', function()
 
     before_each(function()
         world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+        world:setCallbacks(contactTracker.beginContact, contactTracker.endContact)
         state.physicsWorld = world
         registry.reset()
         mipoRegistry.reset()

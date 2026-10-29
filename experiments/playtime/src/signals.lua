@@ -11,6 +11,7 @@
 --   { name = 'SIGNAL_GATE',   signal = 'gate1', open = false } prismatic gate: toggles
 local state = require('src.state')
 local units = require('src.physics-units')
+local contactTracker = require('src.physics.contact-tracker')
 
 local lib = {}
 
@@ -245,15 +246,12 @@ lib.toggleReleaseFrames = 60
 local plateWasPressed = setmetatable({}, { __mode = 'k' }) -- [body] = bool
 local plateFreeFrames = setmetatable({}, { __mode = 'k' }) -- [body] = frames free in a row
 
+local function solidDynamic(own, other, otherBody)
+    return otherBody:getType() == 'dynamic' and not own:isSensor() and not other:isSensor()
+end
+
 local function plateIsPressed(body)
-    for _, contact in ipairs(body:getContacts()) do
-        if contact:isTouching() then
-            local a, b = contact:getFixtures()
-            local other = a:getBody() == body and b:getBody() or a:getBody()
-            if other:getType() == 'dynamic' and not a:isSensor() and not b:isSensor() then return true end
-        end
-    end
-    return false
+    return contactTracker.any(body, solidDynamic)
 end
 
 -- Sockets: filled while something is snapped onto the body. Mipo hands don't

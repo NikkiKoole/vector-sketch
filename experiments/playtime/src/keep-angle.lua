@@ -1,6 +1,7 @@
 local lib = {}
 local registry = require 'src.registry'
 local units = require('src.physics-units')
+local contactTracker = require('src.physics.contact-tracker')
 
 -- While a part touches another Mipo or a prop, the controller only gets a
 -- bounded torque (inertia * maxAlpha) so it yields instead of drilling through.
@@ -20,24 +21,19 @@ lib.maxKpPerStep = 0.9
 lib.legDeadband = 0
 local deadbandParts = { luleg = true, ruleg = true, llleg = true, rlleg = true }
 
+-- only another Mipo counts (piles); standing on a skateboard or leaning on a ball
+-- needs full strength
+local function solidOtherMipo(own, other, otherBody, ownMipo)
+    if own:isSensor() or other:isSensor() then return false end
+    local oud = otherBody:getUserData()
+    local otherMipo = oud and oud.thing and oud.thing.mipoId
+    return otherMipo ~= nil and otherMipo ~= ownMipo
+end
+
 -- Touching another Mipo (props and floors are fine).
 local function touchingOthers(body)
     local ud = body:getUserData()
-    local ownMipo = ud and ud.thing and ud.thing.mipoId
-    for _, contact in ipairs(body:getContacts()) do
-        if contact:isTouching() then
-            local fixtureA, fixtureB = contact:getFixtures()
-            if not fixtureA:isSensor() and not fixtureB:isSensor() then
-                local other = fixtureA:getBody() == body and fixtureB:getBody() or fixtureA:getBody()
-                -- only another Mipo counts (piles); standing on a skateboard or
-                -- leaning on a ball needs full strength
-                local oud = other:getUserData()
-                local otherMipo = oud and oud.thing and oud.thing.mipoId
-                if otherMipo and otherMipo ~= ownMipo then return true end
-            end
-        end
-    end
-    return false
+    return contactTracker.any(body, solidOtherMipo, ud and ud.thing and ud.thing.mipoId)
 end
 
 -- PD controller on angular velocity

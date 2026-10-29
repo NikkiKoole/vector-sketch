@@ -8,6 +8,8 @@
 
 if not love then return end
 
+local contactTracker = require('src.physics.contact-tracker')
+
 local state = require('src.state')
 local registry = require('src.registry')
 local objectManager = require('src.object-manager')
@@ -23,6 +25,7 @@ describe('library prefabs', function()
 
     before_each(function()
         world = love.physics.newWorld(0, 0, true)
+        world:setCallbacks(contactTracker.beginContact, contactTracker.endContact)
         state.physicsWorld = world
         registry.reset()
     end)

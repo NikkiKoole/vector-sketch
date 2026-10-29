@@ -7,6 +7,8 @@
 
 if not love then return end
 
+local contactTracker = require('src.physics.contact-tracker')
+
 local state = require('src.state')
 local registry = require('src.registry')
 local mipoRegistry = require('src.mipo-registry')
@@ -34,6 +36,7 @@ local function simulate(seed, seconds)
     local realGetTime = love.timer.getTime
     love.timer.getTime = function() return simTime end
     local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+    world:setCallbacks(contactTracker.beginContact, contactTracker.endContact)
     state.physicsWorld = world
     registry.reset()
     mipoRegistry.reset()
@@ -77,6 +80,7 @@ describe('Mipo feet', function()
     -- pointing straight down: Mipos stood on the tips of their feet.
     it('the ankle range is centred on flat, not on pointing down', function()
         local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+        world:setCallbacks(contactTracker.beginContact, contactTracker.endContact)
         state.physicsWorld = world
         registry.reset()
         mipoRegistry.reset()

@@ -3,6 +3,8 @@
 
 if not love then return end
 
+local contactTracker = require('src.physics.contact-tracker')
+
 local state = require('src.state')
 local registry = require('src.registry')
 local props = require('src.props')
@@ -16,6 +18,7 @@ describe('src.signals + props gate/button', function()
 
     before_each(function()
         world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+        world:setCallbacks(contactTracker.beginContact, contactTracker.endContact)
         state.physicsWorld = world
         registry.reset()
         base = love.physics.newBody(world, 0, 0, 'static')
