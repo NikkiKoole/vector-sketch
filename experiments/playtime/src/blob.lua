@@ -446,6 +446,28 @@ function lib.afterStep()
     end
 end
 
+-- The blob whose rim (x, y) is inside: its body and the body's own (handle) fixture.
+-- Only the rim circles and the small handle circle are fixtures, so a press in between
+-- would otherwise grab nothing.
+function lib.hitAt(x, y)
+    for _, rt in pairs(state.blobs) do
+        if rimIntact(rt) then
+            local inside, n = false, #rt.nodes
+            local jx, jy = rt.nodes[n]:getPosition()
+            for k = 1, n do
+                local ix, iy = rt.nodes[k]:getPosition()
+                if ((iy > y) ~= (jy > y)) and (x < (jx - ix) * (y - iy) / (jy - iy) + ix) then inside = not inside end
+                jx, jy = ix, iy
+            end
+            if inside then
+                for _, f in ipairs(rt.body:getFixtures()) do
+                    if not f:getUserData() then return rt.body, f end
+                end
+            end
+        end
+    end
+end
+
 -- The blob body a rim body belongs to (nil for anything else).
 function lib.ownerOf(body)
     local rt = body and state.blobRims[body]

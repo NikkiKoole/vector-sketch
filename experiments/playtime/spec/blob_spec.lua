@@ -20,6 +20,8 @@ local sceneIO = require('src.io')
 local state = require('src.state')
 local blobs = require('src.blob')
 local props = require('src.props')
+package.loaded['src.physics.box2d-pointerjoints'] = nil
+local pointerJoints = require('src.physics.box2d-pointerjoints')
 local subtypes = require('src.subtypes')
 
 local function makeWorld()
@@ -207,6 +209,26 @@ describe("blob (SOFTBODY sfixture)", function()
         local dist = math.sqrt((cx - bx) ^ 2 + (cy - by) ^ 2)
         assert.is_true(dist < 40, string.format('rim middle %.0f from the handle (handle %.0f,%.0f rim %.0f,%.0f area %.2f)',
             dist, bx, by, cx, cy, rimArea(rt) / restArea))
+    end)
+
+    it("can be grabbed anywhere inside, not only on its edge or its handle", function()
+        local thing = props.makeBlob(0, 0)
+        blobs.beforeStep(true)
+        local rt = onlyRuntime()
+        local params = { pointerForceFunc = function() return 500000 end, damp = 0.5 }
+        -- halfway between the middle and each rim point: inside the blob, off the handle circle
+        local misses = 0
+        for i = 1, #rt.nodes, 4 do
+            local nx, ny = rt.nodes[i]:getPosition()
+            local hit, hitted = pointerJoints.handlePointerPressed(nx * 0.55, ny * 0.55, 'mouse', params, true)
+            local grabbed = hit and hitted[1] and (hitted[1]:getBody() == thing.body or blobs.ownerOf(hitted[1]:getBody()))
+            if not grabbed then misses = misses + 1 end
+            pointerJoints.killMouseJointIfPossible('mouse')
+        end
+        assert.are.equal(0, misses)
+        -- outside the blob: nothing
+        local hit = pointerJoints.handlePointerPressed(1000, 1000, 'mouse', params, true)
+        assert.is_false(hit)
     end)
 
     it("lands on a floor and keeps its shape (pressure)", function()

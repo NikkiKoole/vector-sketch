@@ -211,6 +211,16 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
         end
     end
 
+    -- inside a blob but between its rim circles and its handle: carry it by the handle
+    if #temp == 0 then
+        local blobBody, handle = require('src.blob').hitAt(wx, wy)
+        if blobBody then
+            table.insert(hitted, handle)
+            table.insert(temp, { id = id, body = blobBody, wx = wx, wy = wy, prio = 1, fixture = handle })
+            if onPressedParams and onPressedParams.onPressedFunc then onPressedParams.onPressedFunc(blobBody) end
+        end
+    end
+
     local createdmousejointdata = {}
 
     if #temp > 0 then
