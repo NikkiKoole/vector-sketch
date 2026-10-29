@@ -437,8 +437,47 @@ function lib.beforeStep(paused, dt)
 end
 
 -- After the physics step: where the body is now, so an editor move shows up as a jump.
+local function insideRim(rt, x, y)
+    local inside, n = false, #rt.nodes
+    local jx, jy = rt.nodes[n]:getPosition()
+    for k = 1, n do
+        local ix, iy = rt.nodes[k]:getPosition()
+        if ((iy > y) ~= (jy > y)) and (x < (jx - ix) * (y - iy) / (jy - iy) + ix) then inside = not inside end
+        jx, jy = ix, iy
+    end
+    return inside
+end
+
+-- The handle stays inside its rim. The pull that ties them is a spring, and a hard yank
+-- (the pointer on the handle at full drag force) outran it: at the game's 100 px per metre
+-- Box2D lets a body move 200 px a step, at the 30 the specs used to run at only 60, which
+-- had hidden it. An escaped handle goes back just inside, on the line to the rim's middle,
+-- moving with the rim; the pointer keeps pulling and the spring takes the rim along.
+local function keepHandleInside(rt)
+    local x, y = rt.body:getPosition()
+    if insideRim(rt, x, y) then return end
+    local n = #rt.nodes
+    local cx, cy, vx, vy = 0, 0, 0, 0
+    for _, node in ipairs(rt.nodes) do
+        local nx, ny = node:getPosition()
+        local nvx, nvy = node:getLinearVelocity()
+        cx, cy, vx, vy = cx + nx / n, cy + ny / n, vx + nvx / n, vy + nvy / n
+    end
+    if not insideRim(rt, cx, cy) then return end -- a rim folded around its own middle: leave it
+    -- the rim's edge on the line from the middle (t = 0) to the handle (t = 1)
+    local lo, hi = 0, 1
+    for _ = 1, 10 do
+        local t = (lo + hi) / 2
+        if insideRim(rt, cx + (x - cx) * t, cy + (y - cy) * t) then lo = t else hi = t end
+    end
+    local t = lo * 0.8
+    rt.body:setPosition(cx + (x - cx) * t, cy + (y - cy) * t)
+    rt.body:setLinearVelocity(vx, vy)
+end
+
 function lib.afterStep()
     for _, rt in pairs(state.blobs) do
+        if rimIntact(rt) then keepHandleInside(rt) end
         if not rt.body:isDestroyed() then
             rt.lastX, rt.lastY = rt.body:getPosition()
             rt.lastA = rt.body:getAngle()
@@ -451,18 +490,9 @@ end
 -- would otherwise grab nothing.
 function lib.hitAt(x, y)
     for _, rt in pairs(state.blobs) do
-        if rimIntact(rt) then
-            local inside, n = false, #rt.nodes
-            local jx, jy = rt.nodes[n]:getPosition()
-            for k = 1, n do
-                local ix, iy = rt.nodes[k]:getPosition()
-                if ((iy > y) ~= (jy > y)) and (x < (jx - ix) * (y - iy) / (jy - iy) + ix) then inside = not inside end
-                jx, jy = ix, iy
-            end
-            if inside then
-                for _, f in ipairs(rt.body:getFixtures()) do
-                    if not f:getUserData() then return rt.body, f end
-                end
+        if rimIntact(rt) and insideRim(rt, x, y) then
+            for _, f in ipairs(rt.body:getFixtures()) do
+                if not f:getUserData() then return rt.body, f end
             end
         end
     end
