@@ -23,17 +23,28 @@ function lib.meter()
     return (love and love.physics and love.physics.getMeter()) or lib.REFERENCE_METER
 end
 
--- k: how many times bigger the meter is than the reference.
-function lib.scale()
-    return lib.meter() / lib.REFERENCE_METER
+-- k and sqrt(k) for the last meter seen: these run thousands of times a step
+local lastMeter, k, rootK = nil, 1, 1
+local function factors()
+    local meter = lib.meter()
+    if meter ~= lastMeter then
+        lastMeter, k = meter, meter / lib.REFERENCE_METER
+        rootK = math.sqrt(k)
+    end
+    return k, rootK
 end
 
-function lib.speed(v) return v * math.sqrt(lib.scale()) end
-function lib.rate(r) return r * math.sqrt(lib.scale()) end
-function lib.accel(a) return a * lib.scale() end
-function lib.mass(m) return m / lib.scale() ^ 2 end
-function lib.force(f) return f / lib.scale() end
-function lib.impulse(j) return j / lib.scale() ^ 1.5 end
+-- k: how many times bigger the meter is than the reference.
+function lib.scale()
+    return (factors())
+end
+
+function lib.speed(v) local _, r = factors(); return v * r end
+function lib.rate(x) local _, r = factors(); return x * r end
+function lib.accel(a) return a * factors() end
+function lib.mass(m) return m / factors() ^ 2 end
+function lib.force(f) return f / factors() end
+function lib.impulse(j) local s, r = factors(); return j / (s * r) end
 
 -- Physics steps per second. A fall of the same pixels is over sqrt(k) times sooner, so the
 -- step shrinks with it: each step then covers the same part of every motion as 60 a second
@@ -55,7 +66,7 @@ function lib.meterFromArgs(args)
     return nil
 end
 
-function lib.toReferenceSpeed(v) return v / math.sqrt(lib.scale()) end
-function lib.toReferenceForce(f) return f * lib.scale() end
+function lib.toReferenceSpeed(v) local _, r = factors(); return v / r end
+function lib.toReferenceForce(f) return f * factors() end
 
 return lib

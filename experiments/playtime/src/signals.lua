@@ -286,6 +286,26 @@ local function edge(store, body, behavior, now)
     end
 end
 
+-- The plates and sockets, looked up again when the world or its body count changes, else
+-- every rescanSteps (a behavior added in the editor): every body every step was 4500
+-- behavior lookups a frame with 20 Mipos.
+lib.rescanSteps = 60
+local triggers = { world = nil, bodyCount = -1, steps = 0, list = {} }
+
+local function triggerBodies(world)
+    local count = world:getBodyCount()
+    triggers.steps = triggers.steps - 1
+    if triggers.world ~= world or triggers.bodyCount ~= count or triggers.steps <= 0 then
+        local list = {}
+        for _, body in ipairs(world:getBodies()) do
+            local socket, plate = findBehavior(body, 'SIGNAL_SOCKET'), findBehavior(body, 'SIGNAL_PLATE')
+            if socket or plate then list[#list + 1] = body end
+        end
+        triggers.world, triggers.bodyCount, triggers.steps, triggers.list = world, count, lib.rescanSteps, list
+    end
+    return triggers.list
+end
+
 function lib.update()
     if not state.physicsWorld then return end
     for body, trip in pairs(travelling) do
@@ -299,13 +319,13 @@ function lib.update()
         end
     end
     local snapJoints = nil
-    for _, body in ipairs(state.physicsWorld:getBodies()) do
-        local socket = findBehavior(body, 'SIGNAL_SOCKET')
+    for _, body in ipairs(triggerBodies(state.physicsWorld)) do
+        local socket = not body:isDestroyed() and findBehavior(body, 'SIGNAL_SOCKET')
         if socket then
             snapJoints = snapJoints or require('src.physics.snap').joints()
             edge(socketWasFilled, body, socket, socketIsFilled(body, socket, snapJoints))
         end
-        local plate = findBehavior(body, 'SIGNAL_PLATE')
+        local plate = not body:isDestroyed() and findBehavior(body, 'SIGNAL_PLATE')
         if plate then
             local touching = plateIsPressed(body)
             plateFreeFrames[body] = touching and 0 or (plateFreeFrames[body] or 0) + 1

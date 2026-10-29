@@ -288,11 +288,13 @@ function lib.update(dt)
     for id, untilT in pairs(cooldownUntil) do
         if t >= untilT then cooldownUntil[id] = nil end
     end
+    local interacted = box2dPointerJoints.getInteractedWithPointer()
+    checkForBreaks(dt, lib.joints(), interacted)
+    -- with nothing held nothing new snaps: skip gathering every snap point (all sfixtures
+    -- and both hands of every Mipo, each step: as much as the angle controller with 20 Mipos)
+    if state.snap.onlyConnectWhenInteracted and #interacted == 0 then return end
     local points = lib.points()
     if #points < 2 then return end
-    local interacted = box2dPointerJoints.getInteractedWithPointer()
-    local snapJoints = lib.joints()
-    checkForBreaks(dt, snapJoints, interacted)
     checkForSnaps(points, lib.joints(), interacted)
 end
 
