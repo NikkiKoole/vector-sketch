@@ -283,6 +283,37 @@ describe('the spine room', function()
             assert.is_near(4, cy, 1e-6)
         end)
 
+        -- S4: every band takes torso1's shape, so the Mipo editor's shape panel edits torso1
+        -- whichever band was clicked (an edit on an upper band was overwritten right away)
+        it('the shape panel edits the whole torso, and a new shape reaches every band', function()
+            local editor = require('src.ui.mipo-editor')
+            CM.rebuildFromCreation(instance, { torsoSegments = 3 })
+            assert.are.equal('torso1', editor.shapePartFor(instance, 'torso3'))
+            assert.are.equal('torso1', editor.shapePartFor(instance, 'torso1'))
+            assert.are.equal('luarm', editor.shapePartFor(instance, 'luarm'))
+            CM.updatePart('torso1', { shape8URL = 'shapeA3.png', sx = 1.2, sy = 1.2 }, instance)
+            for i = 1, 3 do
+                local part = instance.dna.parts['torso' .. i]
+                assert.are.equal('shapeA3.png', part.shape8URL)
+                assert.are.equal(1.2, part.dims.sx)
+            end
+            local top, bottom = math.huge, -math.huge
+            for i = 1, 3 do
+                for _, f in ipairs(instance.parts['torso' .. i].body:getFixtures()) do
+                    if not f:getUserData() then
+                        local _, ty, _, by = f:getBoundingBox()
+                        top, bottom = math.min(top, ty), math.max(bottom, by)
+                    end
+                end
+            end
+            local whole = CM.shape8Dict['shapeA3.png'].dimensions[2] * 1.2 * instance.scale
+            assert.is_true(math.abs((bottom - top) - whole) < whole * 0.15,
+                string.format('bands span %d, the new torso is %d', bottom - top, whole))
+            -- without a spine each segment keeps its own shape
+            CM.rebuildFromCreation(instance, { torsoSpine = false })
+            assert.are.equal('torso3', editor.shapePartFor(instance, 'torso3'))
+        end)
+
         it('turned off again: whole torsos that each keep their angle', function()
             CM.rebuildFromCreation(instance, { torsoSpine = false })
             assert.is_nil(instance.dna.parts.torso2.spineBand)

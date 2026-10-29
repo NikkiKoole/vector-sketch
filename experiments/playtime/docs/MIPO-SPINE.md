@@ -56,10 +56,12 @@ slices of one torso shape, drawn as one picture. Off (default) = today's stack. 
   little as it bends. Haircut: traced along the whole torso's top, riding the bend there.
 - Ears are bodies; on a potato head they hang from the top band already.
 
-**S4 Editor and tuning** (small)
+**S4 Editor and tuning** (done 2026-10-29)
 - Checkbox, `rebuildFromCreation`; sliders for spineBend and spineSway (see Settings), a
   stiffness knob `lib.spineStiffness` to tune by hand. The per-segment torso controls in the editor already loop over all
-  segments for skin and bodyhair; shape and size must too (a spine has one shape).
+  segments for skin and bodyhair; shape and size must too (a spine has one shape). Done: on a
+  spine the shape panel is 'torso shape' and edits torso1 whichever band was clicked
+  (mipo-editor `shapePartFor`); applySpine gives every band its shape.
 - Randomize keeps it off; maybe later on for tall torsos only.
 
 ## Settings (decided 2026-10-29)

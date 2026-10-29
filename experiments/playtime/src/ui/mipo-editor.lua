@@ -730,6 +730,16 @@ end
 
 
 -- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
+-- The part the shape panel edits for `partName`: a spine's bands all take torso1's shape
+-- (CharacterManager.applySpine), so on a spine any torso band means torso1.
+function lib.shapePartFor(instance, partName)
+    local creation = instance.dna and instance.dna.creation
+    if creation and creation.torsoSpine and (creation.torsoSegments or 1) > 1 and partName:match('^torso%d') then
+        return 'torso1'
+    end
+    return partName
+end
+
 function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, panelH)
     local w, h = love.graphics.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
@@ -1039,19 +1049,23 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         end)
 
         -- === SHAPE ACCORDION ===
-        local shapes = getShapesForPart(partName)
+        -- on a spine every band is cut from torso1's shape: whichever band was clicked, the
+        -- panel edits the whole torso (torso1); edits to an upper band were overwritten
+        local shapePart = lib.shapePartFor(instance, partName)
+        local shapes = getShapesForPart(shapePart)
         if shapes then
-            drawAccordion(partName .. ' shape', function()
-                local partData = instance.dna.parts[partName]
+            local spineTorso = shapePart == 'torso1' and lib.shapePartFor(instance, 'torso2') == 'torso1'
+            drawAccordion((spineTorso and 'torso' or shapePart) .. ' shape', function()
+                local partData = instance.dna.parts[shapePart]
                 if not partData then return end
 
                 local currentURL = partData.shape8URL
                 local cellSize = 50
                 local gridHeight = drawThumbnailGrid(shapes, currentURL, panelX, y, cellSize, function(url)
-                    local mirror = getMirrorPart(partName)
+                    local mirror = getMirrorPart(shapePart)
                     local sx = partData.dims.sx or 1
                     local sy = partData.dims.sy or 1
-                    CharacterManager.updatePart(partName, { shape8URL = url, sx = sx, sy = sy }, instance)
+                    CharacterManager.updatePart(shapePart, { shape8URL = url, sx = sx, sy = sy }, instance)
                     if mirror then
                         local mirrorData = instance.dna.parts[mirror]
                         if mirrorData then
@@ -1070,10 +1084,10 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 ui.alignedLabel(x, y, '  sx')
                 sxVal = sxVal and tonumber(sxVal)
                 if sxVal and sxVal ~= (partData.dims.sx or 1) then
-                    CharacterManager.updatePart(partName,
+                    CharacterManager.updatePart(shapePart,
                         { shape8URL = partData.shape8URL, sx = sxVal, sy = partData.dims.sy or 1 }, instance)
                     if accordionStates.symmetricEditing then
-                        local mirror = getMirrorPart(partName)
+                        local mirror = getMirrorPart(shapePart)
                         if mirror then
                             local mirrorData = instance.dna.parts[mirror]
                             if mirrorData then
@@ -1092,10 +1106,10 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 ui.alignedLabel(x, y, '  sy')
                 syVal = syVal and tonumber(syVal)
                 if syVal and syVal ~= (partData.dims.sy or 1) then
-                    CharacterManager.updatePart(partName,
+                    CharacterManager.updatePart(shapePart,
                         { shape8URL = partData.shape8URL, sx = partData.dims.sx or 1, sy = syVal }, instance)
                     if accordionStates.symmetricEditing then
-                        local mirror = getMirrorPart(partName)
+                        local mirror = getMirrorPart(shapePart)
                         if mirror then
                             local mirrorData = instance.dna.parts[mirror]
                             if mirrorData then
