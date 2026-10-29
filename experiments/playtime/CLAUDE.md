@@ -202,7 +202,7 @@ Deep-dive docs live in `docs/`:
 - `EDITOR-INSPECTOR-LIBRARY.md` — editor rework (inspector from data, tabbed right column, library, tool rail); its "Next step" section is where to resume
 - `DOLL-PLAY.md` — the Puppetmaker follow-up: doll-play world, toys, signals, snap-together pieces
 - `WORLDS-AND-DOORS.md` — overworld + rooms linked by doors, carrying a Mipo (and what's connected) through, per-room persistence
-- `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8)
+- `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8). The sky (G5) is prototyped in `../sky-atmosphere/`: one multi-stop gradient from the ground to space and the moon, day/dawn/dusk/night palettes blended
 - `HARVEST-NAVKIT-DREAMENGINE.md` — survey of ~/Projects/navkit (logic/power, water, fire, smoke/steam, temperature, weather, moods/needs, dollhouse plan) and ~/Projects/dreamengine carts (juice, eyes, jelly, water toys, input) with a suggested order
 - `NEXT-STEPS-2026-07.md` — post-audit direction: play mode, tween layer, Bathhouse resume order, code-strengthening list
 - `PLAN-OF-ATTACK.md` — master work plan with phase status (remaining open: 7d, Phase 8)

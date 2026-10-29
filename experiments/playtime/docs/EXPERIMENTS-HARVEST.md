@@ -13,6 +13,8 @@ spot-checked against `src/`. The other line numbers are from the agents: check b
 
 **Not covered here (other docs own them):**
 - Grass, ground skins, sky, clouds, terrain, outside scenes: `WORLD-BUILDING.md` (G1–G8, §1d has the finds from this survey).
+- Sky: a new experiment, `../sky-atmosphere/` (2026-10-29), has one multi-stop gradient over altitude from the
+  ground to black space and the moon, with day, dawn, dusk and night palettes blended. See WORLD-BUILDING G5.
 - `~/Projects/navkit` (simulation: logic, power, water, fire) and `~/Projects/dreamengine`
   (world gen, faces, gestures, particles): surveyed by the grass/world session in `HARVEST-NAVKIT-DREAMENGINE.md`.
 - Puppetmaker 2's sound: `PUPPETMAKER-SOUND.md`.
@@ -150,7 +152,9 @@ accelerate / brake / chain-lift / flip, carts follow by arc length (`Track:getPo
 - **Walking.** Mipos can be dragged, thrown and ridden, but nothing makes one walk somewhere on its
   own. Steering (#12) gives the target, not the gait.
 - **Water.** `liquid` (grid water, buggy) and `buoyancy` (one force on contact) are dead ends.
-  A bathtub or pond needs per-frame buoyancy by submerged area: new work.
+  But Playtime's own scene scripts have it: `scripts/water.playtime.lua` (buoyancy by submerged area,
+  `polygonClip` of the body against a water sensor) and `scripts/mudready.playtime.lua` (the Bathhouse
+  spike: a flat water line, mass-relative buoyancy with drag, splash particles, a wave surface).
 - **Room persistence** (W2) and **carrying what's connected** (W3): no experiment did this; the
   plan in `WORLDS-AND-DOORS.md` stands.
 - **Plants you push through.** `vehicles-vegetation` `makeGrassThing` :794 (dynamic plant on a
