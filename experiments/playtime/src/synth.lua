@@ -19,6 +19,7 @@ lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
     PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, PIPE = 25,
     GUITAR = 26, PIANO = 27, BOWED = 28, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
+    SCRAPE = 39, -- scraped/rattled percussion from separate teeth: harmonics body, timbre rate, morph rattle
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
 }
 
@@ -137,19 +138,20 @@ lib.patches = {
     -- CR-78's tambourine (a short highpassed jingle) and guiro (a bandpassed scrape, chopped by a fast
     -- volume LFO), two triangles (a bell-hard mallet very high, choked and ringing) and the quijada
     -- (a jawbone rattle: noise through a fast LFO, decaying). The hand drums are the conga patch.
-    -- The guiro and quijada are tuned to the recordings (measured 2026-10-29): the CR-78 guiro scrapes
-    -- ~77 teeth/s for ~270 ms around 6 kHz, the quijada rattles ~23/s, decaying over ~400 ms, around
-    -- 2-3 kHz. An LFO is a tremolo, not separate teeth: the engine ask is NikkiKoole/dreamengine-studio.
+    -- The guiro and quijada are dreamengine's INSTR_SCRAPE (asked for in dreamengine-studio#45, from
+    -- measurements of the recordings): each tooth its own noise burst ringing a body. The CR-78 guiro
+    -- scrapes ~75 teeth/s for ~270 ms around 6 kHz; the quijada rattles ~23/s and dies away, ~2.5 kHz.
+    -- Play them at note 60 (the note moves the body) and the hit length is the scrape's length.
     tamb = { slot = 44, wave = 'NOISE', adsr = { 0, 220, 0, 60 }, reverb = 0.1, level = 0.027,
              filter = { mode = 2, cutoff = 6500, resonance = 1 } },
-    guiro = { slot = 40, wave = 'NOISE', adsr = { 2, 300, 0, 50 }, reverb = 0.1, level = 0.24,
-              filter = { mode = 3, cutoff = 6000, resonance = 2 }, lfo = { { 2, 77, 0.9 } } },
+    guiro = { slot = 40, wave = 'SCRAPE', adsr = { 0, 0, 7, 30 }, harmonics = 0.0, timbre = 0.87, morph = 0.0,
+              reverb = 0.1, level = 0.7 },
     triangle = { slot = 41, wave = 'MALLET', adsr = { 0, 90, 0, 40 },
                  harmonics = 1.0, timbre = 0.9, morph = 0.5, reverb = 0.25, level = 0.5 },
     triangleRing = { slot = 42, wave = 'MALLET', adsr = { 0, 1800, 0, 600 },
                      harmonics = 1.0, timbre = 0.9, morph = 0.9, reverb = 0.3, level = 0.5 },
-    quijada = { slot = 43, wave = 'NOISE', adsr = { 0, 600, 0, 150 }, reverb = 0.2, level = 0.5,
-                filter = { mode = 3, cutoff = 2600, resonance = 2 }, lfo = { { 2, 23, 0.95 } } },
+    quijada = { slot = 43, wave = 'SCRAPE', adsr = { 0, 0, 7, 30 }, harmonics = 0.5, timbre = 0.35, morph = 1.0,
+                reverb = 0.2, level = 0.7 },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,

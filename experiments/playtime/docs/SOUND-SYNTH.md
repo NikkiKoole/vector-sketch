@@ -6,7 +6,7 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md).
 
 ## Setting up on a new machine
 1. Clone dreamengine to `~/Projects/dreamengine`, or anywhere else and set `DREAMENGINE=/path`.
-2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `d1ae370d` (2026-10-29: INSTR_SING, sample_formant).
+2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `6f5eef58` or later (2026-10-29: INSTR_SING, sample_formant, INSTR_SCRAPE).
 3. Without the dylib the app still runs. Every synth call does nothing, and `[synth] missing ...` is printed once.
 
 ## How it fits together
