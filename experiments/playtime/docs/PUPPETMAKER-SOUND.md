@@ -8,7 +8,9 @@ or change them, the mi… po… chatter, and a band they sing along with and mov
 **How to use this doc:** part 1 is what Puppetmaker 2 does (source:
 `../puppet-maker2`, `../../lib/melody-paint-audio-*.lua`). Part 2 is what
 Playtime already has. Part 3 is the order to build the rest; tick it there.
-Related: `DOLL-PLAY.md` "Voice" (V1–V6), `SOUND-SYNTH.md`, `src/mipo-voice.lua`, `src/music.lua`.
+Related: `DOLL-PLAY.md` "Voice" (V1–V6), `SOUND-SYNTH.md` (the synth, its slot map and gotchas, the
+music's onNote / stepAt; the puppetmaker and strum styles there and in `MUSIC-IDEAS.md`),
+`src/mipo-voice.lua`, `src/music.lua`.
 
 ---
 
@@ -61,7 +63,7 @@ resolves. No bass, no tune, no chord changes.
 
 | Sample | What it is (measured) | Synth recipe (we have these: `src/synth.lua`) |
 |---|---|---|
-| `babirhodes/rhodes2` (3.0 s) | **Not a lick: one rolled chord.** E♭3, then B♭3, G4, B♭4, C5 come in ~60 ms apart (an up-strum), held, decaying over ~2.8 s. An E♭6 (Cm7/E♭). Root + 0, 7, 16, 19, 21 semitones | EPIANO (`rhodes` slot), the five notes 60 ms apart, ~2.8 s long, root moved by the rnd semitone. **The same voicing every time, only the pitch moves** |
+| `babirhodes/rhodes2` (3.0 s) | **Not a lick: one rolled chord.** Six notes: E♭3 B♭3 G4 B♭4 C5 E♭5, root + 0, 7, 16, 19, 21, 24 (an E♭6 with the octave on top; the E♭5 is played, not an overtone). A hand's up-strum: +29, +23, +23, +76, +40 ms (quick, then a lag before the top two), swelling for ~0.5 s, ringing past 3 s. (First read as five notes 60 ms apart; re-measured by the music side, 2026-10-29) | EPIANO (`rhodes` slot), those six notes and gaps, root moved by the rnd semitone: what the puppetmaker style plays. **The same voicing every time, only the pitch moves** |
 | `babirhodes/ba` (0.4 s), `bi` (0.2 s) | single voiced notes, ~E4 / ~F♯4 | EPIANO single notes, or `INSTR_VOICE` with a b-consonant (a/i vowel): synthetic "ba"/"bi" backing vocals |
 | `babirhodes/biep2/3` | no clear onset or pitch: bends or blips | a short gliding note (`instrument_glide`), or a VOICE "biep" |
 | Triangles 101 (0.09 s) / 103 (1.8 s) | metallic, partials ~5.5 kHz and ~8.4 kHz; a choked hit and a ringing one | METAL (or a high MALLET), short release vs long ring |
