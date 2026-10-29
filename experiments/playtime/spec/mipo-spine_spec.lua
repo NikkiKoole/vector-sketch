@@ -1,6 +1,7 @@
 -- spec/mipo-spine_spec.lua
--- The spine test room (scripts/spine.playtime.json): P4re5, a Mipo with a tall torso, on a
--- floor between two walls (docs/MIPO-SPINE.md).
+-- The spine test room (scripts/spine-test.playtime.json, a fixed copy: scripts/spine is the
+-- room to play in): P4re5, a Mipo with a tall torso, on a floor between two walls
+-- (docs/MIPO-SPINE.md).
 -- Run with: love . --specs spec/mipo-spine_spec.lua
 
 if not love then return end
@@ -34,7 +35,7 @@ describe('the spine room', function()
         state.physicsWorld = world
         registry.reset()
         mipoRegistry.reset()
-        sceneLoader.loadScriptAndScene('spine')
+        sceneLoader.loadScriptAndScene('spine-test')
         world = state.physicsWorld
         world:setCallbacks(contactTracker.beginContact, contactTracker.endContact)
     end)
@@ -64,8 +65,8 @@ describe('the spine room', function()
         simulate(3)
         local _, y1 = torso:getPosition()
         assert.is_true(math.abs(y1 - y0) < 30, string.format('torso moved from %d to %d', y0, y1))
-        assert.is_true(math.abs(torso:getAngle()) < math.rad(20),
-            string.format('torso leans %.0f degrees', math.deg(torso:getAngle())))
+        local lean = (torso:getAngle() + math.pi) % (2 * math.pi) - math.pi -- wrapped: bodies spin
+        assert.is_true(math.abs(lean) < math.rad(20), string.format('torso leans %.0f degrees', math.deg(lean)))
     end)
 
     -- the scene file keeps a revolute joint's reference angle: without it a joint saved bent
@@ -178,7 +179,8 @@ describe('the spine room', function()
             assert.is_true(math.abs(joint:getJointAngle()) < math.rad(5),
                 'still bent ' .. math.deg(joint:getJointAngle()) .. ' degrees')
             local torso = instance.parts.torso1.body
-            assert.is_true(math.abs(torso:getAngle()) < math.rad(20), 'fell over')
+            local lean = (torso:getAngle() + math.pi) % (2 * math.pi) - math.pi
+            assert.is_true(math.abs(lean) < math.rad(20), 'fell over')
         end)
 
         it('bends the picture with the bands (S2)', function()
