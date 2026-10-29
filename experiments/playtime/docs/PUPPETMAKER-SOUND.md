@@ -190,7 +190,19 @@ start once that lands.
   our takes (po3, mi, mo, huh, humup2): in tune within ~7 cents, keep a Mipo within ~±7 st of its
   take. Gotchas: `assets/voices/puppetmaker/*.ogg` are 48 kHz, so resample to 44.1k before
   `sample_load`; "huh" has a voiced part and gets pitched (ears: maybe keep grunts as plain samples).
-  Next: the bindings + a rebuild (playtime-3a's synth.lua/build), then try it per Mipo.
+  Bindings + rebuild done (c906eaee). **Voice lab** (2026-10-29, `src/voice-lab.lua`, settings →
+  voice lab): one take, speed (the chipmunk: rate) + shift (pitch, length kept) + size (throat)
+  mixed, played as 'now' (LÖVE, today's sound), 'synth' (shift/size baked in, played at speed) or
+  'sing' (INSTR_SING). Sample slot 7, instrument slots 45/46. Listen there first (clicks, noise,
+  the grunts), then decide what the Mipos get.
+  Lab findings (2026-10-29): 'synth' at all zeros = 'now' in pitch and length (measured, 0.00 st);
+  it was ~15 dB quieter at level 1 (it sounded lower), so the lab plays it at level 4, note vol 7
+  (`spec/voice-lab_spec.lua`). Size + is a bigger throat (centroid 1258 -> 1042 Hz at +6 on po3); a
+  big Mipo is size + with the pitch down. Nikki prefers 'synth' over 'sing' (keep both).
+  **INSTR_SING is not a one-shot** (to hand to dreamengine): it sounds only while held, plus its
+  release (released at once: ~0.1 s, the word cut off; "release finishes the word" doesn't happen),
+  and it sustains the held vowel by repeating it, which sounds loopy. The lab holds it for the
+  take's length. Ask: a one-shot mode, NikkiKoole/dreamengine-studio#46.
 
 **Listen before P4:**
 - The Puppetmaker takes vs the mipomi `nikki` syllables. `po3` (0.69 s) sounds like the sung one.

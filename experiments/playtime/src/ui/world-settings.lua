@@ -1,7 +1,7 @@
 -- world-settings.lua — the settings panel, opened from the tool rail's settings
 -- button. Three folding sections: world (src/world-params.lua), backdrops (the
 -- list + the selected one's params; while open, dragging moves the selected
--- backdrop, main.lua) and music (src/music-params.lua).
+-- backdrop, main.lua), music (src/music-params.lua) and the voice lab (src/voice-lab-params.lua).
 local lib = {}
 
 local ui = require('src.ui.all')
@@ -9,6 +9,7 @@ local state = require('src.state')
 local inspector = require('src.ui.inspector')
 local worldParams = require('src.world-params')
 local musicParams = require('src.music-params')
+local voiceLabParams = require('src.voice-lab-params')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local START_X, START_Y = 102, 60 -- right of the tool rail
@@ -83,6 +84,13 @@ function lib.drawWorldSettingsUI()
             if clicked then f.music = not f.music end
             if f.music then
                 y = y + inspector.drawParams('music', musicParams.rows, musicParams.target(), nil, x, y, w)
+            end
+
+            -- a test bench for Mipo voices on the synth (src/voice-lab.lua)
+            clicked, y = sectionHeader(x, y, w, 'voice lab', f.voiceLab)
+            if clicked then f.voiceLab = not f.voiceLab end
+            if f.voiceLab then
+                y = y + inspector.drawParams('voicelab', voiceLabParams.rows, voiceLabParams.target(), nil, x, y, w)
             end
 
             usedHeight = y - top
