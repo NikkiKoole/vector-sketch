@@ -19,7 +19,7 @@ describe('src.mipo-actions', function()
     local world, instance
 
     before_each(function()
-        world = love.physics.newWorld(0, 980, true)
+        world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         state.physicsWorld = world
         registry.reset()
         mipoRegistry.reset()

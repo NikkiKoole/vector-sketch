@@ -7,8 +7,12 @@
 -- enabled = false makes a part limp, enabled = nil (default) keeps it upright.
 local mipoRegistry = require('src.mipo-registry')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local units = require('src.physics-units')
 
 local lib = {}
+
+-- Speeds, gains and the breath impulse below are as tuned at 100 px per metre;
+-- src/physics-units.lua turns them into the world's meter where they are used.
 
 -- Jump speed (world units/s) for the whole Mipo; the impulse scales with its
 -- mass. A fixed 4000 impulse lifted a heavy Mipo (mass 36) only ~20 units.
@@ -71,7 +75,7 @@ end
 function lib.breathe(instance)
     local torso = instance.parts and instance.parts.torso1
     if torso and torso.body and not torso.body:isDestroyed() then
-        torso.body:applyLinearImpulse(0, -1000)
+        torso.body:applyLinearImpulse(0, units.impulse(-1000))
     end
 end
 
@@ -92,7 +96,7 @@ local function fireJump(instance)
     instance._jumpAt = nil
     local torso = instance.parts and instance.parts.torso1
     if torso and torso.body and not torso.body:isDestroyed() then
-        torso.body:applyLinearImpulse(0, -totalMass(instance) * lib.jumpSpeed)
+        torso.body:applyLinearImpulse(0, -totalMass(instance) * units.speed(lib.jumpSpeed))
     end
     if not instance._isRagdoll then
         local flipped = instance._isFlipped
@@ -228,6 +232,7 @@ end
 -- Dazed: a hard landing knocks a Mipo limp for a moment; then it straightens
 -- up again (and the stand-up hop in src/mipo-joint-guard.lua gets it on its feet).
 lib.daze = true
+-- (impact speeds come from src/mipo-voice.lua already at 100 px per metre, src/physics-units.lua)
 lib.dazeSpeed = 2000      -- impact speed that dazes (the 'oof' starts at 1200)
 lib.dazeMin = 1.0         -- seconds limp for a hit at dazeSpeed
 lib.dazeMax = 2.5         -- seconds limp for the hardest hits, and the cap
@@ -313,14 +318,14 @@ local function updateIdle(instance, now)
     if now >= instance._nextBreath then
         local torso = instance.parts.torso1
         if torso and torso.body and not torso.body:isDestroyed() then
-            torso.body:applyLinearImpulse(0, -totalMass(instance) * lib.breatheSpeed)
+            torso.body:applyLinearImpulse(0, -totalMass(instance) * units.speed(lib.breatheSpeed))
         end
         instance._nextBreath = now + randomIn(lib.breatheEvery)
     end
     if now >= instance._nextSlump then
         local torso = instance.parts.torso1
         if torso and torso.body and not torso.body:isDestroyed() then
-            torso.body:applyLinearImpulse(0, totalMass(instance) * lib.slumpPush)
+            torso.body:applyLinearImpulse(0, totalMass(instance) * units.speed(lib.slumpPush))
         end
         instance._slumpUntil = now + lib.slumpFor
         instance._nextSlump = now + randomIn(lib.slumpEvery)
@@ -396,6 +401,7 @@ function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, m
     if not joint then
         return lib.steerToward(childBody, targetWorldAngle, kp, kd, maxAlpha)
     end
+    kp, kd, maxAlpha = units.accel(kp), units.rate(kd), units.accel(maxAlpha) -- 1/s^2, 1/s, rad/s^2
     local jointAngle = joint:getJointAngle()
     local desired = targetWorldAngle - parentBody:getAngle() - joint:getReferenceAngle()
     local diff

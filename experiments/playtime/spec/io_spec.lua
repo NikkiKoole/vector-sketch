@@ -179,7 +179,7 @@ describe("io.gatherSaveData (LÖVE integration)", function()
     }
 
     before_each(function()
-        world = love.physics.newWorld(0, 9.81 * 100, true)
+        world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
         registry.reset()
     end)
 
@@ -433,7 +433,7 @@ describe("save/load round-trip", function()
             end
 
             -- 2. Load into a fresh world
-            local world = love.physics.newWorld(0, 9.81 * 100, true)
+            local world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
             registry.reset()
             camState = { x = 0, y = 0, scale = 1 }
 
@@ -734,7 +734,7 @@ describe("double round-trip (all scene files)", function()
             end
 
             -- Pass 1: load original → save
-            local world1 = love.physics.newWorld(0, 9.81 * 100, true)
+            local world1 = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
             registry.reset()
             local cam1 = makeCam()
             sceneIO.buildWorld(originalData, world1, cam1)
@@ -742,7 +742,7 @@ describe("double round-trip (all scene files)", function()
             world1:destroy()
 
             -- Pass 2: load save1 → save again
-            local world2 = love.physics.newWorld(0, 9.81 * 100, true)
+            local world2 = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
             registry.reset()
             local cam2 = makeCam()
             sceneIO.buildWorld(save1, world2, cam2)

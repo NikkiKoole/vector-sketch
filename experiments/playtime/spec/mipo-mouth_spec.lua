@@ -19,7 +19,7 @@ describe('Mipo rest mouths', function()
         local state = require('src.state')
         local registry = require('src.registry')
         local CM = require('src.character-manager')
-        local world = love.physics.newWorld(0, 980, true)
+        local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         state.physicsWorld = world
         registry.reset()
         local rest = {}

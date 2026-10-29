@@ -3,6 +3,7 @@ local lib = {}
 local state = require 'src.state'
 local BT = require('src.body-types')
 local mipoRegistry = require('src.mipo-registry')
+local units = require('src.physics-units')
 local pointerJoints = {}
 
 local function getPointerPosition(id)
@@ -35,7 +36,9 @@ function lib.makePointerJoint(id, bodyToAttachTo, wx, wy, force, damp)
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
     pointerJoint.joint:setDampingRatio(damp or .5)
-    pointerJoint.joint:setMaxForce(force)
+    -- force (state.world.mouseForce) and Box2D's 5 Hz spring as at 100 px per metre
+    pointerJoint.joint:setMaxForce(units.force(force))
+    pointerJoint.joint:setFrequency(units.rate(pointerJoint.joint:getFrequency()))
     return pointerJoint
 end
 

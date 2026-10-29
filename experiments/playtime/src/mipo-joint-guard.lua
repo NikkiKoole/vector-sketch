@@ -30,6 +30,7 @@ local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local registry = require('src.registry')
+local units = require('src.physics-units') -- speeds below are as at 100 px per metre
 
 local lib = {}
 
@@ -366,9 +367,10 @@ local function unstickJoints(joints, now)
                 unghost(key)
             else
                 local vx, vy = good:getLinearVelocity()
+                local pull = units.rate(lib.unstickPull)
                 for _, body in ipairs(bodies) do
                     local x, y = body:getPosition()
-                    body:setLinearVelocity(vx + (gx - x) * lib.unstickPull, vy + (gy - y) * lib.unstickPull)
+                    body:setLinearVelocity(vx + (gx - x) * pull, vy + (gy - y) * pull)
                 end
             end
         end
@@ -474,7 +476,7 @@ local function standUpMipo(id, instance, now)
         and not leaningOnOthers(instance) then
         local mass = 0
         for _, part in pairs(instance.parts) do mass = mass + part.body:getMass() end
-        torso.body:applyLinearImpulse(0, -mass * lib.standUpSpeed)
+        torso.body:applyLinearImpulse(0, -mass * units.speed(lib.standUpSpeed))
         lastStandUp[id] = now
         lib.stats.standUps = lib.stats.standUps + 1
         lib.stats.standUpsByMipo[id] = (lib.stats.standUpsByMipo[id] or 0) + 1
@@ -524,8 +526,9 @@ local function calmPileKicks(now)
         if torso and torso.body and not torso.body:isDestroyed() and not wasHeld(id, now) then
             local vx, vy = torso.body:getLinearVelocity()
             local speed = math.sqrt(vx * vx + vy * vy)
-            if speed > lib.pileMaxSpeed and leaningOnOthers(instance) then
-                local scale = lib.pileMaxSpeed / speed
+            local maxSpeed = units.speed(lib.pileMaxSpeed)
+            if speed > maxSpeed and leaningOnOthers(instance) then
+                local scale = maxSpeed / speed
                 for _, part in pairs(instance.parts) do
                     if part.body and not part.body:isDestroyed() then
                         local px, py = part.body:getLinearVelocity()
@@ -549,9 +552,10 @@ local function hopOut(idA, idB)
     local upper, lower = a, tb
     if tb:getY() < ta:getY() then upper, lower = b, ta end
     local dir = upper.parts.torso1.body:getX() < lower:getX() and -1 or 1
+    local hopX, hopY = units.speed(lib.untangleHop[1]), units.speed(lib.untangleHop[2])
     for _, part in pairs(upper.parts) do
         if part.body and not part.body:isDestroyed() then
-            part.body:setLinearVelocity(dir * lib.untangleHop[1], -lib.untangleHop[2])
+            part.body:setLinearVelocity(dir * hopX, -hopY)
         end
     end
 end

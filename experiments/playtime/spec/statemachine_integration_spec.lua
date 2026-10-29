@@ -16,7 +16,7 @@ describe('statemachine integration (via sm-demo)', function()
         -- In a fresh `love . --specs` run there is no live app world (and
         -- earlier specs destroy theirs); loadScriptAndScene needs one.
         if not state.physicsWorld or state.physicsWorld:isDestroyed() then
-            state.physicsWorld = love.physics.newWorld(0, 9.81 * 100, true)
+            state.physicsWorld = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
             ownWorld = true
         end
     end)

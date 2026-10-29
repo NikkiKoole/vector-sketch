@@ -17,7 +17,7 @@ describe('mipo unstick', function()
     local FLOOR_TOP = 580
 
     local function setUp()
-        world = love.physics.newWorld(0, 9.81 * 100, true)
+        world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
         state.physicsWorld = world
         registry.reset()
         objectManager.addThing('rectangle', { x = 0, y = 600, width = 3000, height = 40, bodyType = 'static',

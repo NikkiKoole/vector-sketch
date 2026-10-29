@@ -10,11 +10,13 @@
 --        snapped onto it (src/physics/snap.lua; not a Mipo hand, label = accepts if set)
 --   { name = 'SIGNAL_GATE',   signal = 'gate1', open = false } prismatic gate: toggles
 local state = require('src.state')
+local units = require('src.physics-units')
 
 local lib = {}
 
-lib.gateSpeed = 600      -- how fast a gate moves (world units/s)
-lib.gateForce = 1e7      -- motor force: enough to hold up a skateboard with a Mipo
+lib.gateSpeed = 600      -- how fast a gate moves (world units/s, at any meter: it's how the gate looks)
+lib.gateForce = 1e7      -- motor force: enough to hold up a skateboard with a Mipo (at 100 px per
+                         -- metre; src/physics-units.lua makes it the same push at any meter)
 
 local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true, SIGNAL_SOCKET = true }
 
@@ -81,7 +83,7 @@ function lib.setGate(body, open)
     b.open = open
     local dir = openDirection(joint)
     joint:setMotorEnabled(true)
-    joint:setMaxMotorForce(lib.gateForce)
+    joint:setMaxMotorForce(units.force(lib.gateForce))
     joint:setMotorSpeed((open and dir or -dir) * lib.gateSpeed)
     body:setAwake(true)
     local wasAllowed = travelling[body] and travelling[body].sleepingAllowed or body:isSleepingAllowed()

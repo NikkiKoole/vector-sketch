@@ -54,7 +54,7 @@ local function knot(instance, side)
 end
 
 local function newWorld()
-    local world = love.physics.newWorld(0, 980, true)
+    local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
     state.physicsWorld = world
     registry.reset()
     mipoRegistry.reset()

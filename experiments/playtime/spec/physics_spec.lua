@@ -10,7 +10,7 @@ describe("physics world (integration)", function()
     local world
 
     before_each(function()
-        world = love.physics.newWorld(0, 9.81 * 100, true)
+        world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     end)
 
     after_each(function()
@@ -28,7 +28,7 @@ describe("physics world (integration)", function()
         it("has correct gravity", function()
             local gx, gy = world:getGravity()
             assert.are.equal(0, gx)
-            assert.is_near(981, gy, 0.01)
+            assert.is_near(9.81 * love.physics.getMeter(), gy, 0.01)
         end)
     end)
 

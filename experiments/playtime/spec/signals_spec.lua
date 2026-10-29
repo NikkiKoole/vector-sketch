@@ -15,7 +15,7 @@ describe('src.signals + props gate/button', function()
     local world, base
 
     before_each(function()
-        world = love.physics.newWorld(0, 980, true)
+        world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         state.physicsWorld = world
         registry.reset()
         base = love.physics.newBody(world, 0, 0, 'static')

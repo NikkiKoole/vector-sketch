@@ -21,7 +21,7 @@ describe('mipo band', function()
     local band
 
     local function setUp(count)
-        world = love.physics.newWorld(0, 980, true)
+        world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         state.physicsWorld = world
         state.world.paused = false
         registry.reset()

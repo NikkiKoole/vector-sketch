@@ -25,6 +25,8 @@ for i, v in ipairs(arg) do
     end
 end
 
+local meter = require('src.physics-units').meterFromArgs(arg)
+
 -- Override arg to look like: busted <specTarget>
 arg = { specTarget }
 arg[0] = 'busted'
@@ -32,7 +34,10 @@ arg[-1] = 'luajit'
 
 -- The game's meter (main.lua sets it from state.world.meter); without this specs ran at
 -- LÖVE's default of 30 px per metre, a different physics from the game's.
-love.physics.setMeter(require('src.state').world.meter)
+-- `--meter N` runs them at another (src/physics-units.lua).
+local state = require('src.state')
+state.world.meter = meter or state.world.meter
+love.physics.setMeter(state.world.meter)
 
 -- Intercept os.exit so busted doesn't leave LÖVE hanging
 local realExit = os.exit

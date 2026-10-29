@@ -175,6 +175,7 @@ function love.load(_args)
 
     ui.init(font, fontHeight)
 
+    state.world.meter = require('src.physics-units').meterFromArgs(arg) or state.world.meter
     love.physics.setMeter(state.world.meter)
     state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
 

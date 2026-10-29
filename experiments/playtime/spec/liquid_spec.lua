@@ -177,7 +177,7 @@ describe('liquid in the kitchen scene', function()
 
     it('loads with two cups and a bath, and their water keeps its amount as a cup tilts', function()
         if not state.physicsWorld or state.physicsWorld:isDestroyed() then
-            state.physicsWorld = love.physics.newWorld(0, 980, true)
+            state.physicsWorld = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         end
         sceneLoader.loadScriptAndScene('kitchen')
         local all = liquids()

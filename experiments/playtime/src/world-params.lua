@@ -76,6 +76,8 @@ lib.rows = {
           end
       end },
     { kind = 'note', advanced = true,
+      label = function(world) return string.format('%d px per metre (--meter)', world.meter) end },
+    { kind = 'note', advanced = true,
       label = function() return require('src.registry').print() end },
     { kind = 'note', advanced = true,
       label = function()

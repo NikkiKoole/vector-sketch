@@ -26,7 +26,7 @@ local snap = require('src.physics.snap')
 -- ─── Helpers ───
 
 local function makeWorld()
-    return love.physics.newWorld(0, 9.81 * 100, true)
+    return love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
 end
 
 local function makeCam()

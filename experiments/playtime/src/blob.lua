@@ -24,11 +24,13 @@ local lib = {}
 
 local state = require('src.state')
 local subtypes = require('src.subtypes')
+local units = require('src.physics-units')
 
 -- What a new blob starts with (also the fallback for missing keys).
 lib.defaults = {
     height = 300,       -- world units, the outline's height at rest
     rimPoints = 28,     -- rim bodies (not 'nodes': io.lua takes extra.nodes for a ribbon's joints)
+    -- Hz below are as at 100 px per metre (src/physics-units.lua)
     stiffness = 4,      -- shape matching, Hz (capped by the step: stable up to ~1 / (2 pi dt))
     damping = 0.5,      -- shape matching, damping ratio
     pressure = 1,       -- 1: at 10% less area the rim pushes out with ~3x the blob's weight
@@ -157,7 +159,7 @@ end
 
 local function applyJointSettings(rt, extra)
     for _, j in ipairs(rt.bends) do
-        if not j:isDestroyed() then j:setFrequency(setting(extra, 'bend')); j:setDampingRatio(0.7) end
+        if not j:isDestroyed() then j:setFrequency(units.rate(setting(extra, 'bend'))); j:setDampingRatio(0.7) end
     end
     for _, f in ipairs(rt.rimFixtures) do
         f:setFriction(setting(extra, 'friction'))
@@ -333,7 +335,7 @@ local function shapeMatch(rt, extra, dt)
 
     -- explicit springs: stable while omega * dt stays under ~1
     local maxOmega = 1 / dt
-    local omega = math.min(2 * math.pi * setting(extra, 'stiffness'), maxOmega)
+    local omega = math.min(2 * math.pi * units.rate(setting(extra, 'stiffness')), maxOmega)
     local zeta = setting(extra, 'damping')
     for i = 1, n do
         local ax, ay = rest[i][1], rest[i][2]
@@ -355,7 +357,7 @@ local function shapeMatch(rt, extra, dt)
     -- body and rim pull on each other: a spring between two masses, so it's tuned on the
     -- reduced mass (tuned on the body's mass alone it ran 1.7x too fast and the explicit
     -- damping overshot every step: velocities flipped sign each frame and grew)
-    local hOmega = math.min(2 * math.pi * HANDLE_HZ, 0.5 * maxOmega)
+    local hOmega = math.min(2 * math.pi * units.rate(HANDLE_HZ), 0.5 * maxOmega)
     local mb = body:getMass()
     local mr = rt.handleMass / HANDLE_MASS
     local mu = mb * mr / (mb + mr)

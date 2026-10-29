@@ -15,10 +15,11 @@ local music = require('src.music')
 local mipoVoice = require('src.mipo-voice')
 local mipoChatter = require('src.mipo-chatter')
 local mipoActions = require('src.mipo-actions')
+local units = require('src.physics-units')
 
 lib.enabled = true
 lib.volume = 0.6         -- the band's samples, before mipoVoice.masterVolume
-lib.doink = 1500         -- the chord's push down on a torso (breathe is 1000 up)
+lib.doink = 1500         -- the chord's push down on a torso (breathe is 1000 up; at 100 px/m, src/physics-units.lua)
 lib.singers = { pi = true, po3 = true } -- sample names a Mipo sings (assets/voices/puppetmaker)
 
 -- On state, so a hot reload keeps what's booked.
@@ -93,7 +94,7 @@ local function playNote(note)
         local mipo = anyFree()
         local torso = mipo and mipo.parts.torso1
         if torso and torso.body and not torso.body:isDestroyed() then
-            torso.body:applyLinearImpulse(0, lib.doink)
+            torso.body:applyLinearImpulse(0, units.impulse(lib.doink))
         end
     end
 end

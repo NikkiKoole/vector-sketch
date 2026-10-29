@@ -71,7 +71,7 @@ do_start() {
     > "$LOGFILE"  # truncate log
     local scene_args=""
     [ -n "$scene" ] && scene_args="$mode_flag $scene"
-    "$LOVE" "$DIR" --bridge $scene_args >"$LOGFILE" 2>&1 &
+    "$LOVE" "$DIR" --bridge $scene_args ${METER:+--meter $METER} >"$LOGFILE" 2>&1 &
     disown
 
     # Wait for bridge to come up
@@ -104,7 +104,7 @@ do_start() {
     fi
 
     # No error — restart for the user
-    "$LOVE" "$DIR" --bridge $scene_args >>"$LOGFILE" 2>&1 &
+    "$LOVE" "$DIR" --bridge $scene_args ${METER:+--meter $METER} >>"$LOGFILE" 2>&1 &
     disown
     echo "started but bridge not responding yet"
 }

@@ -8,12 +8,13 @@
 
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
+local units = require('src.physics-units')
 
 local lib = {}
 
 lib.enabled = false       -- off: a continuous whistle on the slide was too much (tried pipe + cassette, 2026-10-27)
 lib.patch = 'whistle'     -- src/synth.lua patch
-lib.minSpeed = 120        -- along the slide (world units/s); slower riders are quiet
+lib.minSpeed = 120        -- along the slide (world units/s at 100 px per metre); slower riders are quiet
 lib.loudSpeed = 1200      -- full volume; a ride down the dollhouse slide reaches ~600-1200
 lib.topNote = 84          -- pitch at the top of the slide...
 lib.bottomNote = 67       -- ...and at the bottom
@@ -69,7 +70,7 @@ local function findRiders()
                         local body = other:getBody()
                         local nx, ny = contact:getNormal()
                         local vx, vy = body:getLinearVelocity()
-                        local speed = math.abs(-vx * ny + vy * nx) -- along the surface tangent
+                        local speed = units.toReferenceSpeed(math.abs(-vx * ny + vy * nx)) -- along the surface tangent
                         local key = riderKey(body)
                         if not found[key] or speed > found[key].speed then
                             found[key] = { speed = speed, x = x, y = y, slide = slide }

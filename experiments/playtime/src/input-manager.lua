@@ -25,6 +25,7 @@ local ST = require 'src.shape-types'
 local joints = require 'src.joints'
 local NT = require('src.node-types')
 local playMode = require('src.play-mode')
+local units = require('src.physics-units')
 
 -- In-flight Steiner drag state. Non-zero = we're dragging thing.extraSteiner
 -- at this array index on state.selection.selectedObj. Cleared on release.
@@ -240,7 +241,7 @@ local releasedHandlers = {
 
 -- Grabbing a Mipo by its torso makes it hop a little (puppet-maker2 outside.lua: torso impulse on tap).
 -- The impulse scales with the Mipo's total mass so every Mipo hops about the same.
-lib.mipoHopSpeed = 500
+lib.mipoHopSpeed = 500 -- world units/s at 100 px per metre (src/physics-units.lua)
 local function hopMipo(mipo)
     local torso = mipo.parts and mipo.parts.torso1
     if not torso or not torso.body or torso.body:isDestroyed() then return end
@@ -248,7 +249,7 @@ local function hopMipo(mipo)
     for _, part in pairs(mipo.parts) do
         if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
     end
-    torso.body:applyLinearImpulse(0, -mass * lib.mipoHopSpeed)
+    torso.body:applyLinearImpulse(0, -mass * units.speed(lib.mipoHopSpeed))
 end
 
 -- What a press on bodies does while playing: the scene script, signals, doors, a Mipo's squeak.

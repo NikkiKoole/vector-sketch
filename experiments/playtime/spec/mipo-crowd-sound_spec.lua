@@ -29,7 +29,7 @@ local function pile(seed, count, seconds)
     local simTime = 0
     local realGetTime = love.timer.getTime
     love.timer.getTime = function() return simTime end
-    local world = love.physics.newWorld(0, 980, true)
+    local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
     world:setCallbacks(unpack(callbacks))
     state.physicsWorld = world
     registry.reset()

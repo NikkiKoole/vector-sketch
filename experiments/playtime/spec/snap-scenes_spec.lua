@@ -13,7 +13,7 @@ local script = require('src.script')
 describe('snap test scenes', function()
     before_each(function()
         if not state.physicsWorld or state.physicsWorld:isDestroyed() then
-            state.physicsWorld = love.physics.newWorld(0, 980, true)
+            state.physicsWorld = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         end
     end)
 

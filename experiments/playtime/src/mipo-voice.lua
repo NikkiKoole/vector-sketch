@@ -8,6 +8,7 @@
 -- mouthSay() and postSolve sounds).
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
+local units = require('src.physics-units')
 
 local lib = {}
 
@@ -18,7 +19,8 @@ lib.cooldown = 0.15      -- seconds between squeaks of the same Mipo
 lib.impactCooldown = 0.5 -- seconds between impact 'oof's of the same Mipo
 lib.impactSpeed = 1200   -- velocity change (world units/s) for an oof; measured: small hop ~550, 800-unit drop ~2500
 -- Impact sounds (files relative to assets/sounds/, see its README for sources).
--- Speeds are velocity changes (world units/s); a hit at `soft`
+-- Speeds are velocity changes (world units/s, as at 100 px per metre: measured speeds go
+-- through units.toReferenceSpeed, src/physics-units.lua); a hit at `soft`
 -- plays at pitch[1]/volume[1], at `hard` and above at pitch[2]/volume[2].
 -- `synth` lists src/synth.lua patches to use instead of the files when synthImpacts is on
 -- (`transpose` semitones on lib.plonkNotes, `durMs` how long the note is held, default 400;
@@ -449,7 +451,7 @@ function lib.onBeginContact(fix1, fix2, contact)
     local nx, ny = contact:getNormal()
     local ax, ay = fix1:getBody():getLinearVelocityFromWorldPoint(x, y)
     local bx, by = fix2:getBody():getLinearVelocityFromWorldPoint(x, y)
-    local approach = math.abs((ax - bx) * nx + (ay - by) * ny)
+    local approach = units.toReferenceSpeed(math.abs((ax - bx) * nx + (ay - by) * ny))
     if approach >= (retouch and lib.retouchSpeed or lib.minApproachSpeed) then
         freshContacts[fixturePairKey(fix1, fix2)] = approach
     end
@@ -491,7 +493,7 @@ function lib.onImpact(fix1, fix2, normalImpulse)
     for _, pair in ipairs({ { mipo1, body1 }, { mipo2, body2 } }) do
         local instance, body = pair[1], pair[2]
         local mass = body:getMass()
-        local speed = mass > 0 and normalImpulse / mass or 0
+        local speed = mass > 0 and units.toReferenceSpeed(normalImpulse / mass) or 0
         if instance then
             local t = now()
             if not lastPlonk[instance.id] or t - lastPlonk[instance.id] > lib.plonkMipoCooldown then

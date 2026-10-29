@@ -10,7 +10,13 @@
 ./playtime.sh status   # check if running
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
+METER=400 ./playtime.sh start  # another px-per-metre (default 100, state.world.meter; love . --meter 400)
 ```
+
+Tuned physics numbers (speeds, forces, impulses, gains, Hz) are written as at 100 px per metre
+and go through `src/physics-units.lua` where they're used (`units.speed(lib.jumpSpeed)`);
+measured speeds/forces come back with `units.toReferenceSpeed/Force`, so thresholds keep their
+numbers. Add new ones the same way. Spec worlds use `9.8 * love.physics.getMeter()` gravity.
 
 Love executable: `/Applications/love115.app/Contents/MacOS/love`
 LÖVE version: 11.5, window 1200x768.
@@ -64,6 +70,7 @@ busted spec/math-utils_spec.lua           # single file
 love . --specs                            # all specs (pure + physics + integration), no audio device,
                                           # window borderless and off-screen (graphics need one)
 love . --specs --audio                    # same, plus the 3 specs that play sound (else pending)
+love . --specs --meter 400                # at another px-per-metre (src/physics-units.lua)
 love . --specs spec/integration_spec.lua  # single file
 
 # Via the bridge (while app is running)

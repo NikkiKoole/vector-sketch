@@ -26,6 +26,7 @@ local mathutils = require 'src.math-utils'
 local subtypes = require 'src.subtypes'
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
+local units = require('src.physics-units')
 
 local lib = {}
 
@@ -33,7 +34,8 @@ lib.mipoHands = true
 lib.handMargin = 30           -- a hand grabs what it touches: centres within both reach radii + this
                               -- (a fixed 70 was less than one hand's own radius, 100-124: two
                               -- solid hands could never get that close, so never held hands)
-lib.handBreakThreshold = 40000 -- a hand lets go above this joint force (a pull, a hard fall)
+lib.handBreakThreshold = 40000 -- a hand lets go above this joint force (a pull, a hard fall);
+                               -- forces here are as at 100 px per metre (src/physics-units.lua)
 
 local cooldownUntil = {} -- [sfixture id] = time
 
@@ -233,6 +235,7 @@ local function checkForBreaks(dt, snapJoints, interacted)
     for _, joint in ipairs(snapJoints) do
         if not joint:isDestroyed() then
             local fx, fy = joint:getReactionForce(1 / dt)
+            fx, fy = units.toReferenceForce(fx), units.toReferenceForce(fy)
             local meta = snapMeta(joint)
             local threshold = (isHandId(meta.a) or isHandId(meta.b)) and lib.handBreakThreshold
                 or state.snap.jointBreakThreshold

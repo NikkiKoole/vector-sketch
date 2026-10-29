@@ -33,7 +33,7 @@ local function simulate(seed, seconds)
     local simTime = 0
     local realGetTime = love.timer.getTime
     love.timer.getTime = function() return simTime end
-    local world = love.physics.newWorld(0, 980, true)
+    local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
     state.physicsWorld = world
     registry.reset()
     mipoRegistry.reset()
@@ -76,7 +76,7 @@ describe('Mipo feet', function()
     -- used to be counted from 'in line with the shin', so it was centred on a foot
     -- pointing straight down: Mipos stood on the tips of their feet.
     it('the ankle range is centred on flat, not on pointing down', function()
-        local world = love.physics.newWorld(0, 980, true)
+        local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
         state.physicsWorld = world
         registry.reset()
         mipoRegistry.reset()

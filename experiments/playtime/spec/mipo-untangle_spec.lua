@@ -22,7 +22,7 @@ local callbacks = require('src.physics.physics-callbacks')
 local DT = 1 / 60
 
 local function newWorld()
-    local world = love.physics.newWorld(0, 980, true)
+    local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
     world:setCallbacks(unpack(callbacks))
     state.physicsWorld = world
     registry.reset()

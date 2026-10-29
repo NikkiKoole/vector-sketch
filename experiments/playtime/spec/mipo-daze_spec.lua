@@ -19,6 +19,7 @@ local jointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local mipoVoice = require('src.mipo-voice')
 local callbacks = require('src.physics.physics-callbacks')
+local units = require('src.physics-units')
 
 local DT = 1 / 60
 
@@ -28,7 +29,7 @@ local function run(throw, seconds)
     local simTime = 0
     local realGetTime = love.timer.getTime
     love.timer.getTime = function() return simTime end
-    local world = love.physics.newWorld(0, 980, true)
+    local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
     world:setCallbacks(unpack(callbacks))
     state.physicsWorld = world
     registry.reset()
@@ -50,10 +51,10 @@ local function run(throw, seconds)
     math.randomseed(7)
     local instance = CharacterManager.createCharacter('humanoid', 0, 600, 0.3)
     CharacterManager.randomizeMipoConstrained(instance)
-    -- CnANW's masses: head 54, torso 23 (its light legs carry all of it)
+    -- CnANW's masses at 100 px per metre: head 54, torso 23 (its light legs carry all of it)
     for name, mass in pairs({ head = 54, torso1 = 23 }) do
         local body = instance.parts[name].body
-        local ratio = mass / body:getMass()
+        local ratio = units.mass(mass) / body:getMass()
         for _, f in ipairs(body:getFixtures()) do
             if not f:getUserData() then f:setDensity(f:getDensity() * ratio) end
         end

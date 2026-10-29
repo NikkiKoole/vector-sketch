@@ -1,5 +1,6 @@
 local lib = {}
 local registry = require 'src.registry'
+local units = require('src.physics-units')
 
 -- While a part touches another Mipo or a prop, the controller only gets a
 -- bounded torque (inertia * maxAlpha) so it yields instead of drilling through.
@@ -49,9 +50,10 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
 
     -- Tunables (or read from data)
 
-    local kp = (data and data.kp) or 20.0    -- P gain (1/s)  --was 8
-    local kd = (data and data.kd) or .000015 -- D gain (unitless) -- was 1.5
-    local maxOmega = (data and data.maxOmega) or 15.0
+    -- (gains as tuned at the reference meter, src/physics-units.lua)
+    local kp = units.rate((data and data.kp) or 20.0) -- P gain (1/s)  --was 8
+    local kd = (data and data.kd) or .000015         -- D gain (unitless) -- was 1.5
+    local maxOmega = units.rate((data and data.maxOmega) or 15.0)
 
     -- PD controller in "omega space"
     local omega_cmd = kp * diff - kd * omega
@@ -68,7 +70,7 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
     -- Setting the velocity is infinitely strong: in a pile of Mipos a leg turned
     -- straight through its neighbours, the contact solver shoved them apart, and
     -- the pile gained energy until one was launched out of the world.
-    local maxAlpha = (data and data.maxAlpha) or lib.maxAlpha
+    local maxAlpha = units.accel((data and data.maxAlpha) or lib.maxAlpha)
     local alpha = (omega_cmd - omega) / math.max(dt or 1 / 60, 1e-4)
     if alpha > maxAlpha then alpha = maxAlpha end
     if alpha < -maxAlpha then alpha = -maxAlpha end

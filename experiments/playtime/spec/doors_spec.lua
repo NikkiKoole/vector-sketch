@@ -17,7 +17,7 @@ describe('doors', function()
     local world
 
     setup(function()
-        world = love.physics.newWorld(0, 9.81 * 100, true)
+        world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
         state.physicsWorld = world
         registry.reset()
         state.rooms.saved, state.rooms.openDoor, state.rooms.pending = {}, nil, nil
