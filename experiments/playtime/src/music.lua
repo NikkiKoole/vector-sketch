@@ -15,7 +15,10 @@
 -- plinky marimba riff, a bouncy bass, a kalimba tune), dumont (Domenique Dumont's dubby synth-pop:
 -- funky minor vamps, a busy syncopated bass, a marimba riff, a steel-pan tune, claps with an echo),
 -- supermarket (Mr. Lucky's ii7 - V11 vamp, staccato and bouncy, a marimba tune), herbs (MF DOOM's
--- Special Herbs: a dusty swung boom-bap loop, chopped Rhodes, a sub bass on the kick) and ballad.
+-- Special Herbs: a dusty swung boom-bap loop, chopped Rhodes, a sub bass on the kick), lofi (lofi
+-- city's jazzhop: our planner, its sound), puppetmaker (Puppetmaker 2's band: a chance-driven CR-78
+-- hand-percussion loop and its rolled Rhodes chord), strum (that chord humanized, through a key) and
+-- ballad. lib.onNote lets other code hear every note (the Mipos react to the puppetmaker band).
 -- style = 'set' plays lib.set as a live set: each song ends on home, takes a breath, and the next
 -- one starts in a related key.
 --

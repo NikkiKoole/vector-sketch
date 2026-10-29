@@ -2,7 +2,7 @@
 
 Playtime uses the synth from the user's own engine, dreamengine (`git@github.com:NikkiKoole/dreamengine-studio.git`), unchanged. It's called from LuaJIT through FFI. The synth plays the impact plonks, the box drums, the snap clicks and the background music.
 
-Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md).
+Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md). The Mipo voices, Puppetmaker 2's band and the voice lab (the sound-effects side): [PUPPETMAKER-SOUND.md](PUPPETMAKER-SOUND.md).
 
 ## Setting up on a new machine
 1. Clone dreamengine to `~/Projects/dreamengine`, or anywhere else and set `DREAMENGINE=/path`.
@@ -18,7 +18,7 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md).
 | `src/mipo-voice.lua` | Impacts: plonks, the ball (upright pizz), boxes (conga/djembe/tabla per box). Starts the synth lazily. |
 | `src/snap-sound.lua` | A tiny click when a snap joint forms |
 | `src/slide-sound.lua` | The slide whistle, disabled (the user disliked it) |
-| `src/music.lua` | Generative background music, planned like dreamengine's lofi.c: a live set of bossa (Rhodes) and guaraldi (felt piano, brushes) songs, or one style |
+| `src/music.lua` | Generative background music, planned like dreamengine's lofi.c: a live set of styles (bossa, guaraldi, island, dumont, supermarket, herbs, lofi, puppetmaker, strum; `lib.set`), or one style. The styles are listed in [MUSIC-IDEAS.md](MUSIC-IDEAS.md) |
 | `claudetools/render-music.lua` | Renders the real `music.lua` + `synth.lua` offline to a WAV, no app needed |
 
 The main thread calls the dreamengine API, which drops commands into a lock-free queue. The render thread calls `de_lua_render_s16`. This is still safe on iOS with the JIT off, because FFI keeps working there (link statically and use `ffi.C`).
@@ -35,6 +35,8 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - The chords are "played": the notes drift in one by one, and the Rhodes' left hand plays the bass.
 - `music.bump()` on each impact raises a play level. When it gets high the drums join (where the song's form lets them), and they leave again when play calms down.
 - `music.chordNotes(lo, hi)` gives sound effects notes from the chord sounding right now, so impacts are in key.
+- `music.onNote(name, fn)` hears every booked note, `fn(part, patch, midi, vol, durMs, t, step)`. `t` is the audio time, ~0.3 s ahead. Puppetmaker's parts are 'perc', 'chord' and 'sample'; a 'sample' is a recording for the listener to play (ba, bi, biep2, biep3, pi, po3; midi 60 = its own pitch), and the synth plays nothing. `nowPlaying().stepTime / stepLen` and `music.stepAt(s)` give the swung grid. The Mipos' band reactions (`src/mipo-band.lua`) use them.
+- A picked style starts at the next bar, at its first A, with the tune and the band in (`audition`).
 - The settings are at the top of `src/music.lua`: style ('set' or one style), set, rhythmSection, upright, melody, melodyPatch, and more. `music.nowPlaying()` says which style, key and section is playing.
 
 ## Gotchas
