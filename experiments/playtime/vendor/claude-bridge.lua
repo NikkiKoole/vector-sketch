@@ -1259,7 +1259,8 @@ local route_descriptions = {
     ["POST /breakpoint/reset"] = "Reset a hit breakpoint so it can trigger again",
     ["DELETE /breakpoint"] = "Remove a breakpoint (?name=X or clear all)",
     ["POST /profile/benchmark"] = "Benchmark a Lua code snippet (iterations, warmup, returns timing stats)",
-    ["POST /profile/frames"] = "Profile N frames of physics with ProFi (returns text report)",
+    ["POST /profile/frames"] = "Profile the next N real frames with ProFi (frames, top, sort=duration|count); result via GET /profile/report",
+    ["GET /profile/report"] = "The last ProFi run: per function ms/frame, calls/frame, % of wall (?format=text)",
     ["POST /specs"] = "Run busted specs inside LÖVE ({target:'spec/file.lua', fresh:true})",
     ["GET /mipo"] = "List all mipo characters (id, templateName, scale, partNames)",
     ["GET /mipo/dna"] = "Get character DNA (?id=X, auto-selects if 1 character)",
@@ -1816,43 +1817,88 @@ routes["POST /profile/benchmark"] = function(req)
     })
 end
 
+-- ProFi over N real frames (update + draw, the way the game runs), not inside one
+-- request: the run spans frames, so POST starts it and GET /profile/report has the
+-- result once it's done. The hooks make everything ~10x slower: compare the rows, not
+-- the totals with a normal frame. LuaJIT doesn't call hooks from compiled code, so the
+-- JIT is off while it runs and put back as it was after (main.lua keeps it off anyway).
+-- Time-throttled code (every 0.1 s) runs on nearly every step at these frame times, so
+-- it shows up far bigger than it is.
+local function finishProfile()
+    local run = bridge.profiling
+    local ProFi = require('vendor.ProFi')
+    ProFi:stop()
+    love.draw = run.origDraw
+    if jit and run.jitWasOn then jit.on() end
+    bridge.profiling = nil
+
+    local wall = love.timer.getTime() - run.startTime
+    local frames = math.max(1, run.drawn)
+    local reports = ProFi.reports or {}
+    table.sort(reports, run.sort == "count"
+        and function(a, b) return a.count > b.count end
+        or function(a, b) return a.timer > b.timer end)
+    local rows, lines = {}, {}
+    lines[#lines + 1] = string.format("%d frames in %.2fs (%.1f fps with the hooks on)",
+        frames, wall, frames / wall)
+    lines[#lines + 1] = string.format("%9s %9s %8s  %s", "ms/frame", "calls/fr", "% wall", "function")
+    for i = 1, math.min(run.top, #reports) do
+        local r = reports[i]
+        local row = {
+            name = r.name, source = r.source, line = r.line, calls = r.count,
+            ms_per_frame = r.timer / frames * 1000,
+            calls_per_frame = r.count / frames,
+            pct_wall = r.timer / wall * 100,
+        }
+        rows[#rows + 1] = row
+        lines[#lines + 1] = string.format("%9.3f %9.1f %7.1f%%  %s  %s:%d", row.ms_per_frame,
+            row.calls_per_frame, row.pct_wall, row.name, row.source, row.line)
+    end
+    bridge.profileResult = {
+        frames = frames, wall = wall, fps = frames / wall, sort = run.sort,
+        rows = rows, text = table.concat(lines, "\n"),
+    }
+end
+
 routes["POST /profile/frames"] = function(req)
     local params = req.json_body or {}
-    local frames = params.frames or 60
-    local sort = params.sort or "duration"
-
+    if bridge.profiling then return err_response("a profile run is already going; GET /profile/report") end
+    local ProFi = require('vendor.ProFi')
     ProFi:reset()
-    if sort == "count" then
-        ProFi:setSortMethod("count")
-    else
-        ProFi:setSortMethod("duration")
+    ProFi:setGetTimeMethod(love.timer.getTime) -- wall time, not os.clock's CPU time
+    local run = {
+        frames = params.frames or 60,
+        top = params.top or 40,
+        sort = params.sort == "count" and "count" or "duration",
+        drawn = 0,
+        origDraw = love.draw,
+        jitWasOn = jit and jit.status() or false,
+        startTime = nil,
+    }
+    bridge.profiling = run
+    bridge.profileResult = nil
+    -- start and stop around whole frames: the hooks begin at the top of the next draw...
+    love.draw = function(...)
+        if not run.startTime then
+            if jit then jit.off() end
+            run.startTime = love.timer.getTime()
+            ProFi:start()
+        end
+        run.origDraw(...)
+        run.drawn = run.drawn + 1
+        -- ...and end after the last one (the updates in between are inside the run)
+        if run.drawn >= run.frames then finishProfile() end
     end
+    return ok_response({ started = true, frames = run.frames, report = "GET /profile/report" })
+end
 
-    ProFi:start()
-    local state = require 'src.state'
-    local dt = 1 / 60
-    for i = 1, frames do
-        state.physicsWorld:update(dt, 8, 3)
+routes["GET /profile/report"] = function(req)
+    if bridge.profiling then
+        return ok_response({ running = true, drawn = bridge.profiling.drawn, frames = bridge.profiling.frames })
     end
-    ProFi:stop()
-
-    -- Write to temp file, read back
-    local tmpfile = love.filesystem.getSaveDirectory() .. "/_bridge_profile.txt"
-    ProFi:writeReport(tmpfile)
-
-    local f = io.open(tmpfile, "r")
-    local report = ""
-    if f then
-        report = f:read("*all")
-        f:close()
-        os.remove(tmpfile)
-    end
-
-    return ok_response({
-        frames = frames,
-        sort = sort,
-        report = report,
-    })
+    if not bridge.profileResult then return err_response("no profile yet; POST /profile/frames") end
+    if req.query and req.query.format == "text" then return ok_response(bridge.profileResult.text) end
+    return ok_response(bridge.profileResult)
 end
 
 -- ─── Specs (busted inside LÖVE) ───

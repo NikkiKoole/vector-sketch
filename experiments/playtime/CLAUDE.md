@@ -32,7 +32,8 @@ HTTP JSON API for interacting with the running game. All endpoints return `{ok, 
 - `POST /exec` — run Lua code, fire-and-forget
 - `POST /screenshot` — capture screenshot
 - `POST /profile/benchmark` — benchmark code snippet (iterations, returns mean/median/min/max/p95)
-- `POST /profile/frames` — profile N physics frames with ProFi
+- `POST /profile/frames` — ProFi over the next N real frames (`{"frames":60,"top":40}`); `GET /profile/report` (`?format=text`) gives ms/frame and calls/frame per function. Hooks make it ~10x slower: compare rows, not totals
+- `POST /profile/benchmark` runs on the interpreter like the game (main.lua keeps the JIT off: on, the game was ~3x slower). Setting a module's fields from the bridge after a lurker hot-swap doesn't reach the live code (it reads a fresh `lib`); put such switches on `state` (e.g. `state.drawTimes = {frames=0, ms={}, count={}}` times drawTexturedWorld per drawable kind)
 
 ### Important
 - Always quote URLs with `?` in zsh: `curl 'localhost:8001/console?n=5'`

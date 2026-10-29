@@ -1678,9 +1678,70 @@ end
 
 -- Build a closed polygon from mouth curvePoints (16 floats: 8 control points).
 -- Returns a cleaned flat vertex array suitable for triangulation, or nil.
+-- A mouth's triangles, kept until its polygon changes: the mouth is drawn every frame
+-- (twice with teeth) and only changes shape while it talks, and makeTrianglesFromPolygon
+-- was ~a third of the draw with a dozen Mipos. Weak keys, not on `extra`: that's saved.
+local mouthTrisCache = setmetatable({}, { __mode = 'k' })
+local function mouthTriangles(extra, slot, poly)
+    local perExtra = mouthTrisCache[extra]
+    if not perExtra then perExtra = {}; mouthTrisCache[extra] = perExtra end
+    local cached = perExtra[slot]
+    if cached and #cached.poly == #poly then
+        local same = true
+        for k = 1, #poly do
+            if cached.poly[k] ~= poly[k] then same = false; break end
+        end
+        if same then return cached.tris end
+    end
+    local tris = shapes.makeTrianglesFromPolygon(poly)
+    perExtra[slot] = { poly = poly, tris = tris }
+    return tris
+end
+
+-- Lip strips are in the mouth's own space and a mouth only moves while it talks: a strip
+-- already holding this curve (same 16 numbers, written last into this mesh) is drawn as
+-- is. Lips sharing a picture share a mesh; then the last writer differs and it's redone.
+local stripCurve = setmetatable({}, { __mode = 'k' }) -- [mesh] = the curve data last written
+local function stripHolds(mesh, data)
+    local last = stripCurve[mesh]
+    local same = last ~= nil and #last == #data
+    if same then
+        for k = 1, #data do
+            if last[k] ~= data[k] then same = false; break end
+        end
+    end
+    if not same then
+        local copy = {}
+        for k = 1, #data do copy[k] = data[k] end
+        stripCurve[mesh] = copy
+    end
+    return same
+end
+
+-- buildMouthPolygon makes two Bezier curves and renders them: kept per input (the 16
+-- curve points), as most mouths are still most of the time.
+local mouthPolyCache = { keys = {}, polys = {}, next = 1 }
+local MOUTH_POLY_SLOTS = 64
+
+local buildMouthPolygonUncached
 local function buildMouthPolygon(curvePoints)
+    if not curvePoints or #curvePoints ~= 16 then return nil end
+    local key = table.concat(curvePoints, ',')
+    local cache = mouthPolyCache
+    local hit = cache.polys[key]
+    if hit ~= nil then return hit or nil end
+    local poly = buildMouthPolygonUncached(curvePoints)
+    -- a ring of slots: talking mouths make new shapes every frame; don't keep them all
+    local old = cache.keys[cache.next]
+    if old then cache.polys[old] = nil end
+    cache.keys[cache.next] = key
+    cache.polys[key] = poly or false
+    cache.next = cache.next % MOUTH_POLY_SLOTS + 1
+    return poly
+end
+
+buildMouthPolygonUncached = function(curvePoints)
     local pts = curvePoints
-    if not pts or #pts ~= 16 then return nil end
 
     local upData = {
         pts[1], pts[2], pts[3], pts[4],
@@ -2281,16 +2342,58 @@ local function createDrawables(bodies)
     return drawables
 end
 
+-- The hair strip along part of a body's outline (TRACE_VERTICES), in body space: it only
+-- changes when the outline or the strip's settings do, so the mesh is kept until then.
+-- Building it every frame (curve, polyline, newMesh) was ~120 us per Mipo.
+-- Weak keys, not on `extra`: that's saved.
+local traceMeshCache = setmetatable({}, { __mode = 'k' })
+local function traceVerticesMesh(extra, outline)
+    local sum = 0
+    for k = 1, #outline do sum = sum + outline[k] * k end
+    local key = table.concat({ #outline, sum, tostring(extra.startIndex), tostring(extra.endIndex),
+        extra.tension or .02, extra.spacing or 5, extra.width or 100 }, '|')
+    local cached = traceMeshCache[extra]
+    if cached and cached.key == key then return cached.mesh end
+
+    local indices = getIndices(#outline / 2, extra.startIndex, extra.endIndex)
+    local points = {}
+    for j = 1, #indices do
+        points[#points + 1] = { outline[indices[j] * 2 + 1], outline[indices[j] * 2 + 2] }
+    end
+    local mesh
+    if #points >= 2 then
+        local coords = mathutils.unloosenVanillaline(points, extra.tension or .02, extra.spacing or 5)
+        local verts = polyline.render('miter', coords, extra.width or 100)
+        local cx, cy = mathutils.getCenterOfPoints(outline)
+        local vertsWithUVs = {}
+        for vi = 1, #verts do
+            local u = (vi % 2 == 1) and 0 or 1
+            local v = math.floor(((vi - 1) / 2)) / (#verts / 2 - 1)
+            vertsWithUVs[vi] = { verts[vi][1] - cx, verts[vi][2] - cy, u, v }
+        end
+        mesh = love.graphics.newMesh(vertsWithUVs, "strip")
+    end
+    if cached and cached.mesh then cached.mesh:release() end
+    traceMeshCache[extra] = { key = key, mesh = mesh }
+    return mesh
+end
+
 function lib.drawTexturedWorld(world)
     tickBlink(world, love.timer.getDelta() or 0)
     local bodies = world:getBodies()
 
 
 
+    -- state.drawTimes = { frames = 0, ms = {}, count = {} } (from the bridge) adds up the time
+    -- per drawable kind; nil (the default) costs nothing. On state: a hot swap gives this
+    -- code a fresh lib, so a flag set on the old one from outside is never seen
+    local times, counts = state.drawTimes and state.drawTimes.ms, state.drawTimes and state.drawTimes.count
+    local tStart = times and love.timer.getTime()
     local drawables = createDrawables(bodies)
     -- todo: optimally keep the list sorted and only resort when
     -- drawables are added/removed or a z changes.
     table.sort(drawables, sorter)
+    local tSort = times and love.timer.getTime() - tStart
 
 
 
@@ -2349,6 +2452,7 @@ function lib.drawTexturedWorld(world)
 
 
     for i = 1, #drawables do
+        local t0 = times and love.timer.getTime()
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
 
@@ -3071,25 +3175,8 @@ function lib.drawTexturedWorld(world)
         end
 
         if drawables[i].type == subtypes.TRACE_VERTICES then
-            local length = (#drawables[i].thing.vertices) / 2
-            local startIndex = drawables[i].extra.startIndex
-            local endIndex = drawables[i].extra.endIndex
-            local indices = getIndices(length, startIndex, endIndex)
-            local points = {}
-            local pointsflat = {}
-            -- logger:info(length)
-            -- logger:inspect(indices)
-            for j = 1, #indices do
-                --local index = indices[j]
-                local x = drawables[i].thing.vertices[indices[j] * 2 + 1]
-                local y = drawables[i].thing.vertices[indices[j] * 2 + 2]
-                table.insert(points, { x, y })
-                table.insert(pointsflat, x)
-                table.insert(pointsflat, y)
-            end
-
-
-            if #points >= 2 then
+            local m = traceVerticesMesh(drawables[i].extra, drawables[i].thing.vertices)
+            if m then
                 --love.graphics.line(pointsflat)
                 --if drawables[i].extra.main.bgURL
                 local extra = drawables[i].extra
@@ -3111,34 +3198,6 @@ function lib.drawTexturedWorld(world)
                     end
                 end
 
-                local hairTension = extra.tension or .02 -- love.math.random() --.02
-                local spacing = extra.spacing or 5
-                -- 5                                                    --* multipliers.hair.sMultiplier
-                local coords = mathutils.unloosenVanillaline(points, hairTension, spacing)
-                --local factor = (length / h)
-                --local hairWidthMultiplier = 1 --* multipliers.hair.wMultiplier
-                local width = extra.width or 100 -- 100 --(w * factor) / 2
-                --2                         -- 100             (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
-                local verts = polyline.render('miter', coords, width)
-
-                local cx, cy = mathutils.getCenterOfPoints(drawables[i].thing.vertices)
-                for vi = 1, #verts do
-                    verts[vi][1] = verts[vi][1] - cx
-                    verts[vi][2] = verts[vi][2] - cy
-                end
-
-                local vertsWithUVs = {}
-
-                for vi = 1, #verts do
-                    local u = (vi % 2 == 1) and 0 or 1
-                    local v = math.floor(((vi - 1) / 2)) / (#verts / 2 - 1)
-                    vertsWithUVs[vi] = { verts[vi][1], verts[vi][2], u, v }
-                end
-
-                local vertices = vertsWithUVs
-
-
-                local m = love.graphics.newMesh(vertices, "strip")
                 m:setTexture(img)
                 local body = drawables[i].thing.body
                 if useOMP then
@@ -3353,7 +3412,7 @@ function lib.drawTexturedWorld(world)
 
                 local cleaned = buildMouthPolygon(curvePoints)
                 if cleaned then
-                    local tris = shapes.makeTrianglesFromPolygon(cleaned)
+                    local tris = mouthTriangles(extra, 'backdrop', cleaned)
                     if tris and #tris > 0 then
                         love.graphics.stencil(function()
                             for ti = 1, #tris do
@@ -3413,8 +3472,6 @@ function lib.drawTexturedWorld(world)
                     s[13], s[14], s[11], s[12],
                     s[11], s[12], s[9], s[10],
                 } or curveData
-                local downCurve = love.math.newBezierCurve(activeCurveData)
-
                 local lipImg = extra.ompImage
                 if not lipImg and extra.main and extra.main.bgURL then
                     lipImg = getLoveImage('textures/' .. extra.main.bgURL)
@@ -3422,7 +3479,10 @@ function lib.drawTexturedWorld(world)
                 if lipImg then
                     local mesh = getStrip(lipImg, extra.lipScale or 0.25)
                     love.graphics.setColor(1, 1, 1, 1)
-                    texturedCurve(downCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
+                    if not stripHolds(mesh, activeCurveData) then
+                        texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
+                            extra.lipScale or 0.25)
+                    end
                     love.graphics.push()
                     love.graphics.translate(0, -8)
                     love.graphics.draw(mesh)
@@ -3463,7 +3523,6 @@ function lib.drawTexturedWorld(world)
                         s[7], s[8], s[9], s[10],
                     }
                 end
-                local upCurve = love.math.newBezierCurve(activeCurveData)
                 local lipImg = extra.ompImage
                 if not lipImg and extra.main and extra.main.bgURL then
                     lipImg = getLoveImage('textures/' .. extra.main.bgURL)
@@ -3471,7 +3530,10 @@ function lib.drawTexturedWorld(world)
                 if lipImg then
                     local mesh = getStrip(lipImg, extra.lipScale or 0.25)
                     love.graphics.setColor(1, 1, 1, 1)
-                    texturedCurve(upCurve, lipImg, mesh, -1, extra.lipScale or 0.25)
+                    if not stripHolds(mesh, activeCurveData) then
+                        texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
+                            extra.lipScale or 0.25)
+                    end
                     love.graphics.push()
                     love.graphics.translate(0, 8)
                     love.graphics.draw(mesh)
@@ -3548,7 +3610,7 @@ function lib.drawTexturedWorld(world)
                     local cleaned = buildMouthPolygon(curvePoints)
 
                     if cleaned then
-                        local tris = shapes.makeTrianglesFromPolygon(cleaned)
+                        local tris = mouthTriangles(extra, 'teeth', cleaned)
                         if tris and #tris > 0 then
                             love.graphics.stencil(function()
                                 for ti = 1, #tris do
@@ -3568,6 +3630,15 @@ function lib.drawTexturedWorld(world)
                 love.graphics.pop()
             end
         end
+        if times then
+            local kind = drawables[i].type
+            times[kind] = (times[kind] or 0) + love.timer.getTime() - t0
+            counts[kind] = (counts[kind] or 0) + 1
+        end
+    end
+    if times then
+        times['(createDrawables + sort)'] = (times['(createDrawables + sort)'] or 0) + tSort
+        state.drawTimes.frames = state.drawTimes.frames + 1
     end
 
     --  end)

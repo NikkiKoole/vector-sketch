@@ -29,6 +29,7 @@ local JT = require('src.joint-types')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
+local registry = require('src.registry')
 
 local lib = {}
 
@@ -64,11 +65,20 @@ lib.splayedFor = 0.6            -- seconds of splayed legs before a hop
 lib.standUpPause = 1.2          -- seconds between hops
 lib.standUpSpeed = 500          -- hop speed (world units/s), like the grab hop
 
+-- standUp and the search for newly stuck limbs look for things that last half a second
+-- or more, so each Mipo (each joint, for stuck) is looked at once every this many physics
+-- steps, a slice of them on every step: all at once, with 20 Mipos, they were 2-3 ms
+-- spikes (contacts of every part, three raycasts per joint) that threw the fixed timestep
+-- off. Counted in steps, not seconds, so a slow frame or a spec stepping faster than real
+-- time sees the same thing. Heal, unwind and pulling a ghost back run every step.
+lib.slowCheckSteps = 12
+
 local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
 -- [pairKey] = { a, b, since, untilT, restUntil }; on state: preSolve reads it every step
 state.mipoTangles = state.mipoTangles or {}
 local tangles = state.mipoTangles
 local lastTangleCheck = 0
+local stepCount = 0
 local splayedSince = {} -- [mipoId] = time its legs became splayed
 local lastStandUp = {}  -- [mipoId] = time of its last stand-up hop
 -- Parts that can carry the Mipo: legs normally, arms in a handstand (flip).
@@ -94,11 +104,14 @@ function lib.turnsToUnwind(angle, lower, upper)
     return 0
 end
 
-local function isMipoJoint(joint)
-    local bodyA, bodyB = joint:getBodies()
-    if not bodyA or not bodyB then return false end
-    local mipo = mipoRegistry.getFromBody(bodyA)
-    return mipo ~= nil and mipo == mipoRegistry.getFromBody(bodyB)
+-- A Mipo's revolute joints, from its own list (instance.joints: 'parent->child' = id).
+-- Scanning every joint in the world and looking up both bodies' Mipo was most of
+-- this module's per-step cost with 20 Mipos.
+local function eachRevolute(instance, fn)
+    for _, jointId in pairs(instance.joints or {}) do
+        local joint = registry.getJointByID(jointId)
+        if joint and not joint:isDestroyed() and joint:getType() == JT.REVOLUTE then fn(joint) end
+    end
 end
 
 local function unwindJoints(joints)
@@ -259,27 +272,30 @@ local function otherMipoAcross(x1, y1, x2, y2, ownId)
 end
 
 -- Every hook right now: { a = the Mipo whose limb, b = the Mipo across it, part, through }.
+local function hooksOf(owner, result)
+    eachRevolute(owner, function(joint)
+        local bodyA, bodyB = joint:getBodies()
+        local instance, partName = mipoRegistry.getFromBody(bodyB)
+        if instance then
+            local x1, y1, x2, y2 = joint:getAnchors()
+            local ax, ay = bodyA:getPosition()
+            local bx, by = bodyB:getPosition()
+            local fixture, other = otherMipoAcross(ax, ay, x1, y1, instance.id)
+            if not fixture then fixture, other = otherMipoAcross(x1, y1, x2, y2, instance.id) end
+            if not fixture then fixture, other = otherMipoAcross(x2, y2, bx, by, instance.id) end
+            if fixture then
+                local _, through = mipoRegistry.getFromBody(fixture:getBody())
+                result[#result + 1] = { a = instance, b = other, part = partName, through = through }
+            end
+        end
+    end)
+    return result
+end
+
 function lib.hooks()
     local result = {}
     if not state.physicsWorld then return result end
-    for _, joint in ipairs(state.physicsWorld:getJoints()) do
-        if joint:getType() == JT.REVOLUTE and isMipoJoint(joint) then
-            local bodyA, bodyB = joint:getBodies()
-            local instance, partName = mipoRegistry.getFromBody(bodyB)
-            if instance then
-                local x1, y1, x2, y2 = joint:getAnchors()
-                local ax, ay = bodyA:getPosition()
-                local bx, by = bodyB:getPosition()
-                local fixture, other = otherMipoAcross(ax, ay, x1, y1, instance.id)
-                if not fixture then fixture, other = otherMipoAcross(x1, y1, x2, y2, instance.id) end
-                if not fixture then fixture, other = otherMipoAcross(x2, y2, bx, by, instance.id) end
-                if fixture then
-                    local _, through = mipoRegistry.getFromBody(fixture:getBody())
-                    result[#result + 1] = { a = instance, b = other, part = partName, through = through }
-                end
-            end
-        end
-    end
+    for _, owner in pairs(mipoRegistry.getAll()) do hooksOf(owner, result) end
     return result
 end
 
@@ -347,8 +363,9 @@ local function unstickJoints(joints, now)
             end
         end
     end
-    for _, joint in ipairs(joints) do
-        if not ghosts[jointKey(joint)] then
+    local slice = stepCount % lib.slowCheckSteps
+    for j, joint in ipairs(joints) do
+        if j % lib.slowCheckSteps == slice and not ghosts[jointKey(joint)] then
             local wall = wallAcrossLimb(joint)
             if wall then
                 local _, bodyB = joint:getBodies()
@@ -371,12 +388,6 @@ local function markHeldMipos(now)
     end
 end
 
-local function recentlyHeld(joint, now)
-    local _, bodyB = joint:getBodies()
-    local instance = mipoRegistry.getFromBody(bodyB)
-    local held = instance and lastHeld[instance.id]
-    return held ~= nil and now - held <= lib.healAfterRelease
-end
 
 -- Splayed: a supporting part that is holding a target (KEEP_ANGLE enabled) is
 -- far from that target. Follows the actions in src/mipo-actions.lua: upright
@@ -441,24 +452,30 @@ local function onGround(instance)
     return false
 end
 
+local function standUpMipo(id, instance, now)
+    local torso = instance.parts.torso1
+    local held = lastHeld[id] and now - lastHeld[id] <= lib.healAfterRelease
+    if not torso or held or not isSplayed(instance) or not onGround(instance) then
+        splayedSince[id] = nil
+    elseif not splayedSince[id] then
+        splayedSince[id] = now
+    elseif now - splayedSince[id] >= lib.splayedFor
+        and (not lastStandUp[id] or now - lastStandUp[id] >= lib.standUpPause)
+        and not leaningOnOthers(instance) then
+        local mass = 0
+        for _, part in pairs(instance.parts) do mass = mass + part.body:getMass() end
+        torso.body:applyLinearImpulse(0, -mass * lib.standUpSpeed)
+        lastStandUp[id] = now
+        lib.stats.standUps = lib.stats.standUps + 1
+        lib.stats.standUpsByMipo[id] = (lib.stats.standUpsByMipo[id] or 0) + 1
+    end
+end
+
 local function standUpMipos(now)
+    local slice, k = stepCount % lib.slowCheckSteps, 0
     for id, instance in pairs(mipoRegistry.getAll()) do
-        local torso = instance.parts.torso1
-        local held = lastHeld[id] and now - lastHeld[id] <= lib.healAfterRelease
-        if not torso or held or not isSplayed(instance) or not onGround(instance) then
-            splayedSince[id] = nil
-        elseif not splayedSince[id] then
-            splayedSince[id] = now
-        elseif now - splayedSince[id] >= lib.splayedFor
-            and (not lastStandUp[id] or now - lastStandUp[id] >= lib.standUpPause)
-            and not leaningOnOthers(instance) then
-            local mass = 0
-            for _, part in pairs(instance.parts) do mass = mass + part.body:getMass() end
-            torso.body:applyLinearImpulse(0, -mass * lib.standUpSpeed)
-            lastStandUp[id] = now
-            lib.stats.standUps = lib.stats.standUps + 1
-            lib.stats.standUpsByMipo[id] = (lib.stats.standUpsByMipo[id] or 0) + 1
-        end
+        k = k + 1
+        if k % lib.slowCheckSteps == slice then standUpMipo(id, instance, now) end
     end
 end
 
@@ -508,13 +525,35 @@ local function hopOut(idA, idB)
     end
 end
 
+-- [pairKey] = { a, b, step }: the hooks seen, a slice of the Mipos per step (all at once
+-- was a ~6 ms step with 20 Mipos); a pair counts as hooked until a whole round of slices
+-- has gone by without seeing it again.
+local hookSeen = {}
+
+local function lookForHooks()
+    local slice, k = stepCount % lib.slowCheckSteps, 0
+    for _, owner in pairs(mipoRegistry.getAll()) do
+        k = k + 1
+        if k % lib.slowCheckSteps == slice then
+            for _, hook in ipairs(hooksOf(owner, {})) do
+                local key, a, b = pairKey(hook.a.id, hook.b.id)
+                hookSeen[key] = { a = a, b = b, step = stepCount }
+            end
+        end
+    end
+end
+
 local function untangleMipos(now)
+    lookForHooks()
     if now - lastTangleCheck < lib.untangleCheckEvery then return end
     lastTangleCheck = now
     local hooked = {}
-    for _, hook in ipairs(lib.hooks()) do
-        local key, a, b = pairKey(hook.a.id, hook.b.id)
-        hooked[key] = { a = a, b = b }
+    for key, seen in pairs(hookSeen) do
+        if stepCount - seen.step <= lib.slowCheckSteps then
+            hooked[key] = seen
+        else
+            hookSeen[key] = nil
+        end
     end
     for key, t in pairs(tangles) do
         if t.untilT then
@@ -557,21 +596,22 @@ end
 function lib.update()
     if not state.physicsWorld then return end
     local now = love.timer.getTime()
+    stepCount = stepCount + 1
     markHeldMipos(now)
     if lib.standUp then standUpMipos(now) end
     if lib.untangle then untangleMipos(now) end
     if not lib.unwind and not lib.heal and not lib.unstick then return end
-    local revolute, limited = {}, {}
-    for _, joint in ipairs(state.physicsWorld:getJoints()) do
-        if joint:getType() == JT.REVOLUTE and isMipoJoint(joint) then
+    local revolute, limited, held = {}, {}, {}
+    for id, instance in pairs(mipoRegistry.getAll()) do
+        local recentlyHeld = wasHeld(id, now)
+        eachRevolute(instance, function(joint)
             revolute[#revolute + 1] = joint
             if joint:areLimitsEnabled() then limited[#limited + 1] = joint end
-        end
+            if recentlyHeld then held[#held + 1] = joint end
+        end)
     end
     if lib.heal then
-        for _, joint in ipairs(revolute) do
-            if recentlyHeld(joint, now) then healJoint(joint) end
-        end
+        for _, joint in ipairs(held) do healJoint(joint) end
     end
     if lib.unwind then unwindJoints(limited) end
     if lib.unstick then unstickJoints(revolute, now) end

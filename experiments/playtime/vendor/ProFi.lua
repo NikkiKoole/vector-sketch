@@ -205,11 +205,13 @@ function ProFi:shouldReturn()
 end
 
 function ProFi:getFuncReport(funcInfo)
-    local title = self:getTitleFromFuncInfo(funcInfo)
-    local funcReport = self.reportsByTitle[title]
+    -- keyed by the function itself: one row per function (not per call-site name), and no
+    -- string.format on every call, which made the profiler slower than what it measured
+    local key = funcInfo.func or self:getTitleFromFuncInfo(funcInfo)
+    local funcReport = self.reportsByTitle[key]
     if not funcReport then
         funcReport = self:createFuncReport(funcInfo)
-        self.reportsByTitle[title] = funcReport
+        self.reportsByTitle[key] = funcReport
         table.insert(self.reports, funcReport)
     end
     return funcReport
@@ -228,6 +230,10 @@ function ProFi:createFuncReport(funcInfo)
         ['title'] = self:getTitleFromFuncInfo(funcInfo),
         ['count'] = 0,
         ['timer'] = 0,
+        ['depth'] = 0,
+        ['source'] = funcInfo.short_src or 'C_FUNC',
+        ['name'] = funcInfo.name or 'anonymous',
+        ['line'] = funcInfo.linedefined or 0,
     }
     return funcReport
 end
@@ -343,6 +349,7 @@ function ProFi:resetReports(reports)
         report.count = 0
         report.inspections = nil
         report.callTime = nil -- <<< added this here
+        report.depth = 0
     end
 end
 
@@ -395,7 +402,9 @@ end
 
 function ProFi:onFunctionCall(funcInfo)
     local funcReport = ProFi:getFuncReport(funcInfo)
-    funcReport.callTime = getTime()
+    -- recursion: time from the outermost call only, or the inner calls reset the clock
+    if funcReport.depth == 0 then funcReport.callTime = getTime() end
+    funcReport.depth = funcReport.depth + 1
     funcReport.count = funcReport.count + 1
     if self:shouldInspect(funcInfo) then
         self:doInspection(self.inspect, funcReport)
@@ -404,7 +413,8 @@ end
 
 function ProFi:onFunctionReturn(funcInfo)
     local funcReport = ProFi:getFuncReport(funcInfo)
-    if funcReport.callTime then
+    if funcReport.depth > 0 then funcReport.depth = funcReport.depth - 1 end
+    if funcReport.callTime and funcReport.depth == 0 then
         funcReport.timer = funcReport.timer + (getTime() - funcReport.callTime)
         funcReport.callTime = nil -- <<< added here
     end
@@ -437,7 +447,7 @@ end
 getTime = os.clock
 
 onDebugHook = function(hookType)
-    local funcInfo = debug.getinfo(2, 'nS')
+    local funcInfo = debug.getinfo(2, 'nSf')
     if hookType == "call" then
         ProFi:onFunctionCall(funcInfo)
     elseif hookType == "return" then

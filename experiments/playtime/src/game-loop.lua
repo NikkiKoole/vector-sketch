@@ -107,8 +107,10 @@ function lib.createFixedTimestepRun(tickrate)
                 end
             end
 
-            if love.timer then
-                -- tiny sleep to yield + adaptive backoff under sustained load
+            -- tiny sleep to yield + adaptive backoff under sustained load. Not with vsync:
+            -- present() already waits, and the 1 ms (~1.2 on macOS) came out of a frame
+            -- that has to fit in 16.7 ms or drop to 30 fps
+            if love.timer and (adaptiveSleep > 0 or not (love.window and love.window.getVSync() ~= 0)) then
                 love.timer.sleep(0.001 + adaptiveSleep)
             end
         end

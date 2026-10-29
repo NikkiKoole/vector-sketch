@@ -90,6 +90,8 @@ end
 local _logger = require 'src.logger'      -- luacheck: ignore 211
 local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
 local prof = require 'vendor.jprof'
+-- The JIT stays off: turned on (2026-10-29, 13 Mipos) the game ran ~3x slower, 20 -> 6 fps.
+-- So everything runs on the interpreter; FFI is slow here too.
 if jit then jit.off() end                -- luacheck: ignore 113 (jit is a LuaJIT global)
 local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 
