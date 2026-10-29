@@ -117,6 +117,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 **Characters & scripting:**
 - `src/character-manager.lua` — character DNA system, body part assembly
 - `src/mipo-voice.lua` — Mipo squeaks, hmpfs, mouth flap, impact sounds; `src/mipo-chatter.lua` — idle mi… po… between Mipos
+- `src/mipo-band.lua` — the Mipos and the music: plays the music's 'sample' notes (Mipos sing pi/po), breath/doink in the puppetmaker style; `src/voice-lab.lua` — test bench for Mipo voices on the synth (settings → voice lab)
 - `src/script.lua` — per-scene Lua script loading and execution
 - `src/recorder.lua` — animation recording and playback
 

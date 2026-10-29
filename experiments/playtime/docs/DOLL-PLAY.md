@@ -189,6 +189,17 @@ recording and tuning happen; playtime gets a copy of the engine and the cut samp
     total mass (`mipoHopSpeed` 500, about 200 units high).
   - Impact sounds only fire on the first solve of a *new* contact that approaches
     faster than 350, and plonks are capped per Mipo. Tangled Mipos used to plonk nonstop.
+    Re-touches are quiet too (2026-10-29): two bodies that touched within 1.5 s only sound
+    again at 3000+ (a leg resting on a head jittered off and on, a 'new' contact every half
+    second; a still pile went from 1-3 plonks/s to ~0.5; `spec/mipo-crowd-sound_spec.lua`).
+  - *Mouths rest closed* (2026-10-29): most Mipos had their mouths open. A click near a
+    face (grabbing one by the head too) pulled a random face that stayed until the next
+    click; now it lasts 2 s and goes back to the Mipo's own mouth. Randomize picks rest
+    mouths from `mouthShapes.restShapes` (closed, M_B_P, mmm, smile, frown; it picked from
+    all 15, mostly open speaking shapes). Mouth flaps live on state (a hot reload froze
+    them open). `spec/mipo-mouth_spec.lua`.
+  - More in `PUPPETMAKER-SOUND.md`: hmpf on editing, mi-po chatter, a voice per Mipo, the
+    band's singing, the voice lab.
 - [ ] **V4. Lipsync**: don't port mipomi's `mouth/mouth.lua`. Playtime already
   has the same 15 shapes (`src/mouth-shapes.lua`), and the renderer reads
   the lip decals' `extra.curvePoints` every frame
