@@ -150,9 +150,23 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
   - Settings: density, height, height variation, colour back/front, front share, sprite set
     (`sprieten.png` atlas or `spriet1-8`), sway.
   - Copy the sprites into `textures/world/` (with the asset sizes measured first).
-- [ ] **G2. Blades that react.** Blades near a body (a Mipo's feet, a ball) bend away and
-  spring back. Per patch, query the bodies in its AABB, and per blade use a spring angle. A
-  hard landing flattens the grass for a moment. This is the Sago bit; neither old version had it.
+- [ ] **G2. Blades that react.** **Parked (Nikki, 2026-10-29: happy with the grass for now).** Blades near a body
+  (a Mipo's feet, a ball) bend away and spring back; a hard landing flattens them for a moment. This is
+  the Sago bit; neither old version had it. The approach, worked out 2026-10-29:
+  - Per blade a bend angle + bend speed (a damped spring toward a target, 0 when nothing is near),
+    kept in `src/grass.lua`'s cache next to the batches. The sway stays on top.
+  - Pushers: once per frame per patch, `world:queryBoundingBox` over the body's AABB raised by the grass
+    height. Dynamic bodies only (not the ground, not sensors), each turned into the grass body's local
+    space as a span: its fixture's left/right and how low it reaches. Blades are sorted along x, so
+    only the ones under a pusher are touched.
+  - Target bend: away from the pusher's centre, stronger nearer the middle and the deeper it reaches;
+    the pusher's sideways speed adds a kick, so walking through swishes.
+  - Flatten: a fast landing (downward speed, or `mipoVoice.onHardImpact` for Mipos) squashes the
+    blades under it (shorter, bent outward), recovering slower (~1-2 s) than the bend.
+  - Inspector: react on/off, stiffness, damping, push strength, flatten recovery.
+  - Specs: the spring settles, the push direction follows the side, blades outside a span are
+    untouched; in the app, drop a ball through the bridge and read the blade angles back.
+  - Open: should a finger or mouse dragged through the grass part it too (the pointer as one more pusher)?
 - [ ] **G3. tile-repeat as a ground skin.** An alpha setting instead of the fixed 140 (old
   scenes keep 140). An optional top band: a strip texture along the up-facing edges with the
   fill below, like downhill's road. A grass lip over dirt is then one attach.
@@ -160,8 +174,25 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
   `createCamData`, brady's `addLayer`). A `parallax` value 0..1 per backdrop (0 = fixed to the
   screen, 1 = moves with the world). It's a small change where `main.lua` draws backdrops, plus a slider in world
   settings. It's saved with the scene, with a default of 1 for old scenes.
-- [ ] **G5. Sky.** A gradient sky as a world setting (`../skies/SkyGradient.lua`, gamma-correct; or `../../lib/gradient.lua`'s presets), and later
-  day/night with sun/moon (downhill). Clouds come as parallax backdrops (G4).
+- [ ] **G5. Sky.** **Tried in an experiment first: `../sky-atmosphere/` (2026-10-29, Nikki: "looking
+  promising", still thinking it over).** What Nikki wants: one sky you can drag a Mipo up through, from
+  the ground's horizon through the atmosphere to black space and the moon, with day and night colours
+  in the same mix. The old skies couldn't: `lib/gradient.lua`'s 24 presets have only two colours each
+  (Puppetmaker 2 used preset 10, `#61d0cf` -> `#efeebc`; physics-testbed blended 10 <-> 22 for day/night).
+  The experiment:
+  - `palettes.lua`: colour stops over altitude (7 stops, black at `space` = 60000 up), one palette each
+    for night, dawn, day and dusk, all at the same stop heights, plus a timeline of the day. They blend
+    stop by stop in linear RGB (as `../skies/SkyGradient.lua` does). The day keeps Puppetmaker's
+    turquoise -> cream near the ground.
+  - A sky shader: each pixel takes its altitude from the camera and looks up its colour.
+  - Stars fade in with the night *and* with altitude (space is starry at noon). The sun rises and sets
+    on an arc, warmer near the horizon. The moon is small in the sky from the ground and slides into a
+    real one (a static body 120000 up) as you climb.
+  - Gravity fades out above the atmosphere; near the moon, the moon pulls. Clouds at 1500-14000 take
+    the sky's colour around them. The camera zooms out with altitude.
+  - `love . --selftest` sweeps a day while flying the Mipo to the moon (no errors).
+  Still to decide before it comes into Playtime: the colours, how high space and the moon are in a
+  Playtime scene, and whether the sky is a world setting (with a time of day) per scene.
 - [ ] **G6. Terrain tool.** A "hill" shape from noise (amplitude, frequency, octaves, seed,
   length) that becomes a normal editable body (a polygon or a ribbon). It checks `WORLD-METRICS.md` and
   flattens the stretches marked as standing spots (slope ≤5°, ≥650 wide). The endless mode is
