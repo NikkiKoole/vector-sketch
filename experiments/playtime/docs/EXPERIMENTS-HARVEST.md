@@ -116,6 +116,12 @@ accelerate / brake / chain-lift / flip, carts follow by arc length (`Track:getPo
 
 ## 5. Pipeline, memory, tools
 
+- [x] **Bake OMP at half size** (2026-10-29): `shrinkFactor` 2 in `box2d-draw-textured.lua`.
+  Measured in `experiments/omp-bench` on the dollhouse Mipos: 4.5 → 1.1 MB per Mipo
+  (50 Mipos: 225 → 56 MB baked, plus 31 MB of shared sources), bakes 28 → 17 ms per Mipo,
+  no frame-time change on the Mac; only close up the grain is a little softer. Patches stay
+  put (`--patch-check`). Still open from the lab: release-on-rebake (small: +7 → +0.6 MB while
+  randomizing), r8 sources (the fixed 31 MB), shader compositing, markings.
 - **R8 masks** (S–M): `r8/main.lua:247 makeR8Image` stores masks single-channel, ¼ the VRAM, for the
   ~290 OMP textures and the "caches grow" known issue. Has a bug (`a * 255` on a byte, inverted
   alpha): fix before use.

@@ -294,7 +294,12 @@ tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = safeLoadImage('textures/shapes6.png')
 local maskTex = safeLoadImage('textures/shapes6-mask.png')
 local imageCache = {}
-local shrinkFactor = 1
+-- Baked OMP images are 1/shrinkFactor of the source size. 2 = a quarter of the texture
+-- memory (4.5 -> 1.1 MB per Mipo) and ~40% faster bakes; at the dollhouse zoom the
+-- sources carry ~4.5x more pixels than reach the screen, so it only shows close up as
+-- slightly softer grain. Patches stay put (their own bake shrinks too). Measured in
+-- experiments/omp-bench (results/results.md, patch-check).
+local shrinkFactor = 2
 
 -- Skinning mode for MESHUSERT deformation (the mesh-with-influences path).
 --   true  = Dual Quaternion Skinning — preserves volume, avoids candy-wrapper at joints
