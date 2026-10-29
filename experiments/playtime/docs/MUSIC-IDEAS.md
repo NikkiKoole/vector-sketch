@@ -28,7 +28,15 @@ Notes to pick up now and then, with no deadline. The music lives in `src/music.l
     - 15% of the chords float to a root outside the key (bVII, bVI, bIII), the Puppetmaker trick.
     - Every strum is humanized: gaps of 18–58 ms each ×0.6–1.5, a lag before the top two 45% of the time, a down-strum 15%, a slow harp roll at the top of the loop. A lighter re-strum of the top three comes on 3 or the and-of-2 (40%).
     - Under it: a low root, a high pentatonic answer 25% of the time (never on a floating chord), and Puppetmaker's sparse hand drums when the band plays.
-  - Everything lets go at the change (rung on, these open shapes rubbed: 20–32/min before, ≤0.3 after). In the set. Waiting on an ear pass.
+  - Everything lets go at the change (rung on, these open shapes rubbed: 20–32/min before, ≤0.3 after). In the set.
+  - **Ear pass (2026-10-29), Nikki:** "pretty good", "it's too random, but I like the direction". It needs a real vibe, or something built with it. Parked here; ideas for next time:
+    - **Commit instead of rolling.** Every bar rolls its own dice now (strum gaps, lag, down-strum, re-strum, float, answer), which is the lesson from lofi.c we skipped. Pick the strum feel **per song** (one gap, one lag habit, one re-strum spot) and keep it. Leave only the micro-timing loose.
+    - **Plan the floats.** Put the outside chord on a fixed spot in the loop (bar 4 of every 4, say), so it becomes the song's signature move rather than a surprise.
+    - **A rhythm that comes back.** The strums and re-strums as a pattern seeded by its place, like the tune is elsewhere, so every A strums the same way.
+    - **A form and a hook.** Intro, A and B, outro, with the planner's own tune (seeded by place, on vibes or the kalimba) over the strums, or the high answers turned into a real two-bar motif.
+    - **Something to lean on.** A groove under it: a soft kick and shaker, a moving bass, or a guitar-like pattern (`INSTR_GUITAR` strumming the same shapes). Or set it inside another style as its signature: island's or lofi's B, or a song's intro.
+    - **Vibes to aim at:** a K.K. Slider-ish campfire guitar, Khruangbin's slow and dry, Hiroshi Yoshimura's ambient Rhodes, Mac DeMarco's woozy chords.
+    - Options to expose once it has a vibe: the voice (Rhodes, felt piano, nylon guitar, harp), strum speed, float odds and shapes.
 - [ ] **Old Sesame Street jazz**: a 70s small band, warm and playful, with a walking bass.
 - [ ] **Dominique Dumont**: lo-fi French bedroom pop. Toy drum machine, wobbly keys, a sleepy hum.
 - [ ] **Library music**: 60s/70s production music (KPM, De Wolfe). Short, clear moods, a lot of character on a small budget.
