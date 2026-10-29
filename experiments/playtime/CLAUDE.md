@@ -138,7 +138,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
   zOffset, behaviors, label }
 ```
 
-**sfixture** — special sensor fixture on a body (9 subtypes: anchor, snap, texfixture, connected-texture, meshusert, trace-vertices, resource, bone, script). Stored as `fixture:getUserData()` with `{ type, subtype, id, label, extra }`.
+**sfixture** — special sensor fixture on a body (subtypes in `src/subtypes.lua`: anchor, snap, texfixture, connected-texture, tile-repeat, grass, meshusert, uvusert, trace-vertices, resource, decal, light). Stored as `fixture:getUserData()` with `{ type, subtype, id, label, extra }`.
 
 **Fixture ordering invariant**: all fixtures with userData (sfixtures) must come before fixtures without userData (collision shapes) on each body. Validated by `fixtures.hasFixturesWithUserDataAtBeginning()`.
 

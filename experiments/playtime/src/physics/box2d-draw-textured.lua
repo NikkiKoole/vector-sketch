@@ -11,6 +11,7 @@ local mathutils = require 'src.math-utils'
 local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
 local subtypes = require 'src.subtypes'
+local grass = require('src.grass')
 local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local spineMesh = require 'src.spine-mesh'
@@ -2016,6 +2017,16 @@ local function createDrawables(bodies)
                 })
             end
 
+            if ud and subtypes.is(ud, subtypes.GRASS) then
+                -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                local thing = body:getUserData() and body:getUserData().thing
+                table.insert(drawables, { type = 'grass', layer = 'back', z = composedZ,
+                    extra = ud.extra, thing = thing, body = body })
+                table.insert(drawables, { type = 'grass', layer = 'front', z = grass.FRONT_Z + (ud.extra.zOffset or 0),
+                    extra = ud.extra, thing = thing, body = body })
+            end
+
             if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 table.insert(drawables,
@@ -2918,6 +2929,10 @@ function lib.drawTexturedWorld(world)
             if ctPlasticineOn or ctHairsOn then
                 love.graphics.setShader()
             end
+        end
+
+        if drawables[i].type == subtypes.GRASS then
+            grass.draw(drawables[i].extra, drawables[i].thing, drawables[i].body, drawables[i].layer)
         end
 
         if drawables[i].type == subtypes.TILE_REPEAT then

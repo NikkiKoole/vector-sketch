@@ -36,6 +36,15 @@ fixtureTypes[subtypes.ANCHOR]            = simpleEntry(subtypes.ANCHOR)
 fixtureTypes[subtypes.CONNECTED_TEXTURE] = simpleEntry(subtypes.CONNECTED_TEXTURE)
 fixtureTypes[subtypes.TRACE_VERTICES]    = simpleEntry(subtypes.TRACE_VERTICES)
 fixtureTypes[subtypes.TILE_REPEAT]       = simpleEntry(subtypes.TILE_REPEAT)
+fixtureTypes[subtypes.GRASS] = {
+    subtype = subtypes.GRASS,
+    getSize = function(cfg) return cfg.radius, cfg.radius end,
+    getExtra = function()
+        local extra = { zOffset = 0, zGroupOffset = 0 }
+        for k, v in pairs(require('src.grass').defaults) do extra[k] = v end
+        return extra
+    end,
+}
 fixtureTypes[subtypes.RESOURCE] = simpleEntry(subtypes.RESOURCE, {
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
 })

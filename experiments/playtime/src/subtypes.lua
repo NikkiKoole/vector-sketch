@@ -12,6 +12,7 @@ lib.UVUSERT           = 'uvusert'
 lib.MESHUSERT         = 'meshusert'
 lib.DECAL             = 'decal'
 lib.LIGHT             = 'light'
+lib.GRASS             = 'grass'
 
 -- All known subtypes (current era) — used by migration
 lib.ALL = {
@@ -26,6 +27,7 @@ lib.ALL = {
     [lib.MESHUSERT]         = true,
     [lib.DECAL]             = true,
     [lib.LIGHT]             = true,
+    [lib.GRASS]             = true,
 }
 
 --- Check whether a fixture userData has a given subtype.

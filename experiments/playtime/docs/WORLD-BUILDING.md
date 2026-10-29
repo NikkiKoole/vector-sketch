@@ -131,7 +131,16 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
 
 ## 3. Order to build
 
-- [ ] **G1. Grass edge sfixture.** An attach kind (looks → "grass") on any ground body:
+- [x] **G1. Grass edge sfixture.** **Built 2026-10-29, Nikki likes it.** `src/grass.lua`,
+  subtype `grass` (rail → attach → looks → grass), inspector rows in `src/sfixture-params.lua`, drawn from
+  `createDrawables` in `box2d-draw-textured.lua` as two drawables (back at its own z, front at
+  `grass.FRONT_Z`). Atlas `textures/world/sprieten.png`. Spec: `spec/grass_spec.lua` (placement).
+  The sway runs on the CPU (`SpriteBatch:set` per blade per frame), not in a shader: G2 needs a
+  spring angle per blade anyway, and a few hundred `set`s are cheap. Height comes from noise (clumps);
+  sprite, lean, phase and front/back from a hash (noise bunches around 0.5, so a 25% front share
+  gave 2%). `thing.vertices` aren't always body-local (a ribbon's sit around their centroid), so the
+  outline is moved to its centroid first, as tile-repeat does. Known limit: a body that keeps rotating rebuilds its batches every frame.
+  The plan was:
   - Blades along the edges whose normal points up (a settable max angle). The noise for height
     and sprite uses the blade's world x, as downhill does, so a scene looks the same every time it loads.
   - A back layer behind the Mipos and a front layer in front. Both go through the z-sort, so
@@ -164,8 +173,19 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
   five Mipos dropping in (Puppetmaker's recipe). It's also a candidate overworld for `WORLDS-AND-DOORS.md`.
 
 ## Open questions
-- Should G1 be one sfixture that draws in two z-layers, or two sfixtures? It depends on how the
-  z-sort takes a drawable from one sfixture at two depths.
-- Which blade sprites? Look at `sprieten.png` vs `spriet1-8.png` side by side (Nikki's call).
+- ~~One sfixture or two for the two layers?~~ **One** (checked 2026-10-29). `createDrawables` in
+  `src/physics/box2d-draw-textured.lua` may push several drawables per sfixture: a lower lip DECAL
+  already adds a `mouth-backdrop` at `z - 2`. All drawables get one `table.sort` by `z`
+  (`sorter`, `:1704`), where `z = zGroupOffset*1000 + zOffset`. Mipos get z-groups 1, 2, 3…
+  (`allocateZGroupOffset`, `character-manager.lua:46`) with parts at zOffset ~100–500, and scenery
+  sits in group 0. So the **back** layer uses the sfixture's own z (group 0: behind every Mipo), and
+  the **front** layer needs a z above every Mipo group: a fixed high band (e.g. 1e6 + zOffset), not
+  the next group. Untextured bodies are drawn before the textured pass (`main.lua:436`), so grass
+  is always on top of them.
+- ~~Which blade sprites?~~ **`sprieten.png`** (Nikki, 2026-10-29). It's the same eight drawings as
+  `spriet1-8.png` (the alpha differs ~2.5%; physics-testbed's `world/spriet1.png` is byte-identical to
+  puppet-maker2's), cleaned of specks, light so a tint comes out bright, one image for one
+  SpriteBatch, with pivots already measured. More variety (tufts, other shapes) would help more than
+  either set; a second batch can go in the same atlas.
 - Should endless terrain fight the "everything stays where you put it" rooms idea? Probably keep it for
   travel scenes only.

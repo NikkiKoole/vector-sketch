@@ -253,7 +253,7 @@ lib.groups = {
         default = 'snap',
         sections = {
             { title = 'play', 'snap', 'anchor' },
-            { title = 'looks', 'texfixture', 'connected-texture', 'tile-repeat', 'light' },
+            { title = 'looks', 'texfixture', 'connected-texture', 'tile-repeat', 'grass', 'light' },
             { title = 'skin', 'resource', 'meshusert', 'uvusert', 'trace-vertices' },
         },
         onPress = startAttach,

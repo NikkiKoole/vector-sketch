@@ -108,7 +108,7 @@ describe('panels fit the window (1200x768, fully open)', function()
     end
 
     for _, subtype in ipairs({ 'snap', 'anchor', 'texfixture', 'connected-texture', 'trace-vertices',
-        'tile-repeat', 'resource', 'uvusert', 'meshusert', 'light' }) do
+        'tile-repeat', 'resource', 'uvusert', 'meshusert', 'light', 'grass' }) do
         it('sfixture panel: ' .. subtype, function()
             local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 100, height = 100 })
             local fixture = fixtures.createSFixture(thing.body, 0, 0, subtype, { radius = 20, width = 40, height = 40 })

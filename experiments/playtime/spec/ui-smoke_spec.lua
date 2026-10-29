@@ -275,7 +275,7 @@ describe("UI smoke tests", function()
 
     describe("drawSelectedSFixture", function()
         local subtypes = { 'snap', 'anchor', 'texfixture', 'connected-texture',
-                           'trace-vertices', 'tile-repeat', 'resource', 'uvusert', 'meshusert' }
+                           'trace-vertices', 'tile-repeat', 'resource', 'uvusert', 'meshusert', 'grass' }
 
         for _, subtype in ipairs(subtypes) do
             it("renders with " .. subtype .. " sfixture selected", function()
