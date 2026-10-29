@@ -15,6 +15,7 @@ local jointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local CM = require('src.character-manager')
 local subtypes = require('src.subtypes')
+local spineSkin = require('src.spine-skin')
 
 -- the game's step at this meter (60 a second at 100 px per metre, 85 at 200): at 1/60 the
 -- tall P4re5 sagged onto its knees on 200 and hopped back up over and over
@@ -145,6 +146,43 @@ describe('the spine room', function()
                 'still bent ' .. math.deg(joint:getJointAngle()) .. ' degrees')
             local torso = instance.parts.torso1.body
             assert.is_true(math.abs(torso:getAngle()) < math.rad(20), 'fell over')
+        end)
+
+        it('bends the picture with the bands (S2)', function()
+            local bones = spineSkin.bonesOf(instance.parts.torso1.body)
+            assert.is_truthy(bones)
+            assert.is_nil(spineSkin.bonesOf(instance.parts.torso2.body))
+            local t1, t2 = instance.parts.torso1.body, instance.parts.torso2.body
+            -- straight: put the top band exactly on its rest place
+            local function placeTop(angle)
+                local ax, ay = spineJoint():getAnchors()
+                local mx, my = t1:getWorldPoint(0, bones.middles[2])
+                local dx, dy = mx - ax, my - ay
+                local c, s2 = math.cos(angle), math.sin(angle)
+                t2:setAngle(t1:getAngle() + angle)
+                t2:setPosition(ax + dx * c - dy * s2, ay + dx * s2 + dy * c)
+            end
+            placeTop(0)
+            local top, bottom = bones.middles[2] * 1.4, bones.middles[1] - (bones.middles[2] - bones.middles[1]) * 0.4
+            local rest = { 20, top, 20, bottom }
+            local bent = spineSkin.deform(rest, bones)
+            for k = 1, 4 do assert.is_near(rest[k], bent[k], 0.01) end
+            -- the top band turned 10 degrees: the top follows it, the bottom stays
+            placeTop(math.rad(10))
+            bent = spineSkin.deform(rest, bones)
+            local wx, wy = t2:getWorldPoint(20, top - bones.middles[2])
+            local ex, ey = t1:getLocalPoint(wx, wy)
+            assert.is_near(ex, bent[1], 0.01)
+            assert.is_near(ey, bent[2], 0.01)
+            assert.is_near(rest[3], bent[3], 0.01)
+            assert.is_near(rest[4], bent[4], 0.01)
+            assert.is_true(math.abs(bent[1] - rest[1]) > 5, 'the top did not move')
+            -- and it draws
+            local canvas = love.graphics.newCanvas(64, 64)
+            love.graphics.setCanvas({ canvas, stencil = true })
+            local ok, err = pcall(require('src.physics.box2d-draw-textured').drawTexturedWorld, world)
+            love.graphics.setCanvas()
+            assert(ok, err)
         end)
 
         it('turned off again: whole torsos that each keep their angle', function()

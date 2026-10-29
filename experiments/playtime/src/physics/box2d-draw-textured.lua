@@ -20,6 +20,7 @@ local spineMesh = require 'src.spine-mesh'
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 local mipoRegistry = require('src.mipo-registry')
+local spineSkin = require('src.spine-skin')
 
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
 local mouthShapes = require('src.mouth-shapes')
@@ -1831,6 +1832,8 @@ local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
     -- print('jo!')
     local img = getLoveImage('textures/' .. url)
     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
+    local bones = spineSkin.bonesOf(texfixture:getBody()) -- a spine's bodyhair bends with it
+    if bones then vertices = spineSkin.deform(vertices, bones) end
 
     if (vertices and img) then
         local body = texfixture:getBody()
@@ -1851,6 +1854,13 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
     local img = ompImage
     if vertices and img then
         local body = texfixture:getBody()
+        local bones = #vertices == 8 and spineSkin.bonesOf(body) -- a spine's torso picture bends
+        if bones then
+            love.graphics.setColor(1, 1, 1, 1)
+            if extra.main.tint then love.graphics.setColor(lib.hexToColor(extra.main.tint)) end
+            spineSkin.drawGrid(img, vertices, bones, body, extra)
+            return
+        end
         -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
         local sx = 1 --ww / imgw
         local sy = 1 --hh / imgh

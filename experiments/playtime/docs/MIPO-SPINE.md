@@ -23,7 +23,7 @@ Optional per Mipo, like potato head and neck segments.
 slices of one torso shape, drawn as one picture. Off (default) = today's stack. Editor: a
 'spine' checkbox next to the torso segments slider; saved with the creation like the rest.
 
-**S1 Physics: slice the torso** (one session)
+**S1 Physics: slice the torso** (done 2026-10-29)
 - Cut torso1's outline (its shape8) into N horizontal bands at even heights
   (`mathutils.slicePolygon`); band i is torso_i. Each band needs an 8-point outline in the
   shape8 order, since attaching arms/legs/neck reads those points (`ownAttach` `topEdge`):
@@ -33,14 +33,19 @@ slices of one torso shape, drawn as one picture. Off (default) = today's stack. 
   then straightens. KEEP_ANGLE only on torso1; the upper bones ride on the spring.
 - Spec: a spined Mipo stands as still as one without a spine (standing_spec), bends less
   than the limit, is straight again within a second after a drop, no explosions in a pile.
+- Done differently: not a torque spring (sized for everything above the joint but put on
+  the light band, it whipped the band into its limit and tore the joint) but the joint's
+  motor, toward straight, with at most 1.5x the weight torque above the joint.
 
-**S2 Drawing: one picture over the bones** (one session)
-- Draw torso1's OMP picture as a grid mesh (about 3 x 8) over the whole torso at rest; the
-  other segments draw no picture of their own.
+**S2 Drawing: one picture over the bones** (done 2026-10-29, `src/spine-skin.lua`)
+- Draw torso1's OMP picture as a grid mesh (3 x 12) over the whole torso at rest; the
+  other segments draw no picture of their own. Skin patches are in that picture, so they
+  bend too; bodyhair's outline points bend with the same weights.
 - Weights by height: each vertex follows its own bone, blended over a band around each cut
   (no crease). Rest pose and weights made once when the Mipo is built (bindVerts,
   bindAngle), deformed every frame with the DQS math: one Mesh kept and setVertices'd,
-  not a new mesh per frame.
+  not a new mesh per frame. (Done with plain linear blending from the bands' rest places
+  in the picture, no bind step: fine for spine angles.)
 
 **S3 What sits on the torso** (half a session to one)
 - Skin patches: each follows the bone it's over (rigid). Bodyhair (drawn around the
