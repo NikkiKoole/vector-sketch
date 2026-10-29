@@ -84,8 +84,11 @@ Squish and texture both work. What the real thing has to carry over from it:
      body was; a jump between steps is an editor move). Size, rim points or bg rebuild the rim;
      the other settings apply live.
    - Toys shelf: 'blob' (`props.makeBlob`); attach rail: 'softbody' under looks; inspector panel.
-   - Still to do: retire the old `playWithSoftbodies` path (main.lua, input-manager,
-     object-manager); a squashed blob saves as unsquashed.
+   - The old `playWithSoftbodies` path and `vendor/loveblobs` are gone (2026-10-29), as is
+     the 'soft-surface' button on the click-polygon prompt.
+   - Still to do: a squashed blob saves as unsquashed; a workflow to turn an arbitrary shape
+     (a drawn polygon, an existing body) into a blob: the outline would come from the shape
+     instead of a shape8 picture.
 3. **Later**: puddings that stack; a blob head on a Mipo (a joint to the blob body); a
    soft-surface floor (jelly floor, bouncy castle) through the same sfixture idea; floating
    in water (playtime-a1 is sketching water containers).

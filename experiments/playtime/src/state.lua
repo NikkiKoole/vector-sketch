@@ -102,8 +102,6 @@ state.world = {
     mouseForce = 500000,
     mouseDamping = 0.5,
     speedMultiplier = 1.0,
-    softbodies = {},
-    playWithSoftbodies = false,
     showTextures = true,
     showDebugIds = false,
 }

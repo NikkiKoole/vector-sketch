@@ -279,20 +279,9 @@ This means scripts can do **anything** the main app can do, which is powerful bu
 
 ---
 
-## 6. Soft Bodies (loveblobs) — Disabled Feature
+## 6. Soft Bodies — RESOLVED
 
-### What's there
-
-- `vendor/loveblobs/` contains `softbody.lua`, `softsurface.lua`, `util.lua`
-- `object-manager.lua:finalizePolygonAsSoftSurface()` creates soft surfaces from drawn polygons
-- The UI button for soft bodies exists but is **commented out** in `playtime-ui.lua:3228`:
-  ```lua
-  -- if ui.button(x, y, 260, 'blob') then
-  ```
-
-### Status
-
-Partially integrated, disabled at the UI level. Unknown if it still works end-to-end. Could be a feature that was abandoned or is waiting for polish.
+The old `vendor/loveblobs` path (`playWithSoftbodies`, the 'soft-surface' polygon button) was removed 2026-10-29. Blobs are now a SOFTBODY sfixture, `src/blob.lua`; see `docs/BLOBS.md`.
 
 ---
 
@@ -410,7 +399,7 @@ Even after this analysis, these remain opaque without running the app:
 3. **Which scenes are "good" test cases** — There are 40+ scene files but no indication which ones exercise which features
 4. **What "looks wrong"** — The original motivation for some code (like the UV matching workaround) was probably "it looked wrong" — we can't evaluate visual correctness
 5. **Interaction feel** — How dragging, snapping, and editing feel in practice. Timing, responsiveness, edge cases.
-6. **Soft body behavior** — Whether loveblobs integration actually produces good-looking results
+6. **Soft body behavior** — Whether blobs (`src/blob.lua`) look and feel right in real scenes
 7. **Script behavior at runtime** — Whether catapult/torso/etc scripts work correctly with current code
 
 These are exactly the gaps the tooling ideas (TOOLING-IDEAS.md) were designed to address — screenshot+metadata, state dumps, and validators can bridge much of this.

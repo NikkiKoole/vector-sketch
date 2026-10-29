@@ -87,7 +87,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 - `main.lua` — entry point, keybindings, UI callbacks
 - `src/` — core modules (61 files across src/, src/ui/, src/physics/)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
-- `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, loveblobs, etc.)
+- `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
 - `textures/` — character textures (~290 files, OMP system: outline + mask + pattern)
 

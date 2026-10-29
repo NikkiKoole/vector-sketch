@@ -207,12 +207,10 @@ function lib.drawUI()
 
 
     if modes.is(modes.DRAW_CLICK) then
-        local clicked = ui.topPrompt('• click to place points •', { 'finalize', 'soft-surface', 'uv-mappert' }, 140)
+        local clicked = ui.topPrompt('• click to place points •', { 'finalize', 'uv-mappert' }, 140)
         if clicked == 'finalize' then
             logger:info('finalize clicked')
             objectManager.finalizePolygon()
-        elseif clicked == 'soft-surface' then
-            objectManager.finalizePolygonAsSoftSurface()
         elseif clicked == 'uv-mappert' then
             local thing = objectManager.finalizePolygon()
             if thing and thing.body then

@@ -16,7 +16,6 @@ local selectrect = require 'src.selection-rect'
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local modes = require 'src.modes'
-local blob = require 'vendor.loveblobs'
 local ui = require('src.ui.all')
 local fixtures = require 'src.fixtures'
 local cdt = require 'src.cdt'
@@ -637,17 +636,6 @@ function lib.handleMousePressed(x, y, button, istouch)
     end
     if not istouch and button == 2 then
         handlePointer(x, y, 'mouse', 'pressed', button)
-    end
-
-    if state.world.playWithSoftbodies and button == 2 then
-        local cx, cy = cam:getWorldCoordinates(x, y)
-
-
-        local b = blob.softbody(state.physicsWorld, cx, cy, 102, 1, 1)
-        b:setFrequency(3)
-        b:setDamping(0.1)
-
-        table.insert(state.world.softbodies, b)
     end
 end
 

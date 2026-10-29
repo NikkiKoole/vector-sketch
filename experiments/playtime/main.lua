@@ -93,7 +93,6 @@ local prof = require 'vendor.jprof'
 if jit then jit.off() end                -- luacheck: ignore 113 (jit is a LuaJIT global)
 local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
 
-local blob = require 'vendor.loveblobs'
 local Peeker = require 'vendor.peeker'
 local recorder = require 'src.recorder'
 local ui = require('src.ui.all')
@@ -116,7 +115,7 @@ local mipoBand = require('src.mipo-band')
 local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
-local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures); 'blob' above is the old loveblobs
+local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures)
 local liquid = require('src.liquid')
 local signals = require('src.signals')
 local doors = require('src.doors')
@@ -240,24 +239,6 @@ function love.load(_args)
 
     --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
 
-    if state.world.playWithSoftbodies then
-        local softBody = blob.softbody(state.physicsWorld, 500, 0, 102, 1, 1)
-        softBody:setFrequency(3)
-        softBody:setDamping(0.1)
-        --softBody:setFriction(1)
-
-        table.insert(state.world.softbodies, softBody)
-        local points = {
-            0, 500, 800, 500,
-            800, 800, 0, 800
-        }
-        local softSurface = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
-        table.insert(state.world.softbodies, softSurface)
-        softSurface:setJointFrequency(2)
-        softSurface:setJointDamping(.1)
-        --b:setFixtureRestitution(2)
-        -- b:setFixtureFriction(10)
-    end
 
     -- if state.backdrop and state.backdrop.url then
     --     state.backdrop.image = love.graphics.newImage(state.backdrop.url)
@@ -304,11 +285,6 @@ function love.update(dt)
     prof.push('physics-update')
     blobs.beforeStep(state.world.paused, scaled_dt) -- blob rims: build/follow, pressure (src/blob.lua)
     if not state.world.paused then
-        if state.world.playWithSoftbodies then
-            for _, v in ipairs(state.world.softbodies) do
-                v:update(scaled_dt)
-            end
-        end
         local velocityiterations = 8 --* 2
         local positioniterations = 3 --* 2 -- 3
         -- for i = 1, 1 do

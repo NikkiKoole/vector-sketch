@@ -2043,7 +2043,7 @@ local function createDrawables(bodies)
         local fixtures = body:getFixtures()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
-            if type(ud) ~= 'table' then -- vanwege softbodies bullshit
+            if type(ud) ~= 'table' then -- only table userData is an sfixture
                 ud = nil
             end
             if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then

@@ -9,7 +9,6 @@ local jointHandlers = require 'src.joint-handlers'
 local utils = require 'src.utils'
 local mathutils = require 'src.math-utils'
 local fixtures = require 'src.fixtures'
-local blob = require 'vendor.loveblobs'
 local state = require 'src.state'
 local modes = require 'src.modes'
 local ST = require 'src.shape-types'
@@ -17,24 +16,6 @@ local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local subtypes = require('src.subtypes')
 -- local polyline = require 'src.polyline' -- unused
-
-function lib.finalizePolygonAsSoftSurface()
-    if #state.interaction.polyVerts >= 6 then
-        local points = state.interaction.polyVerts
-        local b = blob.softsurface(state.physicsWorld, points, 120, "dynamic")
-        table.insert(state.world.softbodies, b)
-        b:setJointFrequency(10)
-        b:setJointDamping(10)
-    else
-        logger:warn('finalizePolygonAsSoftSurface: not enough points for a surface')
-    end
-    -- Reset the drawing state
-
-    modes.clear()
-    state.interaction.capturingPoly = false
-    state.interaction.polyVerts = {}
-    state.interaction.lastPolyPt = nil
-end
 
 -- function lib.finalizePolygonAsBlob()
 

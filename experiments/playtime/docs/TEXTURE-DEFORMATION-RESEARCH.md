@@ -44,9 +44,9 @@ Located in `src/physics/box2d-draw-textured.lua`:
 
 Works well for individual limbs (arms, tail, tentacles) but can't handle a whole-body scan — it's a 1D ribbon, not a 2D mesh. As of 2026-04-13, `texturedCurve` has per-sample miter-limit width clamping to prevent bow-tie artifacts at sharp bends (e.g. arm hair at flexed elbow/knee).
 
-### 4. `vendor/loveblobs/` — soft body physics (disabled)
+### 4. Soft bodies — `src/blob.lua` (SOFTBODY sfixture)
 
-Spring-based blob deformation. Wrong tool for skeletal skinning.
+Blob deformation (rim + pressure + shape matching, MVC mesh). Wrong tool for skeletal skinning. (The old `vendor/loveblobs` was removed 2026-10-29.)
 
 ---
 

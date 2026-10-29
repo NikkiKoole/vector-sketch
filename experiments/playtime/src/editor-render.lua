@@ -7,7 +7,6 @@ local state = require 'src.state'
 local modes = require 'src.modes'
 local fixtures = require 'src.fixtures'
 local box2dDraw = require 'src.physics.box2d-draw'
-local shapes = require 'src.shapes'
 local mathutils = require 'src.math-utils'
 local camera = require 'src.camera'
 local cam = camera.getInstance()
@@ -159,27 +158,6 @@ function lib.renderActiveEditorThings()
         box2dDraw.drawJointAnchors(state.selection.selectedJoint)
     end
 
-    local lw = love.graphics.getLineWidth()
-    for i, v in ipairs(state.world.softbodies) do
-        if (tostring(v) == "softbody") then
-            love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
-            --v:draw("fill", false)
-            love.graphics.setColor(50 * i / 255, 255 / 255, 200 * i / 255, .8)
-        else
-            love.graphics.setColor(50 * i / 255, 100 / 255, 200 * i / 255, .8)
-        end
-
-        if v.centerBody and not v.centerBody:isDestroyed() then
-            local polygon = v:getPoly()
-
-            local tris = shapes.makeTrianglesFromPolygon(polygon)
-            for ti = 1, #tris do
-                love.graphics.polygon('fill', tris[ti])
-            end
-        end
-    end
-    love.graphics.setLineWidth(lw)
-    love.graphics.setColor(1, 1, 1)
 
     -- draw to be drawn polygon
     if modes.is(modes.DRAW_CLICK)
