@@ -540,6 +540,32 @@ describe("character-manager", function()
         end)
     end)
 
+    describe("part masses (balanceMasses)", function()
+        it("a randomized Mipo's head weighs at most headMaxShare of its torso", function()
+            local heavy = 0
+            for seed = 1, 20 do
+                love.math.setRandomSeed(seed * 37)
+                math.randomseed(seed * 37)
+                local world = makeWorld()
+                registry.reset()
+                mipoRegistry.reset()
+                local instance = createHumanoid(world)
+                CharacterManager.randomizeMipoConstrained(instance)
+                local torso = 0
+                for i = 1, (instance.dna.creation.torsoSegments or 1) do
+                    torso = torso + instance.parts['torso' .. i].body:getMass()
+                end
+                local head = instance.parts.head.body:getMass()
+                if head > torso * CharacterManager.headMaxShare * 0.99 then heavy = heavy + 1 end
+                assert.is_true(head <= torso * CharacterManager.headMaxShare * 1.001,
+                    string.format('seed %d: head %.2f, torso %.2f', seed, head, torso))
+                destroyInstance(instance)
+                world:destroy()
+            end
+            assert.is_true(heavy > 0, 'no Mipo had a head heavy enough to cap') -- the cap was tested
+        end)
+    end)
+
     describe("randomizeMipo", function()
         -- randomizeMipo lives on CharacterManager; src.ui.mipo-editor just
         -- calls through to it from the UI button. Test the real source.

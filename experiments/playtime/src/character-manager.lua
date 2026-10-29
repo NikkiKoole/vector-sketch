@@ -1612,7 +1612,7 @@ function lib.updatePart(partName, data, instance)
     -- filling the cache
     local poseCache = getPoseCache(instance)
     updateSinglePart(partName, data, instance)
-    lib.balanceArms(instance)
+    lib.balanceMasses(instance)
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
 end
@@ -2296,6 +2296,37 @@ function lib.balanceArms(instance, share)
     end
 end
 
+-- A head weighs at most this many times the torso (all its segments). By area a big head
+-- weighed up to 5x its torso (1C4UIs; CnANW 2.3x fell head first and was dazed over and
+-- over): the Mipo tipped onto it and its light legs couldn't lift it. Density only, so a
+-- big head still looks big.
+lib.headMaxShare = 1.5
+
+-- `share` (optional) instead of lib.headMaxShare: to try values on live Mipos from the bridge.
+function lib.balanceHead(instance, share)
+    share = share or lib.headMaxShare
+    local head = instance.parts.head
+    if not (head and head.body and not head.body:isDestroyed()) then return end
+    local torsoMass = 0
+    for i = 1, (instance.dna.creation.torsoSegments or 1) do
+        local torso = instance.parts['torso' .. i]
+        if torso and torso.body and not torso.body:isDestroyed() then torsoMass = torsoMass + torso.body:getMass() end
+    end
+    local mass, maxMass = head.body:getMass(), torsoMass * share
+    if torsoMass > 0 and mass > maxMass then
+        for _, f in ipairs(head.body:getFixtures()) do
+            if not f:getUserData() then f:setDensity(f:getDensity() * maxMass / mass) end
+        end
+        head.body:resetMassData()
+    end
+end
+
+-- Part masses that by area alone make a Mipo hard to move: a heavy head, thin arms.
+function lib.balanceMasses(instance)
+    lib.balanceHead(instance)
+    lib.balanceArms(instance)
+end
+
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
     -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
@@ -2436,7 +2467,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         end
     end
 
-    lib.balanceArms(instance)
+    lib.balanceMasses(instance)
     mipoRegistry.register(instance)
     return instance
 end
@@ -2641,7 +2672,7 @@ function lib.reconstructInstance(charData, partBodies)
             end
         end
     end
-    lib.balanceArms(instance)
+    lib.balanceMasses(instance)
     return instance
 end
 
