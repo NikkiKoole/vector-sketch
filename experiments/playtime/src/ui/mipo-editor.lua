@@ -1,7 +1,27 @@
 local lib = {}
 
-local ui = require('src.ui.all')
+local allUI = require('src.ui.all')
 local state = require('src.state')
+local mipoVoice = require('src.mipo-voice')
+
+-- The Mipo being edited hmpfs on every change (docs/PUPPETMAKER-SOUND.md P1):
+-- the editor draws through this ui, which reports slider and checkbox changes.
+local editing
+local ui = setmetatable({
+    sliderWithInput = function(id, x, y, w, min, max, value, changed, step)
+        local result = allUI.sliderWithInput(id, x, y, w, min, max, value, changed, step)
+        local v = tonumber(result)
+        if v and editing and max > min then
+            mipoVoice.edited(editing, math.max(0, math.min(1, (v - min) / (max - min))))
+        end
+        return result
+    end,
+    checkbox = function(x, y, checked, label)
+        local clicked, nowChecked = allUI.checkbox(x, y, checked, label)
+        if clicked and editing then mipoVoice.edited(editing) end
+        return clicked, nowChecked
+    end,
+}, { __index = allUI })
 local CharacterManager = require('src.character-manager')
 local mipoRegistry = require('src.mipo-registry')
 local mipoActions = require('src.mipo-actions')
@@ -152,6 +172,7 @@ local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, on
             clicked = true
         end
     end
+    if clicked and editing then mipoVoice.edited(editing) end
 
     local totalItems = #items + offset
     local totalRows = math.ceil(totalItems / itemsPerRow)
@@ -167,14 +188,17 @@ local function handlePaletteButton(idPrefix, px, py, pw, currentHex, onColorChan
             state.showPaletteFunc = nil
         else
             state.panelVisibility.showPalette = true
+            local instance = editing
             state.showPaletteFunc = function(color)
                 onColorChange(color)
+                if instance then mipoVoice.edited(instance) end
             end
         end
     end
     local hex = ui.textinput(idPrefix, px + 10, py, pw, BUTTON_HEIGHT, "", currentHex or '')
     if hex and hex ~= currentHex then
         onColorChange(hex)
+        if editing then mipoVoice.edited(editing) end
     end
 end
 
@@ -710,6 +734,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
     local w, h = love.graphics.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
+    editing = instance
     ui.scrollableList('mipo_scroll', panelX, panelY, panelWidth, panelH,
         function(_sx, _sy, _sw, _sh, scrollOffset)
         local padding = BUTTON_SPACING
@@ -1885,18 +1910,22 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         end
         if ui.button(x, y, panelWidth - 40, 'randomize ' .. partLabel) then
             CharacterManager.randomizePart(instance, partName)
+            mipoVoice.dice(instance)
         end
         y = y + ROW
         local hw = math.floor((panelWidth - 40) / 2) - 2
         if ui.button(x, y, hw, 'randomize all') then
             CharacterManager.randomizeMipo(instance)
+            mipoVoice.dice(instance)
         end
         if ui.button(x + hw + 4, y, hw, 'randomize *') then
             CharacterManager.randomizeMipoConstrained(instance)
+            mipoVoice.dice(instance)
         end
         y = y + ROW
         if ui.button(x, y, hw, 'mutate sizes') then
             CharacterManager.mutateSizes(instance)
+            mipoVoice.dice(instance)
         end
 
         -- === DISSOLVE BUTTON === (next to mutate sizes)

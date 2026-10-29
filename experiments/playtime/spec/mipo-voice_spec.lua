@@ -19,7 +19,8 @@ describe("src.mipo-voice", function()
                     if name == voice.set then known = true end
                 end
                 assert.is_true(known, 'unknown set ' .. tostring(voice.set))
-                assert.is_true(voice.pitch >= 0.85 and voice.pitch <= 1.25)
+                assert.is_true(voice.pitch >= mipoVoice.pitchRange[1] and voice.pitch <= mipoVoice.pitchRange[2])
+                assert.is_true(voice.tone >= mipoVoice.toneRange[1] and voice.tone <= mipoVoice.toneRange[2])
             end
         end)
 
@@ -29,6 +30,17 @@ describe("src.mipo-voice", function()
             local count = 0
             for _ in pairs(seen) do count = count + 1 end
             assert.is_true(count > 1)
+        end)
+
+        it("has deep, dark Mipos and high, bright ones", function()
+            local deep, high = 0, 0
+            for i = 1, 60 do
+                local voice = mipoVoice.voiceFor({ id = 'mipo-' .. i })
+                if voice.pitch < 0.8 then deep = deep + 1 end
+                if voice.pitch > 1.3 then high = high + 1 end
+            end
+            assert.is_true(deep >= 10, 'deep voices: ' .. deep)
+            assert.is_true(high >= 10, 'high voices: ' .. high)
         end)
 
         it("prefers dna.voice when present", function()
@@ -81,6 +93,29 @@ describe("src.mipo-voice", function()
     describe("squeak", function()
         it("is a no-op without an instance", function()
             assert.is_nil(mipoVoice.squeak(nil, 'poke'))
+        end)
+    end)
+
+    describe("edited", function()
+        it("is a no-op without an instance", function()
+            assert.is_nil(mipoVoice.edited(nil, 0.5))
+            assert.is_false(mipoVoice.isTalking(nil))
+        end)
+
+        if not (love and love.audio) then return end
+
+        it("talks higher for bigger values and waits until the last hmpf is done", function()
+            local low = mipoVoice.edited({ id = 'edit-low', parts = {} }, 0)
+            local high = mipoVoice.edited({ id = 'edit-high', parts = {} }, 1)
+            assert.is_not_nil(low)
+            assert.is_not_nil(high)
+            assert.is_true(high:getPitch() > low:getPitch() * 2)
+
+            local instance = { id = 'edit-busy', parts = {} }
+            assert.is_not_nil(mipoVoice.edited(instance, 0.5))
+            assert.is_true(mipoVoice.isTalking(instance))
+            assert.is_nil(mipoVoice.edited(instance, 0.5))
+            low:stop(); high:stop()
         end)
     end)
 end)

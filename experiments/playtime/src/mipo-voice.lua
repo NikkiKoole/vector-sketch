@@ -88,6 +88,7 @@ local flaps = {}       -- [mipoId] = { thing, start, duration, from, target, amo
 local impactPairs = {} -- [kind .. pairKey] = time
 local freshContacts = {} -- [fixturePairKey] = approach speed, between beginContact and the first postSolve
 local lastPlonk = {}     -- [mipoId] = time
+local lastTouch = {}     -- [bodyPairKey] = time two bodies last began or ended a contact
 local impactSources = {} -- [kind] = { Source, ... }
 
 local function now()
@@ -118,17 +119,28 @@ local function hashString(s)
     return h
 end
 
+-- Per-Mipo voice spread: pitch from pitchRange (spread evenly in octaves, so as
+-- many deep Mipos as squeaky ones), and a tone 0..1 (1 = clear, lower = darker,
+-- a lowpass) that mostly follows the pitch: deep voices are dark, high ones bright.
+lib.pitchRange = { 0.6, 1.7 }
+lib.toneRange = { 0.25, 1 }
+
 -- The voice of a Mipo: dna.voice when set, otherwise derived from its id so the
--- same Mipo always sounds the same.
+-- same Mipo always sounds the same. { set, pitch, tone }
 function lib.voiceFor(instance)
     local dnaVoice = instance and instance.dna and instance.dna.voice
     if dnaVoice and dnaVoice.set then
-        return { set = dnaVoice.set, pitch = dnaVoice.pitch or 1 }
+        return { set = dnaVoice.set, pitch = dnaVoice.pitch or 1, tone = dnaVoice.tone or 1 }
     end
     local h = hashString(tostring(instance and instance.id or ''))
+    local lowP, highP = lib.pitchRange[1], lib.pitchRange[2]
+    local t = (math.floor(h / 7) % 101) / 100
+    local jitter = ((math.floor(h / 709) % 41) - 20) / 100 -- -0.2 .. 0.2
+    local toneT = math.max(0, math.min(1, t + jitter))
     return {
         set = lib.voiceSets[(h % #lib.voiceSets) + 1],
-        pitch = 0.85 + (math.floor(h / 7) % 41) / 100, -- 0.85 .. 1.25
+        pitch = lowP * (highP / lowP) ^ t,
+        tone = lib.toneRange[1] + (lib.toneRange[2] - lib.toneRange[1]) * toneT,
     }
 end
 
@@ -157,19 +169,24 @@ function lib.candidates(voiceSet, emotionName)
     return result
 end
 
-local function play(setName, key, pitch)
+-- `tone` (optional, 0..1): below 1 a lowpass takes the highs off (a darker voice).
+local function play(setName, key, pitch, tone)
     local source = loadSet(setName).sources[key]
     if not source then return nil end
     local clone = source:clone()
     clone:setPitch(pitch)
     clone:setVolume(lib.volume * lib.masterVolume)
+    if tone and tone < 1 then
+        -- needs OpenAL's EFX; without it the voice just stays clear
+        pcall(clone.setFilter, clone, { type = 'lowpass', volume = 1, highgain = tone })
+    end
     clone:play()
     return clone
 end
 
 -- Play one squeak for a Mipo instance. Returns the playing Source, or nil when
--- muted, rate-limited or no sample matched.
-function lib.squeak(instance, emotionName)
+-- muted, rate-limited or no sample matched. `pitchMul` (optional) goes on top.
+function lib.squeak(instance, emotionName, pitchMul)
     if not lib.enabled or not instance then return nil end
     if not (love and love.audio) then return nil end
     local t = now()
@@ -183,13 +200,50 @@ function lib.squeak(instance, emotionName)
     local jitter = 0.95 + love.math.random() * 0.1
 
     lastSqueak[instance.id] = t
+    return lib.say(instance, pick.set, pick.key, emotion.pitch * jitter * (pitchMul or 1))
+end
+
+-- Play one given sample (assets/voices/<setName>/<key>.ogg) as this Mipo, at its
+-- own voice pitch times `pitchMul`, with the mouth flap. Stops what it was saying.
+function lib.say(instance, setName, key, pitchMul)
+    if not lib.enabled or not instance or not (love and love.audio) then return nil end
     if playing[instance.id] then playing[instance.id]:stop() end
-    local pitch = voice.pitch * emotion.pitch * jitter
-    playing[instance.id] = play(pick.set, pick.key, pitch)
+    local voice = lib.voiceFor(instance)
+    local pitch = voice.pitch * (pitchMul or 1)
+    playing[instance.id] = play(setName, key, pitch, voice.tone)
     if playing[instance.id] then
         lib.flapMouth(instance, playing[instance.id]:getDuration() / pitch)
     end
     return playing[instance.id]
+end
+
+-- True while the Mipo's last squeak is still sounding.
+function lib.isTalking(instance)
+    local source = instance and playing[instance.id]
+    return source ~= nil and source:isPlaying()
+end
+
+-- A Mipo you're changing in the editor hmpfs (puppet-maker2's growl() on every
+-- edit). `amount` 0..1 is where the edited value sits in its range: bigger values
+-- talk higher (pitch 1..lib.editPitchMax); nil for a pick or a toggle (pitch 1..1.2).
+-- While a slider drags, the next hmpf waits for the last one to finish.
+lib.editPitchMax = 3
+function lib.edited(instance, amount)
+    if not instance or lib.isTalking(instance) then return nil end
+    local pitchMul = amount and (1 + (lib.editPitchMax - 1) * amount) or (1 + love.math.random() * 0.2)
+    return lib.squeak(instance, 'pickup', pitchMul)
+end
+
+-- The dice (randomize / mutate in the Mipo editor): puppet-maker2's Quijada
+-- rattle, and the Mipo hmpfs about its new look.
+local quijada
+function lib.dice(instance)
+    if not lib.enabled or not (love and love.audio) then return end
+    quijada = quijada or love.audio.newSource('assets/sounds/mp7-quijada.ogg', 'static')
+    local clone = quijada:clone()
+    clone:setVolume(lib.volume * lib.masterVolume)
+    clone:play()
+    lib.edited(instance)
 end
 
 -- The face-owner thing of a Mipo (head, or torso1 for potato heads) and its upper lip decal.
@@ -293,6 +347,9 @@ function lib.update(dt)
     for key, at in pairs(impactPairs) do
         if t - at > lib.impactPairCooldown then impactPairs[key] = nil end
     end
+    for key, at in pairs(lastTouch) do
+        if t - at > lib.retouchWindow then lastTouch[key] = nil end
+    end
 end
 
 function lib.squeakBody(body, emotionName)
@@ -308,6 +365,8 @@ local function mapInto(x, inMin, inMax, outMin, outMax)
 end
 
 -- `source` is the body making the sound (for perBody sounds).
+lib.stats = { impacts = 0 } -- impact sounds played (spec/mipo-crowd-sound_spec.lua counts them)
+
 local function playImpact(kind, body1, body2, speed, source)
     local sound = lib.impactSounds[kind]
     if not sound or speed < sound.soft or not (love and love.audio) then return end
@@ -315,6 +374,7 @@ local function playImpact(kind, body1, body2, speed, source)
     local key = kind .. (a < b and (a .. b) or (b .. a))
     if impactPairs[key] then return end
     impactPairs[key] = now()
+    lib.stats.impacts = lib.stats.impacts + 1
     local synth = sound.synth and getSynth()
     if synth then
         -- soft hits high, hard hits low (like the samples' pitch 2 -> 1), a step of jitter either way
@@ -360,24 +420,40 @@ local function fixturePairKey(fix1, fix2)
     return a < b and (a .. b) or (b .. a)
 end
 
+local function bodyPairKey(fix1, fix2)
+    local a, b = tostring(fix1:getBody()), tostring(fix2:getBody())
+    return a < b and (a .. b) or (b .. a)
+end
+
 -- Only the first solve of a new contact makes a sound. Bodies that stay pressed
 -- together (tangled Mipos, a Mipo held into the floor) keep reporting big
 -- impulses every step and would otherwise sound forever.
+-- Re-touches are quiet too: in a pile a leg resting on another Mipo's head
+-- jitters off and on, a 'new' contact every half second (most of a still pile's
+-- plonks, spec/mipo-crowd-sound_spec.lua). Two bodies that touched within
+-- retouchWindow seconds only sound again when they meet at retouchSpeed or faster.
+lib.retouchWindow = 1.5
+lib.retouchSpeed = 3000 -- a foot kicking against a Mipo lying on it re-touched at ~1200-2000
 function lib.onBeginContact(fix1, fix2, contact)
     if fix1:isSensor() or fix2:isSensor() or not contact then return end
     local x, y = contact:getPositions()
     if not x then return end
+    local pair = bodyPairKey(fix1, fix2)
+    local t = now()
+    local retouch = lastTouch[pair] and t - lastTouch[pair] < lib.retouchWindow
+    lastTouch[pair] = t
     local nx, ny = contact:getNormal()
     local ax, ay = fix1:getBody():getLinearVelocityFromWorldPoint(x, y)
     local bx, by = fix2:getBody():getLinearVelocityFromWorldPoint(x, y)
     local approach = math.abs((ax - bx) * nx + (ay - by) * ny)
-    if approach >= lib.minApproachSpeed then
+    if approach >= (retouch and lib.retouchSpeed or lib.minApproachSpeed) then
         freshContacts[fixturePairKey(fix1, fix2)] = approach
     end
 end
 
 function lib.onEndContact(fix1, fix2)
     freshContacts[fixturePairKey(fix1, fix2)] = nil
+    if not (fix1:isSensor() or fix2:isSensor()) then lastTouch[bodyPairKey(fix1, fix2)] = now() end
 end
 
 local function hasLabel(body, label)
@@ -443,6 +519,7 @@ function lib.reset()
     impactPairs = {}
     freshContacts = {}
     lastPlonk = {}
+    lastTouch = {}
 end
 
 return lib

@@ -111,6 +111,7 @@ local utils = require 'src.utils'
 local box2dDraw = require 'src.physics.box2d-draw'
 local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 local mipoVoice = require('src.mipo-voice')
+local mipoChatter = require('src.mipo-chatter')
 local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
@@ -314,6 +315,7 @@ function love.update(dt)
         mipoActions.update()
         signals.update()
         mipoVoice.update(scaled_dt)
+        mipoChatter.update()
         flightRecorder.update(scaled_dt)
         --for i = 1, #joints do
         --correctJoint(joints[i])

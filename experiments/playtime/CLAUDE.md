@@ -116,6 +116,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 
 **Characters & scripting:**
 - `src/character-manager.lua` — character DNA system, body part assembly
+- `src/mipo-voice.lua` — Mipo squeaks, hmpfs, mouth flap, impact sounds; `src/mipo-chatter.lua` — idle mi… po… between Mipos
 - `src/script.lua` — per-scene Lua script loading and execution
 - `src/recorder.lua` — animation recording and playback
 

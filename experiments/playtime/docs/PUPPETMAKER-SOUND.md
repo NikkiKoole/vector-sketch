@@ -1,6 +1,6 @@
 # Puppetmaker sound — how Mipo Puppetmaker 2 sounds, and bringing it here
 
-**Started:** 2026-10-28. **Status:** analysis done, samples copied in, nothing built yet.
+**Started:** 2026-10-28. **Status:** samples copied in; P1 and P5 built (2026-10-29), P2–P4 wait for `music.lua`.
 
 **Goal:** Mipos that feel as alive as in Puppetmaker: the hmpfs when you touch
 or change them, the mi… po… chatter, and a band they sing along with and move to.
@@ -51,6 +51,28 @@ path, the pitch and the source). On the outside screen `scene.handleAudioMessage
 **A crowd versus one Mipo:** outside, the groove is dense, the band sings and random
 Mipos mouth along, breathe and bounce. In the editor the music is sparse and nobody sings:
 the one Mipo only makes sounds when you touch it or change it (1c).
+
+#### The band's samples, measured (2026-10-29), and how the synth could play them
+
+The song file has no scale, so it's **chromatic**: a note marked rnd lands on any of the 12
+semitones. Together with the sparse chances, that's the feel: a dry, swung CR-78 hand-percussion
+loop with a dreamy chord that floats in at an unrelated pitch every few bars, and nothing
+resolves. No bass, no tune, no chord changes.
+
+| Sample | What it is (measured) | Synth recipe (we have these: `src/synth.lua`) |
+|---|---|---|
+| `babirhodes/rhodes2` (3.0 s) | **Not a lick: one rolled chord.** E♭3, then B♭3, G4, B♭4, C5 come in ~60 ms apart (an up-strum), held, decaying over ~2.8 s. An E♭6 (Cm7/E♭). Root + 0, 7, 16, 19, 21 semitones | EPIANO (`rhodes` slot), the five notes 60 ms apart, ~2.8 s long, root moved by the rnd semitone. **The same voicing every time, only the pitch moves** |
+| `babirhodes/ba` (0.4 s), `bi` (0.2 s) | single voiced notes, ~E4 / ~F♯4 | EPIANO single notes, or `INSTR_VOICE` with a b-consonant (a/i vowel): synthetic "ba"/"bi" backing vocals |
+| `babirhodes/biep2/3` | no clear onset or pitch: bends or blips | a short gliding note (`instrument_glide`), or a VOICE "biep" |
+| Triangles 101 (0.09 s) / 103 (1.8 s) | metallic, partials ~5.5 kHz and ~8.4 kHz; a choked hit and a ringing one | METAL (or a high MALLET), short release vs long ring |
+| CR-78 conga low, bongo low/high | short hand drums (0.42 / 0.14 / 0.13 s) | MEMBRANE (`conga`, `tabla` patches exist) |
+| CR-78 tamb 1 (0.29 s) | jingle burst | NOISE, highpassed, short (like `shaker`) |
+| CR-78 guiro 1 (0.44 s) | a scrape | NOISE with a fast amplitude LFO (~25–35 Hz), bandpassed |
+| mp7 Quijada (0.8 s) | a decaying rattle | NOISE or METAL with a fast amplitude LFO, long decay |
+| mipo pi / po3 | the singing (P4) | keep as samples (`assets/voices/puppetmaker`): the voices are the characters |
+
+The groove: 60 bpm in 16ths (one bar = 4 s), swing 52, and every hit has its chance from the
+table in 1a. Page 1 (a crowd) is the dense one; page 2 (one Mipo) is the same kit at 10–20%.
 
 ### 1b. The intro: mi… po…
 
@@ -125,9 +147,19 @@ They are **different recordings** from the mipomi `nikki` syllables (other lengt
 
 ## 3. Order to bring the rest in
 
-- [ ] **P1. Hmpf on editing.** Every change in the Mipo editor makes that Mipo
-  hmpf (the `pickup` pool, through `mipoVoice.squeak`); sliders and steppers set the pitch
-  from the value, min…max → 1…3. Smallest step, clearest win.
+- [x] **P1. Hmpf on editing** (2026-10-29). `src/ui/mipo-editor.lua` draws through a
+  small `ui` wrapper: every slider change, checkbox, thumbnail pick and colour makes the Mipo
+  hmpf (`mipoVoice.edited`, the `pickup` pool). Sliders set the pitch from where the value
+  sits in its range (min…max → 1…3, `mipoVoice.editPitchMax`); picks and toggles 1…1.2.
+  While a slider drags, the next hmpf waits for the last to finish (no stutter).
+  Randomize / mutate play the Quijada rattle plus a hmpf (`mipoVoice.dice`).
+**Who builds what (2026-10-29):** the music session builds the band as `style = 'puppetmaker'`
+in `music.lua` (its patches in synth slots 40–44; 45–47 are free for the sound-effects side, ask first)
+and the hook: `music.onNote(name, fn)`, fn(part, patch, midi, vol, durMs, t, step), nil removes it.
+It's a function call, not a field on the module (hot reload). `t` is booked ~0.3 s ahead: compare with
+`synth.audioTime()`. `music.nowPlaying()` gets `stepTime` + `stepLen` for the swung grid. P3/P4
+start once that lands.
+
 - [ ] **P2. A "note played" event from `music.lua`.** Report the instrument, step and length,
   e.g. `music.onNote(fn)`. Everything below needs it.
 - [ ] **P3. Mipos move to the music.** A breath on a soft beat, a doink on a
@@ -136,9 +168,21 @@ They are **different recordings** from the mipomi `nikki` syllables (other lengt
   rnd, using `assets/voices/puppetmaker/`, pitched into the song's key. A Mipo on stage mouths each note:
   - with several Mipos, a random one sings;
   - with one Mipo you're editing, nobody sings (the page 2 rule).
-- [ ] **P5. Idle mi… po… chatter.** With two or more Mipos standing around, one says MI and
-  a different one (actually check this time) answers PO, at 0.2–2.2 s and 0.2–1.2 s gaps.
+- [x] **P5. Idle mi… po… chatter** (2026-10-29). `src/mipo-chatter.lua`: every 6–15 s
+  (`gap`) a Mipo says MI and a *different* one answers PO 0.2–1.2 s later, with
+  puppet-maker2's odds, from `assets/voices/puppetmaker`, at each Mipo's own voice pitch
+  ×0.8–1.2 (`mipoVoice.say`). Only Mipos in view, not held, dazed or talking; two
+  needed; not while paused. Spec: `spec/mipo-chatter_spec.lua`. Off: `mipoChatter.enabled`.
 - [ ] **P6. Voice in DNA** (= DOLL-PLAY V5). The singing and chatter use each Mipo's own voice set and pitch.
+
+- [x] **P7. A voice per Mipo** (2026-10-29). `mipoVoice.voiceFor` spreads each Mipo over
+  pitch 0.6–1.7 (`pitchRange`, evenly in octaves) and a tone (`toneRange`, a LÖVE lowpass
+  on the source) that follows the pitch: deep Mipos are dark, high ones clear. Every Mipo sound uses it.
+- [ ] **P8. Voice size, not just speed.** Playback rate moves pitch and formants together
+  (slow tape vs chipmunk). A real "big vs tiny" voice needs a formant shift on samples:
+  dreamengine issue NikkiKoole/dreamengine-studio#44 (`sample_formant`). After that: a few
+  shared voice types through desound (8 sample slots, a limited number of effect chains, shared
+  with `music.lua`; coordinate first).
 
 **Listen before P4:**
 - The Puppetmaker takes vs the mipomi `nikki` syllables. `po3` (0.69 s) sounds like the sung one.
