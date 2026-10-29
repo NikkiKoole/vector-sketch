@@ -97,8 +97,10 @@ describe('the spine room', function()
             assert.is_true(t2:getY() < t1:getY(), 'the second band is not above the first')
             local joint = spineJoint()
             assert.is_truthy(joint)
+            simulate(0.5) -- the room was saved mid-sway; the rebuild keeps that pose
             local x1, y1, x2, y2 = joint:getAnchors()
-            assert.is_true(math.abs(x1 - x2) + math.abs(y1 - y2) < 1)
+            assert.is_true(math.abs(x1 - x2) + math.abs(y1 - y2) < 1,
+                string.format('joint halves %.1f apart', math.abs(x1 - x2) + math.abs(y1 - y2)))
             assert.is_near(math.rad(15), joint:getUpperLimit(), 1e-6)
             -- the two bands together are about as tall as one whole torso
             local function height(body)
