@@ -136,16 +136,19 @@ lib.patches = {
     -- CR-78's tambourine (a short highpassed jingle) and guiro (a bandpassed scrape, chopped by a fast
     -- volume LFO), two triangles (a bell-hard mallet very high, choked and ringing) and the quijada
     -- (a jawbone rattle: noise through a fast LFO, decaying). The hand drums are the conga patch.
+    -- The guiro and quijada are tuned to the recordings (measured 2026-10-29): the CR-78 guiro scrapes
+    -- ~77 teeth/s for ~270 ms around 6 kHz, the quijada rattles ~23/s, decaying over ~400 ms, around
+    -- 2-3 kHz. An LFO is a tremolo, not separate teeth: the engine ask is NikkiKoole/dreamengine-studio.
     tamb = { slot = 44, wave = 'NOISE', adsr = { 0, 220, 0, 60 }, reverb = 0.1, level = 0.027,
              filter = { mode = 2, cutoff = 6500, resonance = 1 } },
-    guiro = { slot = 40, wave = 'NOISE', adsr = { 8, 380, 0, 50 }, reverb = 0.1, level = 0.75,
-              filter = { mode = 3, cutoff = 2600, resonance = 2 }, lfo = { { 2, 30, 0.9 } } },
+    guiro = { slot = 40, wave = 'NOISE', adsr = { 2, 300, 0, 50 }, reverb = 0.1, level = 0.24,
+              filter = { mode = 3, cutoff = 6000, resonance = 2 }, lfo = { { 2, 77, 0.9 } } },
     triangle = { slot = 41, wave = 'MALLET', adsr = { 0, 90, 0, 40 },
                  harmonics = 1.0, timbre = 0.9, morph = 0.5, reverb = 0.25, level = 0.5 },
     triangleRing = { slot = 42, wave = 'MALLET', adsr = { 0, 1800, 0, 600 },
                      harmonics = 1.0, timbre = 0.9, morph = 0.9, reverb = 0.3, level = 0.5 },
-    quijada = { slot = 43, wave = 'NOISE', adsr = { 0, 800, 0, 200 }, reverb = 0.2, level = 0.5,
-                filter = { mode = 3, cutoff = 3200, resonance = 2 }, lfo = { { 2, 22, 0.95 } } },
+    quijada = { slot = 43, wave = 'NOISE', adsr = { 0, 600, 0, 150 }, reverb = 0.2, level = 0.5,
+                filter = { mode = 3, cutoff = 2600, resonance = 2 }, lfo = { { 2, 23, 0.95 } } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,

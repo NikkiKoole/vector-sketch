@@ -313,22 +313,23 @@ lib.puppetmaker = {
                               { 9, 40 }, { 12, 70 } } },                                          -- bongo high
         { 'tamb', 60, 290, { { 1, 100 }, { 10, 100 }, { 13, 100 }, { 3, 80 }, { 4, 80 }, { 15, 80 },
                              { 16, 80 }, { 12, 70 }, { 8, 30 } } },
-        { 'guiro', 60, 440, { { 8, 50 } } },
+        { 'guiro', 60, 290, { { 8, 50 } } },
         { 'triangle', 100, 90, { { 5, 60 }, { 13, 80 } } },                                      -- 101, choked
         { 'triangleRing', 100, 1800, { { 6, 60 }, { 14, 40 } } },                                -- 103, ringing
         { 'chord', 0, 0, { { 9, 50, true } } },
-        { 'rhodes', 64, 400, { { 8, 5, true } } },                                               -- ba
-        { 'rhodes', 66, 200, { { 12, 5, true } } },                                              -- bi
-        { 'rhodes', 66, 150, { { 16, 5, true }, { 3, 5, true } } },                              -- biep
+        { 'sample:ba', 60, 400, { { 8, 5, true } } },        -- babirhodes' voices: samples, played by the
+        { 'sample:bi', 60, 200, { { 12, 5, true } } },       -- onNote listener (like the Mipos' mi/po),
+        { 'sample:biep2', 60, 300, { { 16, 5, true } } },    -- midi 60 = the sample's own pitch
+        { 'sample:biep3', 60, 300, { { 3, 5, true } } },
     },
     sparse = {
         { 'conga', 69, 130, { { 11, 20 }, { 13, 20 } } },
         { 'tamb', 60, 290, { { 3, 10 }, { 15, 10 }, { 7, 20 }, { 12, 30 } } },
-        { 'guiro', 60, 440, { { 7, 20, true } } },
+        { 'guiro', 60, 290, { { 7, 20, true } } },
         { 'triangle', 100, 90, { { 3, 10 }, { 15, 20, true } } },
         { 'triangleRing', 100, 1800, { { 14, 20, true } } },
         { 'chord', 0, 0, { { 8, 10, true } } },
-        { 'quijada', 60, 800, { { 10, 20 } } },
+        { 'quijada', 60, 600, { { 10, 20 } } },
     },
 }
 
@@ -375,7 +376,8 @@ M.booked = M.booked or {} -- the last few booked chords: { at = audio time, pcs 
 M.listeners = M.listeners or {} -- onNote listeners by name (on state, so they survive a hot reload)
 
 -- Hear every note the music books: fn(part, patch, midi, vol, durMs, t, step). part is 'keys', 'bass',
--- 'lead', 'riff', 'drums', 'vinyl', or for puppetmaker 'perc' / 'chord' / 'keys'; t is the audio time
+-- 'lead', 'riff', 'drums', 'vinyl', or for puppetmaker 'perc' / 'chord' / 'sample' (a sample to play: patch
+-- is its name, ba / bi / biep2 / biep3, midi 60 its own pitch; the synth plays nothing); t is the audio time
 -- it's booked for (lookahead ahead of synth.audioTime()); step 0..15 in its bar (puppetmaker only, for
 -- now). fn = nil removes it. Call this, don't set a field: see the settings note above.
 function lib.onNote(name, fn)
@@ -886,13 +888,17 @@ end
 
 -- every note goes through here; lib.trace(part, t, midi, vol, durMs), when set, sees them all
 -- (claudetools/render-music.lua counts rubs with it)
-local function play(synth, part, patch, t, midi, vol, durMs, step)
-    synth.scheduleAt(patch, t, midi, vol, durMs)
-    if lib.trace then lib.trace(part, t, midi, vol, durMs) end
+local function notify(part, patch, midi, vol, durMs, t, step)
     for name, fn in pairs(M.listeners) do
         local ok, err = pcall(fn, part, patch, midi, vol, durMs, t, step)
         if not ok then M.listeners[name] = nil; print('[music] onNote ' .. name .. ': ' .. tostring(err)) end
     end
+end
+
+local function play(synth, part, patch, t, midi, vol, durMs, step)
+    synth.scheduleAt(patch, t, midi, vol, durMs)
+    if lib.trace then lib.trace(part, t, midi, vol, durMs) end
+    notify(part, patch, midi, vol, durMs, t, step)
 end
 
 -- One bar of Puppetmaker's loop: every hit rolls its chance, rnd ones land on a random semitone.
@@ -914,9 +920,10 @@ local function bookLoopBar(synth, t0, song, b)
                     end
                     table.insert(M.booked, { at = t, pcs = pcs }) -- impacts play along in its notes
                     if #M.booked > 4 then table.remove(M.booked, 1) end
+                elseif patch:sub(1, 7) == 'sample:' then -- a sample: only the listeners play it
+                    notify('sample', patch:sub(8), midi + shift, 5, durMs, t, s)
                 else
-                    play(synth, patch == 'rhodes' and 'keys' or 'perc', patch, t, midi + shift,
-                         patch == 'tamb' and 4 or 5, durMs, s)
+                    play(synth, 'perc', patch, t, midi + shift, patch == 'tamb' and 4 or 5, durMs, s)
                 end
             end
         end
