@@ -12,6 +12,17 @@ Related: `DOLL-PLAY.md` "Voice" (V1–V6), `SOUND-SYNTH.md` (the synth, its slot
 music's onNote / stepAt; the puppetmaker and strum styles there and in `MUSIC-IDEAS.md`),
 `src/mipo-voice.lua`, `src/music.lua`.
 
+**After pulling (or on a new machine): rebuild the synth.** `native/desound/libdesound.dylib`
+is gitignored, so a pull doesn't update it. Playtime's code needs dreamengine `2572e0e5` or later
+(INSTR_SING, `sample_formant`). An old dylib fails without an error: the voice lab breaks on the first
+missing function. The Mipos' own voices (`assets/voices/`, plain LÖVE audio) still play without it.
+Check: `nm -gU native/desound/libdesound.dylib | grep sample_formant` prints nothing → rebuild:
+
+```sh
+git -C ~/Projects/dreamengine pull
+./playtime.sh stop && native/desound/build.sh && ./playtime.sh start   # stop first: the app holds the dylib
+```
+
 ---
 
 ## 1. What Puppetmaker 2 does
