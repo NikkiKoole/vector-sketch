@@ -47,9 +47,82 @@ local function getTransformedIndex(index, flipX, flipY)
     end
 end
 
+-- ─── Spine bands (docs/MIPO-SPINE.md) ───
+-- With creation.torsoSpine the torso segments are horizontal bands of one torso shape.
+-- A band is described in the same 8-point order as a shape8 (1 top, 2 top right, 3 right,
+-- 4 bottom right, 5 bottom, 6 bottom left, 7 left, 8 top left), so attaching arms, legs
+-- and the neck works unchanged: the lowest band keeps the shape's own bottom points (legs),
+-- the highest its top points (arms, neck), and neighbours share the points at their cut.
+
+-- Smallest and largest x where the outline crosses the horizontal line at y.
+local function crossings(raw, y)
+    local lo, hi = math.huge, -math.huge
+    local n = #raw / 2
+    for i = 1, n do
+        local x1, y1 = raw[i * 2 - 1], raw[i * 2]
+        local j = i % n + 1
+        local x2, y2 = raw[j * 2 - 1], raw[j * 2]
+        if (y >= math.min(y1, y2)) and (y <= math.max(y1, y2)) then
+            local x = (y1 == y2) and x1 or x1 + (x2 - x1) * (y - y1) / (y2 - y1)
+            lo, hi = math.min(lo, x, (y1 == y2) and x2 or x), math.max(hi, x, (y1 == y2) and x2 or x)
+        end
+    end
+    return lo, hi
+end
+
+-- Band `index` of `count` (1 = the torso's bottom) of a raw shape8 outline, centred on the
+-- band's middle. flipY: the part is drawn upside down (dims.sy < 0), so its bottom is the
+-- raw top. Returns the 16 numbers and the band's middle y in the raw outline.
+function lib.spineBand(raw, index, count, flipY)
+    local top, bottom = math.huge, -math.huge
+    for i = 2, #raw, 2 do top, bottom = math.min(top, raw[i]), math.max(bottom, raw[i]) end
+    local fromBottom = flipY and (count - index + 1) or index
+    local h = (bottom - top) / count
+    local yA, yB = bottom - fromBottom * h, bottom - (fromBottom - 1) * h -- band top, band bottom
+    local out = {}
+    local function put(k, x, y) out[k * 2 - 1], out[k * 2] = x, y end
+    local function onRight(y) local _, hi = crossings(raw, y); return hi, y end
+    local function onLeft(y) local lo = crossings(raw, y); return lo, y end
+    local function clamp(y, a, b) return math.max(a, math.min(b, y)) end
+    if fromBottom == count then -- the shape's own top: its points, kept in the upper part of the band
+        for _, k in ipairs({ 8, 1, 2 }) do
+            local y = clamp(raw[k * 2], yA, yA + 0.6 * h)
+            if k == 1 then put(1, raw[1], y) elseif k == 2 then put(2, onRight(y)) else put(8, onLeft(y)) end
+        end
+    else -- a cut: shared with the band above
+        local lo, hi = crossings(raw, yA)
+        put(8, lo, yA); put(1, (lo + hi) / 2, yA); put(2, hi, yA)
+    end
+    if fromBottom == 1 then -- the shape's own bottom
+        for _, k in ipairs({ 4, 5, 6 }) do
+            local y = clamp(raw[k * 2], yB - 0.6 * h, yB)
+            if k == 5 then put(5, raw[9], y) elseif k == 4 then put(4, onRight(y)) else put(6, onLeft(y)) end
+        end
+    else
+        local lo, hi = crossings(raw, yB)
+        put(6, lo, yB); put(5, (lo + hi) / 2, yB); put(4, hi, yB)
+    end
+    put(3, onRight((out[4] + out[8]) / 2)) -- halfway between the right corners
+    put(7, onLeft((out[12] + out[16]) / 2))
+    local middle = (yA + yB) / 2
+    for i = 2, 16, 2 do out[i] = out[i] - middle end
+    return out, middle
+end
+
+-- A part's raw shape8 outline: its band when it's part of a spine (part.spineBand =
+-- { index, count }, set when the Mipo is built), else the whole shape.
+function lib.shape8Vertices(part)
+    local raw = shape8Dict[part.shape8URL].vertices
+    local band = part.spineBand
+    if band then
+        return (lib.spineBand(raw, band[1], band[2], (part.dims.sy or 1) < 0))
+    end
+    return raw
+end
+
 -- Read a shape8 vertex, scaled. Returns (x * scale, y * scale).
 local function getVertex(part, vertexIndex, scale)
-    local raw = shape8Dict[part.shape8URL].vertices
+    local raw = lib.shape8Vertices(part)
     local vertices = makeTransformedVertices(raw, part.dims.sx or 1, part.dims.sy or 1)
     local idx = getTransformedIndex(vertexIndex, sign(part.dims.sx), sign(part.dims.sy))
     return vertices[(idx * 2) - 1] * scale, vertices[(idx * 2)] * scale

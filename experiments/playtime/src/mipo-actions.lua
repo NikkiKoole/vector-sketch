@@ -372,6 +372,16 @@ lib.knotMaxAlpha = 12   -- rad/s^2 cap for the whole-arm pull: lifts the hand wi
 
 local armParent = { luarm = 'torso1', ruarm = 'torso1', llarm = 'luarm', rlarm = 'ruarm' }
 
+-- The part an arm segment hangs from: upper arms from the top torso segment.
+local function armParentOf(instance, name)
+    local parent = armParent[name]
+    if parent == 'torso1' then
+        local creation = instance.dna and instance.dna.creation
+        return 'torso' .. ((creation and creation.torsoSegments) or 1)
+    end
+    return parent
+end
+
 local function jointBetween(parentBody, childBody)
     for _, joint in ipairs(childBody:getJoints()) do
         if joint:getType() == 'revolute' then
@@ -401,9 +411,7 @@ end
 -- the torque is then scaled to move all of them, not just the part.
 function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, maxAlpha, chain)
     local joint = jointBetween(parentBody, childBody)
-    if not joint then
-        return lib.steerToward(childBody, targetWorldAngle, kp, kd, maxAlpha)
-    end
+    if not joint then return end -- not joined (was a call to a steerToward that didn't exist)
     kp, kd, maxAlpha = units.accel(kp), units.rate(kd), units.accel(maxAlpha) -- 1/s^2, 1/s, rad/s^2
     local jointAngle = joint:getJointAngle()
     local desired = targetWorldAngle - parentBody:getAngle() - joint:getReferenceAngle()
@@ -516,7 +524,7 @@ end
 local function steerArm(instance, side, angle, kp, kd, maxAlpha)
     for _, name in ipairs({ side .. 'uarm', side .. 'larm' }) do
         local part = instance.parts[name]
-        local parent = instance.parts[armParent[name]]
+        local parent = instance.parts[armParentOf(instance, name)]
         if part and parent and part.body and parent.body and not part.body:isDestroyed()
             and not parent.body:isDestroyed() and not part.limp then
             local chain
@@ -583,6 +591,72 @@ local function poseArms(instance)
         end
     end
     instance._pointedSide = pointingSide and 'both' or nil
+end
+
+-- Spine (creation.torsoSpine, docs/MIPO-SPINE.md): each spine joint's motor turns it back
+-- toward straight (spineReturn: the speed per radian off) with at most spineStrength times
+-- the torque that the weight of everything above the joint (bands, neck, head, arms)
+-- puts on it, so a landing bends it within the joint's limits and it comes back. Limp
+-- while ragdolled or dazed. When idle it sways a little (spineSway).
+-- (A torque spring sized for everything above, put on the light band, whipped the band
+-- into its limit and tore the joint apart: bent 18 degrees in free fall, 100 on landing.)
+lib.spine = true
+lib.spineReturn = 6     -- 1/s at 100 px per metre
+lib.spineStrength = 1.5 -- times the weight torque above the joint
+lib.spineSwayAngle = 4  -- degrees of sway at spineSway 1
+lib.spineSwayPeriod = 4 -- seconds
+
+-- Every body in the part's subtree (the part itself too).
+local function subtreeBodies(instance, name, out)
+    local part = instance.parts[name]
+    if part and part.body and not part.body:isDestroyed() then out[#out + 1] = part.body end
+    for _, child in ipairs((instance.childrenMap or {})[name] or {}) do subtreeBodies(instance, child, out) end
+    return out
+end
+
+-- The weight torque everything in `bodies` puts on a joint at (ax, ay), its arm taken as
+-- the distance to their centre of mass (the most it can be).
+local function weightTorque(bodies, ax, ay)
+    local mass, mx, my = 0, 0, 0
+    for _, body in ipairs(bodies) do
+        local m = body:getMass()
+        local cx, cy = body:getWorldCenter()
+        mass, mx, my = mass + m, mx + m * cx, my + m * cy
+    end
+    if mass <= 0 then return 0 end
+    local dx, dy = mx / mass - ax, my / mass - ay
+    return mass * 9.8 * units.meter() * math.sqrt(dx * dx + dy * dy)
+end
+
+local function spineSpring(instance, now)
+    local creation = instance.dna and instance.dna.creation
+    local count = creation and creation.torsoSpine and creation.torsoSegments or 1
+    if not lib.spine or count < 2 then return end
+    local limp = instance._isRagdoll or instance._dazedUntil
+    local sway = 0
+    if (creation.spineSway or 0) > 0 and not (instance._lastHeld and now - instance._lastHeld < lib.idleAfter) then
+        instance._swayPhase = instance._swayPhase or love.math.random() * 2 * math.pi
+        sway = math.rad(lib.spineSwayAngle) * creation.spineSway
+            * math.sin(2 * math.pi * now / lib.spineSwayPeriod + instance._swayPhase) / (count - 1)
+    end
+    for i = 2, count do
+        local parent, part = instance.parts['torso' .. (i - 1)], instance.parts['torso' .. i]
+        if parent and part and parent.body and part.body and not parent.body:isDestroyed()
+            and not part.body:isDestroyed() then
+            local joint = jointBetween(parent.body, part.body)
+            if joint then
+                if limp then
+                    joint:setMotorEnabled(false)
+                else
+                    local ax, ay = joint:getAnchors()
+                    joint:setMotorEnabled(true)
+                    joint:setMotorSpeed(units.rate(lib.spineReturn) * (sway - joint:getJointAngle()))
+                    joint:setMaxMotorTorque(lib.spineStrength
+                        * weightTorque(subtreeBodies(instance, 'torso' .. i, {}), ax, ay))
+                end
+            end
+        end
+    end
 end
 
 -- Gaze: each Mipo looks at something. An explicit lookAt target first, else
@@ -686,6 +760,7 @@ local function updateLimp(now)
             end
         end
         poseArms(instance)
+        spineSpring(instance, now)
     end
 end
 

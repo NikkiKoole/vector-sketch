@@ -279,16 +279,18 @@ describe('dna-defaults', function()
         end)
 
         it('validateCreation passes for complete creation', function()
-            local creation = { isPotatoHead = false, torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay' }
+            local creation = { isPotatoHead = false, torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay',
+                torsoSpine = false, spineBend = 15, spineSway = 0.3 }
             local issues = D.validateCreation(creation)
             assert.same({}, issues)
         end)
 
         it('validateCreation catches missing fields', function()
             local issues = D.validateCreation({})
-            assert.equal(5, #issues)
+            assert.equal(8, #issues)
             local paths = {}
             for _, issue in ipairs(issues) do paths[issue.path] = true end
+            assert.is_true(paths['creation.torsoSpine'])
             assert.is_true(paths['creation.isPotatoHead'])
             assert.is_true(paths['creation.torsoSegments'])
             assert.is_true(paths['creation.neckSegments'])
@@ -297,7 +299,8 @@ describe('dna-defaults', function()
         end)
 
         it('validateCreation catches type mismatches', function()
-            local creation = { isPotatoHead = 'yes', torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay' }
+            local creation = { isPotatoHead = 'yes', torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay',
+                torsoSpine = false, spineBend = 15, spineSway = 0.3 }
             local issues = D.validateCreation(creation)
             assert.equal(1, #issues)
             assert.equal('creation.isPotatoHead', issues[1].path)

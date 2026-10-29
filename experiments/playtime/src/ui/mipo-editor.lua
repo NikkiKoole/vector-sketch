@@ -798,6 +798,33 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             end
             y = y + ROW
 
+            -- spine: the torso segments are bands of one torso that bend (docs/MIPO-SPINE.md)
+            local spClicked, spChecked = ui.checkbox(x, y, creation.torsoSpine or false, 'spine')
+            if spClicked then
+                changed = true
+                local patch = { torsoSpine = spChecked }
+                if spChecked and (creation.torsoSegments or 1) < 2 then patch.torsoSegments = 2 end
+                CharacterManager.rebuildFromCreation(instance, patch)
+                CharacterManager.addTexturesFromInstance2(instance)
+            end
+            y = y + ROW
+            if creation.torsoSpine then
+                local bend = ui.sliderWithInput('mipo_spineBend', x, y, 120, 0, 45, creation.spineBend or 15, false, 1)
+                ui.alignedLabel(x, y, '  spine bend')
+                bend = bend and math.floor(tonumber(bend) or 0)
+                if bend and bend ~= creation.spineBend then
+                    changed = true
+                    CharacterManager.rebuildFromCreation(instance, { spineBend = bend })
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                y = y + ROW
+                local sway = ui.sliderWithInput('mipo_spineSway', x, y, 120, 0, 1, creation.spineSway or 0.3)
+                ui.alignedLabel(x, y, '  spine sway')
+                sway = sway and tonumber(sway)
+                if sway and sway ~= creation.spineSway then creation.spineSway = sway end -- read live
+                y = y + ROW
+            end
+
             -- neckSegments
             local ns = ui.sliderWithInput('mipo_neckSeg', x, y, 120, 0, 5, creation.neckSegments or 0, false, 1)
             ui.alignedLabel(x, y, '  neck segments')

@@ -1541,6 +1541,8 @@ local function updateSinglePart(partName, data, instance)
             partData[k] = v
         end
     end
+    -- a spine's bands all take torso1's shape (rebuilt below as its children)
+    if partName:find('^torso%d') then lib.applySpine(instance) end
 
     local oldPosX, oldPosY = 0, 0
     local oldAngle = 0
@@ -1578,7 +1580,7 @@ local function updateSinglePart(partName, data, instance)
     }
 
     if partData.shape8URL and shape8Dict[partData.shape8URL] then
-        local raw = shape8Dict[partData.shape8URL].vertices
+        local raw = topology.shape8Vertices(partData) -- a spine band, or the whole shape
         settings.vertices = makeTransformedVertices(
             raw, (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
     end
@@ -1674,8 +1676,19 @@ function lib.rebuildFromCreation(instance, newCreation)
     end
 end
 
+-- Where the whole torso picture sits on a spine band's body (its y offset): the band's
+-- outline is centred on the band, the picture on the whole shape. 0 for anything else.
+local function spinePictureOffset(partData, scale)
+    local band = partData.spineBand
+    if not band then return 0 end
+    local _, middle = topology.spineBand(shape8Dict[partData.shape8URL].vertices, band[1], band[2],
+        (partData.dims.sy or 1) < 0)
+    return -middle * (partData.dims.sy or 1) * scale
+end
+
 local function addSkinTexture(body, partData, skinData, scale)
     local _, _, w, h = getCenterAndDimensions(body)
+    local offsetY = spinePictureOffset(partData, scale)
 
     local documentSize = nil
     if partData.shape8URL then
@@ -1693,7 +1706,7 @@ local function addSkinTexture(body, partData, skinData, scale)
 
     local fixture
     if (documentSize) then
-        fixture = fixtures.createSFixture(body, 0, 0,
+        fixture = fixtures.createSFixture(body, 0, offsetY,
             subtypes.TEXFIXTURE,
             {
                 width = documentSize.w * growfactor * scale,
@@ -1745,6 +1758,8 @@ local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
     local raw = shape8Dict[partData.shape8URL].vertices
     local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor * scale,
         (partData.dims.sy or 1) * growfactor * scale)
+    local offsetY = spinePictureOffset(partData, scale) -- the whole torso's hair, on a spine's lowest band
+    for i = 2, #vertices, 2 do vertices[i] = vertices[i] + offsetY end
     local newVertices = cyclicShift(vertices, 2)
     if partData.dims.sy < 0 then
         newVertices = cyclicShift(newVertices, 8)
@@ -2232,8 +2247,11 @@ function lib.addTexturesFromInstance2(instance)
                     end
                 end
 
+                -- a spine's upper bands draw no picture of their own: torso1 draws the whole torso
+                local upperBand = v.spineBand and v.spineBand[1] > 1
                 for k2, v2 in pairs(v.appearance) do
-                    if k2 == 'skin' then
+                    if (k2 == 'skin' or k2 == 'bodyhair') and upperBand then -- luacheck: ignore 542
+                    elseif k2 == 'skin' then
                         addSkinTexture(relevant.body, v, v2, scale)
                     elseif k2 == 'bodyhair' then
                         addBodyhairTexture(relevant.body, k, v, v2, scale)
@@ -2333,6 +2351,34 @@ function lib.balanceMasses(instance)
     lib.balanceArms(instance)
 end
 
+-- A spine (creation.torsoSpine, docs/MIPO-SPINE.md): the torso segments are bands of
+-- torso1's shape (part.spineBand, read by topology.shape8Vertices), the upper ones bend
+-- on a spring (mipo-actions, spineSpring) instead of each keeping its own angle.
+-- Without it, the segments are whole torsos again, each with KEEP_ANGLE.
+function lib.applySpine(instance)
+    local creation = instance.dna.creation
+    local count = creation.torsoSegments or 1
+    local spine = creation.torsoSpine and count > 1
+    local base = instance.dna.parts.torso1
+    for i = 1, count do
+        local part = instance.dna.parts['torso' .. i]
+        if part then
+            part.spineBand = spine and { i, count } or nil
+            if i > 1 then
+                if spine then
+                    part.shape8URL = base.shape8URL
+                    part.dims = utils.deepCopy(base.dims)
+                    part.behaviors = {}
+                    local bend = math.rad(creation.spineBend or D.creation.spineBend)
+                    part.j = { type = JT.REVOLUTE, limits = { low = -bend, up = bend } }
+                elseif not (part.behaviors and part.behaviors[1]) then
+                    part.behaviors = { { name = 'KEEP_ANGLE', angle = 0 } }
+                end
+            end
+        end
+    end
+end
+
 local function migrateTorsoLayers(instance)
     for partName, partDNA in pairs(instance.dna.parts or {}) do
         local skin = partName:find('^torso%d') and partDNA.appearance and partDNA.appearance.skin
@@ -2376,6 +2422,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['torso-segment-template'])
         end
     end
+    lib.applySpine(instance)
 
     if not instance.dna.creation.isPotatoHead and instance.dna.creation.neckSegments > 0 then
         for i = 1, instance.dna.creation.neckSegments do
@@ -2441,7 +2488,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         }
 
         if partData.shape8URL and shape8Dict[partData.shape8URL] then
-            local raw = shape8Dict[partData.shape8URL].vertices
+            local raw = topology.shape8Vertices(partData) -- a spine band, or the whole shape
             settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * instance.scale,
                 (partData.dims.sy or 1) * instance.scale)
         end

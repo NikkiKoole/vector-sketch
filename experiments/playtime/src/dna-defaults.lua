@@ -96,6 +96,10 @@ lib.creation = {
     neckSegments = 0,
     noseSegments = 0,
     noseMode = 'overlay', -- 'overlay' or 'physics' (only when noseSegments == 1)
+    -- spine (docs/MIPO-SPINE.md): the torso segments are bands of one torso that bend
+    torsoSpine = false,
+    spineBend = 15,   -- degrees each spine joint bends at most
+    spineSway = 0.3,  -- idle sway with the breath, 0 = none, 1 = a lot
 }
 
 -- Face magnitude (overall face-part scale factor)
@@ -196,6 +200,9 @@ lib.creationSchema = {
     neckSegments = 'number',
     noseSegments = 'number',
     noseMode = 'string',
+    torsoSpine = 'boolean',
+    spineBend = 'number',
+    spineSway = 'number',
 }
 
 --- Recursively validate target against schema.
