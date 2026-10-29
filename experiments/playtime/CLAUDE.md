@@ -46,6 +46,7 @@ HTTP JSON API for interacting with the running game. All endpoints return `{ok, 
 - Must clear Box2D callbacks before destroying bodies to avoid SEGFAULT
 - `/eval` has an instruction limit and aborts *mid-function* when it's hit, leaving half-done state. Creating + randomizing several Mipos in one eval got cut off inside `rebuildFromCreation` and left headless, untextured, unregistered Mipos (group 0, self-colliding). Create one Mipo per eval call and always check the response for `"ok":false`. Big dumps: use `/exec`
 - Never call `world:update` from `/eval` (or `/exec`): the instruction limit can stop it inside a Box2D callback, Box2D's allocator is left unbalanced and the next real step aborts the game (`Box2D assertion failed: p == entry->data`, 2026-10-29). Time physics in a spec (`love . --specs <file>`) instead
+- Don't wrap `love.update`/`love.draw` from the bridge (to time them, say): `love.update` is lurker's wrapper, and on the next hot swap lurker stores your wrapper as the real function, so the two call each other: `stack overflow` on every reload (2026-10-29). Wrap `require('vendor.lurker').lovefuncs.update` instead, or restart after
 - zsh `echo` expands `\n` inside JSON payloads; send eval bodies with `curl --data-binary @file.json`
 - `playtime.sh start` passes `--bridge` which skips the start screen automatically
 - macOS buffers stderr from .app bundles until process exit; `playtime.sh` handles this by killing the process to flush errors on startup failure
