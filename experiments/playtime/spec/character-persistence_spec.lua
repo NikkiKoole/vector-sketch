@@ -397,6 +397,30 @@ describe("character persistence round-trip", function()
         destroyWorld(newWorld)
     end)
 
+    -- Loading used to give every fixture of a body the body's one density, sensors too:
+    -- textures and face decals then weighed as much as solid shapes, and a Mipo came back
+    -- with head, torso, hands and feet 4-5x heavier than when it was made.
+    it("every part weighs the same after a save/load cycle", function()
+        CharacterManager.randomizeMipoConstrained(instance) -- a full Mipo: head, hands, face decals
+        local before = {}
+        for name, part in pairs(instance.parts) do before[name] = part.body:getMass() end
+
+        local newWorld = buildFreshWorld(saveAndDecode())
+        local _, loaded = next(mipoRegistry.getAll())
+        for name, mass in pairs(before) do
+            local part = loaded.parts[name]
+            assert.is_not_nil(part, name .. " missing after load")
+            assert.is_true(math.abs(part.body:getMass() - mass) < 1e-3 * math.max(1, mass),
+                string.format("%s weighed %.3f, %.3f after load", name, mass, part.body:getMass()))
+            for _, fixture in ipairs(part.body:getFixtures()) do
+                if fixture:getUserData() then
+                    assert.are.equal(0, fixture:getDensity(), name .. " has an sfixture with weight")
+                end
+            end
+        end
+        destroyWorld(newWorld)
+    end)
+
     it("reconstructed instance has same DNA as original after round-trip", function()
         local decoded = saveAndDecode()
         local newWorld = buildFreshWorld(decoded)

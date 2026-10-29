@@ -55,6 +55,7 @@ lib.untangle = true
 lib.untangleAfter = 2.0     -- seconds knotted (and let go) before it untangles
 lib.untangleMaxTime = 4.0   -- seconds of passing through at most
 lib.untangleRest = 3.0      -- seconds before the same pair untangles again
+lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, this soon
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
 lib.untangleCheckEvery = 0.25
 
@@ -557,8 +558,12 @@ local function untangleMipos(now)
     end
     for key, t in pairs(tangles) do
         if t.untilT then
-            if now >= t.untilT or (not hooked[key] and not overlapping(t.a, t.b)) then
+            if not hooked[key] and not overlapping(t.a, t.b) then
                 t.untilT, t.since, t.restUntil = nil, nil, now + lib.untangleRest
+            elseif now >= t.untilT then
+                -- out of time, still hooked: hop again soon (the rest is for a pair that came
+                -- apart; light Mipos' arms often still hung on when the 4 s ran out)
+                t.untilT, t.since, t.restUntil = nil, now - lib.untangleAfter, now + lib.untangleRetry
             end
         elseif not hooked[key] then
             t.since = nil

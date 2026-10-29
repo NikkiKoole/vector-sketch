@@ -301,7 +301,7 @@ function lib.maybeUpdateTexFixtureVertices()
     state.selection.selectedSFixture:destroy()
 
     local shape = love.physics.newPolygonShape(state.texFixtureEdit.tempVerts)
-    local newfixture = love.physics.newFixture(body, shape)
+    local newfixture = love.physics.newFixture(body, shape, 0) -- sensors weigh nothing
     newfixture:setSensor(true) -- Sensor so it doesn't collide
 
     newfixture:setUserData(oldUD)

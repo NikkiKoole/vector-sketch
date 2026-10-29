@@ -135,7 +135,7 @@ function lib.updateSFixtureDimensions(w, h)
     local centerX, centerY = mathutils.getCenterOfPoints(points)
     local vertices = oldUD.extra.vertexCount == 8 and rect8(w, h, centerX, centerY) or rect(w, h, centerX, centerY)
     local shape = love.physics.newPolygonShape(vertices)
-    local newfixture = love.physics.newFixture(body, shape)
+    local newfixture = love.physics.newFixture(body, shape, 0) -- sensors weigh nothing
     oldUD.extra.vertices = vertices
     newfixture:setSensor(true) -- Sensor so it doesn't collide
     newfixture:setUserData(oldUD)
@@ -155,7 +155,7 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
 
     local w, h = ft.getSize(cfg)
     local shape = love.physics.newPolygonShape(rect(w, h, localX, localY))
-    local fixture = love.physics.newFixture(body, shape, ft.density or 1)
+    local fixture = love.physics.newFixture(body, shape, ft.density or 0) -- sensors weigh nothing
     fixture:setSensor(true)
     local setId = uuid.generateID()
     local extra = ft.getExtra(cfg, localX, localY)

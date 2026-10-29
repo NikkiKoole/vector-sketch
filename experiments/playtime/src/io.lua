@@ -372,7 +372,11 @@ function lib.buildWorld(data, world, cam, opts)
 
 
             if shape then
-                local fixture = love.physics.newFixture(body, shape, shared.density)
+                -- sfixtures (textures, face decals, ribbons) are sensors and weigh nothing; the
+                -- body's one shared density went onto them too, and a loaded Mipo's head, torso,
+                -- hands and feet came back 4-5x heavier than when it was made
+                local density = fixtureData.userData and 0 or shared.density
+                local fixture = love.physics.newFixture(body, shape, density)
                 fixture:setFriction(shared.friction)
                 fixture:setRestitution(shared.restitution)
                 fixture:setGroupIndex(shared.groupIndex or 0)
