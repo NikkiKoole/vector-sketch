@@ -114,6 +114,24 @@ lib.patches = {
               filter = { mode = 2, cutoff = 1200, resonance = 1 } },
     crackle = { slot = 34, wave = 'NOISE', adsr = { 0, 4, 0, 4 }, reverb = 0, level = 0.3,
                 filter = { mode = 2, cutoff = 3500, resonance = 1 } },
+    -- the lofi style, after dreamengine's lofi city (its jazzhop casting): a darker Rhodes with
+    -- the suitcase tremolo, a slow pan and a few cents of tape wow, all as LFOs (an LFO takes no FX
+    -- bus), vibes for the tune, a round sine bass, a softer kick and a vinyl hiss bed. music.lua rides
+    -- the lowpass on the keys, vibes and bass (lib.slotFilter): the intro opens up, the break dips.
+    -- lfo = { { dest, rate Hz, depth } } per LFO: dest 0 pitch (semitones), 2 volume, 7 pan.
+    lofiKeys = { slot = 35, wave = 'EPIANO', adsr = { 2, 0, 7, 320 },
+                 harmonics = 0.10, timbre = 0.36, morph = 0.18, reverb = 0.3, level = 0.54,
+                 filter = { mode = 1, cutoff = 3400, resonance = 0 },
+                 lfo = { { 2, 4.5, 0.06 }, { 7, 4.5, 0.12 }, { 0, 0.5, 0.035 } } },
+    vibes = { slot = 36, wave = 'MALLET', adsr = { 1, 0, 7, 1100 },
+              harmonics = 0.25, timbre = 0.5, morph = 0.9, reverb = 0.3, level = 0.5,
+              filter = { mode = 1, cutoff = 3200, resonance = 0 } },
+    roundBass = { slot = 37, wave = 'SINE', adsr = { 4, 0, 6, 150 }, reverb = 0.05, level = 0.36,
+                  filter = { mode = 1, cutoff = 600, resonance = 0 } },
+    lofiKick = { slot = 38, wave = 'MEMBRANE', adsr = { 0, 180, 0, 80 },
+                 harmonics = 0.05, timbre = 0.0, morph = 0, reverb = 0.05, level = 1.6 },
+    hiss = { slot = 39, wave = 'NOISE', adsr = { 300, 0, 7, 300 }, reverb = 0, level = 0.02,
+             filter = { mode = 1, cutoff = 5000, resonance = 0 } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,
@@ -149,6 +167,7 @@ void instrument_tape(int slot, float wow, float flutter, float saturation);
 void instrument_tape_warble(int slot, float amount);
 void instrument_autopan(int slot, float rate, float depth, int shape);
 void instrument_phaser(int slot, float rate, float depth, float feedback, float mix, int stages);
+void instrument_lfo(int slot, int which, int dest, float rate_hz, float depth);
 double audio_time(void);
 void schedule_at(double t, int midi, int instr, int vol, int dur_ms);
 int  note_on(int midi, int instr, int vol);
@@ -182,6 +201,7 @@ local function definePatches()
             S.C.instrument_tape(patch.slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
             S.C.instrument_tape_warble(patch.slot, patch.tape.warble or 0)
         end
+        for i, lfo in ipairs(patch.lfo or {}) do S.C.instrument_lfo(patch.slot, i - 1, lfo[1], lfo[2], lfo[3]) end
         if patch.autopan then S.C.instrument_autopan(patch.slot, patch.autopan.rate, patch.autopan.depth, 0) end
         if patch.phaser then
             local ph = patch.phaser
@@ -278,6 +298,14 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs)
     if not patch then return end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
     S.C.schedule_at(t, midi, patch.slot, vol, math.max(1, math.floor(durMs)))
+end
+
+-- Ride a patch's lowpass live (the music's tone automation); the patch keeps its filter mode.
+function lib.slotFilter(patchName, cutoff)
+    if not S.started then return end
+    local patch = lib.patches[patchName]
+    if not (patch and patch.filter) then return end
+    S.C.instrument_filter(patch.slot, patch.filter.mode, math.floor(cutoff), patch.filter.resonance)
 end
 
 -- Held notes. noteOn returns a handle (nil when the synth isn't running); vol 0..7, fractions OK.

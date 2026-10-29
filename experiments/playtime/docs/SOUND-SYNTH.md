@@ -31,7 +31,7 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - Patches are named in `lib.patches`. Each has a slot, an instrument id (`lib.INSTR`), adsr, three macros (harmonics/timbre/morph), and optionally level, reverb, filter, tape, autopan and phaser.
 
 ## Music, in short
-- Chords: lofi.c's method, ported. Rootless four-note voicings, the one that moves least, no minor ninth inside.
+- Chords: lofi.c's method, ported: the voicing that moves least, no minor ninth inside. Each style has its own chord vocabulary (`lib.qualities`): rootless jazz, plain sevenths, triads, or a stacked quartal shape.
 - The chords are "played": the notes drift in one by one, and the Rhodes' left hand plays the bass.
 - `music.bump()` on each impact raises a play level. When it gets high the drums join (where the song's form lets them), and they leave again when play calms down.
 - `music.chordNotes(lo, hi)` gives sound effects notes from the chord sounding right now, so impacts are in key.
@@ -42,5 +42,6 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - **A new FFI function must go in synth.lua's `CDEF`.** It's declared once at module load, so the next hot reload picks it up. Redeclaring an identical function is fine.
 - **Module state goes on `state.synth` / `state.music` / `state.snapSound`.** A hot reload would wipe module-local state.
 - **Only 7 slots can have inserts (tape, autopan, phaser, chorus, echo, ...).** Each slot with one takes an aux FX bus (`SOUND_FX_BUSES` 8 = master + 7), never freed. 6 are used (rhodes, celesta, rhodesLead, piano, pianoLead, whistle). Past that the effect is silently absent and `sound_tick` prints a warning. Until 2026-10-28 that warning **segfaulted the app**: `printh` was unresolved in libdesound (NULL under `-undefined dynamic_lookup`). desound.c now defines it (stderr). Rebuild with `native/desound/build.sh` while the app is stopped.
+- **An LFO is not an insert.** A patch's `lfo = { { dest, rate, depth } }` (tremolo, pan, pitch wow) takes no FX bus, so that's the way to add motion while the buses are full. `synth.slotFilter(patch, cutoff)` rides a patch's lowpass live; the lofi style's tone automation uses it.
 - **Measure loudness before choosing levels.** Render offline and compare peaks. One instrument (MODAL) came out 10× louder than the rest.
 - **The user's taste so far:** likes the Rhodes, the drums, the membrane boxes and the click. Disliked the celesta, the slide whistle and (in the music) the upright.
