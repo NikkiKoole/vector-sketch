@@ -1,0 +1,17 @@
+# OMP bench results
+
+Run: 2026-10-29 12:54 on OpenGL 4.1 ATI-5.5.17 (ATI Technologies Inc., AMD Radeon Pro 575X OpenGL Engine).
+Scene: scripts/dollhouse.playtime.json, 5 Mipos, 118 OMP parts. Extra Mipos are recoloured copies. Ribbon parts (connected-texture) are drawn as quads at their source size.
+Source images (outline/mask/pattern, shared, not in the MB columns): 31.3 MB.
+Oversampling at full size (texture px per screen px): median 4.5 (p10 2.5, p90 6.4) at the dollhouse zoom 0.35; median 1.6 at zoom 1.0.
+
+Frame test: 30 Mipos scattered at the dollhouse zoom, vsync off, 600 frames.
+diff = mean difference per channel (0-255) against baseline; % px changed = pixels off by more than 8/255.
+Randomize: Mipo 1 re-baked 25 times next to the others; +MB over the start.
+
+| option | MB@5 | MB@10 | MB@30 | MB@60 | MB per Mipo | bake ms/Mipo | frame ms median | frame ms p95 | draw calls | diff game | % px changed game | diff close | % px changed close | randomize peak +MB | randomize end +MB |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| baseline | 22.5 | 44.9 | 134.7 | 269.5 | 4.49 | 28.2 | 4.07 | 5.66 | 708 |  |  |  |  | 6.9 | 5.0 |
+| shrink-1.5 | 9.9 | 19.8 | 59.5 | 119.1 | 1.98 | 20.8 | 4.09 | 5.61 | 708 | 0.48 | 2.0 | 1.95 | 6.9 | 3.2 | 2.2 |
+| shrink-2 | 5.6 | 11.2 | 33.5 | 67.0 | 1.12 | 17.2 | 4.10 | 5.38 | 708 | 0.50 | 2.1 | 2.05 | 7.7 | 2.0 | 1.2 |
+| release | 22.5 | 44.9 | 134.7 | 269.5 | 4.49 | 25.6 | 4.10 | 5.55 | 708 | 0.00 | 0.0 | 0.00 | 0.0 | 0.6 | 0.0 |
