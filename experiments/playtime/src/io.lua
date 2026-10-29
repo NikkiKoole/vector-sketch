@@ -470,22 +470,20 @@ function lib.buildWorld(data, world, cam, opts)
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
             elseif jointData.type == "revolute" then
+                -- both anchors as saved: a joint saved pulled apart a little (a Mipo in motion)
+                -- got both halves on A's anchor, a kink in the chain for good (3BjZpF fell over
+                -- loaded, stood rebuilt). Scenes saved before the reference angle was kept:
+                -- count from the saved pose, as LÖVE's short form did.
                 local referenceAngle = jointData.properties and jointData.properties.referenceAngle
-                if referenceAngle then
-                    joint = love.physics.newRevoluteJoint(
-                        bodyA, bodyB,
-                        anchorA[1], anchorA[2],
-                        anchorA[1], anchorA[2],
-                        collideConnected, referenceAngle
-                    )
-                else -- scenes saved before the reference angle was kept: counts from the saved pose
-                    joint = love.physics.newRevoluteJoint(
-                        bodyA, bodyB,
-                        anchorA[1], anchorA[2],
-                        --anchorB[1], anchorB[2],
-                        collideConnected
-                    )
-                end
+                    or (bodyB:getAngle() - bodyA:getAngle())
+                local bx, by = anchorA[1], anchorA[2]
+                if anchorB then bx, by = anchorB[1], anchorB[2] end
+                joint = love.physics.newRevoluteJoint(
+                    bodyA, bodyB,
+                    anchorA[1], anchorA[2],
+                    bx, by,
+                    collideConnected, referenceAngle
+                )
                 joint:setMotorEnabled(jointData.properties.motorEnabled)
                 if jointData.properties.motorEnabled then
                     joint:setMotorSpeed(jointData.properties.motorSpeed)

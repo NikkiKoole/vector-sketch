@@ -370,16 +370,20 @@ describe("save/load round-trip", function()
             -- Position (within rounding tolerance)
             -- Box2D uses float32 internally; precision degrades at large coordinates
             -- (0.25 at ~4M, 0.5 at ~8M), so scale tolerance accordingly
-            local posTolX = math.max(0.1, math.abs(orig.position[1]) * 1e-6)
-            local posTolY = math.max(0.1, math.abs(orig.position[2]) * 1e-6)
-            assert.is_near(orig.position[1], rest.position[1], posTolX,
-                file .. ": body " .. id .. " X position drift")
-            assert.is_near(orig.position[2], rest.position[2], posTolY,
-                file .. ": body " .. id .. " Y position drift")
+            -- Mipo parts are left out: a Mipo saved mid-motion (joints pulled apart, bent past
+            -- a limit) is put back together when it loads (character-manager settlePose)
+            if not orig.mipoId then
+                local posTolX = math.max(0.1, math.abs(orig.position[1]) * 1e-6)
+                local posTolY = math.max(0.1, math.abs(orig.position[2]) * 1e-6)
+                assert.is_near(orig.position[1], rest.position[1], posTolX,
+                    file .. ": body " .. id .. " X position drift")
+                assert.is_near(orig.position[2], rest.position[2], posTolY,
+                    file .. ": body " .. id .. " Y position drift")
 
-            -- Angle
-            assert.is_near(orig.angle, rest.angle, 0.001,
-                file .. ": body " .. id .. " angle drift")
+                -- Angle
+                assert.is_near(orig.angle, rest.angle, 0.001,
+                    file .. ": body " .. id .. " angle drift")
+            end
 
             -- Dims should survive
             if orig.dims then

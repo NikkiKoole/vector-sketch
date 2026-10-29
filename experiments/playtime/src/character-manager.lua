@@ -2378,19 +2378,91 @@ end
 -- joints held it at 40-60.
 lib.neckBend = 45
 
+-- A segmented physics nose is a trunk: each joint bends this far (degrees). The template's
+-- 5.6 made a 5-segment nose a stiff stick; Nikki wants it to hang and swing (2026-10-29).
+lib.trunkBend = 30
+
+-- Trunk limits on a segmented nose's DNA (built and loaded Mipos alike).
+function lib.applyTrunk(instance)
+    local creation = instance.dna.creation
+    if (creation.noseSegments or 0) < 2 and creation.noseMode ~= 'physics' then return end
+    local bend = math.rad(lib.trunkBend)
+    for i = 1, creation.noseSegments or 0 do
+        local part = instance.dna.parts['nose' .. i]
+        if part and part.j and part.shape ~= ST.SHAPE8 then part.j.limits = { low = -bend, up = bend } end
+    end
+end
+
 -- Neck segments keep themselves upright (see balanceNeck). Behaviors are the part's
 -- thing.behaviors (from the DNA when built, saved with the body); `things` = true also sets
 -- them on the built parts (a scene saved before this).
 function lib.applyNeck(instance, things)
-    for i = 1, (instance.dna.creation.neckSegments or 0) do
+    local count = instance.dna.creation.neckSegments or 0
+    local template = instance.dna.parts['neck-segment-template']
+    local templateBend = template and template.j and template.j.limits and template.j.limits.up or math.pi / 8
+    for i = 1, count do
         local name = 'neck' .. i
         local dnaPart = instance.dna.parts[name]
         if dnaPart and not (dnaPart.behaviors and dnaPart.behaviors[1]) then
             dnaPart.behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } }
         end
+        if dnaPart and dnaPart.j then -- the bend budget (neckBend), from the template's own range
+            local bend = math.min(templateBend, math.rad(lib.neckBend) / count)
+            dnaPart.j.limits = { low = -bend, up = bend }
+        end
         local part = things and instance.parts[name]
         if part and not (part.behaviors and part.behaviors[1]) then
             part.behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } }
+        end
+    end
+end
+
+-- A Mipo loaded in a pose its joints don't allow got yanked together by Box2D in one step and
+-- fell over (3BjZpF stood rebuilt, fell loaded): saved while flailing, its joints pulled
+-- apart (the nose tip 238 off, the neck 64), and saved bent past a limit that has changed
+-- since (a neck at 25 degrees a joint, its limit now 9). Parents first, each part and
+-- everything that hangs from it is moved onto its parent's anchor, then turned back inside
+-- its limits about the joint, as a rebuild would assemble it.
+local function subtreeOf(instance, name, out)
+    local part = instance.parts[name]
+    if part and part.body and not part.body:isDestroyed() then out[#out + 1] = part.body end
+    for _, child in ipairs(instance.childrenMap[name] or {}) do subtreeOf(instance, child, out) end
+    return out
+end
+
+function lib.settlePose(instance)
+    for _, entry in ipairs(instance.topology or {}) do
+        local part, parent = instance.parts[entry.name], entry.parent and instance.parts[entry.parent]
+        if part and parent and part.body and parent.body and not part.body:isDestroyed() then
+            for _, joint in ipairs(part.body:getJoints()) do
+                local a, b = joint:getBodies()
+                if a == parent.body and b == part.body then
+                    local x1, y1, x2, y2 = joint:getAnchors()
+                    if math.abs(x1 - x2) + math.abs(y1 - y2) > 0.5 then
+                        for _, body in ipairs(subtreeOf(instance, entry.name, {})) do
+                            local x, y = body:getPosition()
+                            body:setPosition(x + x1 - x2, y + y1 - y2)
+                        end
+                    end
+                end
+                if a == parent.body and b == part.body and joint:getType() == 'revolute'
+                    and joint:areLimitsEnabled() then
+                    local angle = joint:getJointAngle()
+                    local target = math.max(joint:getLowerLimit(), math.min(joint:getUpperLimit(), angle))
+                    local turn = target - angle
+                    if math.abs(turn) > 1e-3 then
+                        local ax, ay = joint:getAnchors()
+                        local c, s = math.cos(turn), math.sin(turn)
+                        for _, body in ipairs(subtreeOf(instance, entry.name, {})) do
+                            local x, y = body:getPosition()
+                            local dx, dy = x - ax, y - ay
+                            body:setPosition(ax + dx * c - dy * s, ay + dx * s + dy * c)
+                            body:setAngle(body:getAngle() + turn)
+                            body:setAngularVelocity(0)
+                        end
+                    end
+                end
+            end
         end
     end
 end
@@ -2483,12 +2555,6 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             instance.dna.parts['neck' .. i] = utils.deepCopy(instance.dna.parts['neck-segment-template'])
         end
         lib.applyNeck(instance)
-        local count = instance.dna.creation.neckSegments
-        for i = 1, count do
-            local limits = instance.dna.parts['neck' .. i].j.limits
-            local bend = math.min(limits.up, math.rad(lib.neckBend) / count)
-            instance.dna.parts['neck' .. i].j.limits = { low = -bend, up = bend }
-        end
     end
 
     local noseSegments = instance.dna.creation.noseSegments
@@ -2514,6 +2580,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
                     instance.dna.parts[partName] = utils.deepCopy(instance.dna.parts['nose-segment-template'])
                 end
             end
+            lib.applyTrunk(instance)
             local nose1 = instance.dna.parts['nose1']
             if not nose1.appearance then nose1.appearance = {} end
             if not nose1.appearance['connected-skin'] then
@@ -2693,6 +2760,8 @@ function lib.reconstructInstance(charData, partBodies)
     }
     D.ensureDefaults(instance.dna.creation, D.creation)
     migrateTorsoLayers(instance)
+    lib.applyNeck(instance) -- neck limits (bend budget) before the rest-pose limits below
+    lib.applyTrunk(instance)
     if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
     if not instance.dna.positioners then instance.dna.positioners = {} end
     D.ensureDefaults(instance.dna.positioners, D.positioners)
@@ -2810,6 +2879,7 @@ function lib.reconstructInstance(charData, partBodies)
     end
     lib.applyNeck(instance, true)
     lib.balanceMasses(instance)
+    lib.settlePose(instance)
     return instance
 end
 

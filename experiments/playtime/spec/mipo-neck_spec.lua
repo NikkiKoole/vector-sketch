@@ -65,4 +65,40 @@ describe('a long neck', function()
         love.timer.getTime = realGetTime
         assert(ok, err)
     end)
+
+    -- a Mipo saved mid-motion (joints pulled apart, bent past a limit that has changed since)
+    -- is put back together when it loads, before physics yanks it (it fell over: 3BjZpF)
+    it('a pose with joints pulled apart and bent past a limit is settled (settlePose)', function()
+        local world = love.physics.newWorld(0, 0, true)
+        state.physicsWorld = world
+        registry.reset()
+        mipoRegistry.reset()
+        love.math.setRandomSeed(1)
+        math.randomseed(1)
+        local instance = CM.createCharacter('humanoid', 0, 0, 0.3)
+        CM.rebuildFromCreation(instance, { isPotatoHead = false, neckSegments = 3 })
+        local function jointInto(name)
+            local b = instance.parts[name].body
+            for _, j in ipairs(b:getJoints()) do
+                local _, bb = j:getBodies()
+                if bb == b then return j end
+            end
+        end
+        -- pull the neck apart at neck2 (it and everything above it), bend neck3 past its limit
+        for _, name in ipairs({ 'neck2', 'neck3', 'head' }) do
+            local b = instance.parts[name].body
+            b:setPosition(b:getX() + 40, b:getY() - 30)
+        end
+        local n3 = instance.parts.neck3.body
+        n3:setAngle(n3:getAngle() + math.rad(40))
+        CM.settlePose(instance)
+        for _, name in ipairs({ 'neck1', 'neck2', 'neck3', 'head' }) do
+            local j = jointInto(name)
+            local x1, y1, x2, y2 = j:getAnchors()
+            assert.is_true(math.abs(x1 - x2) + math.abs(y1 - y2) < 0.5, name .. ' still apart')
+            local a = j:getJointAngle()
+            assert.is_true(a >= j:getLowerLimit() - 1e-3 and a <= j:getUpperLimit() + 1e-3, name .. ' past its limit')
+        end
+        world:destroy()
+    end)
 end)
