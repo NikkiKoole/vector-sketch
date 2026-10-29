@@ -143,6 +143,13 @@ function ui.startFrame()
     end
     ui.nextID = 1           -- Reset unique ID counter at the start of each frame
 
+    -- a focused text input that wasn't drawn last frame (its panel closed) lets go of
+    -- the keyboard; otherwise tab and the editor keys stay blocked for good
+    if ui.focusedTextInputID and not ui.focusedTextInputDrawn then
+        ui.focusedTextInputID = nil
+    end
+    ui.focusedTextInputDrawn = false
+
     ui.mousePressed = false -- Reset click state
     ui.mouseReleased = false
 

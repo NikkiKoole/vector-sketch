@@ -462,6 +462,14 @@ local function handlePointer(x, y, id, action, button)
             local ud = hitBody:getUserData()
             if ud and ud.thing then
                 state.selection.selectedObj = ud.thing
+                -- a blob shows its blob settings; clicking empty space goes to the body
+                local blobFixture = blobs.sfixtureOf(hitBody)
+                local sel = state.selection.selectedSFixture
+                if blobFixture then
+                    state.selection.selectedSFixture = blobFixture
+                elseif sel and (sel:isDestroyed() or subtypes.is(sel:getUserData(), subtypes.SOFTBODY)) then
+                    state.selection.selectedSFixture = nil
+                end
             end
             if state.scene.sceneScript and not state.world.paused and state.selection.selectedObj then
                 state.selection.selectedObj = nil

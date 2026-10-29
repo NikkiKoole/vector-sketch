@@ -406,6 +406,7 @@ return function(ui)
 
         -- Re-check focus (may have changed via mouse click above)
         isFocused = (ui.focusedTextInputID == id)
+        if isFocused then ui.focusedTextInputDrawn = true end -- see ui.startFrame
 
         -- Update cursor blinking
         if isFocused then

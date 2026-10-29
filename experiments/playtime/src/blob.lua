@@ -474,6 +474,13 @@ function lib.ownerOf(body)
     return rt and rt.body or nil
 end
 
+-- The SOFTBODY sfixture of a blob body (nil for anything else).
+function lib.sfixtureOf(body)
+    for _, rt in pairs(state.blobs) do
+        if rt.body == body and not rt.fixture:isDestroyed() then return rt.fixture end
+    end
+end
+
 ---------------------------------------------------------------- drawing
 
 -- The drawn rim: rim positions smoothed (drawing only), pushed out by r along the normal
