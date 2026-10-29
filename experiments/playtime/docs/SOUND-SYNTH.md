@@ -46,6 +46,7 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
   - `sample_load` wants **44.1 kHz mono floats**; a 48 kHz ogg plays ~1.5 semitones flat. Resample first. `assets/voices/puppetmaker/*.ogg` are 48 kHz; theo, nikki and fx are already 44.1 kHz.
   - Takes clamp to 8 s, and there are 8 sample slots. Several SING instrument slots can share one sample slot, each with its own size.
   - Call `instrument()` **before** `instrument_sample()`, because instrument() clears the binding. Binding analyses the take on the calling thread (~0.1 s per second of audio), so do it at load time, not mid-song.
+- **Who uses which slot (2026-10-29).** Instrument slots 5–44 are `lib.patches` in synth.lua (35–39 lofi, 40–44 puppetmaker). Slots 45 (INSTR_SAMPLE) and 46 (INSTR_SING) belong to the voice lab (`src/voice-lab.lua`, the sound-effects side), and 47 is free. Sample slots: 7 is the voice lab's, 0–6 are free. Check here before taking one.
 - **An LFO is not an insert.** A patch's `lfo = { { dest, rate, depth } }` (tremolo, pan, pitch wow) takes no FX bus, so that's the way to add motion while the buses are full. `synth.slotFilter(patch, cutoff)` rides a patch's lowpass live; the lofi style's tone automation uses it.
 - **Measure loudness before choosing levels.** Render offline and compare peaks. One instrument (MODAL) came out 10× louder than the rest.
 - **The user's taste so far:** likes the Rhodes, the drums, the membrane boxes and the click. Disliked the celesta, the slide whistle and (in the music) the upright.
