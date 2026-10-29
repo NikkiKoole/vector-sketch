@@ -52,7 +52,7 @@ setmetatable(lib, {
     end,
 })
 
-lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi' }
+lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker' }
 lib.lookahead = 0.3          -- seconds of music booked ahead
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -278,6 +278,11 @@ lib.styles = {
             { { 0, 'm9' }, { 8, 'maj9' }, { 5, 'm9' }, { 7, 'sus', 2 }, { 7, 'b9', 2 } }, -- i bVI iv Vsus V7b9
         },
     },
+    -- Puppetmaker 2's band (docs/PUPPETMAKER-SOUND.md 1a): no form, no chords, a dry swung CR-78
+    -- hand-percussion loop at 60 bpm in 16ths where every hit has its chance, and one rolled Rhodes
+    -- chord floating in at a chromatic pitch now and then. Dense when play is busy (PM2's crowd
+    -- outside), sparse when calm (its editor, one Mipo). Pattern: lib.puppetmaker.
+    puppetmaker = { loop = true, bpm = 60, swing = 0.52, swing16 = true, bars = 16 },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',
@@ -291,6 +296,39 @@ lib.styles = {
             { { 9, 'm9', 4 }, { 2, 'm9', 4 }, { 7, 'dom9', 4 }, { 0, 'maj9', 4 } },     -- vi ii V I
         },
         comps = { { { 0, 16, 4 }, { 16, 16, 4 } } },
+    },
+}
+
+-- Puppetmaker's pattern, from its song file (mipo4.melodypaint.txt): per voice the patch, the pitch, the
+-- length and its hits { step 1..16, chance %, rnd = a random semitone }. dense = PM2's page 1 (outside,
+-- the crowd), sparse = page 2 (the editor). The chord is the rhodes2 sample: one up-strummed voicing
+-- (root + 0 7 16 19 21, 60 ms apart, ringing ~2.8 s), only its root moves.
+lib.puppetmaker = {
+    chord = { 0, 7, 16, 19, 21 }, chordRoot = 51, strumMs = 60, chordMs = 2800,
+    dense = {
+        { 'conga', 52, 420, { { 1, 50 }, { 5, 50 }, { 9, 60 }, { 13, 60 } } },                  -- conga low
+        { 'conga', 62, 140, { { 2, 80 }, { 7, 80 }, { 10, 80 }, { 3, 60 }, { 6, 60 }, { 11, 60 },
+                              { 14, 90 }, { 15, 90 } } },                                         -- bongo low
+        { 'conga', 69, 130, { { 1, 80 }, { 5, 80 }, { 10, 80 }, { 14, 80 }, { 3, 50 }, { 7, 50 },
+                              { 9, 40 }, { 12, 70 } } },                                          -- bongo high
+        { 'tamb', 60, 290, { { 1, 100 }, { 10, 100 }, { 13, 100 }, { 3, 80 }, { 4, 80 }, { 15, 80 },
+                             { 16, 80 }, { 12, 70 }, { 8, 30 } } },
+        { 'guiro', 60, 440, { { 8, 50 } } },
+        { 'triangle', 100, 90, { { 5, 60 }, { 13, 80 } } },                                      -- 101, choked
+        { 'triangleRing', 100, 1800, { { 6, 60 }, { 14, 40 } } },                                -- 103, ringing
+        { 'chord', 0, 0, { { 9, 50, true } } },
+        { 'rhodes', 64, 400, { { 8, 5, true } } },                                               -- ba
+        { 'rhodes', 66, 200, { { 12, 5, true } } },                                              -- bi
+        { 'rhodes', 66, 150, { { 16, 5, true }, { 3, 5, true } } },                              -- biep
+    },
+    sparse = {
+        { 'conga', 69, 130, { { 11, 20 }, { 13, 20 } } },
+        { 'tamb', 60, 290, { { 3, 10 }, { 15, 10 }, { 7, 20 }, { 12, 30 } } },
+        { 'guiro', 60, 440, { { 7, 20, true } } },
+        { 'triangle', 100, 90, { { 3, 10 }, { 15, 20, true } } },
+        { 'triangleRing', 100, 1800, { { 14, 20, true } } },
+        { 'chord', 0, 0, { { 8, 10, true } } },
+        { 'quijada', 60, 800, { { 10, 20 } } },
     },
 }
 
@@ -334,6 +372,15 @@ state.music = state.music or { activity = 0, withBand = false }
 local M = state.music
 if M.version ~= VERSION then M.version, M.song, M.barAt = VERSION, nil, nil end
 M.booked = M.booked or {} -- the last few booked chords: { at = audio time, pcs = { pitch classes } }
+M.listeners = M.listeners or {} -- onNote listeners by name (on state, so they survive a hot reload)
+
+-- Hear every note the music books: fn(part, patch, midi, vol, durMs, t, step). part is 'keys', 'bass',
+-- 'lead', 'riff', 'drums', 'vinyl', or for puppetmaker 'perc' / 'chord' / 'keys'; t is the audio time
+-- it's booked for (lookahead ahead of synth.audioTime()); step 0..15 in its bar (puppetmaker only, for
+-- now). fn = nil removes it. Call this, don't set a field: see the settings note above.
+function lib.onNote(name, fn)
+    M.listeners[name] = fn
+end
 
 -- Gameplay calls this (impacts); enough of it brings the rhythm section in.
 function lib.bump(amount)
@@ -503,6 +550,14 @@ local function planSong()
         swing16 = style.swing16, snareLag = between(style.snareLagMs or 8) / 1000,
     }
     song.barLength = 4 * song.beat
+
+    if style.loop then -- a loop, not a song: one section, no chords, no tune
+        local section = { kind = 'loop', bars = style.bars, roles = {} }
+        song.sections, song.barSection, song.barIndex = { section }, {}, {}
+        for j = 0, style.bars - 1 do song.barSection[j + 1], song.barIndex[j + 1] = section, j end
+        song.bars, song.bar = style.bars, 0
+        return song
+    end
 
     local rnd = stream(seed, 1)
     song.lydian = rnd() < (style.lydianChance or 0)
@@ -831,9 +886,41 @@ end
 
 -- every note goes through here; lib.trace(part, t, midi, vol, durMs), when set, sees them all
 -- (claudetools/render-music.lua counts rubs with it)
-local function play(synth, part, patch, t, midi, vol, durMs)
+local function play(synth, part, patch, t, midi, vol, durMs, step)
     synth.scheduleAt(patch, t, midi, vol, durMs)
     if lib.trace then lib.trace(part, t, midi, vol, durMs) end
+    for name, fn in pairs(M.listeners) do
+        local ok, err = pcall(fn, part, patch, midi, vol, durMs, t, step)
+        if not ok then M.listeners[name] = nil; print('[music] onNote ' .. name .. ': ' .. tostring(err)) end
+    end
+end
+
+-- One bar of Puppetmaker's loop: every hit rolls its chance, rnd ones land on a random semitone.
+-- Busy play gets the crowd's dense page, calm the editor's sparse one.
+local function bookLoopBar(synth, t0, song, b)
+    local pm, rnd = lib.puppetmaker, stream(song.seed, 6000 + b)
+    for _, voice in ipairs(bandPlays() and pm.dense or pm.sparse) do
+        local patch, midi, durMs, hits = voice[1], voice[2], voice[3], voice[4]
+        for _, h in ipairs(hits) do
+            if rnd(100) < h[2] then
+                local s, shift = h[1] - 1, h[3] and rnd(12) - 6 or 0
+                local t = stepTime(song, t0, s) + humanize(0.003)
+                if patch == 'chord' then -- the rolled Rhodes chord, an up-strum
+                    local root, pcs = pm.chordRoot + shift, {}
+                    for k, interval in ipairs(pm.chord) do
+                        play(synth, 'chord', 'rhodes', t + (k - 1) * pm.strumMs / 1000, root + interval, 4,
+                             pm.chordMs - (k - 1) * pm.strumMs, s)
+                        pcs[#pcs + 1] = (root + interval) % 12
+                    end
+                    table.insert(M.booked, { at = t, pcs = pcs }) -- impacts play along in its notes
+                    if #M.booked > 4 then table.remove(M.booked, 1) end
+                else
+                    play(synth, patch == 'rhodes' and 'keys' or 'perc', patch, t, midi + shift,
+                         patch == 'tamb' and 4 or 5, durMs, s)
+                end
+            end
+        end
+    end
 end
 
 -- the left hand (or the upright, with lane = 'musicBass') under one chord inside the bar
@@ -1141,6 +1228,8 @@ end
 
 local function bookBar(synth, t0, song, b)
     local style = lib.styles[song.style]
+    M.barStart = t0
+    if style.loop then return bookLoopBar(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
     local roles = section.roles
     local band = bandPlays()
@@ -1341,12 +1430,14 @@ end
 -- The style was just picked: skip the intro into the first A with the tune and the band in, so the
 -- new style is heard at once. The band lifts the play level, so it leaves again as play calms down.
 local function audition(song)
+    local skip = 0
     for _, section in ipairs(song.sections) do
         if section.kind == 'A' then
             section.roles.lead = true
+            song.bar = skip
             break
         end
-        song.bar = song.bar + section.bars
+        skip = skip + section.bars
     end
     song.hasLead = true
     M.activity = math.max(M.activity, 2 * lib.bandJoins)
@@ -1397,12 +1488,20 @@ function lib.chordNotes(lo, hi)
     return #notes > 0 and notes or nil
 end
 
+-- The audio time of 16th step s (0..15, fractions fine) of the latest booked bar, on the song's swing.
+function lib.stepAt(s)
+    local song = M.song
+    if not (song and M.barStart) then return nil end
+    return stepTime(song, M.barStart, s)
+end
+
 -- what is playing, for a console or a HUD: style, key, section
 function lib.nowPlaying()
     local song = M.song
     if not song then return nil end
     local section = song.barSection[math.max(1, math.min(song.bars, song.bar))]
-    return { style = song.style, key = song.key, section = section and section.kind, bar = song.bar, bars = song.bars }
+    return { style = song.style, key = song.key, section = section and section.kind, bar = song.bar, bars = song.bars,
+             stepTime = M.barStart, stepLen = song.beat / 4 } -- the latest booked bar's step 0, in audio time
 end
 
 function lib.update(synth, now)

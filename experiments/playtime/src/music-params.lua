@@ -32,7 +32,7 @@ lib.rows = {
     field('enabled', 'music', 'bool'),
     field('melody', 'melody', 'bool'),
     field('style', 'style', 'choice',
-          { 'set', 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'ballad' }),
+          { 'set', 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'ballad' }),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
     field('upright', 'upright', 'bool'),
 }
