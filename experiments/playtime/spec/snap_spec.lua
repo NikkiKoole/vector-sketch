@@ -41,6 +41,7 @@ describe('snap core', function()
         world = love.physics.newWorld(0, 0, true)
         state.physicsWorld = world
         registry.reset()
+        mipoRegistry.reset() -- Mipo hands are snap points too: none left over from other specs
         snap.reset()
         simTime = 0
         realGetTime = love.timer.getTime

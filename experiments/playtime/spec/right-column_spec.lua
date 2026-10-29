@@ -12,9 +12,14 @@ local ui = require('src.ui.all')
 local rightColumn = require('src.ui.right-column')
 
 describe('right column', function()
-    local canvas
+    local canvas, world, previousWorld
 
     setup(function()
+        -- its own (empty) world: the panels read state.physicsWorld (signal wires), and the
+        -- one an earlier spec left there may be destroyed
+        previousWorld = state.physicsWorld
+        world = love.physics.newWorld(0, 0, true)
+        state.physicsWorld = world
         local font = love.graphics.newFont(12)
         love.graphics.setFont(font)
         ui.init(font, font:getHeight())
@@ -24,6 +29,8 @@ describe('right column', function()
     teardown(function()
         canvas:release()
         state.rightColumn.tab = 'properties'
+        world:destroy()
+        state.physicsWorld = previousWorld
     end)
 
     local function frame(mx, my, pressed, released, drawProperties)

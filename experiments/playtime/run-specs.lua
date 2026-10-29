@@ -30,6 +30,10 @@ arg = { specTarget }
 arg[0] = 'busted'
 arg[-1] = 'luajit'
 
+-- The game's meter (main.lua sets it from state.world.meter); without this specs ran at
+-- LÖVE's default of 30 px per metre, a different physics from the game's.
+love.physics.setMeter(require('src.state').world.meter)
+
 -- Intercept os.exit so busted doesn't leave LÖVE hanging
 local realExit = os.exit
 local exitCode = 0
