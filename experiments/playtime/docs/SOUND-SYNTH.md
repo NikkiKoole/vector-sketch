@@ -6,7 +6,7 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md).
 
 ## Setting up on a new machine
 1. Clone dreamengine to `~/Projects/dreamengine`, or anywhere else and set `DREAMENGINE=/path`.
-2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `9abe3f44`.
+2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `d1ae370d` (2026-10-29: INSTR_SING, sample_formant).
 3. Without the dylib the app still runs. Every synth call does nothing, and `[synth] missing ...` is printed once.
 
 ## How it fits together
@@ -42,6 +42,10 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - **A new FFI function must go in synth.lua's `CDEF`.** It's declared once at module load, so the next hot reload picks it up. Redeclaring an identical function is fine.
 - **Module state goes on `state.synth` / `state.music` / `state.snapSound`.** A hot reload would wipe module-local state. Settings too: a hot reload (lume.hotswap) copies the new functions onto the old module table, but they keep reading the new chunk's own table. So a plain field the settings panel sets on the module is never seen, and a reload resets it. Music's switches (`style`, `enabled`, ...) live on `state.musicSettings` behind the module's metatable for that reason (2026-10-29: picking a style did nothing until the song ended).
 - **Only 7 slots can have inserts (tape, autopan, phaser, chorus, echo, ...).** Each slot with one takes an aux FX bus (`SOUND_FX_BUSES` 8 = master + 7), never freed. 6 are used (rhodes, celesta, rhodesLead, piano, pianoLead, whistle). Past that the effect is silently absent and `sound_tick` prints a warning. Until 2026-10-28 that warning **segfaulted the app**: `printh` was unresolved in libdesound (NULL under `-undefined dynamic_lookup`). desound.c now defines it (stderr). Rebuild with `native/desound/build.sh` while the app is stopped.
+- **Recorded takes in the engine (bound in synth.lua, not used yet, 2026-10-29).** dreamengine `7cc1a532` and `d1ae370d` (build against d1ae370d or later) add `sample_formant(slot, semis)` (the voice's size, pitch kept) and `INSTR_SING` (38: one syllable sung at any note by the same speaker; timbre = size, morph = speed, harmonics = inflection, where 0 is sung flat and 0.5 is the take's own melody). Per note: `note_timbre` / `note_harmonics`. Neither takes an FX bus. `synth.lua` declares them: `lib.INSTR.SING`, sample_load/shift/formant, instrument_sample*, note_timbre/harmonics. Gotchas from dreamengine:
+  - `sample_load` wants **44.1 kHz mono floats**; a 48 kHz ogg plays ~1.5 semitones flat. Resample first. `assets/voices/puppetmaker/*.ogg` are 48 kHz; theo, nikki and fx are already 44.1 kHz.
+  - Takes clamp to 8 s, and there are 8 sample slots. Several SING instrument slots can share one sample slot, each with its own size.
+  - Call `instrument()` **before** `instrument_sample()`, because instrument() clears the binding. Binding analyses the take on the calling thread (~0.1 s per second of audio), so do it at load time, not mid-song.
 - **An LFO is not an insert.** A patch's `lfo = { { dest, rate, depth } }` (tremolo, pan, pitch wow) takes no FX bus, so that's the way to add motion while the buses are full. `synth.slotFilter(patch, cutoff)` rides a patch's lowpass live; the lofi style's tone automation uses it.
 - **Measure loudness before choosing levels.** Render offline and compare peaks. One instrument (MODAL) came out 10× louder than the rest.
 - **The user's taste so far:** likes the Rhodes, the drums, the membrane boxes and the click. Disliked the celesta, the slide whistle and (in the music) the upright.

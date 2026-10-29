@@ -18,7 +18,8 @@ lib.reverbDamping = 0.5  -- 0 bright .. 1 dark tail
 lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
     PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, PIPE = 25,
-    GUITAR = 26, PIANO = 27, BOWED = 28, MODAL = 31, METAL = 34, WAVESCAN = 36,
+    GUITAR = 26, PIANO = 27, BOWED = 28, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
+    SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
 }
 
 -- Named patches in instrument slots 5..47: wave, attack/decay ms, sustain 0..7, release ms, macros,
@@ -192,6 +193,14 @@ void note_off(int handle);
 void note_pitch(int handle, float midi);
 void note_vol(int handle, float vol);
 void note_pos(int handle, float x, float y);
+void note_timbre(int handle, float x);
+void note_harmonics(int handle, float x);
+void instrument_sample(int slot, int sample_slot, int root_midi);
+void instrument_sample_region(int slot, float start, float end);
+void instrument_sample_mode(int slot, int mode);
+void sample_load(int slot, const float *data, int n);
+void sample_shift(int slot, float semitones);
+void sample_formant(int slot, float semitones);
 ]]
 -- At load, so a hot reload can add functions. Redeclaring an identical function is allowed.
 pcall(ffi.cdef, CDEF)
