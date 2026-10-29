@@ -52,6 +52,13 @@ fixtureTypes[subtypes.SOFTBODY] = {
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
     getExtra = function() return require('src.blob').newExtra() end,
 }
+-- water in a container: the cavity and the amount come from extra (src/liquid.lua)
+fixtureTypes[subtypes.LIQUID] = {
+    subtype = subtypes.LIQUID,
+    density = 0,
+    getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
+    getExtra = function() return require('src.liquid').newExtra() end,
+}
 fixtureTypes[subtypes.RESOURCE] = simpleEntry(subtypes.RESOURCE, {
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
 })

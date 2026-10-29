@@ -35,6 +35,40 @@ function lib.makeBlob(x, y, height)
     return thing
 end
 
+-- A container: a U-shaped body (open at the top, walls `wall` thick) with a LIQUID
+-- sfixture inside (src/liquid.lua). The cup is dynamic, the bath static and its water
+-- is drawn in front of the Mipos.
+local function makeContainer(x, y, w, h, wall, opts)
+    local hw, hh = w / 2, h / 2
+    local vertices = {
+        x - hw, y - hh, x - hw + wall, y - hh, x - hw + wall, y + hh - wall, x + hw - wall, y + hh - wall,
+        x + hw - wall, y - hh, x + hw, y - hh, x + hw, y + hh, x - hw, y + hh,
+    }
+    local thing = objectManager.addThing('custom', { x = x, y = y, vertices = vertices,
+        bodyType = opts.bodyType or 'dynamic', label = opts.label })
+    if not thing then return nil end
+    local subtypes = require('src.subtypes')
+    local fixture = require('src.fixtures').createSFixture(thing.body, 0, 0, subtypes.LIQUID, { radius = 20 })
+    if fixture then
+        local extra = fixture:getUserData().extra
+        extra.wall = wall
+        extra.fill = opts.fill or extra.fill
+        extra.front = opts.front or false
+    end
+    return thing
+end
+
+function lib.makeCup(x, y, scale)
+    scale = scale or 1
+    return makeContainer(x, y, 140 * scale, 170 * scale, 14 * scale, { label = 'cup', fill = 0.6 })
+end
+
+function lib.makeBath(x, y, scale)
+    scale = scale or 1
+    return makeContainer(x, y, 1000 * scale, 380 * scale, 30 * scale,
+        { label = 'bath', bodyType = 'static', fill = 0.55, front = true })
+end
+
 -- A bouncy ball. opts: { squishy = true } for the soft winegum-kiss sound.
 function lib.makeBall(x, y, radius, opts)
     opts = opts or {}

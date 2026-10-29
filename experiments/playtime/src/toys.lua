@@ -11,6 +11,8 @@ local objectManager = require('src.object-manager')
 lib.LIST = {
     { 'ball', function(wx, wy) return { props.makeBall(wx, wy, 80, { squishy = true }) } end },
     { 'blob', function(wx, wy) return { props.makeBlob(wx, wy) } end },
+    { 'cup', function(wx, wy) return { props.makeCup(wx, wy, 1) } end },
+    { 'bath', function(wx, wy) return { props.makeBath(wx, wy, 1) } end },
     { 'skateboard', function(wx, wy)
         local deck, wheels = props.makeSkateboard(wx, wy, 1)
         return { deck, wheels and wheels[1], wheels and wheels[2] }

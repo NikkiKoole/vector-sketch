@@ -107,7 +107,7 @@ describe("fixtures with real Box2D (LÖVE integration)", function()
 
     describe("createSFixture", function()
         local subtypes = { 'snap', 'anchor', 'connected-texture', 'trace-vertices',
-                           'tile-repeat', 'texfixture', 'resource', 'uvusert', 'meshusert', 'grass' }
+                           'tile-repeat', 'texfixture', 'resource', 'uvusert', 'meshusert', 'grass', 'liquid' }
 
         for _, subtype in ipairs(subtypes) do
             it("creates " .. subtype .. " sfixture", function()

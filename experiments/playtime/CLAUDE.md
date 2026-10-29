@@ -139,7 +139,7 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
   zOffset, behaviors, label }
 ```
 
-**sfixture** — special sensor fixture on a body (subtypes in `src/subtypes.lua`: anchor, snap, texfixture, connected-texture, tile-repeat, grass, softbody (blobs, `src/blob.lua`), meshusert, uvusert, trace-vertices, resource, decal, light). Stored as `fixture:getUserData()` with `{ type, subtype, id, label, extra }`.
+**sfixture** — special sensor fixture on a body (subtypes in `src/subtypes.lua`: anchor, snap, texfixture, connected-texture, tile-repeat, grass, liquid, softbody (blobs, `src/blob.lua`), meshusert, uvusert, trace-vertices, resource, decal, light). Stored as `fixture:getUserData()` with `{ type, subtype, id, label, extra }`.
 
 **Fixture ordering invariant**: all fixtures with userData (sfixtures) must come before fixtures without userData (collision shapes) on each body. Validated by `fixtures.hasFixturesWithUserDataAtBeginning()`.
 
@@ -203,6 +203,7 @@ Deep-dive docs live in `docs/`:
 - `DOLL-PLAY.md` — the Puppetmaker follow-up: doll-play world, toys, signals, snap-together pieces
 - `WORLDS-AND-DOORS.md` — overworld + rooms linked by doors, carrying a Mipo (and what's connected) through, per-room persistence
 - `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8). The sky (G5) is prototyped in `../sky-atmosphere/`: one multi-stop gradient from the ground to space and the moon, day/dawn/dusk/night palettes blended
+- `WATER.md` — water in containers (LIQUID sfixture, `src/liquid.lua`): level water W1 done, then pouring, wobble, floating, taps (W2–W5); what the old water/Bathhouse scripts already had
 - `HARVEST-NAVKIT-DREAMENGINE.md` — survey of ~/Projects/navkit (logic/power, water, fire, smoke/steam, temperature, weather, moods/needs, dollhouse plan) and ~/Projects/dreamengine carts (juice, eyes, jelly, water toys, input) with a suggested order
 - `NEXT-STEPS-2026-07.md` — post-audit direction: play mode, tween layer, Bathhouse resume order, code-strengthening list
 - `PLAN-OF-ATTACK.md` — master work plan with phase status (remaining open: 7d, Phase 8)

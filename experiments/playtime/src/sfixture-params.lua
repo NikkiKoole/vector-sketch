@@ -166,6 +166,21 @@ lib.bySubtype = {
                   or 'aim: rotate the body (body +X = light dir)'
           end },
     }, position),
+    -- water in a container (src/liquid.lua): how full, the wall the cavity keeps clear, the look
+    [subtypes.LIQUID] = concat({
+        extraNumber('fill', 'fill', 0, 1, 0.6),
+        extraNumber('wall', 'wall', 0, 200, 12, nil, { step = 1 }),
+        { key = 'color', kind = 'color',
+          get = function(fixture) return extraOf(fixture).color or '3aa7d9b3' end,
+          set = function(fixture, v) extraOf(fixture).color = v end },
+        { key = 'surface', kind = 'color',
+          get = function(fixture) return extraOf(fixture).surfaceColor or 'cdeeffff' end,
+          set = function(fixture, v) extraOf(fixture).surfaceColor = v end },
+        { key = 'in front', kind = 'bool', -- in front of the Mipos, for a bath
+          get = function(fixture) return extraOf(fixture).front == true end,
+          set = function(fixture, v) extraOf(fixture).front = v end },
+        zOffset,
+    }, position),
     -- a blob (src/blob.lua): size and squish, then the look. Size, rim points and the
     -- outline (bg) rebuild the rim; the rest applies on the fly.
     [subtypes.SOFTBODY] = concat({

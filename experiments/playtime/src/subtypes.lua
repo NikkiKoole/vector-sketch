@@ -14,6 +14,7 @@ lib.DECAL             = 'decal'
 lib.LIGHT             = 'light'
 lib.GRASS             = 'grass'
 lib.SOFTBODY          = 'softbody'
+lib.LIQUID            = 'liquid'
 
 -- All known subtypes (current era) — used by migration
 lib.ALL = {
@@ -30,6 +31,7 @@ lib.ALL = {
     [lib.LIGHT]             = true,
     [lib.GRASS]             = true,
     [lib.SOFTBODY]          = true,
+    [lib.LIQUID]            = true,
 }
 
 --- Check whether a fixture userData has a given subtype.

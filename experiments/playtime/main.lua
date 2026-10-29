@@ -117,6 +117,7 @@ local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures); 'blob' above is the old loveblobs
+local liquid = require('src.liquid')
 local signals = require('src.signals')
 local doors = require('src.doors')
 local cameraFollow = require('src.camera-follow')
@@ -345,6 +346,7 @@ function love.update(dt)
         keep_angle.update(scaled_dt, newHitted)
     end
     blobs.afterStep()
+    liquid.update(state.world.paused) -- containers spill what they can't hold (src/liquid.lua)
     prof.pop('physics-update')
 
     if recorder.isRecording and utils.tablelength(recorder.recordingMouseJoints) > 0 then
