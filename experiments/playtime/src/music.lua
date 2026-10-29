@@ -52,7 +52,7 @@ setmetatable(lib, {
     end,
 })
 
-lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker' }
+lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum' }
 lib.lookahead = 0.3          -- seconds of music booked ahead
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -283,6 +283,12 @@ lib.styles = {
     -- chord floating in at a chromatic pitch now and then. Dense when play is busy (PM2's crowd
     -- outside), sparse when calm (its editor, one Mipo). Pattern: lib.puppetmaker.
     puppetmaker = { loop = true, bpm = 60, swing = 0.52, swing16 = true, bars = 16 },
+    -- strum: more of Puppetmaker's rolled chord, as a style of its own. Its open pentatonic shape and
+    -- its cousins (lib.strum) moving slowly through a key, a chord now and then floating on a root
+    -- outside it, every strum played by a hand: the gaps vary, a lag before the top notes, now and then
+    -- a down-strum or a slow harp roll, a lighter re-strum later in the bar. A low root under it, a
+    -- high answer note now and then, Puppetmaker's sparse hand drums when play gets busy.
+    strum = { loop = 'strum', bpm = { 66, 76 }, swing = 0.52, swing16 = true, bars = 24, chordBars = { 1, 2 } },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',
@@ -301,10 +307,12 @@ lib.styles = {
 
 -- Puppetmaker's pattern, from its song file (mipo4.melodypaint.txt): per voice the patch, the pitch, the
 -- length and its hits { step 1..16, chance %, rnd = a random semitone }. dense = PM2's page 1 (outside,
--- the crowd), sparse = page 2 (the editor). The chord is the rhodes2 sample: one up-strummed voicing
--- (root + 0 7 16 19 21, 60 ms apart, ringing ~2.8 s), only its root moves.
+-- the crowd), sparse = page 2 (the editor). The chord is the rhodes2 sample: one up-strummed voicing,
+-- only its root moves. Measured on the recording (2026-10-29): Eb3 Bb3 G4 Bb4 C5 Eb5 (root + 0 7 16 19
+-- 21 24), a hand's strum (quick through the first four, then a lag before the top two), blooming for
+-- half a second and ringing past 3 s.
 lib.puppetmaker = {
-    chord = { 0, 7, 16, 19, 21 }, chordRoot = 51, strumMs = 60, chordMs = 2800,
+    chord = { 0, 7, 16, 19, 21, 24 }, strum = { 0, 29, 52, 75, 151, 191 }, chordRoot = 51, chordMs = 3000,
     dense = {
         { 'conga', 52, 420, { { 1, 50 }, { 5, 50 }, { 9, 60 }, { 13, 60 } } },                  -- conga low
         { 'conga', 62, 140, { { 2, 80 }, { 7, 80 }, { 10, 80 }, { 3, 60 }, { 6, 60 }, { 11, 60 },
@@ -321,6 +329,8 @@ lib.puppetmaker = {
         { 'sample:bi', 60, 200, { { 12, 5, true } } },       -- onNote listener (like the Mipos' mi/po),
         { 'sample:biep2', 60, 300, { { 16, 5, true } } },    -- midi 60 = the sample's own pitch
         { 'sample:biep3', 60, 300, { { 3, 5, true } } },
+        { 'sample:pi', 60, 284, { { 4, 50 }, { 12, 50 }, { 14, 90, true } } },           -- the Mipos sing (only
+        { 'sample:po3', 60, 693, { { 2, 20, true }, { 10, 20, true }, { 16, 30, true } } }, -- here: the crowd)
     },
     sparse = {
         { 'conga', 69, 130, { { 11, 20 }, { 13, 20 } } },
@@ -331,6 +341,29 @@ lib.puppetmaker = {
         { 'chord', 0, 0, { { 8, 10, true } } },
         { 'quijada', 60, 600, { { 10, 20 } } },
     },
+}
+
+-- The strum style's chords: shapes over the chord's root (Puppetmaker's 6 and its cousins, all open,
+-- no half-steps inside), and loops of { degree, shape }. Every shape stays in the major key on the
+-- degrees it's used on; 'float' entries are the Puppetmaker trick, the same shape on a root outside
+-- the key (bVII, bVI, bIII), planed, nothing resolving.
+lib.strum = {
+    shapes = {
+        six = { 0, 7, 16, 19, 21, 24 },      -- Puppetmaker's: 1 5 3 5 6 1
+        sixNine = { 0, 7, 14, 16, 21 },      -- 1 5 9 3 13
+        minor7 = { 0, 7, 15, 19, 22, 24 },   -- 1 5 b3 5 b7 1
+        minor11 = { 0, 7, 15, 17, 22 },      -- 1 5 b3 11 b7: open fourths
+        sus = { 0, 7, 14, 17, 19 },          -- 1 5 9 11 5
+    },
+    loops = {
+        { { 0, 'six' }, { 5, 'sixNine' }, { 9, 'minor7' }, { 7, 'sus' } },        -- I IV vi V
+        { { 0, 'six' }, { 9, 'minor11' }, { 5, 'six' }, { 0, 'sixNine' } },       -- I vi IV I
+        { { 5, 'sixNine' }, { 0, 'six' }, { 2, 'minor11' }, { 7, 'sixNine' } },   -- IV I ii V
+        { { 0, 'sixNine' }, { 4, 'minor7' }, { 5, 'six' }, { 2, 'minor7' } },     -- I iii IV ii
+        { { 9, 'minor7' }, { 5, 'sixNine' }, { 0, 'six' }, { 7, 'sus' } },        -- vi IV I V
+    },
+    float = { { 10, 'six' }, { 8, 'sixNine' }, { 3, 'six' } }, floatOdds = 15,
+    rootLo = 48,                              -- the chord's root lands in 48..59 (Puppetmaker's is 51)
 }
 
 -- the tune's rhythm: GROUPS of two to four notes a 16th or an 8th apart, then a breath (lofi.c's
@@ -558,6 +591,11 @@ local function planSong()
         song.sections, song.barSection, song.barIndex = { section }, {}, {}
         for j = 0, style.bars - 1 do song.barSection[j + 1], song.barIndex[j + 1] = section, j end
         song.bars, song.bar = style.bars, 0
+        if style.loop == 'strum' then -- the loop of chords, a chord a bar or two
+            local rnd = stream(seed, 1)
+            song.chordBars = style.chordBars[rnd(#style.chordBars) + 1]
+            song.loop = lib.strum.loops[rnd(#lib.strum.loops) + 1]
+        end
         return song
     end
 
@@ -914,8 +952,8 @@ local function bookLoopBar(synth, t0, song, b)
                 if patch == 'chord' then -- the rolled Rhodes chord, an up-strum
                     local root, pcs = pm.chordRoot + shift, {}
                     for k, interval in ipairs(pm.chord) do
-                        play(synth, 'chord', 'rhodes', t + (k - 1) * pm.strumMs / 1000, root + interval, 4,
-                             pm.chordMs - (k - 1) * pm.strumMs, s)
+                        play(synth, 'chord', 'rhodes', t + pm.strum[k] / 1000, root + interval, 4,
+                             pm.chordMs - pm.strum[k], s)
                         pcs[#pcs + 1] = (root + interval) % 12
                     end
                     table.insert(M.booked, { at = t, pcs = pcs }) -- impacts play along in its notes
@@ -1233,9 +1271,86 @@ local function bookTone(synth, song, section, j, rnd)
     synth.slotFilter('roundBass', math.min(600, tone))
 end
 
+-- One strum: the shape's notes rolled by a hand. Up (low to high) most of the time, the gaps around
+-- `gap` ms each a little different, sometimes a lag before the top two (Puppetmaker's own strum);
+-- now and then down (high to low, quicker); `notes` limits it to the top few (a lighter re-strum).
+local function strumChord(synth, t, root, shape, vol, durMs, step, rnd, gap, notes)
+    local order = {}
+    for k = math.max(1, #shape - (notes or #shape) + 1), #shape do order[#order + 1] = root + shape[k] end
+    local down = rnd(100) < 15
+    if down then
+        local flipped = {}
+        for k = #order, 1, -1 do flipped[#flipped + 1] = order[k] end
+        order, gap = flipped, gap * 0.6
+    end
+    local lag = not down and #order >= 5 and rnd(100) < 45
+    local at = 0
+    for k, midi in ipairs(order) do
+        local v = vol + ((not down and k == #order) and 1 or 0) - ((down and k > 3) and 1 or 0)
+        play(synth, 'chord', 'rhodes', t + at / 1000, midi, math.max(1, v), durMs - at, step)
+        local g = gap * (0.6 + 0.9 * rnd())
+        if lag and k == #order - 2 then g = g * 3 end
+        at = at + g
+    end
+end
+
+-- One bar of the strum style: the bar's chord strummed on 1 (a slow harp roll at the top of the loop
+-- now and then), maybe re-strummed lighter later in the bar, a low root, a high answer note,
+-- Puppetmaker's sparse hand drums under it while the band plays.
+local function bookStrumBar(synth, t0, song, b)
+    local st, rnd = lib.strum, stream(song.seed, 7000 + b)
+    local barInLoop = math.floor((b - 1) / song.chordBars)
+    local entry = song.loop[barInLoop % #song.loop + 1]
+    local newChord = (b - 1) % song.chordBars == 0
+    if newChord then
+        song.chord, song.floating = entry, rnd(100) < st.floatOdds
+        if song.floating then song.chord = st.float[rnd(#st.float) + 1] end
+    end
+    local degree, shape = song.chord[1], st.shapes[song.chord[2]]
+    local root = st.rootLo + (song.key + degree - st.rootLo) % 12
+    local pcs = {}
+    for _, interval in ipairs(shape) do pcs[#pcs + 1] = (root + interval) % 12 end
+    table.insert(M.booked, { at = t0, pcs = pcs }) -- impacts play along in the chord
+    if #M.booked > 4 then table.remove(M.booked, 1) end
+    local barMs = lengthMs(song, 0, 16)
+    -- everything lets go when the chord changes (rung on, these open shapes rub the next one)
+    local chordEndMs = barMs * (song.chordBars - (b - 1) % song.chordBars) - 20
+    if newChord then
+        local harp = barInLoop % #song.loop == 0 and rnd(100) < 35
+        local gap = harp and 90 + rnd(40) or 18 + rnd(40)
+        strumChord(synth, t0 + humanize(0.008), root, shape, 4, chordEndMs, 0, rnd, gap)
+        play(synth, 'bass', 'rhodes', t0, root - 12, 4, chordEndMs, 0) -- the low root
+    end
+    if rnd(100) < 40 then -- a lighter re-strum of the top: on 3, or on the and-of-2
+        local s = rnd(100) < 60 and 8 or 6
+        strumChord(synth, stepTime(song, t0, s) + humanize(0.008), root, shape, 3,
+                   chordEndMs - lengthMs(song, 0, s), s, rnd, 15 + rnd(25), 3)
+    end
+    if not song.floating and rnd(100) < 25 then -- an answer up high, from the key's pentatonic
+        local penta, s = { 0, 2, 4, 7, 9 }, rnd(100) < 50 and 10 or 14
+        local midi = 72 + (song.key + penta[rnd(5) + 1]) % 12 + 12 * rnd(2)
+        play(synth, 'keys', 'rhodes', stepTime(song, t0, s), midi, 3, 500, s)
+    end
+    if bandPlays() then -- the hand drums, light (Puppetmaker's editor page, without its chord)
+        for _, voice in ipairs(lib.puppetmaker.sparse) do
+            local patch, midi, durMs = voice[1], voice[2], voice[3]
+            if patch ~= 'chord' then
+                for _, h in ipairs(voice[4]) do
+                    if rnd(100) < h[2] then
+                        local s = h[1] - 1
+                        play(synth, 'perc', patch, stepTime(song, t0, s) + humanize(0.003),
+                             midi + (h[3] and rnd(12) - 6 or 0), patch == 'tamb' and 4 or 5, durMs, s)
+                    end
+                end
+            end
+        end
+    end
+end
+
 local function bookBar(synth, t0, song, b)
     local style = lib.styles[song.style]
     M.barStart = t0
+    if style.loop == 'strum' then return bookStrumBar(synth, t0, song, b) end
     if style.loop then return bookLoopBar(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
     local roles = section.roles
