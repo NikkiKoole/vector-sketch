@@ -854,6 +854,34 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 y = y + ROW
             end
 
+            -- neck picture and width: the strip from the top torso segment to the head (its
+            -- connected-skin; randomize gives it the leg skin), set on every torso segment so a
+            -- change of segment count keeps it
+            local topTorso = instance.dna.parts['torso' .. (creation.torsoSegments or 1)]
+            local neckSkin = not creation.isPotatoHead and topTorso and topTorso.appearance
+                and topTorso.appearance['connected-skin']
+            if neckSkin and neckSkin.main then
+                local function setNeck(values)
+                    for i = 1, creation.torsoSegments or 1 do
+                        CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin', values)
+                    end
+                    CharacterManager.addTexturesFromInstance2(instance)
+                end
+                ui.label(x, y, 'neck skin')
+                y = y + ROW
+                local gridHeight = drawThumbnailGrid(limbSkinTextures, neckSkin.main.bgURL or '', panelX, y, 50,
+                    function(url)
+                        setNeck({ bgURL = url, fgURL = url:gsub('%.png', '-mask.png') })
+                    end)
+                y = y + gridHeight + BUTTON_SPACING
+                local currentWmul = neckSkin.main.wmul or instance.scale or 1
+                local neckW = ui.sliderWithInput('mipo_neck_wmul', x, y, 120, 0.1, 10, currentWmul)
+                ui.alignedLabel(x, y, '  neck width')
+                neckW = neckW and tonumber(neckW)
+                if neckW and neckW ~= currentWmul then setNeck({ wmul = neckW }) end
+                y = y + ROW
+            end
+
             -- noseSegments
             local noses = ui.sliderWithInput('mipo_noseSeg', x, y, 120, 0, 5, creation.noseSegments or 0, false, 1)
             ui.alignedLabel(x, y, '  nose segments')

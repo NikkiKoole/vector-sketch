@@ -558,6 +558,29 @@ describe("character-manager", function()
         end)
     end)
 
+    describe("neck strip (the top torso's connected-skin)", function()
+        it("takes its own picture and width (the Mipo editor's neck skin / neck width)", function()
+            if not instance.parts.head then
+                CharacterManager.rebuildFromCreation(instance, { isPotatoHead = false })
+            end
+            for i = 1, instance.dna.creation.torsoSegments or 1 do
+                CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
+                    { bgURL = 'leg3.png', fgURL = 'leg3-mask.png', wmul = 2.5 })
+            end
+            CharacterManager.addTexturesFromInstance2(instance)
+            local top = instance.parts['torso' .. (instance.dna.creation.torsoSegments or 1)]
+            local found
+            for _, f in ipairs(top.body:getFixtures()) do
+                local ud = f:getUserData()
+                if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.main.bgURL == 'leg3.png' then
+                    found = ud
+                end
+            end
+            assert.is_truthy(found, 'no neck strip with the chosen picture')
+            assert.are.equal(2.5, found.extra.main.wmul)
+        end)
+    end)
+
     describe("part masses (balanceMasses)", function()
         it("a randomized Mipo's head weighs at most headMaxShare of its torso", function()
             local heavy = 0

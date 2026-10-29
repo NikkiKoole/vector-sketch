@@ -628,6 +628,28 @@ local function weightTorque(bodies, ax, ay)
     return mass * 9.8 * units.meter() * math.sqrt(dx * dx + dy * dy)
 end
 
+-- The motor of the joint parent -> child turns it toward `target` (radians, child angle
+-- minus parent angle; 0 = in line) at `rate` per radian off, with at most `strength` times
+-- the weight torque of everything from the child up. Off while `limp`.
+local function straighten(instance, parentName, childName, target, rate, strength, limp)
+    local parent, part = instance.parts[parentName], instance.parts[childName]
+    if not (parent and part and parent.body and part.body) or parent.body:isDestroyed()
+        or part.body:isDestroyed() then return end
+    local joint = jointBetween(parent.body, part.body)
+    if not joint then return end
+    if limp then
+        joint:setMotorEnabled(false)
+        return
+    end
+    local ax, ay = joint:getAnchors()
+    joint:setMotorEnabled(true)
+    -- the two bodies' own angles (not joint angle 0: that counts from the joint's reference,
+    -- the pose it was made or loaded in), wrapped: bodies spin
+    local bend = (part.body:getAngle() - parent.body:getAngle() + math.pi) % (2 * math.pi) - math.pi
+    joint:setMotorSpeed(units.rate(rate) * (target - bend))
+    joint:setMaxMotorTorque(strength * weightTorque(subtreeBodies(instance, childName, {}), ax, ay))
+end
+
 local function spineSpring(instance, now)
     local creation = instance.dna and instance.dna.creation
     local count = creation and creation.torsoSpine and creation.torsoSegments or 1
@@ -640,25 +662,7 @@ local function spineSpring(instance, now)
             * math.sin(2 * math.pi * now / lib.spineSwayPeriod + instance._swayPhase) / (count - 1)
     end
     for i = 2, count do
-        local parent, part = instance.parts['torso' .. (i - 1)], instance.parts['torso' .. i]
-        if parent and part and parent.body and part.body and not parent.body:isDestroyed()
-            and not part.body:isDestroyed() then
-            local joint = jointBetween(parent.body, part.body)
-            if joint then
-                if limp then
-                    joint:setMotorEnabled(false)
-                else
-                    local ax, ay = joint:getAnchors()
-                    joint:setMotorEnabled(true)
-                    -- straight = the two bands at the same angle (not joint angle 0: that counts
-                    -- from the joint's reference, the pose it was made or loaded in)
-                    local bend = part.body:getAngle() - parent.body:getAngle()
-                    joint:setMotorSpeed(units.rate(lib.spineReturn) * (sway - bend))
-                    joint:setMaxMotorTorque(lib.spineStrength
-                        * weightTorque(subtreeBodies(instance, 'torso' .. i, {}), ax, ay))
-                end
-            end
-        end
+        straighten(instance, 'torso' .. (i - 1), 'torso' .. i, sway, lib.spineReturn, lib.spineStrength, limp)
     end
 end
 
