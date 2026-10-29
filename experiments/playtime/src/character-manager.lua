@@ -1901,6 +1901,9 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
         local raw = shape8Dict[partData.shape8URL].vertices
         local verts = makeTransformedVertices(raw,
             (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
+        -- a spine's torso1 (potato head): the face is on the whole torso, like its picture
+        local offsetY = spinePictureOffset(partData, scale)
+        for i = 2, #verts, 2 do verts[i] = verts[i] + offsetY end
 
         -- 8-vertex polygon: 1=top, 3=right-mid, 5=bottom, 7=left-mid
         -- Indices are 1-based, pairs of x,y

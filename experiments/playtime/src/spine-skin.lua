@@ -19,7 +19,9 @@ local function smoothstep(t)
 end
 
 -- The bones of a spine torso when `body` is its torso1: { bodies = { torso1.. }, middles = {
--- each band's middle y in torso1's local space at rest } }; nil for anything else.
+-- each band's middle y in torso1's local space at rest }, originY = where the whole torso
+-- shape's centre is in torso1's local space, outline = the whole torso outline around that
+-- centre (as a whole torso's thing.vertices) }; nil for anything else.
 function lib.bonesOf(body)
     local instance, partName = mipoRegistry.getFromBody(body)
     if partName ~= 'torso1' then return nil end
@@ -35,6 +37,9 @@ function lib.bonesOf(body)
     local flipY = (partData.dims.sy or 1) < 0
     local bodies, middles = {}, {}
     local _, first = topology.spineBand(raw.vertices, 1, count, flipY)
+    local sx = (partData.dims.sx or 1) * (instance.scale or 1)
+    local outline = {}
+    for k = 1, #raw.vertices, 2 do outline[k], outline[k + 1] = raw.vertices[k] * sx, raw.vertices[k + 1] * sy end
     for i = 1, count do
         local part = instance.parts['torso' .. i]
         if not (part and part.body and not part.body:isDestroyed()) then return nil end
@@ -42,7 +47,7 @@ function lib.bonesOf(body)
         bodies[i] = part.body
         middles[i] = (middle - first) * sy
     end
-    return { bodies = bodies, middles = middles }
+    return { bodies = bodies, middles = middles, originY = -first * sy, outline = outline }
 end
 
 -- Bend a flat list of torso1-local rest points (x1, y1, x2, y2, ...) over the bones;
@@ -70,6 +75,31 @@ function lib.deform(points, bones, out)
         out[k], out[k + 1] = root:getLocalPoint(ax + (bx - ax) * w, ay + (by - ay) * w)
     end
     return out
+end
+
+-- A transform (world space) that carries something drawn on torso1 around its rest point
+-- (x, y) (torso1-local) to where the bent torso has that point, turned with the bend there:
+-- a face part keeps its shape and rides the spine. nil when `body` is no spine torso1.
+local transform, toBody, fromBody = nil, nil, nil
+function lib.transformAt(body, x, y)
+    local bones = lib.bonesOf(body)
+    if not bones then return nil end
+    transform = transform or love.math.newTransform()
+    toBody = toBody or love.math.newTransform()
+    fromBody = fromBody or love.math.newTransform()
+    local p = lib.deform({ x, y, x + 10, y }, bones)
+    local turn = math.atan2(p[4] - p[2], p[3] - p[1])
+    local bx, by, angle = body:getX(), body:getY(), body:getAngle()
+    toBody:setTransformation(bx, by, angle)
+    fromBody:setTransformation(bx, by, angle)
+    fromBody = fromBody:inverse()
+    transform:reset()
+    transform:apply(toBody)
+    transform:translate(p[1], p[2])
+    transform:rotate(turn)
+    transform:translate(-x, -y)
+    transform:apply(fromBody)
+    return transform
 end
 
 -- Draw `img` over the rectangle `corners` (4 points, torso1-local, top left first, as the

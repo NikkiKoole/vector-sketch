@@ -21,6 +21,9 @@ local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 local mipoRegistry = require('src.mipo-registry')
 local spineSkin = require('src.spine-skin')
+-- face parts drawn on their body around extra.ox/oy: on a spine torso they ride the bend
+local faceDrawables = { decal = true, brow = true, ['mouth-backdrop'] = true, ['mouth-lower'] = true,
+    ['mouth-upper'] = true, ['mouth-teeth'] = true }
 
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
 local mouthShapes = require('src.mouth-shapes')
@@ -2472,6 +2475,13 @@ function lib.drawTexturedWorld(world)
         local t0 = times and love.timer.getTime()
         local thing = drawables[i].thing
         local texfixture = drawables[i].texfixture
+        -- a face on a spine torso (a potato head) moves and turns with the bend where it sits
+        local faceBend = faceDrawables[drawables[i].type] and drawables[i].body and drawables[i].extra
+            and spineSkin.transformAt(drawables[i].body, drawables[i].extra.ox or 0, drawables[i].extra.oy or 0)
+        if faceBend then
+            love.graphics.push()
+            love.graphics.applyTransform(faceBend)
+        end
 
         if drawables[i].type == subtypes.TEXFIXTURE then
             --if texfixture then
@@ -3192,7 +3202,10 @@ function lib.drawTexturedWorld(world)
         end
 
         if drawables[i].type == subtypes.TRACE_VERTICES then
-            local m = traceVerticesMesh(drawables[i].extra, drawables[i].thing.vertices)
+            -- a spine torso's haircut runs along the whole torso's top, not its lowest band's
+            local hairBones = spineSkin.bonesOf(drawables[i].thing.body)
+            local m = traceVerticesMesh(drawables[i].extra,
+                hairBones and hairBones.outline or drawables[i].thing.vertices)
             if m then
                 --love.graphics.line(pointsflat)
                 --if drawables[i].extra.main.bgURL
@@ -3253,7 +3266,22 @@ function lib.drawTexturedWorld(world)
                     plasticineShader:send('rimStyle', rimMap[extra.plasticineRimStyle or 'silhouette'])
                     sendSharedLighting(plasticineShader, body, extra)
                 end
-                love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
+                if hairBones then
+                    -- the mesh is around the whole outline's centre: put that where the torso
+                    -- shape's centre is on torso1, then bend with the spine at the top
+                    local outline = hairBones.outline
+                    local cx, cy = mathutils.getCenterOfPoints(outline)
+                    local topY = math.huge
+                    for k = 2, #outline, 2 do topY = math.min(topY, outline[k]) end
+                    local bend = spineSkin.transformAt(body, 0, topY + hairBones.originY)
+                    love.graphics.push()
+                    love.graphics.applyTransform(bend)
+                    local wx, wy = body:getWorldPoint(cx, cy + hairBones.originY)
+                    love.graphics.draw(m, wx, wy, body:getAngle())
+                    love.graphics.pop()
+                else
+                    love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
+                end
                 if tvHairsOn or tvPlasticineOn then
                     love.graphics.setShader()
                 end
@@ -3647,6 +3675,7 @@ function lib.drawTexturedWorld(world)
                 love.graphics.pop()
             end
         end
+        if faceBend then love.graphics.pop() end
         if times then
             local kind = drawables[i].type
             times[kind] = (times[kind] or 0) + love.timer.getTime() - t0

@@ -185,6 +185,53 @@ describe('the spine room', function()
             assert(ok, err)
         end)
 
+        it('a potato head face sits where it would without a spine, and rides the bend (S3)', function()
+            local function eyeY()
+                for _, f in ipairs(instance.parts.torso1.body:getFixtures()) do
+                    local ud = f:getUserData()
+                    if ud and ud.label == 'leye' then return ud.extra.oy end
+                end
+            end
+            CM.rebuildFromCreation(instance, { isPotatoHead = true, torsoSpine = false, torsoSegments = 1 })
+            CM.addTexturesFromInstance2(instance)
+            local plain = eyeY()
+            assert.is_truthy(plain, 'no eye on the torso')
+            CM.rebuildFromCreation(instance, { isPotatoHead = true, torsoSpine = true, torsoSegments = 3 })
+            CM.addTexturesFromInstance2(instance)
+            local bones = spineSkin.bonesOf(instance.parts.torso1.body)
+            assert.is_near(plain, eyeY() - bones.originY, 0.5)
+            -- straight: the face part stays where it is
+            local t1 = instance.parts.torso1.body
+            local function straighten()
+                for i = 2, 3 do
+                    local t = instance.parts['torso' .. i].body
+                    t:setAngle(t1:getAngle())
+                    t:setPosition(t1:getWorldPoint(0, bones.middles[i]))
+                end
+            end
+            straighten()
+            local x, y = 30, eyeY()
+            local tf = spineSkin.transformAt(t1, x, y)
+            local wx, wy = t1:getWorldPoint(x, y)
+            local tx, ty = tf:transformPoint(wx, wy)
+            assert.is_near(wx, tx, 0.01)
+            assert.is_near(wy, ty, 0.01)
+            -- the top band turned: an eye up there moves with it
+            local top = instance.parts.torso3.body
+            top:setAngle(t1:getAngle() + math.rad(20))
+            tf = spineSkin.transformAt(t1, x, bones.middles[3])
+            tx, ty = tf:transformPoint(t1:getWorldPoint(x, bones.middles[3]))
+            local ex, ey = top:getWorldPoint(x, 0)
+            assert.is_near(ex, tx, 0.5)
+            assert.is_near(ey, ty, 0.5)
+            -- and it draws
+            local canvas = love.graphics.newCanvas(64, 64)
+            love.graphics.setCanvas({ canvas, stencil = true })
+            local ok, err = pcall(require('src.physics.box2d-draw-textured').drawTexturedWorld, world)
+            love.graphics.setCanvas()
+            assert(ok, err)
+        end)
+
         it('turned off again: whole torsos that each keep their angle', function()
             CM.rebuildFromCreation(instance, { torsoSpine = false })
             assert.is_nil(instance.dna.parts.torso2.spineBand)

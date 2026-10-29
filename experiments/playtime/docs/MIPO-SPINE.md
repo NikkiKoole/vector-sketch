@@ -47,12 +47,14 @@ slices of one torso shape, drawn as one picture. Off (default) = today's stack. 
   not a new mesh per frame. (Done with plain linear blending from the bands' rest places
   in the picture, no bind step: fine for spine angles.)
 
-**S3 What sits on the torso** (half a session to one)
-- Skin patches: each follows the bone it's over (rigid). Bodyhair (drawn around the
-  outline points): outline points skinned with the same weights. Potato head face and
-  haircut: on the top bone.
-- If that still looks stiff: draw the torso's layers into one canvas and skin that
-  (perfect bend), but check the z-order against arms and legs first.
+**S3 What sits on the torso** (done 2026-10-29)
+- Skin patches are in the torso picture, bodyhair bends with it (S2).
+- Potato head face: laid out on the whole torso shape, the same place as without a spine
+  (face positioners decide where, not the number of bones). Each face part (eyes, pupils,
+  brows, nose, lips, teeth) rides the bend at its own spot (`spineSkin.transformAt`: moved
+  and turned with the blended bands there), so over different bones they move apart a
+  little as it bends. Haircut: traced along the whole torso's top, riding the bend there.
+- Ears are bodies; on a potato head they hang from the top band already.
 
 **S4 Editor and tuning** (small)
 - Checkbox, `rebuildFromCreation`; sliders for spineBend and spineSway (see Settings), a
