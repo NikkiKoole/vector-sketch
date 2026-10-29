@@ -4,6 +4,7 @@
 
 ```bash
 ./playtime.sh start    # start with --bridge (skips start screen), captures errors
+./playtime.sh play dollhouse  # start in play mode (no editor; tab toggles it, also in the editor)
 ./playtime.sh stop     # graceful quit via bridge, force kill as fallback
 ./playtime.sh restart  # stop + start
 ./playtime.sh status   # check if running

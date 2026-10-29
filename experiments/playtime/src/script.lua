@@ -43,6 +43,7 @@ local baseEnv = {
     objectManager            = objectManager,
     ui                       = ui,
     cam                      = cam,
+    camera                   = require('src.camera-follow').script, -- follow, setBounds, shake, zoomTo
     mathutils                = mathutils,
     getPJAttachedTo          = box2dPointerJoints.getPointerJointAttachedTo,
     getInteractedWithPointer = box2dPointerJoints.getInteractedWithPointer,

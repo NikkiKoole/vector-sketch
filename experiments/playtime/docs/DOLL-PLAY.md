@@ -20,10 +20,14 @@ tick it here when it's done.
 - [x] **F1. Play scene** `scripts/dollhouse.playtime.json` + `.lua` (2026-10-27): ribbon
   floor/walls and 2 Mipos, built in the editor. The default for `./playtime.sh start`.
   No props yet. The Mipos start high and drop to the floor.
-- [ ] **F2. Play mode** `--play <scene>`: no editor chrome, overlays or editor
-  input. Gate `drawUI` / editor overlays in `main.lua`, take the play path
-  straight away in `input-manager.lua` `handlePointer`, and remove the
-  `x > w-300` checks. Details are in `NEXT-STEPS-2026-07.md` §1.
+- [x] **F2. Play mode** (2026-10-29, `src/play-mode.lua`): **tab** goes in and out (escape also leaves),
+  `love . --play <scene>` / `./playtime.sh play <scene>` starts in it. No editor panels, overlays, grid,
+  selection rectangle or HUD; physics runs; the pointer takes its own path (`handlePlayPointer` in
+  `input-manager.lua`): left grabs (onPressed/onReleased, signals, doors, squeaks) whatever tool mode is
+  active, right/middle pans, the wheel only zooms. Editor keys rest, the scene script still gets
+  `onKeyPress`. Leaving puts back the editor's pause; selection and tool mode are kept. A 'tab: editor'
+  hint fades out after going in. Spec: `spec/input-manager_spec.lua` "play mode". The `x > w - 300`
+  gates are only on the editor path now; removing them there is still open.
 - [ ] **F3. Tween/timer layer**: put `hump.timer` in `vendor/` and expose it in the
   script sandbox (`script.lua` baseEnv). Head turns, blinks, reactions and
   smooth camera moves all need it.
@@ -150,8 +154,23 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 - [ ] **Switches**: lamp on/off, day/night, a tap that runs water. Tiny cause-and-effect wins.
 
 ### Camera and world size
-- [ ] **Drag to pan**: dragging a Mipo near the screen edge scrolls the world
-  (Fiete-style). Smooth follow with tweens.
+- [x] **Follow camera** (2026-10-29, `src/camera-follow.lua`, spec `spec/camera-follow_spec.lua`). Sago style:
+  on while playing, off while paused (Nikki). It follows the Mipo you last touched (its torso), or the one
+  pinned with 'cam' on its on-stage row. It holds still while you drag, since the pointer would chase the
+  camera. A right/middle-drag pan hands the camera to you until the next touch. Dead zone (30% of the
+  screen), smoothing and a velocity look-ahead.
+- [x] **Camera settings per scene** (2026-10-29): settings panel → 'camera' (`src/camera-params.lua`).
+  follow, edge pan, dead zone, catch up, look ahead, min/max zoom; behind '+ more' max lead, edge px,
+  edge speed. Kept in `state.cameraSettings`, saved as `camera.settings` in the `.playtime.json`; a scene
+  without them gets `lib.defaults`.
+- [x] **Bounds**: 'bounds = this view' takes what the editor shows; then left/top/right/bottom fields and
+  'no bounds'. While playing the view stays inside (centred on an axis where the bounds are smaller) and
+  can't zoom out past them; paused, the editor ignores them and dims what's outside with an orange frame.
+- [x] **Drag to pan**: dragging something (a Mipo while playing, or a body in the editor) into the edge
+  margin pans that way, faster the closer to the edge. The pointer target rides along, so the Mipo keeps up.
+- [x] **Script API**: `camera.follow(thing)` (nil: back to last touched), `camera.setBounds(x1, y1, x2, y2)`
+  (nil: none), `camera.shake(amount, seconds)`, `camera.zoomTo(scale, seconds)`, `camera.settings()`.
+- [ ] Later: fling-pan (throw the view), drag handles on the bounds frame, screen wipes between rooms.
 - [ ] **Drag empty space to pan** (one finger on the background).
 - [ ] **Pinch zoom** (maybe never; Sago mostly doesn't zoom).
 - [ ] **Rooms**: a wide world built from rooms (house, garden, bathroom), or

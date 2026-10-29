@@ -268,6 +268,8 @@ function lib.buildWorld(data, world, cam, opts)
 
         snap.reset()
 
+        -- the scene's camera settings (follow, bounds, zoom limits); none saved: the defaults
+        require('src.camera-follow').loadSettings(data.camera and data.camera.settings)
         if data.camera then
             cam:setTranslation(data.camera.x, data.camera.y)
             cam:setScale(data.camera.scale)
@@ -1188,7 +1190,8 @@ function lib.gatherSaveData(world, camera)
         rotation = camera:getRotation(),
         x = camx,
         y = camy,
-        scale = camera:getScale()
+        scale = camera:getScale(),
+        settings = require('src.camera-follow').saveSettings(),
     }
     return saveData
 end

@@ -129,6 +129,21 @@ describe('panels fit the window (1200x768, fully open)', function()
         inspector.setFoldOpen('world', false)
     end)
 
+    it('settings camera section, with bounds and the advanced rows', function()
+        local state = require('src.state')
+        local cameraFollow = require('src.camera-follow')
+        local folds = state.settingsFolds
+        state.settingsFolds = { camera = true }
+        cameraFollow.settings().bounds = { -500, -400, 500, 400 }
+        inspector.setFoldOpen('camera', true)
+        local uiWorldSettings = require('src.ui.world-settings')
+        measure(function() uiWorldSettings.drawWorldSettingsUI() end)
+        check('camera settings', measure(function() uiWorldSettings.drawWorldSettingsUI() end))
+        inspector.setFoldOpen('camera', false)
+        cameraFollow.settings().bounds = nil
+        state.settingsFolds = folds
+    end)
+
     describe('ui.scrollPanel', function()
         local function frame(mx, my, pressed, released, draw)
             ui.startFrame()

@@ -7,6 +7,7 @@ local lib = {}
 local ui = require('src.ui.all')
 local state = require('src.state')
 local camera = require('src.camera')
+local cameraFollow = require('src.camera-follow')
 local mipoRegistry = require('src.mipo-registry')
 local signals = require('src.signals')
 
@@ -148,8 +149,17 @@ function lib.draw(x, y, w, h)
                         and ui.mouseY <= rowY + rowH then
                         state.interaction.hoverBodies = row.bodies
                     end
-                    if ui.header_button(rowX, rowY, rowW, ' ' .. row.label, isSelected(row, current)) then
+                    -- a Mipo row has a 'cam' toggle: the camera follows this one while playing
+                    local camW = row.mipoId and 50 or 0
+                    local labelW = rowW - (camW > 0 and camW + 6 or 0)
+                    if ui.header_button(rowX, rowY, labelW, ' ' .. row.label, isSelected(row, current)) then
                         lib.select(lib.nextBody(row))
+                    end
+                    if camW > 0 then
+                        local pinned = cameraFollow.isPinned(row.bodies[1])
+                        if ui.header_button(rowX + labelW + 6, rowY, camW, ' cam', pinned) then
+                            cameraFollow.pin(not pinned and row.bodies[1] or nil)
+                        end
                     end
                 end
                 rowY = rowY + rowH + 4

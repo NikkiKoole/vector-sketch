@@ -1,6 +1,7 @@
 #!/bin/bash
 # Helper script for managing the playtime LÖVE app
-# Usage: ./playtime.sh [start|stop|restart|status|log|errors]
+# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors] [scene]
+#   play <scene>: start straight in play mode (no editor; tab goes to the editor)
 
 LOVE="/Applications/love115.app/Contents/MacOS/love"
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -50,6 +51,7 @@ do_stop() {
 
 do_start() {
     local scene="${1:-dollhouse}"
+    local mode_flag="${2:---scene}" # --play starts in play mode
 
     if is_running; then
         echo "already running (port $PORT)"
@@ -68,7 +70,7 @@ do_start() {
     # so errors won't appear in the log until the process is killed.
     > "$LOGFILE"  # truncate log
     local scene_args=""
-    [ -n "$scene" ] && scene_args="--scene $scene"
+    [ -n "$scene" ] && scene_args="$mode_flag $scene"
     "$LOVE" "$DIR" --bridge $scene_args >"$LOGFILE" 2>&1 &
     disown
 
@@ -135,6 +137,7 @@ do_restart() {
 
 case "${1:-status}" in
     start)   do_start "${2:-}" ;;
+    play)    do_start "${2:-}" --play ;;
     stop)    do_stop ;;
     restart) do_restart "${2:-}" ;;
     status)  do_status ;;

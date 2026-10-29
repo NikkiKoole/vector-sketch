@@ -118,6 +118,8 @@ local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local signals = require('src.signals')
 local doors = require('src.doors')
+local cameraFollow = require('src.camera-follow')
+local playMode = require('src.play-mode')
 mipoVoice.onHardImpact = function(...) return mipoActions.onHardImpact(...) end -- late-bound for hot reload
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local camera = require 'src.camera'
@@ -207,7 +209,9 @@ function love.load(_args)
             break
         end
     end
-    sceneLoader.loadScriptAndScene(startScene)
+    local playScene = playMode.sceneFromArgs(arg) -- --play <scene>: straight into play mode
+    sceneLoader.loadScriptAndScene(playScene or startScene)
+    if playScene then playMode.enter() end
     -- sceneLoader.loadAndRunScript(cwd .. '/scripts/mesh_test.playtime.lua')
 
     --loadScriptAndScene('elasto')
@@ -347,6 +351,7 @@ function love.update(dt)
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
     --phys.handleUpdate(dt)
     prof.pop('pointers')
+    cameraFollow.update(dt) -- while playing, follow the Mipo last touched
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
@@ -428,7 +433,8 @@ function love.draw()
     end
 
     -- Grid draws over backdrops, under bodies.
-    if state.editorPreferences.showGrid then
+    local editing = not playMode.isOn()
+    if editing and state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
 
@@ -450,12 +456,15 @@ function love.draw()
         end
     end
 
-    editorRenderer.renderActiveEditorThings()
-    editorRenderer.renderSteinerOverlay()
-    editorRenderer.renderSelectionBox()
-    if state.world.paused then
-        local selected = state.selection.selectedObj and state.selection.selectedObj.body
-        signals.drawWires(selected)
+    if editing then
+        cameraFollow.drawBounds() -- the scene's camera bounds, in the editor
+        editorRenderer.renderActiveEditorThings()
+        editorRenderer.renderSteinerOverlay()
+        editorRenderer.renderSelectionBox()
+        if state.world.paused then
+            local selected = state.selection.selectedObj and state.selection.selectedObj.body
+            signals.drawWires(selected)
+        end
     end
     cam:pop()
     -- end)
@@ -463,16 +472,17 @@ function love.draw()
     --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
 
     Peeker.detach()
-    if state.interaction.startSelection then
+    if editing and state.interaction.startSelection then
         selectrect.draw(state.interaction.startSelection)
     end
 
 
     doors.drawFade()
-    playtimeui.drawUI()
+    if editing then playtimeui.drawUI() end
     script.call('drawUI')
+    playMode.drawHint()
 
-    if recorder.isRecording then
+    if editing and recorder.isRecording then
         love.graphics.setColor(1, 0, 0)
         love.graphics.circle('fill', 20, 20, 20)
         love.graphics.setColor(1, 1, 1)
@@ -485,16 +495,18 @@ function love.draw()
         love.graphics.setColor(1, 1, 1)
     end
 
-    if FIXED_TIMESTEP then
-        love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
-        local timediff = love.timer.getTime() - beginframetime
-        if timediff > TICKRATE then
-            love.graphics.setColor(1, 0, 0)
-            love.graphics.print(timediff, w - 80, 50)
-            love.graphics.setColor(1, 1, 1)
+    if editing then -- play mode: no HUD
+        if FIXED_TIMESTEP then
+            love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
+            local timediff = love.timer.getTime() - beginframetime
+            if timediff > TICKRATE then
+                love.graphics.setColor(1, 0, 0)
+                love.graphics.print(timediff, w - 80, 50)
+                love.graphics.setColor(1, 1, 1)
+            end
+        else
+            love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
         end
-    else
-        love.graphics.print(string.format("%03d", love.timer.getFPS()), w - 80, 10)
     end
     prof.pop('frame')
 end
@@ -503,7 +515,8 @@ function love.wheelmoved(dx, dy)
     -- R + mousewheel on a body → rotate it (and its child chain) around its
     -- parent joint anchor. Used for pre-bind rig alignment (match bones to
     -- the drawn character before MESHUSERT bind pose captures rest pose).
-    if love.keyboard.isDown('r') and not ui.overPanel then
+    local editing = not playMode.isOn() -- play mode: the wheel only zooms
+    if editing and love.keyboard.isDown('r') and not ui.overPanel then
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
         local body = bodyRotate.findBodyAt(state.physicsWorld, wx, wy)
@@ -521,7 +534,7 @@ function love.wheelmoved(dx, dy)
     local resizeKey
     if love.keyboard.isDown('w') then resizeKey = 'width'
     elseif love.keyboard.isDown('h') then resizeKey = 'height' end
-    if resizeKey and not ui.overPanel then
+    if editing and resizeKey and not ui.overPanel then
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
         local body = bodyRotate.findBodyAt(state.physicsWorld, wx, wy)
@@ -540,7 +553,7 @@ function love.wheelmoved(dx, dy)
 
     if not ui.overPanel then
         local newScale = cam.scale * (1 + dy / 10)
-        if newScale > 0.01 and newScale < 50 then
+        if newScale > 0.01 and newScale < 50 and cameraFollow.zoomAllowed(newScale) then
             cam:scaleToPoint(1 + dy / 10)
         end
     end
@@ -593,6 +606,15 @@ function love.resize(_w, _h)
 end
 
 function love.keypressed(key)
+    -- tab: in and out of play mode (src/play-mode.lua); escape leaves it too
+    if (key == 'tab' and not ui.focusedTextInputID) or (key == 'escape' and playMode.isOn()) then
+        playMode.toggle()
+        return
+    end
+    if playMode.isOn() then -- the editor's keys rest; the scene script still hears them
+        script.call('onKeyPress', key)
+        return
+    end
     ui.handleKeyPress(key)
     InputManager.handleKeyPressed(key)
     script.call('onKeyPress', key)
@@ -604,7 +626,7 @@ end
 
 function love.mousemoved(x, y, dx, dy)
     InputManager.handleMouseMoved(x, y, dx, dy)
-    if state.panelVisibility.bgSettingsOpened then
+    if state.panelVisibility.bgSettingsOpened and not playMode.isOn() then
         if love.mouse.isDown(1) then
             for i = 1, #state.backdrops do
                 local b = state.backdrops[i]

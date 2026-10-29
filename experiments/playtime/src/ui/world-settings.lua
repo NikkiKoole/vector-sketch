@@ -1,5 +1,5 @@
 -- world-settings.lua — the settings panel, opened from the tool rail's settings
--- button. Three folding sections: world (src/world-params.lua), backdrops (the
+-- button. Folding sections: world (src/world-params.lua), camera (src/camera-params.lua), backdrops (the
 -- list + the selected one's params; while open, dragging moves the selected
 -- backdrop, main.lua), music (src/music-params.lua) and the voice lab (src/voice-lab-params.lua).
 local lib = {}
@@ -9,6 +9,7 @@ local state = require('src.state')
 local inspector = require('src.ui.inspector')
 local worldParams = require('src.world-params')
 local musicParams = require('src.music-params')
+local cameraParams = require('src.camera-params')
 local voiceLabParams = require('src.voice-lab-params')
 
 local PANEL_WIDTH = ui.theme.panelWidth
@@ -73,6 +74,13 @@ function lib.drawWorldSettingsUI()
             if clicked then f.world = not f.world end
             if f.world then
                 y = y + inspector.drawParams('world', worldParams.rows, state.world, nil, x, y, w)
+            end
+
+            -- the scene's camera while playing (src/camera-follow.lua)
+            clicked, y = sectionHeader(x, y, w, 'camera', f.camera)
+            if clicked then f.camera = not f.camera end
+            if f.camera then
+                y = y + inspector.drawParams('camera', cameraParams.rows, cameraParams.target(), nil, x, y, w)
             end
 
             local pv = state.panelVisibility

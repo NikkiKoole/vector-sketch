@@ -24,6 +24,7 @@ local resourceLink = require('src.resource-link')
 local ST = require 'src.shape-types'
 local joints = require 'src.joints'
 local NT = require('src.node-types')
+local playMode = require('src.play-mode')
 
 -- In-flight Steiner drag state. Non-zero = we're dragging thing.extraSteiner
 -- at this array index on state.selection.selectedObj. Cleared on release.
@@ -250,7 +251,70 @@ local function hopMipo(mipo)
     torso.body:applyLinearImpulse(0, -mass * lib.mipoHopSpeed)
 end
 
+-- What a press on bodies does while playing: the scene script, signals, doors, a Mipo's squeak.
+local function playPressed(hitted)
+    local newHitted = utils.map(hitted, function(h)
+        local hud = (h:getBody() and h:getBody():getUserData())
+        local hthing = hud and hud.thing
+        return hthing
+    end)
+    script.call('onPressed', newHitted)
+    local pressedBodies = {}
+    for _, fixture in ipairs(hitted) do pressedBodies[#pressedBodies + 1] = fixture:getBody() end
+    signals.onPressed(pressedBodies)
+    doors.onPressed(pressedBodies)
+    for _, fixture in ipairs(hitted) do
+        local mipo, partName = mipoRegistry.getFromBody(fixture:getBody())
+        if mipo then
+            mipoVoice.squeak(mipo, 'pickup')
+            -- only grabbing the torso hops; a hand or foot is just picked up
+            if partName == 'torso1' then hopMipo(mipo) end
+            break
+        end
+    end
+end
+
+local function pointerParams()
+    return {
+        pointerForceFunc = function(_fixture)
+            return state.world.mouseForce
+        end,
+        damp = state.world.mouseDamping
+    }
+end
+
+-- Letting go: the pointer joints, the scene script, the recorder.
+local function releasePointer(x, y, id)
+    local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
+    if (#releasedObjs > 0) then
+        local newReleased = utils.map(releasedObjs,
+            function(h) return h:getUserData() and h:getUserData().thing end)
+
+        script.call('onReleased', newReleased)
+        if recorder.isRecording and not state.world.paused then
+            for _, obj in ipairs(releasedObjs) do
+                recorder:recordMouseJointFinish(id, obj:getUserData().thing.id)
+            end
+        end
+    end
+end
+
+-- Play mode (src/play-mode.lua): the pointer only plays. No selection, tool modes or panel gates.
+local function handlePlayPointer(x, y, id, action)
+    if action == "pressed" then
+        local cx, cy = cam:getWorldCoordinates(x, y)
+        local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, pointerParams(), true)
+        if #hitted > 0 then playPressed(hitted) end
+        if recorder.isRecording and #hitted > 0 and madedata.bodyID then
+            recorder:recordMouseJointStart(madedata)
+        end
+    elseif action == "released" then
+        releasePointer(x, y, id)
+    end
+end
+
 local function handlePointer(x, y, id, action, button)
+    if playMode.isOn() then return handlePlayPointer(x, y, id, action) end
     if action == "pressed" then
         -- Track whether press originated over a UI element
         state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
@@ -378,14 +442,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         -- Physics hit detection (shared infrastructure)
-        local onPressedParams = {
-            pointerForceFunc = function(_fixture)
-                return state.world.mouseForce
-            end,
-            damp = state.world.mouseDamping
-        }
-
-        local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, onPressedParams,
+        local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, pointerParams(),
             not state.world.paused)
 
         if (state.selection.selectedBodies and #hitted == 0) then
@@ -420,25 +477,7 @@ local function handlePointer(x, y, id, action, button)
                     end
                 end
             else
-                local newHitted = utils.map(hitted, function(h)
-                    local hud = (h:getBody() and h:getBody():getUserData())
-                    local hthing = hud and hud.thing
-                    return hthing
-                end)
-                script.call('onPressed', newHitted)
-                local pressedBodies = {}
-                for _, fixture in ipairs(hitted) do pressedBodies[#pressedBodies + 1] = fixture:getBody() end
-                signals.onPressed(pressedBodies)
-                doors.onPressed(pressedBodies)
-                for _, fixture in ipairs(hitted) do
-                    local mipo, partName = mipoRegistry.getFromBody(fixture:getBody())
-                    if mipo then
-                        mipoVoice.squeak(mipo, 'pickup')
-                        -- only grabbing the torso hops; a hand or foot is just picked up
-                        if partName == 'torso1' then hopMipo(mipo) end
-                        break
-                    end
-                end
+                playPressed(hitted)
             end
         else
             state.interaction.pressMissedEverything = true
@@ -462,18 +501,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         -- Handle release logic
-        local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
-        if (#releasedObjs > 0) then
-            local newReleased = utils.map(releasedObjs,
-                function(h) return h:getUserData() and h:getUserData().thing end)
-
-            script.call('onReleased', newReleased)
-            if recorder.isRecording and not state.world.paused then
-                for _, obj in ipairs(releasedObjs) do
-                    recorder:recordMouseJointFinish(id, obj:getUserData().thing.id)
-                end
-            end
-        end
+        releasePointer(x, y, id)
 
         if state.interaction.pressMissedEverything then
             local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
@@ -589,6 +617,10 @@ function lib.handleDraggingObj()
 end
 
 function lib.handleMousePressed(x, y, button, istouch)
+    if playMode.isOn() then -- left grabs; right/middle pan (handleMouseMoved)
+        if not istouch and button == 1 then handlePointer(x, y, 'mouse', 'pressed', button) end
+        return
+    end
     if not istouch and button == 1 then
         if modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) then
             -- Start capturing mouse movement
@@ -617,7 +649,7 @@ end
 
 function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
     --handlePointer(x, y, id, 'pressed')
-    if modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) then
+    if not playMode.isOn() and (modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH)) then
         -- Start capturing mouse movement
         state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
@@ -647,7 +679,17 @@ function lib.showCloseNode()
     return nil
 end
 
+local function panCamera(dx, dy)
+    local tx, ty = cam:getTranslation()
+    cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
+    require('src.camera-follow').notePan() -- you steer now, until the next touch
+end
+
 function lib.handleMouseMoved(x, y, dx, dy)
+    if playMode.isOn() then -- play mode: moving only pans (right/middle drag)
+        if love.mouse.isDown(3) or love.mouse.isDown(2) then panCamera(dx, dy) end
+        return
+    end
     --print('moved')
     --
     --
@@ -800,8 +842,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
             state.interaction.lastPolyPt = { x = wx, y = wy }
         end
     elseif love.mouse.isDown(3) or love.mouse.isDown(2) then
-        local tx, ty = cam:getTranslation()
-        cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
+        panCamera(dx, dy)
     end
 end
 

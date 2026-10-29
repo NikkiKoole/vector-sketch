@@ -15,6 +15,7 @@ package.loaded['src.state'] = nil
 package.loaded['src.input-manager'] = nil
 package.loaded['src.camera'] = nil
 package.loaded['src.physics.box2d-pointerjoints'] = nil
+package.loaded['src.play-mode'] = nil
 
 local registry = require('src.registry')
 local objectManager = require('src.object-manager')
@@ -24,6 +25,9 @@ local state = require('src.state')
 local InputManager = require('src.input-manager')
 local camera = require('src.camera')
 local cam = camera.getInstance()
+local playMode = require('src.play-mode')
+local pointerJoints = require('src.physics.box2d-pointerjoints')
+local modes = require('src.modes')
 
 -- ─── Helpers ───
 
@@ -526,5 +530,63 @@ describe("input-manager: handlePointer mode dispatch", function()
 
             assert.are.equal(0, state.texFixtureEdit.dragIdx)
         end)
+    end)
+end)
+
+-- Play mode (src/play-mode.lua): the pointer only plays.
+describe("input-manager: play mode", function()
+    before_each(function()
+        state.physicsWorld = makeWorld()
+        registry.reset()
+        cam:setTranslation(0, 0)
+        cam:setScale(1)
+        resetInteractionState()
+        playMode.enter()
+    end)
+
+    after_each(function()
+        release(SX1, SY1)
+        playMode.exit()
+        if state.physicsWorld and not state.physicsWorld:isDestroyed() then
+            state.physicsWorld:destroy()
+        end
+    end)
+
+    it("runs the physics, and leaving puts the editor's pause back", function()
+        assert.is_false(state.world.paused)
+        playMode.exit()
+        assert.is_true(state.world.paused)
+        state.world.paused = false
+        playMode.enter()
+        playMode.exit()
+        assert.is_false(state.world.paused)
+    end)
+
+    it("grabs a body without selecting it, and lets go on release", function()
+        addBodyAtScreen('rectangle', SX1, SY1)
+        press(SX1, SY1)
+        assert.are.equal(1, #pointerJoints.getInteractedWithPointer())
+        assert.is_nil(state.selection.selectedObj)
+        release(SX1, SY1)
+        assert.are.equal(0, #pointerJoints.getInteractedWithPointer())
+    end)
+
+    it("grabs even with an editor tool mode active", function()
+        addBodyAtScreen('rectangle', SX1, SY1)
+        state.currentMode = modes.DRAW_FREE_POLY
+        press(SX1, SY1)
+        assert.is_false(state.interaction.capturingPoly)
+        assert.are.equal(1, #pointerJoints.getInteractedWithPointer())
+    end)
+
+    it("doesn't grab with the right button (that pans)", function()
+        addBodyAtScreen('rectangle', SX1, SY1)
+        InputManager.handleMousePressed(SX1, SY1, 2, false)
+        assert.are.equal(0, #pointerJoints.getInteractedWithPointer())
+    end)
+
+    it("reads --play <scene> from the command line", function()
+        assert.are.equal('dollhouse', playMode.sceneFromArgs({ '--bridge', '--play', 'dollhouse' }))
+        assert.is_nil(playMode.sceneFromArgs({ '--scene', 'dollhouse' }))
     end)
 end)

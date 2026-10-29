@@ -144,10 +144,13 @@ describe("UI smoke tests", function()
     it("settings renders with every section open", function()
         state.panelVisibility.worldSettingsOpened = true
         state.panelVisibility.bgSettingsOpened = true
-        state.settingsFolds = { world = true, music = true }
+        state.settingsFolds = { world = true, camera = true, music = true }
+        local cameraFollow = require('src.camera-follow')
+        cameraFollow.settings().bounds = { -500, -400, 500, 400 } -- shows the bounds rows too
         local ok, err = renderToCanvas(function()
             playtimeui.drawUI()
         end)
+        cameraFollow.settings().bounds = nil
         assert.is_true(ok, "settings sections failed: " .. tostring(err))
     end)
 
