@@ -1819,7 +1819,13 @@ end
 -- (the deform/anchor ones per DRAWABLE per frame). None of them capture
 -- per-call state, so they live at module scope now — pure GC churn win.
 
-local function sorter(a, b) return a.z < b.z end
+-- z first; equal z by the sfixture's id (then which of its entries), so it can't flicker
+-- or differ between sessions
+local function sorter(a, b)
+    if a.z ~= b.z then return a.z < b.z end
+    if a.key ~= b.key then return a.key < b.key end
+    return a.sub < b.sub
+end
 
 local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
     -- print('jo!')
@@ -2095,253 +2101,252 @@ end
 -- small per-drawable tables still allocate per frame.
 local drawablesList = {}
 
-local function createDrawables(bodies)
+-- Everything drawn here hangs off an sfixture, so the list is built from the registry's
+-- sfixtures, not by walking every fixture of every body (1500 fixtures, 650 of them
+-- sfixtures, with 20 Mipos). Each entry gets a `key` (its sfixture's id) and `sub` so
+-- equal z sorts the same way every frame and every session.
+local function createDrawables()
     local drawables = drawablesList
     for i = #drawables, 1, -1 do drawables[i] = nil end
-    for _, body in ipairs(bodies) do
-        -- local ud = body:getUserData()
-        -- if (ud and ud.thing) then
-        --     local composedZ = ((ud.thing.zGroupOffset or 0) * 1000) + ud.thing.zOffset
-        --     table.insert(drawables, { z = composedZ, body = body, thing = ud.thing })
-        -- end
-        -- todo instead of having to check all the fixtures every frame
-        -- we should mark a thing that has these type of specialfixtures.
-        local fixtures = body:getFixtures()
-        for i = 1, #fixtures do
-            local ud = fixtures[i]:getUserData()
-            if type(ud) ~= 'table' then -- only table userData is an sfixture
-                ud = nil
-            end
-            if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+    for _, fixture in pairs(registry.sfixtures) do
+        local ud = not fixture:isDestroyed() and fixture:getUserData()
+        if type(ud) ~= 'table' then -- only table userData is an sfixture
+            ud = nil
+        end
+        local body = ud and fixture:getBody()
+        local before = #drawables
+        if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
-                table.insert(drawables, {
-                    type = 'trace-vertices',
+            table.insert(drawables, {
+                type = 'trace-vertices',
+                z = composedZ,
+                extra = ud.extra,
+                thing = body:getUserData().thing
+            })
+        end
+
+        if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+
+            table.insert(drawables, {
+                type = 'tile-repeat',
+                z = composedZ,
+                extra = ud.extra,
+                thing = body:getUserData().thing
+            })
+        end
+
+        if ud and subtypes.is(ud, subtypes.GRASS) then
+            -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            local thing = body:getUserData() and body:getUserData().thing
+            table.insert(drawables, { type = 'grass', layer = 'back', z = composedZ,
+                extra = ud.extra, thing = thing, body = body })
+            table.insert(drawables, { type = 'grass', layer = 'front', z = grass.FRONT_Z + (ud.extra.zOffset or 0),
+                extra = ud.extra, thing = thing, body = body })
+        end
+
+        if ud and subtypes.is(ud, subtypes.LIQUID) then
+            -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath)
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            if ud.extra.front then composedZ = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
+            table.insert(drawables, { type = subtypes.LIQUID, z = composedZ, extra = ud.extra, body = body })
+        end
+
+        if ud and subtypes.is(ud, subtypes.SOFTBODY) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            table.insert(drawables, { type = subtypes.SOFTBODY, z = composedZ, fixture = fixture })
+        end
+
+        if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            table.insert(drawables,
+                {
+                    type = 'texfixture',
                     z = composedZ,
+                    texfixture = fixture,
                     extra = ud.extra,
+                    body = body,
                     thing = body:getUserData().thing
                 })
-            end
-
-            if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-
-                table.insert(drawables, {
-                    type = 'tile-repeat',
+        end
+        if ud and subtypes.is(ud, subtypes.MESHUSERT) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            table.insert(drawables,
+                {
+                    type = 'meshusert',
                     z = composedZ,
+                    texfixture = fixture,
+                    label = ud.label,
                     extra = ud.extra,
+                    body = body,
                     thing = body:getUserData().thing
                 })
-            end
-
-            if ud and subtypes.is(ud, subtypes.GRASS) then
-                -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                local thing = body:getUserData() and body:getUserData().thing
-                table.insert(drawables, { type = 'grass', layer = 'back', z = composedZ,
-                    extra = ud.extra, thing = thing, body = body })
-                table.insert(drawables, { type = 'grass', layer = 'front', z = grass.FRONT_Z + (ud.extra.zOffset or 0),
-                    extra = ud.extra, thing = thing, body = body })
-            end
-
-            if ud and subtypes.is(ud, subtypes.LIQUID) then
-                -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath)
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                if ud.extra.front then composedZ = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
-                table.insert(drawables, { type = subtypes.LIQUID, z = composedZ, extra = ud.extra, body = body })
-            end
-
-            if ud and subtypes.is(ud, subtypes.SOFTBODY) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                table.insert(drawables, { type = subtypes.SOFTBODY, z = composedZ, fixture = fixtures[i] })
-            end
-
-            if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                table.insert(drawables,
-                    {
-                        type = 'texfixture',
-                        z = composedZ,
-                        texfixture = fixtures[i],
-                        extra = ud.extra,
-                        body = body,
-                        thing = body:getUserData().thing
-                    })
-            end
-            if ud and subtypes.is(ud, subtypes.MESHUSERT) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                table.insert(drawables,
-                    {
-                        type = 'meshusert',
-                        z = composedZ,
-                        texfixture = fixtures[i],
-                        label = ud.label,
-                        extra = ud.extra,
-                        body = body,
-                        thing = body:getUserData().thing
-                    })
-            end
-            if ud and subtypes.is(ud, subtypes.UVUSERT) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                table.insert(drawables,
-                    {
-                        type = 'uvusert',
-                        z = composedZ,
-                        texfixture = fixtures[i],
-                        label = ud.label,
-                        extra = ud.extra,
-                        body = body,
-                        thing = body:getUserData().thing
-                    })
-            end
-            if ud and subtypes.is(ud, subtypes.DECAL) then
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                if ud.extra.browCurve then
+        end
+        if ud and subtypes.is(ud, subtypes.UVUSERT) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            table.insert(drawables,
+                {
+                    type = 'uvusert',
+                    z = composedZ,
+                    texfixture = fixture,
+                    label = ud.label,
+                    extra = ud.extra,
+                    body = body,
+                    thing = body:getUserData().thing
+                })
+        end
+        if ud and subtypes.is(ud, subtypes.DECAL) then
+            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+            if ud.extra.browCurve then
+                table.insert(drawables, {
+                    type = 'brow',
+                    z = composedZ,
+                    extra = ud.extra,
+                    body = body,
+                })
+            elseif ud.extra.mouthCurve then
+                if ud.extra.mouthCurve == 'teeth' then
+                    -- Teeth: positioned image, optionally clipped to mouth polygon
                     table.insert(drawables, {
-                        type = 'brow',
+                        type = 'mouth-teeth',
                         z = composedZ,
                         extra = ud.extra,
                         body = body,
                     })
-                elseif ud.extra.mouthCurve then
-                    if ud.extra.mouthCurve == 'teeth' then
-                        -- Teeth: positioned image, optionally clipped to mouth polygon
+                else
+                    -- Mouth bezier curve decal (upper or lower lip)
+                    local pts = ud.extra.curvePoints
+                    if pts and #pts == 16 then
+                        local s = pts
+                        local curveData
+                        if ud.extra.mouthCurve == 'upper' then
+                            curveData = {
+                                s[1], s[2], s[3], s[4],
+                                s[3], s[4], s[5], s[6],
+                                s[5], s[6], s[7], s[8],
+                                s[7], s[8], s[9], s[10],
+                            }
+                        else
+                            -- Reverse lower lip curve to go left-to-right
+                            -- (matching upper lip direction) so texture orientation is consistent
+                            curveData = {
+                                s[1], s[2], s[15], s[16],
+                                s[15], s[16], s[13], s[14],
+                                s[13], s[14], s[11], s[12],
+                                s[11], s[12], s[9], s[10],
+                            }
+                        end
                         table.insert(drawables, {
-                            type = 'mouth-teeth',
+                            type = 'mouth-' .. ud.extra.mouthCurve,
                             z = composedZ,
                             extra = ud.extra,
                             body = body,
+                            curveData = curveData,
                         })
-                    else
-                        -- Mouth bezier curve decal (upper or lower lip)
-                        local pts = ud.extra.curvePoints
-                        if pts and #pts == 16 then
-                            local s = pts
-                            local curveData
-                            if ud.extra.mouthCurve == 'upper' then
-                                curveData = {
-                                    s[1], s[2], s[3], s[4],
-                                    s[3], s[4], s[5], s[6],
-                                    s[5], s[6], s[7], s[8],
-                                    s[7], s[8], s[9], s[10],
-                                }
-                            else
-                                -- Reverse lower lip curve to go left-to-right
-                                -- (matching upper lip direction) so texture orientation is consistent
-                                curveData = {
-                                    s[1], s[2], s[15], s[16],
-                                    s[15], s[16], s[13], s[14],
-                                    s[13], s[14], s[11], s[12],
-                                    s[11], s[12], s[9], s[10],
-                                }
-                            end
+                        if ud.extra.mouthCurve == 'lower' then
+                            -- Dark interior fill renders below teeth so teeth always
+                            -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
                             table.insert(drawables, {
-                                type = 'mouth-' .. ud.extra.mouthCurve,
-                                z = composedZ,
+                                type = 'mouth-backdrop',
+                                z = composedZ - 2,
                                 extra = ud.extra,
                                 body = body,
-                                curveData = curveData,
                             })
-                            if ud.extra.mouthCurve == 'lower' then
-                                -- Dark interior fill renders below teeth so teeth always
-                                -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
-                                table.insert(drawables, {
-                                    type = 'mouth-backdrop',
-                                    z = composedZ - 2,
-                                    extra = ud.extra,
-                                    body = body,
-                                })
-                            end
                         end
                     end
-                else
-                    table.insert(drawables, {
-                        type = 'decal',
+                end
+            else
+                table.insert(drawables, {
+                    type = 'decal',
+                    z = composedZ,
+                    extra = ud.extra,
+                    body = body,
+                })
+            end
+        end
+
+        if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
+            -- logger:inspect(ud)
+            --logger:info('got some new kind of combined drawing todo!')
+            local points = {}
+            for j = 1, #ud.extra.nodes do
+                local it = ud.extra.nodes[j]
+                if it.type == NT.ANCHOR then
+                    local f = registry.getSFixtureByID(it.id)
+                    if f then
+                        local b = f:getBody()
+                        local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                            :getPoints()) })
+                        table.insert(points, centerX)
+                        table.insert(points, centerY)
+                    else
+                        print('issue with finding achor, id:', it.id)
+                    end
+                end
+                if it.type == NT.JOINT then
+                    local jnt = registry.getJointByID(it.id)
+                    if jnt and not jnt:isDestroyed() then
+                        local x1, y1, _, _ = jnt:getAnchors()
+                        table.insert(points, x1)
+                        table.insert(points, y1)
+                    end
+                end
+            end
+
+            if #points == 4 then
+                -- here we will just introduce a little midle thingie
+                -- -- becaue i cannot draw a curve of 2 points
+                local function addMidpoint(pts)
+                    if #pts ~= 4 then
+                        error("Expected array of exactly 2 points (4 numbers)")
+                    end
+
+                    local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
+                    local midX = (x1 + x2) / 2
+                    local midY = (y1 + y2) / 2
+
+                    return { x1, y1, midX, midY, x2, y2 }
+                end
+
+                points = addMidpoint(points)
+            end
+
+            if #points >= 6 then
+                -- todo here we might want to grow the curve... so it will stick a little bit from the sides
+
+
+                -- todo parameterize this
+                local growLength = ud.extra.growExtra or 20
+                points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
+                points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+
+
+                -- bendiness controls control-point duplication for the bezier through
+                -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
+                -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
+                -- pre-knob behaviour. See doubleControlPoints above.
+                local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
+                points = doubleControlPoints(points, bendiness)
+
+
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                --print(inspect(ud.extra))
+                table.insert(drawables,
+                    {
                         z = composedZ,
+                        type = 'connected-texture',
+                        curve = love.math.newBezierCurve(points),
+                        --texfixture = fixture,
                         extra = ud.extra,
-                        body = body,
+                        --body = body,
+                        -- thing = body:getUserData().thing
                     })
-                end
             end
-
-            if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
-                -- logger:inspect(ud)
-                --logger:info('got some new kind of combined drawing todo!')
-                local points = {}
-                for j = 1, #ud.extra.nodes do
-                    local it = ud.extra.nodes[j]
-                    if it.type == NT.ANCHOR then
-                        local f = registry.getSFixtureByID(it.id)
-                        if f then
-                            local b = f:getBody()
-                            local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
-                                :getPoints()) })
-                            table.insert(points, centerX)
-                            table.insert(points, centerY)
-                        else
-                            print('issue with finding achor, id:', it.id)
-                        end
-                    end
-                    if it.type == NT.JOINT then
-                        local jnt = registry.getJointByID(it.id)
-                        if jnt and not jnt:isDestroyed() then
-                            local x1, y1, _, _ = jnt:getAnchors()
-                            table.insert(points, x1)
-                            table.insert(points, y1)
-                        end
-                    end
-                end
-
-                if #points == 4 then
-                    -- here we will just introduce a little midle thingie
-                    -- -- becaue i cannot draw a curve of 2 points
-                    local function addMidpoint(pts)
-                        if #pts ~= 4 then
-                            error("Expected array of exactly 2 points (4 numbers)")
-                        end
-
-                        local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
-                        local midX = (x1 + x2) / 2
-                        local midY = (y1 + y2) / 2
-
-                        return { x1, y1, midX, midY, x2, y2 }
-                    end
-
-                    points = addMidpoint(points)
-                end
-
-                if #points >= 6 then
-                    -- todo here we might want to grow the curve... so it will stick a little bit from the sides
-
-
-                    -- todo parameterize this
-                    local growLength = ud.extra.growExtra or 20
-                    points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
-                    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
-
-
-                    -- bendiness controls control-point duplication for the bezier through
-                    -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
-                    -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
-                    -- pre-knob behaviour. See doubleControlPoints above.
-                    local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
-                    points = doubleControlPoints(points, bendiness)
-
-
-                    local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                    --print(inspect(ud.extra))
-                    table.insert(drawables,
-                        {
-                            z = composedZ,
-                            type = 'connected-texture',
-                            curve = love.math.newBezierCurve(points),
-                            --texfixture = fixtures[i],
-                            extra = ud.extra,
-                            --body = body,
-                            -- thing = body:getUserData().thing
-                        })
-                end
-            end
+        end
+        for k = before + 1, #drawables do
+            drawables[k].key, drawables[k].sub = ud.id, k - before
         end
     end
     return drawables
@@ -2385,20 +2390,17 @@ end
 
 function lib.drawTexturedWorld(world)
     tickBlink(world, love.timer.getDelta() or 0)
-    local bodies = world:getBodies()
-
-
 
     -- state.drawTimes = { frames = 0, ms = {}, count = {} } (from the bridge) adds up the time
     -- per drawable kind; nil (the default) costs nothing. On state: a hot swap gives this
     -- code a fresh lib, so a flag set on the old one from outside is never seen
     local times, counts = state.drawTimes and state.drawTimes.ms, state.drawTimes and state.drawTimes.count
     local tStart = times and love.timer.getTime()
-    local drawables = createDrawables(bodies)
-    -- todo: optimally keep the list sorted and only resort when
-    -- drawables are added/removed or a z changes.
+    local drawables = createDrawables()
+    local tBuilt = times and love.timer.getTime()
     table.sort(drawables, sorter)
-    local tSort = times and love.timer.getTime() - tStart
+    local tCreate = times and tBuilt - tStart
+    local tSort = times and love.timer.getTime() - tBuilt
 
 
 
@@ -3642,7 +3644,8 @@ function lib.drawTexturedWorld(world)
         end
     end
     if times then
-        times['(createDrawables + sort)'] = (times['(createDrawables + sort)'] or 0) + tSort
+        times['(createDrawables)'] = (times['(createDrawables)'] or 0) + tCreate
+        times['(sort)'] = (times['(sort)'] or 0) + tSort
         state.drawTimes.frames = state.drawTimes.frames + 1
     end
 

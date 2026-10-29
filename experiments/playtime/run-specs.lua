@@ -46,6 +46,13 @@ end)
 -- Restore os.exit
 os.exit = realExit
 
+-- Spec mode skips main.lua, so its love.quit (which stops the synth) never exists here. A
+-- spec that started the synth would leave its render thread calling into the audio source
+-- while LÖVE tears audio down, and the process aborts on the way out.
+if package.loaded['src.synth'] then
+    pcall(package.loaded['src.synth'].stop)
+end
+
 if not ok then
     print('Error running busted: ' .. tostring(err))
     love.event.quit(1)
