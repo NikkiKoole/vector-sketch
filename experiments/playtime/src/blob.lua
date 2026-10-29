@@ -6,8 +6,12 @@
 -- shape8 outline of extra.main.bgURL.
 --
 -- The rim is built at runtime from those settings and never saved: small circle bodies
--- along the outline with spokes to the body, links and bend springs between neighbours,
--- and gas pressure so a hard landing can't turn it inside out. Rim bodies have no
+-- along the outline, rigid links and bend springs between neighbours, shape matching
+-- (every point pulled toward its spot in the rest shape fitted onto the rim) and gas
+-- pressure. The body is tied to the rim's middle by a stiff damped pull (the opposite
+-- pull spread over the rim) and is made heavier than the rim, so dragging it carries the
+-- blob. It used to hang on distance-joint spokes: those only know lengths, so a hard drag
+-- pulled the body out through the rim and left it there. Rim bodies have no
 -- userData and aren't registered, so save, selection, scripts and signals skip them;
 -- `lib.ownerOf` maps one back to its blob. The body's own collision shape collides
 -- with nothing (it's the handle to carry the blob by).
@@ -25,8 +29,8 @@ local subtypes = require('src.subtypes')
 lib.defaults = {
     height = 300,       -- world units, the outline's height at rest
     rimPoints = 28,     -- rim bodies (not 'nodes': io.lua takes extra.nodes for a ribbon's joints)
-    stiffness = 4,      -- spokes, Hz
-    damping = 0.5,      -- spokes
+    stiffness = 4,      -- shape matching, Hz (capped by the step: stable up to ~1 / (2 pi dt))
+    damping = 0.5,      -- shape matching, damping ratio
     pressure = 1,       -- 1: at 10% less area the rim pushes out with ~3x the blob's weight
     bend = 3,           -- bend springs, Hz (0 = off; 10+ made blobs cave in)
     friction = 0.7,
@@ -37,6 +41,8 @@ lib.defaults = {
 }
 
 local RINGS = 3 -- inner mesh rings between the middle and the rim
+local HANDLE_HZ = 8 -- the body's pull toward the rim's middle
+local HANDLE_MASS = 2 -- the body's mass, in rim masses
 
 -- runtime per SOFTBODY sfixture id; on state so a hot reload keeps the blobs
 state.blobs = state.blobs or {}
@@ -147,10 +153,6 @@ local function jointSignature(extra)
 end
 
 local function applyJointSettings(rt, extra)
-    local stiffness, damping = setting(extra, 'stiffness'), setting(extra, 'damping')
-    for _, j in ipairs(rt.spokes) do
-        if not j:isDestroyed() then j:setFrequency(stiffness); j:setDampingRatio(damping) end
-    end
     for _, j in ipairs(rt.bends) do
         if not j:isDestroyed() then j:setFrequency(setting(extra, 'bend')); j:setDampingRatio(0.7) end
     end
@@ -192,7 +194,7 @@ local function build(fixture)
     local vx, vy = body:getLinearVelocity()
 
     local rt = { id = ud.id, fixture = fixture, body = body, nodes = {}, rimFixtures = {}, uvs = {},
-        spokes = {}, links = {}, bends = {}, r = r, signature = signature(extra), rim = {}, rimVerts = {},
+        rest = {}, links = {}, bends = {}, r = r, signature = signature(extra), rim = {}, rimVerts = {},
         centreUV = { cxs / dw + 0.5, cys / dh + 0.5 } }
 
     -- winding of the outline, for normals and pressure
@@ -220,7 +222,7 @@ local function build(fixture)
         rt.nodes[i] = node
         rt.rimFixtures[i] = f
         rt.uvs[i] = { p[1] / dw + 0.5, p[2] / dh + 0.5 }
-        rt.spokes[i] = love.physics.newDistanceJoint(body, node, bx, by, wx, wy, false)
+        rt.rest[i] = { lx, ly } -- rest spot, body-local at angle 0 (re-centred below)
         state.blobRims[node] = rt
     end
     local n = #rt.nodes
@@ -240,6 +242,16 @@ local function build(fixture)
     end
     applyJointSettings(rt, extra)
 
+    -- rest shape around its own middle, for shape matching
+    local mx, my = 0, 0
+    for _, p in ipairs(rt.rest) do mx, my = mx + p[1] / n, my + p[2] / n end
+    for _, p in ipairs(rt.rest) do p[1], p[2] = p[1] - mx, p[2] - my end
+    -- a heavy handle: the pull that ties it to the rim then barely stretches while dragging
+    local rimMass = 0
+    for _, node in ipairs(rt.nodes) do rimMass = rimMass + node:getMass() end
+    rt.handleMass = rimMass * HANDLE_MASS
+    rt.theta = angle
+
     -- rest area (signed, same winding as the rim) and the pressure that goes with it
     local area = 0
     for i = 1, n do
@@ -248,8 +260,7 @@ local function build(fixture)
         area = area + ax * cy - cx * ay
     end
     rt.restArea = area / 2
-    local mass = body:getMass()
-    for _, node in ipairs(rt.nodes) do mass = mass + node:getMass() end
+    local mass = rt.handleMass + rimMass
     local gx, gy = world:getGravity()
     rt.pressureK = 30 * mass * math.sqrt(gx * gx + gy * gy) / (perimeter * scale)
 
@@ -287,6 +298,75 @@ local function applyPressure(rt, extra)
     end
 end
 
+local function wrapAngle(a)
+    return (a + math.pi) % (2 * math.pi) - math.pi
+end
+
+-- Shape matching: fit the rest shape onto the rim (its middle, best rotation) and pull
+-- every rim point toward its spot in it, damped against the rim's own motion. The rim
+-- keeps its shape on its own and can't turn inside out. Then tie the body to the rim's
+-- middle and turn it with the rim; the opposite pull goes to the rim, so a pointer
+-- dragging the body carries the whole blob.
+local function shapeMatch(rt, extra, dt)
+    local nodes, n, rest = rt.nodes, #rt.nodes, rt.rest
+    local cx, cy, vcx, vcy = 0, 0, 0, 0
+    local xs, ys = rt._mx or {}, rt._my or {}
+    rt._mx, rt._my = xs, ys
+    for i = 1, n do
+        xs[i], ys[i] = nodes[i]:getPosition()
+        local vx, vy = nodes[i]:getLinearVelocity()
+        cx, cy, vcx, vcy = cx + xs[i] / n, cy + ys[i] / n, vcx + vx / n, vcy + vy / n
+    end
+    local sxx, sxy = 0, 0
+    for i = 1, n do
+        local ax, ay = rest[i][1], rest[i][2]
+        local bx, by = xs[i] - cx, ys[i] - cy
+        sxx, sxy = sxx + ax * bx + ay * by, sxy + ax * by - ay * bx
+    end
+    local theta = math.atan2(sxy, sxx)
+    local spin = wrapAngle(theta - (rt.theta or theta)) / dt
+    rt.theta = theta
+    local c, s = math.cos(theta), math.sin(theta)
+
+    -- explicit springs: stable while omega * dt stays under ~1
+    local maxOmega = 1 / dt
+    local omega = math.min(2 * math.pi * setting(extra, 'stiffness'), maxOmega)
+    local zeta = setting(extra, 'damping')
+    for i = 1, n do
+        local ax, ay = rest[i][1], rest[i][2]
+        local tx, ty = cx + ax * c - ay * s, cy + ax * s + ay * c
+        local m = nodes[i]:getMass()
+        local vx, vy = nodes[i]:getLinearVelocity()
+        -- the rim's own velocity at this point: moving along and spinning
+        local rvx, rvy = vcx - spin * (ty - cy), vcy + spin * (tx - cx)
+        nodes[i]:applyForce(m * omega * omega * (tx - xs[i]) + 2 * m * omega * zeta * (rvx - vx),
+            m * omega * omega * (ty - ys[i]) + 2 * m * omega * zeta * (rvy - vy))
+    end
+
+    -- the handle
+    local body = rt.body
+    if math.abs(body:getMass() - rt.handleMass) > rt.handleMass * 1e-3 then
+        local lx, ly, mass, inertia = body:getMassData()
+        body:setMassData(lx, ly, rt.handleMass, inertia * rt.handleMass / math.max(mass, 1e-9))
+    end
+    -- body and rim pull on each other: a spring between two masses, so it's tuned on the
+    -- reduced mass (tuned on the body's mass alone it ran 1.7x too fast and the explicit
+    -- damping overshot every step: velocities flipped sign each frame and grew)
+    local hOmega = math.min(2 * math.pi * HANDLE_HZ, 0.5 * maxOmega)
+    local mb = body:getMass()
+    local mr = rt.handleMass / HANDLE_MASS
+    local mu = mb * mr / (mb + mr)
+    local bx, by = body:getPosition()
+    local bvx, bvy = body:getLinearVelocity()
+    local fx = mu * hOmega * hOmega * (cx - bx) + 2 * mu * hOmega * (vcx - bvx)
+    local fy = mu * hOmega * hOmega * (cy - by) + 2 * mu * hOmega * (vcy - bvy)
+    body:applyForce(fx, fy)
+    for i = 1, n do nodes[i]:applyForce(-fx / n, -fy / n) end
+    local inertia = body:getInertia() -- the turn has no counter-torque on the rim: plain spring
+    body:applyTorque(inertia * hOmega * hOmega * wrapAngle(theta - body:getAngle())
+        + 2 * inertia * hOmega * (spin - body:getAngularVelocity()))
+end
+
 -- The editor moved or turned the body (drag, rotate, set position): take the rim along.
 local function followTeleport(rt)
     local x, y = rt.body:getPosition()
@@ -312,7 +392,8 @@ end
 
 -- Before the physics step (also while paused): build, rebuild and drop rims to match the
 -- SOFTBODY sfixtures in the world, follow editor moves, push the pressure.
-function lib.beforeStep(paused)
+function lib.beforeStep(paused, dt)
+    dt = dt or 1 / 60
     local world = state.physicsWorld
     if not world then return end
     local seen = {}
@@ -338,7 +419,10 @@ function lib.beforeStep(paused)
                     for _, f in ipairs(body:getFixtures()) do
                         if not f:getUserData() then f:setMask(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16) end
                     end
-                    if not paused then applyPressure(rt, ud.extra) end
+                    if not paused and dt > 0 then
+                        shapeMatch(rt, ud.extra, dt)
+                        applyPressure(rt, ud.extra)
+                    end
                 end
             end
         end

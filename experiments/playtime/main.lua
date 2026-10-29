@@ -301,7 +301,7 @@ function love.update(dt)
 
     local scaled_dt = dt * state.world.speedMultiplier
     prof.push('physics-update')
-    blobs.beforeStep(state.world.paused) -- blob rims: build/follow, pressure (src/blob.lua)
+    blobs.beforeStep(state.world.paused, scaled_dt) -- blob rims: build/follow, pressure (src/blob.lua)
     if not state.world.paused then
         if state.world.playWithSoftbodies then
             for _, v in ipairs(state.world.softbodies) do

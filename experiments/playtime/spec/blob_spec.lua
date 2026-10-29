@@ -54,6 +54,18 @@ local function onlyRuntime()
     return found
 end
 
+local function insideRim(rt, x, y)
+    local inside, n = false, #rt.nodes
+    local j = n
+    for k = 1, n do
+        local xi, yi = rt.nodes[k]:getPosition()
+        local xj, yj = rt.nodes[j]:getPosition()
+        if ((yi > y) ~= (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi) then inside = not inside end
+        j = k
+    end
+    return inside
+end
+
 local function rimArea(rt)
     local a, n = 0, #rt.nodes
     for i = 1, n do
@@ -156,6 +168,45 @@ describe("blob (SOFTBODY sfixture)", function()
         assert.are_not.equal(before, after)
         assert.is_true(before.nodes[1]:isDestroyed())
         assert.is_true(math.abs(rimArea(after)) > 3 * beforeArea) -- twice the height: ~4x the area
+    end)
+
+    it("keeps its handle inside the rim when dragged hard by it", function()
+        local floor = love.physics.newBody(state.physicsWorld, 0, 400, 'static')
+        love.physics.newFixture(floor, love.physics.newRectangleShape(4000, 40))
+        local thing = props.makeBlob(0, 200)
+        blobs.beforeStep(true)
+        local rt = onlyRuntime()
+        local restArea = rimArea(rt)
+        step(1)
+        -- a pointer grabbing the handle (as the play-mode grab does), yanked around
+        local mj = love.physics.newMouseJoint(thing.body, thing.body:getPosition())
+        mj:setMaxForce(1000000) -- the drag slider's maximum (state.world.mouseForce is 500000)
+        mj:setDampingRatio(0.5)
+        local outside, frames = 0, 0
+        for _, target in ipairs({ { 700, 100 }, { -600, -200 }, { 300, 300 }, { -200, -500 } }) do
+            mj:setTarget(target[1], target[2])
+            for _ = 1, 40 do
+                blobs.beforeStep(false)
+                state.physicsWorld:update(1 / 60)
+                blobs.afterStep()
+                frames = frames + 1
+                if not insideRim(rt, thing.body:getPosition()) then outside = outside + 1 end
+            end
+        end
+        mj:destroy()
+        step(2)
+        assert.are.equal(0, outside, outside .. ' of ' .. frames .. ' frames outside while dragged')
+        assert.is_true(insideRim(rt, thing.body:getPosition()), 'outside after letting go')
+        -- and the rim came along: its middle is near the handle
+        local cx, cy = 0, 0
+        for _, node in ipairs(rt.nodes) do
+            local x, y = node:getPosition()
+            cx, cy = cx + x / #rt.nodes, cy + y / #rt.nodes
+        end
+        local bx, by = thing.body:getPosition()
+        local dist = math.sqrt((cx - bx) ^ 2 + (cy - by) ^ 2)
+        assert.is_true(dist < 40, string.format('rim middle %.0f from the handle (handle %.0f,%.0f rim %.0f,%.0f area %.2f)',
+            dist, bx, by, cx, cy, rimArea(rt) / restArea))
     end)
 
     it("lands on a floor and keeps its shape (pressure)", function()
