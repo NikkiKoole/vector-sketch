@@ -1612,6 +1612,7 @@ function lib.updatePart(partName, data, instance)
     -- filling the cache
     local poseCache = getPoseCache(instance)
     updateSinglePart(partName, data, instance)
+    lib.balanceArms(instance)
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
 end
@@ -2259,6 +2260,42 @@ function lib.addTexturesFromInstance2(instance)
     end
 end
 
+-- Arms are thin capsules under big hands and next to a big torso: by area alone a segment
+-- weighed 1/40 of its hand and 1/80 of the torso (2eJYpY). Box2D chains past ~10:1 stretch
+-- and lag; a hand snapped to a hold let the body slide 1000 units away on a stretched arm.
+-- So each arm segment weighs at least this share of its hand and of the torso (the larger),
+-- by density only: looks and collisions stay the same.
+lib.armMinShare = { hand = 1 / 6, torso = 1 / 12 }
+
+local arms = {
+    { 'luarm', 'llarm', hand = 'lhand' },
+    { 'ruarm', 'rlarm', hand = 'rhand' },
+}
+
+-- `share` (optional) instead of lib.armMinShare: to try values on live Mipos from the bridge.
+function lib.balanceArms(instance, share)
+    share = share or lib.armMinShare
+    local torso = instance.parts.torso1
+    if not (torso and torso.body and not torso.body:isDestroyed()) then return end
+    for _, arm in ipairs(arms) do
+        local hand = instance.parts[arm.hand]
+        local handMass = (hand and hand.body and not hand.body:isDestroyed()) and hand.body:getMass() or 0
+        local minMass = math.max(handMass * share.hand, torso.body:getMass() * share.torso)
+        for _, name in ipairs(arm) do
+            local part = instance.parts[name]
+            if part and part.body and not part.body:isDestroyed() then
+                local mass = part.body:getMass()
+                if mass > 0 and mass < minMass then
+                    for _, f in ipairs(part.body:getFixtures()) do
+                        if not f:getUserData() then f:setDensity(f:getDensity() * minMass / mass) end
+                    end
+                    part.body:resetMassData()
+                end
+            end
+        end
+    end
+end
+
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
     -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
@@ -2399,6 +2436,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         end
     end
 
+    lib.balanceArms(instance)
     mipoRegistry.register(instance)
     return instance
 end
@@ -2603,6 +2641,7 @@ function lib.reconstructInstance(charData, partBodies)
             end
         end
     end
+    lib.balanceArms(instance)
     return instance
 end
 
