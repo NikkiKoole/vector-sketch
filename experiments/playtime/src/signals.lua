@@ -63,6 +63,14 @@ local function ensureGateLimits(body, joint)
     joint:setLimitsEnabled(true)
 end
 
+-- [gate body] = { steps it stays awake, its own sleep setting to put back }. A gate resting
+-- half a pixel past the end of its limits (Box2D's slop, which grows with the meter) gets a
+-- limit-and-motor solve that
+-- pushes it the wrong way; it doesn't move, falls asleep after half a second and stays
+-- shut (or open). Awake for the whole trip it gets going. On state: survives a hot reload.
+state.gatesTravelling = state.gatesTravelling or setmetatable({}, { __mode = 'k' })
+local travelling = state.gatesTravelling
+
 -- Gate: a body on a prismatic joint; the motor drives it to the closed end or
 -- to the open (world-down) end of its limits.
 function lib.setGate(body, open)
@@ -76,6 +84,11 @@ function lib.setGate(body, open)
     joint:setMaxMotorForce(lib.gateForce)
     joint:setMotorSpeed((open and dir or -dir) * lib.gateSpeed)
     body:setAwake(true)
+    local wasAllowed = travelling[body] and travelling[body].sleepingAllowed or body:isSleepingAllowed()
+    body:setSleepingAllowed(false)
+    local travel = joint:getUpperLimit() - joint:getLowerLimit()
+    -- the trip at 60 steps a second, and half a second
+    travelling[body] = { steps = math.ceil(travel / lib.gateSpeed * 60) + 30, sleepingAllowed = wasAllowed }
 end
 
 local receivers = {
@@ -269,6 +282,16 @@ end
 
 function lib.update()
     if not state.physicsWorld then return end
+    for body, trip in pairs(travelling) do
+        if body:isDestroyed() or type(trip) ~= 'table' then
+            travelling[body] = nil
+        elseif trip.steps <= 1 then
+            body:setSleepingAllowed(trip.sleepingAllowed)
+            travelling[body] = nil
+        else
+            trip.steps = trip.steps - 1
+        end
+    end
     local snapJoints = nil
     for _, body in ipairs(state.physicsWorld:getBodies()) do
         local socket = findBehavior(body, 'SIGNAL_SOCKET')
