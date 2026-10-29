@@ -1245,8 +1245,10 @@ local function makePatch(name, ud)
                 ud.extra[name].fy or 1  -- flipy (normal)
             )
             lib.texturesCreated = lib.texturesCreated + 1
+            local img = love.graphics.newImage(imgData)
+            imgData:release()
             result = {
-                img = love.graphics.newImage(imgData),
+                img = img,
                 --img = getLoveImage('textures/' .. ud.extra.patch1URL),
                 tint = ud.extra[name].tint or 'ffffff',
                 tx = ud.extra[name].tx,
@@ -1261,8 +1263,41 @@ local function makePatch(name, ud)
     return result
 end
 
+-- Release baked images that were replaced by a re-bake, instead of leaving their GPU memory
+-- to the GC (omp-bench 'release': randomizing a Mipo 25x left +5 MB without this, 0 with it).
+-- A cloned fixture shares its original's image until it is re-baked itself, so only release
+-- what no fixture holds any more. The strip/fan meshes cached per image go with it.
+local function releaseReplacedImages(replaced, bodies)
+    local inUse = {}
+    for _, body in ipairs(bodies) do
+        for _, fixture in ipairs(body:getFixtures()) do
+            local ud = fixture:getUserData()
+            if type(ud) == 'table' and ud.extra and ud.extra.ompImage then
+                inUse[ud.extra.ompImage] = true
+            end
+        end
+    end
+    for _, img in ipairs(replaced) do
+        if not inUse[img] then
+            inUse[img] = true -- the same image can be in the list twice
+            for _, mesh in pairs(_stripCache[img] or {}) do mesh:release() end
+            for _, rec in pairs(_fanPool[img] or {}) do rec.mesh:release() end
+            _stripCache[img] = nil
+            _fanPool[img] = nil
+            img:release()
+        end
+    end
+end
+
+local function releasePatches(patches)
+    for _, patch in ipairs(patches) do
+        if patch then patch.img:release() end
+    end
+end
+
 function lib.makeCombinedImages()
     local bodies = state.physicsWorld:getBodies()
+    local replaced = nil
 
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -1272,7 +1307,12 @@ function lib.makeCombinedImages()
                 local patch1 = makePatch('patch1', ud)
                 local patch2 = makePatch('patch2', ud)
                 local patch3 = makePatch('patch3', ud)
+                local patches = { patch1 or false, patch2 or false, patch3 or false } -- avoid sparse table
                 local main = ud.extra.main
+                if ud.extra.ompImage then
+                    replaced = replaced or {}
+                    replaced[#replaced + 1] = ud.extra.ompImage
+                end
 
                 if not main.cached then
                     lib.makeCached(main)
@@ -1283,6 +1323,7 @@ function lib.makeCombinedImages()
                 -- thumbnail. Drop ompImage and skip recompose so the renderer's
                 -- non-OMP fallback path also short-circuits cleanly.
                 if not main.bgURL or main.bgURL == '' then
+                    releasePatches(patches)
                     ud.extra.ompImage = nil
                     ud.extra.dirty = false
                     goto continue_omp_compose
@@ -1311,12 +1352,14 @@ function lib.makeCombinedImages()
                         cached.bgA * 5,            -- lineAlpha
                         main.fx or 1,              -- flipx (normal)
                         main.fy or 1,              -- flipy (normal)
-                        { patch1 or false, patch2 or false, patch3 or false } -- renderPatch (avoid sparse table)
+                        patches               -- renderPatch
                     )
                     local image = love.graphics.newImage(imgData)
+                    imgData:release()
                     lib.texturesCreated = lib.texturesCreated + 1
                     ud.extra.ompImage = image
                 end
+                releasePatches(patches)
                 fixtures[i]:setUserData(ud)
 
                 ud.extra.dirty = false
@@ -1326,6 +1369,7 @@ function lib.makeCombinedImages()
         --for i = 1, #fixtures do fixtures[i] = nil end
     end
     --for i = 1, #bodies do bodies[i] = nil end
+    if replaced then releaseReplacedImages(replaced, bodies) end
 end
 
 local function makeSquishableUVsFromPoints(v)
