@@ -742,6 +742,9 @@ function love.load()
     love.graphics.setBackgroundColor(0.93, 0.91, 0.86)
     if CHECK then
         runCheck()
+        settings.debug = true
+        love.draw() -- the draw path too, not only the physics
+        print('draw ok')
         love.event.quit()
     end
 end
@@ -800,9 +803,9 @@ function love.draw()
     end
 
     love.graphics.setColor(0.15, 0.15, 0.15)
-    local look = blobs[1] and looks[lastBlob.look]
+    local look = lastBlob and looks[lastBlob.look]
     love.graphics.print(string.format(
-        '%s mesh (m)   blobs %d   spokes %.1f Hz ([ ])   pressure %.2f (, .)   rim %s (\')   smooth %s (s)   fps %d   look %s',
+        '%s mesh (m)   bend %.0f Hz (b)   blobs %d   spokes %.1f Hz ([ ])   pressure %.2f (, .)   rim %s (\')   smooth %s (s)   fps %d   look %s',
         settings.meshMode, settings.bend, #blobs, settings.spokeHz, settings.pressure, settings.rimRigid and 'rigid' or 'springy',
         settings.smooth and 'on' or 'off', love.timer.getFPS(), look and look.url or '-'), 10, 10)
     love.graphics.print('drag: grab   right: new blob   n: next look   k: kick   d: debug (red = folded)   x: clear', 10, 28)
