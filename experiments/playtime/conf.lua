@@ -40,6 +40,13 @@ function love.conf(t)
         if a == '--audio' then audio = true end
     end
     if specs and not audio then t.modules.audio = false end
+    -- Specs need a window for graphics (images, meshes, the UI: without one ~110 fail) and
+    -- some read its size; so the normal one, but borderless and far off-screen, so a spec
+    -- run doesn't pop up over the game.
+    if specs then
+        t.window.borderless = true
+        t.window.x, t.window.y = -20000, -20000
+    end
     t.modules.data = true                  -- Enable the data module (boolean)
     t.modules.event = true                 -- Enable the event module (boolean)
     t.modules.font = true                  -- Enable the font module (boolean)
