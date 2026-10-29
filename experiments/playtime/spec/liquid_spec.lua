@@ -121,6 +121,39 @@ describe('liquid', function()
     end)
 end)
 
+describe('liquid surface (sloshing)', function()
+    it('rocks when pushed and settles back to flat, keeping its amount', function()
+        local wave = liquid.newWave(24)
+        liquid.pushWave(wave, 200)
+        local function step(seconds)
+            for _ = 1, math.floor(seconds * 60) do liquid.stepWave(wave, 1 / 60, 30, 1.2, 50) end
+        end
+        step(0.1)
+        assert.is_true(wave.h[1] > 1 and wave.h[24] < -1, 'pushed: left up, right down')
+        local mean = 0
+        for i = 1, 24 do mean = mean + wave.h[i] end
+        assert.is_true(math.abs(mean / 24) < 1e-6, 'the mean stays at the level')
+        step(0.6)
+        local swung = false -- it rocks: some time later the left side has come down below the right
+        for _ = 1, 120 do
+            step(1 / 60)
+            if wave.h[1] < wave.h[24] then swung = true end
+        end
+        assert.is_true(swung)
+        step(12)
+        assert.is_true(liquid.waveEnergy(wave) < 0.01, 'settled')
+    end)
+
+    it('stays flat without a push, and keeps within its cap', function()
+        local wave = liquid.newWave(24)
+        for _ = 1, 60 do liquid.stepWave(wave, 1 / 60, 30, 1.2, 50) end
+        assert.are.equal(0, liquid.waveEnergy(wave))
+        liquid.pushWave(wave, 1e6)
+        for _ = 1, 10 do liquid.stepWave(wave, 1 / 60, 30, 1.2, 5) end
+        for i = 1, 24 do assert.is_true(math.abs(wave.h[i]) <= 5 + 1e-9) end
+    end)
+end)
+
 -- The kitchen test scene (scripts/kitchen.playtime.json): cups on the table, a bath.
 if not love or not love.physics then return end
 

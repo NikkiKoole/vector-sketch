@@ -77,9 +77,17 @@ pools. Static bodies would be stamped into the grid as rock.
   opening's lowest point, the extra amount leaves from there as a stream of simple drops (no
   Box2D bodies). A drop landing in another cavity adds to its amount; one landing on the floor
   splashes and fades. Open: lost, or puddles you can mop up?
-- [ ] **W3. Wobble and splash.** The surface as a row of ~12 springs (ripple in 1D). Moving or
-  tilting the container excites it; things falling in make a ring. Splash particles from
-  mudready.
+- [x] **W3a. Sloshing** (2026-10-29; Nikki: "sloshing and little settle things, no crown of drops or
+  particles yet, just the one body but better"). The surface is 24 springs across the container
+  (`liquid.newWave/stepWave/pushWave`). Each frame the container's sideways acceleration and turning
+  push it: speeding up to the right leaves the water up on the left. It rocks with omega^2 ~ pi g /
+  width, so a bath sloshes slower than a cup, and settles (damping 1.8 x `settle`). The mean stays at
+  the level, so the amount doesn't change. A soft cap keeps it below the mouth's lowest point (no lid
+  cutting it off) and rounds it off there. Level changes glide in. Drawn as columns under the wavy
+  line inside a stencil of the hollow. Visual only, not saved; runs in `liquid.draw`, also in the
+  editor. Inspector: slosh, settle.
+- [ ] **W3b. Splash** (not wanted yet): rings when something drops in, the crown/spray particles
+  from mudready.
 - [ ] **W4. Floating.** In `src/liquid.lua`. Bodies overlapping the water (`queryBoundingBox`, not
   only ones with `ud.thing`) get `mass x g x submerged fraction x density` up, at the centre of
   the submerged part. They get drag by depth, and their own damping back when they leave. Blob

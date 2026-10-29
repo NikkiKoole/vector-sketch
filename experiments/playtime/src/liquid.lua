@@ -10,7 +10,10 @@
 -- While playing, water above the mouth's lowest point spills out (lib.update), so a
 -- tipped cup empties and an upside-down one holds nothing.
 -- extra.cavity (a body-local polygon, first edge = mouth) replaces the hull when set.
--- W2 turns what spills into a stream, W3 a wobbling surface, W4 floating.
+-- The surface sloshes (W3): a row of springs across the container that moving, shaking or
+-- rotating it sets rocking, and that settle again; a level change glides instead of
+-- snapping. Visual only (not saved): it runs in lib.draw, playing or not.
+-- W2 turns what spills into a stream, W4 floating.
 local lib = {}
 
 lib.defaults = {
@@ -18,7 +21,10 @@ lib.defaults = {
     color = '3aa7d9b3',
     surfaceColor = 'cdeeffff',
     front = false,            -- drawn in front of the Mipos (a bath) instead of at its own z
+    slosh = 1,                -- how much moving the container rocks the surface (0 = flat)
+    settle = 1,               -- how quickly it calms down again
 }
+lib.SPRINGS = 24              -- points across the surface
 lib.FRONT_Z = 1000000 + 500   -- above every Mipo z-group, like the grass's front layer
 
 local CIRCLE_SIDES = 16
@@ -258,6 +264,108 @@ function lib.water(extra, body)
     return level, poly, hull, holes
 end
 
+-- ---------------------------------------------------------------------------
+-- The sloshing surface. `wave` = { h = {}, v = {} }: per spring the height above the
+-- flat level (world units, up) and its speed. Each spring is pulled back to flat,
+-- passes some of its height to its neighbours (so a push travels and rocks), and is
+-- damped; the mean is kept at 0 so the water's amount doesn't change.
+
+function lib.newWave(n)
+    local wave = { h = {}, v = {} }
+    for i = 1, n or lib.SPRINGS do wave.h[i], wave.v[i] = 0, 0 end
+    return wave
+end
+
+-- One step. `stiffness` (1/s^2) sets how fast it rocks, `damping` (1/s) how fast it calms,
+-- `maxHeight` caps it.
+function lib.stepWave(wave, dt, stiffness, damping, maxHeight)
+    local h, v = wave.h, wave.v
+    local n = #h
+    for i = 1, n do
+        v[i] = v[i] + (-stiffness * h[i] - damping * v[i]) * dt
+        h[i] = h[i] + v[i] * dt
+    end
+    local spread = math.min(0.5, stiffness * dt * dt * 4) -- neighbours pull on each other
+    for _ = 1, 2 do
+        for i = 1, n - 1 do
+            local d = (h[i + 1] - h[i]) * spread
+            v[i] = v[i] + d / dt * 0.5
+            v[i + 1] = v[i + 1] - d / dt * 0.5
+        end
+    end
+    local mean = 0
+    for i = 1, n do mean = mean + h[i] end
+    mean = mean / n
+    -- a soft cap: it rounds off nearing maxHeight instead of going flat there
+    for i = 1, n do
+        local x = h[i] - mean
+        if maxHeight <= 0 then
+            h[i], v[i] = 0, 0
+        elseif math.abs(x) > maxHeight * 0.5 then
+            local sign = x > 0 and 1 or -1
+            local over = (math.abs(x) - maxHeight * 0.5) / (maxHeight * 0.5)
+            h[i] = sign * maxHeight * (0.5 + 0.5 * (over / (1 + over)))
+            v[i] = v[i] * 0.8
+        else
+            h[i] = x
+        end
+    end
+end
+
+-- Rock it: a push that raises one side and lowers the other (`amount` in world units/s
+-- at the ends; positive raises the left).
+function lib.pushWave(wave, amount)
+    local n = #wave.h
+    for i = 1, n do
+        local t = (i - 1) / (n - 1)
+        wave.v[i] = wave.v[i] + amount * (1 - 2 * t)
+    end
+end
+
+local function waveEnergy(wave)
+    local e = 0
+    for i = 1, #wave.h do e = e + wave.h[i] * wave.h[i] + wave.v[i] * wave.v[i] * 0.01 end
+    return e
+end
+lib.waveEnergy = waveEnergy
+
+-- Runtime surface per sfixture (weak by extra; a hot reload just starts it flat).
+local waves = setmetatable({}, { __mode = 'k' })
+
+-- Advance the surface for this frame from how the container moved since the last one.
+local function updateWave(extra, body, level, width, maxHeight, dt)
+    local entry = waves[extra]
+    local x, y = body:getPosition()
+    local angle = body:getAngle()
+    if not entry then
+        entry = { wave = lib.newWave(), x = x, y = y, angle = angle, vx = 0, omega = 0, shownLevel = level }
+        waves[extra] = entry
+    end
+    if dt <= 0 then return entry end
+    local vx = (x - entry.x) / dt
+    local omega = (angle - entry.angle) / dt
+    local ax = (vx - entry.vx) / dt
+    local alpha = (omega - entry.omega) / dt
+    entry.x, entry.y, entry.angle, entry.vx, entry.omega = x, y, angle, vx, omega
+
+    local slosh = setting(extra, 'slosh')
+    -- speeding up to the right leaves the water behind, up on the left; turning clockwise
+    -- (the right side going down) leaves it up on the right
+    local push = (ax * 0.5 - alpha * width * 0.25) * slosh * dt
+    local limit = width * 4
+    lib.pushWave(entry.wave, math.max(-limit, math.min(limit, push)))
+
+    -- a real slosh is slow in a wide bath and quick in a cup: omega^2 ~ pi g / width
+    local g = 980
+    local stiffness = math.pi * g / math.max(20, width)
+    local damping = 1.8 * setting(extra, 'settle')
+    lib.stepWave(entry.wave, math.min(dt, 1 / 30), stiffness, damping, maxHeight)
+
+    -- a level change (a spill, a new fill) glides in
+    entry.shownLevel = entry.shownLevel + (level - entry.shownLevel) * (1 - math.exp(-dt * 10))
+    return entry
+end
+
 local function hexColor(hex)
     local function byte(i) return (tonumber(hex:sub(i, i + 1), 16) or 255) / 255 end
     return byte(1), byte(3), byte(5), #hex >= 8 and byte(7) or 1
@@ -277,29 +385,58 @@ end
 
 function lib.draw(extra, body)
     if not body or body:isDestroyed() then return end
-    local level, poly, _, holes = lib.water(extra, body)
-    if not level or #poly < 6 then return end
-    -- mask out the body itself, so the water fills only the hollow
+    local level, poly, hull, holes = lib.water(extra, body)
+    if not level or #poly < 6 then
+        waves[extra] = nil
+        return
+    end
+    local x1, x2 = surfaceEnds(poly, level)
+    local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
+    for i = 1, #hull, 2 do
+        minX, maxX = math.min(minX, hull[i]), math.max(maxX, hull[i])
+        minY, maxY = math.min(minY, hull[i + 1]), math.max(maxY, hull[i + 1])
+    end
+    local width = x1 and (x2 - x1) or (maxX - minX)
+    -- the surface never rises past the mouth (no lid to cut it off), and only so far in a deep one
+    local mouth = mouthY(lib.container(extra, body), hull) -- its lowest point; huge when closed
+    local top = mouth == math.huge and minY or mouth
+    local maxHeight = math.max(0, math.min((maxY - minY) * 0.35, level - top))
+    local entry = updateWave(extra, body, level, width, maxHeight, love.timer.getDelta())
+    local h = entry.wave.h
+    local n = #h
+    local shown = entry.shownLevel
+
+    -- the hollow: the hull less the body, as a stencil
+    love.graphics.stencil(function()
+        love.graphics.polygon('fill', hull)
+    end, 'replace', 1)
     love.graphics.stencil(function()
         for _, hole in ipairs(holes) do
             if #hole >= 6 then love.graphics.polygon('fill', hole) end
         end
-    end, 'replace', 1)
+    end, 'replace', 0, true)
     local compare, value = love.graphics.getStencilTest()
-    love.graphics.setStencilTest('equal', 0)
+    love.graphics.setStencilTest('equal', 1)
+
+    -- the water: columns from the wavy surface down past the bottom, across the hull
+    local line = {}
+    for i = 1, n do
+        local t = (i - 1) / (n - 1)
+        line[#line + 1] = minX + (maxX - minX) * t
+        line[#line + 1] = shown - h[i]
+    end
     love.graphics.setColor(hexColor(setting(extra, 'color')))
-    local ok, triangles = pcall(love.math.triangulate, poly)
-    if ok then
-        for _, t in ipairs(triangles) do love.graphics.polygon('fill', t) end
+    local bottom = maxY + 1
+    for i = 1, n - 1 do
+        local ax, ay, bx, by = line[i * 2 - 1], line[i * 2], line[i * 2 + 1], line[i * 2 + 2]
+        love.graphics.polygon('fill', ax, ay, bx, by, bx, bottom, ax, bottom)
     end
-    local x1, x2 = surfaceEnds(poly, level)
-    if x1 then
-        love.graphics.setColor(hexColor(setting(extra, 'surfaceColor')))
-        local lw = love.graphics.getLineWidth()
-        love.graphics.setLineWidth(4)
-        love.graphics.line(x1, level, x2, level)
-        love.graphics.setLineWidth(lw)
-    end
+    love.graphics.setColor(hexColor(setting(extra, 'surfaceColor')))
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(4)
+    love.graphics.line(line)
+    love.graphics.setLineWidth(lw)
+
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
     love.graphics.setColor(1, 1, 1, 1)
 end
