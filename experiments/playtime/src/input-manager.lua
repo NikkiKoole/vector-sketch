@@ -7,6 +7,7 @@ local mathutils = require 'src.math-utils'
 local recorder = require 'src.recorder'
 local mipoVoice = require('src.mipo-voice')
 local mipoRegistry = require('src.mipo-registry')
+local blobs = require('src.blob')
 local signals = require('src.signals')
 local doors = require('src.doors')
 local utils = require 'src.utils'
@@ -293,7 +294,8 @@ local function releasePointer(x, y, id)
         script.call('onReleased', newReleased)
         if recorder.isRecording and not state.world.paused then
             for _, obj in ipairs(releasedObjs) do
-                recorder:recordMouseJointFinish(id, obj:getUserData().thing.id)
+                local ud = obj:getUserData() -- nil for a blob's rim
+                if ud and ud.thing then recorder:recordMouseJointFinish(id, ud.thing.id) end
             end
         end
     end
@@ -456,7 +458,9 @@ local function handlePointer(x, y, id, action, button)
 
         -- Default selection + jointCreationMode handling
         if #hitted > 0 and (not modes.is(modes.PICK_AUTO_ROPIFY)) then
-            local ud = hitted[1]:getBody():getUserData()
+            -- a blob's rim bodies have no thing: clicking the rim selects the blob
+            local hitBody = blobs.ownerOf(hitted[1]:getBody()) or hitted[1]:getBody()
+            local ud = hitBody:getUserData()
             if ud and ud.thing then
                 state.selection.selectedObj = ud.thing
             end

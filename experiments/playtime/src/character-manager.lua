@@ -1000,6 +1000,7 @@ local shape8Dict = {
 }
 
 topology.setShape8Dict(shape8Dict)
+lib.shape8Dict = shape8Dict -- read by src/blob.lua (a blob's outline)
 
 local dna = {
     ['humanoid'] = {

@@ -10,6 +10,7 @@ local objectManager = require('src.object-manager')
 -- { name, make(wx, wy) -> list of things (may contain nils) }
 lib.LIST = {
     { 'ball', function(wx, wy) return { props.makeBall(wx, wy, 80, { squishy = true }) } end },
+    { 'blob', function(wx, wy) return { props.makeBlob(wx, wy) } end },
     { 'skateboard', function(wx, wy)
         local deck, wheels = props.makeSkateboard(wx, wy, 1)
         return { deck, wheels and wheels[1], wheels and wheels[2] }

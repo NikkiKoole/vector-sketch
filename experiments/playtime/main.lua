@@ -116,6 +116,7 @@ local mipoBand = require('src.mipo-band')
 local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
+local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures); 'blob' above is the old loveblobs
 local signals = require('src.signals')
 local doors = require('src.doors')
 local cameraFollow = require('src.camera-follow')
@@ -300,6 +301,7 @@ function love.update(dt)
 
     local scaled_dt = dt * state.world.speedMultiplier
     prof.push('physics-update')
+    blobs.beforeStep(state.world.paused) -- blob rims: build/follow, pressure (src/blob.lua)
     if not state.world.paused then
         if state.world.playWithSoftbodies then
             for _, v in ipairs(state.world.softbodies) do
@@ -342,6 +344,7 @@ function love.update(dt)
         end)
         keep_angle.update(scaled_dt, newHitted)
     end
+    blobs.afterStep()
     prof.pop('physics-update')
 
     if recorder.isRecording and utils.tablelength(recorder.recordingMouseJoints) > 0 then

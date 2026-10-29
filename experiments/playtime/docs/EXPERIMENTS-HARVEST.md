@@ -99,7 +99,7 @@ accelerate / brake / chain-lift / flip, carts follow by arc length (`Track:getPo
 | **Hand-drawn outline** for plain polygons: Catmull-Rom, evenly resampled, random width per segment | vector-sketch `lib/border-mesh.lua:124 makeBorderMesh`, `lib/polyline.lua:299-307` | S–M | makes greybox props and ground look drawn without texture work; fits "art comes last" |
 | **Soft drop shadows** under props and Mipos | `shadow/main.lua` ~:75 + `polyfun/main.lua:350` (CPU blur, slow); `Gaussian/main.lua` 9-tap blur shader | S–M | cache per shape, blur on GPU |
 | **Keyframe blend shapes** for art: lerp 2 poses, or 4–5 for a joystick blend | vector-sketch `lib/render.lua:40-176` | M | flowers that open, doors, breathing props; driven by tweens or signals |
-| **Textured soft bodies** + push/rotate/move helpers | `loveblobs2/loveblobs/softbody.lua:192`, `loveblobs2/main.lua:135-297`; Playtime's vendored loveblobs has no texture code | S | jelly toys, pillows, a blob Mipo |
+| **Textured soft bodies** + push/rotate/move helpers | `loveblobs2/loveblobs/softbody.lua:192`, `loveblobs2/main.lua:135-297`; Playtime's vendored loveblobs has no texture code | S | **done 2026-10-29**: spike in `experiments/blob-spike` (why the loveblobs2 texture looked wrong, flicker fixes, numbers), in Playtime as the SOFTBODY sfixture (`src/blob.lua`, `docs/BLOBS.md`) |
 | **Perspective ground plane** | `scrolling-world/src/groundplane.lua:51`, `puppet-maker/scenes/fiveGuys.lua:363` | S | for the lineup (#8) and outside scenes |
 | **Sculpt terrain** with marching squares | `tiled-polygons-01/tiled-polygons.lua:126` | M–L | output must become one ChainShape, not a body per tile |
 | **Trees from an L-system** | `lsystem-master/l-system.lua` | S | low priority |

@@ -166,6 +166,25 @@ lib.bySubtype = {
                   or 'aim: rotate the body (body +X = light dir)'
           end },
     }, position),
+    -- a blob (src/blob.lua): size and squish, then the look. Size, rim points and the
+    -- outline (bg) rebuild the rim; the rest applies on the fly.
+    [subtypes.SOFTBODY] = concat({
+        extraNumber('height', 'size', 40, 2000, 300, nil, { step = 1 }),
+        extraNumber('stiffness', 'stiffness', 0.5, 20, 4),
+        extraNumber('pressure', 'pressure', 0, 4, 1),
+        extraNumber('restitution', 'bounce', 0, 1, 0.05),
+        extraNumber('damping', 'damping', 0, 1, 0.5, nil, { advanced = true }),
+        extraNumber('bend', 'bend', 0, 20, 3, nil, { advanced = true }),
+        extraNumber('friction', 'friction', 0, 2, 0.7, nil, { advanced = true }),
+        extraNumber('rimPoints', 'rim points', 8, 64, 28, nil, { step = 1, advanced = true }),
+        extraNumber('drawSmooth', 'smooth edge', 0, 8, 4, nil, { step = 1, advanced = true }),
+        { kind = 'action', label = 'new look',
+          run = function(_, fixture)
+              local e = extraOf(fixture)
+              e.main = require('src.blob').randomLook()
+              e.dirty = true
+          end },
+    }, require('src.texfixture-params').ompRows('main'), { zOffset }, position),
 }
 
 return lib

@@ -45,6 +45,13 @@ fixtureTypes[subtypes.GRASS] = {
         return extra
     end,
 }
+-- a blob: the rim and the look come from extra (src/blob.lua)
+fixtureTypes[subtypes.SOFTBODY] = {
+    subtype = subtypes.SOFTBODY,
+    density = 0,
+    getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
+    getExtra = function() return require('src.blob').newExtra() end,
+}
 fixtureTypes[subtypes.RESOURCE] = simpleEntry(subtypes.RESOURCE, {
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
 })

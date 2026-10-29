@@ -12,6 +12,7 @@ local polyline = require 'src.polyline'
 local shapes = require 'src.shapes'
 local subtypes = require 'src.subtypes'
 local grass = require('src.grass')
+local blobs = require('src.blob')
 local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local spineMesh = require 'src.spine-mesh'
@@ -2076,6 +2077,11 @@ local function createDrawables(bodies)
                     extra = ud.extra, thing = thing, body = body })
             end
 
+            if ud and subtypes.is(ud, subtypes.SOFTBODY) then
+                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
+                table.insert(drawables, { type = subtypes.SOFTBODY, z = composedZ, fixture = fixtures[i] })
+            end
+
             if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 table.insert(drawables,
@@ -2982,6 +2988,10 @@ function lib.drawTexturedWorld(world)
 
         if drawables[i].type == subtypes.GRASS then
             grass.draw(drawables[i].extra, drawables[i].thing, drawables[i].body, drawables[i].layer)
+        end
+
+        if drawables[i].type == subtypes.SOFTBODY then
+            blobs.draw(drawables[i].fixture)
         end
 
         if drawables[i].type == subtypes.TILE_REPEAT then

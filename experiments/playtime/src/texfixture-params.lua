@@ -196,6 +196,8 @@ local function flipAndTint(layer)
     }
 end
 
+lib.ompRows = ompRows -- the blob's look (src/sfixture-params.lua) uses the same rows
+
 local function isOMP(fixture) return extraOf(fixture).OMP == true end
 local function notOMP(fixture) return not isOMP(fixture) end
 

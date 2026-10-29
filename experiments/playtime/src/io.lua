@@ -1086,7 +1086,11 @@ function lib.gatherSaveData(world, camera)
         local jointID = jointUserData and jointUserData.id
 
         if not jointID then
-            logger:debug('what is up with this joint?')
+            -- a blob's rim joints are rebuilt from its sfixture (src/blob.lua): not saved, no fuss
+            local bodyB = select(2, joint:getBodies())
+            if not (state.blobRims and state.blobRims[bodyB]) then
+                logger:debug('what is up with this joint?')
+            end
         else
             -- Get connected bodies
             local bodyA, bodyB = joint:getBodies()

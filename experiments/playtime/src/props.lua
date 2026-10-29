@@ -23,6 +23,18 @@ local function setMaterial(body, friction, restitution, density)
     body:resetMassData()
 end
 
+-- A blob (src/blob.lua, docs/BLOBS.md): a squishy body wearing a random head/body look.
+-- The circle is only the handle to carry it by (it collides with nothing); the rim the
+-- SOFTBODY sfixture builds around it does the colliding.
+function lib.makeBlob(x, y, height)
+    local thing = objectManager.addThing('circle', { x = x, y = y, radius = (height or 300) * 0.15, label = 'blob' })
+    if not thing then return nil end
+    local subtypes = require('src.subtypes')
+    local fixture = require('src.fixtures').createSFixture(thing.body, 0, 0, subtypes.SOFTBODY, { radius = 20 })
+    if fixture and height then fixture:getUserData().extra.height = height end
+    return thing
+end
+
 -- A bouncy ball. opts: { squishy = true } for the soft winegum-kiss sound.
 function lib.makeBall(x, y, radius, opts)
     opts = opts or {}

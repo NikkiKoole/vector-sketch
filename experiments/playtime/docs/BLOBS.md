@@ -68,11 +68,27 @@ Squish and texture both work. What the real thing has to carry over from it:
    texture and the fan mesh draw. Answers the only real unknowns: does it look good squashed,
    and does it hold the head shape (the 8-point outlines are not round; spokes should hold it,
    otherwise add pressure).
-2. **Real thing (M)**: SOFTBODY subtype, rim generation on create/load, save/load, the draw in
-   `box2d-draw-textured.lua`, grab through rim fixtures, editor move/rotate, clone, inspector
-   params, a "blob" entry in the toys menu. Retire the old `playWithSoftbodies` path.
-3. **Later**: pressure (area restore, from `jelly.c`) for puddings that stack; a blob head on a
-   Mipo; a soft-surface floor (jelly floor, bouncy castle) through the same sfixture idea.
+2. **Real thing** (2026-10-29), `src/blob.lua`, `spec/blob_spec.lua`:
+   - SOFTBODY sfixture: settings (size, stiffness, pressure, bounce; advanced: damping, bend,
+     friction, rim points, smooth edge) + OMP look in `extra.main`, baked by makeCombinedImages.
+     The outline is the bg picture's shape8 outline (`characterManager.shape8Dict`).
+   - **Save/load**: only the body (a small circle, the handle) and the sfixture's settings are
+     saved. The rim (bodies, joints, mesh) is rebuilt every time from those, in
+     `blobs.beforeStep` (main.lua, before the physics step), which also builds blobs that
+     appear by load, clone or undo and drops rims whose body is gone. A blob reloads at rest
+     (unsquashed) where its body was. Rim bodies have no userData and aren't registered, so
+     save/selection/scripts/signals skip them; `blobs.ownerOf(rimBody)` maps back (editor
+     clicks on the rim select the blob). Setting key `rimPoints`, not `nodes`: io.lua reads
+     `extra.nodes` as a ribbon's joints.
+   - Editor moves/rotates of the body take the rim along (`blobs.afterStep` remembers where the
+     body was; a jump between steps is an editor move). Size, rim points or bg rebuild the rim;
+     the other settings apply live.
+   - Toys shelf: 'blob' (`props.makeBlob`); attach rail: 'softbody' under looks; inspector panel.
+   - Still to do: retire the old `playWithSoftbodies` path (main.lua, input-manager,
+     object-manager); a squashed blob saves as unsquashed.
+3. **Later**: puddings that stack; a blob head on a Mipo (a joint to the blob body); a
+   soft-surface floor (jelly floor, bouncy castle) through the same sfixture idea; floating
+   in water (playtime-a1 is sketching water containers).
 
 ## Costs and risks
 
