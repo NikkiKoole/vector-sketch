@@ -18,16 +18,25 @@
 --   [ ]        spokes softer / stiffer      ; '        rim links rigid / springy
 --   k          kick everything up            d          debug (nodes, triangles)
 --   s          smooth edge on/off            x          clear blobs
+--   m          mesh: mvc / fan               b          bend springs (0, 3, 6 .. 24 Hz)
 --   esc        quit
 
 -- --check: simulate drop, kick and settle without a window loop, print shape stats, quit
 local CHECK = false
-local PRESSURE_ARG, HZ_ARG
+local BEND_ARG, DRAW_SMOOTH_ARG
+local PRESSURE_ARG, HZ_ARG, FAN_ARG, NO_SMOOTH_ARG, NO_OFFSET_ARG
 for _, a in ipairs(arg or {}) do
     local pv = tonumber(a:match('^%-%-pressure=([%d.]+)$') or '')
     if pv then PRESSURE_ARG = pv end
     local hv = tonumber(a:match('^%-%-hz=([%d.]+)$') or '')
     if hv then HZ_ARG = hv end
+    if a == '--fan' then FAN_ARG = true end
+    local dv = tonumber(a:match('^%-%-draw%-smooth=(%d+)$') or '')
+    if dv then DRAW_SMOOTH_ARG = dv end
+    local bv = tonumber(a:match('^%-%-bend=([%d.]+)$') or '')
+    if bv then BEND_ARG = bv end
+    if a == '--no-smooth' then NO_SMOOTH_ARG = true end
+    if a == '--no-offset' then NO_OFFSET_ARG = true end
     if a == '--check' then
         CHECK = true
         love.errorhandler = function(msg)
@@ -91,7 +100,7 @@ local lookIndex = 0
 local mouseJoint
 local lastBlob
 local settings = { spokeHz = 4, spokeDamping = 0.5, rimRigid = true, smooth = true, debug = false,
-    pressure = 1 }
+    pressure = 1, offset = 1, meshMode = 'mvc', bend = 3, drawSmooth = 4 }
 local STEP = 1 / 120 -- fixed physics step; pressure is re-applied before every step
 local blobCount = 0
 
@@ -227,6 +236,8 @@ end
 
 ---------------------------------------------------------------- blobs
 
+local buildMesh -- below, after the rim helpers
+
 local function setJointSettings(blob)
     for _, j in ipairs(blob.spokes) do
         j:setFrequency(settings.spokeHz)
@@ -235,6 +246,10 @@ local function setJointSettings(blob)
     for _, j in ipairs(blob.links) do
         j:setFrequency(settings.rimRigid and 0 or settings.spokeHz * 2)
         j:setDampingRatio(0.5)
+    end
+    for _, j in ipairs(blob.bends or {}) do
+        j:setFrequency(settings.bend)
+        j:setDampingRatio(0.7)
     end
 end
 
@@ -285,6 +300,17 @@ local function makeBlob(x, y, lookIdx)
         local bx, by = b:getPosition()
         blob.links[i] = love.physics.newDistanceJoint(a, b, ax, ay, bx, by, false)
     end
+    -- bend springs: each rim point to the one two along, so the rim curves but can't kink
+    -- into a zigzag when squashed (a zigzag rim folds the triangles at the edge)
+    blob.bends = {}
+    if settings.bend > 0 then
+        for i = 1, #blob.nodes do
+            local a, b = blob.nodes[i], blob.nodes[(i + 1) % #blob.nodes + 1]
+            local ax, ay = a:getPosition()
+            local bx, by = b:getPosition()
+            blob.bends[i] = love.physics.newDistanceJoint(a, b, ax, ay, bx, by, false)
+        end
+    end
     setJointSettings(blob)
     blob.rest = {}
     for i, body in ipairs(blob.nodes) do
@@ -302,14 +328,9 @@ local function makeBlob(x, y, lookIdx)
     -- pressure 1: at 10% less area the push on the whole rim is ~3x the blob's weight
     blob.pressureK = 30 * mass * GRAVITY * METER / (perimeter * scale)
 
-    -- one mesh, built once: centre + (smoothed) rim + the first rim vertex again
-    local count = (settings.smooth and #blob.nodes * 2 or #blob.nodes) + 2
-    local verts = {}
-    for i = 1, count do verts[i] = { 0, 0, 0, 0, 1, 1, 1, 1 } end
-    blob.verts = verts
-    blob.mesh = love.graphics.newMesh(count, 'fan', 'stream')
-    blob.mesh:setTexture(look.image)
     blob.smooth = settings.smooth
+    blob.meshMode = settings.meshMode
+    buildMesh(blob, look.image)
 
     blobs[#blobs + 1] = blob
     lastBlob = blob
@@ -331,42 +352,188 @@ local function rebuildBlob(blob, lookIdx)
     return makeBlob(x, y, lookIdx or blob.look)
 end
 
--- vertex positions from the rim bodies (pushed out by r along the normal), UVs fixed
-local rim = {}
-local function updateMesh(blob)
-    local n = #blob.nodes
-    local cx, cy = blob.centre:getPosition()
+-- The drawn rim: each rim body pushed out by r along the normal (so the circles' outer edge
+-- is the picture's edge), with Catmull-Rom midpoints when smoothing. UVs are fixed per point.
+local function computeRim(blob)
+    local nodes, n = blob.nodes, #blob.nodes
+    local w = blob.restArea > 0 and 1 or -1
+    local rim = blob.rim
+    -- node positions, Taubin-smoothed for drawing only: the physics rim kinks where a floor
+    -- or another blob presses one point in, and a kinked rim folds the triangles at the edge.
+    -- A shrink pass (lambda) then an inflate pass (mu) irons out kinks without shrinking.
+    local xs, ys = blob._xs or {}, blob._ys or {}
+    blob._xs, blob._ys = xs, ys
+    for i = 1, n do xs[i], ys[i] = nodes[i]:getPosition() end
+    local tx, ty = blob._tx or {}, blob._ty or {}
+    blob._tx, blob._ty = tx, ty
+    for _ = 1, settings.drawSmooth do
+        for _, f in ipairs({ 0.5, -0.53 }) do
+            for i = 1, n do
+                local a, b = (i - 2) % n + 1, i % n + 1
+                tx[i] = xs[i] + f * ((xs[a] + xs[b]) / 2 - xs[i])
+                ty[i] = ys[i] + f * ((ys[a] + ys[b]) / 2 - ys[i])
+            end
+            for i = 1, n do xs[i], ys[i] = tx[i], ty[i] end
+        end
+    end
     for i = 1, n do
-        local px, py = blob.nodes[i]:getPosition()
-        local ax, ay = blob.nodes[(i - 2) % n + 1]:getPosition()
-        local bx, by = blob.nodes[i % n + 1]:getPosition()
-        local nx, ny = outwardNormal(px, py, ax, ay, bx, by, cx, cy)
+        local px, py = xs[i], ys[i]
+        local ax, ay = xs[(i - 2) % n + 1], ys[(i - 2) % n + 1]
+        local bx, by = xs[i % n + 1], ys[i % n + 1]
+        -- outward from the winding, the same way every frame ("away from the middle" flipped
+        -- sign in dents and made rim vertices jump in and out)
+        local ex, ey = bx - ax, by - ay
+        local len = math.sqrt(ex * ex + ey * ey)
+        if len < 1e-6 then len = 1 end
+        local nx, ny = ey / len * w, -ex / len * w
         local rv = rim[i] or {}
-        rv[1], rv[2] = px + nx * blob.r, py + ny * blob.r
+        if rv.nx and nx * rv.nx + ny * rv.ny < 0 then blob.normalFlips = (blob.normalFlips or 0) + 1 end
+        rv.nx, rv.ny = nx, ny
+        rv[1], rv[2] = px + nx * blob.r * settings.offset, py + ny * blob.r * settings.offset
         rv[3], rv[4] = blob.uvs[i][1], blob.uvs[i][2]
         rim[i] = rv
     end
-
-    local verts = blob.verts
-    local v = verts[1]
-    v[1], v[2], v[3], v[4] = cx, cy, blob.centreUV[1], blob.centreUV[2]
-    local k = 2
+    local out = blob.rimVerts
+    local k = 1
     for i = 1, n do
         local p1, p2 = rim[i], rim[i % n + 1]
-        v = verts[k]
+        local v = out[k] or {}
         v[1], v[2], v[3], v[4] = p1[1], p1[2], p1[3], p1[4]
+        out[k] = v
         k = k + 1
         if blob.smooth then
-            -- a Catmull-Rom midpoint, for position and UV alike
             local p0, p3 = rim[(i - 2) % n + 1], rim[(i + 1) % n + 1]
-            v = verts[k]
+            v = out[k] or {}
             for c = 1, 4 do v[c] = catmull(p0[c], p1[c], p2[c], p3[c], 0.5) end
+            out[k] = v
             k = k + 1
         end
     end
-    v = verts[k]
-    local first = verts[2]
-    v[1], v[2], v[3], v[4] = first[1], first[2], first[3], first[4]
+    return out
+end
+
+-- Mean value coordinates of point (px, py) in a polygon: weights that rebuild the point from
+-- the polygon's corners, smooth inside, also for dented (non-convex) shapes.
+local function mvcWeights(px, py, poly)
+    local m = #poly
+    local dist, angle, weights, sum = {}, {}, {}, 0
+    for i = 1, m do
+        local dx, dy = poly[i][1] - px, poly[i][2] - py
+        dist[i] = math.max(math.sqrt(dx * dx + dy * dy), 1e-6)
+    end
+    for i = 1, m do
+        local j = i % m + 1
+        local ax, ay = poly[i][1] - px, poly[i][2] - py
+        local bx, by = poly[j][1] - px, poly[j][2] - py
+        angle[i] = math.atan2(ax * by - ay * bx, ax * bx + ay * by)
+    end
+    for i = 1, m do
+        local prev = (i - 2) % m + 1
+        weights[i] = (math.tan(angle[prev] / 2) + math.tan(angle[i] / 2)) / dist[i]
+        sum = sum + weights[i]
+    end
+    for i = 1, m do weights[i] = weights[i] / sum end
+    return weights
+end
+
+local RINGS = 3 -- inner rings between the middle and the rim ('mvc' mesh)
+
+-- 'fan': the middle vertex at the rim's mean, triangles fanned out to the rim. Folds when a
+-- squash bends the rim so part of it is hidden from the middle (flickering triangles).
+-- 'mvc': triangles fixed at rest (middle, RINGS inner rings, rim); every frame the inner
+-- vertices are rebuilt from the rim with mean value coordinates taken at rest, so the inside
+-- bends with the rim instead of pivoting around one point.
+buildMesh = function(blob, image)
+    blob.rim, blob.rimVerts = {}, {}
+    local rest = computeRim(blob)
+    local m = #rest
+    local cx, cy, cu, cv = 0, 0, 0, 0
+    for _, r in ipairs(rest) do cx, cy, cu, cv = cx + r[1], cy + r[2], cu + r[3], cv + r[4] end
+    cx, cy, cu, cv = cx / m, cy / m, cu / m, cv / m
+
+    local verts = {}
+    for i = 1, m do verts[i] = { rest[i][1], rest[i][2], rest[i][3], rest[i][4], 1, 1, 1, 1 } end
+    blob.inner = {}
+    local map, w = {}, blob.restArea > 0 and 1 or -1
+    if blob.meshMode == 'fan' then
+        verts[m + 1] = { cx, cy, cu, cv, 1, 1, 1, 1 }
+        for i = 1, m do
+            local j = i % m + 1
+            map[#map + 1], map[#map + 2], map[#map + 3] = m + 1, i, j
+        end
+    else
+        local restPoly = {}
+        for i = 1, m do restPoly[i] = { rest[i][1], rest[i][2] } end
+        local function addInner(t, i)
+            local r = rest[i or 1]
+            local x, y = cx + (r[1] - cx) * t, cy + (r[2] - cy) * t
+            local u, v = cu + (r[3] - cu) * t, cv + (r[4] - cv) * t
+            verts[#verts + 1] = { x, y, u, v, 1, 1, 1, 1 }
+            blob.inner[#blob.inner + 1] = { index = #verts, weights = mvcWeights(x, y, restPoly) }
+            return #verts
+        end
+        local centre = addInner(0)
+        local rings = {}
+        for k = 1, RINGS do
+            rings[k] = {}
+            for i = 1, m do rings[k][i] = addInner(k / (RINGS + 1), i) end
+        end
+        local rimRing = {}
+        for i = 1, m do rimRing[i] = i end
+        rings[RINGS + 1] = rimRing
+        local function tri(a, b, c) map[#map + 1], map[#map + 2], map[#map + 3] = a, b, c end
+        for i = 1, m do tri(centre, rings[1][i], rings[1][i % m + 1]) end
+        for k = 1, RINGS do
+            local a, b = rings[k], rings[k + 1]
+            for i = 1, m do
+                local j = i % m + 1
+                tri(a[i], b[i], b[j])
+                tri(a[i], b[j], a[j])
+            end
+        end
+    end
+    blob.verts, blob.map, blob.winding = verts, map, w
+    blob.mesh = love.graphics.newMesh(verts, 'triangles', 'stream')
+    blob.mesh:setVertexMap(map)
+    blob.mesh:setTexture(image)
+end
+
+local function updateMesh(blob)
+    local rimVerts = computeRim(blob)
+    local verts, m = blob.verts, #rimVerts
+    for i = 1, m do
+        verts[i][1], verts[i][2] = rimVerts[i][1], rimVerts[i][2]
+    end
+    if blob.meshMode == 'fan' then
+        local cx, cy = 0, 0
+        for i = 1, m do cx, cy = cx + rimVerts[i][1], cy + rimVerts[i][2] end
+        verts[m + 1][1], verts[m + 1][2] = cx / m, cy / m
+    else
+        for _, inner in ipairs(blob.inner) do
+            local x, y, ws = 0, 0, inner.weights
+            for i = 1, m do
+                x, y = x + ws[i] * rimVerts[i][1], y + ws[i] * rimVerts[i][2]
+            end
+            verts[inner.index][1], verts[inner.index][2] = x, y
+        end
+    end
+
+    -- folded triangles: wound the other way than at rest
+    local folded, map, w = 0, blob.map, blob.winding
+    for t = 1, #map, 3 do
+        local a, b, c = verts[map[t]], verts[map[t + 1]], verts[map[t + 2]]
+        local cross = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])
+        if cross * w < 0 then
+            folded = folded + 1
+            -- which band: 0 = around the middle ... RINGS = between the last ring and the rim
+            local tri = (t - 1) / 3
+            local m3 = #blob.rimVerts
+            local band = tri < m3 and 0 or math.floor((tri - m3) / (2 * m3)) + 1
+            blob.bandFolds = blob.bandFolds or {}
+            blob.bandFolds[band] = (blob.bandFolds[band] or 0) + 1
+        end
+    end
+    blob.folded = folded
     blob.mesh:setVertices(verts)
 end
 
@@ -459,13 +626,56 @@ local function shapeStats(blob)
     return area(now) / area(blob.rest), err / #now / size * 100
 end
 
+local function pointInPoly(x, y, verts)
+    local inside, n = false, #verts
+    local j = n
+    for k = 1, n do
+        local xi, yi, xj, yj = verts[k][1], verts[k][2], verts[j][1], verts[j][2]
+        if ((yi > y) ~= (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi) then inside = not inside end
+        j = k
+    end
+    return inside
+end
+
+-- rim points of a blob that sit inside another blob's rim (blobs passing into each other)
+local function intruders(blob)
+    local count = 0
+    for _, other in ipairs(blobs) do
+        if other ~= blob then
+            for _, b in ipairs(blob.nodes) do
+                if pointInPoly(b:getX(), b:getY(), other.rimVerts) then count = count + 1 end
+            end
+        end
+    end
+    return count
+end
+
 local function runCheck()
+    love.math.setRandomSeed(7)
     local dt = STEP
     local worst = {}
     local function step(seconds)
         for _ = 1, math.floor(seconds / dt) do
             stepWorld(dt)
             for i, blob in ipairs(blobs) do
+                updateMesh(blob)
+                blob.foldedFrames = (blob.foldedFrames or 0) + (blob.folded > 0 and 1 or 0)
+                if blob.lastFolded and blob.lastFolded ~= blob.folded then
+                    blob.foldToggles = (blob.foldToggles or 0) + 1
+                end
+                blob.lastFolded = blob.folded
+                blob.restFolded = blob.restFolded or blob.folded
+                blob.maxFolded = math.max(blob.maxFolded or 0, blob.folded)
+                -- rim kinks: consecutive rim edges turning back more than 90 degrees
+                local n, kinks = #blob.nodes, 0
+                for q = 1, n do
+                    local ax, ay = blob.nodes[(q - 2) % n + 1]:getPosition()
+                    local px, py = blob.nodes[q]:getPosition()
+                    local bx, by = blob.nodes[q % n + 1]:getPosition()
+                    if (px - ax) * (bx - px) + (py - ay) * (by - py) < 0 then kinks = kinks + 1 end
+                end
+                blob.kinkFrames = (blob.kinkFrames or 0) + (kinks > 0 and 1 or 0)
+                blob.maxIntruders = math.max(blob.maxIntruders or 0, intruders(blob))
                 local a, e = shapeStats(blob)
                 local w = worst[i] or { amin = 1, amax = 1, emax = 0 }
                 w.amin, w.amax, w.emax = math.min(w.amin, a), math.max(w.amax, a), math.max(w.emax, e)
@@ -484,7 +694,8 @@ local function runCheck()
     end
     love.keypressed('k')
     step(4)
-    print(string.format('%-14s %8s %8s %10s %10s %10s', 'look', 'area', 'shape%', 'area min', 'area max', 'shape% max'))
+    print(string.format('%-14s %8s %8s %10s %10s %10s %8s %8s %8s %8s %8s %8s', 'look', 'area', 'shape%', 'area min', 'area max',
+        'shape% max', 'folded', 'flips', 'toggles', 'atRest', 'max', 'inside'))
     for i, blob in ipairs(blobs) do
         local a, e = shapeStats(blob)
         local okVerts = true
@@ -492,9 +703,21 @@ local function runCheck()
         for _, v in ipairs(blob.verts) do
             if v[1] ~= v[1] or v[2] ~= v[2] then okVerts = false end
         end
-        print(string.format('%-14s %8.2f %8.1f %10.2f %10.2f %10.1f %s', looks[blob.look].url, a, e,
-            worst[i].amin, worst[i].amax, worst[i].emax, okVerts and '' or 'NaN verts!'))
+        print(string.format('%-14s %8.2f %8.1f %10.2f %10.2f %10.1f %8d %8d %8d %8d %8d %8d %s', looks[blob.look].url, a, e,
+            worst[i].amin, worst[i].amax, worst[i].emax, blob.foldedFrames or 0, blob.normalFlips or 0,
+            blob.foldToggles or 0, blob.restFolded or 0, blob.maxFolded or 0, blob.maxIntruders or 0,
+            okVerts and '' or 'NaN verts!'))
     end
+    local bands = {}
+    for _, blob in ipairs(blobs) do
+        for band, c in pairs(blob.bandFolds or {}) do bands[band] = (bands[band] or 0) + c end
+    end
+    local kinkFrames = 0
+    for _, blob in ipairs(blobs) do kinkFrames = kinkFrames + (blob.kinkFrames or 0) end
+    print('frames with a kinked rim (summed over blobs): ' .. kinkFrames)
+    local line = 'folds per band (0 = middle, ' .. RINGS .. ' = next to the rim):'
+    for band = 0, RINGS do line = line .. ' ' .. (bands[band] or 0) end
+    print(line)
     print(string.format('pressure %.2f, spokes %.1f Hz, rim %s, %d nodes, %d bodies, %d joints', settings.pressure, settings.spokeHz,
         settings.rimRigid and 'rigid' or 'springy', NODES, world:getBodyCount(), world:getJointCount()))
 end
@@ -502,6 +725,11 @@ end
 function love.load()
     if PRESSURE_ARG then settings.pressure = PRESSURE_ARG end
     if HZ_ARG then settings.spokeHz = HZ_ARG end
+    settings.meshMode = FAN_ARG and 'fan' or 'mvc'
+    if BEND_ARG then settings.bend = BEND_ARG end
+    if DRAW_SMOOTH_ARG then settings.drawSmooth = DRAW_SMOOTH_ARG end
+    if NO_SMOOTH_ARG then settings.smooth = false end
+    settings.offset = NO_OFFSET_ARG and 0 or 1
     tex1 = getSource('textures/pat/type0.png')
     tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
     loadLooks()
@@ -553,10 +781,16 @@ function love.draw()
     if settings.debug then
         love.graphics.setLineWidth(1)
         for _, blob in ipairs(blobs) do
-            love.graphics.setColor(0, 0, 0, 0.35)
-            local c = blob.verts[1]
-            for i = 2, #blob.verts do
-                love.graphics.line(c[1], c[2], blob.verts[i][1], blob.verts[i][2])
+            local verts, map = blob.verts, blob.map
+            for t = 1, #map, 3 do
+                local a, b, c = verts[map[t]], verts[map[t + 1]], verts[map[t + 2]]
+                local cross = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])
+                if cross * blob.winding < 0 then
+                    love.graphics.setColor(1, 0, 0, 0.6) -- folded
+                    love.graphics.polygon('fill', a[1], a[2], b[1], b[2], c[1], c[2])
+                end
+                love.graphics.setColor(0, 0, 0, 0.3)
+                love.graphics.polygon('line', a[1], a[2], b[1], b[2], c[1], c[2])
             end
             love.graphics.setColor(0.9, 0.1, 0.2, 0.8)
             for _, b in ipairs(blob.nodes) do
@@ -568,10 +802,10 @@ function love.draw()
     love.graphics.setColor(0.15, 0.15, 0.15)
     local look = blobs[1] and looks[lastBlob.look]
     love.graphics.print(string.format(
-        'blobs %d   spokes %.1f Hz ([ ])   pressure %.2f (, .)   rim %s (\')   smooth %s (s)   fps %d   look %s',
-        #blobs, settings.spokeHz, settings.pressure, settings.rimRigid and 'rigid' or 'springy',
+        '%s mesh (m)   blobs %d   spokes %.1f Hz ([ ])   pressure %.2f (, .)   rim %s (\')   smooth %s (s)   fps %d   look %s',
+        settings.meshMode, settings.bend, #blobs, settings.spokeHz, settings.pressure, settings.rimRigid and 'rigid' or 'springy',
         settings.smooth and 'on' or 'off', love.timer.getFPS(), look and look.url or '-'), 10, 10)
-    love.graphics.print('drag: grab   right: new blob   n: next look   k: kick   d: debug   x: clear', 10, 28)
+    love.graphics.print('drag: grab   right: new blob   n: next look   k: kick   d: debug (red = folded)   x: clear', 10, 28)
 end
 
 local function blobAt(x, y)
@@ -589,9 +823,9 @@ local function blobAt(x, y)
     for i = #blobs, 1, -1 do
         local blob = blobs[i]
         local poly = {}
-        for k = 2, #blob.verts - 1 do
-            poly[#poly + 1] = blob.verts[k][1]
-            poly[#poly + 1] = blob.verts[k][2]
+        for _, v in ipairs(blob.rimVerts) do
+            poly[#poly + 1] = v[1]
+            poly[#poly + 1] = v[2]
         end
         local inside, n = false, #poly / 2
         local j = n
@@ -628,7 +862,7 @@ end
 
 function love.keypressed(key)
     if key == 'escape' then love.event.quit() end
-    if mouseJoint and (key == 'n' or key == 's' or key == 'x') then
+    if mouseJoint and (key == 'n' or key == 's' or key == 'x' or key == 'm' or key == 'b') then
         mouseJoint:destroy()
         mouseJoint = nil
     end
@@ -647,6 +881,14 @@ function love.keypressed(key)
     end
     if key == 's' then
         settings.smooth = not settings.smooth
+        for i = 1, #blobs do blobs[1] = rebuildBlob(blobs[1]) end
+    end
+    if key == 'b' then
+        settings.bend = settings.bend == 0 and 3 or settings.bend >= 30 and 0 or settings.bend * 2
+        for i = 1, #blobs do blobs[1] = rebuildBlob(blobs[1]) end
+    end
+    if key == 'm' then
+        settings.meshMode = settings.meshMode == 'mvc' and 'fan' or 'mvc'
         for i = 1, #blobs do blobs[1] = rebuildBlob(blobs[1]) end
     end
     if key == 'n' and lastBlob then lastBlob = rebuildBlob(lastBlob, nextLook()) end
