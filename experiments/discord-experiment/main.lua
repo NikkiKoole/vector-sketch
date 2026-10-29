@@ -7,7 +7,7 @@ local ltn12 = require("ltn12")
 local json = require("vendor.json") -- You might need a JSON library, like lua-cjson or similar
 
 local discordToken =
-"MTIxMTY3MDU1NDU1NDI2OTczNg.GVT3yb.n-OPNWdkTJU8YFQKtn3l91YQM1IYTAptjO0-x4" --"YOUR_DISCORD_BOT_TOKEN"
+"YOUR_DISCORD_BOT_TOKEN" --"YOUR_DISCORD_BOT_TOKEN"
 local channelId =
 "1211638953841786943"                                                      --"YOUR_DISCORD_CHANNEL_ID"
 local messageContent = "Hello, Discord!"
