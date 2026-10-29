@@ -131,6 +131,41 @@ describe('src.mipo-actions', function()
         mipoActions.stopLooking(instance)
     end)
 
+    it('looks at a moving cursor, and loses interest once it has been still for a while', function()
+        local face = instance.parts.head or instance.parts.torso1
+        local fx, fy = face.body:getPosition()
+        local cam = require('src.camera').getInstance()
+        local now = 1000
+        local realTime, realMouse = love.timer.getTime, love.mouse.getPosition
+        love.timer.getTime = function() return now end
+        -- the cursor 900 left of the face (beyond the 500 it looks around in on its own)
+        local sx, sy = cam:getScreenCoordinates(fx - 900, fy)
+        local mx = sx
+        love.mouse.getPosition = function() return mx, sy end
+        local function run(seconds)
+            for _ = 1, math.floor(seconds * 60) do
+                now = now + 1 / 60
+                mipoActions.update()
+            end
+        end
+        local ok, err = pcall(function()
+            mx = sx + 10 -- a move
+            run(0.1)
+            mx = sx
+            run(1)
+            assert.is_true(mipoActions.cursorIsInteresting(now))
+            assert.is_true(face.gazeX < fx - 700, 'not looking at the cursor')
+            run(mipoActions.gazeCursorBoredAfter + 1)
+            assert.is_false(mipoActions.cursorIsInteresting(now))
+            assert.is_true(face.gazeX > fx - 600, 'still staring at the still cursor')
+            mx = sx + 10 -- it moves again: interesting again
+            run(1)
+            assert.is_true(face.gazeX < fx - 700, 'did not look back at the moving cursor')
+        end)
+        love.timer.getTime, love.mouse.getPosition = realTime, realMouse
+        assert(ok, err)
+    end)
+
     it('knows which limb a part belongs to', function()
         assert.are.equal('lleg', mipoActions.limbOf('lfoot'))
         assert.are.equal('rarm', mipoActions.limbOf('rlarm'))

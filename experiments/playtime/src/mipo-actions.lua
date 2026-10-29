@@ -665,6 +665,8 @@ end
 -- the face-owner part; the head tilts a little toward the gaze.
 lib.gaze = true
 lib.gazeCursorRadius = 1000      -- the cursor/finger is noticed within this distance
+lib.gazeCursorBoredAfter = 3     -- seconds of a still cursor before they stop caring about it
+                                 -- (and look around on their own again); moving it wakes them
 lib.gazeWanderEvery = { 1.5, 4 } -- seconds between idle look-arounds
 lib.gazeWanderRadius = 500       -- how far around itself it looks when idle
 lib.gazeSpeed = 8                -- how fast the gaze follows (1/s)
@@ -679,6 +681,26 @@ function lib.stopLooking(instance)
     instance._lookTarget = nil
 end
 
+-- When the cursor/finger last moved (on screen: the camera moving under a still cursor
+-- doesn't count). A finger on the screen always counts as moving.
+local cursorSeen = { x = nil, y = nil, movedAt = -math.huge }
+
+local function noteCursor(now)
+    local touches = love.touch and love.touch.getTouches() or {}
+    if #touches > 0 then
+        cursorSeen.movedAt = now
+        return
+    end
+    local x, y = love.mouse.getPosition()
+    if cursorSeen.x == nil or math.abs(x - cursorSeen.x) + math.abs(y - cursorSeen.y) > 2 then
+        cursorSeen.x, cursorSeen.y, cursorSeen.movedAt = x, y, now
+    end
+end
+
+function lib.cursorIsInteresting(now)
+    return now - cursorSeen.movedAt < lib.gazeCursorBoredAfter
+end
+
 local function facePart(instance)
     return instance.parts.head or instance.parts.torso1
 end
@@ -691,8 +713,10 @@ local function gazeGoal(instance, now)
     if x then return x, y end
     x, y = resolveTarget(instance._pointTarget)
     if x then return x, y end
-    x, y = resolveTarget('cursor')
-    if x and (x - fx) ^ 2 + (y - fy) ^ 2 < lib.gazeCursorRadius ^ 2 then return x, y end
+    if lib.cursorIsInteresting(now) then
+        x, y = resolveTarget('cursor')
+        if x and (x - fx) ^ 2 + (y - fy) ^ 2 < lib.gazeCursorRadius ^ 2 then return x, y end
+    end
     if not instance._wanderAt or now >= instance._wanderAt then
         local angle = love.math.random() * 2 * math.pi
         local r = lib.gazeWanderRadius * (0.3 + 0.7 * love.math.random())
@@ -768,6 +792,7 @@ end
 -- editor drew that Mipo).
 function lib.update()
     local now = love.timer.getTime()
+    noteCursor(now)
     updateLimp(now)
     for _, instance in pairs(mipoRegistry.getAll()) do
         if instance._jumpAt and now >= instance._jumpAt then fireJump(instance) end
