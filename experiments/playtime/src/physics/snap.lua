@@ -12,7 +12,7 @@
 -- Mipo hands are snap points too (no fixture: id = the hand part's thing id),
 -- so a hand grabs a climbing hold, a snap block, or another Mipo's hand.
 -- A hand grabs what it touches (reach radius + handMargin), holds on where it
--- touches, and lets go more easily (handBreakThreshold); never its own Mipo.
+-- touches, and lets go when pulled hard for its weight (handLetGo); never its own Mipo.
 --
 -- (Before: links lived in each snap point as live body refs (at/to) plus two
 -- cached arrays kept in sync by hand. Deleting a body left its partner point
@@ -34,8 +34,15 @@ lib.mipoHands = true
 lib.handMargin = 30           -- a hand grabs what it touches: centres within both reach radii + this
                               -- (a fixed 70 was less than one hand's own radius, 100-124: two
                               -- solid hands could never get that close, so never held hands)
-lib.handBreakThreshold = 40000 -- a hand lets go above this joint force (a pull, a hard fall);
-                               -- forces here are as at 100 px per metre (src/physics-units.lua)
+-- A hand lets go when it's pulled with more than handLetGo times the weight (at 9.8 m/s^2)
+-- of the lighter Mipo it holds on for (its own on a fixed hold), averaged over handPullTime:
+-- a step's force spikes (a swing reads 4-7 weights for a moment). Measured, averaged:
+-- hanging and swinging 3-4.5, a hard drag down 8-16. A fixed force (40000) stopped
+-- breaking when sensor fixtures stopped weighing anything (Mipos 4-10x lighter).
+lib.handLetGo = 6
+lib.handPullTime = 0.1
+-- [joint] = averaged pull in weights; on state so a hot reload keeps it
+state.snapHandPull = state.snapHandPull or setmetatable({}, { __mode = 'k' })
 
 local cooldownUntil = {} -- [sfixture id] = time
 
@@ -231,15 +238,42 @@ local function checkForSnaps(points, snapJoints, interacted)
     end
 end
 
+local function mipoMass(instance)
+    local mass = 0
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
+    end
+    return mass
+end
+
+-- A hand joint's pull in weights of the lighter Mipo on it, averaged over handPullTime.
+local function handPull(joint, dt, fx, fy)
+    local mass = math.huge
+    for _, body in ipairs({ joint:getBodies() }) do
+        local instance = mipoRegistry.getFromBody(body)
+        if instance then mass = math.min(mass, mipoMass(instance)) end
+    end
+    if mass == math.huge or mass <= 0 then return 0 end
+    local pull = math.sqrt(fx * fx + fy * fy) / (mass * 9.8 * units.meter())
+    local average = state.snapHandPull[joint] or 0
+    average = average + (pull - average) * (1 - math.exp(-dt / lib.handPullTime))
+    state.snapHandPull[joint] = average
+    return average
+end
+
 local function checkForBreaks(dt, snapJoints, interacted)
     for _, joint in ipairs(snapJoints) do
         if not joint:isDestroyed() then
             local fx, fy = joint:getReactionForce(1 / dt)
-            fx, fy = units.toReferenceForce(fx), units.toReferenceForce(fy)
             local meta = snapMeta(joint)
-            local threshold = (isHandId(meta.a) or isHandId(meta.b)) and lib.handBreakThreshold
-                or state.snap.jointBreakThreshold
-            if math.max(math.abs(fx), math.abs(fy)) > threshold then
+            local breaks
+            if isHandId(meta.a) or isHandId(meta.b) then
+                breaks = handPull(joint, dt, fx, fy) > lib.handLetGo
+            else
+                fx, fy = units.toReferenceForce(fx), units.toReferenceForce(fy)
+                breaks = math.max(math.abs(fx), math.abs(fy)) > state.snap.jointBreakThreshold
+            end
+            if breaks then
                 local a, b = joint:getBodies()
                 if not state.snap.onlyBreakWhenInteracted or isInteracted(a, b, interacted) then
                     destroySnapJoint(joint)

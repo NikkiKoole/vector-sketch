@@ -57,6 +57,8 @@ It only watches `src/` and top-level `.lua` files (override in `main.lua`; walki
 project was a 25 ms hitch). Scene scripts reload via scene-loader instead.
 A hot-swap re-runs the file, so module-local state (`local cache = {}`) starts empty again.
 State that must survive belongs on `state` (see `src/mipo-registry.lua`).
+Editing `src/state.lua` itself hot-swaps it too: `state.world.paused` goes back to true and the
+world and registry fall out of step (2026-10-29). Restart the game after changing it.
 
 ## Testing
 

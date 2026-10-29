@@ -239,17 +239,28 @@ local releasedHandlers = {
     [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
 }
 
+local function mipoMass(mipo)
+    local mass = 0
+    for _, part in pairs(mipo.parts) do
+        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
+    end
+    return mass
+end
+
 -- Grabbing a Mipo by its torso makes it hop a little (puppet-maker2 outside.lua: torso impulse on tap).
 -- The impulse scales with the Mipo's total mass so every Mipo hops about the same.
 lib.mipoHopSpeed = 500 -- world units/s at 100 px per metre (src/physics-units.lua)
 local function hopMipo(mipo)
     local torso = mipo.parts and mipo.parts.torso1
     if not torso or not torso.body or torso.body:isDestroyed() then return end
-    local mass = 0
-    for _, part in pairs(mipo.parts) do
-        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
-    end
-    torso.body:applyLinearImpulse(0, -mass * units.speed(lib.mipoHopSpeed))
+    torso.body:applyLinearImpulse(0, -mipoMass(mipo) * units.speed(lib.mipoHopSpeed))
+end
+
+-- What a drag pulls along: a whole Mipo (by any part), a whole blob, else the body.
+local function grabbedMass(body)
+    local mipo = mipoRegistry.getFromBody(body)
+    if mipo then return mipoMass(mipo) end
+    return blobs.massOf(body) or body:getMass()
 end
 
 -- What a press on bodies does while playing: the scene script, signals, doors, a Mipo's squeak.
@@ -277,8 +288,12 @@ end
 
 local function pointerParams()
     return {
-        pointerForceFunc = function(_fixture)
-            return state.world.mouseForce
+        -- dragStrength is in weights (at 9.8 m/s^2) of what's grabbed: a fixed force threw
+        -- the lightest Mipos (mass 1.6) at 80 weights and the heaviest (5.9) at 22.
+        -- makePointerJoint takes forces as at 100 px per metre.
+        pointerForceFunc = function(fixture)
+            local weight = grabbedMass(fixture:getBody()) * 9.8 * units.meter()
+            return units.toReferenceForce(state.world.dragStrength * weight)
         end,
         damp = state.world.mouseDamping
     }

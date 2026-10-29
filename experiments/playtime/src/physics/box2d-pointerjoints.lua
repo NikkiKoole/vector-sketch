@@ -36,7 +36,8 @@ function lib.makePointerJoint(id, bodyToAttachTo, wx, wy, force, damp)
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
     pointerJoint.joint:setDampingRatio(damp or .5)
-    -- force (state.world.mouseForce) and Box2D's 5 Hz spring as at 100 px per metre
+    -- force (src/input-manager.lua, from state.world.dragStrength) and Box2D's 5 Hz spring
+    -- as at 100 px per metre
     pointerJoint.joint:setMaxForce(units.force(force))
     pointerJoint.joint:setFrequency(units.rate(pointerJoint.joint:getFrequency()))
     return pointerJoint

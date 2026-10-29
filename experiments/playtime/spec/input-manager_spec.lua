@@ -92,7 +92,7 @@ local function resetInteractionState()
     state.panelVisibility.worldSettingsOpened = false
     state.panelVisibility.recordingPanelOpened = false
     state.world.paused = true
-    state.world.mouseForce = 100
+    state.world.dragStrength = 40
     state.world.mouseDamping = 0.5
     state.jointParams = {}
     state.pickAutoRopifyModeHitted = nil

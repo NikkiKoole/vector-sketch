@@ -269,7 +269,7 @@ describe('snap core', function()
             assert.are.equal(0, #snap.joints())
         end)
 
-        it('a hand grabs a fixed hold and lets go when pulled past handBreakThreshold', function()
+        it('a hand grabs a fixed hold and lets go when pulled past handLetGo', function()
             local a = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
             local hx, hy = a.parts.lhand.body:getWorldCenter()
             local hold = love.physics.newBody(world, hx + 30, hy, 'static')
@@ -280,10 +280,10 @@ describe('snap core', function()
             addSnapPoint(hold)
             step()
             assert.are.equal(1, #snap.joints())
-            local before = snap.handBreakThreshold
-            snap.handBreakThreshold = -1 -- any force: a hand lets go
+            local before = snap.handLetGo
+            snap.handLetGo = -1 -- any pull: a hand lets go
             step()
-            snap.handBreakThreshold = before
+            snap.handLetGo = before
             assert.are.equal(0, #snap.joints())
         end)
     

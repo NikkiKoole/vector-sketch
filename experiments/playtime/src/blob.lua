@@ -506,6 +506,17 @@ function lib.ownerOf(body)
     return rt and rt.body or nil
 end
 
+-- A whole blob's mass (rim and body) for its body or one of its rim bodies; nil otherwise.
+function lib.massOf(body)
+    local owner = lib.ownerOf(body) or body
+    for _, rt in pairs(state.blobs) do
+        if rt.body == owner and rt.handleMass then
+            return rt.handleMass * (1 + 1 / HANDLE_MASS)
+        end
+    end
+    return nil
+end
+
 -- The SOFTBODY sfixture of a blob body (nil for anything else).
 function lib.sfixtureOf(body)
     for _, rt in pairs(state.blobs) do

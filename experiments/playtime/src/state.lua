@@ -99,7 +99,7 @@ state.world = {
     isRecordingPointers = false,
     paused = true,
     gravity = 9.80,
-    mouseForce = 500000,
+    dragStrength = 40, -- a drag pulls with up to this many times the weight of what it holds
     mouseDamping = 0.5,
     speedMultiplier = 1.0,
     -- Box2D solver iterations per step (its defaults are 8 and 3); more is stiffer joints and

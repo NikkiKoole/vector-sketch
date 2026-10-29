@@ -182,7 +182,7 @@ describe("blob (SOFTBODY sfixture)", function()
         step(1)
         -- a pointer grabbing the handle (as the play-mode grab does), yanked around
         local mj = love.physics.newMouseJoint(thing.body, thing.body:getPosition())
-        mj:setMaxForce(1000000) -- the drag slider's maximum (state.world.mouseForce is 500000)
+        mj:setMaxForce(1000000) -- a hard drag
         mj:setDampingRatio(0.5)
         local outside, frames = 0, 0
         for _, target in ipairs({ { 700, 100 }, { -600, -200 }, { 300, 300 }, { -200, -500 } }) do

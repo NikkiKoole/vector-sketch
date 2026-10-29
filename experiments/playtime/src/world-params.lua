@@ -62,7 +62,7 @@ lib.rows = {
     flag('drawFixtures', 'sfixtures', true),
     flag('drawOutline', 'outline', true),
     flag('showDebugIds', 'ids', true),
-    number('mouseForce', 'drag', 0, 1000000, true),
+    number('dragStrength', 'drag', 0, 200, true),
     number('mouseDamping', 'damp', 0.001, 1, true),
     { kind = 'action', advanced = true,
       label = function(world) return world.profiling and 'profiling...' or 'profile 60 frames' end,
