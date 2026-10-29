@@ -220,6 +220,7 @@ Deep-dive docs live in `docs/`:
 - `WATER.md` — water in containers (LIQUID sfixture, `src/liquid.lua`): level water W1 done, then pouring, wobble, floating, taps (W2–W5); what the old water/Bathhouse scripts already had
 - `HARVEST-NAVKIT-DREAMENGINE.md` — survey of ~/Projects/navkit (logic/power, water, fire, smoke/steam, temperature, weather, moods/needs, dollhouse plan) and ~/Projects/dreamengine carts (juice, eyes, jelly, water toys, input) with a suggested order
 - `NEXT-STEPS-2026-07.md` — post-audit direction: play mode, tween layer, Bathhouse resume order, code-strengthening list
+- `MIPO-SPINE.md` — plan: an optional spine (torso cut into 2-3 bones that bend, one torso picture skinned over them), S1-S4
 - `PLAN-OF-ATTACK.md` — master work plan with phase status (remaining open: 7d, Phase 8)
 - `DEEPER-ISSUES.md` — bugs, hidden constraints, architectural risks
 - `CODE-AUDIT-2026-07.md` — third-pass audit: prioritized fix list (broken → risks → cleanup → test gaps)
