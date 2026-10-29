@@ -59,6 +59,15 @@ lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, th
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
 lib.untangleCheckEvery = 0.25
 
+-- pileKick: in a pile (a Mipo touching other Mipos through a hundred-odd contacts) a
+--   limb squeezed between heavier parts now and then shoots out at 3000-11000 units/s and
+--   takes its Mipo along, out of a box or out of the room. Box2D caps a step at 2 metres:
+--   at the 30 px per metre the specs used to run at that hid it (3600/s), at the game's
+--   100 it doesn't (12000/s). A Mipo nobody holds or just threw, touching another Mipo,
+--   goes no faster than pileMaxSpeed.
+lib.pileKick = true
+lib.pileMaxSpeed = 3000
+
 lib.standUp = true
 lib.splayedAngle = math.rad(30) -- further than this from its target counts as splayed (50 let a
                                 -- wide stance on grippy feet tug forever instead of hopping to reset)
@@ -509,6 +518,27 @@ local function wasHeld(id, now)
     return lastHeld[id] ~= nil and now - lastHeld[id] <= lib.healAfterRelease
 end
 
+local function calmPileKicks(now)
+    for id, instance in pairs(mipoRegistry.getAll()) do
+        local torso = instance.parts.torso1
+        if torso and torso.body and not torso.body:isDestroyed() and not wasHeld(id, now) then
+            local vx, vy = torso.body:getLinearVelocity()
+            local speed = math.sqrt(vx * vx + vy * vy)
+            if speed > lib.pileMaxSpeed and leaningOnOthers(instance) then
+                local scale = lib.pileMaxSpeed / speed
+                for _, part in pairs(instance.parts) do
+                    if part.body and not part.body:isDestroyed() then
+                        local px, py = part.body:getLinearVelocity()
+                        part.body:setLinearVelocity(px * scale, py * scale)
+                        part.body:setAngularVelocity(part.body:getAngularVelocity() * scale)
+                    end
+                end
+                lib.stats.pileKicks = (lib.stats.pileKicks or 0) + 1
+            end
+        end
+    end
+end
+
 -- The upper of two knotted Mipos hops up and away from the other.
 local function hopOut(idA, idB)
     local all = mipoRegistry.getAll()
@@ -603,6 +633,7 @@ function lib.update()
     local now = love.timer.getTime()
     stepCount = stepCount + 1
     markHeldMipos(now)
+    if lib.pileKick then calmPileKicks(now) end
     if lib.standUp then standUpMipos(now) end
     if lib.untangle then untangleMipos(now) end
     if not lib.unwind and not lib.heal and not lib.unstick then return end
