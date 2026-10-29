@@ -20,7 +20,12 @@ function love.conf(t)
     t.window.minheight = 1                 -- Minimum window height if the window is resizable (number)
     t.window.fullscreen = false            -- Enable fullscreen (boolean)
     t.window.fullscreentype = "desktop"    -- Choose between "desktop" fullscreen or "exclusive" fullscreen mode (string)
-    t.window.vsync = 1                     -- Vertical sync mode (number)
+    -- adaptive vsync: a late frame is shown at once (may tear) instead of waiting a whole
+    -- refresh. With 1 the crowd scene got stuck at 30 fps: at 30 a frame runs 3 physics
+    -- steps (~10 ms) + drawing (~10 ms), too long for 60, so it stayed at 30; with -1 it
+    -- climbs to 60 where a frame runs 1-2 steps (~15 ms). LOVE falls back to 1 where
+    -- adaptive isn't supported.
+    t.window.vsync = -1
     t.window.msaa = 4                      -- The number of samples to use with multi-sampled antialiasing (number)
     t.window.depth = 16                    -- The number of bits per sample in the depth buffer
     t.window.stencil = nil                 -- The number of bits per sample in the stencil buffer
