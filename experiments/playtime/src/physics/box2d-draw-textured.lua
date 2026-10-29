@@ -414,13 +414,18 @@ local function _ensureVertsBuf(mesh)
 end
 
 -- todo segments need to be parameterized
+-- Samples along a textured ribbon (limbs, hair, lips). Each one costs per frame (the
+-- curve is evaluated and the strip rewritten): 32 -> 16 took 20 ribbons-per-Mipo from
+-- 3.4 to 2.2 ms with 20 Mipos. Only new strips pick up a change (hot reload makes new ones).
+lib.ribbonSegments = 16
+
 local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     -- this assumes an strip that is oriented vertically
     local w, h = image:getDimensions()
     w = w * (optionalWidthMultiplier or 1)
 
     local vertices = {}
-    local segments = 32
+    local segments = lib.ribbonSegments
     local segMinus1 = segments - 1
     local hPart = h / (segMinus1)
     local hv = 1 / (segMinus1)
