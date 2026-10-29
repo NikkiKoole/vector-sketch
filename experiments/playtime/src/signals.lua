@@ -89,8 +89,10 @@ function lib.setGate(body, open)
     local wasAllowed = travelling[body] and travelling[body].sleepingAllowed or body:isSleepingAllowed()
     body:setSleepingAllowed(false)
     local travel = joint:getUpperLimit() - joint:getLowerLimit()
-    -- the trip at 60 steps a second, and half a second
-    travelling[body] = { steps = math.ceil(travel / lib.gateSpeed * 60) + 30, sleepingAllowed = wasAllowed }
+    -- the trip, and half a second, in physics steps
+    local stepsPerSecond = units.stepsPerSecond()
+    travelling[body] = { steps = math.ceil((travel / lib.gateSpeed + 0.5) * stepsPerSecond),
+        sleepingAllowed = wasAllowed }
 end
 
 local receivers = {
@@ -236,6 +238,10 @@ end
 -- counts at once, a release only after the plate has been free for
 -- plateReleaseFrames (a bouncing ball or a wobbling Mipo made the gate chatter).
 lib.plateReleaseFrames = 15 -- 0.25s at 60 fps
+-- A toggle plate waits longer: every release-and-press flips its gate, and a ball
+-- bouncing on it is in the air 0.25-0.5 s per hop (shorter at a bigger meter); it
+-- flipped the gate on every bounce, ending open or closed by how many there were.
+lib.toggleReleaseFrames = 60
 local plateWasPressed = setmetatable({}, { __mode = 'k' }) -- [body] = bool
 local plateFreeFrames = setmetatable({}, { __mode = 'k' }) -- [body] = frames free in a row
 
@@ -306,7 +312,8 @@ function lib.update()
             local touching = plateIsPressed(body)
             plateFreeFrames[body] = touching and 0 or (plateFreeFrames[body] or 0) + 1
             local was = plateWasPressed[body]
-            local pressed = touching or (was and plateFreeFrames[body] < lib.plateReleaseFrames) or false
+            local release = plate.mode == 'toggle' and lib.toggleReleaseFrames or lib.plateReleaseFrames
+            local pressed = touching or (was and plateFreeFrames[body] < release) or false
             edge(plateWasPressed, body, plate, was == nil and touching or pressed)
         end
     end

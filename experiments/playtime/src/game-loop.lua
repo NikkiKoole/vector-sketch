@@ -17,7 +17,8 @@ function lib.createFixedTimestepRun(tickrate)
         if love.timer then love.timer.step() end
 
         local MAX_ACCUMULATOR = 0.25  -- never try to catch up more than 250ms
-        local MAX_STEPS_PER_FRAME = 4 -- hard cap to prevent death spiral
+        local MAX_STEPS_PER_FRAME = math.ceil(4 / 60 / tickrate - 1e-9) -- hard cap to prevent death spiral
+                                                                         -- (4 at 60 steps a second)
         local PANIC_HORIZON = 30      -- frames before we say "we're saturated"
         local panicFrames = 0
         local adaptiveSleep = 0       -- additional sleep to soften render rate under load

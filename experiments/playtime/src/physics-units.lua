@@ -35,6 +35,16 @@ function lib.mass(m) return m / lib.scale() ^ 2 end
 function lib.force(f) return f / lib.scale() end
 function lib.impulse(j) return j / lib.scale() ^ 1.5 end
 
+-- Physics steps per second. A fall of the same pixels is over sqrt(k) times sooner, so the
+-- step shrinks with it: each step then covers the same part of every motion as 60 a second
+-- at the reference meter, and counts in steps (debounces, check slices) keep their meaning.
+-- At 400 px per metre and 60 steps Mipo legs sagged and splayed on landing: the gravity
+-- added per step was 4x, the angle controller only 2x as quick.
+lib.REFERENCE_STEPS = 60
+function lib.stepsPerSecond(meter)
+    return lib.REFERENCE_STEPS * math.sqrt((meter or lib.meter()) / lib.REFERENCE_METER)
+end
+
 -- The meter from the command line: `--meter <px per metre>` (love . --meter 400,
 -- METER=400 ./playtime.sh start, love . --specs --meter 400). It's set once, before the
 -- world exists: LÖVE's meter is global and changing it under live bodies moves them.

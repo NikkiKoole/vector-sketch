@@ -9,6 +9,11 @@ local units = require('src.physics-units')
 -- Mipos sink into a split.
 lib.maxAlpha = 1000
 
+-- The controller sets omega = kp * error each step: with kp * dt over 1 it overshoots its
+-- target every step and the part shakes. kp grows with the meter (src/physics-units.lua;
+-- 40 at 100 px per metre is 80 at 400, 1.33 per step): legs splayed, Mipos hopped. Capped here.
+lib.maxKpPerStep = 0.9
+
 -- Legs within this of their target are left alone. 0 (off): with foot friction
 -- 0.45 the legs settle by themselves; a 15 deg band let heavy Mipos sag into
 -- repeated hops (spec/standing_spec.lua).
@@ -52,6 +57,7 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
 
     -- (gains as tuned at the reference meter, src/physics-units.lua)
     local kp = units.rate((data and data.kp) or 20.0) -- P gain (1/s)  --was 8
+    kp = math.min(kp, lib.maxKpPerStep / math.max(dt or 1 / 60, 1e-4))
     local kd = (data and data.kd) or .000015         -- D gain (unitless) -- was 1.5
     local maxOmega = units.rate((data and data.maxOmega) or 15.0)
 

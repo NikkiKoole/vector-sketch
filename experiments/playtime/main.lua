@@ -151,7 +151,9 @@ local rightColumn = require('src.ui.right-column')
 love.window.requestAttention()
 
 local FIXED_TIMESTEP = true
-local FPS = 60 -- in platime ui we also have a fps
+-- physics steps per second: 60 at 100 px per metre, more at a bigger meter (src/physics-units.lua)
+local FPS = require('src.physics-units').stepsPerSecond(
+    require('src.physics-units').meterFromArgs(arg) or require('src.state').world.meter)
 local TICKRATE = 1 / FPS
 
 
