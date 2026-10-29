@@ -1838,8 +1838,12 @@ local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
     -- print('jo!')
     local img = getLoveImage('textures/' .. url)
     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-    local bones = spineSkin.bonesOf(texfixture:getBody()) -- a spine's bodyhair bends with it
-    if bones then vertices = spineSkin.deform(vertices, bones) end
+    local bones = #vertices == 16 and spineSkin.bonesOf(texfixture:getBody()) -- a spine's bodyhair bends with it
+    if bones and img then
+        love.graphics.setColor(r, g, b, a)
+        spineSkin.drawFan(img, vertices, bones, texfixture:getBody(), extra)
+        return
+    end
 
     if (vertices and img) then
         local body = texfixture:getBody()

@@ -102,6 +102,74 @@ function lib.transformAt(body, x, y)
     return transform
 end
 
+-- The squish fan (box2d-draw-textured drawSquishableHairOver) for an 8-point ring: a
+-- centre at uv (0.5, 0.5), ring points at these uvs. Bodyhair is drawn that way.
+local ringUV = { 0, 0, 0.5, 0, 1, 0, 1, 0.5, 1, 1, 0.5, 1, 0, 1, 0, 0.5 }
+
+-- Where the fan puts uv (u, v), given the ring (16 numbers) and its centre.
+function lib.fanPoint(ring, cx, cy, u, v)
+    for i = 1, 8 do
+        local j = i % 8 + 1
+        local ax, ay = ringUV[i * 2 - 1], ringUV[i * 2]
+        local bx, by = ringUV[j * 2 - 1], ringUV[j * 2]
+        -- barycentric of (u, v) in the uv triangle (0.5, 0.5), a, b
+        local d = (ay - by) * (0.5 - bx) + (bx - ax) * (0.5 - by)
+        local wc = ((ay - by) * (u - bx) + (bx - ax) * (v - by)) / d
+        local wa = ((by - 0.5) * (u - bx) + (0.5 - bx) * (v - by)) / d
+        local wb = 1 - wc - wa
+        if wc >= -1e-6 and wa >= -1e-6 and wb >= -1e-6 then
+            return wc * cx + wa * ring[i * 2 - 1] + wb * ring[j * 2 - 1],
+                wc * cy + wa * ring[i * 2] + wb * ring[j * 2]
+        end
+    end
+    return cx, cy
+end
+
+-- Bodyhair on a spine torso: the fan of 8 ring points (a few big triangles across several
+-- bands) made the hair slide over the bending picture. Here the same fan picture is laid
+-- as a fine grid at rest (the fan's own mapping, so it looks the same straight) and every
+-- grid point follows its band like the torso picture does.
+-- [extra] = { [img] = { key, mesh, img, rest, bent, verts } } (bodyhair draws two layers)
+local fans = setmetatable({}, { __mode = 'k' })
+
+function lib.drawFan(img, ring, bones, body, extra)
+    local n = lib.rows
+    local key = table.concat(ring, ',')
+    local byImg = fans[extra]
+    if not byImg then
+        byImg = setmetatable({}, { __mode = 'k' })
+        fans[extra] = byImg
+    end
+    local cache = byImg[img]
+    if not cache or cache.key ~= key then
+        local verts, map, rest = {}, {}, {}
+        local cx, cy = require('src.math-utils').getCenterOfPoints(ring)
+        for r = 0, n do
+            for c = 0, n do
+                local i = r * (n + 1) + c + 1
+                local u, v = c / n, r / n
+                rest[i * 2 - 1], rest[i * 2] = lib.fanPoint(ring, cx, cy, u, v)
+                verts[i] = { 0, 0, u, v }
+            end
+        end
+        for r = 0, n - 1 do
+            for c = 0, n - 1 do
+                local v = r * (n + 1) + c + 1
+                for _, idx in ipairs({ v, v + 1, v + n + 1, v + 1, v + n + 2, v + n + 1 }) do map[#map + 1] = idx end
+            end
+        end
+        local mesh = cache and cache.mesh or love.graphics.newMesh(verts, 'triangles', 'stream')
+        mesh:setVertexMap(map)
+        mesh:setTexture(img)
+        cache = { key = key, mesh = mesh, img = img, rest = rest, bent = {}, verts = verts }
+        byImg[img] = cache
+    end
+    local bent = lib.deform(cache.rest, bones, cache.bent)
+    for i, d in ipairs(cache.verts) do d[1], d[2] = bent[i * 2 - 1], bent[i * 2] end
+    cache.mesh:setVertices(cache.verts)
+    love.graphics.draw(cache.mesh, body:getX(), body:getY(), body:getAngle())
+end
+
 -- Draw `img` over the rectangle `corners` (4 points, torso1-local, top left first, as the
 -- texfixture's shape gives them) as a bent grid. The mesh lives here, never on `extra`
 -- (that is saved to the scene file).

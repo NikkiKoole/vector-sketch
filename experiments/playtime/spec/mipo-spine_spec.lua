@@ -265,6 +265,22 @@ describe('the spine room', function()
             assert(ok, err)
         end)
 
+        -- bodyhair on a spine is a fine grid laid out by the hair's own fan (so straight it
+        -- looks as before) whose points follow their bands; the 8-point fan slid over the
+        -- bending torso
+        it('lays the bodyhair grid out by the fan: its ring points and centre stay put', function()
+            local ring = { -40, -100, 0, -110, 40, -100, 50, 0, 40, 100, 0, 110, -40, 100, -50, 0 }
+            local uvs = { 0, 0, 0.5, 0, 1, 0, 1, 0.5, 1, 1, 0.5, 1, 0, 1, 0, 0.5 }
+            for k = 1, 16, 2 do
+                local x, y = spineSkin.fanPoint(ring, 0, 0, uvs[k], uvs[k + 1])
+                assert.is_near(ring[k], x, 1e-6)
+                assert.is_near(ring[k + 1], y, 1e-6)
+            end
+            local cx, cy = spineSkin.fanPoint(ring, 3, 4, 0.5, 0.5)
+            assert.is_near(3, cx, 1e-6)
+            assert.is_near(4, cy, 1e-6)
+        end)
+
         it('turned off again: whole torsos that each keep their angle', function()
             CM.rebuildFromCreation(instance, { torsoSpine = false })
             assert.is_nil(instance.dna.parts.torso2.spineBand)
