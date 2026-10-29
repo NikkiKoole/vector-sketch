@@ -31,6 +31,15 @@ function love.conf(t)
     t.window.y = nil                       -- The y-coordinate of the window's position in the specified display (number)
 
     t.modules.audio = true                 -- Enable the audio module (boolean)
+    -- Specs open no audio device unless given --audio: a spec run next to the game stopped
+    -- the game's synth source when it opened and closed its own (a drop), and played its
+    -- sounds out loud. The few specs that play sound are pending without it.
+    local specs, audio = false, false
+    for _, a in ipairs(arg or {}) do
+        if a == '--specs' then specs = true end
+        if a == '--audio' then audio = true end
+    end
+    if specs and not audio then t.modules.audio = false end
     t.modules.data = true                  -- Enable the data module (boolean)
     t.modules.event = true                 -- Enable the event module (boolean)
     t.modules.font = true                  -- Enable the font module (boolean)

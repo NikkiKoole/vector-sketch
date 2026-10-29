@@ -61,7 +61,8 @@ busted spec/                              # all pure specs
 busted spec/math-utils_spec.lua           # single file
 
 # Full suite including LÖVE integration tests
-love . --specs                            # all specs (pure + physics + integration)
+love . --specs                            # all specs (pure + physics + integration), no audio device
+love . --specs --audio                    # same, plus the 3 specs that play sound (else pending)
 love . --specs spec/integration_spec.lua  # single file
 
 # Via the bridge (while app is running)

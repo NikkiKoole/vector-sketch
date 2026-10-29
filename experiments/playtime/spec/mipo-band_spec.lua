@@ -5,6 +5,10 @@
 -- Run with: love . --specs spec/mipo-band_spec.lua
 
 if not love then return end
+if not love.audio then -- spec runs open no audio device unless given --audio (conf.lua)
+    describe('mipo band', function() pending('needs audio: love . --specs --audio') end)
+    return
+end
 
 local state = require('src.state')
 local registry = require('src.registry')

@@ -4,6 +4,10 @@
 -- Run with: love . --specs spec/mipo-chatter_spec.lua
 
 if not love then return end
+if not love.audio then -- spec runs open no audio device unless given --audio (conf.lua)
+    describe('mipo chatter', function() pending('needs audio: love . --specs --audio') end)
+    return
+end
 
 local state = require('src.state')
 local registry = require('src.registry')

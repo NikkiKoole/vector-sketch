@@ -21,14 +21,40 @@ local buffers = {}
 for i = 1, BUFFERS do buffers[i] = love.sound.newSoundData(FRAMES, RATE, 16, 2) end
 local nextBuffer = 1
 
+-- How it keeps up, on the 'synth-stats' channel about once a second (read it with
+-- love.thread.getChannel('synth-stats'):peek()): `empty` = refills that found the queue
+-- run dry (a gap: crackle), `restarts` = the source had stopped (a drop), `maxGapMs` =
+-- the longest time between two passes of this loop (> ~35 ms runs the queue dry).
+local stats = love.thread.getChannel('synth-stats')
+local window = { empty = 0, restarts = 0, maxGapMs = 0, passes = 0 }
+local total = { empty = 0, restarts = 0 }
+local lastPass, lastReport = love.timer.getTime(), love.timer.getTime()
+
 while not quit:pop() do
+    local now = love.timer.getTime()
+    local gapMs = (now - lastPass) * 1000
+    lastPass = now
+    if gapMs > window.maxGapMs then window.maxGapMs = gapMs end
+    window.passes = window.passes + 1
+    if source:getFreeBufferCount() == BUFFERS then window.empty = window.empty + 1 end
     while source:getFreeBufferCount() > 0 do
         local soundData = buffers[nextBuffer]
         nextBuffer = nextBuffer % BUFFERS + 1
         C.de_lua_render_s16(ffi.cast('int16_t *', soundData:getFFIPointer()), FRAMES)
         source:queue(soundData)
     end
-    if not source:isPlaying() then source:play() end
+    if not source:isPlaying() then
+        source:play()
+        window.restarts = window.restarts + 1
+    end
+    if now - lastReport >= 1 then
+        total.empty, total.restarts = total.empty + window.empty, total.restarts + window.restarts
+        stats:clear()
+        stats:push({ empty = window.empty, restarts = window.restarts, maxGapMs = window.maxGapMs,
+            passes = window.passes, totalEmpty = total.empty, totalRestarts = total.restarts })
+        window.empty, window.restarts, window.maxGapMs, window.passes = 0, 0, 0, 0
+        lastReport = now
+    end
     love.timer.sleep(0.002)
 end
 source:stop()
