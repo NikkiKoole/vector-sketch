@@ -914,6 +914,12 @@ function lib.mutateSizes(instance)
 end
 
 -- 8-vertex polygon shapes for character body parts, keyed by texture filename
+-- Torso layers: above the ears (190), below the head (200) with its bodyhair too. Both
+-- used to be 200 (bodyhair 210), and same-z layers draw in fixture-id order: P4re5's
+-- torso bodyhair covered its head. Saved Mipos are moved over by migrateTorsoLayers.
+local TORSO_SKIN_Z = 192
+local TORSO_HAIR_ABOVE_SKIN = 5
+
 local shape8Dict = {
     ['shapeA1.png'] = { dimensions = { 339, 560 },
         vertices = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
@@ -1056,7 +1062,7 @@ local dna = {
                         zOffset = 101,
                     },
                     ['skin'] = {
-                        zOffset = 200,
+                        zOffset = 192, -- TORSO_SKIN_Z
                         main = initBlock(),
                         patch1 = add(initBlock('patch2'), { tx = -0.33, ty = 0 }),
                         patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
@@ -1723,16 +1729,16 @@ local function addSkinTexture(body, partData, skinData, scale)
     end
 end
 
-local function addBodyhairTexture(body, _partName, partData, bodyhairData, scale)
+local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
     local _, _, w, h = getCenterAndDimensions(body)
     local growfactor = bodyhairData.growfactor or 1.2
     local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE,
         { width = w * growfactor, height = h * growfactor })
     local ud = fixture:getUserData()
     ud.extra.OMP = false
-    -- Layer bodyhair above skin (skin zOffset is 200 for torso/head parts)
+    -- Layer bodyhair above skin (skin zOffset is 200 for the head, 192 for torsos: see TORSO_SKIN_Z)
     local skinZ = (partData.appearance and partData.appearance['skin'] and partData.appearance['skin'].zOffset) or 200
-    ud.extra.zOffset = skinZ + 10
+    ud.extra.zOffset = skinZ + (partName:find('^torso%d') and TORSO_HAIR_ABOVE_SKIN or 10)
     ud.extra.dirty = true
     ud.extra.main = utils.deepCopy(bodyhairData.main)
 
@@ -2327,12 +2333,20 @@ function lib.balanceMasses(instance)
     lib.balanceArms(instance)
 end
 
+local function migrateTorsoLayers(instance)
+    for partName, partDNA in pairs(instance.dna.parts or {}) do
+        local skin = partName:find('^torso%d') and partDNA.appearance and partDNA.appearance.skin
+        if skin and skin.zOffset == 200 then skin.zOffset = TORSO_SKIN_Z end
+    end
+end
+
 function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
     -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
 
     -- Ensure all DNA sub-tables have their defaults filled in
     D.ensureDefaults(instance.dna.creation, D.creation)
+    migrateTorsoLayers(instance)
     for partName, partDNA in pairs(instance.dna.parts or {}) do
         if partName:find('^nose') and partDNA.appearance then
             for _, block in pairs(partDNA.appearance) do
@@ -2570,6 +2584,7 @@ function lib.reconstructInstance(charData, partBodies)
         positioners = {},
     }
     D.ensureDefaults(instance.dna.creation, D.creation)
+    migrateTorsoLayers(instance)
     if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
     if not instance.dna.positioners then instance.dna.positioners = {} end
     D.ensureDefaults(instance.dna.positioners, D.positioners)
@@ -2582,9 +2597,17 @@ function lib.reconstructInstance(charData, partBodies)
         if ud and ud.thing then
             instance.parts[partName] = ud.thing
             applyFootMaterial(ud.thing, partName) -- scenes saved before feet had grip
-            -- scenes saved when every nose was drawn at z 490, above the arms
+            -- scenes saved when every nose was drawn at z 490, above the arms; and when
+            -- torsos drew at the head's 200/210 (TORSO_SKIN_Z)
             for _, fixture in ipairs(body:getFixtures()) do
                 local fud = fixture:getUserData()
+                if fud and fud.extra and partName:find('^torso%d') and fud.subtype == subtypes.TEXFIXTURE then
+                    if fud.extra.zOffset == 200 then
+                        fud.extra.zOffset = TORSO_SKIN_Z
+                    elseif fud.extra.zOffset == 210 then
+                        fud.extra.zOffset = TORSO_SKIN_Z + TORSO_HAIR_ABOVE_SKIN
+                    end
+                end
                 if fud and fud.extra and fud.extra.zOffset == 490 then
                     if fud.label == 'nose' then
                         fud.extra.zOffset = 254

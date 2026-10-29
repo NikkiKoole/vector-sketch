@@ -101,10 +101,10 @@ describe("character-manager", function()
             assert.is_truthy(instance.parts.rear)
         end)
 
-        it("torso-segment-template skin should have zOffset 200", function()
+        it("torso-segment-template skin should have zOffset 192 (under the head's 200)", function()
             local skin = instance.dna.parts.torso1.appearance.skin
             assert.is_truthy(skin)
-            assert.are.equal(200, skin.zOffset)
+            assert.are.equal(192, skin.zOffset)
         end)
 
         it("head skin should have zOffset 200", function()
@@ -373,15 +373,33 @@ describe("character-manager", function()
             assert.is_true(found210, "lear texfixture should have zOffset 210 after toggle")
         end)
 
-        it("torso skin zOffset should be 200 (above ears at 190, below ears at 210)", function()
+        it("torso skin zOffset should be 192 (above ears at 190, below ears at 210)", function()
             local torsoBody = instance.parts.torso1.body
             local texfixtures = findFixturesBySubtype(torsoBody, subtypes.TEXFIXTURE)
 
-            local found200 = false
+            local found = false
             for _, ud in ipairs(texfixtures) do
-                if ud.extra.zOffset == 200 then found200 = true end
+                if ud.extra.zOffset == 192 then found = true end
             end
-            assert.is_true(found200, "torso1 should have a texfixture with zOffset 200")
+            assert.is_true(found, "torso1 should have a texfixture with zOffset 192")
+        end)
+
+        -- same-z layers draw in fixture-id order: a torso layer at the head's z covered
+        -- the head of some Mipos (P4re5)
+        it("every torso layer draws under every head layer", function()
+            if not instance.parts.head then
+                CharacterManager.rebuildFromCreation(instance, { isPotatoHead = false })
+            end
+            assert.is_truthy(instance.parts.head)
+            local highestTorso, lowestHead = -math.huge, math.huge
+            for _, ud in ipairs(findFixturesBySubtype(instance.parts.torso1.body, subtypes.TEXFIXTURE)) do
+                highestTorso = math.max(highestTorso, ud.extra.zOffset)
+            end
+            for _, ud in ipairs(findFixturesBySubtype(instance.parts.head.body, subtypes.TEXFIXTURE)) do
+                lowestHead = math.min(lowestHead, ud.extra.zOffset)
+            end
+            assert.is_true(highestTorso < lowestHead,
+                string.format('torso up to %d, head from %d', highestTorso, lowestHead))
         end)
     end)
 
