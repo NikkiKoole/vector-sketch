@@ -52,19 +52,23 @@ pools. Static bodies would be stamped into the grid as rock.
 - [x] **W1. Level water** (2026-10-29). The LIQUID sfixture, `src/liquid.lua`:
   - On any body. The body is the container; a cup is a U-shaped custom polygon
     (`props.makeCup`, `props.makeBath`; toys 'cup' and 'bath').
-  - The cavity is the body's bounds less `wall` on the sides and bottom (open at the top), or
-    `extra.cavity` (body-local) when set.
-  - `fill` is the part of the cavity that's water, upright. The level comes from
-    `liquid.levelFor(cavityWorld, amount)`: a binary search on `clipBelow` + shoelace `area`.
+  - The hollow is the body's **convex hull minus the body's own shapes**, so a drawn curved bowl holds
+    water in its curve and the water never covers a wall (it's drawn with the body stencilled out).
+    The mouth is whichever hull edge runs through air, not along the body. (First version: the body's
+    bounds less a `wall`; a drawn bowl got a rectangle of water. Nikki's screenshot, 2026-10-29.)
+    `extra.cavity` (body-local, first edge = mouth) still overrides it.
+  - `fill` is the part of the hollow that's water. The level comes from
+    `liquid.levelFor(hull, amount, holes)`: a binary search on `areaBelow` (the hull clipped below the
+    line, less the body's shapes clipped the same way).
   - It's drawn as the water polygon (triangulated) plus a lighter line on the surface.
     'in front' draws it above the Mipos (the bath), at `liquid.FRONT_Z`.
   - **Spilling** (added after Nikki saw the water held in by an invisible lid when the cup tipped).
     The cavity's first edge is its mouth. While playing, `liquid.update` (in main.lua after the
-    physics step) caps the amount at `liquid.capacity`, the part of the cavity below the mouth's
-    lower end, and lowers `extra.fill` to match. So a tipped cup keeps what's below its rim's low
+    physics step) caps the amount at `liquid.capacity`, the part of the hollow below the mouth's
+    lowest point, and lowers `extra.fill` to match. So a tipped cup keeps what's below its rim's low
     corner, and a cup on its side or upside down ends up empty. Paused, nothing spills, so rotating
     a cup in the editor keeps its water. For now the spilled water just disappears; W2 makes it a stream.
-  - Inspector: fill, wall, color, surface, in front, z offset. In the tool rail under attach → looks.
+  - Inspector: fill, color, surface, in front, z offset. In the tool rail under attach → looks.
   - Test scene: `scripts/kitchen.playtime.json` + `.lua` (`./playtime.sh play kitchen`). It has a
     table with two cups, a bath on the floor, and one Mipo (copied from dollhouse).
   - Specs: `spec/liquid_spec.lua`. The pure part covers area, clip, level upright and tilted, and

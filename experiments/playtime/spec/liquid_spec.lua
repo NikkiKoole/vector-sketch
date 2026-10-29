@@ -73,12 +73,51 @@ describe('liquid', function()
         assert.is_true(near(0, liquid.capacity(rotated(BOX, math.pi, 50, 100)), 1))
     end)
 
-    it('makes a default cavity inside the walls, open at the top', function()
-        local cavity = liquid.cavityFromBounds(-70, -85, 70, 85, 14)
-        assert.are.same({ -56, -85, 56, -85, 56, 71, -56, 71 }, cavity)
-        -- walls thicker than the body: still a (tiny) polygon, not an inside-out one
-        local squeezed = liquid.cavityFromBounds(0, 0, 10, 10, 50)
-        assert.is_true(squeezed[3] > squeezed[1] and squeezed[6] > squeezed[2])
+    -- a U: walls 10 thick in a 100 x 100 box, as three convex pieces (like Box2D fixtures)
+    local U = {
+        { 0, 0, 10, 0, 10, 100, 0, 100 },     -- left wall
+        { 90, 0, 100, 0, 100, 100, 90, 100 }, -- right wall
+        { 10, 90, 90, 90, 90, 100, 10, 100 }, -- bottom
+    }
+    local function hullOf(pieces)
+        local points = {}
+        for _, piece in ipairs(pieces) do for i = 1, #piece do points[#points + 1] = piece[i] end end
+        return liquid.hull(points)
+    end
+
+    it('finds a U-shape\'s hollow: its hull less the body, open across the top', function()
+        local hull = hullOf(U)
+        assert.is_true(near(10000, liquid.area(hull)))
+        assert.is_true(near(80 * 90, liquid.volume(hull, U)))
+        local open = liquid.openEdges(hull, U)
+        assert.are.equal(1, #open)
+        local i = open[1]
+        local j = (i + 2 > #hull) and 1 or i + 2
+        assert.are.equal(0, hull[i + 1]); assert.are.equal(0, hull[j + 1]) -- the top edge
+        -- half full: the water stands 45 deep on the bottom (at y = 90)
+        local level = liquid.levelFor(hull, 80 * 45, U)
+        assert.is_true(near(45, level, 0.01), 'level ' .. tostring(level))
+    end)
+
+    it('finds a curved bowl\'s hollow and mouth', function()
+        -- a half ring below y = 0, radius 90 to 100, in 12 quads (like a drawn ribbon)
+        local pieces = {}
+        local steps = 12
+        for k = 0, steps - 1 do
+            local a1, a2 = math.pi * k / steps, math.pi * (k + 1) / steps
+            pieces[#pieces + 1] = {
+                math.cos(a1) * 90, math.sin(a1) * 90, math.cos(a1) * 100, math.sin(a1) * 100,
+                math.cos(a2) * 100, math.sin(a2) * 100, math.cos(a2) * 90, math.sin(a2) * 90,
+            }
+        end
+        local hull = hullOf(pieces)
+        local inner = math.pi * 90 * 90 / 2
+        local volume = liquid.volume(hull, pieces)
+        assert.is_true(volume > inner * 0.95 and volume < inner * 1.01, 'volume ' .. volume)
+        local open = liquid.openEdges(hull, pieces)
+        assert.are.equal(1, #open, 'only the line across the top is open')
+        -- upright it holds it all; on its side the mouth reaches the bottom and it empties
+        assert.is_true(near(volume, liquid.capacity(hull, pieces, 0), 1))
     end)
 end)
 
@@ -118,15 +157,17 @@ describe('liquid in the kitchen scene', function()
 
         local cup
         for _, l in ipairs(all) do if l.label == 'cup' then cup = l end end
-        local cavity = liquid.cavity(cup.extra, cup.body)
-        local amount = cup.extra.fill * liquid.area(cavity)
-        local _, upright = liquid.water(cup.extra, cup.body)
-        assert.is_true(near(amount, liquid.area(upright), 1))
+        local c = liquid.container(cup.extra, cup.body)
+        local volume = liquid.volume(c.hull, c.holes)
+        assert.is_true(volume > 0, 'the cup has a hollow')
+        local amount = cup.extra.fill * volume
+        local level0, _, hull0, holes0 = liquid.water(cup.extra, cup.body)
+        assert.is_true(near(amount, liquid.areaBelow(hull0, holes0, level0), 1))
         assert.is_true(math.abs(cup.body:getAngle()) < 0.1, 'the cup stands on the table')
 
         cup.body:setAngle(math.rad(35))
-        local level, tilted = liquid.water(cup.extra, cup.body)
-        assert.is_true(near(amount, liquid.area(tilted), 1))
+        local level, tilted, hull, holes = liquid.water(cup.extra, cup.body)
+        assert.is_true(near(amount, liquid.areaBelow(hull, holes, level), 1))
         for i = 2, #tilted, 2 do assert.is_true(tilted[i] >= level - 1e-6) end
 
         -- tipped further it spills while playing (not while paused), down to the mouth's lower end
@@ -136,8 +177,8 @@ describe('liquid in the kitchen scene', function()
         assert.are.equal(fill, cup.extra.fill)
         liquid.update(false)
         assert.is_true(cup.extra.fill < fill)
-        local _, _, cavityWorld = liquid.water(cup.extra, cup.body)
-        assert.is_true(near(liquid.capacity(cavityWorld), cup.extra.fill * liquid.area(cavity), 1))
+        local level2, _, hull2, holes2 = liquid.water(cup.extra, cup.body)
+        assert.is_true(near(cup.extra.fill * volume, liquid.areaBelow(hull2, holes2, level2), 1))
         -- upside down: empty
         cup.body:setAngle(math.pi)
         liquid.update(false)

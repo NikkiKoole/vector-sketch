@@ -51,7 +51,6 @@ local function makeContainer(x, y, w, h, wall, opts)
     local fixture = require('src.fixtures').createSFixture(thing.body, 0, 0, subtypes.LIQUID, { radius = 20 })
     if fixture then
         local extra = fixture:getUserData().extra
-        extra.wall = wall
         extra.fill = opts.fill or extra.fill
         extra.front = opts.front or false
     end

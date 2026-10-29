@@ -166,10 +166,9 @@ lib.bySubtype = {
                   or 'aim: rotate the body (body +X = light dir)'
           end },
     }, position),
-    -- water in a container (src/liquid.lua): how full, the wall the cavity keeps clear, the look
+    -- water in a container (src/liquid.lua): how full (of the body's hollow), the look
     [subtypes.LIQUID] = concat({
         extraNumber('fill', 'fill', 0, 1, 0.6),
-        extraNumber('wall', 'wall', 0, 200, 12, nil, { step = 1 }),
         { key = 'color', kind = 'color',
           get = function(fixture) return extraOf(fixture).color or '3aa7d9b3' end,
           set = function(fixture, v) extraOf(fixture).color = v end },
