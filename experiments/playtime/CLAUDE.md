@@ -10,7 +10,7 @@
 ./playtime.sh status   # check if running
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
-METER=400 ./playtime.sh start  # another px-per-metre (default 100, state.world.meter; love . --meter 400)
+METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ```
 
 Tuned physics numbers (speeds, forces, impulses, gains, Hz) are written as at 100 px per metre
