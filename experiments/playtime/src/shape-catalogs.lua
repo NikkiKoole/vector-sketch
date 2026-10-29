@@ -59,7 +59,9 @@ lib.browShapes = {
     'brow1', 'brow2', 'brow3', 'brow4', 'brow5', 'brow6', 'brow7'
 }
 
-lib.upperLipShapes = { 'upperlip1', 'upperlip2', 'upperlip3', 'upperlip4' }
+-- upperlip4 (the duck beak) is out (2026-10-29): a landscape picture drawn in less than half
+-- of it, so it sat and sized unlike the others; saved Mipos get upperlip1 (character-manager)
+lib.upperLipShapes = { 'upperlip1', 'upperlip2', 'upperlip3' }
 lib.lowerLipShapes = { 'lowerlip1', 'lowerlip2', 'lowerlip3', 'lowerlip4' }
 
 lib.noseShapes = {

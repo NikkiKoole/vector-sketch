@@ -2386,6 +2386,9 @@ local function migrateTorsoLayers(instance)
     for partName, partDNA in pairs(instance.dna.parts or {}) do
         local skin = partName:find('^torso%d') and partDNA.appearance and partDNA.appearance.skin
         if skin and skin.zOffset == 200 then skin.zOffset = TORSO_SKIN_Z end
+        -- the duck beak upper lip is out (shape-catalogs.lua)
+        local face = partDNA.appearance and partDNA.appearance.face
+        if face and face.mouth and face.mouth.upperLipShape == 4 then face.mouth.upperLipShape = 1 end
     end
 end
 
@@ -2657,6 +2660,11 @@ function lib.reconstructInstance(charData, partBodies)
                     elseif fud.extra.zOffset == 210 then
                         fud.extra.zOffset = TORSO_SKIN_Z + TORSO_HAIR_ABOVE_SKIN
                     end
+                end
+                if fud and fud.label == 'upperlip' and fud.extra and fud.extra.main
+                    and fud.extra.main.bgURL == 'upperlip4.png' then -- the duck beak is out
+                    fud.extra.main.bgURL, fud.extra.main.fgURL = 'upperlip1.png', 'upperlip1-mask.png'
+                    fud.extra.dirty = true
                 end
                 if fud and fud.extra and fud.extra.zOffset == 490 then
                     if fud.label == 'nose' then

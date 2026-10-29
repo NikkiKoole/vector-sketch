@@ -36,4 +36,57 @@ describe('lip edges', function()
         assert.is_near((12.5 + 0.5) / 16, upper, 1e-6)
         assert.is_near((2.5 + 0.5) / 16, lower, 1e-6)
     end)
+
+    describe('the duck beak upper lip (upperlip4) is out', function()
+        local state = require('src.state')
+        local registry = require('src.registry')
+        local mipoRegistry = require('src.mipo-registry')
+        local CM = require('src.character-manager')
+        local world
+
+        before_each(function()
+            world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+            state.physicsWorld = world
+            registry.reset()
+            mipoRegistry.reset()
+        end)
+        after_each(function()
+            if not world:isDestroyed() then world:destroy() end
+        end)
+
+        it('random Mipos never get it', function()
+            for seed = 1, 30 do
+                love.math.setRandomSeed(seed)
+                math.randomseed(seed)
+                local instance = CM.createCharacter('humanoid', seed * 2000, 0, 0.3)
+                CM.randomizeMipoConstrained(instance)
+                for _, part in pairs(instance.dna.parts) do
+                    local face = part.appearance and part.appearance.face
+                    if face and face.mouth then assert.is_true(face.mouth.upperLipShape <= 3) end
+                end
+            end
+        end)
+
+        it('saved Mipos that had it get upperlip1 when they load', function()
+            require('src.scene-loader').loadScriptAndScene('crowd')
+            world = state.physicsWorld
+            local lips = 0
+            for _, instance in pairs(mipoRegistry.getAll()) do
+                for _, part in pairs(instance.parts) do
+                    for _, f in ipairs(part.body:getFixtures()) do
+                        local ud = f:getUserData()
+                        if ud and ud.label == 'upperlip' then
+                            lips = lips + 1
+                            assert.are_not.equal('upperlip4.png', ud.extra.main.bgURL)
+                        end
+                    end
+                end
+                for _, part in pairs(instance.dna.parts) do
+                    local face = part.appearance and part.appearance.face
+                    if face and face.mouth then assert.are_not.equal(4, face.mouth.upperLipShape) end
+                end
+            end
+            assert.is_true(lips > 0, 'no upper lips in the crowd')
+        end)
+    end)
 end)
