@@ -34,7 +34,7 @@ lib.rows = {
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'ballad' }),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
-    field('upright', 'upright', 'bool', nil, true),
+    field('upright', 'upright', 'bool'),
 }
 
 function lib.target() return music() end

@@ -29,14 +29,30 @@ local state = require('src.state')
 
 local lib = {}
 
-lib.enabled = true
-lib.style = 'set'            -- 'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
-                             -- 'supermarket', 'herbs', 'ballad'
+-- The switches (the settings panel writes them) live on state, behind lib's metatable. A hot reload
+-- (lume.hotswap) copies this chunk's functions onto the OLD module table, the one the panel writes
+-- to, while those functions still read THIS chunk's table: a plain field set in the panel was never
+-- seen (picking a style did nothing until the song ended) and a reload reset it. On state, every
+-- copy of the module reads the same switch, and it survives a reload.
+--   enabled
+--   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
+--                  'supermarket', 'herbs', 'lofi', 'ballad'
+--   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
+--   upright        the upright in the rhythm section; off: the left hand keeps the bass
+--   melody         the tune on top
+--   melodyPatch    force the tune's voice (rhodesLead, pianoLead, kalimba, ...); nil: the style's
+state.musicSettings = state.musicSettings
+    or { enabled = true, style = 'set', rhythmSection = 'auto', upright = false, melody = true }
+local SETTINGS = { enabled = true, style = true, rhythmSection = true, upright = true, melody = true,
+                   melodyPatch = true }
+setmetatable(lib, {
+    __index = function(_, k) if SETTINGS[k] then return state.musicSettings[k] end end,
+    __newindex = function(t, k, v)
+        if SETTINGS[k] then state.musicSettings[k] = v else rawset(t, k, v) end
+    end,
+})
+
 lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi' }
-lib.rhythmSection = 'auto'   -- 'auto' (joins when play gets busy), 'on' or 'off'
-lib.upright = false          -- the upright in the rhythm section; off: the left hand keeps the bass
-lib.melody = true            -- the tune on top
-lib.melodyPatch = nil        -- force the tune's voice (rhodesLead, pianoLead, kalimba, ...); nil: the style's
 lib.lookahead = 0.3          -- seconds of music booked ahead
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
