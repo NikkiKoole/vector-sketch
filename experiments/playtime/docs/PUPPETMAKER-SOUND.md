@@ -183,6 +183,14 @@ start once that lands.
   dreamengine issue NikkiKoole/dreamengine-studio#44 (`sample_formant`). After that: a few
   shared voice types through desound (8 sample slots, a limited number of effect chains, shared
   with `music.lua`; coordinate first).
+  **Built in dreamengine (2026-10-29, master d1ae370d, not pushed):** `sample_formant(slot, semis)`
+  (offline, ±7 best) and `INSTR_SING` (38): one syllable sings any note as the same speaker.
+  Size (`timbre`/`note_timbre`) and inflection (`harmonics`/`note_harmonics`, 0.5 = the take's own
+  melody) are per voice, so Mipos can share one slot and one sample with their own size. Tested on
+  our takes (po3, mi, mo, huh, humup2): in tune within ~7 cents, keep a Mipo within ~±7 st of its
+  take. Gotchas: `assets/voices/puppetmaker/*.ogg` are 48 kHz, so resample to 44.1k before
+  `sample_load`; "huh" has a voiced part and gets pitched (ears: maybe keep grunts as plain samples).
+  Next: the bindings + a rebuild (playtime-3a's synth.lua/build), then try it per Mipo.
 
 **Listen before P4:**
 - The Puppetmaker takes vs the mipomi `nikki` syllables. `po3` (0.69 s) sounds like the sung one.

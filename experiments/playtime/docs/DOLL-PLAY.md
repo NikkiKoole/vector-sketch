@@ -93,6 +93,16 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
     can't be always on: on arms pinned in a pile it pumped energy in until Mipos flew out of
     the box (and the elbow can't get it: its push-back flings the light upper arm).
     `spec/mipo-arm-knot_spec.lua`: without it 11 of 12 knotted arms stay up, with it 0-2.
+  - `mipoJointGuard.untangle` (2026-10-29): two Mipos knotted together after a hard drag
+    (the pointer joint forces limbs through each other; a free throw rarely does). A knot
+    = a hook: another Mipo's part across a limb's path (parent centre -> joint -> child
+    centre, `lib.hooks()`). A Mipo sitting on another has none, so stacks stay. Knotted 2 s,
+    neither held: the upper one hops up and away, and the two pass through each other
+    (preSolve) until nothing crosses or overlaps (max 4 s), then the pair rests 3 s. What
+    didn't work: passing through alone (they stayed deep inside each other, re-hooking), a
+    sideways drift (grippy feet, the room's wall). The test knot is a real one saved from
+    the dollhouse (9 hooks): `spec/fixtures/tangled-mipos.playtime.json`,
+    `spec/mipo-untangle_spec.lua`. Logged `[untangle] a and b`.
 
 - [x] **Design rule: hands never reach the floor** (2026-10-27): arm (upper + forearm + hand reach)
   <= torso (shoulder->hip) + leg (hip->knee->ankle), measured on the built joints

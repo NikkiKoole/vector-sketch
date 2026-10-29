@@ -189,8 +189,14 @@ function love.load(_args)
     -- Wire physics callbacks so scene scripts can listen to beginContact /
     -- endContact / preSolve / postSolve. physics-callbacks.lua populates
     -- state.physicsCallbacks with {beginContact, endContact, preSolve, postSolve}.
+    -- The world gets wrappers that look the callback up on every call: handing it the
+    -- functions themselves kept the startup versions after a hot reload of
+    -- physics-callbacks.lua (a new preSolve hook silently never ran until a restart).
     require('src.physics.physics-callbacks')
-    state.physicsWorld:setCallbacks(unpack(state.physicsCallbacks))
+    local function current(i)
+        return function(...) return state.physicsCallbacks[i](...) end
+    end
+    state.physicsWorld:setCallbacks(current(1), current(2), current(3), current(4))
 
 
     local startScene = 'miposhader'

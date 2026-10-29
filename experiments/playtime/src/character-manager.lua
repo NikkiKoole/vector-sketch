@@ -564,7 +564,7 @@ local function randomizeFace(instance, hairColor, opts)
         eyeBgHex = '000000ff',
         eyeFgHex = 'ffffffff',
         pupilBgHex = '000000ff',
-        mouthShape = math.ceil(math.random() * #mouthShapes.normalized),
+        mouthShape = mouthShapes.indexOf(mouthShapes.restShapes[math.ceil(math.random() * #mouthShapes.restShapes)]),
         mouthUpperLipShape = math.ceil(math.random() * #C.upperLipShapes),
         mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
         mouthLipHex = 'cc5555ff',

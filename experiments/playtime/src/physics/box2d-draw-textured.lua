@@ -16,6 +16,7 @@ local NT = require('src.node-types')
 local spineMesh = require 'src.spine-mesh'
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
+local mipoRegistry = require('src.mipo-registry')
 
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
 local mouthShapes = require('src.mouth-shapes')
@@ -106,18 +107,29 @@ local function setMouthShape(thing, shapeIdx)
     thing.mouthTweenStart = love.timer.getTime()
 end
 
-local function neutralMouth(thing)
-    -- find 'closed' shape index
-    for i, s in ipairs(mouthNormalized) do
-        if s.name == 'closed' then setMouthShape(thing, i); break end
-    end
+-- Back to the Mipo's own rest mouth (its DNA), then drop the override so the
+-- lip decal draws the DNA mouth again (and an edit in the Mipo editor shows).
+-- Was: back to 'closed', kept forever.
+local function restMouth(thing, body)
+    local instance = mipoRegistry.getFromBody(body)
+    local part = instance and instance.dna and instance.dna.parts[thing.label]
+    local face = part and part.appearance and part.appearance.face
+    setMouthShape(thing, face and face.mouth and face.mouth.shape or mouthShapes.indexOf('closed'))
+    thing.mouthLetGo = true
     thing.mouthIsRandom = false
 end
 
 local function randomizeMouth(thing)
     setMouthShape(thing, math.random(#mouthNormalized))
+    thing.mouthLetGo = nil
     thing.mouthIsRandom = true
 end
+
+-- A click near a Mipo's face pulls a face (random brows + mouth) for this long,
+-- then it goes back to its own. It used to stay until the next click, and
+-- grabbing a Mipo by the head is a click: half of them were left pulling faces,
+-- mostly open-mouthed.
+local PULLED_FACE_SECONDS = 2
 
 local function tickMouthTween(thing)
     if not thing.mouthTweenStart then return end
@@ -128,7 +140,12 @@ local function tickMouthTween(thing)
     local vec = {}
     for i = 1, 16 do vec[i] = from[i] + (to[i] - from[i]) * t end
     thing.mouthShapeVec = vec
-    if t >= 1 then thing.mouthTweenStart = nil end
+    if t >= 1 then
+        thing.mouthTweenStart = nil
+        if thing.mouthLetGo then
+            thing.mouthShapeVec, thing.mouthShapeTarget, thing.mouthLetGo = nil, nil, nil
+        end
+    end
 end
 
 local function lsq1D(nx, wy)
@@ -223,6 +240,13 @@ local function tickBlink(world, dt)
                 thing.eyesOpen = 1
             end
             if isFaceOwner(ud.thing.label) then
+                -- (a face pulled before faces were temporary has no end time: end it now)
+                if thing.browIsRandom and not thing.pulledFaceUntil then thing.pulledFaceUntil = now end
+                if thing.pulledFaceUntil and now >= thing.pulledFaceUntil then
+                    thing.pulledFaceUntil, thing.browIsRandom = nil, false
+                    neutralBrows(thing)
+                    restMouth(thing, body)
+                end
                 tickBrowLerp(thing, dt)
                 tickMouthTween(thing)
             end
@@ -240,15 +264,10 @@ local function tickBlink(world, dt)
                 local bx, by = body:getPosition()
                 local dx, dy = wmx - bx, wmy - by
                 if dx * dx + dy * dy < 200 * 200 then
-                    if ud.thing.browIsRandom then
-                        neutralBrows(ud.thing)
-                        neutralMouth(ud.thing)
-                        ud.thing.browIsRandom = false
-                    else
-                        randomizeBrows(ud.thing)
-                        randomizeMouth(ud.thing)
-                        ud.thing.browIsRandom = true
-                    end
+                    randomizeBrows(ud.thing)
+                    randomizeMouth(ud.thing)
+                    ud.thing.browIsRandom = true
+                    ud.thing.pulledFaceUntil = love.timer.getTime() + PULLED_FACE_SECONDS
                 end
             end
         end

@@ -3,6 +3,7 @@ local script = require 'src.script'
 local state = require 'src.state'
 local SE = require('src.script-events')
 local mipoVoice = require('src.mipo-voice')
+local mipoJointGuard = require('src.mipo-joint-guard')
 
 local function beginContact(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
@@ -20,6 +21,7 @@ end
 
 local function preSolve(fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
     if bridge.destroying_body then return end
+    mipoJointGuard.onPreSolve(fix1, fix2, contact)
     script.call(SE.PRE_SOLVE, fix1, fix2, contact, n_impulse1, tan_impulse1, n_impulse2, tan_impulse2)
 end
 

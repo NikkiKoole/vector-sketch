@@ -42,6 +42,21 @@ lib.unstick = true
 lib.unstickDistance = 15  -- joint halves further apart than this, with a wall between, is stuck
 lib.unstickMaxTime = 2.0  -- seconds a part stays a ghost at most
 
+-- untangle: two Mipos knotted together (a limb of one through the other, see
+-- lib.hooks; a Mipo sitting on another has no hooks) that stay knotted for
+-- untangleAfter seconds, neither held, come apart: the upper one hops up and away
+-- from the other, and the two pass through each other (their contacts switched
+-- off in preSolve) until no limb crosses the other and nothing overlaps (at most
+-- untangleMaxTime); then that pair rests untangleRest. Passing through alone left
+-- them deep inside each other, re-hooking; a sideways drift stuck on grippy feet
+-- and walls. Logged '[untangle] a and b'.
+lib.untangle = true
+lib.untangleAfter = 2.0     -- seconds knotted (and let go) before it untangles
+lib.untangleMaxTime = 4.0   -- seconds of passing through at most
+lib.untangleRest = 3.0      -- seconds before the same pair untangles again
+lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
+lib.untangleCheckEvery = 0.25
+
 lib.standUp = true
 lib.splayedAngle = math.rad(30) -- further than this from its target counts as splayed (50 let a
                                 -- wide stance on grippy feet tug forever instead of hopping to reset)
@@ -50,6 +65,10 @@ lib.standUpPause = 1.2          -- seconds between hops
 lib.standUpSpeed = 500          -- hop speed (world units/s), like the grab hop
 
 local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
+-- [pairKey] = { a, b, since, untilT, restUntil }; on state: preSolve reads it every step
+state.mipoTangles = state.mipoTangles or {}
+local tangles = state.mipoTangles
+local lastTangleCheck = 0
 local splayedSince = {} -- [mipoId] = time its legs became splayed
 local lastStandUp = {}  -- [mipoId] = time of its last stand-up hop
 -- Parts that can carry the Mipo: legs normally, arms in a handstand (flip).
@@ -217,6 +236,51 @@ local function wallAcrossLimb(joint)
     local bx, by = bodyB:getPosition()
     return wallFixtureBetween(ax, ay, x1, y1) or wallFixtureBetween(x1, y1, x2, y2)
         or wallFixtureBetween(x2, y2, bx, by)
+end
+
+-- Another Mipo's part across a limb: a hook, the two tangled. In a stack the
+-- limbs rest ON the other Mipo (feet on a head), nothing crosses them; in a knot
+-- a limb went through and wraps around the other's arm, leg or body. Returns
+-- the first part of another Mipo on the path parent centre -> joint -> child
+-- centre (the wallAcrossLimb path), and that Mipo.
+local function otherMipoAcross(x1, y1, x2, y2, ownId)
+    if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return nil end
+    local found, foundInstance
+    state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
+        if fixture:isSensor() then return -1 end
+        local instance = mipoRegistry.getFromBody(fixture:getBody())
+        if instance and instance.id ~= ownId then
+            found, foundInstance = fixture, instance
+            return 0
+        end
+        return -1
+    end)
+    return found, foundInstance
+end
+
+-- Every hook right now: { a = the Mipo whose limb, b = the Mipo across it, part, through }.
+function lib.hooks()
+    local result = {}
+    if not state.physicsWorld then return result end
+    for _, joint in ipairs(state.physicsWorld:getJoints()) do
+        if joint:getType() == JT.REVOLUTE and isMipoJoint(joint) then
+            local bodyA, bodyB = joint:getBodies()
+            local instance, partName = mipoRegistry.getFromBody(bodyB)
+            if instance then
+                local x1, y1, x2, y2 = joint:getAnchors()
+                local ax, ay = bodyA:getPosition()
+                local bx, by = bodyB:getPosition()
+                local fixture, other = otherMipoAcross(ax, ay, x1, y1, instance.id)
+                if not fixture then fixture, other = otherMipoAcross(x1, y1, x2, y2, instance.id) end
+                if not fixture then fixture, other = otherMipoAcross(x2, y2, bx, by, instance.id) end
+                if fixture then
+                    local _, through = mipoRegistry.getFromBody(fixture:getBody())
+                    result[#result + 1] = { a = instance, b = other, part = partName, through = through }
+                end
+            end
+        end
+    end
+    return result
 end
 
 local function jointKey(joint)
@@ -398,11 +462,104 @@ local function standUpMipos(now)
     end
 end
 
+local function pairKey(idA, idB)
+    if idA > idB then idA, idB = idB, idA end
+    return idA .. '|' .. idB, idA, idB
+end
+
+-- Do any parts of Mipos a and b overlap? (Contacts switched off in preSolve
+-- still report touching while the shapes overlap.)
+local function overlapping(idA, idB)
+    local instance = mipoRegistry.getAll()[idA]
+    if not instance then return false end
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then
+            for _, contact in ipairs(part.body:getContacts()) do
+                if contact:isTouching() then
+                    local fa, fb = contact:getFixtures()
+                    local other = fa:getBody() == part.body and fb or fa
+                    local otherInstance = not other:isSensor() and mipoRegistry.getFromBody(other:getBody())
+                    if otherInstance and otherInstance.id == idB then return true end
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function wasHeld(id, now)
+    return lastHeld[id] ~= nil and now - lastHeld[id] <= lib.healAfterRelease
+end
+
+-- The upper of two knotted Mipos hops up and away from the other.
+local function hopOut(idA, idB)
+    local all = mipoRegistry.getAll()
+    local a, b = all[idA], all[idB]
+    local ta = a and a.parts.torso1 and a.parts.torso1.body
+    local tb = b and b.parts.torso1 and b.parts.torso1.body
+    if not ta or not tb or ta:isDestroyed() or tb:isDestroyed() then return end
+    local upper, lower = a, tb
+    if tb:getY() < ta:getY() then upper, lower = b, ta end
+    local dir = upper.parts.torso1.body:getX() < lower:getX() and -1 or 1
+    for _, part in pairs(upper.parts) do
+        if part.body and not part.body:isDestroyed() then
+            part.body:setLinearVelocity(dir * lib.untangleHop[1], -lib.untangleHop[2])
+        end
+    end
+end
+
+local function untangleMipos(now)
+    if now - lastTangleCheck < lib.untangleCheckEvery then return end
+    lastTangleCheck = now
+    local hooked = {}
+    for _, hook in ipairs(lib.hooks()) do
+        local key, a, b = pairKey(hook.a.id, hook.b.id)
+        hooked[key] = { a = a, b = b }
+    end
+    for key, t in pairs(tangles) do
+        if t.untilT then
+            if now >= t.untilT or (not hooked[key] and not overlapping(t.a, t.b)) then
+                t.untilT, t.since, t.restUntil = nil, nil, now + lib.untangleRest
+            end
+        elseif not hooked[key] then
+            t.since = nil
+            if not t.restUntil or now >= t.restUntil then tangles[key] = nil end
+        end
+    end
+    for key, h in pairs(hooked) do
+        local t = tangles[key] or { a = h.a, b = h.b }
+        tangles[key] = t
+        if not t.untilT then
+            -- the wait starts once both are let go
+            if wasHeld(h.a, now) or wasHeld(h.b, now) or not t.since then t.since = now end
+            if now - t.since >= lib.untangleAfter and not (t.restUntil and now < t.restUntil) then
+                t.untilT = now + lib.untangleMaxTime
+                hopOut(h.a, h.b)
+                lib.stats.untangles = (lib.stats.untangles or 0) + 1
+                print(string.format('[untangle] %s and %s', h.a, h.b))
+            end
+        end
+    end
+end
+
+-- From preSolve (src/physics/physics-callbacks.lua): two Mipos that are
+-- untangling pass through each other.
+function lib.onPreSolve(fix1, fix2, contact)
+    if next(tangles) == nil then return end
+    local instance1 = mipoRegistry.getFromBody(fix1:getBody())
+    if not instance1 then return end
+    local instance2 = mipoRegistry.getFromBody(fix2:getBody())
+    if not instance2 or instance1 == instance2 then return end
+    local t = tangles[pairKey(instance1.id, instance2.id)]
+    if t and t.untilT then contact:setEnabled(false) end
+end
+
 function lib.update()
     if not state.physicsWorld then return end
     local now = love.timer.getTime()
     markHeldMipos(now)
     if lib.standUp then standUpMipos(now) end
+    if lib.untangle then untangleMipos(now) end
     if not lib.unwind and not lib.heal and not lib.unstick then return end
     local revolute, limited = {}, {}
     for _, joint in ipairs(state.physicsWorld:getJoints()) do

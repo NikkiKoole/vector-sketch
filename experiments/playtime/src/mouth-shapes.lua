@@ -114,4 +114,16 @@ lib.normalized = normalizeShapesByCentroid(raw)
 lib.phonemeIndex = phonemeIndex
 lib.phonemeKeys = phonemeKeys
 
+-- The mouths a Mipo rests with: closed, or a closed expression. The others are
+-- speaking shapes (open); randomize picked from all 15, and most Mipos were born
+-- open-mouthed. The Mipo editor can still pick any shape on purpose.
+lib.restShapes = { 'closed', 'M_B_P', 'mmm', 'smile', 'frown' }
+
+function lib.indexOf(name)
+    for i, shape in ipairs(lib.normalized) do
+        if shape.name == name then return i end
+    end
+    return nil
+end
+
 return lib

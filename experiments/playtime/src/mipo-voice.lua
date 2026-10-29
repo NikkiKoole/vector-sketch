@@ -84,7 +84,11 @@ local sampleCache = {} -- [setName] = { keys = {...}, sources = { [key] = Source
 local lastSqueak = {}  -- [mipoId] = time
 local lastImpact = {}  -- [mipoId] = time
 local playing = {}     -- [mipoId] = Source; a Mipo says one thing at a time
-local flaps = {}       -- [mipoId] = { thing, start, duration, from, target, amount, wide, restore }
+-- [mipoId] = { thing, start, duration, from, target, amount, wide, restore }. On state: a hot
+-- reload emptied a local table mid-flap and left those mouths open for good.
+local state = require('src.state')
+state.mipoFlaps = state.mipoFlaps or {}
+local flaps = state.mipoFlaps
 local impactPairs = {} -- [kind .. pairKey] = time
 local freshContacts = {} -- [fixturePairKey] = approach speed, between beginContact and the first postSolve
 local lastPlonk = {}     -- [mipoId] = time
@@ -514,8 +518,10 @@ function lib.reset()
     lastSqueak = {}
     lastImpact = {}
     playing = {}
-    for _, flap in pairs(flaps) do flap.thing.mouthShapeVec = flap.restore end
-    flaps = {}
+    for id, flap in pairs(flaps) do
+        flap.thing.mouthShapeVec = flap.restore
+        flaps[id] = nil
+    end
     impactPairs = {}
     freshContacts = {}
     lastPlonk = {}
