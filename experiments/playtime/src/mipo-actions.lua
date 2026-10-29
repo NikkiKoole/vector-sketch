@@ -338,6 +338,30 @@ lib.armHangKp = 40      -- spring (1/s^2)
 lib.armHangKd = 12      -- damping (1/s)
 lib.armHangMaxAlpha = 80 -- rad/s^2 cap, keeps it soft
 
+-- Knot rescue: an arm flung straight up ends tipped just past vertical over the
+-- head, the hand's weight (five times the forearm's) holding the shoulder against
+-- its limit. The hang spring is scaled for the upper arm alone and can't lift it,
+-- so the arm stayed there. Like a Mipo noticing: after knotAfter seconds pointing
+-- up (within knotUp of straight up, the shoulder within knotLimit of its limit) it
+-- sorts the arm out: the shoulder spring moves the whole arm (upper arm, forearm,
+-- hand; its push-back lands on the heavy torso) until the arm hangs (within
+-- knotDone of straight down), for at most knotPull seconds, then that arm rests
+-- knotRest seconds. It has to finish: let go halfway, the folded hand's weight
+-- pulled the arm back up. Not always on: a whole-arm pull on arms pinned in a pile
+-- pumped energy in until Mipos flew out of the box (spec/mipo-arm-knot_spec.lua).
+lib.knotRescue = true
+-- rescues started; a local the functions hold, since a hot reload doesn't show
+-- them tables added to lib (lume.hotswap)
+local knotStats = { knots = 0 }
+lib.stats = knotStats
+lib.knotUp = 40         -- degrees from straight up that count as 'up'
+lib.knotLimit = 25      -- degrees from the shoulder's limit
+lib.knotAfter = 1.5     -- seconds up before the Mipo does something about it
+lib.knotDone = 60       -- degrees from straight down that count as hanging again
+lib.knotPull = 2.5      -- seconds of pulling at most
+lib.knotRest = 2.0      -- seconds before the same arm is pulled again
+lib.knotMaxAlpha = 12   -- rad/s^2 cap for the whole-arm pull: lifts the hand without a snap
+
 local armParent = { luarm = 'torso1', ruarm = 'torso1', llarm = 'luarm', rlarm = 'ruarm' }
 
 local function jointBetween(parentBody, childBody)
@@ -350,11 +374,24 @@ local function jointBetween(parentBody, childBody)
     return nil
 end
 
+-- Inertia of the bodies hanging from a joint, about the joint's anchor.
+local function chainInertia(bodies, ax, ay)
+    local total = 0
+    for _, body in ipairs(bodies) do
+        if not body:isDestroyed() then
+            local cx, cy = body:getWorldCenter()
+            total = total + body:getInertia() + body:getMass() * ((cx - ax) ^ 2 + (cy - ay) ^ 2)
+        end
+    end
+    return total
+end
+
 -- Steer a part toward a world angle through its joint to the parent: the target
 -- is moved into the joint's allowed range, so the part goes the long way round
 -- instead of pushing against a limit (shortest-path steering left right arms
--- stuck pointing left).
-function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, maxAlpha)
+-- stuck pointing left). `chain` (optional): the bodies that swing with the part;
+-- the torque is then scaled to move all of them, not just the part.
+function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, maxAlpha, chain)
     local joint = jointBetween(parentBody, childBody)
     if not joint then
         return lib.steerToward(childBody, targetWorldAngle, kp, kd, maxAlpha)
@@ -376,7 +413,8 @@ function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, m
     if alpha < -maxAlpha then alpha = -maxAlpha end
     -- equal and opposite on the parent, like a muscle: a torque on the arm alone
     -- is an outside force that spins the whole Mipo
-    local torque = childBody:getInertia() * alpha
+    local inertia = chain and chainInertia(chain, joint:getAnchors()) or childBody:getInertia()
+    local torque = inertia * alpha
     childBody:applyTorque(torque)
     parentBody:applyTorque(-torque)
 end
@@ -428,13 +466,61 @@ function lib.pointAngle(dx, dy)
     return math.atan2(-dx, dy)
 end
 
+-- Is this arm in a knot (see knotRescue): the upper arm pointing up, the
+-- shoulder at the top of its range?
+local function armUp(upperBody, shoulderJoint)
+    local fromUp = (upperBody:getAngle() % (2 * math.pi)) - math.pi -- 0 = straight up
+    fromUp = (fromUp + math.pi) % (2 * math.pi) - math.pi
+    if math.abs(fromUp) > math.rad(lib.knotUp) then return false end
+    if not shoulderJoint or not shoulderJoint:areLimitsEnabled() then return true end
+    local angle = shoulderJoint:getJointAngle()
+    local near = math.rad(lib.knotLimit)
+    return angle > shoulderJoint:getUpperLimit() - near or angle < shoulderJoint:getLowerLimit() + near
+end
+
+-- Whether the knot rescue pulls this arm now; tracks its timers on the instance.
+local function knotPulling(instance, side, upperBody, shoulderJoint)
+    if not lib.knotRescue then return false end
+    instance._armKnot = instance._armKnot or {}
+    local k = instance._armKnot[side] or {}
+    instance._armKnot[side] = k
+    local now = love.timer.getTime()
+    if k.pullUntil then
+        local fromDown = (upperBody:getAngle() + math.pi) % (2 * math.pi) - math.pi
+        if now < k.pullUntil and math.abs(fromDown) > math.rad(lib.knotDone) then return true end
+        k.pullUntil, k.upSince, k.restUntil = nil, nil, now + lib.knotRest
+        return false
+    end
+    if not armUp(upperBody, shoulderJoint) then
+        k.upSince = nil
+        return false
+    end
+    k.upSince = k.upSince or now
+    if now - k.upSince >= lib.knotAfter and not (k.restUntil and now < k.restUntil) then
+        k.pullUntil = now + lib.knotPull
+        knotStats.knots = knotStats.knots + 1
+        return true
+    end
+    return false
+end
+
 local function steerArm(instance, side, angle, kp, kd, maxAlpha)
     for _, name in ipairs({ side .. 'uarm', side .. 'larm' }) do
         local part = instance.parts[name]
         local parent = instance.parts[armParent[name]]
         if part and parent and part.body and parent.body and not part.body:isDestroyed()
             and not parent.body:isDestroyed() and not part.limp then
-            lib.steerJointToward(parent.body, part.body, angle, kp, kd, maxAlpha)
+            local chain
+            if name == side .. 'uarm'
+                and knotPulling(instance, side, part.body, jointBetween(parent.body, part.body)) then
+                chain = { part.body }
+                for _, below in ipairs({ side .. 'larm', side .. 'hand' }) do
+                    local p = instance.parts[below]
+                    if p and p.body then chain[#chain + 1] = p.body end
+                end
+            end
+            lib.steerJointToward(parent.body, part.body, angle, kp, kd,
+                chain and math.min(maxAlpha, lib.knotMaxAlpha) or maxAlpha, chain)
         end
     end
 end

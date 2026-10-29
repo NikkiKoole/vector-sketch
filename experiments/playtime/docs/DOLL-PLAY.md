@@ -83,6 +83,16 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
     hands and lower arms, once a leg and a foot; none visible in play. Logged as
     `[unstick] <part> through <body>, <gap> apart, held|not held`. Not needed yet: a softer
     drag while a held Mipo touches something static (the prevention, if it ever looks jumpy).
+  - `mipoActions.knotRescue` (2026-10-29): arm knots, the upper arm straight up, the forearm
+    folded and hanging. 5 of 9 dollhouse Mipos had one. An arm flung up ends 2-3 deg past
+    vertical over the head (limits give a little) and the hand, five times the forearm's
+    mass, holds the shoulder against its limit. Tighter limits and lighter hands barely
+    helped (tested). The hang spring was scaled for the upper arm alone. Now a Mipo with an
+    arm up for 1.5 s pulls it down with a whole-arm pull until it hangs (max 2.5 s, then a
+    2 s rest). The pull must finish (let go halfway, the hand pulls the arm back up), and it
+    can't be always on: on arms pinned in a pile it pumped energy in until Mipos flew out of
+    the box (and the elbow can't get it: its push-back flings the light upper arm).
+    `spec/mipo-arm-knot_spec.lua`: without it 11 of 12 knotted arms stay up, with it 0-2.
 
 - [x] **Design rule: hands never reach the floor** (2026-10-27): arm (upper + forearm + hand reach)
   <= torso (shoulder->hip) + leg (hip->knee->ankle), measured on the built joints
