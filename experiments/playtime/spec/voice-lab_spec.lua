@@ -98,4 +98,53 @@ describe('voice lab', function()
             assert.is_true(math.abs(dB) < 1, path .. ' loudness off by ' .. dB .. ' dB')
         end
     end)
+
+    -- INSTR_SING's one-shot mode (dreamengine-studio #46): the take once through at its own
+    -- length, whatever the note's length. Before: released at once ~0.1 s (the word cut off).
+    it("'sing' plays a take once, at its own length, short note or long", function()
+        if state.synth and state.synth.started then return end
+        local synth = require('src.synth')
+        local ok, C = pcall(ffi.load, love.filesystem.getWorkingDirectory() .. '/native/desound/libdesound.dylib')
+        if not ok then return end
+        pcall(ffi.cdef, 'void de_lua_render(float *out, int frames);')
+        C.de_lua_init()
+        for _, path in ipairs({ 'assets/voices/nikki/mo.ogg', 'assets/voices/theo/ba.ogg' }) do
+            local x, rate = mono(path)
+            local n = math.floor(#x * 44100 / rate)
+            local buf = ffi.new('float[?]', n)
+            for i = 0, n - 1 do
+                local pos = i * rate / 44100
+                local i0 = math.floor(pos)
+                local i1 = math.min(i0 + 1, #x - 1)
+                buf[i] = x[i0 + 1] + (x[i1 + 1] - x[i0 + 1]) * (pos - i0)
+            end
+            local _, lena = analyse(x, rate)
+            local lengths = {}
+            for _, holdMs in ipairs({ 20, 1000 }) do
+                C.sample_load(7, buf, n)
+                C.instrument(46, synth.INSTR.SING, 4, 10, 7, 90)
+                C.instrument_mode(46, 0, 1)
+                C.instrument_sample(46, 7, 60)
+                C.instrument_level(46, 4)
+                C.instrument_timbre(46, 0.5)
+                C.instrument_harmonics(46, 0.5)
+                C.instrument_morph(46, 0.5)
+                C.de_lua_tick(0.016)
+                C.hit(60, 46, 7, holdMs)
+                C.de_lua_tick(0.016)
+                local out, y, done = ffi.new('float[?]', 1024), {}, 0
+                while done < (n / 44100 + 1.5) * 44100 do
+                    C.de_lua_render(out, 512)
+                    for k = 0, 511 do y[#y + 1] = (out[k * 2] + out[k * 2 + 1]) / 2 end
+                    done = done + 512
+                    C.de_lua_tick(512 / 44100)
+                end
+                local _, len = analyse(y, 44100)
+                lengths[#lengths + 1] = len
+                assert.is_true(math.abs(len / lena - 1) < 0.3,
+                    path .. ' held ' .. holdMs .. ' ms sounds ' .. len .. ' s, the take ' .. lena .. ' s')
+            end
+            assert.is_true(math.abs(lengths[1] - lengths[2]) < 0.05, path .. ': a long note played longer')
+        end
+    end)
 end)

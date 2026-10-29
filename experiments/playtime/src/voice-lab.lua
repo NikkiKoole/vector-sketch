@@ -7,7 +7,7 @@
 --   size   semitones: the throat, + bigger: the formants move, pitch and length stay (sample_formant)
 -- Play 'now' (the plain take through LÖVE at speed: today's sound), 'synth' (the take with
 -- shift and size baked in, played at speed) or 'sing' (INSTR_SING: the take sung at speed's
--- note, held for the take's own length, size as its throat, inflection = how much of the
+-- note, once through (its one-shot mode), size as its throat, inflection = how much of the
 -- take's own melody it keeps).
 -- Uses sample slot 7 and instrument slots 45 (sample) and 46 (sing).
 local lib = {}
@@ -16,6 +16,10 @@ local state = require('src.state')
 
 local SAMPLE_SLOT = 7
 local PLAYER, SINGER = 45, 46
+-- INSTR_SING's one-shot mode (instrument_mode idx; dreamengine-studio #46): the take plays
+-- through once at its own length, then the release, whatever the note's length. Off, it
+-- sounds only while held and sustains its last vowel by rocking over it (that looped).
+local MODE_SING_ONESHOT = 0
 local RATE = 44100 -- the synth's rate; puppetmaker takes are 48 kHz, so everything is resampled
 
 lib.sets = { 'puppetmaker', 'nikki', 'theo', 'herman', 'fx' }
@@ -96,6 +100,7 @@ local function prepare(C, plain)
     C.instrument(PLAYER, s.INSTR.SAMPLE, 1, 0, 7, 40)
     C.instrument_sample(PLAYER, SAMPLE_SLOT, 60)
     C.instrument(SINGER, s.INSTR.SING, 4, 10, 7, 90)
+    C.instrument_mode(SINGER, MODE_SING_ONESHOT, 1) -- the take once through (dreamengine #46)
     C.instrument_sample(SINGER, SAMPLE_SLOT, 60)
     L.loaded, L.seconds = key, seconds
     return true
@@ -137,10 +142,9 @@ function lib.playSing()
     C.instrument_timbre(SINGER, 0.5 - L.size / 24) -- 0.5 = as recorded, lower = a bigger throat
     C.instrument_harmonics(SINGER, L.inflection)
     C.instrument_morph(SINGER, 0.5) -- its own speed
-    -- held for the take's own length: once through. SING sounds only while held (+ a short
-    -- release; measured: released at once it's ~0.1 s, the word cut off), and once it gets to
-    -- the take's last vowel it sustains it by repeating it (the looping you can hear).
-    C.hit(60 + L.speed, SINGER, VOL, math.floor(L.seconds * 1000))
+    -- one-shot: the note's length doesn't matter, the take plays through once (morph must
+    -- stay above 0: frozen, the take never ends and it falls back to the key)
+    C.hit(60 + L.speed, SINGER, VOL, 20)
 end
 
 function lib.status()

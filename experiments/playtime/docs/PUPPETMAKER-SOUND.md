@@ -202,7 +202,10 @@ start once that lands.
   **INSTR_SING is not a one-shot** (to hand to dreamengine): it sounds only while held, plus its
   release (released at once: ~0.1 s, the word cut off; "release finishes the word" doesn't happen),
   and it sustains the held vowel by repeating it, which sounds loopy. The lab holds it for the
-  take's length. Ask: a one-shot mode, NikkiKoole/dreamengine-studio#46.
+  take's length. Ask: a one-shot mode, NikkiKoole/dreamengine-studio#46. **Landed** (dreamengine
+  2572e0e5, not pushed yet: another machine's build wouldn't have it): `instrument_mode(slot, 0, 1)`,
+  the take once through at its own length whatever the note's length; the lab's 'sing' uses it
+  (`spec/voice-lab_spec.lua` checks it).
 
 **Listen before P4:**
 - The Puppetmaker takes vs the mipomi `nikki` syllables. `po3` (0.69 s) sounds like the sung one.
