@@ -1498,8 +1498,9 @@ local _tcX, _tcY, _tcDX, _tcDY = {}, {}, {}, {}
 --   halfWidth ≤ min(prevSegLen, nextSegLen) × tan((π − turnAngle) / 2)
 -- where turnAngle = acos(segDirPrev · segDirNext). Straight joins are unaffected
 -- (tan(π/2) = ∞); 90° joins are capped at min-seg-len; sharper joins taper toward zero.
-local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
+local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
     dir             = dir or 1
+    shift           = shift or 0 -- moves the ribbon's middle this far along the curve's left normal
     scaleW          = scaleW or 1
     dl              = dl or curve:getDerivative()
 
@@ -1571,10 +1572,10 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl)
         end
         hw = hw * signHW
 
-        local xL                   = x + hw * nx
-        local yL                   = y + hw * ny
-        local xR                   = x - hw * nx
-        local yR                   = y - hw * ny
+        local xL                   = x + (hw + shift) * nx
+        local yL                   = y + (hw + shift) * ny
+        local xR                   = x - (hw - shift) * nx
+        local yR                   = y - (hw - shift) * ny
 
         -- UVs: left u=0, right u=1; v increases 0..1 per pair
         local v                    = (segMinus1 > 0) and (p / segMinus1) or 0
@@ -1767,8 +1768,10 @@ buildMouthPolygonUncached = function(curvePoints)
 
     local upCurve = love.math.newBezierCurve(upData)
     local downCurve = love.math.newBezierCurve(downData)
-    local upPts = upCurve:render(1)
-    local downPts = downCurve:render(1)
+    -- depth 3: with 1 the few straight pieces cut outside the curve where it bends sharply
+    -- at the corners, and the hole poked out past the lips there (cached per shape)
+    local upPts = upCurve:render(3)
+    local downPts = downCurve:render(3)
 
     local poly = {}
     for pi = 1, #upPts do poly[#poly + 1] = upPts[pi] end
@@ -2399,6 +2402,55 @@ local function traceVerticesMesh(extra, outline)
     if cached and cached.mesh then cached.mesh:release() end
     traceMeshCache[extra] = { key = key, mesh = mesh }
     return mesh
+end
+
+-- Lips (mouth-upper / mouth-lower): the ribbon runs along the mouth hole's edge, the lip
+-- picture's height along the curve and its width across it, u = 0 above the curve and
+-- u = 1 below (both lips run left to right). Where across the picture the mouth-opening
+-- edge is differs per picture (a straight edge on one side, a blob, a cup), so it is
+-- measured: the middle of the stroke nearest the opening side (the right for an upper
+-- lip, whose hole is below; the left for a lower lip), averaged over the middle rows.
+-- That line is put on the hole's edge. (Was: the ribbon's middle on the edge, then 8 px
+-- toward the hole for every lip: a different offset for every picture and thickness.)
+local lipEdges = {}
+function lib.lipEdgeU(url, side)
+    local key = url .. '|' .. side
+    if lipEdges[key] then return lipEdges[key] end
+    local ok, data = pcall(love.image.newImageData, 'textures/' .. url)
+    local edge = 0.5
+    if ok and data then
+        local w, h = data:getDimensions()
+        local sum, n = 0, 0
+        local from, to, step = 0, w - 1, 1
+        if side == 'upper' then from, to, step = w - 1, 0, -1 end
+        for y = math.floor(h * 0.2), math.floor(h * 0.8) do
+            local first, last
+            for x = from, to, step do
+                local _, _, _, a = data:getPixel(x, y)
+                if a > 0.5 then
+                    first = first or x
+                    last = x
+                elseif first then
+                    break
+                end
+            end
+            if first then sum, n = sum + (first + last) / 2, n + 1 end
+        end
+        if n > 0 then edge = (sum / n + 0.5) / w end
+        data:release()
+    end
+    lipEdges[key] = edge
+    return edge
+end
+
+-- How far to move a lip ribbon's middle along the curve's left normal (down, for both
+-- lips) so its opening edge lies on the hole's edge.
+local function lipShift(extra, side, lipImg)
+    local url = extra.main and extra.main.bgURL
+    if not url or url == '' then return 0 end
+    local edge = lib.lipEdgeU(url, side)
+    -- the ribbon spans -halfWidth (u = 0) .. +halfWidth (u = 1) around its middle
+    return -(2 * edge - 1) * lipImg:getWidth() * (extra.lipScale or 0.25)
 end
 
 function lib.drawTexturedWorld(world)
@@ -3526,12 +3578,9 @@ function lib.drawTexturedWorld(world)
                     love.graphics.setColor(1, 1, 1, 1)
                     if not stripHolds(mesh, activeCurveData) then
                         texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
-                            extra.lipScale or 0.25)
+                            extra.lipScale or 0.25, nil, lipShift(extra, 'lower', lipImg))
                     end
-                    love.graphics.push()
-                    love.graphics.translate(0, -8)
                     love.graphics.draw(mesh)
-                    love.graphics.pop()
                 end
 
                 love.graphics.pop()
@@ -3577,12 +3626,9 @@ function lib.drawTexturedWorld(world)
                     love.graphics.setColor(1, 1, 1, 1)
                     if not stripHolds(mesh, activeCurveData) then
                         texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
-                            extra.lipScale or 0.25)
+                            extra.lipScale or 0.25, nil, lipShift(extra, 'upper', lipImg))
                     end
-                    love.graphics.push()
-                    love.graphics.translate(0, 8)
                     love.graphics.draw(mesh)
-                    love.graphics.pop()
                 end
 
                 love.graphics.pop()
