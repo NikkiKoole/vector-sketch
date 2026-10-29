@@ -88,7 +88,7 @@ describe('the spine room', function()
 
         before_each(function()
             instance = mipoRegistry.getAll().P4re5
-            CM.rebuildFromCreation(instance, { torsoSpine = true, torsoSegments = 2, spineSway = 0 })
+            CM.rebuildFromCreation(instance, { torsoSpine = true, torsoSegments = 2, spineSway = 0, spineBend = 15 })
             CM.addTexturesFromInstance2(instance)
         end)
 
