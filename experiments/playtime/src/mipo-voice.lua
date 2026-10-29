@@ -481,7 +481,8 @@ end
 function lib.onImpact(fix1, fix2, normalImpulse)
     if not lib.enabled or not normalImpulse then return end
     local key = fixturePairKey(fix1, fix2)
-    if not freshContacts[key] then return end
+    local approach = freshContacts[key]
+    if not approach then return end
     freshContacts[key] = nil
     local body1, body2 = fix1:getBody(), fix2:getBody()
     local mipo1 = mipoRegistry.getFromBody(body1)
@@ -497,8 +498,14 @@ function lib.onImpact(fix1, fix2, normalImpulse)
                 lastPlonk[instance.id] = t
                 playImpact('plonk', body1, body2, speed)
             end
-            if speed > lib.impactSpeed then
-                if lib.onHardImpact then lib.onHardImpact(instance, speed) end
+            -- hard (oof, daze): how fast the two met (along the contact normal, measured at
+            -- beginContact), not impulse / mass. A light leg carrying a heavy-headed Mipo got
+            -- impulse/mass 'speeds' of 2000-7500 stepping onto a slope at 3-500 and was dazed
+            -- again every few steps; the light foot of a real fall can read lower than the
+            -- fall itself, too.
+            local hit = approach
+            if hit > lib.impactSpeed then
+                if lib.onHardImpact then lib.onHardImpact(instance, hit) end
                 if not lastImpact[instance.id] or t - lastImpact[instance.id] > lib.impactCooldown then
                     lastImpact[instance.id] = t
                     lib.squeak(instance, 'oof')
