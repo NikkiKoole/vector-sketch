@@ -2347,10 +2347,59 @@ function lib.balanceHead(instance, share)
     end
 end
 
--- Part masses that by area alone make a Mipo hard to move: a heavy head, thin arms.
+-- A long neck under a big head (3BjZpF: 5 segments, each 1/7 of the head) hung to the side:
+-- the light chain stretched past its limits. What held it (tested together; neither alone
+-- did): each neck segment weighs at least neckMinShare of the head (density only), and keeps
+-- itself upright (KEEP_ANGLE, as torso segments do; applyNeck). Head 200 -> 30 to the side.
+lib.neckMinShare = 1 / 4
+
+function lib.balanceNeck(instance, share)
+    share = share or lib.neckMinShare
+    local head = instance.parts.head
+    if not (head and head.body and not head.body:isDestroyed()) then return end
+    local minMass = head.body:getMass() * share
+    for i = 1, (instance.dna.creation.neckSegments or 0) do
+        local part = instance.parts['neck' .. i]
+        if part and part.body and not part.body:isDestroyed() then
+            local mass = part.body:getMass()
+            if mass > 0 and mass < minMass then
+                for _, f in ipairs(part.body:getFixtures()) do
+                    if not f:getUserData() then f:setDensity(f:getDensity() * minMass / mass) end
+                end
+                part.body:resetMassData()
+            end
+        end
+    end
+end
+
+-- How far a whole neck may bend, spread over its joints (none looser than the template's
+-- 22.5 degrees, so 1-2 segments are as before): 5 joints of 22.5 let a neck fold 110 degrees
+-- under its head and lie sideways (head 150-220 to the side, 3 random Mipos); 45 over 5
+-- joints held it at 40-60.
+lib.neckBend = 45
+
+-- Neck segments keep themselves upright (see balanceNeck). Behaviors are the part's
+-- thing.behaviors (from the DNA when built, saved with the body); `things` = true also sets
+-- them on the built parts (a scene saved before this).
+function lib.applyNeck(instance, things)
+    for i = 1, (instance.dna.creation.neckSegments or 0) do
+        local name = 'neck' .. i
+        local dnaPart = instance.dna.parts[name]
+        if dnaPart and not (dnaPart.behaviors and dnaPart.behaviors[1]) then
+            dnaPart.behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } }
+        end
+        local part = things and instance.parts[name]
+        if part and not (part.behaviors and part.behaviors[1]) then
+            part.behaviors = { { name = 'KEEP_ANGLE', angle = 0, kp = 40 } }
+        end
+    end
+end
+
+-- Part masses that by area alone make a Mipo hard to move: a heavy head, thin arms and neck.
 function lib.balanceMasses(instance)
     lib.balanceHead(instance)
     lib.balanceArms(instance)
+    lib.balanceNeck(instance)
 end
 
 -- A spine (creation.torsoSpine, docs/MIPO-SPINE.md): the torso segments are bands of
@@ -2432,6 +2481,13 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     if not instance.dna.creation.isPotatoHead and instance.dna.creation.neckSegments > 0 then
         for i = 1, instance.dna.creation.neckSegments do
             instance.dna.parts['neck' .. i] = utils.deepCopy(instance.dna.parts['neck-segment-template'])
+        end
+        lib.applyNeck(instance)
+        local count = instance.dna.creation.neckSegments
+        for i = 1, count do
+            local limits = instance.dna.parts['neck' .. i].j.limits
+            local bend = math.min(limits.up, math.rad(lib.neckBend) / count)
+            instance.dna.parts['neck' .. i].j.limits = { low = -bend, up = bend }
         end
     end
 
@@ -2752,6 +2808,7 @@ function lib.reconstructInstance(charData, partBodies)
             end
         end
     end
+    lib.applyNeck(instance, true)
     lib.balanceMasses(instance)
     return instance
 end
