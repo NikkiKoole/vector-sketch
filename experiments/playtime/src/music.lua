@@ -23,7 +23,8 @@
 -- buymode (the Sims 1 buy-mode piano trio: Mall Rat's moves, a key change up a half step),
 -- sesame (a 70s TV small band: clav, a walking upright, vibes, horn shouts), satie (a
 -- Gymnopédie-like 3/4 waltz on a felt piano), ambient (pentatonic loops of unequal lengths drifting
--- over a drone, Music for Airports), jingle (Mac DeMarco at dusk: a chorused guitar fingerpicking his
+-- over a drone, Music for Airports), vibesnight (guaraldi's tunes on the vibes, slower, the felt piano
+-- holding, the upright in two: for the background), jingle (Mac DeMarco at dusk: a chorused guitar fingerpicking his
 -- borrowed bVII and bIII chords, a soft bass walking down, rim and hats, a sine tune in the chorus) and
 -- ballad. lib.onNote lets other code hear every note
 -- (the Mipos react to the puppetmaker band).
@@ -77,7 +78,7 @@ local lib = {}
 --   enabled
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dusk', 'dumont',
 --                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'buymode',
---                  'satie', 'ambient', 'jingle', 'ballad'
+--                  'satie', 'ambient', 'jingle', 'vibesnight', 'ballad'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
@@ -156,6 +157,14 @@ local function bookBar(synth, t0, song, b)
         and lofiGroove(song, section.kind, j, section.bars, bar.band and bar.roles.drums or 'none',
                        stream(song.seed, 3000 + b))
     if song.tone then bookTone(synth, song, section, j, bar.rnd) end
+    if not song.tone and not song.toneReset and synth.slotFilter and synth.patches then
+        -- lofi's tape tone stays on the shared patches it rides: put their own cutoffs back
+        song.toneReset = true
+        for _, name in ipairs({ 'lofiKeys', 'vibes', 'roundBass' }) do
+            local patch = synth.patches[name]
+            if patch and patch.filter then synth.slotFilter(name, patch.filter.cutoff) end
+        end
+    end
     if style.vinyl then bookVinyl(bar) end
     bookBass(bar, groove, pushes, sidestepAt)
     if style.riff and not (section.kind == 'outro' and j >= 2) then bookRiff(bar) end

@@ -6,7 +6,7 @@
 local D = {}
 
 D.set = { 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum',
-            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo', 'jingle' }
+            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo', 'jingle', 'vibesnight' }
 D.lookahead = 0.3          -- seconds of music booked ahead
 D.activityHalfLife = 8     -- seconds for the play level to halve
 D.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -491,6 +491,26 @@ D.styles = {
         comps = { { { 0, 16, 4 }, { 16, 16, 4 } } },
     },
 }
+
+-- vibesnight: guaraldi's tunes on a vibes night (cocktail.c's MJQ night), made for the background.
+-- The same chords and comping moves, slower; the vibes sing the tune, the worn felt piano only holds
+-- and leans (quieter, no pushes into the next chord), the upright in two while play is calm and
+-- walking when the band joins, brushes.
+do
+    local g = D.styles.guaraldi
+    D.styles.vibesnight = {
+        bpm = { 108, 118 }, swing = 0.62, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 10, motifRepeat = 30,
+        strumMs = 20, keys = 'feltKeys', lead = 'vibes', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
+        drums = 'brushes', home = 'maj69', range = { 65, 84 }, staccato = 8, lightOdds = 50,
+        A = g.A, B = g.B,
+        -- the piano holding, holding with a lift, the Charleston laid down soft
+        comps = {
+            { { 0, 12, 3 }, { 16, 12, 3 } },
+            { { 0, 8, 3 }, { 14, 2, 2 }, { 16, 8, 3 }, { 26, 4, 2 } },
+            { { 0, 3, 3 }, { 6, 8, 2 }, { 16, 3, 3 }, { 22, 8, 2 } },
+        },
+    }
+end
 
 -- Puppetmaker's pattern, from its song file (mipo4.melodypaint.txt): per voice the patch, the pitch, the
 -- length and its hits { step 1..16, chance %, rnd = a random semitone }. dense = PM2's page 1 (outside,
