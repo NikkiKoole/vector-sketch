@@ -15,8 +15,8 @@ local inspector = require('src.ui.inspector')
 local sfixtureParams = require('src.sfixture-params')
 local texfixtureParams = require('src.texfixture-params')
 local NT = require('src.node-types')
-local SIDES = require('src.sides')
 local cdt = require('src.cdt')
+local meshusertBind = require('src.meshusert-bind')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -211,395 +211,24 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             if bf then ud.extra.bindFalloff = bf end
             nextRow()
 
-            local function getNodeLocal(node)
-                if node.type == NT.JOINT then
-                    local joint = registry.getJointByID(node.id)
-                    if not joint then return {} end
-                    local x1, y1, x2, y2 = joint:getAnchors()
-                    local bodyA, bodyB = joint:getBodies()
-                    local ax, ay = bodyA:getLocalPoint(x1, y1)
-                    local bx, by = bodyB:getLocalPoint(x2, y2)
-                    return {
-                        { body = bodyA, offx = ax, offy = ay, type = NT.JOINT, id = node.id, side = SIDES.A },
-                        { body = bodyB, offx = bx, offy = by, type = NT.JOINT, id = node.id, side = SIDES.B },
-                    }
-                end
-                if node.type == NT.ANCHOR then
-                    local f = registry.getSFixtureByID(node.id)
-                    if not f then return {} end
-                    local bp = f:getBody()
-                    local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
-                    local centerX, centerY = mathutils.getCenterOfPoints(pts)
-                    local lx, ly = bp:getLocalPoint(centerX, centerY)
-                    return { { body = bp, offx = lx, offy = ly, type = NT.ANCHOR, id = node.id } }
-                end
-                return {}
-            end
-
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
-                local mappert = resourceLink.find(ud)
-
-                if mappert then
-                    -- mappert is a thing completely outside of my body,
-                    -- it's just a place where the mesh is stored.
-                    local mb = mappert:getBody()
-                    local mud = mb:getUserData()
-                    -- Prefer the RESOURCE's `meshVertices` when present
-                    -- (CDT mode — includes Steiner points). Fall back to the
-                    -- polygon's raw verts for basic mode / legacy scenes.
-                    local mapperExtra = mappert:getUserData().extra
-                    local verts = (mapperExtra and mapperExtra.meshVertices)
-                        or mud.thing.vertices
-
-                    logger:info("**")
-
-                    -- Center by centroid (same as the draw path uses) so
-                    -- bindVerts end up in the same world-space frame as
-                    -- what's visible pre-bind. Using mb:getPosition() was
-                    -- wrong when the RESOURCE body had been moved away from
-                    -- the authoring-world origin.
-                    local vx, vy = mathutils.computeCentroid(verts)
-                    verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
-
-                    if ud.extra.meshX or ud.extra.meshY then
-                        verts = mathutils.transformPolygonPoints(verts, ud.extra.meshX or 0, ud.extra.meshY or 0)
-                    end
-                    if ud.extra.scaleX or ud.extra.scaleY then
-                        verts = mathutils.scalePolygonPoints(verts, ud.extra.scaleX or 1, ud.extra.scaleY or 1)
-                    end
-                    if ud.extra.meshRot and ud.extra.meshRot ~= 0 then
-                        verts = mathutils.rotatePolygonPoints(verts, ud.extra.meshRot)
-                    end
-                    -- convert LOCAL verts -> WORLD verts
-                    local function vertsToWorld(body, localVerts)
-                        local out = {}
-                        for i = 1, #localVerts, 2 do
-                            local lx, ly = localVerts[i], localVerts[i + 1]
-                            local wx, wy = body:getWorldPoint(lx, ly)
-                            out[#out + 1] = wx
-                            out[#out + 1] = wy
-                        end
-                        return out
-                    end
-                    local function computeInfluences(worldVerts, nodes)
-                        local influences = {}
-                        local numVerts = #worldVerts / 2
-
-                        for vi = 1, numVerts do
-                            local wx = worldVerts[(vi - 1) * 2 + 1]
-                            local wy = worldVerts[(vi - 1) * 2 + 2]
-                            influences[vi] = {}
-
-                            for nj = 1, #nodes do
-                                local node = nodes[nj]
-                                local infos = getNodeLocal(node)
-
-                                for _, info in ipairs(infos) do
-                                    local bb = info.body
-
-                                    local lx, ly = bb:getLocalPoint(wx, wy)
-                                    local dx = lx - info.offx
-                                    local dy = ly - info.offy
-                                    local dist = math.sqrt(dx * dx + dy * dy)
-
-                                    influences[vi][#influences[vi] + 1] = {
-                                        nodeIndex = nj,
-                                        body      = bb,        -- IMPORTANT but not wanetd here, atleast do not save it
-                                        offx      = info.offx, -- bind pose anchor local
-                                        offy      = info.offy,
-                                        nodeType  = info.type,
-                                        nodeId    = info.id,
-                                        side      = info.side, -- nil for anchors, "A"/"B" for joints
-                                        dx        = dx,
-                                        dy        = dy,
-                                        dist      = dist,
-                                        bindAngle = bb:getAngle(), -- body rotation at bind time (for DQS)
-                                        w         = 0,
-                                    }
-                                end
-                            end
-                        end
-
-                        return influences
-                    end
-                    -- Segment-based weighting (ported from
-                    -- experiments/deform-textured/main.lua:570). For each
-                    -- consecutive pair of nodes that share a body, treat that
-                    -- pair as a bone SEGMENT on that body. Compute weight per
-                    -- body from segment-distance + smoothstep falloff, then
-                    -- distribute the body weight across the influences we've
-                    -- already created on that body.
-                    --
-                    -- Why: point-distance (old applyWeights) blurs a vertex
-                    -- between every nearby anchor, which collapses mesh width
-                    -- at bone midpoints. Segment-distance binds a vertex to
-                    -- whichever bone it's closest-to as a whole line, keeping
-                    -- width consistent along the length.
-                    local function distToSegment(px, py, ax, ay, bx, by)
-                        local abx, aby = bx - ax, by - ay
-                        local abLen2 = abx * abx + aby * aby
-                        if abLen2 < 1e-12 then
-                            local dx, dy = px - ax, py - ay
-                            return math.sqrt(dx * dx + dy * dy), 0
-                        end
-                        local t = ((px - ax) * abx + (py - ay) * aby) / abLen2
-                        if t < 0 then t = 0 elseif t > 1 then t = 1 end
-                        local cx, cy = ax + abx * t, ay + aby * t
-                        local dx, dy = px - cx, py - cy
-                        return math.sqrt(dx * dx + dy * dy), t
-                    end
-                    local function smoothstep(e0, e1, v)
-                        if v <= e0 then return 0 end
-                        if v >= e1 then return 1 end
-                        local t = (v - e0) / (e1 - e0)
-                        return t * t * (3 - 2 * t)
-                    end
-                    local function buildSegments(nodes)
-                        local segs = {}
-                        for i = 1, #nodes - 1 do
-                            local a = getNodeLocal(nodes[i])
-                            local b = getNodeLocal(nodes[i + 1])
-                            for _, ai in ipairs(a) do
-                                for _, bi in ipairs(b) do
-                                    if ai.body == bi.body then
-                                        segs[#segs + 1] = {
-                                            body = ai.body,
-                                            lax = ai.offx, lay = ai.offy,
-                                            lbx = bi.offx, lby = bi.offy,
-                                        }
-                                    end
-                                end
-                            end
-                        end
-                        return segs
-                    end
-                    local function applySegmentWeights(influences, nodes, worldVerts, radius, falloff)
-                        radius = radius or 80
-                        falloff = falloff or 1
-                        local segments = buildSegments(nodes)
-                        if #segments == 0 then
-                            -- Fall back to point-based inverse-distance weights.
-                            for vi = 1, #influences do
-                                local sum = 0
-                                for k = 1, #influences[vi] do
-                                    influences[vi][k].w = 1 / (influences[vi][k].dist + 1e-6)
-                                    sum = sum + influences[vi][k].w
-                                end
-                                if sum > 0 then
-                                    for k = 1, #influences[vi] do
-                                        influences[vi][k].w = influences[vi][k].w / sum
-                                    end
-                                end
-                            end
-                            return influences
-                        end
-
-                        local numVerts = #worldVerts / 2
-                        for vi = 1, numVerts do
-                            local px = worldVerts[(vi - 1) * 2 + 1]
-                            local py = worldVerts[(vi - 1) * 2 + 2]
-
-                            -- Per-body weight = max segment weight across any
-                            -- segment on that body (one body can host multiple
-                            -- segments if the node list is longer).
-                            local bodyW = {}
-                            for _, seg in ipairs(segments) do
-                                local wax, way = seg.body:getWorldPoint(seg.lax, seg.lay)
-                                local wbx, wby = seg.body:getWorldPoint(seg.lbx, seg.lby)
-                                local d = distToSegment(px, py, wax, way, wbx, wby)
-                                local weight = 1 - smoothstep(0, radius, d)
-                                if falloff ~= 1 and weight > 0 then weight = weight ^ falloff end
-                                if weight > 0 and (not bodyW[seg.body] or bodyW[seg.body] < weight) then
-                                    bodyW[seg.body] = weight
-                                end
-                            end
-
-                            -- Count influences per body to split body-weight
-                            -- evenly (multiple endpoints on a body deform
-                            -- rigidly together — sharing the weight keeps the
-                            -- total body contribution = body-weight).
-                            local countPerBody = {}
-                            for k = 1, #influences[vi] do
-                                local b = influences[vi][k].body
-                                countPerBody[b] = (countPerBody[b] or 0) + 1
-                            end
-
-                            local sum = 0
-                            for k = 1, #influences[vi] do
-                                local b = influences[vi][k].body
-                                local bw = bodyW[b] or 0
-                                influences[vi][k].w = bw / countPerBody[b]
-                                sum = sum + influences[vi][k].w
-                            end
-
-                            if sum > 0 then
-                                for k = 1, #influences[vi] do
-                                    influences[vi][k].w = influences[vi][k].w / sum
-                                end
-                            else
-                                -- All segments outside radius → bind to the
-                                -- nearest segment's body at full weight so the
-                                -- vertex isn't left orphaned.
-                                local bestBody, bestDist = nil, math.huge
-                                for _, seg in ipairs(segments) do
-                                    local wax, way = seg.body:getWorldPoint(seg.lax, seg.lay)
-                                    local wbx, wby = seg.body:getWorldPoint(seg.lbx, seg.lby)
-                                    local d = distToSegment(px, py, wax, way, wbx, wby)
-                                    if d < bestDist then bestDist = d; bestBody = seg.body end
-                                end
-                                if bestBody then
-                                    local count = countPerBody[bestBody] or 1
-                                    for k = 1, #influences[vi] do
-                                        influences[vi][k].w = (influences[vi][k].body == bestBody) and (1 / count) or 0
-                                    end
-                                end
-                            end
-                        end
-                        return influences
-                    end
-
-                    local function pruneTopK(influences, K)
-                        for vi = 1, #influences do
-                            table.sort(influences[vi], function(a, b) return a.w > b.w end)
-                            while #influences[vi] > K do table.remove(influences[vi]) end
-
-                            local sum = 0
-                            for k = 1, #influences[vi] do sum = sum + influences[vi][k].w end
-                            if sum > 0 then
-                                for k = 1, #influences[vi] do influences[vi][k].w = influences[vi][k].w / sum end
-                            end
-                        end
-                        return influences
-                    end
-                    -- Capture bindVerts in the MESHUSERT-owning body's world
-                    -- space (the bone), NOT the polygon's world space. The
-                    -- pre-bind draw path renders the mesh at the bone's
-                    -- transform (`box2d-draw-textured.lua:1625`), so binding
-                    -- relative to the bone keeps the mesh visually in place
-                    -- — what-you-see-is-what-you-bind. Using `mb` (polygon
-                    -- body) here instead caused the mesh to jump on bind.
-                    local ownerBody = state.selection.selectedSFixture:getBody()
-                    verts = vertsToWorld(ownerBody, verts)
-
-                    if ud.extra.nodes and #ud.extra.nodes > 0 then
-                        local influences = computeInfluences(verts, ud.extra.nodes)
-                        influences = applySegmentWeights(influences, ud.extra.nodes, verts,
-                            tonumber(ud.extra.bindRadius) or 80, tonumber(ud.extra.bindFalloff) or 1)
-
-                        -- optional but highly recommended:
-                        influences = pruneTopK(influences, 3)
-
-                        ud.extra.influences = influences -- STORE IT
-
-                        -- Capture world-space bind-pose vertex positions (for DQS skinning).
-                        local bindVerts = {}
-                        local numVerts = #verts / 2
-                        for vi = 1, numVerts do
-                            bindVerts[vi] = { verts[(vi - 1) * 2 + 1], verts[(vi - 1) * 2 + 2] }
-                        end
-                        ud.extra.bindVerts = bindVerts
-
-                        -- Build rigidLookup: unpruned per-vertex per-bone body+local-coords.
-                        -- The pruned `influences` table (top 3) is used for DQS blending,
-                        -- but the rigid paint path needs ALL bones — this table bypasses
-                        -- the pruneTopK limit so painted assignments always resolve.
-                        -- Also save rigidBindCoords (just the numbers, no body refs) so
-                        -- load can restore the exact same lx/ly without reconstruction.
-                        local rigidLookup = {}
-                        local rigidBindCoords = {}
-                        local numNodes = #ud.extra.nodes
-                        for vi = 1, numVerts do
-                            local wx = verts[(vi - 1) * 2 + 1]
-                            local wy = verts[(vi - 1) * 2 + 2]
-                            rigidLookup[vi] = {}
-                            local coordRow = {}
-                            for nj = 1, numNodes do
-                                local infos = getNodeLocal(ud.extra.nodes[nj])
-                                if #infos > 0 then
-                                    local lx, ly = infos[1].body:getLocalPoint(wx, wy)
-                                    rigidLookup[vi][nj] = { body = infos[1].body, lx = lx, ly = ly }
-                                    coordRow[2 * nj - 1] = lx
-                                    coordRow[2 * nj]     = ly
-                                end
-                            end
-                            rigidBindCoords[vi] = coordRow
-                        end
-                        ud.extra.rigidLookup = rigidLookup
-                        ud.extra.rigidBindCoords = rigidBindCoords
-                        -- Bind modes are mutually exclusive — clear any spine bind.
-                        ud.extra.spineBind = nil
-                    end
-                end
+                meshusertBind.bindInfluences(ud, state.selection.selectedSFixture:getBody())
             end
 
-            -- Spine bind: alternate to DQS. Each vert gets (t, s) against
-            -- the node chain's rest polyline; draw-time rebuilds a Bezier
-            -- through live node positions and places verts at
-            -- curve(t) + s * normal. See docs/MESHUSERT-SPINE-BIND-PLAN.md.
-            --
-            -- Shared prep: resolve the paired RESOURCE polygon, apply the
-            -- mesh offset/scale/rot, convert to owner-body world coords.
-            -- Same framing the draw path uses, so bind round-trips exactly.
-            local function prepWorldVertsForBind()
-                local mappert = resourceLink.find(ud)
-                local nodes = ud.extra.nodes or {}
-                if not (mappert and #nodes >= 2) then return nil, nodes end
-                local mb = mappert:getBody()
-                local mud = mb:getUserData()
-                local mapperExtra = mappert:getUserData().extra
-                local verts = (mapperExtra and mapperExtra.meshVertices) or mud.thing.vertices
-                local vx, vy = mathutils.computeCentroid(verts)
-                verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
-                if ud.extra.meshX or ud.extra.meshY then
-                    verts = mathutils.transformPolygonPoints(verts,
-                        ud.extra.meshX or 0, ud.extra.meshY or 0)
+            -- Spine bind: instead of weights, each vertex rides the curve through its nodes
+            -- (docs/MESHUSERT-SPINE-BIND-PLAN.md); multi splits the nodes where the root repeats.
+            local function spineButton(label, multi, active)
+                if ui.button(x, y, ROW_WIDTH, label, BUTTON_HEIGHT, active and { 0.2, 0.7, 1.0 } or nil) then
+                    local bind, err = meshusertBind.bindSpine(ud, state.selection.selectedSFixture:getBody(), multi)
+                    if not bind then logger:error('spine-bind failed: ' .. tostring(err)) end
                 end
-                if ud.extra.scaleX or ud.extra.scaleY then
-                    verts = mathutils.scalePolygonPoints(verts,
-                        ud.extra.scaleX or 1, ud.extra.scaleY or 1)
-                end
-                if ud.extra.meshRot and ud.extra.meshRot ~= 0 then
-                    verts = mathutils.rotatePolygonPoints(verts, ud.extra.meshRot)
-                end
-                local ownerBody = state.selection.selectedSFixture:getBody()
-                local worldVerts = {}
-                for i = 1, #verts, 2 do
-                    worldVerts[i], worldVerts[i + 1] = ownerBody:getWorldPoint(verts[i], verts[i + 1])
-                end
-                return worldVerts, nodes
-            end
-
-            local function clearOtherBindState()
-                -- Bind modes are mutually exclusive.
-                ud.extra.influences = nil
-                ud.extra.bindVerts = nil
-                ud.extra.rigidLookup = nil
-                ud.extra.rigidBindCoords = nil
             end
 
             nextRow()
             local inSpineMode = ud.extra.spineBind ~= nil
             local isMulti = inSpineMode and ud.extra.spineBind.multi
             local spineBtnLabel = (inSpineMode and not isMulti) and 'rebind spine' or 'bind spine'
-            local spineBtnColor = (inSpineMode and not isMulti) and { 0.2, 0.7, 1.0 } or nil
-            if ui.button(x, y, ROW_WIDTH, spineBtnLabel, BUTTON_HEIGHT, spineBtnColor) then
-                local worldVerts, nodes = prepWorldVertsForBind()
-                if worldVerts then
-                    local spineMesh = require('src.spine-mesh')
-                    local chain = spineMesh.buildChainFromNodes(nodes)
-                    local bendiness = ud.extra.spineBendiness or 2
-                    local bind, err = spineMesh.bind(worldVerts, chain, bendiness)
-                    if bind then
-                        ud.extra.spineBind = bind
-                        clearOtherBindState()
-                        logger:info('spine-bind: ' .. #bind.tsPerVert / 2 .. ' verts, ' .. #nodes .. ' nodes')
-                    else
-                        logger:error('spine-bind failed: ' .. tostring(err))
-                    end
-                else
-                    logger:error('spine-bind: need a label-paired RESOURCE and >=2 nodes')
-                end
-            end
+            spineButton(spineBtnLabel, false, inSpineMode and not isMulti)
 
             -- Multi-chain: split the node list at repeated IDs (user's root
             -- anchor recurs as a chain separator — e.g. 4 limbs off one hub).
@@ -607,26 +236,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             -- between chains stretch on divergence — fix with soft blending.
             nextRow()
             local multiBtnLabel = isMulti and 'rebind spine (multi)' or 'bind spine (multi)'
-            local multiBtnColor = isMulti and { 0.2, 0.7, 1.0 } or nil
-            if ui.button(x, y, ROW_WIDTH, multiBtnLabel, BUTTON_HEIGHT, multiBtnColor) then
-                local worldVerts, nodes = prepWorldVertsForBind()
-                if worldVerts then
-                    local spineMesh = require('src.spine-mesh')
-                    local nodeLists = spineMesh.splitChainsByRootRepeat(nodes)
-                    local chains = spineMesh.buildChainsFromNodeLists(nodeLists)
-                    local bendiness = ud.extra.spineBendiness or 2
-                    local bind, err = spineMesh.bindMultiChain(worldVerts, chains, bendiness)
-                    if bind then
-                        ud.extra.spineBind = bind
-                        clearOtherBindState()
-                        logger:info('spine-bind (multi): ' .. #bind.perVert .. ' verts across ' .. #chains .. ' chains')
-                    else
-                        logger:error('spine-bind (multi) failed: ' .. tostring(err))
-                    end
-                else
-                    logger:error('spine-bind: need a label-paired RESOURCE and >=2 nodes')
-                end
-            end
+            spineButton(multiBtnLabel, true, isMulti)
 
             if inSpineMode then
                 nextRow()
@@ -642,11 +252,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             if hasDQS or inSpineMode then
                 nextRow()
                 if ui.button(x, y, ROW_WIDTH, 'unbind (reset mesh)') then
-                    ud.extra.influences = nil
-                    ud.extra.bindVerts = nil
-                    ud.extra.rigidLookup = nil
-                    ud.extra.rigidBindCoords = nil
-                    ud.extra.spineBind = nil
+                    meshusertBind.unbind(ud.extra)
                 end
             end
 
@@ -736,11 +342,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                             cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
                                         end
                                         -- Invalidate bone assignments — topology changed
-                                        ud.extra.triangleBones = nil
-                                        ud.extra.influences = nil
-                                        ud.extra.bindVerts = nil
-                                        ud.extra.rigidLookup = nil
-                                        ud.extra.rigidBindCoords = nil
+                                        meshusertBind.clearInfluences(ud.extra, true) -- topology changed
                                     end
                                     break
                                 end
@@ -867,15 +469,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     -- highest total influence weight across its 3 verts.
                     if ui.button(x, y, ROW_WIDTH + 50, 'auto assign bones') then
                         local influences = ud.extra.influences
-                        local mappert2
-                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
-                            if not rv:isDestroyed() then
-                                local rud = rv:getUserData()
-                                if rud then
-                                    mappert2 = rv; break
-                                end
-                            end
-                        end
+                        local mappert2 = resourceLink.find(ud)
                         if influences and mappert2 then
                             local triIdx2 = mappert2:getUserData().extra.triangles
                             if triIdx2 then
@@ -909,42 +503,20 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     if ui.button(x, y, ROW_WIDTH + 50, 'auto assign by proximity') then
                         local proxNodes = ud.extra.nodes
                         local radius = tonumber(ud.extra.bindRadius) or 80
-                        local mappert2
-                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
-                            if not rv:isDestroyed() then
-                                local rud = rv:getUserData()
-                                if rud then
-                                    mappert2 = rv; break
-                                end
-                            end
-                        end
-                        if proxNodes and #proxNodes > 0 and mappert2 then
-                            local mud2 = mappert2:getBody():getUserData()
-                            local mextra2 = mappert2:getUserData().extra
-                            local triIdx2 = mextra2 and mextra2.triangles
-                            local baseVerts2 = (mextra2 and mextra2.meshVertices)
-                                or (mud2.thing and mud2.thing.vertices)
-                            if triIdx2 and baseVerts2 then
-                                local bdy = state.selection.selectedSFixture:getBody()
-                                local pcx, pcy = mathutils.computeCentroid(baseVerts2)
-                                local cVerts = mathutils.makePolygonRelativeToCenter(baseVerts2, pcx, pcy)
-                                local pmx = ud.extra.meshX or 0
-                                local pmy = ud.extra.meshY or 0
-                                local psx = ud.extra.scaleX or 1
-                                local psy = ud.extra.scaleY or 1
-                                local pmr = ud.extra.meshRot or 0
-                                local cosR2, sinR2 = math.cos(pmr), math.sin(pmr)
+                        local mappert2 = resourceLink.find(ud)
+                        local mextra2 = mappert2 and mappert2:getUserData().extra
+                        local triIdx2 = mextra2 and mextra2.triangles
+                        -- the mesh where it's drawn (meshusert-bind: the same framing as binding)
+                        local wv = proxNodes and #proxNodes > 0 and triIdx2
+                            and meshusertBind.worldVerts(ud, state.selection.selectedSFixture:getBody())
+                        if wv then
+                            do
                                 local function triCentroidWorld(t)
                                     local wcx, wcy = 0, 0
                                     for corner = 0, 2 do
                                         local vi = triIdx2[t * 3 - 2 + corner]
-                                        local lx = (cVerts[(vi-1)*2+1] + pmx) * psx
-                                        local ly = (cVerts[(vi-1)*2+2] + pmy) * psy
-                                        if pmr ~= 0 then
-                                            lx, ly = lx*cosR2 - ly*sinR2, lx*sinR2 + ly*cosR2
-                                        end
-                                        local wx, wy = bdy:getWorldPoint(lx, ly)
-                                        wcx = wcx + wx; wcy = wcy + wy
+                                        wcx = wcx + wv[(vi - 1) * 2 + 1]
+                                        wcy = wcy + wv[(vi - 1) * 2 + 2]
                                     end
                                     return wcx / 3, wcy / 3
                                 end
@@ -954,7 +526,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                     local tcx, tcy = triCentroidWorld(t)
                                     local bestNode, bestDist = nil, math.huge
                                     for nj, node in ipairs(proxNodes) do
-                                        for _, info in ipairs(getNodeLocal(node)) do
+                                        for _, info in ipairs(meshusertBind.nodeLocal(node)) do
                                             local wx, wy = info.body:getWorldPoint(info.offx, info.offy)
                                             local d = math.sqrt((tcx-wx)^2 + (tcy-wy)^2)
                                             if d < bestDist then bestDist = d; bestNode = nj end
@@ -991,11 +563,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                         if bd then
                                             cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
                                         end
-                                        ud.extra.triangleBones = nil
-                                        ud.extra.influences = nil
-                                        ud.extra.bindVerts = nil
-                                        ud.extra.rigidLookup = nil
-                                        ud.extra.rigidBindCoords = nil
+                                        meshusertBind.clearInfluences(ud.extra, true) -- topology changed
                                     end
                                     nextRow()
                                 end

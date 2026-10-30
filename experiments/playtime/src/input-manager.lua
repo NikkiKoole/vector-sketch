@@ -14,6 +14,7 @@ local utils = require 'src.utils'
 local script = require 'src.script'
 local selectrect = require 'src.selection-rect'
 local polyEdit = require('src.poly-edit')
+local meshusertBind = require('src.meshusert-bind')
 local state = require 'src.state'
 local modes = require 'src.modes'
 local ui = require('src.ui.all')
@@ -47,11 +48,7 @@ local function refreshResourceAfterSteinerChange(body)
             local vud = v:getUserData()
             local resource = vud and subtypes.is(vud, subtypes.MESHUSERT) and resourceLink.find(vud)
             if resource and resource:getBody() == body then
-                vud.extra.triangleBones = nil
-                vud.extra.influences = nil
-                vud.extra.bindVerts = nil
-                vud.extra.rigidLookup = nil
-                vud.extra.rigidBindCoords = nil
+                meshusertBind.clearInfluences(vud.extra, true)
             end
         end
     end

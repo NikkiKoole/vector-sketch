@@ -179,11 +179,17 @@ L = more.
   from love.update; `src/color.lua` (palette, hexToColor remembered) for the renderer, UI, grass and
   liquid. Left: the old mouth-decal migration still runs when a face first ticks (not at load), and
   computeResourceMesh stays in cdt.lua next to refreshResourceMesh.
-- [ ] **CL21. MESHUSERT binding out of the UI.** `ui/sfixture-editor.lua:368-692, 702-737, 1026-1130`:
+- [x] **CL21. MESHUSERT binding out of the UI.** `ui/sfixture-editor.lua:368-692, 702-737, 1026-1130`:
   the bind maths are closures inside a button handler; vertex prep 3 times, "clear bind state" 5
   times, `for _, rv in ipairs({ resourceLink.find(ud) })` 4 times (just `local rv = ...; if rv`).
   → `src/meshusert-bind.lua` (prepBindVerts, bindDQS, bindSpine, clearBind, autoAssign*,
   splitTriangles), with specs. M-L.
+  **Done 2026-10-30:** `src/meshusert-bind.lua`: `worldVerts` (the one mesh framing, was 3 copies),
+  `bindInfluences`, `bindSpine(ud, body, multi)`, `unbind`, `clearInfluences` (was 5 copies, input-manager
+  too), `nodeLocal`; the panel keeps its buttons. sfixture-editor.lua 1886 -> 698 lines today. Checked by
+  pressing every bind and auto-assign button through the panel on 4 Knut scenes: identical results
+  before and after. `spec/meshusert-bind_spec.lua`. Three `ipairs({ resourceLink.find(ud) })` left in
+  the triangle tools.
 - [x] **CL22. Polygon editing out of object-manager.** `object-manager.lua:84-311` (finalizePath,
   finalizePolygon, ribbon pair / custom vertex insert+remove) → `src/poly-edit.lua`. The three
   "rebuild an sfixture with new points" functions (fixtures.updateSFixturePosition,
