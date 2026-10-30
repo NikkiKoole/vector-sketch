@@ -1,5 +1,5 @@
 -- signals.lua
--- Wiring for contraptions (docs/DOLL-PLAY.md, contraption kit): triggers send a
+-- Wiring for contraptions (docs/DOLL-PLAY-MENU.md, contraption kit): triggers send a
 -- named signal, receivers listening to that name act on it. Both are behaviors on
 -- the body's thing, so they save with the scene and show up in the editor's
 -- "add behavior" list:

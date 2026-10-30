@@ -2,7 +2,7 @@
 -- Squeaks for Mipos: one syllable or fx sample per reaction, pitched per Mipo.
 -- Samples come from the mipomi-lang repo (~/Projects/love/mipomi-lang), copied
 -- into assets/voices/{nikki,theo,herman,fx}. Full mipomi speech (say + lipsync)
--- is a later step, see docs/DOLL-PLAY.md "Voice".
+-- is a later step, see docs/PUPPETMAKER-SOUND.md "Voice".
 -- Also: mouth flap while a squeak plays, rubber plonks when Mipos hit things and
 -- winegum kisses when SQUISHY-behavior bodies hit things (all after puppet-maker2's
 -- mouthSay() and postSolve sounds).

@@ -77,7 +77,7 @@ and panned by contact normal (`box2d/main.lua:169`); check overlap with `mipo-vo
 
 **10. Mipomi phrase engine** (M). `mipomi-lang/main.lua` :421-1000: `parseInput` with inline
 `{personality=…}` blocks, per-speaker say queue, pitch curves, stutter, `randomSayableString`.
-This is DOLL-PLAY V2/V6 (already planned), listed so it isn't forgotten.
+This is PUPPETMAKER-SOUND V2/V6 (already planned), listed so it isn't forgotten.
 
 **11. Rooms with a goal, and a front screen** (M). Nothing in Playtime says "you did it".
 `mipo-minipops/games/thief-vs-police/entry.lua`: level table with a difficulty ramp (:214),
@@ -150,7 +150,7 @@ accelerate / brake / chain-lift / flip, carts follow by arc length (`Track:getPo
 ## 6. Gaps: what your ideas need and no experiment has
 
 - **Moods and needs.** `emotion-html` is only a concept (Sims-style bars, "Soul of the Sims" notes,
-  empty `main.js`). DOLL-PLAY's "moods that stick" needs a small design of its own first.
+  empty `main.js`). DOLL-PLAY-MENU's "moods that stick" needs a small design of its own first.
 - **Walking.** Mipos can be dragged, thrown and ridden, but nothing makes one walk somewhere on its
   own. Steering (#12) gives the target, not the gait.
 - **Water.** `liquid` (grid water, buggy) and `buoyancy` (one force on contact) are dead ends.

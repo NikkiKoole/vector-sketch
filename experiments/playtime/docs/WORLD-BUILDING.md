@@ -100,7 +100,7 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
 - `../scrolling-world/src/removeAddItems.lua:7-75`: props streamed in and out per 100-unit ground tile as
   the camera moves (for G6's endless mode).
 - `../scrolling-world/src/pointer-interactions.lua:250-262`: edge-pan. Dragging something to the screen
-  edge scrolls the camera (DOLL-PLAY "drag to pan").
+  edge scrolls the camera (DOLL-PLAY-MENU "drag to pan").
 - `../../lib/screen-transitions.lua:51-153`: circle, rect and fade wipes. Could replace the plain fade in
   `src/doors.lua`.
 - `../tiled-polygons-01/tiled-polygons.lua:126`: marching squares over a weight grid, a possible

@@ -228,7 +228,7 @@ done, tick its box in the same commit and name its id (W2, P8) in the message.
 
 Deep-dive docs live in `docs/`:
 - `EDITOR-INSPECTOR-LIBRARY.md` — editor rework (inspector from data, tabbed right column, library, tool rail); done 2026-10-30; leftovers (joint drag A->B, icons, thumbnails) are polish
-- `DOLL-PLAY.md` — the Puppetmaker follow-up: doll-play world, toys, signals, snap-together pieces
+- `DOLL-PLAY.md` — the Puppetmaker follow-up: foundation (F1–F5) and the menu items being built; `DOLL-PLAY-MENU.md` — the pick-and-choose menu (handling, reactions, toys, camera, contraption kit, other ideas)
 - `WORLDS-AND-DOORS.md` — overworld + rooms linked by doors, carrying a Mipo (and what's connected) through, per-room persistence. W1 (doors, rooms in memory) done 2026-10-28; W2–W5 open
 - `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8). G1 grass done; the sky (G5) is prototyped in `../sky-atmosphere/`: one multi-stop gradient from the ground to space and the moon, day/dawn/dusk/night palettes blended
 - `WATER.md` — water in containers (LIQUID sfixture, `src/liquid.lua`): level water W1 and sloshing done, then parked (2026-10-29); what the old water/Bathhouse scripts already had

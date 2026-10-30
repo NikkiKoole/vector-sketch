@@ -10,7 +10,7 @@ or change them, the mi… po… chatter, and a band they sing along with and mov
 **How to use this doc:** part 1 is what Puppetmaker 2 does (source:
 `../puppet-maker2`, `../../lib/melody-paint-audio-*.lua`). Part 2 is what
 Playtime already has. Part 3 is the order to build the rest; tick it there.
-Related: `DOLL-PLAY.md` "Voice" (V1–V6), `SOUND-SYNTH.md` (the synth, its slot map and gotchas, the
+Related: section 4 "Voice" (V1–V6, moved here from DOLL-PLAY), `SOUND-SYNTH.md` (the synth, its slot map and gotchas, the
 music's onNote / stepAt; the puppetmaker and strum styles there and in `MUSIC-IDEAS.md`),
 `src/mipo-voice.lua`, `src/music.lua`.
 
@@ -149,7 +149,7 @@ They are **different recordings** from the mipomi `nikki` syllables (other lengt
 
   Not copied: the unused fx (BD-lofi, BD-SNARE-TOM, HiHat Accent/Metal, blah4), introloopOld,
   the rest of the CR-78 kit. Licenses are in `assets/sounds/README.md` (some sources unknown).
-- **`src/mipo-voice.lua`** (DOLL-PLAY V3/V3b):
+- **`src/mipo-voice.lua`** (V3/V3b, section 4):
   - The growl pool, as `pickup` on grab. It's **per Mipo** (its own voice pitch, a cooldown)
     instead of one growl for the whole app.
   - The mouth flap, plonks, kisses and the hop on grab.
@@ -188,7 +188,7 @@ start once that lands.
   puppet-maker2's odds, from `assets/voices/puppetmaker`, at each Mipo's own voice pitch
   ×0.8–1.2 (`mipoVoice.say`). Only Mipos in view, not held, dazed or talking; two
   needed; not while paused. Spec: `spec/mipo-chatter_spec.lua`. Off: `mipoChatter.enabled`.
-- [ ] **P6. Voice in DNA** (= DOLL-PLAY V5). The singing and chatter use each Mipo's own voice set and pitch.
+- [ ] **P6. Voice in DNA** (= V5 in section 4). The singing and chatter use each Mipo's own voice set and pitch.
 
 - [x] **P7. A voice per Mipo** (2026-10-29). `mipoVoice.voiceFor` spreads each Mipo over
   pitch 0.6–1.7 (`pitchRange`, evenly in octaves) and a tone (`toneRange`, a LÖVE lowpass
@@ -227,3 +227,62 @@ start once that lands.
 - `babirhodes` ba/bi/biep are voice-like too: maybe the band's "backing vocals".
 - Whether the CR-78/triangle samples are worth a sample layer next to the synth music,
   or whether `music.lua` gets its own percussion instead.
+
+## 4. Voice (mipomi-lang → playtime), moved from DOLL-PLAY.md 2026-10-30
+
+Source repo: `~/Projects/love/mipomi-lang` (GitHub private). It stays the lab where
+recording and tuning happen; playtime gets a copy of the engine and the cut samples.
+
+- [x] **V1. Samples in** (2026-10-27): copy the cut syllables to `assets/voices/{nikki,theo,herman}/`
+  and the fx to `assets/voices/fx/` (about 1.2 MB). Skip the raw takes (`*-uncut*`,
+  root `*.ogg`, `blah4`). Note: mipomi's `main.lua` only ever loads
+  `samples-nikki`. The other two voices are recorded but have never been used in code.
+- [ ] **V2. `src/mipomi.lua`**: extract the *engine* half of mipomi `main.lua`
+  (`parseInput`, per-speaker `sayQueue`, `playSyllable`/`playSFX`,
+  pitch curves, personalities, stutter) into a module with no globals and no
+  draw/keypress code. A speaker is created per Mipo.
+- [x] **V3. `mipo:squeak(emotion)`** (2026-10-27): `src/mipo-voice.lua`. Grab → `pickup`
+  (puppet-maker2's growl pool), hard impact → `oof` (threshold measured live),
+  `mipoVoice` in the script env.: one syllable or fx with a pitch shift. This is
+  the cheap 80%; hook it to poke, pick-up and land reactions.
+- [x] **V3b. From puppet-maker2** (2026-10-27), in `src/mipo-voice.lua`:
+  - *Mouth flap*: every squeak opens the mouth (random open shape + width) for
+    the sound's length via `thing.mouthShapeVec`, then restores it (`flapMouth`).
+  - *Rubber plonks*: Mipo-part impacts play `assets/sounds/rubber-plonk1-3.ogg`.
+    Harder hits are lower and louder (speed 400 to 4000), and each body pair is deduped for 0.5s.
+  - *Winegum kisses*: bodies with the new `SQUISHY` behavior (body editor, then "add
+    behavior") kiss on impact.
+  - *Hop on grab*: `input-manager.lua` `hopMipo`, a torso impulse scaled by the Mipo's
+    total mass (`mipoHopSpeed` 500, about 200 units high).
+  - Impact sounds only fire on the first solve of a *new* contact that approaches
+    faster than 350, and plonks are capped per Mipo. Tangled Mipos used to plonk nonstop.
+    Re-touches are quiet too (2026-10-29): two bodies that touched within 1.5 s only sound
+    again at 3000+ (a leg resting on a head jittered off and on, a 'new' contact every half
+    second; a still pile went from 1-3 plonks/s to ~0.5; `spec/mipo-crowd-sound_spec.lua`).
+  - *Mouths rest closed* (2026-10-29): most Mipos had their mouths open. A click near a
+    face (grabbing one by the head too) pulled a random face that stayed until the next
+    click; now it lasts 2 s and goes back to the Mipo's own mouth. Randomize picks rest
+    mouths from `mouthShapes.restShapes` (closed, M_B_P, mmm, smile, frown; it picked from
+    all 15, mostly open speaking shapes). Mouth flaps live on state (a hot reload froze
+    them open). `spec/mipo-mouth_spec.lua`.
+  - More in `PUPPETMAKER-SOUND.md`: hmpf on editing, mi-po chatter, a voice per Mipo, the
+    band's singing, the voice lab.
+- [ ] **V4. Lipsync**: don't port mipomi's `mouth/mouth.lua`. Playtime already
+  has the same 15 shapes (`src/mouth-shapes.lua`), and the renderer reads
+  the lip decals' `extra.curvePoints` every frame
+  (`box2d-draw-textured.lua` ~2050). So the voice module only reports
+  "current phoneme + blend t", and a small adapter lerps the normalized shapes
+  into `curvePoints` (scaled by the decal's `mouthScaleX/Y`, `mouthX/Y`).
+  Restore the DNA's own mouth shape when it falls silent.
+- **V5. Voice in DNA** is P6 above: `voice = { set = 'theo', root = 'c5', personality = 'party' }`.
+  It's saved with the Mipo, picked by randomize and shown in the Mipo editor.
+- [ ] **V6. `mipo:say("mi mo jo")`**: full phrases plus the script-sandbox API. The
+  glossary (`MI` = I, `MO` = love, `JO` = you) makes the babble mean something.
+
+### Sound library (in `assets/sounds/`, see its README for sources)
+
+- In use: rubber plonks + Minipops `tom1/tom2/wood1` mixed as the impact pool.
+- Waiting for an interaction: Minipops `bd1-3` (heavy thud on big landings?), `sd1-3`,
+  `hihat1-2`; Casio MT70 drums, `hat-clave`/`snare-clave` (switches, buttons?),
+  `vibraphone hi/mid/low` (2s tones for a reveal or a happy moment).
+- Before shipping: confirm the Minipops source and the Legowelt terms.

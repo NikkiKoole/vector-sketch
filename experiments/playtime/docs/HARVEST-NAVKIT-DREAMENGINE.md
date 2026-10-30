@@ -146,7 +146,7 @@ packaging. Two names are traps: `runtime/face.h` is a UI layout grammar, not fac
    feedback for every drop, bonk and placement.
 2. **`peteyes.c`** (169 lines): an eye's shape (who it is) is kept separate from the emotion levers
    (openness, squint, lid tilt, pupil). Lids are painted in face colour, so nothing needs clipping,
-   and a ∩ arc reads as laughing. Happy, scared and dizzy Mipos; fits DOLL-PLAY's "picked-up face".
+   and a ∩ arc reads as laughing. Happy, scared and dizzy Mipos; fits DOLL-PLAY-MENU's "picked-up face".
 3. **`jelly.c` + `runtime/physics.h`**: a tiny verlet kit (points, sticks, springs, grab and throw at
    mouse speed). Jelly blobs are rim links plus gas pressure (shoelace area restore) and stack.
    `boxjelly.c` mixes them with Box2D crates in one world. Toys: pudding, slime, balloons.
@@ -166,7 +166,7 @@ packaging. Two names are traps: `runtime/face.h` is a UI layout grammar, not fac
    `WORLD-BUILDING.md` G5 (a shader or LUT in LÖVE).
 8. **Input** (`runtime/pointer.h`, `gestures.h`, `ui.h`): a pool of fingers, each gesture judged
    per finger on lift (one finger's drag isn't killed by another's tap), pinch, and fat-finger hit
-   pads (`finger_px()`). Fits DOLL-PLAY's multi-finger item.
+   pads (`finger_px()`). Fits DOLL-PLAY-MENU's multi-finger item.
 9. **Generators:**
    - `lsystem.c` (L-system plants);
    - `interiors.c` (a fill language that generates house and shop floor plans in a footprint);
