@@ -615,10 +615,8 @@ end
 local function jointAnchor(instance, parentName, childName)
     local parent, child = instance.parts[parentName], instance.parts[childName]
     if not (parent and child and parent.body and child.body) then return nil end
-    for _, joint in ipairs(child.body:getJoints()) do
-        local a, b = joint:getBodies()
-        if a == parent.body and b == child.body then return joint:getAnchors() end
-    end
+    local joint = mipoRegistry.jointBetween(parent.body, child.body)
+    if joint then return joint:getAnchors() end
     return nil
 end
 
@@ -2348,12 +2346,7 @@ end
 -- since (a neck at 25 degrees a joint, its limit now 9). Parents first, each part and
 -- everything that hangs from it is moved onto its parent's anchor, then turned back inside
 -- its limits about the joint, as a rebuild would assemble it.
-local function subtreeOf(instance, name, out)
-    local part = instance.parts[name]
-    if part and part.body and not part.body:isDestroyed() then out[#out + 1] = part.body end
-    for _, child in ipairs(instance.childrenMap[name] or {}) do subtreeOf(instance, child, out) end
-    return out
-end
+local subtreeOf = mipoRegistry.subtreeBodies
 
 function lib.settlePose(instance)
     for _, entry in ipairs(instance.topology or {}) do

@@ -20,13 +20,7 @@ local lib = {}
 -- mass. A fixed 4000 impulse lifted a heavy Mipo (mass 36) only ~20 units.
 lib.jumpSpeed = 1200
 
-local function totalMass(instance)
-    local mass = 0
-    for _, part in pairs(instance.parts) do
-        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
-    end
-    return mass
-end
+local totalMass = mipoRegistry.totalMass
 
 local legPartNames = { 'luleg', 'ruleg', 'llleg', 'rlleg' }
 local armPartNames = { 'luarm', 'ruarm', 'llarm', 'rlarm' }
@@ -379,13 +373,7 @@ local function armParentOf(instance, name)
 end
 
 local function jointBetween(parentBody, childBody)
-    for _, joint in ipairs(childBody:getJoints()) do
-        if joint:getType() == 'revolute' then
-            local bodyA, bodyB = joint:getBodies()
-            if bodyA == parentBody and bodyB == childBody then return joint end
-        end
-    end
-    return nil
+    return mipoRegistry.jointBetween(parentBody, childBody, 'revolute')
 end
 
 -- Inertia of the bodies hanging from a joint, about the joint's anchor.
@@ -602,13 +590,7 @@ lib.spineStrength = 1.5 -- times the weight torque above the joint
 lib.spineSwayAngle = 4  -- degrees of sway at spineSway 1
 lib.spineSwayPeriod = 4 -- seconds
 
--- Every body in the part's subtree (the part itself too).
-local function subtreeBodies(instance, name, out)
-    local part = instance.parts[name]
-    if part and part.body and not part.body:isDestroyed() then out[#out + 1] = part.body end
-    for _, child in ipairs((instance.childrenMap or {})[name] or {}) do subtreeBodies(instance, child, out) end
-    return out
-end
+local subtreeBodies = mipoRegistry.subtreeBodies
 
 -- The weight torque everything in `bodies` puts on a joint at (ax, ay), its arm taken as
 -- the distance to their centre of mass (the most it can be).
@@ -621,7 +603,7 @@ local function weightTorque(bodies, ax, ay)
     end
     if mass <= 0 then return 0 end
     local dx, dy = mx / mass - ax, my / mass - ay
-    return mass * 9.8 * units.meter() * math.sqrt(dx * dx + dy * dy)
+    return units.weight(mass) * math.sqrt(dx * dx + dy * dy)
 end
 
 -- The motor of the joint parent -> child turns it toward `target` (radians, child angle

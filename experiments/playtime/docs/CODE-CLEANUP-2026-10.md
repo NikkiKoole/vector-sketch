@@ -72,12 +72,18 @@ L = more.
   save and clone, object-manager create, rebuild and the ten-copies tool, and body-params use them.
   Clone no longer turns a missing width2 into 1. Editor spawn defaults stay apart (one preference each).
   `spec/shapes_spec.lua`, `spec/io_spec.lua`.
-- [ ] **CL11. Mipo body helpers in one place.** `part.body and not part.body:isDestroyed()` 37 times;
+- [x] **CL11. Mipo body helpers in one place.** `part.body and not part.body:isDestroyed()` 37 times;
   subtree walk 4 times (character-manager `subtreeOf`, mipo-actions `subtreeBodies`, joint-guard
   `collectSubtree`, body-rotate `collectDescendants`); parent-child joint lookup 4 times; Mipo
   total mass 3 times (input-manager:242, snap:241, mipo-actions:22); `mass * 9.8 * units.meter()`
   3 times; "scale density to a mass" in balanceArms/Head/Neck. Fix: `src/mipo-parts.lua`
   (`liveBody`, `subtreeBodies`, `jointBetween`, `totalMass`, `scaleMass`) and `units.weight(mass)`. M.
+  **Done 2026-10-30:** `mipoRegistry.totalMass / subtreeBodies / jointBetween(parent, child, type)`
+  replace the copies in mipo-actions, character-manager, snap and input-manager; `units.weight(mass)`
+  the three `mass * 9.8 * units.meter()`. Left on purpose: the inline
+  `part.body and not part.body:isDestroyed()` (a short readable line, also on plain things), the
+  joint guard's `collectSubtree` (part names, not bodies), body-rotate's walk (any bodies), and the
+  balance* density scaling (with CL18). `spec/mipo-registry_spec.lua`.
 - [ ] **CL12. Small copies.** `C.x[math.ceil(math.random() * #C.x)]` 31 times → `pick(list)`;
   weighted pick 3 times (mipo-chatter:30, music:664, 719); `setting(extra, key)` in liquid, grass,
   blob; `hexColor` in liquid and grass (use `hexToColor`); `doubleControlPoints` in draw-textured:1629

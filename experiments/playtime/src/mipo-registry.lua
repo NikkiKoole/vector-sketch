@@ -47,6 +47,35 @@ function lib.getAll()
     return instances
 end
 
+-- What all of a Mipo's parts that are still there weigh together.
+function lib.totalMass(instance)
+    local mass = 0
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
+    end
+    return mass
+end
+
+-- Every body in the part's subtree (the part itself first), appended to `out`.
+function lib.subtreeBodies(instance, name, out)
+    local part = instance.parts[name]
+    if part and part.body and not part.body:isDestroyed() then out[#out + 1] = part.body end
+    for _, child in ipairs((instance.childrenMap or {})[name] or {}) do lib.subtreeBodies(instance, child, out) end
+    return out
+end
+
+-- The joint from a parent part's body to a child's (Mipo joints go parent = A, child = B),
+-- of `jointType` when given; nil when there's none.
+function lib.jointBetween(parentBody, childBody, jointType)
+    for _, joint in ipairs(childBody:getJoints()) do
+        local bodyA, bodyB = joint:getBodies()
+        if bodyA == parentBody and bodyB == childBody and (not jointType or joint:getType() == jointType) then
+            return joint
+        end
+    end
+    return nil
+end
+
 function lib.reset()
     for id in pairs(instances) do instances[id] = nil end
 end

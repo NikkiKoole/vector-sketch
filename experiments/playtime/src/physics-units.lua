@@ -66,6 +66,9 @@ function lib.meterFromArgs(args)
     return nil
 end
 
+-- What `mass` weighs (a force) at 9.8 m/s^2: grab and pull strengths are counted in weights.
+function lib.weight(mass) return mass * 9.8 * lib.meter() end
+
 function lib.toReferenceSpeed(v) local _, r = factors(); return v / r end
 function lib.toReferenceForce(f) return f * factors() end
 

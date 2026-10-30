@@ -238,13 +238,7 @@ local function checkForSnaps(points, snapJoints, interacted)
     end
 end
 
-local function mipoMass(instance)
-    local mass = 0
-    for _, part in pairs(instance.parts) do
-        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
-    end
-    return mass
-end
+local mipoMass = mipoRegistry.totalMass
 
 -- A hand joint's pull in weights of the lighter Mipo on it, averaged over handPullTime.
 local function handPull(joint, dt, fx, fy)
@@ -254,7 +248,7 @@ local function handPull(joint, dt, fx, fy)
         if instance then mass = math.min(mass, mipoMass(instance)) end
     end
     if mass == math.huge or mass <= 0 then return 0 end
-    local pull = math.sqrt(fx * fx + fy * fy) / (mass * 9.8 * units.meter())
+    local pull = math.sqrt(fx * fx + fy * fy) / units.weight(mass)
     local average = state.snapHandPull[joint] or 0
     average = average + (pull - average) * (1 - math.exp(-dt / lib.handPullTime))
     state.snapHandPull[joint] = average

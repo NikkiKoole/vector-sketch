@@ -235,13 +235,7 @@ local releasedHandlers = {
     [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
 }
 
-local function mipoMass(mipo)
-    local mass = 0
-    for _, part in pairs(mipo.parts) do
-        if part.body and not part.body:isDestroyed() then mass = mass + part.body:getMass() end
-    end
-    return mass
-end
+local mipoMass = mipoRegistry.totalMass
 
 -- Grabbing a Mipo by its torso makes it hop a little (puppet-maker2 outside.lua: torso impulse on tap).
 -- The impulse scales with the Mipo's total mass so every Mipo hops about the same.
@@ -288,7 +282,7 @@ local function pointerParams()
         -- the lightest Mipos (mass 1.6) at 80 weights and the heaviest (5.9) at 22.
         -- makePointerJoint takes forces as at 100 px per metre.
         pointerForceFunc = function(fixture)
-            local weight = grabbedMass(fixture:getBody()) * 9.8 * units.meter()
+            local weight = units.weight(grabbedMass(fixture:getBody()))
             return units.toReferenceForce(state.world.dragStrength * weight)
         end,
         damp = state.world.mouseDamping
