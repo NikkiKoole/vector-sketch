@@ -30,7 +30,7 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   Done 2026-10-30.
 - [x] **M3. A standing benchmark.** `claudetools/frame-profile.lua` in the running game (a copy on
   its own bridge port: `--scene crowd`). A report, not a pass/fail spec. Done 2026-10-30.
-  **The crowd, 2026-10-30** (20 Mipos, 380 bodies, 305 joints, M-series Mac, interpreter, editor):
+  **The crowd, 2026-10-30** (20 Mipos, 380 bodies, 305 joints, Apple M1, interpreter, editor):
   update 5.5 ms (physics 2.7, joint guard 0.9, keep angle 0.5, mipo actions 0.45, blobs 0.3),
   draw 11.6 ms (textured 8.6: texfixture 2.6 for 200, connected-texture 2.1 for 160 ribbons,
   createDrawables 1.3, mouth backdrop 0.7, brows 0.6, sort 0.4; the rest is the editor's outlines
