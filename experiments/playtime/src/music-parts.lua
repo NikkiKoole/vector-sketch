@@ -502,82 +502,6 @@ local function bookTone(synth, song, section, j, rnd)
     synth.slotFilter('roundBass', math.min(600, tone))
 end
 
--- One strum: the shape's notes rolled by a hand. Up (low to high) most of the time, the gaps around
--- `gap` ms each a little different, sometimes a lag before the top two (Puppetmaker's own strum);
--- now and then down (high to low, quicker); `notes` limits it to the top few (a lighter re-strum).
-local function strumChord(synth, t, root, shape, vol, durMs, step, rnd, gap, notes)
-    local order = {}
-    for k = math.max(1, #shape - (notes or #shape) + 1), #shape do order[#order + 1] = root + shape[k] end
-    local down = rnd(100) < 15
-    if down then
-        local flipped = {}
-        for k = #order, 1, -1 do flipped[#flipped + 1] = order[k] end
-        order, gap = flipped, gap * 0.6
-    end
-    local lag = not down and #order >= 5 and rnd(100) < 45
-    local at = 0
-    for k, midi in ipairs(order) do
-        local v = vol + ((not down and k == #order) and 1 or 0) - ((down and k > 3) and 1 or 0)
-        play(synth, 'chord', 'rhodes', t + at / 1000, midi, math.max(1, v), durMs - at, step)
-        local g = gap * (0.6 + 0.9 * rnd())
-        if lag and k == #order - 2 then g = g * 3 end
-        at = at + g
-    end
-end
-
--- One bar of the strum style: the bar's chord strummed on 1 (a slow harp roll at the top of the loop
--- now and then), maybe re-strummed lighter later in the bar, a low root, a high answer note,
--- Puppetmaker's sparse hand drums under it while the band plays.
-local function bookStrumBar(synth, t0, song, b)
-    local st, rnd = D.strum, stream(song.seed, 7000 + b)
-    local barInLoop = math.floor((b - 1) / song.chordBars)
-    local entry = song.loop[barInLoop % #song.loop + 1]
-    local newChord = (b - 1) % song.chordBars == 0
-    if newChord then
-        song.chord, song.floating = entry, rnd(100) < st.floatOdds
-        if song.floating then song.chord = st.float[rnd(#st.float) + 1] end
-    end
-    local degree, shape = song.chord[1], st.shapes[song.chord[2]]
-    local root = st.rootLo + (song.key + degree - st.rootLo) % 12
-    local pcs = {}
-    for _, interval in ipairs(shape) do pcs[#pcs + 1] = (root + interval) % 12 end
-    table.insert(M.booked, { at = t0, pcs = pcs }) -- impacts play along in the chord
-    if #M.booked > 4 then table.remove(M.booked, 1) end
-    local barMs = lengthMs(song, 0, 16)
-    -- everything lets go when the chord changes (rung on, these open shapes rub the next one)
-    local chordEndMs = barMs * (song.chordBars - (b - 1) % song.chordBars) - 20
-    if newChord then
-        local harp = barInLoop % #song.loop == 0 and rnd(100) < 35
-        local gap = harp and 90 + rnd(40) or 18 + rnd(40)
-        strumChord(synth, t0 + humanize(0.008), root, shape, 4, chordEndMs, 0, rnd, gap)
-        play(synth, 'bass', 'rhodes', t0, root - 12, 4, chordEndMs, 0) -- the low root
-    end
-    if rnd(100) < 40 then -- a lighter re-strum of the top: on 3, or on the and-of-2
-        local s = rnd(100) < 60 and 8 or 6
-        strumChord(synth, stepTime(song, t0, s) + humanize(0.008), root, shape, 3,
-                   chordEndMs - lengthMs(song, 0, s), s, rnd, 15 + rnd(25), 3)
-    end
-    if not song.floating and rnd(100) < 25 then -- an answer up high, from the key's pentatonic
-        local penta, s = { 0, 2, 4, 7, 9 }, rnd(100) < 50 and 10 or 14
-        local midi = 72 + (song.key + penta[rnd(5) + 1]) % 12 + 12 * rnd(2)
-        play(synth, 'keys', 'rhodes', stepTime(song, t0, s), midi, 3, 500, s)
-    end
-    if bandPlays() then -- the hand drums, light (Puppetmaker's editor page, without its chord)
-        for _, voice in ipairs(D.puppetmaker.sparse) do
-            local patch, midi, durMs = voice[1], voice[2], voice[3]
-            if patch ~= 'chord' then
-                for _, h in ipairs(voice[4]) do
-                    if rnd(100) < h[2] then
-                        local s = h[1] - 1
-                        play(synth, 'perc', patch, stepTime(song, t0, s) + humanize(0.003),
-                             midi + (h[3] and rnd(12) - 6 or 0), patch == 'tamb' and 4 or 5, durMs, s)
-                    end
-                end
-            end
-        end
-    end
-end
-
 local function remember(t0, pcs) -- impacts play along in the chord
     table.insert(M.booked, { at = t0, pcs = pcs })
     if #M.booked > 4 then table.remove(M.booked, 1) end
@@ -899,7 +823,62 @@ local function bookTune(bar)
     end
 end
 
-local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, strum = bookStrumBar }
+local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar }
+
+-- strum's guitar: the strings of a chord's barre grip, low to high (nil = damped)
+local function guitarStrings(song, chord)
+    local fret = ((song.key + chord.degree) % 12 - 4) % 12 -- the barre, on the root on the low E
+    local grip = D.grips[chord.quality] or D.grips.gmaj
+    local strings = {}
+    for s = 1, 6 do
+        if grip[s] >= 0 then strings[s] = D.guitarOpen[s] + fret + grip[s] end
+    end
+    return strings
+end
+
+-- a pedal change, turned when the music gets there (notes are booked ahead; music.update turns it)
+local function pedal(t, patch, settings)
+    M.pedals = M.pedals or {}
+    M.pedals[#M.pedals + 1] = { at = t, patch = patch, tape = settings.tape, flanger = settings.flanger }
+end
+
+-- One bar of Travis picking: per beat the thumb (root on 1 and 3, fifth on 2 and 4, palm-damped),
+-- a treble string with it on 1 and 3 (the pinch; not in the intro), another on the off-beat. The
+-- section's pedal settings turn at its first bar; the outro's third bar is one strum left to ring.
+local TRAVIS_PINCH = { [0] = 6, [2] = 4 }
+local TRAVIS_OFF = { [0] = 5, 6, 5, 4 }
+local function bookTravis(bar)
+    local synth, song, style, t0, section, j = bar.synth, bar.song, bar.style, bar.t0, bar.section, bar.j
+    local patch = style.pickPatch
+    if j == 0 and style.pedals and style.pedals[section.kind] then pedal(t0, patch, style.pedals[section.kind]) end
+    if section.kind == 'outro' and j >= 2 then
+        if j == 2 then
+            local strings = guitarStrings(song, bar.chords[1])
+            for s = 1, 6 do
+                if strings[s] then play(synth, 'keys', patch, t0 + (s - 1) * 0.028, strings[s], 4, 3200, 0) end
+            end
+        end
+        return
+    end
+    for beat = 0, 3 do
+        local s = beat * 4
+        local chord = chordAtStep(song, bar.b, s)
+        local strings = guitarStrings(song, chord)
+        local ends = chord.s + chord.len -- a string rings up to the next chord, never into it
+        local t = stepTime(song, t0, s) + humanize(0.008) -- laid back
+        local thumb = strings[beat % 2 == 0 and 1 or 2]
+        if thumb then play(synth, 'keys', patch, t, thumb, 4, 600, s) end
+        local pinch = section.kind ~= 'intro' and TRAVIS_PINCH[beat] and strings[TRAVIS_PINCH[beat]]
+        if pinch then
+            play(synth, 'keys', patch, t + 0.012, pinch, 3, math.min(1500, lengthMs(song, s, ends - s)), s)
+        end
+        local off = strings[TRAVIS_OFF[beat]]
+        if off then
+            play(synth, 'keys', patch, stepTime(song, t0, s + 2) + humanize(0.008), off, 4,
+                 math.min(1500, lengthMs(song, s + 2, ends - s - 2)), s + 2)
+        end
+    end
+end
 
 lib.bandPlays = bandPlays
 lib.notify = notify
@@ -913,8 +892,6 @@ lib.HAT_ACCENT = HAT_ACCENT
 lib.lofiGroove = lofiGroove
 lib.lofiBass = lofiBass
 lib.bookTone = bookTone
-lib.strumChord = strumChord
-lib.bookStrumBar = bookStrumBar
 lib.remember = remember
 lib.bookSatieBar = bookSatieBar
 lib.bookAmbientBar = bookAmbientBar
@@ -932,5 +909,6 @@ lib.bookGuitar = bookGuitar
 lib.bookStrings = bookStrings
 lib.bookTune = bookTune
 lib.LOOP_BARS = LOOP_BARS
+lib.bookTravis = bookTravis
 
 return lib

@@ -175,17 +175,12 @@ local FORMS = { lofi = D.lofiForms, buymode = D.buymodeForms }
 local RIFFS = { dumont = D.dumontRiffs }
 local HORN_HITS = { citypop = D.cityHornHits }
 
--- a loop style: one section, no chords and no tune (strum: its loop of chords, a chord a bar or two)
+-- a loop style: one section, no chords and no tune
 local function planLoop(song, style)
     local section = { kind = 'loop', bars = style.bars, roles = {} }
     song.sections, song.barSection, song.barIndex = { section }, {}, {}
     for j = 0, style.bars - 1 do song.barSection[j + 1], song.barIndex[j + 1] = section, j end
     song.bars, song.bar = style.bars, 0
-    if style.loop == 'strum' then
-        local rnd = stream(song.seed, 1)
-        song.chordBars = style.chordBars[rnd(#style.chordBars) + 1]
-        song.loop = D.strum.loops[rnd(#D.strum.loops) + 1]
-    end
 end
 local LOOP_PLANS = { satie = planSatie, ambient = planAmbient }
 

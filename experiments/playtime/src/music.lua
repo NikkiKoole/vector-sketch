@@ -139,6 +139,7 @@ local function bookBar(synth, t0, song, b)
         chord.lydian = song.lydian and chord.quality == 'maj9'
         remember(stepTime(song, t0, chord.s), chordPcs(song, chord)) -- impacts play along in the chord
     end
+    if style.picking == 'travis' then return parts.bookTravis(bar) end -- strum: the guitar alone
     local hits, sidestepAt, pushes = keysHits(bar)
     bookKeys(bar, hits)
     local groove = style.groove == 'lofi'
@@ -408,6 +409,15 @@ function lib.update(synth, now)
     local t = synth.audioTime()
     if not t then return end
     M.audioTime = t
+    -- pedal changes (strum's guitar) turn when the music reaches them, not when they were booked
+    while M.pedals and M.pedals[1] and M.pedals[1].at <= t do
+        local change = table.remove(M.pedals, 1)
+        local tape, flanger = change.tape, change.flanger
+        if tape and synth.slotTape then synth.slotTape(change.patch, tape[1], tape[2], tape[3], tape[4]) end
+        if flanger and synth.slotFlanger then
+            synth.slotFlanger(change.patch, flanger[1], flanger[2], flanger[3], flanger[4])
+        end
+    end
     -- first call, or back from a pause: start fresh a moment from now
     if not M.barAt or M.barAt < t then M.barAt = t + 0.2 end
     while M.barAt < t + lib.lookahead do

@@ -29,7 +29,21 @@ D.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10, 
                   n9 = { 4, 10, 14 }, b9 = { 4, 7, 10, 13 }, s9 = { 4, 7, 10, 15 },
                   m7b5 = { 3, 6, 10, 14 }, m6 = { 3, 7, 9, 14 },
                   alt = { 4, 10, 15, 20 }, -- citypop's 7alt: 3 b7 #9 b13, the Just the Two of Us crunch
-                  dim7 = { 0, 3, 6, 9 } }  -- buymode's passing diminished
+                  dim7 = { 0, 3, 6, 9 },   -- buymode's passing diminished
+                  -- strum's guitar chords (their grips are D.grips)
+                  gmaj = { 0, 4, 7 }, gadd9 = { 0, 4, 7, 14 }, gmaj7 = { 0, 4, 7, 11 }, gmaj9 = { 0, 4, 7, 11, 14 },
+                  gm7 = { 0, 3, 7, 10 }, gm9 = { 0, 3, 7, 10, 14 }, g9sus4 = { 0, 5, 7, 10, 14 },
+                  gsus4add9 = { 0, 5, 7, 14 } }
+
+-- strum's guitar: standard tuning low to high, and E-shape barre grips from dreamengine's
+-- pedalboard.c (fret offsets above the barre per string, -1 = damped). The barre sits on the
+-- chord's root on the low E string.
+D.guitarOpen = { 40, 45, 50, 55, 59, 64 }
+D.grips = {
+    gmaj = { 0, 2, 2, 1, 0, 0 }, gadd9 = { 0, 2, 2, 1, 0, 2 }, gmaj7 = { 0, 2, 1, 1, 0, 0 },
+    gmaj9 = { 0, 2, 1, 1, 0, 2 }, gm7 = { 0, 2, 0, 0, 0, 0 }, gm9 = { 0, 2, 0, 0, 0, 2 },
+    g9sus4 = { 0, 2, 0, 2, 0, 2 }, gsus4add9 = { 0, 2, 2, 2, 0, 2 },
+}
 
 -- the forms, { section, bars }; songs grow no longer than this (a minute or so: a set keeps moving)
 D.forms = {
@@ -247,12 +261,36 @@ D.styles = {
     -- chord floating in at a chromatic pitch now and then. Dense when play is busy (PM2's crowd
     -- outside), sparse when calm (its editor, one Mipo). Pattern: D.puppetmaker.
     puppetmaker = { loop = true, bpm = 60, swing = 0.52, swing16 = true, bars = 16 },
-    -- strum: more of Puppetmaker's rolled chord, as a style of its own. Its open pentatonic shape and
-    -- its cousins (D.strum) moving slowly through a key, a chord now and then floating on a root
-    -- outside it, every strum played by a hand: the gaps vary, a lag before the top notes, now and then
-    -- a down-strum or a slow harp roll, a lighter re-strum later in the bar. A low root under it, a
-    -- high answer note now and then, Puppetmaker's sparse hand drums when play gets busy.
-    strum = { loop = 'strum', bpm = { 66, 76 }, swing = 0.52, swing16 = true, bars = 24, chordBars = { 1, 2 } },
+    -- strum: one clean electric guitar, Travis-picked (after dreamengine's pedalboard.c), and nothing
+    -- else: background music. The thumb alternates root and fifth on the beat, a treble string on every
+    -- off-beat and one with the thumb on 1 and 3, on real barre grips (D.grips). Puppetmaker's open
+    -- chord moves, B's last chord planned outside the key. The guitar's pedals turn with the sections
+    -- (pedals per section kind: tape { wow, flutter, saturation, warble }, flanger { rate, depth,
+    -- feedback, mix }): a hint of flanger in the intro, moving in A, B a slow full jet sweep, the outro
+    -- through-zero and the tape at its most worn. The outro ends on one strum.
+    strum = {
+        bpm = { 72, 82 }, swing = 0.58, chordBars = { 1, 2 }, pushOdds = 0, turnaroundOdds = 0, leadChance = 0,
+        picking = 'travis', pickPatch = 'guitar', home = 'gadd9',
+        A = {
+            { { 0, 'gadd9' }, { 5, 'gmaj9' }, { 9, 'gm7' }, { 7, 'g9sus4' } },     -- I IV vi V
+            { { 0, 'gadd9' }, { 9, 'gm9' }, { 5, 'gmaj7' }, { 0, 'gadd9' } },      -- I vi IV I
+            { { 5, 'gmaj9' }, { 0, 'gadd9' }, { 2, 'gm7' }, { 7, 'gsus4add9' } },  -- IV I ii V
+            { { 0, 'gmaj9' }, { 4, 'gm7' }, { 5, 'gadd9' }, { 2, 'gm9' } },        -- I iii IV ii
+        },
+        B = { -- the last chord floats: the same kind of chord on a root outside the key
+            { { 5, 'gmaj9', 8 }, { 0, 'gadd9', 8 }, { 2, 'gm9', 8 }, { 10, 'gadd9', 8 } },   -- IV I ii bVII
+            { { 9, 'gm7', 8 }, { 5, 'gmaj9', 8 }, { 0, 'gadd9', 8 }, { 8, 'gmaj7', 8 } },    -- vi IV I bVI
+            { { 0, 'gadd9', 8 }, { 4, 'gm7', 8 }, { 5, 'gadd9', 8 }, { 3, 'gadd9', 8 } },    -- I iii IV bIII
+        },
+        comps = { { { 0, 16, 4 }, { 16, 16, 4 } } }, -- the planner wants one; the picking hand plays instead
+        pedals = {
+            intro = { tape = { 0.2, 0.06, 0.2, 0.05 }, flanger = { 0.3, 0.3, 0.3, 0.2 } },
+            A = { tape = { 0.25, 0.08, 0.25, 0.1 }, flanger = { 0.25, 0.5, 0.5, 0.35 } },
+            -- the jet at 0.85: 0.95 resonates (peaks 4x the guitar's, +3.6 dB rms)
+            B = { tape = { 0.4, 0.12, 0.3, 0.2 }, flanger = { 0.1, 1.0, 0.85, 0.8 } },
+            outro = { tape = { 0.55, 0.15, 0.3, 0.35 }, flanger = { 0.05, 1.0, -0.85, 0.85 } },
+        },
+    },
     -- sesame: a 70s TV small band (old Sesame Street's jazz), quick and swung. A clavinet chopping
     -- the off-beats, the upright in two while it's calm and walking when the band joins, a vibes tune,
     -- sticks on the ride, and short horn shouts in the bar where the tune breathes (D.hornHits).
@@ -406,29 +444,6 @@ D.puppetmaker = {
         { 'chord', 0, 0, { { 8, 10, true } } },
         { 'quijada', 60, 600, { { 10, 20 } } },
     },
-}
-
--- The strum style's chords: shapes over the chord's root (Puppetmaker's 6 and its cousins, all open,
--- no half-steps inside), and loops of { degree, shape }. Every shape stays in the major key on the
--- degrees it's used on; 'float' entries are the Puppetmaker trick, the same shape on a root outside
--- the key (bVII, bVI, bIII), planed, nothing resolving.
-D.strum = {
-    shapes = {
-        six = { 0, 7, 16, 19, 21, 24 },      -- Puppetmaker's: 1 5 3 5 6 1
-        sixNine = { 0, 7, 14, 16, 21 },      -- 1 5 9 3 13
-        minor7 = { 0, 7, 15, 19, 22, 24 },   -- 1 5 b3 5 b7 1
-        minor11 = { 0, 7, 15, 17, 22 },      -- 1 5 b3 11 b7: open fourths
-        sus = { 0, 7, 14, 17, 19 },          -- 1 5 9 11 5
-    },
-    loops = {
-        { { 0, 'six' }, { 5, 'sixNine' }, { 9, 'minor7' }, { 7, 'sus' } },        -- I IV vi V
-        { { 0, 'six' }, { 9, 'minor11' }, { 5, 'six' }, { 0, 'sixNine' } },       -- I vi IV I
-        { { 5, 'sixNine' }, { 0, 'six' }, { 2, 'minor11' }, { 7, 'sixNine' } },   -- IV I ii V
-        { { 0, 'sixNine' }, { 4, 'minor7' }, { 5, 'six' }, { 2, 'minor7' } },     -- I iii IV ii
-        { { 9, 'minor7' }, { 5, 'sixNine' }, { 0, 'six' }, { 7, 'sus' } },        -- vi IV I V
-    },
-    float = { { 10, 'six' }, { 8, 'sixNine' }, { 3, 'six' } }, floatOdds = 15,
-    rootLo = 48,                              -- the chord's root lands in 48..59 (Puppetmaker's is 51)
 }
 
 -- The satie style: a Gymnopédie-like waltz. A low root on 1, the chord on 2 held through 3 (no root:

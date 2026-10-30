@@ -104,7 +104,7 @@ lib.patches = {
     -- (a triangle, lowpassed with a bit of bite), a steel pan for the tune (a mallet toward the bell,
     -- ringing), and a drum machine clap (high-passed noise, a big room).
     -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
-    -- (SOUND_FX_BUSES), and four are taken (rhodes, rhodesLead, piano, pianoLead).
+    -- (SOUND_FX_BUSES), and five are taken (rhodes, rhodesLead, piano, pianoLead, guitar).
     stab = { pool = true, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
              filter = { mode = 1, cutoff = 1500, resonance = 2 } },
     dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
@@ -168,6 +168,18 @@ lib.patches = {
     -- citypop's glossy synth lead: a square with a slow vibrato and a little glide
     citySynth = { pool = true, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
                   filter = { mode = 1, cutoff = 3400, resonance = 0 }, lfo = { { 0, 5.2, 0.08 } } },
+    -- the strum style's clean electric guitar, on the neck pickup: the guitar engine warm (timbre low;
+    -- the pedalboard's 0.85 is a bright jangly pick, harpsichord-like here), less banjo in the body, a
+    -- thick fundamental and a soft pick (modes: string weight, click), rolled off at 2.4 kHz, a little
+    -- tube drive, a slow tremolo (a volume LFO), plenty of reverb, and its own tape (wow, flutter,
+    -- saturation, warble) and flanger (rate, depth, feedback, mix) pedals, which the music turns while
+    -- a song plays (synth.slotTape, synth.slotFlanger). A fixed slot: its pedals take an FX bus.
+    guitar = { slot = 47, wave = 'GUITAR', adsr = { 2, 0, 7, 1600 }, harmonics = 0.4, timbre = 0.3, morph = 0.12,
+               modes = { [0] = 0.7, [1] = 0.15 }, filter = { mode = 1, cutoff = 2400, resonance = 1 },
+               reverb = 0.45, level = 0.45, drive = 0.22, driveMode = 0,
+               tape = { wow = 0.25, flutter = 0.08, saturation = 0.25, warble = 0.1 },
+               flanger = { 0.25, 0.5, 0.5, 0.35 },
+               lfo = { { 2, 4.2, 0.18 } } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,
@@ -199,6 +211,10 @@ void instrument_tape_warble(int slot, float amount);
 void instrument_autopan(int slot, float rate, float depth, int shape);
 void instrument_phaser(int slot, float rate, float depth, float feedback, float mix, int stages);
 void instrument_lfo(int slot, int which, int dest, float rate_hz, float depth);
+void instrument_chorus(int slot, float rate, float depth, float mix);
+void instrument_flanger(int slot, float rate, float depth, float feedback, float mix);
+void instrument_drive(int slot, float x);
+void instrument_drive_mode(int slot, int mode);
 double audio_time(void);
 void schedule_at(double t, int midi, int instr, int vol, int dur_ms);
 int  note_on(int midi, int instr, int vol);
@@ -246,6 +262,15 @@ local function definePatch(slot, patch)
         S.C.instrument_tape_warble(slot, patch.tape.warble or 0)
     end
     if patch.autopan then S.C.instrument_autopan(slot, patch.autopan.rate, patch.autopan.depth, 0) end
+    if patch.drive then
+        S.C.instrument_drive_mode(slot, patch.driveMode or 0)
+        S.C.instrument_drive(slot, patch.drive)
+    end
+    if patch.chorus then S.C.instrument_chorus(slot, patch.chorus[1], patch.chorus[2], patch.chorus[3]) end
+    if patch.flanger then
+        local f = patch.flanger
+        S.C.instrument_flanger(slot, f[1], f[2], f[3], f[4])
+    end
     if patch.phaser then
         local ph = patch.phaser
         S.C.instrument_phaser(slot, ph.rate, ph.depth, ph.feedback, ph.mix, 6)
@@ -264,7 +289,7 @@ end
 -- one music style plays are `pool = true`: they share these slots, and a pool slot takes a patch the
 -- first time a note needs it, from a slot whose notes have all ended (one style plays at a time, so
 -- that's the last style's). S.pool[slot] = { name, ends = audio time its last note is done }.
-lib.poolSlots = { 8, 18, 21, 28, 30, 32, 45, 46, 47 } -- 8 was the slide whistle's (gone 2026-10-30)
+lib.poolSlots = { 8, 18, 21, 28, 30, 32, 45, 46 } -- 8 was the slide whistle's (gone 2026-10-30)
 
 local function slotOf(name, patch, t, durMs)
     if patch.slot then return patch.slot end
@@ -514,6 +539,24 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs)
 end
 
 -- Ride a patch's lowpass live (the music's tone automation); the patch keeps its filter mode.
+-- Turn a patch's flanger pedal now: rate 0.05..5 Hz, depth 0..1, feedback -0.95..0.95 (high = the jet,
+-- below 0 = through-zero), mix 0..1 (0 = off). Fixed-slot patches only.
+function lib.slotFlanger(patchName, rate, depth, feedback, mix)
+    if not S.started then return end
+    local patch = lib.patches[patchName]
+    if not (patch and patch.slot) then return end
+    S.C.instrument_flanger(patch.slot, rate, depth, feedback, mix)
+end
+
+-- Turn a patch's tape pedal now: wow, flutter, saturation, warble, each 0..1. Fixed-slot patches only.
+function lib.slotTape(patchName, wow, flutter, saturation, warble)
+    if not S.started then return end
+    local patch = lib.patches[patchName]
+    if not (patch and patch.slot) then return end
+    S.C.instrument_tape(patch.slot, wow, flutter, saturation)
+    S.C.instrument_tape_warble(patch.slot, warble)
+end
+
 function lib.slotFilter(patchName, cutoff)
     if not S.started then return end
     local patch = lib.patches[patchName]
