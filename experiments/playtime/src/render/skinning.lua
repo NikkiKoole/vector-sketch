@@ -1,5 +1,7 @@
 -- src/render/skinning.lua (split from physics/box2d-draw-textured.lua, SPLIT1)
 local lib = {}
+local spineMesh = require('src.spine-mesh')
+local shapes = require('src.shapes')
 local registry = require('src.registry')
 local mathutils = require('src.math-utils')
 local NT = require('src.node-types')
@@ -235,9 +237,229 @@ local function rigidBoneVertLocal(vi, boneIndex, rigidLookupOrInfluences, rootBo
 end
 
 
+-- A MESHUSERT's triangles this frame, in its body's frame: the RESOURCE's polygon (`verts`,
+-- with its `data`: uvs, triangles, groups) centred and placed by extra.meshX/Y, scale and
+-- rotation, then bent by the spine bind, the bone influences or the painted bones.
+-- Returns the vertex format and vertices for love.graphics.newMesh, and for the debug
+-- outline the placed polygon with its triangle indices (or, without indices, triangles).
+function lib.meshusertVertices(extra, body, data, verts, isSelected)
+    -- Centering origin: bbox center of the vertices — the same
+        -- value `makeShapeListFromPolygon` subtracts when building
+        -- Box2D fixtures. This is stable (doesn't change when the
+        -- RESOURCE body is moved) and matches the collision polygon.
+        -- Using body:getPosition() breaks when the body has been
+        -- moved since creation (thing.vertices are authoring-world,
+        -- not body-local).
+        local cx, cy = mathutils.computeCentroid(verts)
+        verts = mathutils.makePolygonRelativeToCenter(verts, cx, cy)
+
+        -- maybe here we deal with translate and scale ? (rotation?)
+        local x = extra.meshX or 0
+        local y = extra.meshY or 0
+        verts = mathutils.transformPolygonPoints(verts, x, y)
+        local sx = extra.scaleX or 1
+        local sy = extra.scaleY or 1
+        verts = mathutils.scalePolygonPoints(verts, sx, sy)
+        local meshRot = extra.meshRot or 0
+        if meshRot ~= 0 then
+            verts = mathutils.rotatePolygonPoints(verts, meshRot)
+        end
+
+        -- Auto-unbind when polygon vert count changed since bind —
+        -- stale influences / spine (t,s) would crash or misalign.
+        local numVerts = #verts / 2
+        if extra.influences and #extra.influences ~= numVerts then
+            extra.influences = nil
+            extra.bindVerts   = nil
+        end
+        local sb = extra.spineBind
+        if sb then
+            local boundVerts = sb.multi and (sb.perVert and #sb.perVert)
+                or (sb.tsPerVert and #sb.tsPerVert / 2)
+            if boundVerts and boundVerts ~= numVerts then
+                extra.spineBind = nil
+            end
+        end
+
+        -- Two bind modes, mutually exclusive: spine (Bezier through
+        -- nodes) or DQS (per-vert weighted-bone transforms). Each
+        -- bind op clears the other; presence alone decides the path.
+        if extra.spineBind then
+            local bendiness = extra.spineBendiness or 2
+            local worldVerts
+            if extra.spineBind.multi then
+                local nodeLists = spineMesh.splitChainsByRootRepeat(extra.nodes or {})
+                local chains = spineMesh.buildChainsFromNodeLists(nodeLists)
+                worldVerts = spineMesh.evaluateMultiChain(extra.spineBind, chains, bendiness)
+            else
+                local liveChain = spineMesh.buildChainFromNodes(extra.nodes or {})
+                if #liveChain >= 4 then
+                    worldVerts = spineMesh.evaluate(extra.spineBind, liveChain, bendiness)
+                end
+            end
+            if worldVerts then
+                -- Mesh is drawn with the body transform applied
+                -- (love.graphics.draw(mesh, bx, by, ba)) so vert
+                -- coords must be in body-local.
+                local localVerts = {}
+                for k = 1, #worldVerts, 2 do
+                    localVerts[k], localVerts[k + 1] =
+                        body:getLocalPoint(worldVerts[k], worldVerts[k + 1])
+                end
+                verts = localVerts
+            end
+        elseif extra.influences and #extra.influences > 0 then
+            local newVerts = deformWorldVerts(extra.influences,
+                extra.bindVerts, numVerts, body)
+            verts = newVerts
+        end
+
+        local vertexFormat = {
+            { "VertexPosition", "float", 2 },
+            --    { "VertexTexCoord", "float", 2 },
+            { "VertexColor",    "float", 4 },
+        }
+        local meshVertices = {}
+
+        -- Prefer pre-stored triangle indices (computed once at UV-
+        -- compute time on the rest-pose polygon). Index-based draw
+        -- means topology is stable across deformation — no per-frame
+        -- triangulation, no Steiner-point UV gaps. Fall back to
+        -- per-frame triangulation if indices missing (old scenes or
+        -- RESOURCE never selected after polygon edit).
+        local triIdx = data and data.triangles
+        -- Re-order triIdx so triangles with lower group number draw
+        -- first (behind). triangleGroups is written by the triangle
+        -- painter; reorder is stable — triangles within the same
+        -- group preserve CDT order. UVs are per-vertex so reordering
+        -- triangle indices never desyncs them.
+        if triIdx and data.triangleGroups and data.triangleOrderDirty then
+            local numTris = math.floor(#triIdx / 3)
+            local perm = {}
+            for t = 1, numTris do perm[t] = t end
+            table.sort(perm, function(a, b)
+                local ga = data.triangleGroups[a] or 0
+                local gb = data.triangleGroups[b] or 0
+                if ga == gb then return a < b end
+                return ga < gb
+            end)
+            local newTri = {}
+            local newGroups = {}
+            local oldBones = extra.triangleBones
+            local newBones = oldBones and {} or nil
+            for k = 1, numTris do
+                local src = perm[k]
+                newTri[(k - 1) * 3 + 1] = triIdx[(src - 1) * 3 + 1]
+                newTri[(k - 1) * 3 + 2] = triIdx[(src - 1) * 3 + 2]
+                newTri[(k - 1) * 3 + 3] = triIdx[(src - 1) * 3 + 3]
+                newGroups[k] = data.triangleGroups[src]
+                if newBones then newBones[k] = oldBones[src] end
+            end
+            data.triangles = newTri
+            data.triangleGroups = newGroups
+            if newBones then extra.triangleBones = newBones end
+            data.triangleOrderDirty = false
+            triIdx = newTri
+        end
+        local tris
+        if not triIdx then
+            tris = shapes.makeTrianglesFromPolygon(verts)
+        end
+
+        local alpha = (data and data.uvs) and (isSelected and 0.75 or 1) or 0.5
+
+        local triangleBones  = extra.triangleBones
+        local boneInfluences = extra.influences
+        local boneBindVerts  = extra.bindVerts
+        local rigidLookup    = extra.rigidLookup
+        -- rigidLookup is preferred (unpruned); fall back to pruned influences for old scenes
+        local rigidSource    = rigidLookup or boneInfluences
+        local isRigidLookup  = rigidLookup ~= nil
+        local hasBoneOverrides = triangleBones and rigidSource and boneBindVerts
+
+        -- Pre-compute per-vertex bone weights averaged across all triangles
+        -- that share the vertex. Shared seam vertices blend between adjacent
+        -- bone regions instead of snapping to whichever triangle is drawn first.
+        local vertBoneWeights = nil
+        if hasBoneOverrides and triIdx then
+            vertBoneWeights = {}
+            local numTris = math.floor(#triIdx / 3)
+            for t = 1, numTris do
+                local boneIdx = triangleBones[t]
+                if boneIdx then
+                    for corner = 0, 2 do
+                        local vi = triIdx[t * 3 - 2 + corner]
+                        if not vertBoneWeights[vi] then vertBoneWeights[vi] = {} end
+                        vertBoneWeights[vi][boneIdx] = (vertBoneWeights[vi][boneIdx] or 0) + 1
+                    end
+                end
+            end
+            for _, bw in pairs(vertBoneWeights) do
+                local total = 0
+                for _, w in pairs(bw) do total = total + w end
+                for bIdx, w in pairs(bw) do bw[bIdx] = w / total end
+            end
+        end
+
+        -- Where vertex vi is drawn: blended over its painted bones, else where the
+        -- deformation put it.
+        local function placeVertex(vi)
+            local bw = vertBoneWeights and vertBoneWeights[vi]
+            if bw then
+                local wxSum, wySum, wSum = 0, 0, 0
+                for nodeIndex, w in pairs(bw) do
+                    local bx, by = rigidBoneVertLocal(
+                        vi, nodeIndex, rigidSource, body, isRigidLookup)
+                    if bx then
+                        wxSum = wxSum + bx * w
+                        wySum = wySum + by * w
+                        wSum  = wSum + w
+                    end
+                end
+                if wSum > 0 then return wxSum / wSum, wySum / wSum end
+            end
+            return verts[(vi - 1) * 2 + 1], verts[(vi - 1) * 2 + 2]
+        end
+
+        local uvs = data and data.uvs
+        if uvs then
+            vertexFormat = {
+                { "VertexPosition", "float", 2 },
+                { "VertexTexCoord", "float", 2 },
+                { "VertexColor",    "float", 4 },
+            }
+        end
+        if triIdx then
+            -- index-based: vertex vi's UV is uvs[vi*2-1..vi*2]
+            for j = 1, #triIdx do
+                local vi = triIdx[j]
+                local px, py = placeVertex(vi)
+                if uvs then
+                    table.insert(meshVertices, { px, py, uvs[(vi - 1) * 2 + 1] or 0,
+                        uvs[(vi - 1) * 2 + 2] or 0, 1, 1, 1, alpha })
+                else
+                    table.insert(meshVertices, { px, py, 1, 1, 1, alpha })
+                end
+            end
+        else
+            local vertexIndex = uvs and buildPolyVertexIndex(verts)
+            for j = 1, #tris do
+                local tri = tris[j]
+                for k = 0, 2 do
+                    local vx, vy = tri[k * 2 + 1], tri[k * 2 + 2]
+                    if uvs then
+                        local u, v = lookupUV(vx, vy, vertexIndex, uvs)
+                        table.insert(meshVertices, { vx, vy, u or 0, v or 0, 1, 1, 1, alpha })
+                    else
+                        table.insert(meshVertices, { vx, vy, 1, 1, 1, alpha })
+                    end
+                end
+            end
+        end
+        return vertexFormat, meshVertices, verts, triIdx, tris
+end
+
 lib.lookupUV = lookupUV
 lib.buildPolyVertexIndex = buildPolyVertexIndex
-lib.deformWorldVerts = deformWorldVerts
-lib.rigidBoneVertLocal = rigidBoneVertLocal
 
 return lib

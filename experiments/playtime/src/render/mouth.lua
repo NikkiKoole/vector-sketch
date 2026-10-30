@@ -1,5 +1,9 @@
 -- src/render/mouth.lua (split from physics/box2d-draw-textured.lua, SPLIT1)
 local lib = {}
+local color = require('src.color')
+local ompBake = require('src.render.omp-bake')
+local ribbon = require('src.render.ribbon')
+local getLoveImage, getStrip, texturedCurve = ompBake.getLoveImage, ribbon.getStrip, ribbon.texturedCurve
 local shapes = require('src.shapes')
 local utils = require('src.utils')
 
@@ -174,10 +178,210 @@ local function animatedCurvePoints(extra, body)
 end
 
 
-lib.stripHolds = stripHolds
-lib.mouthTriangles = mouthTriangles
-lib.lipShift = lipShift
-lib.buildMouthPolygon = buildMouthPolygon
-lib.animatedCurvePoints = animatedCurvePoints
+-- The mouth's drawables (createDrawables): drawn on the face body, around its curve points.
+lib.drawers = {}
+
+    -- Mouth backdrop: dark interior fill. Drawn below teeth (z = mouth-lower - 2)
+    -- so teeth always render on top of the void.
+lib.drawers['mouth-backdrop'] = function(d)
+    local extra = d.extra
+    local body = d.body
+    if body and not body:isDestroyed() then
+        local angle = body:getAngle()
+        local bx, by = body:getPosition()
+
+        love.graphics.push()
+        love.graphics.translate(bx, by)
+        love.graphics.rotate(angle)
+
+        local curvePoints = animatedCurvePoints(extra, body) or extra.curvePoints
+        local cleaned = buildMouthPolygon(curvePoints)
+        if cleaned then
+            local tris = mouthTriangles(extra, 'backdrop', cleaned)
+            if tris and #tris > 0 then
+                love.graphics.stencil(function()
+                    for ti = 1, #tris do
+                        love.graphics.polygon("fill", tris[ti])
+                    end
+                end, "replace", 1)
+                love.graphics.setStencilTest("equal", 1)
+
+                local br, bg, bb, ba = color.hexToColor(extra.backdropHex or '00000099')
+                love.graphics.setColor(br, bg, bb, ba)
+                local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]
+                for pi = 3, #cleaned, 2 do
+                    if cleaned[pi] < minX then minX = cleaned[pi] end
+                    if cleaned[pi + 1] < minY then minY = cleaned[pi + 1] end
+                    if cleaned[pi] > maxX then maxX = cleaned[pi] end
+                    if cleaned[pi + 1] > maxY then maxY = cleaned[pi + 1] end
+                end
+                love.graphics.rectangle("fill", minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4)
+                love.graphics.setStencilTest()
+            end
+        end
+
+        love.graphics.pop()
+    end
+end
+
+    -- Mouth lower lip: lip curve only (interior fill moved to mouth-backdrop)
+lib.drawers['mouth-lower'] = function(d)
+    local extra = d.extra
+    local body = d.body
+    local curveData = d.curveData
+    if body and not body:isDestroyed() and curveData then
+        local angle = body:getAngle()
+        local bx, by = body:getPosition()
+
+        love.graphics.push()
+        love.graphics.translate(bx, by)
+        love.graphics.rotate(angle)
+
+        local animated = animatedCurvePoints(extra, body)
+        local s = animated or extra.curvePoints
+        local activeCurveData = animated and {
+            s[1], s[2], s[15], s[16],
+            s[15], s[16], s[13], s[14],
+            s[13], s[14], s[11], s[12],
+            s[11], s[12], s[9], s[10],
+        } or curveData
+        local lipImg = extra.ompImage
+        if not lipImg and extra.main and extra.main.bgURL then
+            lipImg = getLoveImage('textures/' .. extra.main.bgURL)
+        end
+        if lipImg then
+            local mesh = getStrip(lipImg, extra.lipScale or 0.25)
+            love.graphics.setColor(1, 1, 1, 1)
+            if not stripHolds(mesh, activeCurveData) then
+                texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
+                    extra.lipScale or 0.25, nil, lipShift(extra, 'lower', lipImg))
+            end
+            love.graphics.draw(mesh)
+        end
+
+        love.graphics.pop()
+    end
+end
+
+    -- Mouth upper lip: draw upper lip curve on top
+lib.drawers['mouth-upper'] = function(d)
+    local extra = d.extra
+    local body = d.body
+    local curveData = d.curveData
+    if body and not body:isDestroyed() and curveData then
+        local angle = body:getAngle()
+        local bx, by = body:getPosition()
+
+        love.graphics.push()
+        love.graphics.translate(bx, by)
+        love.graphics.rotate(angle)
+
+        local activeCurveData = curveData
+        local s = animatedCurvePoints(extra, body)
+        if s then
+            activeCurveData = {
+                s[1], s[2], s[3], s[4],
+                s[3], s[4], s[5], s[6],
+                s[5], s[6], s[7], s[8],
+                s[7], s[8], s[9], s[10],
+            }
+        end
+        local lipImg = extra.ompImage
+        if not lipImg and extra.main and extra.main.bgURL then
+            lipImg = getLoveImage('textures/' .. extra.main.bgURL)
+        end
+        if lipImg then
+            local mesh = getStrip(lipImg, extra.lipScale or 0.25)
+            love.graphics.setColor(1, 1, 1, 1)
+            if not stripHolds(mesh, activeCurveData) then
+                texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
+                    extra.lipScale or 0.25, nil, lipShift(extra, 'upper', lipImg))
+            end
+            love.graphics.draw(mesh)
+        end
+
+        love.graphics.pop()
+    end
+end
+
+    -- Teeth: positioned image, optionally stencil-clipped to mouth interior
+lib.drawers['mouth-teeth'] = function(d)
+    local extra = d.extra
+    local body = d.body
+    if body and not body:isDestroyed() then
+        local angle = body:getAngle()
+        local bx, by = body:getPosition()
+
+        love.graphics.push()
+        love.graphics.translate(bx, by)
+        love.graphics.rotate(angle)
+
+        local img = extra.ompImage
+        if not img and extra.main and extra.main.bgURL then
+            img = getLoveImage('textures/' .. extra.main.bgURL)
+        end
+
+        if img then
+            local ox = extra.ox or 0
+            local oy = extra.oy or 0
+            local w = extra.w or 20
+            local h = extra.h or 10
+            local imgW, imgH = img:getDimensions()
+            local scaleX = w / imgW
+            local scaleY = h / imgH
+
+            -- Build a local curvePoints copy. Animated from mouthShapeVec when
+            -- available, otherwise copied from bind so we can safely mutate.
+            local curvePoints = extra.curvePoints and animatedCurvePoints(extra, body)
+            if curvePoints then
+                -- Anchor at corner midpoint (stable) with a small pull toward
+                -- p3 (top of opening) so teeth follow lip motion subtly.
+                local cmx = (curvePoints[1] + curvePoints[9])  * 0.5
+                local cmy = (curvePoints[2] + curvePoints[10]) * 0.5
+                local k = 0.3
+                ox = cmx * (1 - k) + curvePoints[5] * k
+                oy = cmy * (1 - k) + curvePoints[6] * k
+            elseif extra.curvePoints then
+                curvePoints = {}
+                for ci = 1, #extra.curvePoints do
+                    curvePoints[ci] = extra.curvePoints[ci]
+                end
+            end
+
+            -- For stickOut: push the lower-arc Y values (p6, p7, p8) down by
+            -- ~teeth height BEFORE the polygon is built. Preserves the natural
+            -- top of the curve (including dips in weird mouth shapes — front
+            -- teeth show through below the dip) and creates vertical room.
+            if curvePoints and extra.teethStickOut and #curvePoints == 16 then
+                local drop = h * 0.8
+                curvePoints[12] = curvePoints[12] + drop  -- p6.y
+                curvePoints[14] = curvePoints[14] + drop  -- p7.y
+                curvePoints[16] = curvePoints[16] + drop  -- p8.y
+            end
+
+            local cleaned = buildMouthPolygon(curvePoints)
+
+            if cleaned then
+                local tris = mouthTriangles(extra, 'teeth', cleaned)
+                if tris and #tris > 0 then
+                    love.graphics.stencil(function()
+                        for ti = 1, #tris do
+                            love.graphics.polygon("fill", tris[ti])
+                        end
+                    end, "replace", 1)
+                    love.graphics.setStencilTest("equal", 1)
+
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
+
+                    love.graphics.setStencilTest()
+                end
+            end
+        end
+
+        love.graphics.pop()
+    end
+end
+
 
 return lib
