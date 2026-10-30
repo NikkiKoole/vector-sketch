@@ -239,14 +239,30 @@ local function shaderColor(key, label)
         set = function(fixture, v) extraOf(fixture)[key] = v end }
 end
 
-lib.hairs = {
+-- Light and mottle: both shaders read these (sendSharedLighting in box2d-draw-textured).
+local surfaceLight = {
+    { key = 'lighting', kind = 'bool',
+      get = function(fixture) return extraOf(fixture).plasticineUseLighting ~= false end,
+      set = function(fixture, v) extraOf(fixture).plasticineUseLighting = v end },
+    shaderColor('plasticineWarmHex', 'warm (lit)'),
+    shaderColor('plasticineCoolHex', 'cool'),
+    shaderNumber('plasticineMottleStrength', 'mottle', 0, 0.5, { advanced = true }),
+    shaderNumber('plasticineMottleScale', 'mottle size', 1, 20, { advanced = true }),
+    shaderNumber('plasticineSpecPow', 'shine tight', 2, 120, { advanced = true }),
+    shaderNumber('plasticineSpecStrength', 'shine', 0, 1, { advanced = true }),
+    shaderNumber('plasticineSSSpow', 'sss falloff', 0.5, 8, { advanced = true }),
+    shaderNumber('plasticineSSSstrength', 'sss', 0, 1, { advanced = true }),
+    shaderNumber('plasticineTerminator', 'terminator', 0.5, 6, { advanced = true }),
+}
+
+lib.hairs = concat({
     shaderNumber('hairsStrength', 'strength', 0, 1),
     shaderNumber('hairsDensity', 'density', 1, 30),
     shaderNumber('hairsFuzz', 'fuzz', 0, 0.5),
     shaderNumber('hairsBush', 'bush', 0, 3),
-}
+}, surfaceLight)
 
-lib.plasticine = {
+lib.plasticine = concat({
     { key = 'form', kind = 'bool',
       get = function(fixture) return extraOf(fixture).plasticineForm ~= false end,
       set = function(fixture, v) extraOf(fixture).plasticineForm = v end },
@@ -256,21 +272,9 @@ lib.plasticine = {
     shaderNumber('plasticineStrength', 'grain', 0, 0.6),
     shaderNumber('plasticineScale', 'grain fine', 4, 120),
     shaderNumber('plasticineEdge', 'edge dark', 0, 0.6),
-    { key = 'lighting', kind = 'bool',
-      get = function(fixture) return extraOf(fixture).plasticineUseLighting ~= false end,
-      set = function(fixture, v) extraOf(fixture).plasticineUseLighting = v end },
-    shaderColor('plasticineWarmHex', 'warm (lit)'),
-    shaderColor('plasticineCoolHex', 'cool'),
     shaderNumber('plasticineFormStrength', 'form depth', 0, 6, { advanced = true }),
     shaderNumber('plasticineFormRadius', 'form size', 0.01, 0.2, { advanced = true }),
-    shaderNumber('plasticineMottleStrength', 'mottle', 0, 0.5, { advanced = true }),
-    shaderNumber('plasticineMottleScale', 'mottle size', 1, 20, { advanced = true }),
-    shaderNumber('plasticineSpecPow', 'shine tight', 2, 120, { advanced = true }),
-    shaderNumber('plasticineSpecStrength', 'shine', 0, 1, { advanced = true }),
-    shaderNumber('plasticineSSSpow', 'sss falloff', 0.5, 8, { advanced = true }),
-    shaderNumber('plasticineSSSstrength', 'sss', 0, 1, { advanced = true }),
-    shaderNumber('plasticineTerminator', 'terminator', 0.5, 6, { advanced = true }),
-}
+}, surfaceLight)
 
 -- A patch layer: its images, where it sits on the texture, flips and tint.
 local patches = {}

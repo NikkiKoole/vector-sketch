@@ -317,7 +317,8 @@ describe('inspector', function()
                 local name = subtype .. ' ' .. tostring(row.key or row.label)
                 local results = {}
                 if row.kind == 'number' then
-                    local v = row.min + (row.max - row.min) * 0.75
+                    local min, max = resolve(row.min, fixture), resolve(row.max, fixture)
+                    local v = min + (max - min) * 0.75
                     if row.step then v = math.floor(v) end
                     fixture = row.set(fixture, v) or fixture
                     local got = row.get(fixture)

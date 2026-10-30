@@ -3,9 +3,10 @@
 -- special sensor fixture: snap point, anchor, light, ...). The target is the
 -- Box2D fixture; settings live in its userData (`label`, `extra`). Moving or
 -- resizing replaces the fixture, so those return the new one. Subtypes not in
--- `bySubtype` (texfixture, meshusert, resource, connected-texture,
--- trace-vertices) still use the hand-made panel in src/ui/sfixture-editor.lua.
+-- `bySubtype` (texfixture, meshusert, resource) still use their hand-made panels
+-- in src/ui/sfixture-editor.lua.
 local subtypes = require('src.subtypes')
+local texfixtureParams = require('src.texfixture-params')
 
 local lib = {}
 
@@ -111,10 +112,85 @@ local function textureChanged(e) e.dirty = true end
 
 local zOffset = extraNumber('zOffset', 'z offset', -180, 180, 0, nil, { step = 1, advanced = true })
 
+-- A number in extra.main (the strip textures).
+local function mainNumber(key, label, min, max, default, extra)
+    local row = { key = label, kind = 'number', min = min, max = max,
+        get = function(fixture) return mainOf(fixture)[key] or default end,
+        set = function(fixture, v) mainOf(fixture)[key] = v end }
+    for k, v in pairs(extra or {}) do row[k] = v end
+    return row
+end
+
+-- Which way the texture runs along the strip.
+local direction = { key = 'direction', kind = 'choice', options = { 'forward', 'backward' },
+    get = function(fixture) return mainOf(fixture).dir == -1 and 'backward' or 'forward' end,
+    set = function(fixture, v) mainOf(fixture).dir = (v == 'backward') and -1 or 1 end }
+
+-- Copies of rows that show only while `visible(fixture)` (texfixture-params' rows are shared).
+local function shownWhen(visible, rows)
+    local out = {}
+    for i, row in ipairs(rows) do
+        local copy = {}
+        for k, v in pairs(row) do copy[k] = v end
+        copy.visible = visible
+        out[i] = copy
+    end
+    return out
+end
+
+-- The texture and its shaders; hairs win over plasticine when both are on (setSurfaceShader).
+local function hairsOn(fixture) return extraOf(fixture).hairs == true end
+local function plasticineOn(fixture) return extraOf(fixture).plasticine == true and not hairsOn(fixture) end
+local stripLook = concat(texfixtureParams.texture,
+    shownWhen(hairsOn, texfixtureParams.hairs),
+    shownWhen(plasticineOn, texfixtureParams.plasticine))
+
+-- trace vertices: from which to which vertex of the body's outline (negative counts back)
+local function halfOutline(fixture)
+    return #(fixture:getBody():getUserData().thing.vertices or {}) / 2
+end
+local function outlineIndex(key, label)
+    return { key = label, kind = 'number', step = 1,
+        min = function(fixture) return -halfOutline(fixture) end,
+        max = function(fixture) return halfOutline(fixture) end,
+        get = function(fixture) return extraOf(fixture)[key] or 1 end,
+        set = function(fixture, v) extraOf(fixture)[key] = math.floor(v) end }
+end
+
 lib.bySubtype = {
     [subtypes.SNAP] = position,
     [subtypes.ANCHOR] = position,
     [subtypes.UVUSERT] = position,
+    [subtypes.DECAL] = position,
+    -- a texture strip along a chain of nodes (joints, anchors)
+    [subtypes.CONNECTED_TEXTURE] = concat({
+        { kind = 'action', label = function(fixture) return 'add node (' .. #(extraOf(fixture).nodes or {}) .. ')' end,
+          run = function() local modes = require('src.modes'); modes.set(modes.ADD_NODE_CONNECTED_TEX) end },
+        { kind = 'action', label = 'nodes from joints',
+          run = function(_, fixture)
+              local joints = require('src.joints')
+              local nodes = {}
+              for _, joint in ipairs(joints.jointChain(fixture:getBody())) do
+                  nodes[#nodes + 1] = { id = joints.getJointId(joint), type = require('src.node-types').JOINT }
+              end
+              extraOf(fixture).nodes = nodes
+          end },
+        mainNumber('wmul', 'width', 0.1, 10, 1),
+        mainNumber('bendiness', 'bend', 0, 6, 2, { step = 1 }),
+        direction,
+        zOffset,
+    }, stripLook, position),
+    -- a texture strip along part of the body's outline
+    [subtypes.TRACE_VERTICES] = concat({
+        outlineIndex('startIndex', 'from vertex'),
+        outlineIndex('endIndex', 'to vertex'),
+        extraNumber('tension', 'tension', 0.01, 0.5, 0.05),
+        extraNumber('spacing', 'spacing', 1, 100, 10),
+        extraNumber('width', 'width', 1, 1000, 100),
+        mainNumber('wmul', 'texture width', 0.1, 10, 1),
+        direction,
+        zOffset,
+    }, stripLook, position),
     [subtypes.TILE_REPEAT] = concat({
         { key = 'texture', kind = 'file',
           get = function(fixture) return mainOf(fixture).bgURL or '' end,
@@ -200,7 +276,7 @@ lib.bySubtype = {
               e.main = require('src.blob').randomLook()
               e.dirty = true
           end },
-    }, require('src.texfixture-params').ompRows('main'), { zOffset }, position),
+    }, texfixtureParams.ompRows('main'), { zOffset }, position),
 }
 
 return lib

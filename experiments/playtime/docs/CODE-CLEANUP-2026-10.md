@@ -97,11 +97,18 @@ L = more.
   scripts/ (1812 revolute, 28 wheel, 4 prismatic, 2 friction, 2 rope) compared before and after,
   loaded and round-tripped: identical. `spec/joints-save-load_spec.lua` covers all nine types.
   Files now also keep a disabled motor's speed and disabled limits.
-- [ ] **CL14. Connected texture and trace vertices onto the inspector.** `ui/sfixture-editor.lua:1288-1872`
+- [x] **CL14. Connected texture and trace vertices onto the inspector.** `ui/sfixture-editor.lua:1288-1872`
   (~580 lines) copies texture / hairs / plasticine settings that `texfixture-params` already has,
   and the copies drifted. Fix: `[CONNECTED_TEXTURE]` and `[TRACE_VERTICES]` in
   `sfixtureParams.bySubtype` (position + a few own rows + `texfixtureParams.texture/.hairs/.plasticine`),
   then delete the hand-made branch and the helpers only it uses (:158-291). Removes BUG4 and BUG10. M.
+  **Done 2026-10-30:** `sfixtureParams.bySubtype` has connected texture (add node, nodes from joints,
+  width, bend, direction), trace vertices (from/to vertex, tension, spacing, width) and decals
+  (position); both strips share `texfixtureParams.texture/hairs/plasticine` and `position`. The hand-made
+  branch and its helpers are gone: sfixture-editor.lua 1854 -> 1130 lines. Hairs now also get the
+  light and mottle rows (one `surfaceLight` list both shaders read). New strips get their defaults
+  when made (fixture-types), not the first time the old panel was drawn. `spec/inspector_spec.lua`
+  runs every row of the new panels.
 - [x] **CL15. `forPartAndMirror` in the Mipo editor.** "Apply to this part, then its mirror if
   symmetric, then rebuild textures" is pasted ~18 times (`ui/mipo-editor.lua` 1087, 1146, 1250,
   1265, 1355, ...); connected skin and connected hair (1786-1962) are near-copies; "all torso

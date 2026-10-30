@@ -25,7 +25,7 @@ local function simpleEntry(subtype, opts)
     return {
         subtype = subtype,
         getSize = opts.getSize or function(cfg) return cfg.radius, cfg.radius end,
-        getExtra = function() return {} end,
+        getExtra = opts.getExtra or function() return {} end,
     }
 end
 
@@ -33,8 +33,15 @@ fixtureTypes[subtypes.SNAP] = simpleEntry(subtypes.SNAP, {
     getSize = function(cfg) return cfg.radius * 5, cfg.radius * 5 end,
 })
 fixtureTypes[subtypes.ANCHOR]            = simpleEntry(subtypes.ANCHOR)
-fixtureTypes[subtypes.CONNECTED_TEXTURE] = simpleEntry(subtypes.CONNECTED_TEXTURE)
-fixtureTypes[subtypes.TRACE_VERTICES]    = simpleEntry(subtypes.TRACE_VERTICES)
+-- the strip textures draw from extra.main; trace vertices also need which outline vertices
+fixtureTypes[subtypes.CONNECTED_TEXTURE] = simpleEntry(subtypes.CONNECTED_TEXTURE, {
+    getExtra = function() return { main = {} } end,
+})
+fixtureTypes[subtypes.TRACE_VERTICES] = simpleEntry(subtypes.TRACE_VERTICES, {
+    getExtra = function()
+        return { main = {}, startIndex = 1, endIndex = 1, tension = 0.05, spacing = 10, width = 100 }
+    end,
+})
 fixtureTypes[subtypes.TILE_REPEAT]       = simpleEntry(subtypes.TILE_REPEAT)
 fixtureTypes[subtypes.GRASS] = {
     subtype = subtypes.GRASS,
