@@ -244,7 +244,58 @@ local S = state.synth
 -- voiced), 6 the organ's leakage. A shared slot goes back to these before its next patch.
 local MODE_DEFAULTS = { [0] = 0, 0, 0.5, 0.5, 0.5, 0.5, 0 }
 
-local function definePatch(slot, patch)
+-- The pedals a patch has right now, unscaled: from the patch when it loads, then whatever the music
+-- turned (slotTape, slotFlanger). On state, so the settings panel and a hot reload see them.
+S.pedals = S.pedals or {}
+S.effectAmount = S.effectAmount or 1
+
+local function pedalsFromPatch(patch)
+    local p = {}
+    local tape = patch.tape
+    if tape then p.tape = { tape.wow, tape.flutter, tape.saturation, tape.warble or 0 } end
+    if patch.autopan then p.autopan = { patch.autopan.rate, patch.autopan.depth } end
+    if patch.drive then p.drive = { patch.driveMode or 0, patch.drive } end
+    if patch.chorus then p.chorus = { patch.chorus[1], patch.chorus[2], patch.chorus[3] } end
+    if patch.flanger then p.flanger = { patch.flanger[1], patch.flanger[2], patch.flanger[3], patch.flanger[4] } end
+    if patch.phaser then
+        p.phaser = { patch.phaser.rate, patch.phaser.depth, patch.phaser.feedback, patch.phaser.mix }
+    end
+    return p
+end
+
+local function clamp(x, lo, hi) return math.max(lo, math.min(hi, x)) end
+
+-- Send a patch's pedals to its slot, every amount scaled by the effects slider (S.effectAmount:
+-- 0 dry, 1 as designed, 2 extreme), kept inside the engine's ranges. Rates and modes don't scale.
+-- At 1 these are exactly the patch's own values. `only` sends just that pedal.
+local function sendPedals(slot, name, only)
+    local p, a = S.pedals[name] or {}, S.effectAmount
+    local function want(kind) return p[kind] and (not only or only == kind) end
+    if want('tape') then
+        local t = p.tape
+        S.C.instrument_tape(slot, clamp(t[1] * a, 0, 1), clamp(t[2] * a, 0, 1), clamp(t[3] * a, 0, 1))
+        S.C.instrument_tape_warble(slot, clamp(t[4] * a, 0, 1))
+    end
+    if want('autopan') then S.C.instrument_autopan(slot, p.autopan[1], clamp(p.autopan[2] * a, 0, 1), 0) end
+    if want('drive') then
+        S.C.instrument_drive_mode(slot, p.drive[1])
+        S.C.instrument_drive(slot, clamp(p.drive[2] * a, 0, 1))
+    end
+    if want('chorus') then
+        local c = p.chorus
+        S.C.instrument_chorus(slot, c[1], clamp(c[2] * a, 0, 1), clamp(c[3] * a, 0, 1))
+    end
+    if want('flanger') then
+        local f = p.flanger
+        S.C.instrument_flanger(slot, f[1], clamp(f[2] * a, 0, 1), clamp(f[3] * a, -0.95, 0.95), clamp(f[4] * a, 0, 1))
+    end
+    if want('phaser') then
+        local ph = p.phaser
+        S.C.instrument_phaser(slot, ph[1], clamp(ph[2] * a, 0, 1), clamp(ph[3] * a, 0, 0.95), clamp(ph[4] * a, 0, 1), 6)
+    end
+end
+
+local function definePatch(slot, patch, name)
     local a, d, s, r = unpack(patch.adsr)
     S.C.instrument(slot, lib.INSTR[patch.wave], a, d, s, r)
     S.C.instrument_harmonics(slot, patch.harmonics or 0)
@@ -272,30 +323,14 @@ local function definePatch(slot, patch)
         S.C.instrument_tape_warble(slot, 0)
         S.C.instrument_drive(slot, 0)
     end
-    if patch.tape then
-        S.C.instrument_tape(slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
-        S.C.instrument_tape_warble(slot, patch.tape.warble or 0)
-    end
-    if patch.autopan then S.C.instrument_autopan(slot, patch.autopan.rate, patch.autopan.depth, 0) end
-    if patch.drive then
-        S.C.instrument_drive_mode(slot, patch.driveMode or 0)
-        S.C.instrument_drive(slot, patch.drive)
-    end
-    if patch.chorus then S.C.instrument_chorus(slot, patch.chorus[1], patch.chorus[2], patch.chorus[3]) end
-    if patch.flanger then
-        local f = patch.flanger
-        S.C.instrument_flanger(slot, f[1], f[2], f[3], f[4])
-    end
-    if patch.phaser then
-        local ph = patch.phaser
-        S.C.instrument_phaser(slot, ph.rate, ph.depth, ph.feedback, ph.mix, 6)
-    end
+    S.pedals[name] = pedalsFromPatch(patch) -- a load starts from the patch's own settings
+    sendPedals(slot, name)
 end
 
 local function definePatches()
     S.C.reverb(lib.reverbSize, lib.reverbDamping)
-    for _, patch in pairs(lib.patches) do
-        if patch.slot then definePatch(patch.slot, patch) end
+    for name, patch in pairs(lib.patches) do
+        if patch.slot then definePatch(patch.slot, patch, name) end
     end
     S.pool, S.fx = {}, {} -- the shared slots load their patches on first use
 end
@@ -327,7 +362,7 @@ local function claim(name, patch, t, durMs, slots, residents)
     end
     -- a free slot, else the one that went quiet longest ago (cut short only if every one still sounds)
     pick = pick or oldest
-    definePatch(pick, patch)
+    definePatch(pick, patch, name)
     residents[pick] = { name = name, ends = ends }
     return pick
 end
@@ -585,7 +620,10 @@ function lib.slotFlanger(patchName, rate, depth, feedback, mix)
     if not S.started then return end
     local patch = lib.patches[patchName]
     local slot = patch and patch.fx and residentSlot(patchName, patch)
-    if slot then S.C.instrument_flanger(slot, rate, depth, feedback, mix) end
+    if not slot then return end
+    S.pedals[patchName] = S.pedals[patchName] or {}
+    S.pedals[patchName].flanger = { rate, depth, feedback, mix }
+    sendPedals(slot, patchName, 'flanger')
 end
 
 -- Turn a patch's tape pedal now: wow, flutter, saturation, warble, each 0..1. fx patches only.
@@ -594,8 +632,37 @@ function lib.slotTape(patchName, wow, flutter, saturation, warble)
     local patch = lib.patches[patchName]
     local slot = patch and patch.fx and residentSlot(patchName, patch)
     if not slot then return end
-    S.C.instrument_tape(slot, wow, flutter, saturation)
-    S.C.instrument_tape_warble(slot, warble)
+    S.pedals[patchName] = S.pedals[patchName] or {}
+    S.pedals[patchName].tape = { wow, flutter, saturation, warble }
+    sendPedals(slot, patchName, 'tape')
+end
+
+-- The effects slider: every pedal's amount times a (0 = dry, 1 = as designed, 2 = extreme), at once
+-- on whatever holds a slot. The flanger's feedback stops at 0.95, where it resonates loudly.
+function lib.setEffectAmount(a)
+    S.effectAmount = math.max(0, math.min(2, a))
+    if not S.started then return end
+    for name, patch in pairs(lib.patches) do
+        local slot = (patch.fx or patch.slot) and S.pedals[name] and residentSlot(name, patch)
+        if slot then sendPedals(slot, name) end
+    end
+end
+function lib.effectAmount() return S.effectAmount end
+
+-- A patch's pedals as they sound now (scaled), for the settings panel: { kind = amount } where the
+-- amount is the one the slider turns (tape wow, flanger mix, phaser mix, auto-pan depth, drive,
+-- chorus mix); nil when it has none
+function lib.pedalsOf(name)
+    local p, a = S.pedals[name], S.effectAmount
+    if not p or not next(p) then return nil end
+    local out = {}
+    if p.drive then out.drive = math.min(1, p.drive[2] * a) end
+    if p.tape then out.tape = math.min(1, p.tape[1] * a) end
+    if p.autopan then out.autopan = math.min(1, p.autopan[2] * a) end
+    if p.chorus then out.chorus = math.min(1, p.chorus[3] * a) end
+    if p.flanger then out.flanger = math.min(1, p.flanger[4] * a) end
+    if p.phaser then out.phaser = math.min(1, p.phaser[4] * a) end
+    return out
 end
 
 function lib.slotFilter(patchName, cutoff)

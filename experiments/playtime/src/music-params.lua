@@ -55,6 +55,42 @@ for i = 1, #music().parts do
         visible = function() return playingLine(i) ~= nil end })
 end
 
+-- the pedals of every instrument with pedals that's playing, a row each ('guitar   drive .22', then
+-- '         tape .25' ...), each the amount the effects slider turns, as it sounds now
+local PEDAL_ORDER = { 'drive', 'tape', 'chorus', 'flanger', 'phaser', 'autopan' }
+local function pedalLines()
+    local lines, seen = {}, {}
+    for _, entry in ipairs(music().playing()) do
+        for _, patch in ipairs(entry.patches) do
+            local pedals = not seen[patch.name] and synth().pedalsOf(patch.name)
+            seen[patch.name] = true
+            if pedals then
+                local first = true
+                for _, kind in ipairs(PEDAL_ORDER) do
+                    if pedals[kind] then
+                        local amount = ('%.2f'):format(pedals[kind]):gsub('^0%.', '.')
+                        lines[#lines + 1] = ('%-11s %s %s'):format(first and patch.name or '', kind, amount)
+                        first = false
+                    end
+                end
+            end
+        end
+    end
+    return lines
+end
+local MAX_PEDAL_LINES = 12
+local effectsAt = 1
+for i, row in ipairs(lib.rows) do if row.key == 'volume' then effectsAt = i + 1 end end
+for i = MAX_PEDAL_LINES, 1, -1 do
+    table.insert(lib.rows, effectsAt, { key = 'pedals' .. i, kind = 'note',
+        label = function() return pedalLines()[i] or '' end,
+        visible = function() return pedalLines()[i] ~= nil end })
+end
+-- the effects slider: every pedal's amount, 0 dry, 1 as designed, 2 extreme
+table.insert(lib.rows, effectsAt, { key = 'effects', kind = 'number', min = 0, max = 2,
+    get = function() return synth().effectAmount() end,
+    set = function(_, v) synth().setEffectAmount(v) end })
+
 function lib.target() return music() end
 
 return lib

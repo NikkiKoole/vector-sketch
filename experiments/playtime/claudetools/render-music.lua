@@ -2,7 +2,8 @@
 -- usage: luajit render.lua <out.wav> <seconds> <style: set|bossa|guaraldi|ballad> <rhythm: auto|on|off>
 --        [busyFrom seconds] [seed]
 -- env: MELODY=<patch> swaps the tune's voice, SOLO=<patch,patch> renders a stem,
---      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second
+--      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second,
+--      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed)
 local P = '/Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/'
 package.path = P .. '?.lua;' .. package.path
 local out, seconds, style, rhythm = arg[1], tonumber(arg[2]) or 30, arg[3] or 'bossa', arg[4] or 'auto'
@@ -26,6 +27,8 @@ if os.getenv('SOLO') then
     for name in os.getenv('SOLO'):gmatch('[^,]+') do keep[name] = true end
     synth.scheduleAt = function(patch, ...) if keep[patch] then return scheduleAt(patch, ...) end end
 end
+
+if os.getenv('EFFECTS') then synth.setEffectAmount(tonumber(os.getenv('EFFECTS'))) end -- the effects slider
 
 local cues = {}
 for at, name, opt in (os.getenv('CUES') or ''):gmatch('(%d+):([%w]+):?([%w]*)') do

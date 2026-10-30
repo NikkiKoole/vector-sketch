@@ -76,6 +76,26 @@ describe('synth pool slots', function()
         assert.are.equal(0, modes[0])
     end)
 
+    it('scales every pedal by the effects slider, inside the engine ranges, and back', function()
+        local amount = synth.effectAmount()
+        synth.scheduleAt('guitar', 1, 52, 4, 600)
+        local slot = notes[1].slot
+        calls = {}
+        synth.setEffectAmount(2)
+        local f = callsTo('instrument_flanger', slot)[1]
+        local own = synth.patches.guitar.flanger
+        assert.are.equal(own[1], f[2])                         -- the rate doesn't scale
+        assert.are.equal(math.min(1, own[4] * 2), f[5])        -- the mix doubles
+        synth.slotFlanger('guitar', 0.1, 1.0, 0.85, 0.8)
+        local hard = callsTo('instrument_flanger', slot)[2]
+        assert.are.equal(0.95, hard[4])                        -- feedback stops where it resonates
+        assert.are.equal(1, hard[5])
+        assert.are.equal(1, synth.pedalsOf('guitar').flanger)
+        calls = {}
+        synth.setEffectAmount(amount)
+        assert.are.equal(0.8, callsTo('instrument_flanger', slot)[1][5]) -- back to the live value
+    end)
+
     it('sends a pedal change to the slot the patch holds now', function()
         synth.scheduleAt('rhodes', 1, 60, 4, 600)
         synth.scheduleAt('guitar', 1, 52, 4, 600)
