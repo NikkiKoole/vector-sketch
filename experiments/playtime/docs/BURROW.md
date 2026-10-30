@@ -37,3 +37,16 @@ Nikki: "feels nice", "pretty good already".
 - A place: a door on the grass that goes down (`WORLDS-AND-DOORS.md`), saving what was dug.
 - Then water: the cellular water of `../liquid` on the same grid, buoyancy on the Mipos
   (`WATER.md`).
+
+## Parked: an interesting outline for any shape
+
+Not just the burrow: a quick way to give any shape (a body, a prop, the earth) an outline that
+looks drawn. Nikki 2026-10-30: the idea is good, not sure this route is it.
+One route: vector-sketch's own shaky border (`../../lib/border-mesh.lua`: a spline through the
+points, evenly spaced, then `../../lib/polyline.lua:295-307` draws it with a random width).
+`src/polyline.lua` is a copy of that file with the random-width mode taken out (unused then).
+Other routes still to look at: a textured stroke along the outline (like the hair ribbons in
+`src/render/ribbon.lua`), or a shader.
+
+Colours: vector-sketch's `../../src/palettes.lua` has a `jamesGulliverHancock` palette (~90
+colours), next to childCraft, quentinBlake, fabuland and others.
