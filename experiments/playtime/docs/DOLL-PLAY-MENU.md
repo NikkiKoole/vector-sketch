@@ -181,6 +181,83 @@ scene and can be added in the editor. Pieces live in `src/props.lua`.
 - [ ] Ideas: elevator (prismatic + motor), seesaw / lever / trapdoor (revolute + limits),
   counterweight lift (pulley), swing / rope bridge (rope / distance), breakable glue (weld).
 
+## From a brainstorm (2026-10-30)
+
+A chat about "a young kids' app like Piku Niku, Sago Mini, Tiny Bop, Toca Boca: creatures,
+Box2D, side-view rooms, skateboards, Mipos you pick up and place, snap points that can break,
+snapping things together into buildings". Kept for picking from; notes on what we already have.
+
+**The core loop it named:** "where can I put this guy" is the whole game. Everything is
+throwable, nothing breaks for good, no fail state.
+
+Handling
+- The grab is a toy: by the head the legs swing, by a foot it hangs upside down, by the belly
+  it squishes. A flick throws, a gentle drop places (see Throw / Gentle drop above).
+- Drop height matters: from high up a splat and star eyes (we have dazed), set down gently it
+  sits content.
+- Spots light up or wiggle when a Mipo hovers near, so toddlers see where it fits (snap points
+  could show this while dragging).
+
+Places to put a Mipo (seats and containers, see World above)
+- Sit in/on: chair, bathtub, bed, hammock, swing, high chair, rocking horse, bike basket,
+  another Mipo (a totem pole; a small one in a big one's arms).
+- Put on and it does something: skateboard rides off, ceiling fan flings, balloon floats up to
+  the ceiling, seesaw, trampoline, catapult or cannon through a hole into the next room.
+- Containers that change them, nothing scary: fridge (shivery and blue for a minute), washing
+  machine (tumbles, comes out fluffy, maybe a new colour; the Bathhouse wash fits here), jar
+  (glass fogs as it breathes), pot (a chef's hat, the room smells of cookies), closet (open it
+  later, new outfit), bed (sleeps, room dims, the others tiptoe).
+- Hangers and carriers: hooks and a clothesline to winch one across, a bucket on a rope up a
+  floor, a wagon to carry one in.
+- Hand them something and they hold it (hands grab already); a hat stays on until a bounce.
+- Left alone they get bored, fidget, wander to the nearest toy.
+
+Breakable snaps (ours only break while dragged, see the cart)
+- Break on force (one on the swing fine, two snaps the chain), on wiggle (shake it loose, like
+  escaping a high chair), on speed (skateboard into a wall throws the rider off).
+- Breaking is funny: a pop, a boing, a surprised face, and the snap point heals so it's usable again.
+- Hinges on purpose: door, trapdoor, drawbridge, catapult arm, cuckoo clock with a Mipo inside.
+- Box2D: weld for stacks, check reaction force each step, a threshold that grows with what's
+  above, a short delay so a glancing bump doesn't take it apart.
+
+Building (snap blocks exist)
+- Blocks, crates, pillows, books, cheese wedges, each its own weight and bounce. Snap when
+  roughly aligned with a nudge into place; no precision needed.
+- A stack sways as one and bursts into parts when rammed. Mipos as living bricks, kicking,
+  the tower wobbles when one sneezes.
+- Vehicles from parts: wheels on a crate = cart (we have this), a balloon = it floats, a fan
+  = it drives. Furniture: a ladder to a high shelf, a plank between two towers.
+- Mixes: a swing hung off something built, a trapdoor at the top of a tower, a tower on wheels
+  rolled between rooms, shedding bricks on the bumps.
+- Open question: do buildings persist and get decorated, or is knocking them down the event?
+  (W2 persistence decides how cheap the first is.)
+
+Skateboards and side view
+- Ramps and a half-pipe; air, the hat flies off. Draggable ramps and planks to build jumps.
+- Swappable wheels: huge (rolls over anything), square (bumpy), sticky (up walls, across the
+  ceiling), balloon (floats a bit). Several Mipos stacked on one board; cargo bouncing off;
+  a tow rope to make a train; a slope through several rooms, attic to basement.
+- Rooms stacked with trapdoors and holes; things dropped upstairs land downstairs. Elevator,
+  conveyor floor, seesaw floor, ladders and poles, a pulley that lifts a Mipo up a floor.
+- Board keeps rolling after the rider falls off, into the next room. Wheel marks that fade,
+  dust puffs, a "wheee" pitched by speed.
+
+Room toys (pure Box2D)
+- Bathtub of balls; pull the plug and it drains into the room below. A pot that changes the
+  colour and bounce of what comes out. A fan lifting light things. Pots and pans / a xylophone
+  floor where falling things play notes (towers collapsing become music, fits the band).
+- A pegboard marble run with draggable pegs, a wrecking ball next to a tower that rebuilds
+  when you leave, balloons that pop into confetti on a spiky ceiling, a trampoline bouncier
+  the more mattresses on it, a rain cloud you push around a greenhouse that drops fruit,
+  a parcel chute that delivers to another room later.
+
+Alive
+- Physics personalities per Mipo: heavy (sinks, tips seesaws), bouncy, sticky (clings to walls),
+  helium-light (drifts up), jelly. Kids learn the rules by play. Careful with absolute mass:
+  Mipos stay light and quick to throw.
+- Things stay where you left them (W2); faces react to what hits them; they nod off when
+  ignored; day turns to night, yawns, lights glow.
+
 ## Other ideas (shooting, not committing)
 
 - **Carry-over from Puppetmaker**: a "made in Puppetmaker" import code (see
