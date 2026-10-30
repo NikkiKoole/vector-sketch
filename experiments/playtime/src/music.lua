@@ -30,7 +30,7 @@
 -- busy (impacts call music.bump), the drums join where the form lets them (the upright too when
 -- lib.upright is on). rhythmSection forces that on or off. lib.chordNotes lets sound effects play
 -- in the current chord. Notes are booked ahead on the synth's audio clock, a bar at a time.
--- Driven by mipo-voice.update while synth impacts are on.
+-- Driven by src/sound.lua every frame (paused or not); rooms change it with lib.cue (src/room-music.lua).
 
 local state = require('src.state')
 
@@ -847,7 +847,8 @@ local function planAmbient(song)
     end
 end
 
-local function planSong()
+-- setKey: the set's key for the song (a cue's choice); nil: a related key, a fourth from the last
+local function planSong(setKey)
     local styleName = nextStyleName()
     local style = lib.styles[styleName]
     local seed = love.math.random(1, 2147483646)
@@ -855,7 +856,7 @@ local function planSong()
         if type(range) ~= 'table' then return range end
         return range[1] + love.math.random() * (range[2] - range[1])
     end
-    local setKey = nextKey(M.song and M.song.setKey)
+    setKey = setKey or nextKey(M.song and M.song.setKey)
     local song = {
         version = VERSION, style = styleName, seed = seed, setKey = setKey, key = setKey,
         beat = 60 / math.floor(between(style.bpm) + 0.5), swing = between(style.swing) or 0.5,
@@ -2064,7 +2065,8 @@ end
 
 -- The style was just picked: skip the intro into the first A with the tune and the band in, so the
 -- new style is heard at once. The band lifts the play level, so it leaves again as play calms down.
-local function audition(song)
+-- bandIn = false (a cue): the tune at once, the band as the play level says.
+local function audition(song, bandIn)
     local skip = 0
     for _, section in ipairs(song.sections) do
         if section.kind == 'A' then
@@ -2075,7 +2077,37 @@ local function audition(song)
         skip = skip + section.bars
     end
     song.hasLead = true
-    M.activity = math.max(M.activity, 2 * lib.bandJoins)
+    if bandIn ~= false then M.activity = math.max(M.activity, 2 * lib.bandJoins) end
+end
+
+-- A cue's moment: the bar just booked closed a 4-bar phrase (or a section, or the song)
+local function phraseEnds(song)
+    if song.bar < 1 or song.bar >= song.bars then return true end
+    local j, section = song.barIndex[song.bar], song.barSection[song.bar]
+    return (j + 1) % 4 == 0 or j == section.bars - 1
+end
+
+local function cueKey(cue, song)
+    if cue.key == 'keep' and song then return song.setKey end
+    return nextKey(song and song.setKey)
+end
+
+-- The bar between the old song and a cued one, in the old song's time: a 9sus4 on the new key's
+-- fifth, held by the keys over its root. A dominant that floats: it leans into the new key without
+-- pulling hard, and it has no third to rub what came before.
+local function bookBridge(synth, t0, song, key)
+    local style = lib.styles[song.style]
+    local root = (key + 7) % 12
+    local quality = lib.qualities.sus
+    local pcs = { root }
+    for _, interval in ipairs(quality) do pcs[#pcs + 1] = (root + interval) % 12 end
+    remember(t0, pcs)
+    M.barStart = t0
+    local ms = song.barLength * 1000 - 30
+    M.voicing = voiceChord(root, quality, 48, 76, M.voicing)
+    local keysPatch = style.loop and 'rhodes' or style.keys
+    for k, midi in ipairs(M.voicing) do play(synth, 'keys', keysPatch, t0 + (k - 1) * 0.02, midi, 4, ms) end
+    play(synth, 'bass', 'roundBass', t0, inRange(root, 36), 4, ms)
 end
 
 -- Books the next bar at audio time t0; returns its length in seconds. Past the song's last bar:
@@ -2087,7 +2119,24 @@ local function bookNext(synth, t0)
             for _, name in ipairs(lib.set) do if name == song.style then return true end end
             return false
         end)()))
-    if not song or wrongStyle then
+    local cue = M.cue
+    if cue and wrongStyle then M.cue, cue = nil, nil end -- a pick in the panel wins over a cue
+    if cue and song and cue.at == 'phrase' and not cue.bridged then
+        if not phraseEnds(song) then
+            cue = nil -- the old song plays on to the end of its phrase
+        else
+            cue.bridged, cue.setKey = true, cueKey(cue, song)
+            bookBridge(synth, t0, song, cue.setKey)
+            return song.barLength
+        end
+    end
+    if cue then -- the cue lands: its style from the first A, in its key
+        M.cue = nil
+        lib.style = cue.style
+        M.song = planSong(cue.setKey or cueKey(cue, song))
+        song = M.song
+        audition(song, false)
+    elseif not song or wrongStyle then
         M.song = planSong()
         song = M.song
         if wrongStyle then audition(song) end
@@ -2102,6 +2151,26 @@ local function bookNext(synth, t0)
     song.bar = song.bar + 1
     bookBar(synth, t0, song, song.bar)
     return song.barLength
+end
+
+-- Change to `style` (a style name, or 'set') the way a game score does, for the rooms
+-- (src/room-music.lua). opts.at: 'phrase' (the default: when the 4-bar phrase ends, through a
+-- bridge bar) or 'bar' (at the next bar line). opts.key: 'related' (the default: a fourth away) or
+-- 'keep'. The new style starts at its first A, the tune in, and lands in lib.style (the settings
+-- panel shows it). Cueing what's already set does nothing (and drops a pending cue); a second cue
+-- replaces the first. With the music off or not started it just sets the style. Returns whether it
+-- will change anything.
+function lib.cue(style, opts)
+    opts = opts or {}
+    if style ~= 'set' and not lib.styles[style] then return false end
+    if style == lib.style then M.cue = nil; return false end
+    if not (lib.enabled and M.song) then
+        lib.style, M.cue = style, nil
+        return true
+    end
+    M.cue = { style = style, at = opts.at == 'bar' and 'bar' or 'phrase',
+              key = opts.key == 'keep' and 'keep' or 'related' }
+    return true
 end
 
 -- The notes from lo to hi (MIDI) that belong to the chord sounding right now, low to high, so
