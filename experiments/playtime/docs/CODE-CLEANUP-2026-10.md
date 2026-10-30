@@ -152,13 +152,20 @@ L = more.
   times, `for _, rv in ipairs({ resourceLink.find(ud) })` 4 times (just `local rv = ...; if rv`).
   → `src/meshusert-bind.lua` (prepBindVerts, bindDQS, bindSpine, clearBind, autoAssign*,
   splitTriangles), with specs. M-L.
-- [ ] **CL22. Polygon editing out of object-manager.** `object-manager.lua:84-311` (finalizePath,
+- [x] **CL22. Polygon editing out of object-manager.** `object-manager.lua:84-311` (finalizePath,
   finalizePolygon, ribbon pair / custom vertex insert+remove) → `src/poly-edit.lua`. The three
   "rebuild an sfixture with new points" functions (fixtures.updateSFixturePosition,
   updateSFixtureDimensions, objectManager.maybeUpdateTexFixtureVertices) → one
   `fixtures.replaceShape(fixture, points)`; two of them drop friction/groupIndex. Small ones:
   `addThing` only wraps `createThing`; both flip axes do the same; `joints.reattachJoints` A and B
   branches differ by side; `tranlateBody`; `recreateJoint` logs a missing handler and calls it anyway. M.
+  **Done 2026-10-30:** `src/poly-edit.lua` (draw a polygon or path, add/remove vertices, apply edited
+  texfixture corners), object-manager 829 -> 570 lines. `fixtures.replaceShape(fixture, points, ud)`
+  for move, resize, edited corners and N/E/S/W/C (resize and corners lost friction and group);
+  `updateSFixtureDimensions` takes the fixture instead of reading the selection. Delete radius named,
+  the doubled `if edge` gone. `recreateJoint`'s missing-handler return was BUG1. Still small and open:
+  `addThing` only wraps `createThing`, `reattachJoints`' A/B branches, `tranlateBody`.
+  `spec/poly-edit_spec.lua`, `spec/fixtures_spec.lua`.
 - [ ] **CL23. `shape8Dict` as its own data file.** It lives in character-manager (:924-1015), gets
   pushed into topology via `setShape8Dict`, and spine-skin / blob require character-manager lazily
   just to read it. Move it to shape-catalogs or its own file; the setter and lazy requires go. S.

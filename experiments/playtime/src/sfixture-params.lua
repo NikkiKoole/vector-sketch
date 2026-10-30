@@ -51,13 +51,7 @@ function lib.placeOnEdge(fixture, place)
     local cx, cy = mathutils.getCenterOfPoints(points)
     local relative = mathutils.makePolygonRelativeToCenter(points, cx, cy)
     local moved = mathutils.makePolygonAbsolute(relative, (bounds.width / 2) * m[1], (bounds.height / 2) * m[2])
-    local ud = require('src.utils').shallowCopy(fixture:getUserData())
-    fixture:destroy()
-    local newFixture = love.physics.newFixture(body, love.physics.newPolygonShape(moved))
-    newFixture:setSensor(true)
-    newFixture:setUserData(ud)
-    require('src.registry').registerSFixture(ud.id, newFixture)
-    return selectFixture(newFixture)
+    return selectFixture(require('src.fixtures').replaceShape(fixture, moved))
 end
 
 local position = {
@@ -73,8 +67,7 @@ local position = {
           return require('src.math-utils').getPolygonDimensions({ fixture:getShape():getPoints() })
       end,
       set = function(fixture, v)
-          state().selection.selectedSFixture = fixture -- updateSFixtureDimensions works on the selection
-          return require('src.fixtures').updateSFixtureDimensions(v, v)
+          return selectFixture(require('src.fixtures').updateSFixtureDimensions(fixture, v, v))
       end },
     { key = 'place', kind = 'buttons', options = { 'N', 'E', 'S', 'W', 'C' }, advanced = true,
       run = function(_, fixture, option) return lib.placeOnEdge(fixture, option) end },

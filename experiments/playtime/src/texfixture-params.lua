@@ -27,10 +27,11 @@ local function dimensions(fixture)
     return require('src.math-utils').getPolygonDimensions(points)
 end
 
--- updateSFixtureDimensions works on (and replaces) the selection
+-- resizing replaces the fixture: select the new one
 local function resize(fixture, w, h)
-    state().selection.selectedSFixture = fixture
-    return require('src.fixtures').updateSFixtureDimensions(w, h)
+    local newFixture = require('src.fixtures').updateSFixtureDimensions(fixture, w, h)
+    state().selection.selectedSFixture = newFixture
+    return newFixture
 end
 
 local function imageSize(fixture)

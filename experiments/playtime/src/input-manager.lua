@@ -13,7 +13,7 @@ local doors = require('src.doors')
 local utils = require 'src.utils'
 local script = require 'src.script'
 local selectrect = require 'src.selection-rect'
-local objectManager = require 'src.object-manager'
+local polyEdit = require('src.poly-edit')
 local state = require 'src.state'
 local modes = require 'src.modes'
 local ui = require('src.ui.all')
@@ -223,11 +223,11 @@ end
 
 -- Released handlers
 local function releasedDrawFreePoly()
-    objectManager.finalizePolygon()
+    polyEdit.finalizePolygon()
 end
 
 local function releasedDrawFreePath()
-    objectManager.finalizePath()
+    polyEdit.finalizePath()
 end
 
 local releasedHandlers = {
@@ -584,12 +584,12 @@ local function handlePointer(x, y, id, action, button)
 
         if state.polyEdit.dragIdx > 0 then
             state.polyEdit.dragIdx = 0
-            objectManager.maybeUpdateCustomPolygonVertices()
+            polyEdit.maybeUpdateCustomPolygonVertices()
         end
 
         if state.texFixtureEdit.dragIdx > 0 then
             state.texFixtureEdit.dragIdx = 0
-            objectManager.maybeUpdateTexFixtureVertices()
+            polyEdit.maybeUpdateTexFixtureVertices()
         end
 
         if (state.interaction.startSelection) then
@@ -888,13 +888,13 @@ function lib.handleKeyPressed(key)
         if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
-            objectManager.insertRibbonPair(wx, wy)
-            objectManager.maybeUpdateCustomPolygonVertices()
+            polyEdit.insertRibbonPair(wx, wy)
+            polyEdit.maybeUpdateCustomPolygonVertices()
         else
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
-            objectManager.insertCustomPolygonVertex(wx, wy)
-            objectManager.maybeUpdateCustomPolygonVertices()
+            polyEdit.insertCustomPolygonVertex(wx, wy)
+            polyEdit.maybeUpdateCustomPolygonVertices()
         end
     end
     if key == 'd' and state.polyEdit.tempVerts then
@@ -902,12 +902,12 @@ function lib.handleKeyPressed(key)
         if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
-            objectManager.removeRibbonPair(wx, wy)
-            objectManager.maybeUpdateCustomPolygonVertices()
+            polyEdit.removeRibbonPair(wx, wy)
+            polyEdit.maybeUpdateCustomPolygonVertices()
         else
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
-            objectManager.removeCustomPolygonVertex(wx, wy)
+            polyEdit.removeCustomPolygonVertex(wx, wy)
         end
     end
 end

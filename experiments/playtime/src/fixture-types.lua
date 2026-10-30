@@ -116,7 +116,7 @@ fixtureTypes[subtypes.LIGHT] = {
     end,
 }
 
--- Expose rect8 for updateSFixtureDimensions in fixtures.lua
+-- an 8-corner rectangle (texfixtures with vertexCount 8; fixtures.updateSFixtureDimensions)
 fixtureTypes.rect8 = rect8
 
 return fixtureTypes

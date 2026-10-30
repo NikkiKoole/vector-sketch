@@ -6,6 +6,7 @@ local sceneIO = require 'src.io'
 local ui = require('src.ui.all')
 local joints = require 'src.joints'
 local objectManager = require 'src.object-manager'
+local polyEdit = require('src.poly-edit')
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local utils = require 'src.utils'
@@ -202,9 +203,9 @@ function lib.drawUI()
         local clicked = ui.topPrompt('• click to place points •', { 'finalize', 'uv-mappert' }, 140)
         if clicked == 'finalize' then
             logger:info('finalize clicked')
-            objectManager.finalizePolygon()
+            polyEdit.finalizePolygon()
         elseif clicked == 'uv-mappert' then
-            local thing = objectManager.finalizePolygon()
+            local thing = polyEdit.finalizePolygon()
             if thing and thing.body then
                 fixtures.createSFixture(thing.body, 0, 0, subtypes.RESOURCE, { width = 20, height = 20 })
             end

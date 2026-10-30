@@ -8,7 +8,6 @@ local uuid = require 'src.uuid'
 
 local registry = require 'src.registry'
 local utils = require 'src.utils' -- Needed for shallowCopy
-local state = require 'src.state'
 local fixtureTypes = require('src.fixture-types')
 local subtypes = require('src.subtypes')
 local lib = {}
@@ -23,6 +22,25 @@ function lib.sfixtureData(body, subtype)
         end
     end
     return found
+end
+
+-- A new shape (body-local polygon `points`) for an sfixture. A Box2D fixture can't change
+-- shape, so a new one takes its place: same userData (or `ud`) and id in the registry,
+-- still a sensor, same density, friction, restitution and group. Returns the new fixture.
+function lib.replaceShape(fixture, points, ud)
+    ud = ud or fixture:getUserData()
+    local body = fixture:getBody()
+    local density, friction = fixture:getDensity(), fixture:getFriction()
+    local restitution, groupIndex = fixture:getRestitution(), fixture:getGroupIndex()
+    fixture:destroy()
+    local newFixture = love.physics.newFixture(body, love.physics.newPolygonShape(points), density)
+    newFixture:setSensor(true)
+    newFixture:setFriction(friction)
+    newFixture:setRestitution(restitution)
+    newFixture:setGroupIndex(groupIndex)
+    newFixture:setUserData(ud)
+    registry.registerSFixture(ud.id, newFixture)
+    return newFixture
 end
 
 -- Updates the position of an sfixture based on a new WORLD coordinate click
@@ -59,28 +77,7 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
             oldUD.extra.vertices[i + 1] = oldUD.extra.vertices[i + 1] - dy
         end
     end
-    local fixtureID = oldUD.id                   -- Keep the ID
-    local fixtureDensity = sfixture:getDensity() -- Keep properties
-    local fixtureFriction = sfixture:getFriction()
-    local fixtureRestitution = sfixture:getRestitution()
-    local fixtureGroupIndex = sfixture:getGroupIndex()
-
-    -- Destroy old fixture and unregister
-    sfixture:destroy()
-    registry.unregisterSFixture(fixtureID)
-
-    -- Create the new shape and fixture
-    local shape = love.physics.newPolygonShape(newShapePoints)
-    local newfixture = love.physics.newFixture(body, shape, fixtureDensity)
-    newfixture:setSensor(true) -- Ensure it remains a sensor
-    newfixture:setFriction(fixtureFriction)
-    newfixture:setRestitution(fixtureRestitution)
-    newfixture:setGroupIndex(fixtureGroupIndex)
-    newfixture:setUserData(oldUD)                    -- Reuse the userdata (including the ID)
-
-    registry.registerSFixture(fixtureID, newfixture) -- Register the new fixture with the *same* ID
-
-    return newfixture
+    return lib.replaceShape(sfixture, newShapePoints, oldUD)
 end
 
 function lib.hasFixturesWithUserDataAtBeginning(fixtures)
@@ -108,43 +105,20 @@ function lib.getCentroidOfFixture(_body, fixture)
 end
 
 local rect = shapes.rect
-
-local function rect8(w, h, x, y)
-    return {
-        x - w / 2, y - h / 2,
-        x, y - h / 2,
-        x + w / 2, y - h / 2,
-        x + w / 2, y,
-        x + w / 2, y + h / 2,
-        x, y + h / 2,
-        x - w / 2, y + h / 2,
-        x - w / 2, y,
-    }
-end
+local rect8 = fixtureTypes.rect8
 
 function lib.destroyFixture(fixture)
     registry.unregisterSFixture(fixture:getUserData().id)
     fixture:destroy()
 end
 
-function lib.updateSFixtureDimensions(w, h)
-    local points = { state.selection.selectedSFixture:getShape():getPoints() }
-    local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-    local body = state.selection.selectedSFixture:getBody()
-    state.selection.selectedSFixture:destroy()
-
-    local centerX, centerY = mathutils.getCenterOfPoints(points)
-    local vertices = oldUD.extra.vertexCount == 8 and rect8(w, h, centerX, centerY) or rect(w, h, centerX, centerY)
-    local shape = love.physics.newPolygonShape(vertices)
-    local newfixture = love.physics.newFixture(body, shape, 0) -- sensors weigh nothing
-    oldUD.extra.vertices = vertices
-    newfixture:setSensor(true) -- Sensor so it doesn't collide
-    newfixture:setUserData(oldUD)
-
-    state.selection.selectedSFixture = newfixture
-    registry.registerSFixture(oldUD.id, newfixture)
-
-    return newfixture
+-- A w x h rectangle (8 corners if extra.vertexCount says so) where the sfixture is now.
+function lib.updateSFixtureDimensions(fixture, w, h)
+    local centerX, centerY = mathutils.getCenterOfPoints({ fixture:getShape():getPoints() })
+    local ud = utils.shallowCopy(fixture:getUserData())
+    local vertices = ud.extra.vertexCount == 8 and rect8(w, h, centerX, centerY) or rect(w, h, centerX, centerY)
+    ud.extra.vertices = vertices
+    return lib.replaceShape(fixture, vertices, ud)
 end
 
 function lib.createSFixture(body, localX, localY, subtype, cfg)
