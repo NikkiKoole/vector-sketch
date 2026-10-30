@@ -1,7 +1,8 @@
 -- Renders the real src/music.lua + src/synth.lua offline to a WAV.
 -- usage: luajit render.lua <out.wav> <seconds> <style: set|bossa|guaraldi|ballad> <rhythm: auto|on|off>
 --        [busyFrom seconds] [seed]
--- env: MELODY=<patch> swaps the tune's voice, SOLO=<patch,patch> renders a stem
+-- env: MELODY=<patch> swaps the tune's voice, SOLO=<patch,patch> renders a stem,
+--      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second
 local P = '/Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/'
 package.path = P .. '?.lua;' .. package.path
 local out, seconds, style, rhythm = arg[1], tonumber(arg[2]) or 30, arg[3] or 'bossa', arg[4] or 'auto'
@@ -26,6 +27,11 @@ if os.getenv('SOLO') then
     synth.scheduleAt = function(patch, ...) if keep[patch] then return scheduleAt(patch, ...) end end
 end
 
+local cues = {}
+for at, name, opt in (os.getenv('CUES') or ''):gmatch('(%d+):([%w]+):?([%w]*)') do
+    cues[#cues + 1] = { at = tonumber(at), name = name, opt = opt }
+end
+
 local RATE, N = 44100, 512
 local buf = ffi.new('float[?]', N * 2)
 local samples = {}
@@ -33,6 +39,17 @@ local blocks = math.floor(seconds * RATE / N)
 for b = 1, blocks do
     local now = b * N / RATE
     if busyFrom and now > busyFrom and now < busyFrom + 6 and b % 20 == 0 then music.bump(1) end
+    for _, cue in ipairs(cues) do
+        if not cue.done and now >= cue.at then
+            cue.done = true
+            if cue.name == 'keep' then music.layers(cue.opt)
+            else
+                local layers = cue.opt ~= 'bar' and cue.opt ~= '' and cue.opt or nil
+                music.cue(cue.name, { at = cue.opt == 'bar' and 'bar' or 'phrase', layers = layers })
+            end
+            print(('%5.1fs cue %s %s'):format(now, cue.name, cue.opt))
+        end
+    end
     music.update(synth, now)
     C.de_lua_render(buf, N)
     for i = 0, N * 2 - 1 do samples[#samples + 1] = buf[i] end

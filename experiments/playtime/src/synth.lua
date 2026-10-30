@@ -25,7 +25,8 @@ lib.INSTR = {
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
 }
 
--- Named patches in instrument slots 5..47: wave, attack/decay ms, sustain 0..7, release ms, macros,
+-- Named patches in instrument slots 5..47 (pool = true: no slot of its own, see lib.poolSlots): wave,
+-- attack/decay ms, sustain 0..7, release ms, macros,
 -- reverb send 0..1, level 0..1 (balances engines: some run much hotter), optional engine modes and filter,
 -- glide ms (held notes slide to a new pitch over this long), tape { wow, flutter, saturation, warble } 0..1
 -- (a cassette on just this slot; warble = a worn tape that sags now and then), autopan, phaser.
@@ -63,10 +64,10 @@ lib.patches = {
     -- 16ths (high-passed, no chorus: that needs an FX bus) and a soft saw string section, slow in.
     -- Slots 18 and 21 were the celesta (disliked) and the wavescan kalimba (unused): the engine has
     -- 48 slots (SOUND_INSTR_SLOTS) and every one is taken.
-    cityGuitar = { slot = 18, wave = 'GUITAR', adsr = { 1, 0, 7, 90 },
+    cityGuitar = { pool = true, wave = 'GUITAR', adsr = { 1, 0, 7, 90 },
                    harmonics = 0.45, timbre = 0.78, morph = 0.5, reverb = 0.15, level = 1.8,
                    filter = { mode = 2, cutoff = 220, resonance = 0 } },
-    strings = { slot = 21, wave = 'SAW', adsr = { 260, 0, 6, 260 }, reverb = 0.45, level = 0.22,
+    strings = { pool = true, wave = 'SAW', adsr = { 260, 0, 6, 260 }, reverb = 0.45, level = 0.22,
                 filter = { mode = 1, cutoff = 2600, resonance = 0 }, lfo = { { 0, 5.0, 0.04 } } },
     -- other melody voices: the Rhodes a little brighter for a tune on top, and a kalimba: a
     -- mallet halfway between wood and bell
@@ -104,13 +105,13 @@ lib.patches = {
     -- ringing), and a drum machine clap (high-passed noise, a big room).
     -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
     -- (SOUND_FX_BUSES), and five are taken (rhodes, rhodesLead, piano, pianoLead, whistle).
-    stab = { slot = 28, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
+    stab = { pool = true, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
              filter = { mode = 1, cutoff = 1500, resonance = 2 } },
     dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
                 filter = { mode = 1, cutoff = 1100, resonance = 3 } },
-    steelpan = { slot = 30, wave = 'MALLET', adsr = { 0, 700, 0, 350 },
+    steelpan = { pool = true, wave = 'MALLET', adsr = { 0, 700, 0, 350 },
                  harmonics = 0.7, timbre = 0.5, morph = 0.4, reverb = 0.35, level = 0.9 },
-    clap = { slot = 32, wave = 'NOISE', adsr = { 0, 70, 0, 60 }, reverb = 0.6, level = 0.35,
+    clap = { pool = true, wave = 'NOISE', adsr = { 0, 70, 0, 60 }, reverb = 0.6, level = 0.35,
              filter = { mode = 2, cutoff = 1400, resonance = 2 } },
     -- the herbs style (boom-bap): a hard kick (a looser, longer drumhead than the soft kick), a
     -- snare's noise (its body is that kick tuned up) and vinyl crackle (tiny high-passed ticks)
@@ -159,13 +160,28 @@ lib.patches = {
     -- the sesame style: a clavinet (dreamengine's clavinet.c recipe: the e-piano engine's clav voicing,
     -- short and percussive, without its bus wah) and a horn section (the lip-reed BRASS engine,
     -- between trumpet and flugelhorn, round rather than blatty) for short shouts
-    clav = { slot = 45, wave = 'EPIANO', adsr = { 2, 140, 2, 120 },
+    clav = { pool = true, wave = 'EPIANO', adsr = { 2, 140, 2, 120 },
              harmonics = 0.85, timbre = 0.75, morph = 0.55, reverb = 0.2, level = 1.1 },
-    horn = { slot = 46, wave = 'BRASS', adsr = { 8, 0, 6, 120 },
+    horn = { pool = true, wave = 'BRASS', adsr = { 8, 0, 6, 120 },
              harmonics = 0.3, timbre = 0.4, morph = 0.25, reverb = 0.3, level = 0.4,
              filter = { mode = 1, cutoff = 3600, resonance = 1 } },
+    -- the americana style: a 60s string orchestra on dreamengine's bowed-string engine (mariachi.c's
+    -- violin recipe: mid bow, light pressure, a violin body at 0.6, vibrato), a second desk a viola's
+    -- size, the same strings plucked (pizzicato: modes[0] = 1), a harp (the Karplus pluck, long
+    -- ring) and a Harmon-muted trumpet (modaljazz.c: band-passed brass). All pool patches.
+    violins = { pool = true, wave = 'BOWED', adsr = { 70, 0, 7, 340 }, harmonics = 0.45, timbre = 0.30,
+                morph = 0.70, reverb = 0.45, level = 0.5, modes = { [1] = 0.6 }, lfo = { { 0, 5.6, 0.10 } } },
+    violas = { pool = true, wave = 'BOWED', adsr = { 80, 0, 7, 340 }, harmonics = 0.48, timbre = 0.32,
+               morph = 0.62, reverb = 0.45, level = 0.5, modes = { [1] = 0.6, [2] = 0.65 },
+               lfo = { { 0, 5.2, 0.09 } } },
+    pizz = { pool = true, wave = 'BOWED', adsr = { 1, 0, 7, 400 }, harmonics = 0.45, timbre = 0.3, morph = 0.5,
+             reverb = 0.35, level = 0.6, modes = { [0] = 1, [1] = 0.6 } },
+    harp = { pool = true, wave = 'PLUCK', adsr = { 0, 0, 7, 900 }, harmonics = 0.75, timbre = 0.35, morph = 0.3,
+             reverb = 0.5, level = 0.6 },
+    mutedTrumpet = { pool = true, wave = 'BRASS', adsr = { 1, 0, 5, 120 }, harmonics = 0.15, timbre = 0.55,
+                     morph = 0.42, reverb = 0.35, level = 0.5, filter = { mode = 3, cutoff = 1700, resonance = 2 } },
     -- citypop's glossy synth lead: a square with a slow vibrato and a little glide
-    citySynth = { slot = 47, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
+    citySynth = { pool = true, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
                   filter = { mode = 1, cutoff = 3400, resonance = 0 }, lfo = { { 0, 5.2, 0.08 } } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
@@ -226,31 +242,69 @@ if ffi then pcall(ffi.cdef, CDEF) end
 state.synth = state.synth or { started = false, failed = nil, C = nil, thread = nil, quit = nil }
 local S = state.synth
 
+local function definePatch(slot, patch)
+    local a, d, s, r = unpack(patch.adsr)
+    S.C.instrument(slot, lib.INSTR[patch.wave], a, d, s, r)
+    S.C.instrument_harmonics(slot, patch.harmonics or 0)
+    S.C.instrument_timbre(slot, patch.timbre or 0)
+    S.C.instrument_morph(slot, patch.morph or 0)
+    S.C.instrument_level(slot, lib.volume * (patch.level or 1))
+    S.C.instrument_reverb(slot, patch.reverb or 0)
+    if patch.pool then -- a pool slot may still hold the last patch's modes and LFOs
+        for idx = 0, 2 do S.C.instrument_mode(slot, idx, patch.modes and patch.modes[idx] or 0) end
+        for i = 0, 2 do S.C.instrument_lfo(slot, i, 0, 0, 0) end
+    else
+        for idx, value in pairs(patch.modes or {}) do S.C.instrument_mode(slot, idx, value) end
+    end
+    local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
+    S.C.instrument_filter(slot, filter.mode, filter.cutoff, filter.resonance)
+    S.C.instrument_glide(slot, patch.glide or 0)
+    for i, lfo in ipairs(patch.lfo or {}) do S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3]) end
+    if patch.pool then return end -- inserts take an FX bus for good: never on a pool slot
+    if patch.tape then
+        S.C.instrument_tape(slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
+        S.C.instrument_tape_warble(slot, patch.tape.warble or 0)
+    end
+    if patch.autopan then S.C.instrument_autopan(slot, patch.autopan.rate, patch.autopan.depth, 0) end
+    if patch.phaser then
+        local ph = patch.phaser
+        S.C.instrument_phaser(slot, ph.rate, ph.depth, ph.feedback, ph.mix, 6)
+    end
+end
+
 local function definePatches()
     S.C.reverb(lib.reverbSize, lib.reverbDamping)
     for _, patch in pairs(lib.patches) do
-        local a, d, s, r = unpack(patch.adsr)
-        S.C.instrument(patch.slot, lib.INSTR[patch.wave], a, d, s, r)
-        S.C.instrument_harmonics(patch.slot, patch.harmonics or 0)
-        S.C.instrument_timbre(patch.slot, patch.timbre or 0)
-        S.C.instrument_morph(patch.slot, patch.morph or 0)
-        S.C.instrument_level(patch.slot, lib.volume * (patch.level or 1))
-        S.C.instrument_reverb(patch.slot, patch.reverb or 0)
-        for idx, value in pairs(patch.modes or {}) do S.C.instrument_mode(patch.slot, idx, value) end
-        local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
-        S.C.instrument_filter(patch.slot, filter.mode, filter.cutoff, filter.resonance)
-        S.C.instrument_glide(patch.slot, patch.glide or 0)
-        if patch.tape then
-            S.C.instrument_tape(patch.slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
-            S.C.instrument_tape_warble(patch.slot, patch.tape.warble or 0)
-        end
-        for i, lfo in ipairs(patch.lfo or {}) do S.C.instrument_lfo(patch.slot, i - 1, lfo[1], lfo[2], lfo[3]) end
-        if patch.autopan then S.C.instrument_autopan(patch.slot, patch.autopan.rate, patch.autopan.depth, 0) end
-        if patch.phaser then
-            local ph = patch.phaser
-            S.C.instrument_phaser(patch.slot, ph.rate, ph.depth, ph.feedback, ph.mix, 6)
-        end
+        if patch.slot then definePatch(patch.slot, patch) end
     end
+    S.pool = {} -- the pool slots load their patches on first use
+end
+
+-- The engine has 48 instrument slots (SOUND_INSTR_SLOTS) and every one was taken. Patches that only
+-- one music style plays are `pool = true`: they share these slots, and a pool slot takes a patch the
+-- first time a note needs it, from a slot whose notes have all ended (one style plays at a time, so
+-- that's the last style's). S.pool[slot] = { name, ends = audio time its last note is done }.
+lib.poolSlots = { 18, 21, 28, 30, 32, 45, 46, 47 }
+
+local function slotOf(name, patch, t, durMs)
+    if patch.slot then return patch.slot end
+    S.pool = S.pool or {}
+    local ends = t + (durMs + patch.adsr[4]) / 1000
+    local pick, oldest
+    for _, slot in ipairs(lib.poolSlots) do
+        local resident = S.pool[slot]
+        if resident and resident.name == name then
+            resident.ends = math.max(resident.ends, ends)
+            return slot
+        end
+        if not resident then pick = pick or slot
+        elseif not oldest or resident.ends < S.pool[oldest].ends then oldest = slot end
+    end
+    -- a free slot, else the one that went quiet longest ago (cut short only if every one still sounds)
+    pick = pick or oldest
+    definePatch(pick, patch)
+    S.pool[pick] = { name = name, ends = ends }
+    return pick
 end
 
 -- Loads the library and starts the render thread once; returns whether the synth is usable.
@@ -461,10 +515,11 @@ function lib.hit(patchName, midi, vol, durMs, x, y)
     local patch = lib.patches[patchName]
     if not patch then return end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
+    local slot = slotOf(patchName, patch, lib.audioTime() or 0, durMs)
     if x then
-        S.C.hit_at(midi, patch.slot, vol, durMs, x, y)
+        S.C.hit_at(midi, slot, vol, durMs, x, y)
     else
-        S.C.hit(midi, patch.slot, vol, durMs)
+        S.C.hit(midi, slot, vol, durMs)
     end
 end
 
@@ -479,7 +534,7 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs)
     local patch = lib.patches[patchName]
     if not patch then return end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
-    S.C.schedule_at(t, midi, patch.slot, vol, math.max(1, math.floor(durMs)))
+    S.C.schedule_at(t, midi, slotOf(patchName, patch, t, durMs), vol, math.max(1, math.floor(durMs)))
 end
 
 -- Ride a patch's lowpass live (the music's tone automation); the patch keeps its filter mode.
@@ -487,7 +542,12 @@ function lib.slotFilter(patchName, cutoff)
     if not S.started then return end
     local patch = lib.patches[patchName]
     if not (patch and patch.filter) then return end
-    S.C.instrument_filter(patch.slot, patch.filter.mode, math.floor(cutoff), patch.filter.resonance)
+    local slot = patch.slot
+    if not slot then -- a pool patch: only while it holds a slot
+        for poolSlot, resident in pairs(S.pool or {}) do if resident.name == patchName then slot = poolSlot end end
+        if not slot then return end
+    end
+    S.C.instrument_filter(slot, patch.filter.mode, math.floor(cutoff), patch.filter.resonance)
 end
 
 -- Held notes. noteOn returns a handle (nil when the synth isn't running); vol 0..7, fractions OK.
@@ -496,7 +556,8 @@ function lib.noteOn(patchName, midi, vol, x, y)
     if not S.started then return nil end
     local patch = lib.patches[patchName]
     if not patch then return nil end
-    local handle = S.C.note_on(midi, patch.slot, math.max(0, math.min(7, math.floor(vol + 0.5))))
+    local handle = S.C.note_on(midi, slotOf(patchName, patch, lib.audioTime() or 0, 60000),
+                               math.max(0, math.min(7, math.floor(vol + 0.5))))
     if x then S.C.note_pos(handle, x, y) end
     return handle
 end
@@ -519,7 +580,10 @@ function lib.setVolume(v)
     S.volume = v
     if not S.started then return end
     for _, patch in pairs(lib.patches) do
-        S.C.instrument_level(patch.slot, v * (patch.level or 1))
+        if patch.slot then S.C.instrument_level(patch.slot, v * (patch.level or 1)) end
+    end
+    for slot, resident in pairs(S.pool or {}) do
+        S.C.instrument_level(slot, v * (lib.patches[resident.name].level or 1))
     end
 end
 

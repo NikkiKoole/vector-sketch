@@ -19,6 +19,7 @@
 -- city's jazzhop: our planner, its sound), puppetmaker (Puppetmaker 2's band: a chance-driven CR-78
 -- hand-percussion loop and its rolled Rhodes chord), strum (that chord humanized, through a key),
 -- citypop (Japanese pop-funk: the Royal Road, a popping bass, guitar cutting, strings, horns),
+-- americana (60s commercial strings: violins on the tune, pizzicato, harp sweeps, a muted trumpet),
 -- sesame (a 70s TV small band: clav, a walking upright, vibes, horn shouts), satie (a
 -- Gymnopédie-like 3/4 waltz on a felt piano), ambient (pentatonic loops of unequal lengths drifting
 -- over a drone, Music for Airports) and ballad. lib.onNote lets other code hear every note
@@ -30,7 +31,8 @@
 -- busy (impacts call music.bump), the drums join where the form lets them (the upright too when
 -- lib.upright is on). rhythmSection forces that on or off. lib.chordNotes lets sound effects play
 -- in the current chord. Notes are booked ahead on the synth's audio clock, a bar at a time.
--- Driven by src/sound.lua every frame (paused or not); rooms change it with lib.cue (src/room-music.lua).
+-- Driven by src/sound.lua every frame (paused or not); rooms change it with lib.cue and lib.layers
+-- (src/room-music.lua).
 
 local state = require('src.state')
 
@@ -43,8 +45,8 @@ local lib = {}
 -- copy of the module reads the same switch, and it survives a reload.
 --   enabled
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
---                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'satie',
---                  'ambient', 'ballad'
+--                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'americana',
+--                  'satie', 'ambient', 'ballad'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
@@ -357,6 +359,36 @@ lib.styles = {
             { { 0, 2, 4 }, { 3, 2, 2 }, { 6, 2, 3 }, { 10, 2, 2 }, { 12, 4, 3 },
               { 16, 2, 4 }, { 19, 2, 2 }, { 22, 2, 3 }, { 26, 2, 2 }, { 28, 4, 3 } },
             { { 0, 6, 4 }, { 6, 2, 3 }, { 10, 6, 3 }, { 16, 8, 4 }, { 24, 8, 3 } },
+        },
+    },
+    -- americana: 60s commercial strings, the easy-listening orchestra (Percy Faith, the Living Strings;
+    -- the Sims' buy mode is a modern take). The violins sing the tune with the violas an octave under,
+    -- a felt piano chanks 2 and 4, pizzicato bounces the riff, the upright in two (walking when the
+    -- band joins), brushes, a saw string pad under the chorus, a harp sweeping up into each section,
+    -- and a Harmon-muted trumpet answering in the bar the tune breathes. Sunny sixths and ninths,
+    -- secondary dominants.
+    americana = {
+        bpm = { 112, 126 }, swing = 0.56, chordBars = { 1, 2 }, pushOdds = 20, motifRepeat = 25,
+        strumMs = 10, keys = 'piano', lead = 'violins', leadDouble = { patch = 'violas', interval = -12 },
+        riff = 'pizz', bass = 'walk', bassPatch = 'musicBass', bassLo = 34, drums = 'brushes', home = 'maj69',
+        horns = true, hornPatch = 'mutedTrumpet', strings = true, harp = true,
+        A = {
+            { { 0, 'maj69' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'dom9' } },       -- I vi ii V
+            { { 0, 'maj69' }, { 0, 'maj69' }, { 2, 'dom9' }, { 7, 'dom9' } },  -- I I II7 V7, the sunny one
+            { { 0, 'maj69' }, { 5, 'maj69' }, { 4, 'm7' }, { 9, 'dom9' } },    -- I IV iii VI7
+            { { 5, 'maj7' }, { 5, 'm6' }, { 0, 'maj69' }, { 7, 'dom9' } },     -- IV iv I V
+        },
+        B = {
+            { { 4, 'dom9', 8 }, { 9, 'dom9', 8 }, { 2, 'dom9', 8 }, { 7, 'dom9', 8 } },     -- III7 VI7 II7 V7
+            { { 5, 'maj7', 8 }, { 7, 'dom9', 8 }, { 4, 'm7', 4 }, { 9, 'dom9', 4 },
+              { 2, 'm9', 4 }, { 7, 'dom9', 4 } },                                          -- IV V iii VI ii V
+            { { 2, 'm9', 8 }, { 7, 'dom9', 8 }, { 0, 'maj69', 8 }, { 9, 'dom9', 8 } },      -- ii V I VI7
+        },
+        -- the piano: the chank on 2 and 4, a Charleston lilt, 2 and 4 with skips
+        comps = {
+            { { 4, 2, 3 }, { 12, 2, 3 }, { 20, 2, 3 }, { 28, 2, 3 } },
+            { { 0, 4, 3 }, { 6, 2, 2 }, { 16, 4, 3 }, { 22, 2, 2 } },
+            { { 4, 2, 3 }, { 10, 2, 2 }, { 12, 2, 3 }, { 20, 2, 3 }, { 26, 2, 2 }, { 28, 2, 3 } },
         },
     },
     -- satie: a Gymnopédie-like waltz in 3/4, slow, no drums. Root on 1, chord on 2, a felt-piano tune
@@ -1232,7 +1264,10 @@ local function notify(part, patch, midi, vol, durMs, t, step)
     end
 end
 
+-- M.mute: the parts that sit this bar out (the layers, a handoff); M.clipAt: no note rings past it
 local function play(synth, part, patch, t, midi, vol, durMs, step)
+    if M.mute and M.mute[part] then return end
+    if M.clipAt and t + durMs / 1000 > M.clipAt then durMs = math.max(20, (M.clipAt - t) * 1000) end
     synth.scheduleAt(patch, t, midi, vol, durMs)
     if lib.trace then lib.trace(part, t, midi, vol, durMs) end
     notify(part, patch, midi, vol, durMs, t, step)
@@ -1258,7 +1293,9 @@ local function bookLoopBar(synth, t0, song, b)
                     table.insert(M.booked, { at = t, pcs = pcs }) -- impacts play along in its notes
                     if #M.booked > 4 then table.remove(M.booked, 1) end
                 elseif patch:sub(1, 7) == 'sample:' then -- a sample: only the listeners play it
-                    notify('sample', patch:sub(8), midi + shift, 5, durMs, t, s)
+                    if not (M.mute and M.mute.sample) then
+                        notify('sample', patch:sub(8), midi + shift, 5, durMs, t, s)
+                    end
                 else
                     play(synth, 'perc', patch, t, midi + shift, patch == 'tamb' and 4 or 5, durMs, s)
                 end
@@ -2014,7 +2051,8 @@ local function bookBar(synth, t0, song, b)
             local voicing = keysVoicing(chordAtStep(song, b, h[1]))
             local t = stepTime(song, t0, h[1]) + humanize(0.004)
             for k = math.max(1, #voicing - 2), #voicing do
-                play(synth, 'horns', 'horn', t + (k - 1) * 0.004, voicing[k], h[3], lengthMs(song, h[1], h[2]) * 0.85)
+                play(synth, 'horns', style.hornPatch or 'horn', t + (k - 1) * 0.004, voicing[k], h[3],
+                     lengthMs(song, h[1], h[2]) * 0.85)
             end
         end
     end
@@ -2033,6 +2071,21 @@ local function bookBar(synth, t0, song, b)
                          c == 1 and 50 or 150)
                 end
             end
+        end
+    end
+
+    -- americana's harp: a sweep up through the next chord on the last beat of a section, into A or B
+    local nextSection = b < song.bars and song.barSection[b + 1]
+    if style.harp and nextChords and j == section.bars - 1 and nextSection
+        and (nextSection.kind == 'A' or nextSection.kind == 'B') then
+        local pcs, notes = chordPcs(song, nextChords[1]), {}
+        for midi = 55, 86 do
+            for _, pc in ipairs(pcs) do if midi % 12 == pc then notes[#notes + 1] = midi end end
+        end
+        local t, gap = stepTime(song, t0, 12), song.beat / #notes
+        for k, midi in ipairs(notes) do
+            local at = t + (k - 1) * gap
+            play(synth, 'harp', 'harp', at, midi, 3, (t0 + song.barLength - at) * 1000 + 400)
         end
     end
 
@@ -2058,6 +2111,11 @@ local function bookBar(synth, t0, song, b)
                 local t = stepTime(song, t0, note.s % 16) + humanize(0.003)
                 if note.grace then play(synth, 'lead', patch, t - 0.05, note.grace, math.max(1, note.vol - 2), 45) end
                 play(synth, 'lead', patch, t, note.midi, note.vol, lengthMs(song, note.s % 16, note.len) * 0.9)
+                local double = style.leadDouble -- americana: the violas an octave under the violins
+                if double and not lib.melodyPatch then
+                    play(synth, 'lead', double.patch, t, note.midi + double.interval, math.max(1, note.vol - 1),
+                         lengthMs(song, note.s % 16, note.len) * 0.9)
+                end
             end
         end
     end
@@ -2080,34 +2138,79 @@ local function audition(song, bandIn)
     if bandIn ~= false then M.activity = math.max(M.activity, 2 * lib.bandJoins) end
 end
 
--- A cue's moment: the bar just booked closed a 4-bar phrase (or a section, or the song)
-local function phraseEnds(song)
-    if song.bar < 1 or song.bar >= song.bars then return true end
-    local j, section = song.barIndex[song.bar], song.barSection[song.bar]
+-- A cue comes in where the energy is: at its B (the chorus) when the old song was in its B, else at
+-- its first A; never the intro. The tune is in from the start, the band as the play level says.
+local function enter(song, kind)
+    local skip, at = 0, nil
+    for _, section in ipairs(song.sections) do
+        if section.kind == kind or (not at and section.kind == 'A') then
+            at = { section = section, bar = skip }
+            if section.kind == kind then break end
+        end
+        skip = skip + section.bars
+    end
+    if at then
+        at.section.roles.lead = true
+        song.bar = at.bar
+    end
+    song.hasLead = true
+end
+
+-- The layers (iMUSE's instruments on and off, Woodtick's one tune in many arrangements): which parts
+-- play. A preset is a name from lib.layerPresets or a table { drums = false, ... }; M.layers holds
+-- { name, off = { part = true } } and M.nextLayers the one waiting for the next bar line.
+lib.layerPresets = { 'full', 'quiet', 'cellar', 'rhythm' }
+local LAYERS = {
+    full = {},
+    quiet = { drums = true, bass = true, perc = true, riff = true, guitar = true, horns = true, vinyl = true },
+    cellar = { lead = true, drums = true, perc = true, riff = true, guitar = true, horns = true, strings = true,
+               harp = true, sample = true },
+    rhythm = { lead = true, keys = true, chord = true, strings = true, harp = true },
+}
+local function layerOf(preset)
+    if type(preset) == 'string' then
+        if not LAYERS[preset] then return nil end
+        local off = {}
+        for part in pairs(LAYERS[preset]) do off[part] = true end
+        return { name = preset, off = off }
+    elseif type(preset) == 'table' then
+        local off = {}
+        for part, on in pairs(preset) do if on == false then off[part] = true end end
+        return { name = 'custom', off = off }
+    end
+end
+local function sameLayers(a, b)
+    a, b = a and a.off or {}, b and b.off or {}
+    for part in pairs(a) do if not b[part] then return false end end
+    for part in pairs(b) do if not a[part] then return false end end
+    return true
+end
+
+-- The handoff, part by part: the old song's last bar keeps its light parts and is cut at the bar
+-- line (the releases fade it); the new song comes in light and the heavy parts join bar by bar.
+local TAIL_OFF = { drums = true, bass = true, perc = true, riff = true, guitar = true, horns = true, vinyl = true,
+                   sample = true }
+local ENTRY_OFF = {
+    { drums = true, perc = true, riff = true, guitar = true, horns = true, vinyl = true },
+    { drums = true, perc = true, horns = true },
+}
+local function muteFor(extra)
+    local mute = {}
+    for part in pairs(M.layers and M.layers.off or {}) do mute[part] = true end
+    for part in pairs(extra or {}) do mute[part] = true end
+    return next(mute) and mute or nil
+end
+
+-- Whether bar b closes a 4-bar phrase (or a section, or the song): a cue's moment
+local function phraseEnds(song, b)
+    if b < 1 or b >= song.bars then return true end
+    local j, section = song.barIndex[b], song.barSection[b]
     return (j + 1) % 4 == 0 or j == section.bars - 1
 end
 
 local function cueKey(cue, song)
     if cue.key == 'keep' and song then return song.setKey end
     return nextKey(song and song.setKey)
-end
-
--- The bar between the old song and a cued one, in the old song's time: a 9sus4 on the new key's
--- fifth, held by the keys over its root. A dominant that floats: it leans into the new key without
--- pulling hard, and it has no third to rub what came before.
-local function bookBridge(synth, t0, song, key)
-    local style = lib.styles[song.style]
-    local root = (key + 7) % 12
-    local quality = lib.qualities.sus
-    local pcs = { root }
-    for _, interval in ipairs(quality) do pcs[#pcs + 1] = (root + interval) % 12 end
-    remember(t0, pcs)
-    M.barStart = t0
-    local ms = song.barLength * 1000 - 30
-    M.voicing = voiceChord(root, quality, 48, 76, M.voicing)
-    local keysPatch = style.loop and 'rhodes' or style.keys
-    for k, midi in ipairs(M.voicing) do play(synth, 'keys', keysPatch, t0 + (k - 1) * 0.02, midi, 4, ms) end
-    play(synth, 'bass', 'roundBass', t0, inRange(root, 36), 4, ms)
 end
 
 -- Books the next bar at audio time t0; returns its length in seconds. Past the song's last bar:
@@ -2119,23 +2222,30 @@ local function bookNext(synth, t0)
             for _, name in ipairs(lib.set) do if name == song.style then return true end end
             return false
         end)()))
+    if M.nextLayers then M.layers, M.nextLayers = M.nextLayers, nil end -- layers change on the bar line
+    M.mute, M.clipAt = muteFor(), nil
     local cue = M.cue
     if cue and wrongStyle then M.cue, cue = nil, nil end -- a pick in the panel wins over a cue
-    if cue and song and cue.at == 'phrase' and not cue.bridged then
-        if not phraseEnds(song) then
-            cue = nil -- the old song plays on to the end of its phrase
-        else
-            cue.bridged, cue.setKey = true, cueKey(cue, song)
-            bookBridge(synth, t0, song, cue.setKey)
+    if cue and song and not cue.tailed then
+        if cue.at == 'phrase' and not phraseEnds(song, song.bar + 1) then
+            cue = nil -- the old song plays on: its tail is the phrase's last bar
+        elseif song.bar < song.bars then -- the old song's last bar: its light parts, cut at the bar line
+            cue.tailed = true
+            song.bar = song.bar + 1
+            M.mute, M.clipAt = muteFor(TAIL_OFF), t0 + song.barLength
+            bookBar(synth, t0, song, song.bar)
             return song.barLength
         end
     end
-    if cue then -- the cue lands: its style from the first A, in its key
+    if cue then -- the cue lands: its style on the next downbeat, in its key, coming in light
         M.cue = nil
         lib.style = cue.style
-        M.song = planSong(cue.setKey or cueKey(cue, song))
+        if cue.layers then M.layers = cue.layers end
+        local was = song and song.barSection[math.max(1, math.min(song.bars, song.bar))]
+        M.song = planSong(cueKey(cue, song))
         song = M.song
-        audition(song, false)
+        enter(song, was and was.kind == 'B' and 'B' or 'A')
+        M.entry = 0
     elseif not song or wrongStyle then
         M.song = planSong()
         song = M.song
@@ -2148,28 +2258,55 @@ local function bookNext(synth, t0)
         M.song = planSong()
         song = M.song
     end
+    if M.entry then -- the new song's first bars: the heavy parts join one bar at a time
+        M.entry = M.entry + 1
+        M.mute = muteFor(ENTRY_OFF[M.entry])
+        if M.entry >= #ENTRY_OFF then M.entry = nil end
+    end
     song.bar = song.bar + 1
     bookBar(synth, t0, song, song.bar)
     return song.barLength
 end
 
+-- Switch which parts play (lib.layerPresets, or a table { drums = false, lead = false, ... }) on the
+-- next bar line, same song. Returns whether it changes anything.
+function lib.layers(preset)
+    local layer = layerOf(preset)
+    if not layer then return false end
+    if sameLayers(layer, M.layers) then
+        M.nextLayers = nil
+        return false
+    end
+    if sameLayers(layer, M.nextLayers) then return false end
+    if lib.enabled and M.song then M.nextLayers = layer else M.layers = layer end
+    return true
+end
+
 -- Change to `style` (a style name, or 'set') the way a game score does, for the rooms
--- (src/room-music.lua). opts.at: 'phrase' (the default: when the 4-bar phrase ends, through a
--- bridge bar) or 'bar' (at the next bar line). opts.key: 'related' (the default: a fourth away) or
--- 'keep'. The new style starts at its first A, the tune in, and lands in lib.style (the settings
--- panel shows it). Cueing what's already set does nothing (and drops a pending cue); a second cue
--- replaces the first. With the music off or not started it just sets the style. Returns whether it
--- will change anything.
+-- (src/room-music.lua). opts.at: 'bar' (at the next bar line) or 'phrase' (the default: when the
+-- 4-bar phrase ends). Then a handoff, part by part: the old song plays one more bar with only its
+-- light parts, cut at the bar line, and the new one starts on the next downbeat at its A (its B
+-- when the old one was in B), light first, drums and horns joining two bars in. opts.key: 'related'
+-- (the default: a fourth away) or 'keep'. opts.layers: a preset the new song comes in with (see
+-- lib.layers); for the style already set, a cue with layers is lib.layers. The style lands in
+-- lib.style (the settings panel shows it). Cueing what's already set does nothing (and drops a
+-- pending cue); a second cue replaces the first. With the music off or not started it just sets
+-- the style. Returns whether it will change anything.
 function lib.cue(style, opts)
     opts = opts or {}
     if style ~= 'set' and not lib.styles[style] then return false end
-    if style == lib.style then M.cue = nil; return false end
+    local layer = opts.layers and layerOf(opts.layers)
+    if style == lib.style then
+        M.cue = nil
+        return layer and lib.layers(opts.layers) or false
+    end
     if not (lib.enabled and M.song) then
         lib.style, M.cue = style, nil
+        if layer then M.layers = layer end
         return true
     end
     M.cue = { style = style, at = opts.at == 'bar' and 'bar' or 'phrase',
-              key = opts.key == 'keep' and 'keep' or 'related' }
+              key = opts.key == 'keep' and 'keep' or 'related', layers = layer }
     return true
 end
 
@@ -2202,8 +2339,8 @@ end
 -- Which instruments are playing, per part, for the settings panel (and the bridge): a list of
 -- { part, patches = { { name, now } } } in a fixed part order, holding each patch heard in the last
 -- `window` seconds (default 4); now = sounding at this moment.
-lib.parts = { 'lead', 'keys', 'chord', 'guitar', 'horns', 'strings', 'riff', 'bass', 'drums', 'perc', 'sample',
-              'vinyl' }
+lib.parts = { 'lead', 'keys', 'chord', 'guitar', 'horns', 'strings', 'harp', 'riff', 'bass', 'drums', 'perc',
+              'sample', 'vinyl' }
 function lib.playing(window)
     local now = M.audioTime
     if not (lib.enabled and now) then return {} end
@@ -2232,6 +2369,7 @@ function lib.nowPlaying()
     if not song then return nil end
     local section = song.barSection[math.max(1, math.min(song.bars, song.bar))]
     return { style = song.style, key = song.key, section = section and section.kind, bar = song.bar, bars = song.bars,
+             layers = M.layers and M.layers.name or 'full',
              stepTime = M.barStart, stepLen = song.beat / 4 } -- the latest booked bar's step 0, in audio time
 end
 
