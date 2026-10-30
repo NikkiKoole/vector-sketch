@@ -273,18 +273,17 @@ function lib.drawWorld(world, drawOutline)
                         end
                     end
                 elseif shapeType == 'CircleShape' then
-                    local body_x, body_y = body:getPosition()
-                    local shape_x, shape_y = shape:getPoint()
+                    local cx, cy = body:getWorldPoint(shape:getPoint()) -- an offset circle turns with its body
                     local radius = shape:getRadius()
                     local circleFillColor = getBodyColor(body)
                     local segments = 180
                     love.graphics.setColor(circleFillColor[1], circleFillColor[2], circleFillColor[3], alpha)
-                    love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, radius, segments)
+                    love.graphics.circle('fill', cx, cy, radius, segments)
 
                     local circleOutlineColor = pal.creamy
                     love.graphics.setColor(circleOutlineColor[1], circleOutlineColor[2], circleOutlineColor[3], alpha)
                     if drawOutline then
-                        love.graphics.circle('line', body_x + shape_x, body_y + shape_y, radius, segments)
+                        love.graphics.circle('line', cx, cy, radius, segments)
                     end
                 end
                 if state.world.showDebugIds then
@@ -300,7 +299,7 @@ function lib.drawWorld(world, drawOutline)
             end
         until true end
     end
-    love.graphics.setColor(255, 255, 255, alpha)
+    love.graphics.setColor(1, 1, 1, alpha)
     -- Joint debug
 
     local joints = world:getJoints()
@@ -428,7 +427,8 @@ function lib.drawBodies(bodies)
             love.graphics.translate(body:getX(), body:getY())
             love.graphics.rotate(body:getAngle())
             if shape:typeOf("CircleShape") then
-                love.graphics.circle("line", 0, 0, shape:getRadius())
+                local sx, sy = shape:getPoint()
+                love.graphics.circle("line", sx, sy, shape:getRadius())
             elseif shape:typeOf("PolygonShape") then
                 local points = { shape:getPoints() }
                 love.graphics.polygon("line", points)

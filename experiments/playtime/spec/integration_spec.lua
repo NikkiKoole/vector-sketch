@@ -544,6 +544,39 @@ describe("integration: object lifecycle", function()
             world2:destroy()
         end)
 
+        it("leaves the live scene alone when saving (BUG15)", function()
+            local thing = addBody('rectangle', 0, 0, { width = 60, height = 60 })
+            local other = addBody('rectangle', 100, 0)
+            local tex = fixtures.createSFixture(thing.body, 0, 0, 'texfixture', { width = 40, height = 40 })
+            local extra = tex:getUserData().extra
+            local image = love.graphics.newImage(love.image.newImageData(4, 4))
+            extra.ompImage, extra.dirty, extra._mesh = image, false, 'a mesh'
+            extra.influences = { { { body = other.body, nodeId = 'x', weight = 1 } } }
+            extra.rigidLookup = { [1] = other.body }
+
+            local saveData = sceneIO.gatherSaveData(state.physicsWorld, cam)
+
+            -- live: untouched, so nothing gets composed again
+            assert.are.equal(image, extra.ompImage)
+            assert.is_false(extra.dirty)
+            assert.are.equal('a mesh', extra._mesh)
+            assert.are.equal(other.body, extra.influences[1][1].body)
+            assert.are.equal(other.body, extra.rigidLookup[1])
+            -- saved: no userdata, composed again after a load
+            local saved
+            for _, body in ipairs(saveData.bodies) do
+                for _, f in ipairs(body.fixtures) do
+                    if f.userData and f.userData.subtype == 'texfixture' then saved = f.userData.extra end
+                end
+            end
+            assert.is_nil(saved.ompImage)
+            assert.is_nil(saved._mesh)
+            assert.is_nil(saved.rigidLookup)
+            assert.is_true(saved.dirty)
+            assert.is_nil(saved.influences[1][1].body)
+            assert.are.equal('x', saved.influences[1][1].nodeId)
+        end)
+
         it("round-trips fixture physics properties", function()
             local thing = addBody('circle', 0, 0, { radius = 25 })
             local fix = thing.body:getFixtures()[1]

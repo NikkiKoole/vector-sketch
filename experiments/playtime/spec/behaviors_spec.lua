@@ -30,3 +30,41 @@ describe('behavior params (inspector schema)', function()
         end)
     end
 end)
+
+-- BUG9: the add-behavior panel put a copy of the userData on the body, so the
+-- selection (and a Mipo's parts) kept the old thing without the behavior.
+describe('behaviors.add', function()
+    local function fakeBody(thing, fixtures)
+        local ud = { thing = thing }
+        return {
+            getUserData = function() return ud end,
+            getFixtures = function() return fixtures or {} end,
+        }
+    end
+
+    local function fakeFixture(userData)
+        local f = { sensor = false }
+        function f.getUserData() return userData end
+        function f.setSensor(_, v) f.sensor = v end
+        return f
+    end
+
+    it('adds to the thing the body already has', function()
+        local thing = { id = 'b1' }
+        local body = fakeBody(thing)
+        behaviors.add(body, 'KEEP_ANGLE')
+        assert.are.equal(thing, body:getUserData().thing)
+        assert.are.equal('KEEP_ANGLE', thing.behaviors[1].name)
+    end)
+
+    it('gives a signal behavior its signal, a door its name, and makes a door walk-through', function()
+        local thing = {}
+        local shape, sfixture = fakeFixture(nil), fakeFixture({ subtype = 'snap' })
+        local body = fakeBody(thing, { shape, sfixture })
+        assert.are.equal('signal1', behaviors.add(body, 'SIGNAL_BUTTON').signal)
+        assert.are.equal('door1', behaviors.add(body, 'DOOR').door)
+        assert.is_true(shape.sensor)
+        assert.is_false(sfixture.sensor)
+        assert.are.equal(2, #thing.behaviors)
+    end)
+end)

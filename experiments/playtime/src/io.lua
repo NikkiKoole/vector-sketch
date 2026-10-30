@@ -1039,43 +1039,32 @@ function lib.gatherSaveData(world, camera)
                         -- snap joint, src/physics/snap.lua)
                         fixtureData.userData = utils.deepCopy(fixture:getUserData())
                     else
+                        -- Clean a copy, not the live userdata: saving used to drop every OMP
+                        -- image and mesh in the scene, so all of them were made again (BUG15).
                         local ud = fixture:getUserData()
-                        if ud and ud.extra and ud.extra._mesh then
-                            ud.extra._mesh = nil
+                        local saved = utils.shallowCopy(ud)
+                        if ud.extra then
+                            local extra = utils.shallowCopy(ud.extra)
+                            extra._mesh = nil
+                            extra.rigidLookup = nil -- holds bodies (userdata)
+                            if extra.ompImage or subtypes.is(ud, subtypes.TEXFIXTURE) then
+                                extra.ompImage = nil
+                                extra.dirty = true -- composed again after a load
+                            end
+                            -- selectedBGURL mirrors imageURL for older builds reading this file.
+                            if subtypes.is(ud, subtypes.RESOURCE) then
+                                extra.selectedBGURL = resourceLink.imageURL(ud)
+                            end
+                            saved.extra = extra
                         end
-                        -- logger:inspect(ud)
-                        if subtypes.is(ud, subtypes.TEXFIXTURE) then
-                            ud.extra.dirty = true
-                            if ud.extra.ompImage then ud.extra.ompImage = nil end
-                        end
-                        -- selectedBGURL mirrors imageURL for older builds reading this file.
-                        if subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
-                            ud.extra.selectedBGURL = resourceLink.imageURL(ud)
-                        end
-                        if ud.extra and ud.extra.ompImage then
-                            ud.extra.dirty = true
-                            ud.extra.ompImage = nil
-                        end
-                        -- removing body before save
-                        if ud.extra.influences then
-                            for i = 1, #ud.extra.influences do
-                                local inflList = ud.extra.influences[i]
-                                for j = 1, #inflList do
-                                    if inflList[j].body then
-                                        ud.extra.influences[i][j].body = nil
-                                    end
-                                end
+                        fixtureData.userData = utils.deepCopy(saved)
+                        -- influences point at bodies; the file keeps their ids
+                        local influences = fixtureData.userData.extra and fixtureData.userData.extra.influences
+                        for _, inflList in ipairs(influences or {}) do
+                            for _, influence in ipairs(inflList) do
+                                influence.body = nil
                             end
                         end
-                        -- rigidLookup holds body references (userdata) — strip before JSON
-                        local savedRigidLookup = ud.extra.rigidLookup
-                        ud.extra.rigidLookup = nil
-                        fixtureData.userData = utils.deepCopy(ud)
-                        -- restoring body after save
-                        if ud.extra.influences then
-                            restoreInfluenceBodies(ud.extra.influences)
-                        end
-                        ud.extra.rigidLookup = savedRigidLookup
                     end
 
 

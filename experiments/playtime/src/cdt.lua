@@ -413,7 +413,7 @@ function lib.computeResourceMesh(ud, body, bd, mathutils)
         if not triIndices or #triIndices == 0 then
             mode = 'basic'
             meshVerts = localPolyVerts
-            triIndices = mathutils and mathutils.triangulateToIndices(localPolyVerts) or nil
+            triIndices = mathutils2.triangulateToIndices(localPolyVerts)
         end
     end
     if not triIndices or #triIndices == 0 then return false end
@@ -450,6 +450,34 @@ function lib.computeResourceMesh(ud, body, bd, mathutils)
         ud.extra.meshVertices = nil
     end
     ud.extra.triangulationMode = mode
+    return true
+end
+
+-- What the mesh is made from: the body's place, the backdrop, the outline and the
+-- split points. The RESOURCE panel used to triangulate every frame it was open (BUG16).
+local meshInputs = setmetatable({}, { __mode = 'k' }) -- ud -> inputs of its last mesh
+
+local function inputsOf(ud, body, bd)
+    local thing = body:getUserData().thing
+    local parts = { tostring(body), body:getX(), body:getY(), body:getAngle(),
+        bd.url or '', bd.x, bd.y, bd.w, bd.h, bd.scale or 1, thing.shapeType or '' }
+    for _, list in ipairs({ thing.vertices or {}, thing.extraSteiner or {} }) do
+        parts[#parts + 1] = #list
+        for i = 1, #list do parts[#parts + 1] = list[i] end
+    end
+    parts[#parts + 1] = ud.extra.uvs and 'uvs' or 'none' -- dropped by a polygon edit
+    return table.concat(parts, ' ')
+end
+
+-- computeResourceMesh, but only when something it reads has changed.
+function lib.refreshResourceMesh(ud, body, bd)
+    if not (ud and ud.extra and body and bd and body:getUserData() and body:getUserData().thing) then
+        return false
+    end
+    local inputs = inputsOf(ud, body, bd)
+    if meshInputs[ud] == inputs then return false end
+    lib.computeResourceMesh(ud, body, bd)
+    meshInputs[ud] = inputsOf(ud, body, bd)
     return true
 end
 

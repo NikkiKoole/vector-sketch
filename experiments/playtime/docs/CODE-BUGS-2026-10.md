@@ -58,10 +58,11 @@ Each is small (under half an hour) unless it says otherwise.
 - [x] **BUG8. `debugIds` can be nil.** `physics/box2d-draw.lua:396` indexes `debugIds`, which is only
   made in the body loop (:293). Show debug ids with no body ids drawn → error. Fix: create it at :188.
   **Done 2026-10-30:** made once at the top of drawWorld. `spec/draw-debug_spec.lua`.
-- [ ] **BUG9. The add-behavior panel replaces the thing.** `playtime-ui.lua:430` deep-copies the
+- [x] **BUG9. The add-behavior panel replaces the thing.** `playtime-ui.lua:430` deep-copies the
   body's userData every frame and `setUserData`s the copy on click, so
   `state.selection.selectedObj` points at the old thing. Fix: insert into
   `body:getUserData().thing.behaviors` directly.
+  **Done 2026-10-30:** `behaviors.add(body, name)`. `spec/behaviors_spec.lua`.
 - [x] **BUG10. `handleOffset` doesn't register the new fixture.** `ui/sfixture-editor.lua:1317-1336`
   (N/E/S/W/C buttons on connected texture and trace vertices) destroys and recreates the fixture
   but never calls `registry.registerSFixture`. `placeOnEdge` in `sfixture-params.lua:43` does it
@@ -80,9 +81,11 @@ Each is small (under half an hour) unless it says otherwise.
   `lib.drawMeshOutline = true` draws green triangle edges over every MESHUSERT, in play mode too.
   Fix: default false.
   **Done 2026-10-30.**
-- [ ] **BUG13. Offset circles ignore body rotation.** `physics/box2d-draw.lua:287` draws at
+- [x] **BUG13. Offset circles ignore body rotation.** `physics/box2d-draw.lua:287` draws at
   `body_x + shape_x`; use `body:getWorldPoint(shape:getPoint())`. Also `:307`
   `setColor(255,255,255, alpha)` should be `1,1,1`. (Not checked by hand.)
+  **Done 2026-10-30:** both, and `drawBodies` now draws circles at their offset too.
+  `spec/draw-debug_spec.lua`.
 
 ## Slow
 
@@ -92,16 +95,23 @@ Each is small (under half an hour) unless it says otherwise.
   `sliderWithInput` (`ui/all.lua:247-284`) returns a string when dragged and a number when typed,
   which is why there are `tonumber` calls everywhere. Fix: return `tonumber(...)`, and `if val and`.
   **Done 2026-10-30:** both. `spec/mipo-editor_spec.lua` (5 rebuilds per frame before, 0 now).
-- [ ] **BUG15. Every save regenerates every OMP texture.** `io.lua:1041-1077` sets
+- [x] **BUG15. Every save regenerates every OMP texture.** `io.lua:1041-1077` sets
   `extra.dirty = true` and drops `ompImage`/`_mesh` on the live userdata (library saves too, they
   gather the whole world). Fix: deepCopy first, clean only the copy.
-- [ ] **BUG16. The RESOURCE panel triangulates every frame.** `ui/sfixture-editor.lua:1254` calls
+  **Done 2026-10-30.** `spec/integration_spec.lua`.
+- [x] **BUG16. The RESOURCE panel triangulates every frame.** `ui/sfixture-editor.lua:1254` calls
   `cdt.computeResourceMesh` on each draw while a backdrop is linked. Fix: only when the index
   changes. While there: `if #state.backdrops then` (:1218) is always true, the 'bind-pose' button
   (:1274) does nothing, the 'global mesh ftw!' label (:1287) can go.
-- [ ] **BUG17. Blob rims scan every fixture every step.** `blob.lua:400-435` `beforeStep` walks all
+  **Done 2026-10-30, a bit differently:** the per-frame call also kept UVs right while you move the
+  body or backdrop and after a polygon edit, so `cdt.refreshResourceMesh` makes the mesh again
+  whenever any of its inputs changed (body place, backdrop, outline, splits), not only on a new
+  index. The rest as said; also `computeResourceMesh` ear-clipped only when handed `mathutils`.
+  `spec/resource-link_spec.lua`.
+- [x] **BUG17. Blob rims scan every fixture every step.** `blob.lua:400-435` `beforeStep` walks all
   fixtures of all bodies (paused too) and calls `setMask` each step. Fix: loop over
   `registry.sfixtures` like `liquid.lua:461`.
+  **Done 2026-10-30** (the setMask stays, it's per blob now). `spec/blob_spec.lua`.
 - [x] **BUG18. `blinkStates` leaks.** `box2d-draw-textured.lua:32` is keyed by `thing` but not
   weak-keyed, so every rebuilt thing stays. Fix: `setmetatable({}, { __mode = 'k' })`.
   **Done 2026-10-30.** `spec/draw-debug_spec.lua`.

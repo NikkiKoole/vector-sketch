@@ -60,5 +60,23 @@ lib.allBehaviors = {
       params = {} },
 }
 
+-- Add the behavior `name` to a body's thing, in place: whoever holds that thing
+-- (the selection, a Mipo's parts) still sees it. The panel used to put a copy of
+-- the whole userData on the body, and the selection kept the old thing (BUG9).
+function lib.add(body, name)
+    local thing = body:getUserData().thing
+    thing.behaviors = thing.behaviors or {}
+    local added = { name = name }
+    if name:find('^SIGNAL_') then added.signal = 'signal1' end
+    if name == 'DOOR' then
+        -- a door doesn't collide: Mipos walk past it (sfixtures keep their own setting)
+        added.door = 'door1'
+        for _, fixture in ipairs(body:getFixtures()) do
+            if not fixture:getUserData() then fixture:setSensor(true) end
+        end
+    end
+    table.insert(thing.behaviors, added)
+    return added
+end
 
 return lib

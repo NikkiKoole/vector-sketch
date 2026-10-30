@@ -427,9 +427,8 @@ function lib.drawUI()
 
 
 
-        local myUD = utils.deepCopy(state.panelVisibility.addBehavior.body:getUserData())
-        --logger:inspect(myUD)
-        local myBehaviors = myUD.thing.behaviors or {}
+        local body = state.panelVisibility.addBehavior.body
+        local myBehaviors = body:getUserData().thing.behaviors or {}
 
         local function updatePossibleOptions()
             local possible_options = {}
@@ -464,25 +463,8 @@ function lib.drawUI()
                     local ox = px + BUTTON_SPACING + column * (optionW + BUTTON_SPACING)
                     local oy = py + ui.theme.contentTop + row * (BUTTON_HEIGHT + BUTTON_SPACING)
                     if ui.button(ox, oy, optionW, option) then
-                        --local newUD = utils.deepCopy(myUD)
-                        if not myUD.thing.behaviors then
-                            myUD.thing.behaviors = {}
-                        end
-                        local added = { name = option }
-                        if option:find('^SIGNAL_') then added.signal = 'signal1' end
-                        if option == 'DOOR' then
-                            -- a door doesn't collide: Mipos walk past it (sfixtures keep their own setting)
-                            added.door = 'door1'
-                            for _, fixture in ipairs(state.panelVisibility.addBehavior.body:getFixtures()) do
-                                if not fixture:getUserData() then fixture:setSensor(true) end
-                            end
-                        end
-                        table.insert(myUD.thing.behaviors, added)
-                        state.panelVisibility.addBehavior.body:setUserData(myUD)
-                        local body = state.panelVisibility.addBehavior.body
+                        behaviors.add(body, option)
                         state.panelVisibility.addBehavior = false
-                        --table.insert(myBehaviors, {name = option})
-                        --
                         state.panelVisibility.customBehavior = { name = option, body = body }
                     end
                 end

@@ -4,9 +4,11 @@
 -- BUG12: the MESHUSERT wireframe (a debug view) was on by default.
 -- BUG18: blink states held on to every thing ever drawn.
 -- BUG11: two of three hairs-shader setups never sent the mottle.
+-- BUG13: a circle off the body's centre was drawn as if the body never turned.
 -- Run with: love . --specs spec/draw-debug_spec.lua
 
 if not love then return end
+-- luacheck: ignore 122 (a spy swaps love.graphics.circle and puts it back)
 
 local state = require('src.state')
 local registry = require('src.registry')
@@ -39,6 +41,26 @@ describe('drawing: debug views', function()
         state.world.showDebugIds = true
         state.world.debugDrawJoints = true
         assert.has_no.errors(function() box2dDraw.drawWorld(world) end)
+    end)
+
+    it('draws an offset circle where it is on a turned body (BUG13)', function()
+        local body = love.physics.newBody(world, 100, 50, 'dynamic')
+        love.physics.newFixture(body, love.physics.newCircleShape(20, 0, 5)) -- 20 to the right
+        body:setAngle(math.pi / 2) -- now 20 down
+        local centres = {}
+        local circle = love.graphics.circle
+        love.graphics.circle = function(mode, x, y, ...)
+            centres[#centres + 1] = { x, y }
+            return circle(mode, x, y, ...)
+        end
+        local ok, err = pcall(box2dDraw.drawWorld, world)
+        love.graphics.circle = circle
+        assert.is_true(ok, tostring(err))
+        assert.is_true(#centres > 0)
+        for _, c in ipairs(centres) do
+            assert.is_near(100, c[1], 1e-3)
+            assert.is_near(70, c[2], 1e-3)
+        end
     end)
 
     it('has the MESHUSERT wireframe off unless asked for (BUG12)', function()

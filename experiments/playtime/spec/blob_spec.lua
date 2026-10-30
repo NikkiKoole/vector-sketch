@@ -97,6 +97,26 @@ describe("blob (SOFTBODY sfixture)", function()
         assert.is_nil(blobs.ownerOf(thing.body))
     end)
 
+    -- BUG17: every step looked at every fixture of every body to find the blobs
+    it("finds its blobs without looking at every body", function()
+        props.makeBlob(0, 0)
+        for i = 1, 30 do
+            objectManager.addThing('rectangle', { x = 300 + i * 50, y = 0, width = 40, height = 40 })
+        end
+        blobs.beforeStep(true) -- builds the rim
+        local methods = getmetatable(state.physicsWorld:getBodies()[1]).__index
+        local getFixtures, calls = methods.getFixtures, 0
+        methods.getFixtures = function(...)
+            calls = calls + 1
+            return getFixtures(...)
+        end
+        local ok, err = pcall(blobs.beforeStep, false, 1 / 60)
+        methods.getFixtures = getFixtures
+        assert.is_true(ok, tostring(err))
+        assert.is_not_nil(onlyRuntime())
+        assert.is_true(calls <= 2, calls .. ' bodies looked at')
+    end)
+
     it("saves the body and its settings, not the rim", function()
         props.makeBlob(0, 0)
         blobs.beforeStep(true)

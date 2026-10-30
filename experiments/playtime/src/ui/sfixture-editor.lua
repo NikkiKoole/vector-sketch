@@ -1215,7 +1215,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 ui.zOffsetSlider(myID, ud.extra, x, y, ROW_WIDTH)
             end
         elseif subtypes.is(ud, subtypes.RESOURCE) then
-            if #state.backdrops then
+            do
                 ui.label(x, y, 'backdrop index (for uvmap)')
                 nextRow()
                 -- shows the backdrop with this RESOURCE's image (0: not on stage);
@@ -1246,12 +1246,10 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
 
                     local bod = state.selection.selectedSFixture:getBody()
 
-                    -- Delegate UV + triangulation to the shared mesh builder
-                    -- in `src/cdt.lua`. Auto-picks strip (ribbons) / authored
-                    -- (has user Steiners) / basic (ear-clip). Stores
-                    -- `ud.extra.uvs`, `ud.extra.triangles`, and optionally
-                    -- `ud.extra.meshVertices` (authored mode only).
-                    cdt.computeResourceMesh(ud, bod, b, mathutils)
+                    -- UVs + triangles from `src/cdt.lua` (strip for ribbons, authored with
+                    -- split points, else ear-clip), made again only when the body, the
+                    -- backdrop, the outline or the splits changed
+                    cdt.refreshResourceMesh(ud, bod, b)
                 end
             end
             nextRow()
@@ -1271,12 +1269,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 nextRow()
             end
 
-            if ui.button(x + 100, y, ROW_WIDTH * 0.75, 'bind-pose') then
-                logger:info('here we do nothing...')
-                -- TODO: implement bind-pose for resource sfixtures
-            end
-            local slx, sly = ui.sameLine()
-            if ui.button(slx, sly, 50, 'c') then
+            if ui.button(x, y, 50, 'c') then
                 local body = state.selection.selectedSFixture:getBody()
                 state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                     body:getX(), body:getY())
@@ -1284,7 +1277,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 --state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
             end
             nextRow()
-            ui.label(x, y, 'global mesh ftw!')
         else
             drawAccordion('position', function()
                 nextRow()

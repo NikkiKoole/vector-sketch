@@ -24,6 +24,7 @@ local lib = {}
 
 local state = require('src.state')
 local subtypes = require('src.subtypes')
+local registry = require('src.registry')
 local units = require('src.physics-units')
 
 -- What a new blob starts with (also the fallback for missing keys).
@@ -402,34 +403,33 @@ function lib.beforeStep(paused, dt)
     local world = state.physicsWorld
     if not world then return end
     local seen = {}
-    for _, body in ipairs(world:getBodies()) do
-        if not state.blobRims[body] then
-            for _, fixture in ipairs(body:getFixtures()) do
-                local ud = fixture:getUserData()
-                if type(ud) == 'table' and subtypes.is(ud, subtypes.SOFTBODY) and ud.extra then
-                    seen[ud.id] = true
-                    local rt = state.blobs[ud.id]
-                    if rt and (rt.build ~= BUILD or rt.body ~= body or not rimIntact(rt)
-                            or rt.signature ~= signature(ud.extra)) then
-                        destroy(rt)
-                        rt = nil
-                    end
-                    if rt then
-                        rt.fixture = fixture -- moving/resizing the sfixture replaces the fixture
-                        followTeleport(rt)
-                        if rt.jointSignature ~= jointSignature(ud.extra) then applyJointSettings(rt, ud.extra) end
-                    else
-                        rt = build(fixture)
-                    end
-                    -- the body's own shape is only a handle: it collides with nothing
-                    for _, f in ipairs(body:getFixtures()) do
-                        if not f:getUserData() then f:setMask(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16) end
-                    end
-                    if not paused and dt > 0 then
-                        shapeMatch(rt, ud.extra, dt)
-                        applyPressure(rt, ud.extra)
-                    end
-                end
+    -- the registered sfixtures, not every fixture of every body (BUG17)
+    for _, fixture in pairs(registry.sfixtures) do
+        local ud = not fixture:isDestroyed() and fixture:getUserData()
+        local body = ud and fixture:getBody()
+        if type(ud) == 'table' and subtypes.is(ud, subtypes.SOFTBODY) and ud.extra
+            and body:getWorld() == world and not state.blobRims[body] then
+            seen[ud.id] = true
+            local rt = state.blobs[ud.id]
+            if rt and (rt.build ~= BUILD or rt.body ~= body or not rimIntact(rt)
+                    or rt.signature ~= signature(ud.extra)) then
+                destroy(rt)
+                rt = nil
+            end
+            if rt then
+                rt.fixture = fixture -- moving/resizing the sfixture replaces the fixture
+                followTeleport(rt)
+                if rt.jointSignature ~= jointSignature(ud.extra) then applyJointSettings(rt, ud.extra) end
+            else
+                rt = build(fixture)
+            end
+            -- the body's own shape is only a handle: it collides with nothing
+            for _, f in ipairs(body:getFixtures()) do
+                if not f:getUserData() then f:setMask(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16) end
+            end
+            if not paused and dt > 0 then
+                shapeMatch(rt, ud.extra, dt)
+                applyPressure(rt, ud.extra)
             end
         end
     end

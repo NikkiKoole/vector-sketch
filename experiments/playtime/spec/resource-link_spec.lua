@@ -190,3 +190,46 @@ describe('resource link', function()
         end)
     end)
 end)
+
+-- BUG16: the RESOURCE panel triangulated every frame it was open. Now only when
+-- the body, the backdrop, the outline or the split points changed.
+describe('cdt.refreshResourceMesh', function()
+    local cdt = require('src.cdt')
+    local world, thing, ud, backdrop
+
+    before_each(function()
+        world = love.physics.newWorld(0, 0, true)
+        state.physicsWorld = world
+        registry.reset()
+        thing = objectManager.addThing('custom', { x = 0, y = 0,
+            vertices = { -50, -50, 50, -50, 50, 50, -50, 50 } })
+        local resource = fixtures.createSFixture(thing.body, 0, 0, 'resource', { width = 20, height = 20 })
+        ud = resource:getUserData()
+        backdrop = { url = 'backdrops/spec.png', x = -100, y = -100, w = 200, h = 200 }
+    end)
+
+    after_each(function()
+        if world and not world:isDestroyed() then world:destroy() end
+    end)
+
+    it('makes the mesh once, then again only after a change', function()
+        assert.is_true(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+        assert.is_not_nil(ud.extra.uvs)
+        assert.is_not_nil(ud.extra.triangles)
+        assert.is_false(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+
+        thing.body:setPosition(10, 0) -- moved while tracing
+        assert.is_true(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+        assert.is_false(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+
+        backdrop.w = 300 -- the backdrop was resized
+        assert.is_true(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+
+        thing.extraSteiner = { 0, 0 } -- a split point
+        assert.is_true(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+
+        ud.extra.uvs = nil -- a polygon edit drops the mesh
+        assert.is_true(cdt.refreshResourceMesh(ud, thing.body, backdrop))
+        assert.is_not_nil(ud.extra.uvs)
+    end)
+end)
