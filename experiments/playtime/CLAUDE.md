@@ -241,5 +241,6 @@ Reference docs worth knowing when touching an area:
 - `UV-BACKDROP-FRAGILITY.md` — RESOURCE/backdrop/UV seams; read before touching that path
 - `SOUND-SYNTH.md` — the dreamengine synth via FFI: setup on a new machine, API, gotchas
 - `WORLD-METRICS.md` — Mipo sizes, for designing the world around their feet
+- `INSPIRATIONS.md` — the pictures, toys and apps behind Mipo's look and play (Childcraft, Fabuland, Hancock's Underworld, …)
 - `TOOLING-SETUP.md` — luacheck, busted, profiling
 - `MEASURING.md` — profiling, and `claudetools/snapshot.sh` (before/after snapshots of scenes, Mipos, the Mipo editor) for refactors
