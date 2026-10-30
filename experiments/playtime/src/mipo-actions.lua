@@ -262,6 +262,15 @@ local function wakeUp(instance)
     lib.setRagdoll(instance, false)
 end
 
+-- Upright again: no daze, no ragdoll, every KEEP_ANGLE back as standing wants it. For a Mipo
+-- rebuilt from save data (through a door, src/doors.lua): its KEEP_ANGLEs come back as they
+-- were saved, but the daze timer that would have woken it stayed behind, so it stayed limp.
+function lib.wake(instance)
+    instance._isRagdoll = true -- so setRagdoll(false) restores, whatever the saved flags say
+    instance._isFlipped = false
+    wakeUp(instance)
+end
+
 -- Held limb goes limp: while a pointer holds an arm or leg part, that whole
 -- limb is slack (thing.limp, honoured by src/keep-angle.lua); the rest of the
 -- body keeps its pose. Separate from the enabled flags that ragdoll/flip/daze use.

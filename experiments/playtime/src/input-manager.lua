@@ -247,7 +247,8 @@ local function grabbedMass(body)
 end
 
 -- What a press on bodies does while playing: the scene script, signals, doors, a Mipo's squeak.
-local function playPressed(hitted)
+-- cx, cy: the press in world space (a door's leaf and doorway are tapped by position).
+local function playPressed(hitted, cx, cy)
     local newHitted = utils.map(hitted, function(h)
         local hthing = utils.thingOf(h:getBody())
         return hthing
@@ -256,7 +257,7 @@ local function playPressed(hitted)
     local pressedBodies = {}
     for _, fixture in ipairs(hitted) do pressedBodies[#pressedBodies + 1] = fixture:getBody() end
     signals.onPressed(pressedBodies)
-    doors.onPressed(pressedBodies)
+    doors.onPressed(pressedBodies, cx, cy)
     for _, fixture in ipairs(hitted) do
         local mipo, partName = mipoRegistry.getFromBody(fixture:getBody())
         if mipo then
@@ -286,6 +287,7 @@ local function releasePointer(x, y, id)
     local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
     if (#releasedObjs > 0) then
         local newReleased = utils.map(releasedObjs, utils.thingOf)
+        if not state.world.paused then doors.onReleased(releasedObjs) end -- a Mipo dropped on a door
 
         script.call('onReleased', newReleased)
         if recorder.isRecording and not state.world.paused then
@@ -302,7 +304,7 @@ local function handlePlayPointer(x, y, id, action)
     if action == "pressed" then
         local cx, cy = cam:getWorldCoordinates(x, y)
         local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, pointerParams(), true)
-        if #hitted > 0 then playPressed(hitted) end
+        if #hitted > 0 then playPressed(hitted, cx, cy) else doors.onPressed({}, cx, cy) end
         if recorder.isRecording and #hitted > 0 and madedata.bodyID then
             recorder:recordMouseJointStart(madedata)
         end
@@ -431,7 +433,7 @@ local function pressedSelect(hitted, cx, cy)
     end
 
     if not state.world.paused then
-        playPressed(hitted)
+        playPressed(hitted, cx, cy)
     elseif state.polyEdit.lockedVerts then
         state.interaction.draggingObj = state.selection.selectedObj
         if state.selection.selectedObj then

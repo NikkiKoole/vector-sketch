@@ -215,8 +215,10 @@ end
 -- mode from the body).
 local function fixUpSFixtures(sfixtures)
     for _, fixture in pairs(sfixtures) do
-        local ud = fixture:getUserData()
-        if subtypes.is(ud, subtypes.MESHUSERT) and ud.extra then
+        -- a destroyed one left in the registry (a hot reload of registry.lua split it) is skipped,
+        -- not a crash in the middle of a room load
+        local ud = not fixture:isDestroyed() and fixture:getUserData()
+        if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.extra then
             if ud.extra.influences then
                 influences.restoreBodies(ud.extra.influences)
                 migrations.backfillBindVerts(ud.extra)

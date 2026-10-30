@@ -63,6 +63,14 @@ lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, th
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
 lib.untangleCheckEvery = 0.25
 
+-- passThrough: Mipos put down overlapping (several stepping out of one door, src/doors.lua)
+-- pass through each other, still standing on the floor, while a soft sideways push moves
+-- them apart; each pair collides again once nothing overlaps (at most passThroughMaxTime).
+-- The dismount trick from physics-testbed's downhill scene, but between Mipos only: there
+-- the parts became sensors and would have fallen through the floor.
+lib.passThroughMaxTime = 4.0
+lib.passThroughSpeed = 220 -- the sideways speed the push brings an overlapping Mipo up to (units/s)
+
 -- pileKick: in a pile (a Mipo touching other Mipos through a hundred-odd contacts) a
 --   limb squeezed between heavier parts now and then shoots out at 3000-11000 units/s and
 --   takes its Mipo along, out of a box or out of the room. Box2D caps a step at 2 metres:
@@ -581,7 +589,13 @@ local function untangleMipos(now)
         end
     end
     for key, t in pairs(tangles) do
-        if t.untilT then
+        if t.soft then
+            -- put down overlapping: apart once nothing overlaps, or when the time is up
+            -- (contacts only exist after a physics step, so give it a moment first)
+            t.overlap = overlapping(t.a, t.b)
+            local settled = now - t.startT > 0.1
+            if (settled and not t.overlap) or now >= t.untilT then tangles[key] = nil end
+        elseif t.untilT then
             if not hooked[key] and not overlapping(t.a, t.b) then
                 t.untilT, t.since, t.restUntil = nil, nil, now + lib.untangleRest
             elseif now >= t.untilT then
@@ -597,7 +611,7 @@ local function untangleMipos(now)
     for key, h in pairs(hooked) do
         local t = tangles[key] or { a = h.a, b = h.b }
         tangles[key] = t
-        if not t.untilT then
+        if not t.untilT and not t.soft then
             -- the wait starts once both are let go
             if wasHeld(h.a, now) or wasHeld(h.b, now) or not t.since then t.since = now end
             if now - t.since >= lib.untangleAfter and not (t.restUntil and now < t.restUntil) then
@@ -610,8 +624,61 @@ local function untangleMipos(now)
     end
 end
 
+-- These Mipos (ids) were just put down, maybe overlapping each other or Mipos already
+-- there: every such pair passes through each other until apart (see lib.passThroughSpeed).
+function lib.passThrough(ids)
+    local now = love.timer.getTime()
+    local all = mipoRegistry.getAll()
+    local new = {}
+    for _, id in ipairs(ids) do new[id] = true end
+    for _, id in ipairs(ids) do
+        for otherId in pairs(all) do
+            if otherId ~= id and not (new[otherId] and otherId < id) then
+                local key, a, b = pairKey(id, otherId)
+                tangles[key] = { a = a, b = b, soft = true, overlap = false, startT = now,
+                    untilT = now + lib.passThroughMaxTime }
+            end
+        end
+    end
+end
+
+local function horizontalSpan(instance)
+    local x1, x2 = math.huge, -math.huge
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then
+            local x = part.body:getX()
+            x1, x2 = math.min(x1, x), math.max(x2, x)
+        end
+    end
+    return x1, x2
+end
+
+-- Every step: overlapping pass-through pairs drift apart, each Mipo away from the other's
+-- middle (by id when they're level), up to passThroughSpeed sideways, keeping its fall.
+local function pushApart()
+    local all = mipoRegistry.getAll()
+    local target = units.speed(lib.passThroughSpeed)
+    for _, t in pairs(tangles) do
+        local a, b = all[t.a], all[t.b]
+        if t.soft and t.overlap and a and b then
+            local ax1, ax2 = horizontalSpan(a)
+            local bx1, bx2 = horizontalSpan(b)
+            local dir = ((ax1 + ax2) - (bx1 + bx2)) >= 0 and 1 or -1
+            if (ax1 + ax2) == (bx1 + bx2) then dir = t.a < t.b and -1 or 1 end
+            for instance, sign in pairs({ [a] = dir, [b] = -dir }) do
+                for _, part in pairs(instance.parts) do
+                    if part.body and not part.body:isDestroyed() then
+                        local vx, vy = part.body:getLinearVelocity()
+                        if vx * sign < target then part.body:setLinearVelocity(sign * target, vy) end
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- From preSolve (src/physics/physics-callbacks.lua): two Mipos that are
--- untangling pass through each other.
+-- untangling, or were put down overlapping, pass through each other.
 function lib.onPreSolve(fix1, fix2, contact)
     if next(tangles) == nil then return end
     local instance1 = mipoRegistry.getFromBody(fix1:getBody())
@@ -619,7 +686,7 @@ function lib.onPreSolve(fix1, fix2, contact)
     local instance2 = mipoRegistry.getFromBody(fix2:getBody())
     if not instance2 or instance1 == instance2 then return end
     local t = tangles[pairKey(instance1.id, instance2.id)]
-    if t and t.untilT then contact:setEnabled(false) end
+    if t and (t.untilT or t.soft) then contact:setEnabled(false) end
 end
 
 function lib.update()
@@ -630,6 +697,7 @@ function lib.update()
     if lib.pileKick then calmPileKicks(now) end
     if lib.standUp then standUpMipos(now) end
     if lib.untangle then untangleMipos(now) end
+    if next(tangles) ~= nil then pushApart() end
     if not lib.unwind and not lib.heal and not lib.unstick then return end
     local revolute, limited, held = {}, {}, {}
     for id, instance in pairs(mipoRegistry.getAll()) do

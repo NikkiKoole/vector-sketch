@@ -313,6 +313,7 @@ function love.draw()
     prof.push('drawworld')
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
     prof.pop('drawworld')
+    doors.drawBehind() -- a door swinging open: over the door's own shape, behind the Mipos in it
     prof.push('drawtexturedworld')
     if state.world.showTextures then
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)

@@ -52,7 +52,8 @@ lib.allBehaviors = {
             run = function(body, b) signals().setGate(body, not b.open) end },
       } },
     { name = 'DOOR',
-      description = 'a door to another room (src/doors.lua): tap to open, drop a Mipo on it, tap to go in. '
+      description = 'a door to another room (src/doors.lua): tap it to go in; a Mipo dropped on it goes through '
+        .. 'by itself. '
         .. 'door = its own name, to = the room (scripts/<to>.playtime.json), arrive = the door you come out of there.',
       params = {
           { key = 'door', kind = 'text', default = 'door1' },

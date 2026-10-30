@@ -31,6 +31,25 @@ the door you came in through.
 3. Tap the visible inside: you **go in**. A short zoom into the door, the room
    loads, the Mipo steps out of the arrival door.
 
+**Changed (Nikki, 2026-10-30): a tap takes you, a dropped Mipo takes you along.**
+Built in `src/doors.lua`, worked out in play the same day:
+1. Tap a door: it swings open, *you* go in (the camera, no Mipo needed), and on the
+   other side the arrival door stands open and swings shut behind you. No opening
+   or closing by hand (tried that first: one step too many).
+2. Drop a Mipo on a door: the door swings open with the Mipo still standing there,
+   the Mipo goes through once it's open, you follow, and the door swings shut behind
+   you both. Picked up again or off the door before it's open: nobody goes. (Sending
+   it ahead alone was tried first; following is more natural, and it spaces arrivals
+   by itself: Mipos come in one after another.)
+3. Gathering: tap into a Mipo's room alone, drop it on the door back, both come out.
+4. Arrivals step out of the arrival door (`state.rooms.arrivals`). Two landing on one
+   spot pass through each other while a soft push spreads them
+   (`mipoJointGuard.passThrough`, the dismount trick from physics-testbed's downhill
+   scene, Mipo-on-Mipo only, so they still stand on the floor): no knot, nobody
+   outside the room. They arrive awake: a Mipo dazed when sent kept its limp
+   KEEP_ANGLEs in the save data, not the timer that wakes it.
+5. A Mipo lets go of what it holds at the door for now (W3 carries it).
+
 A deliberate act on purpose: a Mipo that tumbles past a door doesn't teleport.
 The peek is a picture of the room as you last left it (a small canvas render on
 save), or the template's thumbnail the first time.

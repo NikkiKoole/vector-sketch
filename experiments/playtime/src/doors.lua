@@ -1,11 +1,20 @@
--- doors.lua — rooms linked by doors (docs/WORLDS-AND-DOORS.md, slice W1).
+-- doors.lua — rooms linked by doors (docs/WORLDS-AND-DOORS.md).
 -- A door is a body with a DOOR behavior: { door = 'bakery', to = 'bakery',
 -- arrive = 'front' } (usually a static sensor, so Mipos walk past it).
--- Tap a door: it opens. Drop a Mipo on it and tap it again: you go in. The room
--- you leave is kept in memory (state.rooms.saved, as JSON), the Mipo comes along
--- and steps out of the arrival door. Tap an open door with no Mipo on it to close it.
--- W1: the Mipo travels alone (joints to anything else are let go), rooms live in
--- memory only, a room's scene script runs on its first visit, not on a return.
+--   Tap a door: it swings open, you go in, as a spectator, and on the other side the
+--     arrival door swings shut behind you. The room you leave is kept in memory
+--     (state.rooms.saved, as JSON); the camera comes out of the arrival door.
+--   Drop a Mipo on a door: the door swings open, and once it's open the Mipo goes through
+--     (picked up again or off the door by then: it stays) and you follow it (Nikki,
+--     2026-10-30: tapping takes you alone, so gathering Mipos still works). It steps out of
+--     the arrival door on the other side (state.rooms.arrivals). Several step out close
+--     together and pass through each other while they drift apart, so they don't knot or
+--     end up outside the room (mipoJointGuard.passThrough).
+--   No opening or closing by hand (Nikki, 2026-10-30): the door swings open on its own when
+--     something goes through, and shut again (lib.swing).
+-- A Mipo goes alone for now: joints to anything else are let go (W3 carries what's
+-- connected). Rooms live in memory only (W2), a room's scene script runs on its first
+-- visit, not on a return.
 local lib = {}
 
 local state = require('src.state')
@@ -20,24 +29,59 @@ local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local library = require('src.library')
 local sceneLoader = require('src.scene-loader')
 local snap = require('src.physics.snap')
+local objectManager = require('src.object-manager')
+local mipoJointGuard = require('src.mipo-joint-guard')
+local mipoActions = require('src.mipo-actions')
 
--- On state so a hot reload keeps the rooms you've been in.
-state.rooms = state.rooms or { saved = {}, openDoor = nil, pending = nil, fade = 0 }
+-- On state so a hot reload keeps the rooms you've been in and the Mipos on their way.
+--   saved[room]     the room as you left it (JSON)
+--   arrivals[room]  { { traveler = save data of one Mipo, arrive = door name }, ... }
+--   swing[doorId]   seconds into a door's swing open and shut (see lib.swing)
+state.rooms = state.rooms or {}
 local R = state.rooms
+R.saved, R.arrivals, R.swing = R.saved or {}, R.arrivals or {}, R.swing or {}
+R.fade = R.fade or 0
 
 local FADE_SECONDS = 0.5
+-- A door's swing: seconds to swing open, to stay open, to swing shut, and how far it opens.
+-- Going in waits for `opening`, so you go through an open door.
+-- (80 degrees: the leaf ends as a narrow panel on the hinge side, inside the doorway, so it
+-- never draws over a wall next to the door.)
+lib.swing = { opening = 0.22, open = 0.45, closing = 0.3, angle = math.rad(80) }
+local SWING_DEPTH = 25 -- how much the leaf's free edge shrinks top and bottom when turned side-on
 local DOOR_MARGIN = 40 -- a Mipo's torso this close to the door's box counts as on it
 local ARRIVE_CLEARANCE = 80 -- the lowest part's centre this far above the door's bottom
+local ARRIVE_STEP = 70 -- Mipos stepping out together start this far apart, then drift apart
 
--- Every door body in the world.
+-- The doors are looked for again when the world or its body count changes, and every
+-- RESCAN_CALLS calls (a DOOR behavior added in the editor changes no count). Scanning every
+-- body on every call was 1.1-1.4 ms a frame with 100 Mipos (the draws call it each frame).
+local RESCAN_CALLS = 60
+local doorScan = { world = nil, bodyCount = -1, calls = 0, list = {} }
+
+-- Every door body in the world: { { body, door = its DOOR behavior }, ... }.
 function lib.doors()
-    local found = {}
-    if not state.physicsWorld then return found end
-    for _, body in ipairs(state.physicsWorld:getBodies()) do
-        local b = behaviors.find(body, 'DOOR')
-        if b then table.insert(found, { body = body, door = b }) end
+    local world = state.physicsWorld
+    if not world then return {} end
+    local count = world:getBodyCount()
+    doorScan.calls = doorScan.calls - 1
+    local stale = doorScan.world ~= world or doorScan.bodyCount ~= count or doorScan.calls <= 0
+    for _, d in ipairs(doorScan.list) do
+        -- a room load can bring the same body count back with other bodies
+        if stale or d.body:isDestroyed() then
+            stale = true
+            break
+        end
     end
-    return found
+    if stale then
+        local found = {}
+        for _, body in ipairs(world:getBodies()) do
+            local b = behaviors.find(body, 'DOOR')
+            if b then table.insert(found, { body = body, door = b }) end
+        end
+        doorScan.world, doorScan.bodyCount, doorScan.calls, doorScan.list = world, count, RESCAN_CALLS, found
+    end
+    return doorScan.list
 end
 
 function lib.findDoor(name)
@@ -64,24 +108,14 @@ function lib.box(body)
     return x1, y1, x2, y2
 end
 
+local function inside(x, y, x1, y1, x2, y2, margin)
+    margin = margin or 0
+    return x > x1 - margin and x < x2 + margin and y > y1 - margin and y < y2 + margin
+end
+
 local function torsoBody(instance)
     local part = instance.parts and (instance.parts['torso1'] or instance.parts['head'])
     if part and part.body and not part.body:isDestroyed() then return part.body end
-    return nil
-end
-
--- The id of a Mipo standing on the door (its torso in the door's box), or nil.
-function lib.mipoOn(body)
-    local x1, y1, x2, y2 = lib.box(body)
-    for id, instance in pairs(mipoRegistry.getAll()) do
-        local torso = torsoBody(instance)
-        if torso then
-            local x, y = torso:getPosition()
-            if x > x1 - DOOR_MARGIN and x < x2 + DOOR_MARGIN and y > y1 - DOOR_MARGIN and y < y2 + DOOR_MARGIN then
-                return id
-            end
-        end
-    end
     return nil
 end
 
@@ -90,28 +124,61 @@ local function bodyId(body)
     return thing and thing.id
 end
 
--- Called with the bodies under a press while playing (src/input-manager.lua).
--- Returns true when a door took the tap.
-function lib.onPressed(bodies)
+-- The door a Mipo's torso is on, or nil.
+local function doorUnder(instance)
+    local torso = torsoBody(instance)
+    if not torso then return nil end
+    local x, y = torso:getPosition()
+    for _, d in ipairs(lib.doors()) do
+        local x1, y1, x2, y2 = lib.box(d.body)
+        if inside(x, y, x1, y1, x2, y2, DOOR_MARGIN) then return d.body, d.door end
+    end
+    return nil
+end
+
+-- The id of a Mipo standing on the door (its torso in the door's box), or nil.
+function lib.mipoOn(body)
+    for id, instance in pairs(mipoRegistry.getAll()) do
+        if doorUnder(instance) == body then return id end
+    end
+    return nil
+end
+
+-- A press while playing (src/input-manager.lua), at world x, y, on these bodies: a tap on a
+-- door takes you in. Grabbing a Mipo or something loose in front of a door wins over the
+-- door. Returns true when a door took the tap.
+function lib.onPressed(bodies, x, y)
     for _, body in ipairs(bodies) do
-        local b = behaviors.find(body, 'DOOR')
-        if b then
-            local id = bodyId(body)
-            if R.openDoor ~= id then
-                R.openDoor = id
-            else
-                local mipoId = lib.mipoOn(body)
-                if mipoId and b.to and b.to ~= '' then
-                    -- go next frame, outside the input callback
-                    R.pending = { to = b.to, arrive = b.arrive, mipoId = mipoId }
-                else
-                    R.openDoor = nil
-                end
-            end
+        if mipoRegistry.getFromBody(body) or (body:getType() == 'dynamic' and not behaviors.find(body, 'DOOR')) then
+            return false
+        end
+    end
+    for _, d in ipairs(lib.doors()) do
+        if inside(x, y, lib.box(d.body)) and d.door.to and d.door.to ~= '' then
+            -- go next frame, outside the input callback
+            R.pending = { to = d.door.to, arrive = d.door.arrive, wait = lib.swing.opening }
+            R.swing[bodyId(d.body)] = 0
             return true
         end
     end
     return false
+end
+
+-- Letting go of bodies while playing: a Mipo dropped on a door goes through (next frame).
+function lib.onReleased(bodies)
+    for _, body in ipairs(bodies) do
+        local instance = not body:isDestroyed() and mipoRegistry.getFromBody(body)
+        if instance then
+            local doorBody, door = doorUnder(instance)
+            if doorBody and door.to and door.to ~= '' then
+                -- the door swings open first; the Mipo goes once it's open (lib.update)
+                R.sends = R.sends or {}
+                table.insert(R.sends, { mipoId = instance.id, door = bodyId(doorBody), to = door.to,
+                    arrive = door.arrive, wait = lib.swing.opening })
+                R.swing[bodyId(doorBody)] = R.swing[bodyId(doorBody)] or 0
+            end
+        end
+    end
 end
 
 -- Split save data in two: the Mipo (its bodies, the joints between them, its
@@ -124,7 +191,7 @@ function lib.split(data, mipoId)
     local traveler = { version = data.version, bodies = {}, joints = {}, characters = {} }
     local isTraveler = {}
     for _, bodyData in ipairs(data.bodies or {}) do
-        if bodyData.mipoId == mipoId then
+        if mipoId and bodyData.mipoId == mipoId then
             table.insert(traveler.bodies, bodyData)
             isTraveler[bodyData.id] = true
         else
@@ -155,9 +222,43 @@ local function torsoPosition(traveler)
     return 0, 0
 end
 
-local function enterRoom(to, arrive, traveler)
-    local cam = camera.getInstance()
+-- The arrival door's centre and bottom in the room now loaded (0, 0 and no bottom without one).
+local function arrivalPoint(arrive, room)
+    local doorBody = lib.findDoor(arrive)
+    if not doorBody then
+        logger:info('doors: no door "' .. tostring(arrive) .. '" in ' .. tostring(room))
+        return 0, 0, nil
+    end
+    local x1, _, x2, y2 = lib.box(doorBody)
+    return (x1 + x2) / 2, doorBody:getY(), y2
+end
 
+-- One Mipo steps out of the arrival door: centred on it (shifted by `offset` when several come at
+-- once), its lowest part just above the door's bottom (the torso at the door's centre put the legs
+-- in the floor).
+local function placeTraveler(traveler, ax, ay, bottom, offset)
+    if #traveler.bodies == 0 then return end
+    local tx, ty = torsoPosition(traveler)
+    if bottom then
+        local lowest = ty
+        for _, bodyData in ipairs(traveler.bodies) do lowest = math.max(lowest, bodyData.position[2]) end
+        ay = bottom - ARRIVE_CLEARANCE - (lowest - ty)
+    end
+    library.move(traveler, ax + offset - tx, ay - ty)
+    local data = json.decode(json.encode(traveler))
+    sceneIO.prepareLoaded(data)
+    sceneIO.buildWorld(data, state.physicsWorld, camera.getInstance(), { additive = true })
+end
+
+-- Where travelers stepping out together start, around the door: a little apart (so
+-- each knows which way to drift), overlapping; they pass through each other until apart.
+local function closeTogether(n)
+    local offsets = {}
+    for i = 1, n do offsets[i] = (i - (n + 1) / 2) * ARRIVE_STEP end
+    return offsets
+end
+
+local function enterRoom(to, arrive)
     if R.saved[to] then
         sceneLoader.loadSceneData(R.saved[to], to)
         state.scene.id = to
@@ -168,69 +269,176 @@ local function enterRoom(to, arrive, traveler)
     state.interaction.draggingObj = nil
     state.selection.selectedBodies = nil
 
-    -- the Mipo steps out of the arrival door: centred on it, its lowest part just
-    -- above the door's bottom (the torso at the door's centre put the legs in the floor)
-    local doorBody = lib.findDoor(arrive)
-    local ax, ay = 0, 0
-    local bottom
-    if doorBody then
-        local x1, _, x2, y2 = lib.box(doorBody)
-        ax, ay, bottom = (x1 + x2) / 2, doorBody:getY(), y2
-    else
-        logger:info('doors: no door "' .. tostring(arrive) .. '" in ' .. to)
-    end
-    if #traveler.bodies > 0 then
-        local tx, ty = torsoPosition(traveler)
-        if bottom then
-            local lowest = ty
-            for _, bodyData in ipairs(traveler.bodies) do lowest = math.max(lowest, bodyData.position[2]) end
-            ay = bottom - ARRIVE_CLEARANCE - (lowest - ty)
+    local ax, ay, bottom = arrivalPoint(arrive, to)
+    -- Mipos sent ahead step out of the door they were sent to arrive at, side by side
+    local byDoor, order = {}, {}
+    for _, arrival in ipairs(R.arrivals[to] or {}) do
+        if not byDoor[arrival.arrive] then
+            byDoor[arrival.arrive] = {}
+            order[#order + 1] = arrival.arrive
         end
-        library.move(traveler, ax - tx, ay - ty)
-        local data = json.decode(json.encode(traveler))
-        sceneIO.prepareLoaded(data)
-        sceneIO.buildWorld(data, state.physicsWorld, cam, { additive = true })
-        snap.onSceneLoaded()
+        table.insert(byDoor[arrival.arrive], arrival.traveler)
     end
-    cam:setTranslation(ax, ay)
+    local arrived = {}
+    for _, doorName in ipairs(order) do
+        local travelers = byDoor[doorName]
+        local offsets = closeTogether(#travelers)
+        local x, y, b = ax, ay, bottom
+        if doorName ~= arrive then x, y, b = arrivalPoint(doorName, to) end
+        for i, traveler in ipairs(travelers) do
+            placeTraveler(traveler, x, y, b, offsets[i])
+            for _, character in ipairs(traveler.characters or {}) do arrived[#arrived + 1] = character.id end
+        end
+    end
+    if #arrived > 0 then
+        -- upright: a Mipo dazed (limp) when it was sent kept its limp KEEP_ANGLEs in the save
+        -- data, but not the timer that wakes it
+        for _, id in ipairs(arrived) do
+            local instance = mipoRegistry.getAll()[id]
+            if instance then mipoActions.wake(instance) end
+        end
+        mipoJointGuard.passThrough(arrived)
+    end
+    R.arrivals[to] = nil
+    snap.onSceneLoaded()
+    camera.getInstance():setTranslation(ax, ay)
+    -- the door you came through stands open behind you and swings shut as the fade clears
+    -- (the other room's swings are left behind)
+    R.swing = {}
+    local arrivalDoor = lib.findDoor(arrive)
+    if arrivalDoor then R.swing[bodyId(arrivalDoor)] = lib.swing.opening end
 end
 
+-- You go through the open door; the room you leave is kept as it is.
 local function goThrough(pending)
     local from = state.scene.id
-    local data = sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance())
-    local room, traveler = lib.split(data, pending.mipoId)
-    if from then R.saved[from] = json.encode(room) end
-    R.openDoor = nil
-    enterRoom(pending.to, pending.arrive, traveler)
+    if from then
+        R.saved[from] = json.encode(sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance()))
+    end
+    enterRoom(pending.to, pending.arrive)
     R.fade = 1
 end
 
+-- A dropped Mipo goes through by itself: out of this room, onto the next room's arrivals.
+local function heldByPointer(instance)
+    for _, pointerJoint in ipairs(box2dPointerJoints.getPointerJoints()) do
+        local body = pointerJoint.jointBody
+        if body and not body:isDestroyed() and mipoRegistry.getFromBody(body) == instance then return true end
+    end
+    return false
+end
+
+local function send(s)
+    local instance = mipoRegistry.getAll()[s.mipoId]
+    if not instance then return end
+    -- picked up again, or tumbled off the door while it opened: it stays, the door just closes
+    local doorBody = doorUnder(instance)
+    if heldByPointer(instance) or not doorBody or bodyId(doorBody) ~= s.door then return end
+    if mipoActions.isDazed(instance) then mipoActions.wake(instance) end -- goes in awake
+    local data = sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance())
+    local _, traveler = lib.split(data, s.mipoId)
+    if #traveler.bodies == 0 then return end
+    box2dPointerJoints.resetPointerJoints() -- no finger left holding a part that's going
+    state.interaction.draggingObj = nil
+    for _, part in pairs(instance.parts or {}) do
+        if part.body and not part.body:isDestroyed() then
+            snap.destroySnapJointAboutBody(part.body)
+            objectManager.destroyBody(part.body)
+        end
+    end
+    mipoRegistry.unregister(s.mipoId)
+    R.arrivals[s.to] = R.arrivals[s.to] or {}
+    table.insert(R.arrivals[s.to], { traveler = traveler, arrive = s.arrive })
+    logger:info('doors: a Mipo went into ' .. s.to)
+    -- and you follow it (tapping a door takes you alone, so you can still gather Mipos)
+    R.pending = R.pending or { to = s.to, arrive = s.arrive, wait = 0 }
+end
+
 function lib.update(dt)
+    if R.sends then
+        local waiting = {}
+        for _, s in ipairs(R.sends) do
+            s.wait = (s.wait or 0) - dt
+            if s.wait > 0 then waiting[#waiting + 1] = s end
+        end
+        local due = {}
+        for _, s in ipairs(R.sends) do if s.wait <= 0 then due[#due + 1] = s end end
+        R.sends = #waiting > 0 and waiting or nil
+        for _, s in ipairs(due) do send(s) end
+    end
     if R.pending then
-        local pending = R.pending
-        R.pending = nil
-        goThrough(pending)
+        R.pending.wait = (R.pending.wait or 0) - dt
+        if R.pending.wait <= 0 then
+            local pending = R.pending
+            R.pending = nil
+            goThrough(pending)
+        end
+    end
+    local total = lib.swing.opening + lib.swing.open + lib.swing.closing
+    for id, t in pairs(R.swing) do
+        R.swing[id] = t + dt < total and t + dt or nil
     end
     if R.fade > 0 then R.fade = math.max(0, R.fade - dt / FADE_SECONDS) end
 end
 
--- World space: an open door shows a dark inside and what to do next; a closed
--- one a small label. In the editor (paused) every door shows where it leads.
+-- How far a door has turned, 0 (shut) to 1 (open), t seconds into its swing.
+function lib.openness(t)
+    local w = lib.swing
+    local function ease(x) return x * x * (3 - 2 * x) end
+    if t < w.opening then return ease(t / w.opening) end
+    t = t - w.opening
+    if t < w.open then return 1 end
+    t = t - w.open
+    return 1 - ease(math.min(1, t / w.closing))
+end
+
+-- The door leaf turned on its hinge (the doorway's left edge): the dark doorway shows behind
+-- it, the free edge comes across and past the hinge, foreshortened as it turns side-on.
+local function drawSwing(x1, y1, x2, y2, openness)
+    local lg = love.graphics
+    local angle = openness * lib.swing.angle
+    local freeX = x1 + (x2 - x1) * math.cos(angle)
+    local shrink = SWING_DEPTH * math.sin(angle)
+    lg.setColor(0.08, 0.06, 0.1, 0.92 * math.min(1, openness * 3))
+    lg.rectangle('fill', x1, y1, x2 - x1, y2 - y1)
+    lg.setColor(0.55, 0.4, 0.28, 0.97)
+    lg.polygon('fill', x1, y1, freeX, y1 + shrink, freeX, y2 - shrink, x1, y2)
+    lg.setColor(0.35, 0.25, 0.17, 1)
+    lg.setLineWidth(3)
+    lg.polygon('line', x1, y1, freeX, y1 + shrink, freeX, y2 - shrink, x1, y2)
+end
+
+-- How many Mipos are on their way into a room (waiting for you to go in).
+function lib.waiting(room)
+    return #(R.arrivals[room] or {})
+end
+
+-- World space, between the plain shapes and the textured ones (main.lua): a door swinging open
+-- and shut, over the door's own shape and behind whoever stands in the doorway.
+function lib.drawBehind()
+    for _, d in ipairs(lib.doors()) do
+        local t = R.swing[bodyId(d.body)]
+        if t then
+            local x1, y1, x2, y2 = lib.box(d.body)
+            drawSwing(x1, y1, x2, y2, lib.openness(t))
+        end
+    end
+    love.graphics.setColor(1, 1, 1)
+end
+
+-- World space, over the bodies: a door with Mipos waiting behind it says so; in the editor
+-- (paused) every door shows where it leads.
 function lib.draw()
     local lg = love.graphics
     for _, d in ipairs(lib.doors()) do
         local x1, y1, x2, y2 = lib.box(d.body)
-        local open = R.openDoor == bodyId(d.body)
-        if open then
-            lg.setColor(0.08, 0.06, 0.1, 0.92)
-            lg.rectangle('fill', x1, y1, x2 - x1, y2 - y1)
-            local onIt = lib.mipoOn(d.body)
-            lg.setColor(onIt and { 1, 0.8, 0.3 } or { 1, 1, 1, 0.7 })
-            lg.setLineWidth(6)
-            lg.rectangle('line', x1, y1, x2 - x1, y2 - y1)
-            lg.printf(onIt and 'tap to go in' or ('put a Mipo here\n(' .. tostring(d.door.to) .. ')'),
-                x1, (y1 + y2) / 2 - 20, x2 - x1, 'center')
-        elseif state.world.paused then
+        local waiting = lib.waiting(d.door.to)
+        if waiting > 0 then
+            lg.setColor(1, 1, 1, 0.85)
+            lg.printf(waiting .. (waiting == 1 and ' Mipo' or ' Mipos') .. ' inside', x1 - 100, y1 - 40,
+                x2 - x1 + 200, 'center')
+        end
+        if state.world.paused then
             lg.setColor(1, 1, 1, 0.6)
             lg.setLineWidth(2)
             lg.rectangle('line', x1, y1, x2 - x1, y2 - y1)
