@@ -1,6 +1,6 @@
 # King Rollo: the notebook for a season of Mipo shorts
 
-status: parked — a notebook, watching + collecting
+status: idea
 
 **Started:** 2026-10-02. **Status:** watching + collecting.
 

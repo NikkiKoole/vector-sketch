@@ -1,6 +1,6 @@
 # Music & sound ideas
 
-status: active
+status: idea
 
 Notes to pick up now and then, with no deadline. The music lives in `src/music.lua` and the patches in `src/synth.lua`. The engine is dreamengine, through `native/desound/`.
 

@@ -1,7 +1,8 @@
 -- plans.lua — the work board, made from the docs themselves (docs/readme.md).
 --
 -- Each doc in docs/ (and docs/knut/) has one hand-kept line near the top:
---   status: active | parked — why | done | reference
+--   status: active | idea | parked — why | done | reference
+-- (idea: a notebook added to now and then, like KING-ROLLO; listed, never warned about)
 -- Progress comes from the doc's `- [x]` / `- [ ]` boxes (`- [~]`: a step parked for now, left out);
 -- nothing else is kept by hand.
 -- Warnings point at drift: an active doc untouched for weeks, an active doc with every box
@@ -88,7 +89,7 @@ local function untickedMentions(doc)
 end
 
 local docs = listDocs()
-local byStatus = { active = {}, parked = {}, done = {}, reference = {} }
+local byStatus = { active = {}, idea = {}, parked = {}, done = {}, reference = {} }
 local warnings = {}
 
 for _, path in ipairs(docs) do
@@ -96,7 +97,7 @@ for _, path in ipairs(docs) do
     local short = path:gsub('^docs/', '')
     doc.short = short
     if not doc.status then
-        warnings[#warnings + 1] = short .. ': no status line (add `status: active|parked|done|reference` under the title)'
+        warnings[#warnings + 1] = short .. ': no status line (add `status: active|idea|parked|done|reference` under the title)'
     elseif not byStatus[doc.status] then
         warnings[#warnings + 1] = short .. ': unknown status "' .. doc.status .. '"'
     else
@@ -125,6 +126,11 @@ for _, doc in ipairs(byStatus.active) do
         print('    - ' .. doc.open[i].label)
     end
     if #doc.open > NEXT_ITEMS then print('    ... ' .. (#doc.open - NEXT_ITEMS) .. ' more') end
+end
+
+print('\nIDEAS')
+for _, doc in ipairs(byStatus.idea) do
+    print('  ' .. doc.short .. '  ' .. doc.title)
 end
 
 print('\nPARKED')

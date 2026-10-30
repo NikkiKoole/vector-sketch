@@ -1,6 +1,6 @@
 # Mipo Code — Design Idea
 
-status: parked — an idea, not started
+status: idea
 
 A short, memorable, portable string that uniquely identifies a Mipo character.
 Bidirectional: encode existing DNA → code, decode code → spawn identical Mipo.

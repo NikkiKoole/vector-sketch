@@ -14,7 +14,8 @@ Where the work stands is not written down here. It comes from the docs themselve
 ## The rules
 
 - **One status line** under each doc's title, the only thing kept by hand:
-  `status: active`, `status: parked — why`, `status: done` or `status: reference`.
+  `status: active`, `status: idea`, `status: parked — why`, `status: done` or `status: reference`.
+  `idea` is a notebook added to now and then (KING-ROLLO, MUSIC-IDEAS): listed, no next steps, no warnings.
   No free-text "Status: ... built, ... next" lines: those are what went out of date.
 - **Steps are checkboxes**: `- [ ] **W2. Persistence.** ...`, ticked `- [x]` when done (with the
   date in the text). `- [~]` is a step parked inside an active plan. A short id at the start
