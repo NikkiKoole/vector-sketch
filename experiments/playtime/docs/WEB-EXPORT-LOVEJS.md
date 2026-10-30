@@ -161,7 +161,7 @@ love.js uses PUC Lua 5.1, not LuaJIT. Watch out for:
 
 - **Mouse wheel zoom** — needs `preventDefault()` on canvas wheel event (handled in custom index.html)
 - **Audio autoplay** — browsers block audio until a click or key; the page starts (and wakes) the synth on
-  every click/key. One message in Lora (Google Fonts) covers it: "Loading…" until the game's first
+  every click/key. One message in Lora (webtest/fonts/, self-hosted, SIL OFL) covers it: "Loading…" until the game's first
   frame (the web bridge's 'ready'), then "Click the screen to start" over the game, gone after a click.
 - **Editor UI panels** — full editor UI loads in web build; for shipped scenes, should strip to just the scene player
 - **Missing textures** — all of textures/ is bundled now; a missing one falls back to a white pixel

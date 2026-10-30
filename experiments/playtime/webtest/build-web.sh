@@ -68,6 +68,7 @@ rm -rf "$OUTPUT_DIR"
 HAS_SYNTH=false
 [ -f "$SYNTH_WASM" ] && HAS_SYNTH=true
 sed -e "s/__SCENE__/${SCENE}/g" -e "s/__SYNTH__/${HAS_SYNTH}/g" "$WEBTEST_DIR/index.template.html" > "$OUTPUT_DIR/index.html"
+cp -r "$WEBTEST_DIR/fonts" "$OUTPUT_DIR/"   # Lora for the page's message, with its license
 if [ -f "$SYNTH_WASM" ]; then
     cp "$SYNTH_WASM" "$OUTPUT_DIR/desound.wasm"
     cp "$WEBTEST_DIR/desound-processor.js" "$OUTPUT_DIR/"
