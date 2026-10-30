@@ -153,7 +153,8 @@ lib.styles = {
     },
     guaraldi = {
         bpm = 132, swing = 0.62, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 35, motifRepeat = 30,
-        strumMs = 12, keys = 'piano', lead = 'pianoLead', bass = 'guaraldi', drums = 'brushes', home = 'maj69',
+        strumMs = 12, keys = 'piano', lead = 'pianoLead', bass = 'guaraldi', bassLo = 38, drums = 'brushes',
+        home = 'maj69',
         A = {
             { { 0, 'maj69' }, { 5, 'dom9' } },                                -- I6/9 IV9, the rocking vamp
             { { 0, 'maj7' }, { 2, 'm7' }, { 4, 'm7' }, { 5, 'maj7' } },       -- I ii iii IV, stepping up
@@ -276,7 +277,7 @@ lib.styles = {
         bpm = { 68, 88 }, swing = { 0.54, 0.62 }, swing16 = true, snareLagMs = { 8, 18 },
         chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 50, minorChance = 55,
         strumMs = 18, keys = 'lofiKeys', lead = 'vibes', leadChance = 60, bass = 'lofi',
-        bassPatch = 'roundBass', bassLo = 33, drums = 'jazzhop', home = 'maj9', homeMinor = 'm9',
+        bassPatch = 'roundBass', bassLo = 33, groove = 'lofi', introHats = true, home = 'maj9', homeMinor = 'm9',
         comps = 'jazzhop', compWeights = { { 0.3, 1.0 }, { 0.1, 0.8 }, { 0.1, 0.6 } }, lightOdds = 0,
         holdChanges = true, forms = 'lofi', B = 'A', range = { 67, 84 }, tone = { 5500, 9000 },
         epLp = { 2400, 4500 }, vinyl = true,
@@ -892,43 +893,31 @@ local function planAmbient(song)
     end
 end
 
--- setKey: the set's key for the song (a cue's choice); nil: a related key, a fourth from the last
-local function planSong(setKey)
-    local styleName = nextStyleName()
-    local style = lib.styles[styleName]
-    local seed = love.math.random(1, 2147483646)
-    local function between(range) -- a style value that is a number, or a { lo, hi } to roll per song
-        if type(range) ~= 'table' then return range end
-        return range[1] + love.math.random() * (range[2] - range[1])
-    end
-    setKey = setKey or nextKey(M.song and M.song.setKey)
-    local song = {
-        version = VERSION, style = styleName, seed = seed, setKey = setKey, key = setKey,
-        beat = 60 / math.floor(between(style.bpm) + 0.5), swing = between(style.swing) or 0.5,
-        swing16 = style.swing16, snareLag = between(style.snareLagMs or 8) / 1000,
-    }
-    song.barLength = (style.meter or 4) * song.beat
+-- Data lookups for the planner: a style names its form set, its riffs and its horn figures
+local FORMS = { lofi = lib.lofiForms, buymode = lib.buymodeForms }
+local RIFFS = { dumont = lib.dumontRiffs }
+local HORN_HITS = { citypop = lib.cityHornHits }
 
-    if style.loop == 'satie' then planSatie(song); return song end
-    if style.loop == 'ambient' then planAmbient(song); return song end
-    if style.loop then -- a loop, not a song: one section, no chords, no tune
-        local section = { kind = 'loop', bars = style.bars, roles = {} }
-        song.sections, song.barSection, song.barIndex = { section }, {}, {}
-        for j = 0, style.bars - 1 do song.barSection[j + 1], song.barIndex[j + 1] = section, j end
-        song.bars, song.bar = style.bars, 0
-        if style.loop == 'strum' then -- the loop of chords, a chord a bar or two
-            local rnd = stream(seed, 1)
-            song.chordBars = style.chordBars[rnd(#style.chordBars) + 1]
-            song.loop = lib.strum.loops[rnd(#lib.strum.loops) + 1]
-        end
-        return song
+-- a loop style: one section, no chords and no tune (strum: its loop of chords, a chord a bar or two)
+local function planLoop(song, style)
+    local section = { kind = 'loop', bars = style.bars, roles = {} }
+    song.sections, song.barSection, song.barIndex = { section }, {}, {}
+    for j = 0, style.bars - 1 do song.barSection[j + 1], song.barIndex[j + 1] = section, j end
+    song.bars, song.bar = style.bars, 0
+    if style.loop == 'strum' then
+        local rnd = stream(song.seed, 1)
+        song.chordBars = style.chordBars[rnd(#style.chordBars) + 1]
+        song.loop = lib.strum.loops[rnd(#lib.strum.loops) + 1]
     end
+end
+local LOOP_PLANS = { satie = planSatie, ambient = planAmbient }
 
-    local rnd = stream(seed, 1)
+-- the key (lofi: the relative minor half the time), the A progression and the B: another loop from
+-- the bank (lofi), A with a ii-V turnaround, or a move of its own
+local function planChords(song, style, rnd)
     song.lydian = rnd() < (style.lydianChance or 0)
-    -- lofi: a minor key half the time, the relative minor of the set's key
     song.minor = style.minorChance and rnd(100) < style.minorChance
-    if song.minor then song.key = (setKey + 9) % 12 end
+    if song.minor then song.key = (song.setKey + 9) % 12 end
     song.home = song.minor and style.homeMinor or style.home
     local bank = song.minor and style.Aminor or style.A
     local chordBars = style.chordBars[rnd(#style.chordBars) + 1]
@@ -936,40 +925,50 @@ local function planSong(setKey)
     song.A = {}
     for _, chord in ipairs(bank[aIndex]) do progAdd(song.A, chord[1], chord[2], (chord[3] or 4) * chordBars) end
     song.B = {}
-    if style.B == 'A' and rnd(100) < 60 then -- lofi: B is another loop from the same bank...
+    if style.B == 'A' and rnd(100) < 60 then
         local bIndex = (aIndex + rnd(#bank - 1)) % #bank + 1
         for _, chord in ipairs(bank[bIndex]) do progAdd(song.B, chord[1], chord[2], (chord[3] or 4) * chordBars) end
-    elseif style.B == 'A' or rnd(100) < (style.turnaroundOdds or 35) then -- ...or A with a ii-V turnaround...
+    elseif style.B == 'A' or rnd(100) < (style.turnaroundOdds or 35) then
         for _, chord in ipairs(song.A) do progAdd(song.B, chord.degree, chord.quality, chord.steps / 4) end
         progTurnaround(song.B, song.minor, style.B == 'A')
-    else                  -- ...or a move of its own
+    else
         for _, chord in ipairs(style.B[rnd(#style.B) + 1]) do progAdd(song.B, chord[1], chord[2], chord[3]) end
     end
+end
 
-    -- the form, and each part's role per section (bass: 'play', 'last' bar only, 'hold' or 'none')
+-- each part's role per section (bass: 'play', 'last' bar only, 'hold' or 'none')
+local function sectionRoles(style, kind, aCount, rnd)
+    if kind == 'intro' then
+        local roles = { keys = 'hold', drums = 'none', lead = false, bass = 'play' }
+        if style.introHats then -- lofi: the hats come in for the intro's last two bars, the bass maybe
+            roles.drums = rnd(100) < 45 and 'hats' or 'none'
+            roles.bass = rnd(100) < 50 and 'last' or 'none'
+        end
+        return roles
+    elseif kind == 'break' then
+        return { keys = 'hold', drums = rnd(100) < 35 and 'rim' or 'none', lead = rnd(100) < 30,
+                 bass = rnd(100) < 50 and 'hold' or 'none' }
+    elseif kind == 'outro' then
+        return { keys = 'outro', drums = 'outro', lead = false, bass = 'play' }
+    end
+    -- the first A has no tune: the band plays the changes once first
+    return { keys = 'comp', drums = 'full', lead = kind ~= 'A' or aCount >= 2, bass = 'play' }
+end
+
+-- the form: sections with their roles, a lift (a key change) or chords of their own
+local function planForm(song, style, rnd)
     song.sections, song.barSection, song.barIndex = {}, {}, {}
     local aCount = 0
-    local forms = style.forms == 'lofi' and lib.lofiForms or style.forms == 'buymode' and lib.buymodeForms
-        or lib.forms
+    local forms = FORMS[style.forms] or lib.forms
     song.hasLead = not style.leadChance or rnd(100) < style.leadChance
     for _, entry in ipairs(forms[rnd(#forms) + 1]) do
         local kind, bars = entry[1], entry[2]
-        local roles = { keys = 'comp', drums = 'full', lead = true, bass = 'play' }
-        if kind == 'intro' then
-            roles = { keys = 'hold', drums = 'none', lead = false, bass = 'play' }
-            if style.forms == 'lofi' then -- the hats come in for the intro's last two bars, the bass maybe
-                roles.drums = rnd(100) < 45 and 'hats' or 'none'
-                roles.bass = rnd(100) < 50 and 'last' or 'none'
-            end
-        elseif kind == 'A' then aCount = aCount + 1; roles.lead = aCount >= 2 -- the band plays the changes once first
-        elseif kind == 'break' then
-            roles = { keys = 'hold', drums = rnd(100) < 35 and 'rim' or 'none', lead = rnd(100) < 30,
-                      bass = rnd(100) < 50 and 'hold' or 'none' }
-        elseif kind == 'outro' then roles = { keys = 'outro', drums = 'outro', lead = false, bass = 'play' } end
+        if kind == 'A' then aCount = aCount + 1 end
+        local roles = sectionRoles(style, kind, aCount, rnd)
         if entry.lead == false then roles.lead = false end
         local section = { kind = kind, bars = bars, roles = roles, lift = entry.lift,
                           dipLast = (kind == 'A' or kind == 'B') and rnd(100) < 25 }
-        if entry.prog then -- the section's own chords
+        if entry.prog then
             section.prog = {}
             for _, chord in ipairs(style.progs[entry.prog]) do progAdd(section.prog, chord[1], chord[2], chord[3]) end
         end
@@ -980,10 +979,12 @@ local function planSong(setKey)
         end
     end
     song.bars = #song.barSection
+end
 
-    -- the comp cell per two bars, and per bar (knowing the next): the push and a fill
+-- per bar, knowing the next: the comp cell (per two bars), the push and a fill
+local function planBars(song, style, between)
     song.comp, song.push, song.fill = {}, {}, {}
-    rnd = stream(seed, 2)
+    local rnd = stream(song.seed, 2)
     local weights, total = {}, 0
     for i = 1, #lib.compsOf(style) do
         local w = style.compWeights and between(style.compWeights[i]) or 1
@@ -1001,10 +1002,11 @@ local function planSong(setKey)
         song.fill[b] = b < song.bars and section.roles.drums == 'full'
             and song.barIndex[b] == section.bars - 1 and rnd(100) < 60
     end
+end
 
-    -- the tune: the song's motif rhythm and its cell's anchor pitches; a ladder of the key's
-    -- pentatonic above the chord (median ~76, lofi's 67..86)
-    rnd = stream(seed, 9)
+-- the tune: the motif rhythm and its cell's anchor pitches, the scale, and a ladder of the key's
+-- pentatonic above the chord (median ~76, lofi's 67..86) with where each section's tune starts
+local function planTune(song, style, rnd)
     local motif = lib.motifs[rnd(#lib.motifs) + 1]
     song.motif = { steps = motif[1], groups = motif[2], dir = {} }
     local repeatOdds = style.motifRepeat or 18
@@ -1020,19 +1022,7 @@ local function planSong(setKey)
         end
     end
     song.cellDegrees = { 0, rnd(6) - 2, rnd(6) - 1 }
-    local riffs = style.riffs == 'dumont' and lib.dumontRiffs or lib.riffs
-    song.riff = riffs[stream(seed, 3)(#riffs) + 1]
-    if style.horns then
-        local hits = style.horns == 'citypop' and lib.cityHornHits or lib.hornHits
-        song.horns = hits[stream(seed, 10)(#hits) + 1]
-    end
-    if style.drums == 'session' then -- citypop: the bass figure, the guitar's cutting, the groove
-        local pick = stream(seed, 11)
-        song.bassFigure = lib.cityBass[pick(#lib.cityBass) + 1]
-        song.chuck = lib.cityChucks[pick(#lib.cityChucks) + 1]
-        song.groove = lib.cityGrooves[pick(#lib.cityGrooves) + 1]
-    end
-    -- the scale and the tune's pentatonic: major, dorian (minor, with the major sixth) or minor
+    -- major, dorian (minor with the major sixth) or minor, and its pentatonic
     local minor = style.mode == 'dorian' or song.minor
     song.scale = style.mode == 'dorian'
         and { [0] = true, [2] = true, [3] = true, [5] = true, [7] = true, [9] = true, [10] = true }
@@ -1047,10 +1037,29 @@ local function planSong(setKey)
     end
     song.homeKey, song.homeLadder, song.lift = song.key, song.ladder, 0 -- a lifted section moves both
     song.hookStart = { A = 4 + rnd(3), B = 3 + rnd(4) } -- ladder index where each section's tune starts
+end
 
-    -- lofi: the groove (one of the kit's grids, weighted by tempo), the bass held long or short, the
-    -- Rhodes' own lowpass and the tape's tone (the lowpass the sections ride)
-    if style.drums == 'jazzhop' then
+-- the song's own figures, each from its own stream: the riff, the horn shout, citypop's bass figure,
+-- guitar cutting and kit groove
+local function planParts(song, style)
+    local riffs = RIFFS[style.riffs] or lib.riffs
+    song.riff = riffs[stream(song.seed, 3)(#riffs) + 1]
+    if style.horns then
+        local hits = HORN_HITS[style.horns] or lib.hornHits
+        song.horns = hits[stream(song.seed, 10)(#hits) + 1]
+    end
+    if style.drums == 'session' then
+        local pick = stream(song.seed, 11)
+        song.bassFigure = lib.cityBass[pick(#lib.cityBass) + 1]
+        song.chuck = lib.cityChucks[pick(#lib.cityChucks) + 1]
+        song.groove = lib.cityGrooves[pick(#lib.cityGrooves) + 1]
+    end
+end
+
+-- lofi: the groove (one of the kit's grids, weighted by tempo), the bass held long or short, the
+-- Rhodes' own lowpass and the tape's tone (the lowpass the sections ride)
+local function planTone(song, style, rnd, between)
+    if style.groove == 'lofi' then
         local slow = 60 / song.beat < 74
         local w = slow and { 1.0, 1.0, 1.0, 2.6, 0.5, 0.7 } or { 1.3, 1.2, 1.0, 0.6, 0.5, 1.0 }
         local sum = 0
@@ -1065,7 +1074,36 @@ local function planSong(setKey)
     song.legato = rnd(100) < 50
     song.epLp = between(style.epLp)
     song.tone = between(style.tone)
+end
 
+-- setKey: the set's key for the song (a cue's choice); nil: a related key, a fourth from the last
+local function planSong(setKey)
+    local styleName = nextStyleName()
+    local style = lib.styles[styleName]
+    local seed = love.math.random(1, 2147483646)
+    local function between(range) -- a style value that is a number, or a { lo, hi } to roll per song
+        if type(range) ~= 'table' then return range end
+        return range[1] + love.math.random() * (range[2] - range[1])
+    end
+    setKey = setKey or nextKey(M.song and M.song.setKey)
+    local song = {
+        version = VERSION, style = styleName, seed = seed, setKey = setKey, key = setKey,
+        beat = 60 / math.floor(between(style.bpm) + 0.5), swing = between(style.swing) or 0.5,
+        swing16 = style.swing16, snareLag = between(style.snareLagMs or 8) / 1000,
+    }
+    song.barLength = (style.meter or 4) * song.beat
+    if style.loop then
+        (LOOP_PLANS[style.loop] or planLoop)(song, style)
+        return song
+    end
+    local rnd = stream(seed, 1)
+    planChords(song, style, rnd)
+    planForm(song, style, rnd)
+    planBars(song, style, between)
+    rnd = stream(seed, 9)
+    planTune(song, style, rnd)
+    planParts(song, style)
+    planTone(song, style, rnd, between)
     song.bar = 0
     return song
 end
@@ -1613,8 +1651,11 @@ local function lofiGroove(song, kind, j, bars, mode, rnd)
     if mode == 'none' or (mode == 'hats' and j < bars - 2) or (mode == 'outro' and j >= 2) then return out end
     local grid = lofiGrids[mode == 'rim' and 5 or song.grid]
     local hits = out.hits
-    for lane, pattern in pairs(grid) do
-        for i = 1, 16 do
+    -- lanes in a fixed order: the velocities draw from rnd hit by hit, and pairs() order is the hash's
+    -- (it moved when this file changed, and differs between LuaJIT builds and the web's Lua)
+    for _, lane in ipairs({ 'S', 'H', 'K', 'R' }) do
+        local pattern = grid[lane] or ''
+        for i = 1, #pattern do
             local c = pattern:sub(i, i)
             if c ~= '.' then hits[#hits + 1] = { s = i - 1, lane = lane, ghost = c == 'g', open = c == 'o' } end
         end
@@ -1875,38 +1916,23 @@ local function bookAmbientBar(synth, t0, song, b)
     end
 end
 
-local function bookBar(synth, t0, song, b)
-    local style = lib.styles[song.style]
-    M.barStart = t0
-    if style.loop == 'satie' then return bookSatieBar(synth, t0, song, b) end
-    if style.loop == 'ambient' then return bookAmbientBar(synth, t0, song, b) end
-    if style.loop == 'strum' then return bookStrumBar(synth, t0, song, b) end
-    if style.loop then return bookLoopBar(synth, t0, song, b) end
-    local section, j = song.barSection[b], song.barIndex[b]
+-- buymode's key change: a lifted section moves the key and the tune's ladder
+local function applyLift(song, section)
     local lift = section.lift or 0
-    if song.homeKey and lift ~= song.lift then -- buymode's key change: the key and the tune's ladder move
+    if song.homeKey and lift ~= song.lift then
         song.lift, song.key = lift, (song.homeKey + lift) % 12
         song.ladder = {}
         for i, midi in ipairs(song.homeLadder) do song.ladder[i] = midi + lift end
         song.phraseBar = nil
     end
-    local roles = section.roles
-    local band = bandPlays()
-    local rnd = stream(song.seed, 1000 + b)
-    local chords = barChords(song, b)
-    local nextChords = b < song.bars and barChords(song, b + 1) or nil
-    for _, chord in ipairs(chords) do
-        chord.root = (song.key + chord.degree) % 12
-        chord.lydian = song.lydian and chord.quality == 'maj9'
-    end
-    local keysPatch = style.keys
+end
 
-    for _, chord in ipairs(chords) do
-        table.insert(M.booked, { at = stepTime(song, t0, chord.s), pcs = chordPcs(song, chord) })
-        if #M.booked > 4 then table.remove(M.booked, 1) end
-    end
-
-    -- the keys: the comp cell clipped to the chords, held chords in the intro and outro, the push
+-- The keys' hits in a bar: the comp cell clipped to the chords, held chords in the intro and outro,
+-- the push (the next chord on the and-of-4) or the side-step. Returns the hits, where the
+-- side-step starts and whether the bar pushes.
+local function keysHits(bar)
+    local song, style, b, j, section, roles = bar.song, bar.style, bar.b, bar.j, bar.section, bar.roles
+    local chords, nextChords, rnd = bar.chords, bar.nextChords, bar.rnd
     local hits, sidestepAt = {}, nil
     local pushedInto = b > 1 and song.pushed and song.pushed[b - 1]
     local pushes = roles.keys == 'comp' and song.push[b] and nextChords
@@ -1949,6 +1975,12 @@ local function bookBar(synth, t0, song, b)
         end
     end
     table.sort(hits, function(a, c) return a.s < c.s end)
+    return hits, sidestepAt, pushes
+end
+
+-- the keys play their hits, rolled by the style's strum; the dub echo repeats a stab while its chord lasts
+local function bookKeys(bar, hits)
+    local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
     for _, h in ipairs(hits) do
         local chord = h.sidestep or h.chord
         local root = (song.key + chord.degree) % 12
@@ -1960,39 +1992,41 @@ local function bookBar(synth, t0, song, b)
             local note = voicing[k] + (h.sidestep and 1 or 0)
             local vol = (k == #voicing) and h.vol + 1 or h.vol
             local dur = lengthMs(song, h.s, h.len) * (h.ring and 1 or 0.9)
-            play(synth, 'keys', keysPatch, t + (k - 1) * strum, note, math.min(7, vol), dur)
-            -- the dub echo: the stab again a dotted 8th later, quieter, only while its chord lasts
+            play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
             if style.echo and style.echo.keys and not h.sidestep then
                 for e = 1, 2 do
                     local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
                     if s >= chordEnd or vol - 2 * e < 1 then break end
                     local echoDur = math.min(dur, lengthMs(song, s, chordEnd - s) * 0.9) -- not into the next chord
-                    play(synth, 'keys', keysPatch, stepTime(song, t0, s) + (k - 1) * strum, note, vol - 2 * e, echoDur)
+                    play(synth, 'keys', style.keys, stepTime(song, t0, s) + (k - 1) * strum, note, vol - 2 * e, echoDur)
                 end
             end
         end
     end
+end
 
-    -- lofi: the groove first (the bass plays on its kicks), the tape's tone, the vinyl
-    local groove = style.drums == 'jazzhop'
-        and lofiGroove(song, section.kind, j, section.bars, band and roles.drums or 'none', stream(song.seed, 3000 + b))
-    if song.tone then bookTone(synth, song, section, j, rnd) end
-    if style.vinyl then
-        if j == 0 then -- the hiss bed, one long note a section, crossfading into the next
-            play(synth, 'vinyl', 'hiss', t0, 60, 4, lengthMs(song, 0, 16 * section.bars) + 300)
-        end
-        local ticks = (section.kind == 'intro' or section.kind == 'outro') and 5 or 3
-        for _ = 1, ticks do play(synth, 'vinyl', 'crackle', stepTime(song, t0, rnd(16)), 90 + rnd(12), 1, 8) end
+-- herbs and lofi: the vinyl, a hiss bed a section long and crackle ticks
+local function bookVinyl(bar)
+    local synth, song, t0, section, rnd = bar.synth, bar.song, bar.t0, bar.section, bar.rnd
+    if bar.j == 0 then -- the hiss bed, one long note a section, crossfading into the next
+        play(synth, 'vinyl', 'hiss', t0, 60, 4, lengthMs(song, 0, 16 * section.bars) + 300)
     end
+    local ticks = (section.kind == 'intro' or section.kind == 'outro') and 5 or 3
+    for _ = 1, ticks do play(synth, 'vinyl', 'crackle', stepTime(song, t0, rnd(16)), 90 + rnd(12), 1, 8) end
+end
 
-    -- the bass: the left hand, or the upright when the band plays with it; the outro's last bar rests
-    local upright = band and lib.upright and roles.drums ~= 'none'
-    local bassPatch = upright and 'musicBass' or style.bassPatch or keysPatch
-    local lo = upright and 34 or style.bassLo or (style.bass == 'guaraldi' and 38 or 40)
-    local bassLine = bassLines[style.bass] or bassLines.hold
-    local bassRole = roles.bass or 'play'
-    if bassRole == 'none' or (bassRole == 'last' and j < section.bars - 1) then -- luacheck: ignore 542
-        -- the bass sits this one out
+-- the bass: the left hand, or the upright when the band plays with it; the outro's last bar rests. It
+-- lets go when the next chord comes in early. lofi's plays on its groove's kicks.
+local function bookBass(bar, groove, pushes, sidestepAt)
+    local synth, song, style, t0, b, j = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.j
+    local section, chords, nextChords, band = bar.section, bar.chords, bar.nextChords, bar.band
+    local upright = band and lib.upright and bar.roles.drums ~= 'none'
+    local bassPatch = upright and 'musicBass' or style.bassPatch or style.keys
+    local lo = upright and 34 or style.bassLo or 40
+    local bassRole = bar.roles.bass or 'play'
+    local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
+    if bassRole == 'none' or (bassRole == 'last' and j < section.bars - 1) then
+        return -- the bass sits this one out
     elseif section.kind == 'outro' and j == 2 then
         play(synth, 'bass', bassPatch, t0, inRange(chords[1].root, lo), 5, lengthMs(song, 0, 32))
     elseif style.bass == 'lofi' then
@@ -2011,46 +2045,50 @@ local function bookBar(synth, t0, song, b)
             if not seen[chord.s] then seen[chord.s] = true; steps[#steps + 1] = chord.s end
         end
         table.sort(steps)
-        local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
         lofiBass(hit, chords, nextRoot, steps, stop, stream(song.seed, 4000 + b), song.legato and 0.92 or 0.55)
     elseif not (section.kind == 'outro' and j > 2) then
-        local stop = pushes and 14 or sidestepAt or 16 -- the bass lets go when the next chord comes in early
+        local stop = pushes and 14 or sidestepAt or 16
         local function hit(s, midi, vol, len)
             len = math.min(len, stop - s)
             if len <= 0 then return end
             local t = stepTime(song, t0, s) + humanize(0.004)
             play(synth, 'bass', bassPatch, t, midi, vol, lengthMs(song, s, len) * 0.95)
         end
-        local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
         local function fits(midi, chord) return not rubs(song, midi, chord) end
+        local bassLine = bassLines[style.bass] or bassLines.hold
         for _, chord in ipairs(chords) do
             bassLine(hit, chord, lo, chord.s + chord.len == 16, nextRoot, fits, band, song)
         end
     end
+end
 
-    -- the riff: the song's own pattern over the chord's voicing, in eighths; it starts the intro
-    -- alone and rings out in the outro
-    if style.riff and not (section.kind == 'outro' and j >= 2) then
-        for i, voice in ipairs(song.riff) do
-            local s = (i - 1) * 2
-            if voice > 0 then
-                local chord = chordAtStep(song, b, s)
-                local root = (song.key + chord.degree) % 12
-                local voicing = voiceChord(root, qualityOf(song, chord.quality), 48, 76, M.voicing)
-                local note = voicing[math.min(voice, #voicing)]
-                local vol = (s % 4 == 0) and 4 or 3
-                local t = stepTime(song, t0, s) + humanize(0.004)
-                local len = math.min(3, chord.s + chord.len - s) -- rings a little, never into the next chord
-                play(synth, 'riff', style.riff, t, note, vol, lengthMs(song, s, len) * 0.95)
-            end
+-- the riff: the song's own pattern over the chord's voicing, in eighths; it starts the intro
+-- alone and rings out in the outro
+local function bookRiff(bar)
+    local synth, song, style, t0, b = bar.synth, bar.song, bar.style, bar.t0, bar.b
+    for i, voice in ipairs(song.riff) do
+        local s = (i - 1) * 2
+        if voice > 0 then
+            local chord = chordAtStep(song, b, s)
+            local root = (song.key + chord.degree) % 12
+            local voicing = voiceChord(root, qualityOf(song, chord.quality), 48, 76, M.voicing)
+            local note = voicing[math.min(voice, #voicing)]
+            local vol = (s % 4 == 0) and 4 or 3
+            local t = stepTime(song, t0, s) + humanize(0.004)
+            local len = math.min(3, chord.s + chord.len - s) -- rings a little, never into the next chord
+            play(synth, 'riff', style.riff, t, note, vol, lengthMs(song, s, len) * 0.95)
         end
     end
+end
 
-    -- the drums, where the form and the play let them
-    if groove then -- lofi's groove: the snare and the rim laid back by the song's lag
-        local patches = { K = { 'lofiKick', 32 }, S = { 'snare', 60 }, H = { 'hat', 60 }, R = { 'rim', 79 } }
+-- the drums, where the form and the play let them: lofi's groove (the snare and the rim laid back by
+-- the song's lag), or the style's kit
+local LOFI_LANES = { K = { 'lofiKick', 32 }, S = { 'snare', 60 }, H = { 'hat', 60 }, R = { 'rim', 79 } }
+local function bookDrums(bar, groove)
+    local synth, song, style, t0, j, roles = bar.synth, bar.song, bar.style, bar.t0, bar.j, bar.roles
+    if groove then
         for _, h in ipairs(groove.hits) do
-            local patch = patches[h.lane]
+            local patch = LOFI_LANES[h.lane]
             local lag = (h.lane == 'S' or h.lane == 'R') and song.snareLag or 0
             local t = stepTime(song, t0, h.s) + lag + humanize(h.lane == 'H' and 0.006 or 0.004)
             local vol = math.max(1, math.min(7, math.floor(h.vel * (h.lane == 'H' and 4.5 or 7) + 0.5)))
@@ -2058,77 +2096,116 @@ local function bookBar(synth, t0, song, b)
             play(synth, 'drums', patch[1], t, patch[2], vol, dur)
             if h.lane == 'S' and not h.ghost then play(synth, 'drums', 'lofiKick', t, 48, math.max(1, vol - 2), 90) end
         end
+        return
     end
-    local kit = not groove and style.drums and drumKits[style.drums]
+    local kit = style.drums and drumKits[style.drums]
     local drums = roles.drums == 'full' or (roles.drums == 'outro' and j < 2)
-    if kit and band and drums then
+    if kit and bar.band and drums then
         local function hit(s, patch, midi, vol, dur, dt)
             local drag = (style.swing > 0.5 and s % 8 == 4) and 0.008 or 0 -- the backbeat lays back a hair
             local t = stepTime(song, t0, s) + drag + (dt or 0) + humanize(0.003)
             play(synth, 'drums', patch, t, midi, vol, dur)
         end
-        kit(hit, rnd, section.kind, j, song.fill[b], song)
+        kit(hit, bar.rnd, bar.section.kind, j, song.fill[bar.b], song)
     end
+end
 
-    -- the band plays the keys' own voicing of a chord (its notes never rub each other; the same
-    -- chord voiced again elsewhere can put a 9th a b9 over the minor third, or a #9 over the third)
-    local function keysVoicing(chord)
-        return voiceChord((song.key + chord.degree) % 12, qualityOf(song, chord.quality), 48, 76, M.voicing)
+-- the band plays the keys' own voicing of a chord (its notes never rub each other; the same
+-- chord voiced again elsewhere can put a 9th a b9 over the minor third, or a #9 over the third)
+local function keysVoicing(song, chord)
+    return voiceChord((song.key + chord.degree) % 12, qualityOf(song, chord.quality), 48, 76, M.voicing)
+end
+
+-- the horns: the song's shout in the bar the tune breathes (bar 3 of 4), the top of the chord
+local function bookHorns(bar)
+    local synth, song, t0 = bar.synth, bar.song, bar.t0
+    for _, h in ipairs(song.horns) do
+        local voicing = keysVoicing(song, chordAtStep(song, bar.b, h[1]))
+        local t = stepTime(song, t0, h[1]) + humanize(0.004)
+        for k = math.max(1, #voicing - 2), #voicing do
+            play(synth, 'horns', 'horn', t + (k - 1) * 0.004, voicing[k], h[3], lengthMs(song, h[1], h[2]) * 0.85)
+        end
     end
+end
 
-    -- the horns: the song's shout in the bar the tune breathes (bar 3 of 4), the top of the chord
-    if song.horns and band and (section.kind == 'A' or section.kind == 'B') and j % 4 == 2 then
-        for _, h in ipairs(song.horns) do
-            local voicing = keysVoicing(chordAtStep(song, b, h[1]))
-            local t = stepTime(song, t0, h[1]) + humanize(0.004)
-            for k = math.max(1, #voicing - 2), #voicing do
-                play(synth, 'horns', 'horn', t + (k - 1) * 0.004, voicing[k], h[3], lengthMs(song, h[1], h[2]) * 0.85)
+-- citypop's guitar: the song's 16th cutting on the chord's top notes
+local function bookGuitar(bar, pushes)
+    local synth, song, t0 = bar.synth, bar.song, bar.t0
+    for s = 0, (pushes and 14 or 16) - 1 do
+        local c = song.chuck[s + 1]
+        if c > 0 then
+            local voicing = keysVoicing(song, chordAtStep(song, bar.b, s))
+            local t = stepTime(song, t0, s) + humanize(0.002)
+            local from = c == 1 and #voicing - 1 or #voicing - 2
+            for k = math.max(1, from), #voicing do
+                play(synth, 'guitar', 'cityGuitar', t + (k - from) * 0.006, voicing[k], c == 1 and 3 or 4,
+                     c == 1 and 50 or 150)
             end
         end
     end
+end
 
-    -- citypop's guitar: the song's 16th cutting on the chord's top notes, while the band plays
-    if style.guitar and band and (section.kind == 'A' or section.kind == 'B') then
-        local stop = pushes and 14 or 16
-        for s = 0, stop - 1 do
-            local c = song.chuck[s + 1]
-            if c > 0 then
-                local voicing = keysVoicing(chordAtStep(song, b, s))
-                local t = stepTime(song, t0, s) + humanize(0.002)
-                local from = c == 1 and #voicing - 1 or #voicing - 2
-                for k = math.max(1, from), #voicing do
-                    play(synth, 'guitar', 'cityGuitar', t + (k - from) * 0.006, voicing[k], c == 1 and 3 or 4,
-                         c == 1 and 50 or 150)
-                end
-            end
+-- citypop's strings: the chord's top three held under the chorus, slow in
+local function bookStrings(bar)
+    local synth, song, t0 = bar.synth, bar.song, bar.t0
+    for _, chord in ipairs(bar.chords) do
+        local voicing = keysVoicing(song, chord)
+        for k = math.max(1, #voicing - 2), #voicing do
+            play(synth, 'strings', 'strings', stepTime(song, t0, chord.s), voicing[k], 4,
+                 lengthMs(song, chord.s, chord.len) - 40)
         end
     end
+end
 
-    -- citypop's strings: the chord's top three held under the chorus, slow in
-    if style.strings and section.kind == 'B' then
-        for _, chord in ipairs(chords) do
-            local voicing = keysVoicing(chord)
-            for k = math.max(1, #voicing - 2), #voicing do
-                play(synth, 'strings', 'strings', stepTime(song, t0, chord.s), voicing[k], 4,
-                     lengthMs(song, chord.s, chord.len) - 40)
-            end
+-- the tune: its 4-bar phrase, built when the phrase starts (seeded by its place in the form)
+local function bookTune(bar)
+    local synth, song, style, t0, b, j = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.j
+    local phraseBar = b - j % 4
+    if song.phraseBar ~= phraseBar then song.phrase, song.phraseBar = buildPhrase(song, phraseBar), phraseBar end
+    local patch = lib.melodyPatch or style.lead
+    local barInPhrase = j % 4
+    for _, note in ipairs(song.phrase) do
+        if math.floor(note.s / 16) == barInPhrase then
+            local t = stepTime(song, t0, note.s % 16) + humanize(0.003)
+            if note.grace then play(synth, 'lead', patch, t - 0.05, note.grace, math.max(1, note.vol - 2), 45) end
+            play(synth, 'lead', patch, t, note.midi, note.vol, lengthMs(song, note.s % 16, note.len) * 0.9)
         end
     end
+end
 
-    -- the tune
-    if lib.melody and roles.lead and song.hasLead ~= false then
-        local phraseBar = b - j % 4
-        if song.phraseBar ~= phraseBar then song.phrase, song.phraseBar = buildPhrase(song, phraseBar), phraseBar end
-        local patch = lib.melodyPatch or style.lead
-        local barInPhrase = j % 4
-        for _, note in ipairs(song.phrase) do
-            if math.floor(note.s / 16) == barInPhrase then
-                local t = stepTime(song, t0, note.s % 16) + humanize(0.003)
-                if note.grace then play(synth, 'lead', patch, t - 0.05, note.grace, math.max(1, note.vol - 2), 45) end
-                play(synth, 'lead', patch, t, note.midi, note.vol, lengthMs(song, note.s % 16, note.len) * 0.9)
-            end
-        end
+local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, strum = bookStrumBar }
+
+-- One bar of a song, part by part, in this order (the parts share the bar's random stream and the
+-- performance jitter, so the order is part of the sound).
+local function bookBar(synth, t0, song, b)
+    local style = lib.styles[song.style]
+    M.barStart = t0
+    if style.loop then return (LOOP_BARS[style.loop] or bookLoopBar)(synth, t0, song, b) end
+    local section, j = song.barSection[b], song.barIndex[b]
+    applyLift(song, section)
+    local bar = { synth = synth, t0 = t0, song = song, b = b, style = style, section = section, j = j,
+                  roles = section.roles, band = bandPlays(), rnd = stream(song.seed, 1000 + b),
+                  chords = barChords(song, b), nextChords = b < song.bars and barChords(song, b + 1) or nil }
+    for _, chord in ipairs(bar.chords) do
+        chord.root = (song.key + chord.degree) % 12
+        chord.lydian = song.lydian and chord.quality == 'maj9'
+        remember(stepTime(song, t0, chord.s), chordPcs(song, chord)) -- impacts play along in the chord
     end
+    local hits, sidestepAt, pushes = keysHits(bar)
+    bookKeys(bar, hits)
+    local groove = style.groove == 'lofi'
+        and lofiGroove(song, section.kind, j, section.bars, bar.band and bar.roles.drums or 'none',
+                       stream(song.seed, 3000 + b))
+    if song.tone then bookTone(synth, song, section, j, bar.rnd) end
+    if style.vinyl then bookVinyl(bar) end
+    bookBass(bar, groove, pushes, sidestepAt)
+    if style.riff and not (section.kind == 'outro' and j >= 2) then bookRiff(bar) end
+    bookDrums(bar, groove)
+    local inSong = section.kind == 'A' or section.kind == 'B'
+    if song.horns and bar.band and inSong and j % 4 == 2 then bookHorns(bar) end
+    if style.guitar and bar.band and inSong then bookGuitar(bar, pushes) end
+    if style.strings and section.kind == 'B' then bookStrings(bar) end
+    if lib.melody and bar.roles.lead and song.hasLead ~= false then bookTune(bar) end
 end
 
 -- The style was just picked: skip the intro into the first A with the tune and the band in, so the
