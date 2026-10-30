@@ -231,6 +231,11 @@ L = more.
   wrappers; the `state()` ones (sfixture-params:13, texfixture-params:10, world-params:8) and
   behaviors:9 break no cycle. Only registry ↔ snap needs a lazy require; comment it with the cycle.
   187 bare `require 'x'`, 43 with hyphens (CLAUDE.md says parentheses) → one sed pass. S.
+  **Partly done 2026-10-30:** every bare `require 'x'` is `require('x')` (180, music and synth
+  aside); the `state()`, `textured()`, `cameraFollow()`, `roomMusic()` and `lab()` wrappers are plain
+  requires (checked on a copy: specs and a boot). behaviors' `signals()` stays: signals requires
+  behaviors, a real cycle (comment says so now). Left: the ~130 requires inside functions; each
+  needs a load-order check, so file by file, not one pass.
 - [ ] **CL25. Names.** `addTexturesFromInstance2` (131 call sites, no version 1) → `rebuildTextures`
   (alias for a while); `bud` (draw-textured:3359), `mud` (sfixture-editor:403, 707), `j` for joints
   (16 places), `fud` vs `ud` (38 places); raw subtype strings in editor-render:95 and draw-textured:180;

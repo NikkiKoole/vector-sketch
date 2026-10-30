@@ -1,9 +1,9 @@
-local logger = require 'src.logger'
-local inspect = require 'vendor.inspect'
-local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
-local registry = require 'src.registry'
-local utils = require 'src.utils'
-local state = require 'src.state'
+local logger = require('src.logger')
+local inspect = require('vendor.inspect')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local registry = require('src.registry')
+local utils = require('src.utils')
+local state = require('src.state')
 
 local recorder = {
     isRecording = false,

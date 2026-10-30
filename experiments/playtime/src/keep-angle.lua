@@ -1,5 +1,5 @@
 local lib = {}
-local registry = require 'src.registry'
+local registry = require('src.registry')
 local utils = require('src.utils')
 local units = require('src.physics-units')
 local mathutils = require('src.math-utils')

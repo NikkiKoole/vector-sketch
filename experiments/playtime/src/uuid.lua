@@ -11,8 +11,8 @@ local rng = love.math.newRandomGenerator(os.time() * 1000 + math.floor((os.clock
 local function random(a, b) return rng:random(a, b) end
 
 local lib = {}
-require 'string'
-local registry = require 'src.registry'
+require('string')
+local registry = require('src.registry')
 
 -- Base62 character set
 local base62_chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

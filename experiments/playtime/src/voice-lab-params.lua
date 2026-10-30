@@ -4,14 +4,14 @@
 -- bench itself is src/voice-lab.lua.
 local lib = {}
 
-local function lab() return require('src.voice-lab') end
+local lab = require('src.voice-lab')
 
 lib.rows = {
-    { key = 'take', kind = 'note', label = function() return lab().status() end },
-    { key = 'set', kind = 'choice', options = lab().sets,
+    { key = 'take', kind = 'note', label = function() return lab.status() end },
+    { key = 'set', kind = 'choice', options = lab.sets,
         set = function(t, v) t.set, t.index = v, 1 end },
     { key = 'next', label = 'take', kind = 'buttons', options = { '<', '>' },
-        run = function(_, _, option) lab().step(option == '<' and -1 or 1) end },
+        run = function(_, _, option) lab.step(option == '<' and -1 or 1) end },
     -- the engine's limits: sample_shift -24..24, sample_formant -12..12 (best within 7)
     { key = 'speed', kind = 'number', min = -24, max = 24, step = 1 },
     { key = 'shift', kind = 'number', min = -24, max = 24, step = 1 },
@@ -22,9 +22,9 @@ lib.rows = {
     { key = 'inflection', kind = 'number', min = 0, max = 1 },
     { key = 'play', kind = 'buttons', options = { 'now', 'synth', 'sing' },
         run = function(_, _, option)
-            if option == 'now' then lab().playNow()
-            elseif option == 'synth' then lab().playSynth()
-            else lab().playSing() end
+            if option == 'now' then lab.playNow()
+            elseif option == 'synth' then lab.playSynth()
+            else lab.playSing() end
         end },
 }
 

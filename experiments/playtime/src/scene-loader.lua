@@ -1,10 +1,10 @@
 local lib = {}
-local logger = require 'src.logger'
-local state = require 'src.state'
-local sceneIO = require 'src.io'
-local script = require 'src.script'
-local utils = require 'src.utils'
-local camera = require 'src.camera'
+local logger = require('src.logger')
+local state = require('src.state')
+local sceneIO = require('src.io')
+local script = require('src.script')
+local utils = require('src.utils')
+local camera = require('src.camera')
 local SE = require('src.script-events')
 local FEXT = require('src.file-extensions')
 local cam = camera.getInstance()

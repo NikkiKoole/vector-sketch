@@ -1,6 +1,6 @@
-local bridge = require 'vendor.claude-bridge'
-local script = require 'src.script'
-local state = require 'src.state'
+local bridge = require('vendor.claude-bridge')
+local script = require('src.script')
+local state = require('src.state')
 local SE = require('src.script-events')
 local mipoVoice = require('src.mipo-voice')
 local mipoJointGuard = require('src.mipo-joint-guard')

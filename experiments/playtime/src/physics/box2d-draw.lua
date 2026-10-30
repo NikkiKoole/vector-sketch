@@ -2,12 +2,12 @@
 
 local lib = {}
 
-local state = require 'src.state'
-local JT = require 'src.joint-types'
+local state = require('src.state')
+local JT = require('src.joint-types')
 local BT = require('src.body-types')
-local cdt = require 'src.cdt'
-local mathutils = require 'src.math-utils'
-local subtypes = require 'src.subtypes'
+local cdt = require('src.cdt')
+local mathutils = require('src.math-utils')
+local subtypes = require('src.subtypes')
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow

@@ -8,8 +8,8 @@
 local lib = {}
 local utils = require('src.utils')
 
-local function state() return require('src.state') end
-local function textured() return require('src.physics.box2d-draw-textured') end
+local state = require('src.state')
+local textured = require('src.physics.box2d-draw-textured')
 
 local function extraOf(fixture) return fixture:getUserData().extra end
 
@@ -20,7 +20,7 @@ local function layerOf(fixture, layer)
 end
 
 local function startVertexEdit(fixture)
-    state().texFixtureEdit.tempVerts = require('src.utils').shallowCopy(extraOf(fixture).vertices)
+    state.texFixtureEdit.tempVerts = require('src.utils').shallowCopy(extraOf(fixture).vertices)
 end
 
 local function dimensions(fixture)
@@ -31,7 +31,7 @@ end
 -- resizing replaces the fixture: select the new one
 local function resize(fixture, w, h)
     local newFixture = require('src.fixtures').updateSFixtureDimensions(fixture, w, h)
-    state().selection.selectedSFixture = newFixture
+    state.selection.selectedSFixture = newFixture
     return newFixture
 end
 
@@ -49,7 +49,7 @@ lib.position = {
       run = function(_, fixture)
           local body = fixture:getBody()
           local newFixture = require('src.fixtures').updateSFixturePosition(fixture, body:getX(), body:getY())
-          state().selection.selectedSFixture = newFixture
+          state.selection.selectedSFixture = newFixture
           startVertexEdit(newFixture)
           return newFixture
       end },
@@ -71,9 +71,9 @@ lib.position = {
           return newFixture
       end },
     { key = 'edit verts', kind = 'bool',
-      get = function() return state().texFixtureEdit.lockedVerts == false end,
+      get = function() return state.texFixtureEdit.lockedVerts == false end,
       set = function(fixture, v)
-          local edit = state().texFixtureEdit
+          local edit = state.texFixtureEdit
           edit.lockedVerts = not v
           if v then
               startVertexEdit(fixture)
@@ -227,7 +227,7 @@ local function shaderNumber(key, label, min, max, extra)
     local row = { key = key, label = label, kind = 'number', min = min, max = max,
         get = function(fixture)
             local v = extraOf(fixture)[key]
-            if v == nil then v = textured()[key] end
+            if v == nil then v = textured[key] end
             return v
         end,
         set = function(fixture, v) extraOf(fixture)[key] = v end }
@@ -237,7 +237,7 @@ end
 
 local function shaderColor(key, label)
     return { key = key, label = label, kind = 'color',
-        get = function(fixture) return extraOf(fixture)[key] or textured()[key] end,
+        get = function(fixture) return extraOf(fixture)[key] or textured[key] end,
         set = function(fixture, v) extraOf(fixture)[key] = v end }
 end
 

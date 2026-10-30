@@ -1,6 +1,6 @@
 --box2d-pointerjoints.lua
 local lib = {}
-local state = require 'src.state'
+local state = require('src.state')
 local BT = require('src.body-types')
 local mipoRegistry = require('src.mipo-registry')
 local units = require('src.physics-units')

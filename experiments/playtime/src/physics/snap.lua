@@ -18,12 +18,12 @@
 -- cached arrays kept in sync by hand. Deleting a body left its partner point
 -- marked as linked forever, saving had to convert refs to ids, and loading
 -- guessed which points a joint connected.)
-local logger = require 'src.logger'
-local registry = require 'src.registry'
-local uuid = require 'src.uuid'
-local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
-local mathutils = require 'src.math-utils'
-local subtypes = require 'src.subtypes'
+local logger = require('src.logger')
+local registry = require('src.registry')
+local uuid = require('src.uuid')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local mathutils = require('src.math-utils')
+local subtypes = require('src.subtypes')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local units = require('src.physics-units')

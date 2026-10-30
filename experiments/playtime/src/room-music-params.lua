@@ -4,7 +4,7 @@
 -- (src/room-music.lua, state.roomMusic), saved with the scene.
 local lib = {}
 
-local function roomMusic() return require('src.room-music') end
+local roomMusic = require('src.room-music')
 
 -- the music section's style choices (src/music-params.lua), with 'keep' in front
 local function styles()
@@ -31,7 +31,7 @@ local function field(key, label, kind, options)
         get = function(s) return s[key] end,
         set = function(s, v)
             s[key] = v
-            roomMusic().cue() -- hear it at once
+            roomMusic.cue() -- hear it at once
         end }
 end
 
@@ -45,7 +45,7 @@ lib.rows = {
 -- the choices follow music's styles and presets (they grow with a hot reload)
 function lib.target()
     lib.rows[2].options, lib.rows[3].options = styles(), layerPresets()
-    return roomMusic().settings()
+    return roomMusic.settings()
 end
 
 return lib

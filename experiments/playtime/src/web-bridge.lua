@@ -19,10 +19,10 @@ lib.maxDepth = 4
 lib.errors = {}
 
 -- One line, ending in a space: the code starts on line 1, so error line numbers match what was sent.
-local PREAMBLE = "local state = require 'src.state' local registry = require 'src.registry' " ..
-    "local objectManager = require 'src.object-manager' local joints = require 'src.joints' " ..
-    "local sceneIO = require 'src.io' local inspect = require 'vendor.inspect' " ..
-    "local utils = require 'src.utils' "
+local PREAMBLE = "local state = require('src.state') local registry = require('src.registry') " ..
+    "local objectManager = require('src.object-manager') local joints = require('src.joints') " ..
+    "local sceneIO = require('src.io') local inspect = require('vendor.inspect') " ..
+    "local utils = require('src.utils') "
 
 local started = false
 

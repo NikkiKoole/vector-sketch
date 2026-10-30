@@ -1,8 +1,8 @@
 --selection-rect.lua
 local lib = {}
-local logger = require 'src.logger'
+local logger = require('src.logger')
 local utils = require('src.utils')
-local mathutils = require 'src.math-utils'
+local mathutils = require('src.math-utils')
 
 -- Include the drawDottedLine function here
 local function drawDottedLine(x1, y1, x2, y2, dotSize, spacing)

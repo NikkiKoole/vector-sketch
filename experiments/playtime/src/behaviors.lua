@@ -7,7 +7,7 @@ local utils = require('src.utils')
 -- (hidden behind 'more') }. An 'action' row is a button: `label` may be a
 -- function(behavior) and `run(body, behavior)` does the work.
 
-local function signals() return require('src.signals') end -- lazy: signals -> state
+local function signals() return require('src.signals') end -- lazy: signals requires behaviors
 
 local signalRow = { key = 'signal', kind = 'text', default = 'signal1' }
 local modeRow = { key = 'mode', kind = 'choice', options = { 'hold', 'toggle' }, default = 'hold' }

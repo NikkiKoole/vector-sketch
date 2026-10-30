@@ -1,22 +1,22 @@
 -- here we just have small functions that render things for the editor
 -- (not ui but active state, selection boxes that sort of thing)
 --
-local logger = require 'src.logger'
-local registry = require 'src.registry'
-local state = require 'src.state'
-local modes = require 'src.modes'
-local fixtures = require 'src.fixtures'
-local box2dDraw = require 'src.physics.box2d-draw'
-local mathutils = require 'src.math-utils'
-local camera = require 'src.camera'
+local logger = require('src.logger')
+local registry = require('src.registry')
+local state = require('src.state')
+local modes = require('src.modes')
+local fixtures = require('src.fixtures')
+local box2dDraw = require('src.physics.box2d-draw')
+local mathutils = require('src.math-utils')
+local camera = require('src.camera')
 local cam = camera.getInstance()
-local utils = require 'src.utils'
-local inputmanager = require 'src.input-manager'
-local subtypes = require 'src.subtypes'
+local utils = require('src.utils')
+local inputmanager = require('src.input-manager')
+local subtypes = require('src.subtypes')
 local resourceLink = require('src.resource-link')
-local ST = require 'src.shape-types'
+local ST = require('src.shape-types')
 local NT = require('src.node-types')
-local cdt = require 'src.cdt'
+local cdt = require('src.cdt')
 local colors = require('src.color')
 local lib = {}
 

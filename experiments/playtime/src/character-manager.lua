@@ -1,14 +1,14 @@
 local lib = {}
 
-local objectManager = require 'src.object-manager'
-local joints = require 'src.joints'
-local uuid = require 'src.uuid'
-local utils = require 'src.utils'
-local mathutils = require 'src.math-utils'
-local fixtures = require 'src.fixtures'
-local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
-local subtypes = require 'src.subtypes'
-local ST = require 'src.shape-types'
+local objectManager = require('src.object-manager')
+local joints = require('src.joints')
+local uuid = require('src.uuid')
+local utils = require('src.utils')
+local mathutils = require('src.math-utils')
+local fixtures = require('src.fixtures')
+local box2dDrawTextured = require('src.physics.box2d-draw-textured')
+local subtypes = require('src.subtypes')
+local ST = require('src.shape-types')
 local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local NT = require('src.node-types')

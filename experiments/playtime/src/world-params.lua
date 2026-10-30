@@ -5,7 +5,7 @@
 -- '+ more'. Ranges are the ones the old panel used.
 local lib = {}
 
-local function state() return require('src.state') end
+local state = require('src.state')
 
 local function flag(key, label, advanced)
     return { key = label, kind = 'bool', advanced = advanced,
@@ -43,13 +43,13 @@ lib.rows = {
       get = function(world) return world.gravity end,
       set = function(world, v)
           world.gravity = v
-          local physicsWorld = state().physicsWorld
+          local physicsWorld = state.physicsWorld
           if physicsWorld then physicsWorld:setGravity(0, v * world.meter) end
       end },
     number('speedMultiplier', 'speed', 0.1, 10),
     { key = 'grid', kind = 'bool',
-      get = function() return state().editorPreferences.showGrid == true end,
-      set = function(_, v) state().editorPreferences.showGrid = v end },
+      get = function() return state.editorPreferences.showGrid == true end,
+      set = function(_, v) state.editorPreferences.showGrid = v end },
     flag('showTextures', 'textures'),
     flag('textureOrBody', 'tex/body'), -- textured bodies show only their texture (src/physics/box2d-draw.lua)
     flag('mipoBodies', 'mipo body'),   -- ...except Mipo parts, which keep their body shapes

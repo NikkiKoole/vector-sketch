@@ -1,6 +1,6 @@
 --math-utils.lua
 local lib = {}
-local logger = require 'src.logger'
+local logger = require('src.logger')
 
 -- min wins when min > max, like the math.max(min, math.min(max, x)) it replaces
 function lib.clamp(x, min, max)

@@ -1,15 +1,15 @@
 -- object-manager.lua
 local lib = {}
-local logger = require 'src.logger'
-local shapes = require 'src.shapes'
-local uuid = require 'src.uuid'
-local registry = require 'src.registry'
-local joints = require 'src.joints'
-local jointHandlers = require 'src.joint-handlers'
-local utils = require 'src.utils'
-local mathutils = require 'src.math-utils'
-local fixtures = require 'src.fixtures'
-local state = require 'src.state'
+local logger = require('src.logger')
+local shapes = require('src.shapes')
+local uuid = require('src.uuid')
+local registry = require('src.registry')
+local joints = require('src.joints')
+local jointHandlers = require('src.joint-handlers')
+local utils = require('src.utils')
+local mathutils = require('src.math-utils')
+local fixtures = require('src.fixtures')
+local state = require('src.state')
 local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local subtypes = require('src.subtypes')

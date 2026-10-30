@@ -1,5 +1,5 @@
 --utils.lua
-local logger = require 'src.logger'
+local logger = require('src.logger')
 
 local lib = {}
 

@@ -5,19 +5,19 @@ inefficient. We should absolutely cache these.
 ]] --
 
 local lib = {}
-local registry = require 'src.registry'
-local state = require 'src.state'
-local mathutils = require 'src.math-utils'
-local polyline = require 'src.polyline'
-local shapes = require 'src.shapes'
-local subtypes = require 'src.subtypes'
+local registry = require('src.registry')
+local state = require('src.state')
+local mathutils = require('src.math-utils')
+local polyline = require('src.polyline')
+local shapes = require('src.shapes')
+local subtypes = require('src.subtypes')
 local grass = require('src.grass')
 local blobs = require('src.blob')
 local liquid = require('src.liquid')
 local resourceLink = require('src.resource-link')
 local color = require('src.color')
 local NT = require('src.node-types')
-local spineMesh = require 'src.spine-mesh'
+local spineMesh = require('src.spine-mesh')
 local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 local spineSkin = require('src.spine-skin')

@@ -12,12 +12,12 @@ local utils = require('src.utils')
 local lib = {}
 
 -- lazy: fixtures -> registry -> snap -> ...
-local function state() return require('src.state') end
+local state = require('src.state')
 
 local function extraOf(fixture) return fixture:getUserData().extra end
 
 local function selectFixture(fixture)
-    state().selection.selectedSFixture = fixture
+    state.selection.selectedSFixture = fixture
     return fixture
 end
 
@@ -36,7 +36,7 @@ lib.footer = {
     { kind = 'action', label = 'destroy',
       run = function(_, fixture)
           require('src.fixtures').destroyFixture(fixture)
-          state().selection.selectedSFixture = nil
+          state.selection.selectedSFixture = nil
           return true -- gone: stop drawing this panel
       end },
 }

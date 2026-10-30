@@ -1,19 +1,19 @@
 --io.lua
 local lib = {}
-local logger = require 'src.logger'
+local logger = require('src.logger')
 
-local json = require 'vendor.dkjson'
-local uuid = require 'src.uuid'
-local registry = require 'src.registry'
-local shapes = require 'src.shapes'
-local jointHandlers = require 'src.joint-handlers'
-local mathutils = require 'src.math-utils'
-local utils = require 'src.utils'
-local joints = require 'src.joints'
-local state = require 'src.state'
+local json = require('vendor.dkjson')
+local uuid = require('src.uuid')
+local registry = require('src.registry')
+local shapes = require('src.shapes')
+local jointHandlers = require('src.joint-handlers')
+local mathutils = require('src.math-utils')
+local utils = require('src.utils')
+local joints = require('src.joints')
+local state = require('src.state')
 
-local snap = require 'src.physics.snap'
-local subtypes = require 'src.subtypes'
+local snap = require('src.physics.snap')
+local subtypes = require('src.subtypes')
 local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
@@ -493,7 +493,7 @@ function lib.buildWorld(data, world, cam, opts)
     -- but no cached mesh. Without this, MESHUSERT meshes render untextured
     -- until the user manually selects the RESOURCE. Mode is auto-derived
     -- from body state in computeResourceMesh.
-    local cdt = require 'src.cdt'
+    local cdt = require('src.cdt')
     for _, v in pairs(builtSFixtures) do
         if not v:isDestroyed() then
             local ud = v:getUserData()

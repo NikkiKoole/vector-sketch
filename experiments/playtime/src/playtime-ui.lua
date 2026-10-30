@@ -1,26 +1,26 @@
 local lib = {}
-local logger = require 'src.logger'
+local logger = require('src.logger')
 
-local sceneIO = require 'src.io'
+local sceneIO = require('src.io')
 
 local ui = require('src.ui.all')
-local joints = require 'src.joints'
-local objectManager = require 'src.object-manager'
+local joints = require('src.joints')
+local objectManager = require('src.object-manager')
 local polyEdit = require('src.poly-edit')
 local library = require('src.library')
 local color = require('src.color')
-local camera = require 'src.camera'
+local camera = require('src.camera')
 local cam = camera.getInstance()
-local utils = require 'src.utils'
+local utils = require('src.utils')
 local mathutils = require('src.math-utils')
 
-local fixtures = require 'src.fixtures'
-local snap = require 'src.physics.snap'
+local fixtures = require('src.fixtures')
+local snap = require('src.physics.snap')
 
-local state = require 'src.state'
-local modes = require 'src.modes'
-local subtypes = require 'src.subtypes'
-local behaviors = require 'src.behaviors'
+local state = require('src.state')
+local modes = require('src.modes')
+local subtypes = require('src.subtypes')
+local behaviors = require('src.behaviors')
 local uiWorldSettings = require('src.ui.world-settings')
 local uiJointUpdate = require('src.ui.joint-update')
 local uiRecordingPanel = require('src.ui.recording-panel')

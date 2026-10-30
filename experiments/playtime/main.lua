@@ -31,8 +31,8 @@ local IS_WEB = love.system.getOS() == "Web"
 
 local bridge, lurker
 if not IS_WEB then
-    bridge = require 'vendor.claude-bridge'
-    lurker = require 'vendor.lurker'
+    bridge = require('vendor.claude-bridge')
+    lurker = require('vendor.lurker')
     -- Scene scripts (scripts/*.playtime.lua) are loaded by scene-loader, not
     -- require()'d as modules. Busted spec files (spec/*_spec.lua) use
     -- `describe` as a top-level call which is nil outside busted. Skip both
@@ -71,29 +71,29 @@ else
     bridge = require('src.web-bridge') -- eval from the page: playtime.eval(code)
     lurker = { update = function() end }
 end
-local _logger = require 'src.logger'      -- luacheck: ignore 211
-local _inspect = require 'vendor.inspect' -- luacheck: ignore 211
-local prof = require 'vendor.jprof'
+local _logger = require('src.logger')      -- luacheck: ignore 211
+local _inspect = require('vendor.inspect') -- luacheck: ignore 211
+local prof = require('vendor.jprof')
 -- The JIT stays off. Turned on (2026-10-29, 20 Mipos) it gained nothing, a bit slower even:
 -- LuaJIT flushed all its traces ~17 times a second here. And iOS allows no JIT, so the
 -- interpreter is what the app runs on anyway: measure and optimise for it (FFI is slow too).
 if jit then jit.off() end                -- luacheck: ignore 113 (jit is a LuaJIT global)
-local _ProFi = require 'vendor.ProFi' -- luacheck: ignore 211
+local _ProFi = require('vendor.ProFi') -- luacheck: ignore 211
 
-local Peeker = require 'vendor.peeker'
-local recorder = require 'src.recorder'
+local Peeker = require('vendor.peeker')
+local recorder = require('src.recorder')
 local ui = require('src.ui.all')
-local playtimeui = require 'src.playtime-ui'
+local playtimeui = require('src.playtime-ui')
 
-local selectrect = require 'src.selection-rect'
-local script = require 'src.script'
+local selectrect = require('src.selection-rect')
+local script = require('src.script')
 local gameLoop = require('src.game-loop')
 local mipoFace = require('src.mipo-face')
 local objectManager = require('src.object-manager')
 
-local utils = require 'src.utils'
-local box2dDraw = require 'src.physics.box2d-draw'
-local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
+local utils = require('src.utils')
+local box2dDraw = require('src.physics.box2d-draw')
+local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local mipoVoice = require('src.mipo-voice')
 local sound = require('src.sound')
 local mipoChatter = require('src.mipo-chatter')
@@ -108,22 +108,22 @@ local doors = require('src.doors')
 local cameraFollow = require('src.camera-follow')
 local playMode = require('src.play-mode')
 mipoVoice.onHardImpact = function(...) return mipoActions.onHardImpact(...) end -- late-bound for hot reload
-local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
-local camera = require 'src.camera'
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local camera = require('src.camera')
 local cam = camera.getInstance()
-local _uuid = require 'src.uuid' -- luacheck: ignore 211
+local _uuid = require('src.uuid') -- luacheck: ignore 211
 
-local snap = require 'src.physics.snap'
-local keep_angle = require 'src.keep-angle'
-local _registry = require 'src.registry' -- luacheck: ignore 211
+local snap = require('src.physics.snap')
+local keep_angle = require('src.keep-angle')
+local _registry = require('src.registry') -- luacheck: ignore 211
 
-local _mathutils = require 'src.math-utils' -- luacheck: ignore 211
+local _mathutils = require('src.math-utils') -- luacheck: ignore 211
 
-local InputManager = require 'src.input-manager'
-local bodyRotate = require 'src.body-rotate'
-local state = require 'src.state'
-local sceneLoader = require 'src.scene-loader'
-local editorRenderer = require 'src.editor-render'
+local InputManager = require('src.input-manager')
+local bodyRotate = require('src.body-rotate')
+local state = require('src.state')
+local sceneLoader = require('src.scene-loader')
+local editorRenderer = require('src.editor-render')
 local rightColumn = require('src.ui.right-column')
 
 -- Request window focus so mouse events work when launched from terminal

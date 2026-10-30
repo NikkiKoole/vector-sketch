@@ -1,13 +1,13 @@
 --fixtures.lua
 
-local logger = require 'src.logger'
-local inspect = require 'vendor.inspect'
-local mathutils = require 'src.math-utils'
-local shapes = require 'src.shapes'
-local uuid = require 'src.uuid'
+local logger = require('src.logger')
+local inspect = require('vendor.inspect')
+local mathutils = require('src.math-utils')
+local shapes = require('src.shapes')
+local uuid = require('src.uuid')
 
-local registry = require 'src.registry'
-local utils = require 'src.utils' -- Needed for shallowCopy
+local registry = require('src.registry')
+local utils = require('src.utils') -- Needed for shallowCopy
 local fixtureTypes = require('src.fixture-types')
 local subtypes = require('src.subtypes')
 local lib = {}

@@ -1,5 +1,5 @@
 -- src/logger.lua
-local inspect = require 'vendor.inspect'
+local inspect = require('vendor.inspect')
 
 local Logger = {}
 Logger.__index = Logger

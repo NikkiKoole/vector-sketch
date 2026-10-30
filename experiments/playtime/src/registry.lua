@@ -1,6 +1,6 @@
 -- registry.lua
-local logger = require 'src.logger'
-local utils = require 'src.utils'
+local logger = require('src.logger')
+local utils = require('src.utils')
 local registry = {
     bodies = {}, -- [id] = body
     joints = {}, -- [id] = joint

@@ -1,12 +1,12 @@
 --joints.lua
 
 local lib = {}
-local logger = require 'src.logger'
-local uuid = require 'src.uuid'
-local jointHandlers = require 'src.joint-handlers'
-local registry = require 'src.registry'
-local mathutils = require 'src.math-utils'
-local JT = require 'src.joint-types'
+local logger = require('src.logger')
+local uuid = require('src.uuid')
+local jointHandlers = require('src.joint-handlers')
+local registry = require('src.registry')
+local mathutils = require('src.math-utils')
+local JT = require('src.joint-types')
 local SIDES = require('src.sides')
 local utils = require('src.utils')
 

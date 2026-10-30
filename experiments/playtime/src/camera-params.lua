@@ -4,7 +4,7 @@
 -- (src/camera-follow.lua, state.cameraSettings), saved with the scene.
 local lib = {}
 
-local function cameraFollow() return require('src.camera-follow') end
+local cameraFollow = require('src.camera-follow')
 
 local function field(key, label, kind, min, max, advanced)
     return { key = label, kind = kind, min = min, max = max, advanced = advanced,
@@ -35,7 +35,7 @@ lib.rows = {
       end },
     side(1, 'left'), side(2, 'top'), side(3, 'right'), side(4, 'bottom'),
     { kind = 'action', label = 'bounds = this view',
-      run = function() cameraFollow().boundsFromView() end },
+      run = function() cameraFollow.boundsFromView() end },
     { kind = 'action', label = 'no bounds',
       run = function(_, s) s.bounds = nil end },
     -- advanced
@@ -45,6 +45,6 @@ lib.rows = {
     field('edgeLag', 'edge lag', 'number', 20, 600, true), -- held thing this far behind the cursor: no pan
 }
 
-function lib.target() return cameraFollow().settings() end
+function lib.target() return cameraFollow.settings() end
 
 return lib

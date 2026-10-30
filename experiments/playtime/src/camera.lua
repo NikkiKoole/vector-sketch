@@ -1,5 +1,5 @@
 --camera.lua
-local Camera = require 'vendor.brady'
+local Camera = require('vendor.brady')
 
 local offset = 0
 

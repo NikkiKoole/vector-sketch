@@ -1,9 +1,9 @@
 -- shapes.lua
 
-local logger = require 'src.logger'
-local mathutils = require 'src.math-utils'
-local utils = require 'src.utils'
-local ST = require 'src.shape-types'
+local logger = require('src.logger')
+local mathutils = require('src.math-utils')
+local utils = require('src.utils')
+local ST = require('src.shape-types')
 local shapes = {}
 
 -- The size fields a thing can have. Which ones a shape uses: shapes.usesDim.

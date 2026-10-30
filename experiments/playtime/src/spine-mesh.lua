@@ -16,9 +16,9 @@
 -- docs/MESHUSERT-SPINE-BIND-PLAN.md.
 
 local lib = {}
-local registry = require 'src.registry'
-local mathutils = require 'src.math-utils'
-local NT = require 'src.node-types'
+local registry = require('src.registry')
+local mathutils = require('src.math-utils')
+local NT = require('src.node-types')
 
 -- ─── internal helpers ──────────────────────────────────────────────
 
