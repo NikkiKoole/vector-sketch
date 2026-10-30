@@ -104,7 +104,7 @@ lib.patches = {
     -- (a triangle, lowpassed with a bit of bite), a steel pan for the tune (a mallet toward the bell,
     -- ringing), and a drum machine clap (high-passed noise, a big room).
     -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
-    -- (SOUND_FX_BUSES), and five are taken (rhodes, rhodesLead, piano, pianoLead, whistle).
+    -- (SOUND_FX_BUSES), and four are taken (rhodes, rhodesLead, piano, pianoLead).
     stab = { pool = true, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
              filter = { mode = 1, cutoff = 1500, resonance = 2 } },
     dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
@@ -179,7 +179,7 @@ lib.patches = {
     harp = { pool = true, wave = 'PLUCK', adsr = { 0, 0, 7, 900 }, harmonics = 0.75, timbre = 0.35, morph = 0.3,
              reverb = 0.5, level = 0.6 },
     mutedTrumpet = { pool = true, wave = 'BRASS', adsr = { 1, 0, 5, 120 }, harmonics = 0.15, timbre = 0.55,
-                     morph = 0.42, reverb = 0.35, level = 0.5, filter = { mode = 3, cutoff = 1700, resonance = 2 } },
+                     morph = 0.42, reverb = 0.35, level = 1.0, filter = { mode = 3, cutoff = 1700, resonance = 2 } },
     -- citypop's glossy synth lead: a square with a slow vibrato and a little glide
     citySynth = { pool = true, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
                   filter = { mode = 1, cutoff = 3400, resonance = 0 }, lfo = { { 0, 5.2, 0.08 } } },
@@ -189,11 +189,6 @@ lib.patches = {
               filter = { mode = 2, cutoff = 8200, resonance = 3 } },
     brush = { slot = 25, wave = 'NOISE', adsr = { 60, 300, 2, 200 }, reverb = 0.15, level = 0.2,
               filter = { mode = 2, cutoff = 4800, resonance = 1 } },
-    -- slide whistle: the blown pipe (in tune at morph 0.7), held and glided (src/slide-sound.lua).
-    -- Breathy (timbre = breath air) and on a wobbly cassette, so it sounds less like a pure synth.
-    whistle = { slot = 8, wave = 'PIPE', adsr = { 30, 0, 7, 120 },
-                harmonics = 0.3, timbre = 0.65, morph = 0.7, reverb = 0.25, level = 0.25, glide = 40,
-                tape = { wow = 0.5, flutter = 0.3, saturation = 0.3, warble = 0.3 } },
 }
 
 local CDEF = [[
@@ -284,7 +279,7 @@ end
 -- one music style plays are `pool = true`: they share these slots, and a pool slot takes a patch the
 -- first time a note needs it, from a slot whose notes have all ended (one style plays at a time, so
 -- that's the last style's). S.pool[slot] = { name, ends = audio time its last note is done }.
-lib.poolSlots = { 18, 21, 28, 30, 32, 45, 46, 47 }
+lib.poolSlots = { 8, 18, 21, 28, 30, 32, 45, 46, 47 } -- 8 was the slide whistle's (gone 2026-10-30)
 
 local function slotOf(name, patch, t, durMs)
     if patch.slot then return patch.slot end

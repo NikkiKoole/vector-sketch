@@ -2074,18 +2074,27 @@ local function bookBar(synth, t0, song, b)
         end
     end
 
-    -- americana's harp: a sweep up through the next chord on the last beat of a section, into A or B
+    -- americana's harp: a sweep up on the last beat of a section, into A or B, through the chord that
+    -- sounds; only its tones no semitone from another of its tones (an m9's 9th and minor third, a
+    -- 13's 13th and seventh would rub each other, and the keys)
     local nextSection = b < song.bars and song.barSection[b + 1]
-    if style.harp and nextChords and j == section.bars - 1 and nextSection
+    if style.harp and j == section.bars - 1 and nextSection
         and (nextSection.kind == 'A' or nextSection.kind == 'B') then
-        local pcs, notes = chordPcs(song, nextChords[1]), {}
-        for midi = 55, 86 do
-            for _, pc in ipairs(pcs) do if midi % 12 == pc then notes[#notes + 1] = midi end end
+        local chord = chordAtStep(song, b, 12)
+        local pcs, safe, notes = chordPcs(song, chord), {}, {}
+        for _, pc in ipairs(pcs) do
+            local alone = true
+            for _, other in ipairs(pcs) do
+                local d = (pc - other) % 12
+                if d == 1 or d == 11 then alone = false end
+            end
+            if alone then safe[pc] = true end
         end
-        local t, gap = stepTime(song, t0, 12), song.beat / #notes
+        for midi = 55, 86 do if safe[midi % 12] then notes[#notes + 1] = midi end end
+        local t, gap = stepTime(song, t0, 12), song.beat / math.max(1, #notes)
         for k, midi in ipairs(notes) do
             local at = t + (k - 1) * gap
-            play(synth, 'harp', 'harp', at, midi, 3, (t0 + song.barLength - at) * 1000 + 400)
+            play(synth, 'harp', 'harp', at, midi, 2, (t0 + song.barLength - at) * 1000)
         end
     end
 

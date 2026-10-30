@@ -28,9 +28,8 @@ describe('music.cue', function()
         -- music.lua keeps state.music as its own table: clear its fields, put them back after
         saved = { music = {}, settings = state.musicSettings }
         for k, v in pairs(state.music) do saved.music[k] = v end
-        for _, k in ipairs({ 'song', 'barAt', 'cue', 'audioTime', 'lastNow', 'barStart', 'voicing' }) do
-            state.music[k] = nil
-        end
+        for k in pairs(saved.music) do state.music[k] = nil end -- layers, a cue or an entry left by another spec too
+        state.music.version, state.music.booked, state.music.heard = saved.music.version, {}, {}
         state.music.activity, state.music.withBand, state.music.listeners = 0, false, {}
         state.musicSettings = { enabled = true, style = 'bossa', rhythmSection = 'off', melody = true }
         clock, notes = 0, {}
