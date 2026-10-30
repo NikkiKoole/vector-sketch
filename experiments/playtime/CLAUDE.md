@@ -171,6 +171,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 
 - Closures capture upvalues by reference — `local x, y` must be declared before any closure that uses them
 - When making functions `local`, check for forward references (function used before its definition). Lurker hot-reload re-executes files top-to-bottom, so a local function must be defined before first use. Use `claudetools/find-forward-refs.lua` to scan for these.
+- The web build (`webtest/build-web.sh`, docs/WEB-EXPORT-LOVEJS.md) runs PUC Lua 5.1, not LuaJIT: no `goto` (use `repeat ... until true` with `break`), no FFI outside `src/synth.lua`'s desktop path
 - `registry.getBodyByID()` — capital ID, not Id
 - `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser
 - Circular requires: `registry.lua` ↔ `src/physics/snap.lua` — registry uses a lazy `getSnap()` wrapper to break the cycle. If adding cross-module requires, watch for `loop or previous error loading module` errors
