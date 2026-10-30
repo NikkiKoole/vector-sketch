@@ -1,5 +1,7 @@
 -- Snapshot: 6 seeded Mipos through the character-manager API (new, randomized, part by part,
--- mutated, saved and loaded): every body, fixture and joint, the DNA and a pixel hash.
+-- mutated, saved and loaded): every body, fixture and joint, and the DNA. No pixels: a fresh Mipo's
+-- picture differs from run to run (random ids order its equal-z parts, and more); pixels are the
+-- scenes snapshot's (fixed ids) and spec/draw-cache_spec.lua's (kept vs fresh in one run).
 -- claudetools/snapshot.sh. Runs only when $SNAPSHOT_OUT is set.
 if not love then return end
 local out = os.getenv('SNAPSHOT_OUT')
@@ -8,7 +10,6 @@ if not out or out == '' then return end
 local CM = require('src.character-manager')
 local registry = require('src.registry')
 local state = require('src.state')
-local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 
 local function num(v) return string.format('%.4f', v) end
 
@@ -65,30 +66,11 @@ local function worldDump(world)
     return lines
 end
 
-local function pixels(world)
-    local W, H = 600, 600
-    local canvas = love.graphics.newCanvas(W, H)
-    love.graphics.setCanvas({ canvas, stencil = true })
-    love.graphics.clear(0, 0, 0, 1)
-    love.graphics.push()
-    love.graphics.translate(W / 2, H / 2)
-    love.graphics.scale(0.5)
-    local ok, err = pcall(box2dDrawTextured.drawTexturedWorld, world)
-    love.graphics.pop()
-    love.graphics.setCanvas()
-    love.graphics.setShader()
-    love.graphics.setColor(1, 1, 1, 1)
-    local hash = ok and love.data.encode('string', 'hex', love.data.hash('md5', canvas:newImageData():getString()))
-        or ('ERR ' .. tostring(err))
-    canvas:release()
-    return hash
-end
-
 describe('mipo snapshot', function()
     it('records seeded Mipos', function()
         local lines = {}
         local function record(tag, world)
-            lines[#lines + 1] = '## ' .. tag .. ' pixels ' .. pixels(world)
+            lines[#lines + 1] = '## ' .. tag
             for _, l in ipairs(worldDump(world)) do lines[#lines + 1] = l end
             lines[#lines + 1] = 'DNA ' .. dump(CM.serializeCharacters(), {}, 0)
         end

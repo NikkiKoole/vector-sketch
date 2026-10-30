@@ -13,9 +13,15 @@ local utils = require('src.utils')
 local draw = require('src.physics.box2d-draw-textured')
 local outlines = require('src.physics.box2d-draw')
 
+-- Mipo eyes without a gaze target follow the mouse (lookAtMouse): pin it, or where the mouse
+-- happens to be changes the pupils between runs
+love.mouse.getPosition = function() return 0, 0 end
 local W, H = 800, 600
 
 local function render(world, cx, cy, scale, drawFn)
+    -- bake the OMP pictures first, as love.draw does (else most parts aren't drawn); before setting
+    -- our canvas: the bake draws into canvases of its own and leaves none set
+    draw.makeCombinedImages()
     local canvas = love.graphics.newCanvas(W, H)
     love.graphics.setCanvas({ canvas, stencil = true })
     love.graphics.clear(0, 0, 0, 1)
@@ -98,6 +104,18 @@ describe('drawing with caches (L1) and culling (L0)', function()
         for _, fixture in pairs(registry.sfixtures) do
             local ud = fixture:getUserData()
             if ud.subtype == 'texfixture' and ud.extra.zOffset then ud.extra.zOffset = -ud.extra.zOffset end
+        end
+        keptAndFresh()
+    end)
+
+    it('follows ribbons whose bendiness or grow length changed', function()
+        render(world, cx, cy, scale)
+        for _, fixture in pairs(registry.sfixtures) do
+            local ud = fixture:getUserData()
+            if ud.subtype == 'connected-texture' and ud.extra.main then
+                ud.extra.main.bendiness = 5
+                ud.extra.growExtra = 60
+            end
         end
         keptAndFresh()
     end)

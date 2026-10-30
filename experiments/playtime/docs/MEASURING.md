@@ -67,6 +67,9 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   poll for results rather than wait a fixed time; nothing off screen is culled, texfixture fans are
   rebuilt every frame though they don't change, ribbons recomputed while still: see
   [MIPO-DRAWING.md](MIPO-DRAWING.md) (levels L0-L4 to draw Mipos cheaper, with their cost).
+  Lessons (2026-10-30): compare before/after in one running process (swap the files, lurker reloads
+  them) when other programs load the machine (node scripts at ~170% CPU made an hour-old number look
+  like a 40% regression); a render test must bake (`makeCombinedImages`) before setting its canvas.
 - [ ] **M4. Memory over a long session.** The image and OMP caches are never cleared (DEEPER-ISSUES).
   The bake is one module now (`render/omp-bake.lua`): count what's cached, watch it over 10 minutes
   of randomizing (M3 can run that), then cap or clear it.

@@ -11,6 +11,9 @@ local sceneIO = require('src.io')
 local camera = require('src.camera')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 
+-- Mipo eyes without a gaze target follow the mouse (lookAtMouse): pin it, or where the mouse
+-- happens to be changes the pupils between runs
+love.mouse.getPosition = function() return 0, 0 end
 local function scenes()
     local list = {}
     for _, dir in ipairs({ 'scripts', 'scripts/knut', 'scripts/tech' }) do
@@ -45,6 +48,9 @@ describe('render snapshot', function()
             if ok then
                 local x1, y1, x2, y2 = bounds(world)
                 local s = math.min(W / math.max(x2 - x1 + 600, 1), H / math.max(y2 - y1 + 600, 1))
+                -- bake the OMP pictures first, as love.draw does (else most parts aren't drawn), before
+                -- our canvas is set: the bake leaves no canvas set
+                box2dDrawTextured.makeCombinedImages()
                 local canvas = love.graphics.newCanvas(W, H)
                 love.graphics.setCanvas({ canvas, stencil = true })
                 love.graphics.clear(0, 0, 0, 1)

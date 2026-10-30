@@ -87,6 +87,21 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   5.4 -> 0.8, rebake 2.4 -> 1.1, doors 1.1 -> 0.03; garbage 820 -> 123 KB); all on screen 36.4 -> 28.4 ms;
   the editor's outlines 10 -> 0.75 ms. Left: the rebake check still asks each sfixture for its userData
   (1.1 ms); the editor's signal wires (0.9 ms) scan the same way.
+- [x] **L1c. Our own per-part Lua.** The sampler (100 Mipos on screen, paused, 2026-10-30): Lua 46% of the
+  time, and of that `ribbonPoints` 21% + `doubleControlPoints` 15% (every ribbon's control points worked
+  out every frame, then found unchanged), `earBend.bonesOf` 9% (is this an ear: asked every frame for
+  every 4-corner picture), the drawers 11%, GC 10%. **Done:** ribbons first compare their raw node
+  positions (and nodes, grow length, bendiness) with last frame's and reuse the points; `bonesOf`
+  remembers its answer per body (an ear's while its joint lives and its corners are the same);
+  `doubleControlPoints` writes by index. A/B in one running process (the machine was busy, so not
+  against older numbers): draw 25.3 / 26.6 -> 24.0 / 22.2 ms, texfixtures 6.5 -> 5.5, ribbons 4.1-5.0 ->
+  3.5-3.9. Left: each ribbon still asks its joints where they are every frame.
+  **The tests didn't draw OMP pictures until now:** they never baked (love.draw does, before drawing), so
+  most texfixtures and every ribbon were left out of the pixel checks; baking inside the test's canvas
+  left no canvas set. Fixed (bake first, then set the canvas), the mouse pinned (eyes follow it), and
+  checked again: scenes identical from before L1 to now with OMP drawn; draw-cache_spec's 9 pass and
+  catch the mutations. The Mipo snapshot has no pixels any more: a fresh Mipo's picture differs between
+  runs (random ids order equal-z parts, and more), its bodies, fixtures, joints and DNA are compared.
 - [ ] **L2a. One texture per Mipo, parts drawn as now.** `claudetools/drawcall-bench` (2026-10-30, Apple M1,
   100 Mipos x 30 parts as 10-vertex fans): 3000 meshes with 3000 textures (as today) 9.3 ms a frame; the
   same 3000 meshes on one texture 4.2 ms; one mesh per Mipo on an atlas 0.5 ms, but with its vertices

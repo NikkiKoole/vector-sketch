@@ -507,8 +507,8 @@ end
 -- A connected texture's control points this frame: through its nodes (anchors, joint anchors), a
 -- midpoint added for two, the ends grown, the inner points doubled by bendiness; nil when it has
 -- fewer than three.
-local function ribbonPoints(extra)
-    local points = {}
+local function nodePositions(extra, points)
+    for i = #points, 1, -1 do points[i] = nil end
     for j = 1, #extra.nodes do
         local it = extra.nodes[j]
         if it.type == NT.ANCHOR then
@@ -532,7 +532,10 @@ local function ribbonPoints(extra)
             end
         end
     end
+    return points
+end
 
+local function shapeRibbon(points, extra)
     if #points == 4 then
         -- here we will just introduce a little midle thingie
         -- -- becaue i cannot draw a curve of 2 points
@@ -567,6 +570,30 @@ local function ribbonPoints(extra)
     local bendiness = (extra.main and extra.main.bendiness) or 2
     points = spineMesh.doubleControlPoints(points, bendiness)
     return points
+end
+
+-- Worked out again only when its nodes moved, or its node list, grow length or bendiness changed:
+-- recomputed every frame it was 40% of the Lua time with 100 Mipos standing still.
+local ribbonCache = setmetatable({}, { __mode = 'k' }) -- [extra] = { raw, nodes, grow, bend, points }
+local rawScratch = {}
+local function ribbonPoints(extra)
+    local raw = nodePositions(extra, rawScratch)
+    local grow, bend = extra.growExtra or 20, (extra.main and extra.main.bendiness) or 2
+    local c = ribbonCache[extra]
+    if c and c.nodes == extra.nodes and c.grow == grow and c.bend == bend and #c.raw == #raw then
+        local same = true
+        for i = 1, #raw do
+            if c.raw[i] ~= raw[i] then same = false; break end
+        end
+        if same then return c.points end
+    end
+    local copy = {}
+    for i = 1, #raw do copy[i] = raw[i] end
+    if not c then c = { raw = {} }; ribbonCache[extra] = c end
+    for i = 1, #raw do c.raw[i] = raw[i] end
+    for i = #raw + 1, #c.raw do c.raw[i] = nil end
+    c.nodes, c.grow, c.bend, c.points = extra.nodes, grow, bend, shapeRibbon(copy, extra)
+    return c.points
 end
 
 local function drawConnectedTexture(d)
@@ -1018,6 +1045,7 @@ lib._test = {
     -- forget the kept list and the owned strips and fans: the next frame is drawn from scratch
     clearCaches = function()
         listState.version = nil
+        ribbonCache = setmetatable({}, { __mode = 'k' })
         ribbon.clearOwned()
     end,
     -- how many drawables the last frame skipped as off screen

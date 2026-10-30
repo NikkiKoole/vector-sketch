@@ -84,16 +84,15 @@ end
 function lib.doubleControlPoints(points, dups)
     local n = #points / 2
     if n <= 2 or dups <= 0 then return points end
-    local out = {}
+    local out, k, last = {}, 0, #points - 1
     for i = 1, #points, 2 do
         local x, y = points[i], points[i + 1]
-        out[#out + 1] = x
-        out[#out + 1] = y
-        local isMiddle = (i > 1) and (i < #points - 1)
-        if isMiddle then
+        out[k + 1], out[k + 2] = x, y
+        k = k + 2
+        if i > 1 and i < last then -- a middle point: written dups more times
             for _ = 1, dups do
-                out[#out + 1] = x
-                out[#out + 1] = y
+                out[k + 1], out[k + 2] = x, y
+                k = k + 2
             end
         end
     end

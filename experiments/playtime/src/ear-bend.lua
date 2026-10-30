@@ -54,7 +54,7 @@ end
 
 -- The bones of a Mipo ear when `body` is one, for spineSkin.drawGrid; nil for anything else.
 -- corners: the picture's rectangle (ear-local), to know which way is up the ear.
-function lib.bonesOf(body, corners)
+local function findBones(body, corners)
     if not lib.enabled then return nil end
     local _, partName = mipoRegistry.getFromBody(body)
     if not ears[partName] then return nil end
@@ -83,6 +83,39 @@ function lib.bonesOf(body, corners)
         anchorX = anchorX, anchorY = anchorY, rootX = rootX, rootY = rootY,
         axisX = dx, axisY = dy, length = length,
     }
+end
+
+-- What findBones says about a body, remembered (it was asked every frame for every 4-corner picture:
+-- 9% of the Lua time with 100 Mipos). An ear's answer holds while its joint exists and its picture's
+-- corners are the same; any other body is never an ear.
+local remembered = setmetatable({}, { __mode = 'k' }) -- [body] = { bones, joint, corners } or false
+function lib.bonesOf(body, corners)
+    if not lib.enabled then return nil end
+    local r = remembered[body]
+    if r == false then return nil end
+    if r and not r.joint:isDestroyed() then
+        local same = #r.corners == #corners
+        for i = 1, #corners do
+            if not same then break end
+            same = r.corners[i] == corners[i]
+        end
+        if same then return r.bones end
+    end
+    local _, partName = mipoRegistry.getFromBody(body)
+    if not ears[partName] then
+        if partName then remembered[body] = false end -- a Mipo part that isn't an ear stays one
+        return nil
+    end
+    local bones = findBones(body, corners)
+    local joint = bones and earJoint(body)
+    if joint then
+        local copy = {}
+        for i = 1, #corners do copy[i] = corners[i] end
+        remembered[body] = { bones = bones, joint = joint, corners = copy }
+    else
+        remembered[body] = nil
+    end
+    return bones
 end
 
 return lib
