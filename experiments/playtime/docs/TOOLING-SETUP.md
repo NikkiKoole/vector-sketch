@@ -305,6 +305,11 @@ luacov
 
 ---
 
+## 7. Snapshots and profiling
+
+Before/after snapshots for refactors (scenes, Mipos, the Mipo editor): `claudetools/snapshot.sh`.
+Profiling and what's still to build for measuring: [MEASURING.md](MEASURING.md).
+
 ## Recommended Setup Order
 
 ### Immediate (before any code changes)

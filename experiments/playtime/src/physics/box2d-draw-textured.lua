@@ -365,9 +365,6 @@ local function createDrawables()
     return drawables
 end
 
--- One function per drawable type: drawers[d.type](d). `d` is a drawable from createDrawables.
-local drawers = {}
-for kind, draw in pairs(mouth.drawers) do drawers[kind] = draw end -- backdrop, lips, teeth
 
 -- todo: these3 function look very much alike, we wnat to combine them all in otne,
 -- another issue here is that i dont really understand how to set the ox and oy correctly, (for the combined Image)
@@ -377,7 +374,7 @@ for kind, draw in pairs(mouth.drawers) do drawers[kind] = draw end -- backdrop, 
 -- onscreen 'd' button quite a distnace out of the actual physics body center.
 --
 -- local function drawImageLayerSquish(url, hex, extra, texfixture)
-drawers[subtypes.TEXFIXTURE] = function(d)
+local function drawTexfixture(d)
     local thing = d.thing
     local texfixture = d.texfixture
     local extra = d.extra
@@ -419,7 +416,7 @@ end
 
     -- this is all wrong, the code works but this shouldbnt  be a responnsible in the drawloop, do this outside!
     -- really we want to do this on load or something.
-drawers[subtypes.MESHUSERT] = function(d)
+local function drawMeshusert(d)
     -- now we need to find a mapping file..
 
     local mappert = resourceLink.find(d.texfixture:getUserData())
@@ -488,7 +485,7 @@ drawers[subtypes.MESHUSERT] = function(d)
     end
 end
 
-drawers[subtypes.UVUSERT] = function(d)
+local function drawUvusert(d)
     -- now we need to find a mapping file..
 
     local mappert = resourceLink.find(d.texfixture:getUserData())
@@ -546,7 +543,7 @@ drawers[subtypes.UVUSERT] = function(d)
     end
 end
 
-drawers[subtypes.CONNECTED_TEXTURE] = function(d)
+local function drawConnectedTexture(d)
     local curve = d.curve
     local derivate = curve:getDerivative()
     local extra = d.extra
@@ -591,19 +588,19 @@ drawers[subtypes.CONNECTED_TEXTURE] = function(d)
     end
 end
 
-drawers[subtypes.GRASS] = function(d)
+local function drawGrass(d)
     grass.draw(d.extra, d.thing, d.body, d.layer)
 end
 
-drawers[subtypes.SOFTBODY] = function(d)
+local function drawSoftbody(d)
     blobs.draw(d.fixture)
 end
 
-drawers[subtypes.LIQUID] = function(d)
+local function drawLiquid(d)
     liquid.draw(d.extra, d.body)
 end
 
-drawers[subtypes.TILE_REPEAT] = function(d)
+local function drawTileRepeat(d)
     local vertices = d.thing.vertices
     -- todo CACHE THIS!!
     local tris = d.thing._tris or shapes.makeTrianglesFromPolygon(vertices)
@@ -665,7 +662,7 @@ drawers[subtypes.TILE_REPEAT] = function(d)
     end
 end
 
-drawers[subtypes.TRACE_VERTICES] = function(d)
+local function drawTraceVertices(d)
     -- a spine torso's haircut runs along the whole torso's top, not its lowest band's
     local hairBones = spineSkin.bonesOf(d.thing.body)
     local m = traceVerticesMesh(d.extra,
@@ -727,7 +724,7 @@ drawers[subtypes.TRACE_VERTICES] = function(d)
     end
 end
 
-drawers['decal'] = function(d)
+local function drawDecal(d)
     local extra = d.extra
     local body = d.body
     if body and not body:isDestroyed() then
@@ -794,7 +791,7 @@ drawers['decal'] = function(d)
 end
 
     -- Brow: bezier curve with bend pattern
-drawers['brow'] = function(d)
+local function drawBrow(d)
     local extra = d.extra
     local body = d.body
     if body and not body:isDestroyed() and extra.bgURL then
@@ -855,6 +852,23 @@ end
 
 
 
+
+-- One function per drawable type: drawers[d.type](d). `d` is a drawable from createDrawables.
+-- Named, so a profiler (POST /profile/frames) reports them by name.
+local drawers = {
+    [subtypes.TEXFIXTURE] = drawTexfixture,
+    [subtypes.MESHUSERT] = drawMeshusert,
+    [subtypes.UVUSERT] = drawUvusert,
+    [subtypes.CONNECTED_TEXTURE] = drawConnectedTexture,
+    [subtypes.GRASS] = drawGrass,
+    [subtypes.SOFTBODY] = drawSoftbody,
+    [subtypes.LIQUID] = drawLiquid,
+    [subtypes.TILE_REPEAT] = drawTileRepeat,
+    [subtypes.TRACE_VERTICES] = drawTraceVertices,
+    ['decal'] = drawDecal,
+    ['brow'] = drawBrow,
+}
+for kind, draw in pairs(mouth.drawers) do drawers[kind] = draw end -- backdrop, lips, teeth
 
 function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawables)
 

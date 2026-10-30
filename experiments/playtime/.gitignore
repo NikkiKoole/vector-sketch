@@ -4,3 +4,4 @@ profilingReport.txt
 .playtime-error.log
 native/desound/libdesound.dylib
 native/desound/desound.wasm
+.snapshots/

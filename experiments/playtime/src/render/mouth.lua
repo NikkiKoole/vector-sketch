@@ -178,12 +178,10 @@ local function animatedCurvePoints(extra, body)
 end
 
 
--- The mouth's drawables (createDrawables): drawn on the face body, around its curve points.
-lib.drawers = {}
 
     -- Mouth backdrop: dark interior fill. Drawn below teeth (z = mouth-lower - 2)
     -- so teeth always render on top of the void.
-lib.drawers['mouth-backdrop'] = function(d)
+local function drawMouthBackdrop(d)
     local extra = d.extra
     local body = d.body
     if body and not body:isDestroyed() then
@@ -225,7 +223,7 @@ lib.drawers['mouth-backdrop'] = function(d)
 end
 
     -- Mouth lower lip: lip curve only (interior fill moved to mouth-backdrop)
-lib.drawers['mouth-lower'] = function(d)
+local function drawLowerLip(d)
     local extra = d.extra
     local body = d.body
     local curveData = d.curveData
@@ -264,7 +262,7 @@ lib.drawers['mouth-lower'] = function(d)
 end
 
     -- Mouth upper lip: draw upper lip curve on top
-lib.drawers['mouth-upper'] = function(d)
+local function drawUpperLip(d)
     local extra = d.extra
     local body = d.body
     local curveData = d.curveData
@@ -305,7 +303,7 @@ lib.drawers['mouth-upper'] = function(d)
 end
 
     -- Teeth: positioned image, optionally stencil-clipped to mouth interior
-lib.drawers['mouth-teeth'] = function(d)
+local function drawTeeth(d)
     local extra = d.extra
     local body = d.body
     if body and not body:isDestroyed() then
@@ -383,5 +381,13 @@ lib.drawers['mouth-teeth'] = function(d)
     end
 end
 
+
+-- The mouth's drawables (createDrawables): drawn on the face body, around its curve points.
+lib.drawers = {
+    ['mouth-backdrop'] = drawMouthBackdrop,
+    ['mouth-lower'] = drawLowerLip,
+    ['mouth-upper'] = drawUpperLip,
+    ['mouth-teeth'] = drawTeeth,
+}
 
 return lib

@@ -238,3 +238,4 @@ Reference docs worth knowing when touching an area:
 - `SOUND-SYNTH.md` — the dreamengine synth via FFI: setup on a new machine, API, gotchas
 - `WORLD-METRICS.md` — Mipo sizes, for designing the world around their feet
 - `TOOLING-SETUP.md` — luacheck, busted, profiling
+- `MEASURING.md` — profiling, and `claudetools/snapshot.sh` (before/after snapshots of scenes, Mipos, the Mipo editor) for refactors
