@@ -165,21 +165,6 @@ lib.patches = {
     horn = { pool = true, wave = 'BRASS', adsr = { 8, 0, 6, 120 },
              harmonics = 0.3, timbre = 0.4, morph = 0.25, reverb = 0.3, level = 0.4,
              filter = { mode = 1, cutoff = 3600, resonance = 1 } },
-    -- the americana style: a 60s string orchestra on dreamengine's bowed-string engine (mariachi.c's
-    -- violin recipe: mid bow, light pressure, a violin body at 0.6, vibrato), a second desk a viola's
-    -- size, the same strings plucked (pizzicato: modes[0] = 1), a harp (the Karplus pluck, long
-    -- ring) and a Harmon-muted trumpet (modaljazz.c: band-passed brass). All pool patches.
-    violins = { pool = true, wave = 'BOWED', adsr = { 70, 0, 7, 340 }, harmonics = 0.45, timbre = 0.30,
-                morph = 0.70, reverb = 0.45, level = 0.5, modes = { [1] = 0.6 }, lfo = { { 0, 5.6, 0.10 } } },
-    violas = { pool = true, wave = 'BOWED', adsr = { 80, 0, 7, 340 }, harmonics = 0.48, timbre = 0.32,
-               morph = 0.62, reverb = 0.45, level = 0.5, modes = { [1] = 0.6, [2] = 0.65 },
-               lfo = { { 0, 5.2, 0.09 } } },
-    pizz = { pool = true, wave = 'BOWED', adsr = { 1, 0, 7, 400 }, harmonics = 0.45, timbre = 0.3, morph = 0.5,
-             reverb = 0.35, level = 0.6, modes = { [0] = 1, [1] = 0.6 } },
-    harp = { pool = true, wave = 'PLUCK', adsr = { 0, 0, 7, 900 }, harmonics = 0.75, timbre = 0.35, morph = 0.3,
-             reverb = 0.5, level = 0.6 },
-    mutedTrumpet = { pool = true, wave = 'BRASS', adsr = { 1, 0, 5, 120 }, harmonics = 0.15, timbre = 0.55,
-                     morph = 0.42, reverb = 0.35, level = 1.0, filter = { mode = 3, cutoff = 1700, resonance = 2 } },
     -- citypop's glossy synth lead: a square with a slow vibrato and a little glide
     citySynth = { pool = true, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
                   filter = { mode = 1, cutoff = 3400, resonance = 0 }, lfo = { { 0, 5.2, 0.08 } } },

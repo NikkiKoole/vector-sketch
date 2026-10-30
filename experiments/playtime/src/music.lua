@@ -19,7 +19,7 @@
 -- city's jazzhop: our planner, its sound), puppetmaker (Puppetmaker 2's band: a chance-driven CR-78
 -- hand-percussion loop and its rolled Rhodes chord), strum (that chord humanized, through a key),
 -- citypop (Japanese pop-funk: the Royal Road, a popping bass, guitar cutting, strings, horns),
--- americana (60s commercial strings: violins on the tune, pizzicato, harp sweeps, a muted trumpet),
+-- buymode (the Sims 1 buy-mode piano trio: Mall Rat's moves, a key change up a half step),
 -- sesame (a 70s TV small band: clav, a walking upright, vibes, horn shouts), satie (a
 -- Gymnopédie-like 3/4 waltz on a felt piano), ambient (pentatonic loops of unequal lengths drifting
 -- over a drone, Music for Airports) and ballad. lib.onNote lets other code hear every note
@@ -45,7 +45,7 @@ local lib = {}
 -- copy of the module reads the same switch, and it survives a reload.
 --   enabled
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
---                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'americana',
+--                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'buymode',
 --                  'satie', 'ambient', 'ballad'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
@@ -63,7 +63,7 @@ setmetatable(lib, {
 })
 
 lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'satie',
-            'ambient', 'sesame', 'citypop' }
+            'ambient', 'sesame', 'citypop', 'buymode' }
 lib.lookahead = 0.3          -- seconds of music booked ahead
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -85,12 +85,20 @@ lib.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10
                   -- lofi's jazz on top of the rest: the dominant colours and the minor key's ii
                   n9 = { 4, 10, 14 }, b9 = { 4, 7, 10, 13 }, s9 = { 4, 7, 10, 15 },
                   m7b5 = { 3, 6, 10, 14 }, m6 = { 3, 7, 9, 14 },
-                  alt = { 4, 10, 15, 20 } } -- citypop's 7alt: 3 b7 #9 b13, the Just the Two of Us crunch
+                  alt = { 4, 10, 15, 20 }, -- citypop's 7alt: 3 b7 #9 b13, the Just the Two of Us crunch
+                  dim7 = { 0, 3, 6, 9 } }  -- buymode's passing diminished
 
 -- the forms, { section, bars }; songs grow no longer than this (a minute or so: a set keeps moving)
 lib.forms = {
     { { 'intro', 2 }, { 'A', 8 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'outro', 4 } }, -- AABA, the standard
     { { 'intro', 4 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'B', 8 }, { 'outro', 4 } },
+}
+
+-- buymode's form, after Mall Rat: lift = the section a half step up (the jingle's key change), prog =
+-- the section's own chords (style.progs), lead = false: the tune rests
+lib.buymodeForms = {
+    { { 'intro', 4, prog = 'sway' }, { 'A', 8 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8, lift = 1 },
+      { 'turn', 4, prog = 'turn', lead = false }, { 'A', 8 }, { 'outro', 4, prog = 'float' } },
 }
 
 -- lofi city's forms (and a break: the keys holding, the drums out or on the rim): longer songs
@@ -361,34 +369,39 @@ lib.styles = {
             { { 0, 6, 4 }, { 6, 2, 3 }, { 10, 6, 3 }, { 16, 8, 4 }, { 24, 8, 3 } },
         },
     },
-    -- americana: 60s commercial strings, the easy-listening orchestra (Percy Faith, the Living Strings;
-    -- the Sims' buy mode is a modern take). The violins sing the tune with the violas an octave under,
-    -- a felt piano chanks 2 and 4, pizzicato bounces the riff, the upright in two (walking when the
-    -- band joins), brushes, a saw string pad under the chorus, a harp sweeping up into each section,
-    -- and a Harmon-muted trumpet answering in the bar the tune breathes. Sunny sixths and ninths,
-    -- secondary dominants.
-    americana = {
-        bpm = { 112, 126 }, swing = 0.56, chordBars = { 1, 2 }, pushOdds = 20, motifRepeat = 25,
-        strumMs = 10, keys = 'piano', lead = 'violins', leadDouble = { patch = 'violas', interval = -12 },
-        riff = 'pizz', bass = 'walk', bassPatch = 'musicBass', bassLo = 34, drums = 'brushes', home = 'maj69',
-        horns = true, hornPatch = 'mutedTrumpet', strings = true, harp = true,
+    -- buymode: the Sims 1 buy-mode piano trio, after Jerry Martin's Mall Rat (its chords and moves, read
+    -- off the recording; never its tune). Straight and peppy, about 112 bpm: a felt piano comping and
+    -- singing the tune, the upright in two (walking when the band joins), a light kit. The intro sways
+    -- I to bVII, A and B are I-ii-V with sixths and passing diminished chords, then the jingle's key
+    -- change: an A a half step up, a turn round the fifths back home (III7 VI7 II7 V7), the last A at
+    -- home, and an ending that floats between I6 and bII6.
+    buymode = {
+        bpm = { 108, 116 }, swing = 0.5, chordBars = { 1 }, pushOdds = 25, turnaroundOdds = 0, motifRepeat = 25,
+        strumMs = 10, keys = 'piano', lead = 'pianoLead', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
+        drums = 'lounge', home = 'maj69', forms = 'buymode',
         A = {
-            { { 0, 'maj69' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'dom9' } },       -- I vi ii V
-            { { 0, 'maj69' }, { 0, 'maj69' }, { 2, 'dom9' }, { 7, 'dom9' } },  -- I I II7 V7, the sunny one
-            { { 0, 'maj69' }, { 5, 'maj69' }, { 4, 'm7' }, { 9, 'dom9' } },    -- I IV iii VI7
-            { { 5, 'maj7' }, { 5, 'm6' }, { 0, 'maj69' }, { 7, 'dom9' } },     -- IV iv I V
+            { { 0, 'maj69' }, { 2, 'm7', 2 }, { 7, 'dom7', 2 }, { 0, 'maj69' }, { 9, 'm7', 2 }, { 7, 'dom7', 2 } },
+            { { 0, 'maj69' }, { 4, 'm7' }, { 2, 'm7', 2 }, { 7, 'dom7', 2 }, { 0, 'maj69', 2 }, { 1, 'dim7', 2 } },
+            { { 0, 'maj7' }, { 5, 'maj69' }, { 11, 'm7b5', 2 }, { 4, 'dom7', 2 }, { 9, 'm7', 2 }, { 7, 'dom7', 2 } },
+            { { 0, 'maj69' }, { 10, 'maj7' }, { 0, 'maj69' }, { 2, 'm7', 2 }, { 7, 'dom7', 2 } },
         },
         B = {
-            { { 4, 'dom9', 8 }, { 9, 'dom9', 8 }, { 2, 'dom9', 8 }, { 7, 'dom9', 8 } },     -- III7 VI7 II7 V7
-            { { 5, 'maj7', 8 }, { 7, 'dom9', 8 }, { 4, 'm7', 4 }, { 9, 'dom9', 4 },
-              { 2, 'm9', 4 }, { 7, 'dom9', 4 } },                                          -- IV V iii VI ii V
-            { { 2, 'm9', 8 }, { 7, 'dom9', 8 }, { 0, 'maj69', 8 }, { 9, 'dom9', 8 } },      -- ii V I VI7
+            { { 5, 'maj69', 8 }, { 7, 'dom7', 8 }, { 4, 'm7', 4 }, { 9, 'dom7', 4 }, { 2, 'm7', 4 }, { 7, 'dom7', 4 } },
+            { { 2, 'm7', 4 }, { 7, 'dom7', 4 }, { 0, 'maj7', 8 }, { 2, 'm7', 4 }, { 7, 'dom7', 4 },
+              { 4, 'm7', 4 }, { 3, 'dim7', 4 } },
         },
-        -- the piano: the chank on 2 and 4, a Charleston lilt, 2 and 4 with skips
+        -- the sections with chords of their own (lib.buymodeForms)
+        progs = {
+            sway = { { 0, 'maj7', 4 }, { 10, 'maj7', 4 } },                                   -- I bVII
+            turn = { { 4, 'dom7', 4 }, { 9, 'dom7', 4 }, { 2, 'dom7', 4 }, { 7, 'dom7', 4 } },  -- round the fifths
+            float = { { 0, 'maj6', 4 }, { 1, 'maj6', 4 } },                                   -- I6 bII6
+        },
+        -- the piano: 1, the and-of-2, 3, the and-of-4; the off-beat chank; long and short
         comps = {
-            { { 4, 2, 3 }, { 12, 2, 3 }, { 20, 2, 3 }, { 28, 2, 3 } },
-            { { 0, 4, 3 }, { 6, 2, 2 }, { 16, 4, 3 }, { 22, 2, 2 } },
+            { { 0, 2, 3 }, { 6, 2, 2 }, { 8, 2, 3 }, { 14, 2, 2 },
+              { 16, 2, 3 }, { 22, 2, 2 }, { 24, 2, 3 }, { 30, 2, 2 } },
             { { 4, 2, 3 }, { 10, 2, 2 }, { 12, 2, 3 }, { 20, 2, 3 }, { 26, 2, 2 }, { 28, 2, 3 } },
+            { { 0, 4, 3 }, { 6, 2, 2 }, { 12, 4, 2 }, { 16, 4, 3 }, { 22, 2, 2 }, { 28, 4, 2 } },
         },
     },
     -- satie: a Gymnopédie-like waltz in 3/4, slow, no drums. Root on 1, chord on 2, a felt-piano tune
@@ -936,7 +949,8 @@ local function planSong(setKey)
     -- the form, and each part's role per section (bass: 'play', 'last' bar only, 'hold' or 'none')
     song.sections, song.barSection, song.barIndex = {}, {}, {}
     local aCount = 0
-    local forms = style.forms == 'lofi' and lib.lofiForms or lib.forms
+    local forms = style.forms == 'lofi' and lib.lofiForms or style.forms == 'buymode' and lib.buymodeForms
+        or lib.forms
     song.hasLead = not style.leadChance or rnd(100) < style.leadChance
     for _, entry in ipairs(forms[rnd(#forms) + 1]) do
         local kind, bars = entry[1], entry[2]
@@ -952,8 +966,13 @@ local function planSong(setKey)
             roles = { keys = 'hold', drums = rnd(100) < 35 and 'rim' or 'none', lead = rnd(100) < 30,
                       bass = rnd(100) < 50 and 'hold' or 'none' }
         elseif kind == 'outro' then roles = { keys = 'outro', drums = 'outro', lead = false, bass = 'play' } end
-        local section = { kind = kind, bars = bars, roles = roles,
+        if entry.lead == false then roles.lead = false end
+        local section = { kind = kind, bars = bars, roles = roles, lift = entry.lift,
                           dipLast = (kind == 'A' or kind == 'B') and rnd(100) < 25 }
+        if entry.prog then -- the section's own chords
+            section.prog = {}
+            for _, chord in ipairs(style.progs[entry.prog]) do progAdd(section.prog, chord[1], chord[2], chord[3]) end
+        end
         song.sections[#song.sections + 1] = section
         for j = 0, bars - 1 do
             song.barSection[#song.barSection + 1] = section
@@ -1026,6 +1045,7 @@ local function planSong(setKey)
     for midi = range[1], range[2] do
         if penta[(midi - song.key) % 12] then song.ladder[#song.ladder + 1] = midi end
     end
+    song.homeKey, song.homeLadder, song.lift = song.key, song.ladder, 0 -- a lifted section moves both
     song.hookStart = { A = 4 + rnd(3), B = 3 + rnd(4) } -- ladder index where each section's tune starts
 
     -- lofi: the groove (one of the kit's grids, weighted by tempo), the bass held long or short, the
@@ -1066,16 +1086,20 @@ end
 local function barChords(song, b)
     if b < 1 or b > song.bars then b = math.max(1, math.min(song.bars, b)) end
     local section, j = song.barSection[b], song.barIndex[b]
-    if section.kind == 'outro' and j >= 2 then -- the outro rings on home
-        return { { degree = 0, quality = song.home or lib.styles[song.style].home, s = 0, len = 16 } }
+    -- degrees from the key sounding now: a bar in a lifted section (or out of one) shifts by the difference
+    local shift = (section.lift or 0) - (song.lift or 0)
+    if section.kind == 'outro' and j >= 2 and not section.prog then -- the outro rings on home
+        return { { degree = shift % 12, quality = song.home or lib.styles[song.style].home, s = 0, len = 16 } }
     end
-    local prog = section.kind == 'B' and song.B or song.A
+    local prog = section.prog or section.kind == 'B' and song.B or song.A
     local b0, at, out = (j * 16) % prog.steps, 0, {}
     for _, chord in ipairs(prog) do
         local cs, ce = at, at + chord.steps
         at = ce
         local s, e = math.max(cs, b0), math.min(ce, b0 + 16)
-        if e > s then out[#out + 1] = { degree = chord.degree, quality = chord.quality, s = s - b0, len = e - s } end
+        if e > s then
+            out[#out + 1] = { degree = (chord.degree + shift) % 12, quality = chord.quality, s = s - b0, len = e - s }
+        end
     end
     return out
 end
@@ -1859,6 +1883,13 @@ local function bookBar(synth, t0, song, b)
     if style.loop == 'strum' then return bookStrumBar(synth, t0, song, b) end
     if style.loop then return bookLoopBar(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
+    local lift = section.lift or 0
+    if song.homeKey and lift ~= song.lift then -- buymode's key change: the key and the tune's ladder move
+        song.lift, song.key = lift, (song.homeKey + lift) % 12
+        song.ladder = {}
+        for i, midi in ipairs(song.homeLadder) do song.ladder[i] = midi + lift end
+        song.phraseBar = nil
+    end
     local roles = section.roles
     local band = bandPlays()
     local rnd = stream(song.seed, 1000 + b)
@@ -2051,8 +2082,7 @@ local function bookBar(synth, t0, song, b)
             local voicing = keysVoicing(chordAtStep(song, b, h[1]))
             local t = stepTime(song, t0, h[1]) + humanize(0.004)
             for k = math.max(1, #voicing - 2), #voicing do
-                play(synth, 'horns', style.hornPatch or 'horn', t + (k - 1) * 0.004, voicing[k], h[3],
-                     lengthMs(song, h[1], h[2]) * 0.85)
+                play(synth, 'horns', 'horn', t + (k - 1) * 0.004, voicing[k], h[3], lengthMs(song, h[1], h[2]) * 0.85)
             end
         end
     end
@@ -2071,30 +2101,6 @@ local function bookBar(synth, t0, song, b)
                          c == 1 and 50 or 150)
                 end
             end
-        end
-    end
-
-    -- americana's harp: a sweep up on the last beat of a section, into A or B, through the chord that
-    -- sounds; only its tones no semitone from another of its tones (an m9's 9th and minor third, a
-    -- 13's 13th and seventh would rub each other, and the keys)
-    local nextSection = b < song.bars and song.barSection[b + 1]
-    if style.harp and j == section.bars - 1 and nextSection
-        and (nextSection.kind == 'A' or nextSection.kind == 'B') then
-        local chord = chordAtStep(song, b, 12)
-        local pcs, safe, notes = chordPcs(song, chord), {}, {}
-        for _, pc in ipairs(pcs) do
-            local alone = true
-            for _, other in ipairs(pcs) do
-                local d = (pc - other) % 12
-                if d == 1 or d == 11 then alone = false end
-            end
-            if alone then safe[pc] = true end
-        end
-        for midi = 55, 86 do if safe[midi % 12] then notes[#notes + 1] = midi end end
-        local t, gap = stepTime(song, t0, 12), song.beat / math.max(1, #notes)
-        for k, midi in ipairs(notes) do
-            local at = t + (k - 1) * gap
-            play(synth, 'harp', 'harp', at, midi, 2, (t0 + song.barLength - at) * 1000)
         end
     end
 
@@ -2120,11 +2126,6 @@ local function bookBar(synth, t0, song, b)
                 local t = stepTime(song, t0, note.s % 16) + humanize(0.003)
                 if note.grace then play(synth, 'lead', patch, t - 0.05, note.grace, math.max(1, note.vol - 2), 45) end
                 play(synth, 'lead', patch, t, note.midi, note.vol, lengthMs(song, note.s % 16, note.len) * 0.9)
-                local double = style.leadDouble -- americana: the violas an octave under the violins
-                if double and not lib.melodyPatch then
-                    play(synth, 'lead', double.patch, t, note.midi + double.interval, math.max(1, note.vol - 1),
-                         lengthMs(song, note.s % 16, note.len) * 0.9)
-                end
             end
         end
     end
@@ -2173,8 +2174,8 @@ local LAYERS = {
     full = {},
     quiet = { drums = true, bass = true, perc = true, riff = true, guitar = true, horns = true, vinyl = true },
     cellar = { lead = true, drums = true, perc = true, riff = true, guitar = true, horns = true, strings = true,
-               harp = true, sample = true },
-    rhythm = { lead = true, keys = true, chord = true, strings = true, harp = true },
+               sample = true },
+    rhythm = { lead = true, keys = true, chord = true, strings = true },
 }
 local function layerOf(preset)
     if type(preset) == 'string' then
@@ -2348,8 +2349,8 @@ end
 -- Which instruments are playing, per part, for the settings panel (and the bridge): a list of
 -- { part, patches = { { name, now } } } in a fixed part order, holding each patch heard in the last
 -- `window` seconds (default 4); now = sounding at this moment.
-lib.parts = { 'lead', 'keys', 'chord', 'guitar', 'horns', 'strings', 'harp', 'riff', 'bass', 'drums', 'perc',
-              'sample', 'vinyl' }
+lib.parts = { 'lead', 'keys', 'chord', 'guitar', 'horns', 'strings', 'riff', 'bass', 'drums', 'perc', 'sample',
+              'vinyl' }
 function lib.playing(window)
     local now = M.audioTime
     if not (lib.enabled and now) then return {} end

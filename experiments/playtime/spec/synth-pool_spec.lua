@@ -58,15 +58,13 @@ describe('synth pool slots', function()
     end)
 
     it('hands out the slot that went quiet longest ago once every slot is taken', function()
-        local names = {}
-        for name, patch in pairs(synth.patches) do if patch.pool then names[#names + 1] = name end end
-        table.sort(names)
-        assert.is_true(#names > #synth.poolSlots)
-        for i = 1, #synth.poolSlots do synth.scheduleAt(names[i], i, 60, 4, 100) end
-        local firstSlot = notes[1].slot
-        local late = names[#synth.poolSlots + 1]
-        synth.scheduleAt(late, 40, 60, 4, 100) -- the first one's note ended first
-        assert.are.equal(firstSlot, notes[#notes].slot)
-        assert.are.equal(late, S.pool[firstSlot].name)
+        local poolSlots = synth.poolSlots
+        synth.poolSlots = { poolSlots[1], poolSlots[2] } -- a pool of two, so three patches fill it
+        synth.scheduleAt('clav', 1, 60, 4, 100)
+        synth.scheduleAt('horn', 2, 60, 4, 100)
+        synth.scheduleAt('citySynth', 40, 60, 4, 100) -- clav's note ended first
+        synth.poolSlots = poolSlots
+        assert.are.equal(notes[1].slot, notes[3].slot)
+        assert.are.equal('citySynth', S.pool[notes[1].slot].name)
     end)
 end)
