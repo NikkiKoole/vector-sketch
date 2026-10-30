@@ -5,6 +5,7 @@
 -- Run with: love . --specs spec/draw-skips_spec.lua
 
 if not love then return end
+-- luacheck: ignore 122 (the spies swap love.graphics.polygon/draw and put them back)
 
 local state = require('src.state')
 local registry = require('src.registry')
