@@ -1,6 +1,6 @@
 # World building — grass, ground, sky and outside scenes
 
-**Started:** 2026-10-29 (survey + brainstorm). **Status:** plan, nothing built yet.
+**Started:** 2026-10-29 (survey + brainstorm). **Status:** G1 (grass edge) built 2026-10-29; G2 parked; the sky (G5) tried in `../sky-atmosphere/`; the rest not started.
 
 **Goal:** make an outside world quickly. Ground with grass along its edge, a sky with layers,
 hills, and a few Mipos in it, the way Puppetmaker 2's "outside" felt, without hand-drawing

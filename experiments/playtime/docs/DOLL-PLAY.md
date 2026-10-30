@@ -1,6 +1,6 @@
 # Doll play — the Puppetmaker follow-up
 
-**Started:** 2026-10-27. **Status:** menu, nothing built yet.
+**Started:** 2026-10-27. **Status:** a menu to pick from; many items built (ticked below), the rest open.
 
 **Goal:** the same Mipo as Puppetmaker (or a bit better), but in a world where you
 play with them like dolls. Think Sago Mini / Fiete World: several characters

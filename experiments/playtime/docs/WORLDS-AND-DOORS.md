@@ -1,6 +1,6 @@
 # Worlds and doors — rooms you walk a Mipo into
 
-**Started:** 2026-10-28 (brainstorm). **Status:** plan, nothing built yet.
+**Started:** 2026-10-28 (brainstorm). **Status:** W1 built (2026-10-28); W2–W5 not started.
 
 **Goal:** a world, not a level. A wide overworld (a horizon, and in theory up and
 down too) with doors here and there. Put a Mipo at a door, go in, and you're
@@ -60,7 +60,7 @@ home, and the Puppetmaker Mipo (DOLL-PLAY F4) can move in.
 
 ## Slices
 
-- [x] **W1. Two rooms, one door each, in memory** (built 2026-10-28, not played yet). A door is a DOOR *behavior* (door, to,
+- [x] **W1. Two rooms, one door each, in memory** (built 2026-10-28; Nikki played it 2026-10-30: "works kinda ok"). A door is a DOOR *behavior* (door, to,
   arrive), not an attach kind: behaviors already save and get inspector rows. `src/doors.lua`
   (tap / open / go, split the Mipo off the room, enter, fade), `sceneLoader.loadSceneData`,
   `state.scene.id` = the room you're in. Test rooms from `claudetools/make-door-rooms.lua`:

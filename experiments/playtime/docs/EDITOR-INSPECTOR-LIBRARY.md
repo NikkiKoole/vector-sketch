@@ -1,5 +1,9 @@
 # Editor: inspector + library (plan, 2026-10-27)
 
+**Status: done (2026-10-30, Nikki).** Inspector, right column (properties | on stage | library),
+library and left tool rail are built and kept. The leftovers at the end are polish, done when
+they get in the way, not a next step.
+
 Goal: a tighter editor, Flash-style. One **inspector** that is shallow by default and
 deep on demand, and a **library** you drag things from. The editor keeps doing
 everything it does now. Code stays in files (scene scripts, props, behaviors); the
@@ -132,7 +136,7 @@ Each is its own keep/revert moment.
 - **Hot reload fix**: `src/ui/all.lua` keeps one ui table across reloads (a reload used to
   split it, so panels missed `overPanel` and closed on any click).
 
-## Next step (pick up here)
+## How it went (log)
 
 **Where we are (2026-10-28):** step (a) is done. `src/ui/right-column.lua` draws the tabs
 `properties | on stage | library` at y 70 (under the toolbar row, so the tab bar doesn't
@@ -191,7 +195,7 @@ buttons 70% wide. A first try that also shrank the font to 17 px: said no.
 panels popping up?
 
 **(d) left tool rail: done (2026-10-28).** Layout steps (a)-(d) are all built; the top bar is empty.
-**Still open:** slice 4 (use it for real: the kill check). Leftovers, small: joint creation is
+**Done (2026-10-30):** Nikki calls the rework done; slice 4 is closed. Leftovers, polish only: joint creation is
 still click A, click B, 'Create' (drag A -> B?); the mode prompts ('pick 1st body', click-draw's
 finalize panel, the recording panel) are old floating panels; placeholder icons and round rail
 buttons; library thumbnails.

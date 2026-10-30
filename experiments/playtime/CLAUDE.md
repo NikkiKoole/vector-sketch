@@ -63,7 +63,7 @@ world and registry fall out of step (2026-10-29). Restart the game after changin
 
 ## Testing
 
-Busted is the primary test framework. Specs live in `spec/`. Full suite: **23 spec files, ~726 tests** (pure subset via `busted spec/`: ~300).
+Busted is the primary test framework. Specs live in `spec/`. Full suite: **61 spec files, 1043 tests** (4 pending without `--audio`; pure subset via `busted spec/`: 342). Counted 2026-10-30.
 
 ```bash
 # Pure unit specs (no LÖVE needed)
@@ -94,12 +94,12 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks 
 luacheck src/ main.lua --std "lua51+love"                   # full check
 ```
 
-Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (verified 2026-07-10, after the July 2026 audit §C cleanup).
+Global leaks: **0** across 99 files. Full check: **0 warnings / 0 errors** (verified 2026-10-30).
 
 ## Architecture
 
 - `main.lua` — entry point, keybindings, UI callbacks
-- `src/` — core modules (61 files across src/, src/ui/, src/physics/)
+- `src/` — core modules (98 files across src/, src/ui/, src/physics/)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
@@ -117,11 +117,14 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 **Editor & input:**
 - `src/input-manager.lua` — mouse/keyboard input handling, drag, selection, tool modes
 - `src/editor-render.lua` — editor overlay rendering: selection boxes, handles, guides
-- `src/camera.lua` — camera singleton (pan, zoom via vendor/brady)
+- `src/camera.lua` — camera singleton (pan, zoom via vendor/brady); `src/camera-follow.lua` — Sago-style follow camera, per-scene camera settings
+- `src/modes.lua` — the editor tool modes; set them with `modes.set` / `modes.clear`, not by writing `state.currentMode`
+- `src/library.lua` — prefabs: save selection to `library/<name>.playtime.json`, place a copy (ids renewed); `src/toys.lua` — built-in toys (`src/props.lua` recipes) on the library's 'toys' shelf
+- `src/play-mode.lua` — play mode (no editor; tab toggles)
 
 **UI:**
-- `src/playtime-ui.lua` — editor UI orchestrator (~648 lines)
-- `src/ui/` — extracted UI panels: all.lua, textinput.lua, body-editor.lua, sfixture-editor.lua, joint-update.lua, world-settings.lua, tool-rail.lua (left rail: shape/draw/joint/attach/mipo), right-column.lua, library-tab.lua, on-stage.lua, recording-panel.lua
+- `src/playtime-ui.lua` — editor UI orchestrator (~500 lines)
+- `src/ui/` — extracted UI panels: all.lua (theme), textinput.lua, inspector.lua (generic panel from declared `params`), body-editor.lua, sfixture-editor.lua, joint-update.lua, mipo-editor.lua, world-settings.lua, tool-rail.lua (left rail: play/shape/draw/joint/attach/mipo/settings), right-column.lua (tabs properties | on stage | library), library-tab.lua, on-stage.lua, recording-panel.lua
 
 **Physics & rendering:**
 - `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)
@@ -133,6 +136,12 @@ Global leaks: **0** across 62 files. Full check: **0 warnings / 0 errors** (veri
 - `src/character-manager.lua` — character DNA system, body part assembly
 - `src/mipo-voice.lua` — Mipo squeaks, hmpfs, mouth flap, impact sounds; `src/mipo-chatter.lua` — idle mi… po… between Mipos
 - `src/mipo-band.lua` — the Mipos and the music: plays the music's 'sample' notes (Mipos sing pi/po), breath/doink in the puppetmaker style; `src/voice-lab.lua` — test bench for Mipo voices on the synth (settings → voice lab)
+- `src/mipo-actions.lua` — breathe / jump / ragdoll / flip / lookAt / pointAt
+- `src/spine-skin.lua` — Mipo spine: one torso picture bent over the torso bands (`docs/MIPO-SPINE.md`)
+- `src/signals.lua` — contraption wiring: triggers send a named signal, receivers act on it (behaviors)
+- `src/doors.lua` — DOOR behavior: tap open, drop a Mipo on it, go into another room (`docs/WORLDS-AND-DOORS.md`)
+- `src/grass.lua`, `src/liquid.lua` — grass edge and level-water sfixtures
+- `src/music.lua`, `src/synth.lua` — music and the dreamengine synth (`docs/SOUND-SYNTH.md`)
 - `src/script.lua` — per-scene Lua script loading and execution
 - `src/recorder.lua` — animation recording and playback
 
@@ -205,7 +214,7 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 **Architectural risks:**
 - Box2D doesn't guarantee fixture ordering — the ordering invariant can break silently
 - Z-sort uses unstable `table.sort` — same-z drawables can flicker
-- `state.currentMode` has 27 writers across 3 files with no state machine
+- Tool modes go through `src/modes.lua` (`modes.set/clear/is/get`) but there are no enter/exit rules: any caller can switch any mode to any other
 - Image/OMP/canvas caches never cleared — memory grows over long sessions
 - Clone pipeline: influence references can become nil silently when cloning partial selections
 - Backdrop/UV system: mostly fixed 2026-10-28 (imageURL + id link); what's left in `docs/UV-BACKDROP-FRAGILITY.md`
@@ -213,15 +222,15 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 ## Further documentation
 
 Deep-dive docs live in `docs/`:
-- `EDITOR-INSPECTOR-LIBRARY.md` — editor rework (inspector from data, tabbed right column, library, tool rail); its "Next step" section is where to resume
+- `EDITOR-INSPECTOR-LIBRARY.md` — editor rework (inspector from data, tabbed right column, library, tool rail); done 2026-10-30; leftovers (joint drag A->B, icons, thumbnails) are polish
 - `DOLL-PLAY.md` — the Puppetmaker follow-up: doll-play world, toys, signals, snap-together pieces
-- `WORLDS-AND-DOORS.md` — overworld + rooms linked by doors, carrying a Mipo (and what's connected) through, per-room persistence
-- `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8). The sky (G5) is prototyped in `../sky-atmosphere/`: one multi-stop gradient from the ground to space and the moon, day/dawn/dusk/night palettes blended
-- `WATER.md` — water in containers (LIQUID sfixture, `src/liquid.lua`): level water W1 done, then pouring, wobble, floating, taps (W2–W5); what the old water/Bathhouse scripts already had
+- `WORLDS-AND-DOORS.md` — overworld + rooms linked by doors, carrying a Mipo (and what's connected) through, per-room persistence. W1 (doors, rooms in memory) done 2026-10-28; W2–W5 open
+- `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8). G1 grass done; the sky (G5) is prototyped in `../sky-atmosphere/`: one multi-stop gradient from the ground to space and the moon, day/dawn/dusk/night palettes blended
+- `WATER.md` — water in containers (LIQUID sfixture, `src/liquid.lua`): level water W1 and sloshing done, then parked (2026-10-29); what the old water/Bathhouse scripts already had
 - `HARVEST-NAVKIT-DREAMENGINE.md` — survey of ~/Projects/navkit (logic/power, water, fire, smoke/steam, temperature, weather, moods/needs, dollhouse plan) and ~/Projects/dreamengine carts (juice, eyes, jelly, water toys, input) with a suggested order
-- `NEXT-STEPS-2026-07.md` — post-audit direction: play mode, tween layer, Bathhouse resume order, code-strengthening list
-- `MIPO-SPINE.md` — plan: an optional spine (torso cut into 2-3 bones that bend, one torso picture skinned over them), S1-S4
-- `PLAN-OF-ATTACK.md` — master work plan with phase status (remaining open: 7d, Phase 8)
+- `NEXT-STEPS-2026-07.md` — post-audit direction from July (older; play mode since done): tween layer, Bathhouse resume order, code-strengthening list
+- `MIPO-SPINE.md` — an optional spine (torso cut into 2-3 bones that bend, one torso picture skinned over them); S1–S4 done 2026-10-29
+- `PLAN-OF-ATTACK.md` — the early-2026 cleanup plan with phase status (remaining open: 7d, Phase 8); not the current direction
 - `DEEPER-ISSUES.md` — bugs, hidden constraints, architectural risks
 - `CODE-AUDIT-2026-07.md` — third-pass audit: prioritized fix list (broken → risks → cleanup → test gaps)
 - `BLIND-SPOTS.md` — undocumented systems (thing structure, fixture subtypes, OMP pipeline)
@@ -229,7 +238,7 @@ Deep-dive docs live in `docs/`:
 - `CLAUDE-BRIDGE.md` — complete bridge API reference
 - `DEEP-DIVE-NOTES.md` — analysis of DNA/character system, texture deformation, UI flow
 - `UV-BACKDROP-FRAGILITY.md` — RESOURCE/backdrop/UV duct-tape seams and hardening order
-- `PUPPETMAKER-SOUND.md` — how Puppetmaker 2's Mipos sound (band they lip-sync to, growl hmpfs, mi-po chatter), which samples (copied to assets/ as ogg), and the order to bring it in
+- `PUPPETMAKER-SOUND.md` — how Puppetmaker 2's Mipos sound (band they lip-sync to, growl hmpfs, mi-po chatter), which samples (copied to assets/ as ogg), and the order to bring it in (P1–P5, P7 done; P6, P8 open)
 - `SOUND-SYNTH.md` — dreamengine synth via FFI: setup on a new machine (build.sh), API, music, gotchas; ideas in `MUSIC-IDEAS.md`
 - `TEXTURE-DEFORMATION-RESEARCH.md` — skeletal mesh deformation research + integration plan
 - `AI-COLLABORATION-PLAN.md` — strategy and completed phases
