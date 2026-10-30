@@ -12,6 +12,7 @@ local utils = require('src.utils')
 local mathutils = require('src.math-utils')
 local behaviors = require('src.behaviors')
 local contactTracker = require('src.physics.contact-tracker')
+local camera = require('src.camera')
 
 local lib = {}
 
@@ -443,7 +444,6 @@ end
 
 local function resolveTarget(target)
     if target == 'cursor' then
-        local camera = require('src.camera')
         local touches = love.touch and love.touch.getTouches() or {}
         local sx, sy
         if #touches > 0 then

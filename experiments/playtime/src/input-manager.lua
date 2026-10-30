@@ -27,6 +27,7 @@ local joints = require('src.joints')
 local NT = require('src.node-types')
 local playMode = require('src.play-mode')
 local units = require('src.physics-units')
+local cameraFollow = require('src.camera-follow')
 
 local PANEL_WIDTH = 300        -- presses this close to the right edge belong to the open panel
 local PALETTE_HEIGHT = 400     -- the colour palette along the bottom
@@ -655,7 +656,7 @@ end
 local function panCamera(dx, dy)
     local tx, ty = cam:getTranslation()
     cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
-    require('src.camera-follow').notePan() -- you steer now, until the next touch
+    cameraFollow.notePan() -- you steer now, until the next touch
 end
 
 -- The last place `value` is in `list`, or nil.

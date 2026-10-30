@@ -18,6 +18,7 @@ local ST = require('src.shape-types')
 local NT = require('src.node-types')
 local cdt = require('src.cdt')
 local colors = require('src.color')
+local mipoRegistry = require('src.mipo-registry')
 local lib = {}
 
 -- Grab handles for a flat vertex array, highlighting the one under the
@@ -357,7 +358,7 @@ end
 -- detail, not body collision (by design).
 -- What one box goes around: a body, or every part of the Mipo it belongs to.
 local function boxBodies(body)
-    local instance = require('src.mipo-registry').getFromBody(body)
+    local instance = mipoRegistry.getFromBody(body)
     if not instance then return { body }, nil end
     local bodies = {}
     for _, part in pairs(instance.parts) do

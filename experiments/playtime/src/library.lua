@@ -18,6 +18,7 @@ local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
 local resourceLink = require('src.resource-link')
 local utils = require('src.utils')
+local CharacterManager = require('src.character-manager')
 
 lib.DIR = 'library'
 
@@ -250,7 +251,6 @@ function lib.place(name, x, y)
     if not prefab then return {} end
     local things = buildCopy(prefab, x, y)
     -- Mipos grow fresh from their DNA, with their own id, collision group and z-range
-    local CharacterManager = require('src.character-manager')
     for _, mipo in ipairs(prefab.mipos or {}) do
         local instance = CharacterManager.createCharacterFromJustDNA(mipo.dna, mipo.position[1], mipo.position[2],
             mipo.scale)

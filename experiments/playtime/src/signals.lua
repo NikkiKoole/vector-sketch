@@ -13,6 +13,8 @@ local state = require('src.state')
 local units = require('src.physics-units')
 local contactTracker = require('src.physics.contact-tracker')
 local behaviors = require('src.behaviors')
+local mipoRegistry = require('src.mipo-registry')
+local snap = require('src.physics.snap')
 
 local lib = {}
 
@@ -248,7 +250,6 @@ end
 local socketWasFilled = setmetatable({}, { __mode = 'k' }) -- [body] = bool
 
 local function socketIsFilled(body, socket, snapJoints)
-    local mipoRegistry = require('src.mipo-registry')
     for _, joint in ipairs(snapJoints) do
         local a, b = joint:getBodies()
         local other = (a == body and b) or (b == body and a) or nil
@@ -312,7 +313,7 @@ function lib.update()
     for _, body in ipairs(triggerBodies(state.physicsWorld)) do
         local socket = not body:isDestroyed() and behaviors.find(body, 'SIGNAL_SOCKET')
         if socket then
-            snapJoints = snapJoints or require('src.physics.snap').joints()
+            snapJoints = snapJoints or snap.joints()
             edge(socketWasFilled, body, socket, socketIsFilled(body, socket, snapJoints))
         end
         local plate = not body:isDestroyed() and behaviors.find(body, 'SIGNAL_PLATE')

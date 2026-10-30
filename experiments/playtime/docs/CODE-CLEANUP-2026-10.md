@@ -231,7 +231,7 @@ L = more.
   **Done 2026-10-30:** `src/shape8-dict.lua` (data only); topology, spine-skin, blob and specs
   require it, nothing loads character-manager to read shapes. `topology.setShape8Dict` stays for
   specs (the topology spec puts the real shapes back after).
-- [ ] **CL24. Plain requires.** 134 lazy `require(` calls, 9 `local function x() return require(...) end`
+- [x] **CL24. Plain requires.** 134 lazy `require(` calls, 9 `local function x() return require(...) end`
   wrappers; the `state()` ones (sfixture-params:13, texfixture-params:10, world-params:8) and
   behaviors:9 break no cycle. Only registry ↔ snap needs a lazy require; comment it with the cycle.
   187 bare `require 'x'`, 43 with hyphens (CLAUDE.md says parentheses) → one sed pass. S.
@@ -241,7 +241,11 @@ L = more.
   behaviors, a real cycle (comment says so now). Left: the ~130 requires inside functions; each
   needs a load-order check, so file by file, not one pass. Sound modules done (aeaddadc): voice-lab
   and mipo-voice/snap-sound require synth/music on top; lazy only where pure specs lack ffi, or the
-  web build. The rest: playtime-fc, file by file.
+  web build. The rest by playtime-fc, file by file (22d07f08, a96b3613, 93705b82, 27150db7), and the
+  last nine (signals, library, character-manager, mipo-actions, blob, editor-render, input-manager,
+  grass, meshusert-bind). Lazy on purpose, each with its reason: snap's fixtures (the registry/snap
+  cycle), behaviors' signals (signals requires behaviors), synth where the pure specs have no ffi,
+  the web-only ones, main's spec/desktop/web switches, web-bridge's eval preamble string.
 - [x] **CL25. Names.** `addTexturesFromInstance2` (131 call sites, no version 1) → `rebuildTextures`
   (alias for a while); `bud` (draw-textured:3359), `mud` (sfixture-editor:403, 707), `j` for joints
   (16 places), `fud` vs `ud` (38 places); raw subtype strings in editor-render:95 and draw-textured:180;

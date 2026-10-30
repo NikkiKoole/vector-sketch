@@ -19,6 +19,7 @@ local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
 local topology = require('src.character-topology')
 local units = require('src.physics-units')
+local registry = require('src.registry')
 
 -- Ears hang on a soft weld: the angle springs back to the stanceAngle, the root stays
 -- put. On a hinge (+-11 deg) they lay on a limit all the time, drooping, one up and one
@@ -2408,7 +2409,6 @@ function lib.reconstructInstance(charData, partBodies)
         end
     end
     -- connected textures saved with missing joints (from the bug above): redraw
-    local registry = require('src.registry')
     local brokenTextures = false
     for _, part in pairs(instance.parts) do
         for _, fixture in ipairs(part.body:getFixtures()) do

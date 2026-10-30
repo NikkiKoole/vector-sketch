@@ -27,6 +27,7 @@ local subtypes = require('src.subtypes')
 local registry = require('src.registry')
 local units = require('src.physics-units')
 local mathutils = require('src.math-utils')
+local shape8Dict = require('src.shape8-dict')
 
 -- What a new blob starts with (also the fallback for missing keys).
 lib.defaults = {
@@ -91,7 +92,7 @@ end
 -- The picture's outline: shape8 points in texture space over `dimensions`. A picture
 -- without one gets an oval over its image.
 local function outlineOf(bgURL)
-    local shape = bgURL and require('src.shape8-dict')[bgURL]
+    local shape = bgURL and shape8Dict[bgURL]
     if shape then return shape.vertices, shape.dimensions[1], shape.dimensions[2] end
     local w, h = 200, 200
     local info = bgURL and love.filesystem.getInfo('textures/' .. bgURL, 'file')

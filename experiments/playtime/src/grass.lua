@@ -6,6 +6,7 @@
 -- every Mipo z-group). Each layer is one SpriteBatch, built when the body or a
 -- setting changes; the sway only moves the sprites already in it.
 local lib = {}
+local mathutils = require('src.math-utils')
 
 -- physics-testbed's blade atlas (the same 8 drawings as puppet-maker2's spriet1-8)
 lib.ATLAS = 'textures/world/sprieten.png'
@@ -147,7 +148,7 @@ end
 -- thing.vertices aren't always body-local: a ribbon keeps them around its centroid, and the body
 -- sits on that centroid (the tile-repeat draw does the same subtraction).
 local function bodyLocal(vertices)
-    local cx, cy = require('src.math-utils').computeCentroid(vertices)
+    local cx, cy = mathutils.computeCentroid(vertices)
     local out = {}
     for i = 1, #vertices, 2 do
         out[i], out[i + 1] = vertices[i] - cx, vertices[i + 1] - cy

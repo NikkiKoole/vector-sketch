@@ -10,6 +10,7 @@ local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local utils = require('src.utils')
+local spineMesh = require('src.spine-mesh')
 
 local lib = {}
 
@@ -326,7 +327,6 @@ function lib.bindSpine(ud, ownerBody, multi)
     local nodes = ud.extra.nodes or {}
     local verts = #nodes >= 2 and lib.worldVerts(ud, ownerBody)
     if not verts then return nil, 'need a paired RESOURCE and >=2 nodes' end
-    local spineMesh = require('src.spine-mesh')
     local bendiness = ud.extra.spineBendiness or 2
     local bind, err
     if multi then
