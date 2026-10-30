@@ -39,6 +39,22 @@ About **30 drawables and 30 draw calls per Mipo, ~0.6 ms of drawing each** (all 
 - All this garbage (~0.6 MB a frame at 20 Mipos, 4.8 MB at 200) is what the collector's growing share
   comes from (1.3% -> 5.4% of the time).
 
+## The day in numbers (2026-10-30, evening)
+
+This morning's code (just before L0/L1, 09f2a551) against L0+L1+L1b+L1c (b9671c18), the same machine,
+two rounds in swapped order (morning, now, now, morning; the machine got busier in round two):
+
+| | morning | now |
+|---|---|---|
+| 20 Mipos moving, editor: draw | 11.9 / 13.7 ms | 10.5 / 11.5 ms |
+| ... garbage a frame | 613 / 644 KB | 289 / 302 KB |
+| 100 Mipos all on screen (play, paused): draw | 56.3 / 67.7 ms | 27.0 / 35.1 ms |
+| ... garbage a frame | 2.6 MB | 0.47-0.49 MB |
+| 100 Mipos, normal camera: draw | 62.0 / 67.6 ms | 6.1 / 8.5 ms |
+| ... update (paused: GC work) | 12.0 / 18.5 ms | 3.9 / 4.6 ms |
+
+Untouched: the update while Mipos move (physics, behaviour): 6-9 ms either way.
+
 ## Levels
 
 Each level keeps what you see the same (`claudetools/snapshot.sh` proves it for L0-L2) and is measured
