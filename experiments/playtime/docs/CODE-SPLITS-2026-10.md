@@ -27,19 +27,27 @@ each.
   The `if type ==` chain is `drawers[type]`; drawTexturedWorld is a 30-line loop. 2897 -> 900 lines
   (createDrawables and the other drawers stay). Same pixels in all 36 scenes after each step.
   `texturesCreated` is `ompBake.texturesCreated` (main.lua), `useDQS` is in skinning.
-- [ ] **SPLIT2. `character-manager.lua` (2886).** (`shape8-dict` is out already, CL23.) `mipo-dna` (template,
+- [x] **SPLIT2. `character-manager.lua` (2886).** (`shape8-dict` is out already, CL23.) `mipo-dna` (template,
   zOffsets), `mipo-appearance` (the update*OfPart setters), `mipo-textures` (skins, hair, connected,
   face decals), `mipo-randomize` (randomizers, mutateSizes, arm reach), `mipo-balance`
   (balance*/apply*/settlePose). character-manager keeps building, rebuilding and save/load (~700).
   Dependencies only point one way.
+  **Done 2026-10-30:** character-manager.lua is a 65-line front over mipo-dna (template, earJoint, torso
+  z), mipo-appearance (the update*OfPart setters), mipo-textures (rebuildTextures and the face), mipo-balance,
+  mipo-build (makePart, updatePart, rebuild, create, save/load: ~730) and mipo-randomize. Not as planned:
+  randomize calls updatePart and rebuild all through, so building moved out of the front too and requires
+  point one way (randomize -> build -> textures, balance, appearance -> dna). 6 seeded Mipos (new, randomized,
+  part by part, mutated, saved and loaded: every body, fixture, joint, the DNA and pixels) identical.
 - [ ] **SPLIT3. `ui/mipo-editor.lua` (2020).** After CL15: `ui/mipo/widgets.lua`,
   `ui/mipo/body-panel.lua`, `ui/mipo/face-panel.lua`, `ui/mipo/look-panel.lua`; mipo-editor keeps the
   header and accordion order (~120). `getMirrorPart`, `getLimbRoot` and the faceOwner rule (twice,
   :1429, :1661) go to character-topology.
-- [ ] **SPLIT4. `ui/sfixture-editor.lua` (1886).** After CL14 and CL21 most of it is gone (686 now:
+- [x] **SPLIT4. `ui/sfixture-editor.lua` (1886).** After CL14 and CL21 most of it is gone (686 now:
   maybe no split needed, look first). What's
   left: `ui/meshusert-panel.lua` (bind buttons, sliders, triangle painter; the plain sliders could be
   inspector rows), `ui/resource-panel.lua`, and sfixture-editor as dispatch (~150).
+  **Done 2026-10-30** (b4f452c5, playtime-fc): sfixture-editor 686 -> 158 lines of dispatch,
+  ui/meshusert-panel.lua (513), ui/resource-panel.lua (85). 72 panel draws and 602 clicks identical.
 - [x] **SPLIT5. `music.lua` (1646).** `music-styles` (pure data), `music-theory` (pure functions,
   specs welcome), `music-plan` (planSong and friends), `music-parts` (bass, drums, lofi, strum,
   loop bars); music.lua keeps settings, `state.music`, bookBar/bookNext and the public API (~350).
