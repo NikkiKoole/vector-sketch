@@ -1,6 +1,6 @@
 # Web Export via love.js
 
-status: active
+status: parked — works (game, synth, Lua eval, start screen, offline; Nikki 2026-10-30: "done with that"). Left for when it's needed: iPad touch, the editor in the browser, more bridge tools (WEB3, WEB4)
 
 ## Overview
 
