@@ -189,7 +189,9 @@ L = more.
   draws kept in the same order. character-manager.lua 2886 -> 2470 lines. Checked with a one-off
   snapshot (10 seeded Mipos: randomized, parts randomized, rebuilt, potato, saved and loaded; every
   fixture, decal and joint): identical before and after.
-- [ ] **CL19. `sound.update(dt)`.** See BUG7: synth, music, snap and slide out of mipo-voice. S-M.
+- [x] **CL19. `sound.update(dt)`.** See BUG7: synth, music, snap and slide out of mipo-voice. S-M.
+  **Done with BUG7 (ebd2d79e):** `src/sound.lua` ticks the synth, music, snap sounds (and now the music
+  zones) from love.update; slide went with CL5.
 - [x] **CL20. The renderer only draws.** Blink, brows, mouth tween and the click-to-pull-a-face
   (`box2d-draw-textured.lua:30-283`, polls `love.mouse.isDown` inside draw) → `src/mipo-face.lua`,
   called from update. The mouth-decal migration in `initFaceDecals` → io.lua load. `hexToColor` and
