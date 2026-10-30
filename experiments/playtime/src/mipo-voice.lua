@@ -354,12 +354,6 @@ function lib.update()
     end
 end
 
-function lib.squeakBody(body, emotionName)
-    local instance = mipoRegistry.getFromBody(body)
-    if instance then return lib.squeak(instance, emotionName) end
-    return nil
-end
-
 local mapInto = mathutils.remap
 
 -- `source` is the body making the sound (for perBody sounds).

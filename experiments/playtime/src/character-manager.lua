@@ -114,7 +114,6 @@ local randomHexColor = utils.randomHexColor
 
 
 local function createDefaultTextureDNABlock(shape, skipFG)
-    --print(r, g, b, a)
 
     local result = {
         bgURL = shape .. '.png',
@@ -132,7 +131,6 @@ local function createDefaultTextureDNABlock(shape, skipFG)
 end
 
 local function initBlock(url)
-    -- print(r, g, b, a)
     local result = {
         bgURL = (url or '') .. '.png',
         fgURL = (url or '') .. '-mask.png',
@@ -1122,22 +1120,6 @@ local dna = {
 
 
 
-function lib.updateShape8(instance, partName, newShape8Name)
-    -- Update the physics part
-    lib.updatePart(partName, { shape8URL = newShape8Name .. '.png' }, instance)
-
-    -- Trigger a rebuild
-    lib.rebuildFromCreation(instance, {})
-
-    -- Update all visuals linked to that shape
-    --lib.updateTextureGroupValue(instance, partName .. 'Skin', 'bgURL', newShape8Name .. '.png')
-    --lib.updateTextureGroupValue(instance, partName .. 'Skin', 'fgURL', newShape8Name .. '-mask.png')
-    --lib.updateTextureGroupValueInRoot(instance, partName .. 'Hair', 'followShape8', newShape8Name .. '.png')
-
-    -- Recreate the actual texture fixtures
-    --   lib.addTextureFixturesFromInstance(instance)
-end
-
 -- copy pasted from playtime-ui.lua
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
 
@@ -1489,7 +1471,6 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     instance.parts = {}
     instance.joints = {}
-    --print(instance.scale)
     lib.createCharacterFromExistingDNA(instance, torsoX, torsoY, torsoAngle)
 
     applyPoseCache(instance, poseCache)
@@ -1896,7 +1877,6 @@ function lib.addTexturesFromInstance2(instance)
     local scale = instance.scale
     for k, v in pairs(instance.dna.parts) do
         if v.appearance then
-            --logger:info(k .. ' has appearance')
             local relevant = instance.parts[k]
             if (relevant) then
                 --logger:info('relevant real thing found ' .. k)
@@ -2277,7 +2257,6 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
 
     lib.addTexturesFromInstance2(instance)
-    --logger:info('calling addTextureFixturesFromInstance')
 
     -- Assign a unique negative group index to prevent self-collision.
     -- Reuse existing index if this is a rebuild, otherwise allocate a new one.

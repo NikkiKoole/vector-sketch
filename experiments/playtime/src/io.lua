@@ -349,15 +349,9 @@ function lib.buildWorld(data, world, cam, opts)
             local fixtureData = bodyData.fixtures[i]
             local shape
             if (fixtureData.radius) then
-                --if shared.shapeType == "circle" then
                 shape = love.physics.newCircleShape(fixtureData.radius)
             elseif fixtureData.points then
-                --elseif shared.shapeType == "polygon" then
                 local points = {}
-                -- for _, point in ipairs(fixtureData.points) do
-                --     table.insert(points, point.x)
-                --     table.insert(points, point.y)
-                -- end
                 for _, point in ipairs(fixtureData.points) do
                     table.insert(points, point)
                 end
@@ -369,15 +363,6 @@ function lib.buildWorld(data, world, cam, opts)
                     logger:info('failed creating a polygonshape, will add a circle instead')
                     shape = nil
                 end
-
-
-
-                -- elseif fixtureData.shapeType == "edge" then
-                --     local x1 = fixtureData.points[1].x
-                --     local y1 = fixtureData.points[1].y
-                --     local x2 = fixtureData.points[2].x
-                --     local y2 = fixtureData.points[2].y
-                --     shape = love.physics.newEdgeShape(x1, y1, x2, y2)
             else
                 logger:error("Unsupported shape type:", fixtureData.shapeType)
             end
@@ -421,7 +406,6 @@ function lib.buildWorld(data, world, cam, opts)
 
 
                     registry.registerSFixture(oldUD.id, fixture)
-                    --print(inspect(utils.shallowCopy(fixture:getUserData())))
                 end
             end
         end
@@ -444,7 +428,6 @@ function lib.buildWorld(data, world, cam, opts)
 
         -- Assign the 'thing' to the body's user data
         body:setUserData({ thing = thing })
-        --  print(thing.id, inspect(body:getUserData()))
         registry.registerBody(thing.id, body)
         table.insert(builtThings, thing)
     end
@@ -776,11 +759,9 @@ function lib.gatherSaveData(world, camera)
                 label = utils.sanitizeString(thing.label),
                 shapeType = thing.shapeType,
                 dims = shapes.usedDims(thing),
-                --textures = thing.textures,
                 -- zOffset = thing.zOffset,
                 mirrorX = thing.mirrorX,
                 mirrorY = thing.mirrorY,
-                --radius = thing.radius,
                 vertices = thing.vertices,
                 extraSteiner = thing.extraSteiner, -- body-local Steiner points (Path B)
                 mipoId = thing.mipoId,
@@ -840,7 +821,6 @@ function lib.gatherSaveData(world, camera)
 
                 local fixtureData = {}
                 if shape:typeOf("CircleShape") then
-                    --fixtureData.shapeType = "circle"
                     fixtureData.radius = shape:getRadius()
                 elseif shape:typeOf("PolygonShape") then
                     local result = {}
@@ -849,10 +829,6 @@ function lib.gatherSaveData(world, camera)
                         table.insert(result, utils.round_to_decimals(points[i], 3))
                     end
                     fixtureData.points = result
-                    -- elseif shape:typeOf("EdgeShape") then
-                    --     fixtureData.shapeType = "edge"
-                    --     local x1, y1, x2, y2 = shape:getPoints()
-                    --     fixtureData.points = { { x = x1, y = y1 }, { x = x2, y = y2 } }
                 else
                     -- Handle other shape types if any
                     fixtureData.shapeType = "unknown"
@@ -990,7 +966,6 @@ function lib.save(world, camera, filename)
             end
         end
     end
-    -- logger:debug(inspect(saveData))
     local jsonData = json.encode(saveData, { indent = true })
 
     -- Write the JSON data to a file

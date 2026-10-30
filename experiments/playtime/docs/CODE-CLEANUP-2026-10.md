@@ -25,9 +25,9 @@ L = more.
   pointerjoints `onPressedFunc` and its empty connector loop. Not unused after all: `registry.print`
   (world settings calls it through `require(...)`), `io` `getNewId` (load calls it; an identity
   function, could be inlined), `isRecordingPointers` (the tool rail reads it, nothing sets it).
-  Left: `character-manager` `updateShape8`, `getBoundingBox`, `instance.textures` /
-  `instance.positioners` (after the ears work); `music.stepAt`, music `lib.trace`,
-  `mipoVoice.squeakBody`, `synth.isRunning` (with BUG7); on `state` (restart the game after:
+  Later the same day: `updateShape8` and `mipoVoice.squeakBody` gone; character-manager's
+  `getBoundingBox` is used, `instance.textures` / `positioners` were already gone.
+  Left: `music.stepAt`, music `lib.trace`, `synth.isRunning` (the music session's files); on `state` (restart the game after:
   hot-swapping state.lua unsettles it) `positioningMesh`, `jointLengthParams`, `lastSelectedBody`,
   `axisEnabled`, `showTexFixtureDim`, `texFixtureEdit.verts`. S.
 - [x] **CL3. Unused maths.** `math-utils.lua`: `unloosenVanillalineOLD` with `unpackNodePoints` /
@@ -36,8 +36,9 @@ L = more.
   on 500 random lines). **Done 2026-10-30**, `spec/polyline_spec.lua`.
 - [ ] **CL4. Commented-out code.** **Done 2026-10-30** in src/ and main.lua: ~640 lines, found by
   a script that takes a run of `--` lines as code only when the text compiles as Lua, then read
-  through. Left: character-manager, character-topology, io.lua (other work in them), state.lua,
-  and the sound files (with BUG7). S.
+  through. Later the same day: character-manager, io.lua, mipo-voice (character-topology,
+  mipo-chatter and sound.lua had none). Left: state.lua (restart the game after), music.lua and
+  synth.lua (the music session's). S.
 - [ ] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
   still runs every frame and the `whistle` patch keeps a synth slot. S.
 
