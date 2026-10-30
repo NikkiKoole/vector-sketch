@@ -181,6 +181,20 @@ lib.patches = {
                tape = { wow = 0.25, flutter = 0.08, saturation = 0.25, warble = 0.1 },
                flanger = { 0.25, 0.5, 0.5, 0.35 },
                lfo = { { 2, 4.2, 0.18 } } },
+    -- rollo's guitar: the same electric guitar, choked (a short release) and on a worn cassette
+    jabGuitar = { fx = true, wave = 'GUITAR', adsr = { 1, 0, 7, 90 }, harmonics = 0.4, timbre = 0.35, morph = 0.12,
+                  modes = { [0] = 0.7, [1] = 0.15 }, filter = { mode = 1, cutoff = 2800, resonance = 1 },
+                  reverb = 0.3, level = 0.55, drive = 0.15, driveMode = 0,
+                  tape = { wow = 0.3, flutter = 0.12, saturation = 0.35, warble = 0.15 } },
+    -- rollo's flute: dreamengine's pipe.c 'flute' preset (overblow 0, air .38, embouchure .7), a 4.4 Hz
+    -- vibrato as measured on the record, and the same cassette. Keep it at A5 or below (PIPE flips mode
+    -- above, dreamengine STATUS #31)
+    flute = { fx = true, wave = 'PIPE', adsr = { 1, 0, 6, 140 }, harmonics = 0, timbre = 0.38, morph = 0.7,
+              reverb = 0.4, level = 0.22, lfo = { { 0, 4.4, 0.08 } },
+              tape = { wow = 0.3, flutter = 0.12, saturation = 0.3, warble = 0.15 } },
+    -- rollo's bass: a picked electric bass (the guitar model down low, dark, stopped after a beat)
+    pickBass = { pool = true, wave = 'GUITAR', adsr = { 1, 0, 7, 160 }, harmonics = 0.3, timbre = 0.25, morph = 0.1,
+                 filter = { mode = 1, cutoff = 900, resonance = 1 }, reverb = 0.1, level = 2.0 },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,

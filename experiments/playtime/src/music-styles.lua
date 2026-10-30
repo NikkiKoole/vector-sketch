@@ -6,7 +6,7 @@
 local D = {}
 
 D.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'satie',
-            'ambient', 'sesame', 'citypop', 'buymode' }
+            'ambient', 'sesame', 'citypop', 'buymode', 'rollo' }
 D.lookahead = 0.3          -- seconds of music booked ahead
 D.activityHalfLife = 8     -- seconds for the play level to halve
 D.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -289,6 +289,29 @@ D.styles = {
             -- the jet at 0.85: 0.95 resonates (peaks 4x the guitar's, +3.6 dB rms)
             B = { tape = { 0.4, 0.12, 0.3, 0.2 }, flanger = { 0.1, 1.0, 0.85, 0.8 } },
             outro = { tape = { 0.55, 0.15, 0.3, 0.35 }, flanger = { 0.05, 1.0, -0.85, 0.85 } },
+        },
+    },
+    -- rollo: after the electric guitar in King Rollo's "The Tree" (docs/MUSIC-ANALYSIS.md). A picked
+    -- electric bass holds the root on 1 and 3, a choked guitar stabs a high triad on the and of 2 and
+    -- the and of 4, and nothing else: straight eighths, mostly I and V, on a worn cassette (the tape).
+    rollo = {
+        bpm = { 110, 118 }, swing = 0.5, chordBars = { 1, 1 }, pushOdds = 0, turnaroundOdds = 0, leadChance = 0,
+        picking = 'jabs', pickPatch = 'jabGuitar', bassPatch = 'pickBass', flute = 'flute', home = 'gmaj',
+        A = {
+            { { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 } },   -- I V I V
+            { { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 5, 'gmaj', 8 }, { 7, 'gmaj', 8 } },   -- I V IV V
+            { { 0, 'gmaj', 8 }, { 5, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 0, 'gmaj', 8 } },   -- I IV V I
+        },
+        B = {
+            { { 9, 'gm7', 8 }, { 4, 'gm7', 8 }, { 5, 'gmaj', 8 }, { 7, 'gmaj', 8 } },     -- vi iii IV V
+            { { 5, 'gmaj', 8 }, { 0, 'gmaj', 8 }, { 2, 'gm7', 8 }, { 7, 'gmaj', 8 } },    -- IV I ii V
+        },
+        comps = { { { 0, 16, 4 }, { 16, 16, 4 } } }, -- the planner wants one; the jabs play instead
+        pedals = { -- tape { wow, flutter, saturation, warble }; the flanger off (mix 0)
+            intro = { tape = { 0.3, 0.12, 0.35, 0.15 }, flanger = { 0.25, 0.5, 0.5, 0 } },
+            A = { tape = { 0.3, 0.12, 0.35, 0.15 }, flanger = { 0.25, 0.5, 0.5, 0 } },
+            B = { tape = { 0.4, 0.15, 0.4, 0.25 }, flanger = { 0.25, 0.5, 0.5, 0 } },
+            outro = { tape = { 0.55, 0.18, 0.4, 0.35 }, flanger = { 0.25, 0.5, 0.5, 0 } },
         },
     },
     -- sesame: a 70s TV small band (old Sesame Street's jazz), quick and swung. A clavinet chopping

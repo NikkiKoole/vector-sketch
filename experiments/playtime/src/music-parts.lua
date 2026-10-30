@@ -880,6 +880,69 @@ local function bookTravis(bar)
     end
 end
 
+-- One bar of rollo, after King Rollo's "The Tree" (docs/MUSIC-ANALYSIS.md): the bass holds the root
+-- on 1 and 3, the guitar only stabs a high triad on the and of 2 and the and of 4, choked. A phrase's
+-- last bar has a three-strum fill instead of the second stab; a section's last bar is one low note
+-- left to ring. The intro is the bass and the second stab.
+local function jabTriad(song, chord) -- the grip's top three strings, up the neck
+    local strings = guitarStrings(song, chord)
+    local up = strings[6] and strings[6] < 72 and 12 or 0
+    local triad = {}
+    for s = 4, 6 do
+        if strings[s] then triad[#triad + 1] = strings[s] + up end
+    end
+    return triad
+end
+local function jab(synth, patch, t, triad, durMs, step)
+    for k, midi in ipairs(triad) do play(synth, 'keys', patch, t + (k - 1) * 0.006, midi, 3, durMs, step) end
+end
+-- the flute's run: the chord's notes running down from its highest at or under A5, quick, the last
+-- one held up to the second stab (the record's flute, docs/MUSIC-ANALYSIS.md)
+local function bookFluteRun(bar, s, chord)
+    local song, t = bar.song, stepTime(bar.song, bar.t0, s)
+    local notes = {}
+    for _, midi in ipairs(jabTriad(song, chord)) do
+        for _, n in ipairs({ midi, midi + 12, midi - 12 }) do
+            if n <= 81 and n >= 64 then notes[#notes + 1] = n end
+        end
+    end
+    table.sort(notes, function(a, b) return a > b end)
+    local last = math.min(#notes, 4)
+    for k = 1, last do
+        local dur = k == last and lengthMs(song, s, 5) - (k - 1) * 70 or 90
+        play(bar.synth, 'lead', bar.style.flute, t + (k - 1) * 0.07, notes[k], k == 1 and 4 or 3, dur, s)
+    end
+end
+local function bookJabs(bar)
+    local synth, song, style, t0, section, j = bar.synth, bar.song, bar.style, bar.t0, bar.section, bar.j
+    local patch = style.pickPatch
+    if j == 0 and style.pedals and style.pedals[section.kind] then
+        pedal(t0, patch, style.pedals[section.kind])
+        pedal(t0, style.flute, style.pedals[section.kind])
+    end
+    -- the flute now and then, in a phrase's second bar after the bass's beat 3 (the melody switch is its)
+    local runOdds = section.kind == 'B' and 70 or section.kind == 'A' and 40 or 0
+    if state.musicSettings.melody ~= false and j % 4 == 1 and bar.rnd(100) < runOdds then
+        bookFluteRun(bar, 9, chordAtStep(song, bar.b, 9))
+    end
+    for _, s in ipairs({ 0, 8 }) do
+        local chord = chordAtStep(song, bar.b, s)
+        local root = 36 + (song.key + chord.degree) % 12
+        play(synth, 'bass', style.bassPatch, stepTime(song, t0, s) + humanize(0.004), root, 4,
+             lengthMs(song, s, 7), s)
+    end
+    if j == section.bars - 1 and section.kind ~= 'intro' then
+        local low = guitarStrings(song, bar.chords[1])[1]
+        if low then play(synth, 'keys', patch, t0 + 0.01, low, 4, 3200, 0) end
+        return
+    end
+    local fill = j % 4 == 3 and section.kind ~= 'intro'
+    for _, s in ipairs(section.kind == 'intro' and { 14 } or fill and { 6, 10, 12, 14 } or { 6, 14 }) do
+        jab(synth, patch, stepTime(song, t0, s) + humanize(0.004), jabTriad(song, chordAtStep(song, bar.b, s)),
+            s > 6 and fill and 140 or 110, s)
+    end
+end
+
 lib.bandPlays = bandPlays
 lib.notify = notify
 lib.play = play
@@ -910,5 +973,6 @@ lib.bookStrings = bookStrings
 lib.bookTune = bookTune
 lib.LOOP_BARS = LOOP_BARS
 lib.bookTravis = bookTravis
+lib.bookJabs = bookJabs
 
 return lib

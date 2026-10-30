@@ -140,6 +140,7 @@ local function bookBar(synth, t0, song, b)
         remember(stepTime(song, t0, chord.s), chordPcs(song, chord)) -- impacts play along in the chord
     end
     if style.picking == 'travis' then return parts.bookTravis(bar) end -- strum: the guitar alone
+    if style.picking == 'jabs' then return parts.bookJabs(bar) end     -- rollo: bass and guitar stabs
     local hits, sidestepAt, pushes = keysHits(bar)
     bookKeys(bar, hits)
     local groove = style.groove == 'lofi'
