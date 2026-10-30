@@ -460,14 +460,6 @@ function lib.buildWorld(data, world, cam, opts)
             id = getNewId(bodyData.id),
             label = bodyData.label,
             shapeType = bodyData.shapeType,
-            radius = (bodyData.dims and bodyData.dims.radius) or bodyData.radius,
-            width = (bodyData.dims and bodyData.dims.width) or bodyData.width,
-            width2 = (bodyData.dims and bodyData.dims.width2) or bodyData.width2,
-            width3 = (bodyData.dims and bodyData.dims.width3) or bodyData.width3,
-            height = (bodyData.dims and bodyData.dims.height) or bodyData.height,
-            height2 = (bodyData.dims and bodyData.dims.height2) or bodyData.height2,
-            height3 = (bodyData.dims and bodyData.dims.height3) or bodyData.height3,
-            height4 = (bodyData.dims and bodyData.dims.height4) or bodyData.height4,
             body = body,
             mirrorX = bodyData.mirrorX or 1,
             mirrorY = bodyData.mirrorY or 1,
@@ -477,6 +469,7 @@ function lib.buildWorld(data, world, cam, opts)
             mipoId = bodyData.mipoId,
             mipoPartName = bodyData.mipoPartName,
         }
+        shapes.copyDims(bodyData, thing, bodyData.dims) -- older files: sizes on bodyData itself
 
         -- Assign the 'thing' to the body's user data
         body:setUserData({ thing = thing })
@@ -784,32 +777,6 @@ function lib.load(data, world, cam)
     snap.onSceneLoaded()
 end
 
-local function needsDimProperty(prop, shape)
-    local ST = require 'src.shape-types'
-    local needsRadius = function(s)
-        return s == ST.TRIANGLE or s == ST.PENTAGON or s == ST.HEXAGON or
-            s == ST.HEPTAGON or s == ST.OCTAGON or s == ST.CIRCLE
-    end
-
-    if prop == 'radius' then
-        return needsRadius(shape)
-    elseif prop == 'width' then
-        return not needsRadius(shape) and shape ~= ST.CUSTOM
-    elseif prop == 'height' then
-        return not needsRadius(shape) and shape ~= ST.CUSTOM
-    elseif prop == 'height2' then
-        return shape == ST.CAPSULE or shape == ST.TORSO
-    elseif prop == 'width2' then
-        -- a capsule's corner radius is width / width2 (shapes.lua)
-        return shape == ST.TRAPEZIUM or shape == ST.TORSO or shape == ST.CAPSULE
-    elseif prop == 'height3' or prop == 'height4' then
-        return shape == ST.TORSO
-    elseif prop == 'width3' then
-        return shape == ST.TORSO
-    end
-end
-
-
 function lib.gatherSaveData(world, camera)
     local saveData = {
         version = "1.0", -- Versioning for future compatibility
@@ -839,16 +806,7 @@ function lib.gatherSaveData(world, camera)
                 id = thing.id, -- Unique identifier
                 label = utils.sanitizeString(thing.label),
                 shapeType = thing.shapeType,
-                dims = {
-                    radius = needsDimProperty('radius', thing.shapeType) and thing.radius or nil,
-                    width = needsDimProperty('width', thing.shapeType) and thing.width or nil,
-                    width2 = needsDimProperty('width2', thing.shapeType) and thing.width2 or nil,
-                    width3 = needsDimProperty('width3', thing.shapeType) and thing.width3 or nil,
-                    height = needsDimProperty('height', thing.shapeType) and thing.height or nil,
-                    height2 = needsDimProperty('height2', thing.shapeType) and thing.height2 or nil,
-                    height3 = needsDimProperty('height3', thing.shapeType) and thing.height3 or nil,
-                    height4 = needsDimProperty('height4', thing.shapeType) and thing.height4 or nil,
-                },
+                dims = shapes.usedDims(thing),
                 --textures = thing.textures,
                 -- zOffset = thing.zOffset,
                 mirrorX = thing.mirrorX,
@@ -1119,18 +1077,7 @@ function lib.cloneSelection(selectedBodies, world)
             newBody:setLinearDamping(originalBody:getLinearDamping())
             newBody:setAngularDamping(originalBody:getAngularDamping())
             -- Clone shape
-            local settings = {
-                radius = originalThing.radius,
-                width = originalThing.width,
-                width2 = originalThing.width2,
-                width3 = originalThing.width3,
-                height = originalThing.height,
-                height2 = originalThing.height2,
-                height3 = originalThing.height3,
-                height4 = originalThing.height4,
-                optionalVertices = originalThing.vertices,
-
-            }
+            local settings = shapes.copyDims(originalThing, { optionalVertices = originalThing.vertices })
             local newShapeList, newVertices = shapes.createShape(originalThing.shapeType, settings)
 
 
@@ -1212,14 +1159,6 @@ function lib.cloneSelection(selectedBodies, world)
             end
             local clonedThing = {
                 shapeType = originalThing.shapeType,
-                radius = originalThing.radius,
-                width = originalThing.width,
-                width2 = (originalThing.width2 or 1),
-                width3 = originalThing.width3,
-                height = originalThing.height,
-                height2 = originalThing.height2,
-                height3 = originalThing.height3,
-                height4 = originalThing.height4,
                 label = originalThing.label,
                 mirrorX = originalThing.mirrorX,
                 mirrorY = originalThing.mirrorY,
@@ -1231,6 +1170,7 @@ function lib.cloneSelection(selectedBodies, world)
                 --zOffset = originalThing.zOffset,
                 id = newID
             }
+            shapes.copyDims(originalThing, clonedThing)
             newBody:setUserData({ thing = clonedThing })
 
             -- Register the cloned body
@@ -1422,7 +1362,6 @@ end
 
 -- Expose locals for testing (not part of public API)
 lib._test = {
-    needsDimProperty = needsDimProperty,
     remapAndRestoreInfluences = remapAndRestoreInfluences,
     clearWorld = clearWorld,
     restoreInfluenceBodies = restoreInfluenceBodies,

@@ -63,10 +63,15 @@ L = more.
   doors:26 `doorOf`, mipo-voice:470 `isSquishy`, mipo-actions:38. Plus `isSignal(b)` for the test
   repeated 3x in signals. S. **Done 2026-10-30:** `behaviors.all / find / isSignal`; a shadowed
   `behaviors` loop variable in `signals.renameForCopy` renamed on the way.
-- [ ] **CL10. One list of shape dimension keys.** radius/width/width2/width3/height/height2-4 are
+- [x] **CL10. One list of shape dimension keys.** radius/width/width2/width3/height/height2-4 are
   copied ~10 times (io:422, 944, 1294, 1385; object-manager:327, 363, 409, 492, 590, 695) and the
   copies disagree (BUG3). Fix: `shapes.DIM_KEYS`, `copyDims(from, to)`, and a
   `DIMS[shapeType]` table used by io's `needsDimProperty` and body-params. S.
+  **Done 2026-10-30:** `shapes.DIM_KEYS`, `copyDims(from, to, over)`, `usesDim(key, shapeType)` (was io's
+  `needsDimProperty`; capsules also keep height2 as before) and `usedDims(thing)` in shapes.lua; io load,
+  save and clone, object-manager create, rebuild and the ten-copies tool, and body-params use them.
+  Clone no longer turns a missing width2 into 1. Editor spawn defaults stay apart (one preference each).
+  `spec/shapes_spec.lua`, `spec/io_spec.lua`.
 - [ ] **CL11. Mipo body helpers in one place.** `part.body and not part.body:isDestroyed()` 37 times;
   subtree walk 4 times (character-manager `subtreeOf`, mipo-actions `subtreeBodies`, joint-guard
   `collectSubtree`, body-rotate `collectDescendants`); parent-child joint lookup 4 times; Mipo

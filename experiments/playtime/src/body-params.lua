@@ -6,6 +6,7 @@
 -- (behaviors, joints, sfixtures) and polygon tools stay custom in
 -- src/ui/body-editor.lua. Ranges are the ones the old panel used.
 local ST = require('src.shape-types')
+local shapes = require('src.shapes')
 
 local lib = {}
 
@@ -63,7 +64,7 @@ end
 local isRound = shapeIs(ST.CIRCLE, ST.TRIANGLE, ST.PENTAGON, ST.HEXAGON, ST.HEPTAGON, ST.OCTAGON)
 local isBox = shapeIs(ST.RECTANGLE, ST.ITRIANGLE, ST.TORSO, ST.TRAPEZIUM, ST.CAPSULE)
 local isTorso = shapeIs(ST.TORSO)
-local hasWidth2 = shapeIs(ST.TORSO, ST.TRAPEZIUM, ST.CAPSULE)
+local function hasWidth2(thing) return shapes.usesDim('width2', thing.shapeType) end
 local function width(thing) return thing.width end
 local function height(thing) return thing.height end
 

@@ -12,9 +12,10 @@ local t = sceneIO._test
 local registry = require('src.registry')
 local utils = require('src.utils')
 
--- ─── needsDimProperty (pure logic, but loaded via LÖVE) ───
+-- ─── which size fields a shape keeps (shapes.usesDim; was io needsDimProperty) ───
 
-describe("io._test.needsDimProperty", function()
+describe("shapes.usesDim", function()
+    local shapes = require('src.shapes')
 
     -- All shape types in the system
     local radiusShapes = { 'circle', 'triangle', 'pentagon', 'hexagon', 'heptagon', 'octagon' }
@@ -23,13 +24,13 @@ describe("io._test.needsDimProperty", function()
     describe("radius", function()
         for _, shape in ipairs(radiusShapes) do
             it("is needed for " .. shape, function()
-                assert.is_truthy(t.needsDimProperty('radius', shape))
+                assert.is_truthy(shapes.usesDim('radius', shape))
             end)
         end
 
         for _, shape in ipairs(dimShapes) do
             it("is NOT needed for " .. shape, function()
-                assert.is_falsy(t.needsDimProperty('radius', shape))
+                assert.is_falsy(shapes.usesDim('radius', shape))
             end)
         end
     end)
@@ -37,56 +38,56 @@ describe("io._test.needsDimProperty", function()
     describe("width and height", function()
         for _, shape in ipairs(radiusShapes) do
             it("width is NOT needed for " .. shape, function()
-                assert.is_falsy(t.needsDimProperty('width', shape))
+                assert.is_falsy(shapes.usesDim('width', shape))
             end)
             it("height is NOT needed for " .. shape, function()
-                assert.is_falsy(t.needsDimProperty('height', shape))
+                assert.is_falsy(shapes.usesDim('height', shape))
             end)
         end
 
         it("width is NOT needed for custom", function()
-            assert.is_falsy(t.needsDimProperty('width', 'custom'))
+            assert.is_falsy(shapes.usesDim('width', 'custom'))
         end)
 
         for _, shape in ipairs({ 'rectangle', 'capsule', 'torso', 'trapezium' }) do
             it("width is needed for " .. shape, function()
-                assert.is_truthy(t.needsDimProperty('width', shape))
+                assert.is_truthy(shapes.usesDim('width', shape))
             end)
             it("height is needed for " .. shape, function()
-                assert.is_truthy(t.needsDimProperty('height', shape))
+                assert.is_truthy(shapes.usesDim('height', shape))
             end)
         end
     end)
 
     describe("width2", function()
         it("is needed for torso", function()
-            assert.is_truthy(t.needsDimProperty('width2', 'torso'))
+            assert.is_truthy(shapes.usesDim('width2', 'torso'))
         end)
 
         it("is needed for trapezium", function()
-            assert.is_truthy(t.needsDimProperty('width2', 'trapezium'))
+            assert.is_truthy(shapes.usesDim('width2', 'trapezium'))
         end)
 
         it("is NOT needed for rectangle", function()
-            assert.is_falsy(t.needsDimProperty('width2', 'rectangle'))
+            assert.is_falsy(shapes.usesDim('width2', 'rectangle'))
         end)
 
         it("is needed for capsule (its corner radius, BUG3)", function()
-            assert.is_truthy(t.needsDimProperty('width2', 'capsule'))
+            assert.is_truthy(shapes.usesDim('width2', 'capsule'))
         end)
     end)
 
     describe("height2", function()
         it("is needed for torso", function()
-            assert.is_truthy(t.needsDimProperty('height2', 'torso'))
+            assert.is_truthy(shapes.usesDim('height2', 'torso'))
         end)
 
         it("is needed for capsule", function()
-            assert.is_truthy(t.needsDimProperty('height2', 'capsule'))
+            assert.is_truthy(shapes.usesDim('height2', 'capsule'))
         end)
 
         it("is NOT needed for rectangle", function()
-            assert.is_falsy(t.needsDimProperty('height2', 'rectangle'))
+            assert.is_falsy(shapes.usesDim('height2', 'rectangle'))
         end)
     end)
 
@@ -94,26 +95,26 @@ describe("io._test.needsDimProperty", function()
         local torsoOnly = { 'width3', 'height3', 'height4' }
         for _, prop in ipairs(torsoOnly) do
             it(prop .. " is needed for torso", function()
-                assert.is_truthy(t.needsDimProperty(prop, 'torso'))
+                assert.is_truthy(shapes.usesDim(prop, 'torso'))
             end)
 
             it(prop .. " is NOT needed for rectangle", function()
-                assert.is_falsy(t.needsDimProperty(prop, 'rectangle'))
+                assert.is_falsy(shapes.usesDim(prop, 'rectangle'))
             end)
 
             it(prop .. " is NOT needed for capsule", function()
-                assert.is_falsy(t.needsDimProperty(prop, 'capsule'))
+                assert.is_falsy(shapes.usesDim(prop, 'capsule'))
             end)
         end
     end)
 
     describe("edge cases", function()
-        it("returns nil for unknown properties", function()
-            assert.is_nil(t.needsDimProperty('nonexistent', 'rectangle'))
+        it("says no for unknown properties", function()
+            assert.is_false(shapes.usesDim('nonexistent', 'rectangle'))
         end)
 
         it("returns false for unknown shapes on radius", function()
-            assert.is_false(t.needsDimProperty('radius', 'unknownShape'))
+            assert.is_false(shapes.usesDim('radius', 'unknownShape'))
         end)
     end)
 end)

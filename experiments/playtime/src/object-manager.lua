@@ -282,18 +282,7 @@ local function createThing(shapeType, conf)
     -- Create the physics body at the specified world coordinates
     local body = love.physics.newBody(state.physicsWorld, conf.x or 0, conf.y or 0, bodyType)
 
-    local settings = {
-        radius = conf.radius,
-        width = conf.width,
-        width2 = conf.width2,
-        width3 = conf.width3,
-        height = conf.height,
-        height2 = conf.height2,
-        height3 = conf.height3,
-        height4 = conf.height4,
-        optionalVertices = conf.vertices or nil, --optionalVertices
-
-    }
+    local settings = shapes.copyDims(conf, { optionalVertices = conf.vertices })
     local shapeList, vertices = shapes.createShape(shapeType, settings)
 
     if not shapeList then
@@ -317,14 +306,6 @@ local function createThing(shapeType, conf)
     -- Create the 'thing' table to store properties
     local thing = {
         shapeType = shapeType,
-        radius = settings.radius,
-        width = settings.width,
-        width2 = settings.width2,
-        width3 = settings.width3,
-        height = settings.height,
-        height2 = settings.height2,
-        height3 = settings.height3,
-        height4 = settings.height4,
         label = conf.label or '',
         mirrorX = conf.mirrorX or 1,
         mirrorY = conf.mirrorY or 1,
@@ -336,6 +317,7 @@ local function createThing(shapeType, conf)
         -- NOTE: z-order lives on sfixture extra.zOffset, not on the thing
         id = uuid.generateID(),
     }
+    shapes.copyDims(settings, thing)
 
     -- Set user data for easy access
     body:setUserData({ thing = thing })
@@ -442,17 +424,7 @@ function lib.recreateThingFromBody(body, newSettings)
     newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
     -- Create a new shape
 
-    local settings = {
-        radius = newSettings.radius or thing.radius,
-        width = newSettings.width or thing.width,
-        width2 = newSettings.width2 or thing.width2,
-        width3 = newSettings.width3 or thing.width3,
-        height = newSettings.height or thing.height,
-        height2 = newSettings.height2 or thing.height2,
-        height3 = newSettings.height3 or thing.height3,
-        height4 = newSettings.height4 or thing.height4,
-        optionalVertices = newSettings.optionalVertices
-    }
+    local settings = shapes.copyDims(thing, { optionalVertices = newSettings.optionalVertices }, newSettings)
     local shapeList, newVertices = shapes.createShape(
         newSettings.shapeType or thing.shapeType,
         settings
@@ -535,14 +507,7 @@ function lib.recreateThingFromBody(body, newSettings)
     thing.body = newBody
     thing.shapes = shapeList
 
-    thing.radius = newSettings.radius or thing.radius
-    thing.width = newSettings.width or thing.width
-    thing.width2 = newSettings.width2 or thing.width2
-    thing.width3 = newSettings.width3 or thing.width3
-    thing.height = newSettings.height or thing.height
-    thing.height2 = newSettings.height2 or thing.height2
-    thing.height3 = newSettings.height3 or thing.height3
-    thing.height4 = newSettings.height4 or thing.height4
+    shapes.copyDims(thing, thing, newSettings)
     thing.id = thing.id or uuid.generateID()
     thing.vertices = newVertices
     thing.behaviors = newSettings.behaviors or thing.behaviors
@@ -631,20 +596,11 @@ function lib.autoRopify(ud)
         for _ = 1, 10 do
             local originalBody = thing.body
             if thing.height then
-                local settings = {
+                local settings = shapes.copyDims(thing, {
                     x = originalBody:getX(),
                     y = originalBody:getY() + thing.height,
-                    radius = thing.radius,
-                    width = thing.width,
-                    width2 = thing.width2,
-                    width3 = thing.width3,
-                    height = thing.height,
-                    height2 = thing.height2,
-                    height3 = thing.height3,
-                    height4 = thing.height4,
                     optionalVertices = thing.vertices,
-
-                }
+                })
 
                 local newthing = createThing(thing.shapeType, settings)
                 if newthing then

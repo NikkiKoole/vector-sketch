@@ -568,3 +568,24 @@ describe("shapes.createShape (LÖVE integration)", function()
         end)
     end)
 end)
+
+-- CL10: one list of size fields (copied ~10 times before; the copies disagreed, BUG3)
+describe("shapes.DIM_KEYS / copyDims / usedDims", function()
+    local shapes = require('src.shapes')
+
+    it("copies every size field, the override winning where it has one", function()
+        local from = { radius = 1, width = 2, width2 = 3, width3 = 4, height = 5, height2 = 6, height3 = 7,
+            height4 = 8, label = 'not a size' }
+        local to = shapes.copyDims(from, { x = 9 }, { width = 20, height = nil })
+        assert.are.same({ x = 9, radius = 1, width = 20, width2 = 3, width3 = 4, height = 5, height2 = 6,
+            height3 = 7, height4 = 8 }, to)
+    end)
+
+    it("keeps only the fields a shape uses", function()
+        assert.are.same({ width = 60, height = 100, width2 = 5, height2 = 7 },
+            shapes.usedDims({ shapeType = 'capsule', radius = 3, width = 60, height = 100, width2 = 5, height2 = 7,
+                width3 = 9 }))
+        assert.are.same({ radius = 20 }, shapes.usedDims({ shapeType = 'circle', radius = 20, width = 40 }))
+        assert.are.same({}, shapes.usedDims({ shapeType = 'custom', width = 40 }))
+    end)
+end)

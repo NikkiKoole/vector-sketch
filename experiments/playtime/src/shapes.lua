@@ -6,6 +6,46 @@ local utils = require 'src.utils'
 local ST = require 'src.shape-types'
 local shapes = {}
 
+-- The size fields a thing can have. Which ones a shape uses: shapes.usesDim.
+shapes.DIM_KEYS = { 'radius', 'width', 'width2', 'width3', 'height', 'height2', 'height3', 'height4' }
+
+local roundShapes = { [ST.TRIANGLE] = true, [ST.PENTAGON] = true, [ST.HEXAGON] = true,
+    [ST.HEPTAGON] = true, [ST.OCTAGON] = true, [ST.CIRCLE] = true }
+local extraDims = {
+    [ST.CAPSULE] = { width2 = true, height2 = true }, -- corner radius = width / width2
+    [ST.TRAPEZIUM] = { width2 = true },
+    [ST.TORSO] = { width2 = true, width3 = true, height2 = true, height3 = true, height4 = true },
+}
+
+-- Does this shape use this size field (saved, shown in the panel)?
+function shapes.usesDim(key, shapeType)
+    if key == 'radius' then return roundShapes[shapeType] == true end
+    if key == 'width' or key == 'height' then
+        return not roundShapes[shapeType] and shapeType ~= ST.CUSTOM
+    end
+    return extraDims[shapeType] ~= nil and extraDims[shapeType][key] == true
+end
+
+-- The size fields of `from` into `to` (a new table when nil); `over` wins where it has one.
+function shapes.copyDims(from, to, over)
+    to = to or {}
+    for _, key in ipairs(shapes.DIM_KEYS) do
+        local value = over and over[key]
+        if value == nil then value = from[key] end
+        to[key] = value
+    end
+    return to
+end
+
+-- Only the size fields the thing's shape uses (what a scene file keeps).
+function shapes.usedDims(thing)
+    local dims = {}
+    for _, key in ipairs(shapes.DIM_KEYS) do
+        if shapes.usesDim(key, thing.shapeType) then dims[key] = thing[key] end
+    end
+    return dims
+end
+
 local function makePolygonVertices(sides, radius)
     local vertices = {}
     local angleStep = (2 * math.pi) / sides
