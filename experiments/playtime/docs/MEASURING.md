@@ -62,6 +62,11 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   The sampler: GC 1.3% of the time at 20 Mipos, 5.4% at 200; Lua 10% -> 40%. So the garbage (M7)
   matters more the more Mipos there are. Making a Mipo: 2-5 ms (more with more Mipos around).
   Texture memory ~1.1 MB a default Mipo.
+  Other findings that day: the sampler at 1 ms hung the game at 200 Mipos (a timer signal keeps
+  restarting a C call longer than the interval; now 10 ms); `/eval` answers slowly at ~7 fps, so
+  poll for results rather than wait a fixed time; nothing off screen is culled, texfixture fans are
+  rebuilt every frame though they don't change, ribbons recomputed while still: see
+  [MIPO-DRAWING.md](MIPO-DRAWING.md) (levels L0-L4 to draw Mipos cheaper, with their cost).
 - [ ] **M4. Memory over a long session.** The image and OMP caches are never cleared (DEEPER-ISSUES).
   The bake is one module now (`render/omp-bake.lua`): count what's cached, watch it over 10 minutes
   of randomizing (M3 can run that), then cap or clear it.
