@@ -33,10 +33,26 @@ lib.rows = {
     field('melody', 'melody', 'bool'),
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
-            'strum', 'ballad' }),
+            'strum', 'sesame', 'citypop', 'satie', 'ambient', 'ballad' }),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
     field('upright', 'upright', 'bool'),
 }
+
+-- one row per part that's playing: 'keys  [rhodes]', brackets on what sounds right now
+local function playingLine(i)
+    local entry = music().playing()[i]
+    if not entry then return nil end
+    local names = {}
+    for _, patch in ipairs(entry.patches) do
+        names[#names + 1] = patch.now and '[' .. patch.name .. ']' or patch.name
+    end
+    return entry.part .. '  ' .. table.concat(names, ' ')
+end
+for i = 1, #music().parts do
+    table.insert(lib.rows, 1 + i, { key = 'playing' .. i, kind = 'note', -- under 'now'
+        label = function() return playingLine(i) or '' end,
+        visible = function() return playingLine(i) ~= nil end })
+end
 
 function lib.target() return music() end
 

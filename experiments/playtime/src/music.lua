@@ -17,8 +17,12 @@
 -- supermarket (Mr. Lucky's ii7 - V11 vamp, staccato and bouncy, a marimba tune), herbs (MF DOOM's
 -- Special Herbs: a dusty swung boom-bap loop, chopped Rhodes, a sub bass on the kick), lofi (lofi
 -- city's jazzhop: our planner, its sound), puppetmaker (Puppetmaker 2's band: a chance-driven CR-78
--- hand-percussion loop and its rolled Rhodes chord), strum (that chord humanized, through a key) and
--- ballad. lib.onNote lets other code hear every note (the Mipos react to the puppetmaker band).
+-- hand-percussion loop and its rolled Rhodes chord), strum (that chord humanized, through a key),
+-- citypop (Japanese pop-funk: the Royal Road, a popping bass, guitar cutting, strings, horns),
+-- sesame (a 70s TV small band: clav, a walking upright, vibes, horn shouts), satie (a
+-- Gymnopédie-like 3/4 waltz on a felt piano), ambient (pentatonic loops of unequal lengths drifting
+-- over a drone, Music for Airports) and ballad. lib.onNote lets other code hear every note
+-- (the Mipos react to the puppetmaker band).
 -- style = 'set' plays lib.set as a live set: each song ends on home, takes a breath, and the next
 -- one starts in a related key.
 --
@@ -39,7 +43,8 @@ local lib = {}
 -- copy of the module reads the same switch, and it survives a reload.
 --   enabled
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
---                  'supermarket', 'herbs', 'lofi', 'ballad'
+--                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'satie',
+--                  'ambient', 'ballad'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
@@ -55,7 +60,8 @@ setmetatable(lib, {
     end,
 })
 
-lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum' }
+lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'satie',
+            'ambient', 'sesame' }
 lib.lookahead = 0.3          -- seconds of music booked ahead
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -76,7 +82,8 @@ lib.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10
                   m11 = { 5, 10, 15, 19, stack = true }, -- So What: 11 b7 b3 5, fourths and a third
                   -- lofi's jazz on top of the rest: the dominant colours and the minor key's ii
                   n9 = { 4, 10, 14 }, b9 = { 4, 7, 10, 13 }, s9 = { 4, 7, 10, 15 },
-                  m7b5 = { 3, 6, 10, 14 }, m6 = { 3, 7, 9, 14 } }
+                  m7b5 = { 3, 6, 10, 14 }, m6 = { 3, 7, 9, 14 },
+                  alt = { 4, 10, 15, 20 } } -- citypop's 7alt: 3 b7 #9 b13, the Just the Two of Us crunch
 
 -- the forms, { section, bars }; songs grow no longer than this (a minute or so: a set keeps moving)
 lib.forms = {
@@ -292,6 +299,72 @@ lib.styles = {
     -- a down-strum or a slow harp roll, a lighter re-strum later in the bar. A low root under it, a
     -- high answer note now and then, Puppetmaker's sparse hand drums when play gets busy.
     strum = { loop = 'strum', bpm = { 66, 76 }, swing = 0.52, swing16 = true, bars = 24, chordBars = { 1, 2 } },
+    -- sesame: a 70s TV small band (old Sesame Street's jazz), quick and swung. A clavinet chopping
+    -- the off-beats, the upright in two while it's calm and walking when the band joins, a vibes tune,
+    -- sticks on the ride, and short horn shouts in the bar where the tune breathes (lib.hornHits).
+    sesame = {
+        bpm = { 148, 164 }, swing = 0.6, chordBars = { 1, 2 }, pushOdds = 30, motifRepeat = 25,
+        strumMs = 3, keys = 'clav', lead = 'vibes', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
+        drums = 'sticks', home = 'maj6', horns = true,
+        A = {
+            { { 0, 'maj6' }, { 9, 'dom7' }, { 2, 'm7' }, { 7, 'dom7' } },               -- I VI7 ii V
+            { { 0, 'maj6' }, { 5, 'dom7' }, { 0, 'maj6' }, { 7, 'dom7' } },             -- I IV7 I V7, the kids' blues
+            { { 0, 'maj6' }, { 4, 'm7' }, { 9, 'dom7' }, { 2, 'm7', 2 }, { 7, 'dom7', 2 } }, -- I iii VI7 ii V
+            { { 0, 'maj6' }, { 0, 'dom7' }, { 5, 'maj6' }, { 5, 'm6' } },               -- I I7 IV iv, sunny to wistful
+        },
+        B = {
+            { { 4, 'dom7', 8 }, { 9, 'dom7', 8 }, { 2, 'dom7', 8 }, { 7, 'dom7', 8 } },  -- III7 VI7 II7 V7
+            { { 5, 'maj7', 8 }, { 5, 'm6', 8 }, { 0, 'maj6', 8 }, { 7, 'dom7', 8 } },   -- IV iv I V
+            { { 2, 'm7', 4 }, { 7, 'dom7', 4 }, { 0, 'maj6', 8 }, { 2, 'm7', 4 }, { 7, 'dom7', 4 },
+              { 4, 'm7', 4 }, { 9, 'dom7', 4 } },                                       -- ii V I, ii V iii VI
+        },
+        -- the clav: the off-beat chang, Charleston chops, 2 and 4 with a skip
+        comps = {
+            { { 2, 1, 4 }, { 6, 1, 3 }, { 10, 1, 4 }, { 14, 1, 3 },
+              { 18, 1, 4 }, { 22, 2, 4 }, { 26, 1, 4 }, { 30, 1, 3 } },
+            { { 0, 2, 4 }, { 6, 1, 3 }, { 8, 2, 4 }, { 14, 1, 4 },
+              { 16, 2, 4 }, { 22, 1, 3 }, { 24, 2, 4 }, { 30, 1, 4 } },
+            { { 4, 1, 4 }, { 6, 1, 3 }, { 12, 1, 4 }, { 14, 1, 3 },
+              { 20, 1, 4 }, { 22, 1, 3 }, { 28, 1, 4 }, { 30, 2, 4 } },
+        },
+    },
+    -- citypop: Tatsuro Yamashita, Mariya Takeuchi, Anri; after dreamengine's citypop2.c. Glossy and
+    -- session-tight (straight 16ths, no lag): the Rhodes comping, a fingered bass popping octaves and
+    -- running chromatically into each change (lib.cityBass), a clean guitar cutting 16ths, a string
+    -- pad under the chorus (B), trumpets in the bar the tune breathes, a glossy synth on the tune, a
+    -- disco or funk kit. A is the verse, B the chorus on the Royal Road or Just the Two of Us.
+    citypop = {
+        bpm = { 104, 118 }, swing = 0.5, chordBars = { 1 }, pushOdds = 35, turnaroundOdds = 0,
+        strumMs = 4, keys = 'rhodes', lead = 'citySynth', bass = 'disco', bassPatch = 'dubBass', bassLo = 33,
+        drums = 'session', home = 'maj9', horns = 'citypop', guitar = true, strings = true,
+        A = {
+            { { 2, 'm9' }, { 7, 'dom9' }, { 0, 'maj9' }, { 9, 'm9' } },                   -- ii V I vi, smooth
+            { { 0, 'maj9' }, { 0, 'n9' }, { 5, 'maj7' }, { 5, 'm6' } },                   -- the descent: I I7 IV iv
+            { { 5, 'maj7' }, { 4, 'alt' }, { 9, 'm9' }, { 7, 'm7', 2 }, { 0, 'n9', 2 } }, -- Just the Two of Us
+            { { 2, 'm7' }, { 4, 'alt' }, { 9, 'm9' }, { 9, 'm9' } },                      -- ii III7 vi, the minor one
+        },
+        B = {
+            { { 5, 'maj9', 4 }, { 7, 'dom9', 4 }, { 4, 'm7', 4 }, { 9, 'm9', 4 },
+              { 5, 'maj9', 4 }, { 7, 'dom9', 4 }, { 4, 'm7', 4 }, { 9, 'm9', 4 } },      -- the Royal Road
+            { { 5, 'maj9', 4 }, { 7, 'dom9', 4 }, { 4, 'm7', 4 }, { 9, 'm7', 2 }, { 7, 'sus', 2 },
+              { 5, 'maj9', 4 }, { 7, 'dom9', 4 }, { 4, 'm7', 4 }, { 9, 'm7', 2 }, { 7, 'sus', 2 } }, -- turned back
+            { { 5, 'maj7', 4 }, { 4, 'alt', 4 }, { 9, 'm9', 4 }, { 7, 'm7', 2 }, { 0, 'n9', 2 },
+              { 5, 'maj7', 4 }, { 4, 'alt', 4 }, { 9, 'm9', 4 }, { 7, 'm7', 2 }, { 0, 'n9', 2 } },  -- JTTOU
+        },
+        -- Charleston into anticipations, the funk stabs, anticipations into halves
+        comps = {
+            { { 0, 3, 4 }, { 6, 10, 3 }, { 16, 6, 4 }, { 22, 2, 3 }, { 26, 6, 3 } },
+            { { 0, 2, 4 }, { 3, 2, 2 }, { 6, 2, 3 }, { 10, 2, 2 }, { 12, 4, 3 },
+              { 16, 2, 4 }, { 19, 2, 2 }, { 22, 2, 3 }, { 26, 2, 2 }, { 28, 4, 3 } },
+            { { 0, 6, 4 }, { 6, 2, 3 }, { 10, 6, 3 }, { 16, 8, 4 }, { 24, 8, 3 } },
+        },
+    },
+    -- satie: a Gymnopédie-like waltz in 3/4, slow, no drums. Root on 1, chord on 2, a felt-piano tune
+    -- falling by step over rocking sevenths (lib.satie). A planned song: intro, A A B A, a ringing outro.
+    satie = { loop = 'satie', meter = 3, bpm = { 66, 74 }, swing = 0.5 },
+    -- ambient: Yoshimura / Music for Airports. Pentatonic figures looping at unequal lengths over a
+    -- drone, drifting against each other (lib.ambient). No drums, no chords, no tune.
+    ambient = { loop = 'ambient', bpm = { 60, 66 }, swing = 0.5 },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',
@@ -369,6 +442,46 @@ lib.strum = {
     rootLo = 48,                              -- the chord's root lands in 48..59 (Puppetmaker's is 51)
 }
 
+-- The satie style: a Gymnopédie-like waltz. A low root on 1, the chord on 2 held through 3 (no root:
+-- the bass has it), sevenths rocking a bar each in A, a four-chord walk in B. The tune keeps off
+-- every pitch a semitone from the bar's chord, so it never rubs. Its bars are rhythms in beats
+-- (negative: a rest); a phrase's last bar is one of the endings.
+lib.satie = {
+    qualities = { maj7 = { 4, 7, 11 }, m7 = { 3, 7, 10 } },
+    A = {
+        { { 5, 'maj7' }, { 0, 'maj7' } },   -- IV I, the rocking pair
+        { { 0, 'maj7' }, { 2, 'm7' } },     -- I ii
+        { { 9, 'm7' }, { 5, 'maj7' } },     -- vi IV
+        { { 0, 'maj7' }, { 5, 'maj7' } },   -- I IV
+    },
+    B = {
+        { { 2, 'm7' }, { 4, 'm7' }, { 5, 'maj7' }, { 5, 'maj7' } },   -- ii iii IV
+        { { 9, 'm7' }, { 2, 'm7' }, { 4, 'm7' }, { 5, 'maj7' } },     -- vi ii iii IV
+        { { 5, 'maj7' }, { 4, 'm7' }, { 2, 'm7' }, { 0, 'maj7' } },   -- IV iii ii I, walking down
+    },
+    outro = { { 5, 'maj7' }, { 0, 'maj7' }, { 0, 'maj7', ring = true } },
+    rhythms = { { 3 }, { 1, 2 }, { 2, 1 }, { 1, 1, 1 }, { -1, 1, 1 }, { -1, 2 } },
+    endings = { { 3 }, { -1, 2 }, { 2, -1 } },
+    lo = 65, hi = 81,                         -- the tune's range
+}
+
+-- The ambient style: Hiroshi Yoshimura, Music for Airports. A few short figures, each looping at its
+-- own length (none divides another), so they drift against each other and never line up the same
+-- way twice; all on the key's major pentatonic, so any two notes that meet sound fine. Under it a
+-- low drone that moves every 8 bars. Calm play: the drone and the first two loops; busy: all four.
+-- A loop: its patch, its length in 16ths, how many notes, their register (lo..lo+12), how long each
+-- rings, the bar it joins. The loops leave one by one at the end, the last first.
+lib.ambient = {
+    penta = { 0, 2, 4, 7, 9 },
+    drones = { { 0, 9, 0, 7 }, { 0, 2, 9, 0 }, { 0, 7, 9, 0 } },   -- a degree per 8 bars
+    loops = {
+        { patch = 'piano', steps = 46, notes = 3, lo = 57, ring = 3500, vol = 5, joins = 1 },
+        { patch = 'vibes', steps = 59, notes = 2, lo = 64, ring = 2400, vol = 4, joins = 3 },
+        { patch = 'kalimba', steps = 37, notes = 2, lo = 76, ring = 800, vol = 4, joins = 5, band = true },
+        { patch = 'pianoLead', steps = 67, notes = 3, lo = 69, ring = 3000, vol = 4, joins = 9, band = true },
+    },
+}
+
 -- the tune's rhythm: GROUPS of two to four notes a 16th or an 8th apart, then a breath (lofi.c's
 -- MOTIFS). { steps over two bars, group per note }
 lib.motifs = {
@@ -396,6 +509,37 @@ lib.dumontRiffs = {
     { 3, 0, 0, 4, 0, 2, 0, 3 },
 }
 -- the answer's rhythms in bar 4, grouped the same way
+-- the sesame horns: one shout per song, in the bar the tune breathes { step, length, vol } (all before
+-- the and-of-4, where the keys may push the next chord)
+lib.hornHits = {
+    { { 6, 2, 4 }, { 8, 3, 5 } },                  -- da-DAH
+    { { 0, 2, 5 }, { 6, 1, 4 }, { 8, 3, 5 } },     -- DAH, da-DAH
+    { { 4, 1, 4 }, { 6, 1, 4 }, { 10, 3, 5 } },    -- ba-da ... DAH
+    { { 2, 1, 4 }, { 8, 4, 5 } },                  -- da ... DAAH
+}
+
+-- citypop's horn figures (citypop2.c), its bass figures (x root, o octave pop, g a dead-note ghost;
+-- the chord's first step is always the root) and the guitar's cutting (1 a muted chuck, 2 an open
+-- stab; nothing on 13-15, where the horns and the bass run own the turn). One of each per song.
+lib.cityHornHits = {
+    { { 2, 1, 4 }, { 6, 1, 4 }, { 10, 2, 5 } },
+    { { 3, 1, 4 }, { 6, 1, 4 }, { 8, 2, 5 } },
+    { { 0, 1, 4 }, { 3, 1, 4 }, { 6, 2, 5 } },
+}
+lib.cityBass = { 'x.....o.x.o...o.', 'x..x..o.x..x..o.', 'x.g...o.x.g...o.' }
+lib.cityChucks = {
+    { 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+    { 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0 },
+    { 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0 },
+}
+-- the session kit's grooves (k kick, s snare, g ghost): disco four, funk with ghosts, the push, the skip
+lib.cityGrooves = {
+    { k = 'x...x...x...x...', s = '....x.......x...' },
+    { k = 'x.....x...x.....', s = '....x..g.g..x..g' },
+    { k = 'x.......x.x.....', s = '....x.......x...' },
+    { k = 'x..x....x.x..x..', s = '....x.......x...' },
+}
+
 lib.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 12 }, { 0, 3, 6, 8 } }
 
 -- a style's comp cells: its own, or a shared set from lib.comps by name
@@ -410,6 +554,7 @@ local M = state.music
 if M.version ~= VERSION then M.version, M.song, M.barAt = VERSION, nil, nil end
 M.booked = M.booked or {} -- the last few booked chords: { at = audio time, pcs = { pitch classes } }
 M.listeners = M.listeners or {} -- onNote listeners by name (on state, so they survive a hot reload)
+M.heard = M.heard or {} -- [part][patch] = { { from, to }, ... }: lib.playing's memory
 
 -- Hear every note the music books: fn(part, patch, midi, vol, durMs, t, step). part is 'keys', 'bass',
 -- 'lead', 'riff', 'drums', 'vinyl', or for puppetmaker 'perc' / 'chord' / 'sample' (a sample to play: patch
@@ -573,6 +718,135 @@ local function nextKey(previous)
     return #pool > 0 and pool[love.math.random(#pool)] or previous
 end
 
+-- the song's sections, in order: { kind, bars, chordAt(j) or nil, roles }
+local function addSections(song, list)
+    song.sections, song.barSection, song.barIndex, song.chords = {}, {}, {}, {}
+    for _, entry in ipairs(list) do
+        local section = { kind = entry[1], bars = entry[2], roles = entry[4] or {} }
+        song.sections[#song.sections + 1] = section
+        for j = 0, section.bars - 1 do
+            local b = #song.barSection + 1
+            song.barSection[b], song.barIndex[b] = section, j
+            song.chords[b] = entry[3] and entry[3](j)
+        end
+    end
+    song.bars, song.bar = #song.barSection, 0
+end
+
+-- The satie tune may use the key's notes that sit no semitone from any of the chord's
+-- (root included); returns that set and the chord's pitch classes.
+local function satieAllowed(song, chord)
+    local root = (song.key + chord[1]) % 12
+    local pcs, ok = { root }, {}
+    for _, interval in ipairs(lib.satie.qualities[chord[2]]) do pcs[#pcs + 1] = (root + interval) % 12 end
+    for _, degree in ipairs({ 0, 2, 4, 5, 7, 9, 11 }) do
+        local pc, fine = (song.key + degree) % 12, true
+        for _, c in ipairs(pcs) do
+            local d = (pc - c) % 12
+            if d == 1 or d == 11 then fine = false end
+        end
+        if fine then ok[pc] = true end
+    end
+    return ok, pcs
+end
+
+-- `count` bars of the satie tune from bar `first`, going on from `pitch`: mostly by step, falling more
+-- than rising, the long notes on chord tones; the last bar is an ending, landing on home's 1, 3 or 5
+-- when `home`. Returns the last pitch.
+local function satieBars(song, rnd, first, count, pitch, home)
+    local st = lib.satie
+    for k = 0, count - 1 do
+        local b = first + k
+        local ok, pcs = satieAllowed(song, song.chords[b])
+        local ladder, tones = {}, {}
+        for midi = st.lo, st.hi do
+            if ok[midi % 12] then
+                ladder[#ladder + 1] = midi
+                for _, pc in ipairs(pcs) do if pc == midi % 12 then tones[midi] = true end end
+            end
+        end
+        local last = k == count - 1
+        local rhythm = last and st.endings[rnd(#st.endings) + 1] or st.rhythms[rnd(#st.rhythms) + 1]
+        local notes, beat = {}, 0
+        for n, len in ipairs(rhythm) do
+            if len > 0 then
+                local target = pitch or 72 + rnd(6)
+                local at = 1
+                for i, midi in ipairs(ladder) do
+                    if math.abs(midi - target) < math.abs(ladder[at] - target) then at = i end
+                end
+                if pitch then
+                    local dir = pitch > 77 and -1 or pitch < 68 and 1 or (rnd(100) < 62 and -1 or 1)
+                    at = math.max(1, math.min(#ladder, at + dir * (rnd(100) < 75 and 1 or 2)))
+                end
+                local midi = ladder[at]
+                local final = last and n == #rhythm or last and rhythm[n + 1] and rhythm[n + 1] < 0
+                if len >= 2 or final then -- the long notes and the arrival on chord tones (home's, at the end)
+                    local best
+                    for _, candidate in ipairs(ladder) do
+                        local pc = (candidate - song.key) % 12
+                        local wanted = tones[candidate] and (not (home and final) or pc == 0 or pc == 4 or pc == 7)
+                        if wanted and (not best or math.abs(candidate - midi) < math.abs(best - midi)) then
+                            best = candidate
+                        end
+                    end
+                    midi = best or midi
+                end
+                notes[#notes + 1] = { beat = beat, len = len, midi = midi }
+                pitch = midi
+            end
+            beat = beat + math.abs(len)
+        end
+        song.tune[b] = notes
+    end
+    return pitch
+end
+
+local function planSatie(song)
+    local st, rnd = lib.satie, stream(song.seed, 1)
+    local a, b = st.A[rnd(#st.A) + 1], st.B[rnd(#st.B) + 1]
+    local function loopOf(prog) return function(j) return prog[j % #prog + 1] end end
+    addSections(song, {
+        { 'intro', 2, loopOf(a) }, { 'A', 8, loopOf(a) }, { 'A', 8, loopOf(a) }, { 'B', 8, loopOf(b) },
+        { 'A', 8, loopOf(a) }, { 'outro', 3, loopOf(st.outro) },
+    })
+    -- the tune, seeded by its place: every A sings the same, B its own. Two phrases of four bars;
+    -- the second starts like the first and ends its own way (home, in A).
+    song.tune, song.hasLead = {}, true
+    local first = 1
+    for _, section in ipairs(song.sections) do
+        if section.kind == 'A' or section.kind == 'B' then
+            local tuneRnd = stream(song.seed, section.kind == 'A' and 100 or 200)
+            satieBars(song, tuneRnd, first, 4, nil, false)
+            song.tune[first + 4], song.tune[first + 5] = song.tune[first], song.tune[first + 1]
+            local from = song.tune[first + 1][#song.tune[first + 1]] -- every rhythm has a note
+            satieBars(song, tuneRnd, first + 6, 2, from.midi, section.kind == 'A')
+        end
+        first = first + section.bars
+    end
+end
+
+local function planAmbient(song)
+    local am, rnd = lib.ambient, stream(song.seed, 1)
+    song.drone = am.drones[rnd(#am.drones) + 1]
+    addSections(song, { { 'intro', 4 }, { 'A', 24 }, { 'outro', 4 } })
+    -- each loop's figure: a few notes of the pentatonic in its register, a few 16ths apart
+    song.figures = {}
+    for k, loop in ipairs(am.loops) do
+        local figureRnd, ladder = stream(song.seed, 300 + k), {}
+        for midi = loop.lo, loop.lo + 12 do
+            for _, d in ipairs(am.penta) do if (midi - song.key - d) % 12 == 0 then ladder[#ladder + 1] = midi end end
+        end
+        local figure, step, at = {}, figureRnd(4), figureRnd(#ladder) + 1
+        for n = 1, loop.notes do
+            figure[n] = { step = step, midi = ladder[at] }
+            step = step + 3 + figureRnd(6)
+            at = math.max(1, math.min(#ladder, at + (figureRnd(2) * 2 - 1) * (1 + figureRnd(2))))
+        end
+        song.figures[k] = figure
+    end
+end
+
 local function planSong()
     local styleName = nextStyleName()
     local style = lib.styles[styleName]
@@ -587,8 +861,10 @@ local function planSong()
         beat = 60 / math.floor(between(style.bpm) + 0.5), swing = between(style.swing) or 0.5,
         swing16 = style.swing16, snareLag = between(style.snareLagMs or 8) / 1000,
     }
-    song.barLength = 4 * song.beat
+    song.barLength = (style.meter or 4) * song.beat
 
+    if style.loop == 'satie' then planSatie(song); return song end
+    if style.loop == 'ambient' then planAmbient(song); return song end
     if style.loop then -- a loop, not a song: one section, no chords, no tune
         local section = { kind = 'loop', bars = style.bars, roles = {} }
         song.sections, song.barSection, song.barIndex = { section }, {}, {}
@@ -617,7 +893,7 @@ local function planSong()
     if style.B == 'A' and rnd(100) < 60 then -- lofi: B is another loop from the same bank...
         local bIndex = (aIndex + rnd(#bank - 1)) % #bank + 1
         for _, chord in ipairs(bank[bIndex]) do progAdd(song.B, chord[1], chord[2], (chord[3] or 4) * chordBars) end
-    elseif style.B == 'A' or rnd(100) < 35 then -- ...or A with a ii-V turnaround...
+    elseif style.B == 'A' or rnd(100) < (style.turnaroundOdds or 35) then -- ...or A with a ii-V turnaround...
         for _, chord in ipairs(song.A) do progAdd(song.B, chord.degree, chord.quality, chord.steps / 4) end
         progTurnaround(song.B, song.minor, style.B == 'A')
     else                  -- ...or a move of its own
@@ -694,6 +970,16 @@ local function planSong()
     song.cellDegrees = { 0, rnd(6) - 2, rnd(6) - 1 }
     local riffs = style.riffs == 'dumont' and lib.dumontRiffs or lib.riffs
     song.riff = riffs[stream(seed, 3)(#riffs) + 1]
+    if style.horns then
+        local hits = style.horns == 'citypop' and lib.cityHornHits or lib.hornHits
+        song.horns = hits[stream(seed, 10)(#hits) + 1]
+    end
+    if style.drums == 'session' then -- citypop: the bass figure, the guitar's cutting, the groove
+        local pick = stream(seed, 11)
+        song.bassFigure = lib.cityBass[pick(#lib.cityBass) + 1]
+        song.chuck = lib.cityChucks[pick(#lib.cityChucks) + 1]
+        song.groove = lib.cityGrooves[pick(#lib.cityGrooves) + 1]
+    end
     -- the scale and the tune's pentatonic: major, dorian (minor, with the major sixth) or minor
     local minor = style.mode == 'dorian' or song.minor
     song.scale = style.mode == 'dorian'
@@ -930,6 +1216,15 @@ end
 -- every note goes through here; lib.trace(part, t, midi, vol, durMs), when set, sees them all
 -- (claudetools/render-music.lua counts rubs with it)
 local function notify(part, patch, midi, vol, durMs, t, step)
+    -- what each part plays, for lib.playing: per patch the runs of notes sounding back to back. Bars
+    -- are booked ahead, so the next bar's run starts while the last one still sounds: keep a few.
+    M.heard[part] = M.heard[part] or {}
+    local runs = M.heard[part][patch] or {}
+    M.heard[part][patch] = runs
+    local last, ends = runs[#runs], t + math.max(durMs / 1000, 0.15) -- short hits still show
+    if last and t >= last.from and t <= last.to then last.to = math.max(last.to, ends)
+    else runs[#runs + 1] = { from = t, to = ends } end
+    while #runs > 1 and runs[1].to < (M.audioTime or 0) - 10 do table.remove(runs, 1) end
     for name, fn in pairs(M.listeners) do
         local ok, err = pcall(fn, part, patch, midi, vol, durMs, t, step)
         if not ok then M.listeners[name] = nil; print('[music] onNote ' .. name .. ': ' .. tostring(err)) end
@@ -1046,6 +1341,71 @@ local bassLines = {
     hold = function(hit, chord, lo)
         hit(chord.s, inRange(chord.root, lo), 5, chord.len)
     end,
+    -- walk: calm, a two-feel (the root on 1, the fifth on 3); with the band, quarter notes: the root,
+    -- up through the chord, the last beat a half-step into the next root (a whole step when the
+    -- half-step would rub the chord)
+    walk = function(hit, chord, lo, lastBar, nextRoot, fits, band)
+        local root, e = inRange(chord.root, lo), chord.s + chord.len
+        local third = root + 4
+        for _, interval in ipairs(lib.qualities[chord.quality] or {}) do
+            if interval % 12 == 3 then third = root + 3 end
+        end
+        local fifth = fits(root + 7, chord) and root + 7 or root
+        if not band then
+            if chord.s == 0 or chord.s == 8 then hit(chord.s, root, 5, math.min(8, chord.len)) end
+            if chord.s == 0 and e > 8 then hit(8, fifth, 4, e - 8) end
+            return
+        end
+        local beats = {}
+        for s = chord.s, e - 1 do if s % 4 == 0 then beats[#beats + 1] = s end end
+        local line = { root, third, fifth, root + 9 }
+        if #beats >= 2 then
+            local last = line[#beats - 1]
+            if lastBar and nextRoot then
+                local target = inRange(nextRoot, lo)
+                if math.abs(target + 12 - last) < math.abs(target - last) then target = target + 12 end
+                local from = last > target and 1 or -1
+                local approach = target + from
+                if not fits(approach, chord) then approach = target + 2 * from end
+                line[#beats] = fits(approach, chord) and approach or fifth
+            elseif #beats == 4 then
+                line[4] = fits(root + 9, chord) and root + 9 or fifth
+            end
+        end
+        for i, s in ipairs(beats) do hit(s, line[i], i == 1 and 5 or 4, 4) end
+    end,
+    -- disco (citypop): the song's figure, root, octave pops and dead-note ghosts, each note held to
+    -- the next; with the band, two 16ths running chromatically into the next root. Calm: the root
+    -- held, one pop.
+    disco = function(hit, chord, lo, lastBar, nextRoot, fits, band, song)
+        local root, e = inRange(chord.root, lo), chord.s + chord.len
+        local pop = fits(root + 12, chord) and root + 12 or root
+        if not band then
+            hit(chord.s, root, 5, math.min(6, chord.len))
+            if chord.s <= 6 and e > 6 then hit(6, pop, 3, 1) end
+            return
+        end
+        local run = lastBar and nextRoot and nextRoot ~= chord.root
+        local stop = run and 14 or e
+        local figure = song.bassFigure
+        local function at(s) return s == chord.s and 'x' or figure:sub(s + 1, s + 1) end
+        for s = chord.s, stop - 1 do
+            local c = at(s)
+            if c ~= '.' then
+                local len = 1
+                while s + len < stop and at(s + len) == '.' do len = len + 1 end
+                if c == 'x' then hit(s, root, s == 0 and 5 or 4, len) -- whole steps: the grid has no halves
+                elseif c == 'o' then hit(s, pop, 4, 1)
+                else hit(s, root, 2, 1) end
+            end
+        end
+        if run then
+            local target = inRange(nextRoot, lo)
+            local dir = target > root and 1 or -1
+            hit(14, target - 2 * dir, 3, 1)
+            hit(15, target - dir, 3, 1)
+        end
+    end,
 }
 
 -- the drums for one bar: hit(step, patch, midi, vol, durMs); section = 'A' / 'B' / 'outro'
@@ -1128,6 +1488,45 @@ local drumKits = {
             hit(14, 'ride', 81, 2, 120)
         end
         if fill then hit(10, 'ride', 81, 3, 120); hit(14, 'kick', 33, 3, 60) end
+    end,
+    -- citypop's session kit: the song's groove (disco four, funk ghosts, the push, the skip),
+    -- session-tight, 16th hats leaning on the 8ths, a shaker in the chorus, a conga now and then;
+    -- fills roll on the snare or go round the toms
+    session = function(hit, rnd, kind, _, fill, song)
+        local groove = song.groove
+        for s = 0, 15 do
+            if groove.k:sub(s + 1, s + 1) == 'x' then hit(s, 'kick', 36, 5, 150) end
+            local sn = groove.s:sub(s + 1, s + 1)
+            if sn == 'x' and not (fill and s >= 12) then hit(s, 'snare', 60, 5, 140)
+            elseif sn == 'g' then hit(s, 'snare', 60, 1, 50) end
+            hit(s, 'hat', 60, s % 4 == 0 and 3 or s % 2 == 0 and 2 or 1, 25)
+        end
+        if kind == 'B' then for s = 2, 14, 4 do hit(s, 'shaker', 84, 2, 40) end end
+        if rnd(100) < 30 then hit(14, 'conga', 64, 3, 200) end
+        if fill then
+            if rnd(100) < 50 then
+                for s = 12, 15 do hit(s, 'snare', 60, s - 10, 60) end
+            else
+                for s, midi in ipairs({ 50, 47, 43, 40 }) do hit(11 + s, 'tom', midi, s < 3 and 4 or 5, 200) end
+            end
+        end
+    end,
+    -- a 70s TV band on sticks: the ride's ding ding-ga ding leaning on 2 and 4, the hat's foot on 2
+    -- and 4, a feathered kick, the snare dropping in now and then; a rim backbeat in B; snare fills
+    sticks = function(hit, rnd, kind, _, fill)
+        for s = 0, 12, 4 do hit(s, 'ride', 81, s % 8 == 0 and 3 or 4, 220) end
+        hit(6, 'ride', 81, 2, 120)
+        hit(14, 'ride', 81, 2, 120)
+        hit(4, 'hat', 60, 3, 40)
+        hit(12, 'hat', 60, 3, 40)
+        for s = 0, 12, 4 do hit(s, 'kick', 33, 2, 60) end
+        if rnd(100) < 25 then hit(14, 'snare', 60, 2, 60) end
+        if rnd(100) < 20 then hit(10, 'snare', 60, 1, 50) end
+        if kind == 'B' then hit(4, 'rim', 79, 3, 40); hit(12, 'rim', 79, 3, 40) end
+        if fill then
+            for _, s in ipairs({ 8, 10, 12, 14 }) do hit(s, 'snare', 60, s < 12 and 3 or 4, 60) end
+            hit(14, 'kick', 36, 4, 120)
+        end
     end,
 }
 
@@ -1350,9 +1749,75 @@ local function bookStrumBar(synth, t0, song, b)
     end
 end
 
+local function remember(t0, pcs) -- impacts play along in the chord
+    table.insert(M.booked, { at = t0, pcs = pcs })
+    if #M.booked > 4 then table.remove(M.booked, 1) end
+end
+
+-- One bar of the satie waltz: the root on 1 held through the bar, the chord on 2 held through 3, the
+-- planned tune on the felt piano. Busy play: a sine under the root and vibes doubling the tune.
+-- The outro's last chord rings two bars, struck on 1.
+local function bookSatieBar(synth, t0, song, b)
+    local chord = song.chords[b]
+    local root, intervals = (song.key + chord[1]) % 12, lib.satie.qualities[chord[2]]
+    local pcs = { root }
+    for _, interval in ipairs(intervals) do pcs[#pcs + 1] = (root + interval) % 12 end
+    remember(t0, pcs)
+    local band, barMs = bandPlays(), lengthMs(song, 0, 12)
+    local ringMs = chord.ring and 2 * barMs or barMs - 30
+    local bass = inRange(root, 38)
+    play(synth, 'bass', 'piano', t0 + humanize(0.004), bass, 5, ringMs, 0)
+    if band then play(synth, 'bass', 'roundBass', t0, bass, 1, ringMs, 0) end
+    song.voicing = voiceChord(root, intervals, 53, 67, song.voicing)
+    local s = chord.ring and 0 or 4
+    local t = stepTime(song, t0, s) + humanize(0.006)
+    for k, midi in ipairs(song.voicing) do
+        play(synth, 'keys', 'piano', t + (k - 1) * 0.012, midi, 4, ringMs - lengthMs(song, 0, s), s)
+    end
+    if not lib.melody then return end
+    for _, note in ipairs(song.tune[b] or {}) do
+        local ns = note.beat * 4
+        local nt = stepTime(song, t0, ns) + humanize(0.008)
+        local dur = lengthMs(song, ns, note.len * 4) - 20
+        play(synth, 'lead', lib.melodyPatch or 'pianoLead', nt, note.midi, 6, dur, ns)
+        if band then play(synth, 'lead', 'vibes', nt, note.midi, 2, dur, ns) end
+    end
+end
+
+-- One bar of the ambient style: the drone every 8 bars, and each loop's figure wherever its own
+-- length puts it (counted from the bar it joined).
+local function bookAmbientBar(synth, t0, song, b)
+    local am, pcs = lib.ambient, {}
+    for _, d in ipairs(am.penta) do pcs[#pcs + 1] = (song.key + d) % 12 end
+    remember(t0, pcs)
+    if (b - 1) % 8 == 0 then -- the drone, root and fifth, ringing until the next one
+        local degree = song.drone[math.floor((b - 1) / 8) % #song.drone + 1]
+        local root = inRange((song.key + degree) % 12, 36)
+        local ms = lengthMs(song, 0, 16 * math.min(8, song.bars - b + 1)) - 30
+        play(synth, 'bass', 'roundBass', t0, root, 2, ms, 0)
+        play(synth, 'bass', 'roundBass', t0, root + 7, 1, ms, 0)
+    end
+    local band = bandPlays()
+    for k, loop in ipairs(am.loops) do
+        if b >= loop.joins and b <= song.bars - (k - 1) and (band or not loop.band) then
+            for s = 0, 15 do
+                local at = ((b - loop.joins) * 16 + s) % loop.steps
+                for _, note in ipairs(song.figures[k]) do
+                    if note.step == at then
+                        play(synth, 'keys', loop.patch, stepTime(song, t0, s) + humanize(0.01), note.midi,
+                             loop.vol, loop.ring, s)
+                    end
+                end
+            end
+        end
+    end
+end
+
 local function bookBar(synth, t0, song, b)
     local style = lib.styles[song.style]
     M.barStart = t0
+    if style.loop == 'satie' then return bookSatieBar(synth, t0, song, b) end
+    if style.loop == 'ambient' then return bookAmbientBar(synth, t0, song, b) end
     if style.loop == 'strum' then return bookStrumBar(synth, t0, song, b) end
     if style.loop then return bookLoopBar(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
@@ -1490,7 +1955,7 @@ local function bookBar(synth, t0, song, b)
         local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
         local function fits(midi, chord) return not rubs(song, midi, chord) end
         for _, chord in ipairs(chords) do
-            bassLine(hit, chord, lo, chord.s + chord.len == 16, nextRoot, fits)
+            bassLine(hit, chord, lo, chord.s + chord.len == 16, nextRoot, fits, band, song)
         end
     end
 
@@ -1533,7 +1998,52 @@ local function bookBar(synth, t0, song, b)
             local t = stepTime(song, t0, s) + drag + (dt or 0) + humanize(0.003)
             play(synth, 'drums', patch, t, midi, vol, dur)
         end
-        kit(hit, rnd, section.kind, j, song.fill[b])
+        kit(hit, rnd, section.kind, j, song.fill[b], song)
+    end
+
+    -- the band plays the keys' own voicing of a chord (its notes never rub each other; the same
+    -- chord voiced again elsewhere can put a 9th a b9 over the minor third, or a #9 over the third)
+    local function keysVoicing(chord)
+        return voiceChord((song.key + chord.degree) % 12, qualityOf(song, chord.quality), 48, 76, M.voicing)
+    end
+
+    -- the horns: the song's shout in the bar the tune breathes (bar 3 of 4), the top of the chord
+    if song.horns and band and (section.kind == 'A' or section.kind == 'B') and j % 4 == 2 then
+        for _, h in ipairs(song.horns) do
+            local voicing = keysVoicing(chordAtStep(song, b, h[1]))
+            local t = stepTime(song, t0, h[1]) + humanize(0.004)
+            for k = math.max(1, #voicing - 2), #voicing do
+                play(synth, 'horns', 'horn', t + (k - 1) * 0.004, voicing[k], h[3], lengthMs(song, h[1], h[2]) * 0.85)
+            end
+        end
+    end
+
+    -- citypop's guitar: the song's 16th cutting on the chord's top notes, while the band plays
+    if style.guitar and band and (section.kind == 'A' or section.kind == 'B') then
+        local stop = pushes and 14 or 16
+        for s = 0, stop - 1 do
+            local c = song.chuck[s + 1]
+            if c > 0 then
+                local voicing = keysVoicing(chordAtStep(song, b, s))
+                local t = stepTime(song, t0, s) + humanize(0.002)
+                local from = c == 1 and #voicing - 1 or #voicing - 2
+                for k = math.max(1, from), #voicing do
+                    play(synth, 'guitar', 'cityGuitar', t + (k - from) * 0.006, voicing[k], c == 1 and 3 or 4,
+                         c == 1 and 50 or 150)
+                end
+            end
+        end
+    end
+
+    -- citypop's strings: the chord's top three held under the chorus, slow in
+    if style.strings and section.kind == 'B' then
+        for _, chord in ipairs(chords) do
+            local voicing = keysVoicing(chord)
+            for k = math.max(1, #voicing - 2), #voicing do
+                play(synth, 'strings', 'strings', stepTime(song, t0, chord.s), voicing[k], 4,
+                     lengthMs(song, chord.s, chord.len) - 40)
+            end
+        end
     end
 
     -- the tune
@@ -1618,6 +2128,33 @@ function lib.stepAt(s)
     local song = M.song
     if not (song and M.barStart) then return nil end
     return stepTime(song, M.barStart, s)
+end
+
+-- Which instruments are playing, per part, for the settings panel (and the bridge): a list of
+-- { part, patches = { { name, now } } } in a fixed part order, holding each patch heard in the last
+-- `window` seconds (default 4); now = sounding at this moment.
+lib.parts = { 'lead', 'keys', 'chord', 'guitar', 'horns', 'strings', 'riff', 'bass', 'drums', 'perc', 'sample',
+              'vinyl' }
+function lib.playing(window)
+    local now = M.audioTime
+    if not (lib.enabled and now) then return {} end
+    window = window or 4
+    local out = {}
+    for _, part in ipairs(lib.parts) do
+        local patches = {}
+        for name, runs in pairs(M.heard[part] or {}) do
+            local heard, sounding = false, false
+            for _, run in ipairs(runs) do
+                if run.from <= now and run.to > now - window then
+                    heard, sounding = true, sounding or run.to >= now
+                end
+            end
+            if heard then patches[#patches + 1] = { name = name, now = sounding } end
+        end
+        table.sort(patches, function(a, b) return a.name < b.name end)
+        if #patches > 0 then out[#out + 1] = { part = part, patches = patches } end
+    end
+    return out
 end
 
 -- what is playing, for a console or a HUD: style, key, section

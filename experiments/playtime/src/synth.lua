@@ -20,7 +20,7 @@ lib.reverbDamping = 0.5  -- 0 bright .. 1 dark tail
 lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
     PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, PIPE = 25,
-    GUITAR = 26, PIANO = 27, BOWED = 28, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
+    GUITAR = 26, PIANO = 27, BOWED = 28, BRASS = 29, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
     SCRAPE = 39, -- scraped/rattled percussion from separate teeth: harmonics body, timbre rate, morph rattle
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
 }
@@ -59,20 +59,22 @@ lib.patches = {
     musicBass = { slot = 14, wave = 'BOWED', adsr = { 4, 0, 7, 475 },
                   harmonics = 0.3, timbre = 0.3, morph = 0.45, reverb = 0.15, level = 0.45,
                   modes = { [0] = 1, [1] = 0.85, [2] = 1 }, filter = { mode = 1, cutoff = 1200, resonance = 3 } },
-    -- the music's melody: the piano model's top voicing (harmonics ~1 = celesta), a music box
-    celesta = { slot = 18, wave = 'PIANO', adsr = { 1, 0, 7, 300 },
-                harmonics = 0.97, timbre = 0.5, morph = 0.3, reverb = 0.4, level = 0.8,
-                tape = { wow = 0.2, flutter = 0.05, saturation = 0, warble = 0 } },
-    -- other melody voices: the Rhodes a little brighter for a tune on top, and two kalimbas: a
-    -- mallet halfway between wood and bell, and the wavescan voice through its low-pass gate
-    -- (darker as it fades: a soft thumb 'plonk')
+    -- the citypop style, after dreamengine's citypop2.c: a clean single-coil guitar cutting muted
+    -- 16ths (high-passed, no chorus: that needs an FX bus) and a soft saw string section, slow in.
+    -- Slots 18 and 21 were the celesta (disliked) and the wavescan kalimba (unused): the engine has
+    -- 48 slots (SOUND_INSTR_SLOTS) and every one is taken.
+    cityGuitar = { slot = 18, wave = 'GUITAR', adsr = { 1, 0, 7, 90 },
+                   harmonics = 0.45, timbre = 0.78, morph = 0.5, reverb = 0.15, level = 1.8,
+                   filter = { mode = 2, cutoff = 220, resonance = 0 } },
+    strings = { slot = 21, wave = 'SAW', adsr = { 260, 0, 6, 260 }, reverb = 0.45, level = 0.22,
+                filter = { mode = 1, cutoff = 2600, resonance = 0 }, lfo = { { 0, 5.0, 0.04 } } },
+    -- other melody voices: the Rhodes a little brighter for a tune on top, and a kalimba: a
+    -- mallet halfway between wood and bell
     rhodesLead = { slot = 19, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
                    harmonics = 0.15, timbre = 0.35, morph = 0.15, reverb = 0.3, level = 0.8,
                    autopan = { rate = 4, depth = 0.4 } },
     kalimba = { slot = 20, wave = 'MALLET', adsr = { 0, 600, 0, 300 },
                 harmonics = 0.45, timbre = 0.35, morph = 0.2, reverb = 0.3, level = 1.0 },
-    kalimbaPlonk = { slot = 21, wave = 'WAVESCAN', adsr = { 2, 500, 0, 250 },
-                     harmonics = 0.05, timbre = 0, morph = 1, reverb = 0.3, level = 0.42 },
     -- the music's rhythm section (bossa): a soft kick (a drumhead struck in the centre), the
     -- cross-stick rim click (a hard wooden tick) and a shaker (short high-passed noise)
     kick   = { slot = 15, wave = 'MEMBRANE', adsr = { 0, 220, 0, 80 },
@@ -101,7 +103,7 @@ lib.patches = {
     -- (a triangle, lowpassed with a bit of bite), a steel pan for the tune (a mallet toward the bell,
     -- ringing), and a drum machine clap (high-passed noise, a big room).
     -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
-    -- (SOUND_FX_BUSES), and six are already taken (rhodes, celesta, rhodesLead, piano, pianoLead, whistle).
+    -- (SOUND_FX_BUSES), and five are taken (rhodes, rhodesLead, piano, pianoLead, whistle).
     stab = { slot = 28, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
              filter = { mode = 1, cutoff = 1500, resonance = 2 } },
     dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
@@ -154,6 +156,17 @@ lib.patches = {
                      harmonics = 1.0, timbre = 0.9, morph = 0.9, reverb = 0.3, level = 0.5 },
     quijada = { slot = 43, wave = 'SCRAPE', adsr = { 0, 0, 7, 30 }, harmonics = 0.5, timbre = 0.35, morph = 1.0,
                 reverb = 0.05, level = 0.7 },
+    -- the sesame style: a clavinet (dreamengine's clavinet.c recipe: the e-piano engine's clav voicing,
+    -- short and percussive, without its bus wah) and a horn section (the lip-reed BRASS engine,
+    -- between trumpet and flugelhorn, round rather than blatty) for short shouts
+    clav = { slot = 45, wave = 'EPIANO', adsr = { 2, 140, 2, 120 },
+             harmonics = 0.85, timbre = 0.75, morph = 0.55, reverb = 0.2, level = 1.1 },
+    horn = { slot = 46, wave = 'BRASS', adsr = { 8, 0, 6, 120 },
+             harmonics = 0.3, timbre = 0.4, morph = 0.25, reverb = 0.3, level = 0.4,
+             filter = { mode = 1, cutoff = 3600, resonance = 1 } },
+    -- citypop's glossy synth lead: a square with a slow vibrato and a little glide
+    citySynth = { slot = 47, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
+                  filter = { mode = 1, cutoff = 3400, resonance = 0 }, lfo = { { 0, 5.2, 0.08 } } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,
