@@ -7,7 +7,7 @@ status: active
 love.js (Davidobot/love.js) compiles LÖVE to WebAssembly via Emscripten. Supports LÖVE 11.4 natively (11.5 experimental). This lets us package Playtime scenes as shareable browser links — key for demoing to publishers and distributing Knut content.
 
 Worked 2026-04-11 (catapult, Knut). Rebuilt 2026-10-30: the dollhouse runs in Chrome in play mode,
-Mipos and all, with no errors; no sound from the synth yet (see WEB2).
+Mipos, grabbing and the synth's music included; Lua eval from the page (`playtime.eval`).
 
 - [x] **WEB1. Build from the real game** (2026-10-30). `build-web.sh` packages the real `main.lua`
   and `src/` instead of its own copy of main.lua (that copy had fallen behind: it still loaded the
@@ -50,16 +50,21 @@ Mipos and all, with no errors; no sound from the synth yet (see WEB2).
 ## Quick start
 
 ```bash
-# Build any scene for web:
-./webtest/build-web.sh dollhouse
-
-# Serve it locally:
-./webtest/serve.sh 8080 dollhouse
-
-# Open http://localhost:8080
+./webtest/build-web.sh dollhouse      # build (a minute or so) -> webtest/output-dollhouse/
+./webtest/serve.sh 8080 dollhouse     # serve it (needs the headers below, so not a plain http.server)
+# open http://localhost:8080 and click once: browsers only start audio after a click or key
 ```
 
-Replace `dollhouse` with any scene name from `scripts/`. The page starts it in play mode (`--play`); tab goes to the editor.
+Any scene in `scripts/` works instead of `dollhouse`. The page starts it in play mode (`--play`);
+tab goes to the editor. Rebuild after changing code: the build is a snapshot, nothing hot-reloads.
+
+**Needs:** love.js 11.4 (`npm i -g love.js`; found on PATH or under ~/.nvm, or set `LOVEJS`), and for
+the synth emcc (`brew install emscripten`) plus a dreamengine checkout at `~/Projects/dreamengine`
+(or set `DREAMENGINE`). Without emcc the build still works, just without the synth.
+
+**Poking at it:** in the browser console (or Chrome's javascript tool),
+`await playtime.eval('return state.playMode')` runs Lua in the game (WEB4). Lua's `print` goes to
+the console; the synth engine's own messages show as `desound: ...`.
 
 ## Why web matters
 
@@ -105,25 +110,33 @@ Default pattern/outline textures loaded with `safeLoadImage()` which returns nil
 
 ### What build-web.sh does
 1. Copies main.lua, conf.lua, src/, vendor/, assets/, textures/ and the scene's files to a temp dir
-2. Puts a stand-in `ffi` in front of main.lua (src/synth.lua then stays off) and stubs the profilers
-   (jprof, ProFi, peeker); main.lua itself skips the bridge and lurker when `love.system.getOS() == "Web"`
+2. Puts a stand-in `ffi` in front of main.lua (for the voice lab; src/synth.lua doesn't use ffi on
+   the web) and stubs the profilers (jprof, ProFi, peeker). main.lua itself uses src/web-bridge.lua
+   instead of the claude-bridge and skips lurker when `love.system.getOS() == "Web"`
 3. Zips a .love and packages it with love.js (found on PATH or under ~/.nvm; or set LOVEJS)
-4. Writes index.html from `index.template.html`: full window, `--play <scene>`
-5. Output: `webtest/output-<scene>/`, static files for any web host (not in git)
+4. Builds the synth engine to `desound.wasm` (`native/desound/build-web.sh`, if emcc is there) and
+   copies it with `desound-processor.js` (the AudioWorklet)
+5. Writes index.html from `index.template.html`: full window, `--play <scene>`, the synth and eval
+   plumbing (`desoundSend`, `playtime.eval`)
+6. Output: `webtest/output-<scene>/`, static files for any web host (not in git)
 
 ### What serve.sh does
 Serves the output directory with `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers (required for SharedArrayBuffer / love.js threads).
 
 ## Bundle size
 
+Measured 2026-10-30 (dollhouse):
+
 | Component | Size | Notes |
 |---|---|---|
 | love.js + love.wasm | ~5MB | Fixed, same for all scenes |
-| game.data (no textures) | ~2MB | Lua source + assets (font, icons) |
-| game.data (knut scene) | ~2MB | +5 small texture files |
-| **Total download** | **~7MB** | Acceptable for web demo |
+| game.data | ~15.5MB | Lua source, assets and *all* of textures/ (Mipos pick theirs at runtime) |
+| desound.wasm | ~0.2MB | The synth engine |
+| **Total download** | **~21MB** | Fine for a demo link; too much for a shipped page |
 
 ### Remaining size wins (not yet done)
+- Only the textures the Mipo DNA can pick plus the scene's own (the April build copied only the
+  scene's; that missed everything a Mipo chooses at runtime)
 - Strip `assets/playtime2.png` (1.2MB logo, not needed in shipped scenes)
 - Strip editor-only modules (mipo-editor, character-manager, sfixture-editor)
 - These would bring game.data to under 500KB
@@ -134,7 +147,8 @@ love.js uses PUC Lua 5.1, not LuaJIT. Watch out for:
 
 | Feature | LuaJIT | Lua 5.1 (love.js) | Fix |
 |---|---|---|---|
-| `goto label` / `::label::` | Yes | No | Use if/else |
+| `goto label` / `::label::` | Yes | No | `repeat ... until true` with `break`, or if/else |
+| `ffi` | Yes | No | src/synth.lua uses src/synth-web.lua on the web |
 | `load(str, name, mode, env)` | Yes | No (only 2 args) | Use `loadstring` + `setfenv` |
 | `jit.off()` / `jit` global | Yes | No | Guard with `if jit then` |
 | `bit` library | `bit` | Not available | Use love.math or manual |
@@ -143,9 +157,10 @@ love.js uses PUC Lua 5.1, not LuaJIT. Watch out for:
 ## Known issues (web)
 
 - **Mouse wheel zoom** — needs `preventDefault()` on canvas wheel event (handled in custom index.html)
-- **Audio autoplay** — browsers block audio until user clicks. Need a "tap to start" screen for scenes with sound.
+- **Audio autoplay** — browsers block audio until a click or key; the page starts (and wakes) the synth on
+  every click/key. There's no "tap to start" screen, so the first seconds are silent until you touch it.
 - **Editor UI panels** — full editor UI loads in web build; for shipped scenes, should strip to just the scene player
-- **Missing textures** — scenes that reference pattern/outline textures not bundled will use white pixel fallback (looks wrong but doesn't crash)
+- **Missing textures** — all of textures/ is bundled now; a missing one falls back to a white pixel
 
 ## Hosting options
 
