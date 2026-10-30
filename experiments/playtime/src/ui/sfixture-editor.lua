@@ -1365,42 +1365,12 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     modes.set(modes.ADD_NODE_CONNECTED_TEX)
                 end
 
-                local function inArray(value, array)
-                    for i = 1, #array do
-                        if array[i] == value then
-                            return true
-                        end
-                    end
-                    return false
-                end
-
                 if ui.button(x + ROW_WIDTH, y, ROW_WIDTH / 2, 'auto ') then
-                    local body = state.selection.selectedSFixture:getBody()
-                    local connectedBodies = {}
+                    -- a node on every joint along the chain from this body
                     ud.extra.nodes = {}
-                    while not inArray(body, connectedBodies) do
-                        --   print(#connectedBodies)
-                        local attachedJoints = body:getJoints()
-                        if #attachedJoints > 0 then
-                            table.insert(connectedBodies, body)
-
-                            --print('1 attached joint found, lets start there..')
-                            local joint = attachedJoints[1]
-                            ud.extra.nodes[#connectedBodies] = { id = joints.getJointId(joint), type = NT.JOINT }
-                            -- print(inspect(ud.extra.nodes))
-                            local bodyA, bodyB = joint:getBodies()
-                            if not inArray(bodyA, connectedBodies) then
-                                body = bodyA
-                                --print('settinga')
-                            end
-                            if not inArray(bodyB, connectedBodies) then
-                                body = bodyB
-                                --print('settingb')
-                            end
-                        end
+                    for _, joint in ipairs(joints.jointChain(state.selection.selectedSFixture:getBody())) do
+                        table.insert(ud.extra.nodes, { id = joints.getJointId(joint), type = NT.JOINT })
                     end
-
-                    --ud.extra.nodes[j] = { id = instance.joints[jointID], type = 'joint' }
                 end
 
                 nextRow()

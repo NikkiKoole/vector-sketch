@@ -902,7 +902,8 @@ local function needsDimProperty(prop, shape)
     elseif prop == 'height2' then
         return shape == ST.CAPSULE or shape == ST.TORSO
     elseif prop == 'width2' then
-        return shape == ST.TRAPEZIUM or shape == ST.TORSO
+        -- a capsule's corner radius is width / width2 (shapes.lua)
+        return shape == ST.TRAPEZIUM or shape == ST.TORSO or shape == ST.CAPSULE
     elseif prop == 'height3' or prop == 'height4' then
         return shape == ST.TORSO
     elseif prop == 'width3' then
@@ -1509,13 +1510,8 @@ function lib.cloneSelection(selectedBodies, world)
                             for key, value in pairs(jointData) do
                                 newJointData[key] = value
                             end
-                            local limitsEnabled = originalJoint:areLimitsEnabled()
-                            local lower, upper = originalJoint:getLimits()
+                            -- limits, motor and springs come along in jointData (handler.apply)
                             local newJoint = joints.createJoint(newJointData)
-                            newJoint:setLimits(lower, upper)
-                            --newJoint:setUpperLimit(upper)
-                            --newJoint:setLowerLimit(lower)
-                            newJoint:setLimitsEnabled(limitsEnabled)
                             newJoint:getUserData().label = ud.label
 
                             if ud.scriptmeta then

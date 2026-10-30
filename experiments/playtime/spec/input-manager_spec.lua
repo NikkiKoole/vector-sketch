@@ -590,3 +590,27 @@ describe("input-manager: play mode", function()
         assert.is_nil(playMode.sceneFromArgs({ '--scene', 'dollhouse' }))
     end)
 end)
+
+-- BUG5: typing in a text field also fired the editor's keys (space paused the world).
+describe("input-manager: keys while typing", function()
+    local ui = require('src.ui.all')
+
+    after_each(function()
+        ui.focusedTextInputID = nil
+    end)
+
+    it("a space typed into a text field doesn't pause the world", function()
+        state.world.paused = false
+        ui.textInputs = ui.textInputs or {} -- made by the first text field drawn
+        ui.focusedTextInputID = 'spec-label'
+        InputManager.keyPressed('space')
+        assert.is_false(state.world.paused)
+    end)
+
+    it("a space with no text field focused still pauses", function()
+        state.world.paused = false
+        InputManager.keyPressed('space')
+        assert.is_true(state.world.paused)
+        state.world.paused = false
+    end)
+end)

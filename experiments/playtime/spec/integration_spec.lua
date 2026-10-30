@@ -530,6 +530,20 @@ describe("integration: object lifecycle", function()
             world2:destroy()
         end)
 
+        it("round-trips a capsule's corner size (BUG3)", function()
+            addBody('capsule', 0, 0, { width = 60, height = 100, width2 = 5 })
+
+            local saveData = sceneIO.gatherSaveData(state.physicsWorld, cam)
+            local world2 = makeWorld()
+            registry.reset()
+            sceneIO.buildWorld(saveData, world2, cam)
+
+            local restoredData = sceneIO.gatherSaveData(world2, cam)
+            assert.are.equal(5, restoredData.bodies[1].dims.width2)
+
+            world2:destroy()
+        end)
+
         it("round-trips fixture physics properties", function()
             local thing = addBody('circle', 0, 0, { radius = 25 })
             local fix = thing.body:getFixtures()[1]

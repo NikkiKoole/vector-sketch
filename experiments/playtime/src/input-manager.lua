@@ -862,6 +862,16 @@ function lib.handleMouseMoved(x, y, dx, dy)
     end
 end
 
+-- A key in the editor. While a text field has focus the key is typed and
+-- nothing else hears it (a space in a label used to pause the world).
+function lib.keyPressed(key)
+    local typing = ui.focusedTextInputID -- before: enter/escape can end the typing
+    ui.handleKeyPress(key)
+    if typing then return end
+    lib.handleKeyPressed(key)
+    script.call('onKeyPress', key)
+end
+
 function lib.handleKeyPressed(key)
     if key == 'escape' then
         if state.panelVisibility.quitDialogOpened == true then

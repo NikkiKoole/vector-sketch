@@ -103,6 +103,7 @@ local playtimeui = require 'src.playtime-ui'
 
 local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
+local gameLoop = require('src.game-loop')
 local objectManager = require('src.object-manager')
 
 
@@ -291,8 +292,7 @@ function love.update(dt)
     prof.push('physics-update')
     blobs.beforeStep(state.world.paused, scaled_dt) -- blob rims: build/follow, pressure (src/blob.lua)
     if not state.world.paused then
-        local substeps = 1
-        local step = scaled_dt / substeps
+        local substeps, step = gameLoop.physicsSteps(dt, state.world.speedMultiplier)
         prof.push('physicsWorld:update')
         for _ = 1, substeps do
             state.physicsWorld:update(step, state.world.velocityIterations, state.world.positionIterations)
@@ -595,9 +595,7 @@ function love.keypressed(key)
         script.call('onKeyPress', key)
         return
     end
-    ui.handleKeyPress(key)
-    InputManager.handleKeyPressed(key)
-    script.call('onKeyPress', key)
+    InputManager.keyPressed(key)
 
     if not ui.focusedTextInputID then
         characterExperiments.handleKeyPress(key, humanoidInstance)
@@ -637,6 +635,5 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
 end
 
 if FIXED_TIMESTEP then
-    local gameLoop = require("src.game-loop")
     love.run = gameLoop.createFixedTimestepRun(TICKRATE)
 end

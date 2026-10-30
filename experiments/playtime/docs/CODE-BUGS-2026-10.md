@@ -11,31 +11,45 @@ Each is small (under half an hour) unless it says otherwise.
 
 ## Things that break
 
-- [ ] **BUG1. Rebuilt joints lose their settings.** `src/joint-handlers.lua`: `create` only puts
+- [x] **BUG1. Rebuilt joints lose their settings.** `src/joint-handlers.lua`: `create` only puts
   back revolute limits and wheel springs, not what `extract` reads (motors, reference angle,
   distance/weld frequency + damping, prismatic limits and motor, wheel axis, motor-joint offsets).
   So `joints.recreateJoint` (collide toggle `joint-params.lua:47`, dragging an anchor, flip) and
   resizing a body (`object-manager.lua:481` → `reattachJoints`) quietly switch motors off and reset
   springs. Fix: each handler gets `apply(joint, props)` that sets back everything `extract` returns.
   Load and save can then use the handlers too (CL13). Size: an hour or two.
-- [ ] **BUG2. Clone and flip should crash on welds, ropes, distance joints.** `io.lua:1510` (clone)
+  **Done 2026-10-30:** every handler has `apply`, `extract` also reads reference angle and axis,
+  and `recreateJoint` puts the caller's settings over the extracted ones (the axis sliders).
+  `spec/joints-keep-settings_spec.lua`.
+- [x] **BUG2. Clone and flip should crash on welds, ropes, distance joints.** `io.lua:1510` (clone)
   and `object-manager.lua:932` (flipThing) call `areLimitsEnabled()`/`getLimits()` on every joint;
   only revolute and prismatic have them. Specs only use revolute joints. Fix: check
   `joint.areLimitsEnabled` first, or let `apply` from BUG1 carry the limits.
-- [ ] **BUG3. Capsules lose their corner size on save.** `io.lua:907` `needsDimProperty` saves
+  **Done 2026-10-30:** clone lets `apply` carry the limits; flip passes mirrored limits,
+  reference angle, axis and motor direction as recreate settings. Same spec.
+- [x] **BUG3. Capsules lose their corner size on save.** `io.lua:907` `needsDimProperty` saves
   `width2` only for TRAPEZIUM and TORSO, but `shapes.lua:455` builds a capsule from `width2`.
   After a load, resizing falls back to `width2 or 1`. Fix: add CAPSULE to the `width2` line (and see
   CL10 for one list of dimension keys).
-- [ ] **BUG4. Connected-texture 'auto' button freezes the app** on a body without joints:
+  **Done 2026-10-30:** `io_spec` (it said capsules don't need `width2`) and a round trip in
+  `integration_spec`.
+- [x] **BUG4. Connected-texture 'auto' button freezes the app** on a body without joints:
   `ui/sfixture-editor.lua:1381`, the `while not inArray(...)` loop only moves on when the body has
   joints. Fix: `if #attachedJoints == 0 then break end` (or it goes away with CL14).
-- [ ] **BUG5. Editor keys fire while you type in a text field.** `main.lua:598-599` calls
+  **Done 2026-10-30:** the button uses `joints.jointChain(body)`, which also no longer
+  repeats the last joint. `spec/joints-recreate_spec.lua`.
+- [x] **BUG5. Editor keys fire while you type in a text field.** `main.lua:598-599` calls
   `ui.handleKeyPress` and then `InputManager.handleKeyPressed` without checking focus. Typing a space
   in a label pauses the world, `c` takes a screenshot, `i`/`d` edit polygon vertices. Fix: return
   after `ui.handleKeyPress` when `ui.focusedTextInputID` is set.
-- [ ] **BUG6. The speed slider is applied twice.** `game-loop.lua:59-70` adds or skips steps for
+  **Done 2026-10-30:** `InputManager.keyPressed(key)` does that; `spec/input-manager_spec.lua`.
+- [x] **BUG6. The speed slider is applied twice.** `game-loop.lua:59-70` adds or skips steps for
   `speedMultiplier`, and `main.lua:290` also multiplies each step's dt by it: 2x runs about 4x,
   0.5x about 0.25x. Fix: keep the step count, make `scaled_dt = dt`.
+  **Done 2026-10-30, the other way round:** skipping whole updates also skipped input in slow
+  motion, so the loop no longer looks at speed. `gameLoop.physicsSteps(dt, speed)` makes the step
+  smaller for slow motion and takes more steps when fast (no Box2D step longer than dt).
+  `spec/game-loop_spec.lua`.
 - [ ] **BUG7. Music and snap clicks hang off the Mipo voice.** `mipo-voice.lua:343-351`:
   `mipoVoice.update` starts and ticks the synth and runs music, snap-sound and slide-sound, but only
   when `synthImpacts` is on, and main only calls it when the world isn't paused. Turning off impact

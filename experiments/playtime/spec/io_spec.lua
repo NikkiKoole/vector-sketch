@@ -71,8 +71,8 @@ describe("io._test.needsDimProperty", function()
             assert.is_falsy(t.needsDimProperty('width2', 'rectangle'))
         end)
 
-        it("is NOT needed for capsule", function()
-            assert.is_falsy(t.needsDimProperty('width2', 'capsule'))
+        it("is needed for capsule (its corner radius, BUG3)", function()
+            assert.is_truthy(t.needsDimProperty('width2', 'capsule'))
         end)
     end)
 

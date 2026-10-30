@@ -121,3 +121,63 @@ describe('joints.recreateJoint', function()
         assert.is_nil(joint)
     end)
 end)
+
+-- The connected-texture 'auto' button walks this chain (BUG4: it never ended
+-- on a body without joints).
+describe('joints.jointChain', function()
+    local world
+
+    local function makeBody(id, x)
+        local body = love.physics.newBody(world, x, 0, 'dynamic')
+        love.physics.newFixture(body, love.physics.newCircleShape(10), 1)
+        body:setUserData({ thing = { id = id, body = body } })
+        registry.registerBody(id, body)
+        return body
+    end
+
+    local function link(body1, body2)
+        return joints.createJoint({ body1 = body1, body2 = body2, jointType = JT.REVOLUTE, collideConnected = false })
+    end
+
+    before_each(function()
+        world = love.physics.newWorld(0, 0, true)
+        state.physicsWorld = world
+        registry.reset()
+    end)
+
+    after_each(function()
+        world:destroy()
+        state.physicsWorld = nil
+        registry.reset()
+    end)
+
+    it('is empty for a body without joints', function()
+        assert.are.same({}, joints.jointChain(makeBody('jc-alone', 0)))
+    end)
+
+    it('walks a chain from its end, each joint once, in order', function()
+        local a, b, c = makeBody('jc-a', 0), makeBody('jc-b', 50), makeBody('jc-c', 100)
+        local ab = link(a, b)
+        local bc = link(b, c)
+        local chain = joints.jointChain(a)
+        assert.are.equal(2, #chain)
+        assert.are.equal(ab, chain[1])
+        assert.are.equal(bc, chain[2])
+    end)
+
+    it('walks the same chain built the other way round', function()
+        local a, b, c = makeBody('jc-a', 0), makeBody('jc-b', 50), makeBody('jc-c', 100)
+        local bc = link(c, b)
+        local ab = link(b, a)
+        local chain = joints.jointChain(a)
+        assert.are.equal(2, #chain)
+        assert.are.equal(ab, chain[1])
+        assert.are.equal(bc, chain[2])
+    end)
+
+    it('stops at a loop', function()
+        local a, b, c = makeBody('jc-a', 0), makeBody('jc-b', 50), makeBody('jc-c', 100)
+        link(a, b); link(b, c); link(c, a)
+        assert.are.equal(3, #joints.jointChain(a))
+    end)
+end)

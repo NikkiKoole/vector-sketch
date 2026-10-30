@@ -2,8 +2,6 @@
 -- Fixed-timestep game loop for LÖVE2D
 -- Extracted from main.lua (Phase 6.3)
 
-local state = require 'src.state'
-
 local lib = {}
 
 --- Returns a love.run() function with fixed-timestep physics,
@@ -27,7 +25,6 @@ function lib.createFixedTimestepRun(tickrate)
         local lag = 0.0
 
         -- carry for deterministic speed multiplier (optional)
-        local speedCarry = 0.0
 
         return function()
             -- pump events
@@ -55,19 +52,8 @@ function lib.createFixedTimestepRun(tickrate)
             -- how many base steps this frame?
             local dt = tickrate
             local steps = math.floor(lag / dt)
-
-            -- deterministic speed multiplier => convert fractional speed to extra integer steps
-            local s = (state and state.world and state.world.speedMultiplier) or 1.0
-            speedCarry = speedCarry + (s - 1.0) * steps
-            if speedCarry >= 1.0 then
-                local extra = math.floor(speedCarry)
-                steps = steps + extra
-                speedCarry = speedCarry - extra
-            elseif speedCarry <= -1.0 then
-                local skip = math.floor(-speedCarry)
-                steps = math.max(0, steps - skip)
-                speedCarry = speedCarry + skip
-            end
+            -- the speed slider is not handled here but in the physics step (lib.physicsSteps):
+            -- skipping whole updates for slow motion also skipped input (BUG6)
 
             -- cap steps to avoid runaway
             local didPanic = false
@@ -116,6 +102,14 @@ function lib.createFixedTimestepRun(tickrate)
             end
         end
     end
+end
+
+-- How main steps the physics world for one update of dt at the speed slider's
+-- speed: the step shrinks for slow motion, and fast speeds take more steps so a
+-- Box2D step is never longer than dt (big steps tunnel and explode).
+function lib.physicsSteps(dt, speed)
+    local steps = math.max(1, math.ceil(speed - 1e-9))
+    return steps, dt * speed / steps
 end
 
 return lib

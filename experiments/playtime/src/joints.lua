@@ -113,6 +113,7 @@ function lib.createJoint(data)
             return
         else
             joint = handler.create(data, x1, y1, x2, y2)
+            if handler.apply then handler.apply(joint, data) end
         end
     else
         logger:error("Joint type '" .. jointType .. "' is not implemented yet.")
@@ -168,6 +169,28 @@ function lib.extractJoints(body)
     return jointData
 end
 
+-- The joints along a chain of bodies, starting at body: each step takes the
+-- first joint not walked yet. Ends at a body with no new joint (or none at all).
+function lib.jointChain(body)
+    local chain, walked, seen = {}, {}, {}
+    while body and not seen[body] do
+        seen[body] = true
+        local nextJoint
+        for _, joint in ipairs(body:getJoints()) do
+            if not walked[joint] then
+                nextJoint = joint
+                break
+            end
+        end
+        if not nextJoint then break end
+        walked[nextJoint] = true
+        table.insert(chain, nextJoint)
+        local bodyA, bodyB = nextJoint:getBodies()
+        body = (bodyA == body) and bodyB or bodyA
+    end
+    return chain
+end
+
 function lib.recreateJoint(joint, newSettings)
     if joint:isDestroyed() then
         logger:error("The joint is already destroyed.")
@@ -197,19 +220,17 @@ function lib.recreateJoint(joint, newSettings)
         label = (joint:getUserData() or {}).label,
     }
 
-    -- Add new settings to the data
-    for key, value in pairs(newSettings or {}) do
-        data[key] = value
-    end
-
     local handler = jointHandlers[jointType]
     if not handler or not handler.extract then
         logger:error("recreate extract: Unsupported joint type: " .. jointType)
+        return nil
     end
 
-    -- Extract additional data using the handler
-    local additionalData = handler.extract(joint)
-    for key, value in pairs(additionalData) do
+    -- What the joint has now (motor, springs, limits), then the caller's changes on top
+    for key, value in pairs(handler.extract(joint)) do
+        data[key] = value
+    end
+    for key, value in pairs(newSettings or {}) do
         data[key] = value
     end
 

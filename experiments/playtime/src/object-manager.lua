@@ -902,7 +902,7 @@ function lib.flipThing(thing, axis, recursive)
                 if not handler or not handler.extract then
                     logger:error("flipThing: No handler found for joint type:", jointType)
                 else
-                    handler.extract(joint)
+                    local props = handler.extract(joint)
 
                     -- Determine the connected bodies
                     local bodyA, bodyB = joint:getBodies()
@@ -912,42 +912,29 @@ function lib.flipThing(thing, axis, recursive)
                     if not thingA or not thingB then
                         logger:error("flipThing: One or both connected things are invalid.")
                     else
-                        logger:info(
-                            'I should figure out if i want to do something weird with the offset, ' ..
-                            'think connect to torso logic at edge nr...')
-
-                        --todo when a joint is flipped i alos need to redo its limits (if applicable)
-
                         local offsetA = jointUserData.offsetA
                         local offsetB = jointUserData.offsetB
+                        local key = (axis == 'x') and 'x' or 'y'
+                        offsetA[key] = -offsetA[key]
+                        offsetB[key] = -offsetB[key]
 
-                        if axis == 'x' then
-                            offsetA.x = -offsetA.x
-                            offsetB.x = -offsetB.x
-                        elseif axis == 'y' then
-                            offsetA.y = -offsetA.y
-                            offsetB.y = -offsetB.y
+                        -- Mirroring negates every body angle, so the angle between the two
+                        -- bodies turns around too: reference angle, limits, and which way a
+                        -- motor spins. A slider axis mirrors with the bodies.
+                        local settings = { offsetA = offsetA, offsetB = offsetB }
+                        if props.referenceAngle then settings.referenceAngle = -props.referenceAngle end
+                        if props.motorSpeed and (jointType == JT.REVOLUTE or jointType == JT.WHEEL) then
+                            settings.motorSpeed = -props.motorSpeed
                         end
-
-                        local limitsEnabled = joint:areLimitsEnabled()
-                        local lower, upper = joint:getLimits()
-
-                        local newJoint = joints.recreateJoint(joint, { offsetA = offsetA, offsetB = offsetB })
-
-                        if axis == 'x' then
-                            newJoint:setLimits(-upper, -lower)
-                            newJoint:setLimitsEnabled(limitsEnabled)
+                        if props.lowerLimit and props.upperLimit then
+                            settings.lowerLimit = -props.upperLimit
+                            settings.upperLimit = -props.lowerLimit
                         end
-                        if axis == 'y' then
-                            -- as long as you build your joints in the right order this just works like this.
-                            -- the reason is quite subtle (before we did lowerlimit +math.pi and
-                            -- higherlimit + math.pi), but because the axis is flipped, the order
-                            -- between the joint becomes flipped too, which offsets that math.pi back to 0
-
-                            -- TLDR dont make the joints in the wrong order, then everything works great!
-                            newJoint:setLimits(-upper, -lower)
-                            newJoint:setLimitsEnabled(limitsEnabled)
+                        if props.axisX and props.axisY then
+                            settings.axisX = (axis == 'x') and -props.axisX or props.axisX
+                            settings.axisY = (axis == 'y') and -props.axisY or props.axisY
                         end
+                        joints.recreateJoint(joint, settings)
                     end
                 end
             end
