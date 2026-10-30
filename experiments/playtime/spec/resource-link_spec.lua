@@ -67,7 +67,7 @@ describe('resource link', function()
 
     it('a clone of both uses its own RESOURCE', function()
         local skin, mapper = skinPair(0)
-        local cloned = sceneIO.cloneSelection({ skin, mapper }, world)
+        local cloned = library.clone({ skin, mapper })
         local cloneSkin, cloneMapper
         for _, thing in ipairs(cloned) do
             if meshOf(thing) then cloneSkin = thing else cloneMapper = thing end
@@ -78,7 +78,7 @@ describe('resource link', function()
 
     it('a clone of the mesh alone keeps the original RESOURCE', function()
         local skin, mapper = skinPair(0)
-        local cloned = sceneIO.cloneSelection({ skin }, world)
+        local cloned = library.clone({ skin })
         assert.are.equal(mapper.body, resourceBodyOf(cloned[1]))
     end)
 

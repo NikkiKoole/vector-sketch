@@ -7,6 +7,7 @@ local ui = require('src.ui.all')
 local joints = require 'src.joints'
 local objectManager = require 'src.object-manager'
 local polyEdit = require('src.poly-edit')
+local library = require('src.library')
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local utils = require 'src.utils'
@@ -77,14 +78,14 @@ function lib.drawSelectedBodiesUI(panelX, panelY, panelWidth, panelH)
         end
 
         if ui.button(x, y, 260, 'clone') then
-            local cloned = sceneIO.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
+            local cloned = library.clone(state.selection.selectedBodies)
             state.selection.selectedBodies = cloned
         end
         nextRow()
 
         if ui.button(x, y, 260, 'clone x 10') then
             for _ = 1, 10 do
-                local cloned = sceneIO.cloneSelection(state.selection.selectedBodies, state.physicsWorld)
+                local cloned = library.clone(state.selection.selectedBodies)
                 state.selection.selectedBodies = cloned
             end
             --

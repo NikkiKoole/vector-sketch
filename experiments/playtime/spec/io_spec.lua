@@ -119,55 +119,6 @@ describe("shapes.usesDim", function()
     end)
 end)
 
--- ─── remapAndRestoreInfluences (ID remapping portion) ───
-
-describe("io._test.remapAndRestoreInfluences (ID remapping)", function()
-
-    it("remaps nodeId through idMapping", function()
-        local influences = {
-            [1] = {
-                { nodeId = "old1", nodeType = "anchor", side = nil },
-                { nodeId = "old2", nodeType = "joint", side = "A" },
-            },
-            [2] = {
-                { nodeId = "old1", nodeType = "anchor", side = nil },
-            },
-        }
-        local idMapping = { old1 = "new1", old2 = "new2" }
-
-        t.remapAndRestoreInfluences(influences, idMapping)
-
-        assert.are.equal("new1", influences[1][1].nodeId)
-        assert.are.equal("new2", influences[1][2].nodeId)
-        assert.are.equal("new1", influences[2][1].nodeId)
-    end)
-
-    it("sets nodeId to nil when mapping is missing", function()
-        local influences = {
-            [1] = {
-                { nodeId = "old1", nodeType = "anchor", side = nil },
-            },
-        }
-        local idMapping = {}
-
-        t.remapAndRestoreInfluences(influences, idMapping)
-
-        assert.is_nil(influences[1][1].nodeId)
-    end)
-
-    it("handles nil influences gracefully", function()
-        assert.has_no.errors(function()
-            t.remapAndRestoreInfluences(nil, { a = "b" })
-        end)
-    end)
-
-    it("handles empty influences", function()
-        assert.has_no.errors(function()
-            t.remapAndRestoreInfluences({}, { a = "b" })
-        end)
-    end)
-end)
-
 -- ─── gatherSaveData integration tests ───
 
 describe("io.gatherSaveData (LÖVE integration)", function()

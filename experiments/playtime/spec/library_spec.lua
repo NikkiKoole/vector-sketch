@@ -179,9 +179,8 @@ describe('library prefabs', function()
     end)
 
     it('editor clone: own behaviors table, own signal for a whole contraption', function()
-        local sceneIO = require('src.io')
         local button, gate = contraption()
-        local cloned = sceneIO.cloneSelection({ button, gate }, world)
+        local cloned = library.clone({ button, gate })
         local names = {}
         for _, thing in ipairs(cloned) do
             assert.are_not.equal(button.behaviors, thing.behaviors)

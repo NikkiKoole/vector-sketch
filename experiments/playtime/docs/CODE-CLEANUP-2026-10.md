@@ -127,10 +127,16 @@ L = more.
   reordering 3 times. `composedZ` line 10 times in createDrawables. `browBends` (3423) = `browBendVecs`
   (38). Alpha divided by 5 in `makeTexturedCanvas` and multiplied by 5 by every caller (its own TODO
   says so): pass 0-1. M.
-- [ ] **CL17. Clone through the library path.** `cloneSelection` (io:1252-1598, ~350 lines) rebuilds
+- [x] **CL17. Clone through the library path.** `cloneSelection` (io:1252-1598, ~350 lines) rebuilds
   shapes by hand with its own id map and influence remap. `library.place` already does gather →
   renewIds → move → buildWorld additive. Clone = the same with the selection, +50,+50. Keep only
   the Mipo pose copy if clones should keep their pose. L, worth it.
+  **Done 2026-10-30:** `library.clone(things)`: the selection's save data (a Mipo whole), new ids
+  (Mipo ids too), its own signal names, +50,+50, built; `place` and `clone` share those steps.
+  `io.cloneSelection` (~320 lines) and its influence remapper are gone. A Mipo keeps its pose; any
+  selected part now copies the whole Mipo (before: only the selected parts). Ribbon nodes on a joint
+  that wasn't copied keep pointing at the original (before: lost). `spec/clone_spec.lua` passed on
+  the old clone first.
 - [ ] **CL18. Character copies.** `addFaceDecals` (character-manager:1884-2222, ~340 lines): the OMP
   block 5 times → `ompMain(...)`, `addDecal(body, label, extra)`, then placeEyes/Brows/Nose/Mouth.
   Loose z numbers (190, 220, 250-254, 300, ...) → one `Z = {...}` table (`TORSO_SKIN_Z` exists but

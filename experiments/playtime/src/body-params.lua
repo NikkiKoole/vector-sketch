@@ -81,7 +81,7 @@ lib.rows = {
     { kind = 'action', label = 'clone',
       run = function(_, thing)
           local state = require('src.state')
-          state.selection.selectedBodies = require('src.io').cloneSelection({ thing }, state.physicsWorld)
+          state.selection.selectedBodies = require('src.library').clone({ thing })
           state.selection.selectedObj = nil
           return true -- the selection moved to the clone
       end },

@@ -17,6 +17,7 @@ local snap = require('src.physics.snap')
 local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
 local resourceLink = require('src.resource-link')
+local utils = require('src.utils')
 
 lib.DIR = 'library'
 
@@ -125,7 +126,7 @@ function lib.move(prefab, dx, dy)
     end
 end
 
--- Give every body, sfixture and joint a new id, everywhere it's mentioned
+-- Give every body, sfixture, joint and Mipo a new id, everywhere it's mentioned
 -- (joints, influences, snap links...), so a prefab can be placed many times.
 function lib.renewIds(prefab)
     local newIds = {}
@@ -139,6 +140,7 @@ function lib.renewIds(prefab)
         end
     end
     for _, jointData in ipairs(prefab.joints) do claim(jointData.id) end
+    for _, character in ipairs(prefab.characters or {}) do claim(character.id) end
 
     local function walk(t)
         local renamed = {}
@@ -191,22 +193,62 @@ function lib.load(name)
     return prefab
 end
 
+-- Build save data into the world as a copy, moved by dx, dy: new ids, and a
+-- contraption gets its own signal names. Returns the things built.
+local function buildCopy(data, dx, dy)
+    lib.renewIds(data)
+    local behaviorLists = {}
+    for _, bodyData in ipairs(data.bodies) do
+        if bodyData.behaviors then table.insert(behaviorLists, bodyData.behaviors) end
+    end
+    signals.renameForCopy(behaviorLists, signals.namesInUse())
+    lib.move(data, dx, dy)
+    if #data.bodies == 0 then return {} end
+    local things = sceneIO.buildWorld(data, state.physicsWorld, camera.getInstance(), { additive = true }) or {}
+    snap.onSceneLoaded()
+    return things
+end
+
+-- Copies of these things, 50 down and to the right, with the joints between them: the
+-- editor's clone. Like placing a prefab it goes through save data, so links (ribbon
+-- nodes, influences, snap points, resources) point at the copies. A Mipo comes along
+-- whole and in the pose it's in (a prefab's Mipo grows fresh from its DNA instead).
+function lib.clone(things)
+    local ids, mipoIds, bodies = {}, {}, {}
+    for _, thing in ipairs(things) do
+        if thing.body and not thing.body:isDestroyed() then
+            ids[thing.id] = true
+            if thing.mipoId then mipoIds[thing.mipoId] = true end
+            table.insert(bodies, thing.body)
+        end
+    end
+    if not next(ids) then return {} end
+    resourceLink.linkBodies(bodies) -- meshes carry their RESOURCE link
+
+    local data = sceneIO.gatherSaveData(state.physicsWorld, camera.getInstance())
+    local copy = { version = data.version, bodies = {}, joints = {}, characters = {} }
+    local kept = {}
+    for _, bodyData in ipairs(data.bodies or {}) do
+        if ids[bodyData.id] or (bodyData.mipoId and mipoIds[bodyData.mipoId]) then
+            table.insert(copy.bodies, bodyData)
+            kept[bodyData.id] = true
+        end
+    end
+    for _, jointData in ipairs(data.joints or {}) do
+        if kept[jointData.bodyA] and kept[jointData.bodyB] then table.insert(copy.joints, jointData) end
+    end
+    for _, character in ipairs(data.characters or {}) do
+        if mipoIds[character.id] then table.insert(copy.characters, character) end
+    end
+    -- save data shares some tables with the live scene (a body's behaviors): the copy gets its own
+    return buildCopy(utils.deepCopy(copy), 50, 50)
+end
+
 -- build a copy of the prefab centred on world x, y; returns its things
 function lib.place(name, x, y)
     local prefab = lib.load(name)
     if not prefab then return {} end
-    lib.renewIds(prefab)
-    local behaviorLists = {}
-    for _, bodyData in ipairs(prefab.bodies) do
-        if bodyData.behaviors then table.insert(behaviorLists, bodyData.behaviors) end
-    end
-    signals.renameForCopy(behaviorLists, signals.namesInUse())
-    lib.move(prefab, x, y)
-    local things = {}
-    if #prefab.bodies > 0 then
-        things = sceneIO.buildWorld(prefab, state.physicsWorld, camera.getInstance(), { additive = true }) or {}
-        snap.onSceneLoaded()
-    end
+    local things = buildCopy(prefab, x, y)
     -- Mipos grow fresh from their DNA, with their own id, collision group and z-range
     local CharacterManager = require('src.character-manager')
     for _, mipo in ipairs(prefab.mipos or {}) do
