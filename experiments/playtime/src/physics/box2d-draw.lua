@@ -10,6 +10,7 @@ local mathutils = require('src.math-utils')
 local subtypes = require('src.subtypes')
 local NT = require('src.node-types')
 local registry = require('src.registry')
+local view = require('src.render.view')
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -120,6 +121,11 @@ for _, kind in ipairs({ subtypes.TEXFIXTURE, subtypes.MESHUSERT, subtypes.UVUSER
     texturedKinds[kind] = true
 end
 
+-- lib.cull = false draws every body (spec/draw-cache_spec.lua compares); OUTLINE_PAD: the outline's
+-- width and the debug ids printed next to a body
+lib.cull = true
+local OUTLINE_PAD = 100
+
 function lib.hasTexture(body)
     for _, fixture in ipairs(body:getFixtures()) do
         local ud = fixture:getUserData()
@@ -134,9 +140,21 @@ end
 
 -- Bodies covered by a picture that isn't their own texfixture: a limb's segments under
 -- a textured connected-texture (the bodies two joints in a row share, so not the torso
--- the first joint hangs off) and a textured blob's body and rim circles.
+-- the first joint hangs off) and a textured blob's body and rim circles. Kept until an sfixture
+-- comes or goes (registry.sfixtureVersion), and at most 30 calls (a picture cleared in the editor
+-- changes no sfixture): built every frame it was a walk over all sfixtures.
+local coveredCache = { version = nil, covered = nil, calls = 0 }
 function lib.coveredBodies()
-    local covered = {}
+    coveredCache.calls = coveredCache.calls + 1
+    if coveredCache.version == registry.sfixtureVersion and coveredCache.calls < 30 then
+        local covered = coveredCache.covered
+        for rim, rt in pairs(state.blobRims or {}) do -- rims are rebuilt as the blob goes
+            if covered[rt.body] then covered[rim] = true end
+        end
+        return covered
+    end
+    local covered = setmetatable({}, { __mode = 'k' })
+    coveredCache.version, coveredCache.covered, coveredCache.calls = registry.sfixtureVersion, covered, 0
     for _, f in pairs(registry.sfixtures) do
         local ud = not f:isDestroyed() and f:getUserData()
         if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and hasURL(ud.extra) and ud.extra.nodes then
@@ -196,9 +214,18 @@ function lib.drawWorld(world, drawOutline)
     -- drawing all of them under 20 Mipos was ~2 ms a frame)
     local skipTextured = state.world.showTextures and (state.world.textureOrBody or state.playMode == true)
     local covered = skipTextured and DRAW_BODIES and lib.coveredBodies()
+    -- skip bodies off screen (docs/MIPO-DRAWING.md L1b): their centre plus how far their fixtures
+    -- reach, against what the screen shows, before anything else is asked of them
+    local vx1, vy1, vx2, vy2 = view.worldRect()
+    local cull = lib.cull
 
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do repeat -- break = next body (no goto: the web build's Lua 5.1 has none)
+            if cull then
+                local x, y = body:getPosition()
+                local reach = view.bodyReach(body) + OUTLINE_PAD
+                if x + reach < vx1 or x - reach > vx2 or y + reach < vy1 or y - reach > vy2 then break end
+            end
             local bodyUD = body:getUserData()
             local bodyThing = bodyUD and bodyUD.thing
             if skipTextured and not lib.showsBody(body, covered) then break end

@@ -11,10 +11,11 @@ local camera = require('src.camera')
 local CM = require('src.character-manager')
 local utils = require('src.utils')
 local draw = require('src.physics.box2d-draw-textured')
+local outlines = require('src.physics.box2d-draw')
 
 local W, H = 800, 600
 
-local function render(world, cx, cy, scale)
+local function render(world, cx, cy, scale, drawFn)
     local canvas = love.graphics.newCanvas(W, H)
     love.graphics.setCanvas({ canvas, stencil = true })
     love.graphics.clear(0, 0, 0, 1)
@@ -22,7 +23,7 @@ local function render(world, cx, cy, scale)
     love.graphics.translate(W / 2, H / 2)
     love.graphics.scale(scale)
     love.graphics.translate(-cx, -cy)
-    local ok, err = pcall(draw.drawTexturedWorld, world)
+    local ok, err = pcall(drawFn or draw.drawTexturedWorld, world)
     love.graphics.pop()
     love.graphics.setCanvas()
     love.graphics.setShader()
@@ -52,11 +53,15 @@ describe('drawing with caches (L1) and culling (L0)', function()
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
         scale = math.min(W / (x2 - x1 + 800), H / (y2 - y1 + 800))
         draw.cull = true
+        outlines.cull = true
+        state.playMode = false
         draw._test.clearCaches()
     end)
 
     after_each(function()
         draw.cull = true
+        outlines.cull = true
+        state.playMode = false
         for _, body in ipairs(world:getBodies()) do body:setUserData(nil) end
         world:setCallbacks()
         world:destroy()
@@ -152,6 +157,83 @@ describe('drawing with caches (L1) and culling (L0)', function()
             end
             tried = tried + 1
             if tried == 4 then break end
+        end
+    end)
+
+    -- the body outlines (box2d-draw), culled and not, the same picture
+    local function sameOutlines(x, y, zoom, what)
+        outlines.cull = true
+        local culled = render(world, x, y, zoom, outlines.drawWorld)
+        outlines.cull = false
+        local all = render(world, x, y, zoom, outlines.drawWorld)
+        assert.are.equal(all, culled, what)
+    end
+
+    it('culling body outlines changes no pixel, in the editor and in play mode', function()
+        for _, play in ipairs({ false, true }) do
+            state.playMode = play
+            for step = -4, 4 do
+                sameOutlines(cx + step * 400, cy + (step % 3 - 1) * 300, scale * 4, 'view ' .. step)
+            end
+            local zoom = 0.5
+            local halfW, halfH = W / 2 / zoom, H / 2 / zoom
+            local x, y = world:getBodies()[1]:getPosition()
+            for _, d in ipairs({ 5, 60 }) do
+                sameOutlines(x + d + halfW, y, zoom, 'body left of view by ' .. d)
+                sameOutlines(x, y - d - halfH, zoom, 'body below view by ' .. d)
+            end
+        end
+    end)
+
+    it('every picture that can be baked is on a registered sfixture, in every scene', function()
+        for _, dir in ipairs({ 'scripts', 'scripts/knut', 'scripts/tech' }) do
+            for _, name in ipairs(love.filesystem.getDirectoryItems(dir)) do
+                if name:match('%.playtime%.json$') then
+                    local w = love.physics.newWorld(0, 0, true)
+                    state.physicsWorld = w
+                    registry.reset()
+                    require('src.mipo-registry').reset()
+                    local ok = pcall(sceneIO.load, love.filesystem.read(dir .. '/' .. name), w, camera.getInstance())
+                    if ok then
+                        local registered = {}
+                        for _, f in pairs(registry.sfixtures) do registered[f] = true end
+                        for _, body in ipairs(w:getBodies()) do
+                            for _, f in ipairs(body:getFixtures()) do
+                                local ud = f:getUserData()
+                                if type(ud) == 'table' and ud.extra and ud.extra.OMP then
+                                    local where = dir .. '/' .. name .. ': ' .. tostring(ud.id)
+                                    assert.is_true(registered[f] == true, where)
+                                end
+                            end
+                        end
+                    end
+                    for _, b in ipairs(w:getBodies()) do b:setUserData(nil) end
+                    w:setCallbacks()
+                    w:destroy()
+                end
+            end
+        end
+        state.physicsWorld = world
+    end)
+
+    it('pictures marked dirty are baked again, all of them', function()
+        CM.createCharacter('humanoid', cx, cy, 1) -- the crowd has few baked pictures, a new Mipo many
+        draw.makeCombinedImages()
+        local old = {}
+        for _, f in pairs(registry.sfixtures) do
+            local ud = f:getUserData()
+            if ud.extra and ud.extra.OMP and ud.extra.ompImage then
+                old[ud] = ud.extra.ompImage
+                ud.extra.dirty = true
+            end
+        end
+        local count = 0
+        for _ in pairs(old) do count = count + 1 end
+        assert.is_true(count > 5, 'only ' .. count .. ' baked pictures')
+        draw.makeCombinedImages()
+        for ud, image in pairs(old) do
+            assert.is_false(ud.extra.dirty, tostring(ud.id))
+            assert.are_not.equal(image, ud.extra.ompImage, tostring(ud.id))
         end
     end)
 end)

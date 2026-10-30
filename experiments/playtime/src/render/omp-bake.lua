@@ -1,5 +1,6 @@
 -- src/render/omp-bake.lua (split from physics/box2d-draw-textured.lua, SPLIT1)
 local lib = {}
+local registry = require('src.registry')
 local ribbon = require('src.render.ribbon')
 local state = require('src.state')
 local color = require('src.color')
@@ -303,80 +304,90 @@ local function releasePatches(patches)
     end
 end
 
+-- The sfixtures to look at for a picture to (re)bake: OMP pictures only live on sfixtures, so this
+-- is the registry's, kept as a list until it changes. Walking every fixture of every body each
+-- frame (love.draw calls this) was 2.4 ms with 100 Mipos. userData is still read each frame, so a
+-- `dirty` set anywhere is seen.
+local bakeList = { version = nil, fixtures = {} }
+local function sfixturesToCheck()
+    if bakeList.version ~= registry.sfixtureVersion then
+        local list = {}
+        for _, fixture in pairs(registry.sfixtures) do list[#list + 1] = fixture end
+        bakeList.version, bakeList.fixtures = registry.sfixtureVersion, list
+    end
+    return bakeList.fixtures
+end
+
 function lib.makeCombinedImages()
-    local bodies = state.physicsWorld:getBodies()
     local replaced = nil
-
-    for _, body in ipairs(bodies) do
-        local fixtures = body:getFixtures()
-        for i = 1, #fixtures do
-            local ud = fixtures[i]:getUserData()
-            if ud and type(ud) == 'table' and ud.extra and ud.extra.OMP and ud.extra.dirty then
-                repeat -- break = done (no goto: the web build's Lua 5.1 has none)
-                local patch1 = makePatch('patch1', ud)
-                local patch2 = makePatch('patch2', ud)
-                local patch3 = makePatch('patch3', ud)
-                local patches = { patch1 or false, patch2 or false, patch3 or false } -- avoid sparse table
-                local main = ud.extra.main
-                if ud.extra.ompImage then
-                    replaced = replaced or {}
-                    replaced[#replaced + 1] = ud.extra.ompImage
-                end
-
-                if not main.cached then
-                    lib.makeCached(main)
-                end
-                local cached = main.cached
-
-                -- bgURL can be deliberately cleared by the Mipo editor's "null"
-                -- thumbnail. Drop ompImage and skip recompose so the renderer's
-                -- non-OMP fallback path also short-circuits cleanly.
-                if not main.bgURL or main.bgURL == '' then
-                    releasePatches(patches)
-                    ud.extra.ompImage = nil
-                    ud.extra.dirty = false
-                    break
-                end
-
-                local outlineImage = getLoveImage('textures/' .. main.bgURL)
-                local hasFgURL = main.fgURL and main.fgURL ~= ''
-                local maskImage = hasFgURL and getLoveImage('textures/' .. main.fgURL) or nil
-                local patternImage = getLoveImage('textures/pat/' .. main.pURL)
-
-                if outlineImage or line then
-                    local imgData = lib.makeTexturedCanvas(
-                        outlineImage or line, -- line art
-                        maskImage or (hasFgURL and maskTex) or nil, -- mask (nil for outline-only textures)
-                        cached.fgRGB,         -- color1
-                        cached.fgA,           -- alpha1
-                        patternImage or tex1, -- texture2 (fill texture)
-                        cached.pRGB,          -- color2
-                        cached.pA,            -- alpha2
-                        main.pr or 0,         -- texRot
-                        main.psx or 1,        -- texScale
-                        main.psy or 1,        -- texScale
-                        main.ptx or 0,
-                        main.pty or 0,
-                        cached.bgRGB,              -- lineColor
-                        cached.bgA,                -- lineAlpha
-                        main.fx or 1,              -- flipx (normal)
-                        main.fy or 1,              -- flipy (normal)
-                        patches               -- renderPatch
-                    )
-                    local image = love.graphics.newImage(imgData)
-                    imgData:release()
-                    lib.texturesCreated = lib.texturesCreated + 1
-                    ud.extra.ompImage = image
-                end
-                releasePatches(patches)
-                fixtures[i]:setUserData(ud)
-
-                ud.extra.dirty = false
-                until true
+    local fixtures = sfixturesToCheck()
+    for i = 1, #fixtures do
+        local ud = not fixtures[i]:isDestroyed() and fixtures[i]:getUserData()
+        if ud and type(ud) == 'table' and ud.extra and ud.extra.OMP and ud.extra.dirty then
+            repeat -- break = done (no goto: the web build's Lua 5.1 has none)
+            local patch1 = makePatch('patch1', ud)
+            local patch2 = makePatch('patch2', ud)
+            local patch3 = makePatch('patch3', ud)
+            local patches = { patch1 or false, patch2 or false, patch3 or false } -- avoid sparse table
+            local main = ud.extra.main
+            if ud.extra.ompImage then
+                replaced = replaced or {}
+                replaced[#replaced + 1] = ud.extra.ompImage
             end
+
+            if not main.cached then
+                lib.makeCached(main)
+            end
+            local cached = main.cached
+
+            -- bgURL can be deliberately cleared by the Mipo editor's "null"
+            -- thumbnail. Drop ompImage and skip recompose so the renderer's
+            -- non-OMP fallback path also short-circuits cleanly.
+            if not main.bgURL or main.bgURL == '' then
+                releasePatches(patches)
+                ud.extra.ompImage = nil
+                ud.extra.dirty = false
+                break
+            end
+
+            local outlineImage = getLoveImage('textures/' .. main.bgURL)
+            local hasFgURL = main.fgURL and main.fgURL ~= ''
+            local maskImage = hasFgURL and getLoveImage('textures/' .. main.fgURL) or nil
+            local patternImage = getLoveImage('textures/pat/' .. main.pURL)
+
+            if outlineImage or line then
+                local imgData = lib.makeTexturedCanvas(
+                    outlineImage or line, -- line art
+                    maskImage or (hasFgURL and maskTex) or nil, -- mask (nil for outline-only textures)
+                    cached.fgRGB,         -- color1
+                    cached.fgA,           -- alpha1
+                    patternImage or tex1, -- texture2 (fill texture)
+                    cached.pRGB,          -- color2
+                    cached.pA,            -- alpha2
+                    main.pr or 0,         -- texRot
+                    main.psx or 1,        -- texScale
+                    main.psy or 1,        -- texScale
+                    main.ptx or 0,
+                    main.pty or 0,
+                    cached.bgRGB,              -- lineColor
+                    cached.bgA,                -- lineAlpha
+                    main.fx or 1,              -- flipx (normal)
+                    main.fy or 1,              -- flipy (normal)
+                    patches               -- renderPatch
+                )
+                local image = love.graphics.newImage(imgData)
+                imgData:release()
+                lib.texturesCreated = lib.texturesCreated + 1
+                ud.extra.ompImage = image
+            end
+            releasePatches(patches)
+            fixtures[i]:setUserData(ud)
+
+            ud.extra.dirty = false
+            until true
         end
     end
-    if replaced then releaseReplacedImages(replaced, bodies) end
+    if replaced then releaseReplacedImages(replaced, state.physicsWorld:getBodies()) end
 end
 
 

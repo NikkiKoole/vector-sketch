@@ -61,10 +61,12 @@ describe('draw loops skip and go on', function()
             showTextures = state.world.showTextures,
             drawOutline = state.world.drawOutline,
         }
+        box2dDraw.cull = false -- these are about the skips; culling is spec/draw-cache_spec.lua's
     end)
 
     after_each(function()
         for k, v in pairs(saved) do state.world[k] = v end
+        box2dDraw.cull = true
         if world and not world:isDestroyed() then world:destroy() end
     end)
 

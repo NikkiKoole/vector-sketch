@@ -28,6 +28,7 @@ local gazeRadius = 1000 -- world units; cursor within this distance → track, o
 local mipoFace = require('src.mipo-face')
 local utils = require('src.utils')
 local mipoRegistry = require('src.mipo-registry')
+local view = require('src.render.view')
 local ompBake = require('src.render.omp-bake')
 local shaders = require('src.render.shaders')
 local ribbon = require('src.render.ribbon')
@@ -922,15 +923,7 @@ end
 local function hideOffscreenMipos()
     for id in pairs(hiddenMipos) do hiddenMipos[id] = nil end
     if not lib.cull then return end
-    local w, h = love.graphics.getDimensions()
-    local canvas = love.graphics.getCanvas()
-    if type(canvas) == 'userdata' then w, h = canvas:getDimensions() end
-    local ax, ay = love.graphics.inverseTransformPoint(0, 0)
-    local bx, by = love.graphics.inverseTransformPoint(w, 0)
-    local cx, cy = love.graphics.inverseTransformPoint(0, h)
-    local dx, dy = love.graphics.inverseTransformPoint(w, h)
-    local vx1, vx2 = math.min(ax, bx, cx, dx), math.max(ax, bx, cx, dx)
-    local vy1, vy2 = math.min(ay, by, cy, dy), math.max(ay, by, cy, dy)
+    local vx1, vy1, vx2, vy2 = view.worldRect()
     for id, instance in pairs(mipoRegistry.getAll()) do
         local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
         for _, part in pairs(instance.parts) do

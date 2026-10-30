@@ -67,7 +67,7 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   Mipos move, ribbons cost what they did (their curve changes every frame). Draw calls unchanged (L2).
   Found: outside the textured draw ~33 ms at 200 Mipos in the editor (box2d-draw's outlines of every
   body, not culled) and ~22 ms in play mode; the paused update (26 ms at 200) is untouched by this.
-- [ ] **L1b. The rest of the draw: scans of the whole world every frame.** Measured 2026-10-30 with 100
+- [x] **L1b. The rest of the draw: scans of the whole world every frame.** Measured 2026-10-30 with 100
   Mipos (frame-profile times every love.draw step now). Play mode, normal camera (most Mipos off screen):
   draw 12.6 ms, of which the Mipo pictures 3.7 ms and three steps that draw almost nothing 9 ms:
   - **body outlines** (`box2d-draw.drawWorld`) 5.4 ms, 490 KB garbage (10 ms in the editor): every body
@@ -79,6 +79,14 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
     the world changes (src/doors.lua: playtime-fc's).
   - editor only: signal wires 0.6 ms (the same kind of scan).
   All on screen (100 Mipos): Mipo pictures 25-26 ms, outlines 6-10 ms, rebake 2.4-2.8, doors 1.2-1.4.
+  **Done 2026-10-30:** outlines cull off-screen bodies (centre + how far its fixtures reach, `view.bodyReach`,
+  + 100) before asking anything else of them, and `coveredBodies` is kept (until an sfixture comes or goes,
+  at most 30 calls); the rebake check walks a kept list of sfixtures (`spec`: every baked picture in every
+  scene is on one); doors keep their list (playtime-fc, doors.lua). `src/render/view.lua` holds the screen
+  rectangle for both cullers. Measured, 100 Mipos paused: play mode, normal camera 12.6 -> 5.0 ms (outlines
+  5.4 -> 0.8, rebake 2.4 -> 1.1, doors 1.1 -> 0.03; garbage 820 -> 123 KB); all on screen 36.4 -> 28.4 ms;
+  the editor's outlines 10 -> 0.75 ms. Left: the rebake check still asks each sfixture for its userData
+  (1.1 ms); the editor's signal wires (0.9 ms) scan the same way.
 - [ ] **L2. One texture per Mipo, a few draw calls.** Pack a Mipo's baked part pictures into one atlas at
   bake time, and draw its rigid parts (texfixtures, decals) as one mesh per Mipo, the part vertices
   moved on the CPU each frame; ribbons too if their strips use the atlas. The mouth (stencil) stays
