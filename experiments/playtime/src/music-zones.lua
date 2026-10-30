@@ -10,6 +10,8 @@
 local state = require('src.state')
 local behaviors = require('src.behaviors')
 local roomMusic = require('src.room-music')
+local music = require('src.music')
+local musicParams = require('src.music-params')
 
 local lib = {}
 
@@ -88,7 +90,6 @@ end
 
 local function switchTo(Z, body)
     if not Z.active then -- leaving the room's music: remember it
-        local music = require('src.music')
         local now = music.nowPlaying and music.nowPlaying()
         Z.outside = { style = music.style, layers = now and now.layers ~= 'custom' and now.layers or 'full' }
     end
@@ -106,10 +107,10 @@ end
 -- presets: they grow when the music session adds a style.
 function lib.refreshChoices()
     local choices = behaviors.musicZoneChoices
-    for _, row in ipairs(require('src.music-params').rows) do
+    for _, row in ipairs(musicParams.rows) do
         if row.key == 'style' then refill(choices.style, row.options) end
     end
-    refill(choices.layers, require('src.music').layerPresets or {})
+    refill(choices.layers, music.layerPresets or {})
 end
 
 -- A tick: x, y is the camera centre in world space.

@@ -16,6 +16,10 @@ local mipoRegistry = require('src.mipo-registry')
 local camera = require('src.camera')
 local logger = require('src.logger')
 local behaviors = require('src.behaviors')
+local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local library = require('src.library')
+local sceneLoader = require('src.scene-loader')
+local snap = require('src.physics.snap')
 
 -- On state so a hot reload keeps the rooms you've been in.
 state.rooms = state.rooms or { saved = {}, openDoor = nil, pending = nil, fade = 0 }
@@ -152,8 +156,6 @@ local function torsoPosition(traveler)
 end
 
 local function enterRoom(to, arrive, traveler)
-    local sceneLoader = require('src.scene-loader')
-    local pointerJoints = require('src.physics.box2d-pointerjoints')
     local cam = camera.getInstance()
 
     if R.saved[to] then
@@ -162,7 +164,7 @@ local function enterRoom(to, arrive, traveler)
     else
         sceneLoader.loadScriptAndScene(to)
     end
-    pointerJoints.resetPointerJoints()
+    box2dPointerJoints.resetPointerJoints()
     state.interaction.draggingObj = nil
     state.selection.selectedBodies = nil
 
@@ -184,11 +186,11 @@ local function enterRoom(to, arrive, traveler)
             for _, bodyData in ipairs(traveler.bodies) do lowest = math.max(lowest, bodyData.position[2]) end
             ay = bottom - ARRIVE_CLEARANCE - (lowest - ty)
         end
-        require('src.library').move(traveler, ax - tx, ay - ty)
+        library.move(traveler, ax - tx, ay - ty)
         local data = json.decode(json.encode(traveler))
         sceneIO.prepareLoaded(data)
         sceneIO.buildWorld(data, state.physicsWorld, cam, { additive = true })
-        require('src.physics.snap').onSceneLoaded()
+        snap.onSceneLoaded()
     end
     cam:setTranslation(ax, ay)
 end

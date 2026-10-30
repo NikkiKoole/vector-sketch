@@ -4,6 +4,12 @@
 -- from main.lua, paused or not, so the music keeps going in the editor and with impact sounds off
 -- (BUG7: it used to hang off mipoVoice.update). The Mipo voice keeps its own mouth flaps and impact cooldowns.
 
+local camera = require('src.camera')
+local music = require('src.music')
+local musicZones = require('src.music-zones')
+local snapSound = require('src.snap-sound')
+local state = require('src.state')
+
 local lib = {}
 
 local function now()
@@ -20,12 +26,12 @@ end
 function lib.update(dt, paused)
     local synth = getSynth()
     if not synth then return end
-    local cam = require('src.camera').getInstance()
+    local cam = camera.getInstance()
     synth.update(dt, cam)
-    if not paused then require('src.snap-sound').update(synth) end
+    if not paused then snapSound.update(synth) end
     local cx, cy = cam:getTranslation()
-    require('src.music-zones').update(dt, require('src.state').physicsWorld, cx, cy)
-    require('src.music').update(synth, now())
+    musicZones.update(dt, state.physicsWorld, cx, cy)
+    music.update(synth, now())
 end
 
 return lib

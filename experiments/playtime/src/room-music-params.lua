@@ -5,10 +5,12 @@
 local lib = {}
 
 local roomMusic = require('src.room-music')
+local music = require('src.music')
+local musicParams = require('src.music-params')
 
 -- the music section's style choices (src/music-params.lua), with 'keep' in front
 local function styles()
-    for _, row in ipairs(require('src.music-params').rows) do
+    for _, row in ipairs(musicParams.rows) do
         if row.key == 'style' then
             local out = { 'keep' }
             for _, name in ipairs(row.options) do out[#out + 1] = name end
@@ -22,7 +24,7 @@ end
 -- src/music.lua has them
 local function layerPresets()
     local out = { 'keep' }
-    for _, name in ipairs(require('src.music').layerPresets or {}) do out[#out + 1] = name end
+    for _, name in ipairs(music.layerPresets or {}) do out[#out + 1] = name end
     return out
 end
 

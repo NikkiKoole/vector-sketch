@@ -10,6 +10,7 @@
 -- Whatever music doesn't have yet is skipped (no cue: setting music.style cuts over at the next bar).
 
 local state = require('src.state')
+local music = require('src.music')
 
 local lib = {}
 
@@ -55,7 +56,6 @@ end
 -- Turn the music into s = { style, layers, at } ('keep' leaves that part as it is); music zones
 -- (src/music-zones.lua) send theirs through here too.
 function lib.apply(s)
-    local music = require('src.music')
     local layers = s.layers ~= 'keep' and s.layers or nil
     if s.style ~= 'keep' then
         if music.cue then
