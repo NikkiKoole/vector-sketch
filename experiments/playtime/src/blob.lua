@@ -90,7 +90,7 @@ end
 -- The picture's outline: shape8 points in texture space over `dimensions`. A picture
 -- without one gets an oval over its image.
 local function outlineOf(bgURL)
-    local shape = bgURL and require('src.character-manager').shape8Dict[bgURL]
+    local shape = bgURL and require('src.shape8-dict')[bgURL]
     if shape then return shape.vertices, shape.dimensions[1], shape.dimensions[2] end
     local w, h = 200, 200
     local info = bgURL and love.filesystem.getInfo('textures/' .. bgURL, 'file')

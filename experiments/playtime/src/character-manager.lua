@@ -922,103 +922,14 @@ function lib.mutateSizes(instance)
     lib.addTexturesFromInstance2(instance)
 end
 
--- 8-vertex polygon shapes for character body parts, keyed by texture filename
 -- Torso layers: above the ears (190), below the head (200) with its bodyhair too. Both
 -- used to be 200 (bodyhair 210), and same-z layers draw in fixture-id order: P4re5's
 -- torso bodyhair covered its head. Saved Mipos are moved over by migrateTorsoLayers.
 local TORSO_SKIN_Z = 192
 local TORSO_HAIR_ABOVE_SKIN = 5
 
-local shape8Dict = {
-    ['shapeA1.png'] = { dimensions = { 339, 560 },
-        vertices = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },
-    ['shapeA2.png'] = { dimensions = { 289, 468 },
-        vertices = { 11, -224, 60, -144, 59, -20, 133, 135, 4, 224, -133, 131, -51, -20, -39, -147, } },
-    ['shapeA3.png'] = { dimensions = { 370, 422 },
-        vertices = { -6, -189, 135, -69, 160, 45, 123, 154, -6, 189, -92, 153, -164, 53, -155, -67 } },
-    ['shapeA4.png'] = { dimensions = { 308, 414 },
-        vertices = { 7, -194, 133, -56, 126, 45, 101, 190, -6, 195, -129, 185, -134, 40, -110, -66 } },
-    ['shapes1.png'] = { dimensions = { 296, 495 },
-        vertices = { 10, -244, 133, -56, 135, 48, 124, 221, -0, 231, -128, 215, -138, 41, -134, -62 } },
-    ['shapes2.png'] = { dimensions = { 252, 461 },
-        vertices = { -3, -223, 74, -78, 89, 51, 104, 196, -0, 231, -92, 202, -94, 54, -61, -80 } },
-    ['shapes3.png'] = { dimensions = { 324, 442 },
-        vertices = { -3, -206, 132, -137, 148, 12, 110, 186, -6, 216, -97, 192, -149, 7, -141, -141 } },
-    ['shapes4.png'] = { dimensions = { 364, 266 },
-        vertices = { 0, -123, 164, -98, 148, 12, 157, 112, -1, 117, -149, 105, -149, 7, -168, -87 } },
-    ['shapes5.png'] = { dimensions = { 194, 338 },
-        vertices = { 0, -162, 74, -132, 78, -4, 73, 148, -2, 156, -81, 142, -84, 1, -87, -126, } },
-    ['shapes6.png'] = { dimensions = { 250, 384 },
-        vertices = { 3, -178, 77, -118, 92, -0, 93, 143, -2, 160, -85, 141, -92, 0, -67, -119 } },
-    ['shapes7.png'] = { dimensions = { 722, 929 },
-        vertices = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
-    ['shapes8.png'] = { dimensions = { 788, 708 },
-        vertices = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
-    ['shapes9.png'] = { dimensions = { 520, 468 },
-        vertices = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
-    ['shapes10.png'] = { dimensions = { 520, 856 },
-        vertices = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
-    ['shapes11.png'] = { dimensions = { 652, 932 },
-        vertices = { 4, -451, 110, -405, 195, 6, 306, 408, 13, 436, -277, 417, -205, -3, -114, -417 } },
-    ['shapes12.png'] = { dimensions = { 558, 323 },
-        vertices = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
-    ['shapes13.png'] = { dimensions = { 486, 556 },
-        vertices = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
-    ['feet2r.png'] = { dimensions = { 261, 475 },
-        vertices = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
-    ['feet6r.png'] = { dimensions = { 293, 612 },
-        vertices = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
-    ['feet5xr.png'] = { dimensions = { 174, 621 },
-        vertices = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
-    ['feet3xr.png'] = { dimensions = { 231, 505 },
-        vertices = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
-    ['feet7r.png'] = { dimensions = { 300, 546 },
-        vertices = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
-    ['feet8r.png'] = { dimensions = { 303, 465 },
-        vertices = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { dimensions = { 294, 489 },
-        vertices = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
-    ['feet7xr.png'] = { dimensions = { 216, 410 },
-        vertices = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
-    -- Ears: root is where the drawing meets the head, the middle of the bottom fifth of
-    -- the mask (measured; earx9r's two legs by hand). Vertex 5, used before, was off
-    -- to one side or well above the drawing's end on most of them.
-    ['earx1r.png'] = { dimensions = { 312, 416 }, root = { 35, 131 },
-        vertices = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
-    ['earx2r.png'] = { dimensions = { 354, 420 }, root = { -18, 129 },
-        vertices = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
-    ['earx3r.png'] = { dimensions = { 369, 339 }, root = { 41, 96 },
-        vertices = { -111, -116, -23, -48, 36, 13, 96, 70, -11, 74, -94, 70, -107, 15, -114, -49 } },
-    ['earx4r.png'] = { dimensions = { 306, 483 }, root = { -7, 133 },
-        vertices = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
-    ['earx5r.png'] = { dimensions = { 240, 549 }, root = { 1, 190 },
-        vertices = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
-    ['earx6r.png'] = { dimensions = { 240, 519 }, root = { 1, 176 },
-        vertices = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
-    ['earx7r.png'] = { dimensions = { 204, 474 }, root = { 9, 152 },
-        vertices = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
-    ['earx8r.png'] = { dimensions = { 402, 270 }, root = { -17, 81 },
-        vertices = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
-    ['earx9r.png'] = { dimensions = { 231, 243 }, root = { -7, 62 },
-        vertices = { -4, -81, 38, -60, 66, 0, 62, 38, -7, 59, -73, 49, -82, 7, -57, -59 } },
-    ['earx10r.png'] = { dimensions = { 168, 174 }, root = { -11, 58 },
-        vertices = { -3, -35, 29, -16, 32, 13, 35, 46, -7, 50, -50, 45, -45, 13, -37, -15 } },
-    ['earx11r.png'] = { dimensions = { 177, 150 }, root = { -17, 49 },
-        vertices = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
-    ['earx12r.png'] = { dimensions = { 240, 330 }, root = { 4, 101 },
-        vertices = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
-    ['earx13r.png'] = { dimensions = { 225, 336 }, root = { 31, 129 },
-        vertices = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
-    ['earx14r.png'] = { dimensions = { 270, 465 }, root = { 25, 156 },
-        vertices = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
-    ['earx15r.png'] = { dimensions = { 132, 228 }, root = { -16, 63 },
-        vertices = { -20, -78, 15, -36, 26, 11, 21, 66, -16, 63, -37, 40, -43, 12, -48, -36 } },
-    ['earx16r.png'] = { dimensions = { 312, 258 }, root = { 19, 73 },
-        vertices = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
-}
+local shape8Dict = require('src.shape8-dict')
 
-topology.setShape8Dict(shape8Dict)
-lib.shape8Dict = shape8Dict -- read by src/blob.lua (a blob's outline)
 
 local dna = {
     ['humanoid'] = {

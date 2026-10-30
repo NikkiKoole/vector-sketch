@@ -151,7 +151,7 @@ describe('the spine room', function()
             local top2 = height(t2)
             local _, bottom1 = height(t1)
             local dims = instance.dna.parts.torso1.dims
-            local whole = CM.shape8Dict[instance.dna.parts.torso1.shape8URL].dimensions[2] * math.abs(dims.sy)
+            local whole = require('src.shape8-dict')[instance.dna.parts.torso1.shape8URL].dimensions[2] * math.abs(dims.sy)
                 * instance.scale
             assert.is_true(math.abs((bottom1 - top2) - whole) < whole * 0.15,
                 string.format('bands span %d, the torso is %d', bottom1 - top2, whole))
@@ -306,7 +306,7 @@ describe('the spine room', function()
                     end
                 end
             end
-            local whole = CM.shape8Dict['shapeA3.png'].dimensions[2] * 1.2 * instance.scale
+            local whole = require('src.shape8-dict')['shapeA3.png'].dimensions[2] * 1.2 * instance.scale
             assert.is_true(math.abs((bottom - top) - whole) < whole * 0.15,
                 string.format('bands span %d, the new torso is %d', bottom - top, whole))
             -- without a spine each segment keeps its own shape

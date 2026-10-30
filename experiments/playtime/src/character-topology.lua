@@ -19,9 +19,9 @@ local sign = mathutils.sign
 local lerp = mathutils.clampedLerp
 local makeTransformedVertices = mathutils.scalePolygonPoints
 
--- Shape8 dictionary — set by character-manager at init time via lib.setShape8Dict()
-local shape8Dict
+local shape8Dict = require('src.shape8-dict')
 
+-- specs swap in their own shapes
 function lib.setShape8Dict(dict)
     shape8Dict = dict
 end

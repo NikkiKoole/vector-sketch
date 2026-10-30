@@ -172,9 +172,12 @@ L = more.
   the doubled `if edge` gone. `recreateJoint`'s missing-handler return was BUG1. Still small and open:
   `addThing` only wraps `createThing`, `reattachJoints`' A/B branches, `tranlateBody`.
   `spec/poly-edit_spec.lua`, `spec/fixtures_spec.lua`.
-- [ ] **CL23. `shape8Dict` as its own data file.** It lives in character-manager (:924-1015), gets
+- [x] **CL23. `shape8Dict` as its own data file.** It lives in character-manager (:924-1015), gets
   pushed into topology via `setShape8Dict`, and spine-skin / blob require character-manager lazily
   just to read it. Move it to shape-catalogs or its own file; the setter and lazy requires go. S.
+  **Done 2026-10-30:** `src/shape8-dict.lua` (data only); topology, spine-skin, blob and specs
+  require it, nothing loads character-manager to read shapes. `topology.setShape8Dict` stays for
+  specs (the topology spec puts the real shapes back after).
 - [ ] **CL24. Plain requires.** 134 lazy `require(` calls, 9 `local function x() return require(...) end`
   wrappers; the `state()` ones (sfixture-params:13, texfixture-params:10, world-params:8) and
   behaviors:9 break no cycle. Only registry ↔ snap needs a lazy require; comment it with the cycle.

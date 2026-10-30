@@ -29,7 +29,7 @@ function lib.bonesOf(body)
     local count = creation and creation.torsoSpine and creation.torsoSegments or 1
     if count < 2 then return nil end
     local topology = require('src.character-topology')
-    local shape8Dict = require('src.character-manager').shape8Dict
+    local shape8Dict = require('src.shape8-dict')
     local partData = instance.dna.parts.torso1
     local raw = partData.shape8URL and shape8Dict[partData.shape8URL]
     if not raw then return nil end

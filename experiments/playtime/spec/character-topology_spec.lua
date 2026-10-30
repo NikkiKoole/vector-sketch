@@ -605,6 +605,7 @@ describe("character-topology", function()
             topology.setShape8Dict(dict)
             map = topology.buildEntryMap(topology.resolve({ torsoSegments = 1, isPotatoHead = false }))
         end)
+        teardown(function() topology.setShape8Dict(require('src.shape8-dict')) end)
 
         it("sit on their own side of a lopsided head", function()
             local guy = makeGuy(0.5, 210) -- in front of the head: no inset
