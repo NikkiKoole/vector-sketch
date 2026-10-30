@@ -241,10 +241,28 @@ local function definePatches()
 end
 
 -- Loads the library and starts the render thread once; returns whether the synth is usable.
+-- The CDEF functions a library doesn't have. One built before synth.lua declared a new function
+-- would otherwise fail inside definePatches (dlsym: symbol not found) on the first sound.
+function lib.missingFunctions(C)
+    local missing = {}
+    for name in CDEF:gmatch('([%w_]+)%(') do
+        if not pcall(function() return C[name] end) then missing[#missing + 1] = name end
+    end
+    return missing
+end
+
+-- webtest/build-web.sh puts this in the .love only when it built desound.wasm for the page.
+lib.webSynthMarker = 'native/desound/web-synth'
+
 function lib.start()
     if S.started then return true end
     if S.failed then return false end
     if IS_WEB then
+        if not love.filesystem.getInfo(lib.webSynthMarker) then
+            S.failed = 'this web build has no desound.wasm (needs emcc and dreamengine at build time)'
+            print('[synth] ' .. S.failed)
+            return false
+        end
         S.C = require('src.synth-web')
         S.C.spatial_speed(0)
         definePatches()
@@ -264,6 +282,13 @@ function lib.start()
     local ok, C = pcall(ffi.load, path)
     if not ok then
         S.failed = tostring(C)
+        print('[synth] ' .. S.failed)
+        return false
+    end
+    local missing = lib.missingFunctions(C)
+    if #missing > 0 then
+        S.failed = lib.libPath .. ' is older than src/synth.lua, it lacks ' .. table.concat(missing, ', ')
+            .. ' (rerun native/desound/build.sh)'
         print('[synth] ' .. S.failed)
         return false
     end

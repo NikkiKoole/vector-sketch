@@ -17,7 +17,7 @@ PLAYTIME_DIR="$(cd "$WEBTEST_DIR/.." && pwd)"
 OUTPUT_DIR="$WEBTEST_DIR/output-${SCENE}"
 BUILD_DIR="$(mktemp -d)"
 LOVE_FILE="$BUILD_DIR.love"
-trap 'rm -rf "$BUILD_DIR" "$LOVE_FILE"' EXIT
+trap 'rm -rf "$BUILD_DIR" "$LOVE_FILE" "$BUILD_DIR.desound.wasm"' EXIT
 
 LOVEJS="${LOVEJS:-$(command -v love.js || ls "$HOME"/.nvm/versions/node/*/bin/love.js 2>/dev/null | head -1)}"
 [ -x "$LOVEJS" ] || { echo "love.js not found (npm i -g love.js, or set LOVEJS)" >&2; exit 1; }
@@ -45,22 +45,29 @@ echo "return { push = function() end, pop = function() end, write = function() e
 echo "return {}" > "$BUILD_DIR/vendor/ProFi.lua"
 echo "return { update = function() end, attach = function() end, detach = function() end }" > "$BUILD_DIR/vendor/peeker.lua"
 
-(cd "$BUILD_DIR" && zip -qr "$LOVE_FILE" . -x "*.DS_Store")
-
-# The synth for the page: the engine built to wasm, and the AudioWorklet that runs it.
+# The synth for the page: the engine built to wasm, and the AudioWorklet that runs it. Without it
+# the build still works: no marker, so src/synth.lua doesn't start and the Mipos use their samples.
 SYNTH_WASM="$BUILD_DIR.desound.wasm"
-if command -v emcc > /dev/null; then
-    "$PLAYTIME_DIR/native/desound/build-web.sh" "$SYNTH_WASM" > /dev/null
-else
+if ! command -v emcc > /dev/null; then
     echo "no emcc (brew install emscripten): building without the synth"
+elif ! "$PLAYTIME_DIR/native/desound/build-web.sh" "$SYNTH_WASM" > /dev/null; then
+    echo "the synth didn't build (dreamengine at ~/Projects/dreamengine? or set DREAMENGINE): building without it"
+    rm -f "$SYNTH_WASM"
+else
+    mkdir -p "$BUILD_DIR/native/desound"
+    echo "desound.wasm is next to index.html" > "$BUILD_DIR/native/desound/web-synth"
 fi
+
+(cd "$BUILD_DIR" && zip -qr "$LOVE_FILE" . -x "*.DS_Store")
 echo ".love: $(du -sh "$LOVE_FILE" | cut -f1)"
 
 rm -rf "$OUTPUT_DIR"
 "$LOVEJS" "$LOVE_FILE" "$OUTPUT_DIR" --title "Playtime: ${SCENE}" --memory 268435456 > /dev/null
 
 # A full-window page that starts the scene in play mode (`--play <scene>`, like ./playtime.sh play).
-sed -e "s/__SCENE__/${SCENE}/g" "$WEBTEST_DIR/index.template.html" > "$OUTPUT_DIR/index.html"
+HAS_SYNTH=false
+[ -f "$SYNTH_WASM" ] && HAS_SYNTH=true
+sed -e "s/__SCENE__/${SCENE}/g" -e "s/__SYNTH__/${HAS_SYNTH}/g" "$WEBTEST_DIR/index.template.html" > "$OUTPUT_DIR/index.html"
 if [ -f "$SYNTH_WASM" ]; then
     cp "$SYNTH_WASM" "$OUTPUT_DIR/desound.wasm"
     cp "$WEBTEST_DIR/desound-processor.js" "$OUTPUT_DIR/"

@@ -52,7 +52,7 @@
       // The synth: src/synth-web.lua prints each frame's synth calls as one '@desound' line;
       // they go to the engine (desound.wasm) in an AudioWorklet (desound-processor.js).
       // Browsers only start audio after a click or key, so the calls wait until then.
-      var desound = { node: null, context: null, waiting: [] };
+      var desound = { built: __SYNTH__, node: null, context: null, waiting: [] }; // built: has desound.wasm
       function desoundSend(line) {
         var parts = line.split('\t');
         var message = { t: Number(parts[1]), calls: parts.slice(2) };
@@ -64,6 +64,7 @@
       }
       // On every click or key: start the audio the first time, and wake it if the browser put it to sleep.
       function desoundStart() {
+        if (!desound.built) return;
         if (desound.context) {
           if (desound.context.state === 'suspended') desound.context.resume();
           return;

@@ -26,4 +26,5 @@ In the browser:
 
 The web build needs love.js (`npm i -g love.js`); for the synth also emscripten
 (`brew install emscripten`) and dreamengine checked out at ~/Projects/dreamengine.
-More in docs/WEB-EXPORT-LOVEJS.md.
+Without those (or without native/desound/build.sh run on the desktop) there's no synth
+music, and the Mipos use their sound samples instead. More in docs/WEB-EXPORT-LOVEJS.md.

@@ -60,7 +60,10 @@ tab goes to the editor. Rebuild after changing code: the build is a snapshot, no
 
 **Needs:** love.js 11.4 (`npm i -g love.js`; found on PATH or under ~/.nvm, or set `LOVEJS`), and for
 the synth emcc (`brew install emscripten`) plus a dreamengine checkout at `~/Projects/dreamengine`
-(or set `DREAMENGINE`). Without emcc the build still works, just without the synth.
+(or set `DREAMENGINE`). Without either, the build still works without the synth: it says so, the page
+doesn't load audio, `synth.start()` returns false ("this web build has no desound.wasm") and the
+Mipos use their samples, as on a desktop without `libdesound.dylib`. A desktop library older than
+`src/synth.lua` is caught the same way (`synth.missingFunctions`, spec/synth-missing_spec.lua).
 
 **Poking at it:** in the browser console (or Chrome's javascript tool),
 `await playtime.eval('return state.playMode')` runs Lua in the game (WEB4). Lua's `print` goes to
