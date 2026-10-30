@@ -11,6 +11,7 @@ local mouthShapes = require('src.mouth-shapes')
 local units = require('src.physics-units')
 local mathutils = require('src.math-utils')
 local behaviors = require('src.behaviors')
+local music = require('src.music')
 
 local lib = {}
 
@@ -371,7 +372,7 @@ local function playImpact(kind, body1, body2, speed, source)
     if synth then
         -- soft hits high, hard hits low (like the samples' pitch 2 -> 1), a step of jitter either way
         -- in the background music's current chord when it plays, else the fixed pentatonic
-        local notes = require('src.music').chordNotes(57, 74) or lib.plonkNotes
+        local notes = music.chordNotes(57, 74) or lib.plonkNotes
         local index = math.floor(mapInto(speed, sound.soft, sound.hard, #notes, 1) + 0.5) + love.math.random(-1, 1)
         index = mathutils.clamp(index, 1, #notes)
         local x1, y1 = body1:getPosition()
@@ -387,7 +388,7 @@ local function playImpact(kind, body1, body2, speed, source)
             if size > sound.bigSize then transpose = transpose - 12 end
         end
         synth.hit(patch, notes[index] + transpose, vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
-        require('src.music').bump(1) -- busy play brings the upright into the background music
+        music.bump(1) -- busy play brings the upright into the background music
         return
     end
     if not impactSources[kind] then

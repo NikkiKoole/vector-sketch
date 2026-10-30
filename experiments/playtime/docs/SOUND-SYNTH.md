@@ -25,7 +25,7 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md). The Mipo voices, Puppetma
 The main thread calls the dreamengine API, which drops commands into a lock-free queue. The render thread calls `de_lua_render_s16`. This is still safe on iOS with the JIT off, because FFI keeps working there (link statically and use `ffi.C`).
 
 ## synth.lua API
-- `start()`, `isRunning()`, `stop()`, and `update(dt, camera)` (moves the listener for stereo placement).
+- `start()`, `stop()`, and `update(dt, camera)` (moves the listener for stereo placement).
 - `hit(patch, midi, vol, durMs, x, y)` plays a one-shot note at a world position.
 - `noteOn(patch, midi, vol, x, y)` returns a handle; then `noteSet(handle, ...)` and `noteOff(handle)`.
 - `audioTime()` and `scheduleAt(patch, t, midi, vol, durMs)` book sample-accurate notes. The music uses these.
@@ -36,7 +36,7 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - The chords are "played": the notes drift in one by one, and the Rhodes' left hand plays the bass.
 - `music.bump()` on each impact raises a play level. When it gets high the drums join (where the song's form lets them), and they leave again when play calms down.
 - `music.chordNotes(lo, hi)` gives sound effects notes from the chord sounding right now, so impacts are in key.
-- `music.onNote(name, fn)` hears every booked note, `fn(part, patch, midi, vol, durMs, t, step)`. `t` is the audio time, ~0.3 s ahead. Puppetmaker's parts are 'perc', 'chord' and 'sample'; a 'sample' is a recording for the listener to play (ba, bi, biep2, biep3, pi, po3; midi 60 = its own pitch), and the synth plays nothing. `nowPlaying().stepTime / stepLen` and `music.stepAt(s)` give the swung grid. The Mipos' band reactions (`src/mipo-band.lua`) use them.
+- `music.onNote(name, fn)` hears every booked note, `fn(part, patch, midi, vol, durMs, t, step)`. `t` is the audio time, ~0.3 s ahead. Puppetmaker's parts are 'perc', 'chord' and 'sample'; a 'sample' is a recording for the listener to play (ba, bi, biep2, biep3, pi, po3; midi 60 = its own pitch), and the synth plays nothing. `nowPlaying().stepTime / stepLen` give the latest bar's grid. The Mipos' band reactions (`src/mipo-band.lua`) use them.
 - A picked style starts at the next bar, at its first A, with the tune and the band in (`audition`).
 - The settings are at the top of `src/music.lua`: style ('set' or one style), set, rhythmSection, upright, melody, melodyPatch, and more. `music.nowPlaying()` says which style, key and section is playing.
 

@@ -2339,13 +2339,6 @@ function lib.chordNotes(lo, hi)
     return #notes > 0 and notes or nil
 end
 
--- The audio time of 16th step s (0..15, fractions fine) of the latest booked bar, on the song's swing.
-function lib.stepAt(s)
-    local song = M.song
-    if not (song and M.barStart) then return nil end
-    return stepTime(song, M.barStart, s)
-end
-
 -- Which instruments are playing, per part, for the settings panel (and the bridge): a list of
 -- { part, patches = { { name, now } } } in a fixed part order, holding each patch heard in the last
 -- `window` seconds (default 4); now = sounding at this moment.

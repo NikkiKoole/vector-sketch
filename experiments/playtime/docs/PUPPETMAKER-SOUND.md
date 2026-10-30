@@ -11,7 +11,7 @@ or change them, the mi… po… chatter, and a band they sing along with and mov
 `../puppet-maker2`, `../../lib/melody-paint-audio-*.lua`). Part 2 is what
 Playtime already has. Part 3 is the order to build the rest; tick it there.
 Related: section 4 "Voice" (V1–V6, moved here from DOLL-PLAY), `SOUND-SYNTH.md` (the synth, its slot map and gotchas, the
-music's onNote / stepAt; the puppetmaker and strum styles there and in `MUSIC-IDEAS.md`),
+music's onNote / nowPlaying; the puppetmaker and strum styles there and in `MUSIC-IDEAS.md`),
 `src/mipo-voice.lua`, `src/music.lua`.
 
 **After pulling (or on a new machine): rebuild the synth.** `native/desound/libdesound.dylib`

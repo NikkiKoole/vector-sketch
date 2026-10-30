@@ -5,6 +5,7 @@
 
 local state = require('src.state')
 local snap = require('src.physics.snap')
+local music = require('src.music')
 
 local lib = {}
 
@@ -33,7 +34,7 @@ function lib.update(synth)
     for _, joint in ipairs(fresh) do
         if not joint:isDestroyed() then
             local x, y = joint:getAnchors()
-            local notes = require('src.music').chordNotes(84, 98) or lib.notes -- in the music's chord
+            local notes = music.chordNotes(84, 98) or lib.notes -- in the music's chord
             synth.hit(lib.patch, notes[love.math.random(#notes)], lib.vol, 30, x, y)
         end
     end

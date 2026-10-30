@@ -310,7 +310,7 @@ function lib.start()
             print('[synth] ' .. S.failed)
             return false
         end
-        S.C = require('src.synth-web')
+        S.C = require('src.synth-web') -- here, not on top: only the web build has it
         S.C.spatial_speed(0)
         definePatches()
         S.started = true
@@ -349,10 +349,6 @@ function lib.start()
     S.thread:start(path)
     S.started = true
     return true
-end
-
-function lib.isRunning()
-    return S.started
 end
 
 function lib.stop()

@@ -13,6 +13,7 @@
 local lib = {}
 
 local state = require('src.state')
+local synthModule = require('src.synth')
 
 local SAMPLE_SLOT = 7
 local PLAYER, SINGER = 45, 46
@@ -28,8 +29,7 @@ state.voiceLab = state.voiceLab or { set = 'puppetmaker', index = 1, speed = 0, 
 local L = state.voiceLab
 
 local function synth()
-    local ok, s = pcall(require, 'src.synth')
-    if ok and s.start() then return s, state.synth.C end
+    if synthModule.start() then return synthModule, state.synth.C end
     return nil
 end
 
@@ -65,7 +65,7 @@ local function pcm(path)
     local data = love.sound.newSoundData(path)
     local rate, channels, count = data:getSampleRate(), data:getChannelCount(), data:getSampleCount()
     local n = math.floor(count * RATE / rate)
-    local ffi = require('ffi')
+    local ffi = require('ffi') -- here, not on top: the web build has no ffi
     local out = ffi.new('float[?]', n)
     for i = 0, n - 1 do
         local pos = i * rate / RATE
@@ -95,11 +95,10 @@ local function prepare(C, plain)
     C.sample_load(SAMPLE_SLOT, data, n)
     if shift ~= 0 then C.sample_shift(SAMPLE_SLOT, shift) end
     if size ~= 0 then C.sample_formant(SAMPLE_SLOT, -size) end -- sample_formant: + = smaller
-    local s = require('src.synth')
     -- instrument() first: it clears the sample binding
-    C.instrument(PLAYER, s.INSTR.SAMPLE, 1, 0, 7, 40)
+    C.instrument(PLAYER, synthModule.INSTR.SAMPLE, 1, 0, 7, 40)
     C.instrument_sample(PLAYER, SAMPLE_SLOT, 60)
-    C.instrument(SINGER, s.INSTR.SING, 4, 10, 7, 90)
+    C.instrument(SINGER, synthModule.INSTR.SING, 4, 10, 7, 90)
     C.instrument_mode(SINGER, MODE_SING_ONESHOT, 1) -- the take once through (dreamengine #46)
     C.instrument_sample(SINGER, SAMPLE_SLOT, 60)
     L.loaded, L.seconds = key, seconds
