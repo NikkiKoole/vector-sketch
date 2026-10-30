@@ -1,4 +1,4 @@
--- A sampling profiler for the running game (docs/MEASURING.md): LuaJIT's jit.profile notes, about a
+-- A sampling profiler for the running game (docs/MEASURING.md): LuaJIT's jit.profile notes, a
 -- hundred times a second, which function runs and who called it. A few % overhead, so the game runs
 -- at its real speed and tiny functions called thousands of times a frame don't look heavier than
 -- they are (ProFi's call hooks made the game ~40x slower and did). Desktop only (LuaJIT).
@@ -59,8 +59,10 @@ local function finish()
     run = nil
 end
 
--- Sample for `seconds` (default 10). Stops itself; the report is in lib.report.
-function lib.start(seconds, mode)
+-- Sample for `seconds` (default 10), every `interval` ms (default 10). Stops itself; the report is
+-- in lib.report. Not much below 10 ms: the sampler is a timer signal, and a C call slower than the
+-- interval (a 125 ms draw with 200 Mipos) kept being interrupted and restarted: the game hung.
+function lib.start(seconds, mode, interval)
     if run then return 'already running' end
     local ok, prof = pcall(require, 'jit.profile')
     if not ok then return 'no jit.profile here (the web build has no LuaJIT)' end
@@ -68,7 +70,7 @@ function lib.start(seconds, mode)
     lib.report = nil
     run = { samples = 0, states = {}, self = {}, total = {}, stacks = {}, seconds = seconds or 10,
         started = love.timer.getTime() }
-    prof.start(mode .. 'i1', function(thread, samples, vmstate)
+    prof.start(mode .. 'i' .. (interval or 10), function(thread, samples, vmstate)
         run.samples = run.samples + samples
         run.states[vmstate] = (run.states[vmstate] or 0) + samples
         local stack = prof.dumpstack(thread, mode .. ';', -DEPTH):gsub(';$', '')

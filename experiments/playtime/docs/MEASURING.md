@@ -46,6 +46,22 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   time. The split (sample-profile): ~89% C (Box2D, LÖVE drawing, driver), ~10% Lua, ~1.3% GC; of
   the Lua time createDrawables is 32%. ProFi: 8500 `thingOf`, 14000 `subtypes.is`, 3000
   `physics-units.factors` calls a frame.
+  **200 Mipos, physics paused (2026-10-30)**, the crowd plus default Mipos on a grid; paused means
+  no world step and no Mipo behaviour, only drawing and face animation:
+
+  | Mipos | update | draw | textured: texfixture / ribbons / list / sort | garbage | draw calls | textures |
+  |---|---|---|---|---|---|---|
+  | 20  | 0.9 ms  | 12.4 ms  | 2.7 / 2.3 / 1.3 / 0.3   | 0.6 MB | 612  | 80 MB  |
+  | 50  | 2.6 ms  | 27.6 ms  | 6.0 / 5.3 / 3.3 / 0.8   | 1.2 MB | 1395 | 115 MB |
+  | 100 | 9.4 ms  | 59.7 ms  | 12.7 / 11.0 / 7.4 / 1.9 | 2.4 MB | 2700 | 172 MB |
+  | 200 | 25 ms   | 125 ms   | 27.5 / 23.6 / 16.1 / 4.3 | 4.8 MB | 5310 | 286 MB |
+
+  Drawing grows in step with the Mipos: ~0.6 ms each (~8 fps at 200). The paused update grows
+  faster (mipo face 0.3 -> 11.7 ms, blobs-before 0.3 -> 9.9 ms with no blobs): their loops are
+  linear, but they allocate first after the draw's garbage, so the GC's steps are charged to them.
+  The sampler: GC 1.3% of the time at 20 Mipos, 5.4% at 200; Lua 10% -> 40%. So the garbage (M7)
+  matters more the more Mipos there are. Making a Mipo: 2-5 ms (more with more Mipos around).
+  Texture memory ~1.1 MB a default Mipo.
 - [ ] **M4. Memory over a long session.** The image and OMP caches are never cleared (DEEPER-ISSUES).
   The bake is one module now (`render/omp-bake.lua`): count what's cached, watch it over 10 minutes
   of randomizing (M3 can run that), then cap or clear it.
