@@ -24,6 +24,7 @@ local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local sceneLoader = require('src.scene-loader')
 local script = require('src.script')
 local SE = require('src.script-events')
+local CM = require('src.character-manager')
 
 local RAIL_X = 10
 local RAIL_TOP = 60
@@ -118,7 +119,6 @@ local spawnedMipo = nil
 
 local function spawnMipo(kind)
     ui.draggingActive = ui.activeElementID
-    local CM = require('src.character-manager')
     local wx, wy = cam:getWorldCoordinates(love.mouse.getPosition())
     local instance = CM.createCharacter('humanoid', wx, wy, 0.3)
     if not instance then return end

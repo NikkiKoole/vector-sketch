@@ -5,13 +5,16 @@
 -- old one. `visible(joint)` hides rows (limit sliders while limits are off).
 -- Ranges are the ones the old panel (src/ui/joint-update.lua) used.
 local JT = require('src.joint-types')
+local joints = require('src.joints')
+local mathutils = require('src.math-utils')
+local modes = require('src.modes')
+local registry = require('src.registry')
+local state = require('src.state')
 
 local lib = {}
 
--- lazy: joints -> registry -> snap -> ...
 local function recreate(joint, settings)
-    local state = require('src.state')
-    local newJoint = require('src.joints').recreateJoint(joint, settings)
+    local newJoint = joints.recreateJoint(joint, settings)
     state.selection.selectedJoint = newJoint
     return newJoint
 end
@@ -27,10 +30,9 @@ lib.header = {
       end },
     { kind = 'action', label = 'destroy',
       run = function(_, joint)
-          local joints = require('src.joints')
-          require('src.registry').unregisterJoint(joints.getJointId(joint))
+          registry.unregisterJoint(joints.getJointId(joint))
           joint:destroy()
-          require('src.state').selection.selectedJoint = nil
+          state.selection.selectedJoint = nil
           return true -- gone: stop drawing this panel
       end },
 }
@@ -49,9 +51,9 @@ local collide = { key = 'collide', kind = 'bool', advanced = true,
     set = function(joint, v) return recreate(joint, { collideConnected = v }) end }
 
 local anchorA = { kind = 'action', label = '∆ anchor',
-    run = function() local modes = require('src.modes'); modes.set(modes.SET_OFFSET_A) end }
+    run = function() modes.set(modes.SET_OFFSET_A) end }
 local anchorB = { kind = 'action', label = '∆ anchor B',
-    run = function() local modes = require('src.modes'); modes.set(modes.SET_OFFSET_B) end }
+    run = function() modes.set(modes.SET_OFFSET_B) end }
 
 local function limitsOn(joint) return joint:areLimitsEnabled() end
 local function motorOn(joint) return joint:isMotorEnabled() end
@@ -107,7 +109,7 @@ local axis = {
       set = function(joint, v) local ax = joint:getAxis(); return recreate(joint, { axisX = ax, axisY = v }) end },
     { kind = 'action', label = 'normalize axis', advanced = true,
       run = function(_, joint)
-          local ax, ay = require('src.math-utils').normalizeAxis(joint:getAxis())
+          local ax, ay = mathutils.normalizeAxis(joint:getAxis())
           return recreate(joint, { axisX = ax, axisY = ay })
       end },
 }

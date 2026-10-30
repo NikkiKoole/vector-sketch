@@ -1,3 +1,5 @@
+local state = require('src.state')
+
 local modes = {}
 
 modes.DRAW_CLICK             = 'drawClickMode'
@@ -25,22 +27,18 @@ function modes.set(mode)
     if not validModes[mode] then
         print('[modes] WARNING: unknown mode "' .. tostring(mode) .. '"')
     end
-    local state = require('src.state')
     state.currentMode = mode
 end
 
 function modes.clear()
-    local state = require('src.state')
     state.currentMode = nil
 end
 
 function modes.is(mode)
-    local state = require('src.state')
     return state.currentMode == mode
 end
 
 function modes.get()
-    local state = require('src.state')
     return state.currentMode
 end
 

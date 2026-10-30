@@ -3,6 +3,9 @@
 -- src/behaviors.lua): a label column plus one widget per row, basic rows first,
 -- advanced rows behind a 'more' fold. Plan: docs/EDITOR-INSPECTOR-LIBRARY.md.
 local ui = require('src.ui.all')
+local color = require('src.color')
+local fileBrowser = require('src.file-browser')
+local state = require('src.state')
 
 local lib = {}
 
@@ -87,22 +90,21 @@ local function drawRow(id, row, target, body, x, y, w, labelWidth)
         ui.alignedLabel(x, y + DY, labelOf(row, target), { 1, 1, 1, 0.6 })
     elseif row.kind == 'color' then -- swatch (opens the palette) + hex field
         local hex = valueOf(row, target)
-        local r, g, b, a = require('src.color').hexToColor(hex or 'ffffffff')
+        local r, g, b, a = color.hexToColor(hex or 'ffffffff')
         if ui.button(wx, y + DY, 30, '', nil, { r, g, b, a }) then
-            local state = require('src.state')
             if state.panelVisibility.showPalette then
                 state.panelVisibility.showPalette = nil
                 state.showPaletteFunc = nil
             else
                 state.panelVisibility.showPalette = true
-                state.showPaletteFunc = function(color) setValue(row, target, color) end
+                state.showPaletteFunc = function(picked) setValue(row, target, picked) end
             end
         end
         local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, FIELD_H, 'hex', hex or '')
         if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
     elseif row.kind == 'file' then -- '…' opens the texture browser + the file name
         if ui.button(wx, y + DY, 30, '...') then
-            require('src.file-browser'):open('/textures', { excludes = '-mask' }, function(path)
+            fileBrowser:open('/textures', { excludes = '-mask' }, function(path)
                 setValue(row, target, path:match('/textures/(.+)$') or path) -- the renderer prepends textures/
             end)
         end

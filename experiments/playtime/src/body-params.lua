@@ -8,22 +8,25 @@
 local ST = require('src.shape-types')
 local shapes = require('src.shapes')
 local mathutils = require('src.math-utils')
+local library = require('src.library')
+local objectManager = require('src.object-manager')
+local snap = require('src.physics.snap')
+local state = require('src.state')
 
 local lib = {}
 
--- lazy: object-manager -> registry -> snap -> ...
 local function selectThing(newThing)
-    require('src.state').selection.selectedObj = newThing
+    state.selection.selectedObj = newThing
     return newThing
 end
 
 local function rebuild(thing, settings)
     settings.shapeType = thing.shapeType
-    local prefs = require('src.state').editorPreferences
+    local prefs = state.editorPreferences
     for _, k in ipairs({ 'width', 'height', 'radius' }) do
         if settings[k] then prefs['lastUsed' .. k:sub(1, 1):upper() .. k:sub(2)] = settings[k] end
     end
-    return selectThing(require('src.object-manager').recreateThingFromBody(thing.body, settings))
+    return selectThing(objectManager.recreateThingFromBody(thing.body, settings))
 end
 
 -- Collision fixtures only: sfixtures (sensors with userData) come first on a
@@ -71,7 +74,7 @@ local function height(thing) return thing.height end
 
 local function flip(axis)
     return { kind = 'action', label = 'flip ' .. axis,
-        run = function(_, thing) return selectThing(require('src.object-manager').flipThing(thing, axis, true)) end }
+        run = function(_, thing) return selectThing(objectManager.flipThing(thing, axis, true)) end }
 end
 
 lib.rows = {
@@ -81,16 +84,15 @@ lib.rows = {
       set = function(thing, v) thing.label = v end },
     { kind = 'action', label = 'clone',
       run = function(_, thing)
-          local state = require('src.state')
-          state.selection.selectedBodies = require('src.library').clone({ thing })
+          state.selection.selectedBodies = library.clone({ thing })
           state.selection.selectedObj = nil
           return true -- the selection moved to the clone
       end },
     { kind = 'action', label = 'destroy',
       run = function(body)
-          require('src.physics.snap').destroySnapJointAboutBody(body)
-          require('src.object-manager').destroyBody(body)
-          require('src.state').selection.selectedObj = nil
+          snap.destroySnapJointAboutBody(body)
+          objectManager.destroyBody(body)
+          state.selection.selectedObj = nil
           return true -- gone: stop drawing this panel
       end },
     { key = 'type', kind = 'choice', options = { 'static', 'dynamic', 'kinematic' },

@@ -1,6 +1,9 @@
 -- fixture-types.lua — data-driven registry for sfixture creation
 local subtypes = require('src.subtypes')
 local shapes = require('src.shapes')
+local blobs = require('src.blob')
+local grass = require('src.grass')
+local liquid = require('src.liquid')
 
 local rect = shapes.rect
 
@@ -48,7 +51,7 @@ fixtureTypes[subtypes.GRASS] = {
     getSize = function(cfg) return cfg.radius, cfg.radius end,
     getExtra = function()
         local extra = { zOffset = 0, zGroupOffset = 0 }
-        for k, v in pairs(require('src.grass').defaults) do extra[k] = v end
+        for k, v in pairs(grass.defaults) do extra[k] = v end
         return extra
     end,
 }
@@ -57,14 +60,14 @@ fixtureTypes[subtypes.SOFTBODY] = {
     subtype = subtypes.SOFTBODY,
     density = 0,
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
-    getExtra = function() return require('src.blob').newExtra() end,
+    getExtra = function() return blobs.newExtra() end,
 }
 -- water in a container: the cavity and the amount come from extra (src/liquid.lua)
 fixtureTypes[subtypes.LIQUID] = {
     subtype = subtypes.LIQUID,
     density = 0,
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
-    getExtra = function() return require('src.liquid').newExtra() end,
+    getExtra = function() return liquid.newExtra() end,
 }
 fixtureTypes[subtypes.RESOURCE] = simpleEntry(subtypes.RESOURCE, {
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,

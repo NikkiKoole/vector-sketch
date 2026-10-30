@@ -10,6 +10,9 @@ local utils = require('src.utils')
 
 local state = require('src.state')
 local textured = require('src.physics.box2d-draw-textured')
+local fixtures = require('src.fixtures')
+local mathutils = require('src.math-utils')
+local modes = require('src.modes')
 
 local function extraOf(fixture) return fixture:getUserData().extra end
 
@@ -20,17 +23,17 @@ local function layerOf(fixture, layer)
 end
 
 local function startVertexEdit(fixture)
-    state.texFixtureEdit.tempVerts = require('src.utils').shallowCopy(extraOf(fixture).vertices)
+    state.texFixtureEdit.tempVerts = utils.shallowCopy(extraOf(fixture).vertices)
 end
 
 local function dimensions(fixture)
     local points = extraOf(fixture).vertices or { fixture:getShape():getPoints() }
-    return require('src.math-utils').getPolygonDimensions(points)
+    return mathutils.getPolygonDimensions(points)
 end
 
 -- resizing replaces the fixture: select the new one
 local function resize(fixture, w, h)
-    local newFixture = require('src.fixtures').updateSFixtureDimensions(fixture, w, h)
+    local newFixture = fixtures.updateSFixtureDimensions(fixture, w, h)
     state.selection.selectedSFixture = newFixture
     return newFixture
 end
@@ -44,11 +47,11 @@ end
 
 lib.position = {
     { kind = 'action', label = '∆ move',
-      run = function() local modes = require('src.modes'); modes.set(modes.POSITIONING_SFIXTURE) end },
+      run = function() modes.set(modes.POSITIONING_SFIXTURE) end },
     { kind = 'action', label = 'centre on body',
       run = function(_, fixture)
           local body = fixture:getBody()
-          local newFixture = require('src.fixtures').updateSFixturePosition(fixture, body:getX(), body:getY())
+          local newFixture = fixtures.updateSFixturePosition(fixture, body:getX(), body:getY())
           state.selection.selectedSFixture = newFixture
           startVertexEdit(newFixture)
           return newFixture
@@ -57,7 +60,7 @@ lib.position = {
       run = function(_, fixture, option)
           local w, h
           if option == 'body' then
-              local _, _, bw, bh = require('src.math-utils').getCenterAndDimensions(fixture:getBody())
+              local _, _, bw, bh = mathutils.getCenterAndDimensions(fixture:getBody())
               w, h = bw, bh
           else
               w, h = imageSize(fixture)

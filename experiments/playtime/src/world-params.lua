@@ -6,6 +6,8 @@
 local lib = {}
 
 local state = require('src.state')
+local ProFi = require('vendor.ProFi')
+local registry = require('src.registry')
 
 local function flag(key, label, advanced)
     return { key = label, kind = 'bool', advanced = advanced,
@@ -23,7 +25,6 @@ local profileFrames = 0
 
 -- Profile 60 frames with ProFi, then write profilingReport.txt.
 local function stopProfiling(world)
-    local ProFi = require('vendor.ProFi')
     ProFi:stop()
     ProFi:writeReport('profilingReport.txt')
     world.profiling = false
@@ -71,14 +72,14 @@ lib.rows = {
               stopProfiling(world)
           else
               profileFrames = 0
-              require('vendor.ProFi'):start()
+              ProFi:start()
               world.profiling = true
           end
       end },
     { kind = 'note', advanced = true,
       label = function(world) return string.format('%d px per metre (--meter)', world.meter) end },
     { kind = 'note', advanced = true,
-      label = function() return require('src.registry').print() end },
+      label = function() return registry.print() end },
     { kind = 'note', advanced = true,
       label = function()
           local stats = love.graphics.getStats()

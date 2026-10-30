@@ -11,8 +11,13 @@ local utils = require('src.utils')
 
 local lib = {}
 
--- lazy: fixtures -> registry -> snap -> ...
 local state = require('src.state')
+local NT = require('src.node-types')
+local blobs = require('src.blob')
+local fixtures = require('src.fixtures')
+local joints = require('src.joints')
+local mathutils = require('src.math-utils')
+local modes = require('src.modes')
 
 local function extraOf(fixture) return fixture:getUserData().extra end
 
@@ -26,7 +31,7 @@ lib.header = {
     { key = 'label', kind = 'text', keepSpaces = true,
       get = function(fixture) return fixture:getUserData().label or '' end,
       set = function(fixture, v)
-          local ud = require('src.utils').shallowCopy(fixture:getUserData())
+          local ud = utils.shallowCopy(fixture:getUserData())
           ud.label = v
           fixture:setUserData(ud)
       end },
@@ -35,7 +40,7 @@ lib.header = {
 lib.footer = {
     { kind = 'action', label = 'destroy',
       run = function(_, fixture)
-          require('src.fixtures').destroyFixture(fixture)
+          fixtures.destroyFixture(fixture)
           state.selection.selectedSFixture = nil
           return true -- gone: stop drawing this panel
       end },
@@ -44,7 +49,6 @@ lib.footer = {
 -- Move the sfixture to an edge (N/E/S/W) or the centre (C) of its body's
 -- bounding box, keeping its shape.
 function lib.placeOnEdge(fixture, place)
-    local mathutils = require('src.math-utils')
     local m = ({ N = { 0, -1 }, E = { 1, 0 }, S = { 0, 1 }, W = { -1, 0 }, C = { 0, 0 } })[place]
     local body = fixture:getBody()
     local bounds = mathutils.getBoundingRect(utils.thingOf(body).vertices)
@@ -52,23 +56,23 @@ function lib.placeOnEdge(fixture, place)
     local cx, cy = mathutils.getCenterOfPoints(points)
     local relative = mathutils.makePolygonRelativeToCenter(points, cx, cy)
     local moved = mathutils.makePolygonAbsolute(relative, (bounds.width / 2) * m[1], (bounds.height / 2) * m[2])
-    return selectFixture(require('src.fixtures').replaceShape(fixture, moved))
+    return selectFixture(fixtures.replaceShape(fixture, moved))
 end
 
 local position = {
     { kind = 'action', label = '∆ move',
-      run = function() local modes = require('src.modes'); modes.set(modes.POSITIONING_SFIXTURE) end },
+      run = function() modes.set(modes.POSITIONING_SFIXTURE) end },
     { kind = 'action', label = 'centre',
       run = function(_, fixture)
           local body = fixture:getBody()
-          return selectFixture(require('src.fixtures').updateSFixturePosition(fixture, body:getX(), body:getY()))
+          return selectFixture(fixtures.updateSFixturePosition(fixture, body:getX(), body:getY()))
       end },
     { key = 'radius', kind = 'number', min = 1, max = 200, step = 1,
       get = function(fixture)
-          return require('src.math-utils').getPolygonDimensions({ fixture:getShape():getPoints() })
+          return mathutils.getPolygonDimensions({ fixture:getShape():getPoints() })
       end,
       set = function(fixture, v)
-          return selectFixture(require('src.fixtures').updateSFixtureDimensions(fixture, v, v))
+          return selectFixture(fixtures.updateSFixtureDimensions(fixture, v, v))
       end },
     { key = 'place', kind = 'buttons', options = { 'N', 'E', 'S', 'W', 'C' }, advanced = true,
       run = function(_, fixture, option) return lib.placeOnEdge(fixture, option) end },
@@ -159,13 +163,12 @@ lib.bySubtype = {
     -- a texture strip along a chain of nodes (joints, anchors)
     [subtypes.CONNECTED_TEXTURE] = concat({
         { kind = 'action', label = function(fixture) return 'add node (' .. #(extraOf(fixture).nodes or {}) .. ')' end,
-          run = function() local modes = require('src.modes'); modes.set(modes.ADD_NODE_CONNECTED_TEX) end },
+          run = function() modes.set(modes.ADD_NODE_CONNECTED_TEX) end },
         { kind = 'action', label = 'nodes from joints',
           run = function(_, fixture)
-              local joints = require('src.joints')
               local nodes = {}
               for _, joint in ipairs(joints.jointChain(fixture:getBody())) do
-                  nodes[#nodes + 1] = { id = joints.getJointId(joint), type = require('src.node-types').JOINT }
+                  nodes[#nodes + 1] = { id = joints.getJointId(joint), type = NT.JOINT }
               end
               extraOf(fixture).nodes = nodes
           end },
@@ -267,7 +270,7 @@ lib.bySubtype = {
         { kind = 'action', label = 'new look',
           run = function(_, fixture)
               local e = extraOf(fixture)
-              e.main = require('src.blob').randomLook()
+              e.main = blobs.randomLook()
               e.dirty = true
           end },
     }, texfixtureParams.ompRows('main'), { zOffset }, position),
