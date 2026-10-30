@@ -31,6 +31,9 @@ lib.rows = {
         set = function(_, v) synth().setVolume(v) end },
     field('enabled', 'music', 'bool'),
     field('melody', 'melody', 'bool'),
+    { key = 'tune', kind = 'choice', options = { 'classic', 'guide' }, -- src/music-guide.lua
+        get = function(m) return m.tune or 'guide' end,
+        set = function(m, v) m.tune = v end },
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
             'strum', 'rollo', 'jingle', 'vibesnight', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',

@@ -82,11 +82,15 @@ local lib = {}
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
+--   tune           how the tune is built: 'guide' (the default: from each chord, guide tones and chord
+--                  scales, src/music-guide.lua) or 'classic' (the key's pentatonic, fitted to the chords,
+--                  music-plan's buildPhrase). Only the styles
+--                  that use bookTune: jingle, satie, strum, rollo, puppetmaker and ambient have their own
 --   melodyPatch    force the tune's voice (rhodesLead, pianoLead, kalimba, ...); nil: the style's
 state.musicSettings = state.musicSettings
     or { enabled = true, style = 'set', rhythmSection = 'auto', upright = false, melody = true }
 local SETTINGS = { enabled = true, style = true, rhythmSection = true, upright = true, melody = true,
-                   melodyPatch = true }
+                   melodyPatch = true, tune = true }
 -- music.trace = fn(part, t, midi, vol, durMs) sees every note (claudetools, specs): on state.music too,
 -- where src/music-parts.lua's play reads it
 local HOOKS = { trace = true }

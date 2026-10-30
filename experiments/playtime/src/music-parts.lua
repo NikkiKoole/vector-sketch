@@ -20,6 +20,7 @@ local stepTime = theory.stepTime
 local lengthMs = theory.lengthMs
 local plan = require('src.music-plan')
 local buildPhrase = plan.buildPhrase
+local guide = require('src.music-guide')
 
 local lib = {}
 
@@ -822,7 +823,10 @@ end
 local function bookTune(bar)
     local synth, song, style, t0, b, j = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.j
     local phraseBar = b - j % 4
-    if song.phraseBar ~= phraseBar then song.phrase, song.phraseBar = buildPhrase(song, phraseBar), phraseBar end
+    if song.phraseBar ~= phraseBar then
+        local build = state.musicSettings.tune == 'classic' and buildPhrase or guide.buildPhrase
+        song.phrase, song.phraseBar = build(song, phraseBar), phraseBar
+    end
     local patch = state.musicSettings.melodyPatch or style.lead
     local barInPhrase = j % 4
     for _, note in ipairs(song.phrase) do

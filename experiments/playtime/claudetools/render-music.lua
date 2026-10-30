@@ -2,6 +2,7 @@
 -- usage: luajit render.lua <out.wav> <seconds> <style: set|bossa|guaraldi|ballad> <rhythm: auto|on|off>
 --        [busyFrom seconds] [seed]
 -- env: MELODY=<patch> swaps the tune's voice, SOLO=<patch,patch> renders a stem,
+--      TUNE=classic builds the tune the old way (the default is guide, src/music-guide.lua),
 --      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second,
 --      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed)
 local P = '/Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/'
@@ -20,6 +21,7 @@ package.loaded['src.state'] = { synth = { started = true, C = C } }
 local synth = require('src.synth')
 local music = require('src.music')
 music.style, music.rhythmSection = style, rhythm
+if os.getenv('TUNE') then music.tune = os.getenv('TUNE') end
 if os.getenv('MELODY') then music.melody, music.melodyPatch = true, os.getenv('MELODY') end
 -- SOLO=piano,ride renders only those patches (a stem); the rms printed is over the windows where it sounds
 if os.getenv('SOLO') then
