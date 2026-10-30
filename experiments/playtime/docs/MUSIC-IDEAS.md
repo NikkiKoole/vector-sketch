@@ -15,6 +15,19 @@ Notes to pick up now and then, with no deadline. The music lives in `src/music.l
 - Measured with a stub synth, 3 seeds × 6 min: rubs a minute (semitone or b9 between two sounding notes) are keys-lead ≤ 1.2, bass-keys ≤ 1, keys-keys ≤ 0.8. For comparison, loficity's are 2.7 / 4.0 / 13.9. Stem levels are balanced on renders against the Rhodes.
 - The upright bass is still off (`upright = false`).
 
+## Next time (left open on 2026-10-30)
+The short list after a long day of styles; the details live in the entries further down.
+- [ ] **Pedals on more styles**, all subtle (background music): a slow phaser in strum's B, the wah LFO on sesame's clav, tape on lofi's keys. The effect slots make room for any style's pedals (`synth.fxSlots`, see SOUND-SYNTH); keep no more than five pedalled instruments sounding at once.
+- [ ] **Save the effects slider.** It's `state.synth.effectAmount` and goes back to 1 on a restart; store it with the other music settings.
+- [ ] **Strum v2, next steps**: other pedal moves, a strum at section starts, the guitar's pedal state named in the panel per section (see the Strum entry).
+- [ ] **Motifs across styles**: a few themes of our own heard in every style (below, under Directions).
+- [ ] **The door preview and fading what still rings**: `music.preview(style, gain)` for the rooms session's door peek, and turning a leaving style's pool voices down by slot gain (below, under iMUSE).
+- [ ] **City pop extras**: the last chorus up a whole step (sections can `lift` the key since buymode), horn stabs on the pushes, a sax solo (the REED engine, in a pool slot).
+- [ ] **Styles that may be too much in the foreground**, to pull back if they bother in play: sesame ("a bit annoying"), city pop's full band.
+- [ ] **New dreamengine instruments**: the organ with its Leslie, four-operator FM bells and glass, the shimmer reverb, the granular engine for ambient beds.
+- [ ] **The web build**: check that the browser synth has the per-slot pedals (drive, chorus, flanger, tape, phaser, auto-pan); the Lua side forwards any call, the wasm side may not have them.
+- [ ] **One unexplained hang**: a note-fingerprint run hung once in dumont (calm, seed 1, at about 139 s) during the SPLIT5 work and never again in five runs. If the music ever freezes during dumont, look there first.
+
 ## Directions to try (one at a time)
 **The rule for all of it (Nikki, 2026-10-30):** this is a game, so it's background music, not foreground music. "Usually the sound should not get in the way, just be there." Fewer parts, softer tunes, steady feels, few surprises. Judge a demo by "would this tire you after ten minutes of play?" before "does it sound good?".
 - [ ] **Motifs across styles** (for another time): a few short themes of our own that come back in every style, the way a game score has one theme in many arrangements.
@@ -57,7 +70,7 @@ Notes to pick up now and then, with no deadline. The music lives in `src/music.l
 
 ## Small ideas
 - [ ] Melody voices to revisit: kalimba A (mallet). Kalimba B (wavescan + low-pass gate) was retired for a slot on 2026-10-30; it's in git history (`kalimbaPlonk`).
-- [ ] Slide sound: the whistle was too synthetic and got annoying. Try a softer or less pitched voice for sliding.
+- [x] ~~Slide sound~~: the whistle was too synthetic and got annoying; slide-sound was deleted on 2026-10-30 (CL5) and its slot went to the pool.
 - [ ] Gesture sounds: throw, drop, stretch, wash and squish, each tied to the music's scale.
 - [x] **Satie and ambient** (2026-10-30, the first styles with a song shape of their own; no drums, slow, so they also stretch the 88–132 bpm range). In the set since 2026-10-30 (Nikki: "nice").
   - `satie`: a Gymnopédie-like waltz in **3/4** (`meter = 3`), 66–74 bpm. The root sounds on 1 and holds, the chord (no root) comes on 2 and holds through 3, all on the felt `piano`. A: sevenths rocking a bar each (IV I, I ii, vi IV, I IV). B: a four-chord walk. The tune (`pianoLead`, F4..A5) is planned at song start and seeded by place: two four-bar phrases, the second starting like the first, falling by step more than rising, long notes on chord tones, and A ending on home's 1, 3 or 5. It only uses key notes with no semitone to any of the bar's chord tones, so it can't rub. Busy: a soft sine under the root, vibes doubling the tune. Form: intro 2, A A B A, an outro that rings.
