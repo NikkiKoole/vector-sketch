@@ -1,6 +1,6 @@
 # Scene Graph + Box2D via a Physics-Root Node
 
-status: parked
+status: parked — a design only, nothing built (checked 2026-10-30)
 
 ## Context
 

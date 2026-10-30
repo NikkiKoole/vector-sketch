@@ -1,6 +1,6 @@
 # Tooling Ideas: Instrumenting for AI Collaboration
 
-status: parked
+status: done — most of it came through the bridge instead of CLI flags (checked 2026-10-30): state dump = `/scene`, `/snapshot`, `/diff`; screenshots = `/screenshot`; events = `/collisions`, `/watch`, `src/flight-recorder.lua`; DNA check = `/mipo/dna/validate`. Never built: a scene validator and a save/load round-trip checker as CLI tools
 
 Tools to bridge the gap between "I can read code" and "I can understand what the app is doing at runtime." The app is a visual physics editor — most interesting state is runtime state that an AI collaborator can never see directly.
 

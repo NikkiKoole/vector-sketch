@@ -1,17 +1,17 @@
 # Codebase Cleanup — AI-Friendliness Pass
 
-status: parked
+status: parked — checked 2026-10-30: 1, 2 and 8 are done, 4 lives on in CODE-SPLITS-2026-10.md; left are retiring UVUSERT (7) and the comment/dead-code passes (3, 5, 6)
 
 Painpoints identified 2026-02-28. Work through top-to-bottom.
 
 ## 1. Extract repeated shape8 anchor logic
-**Status:** TODO
+**Status:** done (seen 2026-10-30): `getOwnOffset` moved to `src/character-topology.lua` and its shape8 cases share one `getAnchor`
 **Why:** The `recenterPoints` bug existed in 4 identical copy-pasted blocks (ears, feet, hands, nose). We fixed all 4 separately. One shared function prevents this class of bug entirely.
 **Where:** `src/character-manager.lua` — `getOwnOffset()` around lines 1155-1235
 **Task:** Extract a single `getShape8AnchorPoint(part, index, scale)` function and call it from all 4 places.
 
 ## 2. Standardize module aliases
-**Status:** TODO
+**Status:** done (seen 2026-10-30): no `eio` left in src/, it is `sceneIO` everywhere
 **Why:** Same modules required with different names across files makes grep unreliable. Hard to find all call sites.
 **Mismatches found:**
 - `joints` vs `Joints` vs `jointslib` (5 files)
@@ -29,7 +29,7 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 **Task:** Add one-line comments listing expected table keys, e.g. `-- values: {shape8URL, sy, sx, w, h}`
 
 ## 4. Split largest functions
-**Status:** TODO
+**Status:** moved: `CODE-SPLITS-2026-10.md`
 **Why:** Monster functions (600+ lines) are impossible to reason about in pieces. Bugs hide in deep branches.
 **Targets (by size):**
 - `mipo-editor.lua`: `drawMipoEditor()` ~1,300 lines — split into per-section draw functions
@@ -66,7 +66,7 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 **Win:** ~125 lines off the draw path, one less sfixture variant to maintain, DECAL stays as the one "simple textured thing."
 
 ## 8. Remove dead `thing.zOffset`
-**Status:** TODO
+**Status:** done (seen 2026-10-30): only two commented-out lines in io.lua mention it; z-order is on the sfixture's `extra.zOffset`
 **Why:** Body-level `thing.zOffset` has no live readers — the render path that used it is commented out in `box2d-draw-textured.lua:939-942` and the UI slider is commented out in `body-editor.lua:228-235`. The **active** z-sort uses `ud.extra.zOffset` on the sfixture. Dual key paths invite confusion.
 **Options:**
   - **Delete:** strip `thing.zOffset` from `createThing` defaults, `gatherSaveData`, `buildWorld`, comment-removed UI. Scenes saved with non-default values lose that data — but nothing reads it anyway.

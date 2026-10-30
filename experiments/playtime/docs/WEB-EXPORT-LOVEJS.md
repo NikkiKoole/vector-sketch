@@ -1,6 +1,6 @@
 # Web Export via love.js
 
-status: parked
+status: parked — worked 2026-04-11 (catapult, Knut); not tried since. Since then the synth came in through LuaJIT FFI (`src/synth.lua`), which the browser build (PUC Lua 5.1) doesn't have, so it needs a guard first
 
 ## Overview
 

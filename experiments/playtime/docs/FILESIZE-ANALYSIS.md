@@ -1,6 +1,6 @@
 # Save-File Size Analysis
 
-status: parked
+status: done — the structural savings shipped (steps 1–4); gzip on save waits until an app ships (see "Recommended when we ship")
 
 Scene `.playtime.json` files have grown large (hoop.playtime.json = 826 KB). Most of the bloat is in one field; a handful of cheap fixes could drop the file ~60%.
 

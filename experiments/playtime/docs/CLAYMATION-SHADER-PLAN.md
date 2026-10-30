@@ -1,6 +1,6 @@
 # Claymation Shader Plan
 
-status: parked
+status: parked — lights, sheen, terminator and warm/cool landed 2026-04 (checked 2026-10-30); rim tinting from the opposing light and Voronoi dimples are left
 
 Roadmap for pushing the plasticine / hair shader look further, with a shared
 lighting system at the center. Scope is the shader/material layer only —

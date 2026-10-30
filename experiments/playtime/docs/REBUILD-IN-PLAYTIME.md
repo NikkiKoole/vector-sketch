@@ -1,6 +1,6 @@
 # Rebuilding Other Experiments Inside Playtime
 
-status: parked
+status: parked — the puppet-maker2 half happened another way (the Mipo editor in Playtime); the downhill bike scene was never rebuilt (WORLD-BUILDING.md covers outside scenes now)
 
 Playtime has grown into a capable editor/runtime. Other experiments in `experiments/` duplicate effort that could live on top of playtime instead. This doc evaluates whether two specific experiments could be rebuilt as playtime scenes, and what's missing.
 
