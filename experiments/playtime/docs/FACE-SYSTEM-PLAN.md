@@ -1,6 +1,10 @@
 # Face System — Gap Analysis & Plan
 
-status: parked
+status: done
+
+Gaze, blink, auto-init and brows are built. The mouth flaps while a Mipo squeaks
+(`src/mipo-voice.lua`, 2026-10-29); a mouth that speaks in phoneme shapes is E3 in
+`MIPO-EDITOR-LEFTOVERS.md`.
 
 **Verdict:** 2–3 dev days (~1–2 calendar weeks part-time). Not a port, not a rebuild. Verified against the live codebase 2026-05-14.
 

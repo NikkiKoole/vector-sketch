@@ -1,6 +1,9 @@
 # Mipo Editor TODO — Features from puppet-maker2
 
-status: parked — mostly done; the animation bucket is left
+status: done
+
+The comparison is done; its checkboxes below are history and partly out of date (blink, gaze,
+face patches and linked hair colours are in). What is really left: `MIPO-EDITOR-LEFTOVERS.md`.
 
 Comparison of puppet-maker2 (app store app) vs playtime's mipo editor.
 Checked items = already supported in playtime.
