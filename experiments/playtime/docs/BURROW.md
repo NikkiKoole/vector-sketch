@@ -43,8 +43,19 @@ Nikki: "feels nice", "pretty good already".
 Not just the burrow: a quick way to give any shape (a body, a prop, the earth) an outline that
 looks drawn. Nikki 2026-10-30: the idea is good, not sure this route is it.
 
-**Picked (Nikki 2026-10-30): a textured stroke + line boil as a toggle.** Do it soon, as a
-quick experiment (Nikki: "we need to do this quickly but not now").
+**Picked (Nikki 2026-10-30): a textured stroke + line boil as a toggle.**
+
+**Tried (2026-10-30): `../drawn-outline/`**, random blobs, angular shapes and long planks
+outlined with the crayon strokes below. Nikki: "pretty nice", "looks pretty good".
+- Works: the stroke picture repeats along the outline (only its middle 80%, the ends fade); a
+  wobble scaled to the shape's narrowest side (planks keep straight sides); tapered ends that
+  overshoot where they meet; line boil at 10 Hz; misregistration; a pencil hatch over the fill.
+- Hiding the repeat: each repeat picks another picture of its kind and may be mirrored or run
+  backwards. Any `strokes/line*.png` (drawn upwards, ~500 px) or `track*.png` (sideways) joins
+  the mix; Nikki will add a few lines of their own.
+- Left: sharp corners fold the strip over itself (a dark notch); break the stroke there and
+  start a new piece. The hatch shows vertical bands.
+- Next: put it on the burrow rim, then on playtime shapes.
 - The stroke: a triangle strip along the outline (like `src/render/ribbon.lua`) with a scanned
   line of Nikki's own (pencil, crayon, brush pen) repeating along its length, tapered ends, a
   little width change. Seeded per shape so it stays put.
