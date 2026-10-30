@@ -49,10 +49,57 @@
       window.addEventListener('resize', resizeCanvas);
       resizeCanvas();
 
+      // The synth: src/synth-web.lua prints each frame's synth calls as one '@desound' line;
+      // they go to the engine (desound.wasm) in an AudioWorklet (desound-processor.js).
+      // Browsers only start audio after a click or key, so the calls wait until then.
+      var desound = { node: null, context: null, waiting: [] };
+      function desoundSend(line) {
+        var parts = line.split('\t');
+        var message = { t: Number(parts[1]), calls: parts.slice(2) };
+        if (desound.node) { desound.node.port.postMessage(message); return; }
+        // before audio starts keep only the setup (patches, reverb), not old notes; every frame
+        // sends the listener again anyway
+        message.calls = message.calls.filter(function (c) { return /^(instrument|reverb|spatial_speed)/.test(c); });
+        if (message.calls.length > 0) desound.waiting.push(message);
+      }
+      // On every click or key: start the audio the first time, and wake it if the browser put it to sleep.
+      function desoundStart() {
+        if (desound.context) {
+          if (desound.context.state === 'suspended') desound.context.resume();
+          return;
+        }
+        var context = new AudioContext({ sampleRate: 44100 }); // the engine's rate
+        desound.context = context;
+        Promise.all([
+          context.audioWorklet.addModule('desound-processor.js'),
+          fetch('desound.wasm').then(function (r) { return r.arrayBuffer(); })
+        ]).then(function (results) {
+          var node = new AudioWorkletNode(context, 'desound', {
+            numberOfInputs: 0, outputChannelCount: [2], processorOptions: { wasm: results[1] }
+          });
+          node.port.onmessage = function (e) {
+            if (e.data.error) console.error('desound:', e.data.error, e.data.calls);
+            else if (e.data.print) console.log('desound:', e.data.print);
+            else console.log('desound:', JSON.stringify(e.data));
+          };
+          node.connect(context.destination);
+          desound.waiting.forEach(function (m) { node.port.postMessage(m); });
+          desound.waiting = [];
+          desound.node = node;
+          context.resume();
+        }).catch(function (e) { console.error('desound:', e); });
+      }
+      ['pointerdown', 'keydown', 'touchstart'].forEach(function (type) {
+        window.addEventListener(type, desoundStart);
+      });
+
       var Module = {
         arguments: ['./game.love', '--play', '__SCENE__'],
         INITIAL_MEMORY: 268435456,
-        print: console.log.bind(console),
+        print: function (line) {
+          if (line.indexOf('@desound\t') === 0) desoundSend(line);
+          else console.log(line);
+        },
         printErr: console.error.bind(console),
         canvas: (function () {
           var canvas = document.getElementById('canvas');

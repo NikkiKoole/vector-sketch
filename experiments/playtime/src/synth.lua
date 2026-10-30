@@ -3,8 +3,10 @@
 -- The main thread calls the sound API; native/desound/synth-thread.lua renders into a QueueableSource.
 -- Without the library every call is a no-op and synth.start() returns false,
 -- so callers keep their sample-based fallback.
+-- In the browser (no FFI) src/synth-web.lua stands in for the library and the page plays it.
 
-local ffi = require('ffi')
+local IS_WEB = love ~= nil and love.system ~= nil and love.system.getOS() == 'Web'
+local ffi = not IS_WEB and require('ffi') or nil
 local state = require('src.state')
 
 local lib = {}
@@ -205,7 +207,7 @@ void sample_shift(int slot, float semitones);
 void sample_formant(int slot, float semitones);
 ]]
 -- At load, so a hot reload can add functions. Redeclaring an identical function is allowed.
-pcall(ffi.cdef, CDEF)
+if ffi then pcall(ffi.cdef, CDEF) end
 
 -- Lives on `state` so a lurker hot-swap of this file doesn't load the library or start the thread twice.
 state.synth = state.synth or { started = false, failed = nil, C = nil, thread = nil, quit = nil }
@@ -242,6 +244,13 @@ end
 function lib.start()
     if S.started then return true end
     if S.failed then return false end
+    if IS_WEB then
+        S.C = require('src.synth-web')
+        S.C.spatial_speed(0)
+        definePatches()
+        S.started = true
+        return true
+    end
     if not (love and love.thread and love.audio) then
         S.failed = 'no love.thread/love.audio'
         return false
@@ -275,7 +284,7 @@ function lib.isRunning()
 end
 
 function lib.stop()
-    if not S.started then return end
+    if not (S.started and S.thread) then return end
     S.quit:push(true)
     S.thread:wait()
     S.started = false
@@ -292,7 +301,7 @@ function lib.update(dt, camera)
         S.C.listener(cx, cy)
         S.C.spatial_model(halfWidth, halfWidth * 4, 1)
     end
-    local err = S.thread:getError()
+    local err = S.thread and S.thread:getError()
     if err then
         print('[synth] render thread died: ' .. err)
         S.started = false

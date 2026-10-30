@@ -14,13 +14,32 @@ Mipos and all, with no errors; no sound from the synth yet (see WEB2).
   removed loveblobs). Desktop-only modules get stand-ins (profilers, LuaJIT's `ffi`); the bridge and
   lurker are already skipped by main.lua on the web. The four `goto`s in the draw loops are gone
   from the source (`spec/draw-skips_spec.lua`), so the goto patcher isn't needed any more.
-- [ ] **WEB2. The synth in the browser.** dreamengine's `sound.h` already has web output (an
-  AudioWorklet, with a ScriptProcessor fallback). So `native/desound/desound.c` can be built with
-  emcc into its own small wasm module on the page. The open part is Lua talking to it: love.js has
-  no FFI. Two ways: (a) Lua prints command lines (`hit`, `noteOn`, …) that the page's `Module.print`
-  catches and passes to the synth module; `audioTime` comes back by the page writing it into
-  love's filesystem. (b) Build love.js from source with desound linked in and a small Lua C binding.
-  (a) is a day-sized experiment, (b) is the solid one.
+- [x] **WEB2. The synth in the browser** (2026-10-30). `native/desound/build-web.sh` builds the
+  same `desound.c` (unmodified dreamengine) with emcc into a 218 KB standalone `desound.wasm`;
+  `webtest/desound-processor.js` runs it in an AudioWorklet. Lua has no FFI there, so
+  `src/synth-web.lua` stands in for the C library: it writes each frame's calls down and prints
+  them as one `@desound` line, which the page's `Module.print` catches and posts to the worklet
+  (one frame's calls per 128 samples). `audio_time` is Lua's own clock; the worklet maps the
+  times in `schedule_at` onto the engine's clock (re-synced only past 80 ms of drift), and gives
+  `note_on` handles out on the Lua side. Audio starts on the first click or key (browser rule);
+  setup calls made before that wait, notes don't. Checked in Chrome: the music plays (peak 0.18),
+  the clock runs. Not on the web: `sample_load` (the voice lab).
+  - Gotcha found on the way: the standalone wasm prints through WASI `fd_write`. A stub that
+    answered 0 made the C library retry forever on the engine's first warning (its request queue
+    overflowed when a pile of frames was applied at once): the audio thread hung, and the page with
+    it as soon as anything touched the audio graph. `fd_write` now reports the bytes and passes the
+    text to the page console (`desound: ...`).
+- [ ] **WEB4. Bridge tools for the web build** (noted for Nikki, 2026-10-30; nothing built). Testing
+  it from Claude meant pasting analyser code into the page each time, and the claude-bridge
+  (port 8001) doesn't exist there. Worth having:
+  - a page helper `playtime.audio()`: audio state, clock, output peak, calls/s, the engine's
+    warnings, instead of hand-made AnalyserNodes;
+  - eval into the running Lua: the page drops code into love's filesystem (`Module.FS`), Lua polls
+    an inbox file each frame and prints the result back with an `@bridge` prefix, so `/eval`-style
+    checks work in the browser too (through Chrome's javascript tool or a small relay);
+  - input from Lua (or slow drags from the page): the automated drag was too quick to grab a Mipo;
+  - a headless run (Playwright) of build → load → click → audio check, so the web build gets
+    tested without a person or a Chrome extension.
 - [ ] **WEB3. Check by hand**: grab and throw Mipos (an automated drag didn't take, probably too
   fast for a frame), touch on an iPad, tab into the editor.
 

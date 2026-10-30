@@ -4,8 +4,9 @@
 # Then:  ./serve.sh 8080 <scene>         and open http://localhost:8080
 #
 # It packages the real main.lua and src/; only desktop-only modules get stand-ins:
-# the bridge and lurker (main.lua skips them on the web), the profilers, and LuaJIT's
-# ffi (src/synth.lua then finds no native library and the synth stays off: no music).
+# the bridge and lurker (main.lua skips them on the web), the profilers, and LuaJIT's ffi.
+# The synth plays through the page: src/synth-web.lua prints the calls, the page hands them
+# to the engine built to wasm (native/desound/build-web.sh, needs emcc) in an AudioWorklet.
 # Needs love.js (npm i -g love.js); override with LOVEJS=/path/to/love.js.
 
 set -e
@@ -29,8 +30,8 @@ cp -r "$PLAYTIME_DIR/src" "$PLAYTIME_DIR/vendor" "$PLAYTIME_DIR/assets" "$PLAYTI
 mkdir -p "$BUILD_DIR/scripts"
 cp "$PLAYTIME_DIR/scripts/${SCENE}.playtime."* "$BUILD_DIR/scripts/"
 
-# LuaJIT's ffi doesn't exist here. A stand-in lets src/synth.lua load; it then finds no
-# native/desound library, so lib.start() returns false and everything plays without the synth.
+# LuaJIT's ffi doesn't exist here (src/synth.lua doesn't need it on the web); the stand-in keeps
+# anything else that requires it (the voice lab) from failing at load.
 MAIN="$BUILD_DIR/main.lua"
 {
     echo "package.preload.ffi = package.preload.ffi or function()"
@@ -45,6 +46,14 @@ echo "return {}" > "$BUILD_DIR/vendor/ProFi.lua"
 echo "return { update = function() end, attach = function() end, detach = function() end }" > "$BUILD_DIR/vendor/peeker.lua"
 
 (cd "$BUILD_DIR" && zip -qr "$LOVE_FILE" . -x "*.DS_Store")
+
+# The synth for the page: the engine built to wasm, and the AudioWorklet that runs it.
+SYNTH_WASM="$BUILD_DIR.desound.wasm"
+if command -v emcc > /dev/null; then
+    "$PLAYTIME_DIR/native/desound/build-web.sh" "$SYNTH_WASM" > /dev/null
+else
+    echo "no emcc (brew install emscripten): building without the synth"
+fi
 echo ".love: $(du -sh "$LOVE_FILE" | cut -f1)"
 
 rm -rf "$OUTPUT_DIR"
@@ -52,6 +61,11 @@ rm -rf "$OUTPUT_DIR"
 
 # A full-window page that starts the scene in play mode (`--play <scene>`, like ./playtime.sh play).
 sed -e "s/__SCENE__/${SCENE}/g" "$WEBTEST_DIR/index.template.html" > "$OUTPUT_DIR/index.html"
+if [ -f "$SYNTH_WASM" ]; then
+    cp "$SYNTH_WASM" "$OUTPUT_DIR/desound.wasm"
+    cp "$WEBTEST_DIR/desound-processor.js" "$OUTPUT_DIR/"
+    rm -f "$SYNTH_WASM"
+fi
 
 echo "Output: $OUTPUT_DIR"
 echo "Serve:  $WEBTEST_DIR/serve.sh 8080 $SCENE   (then http://localhost:8080)"
