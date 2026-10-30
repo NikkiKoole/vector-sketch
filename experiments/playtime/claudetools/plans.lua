@@ -3,6 +3,7 @@
 -- Each doc in docs/ (and docs/knut/) has one hand-kept line near the top:
 --   status: active | idea | parked — why | done | reference
 -- (idea: a notebook added to now and then, like KING-ROLLO; listed, never warned about)
+-- `status: active, focus` marks the current focus: listed first, with all its open steps.
 -- Progress comes from the doc's `- [x]` / `- [ ]` boxes (`- [~]`: a step parked for now, left out);
 -- nothing else is kept by hand.
 -- Warnings point at drift: an active doc untouched for weeks, an active doc with every box
@@ -48,6 +49,7 @@ local function readDoc(path)
             if status then
                 doc.status = status
                 doc.reason = rest:gsub('^[—%-:%s]+', '')
+                doc.focus = rest:find('%f[%a]focus%f[%A]') ~= nil
             end
         end
         local mark, text = line:match('^%s*[-*] %[([ xX~])%]%s*(.*)$')
@@ -119,15 +121,22 @@ for _, path in ipairs(docs) do
     end
 end
 
+-- the focus first (stable: the rest keep their ls order)
+local active = {}
+for _, doc in ipairs(byStatus.active) do if doc.focus then active[#active + 1] = doc end end
+for _, doc in ipairs(byStatus.active) do if not doc.focus then active[#active + 1] = doc end end
+
 print('ACTIVE')
-for _, doc in ipairs(byStatus.active) do
+for _, doc in ipairs(active) do
     local total = doc.done + #doc.open
     local progress = total > 0 and (' [' .. doc.done .. '/' .. total .. ']') or ''
-    print('  ' .. doc.title .. progress .. '  (' .. doc.short .. ')')
-    for i = 1, math.min(NEXT_ITEMS, #doc.open) do
+    local marker = doc.focus and '  <- FOCUS' or ''
+    print('  ' .. doc.title .. progress .. '  (' .. doc.short .. ')' .. marker)
+    local shown = doc.focus and #doc.open or math.min(NEXT_ITEMS, #doc.open)
+    for i = 1, shown do
         print('    - ' .. doc.open[i].label)
     end
-    if #doc.open > NEXT_ITEMS then print('    ... ' .. (#doc.open - NEXT_ITEMS) .. ' more') end
+    if #doc.open > shown then print('    ... ' .. (#doc.open - shown) .. ' more') end
 end
 
 print('\nIDEAS')

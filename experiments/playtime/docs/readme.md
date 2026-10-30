@@ -17,6 +17,9 @@ Where the work stands is not written down here. It comes from the docs themselve
   `status: active`, `status: idea`, `status: parked — why`, `status: done` or `status: reference`.
   `idea` is a notebook added to now and then (KING-ROLLO, MUSIC-IDEAS): listed, no next steps, no warnings.
   No free-text "Status: ... built, ... next" lines: those are what went out of date.
+- **The focus:** `status: active, focus` on the one plan that comes first now. The board lists it
+  first with all its open steps (the others show three). One doc at a time; move the word when
+  the focus moves.
 - **Steps are checkboxes**: `- [ ] **W2. Persistence.** ...`, ticked `- [x]` when done (with the
   date in the text). `- [~]` is a step parked inside an active plan. A short id at the start
   (W2, P8, G3) lets the drift check find commits that name it.

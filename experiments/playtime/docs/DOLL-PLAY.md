@@ -1,6 +1,6 @@
 # Doll play — the Puppetmaker follow-up
 
-status: active
+status: active, focus
 
 **Started:** 2026-10-27.
 
