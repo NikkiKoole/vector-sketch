@@ -32,6 +32,3 @@ Where the work stands is not written down here. It comes from the docs themselve
 - `done/` — old finished docs, kept for history.
 - `knut/` — the Knut mini-game (commission fizzled 2026-04-22); the rigging pipeline is still useful.
 - `notes/` — loose research notes and drafts.
-
-The studio rules (the Sago Rule: one verb, 4–6 weeks, no "and also") are in `MANIFESTO.md` (next to
-`CLAUDE.md`).

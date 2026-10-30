@@ -34,7 +34,7 @@ design doc.
   Deferred until there are more target scenes.
 - Character appearance: currently just placeholder bodies. Real art comes
   via the texture deformation / skinned-texture pipeline (see
-  `docs/KNUT-TOOLKIT-TODO.md` and `experiments/deform-textured/`).
+  `docs/knut/KNUT-TOOLKIT-TODO.md` and `experiments/deform-textured/`).
 
 ---
 

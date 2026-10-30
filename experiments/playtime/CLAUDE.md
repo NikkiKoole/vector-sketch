@@ -64,7 +64,7 @@ world and registry fall out of step (2026-10-29). Restart the game after changin
 
 ## Testing
 
-Busted is the primary test framework. Specs live in `spec/`. Full suite: **61 spec files, 1043 tests** (4 pending without `--audio`; pure subset via `busted spec/`: 342). Counted 2026-10-30.
+Busted is the primary test framework. Specs live in `spec/`. The full suite is ~60 spec files and 1000+ tests, about a third pure (`busted spec/`); the run prints the exact counts, and all should pass.
 
 ```bash
 # Pure unit specs (no LÖVE needed)
@@ -74,7 +74,7 @@ busted spec/math-utils_spec.lua           # single file
 # Full suite including LÖVE integration tests
 love . --specs                            # all specs (pure + physics + integration), no audio device,
                                           # window borderless and off-screen (graphics need one)
-love . --specs --audio                    # same, plus the 3 specs that play sound (else pending)
+love . --specs --audio                    # same, plus the specs that play sound (else pending)
 love . --specs --meter 400                # at another px-per-metre (src/physics-units.lua)
 love . --specs spec/integration_spec.lua  # single file
 
@@ -95,12 +95,12 @@ luacheck src/ main.lua --std "lua51+love" --only 111 112   # check global leaks 
 luacheck src/ main.lua --std "lua51+love"                   # full check
 ```
 
-Global leaks: **0** across 99 files. Full check: **0 warnings / 0 errors** (verified 2026-10-30).
+Both should report **0 warnings / 0 errors**; keep it that way.
 
 ## Architecture
 
 - `main.lua` — entry point, keybindings, UI callbacks
-- `src/` — core modules (98 files across src/, src/ui/, src/physics/)
+- `src/` — core modules (src/, src/ui/, src/physics/)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
@@ -207,47 +207,31 @@ Global leaks: **0** across 99 files. Full check: **0 warnings / 0 errors** (veri
 
 ## Known issues
 
-See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
+Open bugs: `docs/CODE-BUGS-2026-10.md` (BUG1…, from the October 2026 review; on the board).
+Older findings and hidden constraints: `docs/DEEPER-ISSUES.md`. Risks to keep in mind while coding:
 
-**Bugs:**
-- Cloned OMP texfixtures not marked `dirty` — composite texture won't regenerate on first render (deferred: proper fix needs the Phase 8 OMP image cache)
-
-**Architectural risks:**
 - Box2D doesn't guarantee fixture ordering — the ordering invariant can break silently
 - Z-sort uses unstable `table.sort` — same-z drawables can flicker
 - Tool modes go through `src/modes.lua` (`modes.set/clear/is/get`) but there are no enter/exit rules: any caller can switch any mode to any other
 - Image/OMP/canvas caches never cleared — memory grows over long sessions
 - Clone pipeline: influence references can become nil silently when cloning partial selections
+- Cloned OMP texfixtures aren't marked `dirty`, so the composite texture doesn't regenerate on first render
 - Backdrop/UV system: mostly fixed 2026-10-28 (imageURL + id link); what's left in `docs/UV-BACKDROP-FRAGILITY.md`
 
-## Further documentation
+## Docs and where the work stands
 
-**Where the work stands:** `./playtime.sh todo` (also shown at session start). It's built from
-each doc's `status:` line and its checkboxes; the rules are in `docs/readme.md`. When a step is
-done, tick its box in the same commit and name its id (W2, P8) in the message.
+`./playtime.sh todo` is the work board (also shown at session start): the active plans with their
+next steps, the ideas, the parked plans and drift warnings. `./playtime.sh todo --all` also lists
+the done and reference docs, with titles. It's built from each doc's `status:` line and checkboxes,
+so it doesn't go stale; the rules are in `docs/readme.md`. When a step is done, tick its box in the
+same commit and name its id (W2, P8, BUG3) in the message. Don't write plan progress here.
 
-Deep-dive docs live in `docs/`:
-- `EDITOR-INSPECTOR-LIBRARY.md` — editor rework (inspector from data, tabbed right column, library, tool rail); done 2026-10-30; leftovers (joint drag A->B, icons, thumbnails) are polish
-- `DOLL-PLAY.md` — the Puppetmaker follow-up: foundation (F1–F5) and the menu items being built; `DOLL-PLAY-MENU.md` — the pick-and-choose menu (handling, reactions, toys, camera, contraption kit, other ideas)
-- `WORLDS-AND-DOORS.md` — overworld + rooms linked by doors, carrying a Mipo (and what's connected) through, per-room persistence. W1 (doors, rooms in memory) done 2026-10-28; W2–W5 open
-- `WORLD-BUILDING.md` — grass edge, ground skins, parallax/sky, terrain, outside scenes: what experiments/ has (puppet-maker2 outside, physics-testbed downhill) and the build order (G1–G8). G1 grass done; the sky (G5) is prototyped in `../sky-atmosphere/`: one multi-stop gradient from the ground to space and the moon, day/dawn/dusk/night palettes blended
-- `WATER.md` — water in containers (LIQUID sfixture, `src/liquid.lua`): level water W1 and sloshing done, then parked (2026-10-29); what the old water/Bathhouse scripts already had
-- `HARVEST-NAVKIT-DREAMENGINE.md` — survey of ~/Projects/navkit (logic/power, water, fire, smoke/steam, temperature, weather, moods/needs, dollhouse plan) and ~/Projects/dreamengine carts (juice, eyes, jelly, water toys, input) with a suggested order
-- `NEXT-STEPS-2026-07.md` — post-audit direction from July (older; play mode since done): tween layer, Bathhouse resume order, code-strengthening list
-- `MIPO-SPINE.md` — an optional spine (torso cut into 2-3 bones that bend, one torso picture skinned over them); S1–S4 done 2026-10-29
-- `PLAN-OF-ATTACK.md` — the early-2026 cleanup plan with phase status (remaining open: 7d, Phase 8); not the current direction
-- `DEEPER-ISSUES.md` — bugs, hidden constraints, architectural risks
-- `CODE-AUDIT-2026-07.md` — third-pass audit: prioritized fix list (broken → risks → cleanup → test gaps)
-- `BLIND-SPOTS.md` — undocumented systems (thing structure, fixture subtypes, OMP pipeline)
-- `MODULE-ANALYSIS.md` — full module inventory, dependency map, serialization pipeline
-- `CLAUDE-BRIDGE.md` — complete bridge API reference
-- `DEEP-DIVE-NOTES.md` — analysis of DNA/character system, texture deformation, UI flow
-- `UV-BACKDROP-FRAGILITY.md` — RESOURCE/backdrop/UV duct-tape seams and hardening order
-- `PUPPETMAKER-SOUND.md` — how Puppetmaker 2's Mipos sound (band they lip-sync to, growl hmpfs, mi-po chatter), which samples (copied to assets/ as ogg), and the order to bring it in (P1–P5, P7 done; P6, P8 open)
-- `SOUND-SYNTH.md` — dreamengine synth via FFI: setup on a new machine (build.sh), API, music, gotchas; ideas in `MUSIC-IDEAS.md`
-- `TEXTURE-DEFORMATION-RESEARCH.md` — skeletal mesh deformation research + integration plan
-- `AI-COLLABORATION-PLAN.md` — strategy and completed phases
-- `TOOLING-SETUP.md` — dev tool setup (luacheck, busted, profiling)
-- `TOOLING-IDEAS.md` — proposed observability tools (not yet implemented)
-- `done/PROJECT.md` — original project overview (outdated, kept for reference)
-- `done/TODO-BRIDGE.md` — bridge feature wishlist (mostly implemented)
+Reference docs worth knowing when touching an area:
+- `CLAUDE-BRIDGE.md` — bridge setup, response format, eval examples (endpoint list: `GET /help`)
+- `BLIND-SPOTS.md` — the `thing` structure, fixture subtypes, OMP pipeline
+- `MODULE-ANALYSIS.md` — module inventory, dependency map, serialization pipeline (Feb 2026, partly dated)
+- `DEEPER-ISSUES.md` — hidden constraints and risks
+- `UV-BACKDROP-FRAGILITY.md` — RESOURCE/backdrop/UV seams; read before touching that path
+- `SOUND-SYNTH.md` — the dreamengine synth via FFI: setup on a new machine, API, gotchas
+- `WORLD-METRICS.md` — Mipo sizes, for designing the world around their feet
+- `TOOLING-SETUP.md` — luacheck, busted, profiling

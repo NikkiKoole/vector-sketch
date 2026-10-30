@@ -28,21 +28,16 @@ Every response:
 
 ## Endpoints
 
-### Read
+The full list, with a line on each, comes from the bridge itself (built from the code, so it's
+always current; this doc doesn't repeat it):
 
-| Command | What |
-|---------|------|
-| `curl localhost:8001/ping` | Health check |
-| `curl localhost:8001/state` | Overview (paused, gravity, selection, currentMode) |
-| `curl localhost:8001/bodies` | List all bodies (id, label, type, position) |
-| `curl localhost:8001/body?id=X` | Full body detail (fixtures, joints, thing data) |
-| `curl localhost:8001/joints` | List all joints |
-| `curl localhost:8001/joint?id=X` | Joint detail with type-specific properties |
-| `curl localhost:8001/selection` | Whatever is currently selected |
-| `curl localhost:8001/scene` | Full scene via gatherSaveData() |
-| `curl localhost:8001/world` | World settings (gravity, meter, speed, etc.) |
-| `curl localhost:8001/registry` | All registered IDs with summary |
-| `curl localhost:8001/sfixtures` | Special fixtures list |
+```bash
+curl localhost:8001/help
+```
+
+Most used: `/ping`, `/state`, `/bodies`, `/body?id=X`, `/joints`, `/selection`, `/errors`,
+`/console?n=10`, `POST /eval`, `POST /exec`, `POST /screenshot`, `POST /specs`, `/mipo`,
+`POST /input/click`, `POST /profile/frames`.
 
 ### Execute Lua
 
@@ -55,20 +50,7 @@ curl -X POST localhost:8001/eval -d '{"code":"return 1+1"}'
 curl -X POST localhost:8001/exec -d '{"code":"print(\"hello\")"}'
 ```
 
-The eval/exec preamble auto-requires: `state`, `registry`, `objectManager`, `joints`, `eio`, `inspect`, `utils`.
-
-### Write / Control
-
-| Command | What |
-|---------|------|
-| `curl -X POST localhost:8001/world/pause` | Pause physics |
-| `curl -X POST localhost:8001/world/unpause` | Unpause physics |
-| `curl -X POST localhost:8001/world/step -d '{"frames":10}'` | Step N physics frames |
-| `curl -X POST localhost:8001/body/create -d '{"shape":"rectangle","opts":{"x":100,"y":100,"width":40,"height":40}}'` | Create body |
-| `curl -X POST localhost:8001/body/destroy -d '{"id":"abc123"}'` | Destroy body |
-| `curl -X POST localhost:8001/scene/save -d '{"filename":"path.json"}'` | Save scene |
-| `curl -X POST localhost:8001/scene/load -d '{"filename":"path.json"}'` | Load scene |
-| `curl -X POST localhost:8001/reload` | Hot-reload current script |
+The eval/exec preamble auto-requires: `state`, `registry`, `objectManager`, `joints`, `sceneIO`, `inspect`, `utils`.
 
 ### Snapshot / Diff
 

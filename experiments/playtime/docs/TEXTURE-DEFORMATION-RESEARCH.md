@@ -189,7 +189,7 @@ A working prototype was built at `../../deform-textured/` implementing most of t
 - Adaptive grid near joints is essential for smooth bending on coarse grids
 - The "body IS the bone" concept aligns well with playtime's existing anchor/joint system
 
-See also: `docs/KNUT-TOOLKIT-TODO.md` for the Knut character assembly plan.
+See also: `docs/knut/KNUT-TOOLKIT-TODO.md` for the Knut character assembly plan.
 
 ---
 
