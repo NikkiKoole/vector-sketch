@@ -1,6 +1,6 @@
 # Drawing Mipos — what it costs and how to make it cheaper
 
-status: parked — L0 and L1 done (2026-10-30); measure on the iPad before L2
+status: parked — L0, L1, L1b and L1c done (2026-10-30); measure on the iPad before L2
 
 How a Mipo is drawn now, from the crowd measurements of 2026-10-30 (MEASURING.md: 20 to 200 Mipos,
 Apple M1) and a read of `physics/box2d-draw-textured.lua` and `src/render/`.

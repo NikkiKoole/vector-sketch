@@ -237,8 +237,9 @@ function love.update(dt)
     if state.interaction.draggingObj then
         InputManager.handleDraggingObj()
     end
-    -- No manual_gc: the game makes ~1.6 KB of garbage per frame, and Lua's own
-    -- incremental collector does work in proportion to that. manual_gc(0.002, x)
+    -- No manual_gc: the game makes ~300 KB of garbage per frame (the crowd, 20 Mipos,
+    -- docs/MEASURING.md M7), and Lua's own incremental collector does work in
+    -- proportion to that. manual_gc(0.002, x)
     -- burned its whole 2 ms budget every update (1000 steps, ~2 full cycles per
     -- frame) and with ceiling 2 MB even forced a full collect every update.
     -- Exception: replaced textures hold GPU memory the GC doesn't feel, so after

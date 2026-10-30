@@ -78,9 +78,15 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
 - [ ] **M8. The 17 ms.** Mostly C: the ~600 draw calls and the per-frame mesh rewrites (ribbons'
   setVertices, squish fans), and Box2D (2.7 ms). Then Lua: createDrawables + sort (rebuilt every
   frame; keep the list while nothing was added or removed?).
+  **2026-10-30:** the Lua half done in MIPO-DRAWING L0-L1c (kept draw list, kept fans and strips,
+  culling): draw 11.9 -> 10.5 ms at 20 Mipos, 62 -> 6 ms at 100 with a normal camera. Left: the
+  draw calls (L2a, measure on the iPad first) and the update (unchanged, Box2D the biggest part).
 - [ ] **M7. The draw's garbage.** ~430 KB a frame from the textured draw (per-drawable tables, fan
   vertex tables, a Bezier curve per ribbon per frame, mouth polygons). Only ~1.3% of the time on
-  the desktop, so after M8; worth it before an iPad build. Fix main.lua's "~1.6 KB" comment.
+  the desktop, so after M8; worth it before an iPad build.
+  **2026-10-30:** L1-L1c took most of it: 613 -> 289 KB a frame at 20 Mipos, 2.6 MB -> 0.47 MB at
+  100 on screen; main.lua's comment fixed. Left: what's still made per frame (find it with
+  frame-profile's garbage per step).
 - [x] **M9. Missing bodyhair masks.** `borsthaar1..7-mask.png` don't exist, and getLoveImage asked the
   filesystem again every frame (40 a frame in the crowd, 0.08 ms). **Done 2026-10-30:** getLoveImage
   and the Mipo editor's thumbnail grid remember what isn't there (`spec/omp-bake_spec.lua`); scenes
