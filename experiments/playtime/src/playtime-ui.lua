@@ -12,6 +12,7 @@ local color = require('src.color')
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local utils = require 'src.utils'
+local mathutils = require('src.math-utils')
 
 local fixtures = require 'src.fixtures'
 local snap = require 'src.physics.snap'
@@ -412,7 +413,7 @@ function lib.drawUI()
         local possible_options = updatePossibleOptions()
 
         -- wide, not tall: the options in a grid of up to 4 columns, top centre
-        local columns = math.max(1, math.min(4, #possible_options))
+        local columns = mathutils.clamp(#possible_options, 1, 4)
         local optionW = 200
         local rows = math.ceil(#possible_options / columns)
         local panelW = columns * (optionW + BUTTON_SPACING) + BUTTON_SPACING

@@ -10,6 +10,7 @@ local json = require('vendor.dkjson')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local camera = require('src.camera')
+local mathutils = require('src.math-utils')
 
 local lib = {}
 
@@ -61,7 +62,7 @@ local function capture(dt)
             local x1, y1, x2, y2 = joint:getAnchors()
             local fx, fy = joint:getReactionForce(invDt)
             local entry = { a = partName(bodyA), b = partName(bodyB), type = jointType,
-                sep = r(math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)), force = r(math.sqrt(fx * fx + fy * fy)) }
+                sep = r(mathutils.dist(x1, y1, x2, y2)), force = r(math.sqrt(fx * fx + fy * fy)) }
             if jointType == 'revolute' then
                 entry.angle = r(joint:getJointAngle())
                 if joint:areLimitsEnabled() then

@@ -11,6 +11,7 @@ local lib = {}
 
 local state = require('src.state')
 local camera = require('src.camera')
+local mathutils = require('src.math-utils')
 local mipoRegistry = require('src.mipo-registry')
 local pointerJoints = require('src.physics.box2d-pointerjoints')
 
@@ -130,7 +131,7 @@ local function keepingUp(cam, s, mx, my, grabX, grabY)
     local sx, sy = cam:getScreenCoordinates(grabX, grabY)
     local lag = math.sqrt((sx - mx) ^ 2 + (sy - my) ^ 2)
     local near = math.max(1, s.edgeLag) / 2
-    return math.max(0, math.min(1, 2 - lag / near))
+    return mathutils.clamp(2 - lag / near, 0, 1)
 end
 
 -- Pan when the mouse, dragging something, is near the screen edge. Returns the pan in world units.
@@ -159,7 +160,7 @@ local function clampToBounds(cam, s, w, h)
     local hw, hh = w / 2 / cam.scale, h / 2 / cam.scale
     local function clampAxis(c, lo, hi, half)
         if hi - lo <= half * 2 then return (lo + hi) / 2 end
-        return math.max(lo + half, math.min(hi - half, c))
+        return mathutils.clamp(c, lo + half, hi - half)
     end
     cam:setTranslation(clampAxis(cx, b[1], b[3], hw), clampAxis(cy, b[2], b[4], hh))
 end
@@ -171,8 +172,8 @@ local function follow(dt, cam, s, w, h)
     local tx, ty = body:getPosition()
     local vx, vy = body:getLinearVelocity()
     local maxX, maxY = w * s.maxLead / scale, h * s.maxLead / scale
-    tx = tx + math.max(-maxX, math.min(maxX, vx * s.lookAhead))
-    ty = ty + math.max(-maxY, math.min(maxY, vy * s.lookAhead))
+    tx = tx + mathutils.clamp(vx * s.lookAhead, -maxX, maxX)
+    ty = ty + mathutils.clamp(vy * s.lookAhead, -maxY, maxY)
     local cx, cy = cam:getTranslation()
     local k = 1 - math.exp(-dt * s.speed)
     cam:setTranslation(approach(cx, tx, w * s.deadZone / scale, k), approach(cy, ty, h * s.deadZone / scale, k))
@@ -185,7 +186,7 @@ local function stepZoom(dt, cam)
     z.t = math.min(z.duration, z.t + dt)
     local u = z.duration > 0 and z.t / z.duration or 1
     u = u * u * (3 - 2 * u)
-    cam:setScale(z.from + (z.to - z.from) * u)
+    cam:setScale(mathutils.lerp(z.from, z.to, u))
     if z.t >= z.duration then F.zoom = nil end
     return true
 end

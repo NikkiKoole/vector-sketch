@@ -83,7 +83,7 @@ function lib.spineBand(raw, index, count, flipY)
     local function put(k, x, y) out[k * 2 - 1], out[k * 2] = x, y end
     local function onRight(y) local _, hi = crossings(raw, y); return hi, y end
     local function onLeft(y) local lo = crossings(raw, y); return lo, y end
-    local function clamp(y, a, b) return math.max(a, math.min(b, y)) end
+    local clamp = mathutils.clamp
     if fromBottom == count then -- the shape's own top: its points, kept in the upper part of the band
         for _, k in ipairs({ 8, 1, 2 }) do
             local y = clamp(raw[k * 2], yA, yA + 0.6 * h)

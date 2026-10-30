@@ -1,4 +1,5 @@
 --ui-text-input.lua
+local mathutils = require('src.math-utils')
 return function(ui)
     --- Helper function to calculate cursor position within a line based on mouse X coordinate.
     function ui.calculateCursorPositionInLine(text, relativeX)
@@ -372,7 +373,7 @@ return function(ui)
                     local relativeX = ui.mouseX - x - 5 -- Subtracting padding
                     local relativeY = ui.mouseY - y
                     local lineIndex = math.floor(relativeY / ui.font:getHeight()) + 1
-                    lineIndex = math.max(1, math.min(lineIndex, #state.lines))
+                    lineIndex = mathutils.clamp(lineIndex, 1, #state.lines)
                     local lineText = state.lines[lineIndex]
                     local charIndex = ui.calculateCursorPositionInLine(lineText, relativeX)
                     state.cursorPosition = { line = lineIndex, char = charIndex }
@@ -392,7 +393,7 @@ return function(ui)
             local relativeX = ui.mouseX - x - 5
             local relativeY = ui.mouseY - y
             local lineIndex = math.floor(relativeY / ui.font:getHeight()) + 1
-            lineIndex = math.max(1, math.min(lineIndex, #state.lines))
+            lineIndex = mathutils.clamp(lineIndex, 1, #state.lines)
             local lineText = state.lines[lineIndex]
             local charIndex = ui.calculateCursorPositionInLine(lineText, relativeX)
             state.cursorPosition = { line = lineIndex, char = charIndex }

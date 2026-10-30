@@ -3,6 +3,7 @@ local lib = {}
 local allUI = require('src.ui.all')
 local state = require('src.state')
 local mipoVoice = require('src.mipo-voice')
+local mathutils = require('src.math-utils')
 
 -- The Mipo being edited hmpfs on every change (docs/PUPPETMAKER-SOUND.md P1):
 -- the editor draws through this ui, which reports slider and checkbox changes.
@@ -12,7 +13,7 @@ local ui = setmetatable({
         local result = allUI.sliderWithInput(id, x, y, w, min, max, value, changed, step)
         local v = tonumber(result)
         if v and editing and max > min then
-            mipoVoice.edited(editing, math.max(0, math.min(1, (v - min) / (max - min))))
+            mipoVoice.edited(editing, mathutils.remap(v, min, max, 0, 1))
         end
         return result
     end,

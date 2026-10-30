@@ -7,6 +7,7 @@
 -- src/ui/body-editor.lua. Ranges are the ones the old panel used.
 local ST = require('src.shape-types')
 local shapes = require('src.shapes')
+local mathutils = require('src.math-utils')
 
 local lib = {}
 
@@ -129,7 +130,7 @@ lib.rows = {
     { key = 'group', kind = 'numberText', advanced = true, visible = hasCollision,
       get = function(thing) return thing.body:getFixtures()[1]:getGroupIndex() end,
       set = function(thing, v)
-          v = math.max(-32768, math.min(32767, math.floor(v)))
+          v = mathutils.clamp(math.floor(v), -32768, 32767)
           for _, fixture in ipairs(thing.body:getFixtures()) do fixture:setGroupIndex(v) end
       end },
     { key = 'ang damp', kind = 'number', min = 0, max = 10, advanced = true,

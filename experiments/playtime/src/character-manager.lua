@@ -569,9 +569,7 @@ local function jointAnchor(instance, parentName, childName)
     return nil
 end
 
-local function dist(x1, y1, x2, y2)
-    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-end
+local dist = mathutils.dist
 
 function lib.armReach(instance)
     local sx, sy = jointAnchor(instance, 'torso1', 'luarm')
@@ -733,7 +731,7 @@ local function jitterInRange(value, key)
     local r = D.randomRanges[key]
     if not r then return value end
     local delta = (math.random() * 2 - 1) * (r.max - r.min) * MUTATE_JITTER
-    return math.max(r.min, math.min(r.max, value + delta))
+    return mathutils.clamp(value + delta, r.min, r.max)
 end
 
 -- Jitter relative to the current value (for dims without global ranges, e.g. limb h).
@@ -813,14 +811,14 @@ function lib.mutateSizes(instance)
     for _, pname in ipairs({'luleg', 'ruleg', 'llleg', 'rlleg'}) do
         local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
         if dims and dims.h then
-            if not legH then legH = math.max(60, math.min(800, jitterRelative(dims.h, MUTATE_JITTER))) end
+            if not legH then legH = mathutils.clamp(jitterRelative(dims.h, MUTATE_JITTER), 60, 800) end
             lib.updatePart(pname, { h = legH }, instance)
         end
     end
     for _, pname in ipairs({'luarm', 'ruarm', 'llarm', 'rlarm'}) do
         local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
         if dims and dims.h then
-            if not armH then armH = math.max(60, math.min(800, jitterRelative(dims.h, MUTATE_JITTER))) end
+            if not armH then armH = mathutils.clamp(jitterRelative(dims.h, MUTATE_JITTER), 60, 800) end
             lib.updatePart(pname, { h = armH }, instance)
         end
     end
@@ -2103,7 +2101,7 @@ function lib.settlePose(instance)
                 if a == parent.body and b == part.body and joint:getType() == 'revolute'
                     and joint:areLimitsEnabled() then
                     local angle = joint:getJointAngle()
-                    local target = math.max(joint:getLowerLimit(), math.min(joint:getUpperLimit(), angle))
+                    local target = mathutils.clamp(angle, joint:getLowerLimit(), joint:getUpperLimit())
                     local turn = target - angle
                     if math.abs(turn) > 1e-3 then
                         local ax, ay = joint:getAnchors()

@@ -2,12 +2,33 @@
 local lib = {}
 local logger = require 'src.logger'
 
-local function getDistance(x1, y1, x2, y2)
-    local dx = x1 - x2
-    local dy = y1 - y2
-    local distance = math.sqrt((dx * dx) + (dy * dy))
+-- min wins when min > max, like the math.max(min, math.min(max, x)) it replaces
+function lib.clamp(x, min, max)
+    return math.max(min, math.min(max, x))
+end
 
-    return distance
+function lib.lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+function lib.clampedLerp(a, b, t)
+    return a + (b - a) * lib.clamp(t, 0, 1)
+end
+
+-- x from [inMin, inMax] to [outMin, outMax], held inside the out range
+function lib.remap(x, inMin, inMax, outMin, outMax)
+    return lib.clampedLerp(outMin, outMax, (x - inMin) / (inMax - inMin))
+end
+
+function lib.dist(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+-- an angle in [-pi, pi)
+function lib.wrapAngle(a)
+    return (a + math.pi) % (2 * math.pi) - math.pi
 end
 
 function lib.getLengthOfPath(path)
@@ -15,7 +36,7 @@ function lib.getLengthOfPath(path)
     for i = 1, #path - 1 do
         local a = path[i]
         local b = path[i + 1]
-        result = result + getDistance(a[1], a[2], b[1], b[2])
+        result = result + lib.dist(a[1], a[2], b[1], b[2])
     end
     return result
 end
@@ -409,7 +430,7 @@ local function distancePointToSegment(px, py, x1, y1, x2, y2)
     local t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
 
     -- Clamp t to the [0,1] range
-    t = math.max(0, math.min(1, t))
+    t = lib.clamp(t, 0, 1)
 
     -- Find the closest point on the segment
     local closestX = x1 + t * dx
@@ -475,12 +496,6 @@ function lib.normalizeAxis(x, y)
     else
         return x / magnitude, y / magnitude
     end
-end
-
-function lib.calculateDistance(x1, y1, x2, y2)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    return math.sqrt(dx * dx + dy * dy)
 end
 
 function lib.computeCentroid(polygon)
@@ -868,20 +883,8 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
     return weights
 end
 
-function lib.clamp(x, min, max)
-    return x < min and min or (x > max and max or x)
-end
-
 function lib.sign(value)
     if value == nil or value < 0 then return -1 else return 1 end
-end
-
-function lib.lerp(a, b, t)
-    return a + (b - a) * t
-end
-
-function lib.clampedLerp(a, b, t)
-    return a + (b - a) * lib.clamp(t, 0, 1)
 end
 
 function lib.getCenterAndDimensions(body)
@@ -940,7 +943,7 @@ function lib.closestEdgeParams(px, py, poly)
         end
 
         -- Clamp t to [0,1] to stay within the segment
-        local clampedT = math.max(0, math.min(1, t))
+        local clampedT = lib.clamp(t, 0, 1)
 
         -- Closest point on edge to (px,py)
         local projX = x1 + clampedT * ex
@@ -1031,7 +1034,7 @@ function lib.findEdgeAndLerpParam(px, py, poly)
         end
 
         -- Clamp t to [0,1]
-        local clampedT = math.max(0, math.min(1, t))
+        local clampedT = lib.clamp(t, 0, 1)
 
         -- Closest point on edge to (px, py)
         local projX = x1 + clampedT * ex

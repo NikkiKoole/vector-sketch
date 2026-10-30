@@ -15,6 +15,7 @@
 -- snapping. Visual only (not saved): it runs in lib.draw, playing or not.
 -- W2 turns what spills into a stream, W4 floating.
 local lib = {}
+local mathutils = require('src.math-utils')
 
 lib.defaults = {
     fill = 0.6,               -- part of the hollow that's water (upright)
@@ -143,7 +144,7 @@ local function nearConvex(poly, x, y, near)
         -- distance to this edge
         local dx, dy = bx - ax, by - ay
         local len2 = dx * dx + dy * dy
-        local t = len2 > 0 and math.max(0, math.min(1, ((x - ax) * dx + (y - ay) * dy) / len2)) or 0
+        local t = len2 > 0 and mathutils.clamp(((x - ax) * dx + (y - ay) * dy) / len2, 0, 1) or 0
         local ex, ey = ax + dx * t - x, ay + dy * t - y
         if ex * ex + ey * ey <= near * near then return true end
     end
@@ -353,7 +354,7 @@ local function updateWave(extra, body, level, width, maxHeight, dt)
     -- (the right side going down) leaves it up on the right
     local push = (ax * 0.5 - alpha * width * 0.25) * slosh * dt
     local limit = width * 4
-    lib.pushWave(entry.wave, math.max(-limit, math.min(limit, push)))
+    lib.pushWave(entry.wave, mathutils.clamp(push, -limit, limit))
 
     -- a real slosh is slow in a wide bath and quick in a cup: omega^2 ~ pi g / width
     local g = 980
@@ -397,7 +398,7 @@ function lib.draw(extra, body)
     -- the surface never rises past the mouth (no lid to cut it off), and only so far in a deep one
     local mouth = mouthY(lib.container(extra, body), hull) -- its lowest point; huge when closed
     local top = mouth == math.huge and minY or mouth
-    local maxHeight = math.max(0, math.min((maxY - minY) * 0.35, level - top))
+    local maxHeight = mathutils.clamp(level - top, 0, (maxY - minY) * 0.35)
     local entry = updateWave(extra, body, level, width, maxHeight, love.timer.getDelta())
     local h = entry.wave.h
     local n = #h
@@ -419,7 +420,7 @@ function lib.draw(extra, body)
     local line = {}
     for i = 1, n do
         local t = (i - 1) / (n - 1)
-        line[#line + 1] = minX + (maxX - minX) * t
+        line[#line + 1] = mathutils.lerp(minX, maxX, t)
         line[#line + 1] = shown - h[i]
     end
     love.graphics.setColor(hexColor(setting(extra, 'color')))

@@ -43,12 +43,18 @@ L = more.
 
 ## Write small things once
 
-- [ ] **CL6. Use the maths helpers.** `math.max(a, math.min(b, x))` is written out 40 times in 16
+- [x] **CL6. Use the maths helpers.** `math.max(a, math.min(b, x))` is written out 40 times in 16
   files while `mathutils.clamp` is used twice. Same for lerp (25 inline), remap (12), distance (34),
   and angle wrapping `(a + pi) % 2pi - pi` (7: mipo-actions, keep-angle, blob). Local copies:
   `clamp` character-topology:86, `clampAxis` camera-follow:160, `lerpClamped` slide-sound:86,
   `mapInto` mipo-voice:367, `lerp` draw-textured:87, `getDistance` / `lerp` inside math-utils itself.
   Fix: `mathutils.clamp / lerp / remap / dist / wrapAngle`, one mechanical pass. M.
+  **Done 2026-10-30:** `clamp` (now `math.max(min, math.min(max, x))`, so min wins on an empty range
+  like the inline copies), `lerp`, `remap` (held in the out range), `dist` (was `calculateDistance`),
+  `wrapAngle` at the top of math-utils; every inline clamp and angle wrap, the local copies (except
+  slide-sound, CL5) and the plain scalar lerps use them. Left on purpose: music.lua and synth.lua
+  (the music session's; integer note and volume bounds), 2D point lerps in geometry loops and
+  vector lengths `math.sqrt(dx * dx + dy * dy)` (no clearer as a call), mipo-face's lerp closure.
 - [ ] **CL7. `thingOf(body)`.** `getUserData().thing` is written ~80 times in 26 files, 8 of them
   calling `getUserData()` twice. `ui/on-stage.lua:14` already has a private `thingOf`; move it to
   registry or utils. M.

@@ -1,6 +1,7 @@
 local lib = {}
 local registry = require 'src.registry'
 local units = require('src.physics-units')
+local mathutils = require('src.math-utils')
 local contactTracker = require('src.physics.contact-tracker')
 
 -- While a part touches another Mipo or a prop, the controller only gets a
@@ -41,7 +42,7 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
     local currentAngle = body:getAngle()
     local diff = math.rad(targetAngle) - currentAngle
     -- wrap to [-pi, pi]
-    diff = (diff + math.pi) % (2 * math.pi) - math.pi
+    diff = mathutils.wrapAngle(diff)
 
     local omega = body:getAngularVelocity()
 

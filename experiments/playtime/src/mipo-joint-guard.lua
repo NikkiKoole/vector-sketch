@@ -30,6 +30,7 @@ local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local registry = require('src.registry')
+local mathutils = require('src.math-utils')
 local units = require('src.physics-units') -- speeds below are as at 100 px per metre
 local contactTracker = require('src.physics.contact-tracker')
 
@@ -414,7 +415,7 @@ local function isSplayed(instance)
                 -- limp parts (held limb, idle slump) are slack on purpose
                 if behavior.name == 'KEEP_ANGLE' and behavior.enabled ~= false and not part.limp then
                     local diff = part.body:getAngle() - math.rad(behavior.angle or 0)
-                    diff = (diff + math.pi) % TWO_PI - math.pi
+                    diff = mathutils.wrapAngle(diff)
                     if math.abs(diff) > lib.splayedAngle then return true end
                 end
             end

@@ -9,6 +9,7 @@
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 local units = require('src.physics-units')
+local mathutils = require('src.math-utils')
 local behaviors = require('src.behaviors')
 
 local lib = {}
@@ -143,11 +144,11 @@ function lib.voiceFor(instance)
     local lowP, highP = lib.pitchRange[1], lib.pitchRange[2]
     local t = (math.floor(h / 7) % 101) / 100
     local jitter = ((math.floor(h / 709) % 41) - 20) / 100 -- -0.2 .. 0.2
-    local toneT = math.max(0, math.min(1, t + jitter))
+    local toneT = mathutils.clamp(t + jitter, 0, 1)
     return {
         set = lib.voiceSets[(h % #lib.voiceSets) + 1],
         pitch = lowP * (highP / lowP) ^ t,
-        tone = lib.toneRange[1] + (lib.toneRange[2] - lib.toneRange[1]) * toneT,
+        tone = mathutils.lerp(lib.toneRange[1], lib.toneRange[2], toneT),
     }
 end
 
@@ -358,11 +359,7 @@ function lib.squeakBody(body, emotionName)
     return nil
 end
 
-local function mapInto(x, inMin, inMax, outMin, outMax)
-    local t = (x - inMin) / (inMax - inMin)
-    t = math.max(0, math.min(1, t))
-    return outMin + (outMax - outMin) * t
-end
+local mapInto = mathutils.remap
 
 -- `source` is the body making the sound (for perBody sounds).
 lib.stats = { impacts = 0 } -- impact sounds played (spec/mipo-crowd-sound_spec.lua counts them)
@@ -381,7 +378,7 @@ local function playImpact(kind, body1, body2, speed, source)
         -- in the background music's current chord when it plays, else the fixed pentatonic
         local notes = require('src.music').chordNotes(57, 74) or lib.plonkNotes
         local index = math.floor(mapInto(speed, sound.soft, sound.hard, #notes, 1) + 0.5) + love.math.random(-1, 1)
-        index = math.max(1, math.min(#notes, index))
+        index = mathutils.clamp(index, 1, #notes)
         local x1, y1 = body1:getPosition()
         local x2, y2 = body2:getPosition()
         local vol = mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume * 14

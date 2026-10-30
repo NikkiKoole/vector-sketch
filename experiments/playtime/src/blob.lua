@@ -26,6 +26,7 @@ local state = require('src.state')
 local subtypes = require('src.subtypes')
 local registry = require('src.registry')
 local units = require('src.physics-units')
+local mathutils = require('src.math-utils')
 
 -- What a new blob starts with (also the fallback for missing keys).
 lib.defaults = {
@@ -294,7 +295,7 @@ local function applyPressure(rt, extra)
     signed = signed / 2
     local k = rt.pressureK
     local p = pressure * k * (rt.restArea - signed) / rt.restArea
-    p = math.max(-k, math.min(p, 5 * k))
+    p = mathutils.clamp(p, -k, 5 * k)
     local w = rt.restArea > 0 and 1 or -1
     for i = 1, n do
         local j = i % n + 1
@@ -304,9 +305,7 @@ local function applyPressure(rt, extra)
     end
 end
 
-local function wrapAngle(a)
-    return (a + math.pi) % (2 * math.pi) - math.pi
-end
+local wrapAngle = mathutils.wrapAngle
 
 -- Shape matching: fit the rest shape onto the rim (its middle, best rotation) and pull
 -- every rim point toward its spot in it, damped against the rim's own motion. The rim

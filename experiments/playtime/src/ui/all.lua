@@ -6,6 +6,7 @@ local ui = rawget(_G, '_ui_module') or {} -- luacheck: ignore 113
 rawset(_G, '_ui_module', ui)              -- luacheck: ignore 112
 
 require('src.ui.textinput')(ui)
+local mathutils = require('src.math-utils')
 
 local creamy  = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
 local orange  = { 242 / 255, 133 / 255, 0 }
@@ -233,7 +234,7 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
         scrollY.value = math.min(scrollY.value, contentHeight - h)
         ui.mouseWheelDy = 0
     end
-    scrollY.value = math.max(0, math.min(scrollY.value, maxContentY - h))
+    scrollY.value = mathutils.clamp(scrollY.value, 0, maxContentY - h)
     ui.popClip()
     return maxContentY
 end
@@ -266,7 +267,7 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
         -- where 0 or negative means a degenerate shape.
         local typed = tonumber(numericInputText)
         if typed and typed == typed then
-            value = math.max(min, math.min(max, typed))
+            value = mathutils.clamp(typed, min, max)
             returnValue = value
         end
     end
@@ -634,11 +635,11 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
         local mouseX, mouseY = ui.mouseX, ui.mouseY
         if isHorizontal then
             -- Clamp thumbX within the track boundaries
-            thumbX = math.max(x, math.min(mouseX - ui.dragOffset.x, x + length - thickness))
+            thumbX = mathutils.clamp(mouseX - ui.dragOffset.x, x, x + length - thickness)
             proportion = (thumbX - x) / (length - thickness)
         else
             -- Clamp thumbY within the track boundaries
-            thumbY = math.max(y, math.min(mouseY - ui.dragOffset.y, y + length - thickness))
+            thumbY = mathutils.clamp(mouseY - ui.dragOffset.y, y, y + length - thickness)
             proportion = 1 - ((thumbY - y) / (length - thickness))
         end
 
@@ -760,7 +761,7 @@ function ui.scrollPanel(id, x, y, w, h, drawFunc)
         scroll.value = scroll.value - ui.mouseWheelDy * 30
         ui.mouseWheelDy = 0
     end
-    scroll.value = math.max(0, math.min(scroll.value, math.max(0, overflow)))
+    scroll.value = mathutils.clamp(scroll.value, 0, overflow)
 
     ui.pushClip(x, y, w, h)
     love.graphics.push()

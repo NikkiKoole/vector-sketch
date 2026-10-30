@@ -8,6 +8,7 @@
 local mipoRegistry = require('src.mipo-registry')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local units = require('src.physics-units')
+local mathutils = require('src.math-utils')
 local behaviors = require('src.behaviors')
 local contactTracker = require('src.physics.contact-tracker')
 
@@ -238,7 +239,7 @@ end
 function lib.onHardImpact(instance, speed)
     if not lib.daze or speed < lib.dazeSpeed then return end
     local t = math.min(1, (speed - lib.dazeSpeed) / (lib.dazeHardSpeed - lib.dazeSpeed))
-    local duration = lib.dazeMin + (lib.dazeMax - lib.dazeMin) * t
+    local duration = mathutils.lerp(lib.dazeMin, lib.dazeMax, t)
     local now = love.timer.getTime()
     if not instance._dazedUntil then
         -- only undo a ragdoll the daze made itself, never one switched on by hand
@@ -404,10 +405,10 @@ function lib.steerJointToward(parentBody, childBody, targetWorldAngle, kp, kd, m
         local lower, upper = joint:getLowerLimit(), joint:getUpperLimit()
         local mid = (lower + upper) / 2
         desired = desired - 2 * math.pi * math.floor((desired - mid) / (2 * math.pi) + 0.5)
-        desired = math.max(lower, math.min(upper, desired))
+        desired = mathutils.clamp(desired, lower, upper)
         diff = desired - jointAngle
     else
-        diff = (desired - jointAngle + math.pi) % (2 * math.pi) - math.pi
+        diff = mathutils.wrapAngle(desired - jointAngle)
     end
     local alpha = kp * diff - kd * (childBody:getAngularVelocity() - parentBody:getAngularVelocity())
     if alpha > maxAlpha then alpha = maxAlpha end
@@ -471,7 +472,7 @@ end
 -- shoulder at the top of its range?
 local function armUp(upperBody, shoulderJoint)
     local fromUp = (upperBody:getAngle() % (2 * math.pi)) - math.pi -- 0 = straight up
-    fromUp = (fromUp + math.pi) % (2 * math.pi) - math.pi
+    fromUp = mathutils.wrapAngle(fromUp)
     if math.abs(fromUp) > math.rad(lib.knotUp) then return false end
     if not shoulderJoint or not shoulderJoint:areLimitsEnabled() then return true end
     local angle = shoulderJoint:getJointAngle()
@@ -487,7 +488,7 @@ local function knotPulling(instance, side, upperBody, shoulderJoint)
     instance._armKnot[side] = k
     local now = love.timer.getTime()
     if k.pullUntil then
-        local fromDown = (upperBody:getAngle() + math.pi) % (2 * math.pi) - math.pi
+        local fromDown = mathutils.wrapAngle(upperBody:getAngle())
         if now < k.pullUntil and math.abs(fromDown) > math.rad(lib.knotDone) then return true end
         k.pullUntil, k.upSince, k.restUntil = nil, nil, now + lib.knotRest
         return false
@@ -623,7 +624,7 @@ local function straighten(instance, parentName, childName, target, rate, strengt
     joint:setMotorEnabled(true)
     -- the two bodies' own angles (not joint angle 0: that counts from the joint's reference,
     -- the pose it was made or loaded in), wrapped: bodies spin
-    local bend = (part.body:getAngle() - parent.body:getAngle() + math.pi) % (2 * math.pi) - math.pi
+    local bend = mathutils.wrapAngle(part.body:getAngle() - parent.body:getAngle())
     joint:setMotorSpeed(units.rate(rate) * (target - bend))
     joint:setMaxMotorTorque(strength * weightTorque(subtreeBodies(instance, childName, {}), ax, ay))
 end
@@ -730,7 +731,7 @@ local function updateGaze(instance, now)
         local tilt = 0
         if not instance._isRagdoll and not instance._isFlipped and not instance._dazedUntil then
             local hx = head.body:getPosition()
-            local f = math.max(-1, math.min(1, (face.gazeX - hx) / lib.headTiltRange))
+            local f = mathutils.clamp((face.gazeX - hx) / lib.headTiltRange, -1, 1)
             tilt = f * lib.headTilt
         end
         local base = instance._isFlipped and 180 or 0
