@@ -105,6 +105,34 @@ local function getMirrorPart(partName)
     return mirrors[partName]
 end
 
+-- The part, and its mirror when symmetric editing is on (and the Mipo has one).
+local function partAndMirror(instance, partName)
+    local names = { partName }
+    local mirror = accordionStates.symmetricEditing and getMirrorPart(partName)
+    if mirror and instance.dna.parts[mirror] then names[2] = mirror end
+    return names
+end
+
+-- fn(name) on the part and its mirror (see partAndMirror), then the textures once.
+local function editPartAndMirror(instance, partName, fn)
+    for _, name in ipairs(partAndMirror(instance, partName)) do fn(name) end
+    CharacterManager.addTexturesFromInstance2(instance)
+end
+
+-- Bodyhair is edited on the whole torso (every segment), else on a part and its mirror.
+local function bodyhairParts(instance, partName)
+    local names = {}
+    if partName:match('^torso') then
+        for i = 1, instance.dna.creation.torsoSegments or 1 do names[i] = 'torso' .. i end
+        return names
+    end
+    for _, name in ipairs(partAndMirror(instance, partName)) do
+        local appearance = instance.dna.parts[name].appearance
+        if appearance and appearance.bodyhair then names[#names + 1] = name end
+    end
+    return names
+end
+
 local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, onSelect, showNone)
     local itemsPerRow = math.floor((PANEL_WIDTH - 20) / cellSize)
     local clicked = false
@@ -246,7 +274,6 @@ local function drawPatternControls(block, idPrefix, panelX, startY, onUpdate)
             local val = ui.sliderWithInput(idPrefix .. '_' .. s.key,
                 px, yy, 120, s.min, s.max, block[s.key] or s.default)
             ui.alignedLabel(px, yy, '  ' .. s.label)
-            val = val and tonumber(val)
             if val and val ~= (block[s.key] or s.default) then
                 onUpdate(s.key, val)
             end
@@ -297,7 +324,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Eye position sliders
     local eyeX = ui.sliderWithInput('mipo_eye_x', x, y, 120, 0, 0.5, eyePos.x)
     ui.alignedLabel(x, y, '  eye spacing')
-    eyeX = eyeX and tonumber(eyeX)
     if eyeX and eyeX ~= eyePos.x then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeX = eyeX })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -306,7 +332,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
 
     local eyeY = ui.sliderWithInput('mipo_eye_y', x, y, 120, 0, 1, eyePos.y)
     ui.alignedLabel(x, y, '  eye vertical')
-    eyeY = eyeY and tonumber(eyeY)
     if eyeY and eyeY ~= eyePos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeY = eyeY })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -316,7 +341,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Eye rotation
     local eyeRVal = ui.sliderWithInput('mipo_eye_r', x, y, 120, -2, 2, eyePos.r)
     ui.alignedLabel(x, y, '  eye rotation')
-    eyeRVal = eyeRVal and tonumber(eyeRVal)
     if eyeRVal and eyeRVal ~= eyePos.r then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeR = eyeRVal })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -326,7 +350,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Eye size sliders
     local ewMul = ui.sliderWithInput('mipo_eye_wmul', x, y, 120, 0.25, 2, eye.wMul)
     ui.alignedLabel(x, y, '  eye width')
-    ewMul = ewMul and tonumber(ewMul)
     if ewMul and ewMul ~= eye.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeWMul = ewMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -335,7 +358,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
 
     local ehMul = ui.sliderWithInput('mipo_eye_hmul', x, y, 120, 0.25, 2, eye.hMul)
     ui.alignedLabel(x, y, '  eye height')
-    ehMul = ehMul and tonumber(ehMul)
     if ehMul and ehMul ~= eye.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeHMul = ehMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -345,7 +367,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Pupil size sliders
     local pwMul = ui.sliderWithInput('mipo_pupil_wmul', x, y, 120, 0.1, 1, pupil.wMul)
     ui.alignedLabel(x, y, '  pupil width')
-    pwMul = pwMul and tonumber(pwMul)
     if pwMul and pwMul ~= pupil.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilWMul = pwMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -354,7 +375,6 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
 
     local phMul = ui.sliderWithInput('mipo_pupil_hmul', x, y, 120, 0.1, 1, pupil.hMul)
     ui.alignedLabel(x, y, '  pupil height')
-    phMul = phMul and tonumber(phMul)
     if phMul and phMul ~= pupil.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilHMul = phMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -421,7 +441,6 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     -- Brow bend pattern
     local browBend = ui.sliderWithInput('mipo_brow_bend', x, y, 120, 1, 10, brow.bend)
     ui.alignedLabel(x, y, '  brow bend')
-    browBend = browBend and tonumber(browBend)
     if browBend then browBend = math.floor(browBend + 0.5) end
     if browBend and browBend ~= brow.bend then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browBend = browBend })
@@ -432,7 +451,6 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     -- Brow size
     local bwMul = ui.sliderWithInput('mipo_brow_wmul', x, y, 120, 0.25, 2, brow.wMul)
     ui.alignedLabel(x, y, '  brow width')
-    bwMul = bwMul and tonumber(bwMul)
     if bwMul and bwMul ~= brow.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browWMul = bwMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -441,7 +459,6 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
 
     local bhMul = ui.sliderWithInput('mipo_brow_hmul', x, y, 120, 0.25, 2, brow.hMul)
     ui.alignedLabel(x, y, '  brow height')
-    bhMul = bhMul and tonumber(bhMul)
     if bhMul and bhMul ~= brow.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browHMul = bhMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -451,7 +468,6 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     -- Brow vertical position
     local browYVal = ui.sliderWithInput('mipo_brow_y', x, y, 120, 0.1, 0.5, browPos.y)
     ui.alignedLabel(x, y, '  brow vertical')
-    browYVal = browYVal and tonumber(browYVal)
     if browYVal and browYVal ~= browPos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browY = browYVal })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -496,7 +512,6 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Nose size sliders
     local nwMul = ui.sliderWithInput('mipo_nose_wmul', x, y, 120, 0.5, 3, nose.wMul)
     ui.alignedLabel(x, y, '  nose width')
-    nwMul = nwMul and tonumber(nwMul)
     if nwMul and nwMul ~= nose.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseWMul = nwMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -505,7 +520,6 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
 
     local nhMul = ui.sliderWithInput('mipo_nose_hmul', x, y, 120, 0.5, 3, nose.hMul)
     ui.alignedLabel(x, y, '  nose height')
-    nhMul = nhMul and tonumber(nhMul)
     if nhMul and nhMul ~= nose.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseHMul = nhMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -515,7 +529,6 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Nose vertical position
     local noseYVal = ui.sliderWithInput('mipo_nose_y', x, y, 120, 0, 1, nosePos.y)
     ui.alignedLabel(x, y, '  nose vertical')
-    noseYVal = noseYVal and tonumber(noseYVal)
     if noseYVal and noseYVal ~= nosePos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseY = noseYVal })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -554,7 +567,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     local mShape = ui.sliderWithInput('mipo_mouth_shape', x, y, 120, 1, #mouthShapes.normalized,
         mouth.shape)
     ui.alignedLabel(x, y, '  mouth preset')
-    mShape = mShape and tonumber(mShape)
     if mShape then mShape = math.floor(mShape + 0.5) end
     if mShape and mShape ~= mouth.shape then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthShape = mShape })
@@ -595,7 +607,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     -- Mouth position
     local mY = ui.sliderWithInput('mipo_mouth_y', x, y, 120, 0.5, 0.95, mouthPos.y)
     ui.alignedLabel(x, y, '  mouth vertical')
-    mY = mY and tonumber(mY)
     if mY and mY ~= mouthPos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthY = mY })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -605,7 +616,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     -- Mouth size
     local mwMul = ui.sliderWithInput('mipo_mouth_wmul', x, y, 120, 0.3, 2, mouth.wMul)
     ui.alignedLabel(x, y, '  mouth width')
-    mwMul = mwMul and tonumber(mwMul)
     if mwMul and mwMul ~= mouth.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthWMul = mwMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -614,7 +624,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
 
     local mhMul = ui.sliderWithInput('mipo_mouth_hmul', x, y, 120, 0.3, 2, mouth.hMul)
     ui.alignedLabel(x, y, '  mouth height')
-    mhMul = mhMul and tonumber(mhMul)
     if mhMul and mhMul ~= mouth.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthHMul = mhMul })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -625,7 +634,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     local upperLipScale = ui.sliderWithInput('mipo_upper_lip_scale', x, y, 120, 0.02, 0.4,
         mouth.upperLipScale or mouth.lipScale or 0.15)
     ui.alignedLabel(x, y, '  upper lip')
-    upperLipScale = upperLipScale and tonumber(upperLipScale)
     if upperLipScale and upperLipScale ~= mouth.upperLipScale then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthUpperLipScale = upperLipScale })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -635,7 +643,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     local lowerLipScale = ui.sliderWithInput('mipo_lower_lip_scale', x, y, 120, 0.02, 0.4,
         mouth.lowerLipScale or mouth.lipScale or 0.25)
     ui.alignedLabel(x, y, '  lower lip')
-    lowerLipScale = lowerLipScale and tonumber(lowerLipScale)
     if lowerLipScale and lowerLipScale ~= mouth.lowerLipScale then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLowerLipScale = lowerLipScale })
         CharacterManager.addTexturesFromInstance2(instance)
@@ -683,7 +690,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     if teeth.shape and teeth.shape > 0 then
         local twMul = ui.sliderWithInput('mipo_teeth_wmul', x, y, 120, 0.3, 3, teeth.wMul or 1)
         ui.alignedLabel(x, y, '  teeth width')
-        twMul = twMul and tonumber(twMul)
         if twMul and twMul ~= (teeth.wMul or 1) then
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethWMul = twMul })
             CharacterManager.addTexturesFromInstance2(instance)
@@ -692,7 +698,6 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
 
         local thMul = ui.sliderWithInput('mipo_teeth_hmul', x, y, 120, 0.5, 3, teeth.hMul)
         ui.alignedLabel(x, y, '  teeth height')
-        thMul = thMul and tonumber(thMul)
         if thMul and thMul ~= teeth.hMul then
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethHMul = thMul })
             CharacterManager.addTexturesFromInstance2(instance)
@@ -830,7 +835,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 y = y + ROW
                 local sway = ui.sliderWithInput('mipo_spineSway', x, y, 120, 0, 1, creation.spineSway or 0.3)
                 ui.alignedLabel(x, y, '  spine sway')
-                sway = sway and tonumber(sway)
                 if sway and sway ~= creation.spineSway then creation.spineSway = sway end -- read live
                 y = y + ROW
             end
@@ -854,7 +858,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 local currentH = firstNeck and firstNeck.dims and firstNeck.dims.h or 150
                 local nh = ui.sliderWithInput('mipo_neckH', x, y, 120, 10, 500, currentH)
                 ui.alignedLabel(x, y, '  neck height')
-                nh = nh and tonumber(nh)
                 if nh and nh ~= currentH then
                     for i = 1, creation.neckSegments do
                         CharacterManager.updatePart('neck' .. i, { h = nh }, instance)
@@ -887,7 +890,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 local currentWmul = neckSkin.main.wmul or instance.scale or 1
                 local neckW = ui.sliderWithInput('mipo_neck_wmul', x, y, 120, 0.1, 10, currentWmul)
                 ui.alignedLabel(x, y, '  neck width')
-                neckW = neckW and tonumber(neckW)
                 if neckW and neckW ~= currentWmul then setNeck({ wmul = neckW }) end
                 y = y + ROW
             end
@@ -945,7 +947,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             -- Leg stance width
             local legX = ui.sliderWithInput('mipo_leg_x', x, y, 120, 0, 1, pos.leg.x)
             ui.alignedLabel(x, y, '  leg stance')
-            legX = legX and tonumber(legX)
             if legX and legX ~= pos.leg.x then
                 CharacterManager.updatePositioners(instance, { legX = legX })
                 CharacterManager.rebuildFromCreation(instance, {})
@@ -956,7 +957,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             -- Ear vertical position
             local earY = ui.sliderWithInput('mipo_ear_y', x, y, 120, 0, 1, pos.ear.y)
             ui.alignedLabel(x, y, '  ear vertical')
-            earY = earY and tonumber(earY)
             if earY and earY ~= pos.ear.y then
                 CharacterManager.updatePositioners(instance, { earY = earY })
                 CharacterManager.rebuildFromCreation(instance, {})
@@ -970,7 +970,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 local lAngle = learPart.stanceAngle or (-math.pi / 2 + math.pi / 5)
                 local lVal = ui.sliderWithInput('mipo_lear_angle', x, y, 120, -math.pi, math.pi, lAngle)
                 ui.alignedLabel(x, y, '  L ear angle')
-                lVal = lVal and tonumber(lVal)
                 if lVal and lVal ~= lAngle then
                     learPart.stanceAngle = lVal
                     CharacterManager.rebuildFromCreation(instance, {})
@@ -985,7 +984,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 local rAngle = rearPart.stanceAngle or (math.pi / 2 - math.pi / 5)
                 local rVal = ui.sliderWithInput('mipo_rear_angle', x, y, 120, -math.pi, math.pi, rAngle)
                 ui.alignedLabel(x, y, '  R ear angle')
-                rVal = rVal and tonumber(rVal)
                 if rVal and rVal ~= rAngle then
                     rearPart.stanceAngle = rVal
                     CharacterManager.rebuildFromCreation(instance, {})
@@ -1014,7 +1012,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             -- Face magnitude (global face feature scaler)
             local fmVal = ui.sliderWithInput('mipo_face_mag', x, y, 120, 0.25, 2, instance.dna.faceMagnitude or 1)
             ui.alignedLabel(x, y, '  face magnitude')
-            fmVal = fmVal and tonumber(fmVal)
             if fmVal and fmVal ~= (instance.dna.faceMagnitude or 1) then
                 CharacterManager.updatePositioners(instance, { faceMagnitude = fmVal })
                 CharacterManager.addTexturesFromInstance2(instance)
@@ -1062,19 +1059,11 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 local currentURL = partData.shape8URL
                 local cellSize = 50
                 local gridHeight = drawThumbnailGrid(shapes, currentURL, panelX, y, cellSize, function(url)
-                    local mirror = getMirrorPart(shapePart)
-                    local sx = partData.dims.sx or 1
-                    local sy = partData.dims.sy or 1
-                    CharacterManager.updatePart(shapePart, { shape8URL = url, sx = sx, sy = sy }, instance)
-                    if mirror then
-                        local mirrorData = instance.dna.parts[mirror]
-                        if mirrorData then
-                            local msx = mirrorData.dims.sx or 1
-                            local msy = mirrorData.dims.sy or 1
-                            CharacterManager.updatePart(mirror, { shape8URL = url, sx = msx, sy = msy }, instance)
-                        end
-                    end
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    editPartAndMirror(instance, shapePart, function(name)
+                        local dims = instance.dna.parts[name].dims
+                        CharacterManager.updatePart(name, { shape8URL = url, sx = dims.sx or 1, sy = dims.sy or 1 },
+                            instance)
+                    end)
                 end)
                 -- Advance y past the grid
                 y = y + gridHeight + BUTTON_SPACING
@@ -1082,44 +1071,24 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 -- sx slider
                 local sxVal = ui.sliderWithInput('mipo_sx', x, y, 120, -10, 10, partData.dims.sx or 1)
                 ui.alignedLabel(x, y, '  sx')
-                sxVal = sxVal and tonumber(sxVal)
                 if sxVal and sxVal ~= (partData.dims.sx or 1) then
-                    CharacterManager.updatePart(shapePart,
-                        { shape8URL = partData.shape8URL, sx = sxVal, sy = partData.dims.sy or 1 }, instance)
-                    if accordionStates.symmetricEditing then
-                        local mirror = getMirrorPart(shapePart)
-                        if mirror then
-                            local mirrorData = instance.dna.parts[mirror]
-                            if mirrorData then
-                                CharacterManager.updatePart(mirror,
-                                    { shape8URL = mirrorData.shape8URL, sx = sxVal,
-                                      sy = mirrorData.dims.sy or 1 }, instance)
-                            end
-                        end
-                    end
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    editPartAndMirror(instance, shapePart, function(name)
+                        local data = instance.dna.parts[name]
+                        CharacterManager.updatePart(name,
+                            { shape8URL = data.shape8URL, sx = sxVal, sy = data.dims.sy or 1 }, instance)
+                    end)
                 end
                 y = y + ROW
 
                 -- sy slider
                 local syVal = ui.sliderWithInput('mipo_sy', x, y, 120, -10, 10, partData.dims.sy or 1)
                 ui.alignedLabel(x, y, '  sy')
-                syVal = syVal and tonumber(syVal)
                 if syVal and syVal ~= (partData.dims.sy or 1) then
-                    CharacterManager.updatePart(shapePart,
-                        { shape8URL = partData.shape8URL, sx = partData.dims.sx or 1, sy = syVal }, instance)
-                    if accordionStates.symmetricEditing then
-                        local mirror = getMirrorPart(shapePart)
-                        if mirror then
-                            local mirrorData = instance.dna.parts[mirror]
-                            if mirrorData then
-                                CharacterManager.updatePart(mirror,
-                                    { shape8URL = mirrorData.shape8URL,
-                                      sx = mirrorData.dims.sx or 1, sy = syVal }, instance)
-                            end
-                        end
-                    end
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    editPartAndMirror(instance, shapePart, function(name)
+                        local data = instance.dna.parts[name]
+                        CharacterManager.updatePart(name,
+                            { shape8URL = data.shape8URL, sx = data.dims.sx or 1, sy = syVal }, instance)
+                    end)
                 end
                 y = y + ROW
                 -- NOTE: h/w sliders are NOT shown here for SHAPE8 parts.
@@ -1141,32 +1110,20 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 if limbData.dims.h then
                     local hVal = ui.sliderWithInput('mipo_limb_h', x, y, 120, 10, 1500, limbData.dims.h or 100)
                     ui.alignedLabel(x, y, '  h')
-                    hVal = hVal and tonumber(hVal)
                     if hVal and hVal ~= limbData.dims.h then
-                        CharacterManager.updatePart(partName, { h = hVal }, instance)
-                        if accordionStates.symmetricEditing then
-                            local mirror = getMirrorPart(partName)
-                            if mirror and instance.dna.parts[mirror] then
-                                CharacterManager.updatePart(mirror, { h = hVal }, instance)
-                            end
-                        end
-                        CharacterManager.addTexturesFromInstance2(instance)
+                        editPartAndMirror(instance, partName, function(name)
+                            CharacterManager.updatePart(name, { h = hVal }, instance)
+                        end)
                     end
                     y = y + ROW
                 end
                 if limbData.dims.w then
                     local wVal = ui.sliderWithInput('mipo_limb_w', x, y, 120, 5, 500, limbData.dims.w or 40)
                     ui.alignedLabel(x, y, '  w')
-                    wVal = wVal and tonumber(wVal)
                     if wVal and wVal ~= limbData.dims.w then
-                        CharacterManager.updatePart(partName, { w = wVal }, instance)
-                        if accordionStates.symmetricEditing then
-                            local mirror = getMirrorPart(partName)
-                            if mirror and instance.dna.parts[mirror] then
-                                CharacterManager.updatePart(mirror, { w = wVal }, instance)
-                            end
-                        end
-                        CharacterManager.addTexturesFromInstance2(instance)
+                        editPartAndMirror(instance, partName, function(name)
+                            CharacterManager.updatePart(name, { w = wVal }, instance)
+                        end)
                     end
                     y = y + ROW
                 end
@@ -1178,6 +1135,11 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         if partData and partData.appearance and partData.appearance['skin'] then
             drawAccordion(partName .. ' skin', function()
                 local skin = partData.appearance['skin']
+                local function setSkin(patch, vals)
+                    editPartAndMirror(instance, partName, function(name)
+                        CharacterManager.updateSkinOfPart(instance, name, vals, patch)
+                    end)
+                end
                 local patches = { 'main', 'patch1', 'patch2', 'patch3' }
                 -- Skin uses full OMP (Outline + Mask + Pattern) composite rendering:
                 --   bg/outline: tints the hand-drawn outline strokes
@@ -1209,28 +1171,9 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                             local cellSize = 50
                             local gridHeight = drawThumbnailGrid(patchShapes, currentBG, panelX, y, cellSize,
                                 function(url)
-                                    if url then
-                                        local base = url:gsub('%.png$', '')
-                                        local vals = { bgURL = base .. '.png', fgURL = base .. '-mask.png' }
-                                        CharacterManager.updateSkinOfPart(instance, partName, vals, patch)
-                                        if accordionStates.symmetricEditing then
-                                            local mirror = getMirrorPart(partName)
-                                            if mirror and instance.dna.parts[mirror] then
-                                                CharacterManager.updateSkinOfPart(instance, mirror, vals, patch)
-                                            end
-                                        end
-                                    else
-                                        CharacterManager.updateSkinOfPart(instance, partName,
-                                            { bgURL = '', fgURL = '' }, patch)
-                                        if accordionStates.symmetricEditing then
-                                            local mirror = getMirrorPart(partName)
-                                            if mirror and instance.dna.parts[mirror] then
-                                                CharacterManager.updateSkinOfPart(instance, mirror,
-                                                    { bgURL = '', fgURL = '' }, patch)
-                                            end
-                                        end
-                                    end
-                                    CharacterManager.addTexturesFromInstance2(instance)
+                                    local base = url and url:gsub('%.png$', '')
+                                    setSkin(patch, base and { bgURL = base .. '.png', fgURL = base .. '-mask.png' }
+                                        or { bgURL = '', fgURL = '' })
                                 end, true)
                             y = y + gridHeight + 4
 
@@ -1247,14 +1190,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 local val = ui.sliderWithInput('mipo_' .. patchId .. '_' .. s.id,
                                     x + 30, y, 120, s.min, s.max, skin[patch][s.id] or s.default, false, s.step)
                                 if val and val ~= (skin[patch][s.id] or s.default) then -- nil: untouched
-                                    CharacterManager.updateSkinOfPart(instance, partName, { [s.id] = val }, patch)
-                                    if accordionStates.symmetricEditing then
-                                        local mirror = getMirrorPart(partName)
-                                        if mirror and instance.dna.parts[mirror] then
-                                            CharacterManager.updateSkinOfPart(instance, mirror, { [s.id] = val }, patch)
-                                        end
-                                    end
-                                    CharacterManager.addTexturesFromInstance2(instance)
+                                    setSkin(patch, { [s.id] = val })
                                 end
                                 y = y + ROW
                             end
@@ -1262,42 +1198,21 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
 
                         handlePaletteButton('mipo_bg_' .. partName .. '_' .. patch,
                             x + 30, y, 140, skin[patch].bgHex, function(color)
-                                CharacterManager.updateSkinOfPart(instance, partName, { bgHex = color }, patch)
-                                if accordionStates.symmetricEditing then
-                                    local mirror = getMirrorPart(partName)
-                                    if mirror and instance.dna.parts[mirror] then
-                                        CharacterManager.updateSkinOfPart(instance, mirror, { bgHex = color }, patch)
-                                    end
-                                end
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                setSkin(patch, { bgHex = color })
                             end)
                         ui.alignedLabel(x + 180, y, 'outline')
                         y = y + ROW
 
                         handlePaletteButton('mipo_fg_' .. partName .. '_' .. patch,
                             x + 30, y, 140, skin[patch].fgHex, function(color)
-                                CharacterManager.updateSkinOfPart(instance, partName, { fgHex = color }, patch)
-                                if accordionStates.symmetricEditing then
-                                    local mirror = getMirrorPart(partName)
-                                    if mirror and instance.dna.parts[mirror] then
-                                        CharacterManager.updateSkinOfPart(instance, mirror, { fgHex = color }, patch)
-                                    end
-                                end
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                setSkin(patch, { fgHex = color })
                             end)
                         ui.alignedLabel(x + 180, y, 'fill')
                         y = y + ROW
 
                         y = drawPatternControls(skin[patch], 'mipo_pat_' .. partName .. '_' .. patch, panelX, y,
                             function(key, value)
-                                CharacterManager.updateSkinOfPart(instance, partName, { [key] = value }, patch)
-                                if accordionStates.symmetricEditing then
-                                    local mirror = getMirrorPart(partName)
-                                    if mirror and instance.dna.parts[mirror] then
-                                        CharacterManager.updateSkinOfPart(instance, mirror, { [key] = value }, patch)
-                                    end
-                                end
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                setSkin(patch, { [key] = value })
                             end)
                         end -- if showPatch
                     end
@@ -1310,7 +1225,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         -- For torso parts, changes propagate to all torso segments for consistency.
         -- For head (or other parts), changes only affect that part.
         if partData and partData.appearance and partData.appearance['bodyhair'] then
-            local isTorso = partName:match('^torso')
             drawAccordion(partName .. ' bodyhair', function()
                 local bh = partData.appearance['bodyhair']
                 if bh['main'] then
@@ -1329,22 +1243,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 end
                                 bhPatch.cached = nil
                             end
-                            if isTorso then
-                                local count = instance.dna.creation.torsoSegments or 1
-                                for i = 1, count do
-                                    clearOrSet('torso' .. i)
-                                end
-                            else
-                                clearOrSet(partName)
-                                if accordionStates.symmetricEditing then
-                                    local mirror = getMirrorPart(partName)
-                                    if mirror and instance.dna.parts[mirror]
-                                        and instance.dna.parts[mirror].appearance
-                                        and instance.dna.parts[mirror].appearance['bodyhair'] then
-                                        clearOrSet(mirror)
-                                    end
-                                end
-                            end
+                            for _, name in ipairs(bodyhairParts(instance, partName)) do clearOrSet(name) end
                             CharacterManager.addTexturesFromInstance2(instance)
                         end, true)
                     y = y + gridHeight + BUTTON_SPACING
@@ -1352,19 +1251,8 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     -- bodyhair colors (2-layer: outline + fill, no pattern)
                     handlePaletteButton('mipo_bh_bg_' .. partName,
                         x + 30, y, 140, bh['main'].bgHex, function(color)
-                            if isTorso then
-                                local count = instance.dna.creation.torsoSegments or 1
-                                for i = 1, count do
-                                    CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i, { bgHex = color })
-                                end
-                            else
-                                CharacterManager.updateBodyhairOfPart(instance, partName, { bgHex = color })
-                                if accordionStates.symmetricEditing then
-                                    local mirror = getMirrorPart(partName)
-                                    if mirror and instance.dna.parts[mirror] then
-                                        CharacterManager.updateBodyhairOfPart(instance, mirror, { bgHex = color })
-                                    end
-                                end
+                            for _, name in ipairs(bodyhairParts(instance, partName)) do
+                                CharacterManager.updateBodyhairOfPart(instance, name, { bgHex = color })
                             end
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1373,19 +1261,8 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
 
                     handlePaletteButton('mipo_bh_fg_' .. partName,
                         x + 30, y, 140, bh['main'].fgHex, function(color)
-                            if isTorso then
-                                local count = instance.dna.creation.torsoSegments or 1
-                                for i = 1, count do
-                                    CharacterManager.updateBodyhairOfPart(instance, 'torso' .. i, { fgHex = color })
-                                end
-                            else
-                                CharacterManager.updateBodyhairOfPart(instance, partName, { fgHex = color })
-                                if accordionStates.symmetricEditing then
-                                    local mirror = getMirrorPart(partName)
-                                    if mirror and instance.dna.parts[mirror] then
-                                        CharacterManager.updateBodyhairOfPart(instance, mirror, { fgHex = color })
-                                    end
-                                end
+                            for _, name in ipairs(bodyhairParts(instance, partName)) do
+                                CharacterManager.updateBodyhairOfPart(instance, name, { fgHex = color })
                             end
                             CharacterManager.addTexturesFromInstance2(instance)
                         end)
@@ -1398,24 +1275,8 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     local newGrow = ui.slider(
                         x + 40, y, 200, 20, 'horizontal', 0.5, 2.5, currentGrow, 'mipo_bh_grow_' .. partName)
                     if newGrow then
-                        local function setGrow(pn)
-                            instance.dna.parts[pn].appearance['bodyhair'].growfactor = newGrow
-                        end
-                        if isTorso then
-                            local count = instance.dna.creation.torsoSegments or 1
-                            for i = 1, count do
-                                setGrow('torso' .. i)
-                            end
-                        else
-                            setGrow(partName)
-                            if accordionStates.symmetricEditing then
-                                local mirror = getMirrorPart(partName)
-                                if mirror and instance.dna.parts[mirror]
-                                    and instance.dna.parts[mirror].appearance
-                                    and instance.dna.parts[mirror].appearance['bodyhair'] then
-                                    setGrow(mirror)
-                                end
-                            end
+                        for _, name in ipairs(bodyhairParts(instance, partName)) do
+                            instance.dna.parts[name].appearance['bodyhair'].growfactor = newGrow
                         end
                         CharacterManager.rebuildFromCreation(instance, {})
                     end
@@ -1458,7 +1319,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         local currentW = nose1Data.dims and nose1Data.dims.w or 40
                         local nw = ui.sliderWithInput('mipo_nose_w', x, y, 120, 5, 500, currentW)
                         ui.alignedLabel(x, y, '  nose width')
-                        nw = nw and tonumber(nw)
                         if nw and nw ~= currentW then
                             for i = 1, noseSegs do
                                 instance.dna.parts['nose' .. i].dims.w = nw
@@ -1471,7 +1331,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         local currentH = nose1Data.dims and nose1Data.dims.h or 40
                         local nh = ui.sliderWithInput('mipo_nose_h', x, y, 120, 5, 500, currentH)
                         ui.alignedLabel(x, y, '  nose height')
-                        nh = nh and tonumber(nh)
                         if nh and nh ~= currentH then
                             for i = 1, noseSegs do
                                 instance.dna.parts['nose' .. i].dims.h = nh
@@ -1502,7 +1361,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 local currentWmul = cs.wmul or instance.scale or 1
                                 local wmulVal = ui.sliderWithInput('mipo_nose_cs_wmul', x, y, 120, 0.1, 10, currentWmul)
                                 ui.alignedLabel(x, y, '  width')
-                                wmulVal = wmulVal and tonumber(wmulVal)
                                 if wmulVal and wmulVal ~= currentWmul then
                                     CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
                                         { wmul = wmulVal })
@@ -1575,7 +1433,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 local currentWmul = ch.wmul or instance.scale or 1
                                 local wmulVal = ui.sliderWithInput('mipo_nose_ch_wmul', x, y, 120, 0.1, 10, currentWmul)
                                 ui.alignedLabel(x, y, '  width')
-                                wmulVal = wmulVal and tonumber(wmulVal)
                                 if wmulVal and wmulVal ~= currentWmul then
                                     CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
                                         { wmul = wmulVal })
@@ -1692,7 +1549,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     local currentWidth = hc.width or 250
                     local wVal = ui.sliderWithInput('mipo_hc_w', x, y, 120, 10, 800, currentWidth)
                     ui.alignedLabel(x, y, '  width')
-                    wVal = wVal and tonumber(wVal)
                     if wVal and wVal ~= currentWidth then
                         CharacterManager.updateHaircutOfPart(instance, haircutOwner, { width = wVal })
                         CharacterManager.addTexturesFromInstance2(instance)
@@ -1702,7 +1558,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     -- startIndex / endIndex sliders
                     local si = ui.sliderWithInput('mipo_hc_si', x, y, 120, 0, 16, hc.startIndex or 6, false, 1)
                     ui.alignedLabel(x, y, '  start')
-                    si = si and tonumber(si)
                     if si then
                         si = math.floor(si)
                         if si ~= hc.startIndex then
@@ -1714,7 +1569,6 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
 
                     local ei = ui.sliderWithInput('mipo_hc_ei', x, y, 120, 0, 16, hc.endIndex or 2, false, 1)
                     ui.alignedLabel(x, y, '  end')
-                    ei = ei and tonumber(ei)
                     if ei then
                         ei = math.floor(ei)
                         if ei ~= hc.endIndex then
@@ -1780,15 +1634,15 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     -- Texture thumbnail grid
                     local currentURL = cs.bgURL or ''
                     local cellSize = 50
-                    local csMirror = accordionStates.symmetricEditing and getMirrorPart(connSkinOwner) or nil
+                    local function setConnectedSkin(vals)
+                        editPartAndMirror(instance, connSkinOwner, function(name)
+                            CharacterManager.updateConnectedAppearance(instance, name, 'connected-skin', vals)
+                        end)
+                    end
                     local gridHeight = drawThumbnailGrid(limbSkinTextures, currentURL, panelX, y, cellSize,
                         function(url)
                             local vals = { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') }
-                            CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin', vals)
-                            if csMirror and instance.dna.parts[csMirror] then
-                                CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin', vals)
-                            end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            setConnectedSkin(vals)
                         end)
                     y = y + gridHeight + BUTTON_SPACING
 
@@ -1797,15 +1651,8 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     local wmulVal = ui.sliderWithInput('mipo_cs_wmul_' .. partName, x, y, 120, 0.1, 10,
                         currentWmul)
                     ui.alignedLabel(x, y, '  width')
-                    wmulVal = wmulVal and tonumber(wmulVal)
                     if wmulVal and wmulVal ~= currentWmul then
-                        CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
-                            { wmul = wmulVal })
-                        if csMirror and instance.dna.parts[csMirror] then
-                            CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin',
-                                { wmul = wmulVal })
-                        end
-                        CharacterManager.addTexturesFromInstance2(instance)
+                        setConnectedSkin({ wmul = wmulVal })
                     end
                     y = y + ROW
 
@@ -1814,54 +1661,29 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     local bendVal = ui.sliderWithInput('mipo_cs_bend_' .. partName, x, y, 120, 0, 6,
                         currentBendiness)
                     ui.alignedLabel(x, y, '  bendiness')
-                    bendVal = bendVal and tonumber(bendVal)
                     if bendVal then bendVal = math.floor(bendVal + 0.5) end
                     if bendVal and bendVal ~= currentBendiness then
-                        CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
-                            { bendiness = bendVal })
-                        if csMirror and instance.dna.parts[csMirror] then
-                            CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin',
-                                { bendiness = bendVal })
-                        end
-                        CharacterManager.addTexturesFromInstance2(instance)
+                        setConnectedSkin({ bendiness = bendVal })
                     end
                     y = y + ROW
 
                     handlePaletteButton('mipo_cs_bg_' .. partName,
                         x + 30, y, 140, cs.bgHex, function(color)
-                            CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
-                                { bgHex = color })
-                            if csMirror and instance.dna.parts[csMirror] then
-                                CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin',
-                                    { bgHex = color })
-                            end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            setConnectedSkin({ bgHex = color })
                         end)
                     ui.alignedLabel(x + 180, y, 'outline')
                     y = y + ROW
 
                     handlePaletteButton('mipo_cs_fg_' .. partName,
                         x + 30, y, 140, cs.fgHex, function(color)
-                            CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
-                                { fgHex = color })
-                            if csMirror and instance.dna.parts[csMirror] then
-                                CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin',
-                                    { fgHex = color })
-                            end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            setConnectedSkin({ fgHex = color })
                         end)
                     ui.alignedLabel(x + 180, y, 'fill')
                     y = y + ROW
 
                     y = drawPatternControls(cs, 'mipo_cs_pat_' .. partName, panelX, y,
                         function(key, value)
-                            CharacterManager.updateConnectedAppearance(instance, connSkinOwner, 'connected-skin',
-                                { [key] = value })
-                            if csMirror and instance.dna.parts[csMirror] then
-                                CharacterManager.updateConnectedAppearance(instance, csMirror, 'connected-skin',
-                                    { [key] = value })
-                            end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            setConnectedSkin({ [key] = value })
                         end)
                 end
             end)
@@ -1891,16 +1713,16 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     -- Texture thumbnail grid
                     local currentURL = ch.bgURL or ''
                     local cellSize = 50
-                    local chMirror = accordionStates.symmetricEditing and getMirrorPart(connHairOwner) or nil
+                    local function setConnectedHair(vals)
+                        editPartAndMirror(instance, connHairOwner, function(name)
+                            CharacterManager.updateConnectedAppearance(instance, name, 'connected-hair', vals)
+                        end)
+                    end
                     local gridHeight = drawThumbnailGrid(limbHairTextures, currentURL, panelX, y, cellSize,
                         function(url)
                             local fgUrl = url and hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
                             local vals = { bgURL = url or '', fgURL = fgUrl }
-                            CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair', vals)
-                            if chMirror and instance.dna.parts[chMirror] then
-                                CharacterManager.updateConnectedAppearance(instance, chMirror, 'connected-hair', vals)
-                            end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            setConnectedHair(vals)
                         end, true)
                     y = y + gridHeight + BUTTON_SPACING
 
@@ -1909,28 +1731,15 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     local wmulVal = ui.sliderWithInput('mipo_ch_wmul_' .. partName, x, y, 120, 0.1, 10,
                         currentWmul)
                     ui.alignedLabel(x, y, '  width')
-                    wmulVal = wmulVal and tonumber(wmulVal)
                     if wmulVal and wmulVal ~= currentWmul then
-                        CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
-                            { wmul = wmulVal })
-                        if chMirror and instance.dna.parts[chMirror] then
-                            CharacterManager.updateConnectedAppearance(instance, chMirror, 'connected-hair',
-                                { wmul = wmulVal })
-                        end
-                        CharacterManager.addTexturesFromInstance2(instance)
+                        setConnectedHair({ wmul = wmulVal })
                     end
                     y = y + ROW
 
                     -- Outline color
                     handlePaletteButton('mipo_ch_bg_' .. partName,
                         x + 30, y, 140, ch.bgHex, function(color)
-                            CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
-                                { bgHex = color })
-                            if chMirror and instance.dna.parts[chMirror] then
-                                CharacterManager.updateConnectedAppearance(instance, chMirror, 'connected-hair',
-                                    { bgHex = color })
-                            end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            setConnectedHair({ bgHex = color })
                         end)
                     ui.alignedLabel(x + 180, y, 'outline')
                     y = y + ROW
@@ -1939,26 +1748,14 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     if ch.fgURL and ch.fgURL ~= '' then
                         handlePaletteButton('mipo_ch_fg_' .. partName,
                             x + 30, y, 140, ch.fgHex or 'ffffffff', function(color)
-                                CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
-                                    { fgHex = color })
-                                if chMirror and instance.dna.parts[chMirror] then
-                                    CharacterManager.updateConnectedAppearance(instance, chMirror, 'connected-hair',
-                                        { fgHex = color })
-                                end
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                setConnectedHair({ fgHex = color })
                             end)
                         ui.alignedLabel(x + 180, y, 'fill')
                         y = y + ROW
 
                         y = drawPatternControls(ch, 'mipo_ch_pat_' .. partName, panelX, y,
                             function(key, value)
-                                CharacterManager.updateConnectedAppearance(instance, connHairOwner, 'connected-hair',
-                                    { [key] = value })
-                                if chMirror and instance.dna.parts[chMirror] then
-                                    CharacterManager.updateConnectedAppearance(instance, chMirror, 'connected-hair',
-                                        { [key] = value })
-                                end
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                setConnectedHair({ [key] = value })
                             end)
                     end
                 end
@@ -2017,6 +1814,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
     end)
 end
 
-lib._test = { accordionStates = accordionStates } -- for specs, not part of the API
+lib._test = { accordionStates = accordionStates, partAndMirror = partAndMirror, -- for specs
+    editPartAndMirror = editPartAndMirror, bodyhairParts = bodyhairParts }
 
 return lib

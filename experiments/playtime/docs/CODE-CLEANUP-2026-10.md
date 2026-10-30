@@ -91,12 +91,18 @@ L = more.
   and the copies drifted. Fix: `[CONNECTED_TEXTURE]` and `[TRACE_VERTICES]` in
   `sfixtureParams.bySubtype` (position + a few own rows + `texfixtureParams.texture/.hairs/.plasticine`),
   then delete the hand-made branch and the helpers only it uses (:158-291). Removes BUG4 and BUG10. M.
-- [ ] **CL15. `forPartAndMirror` in the Mipo editor.** "Apply to this part, then its mirror if
+- [x] **CL15. `forPartAndMirror` in the Mipo editor.** "Apply to this part, then its mirror if
   symmetric, then rebuild textures" is pasted ~18 times (`ui/mipo-editor.lua` 1087, 1146, 1250,
   1265, 1355, ...); connected skin and connected hair (1786-1962) are near-copies; "all torso
   segments" loops 9 times. Fix: `forPartAndMirror(instance, part, fn)` + `forAllTorso`, one
   `drawConnectedAccordion(kind, ...)`. Likely 300+ lines less. Also the shape grid (1065) mirrors with
   symmetric off. M.
+  **Done 2026-10-30:** `partAndMirror`, `editPartAndMirror` (rebuilds once) and `bodyhairParts`
+  (whole torso, else part + mirror) in `ui/mipo-editor.lua`; shape, dims, skin, bodyhair, connected
+  skin and hair all go through them, 2023 -> 1820 lines. The shape grid follows the symmetric
+  checkbox now. Connected skin and hair stay two panels (bendiness, masks and 'none' differ), each
+  edit one `setConnectedSkin/Hair(vals)` line. 45 `tonumber` calls after sliders dropped (BUG14).
+  `spec/mipo-editor_spec.lua` (also draws every panel open for every part).
 - [ ] **CL16. Render copies.** Shader setup 3 times (draw-textured 2546, 3106, 3299; caused BUG11)
   → `beginSurfaceShader(extra, body)`. LBS skinning loop 3 times (1923, 1976, 2026) → `lbsVertex`.
   Rigid bone blend twice (2865, 2885). Mouth curve points 4 times (3495, 3550, 3596, 3646) and upper/lower

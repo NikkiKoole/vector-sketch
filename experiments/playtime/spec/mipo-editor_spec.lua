@@ -56,4 +56,60 @@ describe('mipo editor', function()
         assert.is_true(ok, tostring(err))
         assert.are.equal(0, rebuilds)
     end)
+
+    it('draws every panel open, for every part', function()
+        local states = mipoEditor._test.accordionStates
+        local opened = {}
+        for name in pairs(instance.dna.parts) do
+            for _, suffix in ipairs({ ' shape', ' dims', ' skin', ' bodyhair', ' face', ' connected skin',
+                ' connected hair', '_skin_patch1', '_skin_patch2', '_skin_patch3' }) do
+                states[name .. suffix] = true
+                opened[#opened + 1] = name .. suffix
+            end
+        end
+        for _, key in ipairs({ 'creation', 'positioners', 'actions', 'torso shape' }) do
+            states[key] = true
+            opened[#opened + 1] = key
+        end
+        local canvas = love.graphics.newCanvas(1200, 768)
+        love.graphics.setCanvas(canvas)
+        local failed
+        for name in pairs(instance.dna.parts) do
+            local ok, err = pcall(mipoEditor.drawMipoEditor, instance, name, 800, 0, 380, 768)
+            if not ok then failed = name .. ': ' .. tostring(err) break end
+        end
+        love.graphics.setCanvas()
+        canvas:release()
+        for _, key in ipairs(opened) do states[key] = nil end
+        assert.is_nil(failed)
+    end)
+
+    -- CL15: 'this part, its mirror if symmetric, then rebuild once' in one place
+    describe('editing a part and its mirror', function()
+        local t = mipoEditor._test
+        after_each(function() t.accordionStates.symmetricEditing = true end)
+
+        it('takes the mirror only with symmetric editing on', function()
+            t.accordionStates.symmetricEditing = true
+            assert.are.same({ 'lear', 'rear' }, t.partAndMirror(instance, 'lear'))
+            assert.are.same({ 'head' }, t.partAndMirror(instance, 'head'))
+            t.accordionStates.symmetricEditing = false
+            assert.are.same({ 'luarm' }, t.partAndMirror(instance, 'luarm'))
+        end)
+
+        it('edits both and rebuilds the textures once', function()
+            local edited, rebuilds = {}, 0
+            local original = CM.addTexturesFromInstance2
+            CM.addTexturesFromInstance2 = function() rebuilds = rebuilds + 1 end
+            t.editPartAndMirror(instance, 'lfoot', function(name) edited[#edited + 1] = name end)
+            CM.addTexturesFromInstance2 = original
+            assert.are.same({ 'lfoot', 'rfoot' }, edited)
+            assert.are.equal(1, rebuilds)
+        end)
+
+        it('edits bodyhair on every torso segment', function()
+            CM.rebuildFromCreation(instance, { torsoSegments = 3 })
+            assert.are.same({ 'torso1', 'torso2', 'torso3' }, t.bodyhairParts(instance, 'torso2'))
+        end)
+    end)
 end)
