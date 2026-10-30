@@ -1,6 +1,7 @@
 # Water in containers
 
-**Parked (Nikki, 2026-10-29): "ok as an experiment, not too sure about all the water, leave it for now."**
+status: parked — "ok as an experiment, not too sure about all the water, leave it for now" (2026-10-29)
+
 W1 (level water + spilling) is built and tested; the grid-water experiment (`../liquid/`) is fixed and
 drawn with marching squares. Nothing past that is started.
 
@@ -86,7 +87,7 @@ pools. Static bodies would be stamped into the grid as rock.
   cutting it off) and rounds it off there. Level changes glide in. Drawn as columns under the wavy
   line inside a stencil of the hollow. Visual only, not saved; runs in `liquid.draw`, also in the
   editor. Inspector: slosh, settle.
-- [ ] **W3b. Splash** (not wanted yet): rings when something drops in, the crown/spray particles
+- [~] **W3b. Splash** (not wanted yet): rings when something drops in, the crown/spray particles
   from mudready.
 - [ ] **W4. Floating.** In `src/liquid.lua`. Bodies overlapping the water (`queryBoundingBox`, not
   only ones with `ud.thing`) get `mass x g x submerged fraction x density` up, at the centre of

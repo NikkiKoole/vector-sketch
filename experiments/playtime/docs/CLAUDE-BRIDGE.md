@@ -1,5 +1,7 @@
 # Claude Bridge
 
+status: reference
+
 HTTP JSON API for AI-game interaction. Runs on **port 8001** inside the LÖVE game.
 
 ## Setup

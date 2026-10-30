@@ -1,5 +1,7 @@
 # Mipolai shared — the cross-app template
 
+status: reference
+
 The studio-level tech and mechanics that **every Mipolai app should inherit**,
 so each new app harvests rather than re-implements. Drafted in conversation
 2026-05-28 from the Bathhouse pre-build review.

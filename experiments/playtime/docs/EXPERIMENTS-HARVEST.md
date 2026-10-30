@@ -1,6 +1,8 @@
 # Experiments harvest — what's in `experiments/` that Playtime could use
 
-**Written:** 2026-10-29 (playtime-ef). **Status:** survey only, nothing ported.
+status: reference
+
+**Written:** 2026-10-29 (playtime-ef). A survey; nothing ported from it.
 
 **Question:** over the years ~70 prototypes piled up in `experiments/`. Which of them
 hold things Playtime should take in for world building for Mipos, for gameplay

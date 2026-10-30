@@ -1,5 +1,7 @@
 # Next steps — post-audit, July 2026
 
+status: done
+
 Written 2026-07-10, right after closing out `CODE-AUDIT-2026-07.md` (all A/B/C/D
 items done, 726 tests, luacheck 0/0). This doc answers: *given the goal — make
 Mipos, play/build their world, sometimes carve a piece out as an app, with

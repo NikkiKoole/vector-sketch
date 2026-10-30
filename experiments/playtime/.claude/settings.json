@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PROJECT_DIR:-.}\" && { [ -f claudetools/plans.lua ] || cd experiments/playtime; } && echo 'Work board (./playtime.sh todo, docs/readme.md). Fix DRIFT warnings with the user when they come up:' && lua claudetools/plans.lua 2>/dev/null || true",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

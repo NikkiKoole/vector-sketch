@@ -1,5 +1,7 @@
 # MESHUSERT Spine-Bind Mode — Plan
 
+status: done
+
 Add a second bind mode to MESHUSERT that deforms the paired RESOURCE's polygon via a Bezier curve through the node chain — the same smooth-bend behaviour CONNECTED_TEXTURE gives its ribbon, but applied to an arbitrary traced polygon with backdrop-captured UVs.
 
 **Cross-references:** `SPINE-MESH-PLAN.md` (the original generic-spine-mesh plan, now superseded by this one for the playtime integration), `experiments/spine-humanoid-sandbox/` (the math proven in isolation).

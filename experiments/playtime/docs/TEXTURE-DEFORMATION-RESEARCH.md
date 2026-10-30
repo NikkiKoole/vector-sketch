@@ -1,5 +1,7 @@
 # Texture Deformation Research
 
+status: reference
+
 Research notes for the Knut mini-game: deforming a single scanned body image via a Box2D physics skeleton.
 
 ## The Goal

@@ -1,5 +1,7 @@
 # Rigging friction audit
 
+status: reference
+
 Short notes from walking through the rigging flow in playtime. Used to decide
 whether rigging needs its own editor mode or just targeted fixes. See
 `docs/UV-BACKDROP-FRAGILITY.md` for the texture/UV deep-dive.

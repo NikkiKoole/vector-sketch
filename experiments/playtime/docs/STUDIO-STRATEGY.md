@@ -1,5 +1,7 @@
 # Mipolai — Studio Strategy & Bathhouse Launch Plan
 
+status: reference
+
 **What this is:** a strategy conversation (with Claude, 22 May 2026) about turning
 Mipolai from "a person with apps" into a studio that builds a world — covering
 positioning, which formats to expand into and in what order, monetization, and a

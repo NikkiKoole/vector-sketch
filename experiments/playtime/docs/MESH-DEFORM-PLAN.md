@@ -1,5 +1,7 @@
 # Mesh Deform — Triangle Painter Plan
 
+status: parked — goals 1-2 done; the rest deferred or parked inline
+
 Five goals for the MESHUSERT triangle painter and humanoid authoring. Status tracked inline. All changes live in the working tree (uncommitted) unless noted.
 
 ## Goal 1 — Paint triangles → bones

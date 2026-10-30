@@ -1,6 +1,8 @@
 # Worlds and doors — rooms you walk a Mipo into
 
-**Started:** 2026-10-28 (brainstorm). **Status:** W1 built (2026-10-28); W2–W5 not started.
+status: active
+
+**Started:** 2026-10-28 (brainstorm).
 
 **Goal:** a world, not a level. A wide overworld (a horizon, and in theory up and
 down too) with doors here and there. Put a Mipo at a door, go in, and you're

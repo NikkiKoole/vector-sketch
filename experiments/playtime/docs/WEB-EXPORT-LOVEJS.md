@@ -1,5 +1,7 @@
 # Web Export via love.js
 
+status: parked
+
 ## Overview
 
 love.js (Davidobot/love.js) compiles LÖVE to WebAssembly via Emscripten. Supports LÖVE 11.4 natively (11.5 experimental). This lets us package Playtime scenes as shareable browser links — key for demoing to publishers and distributing Knut content.

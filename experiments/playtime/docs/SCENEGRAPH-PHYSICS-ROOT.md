@@ -1,5 +1,7 @@
 # Scene Graph + Box2D via a Physics-Root Node
 
+status: parked
+
 ## Context
 
 Vector-sketch (the parent project) and playtime are converging. Both deal with flat-shaded figures, triangulated outlines, Steiner points, mesh regen, hierarchical transforms. The only real difference is that playtime also has a Box2D simulation on top.

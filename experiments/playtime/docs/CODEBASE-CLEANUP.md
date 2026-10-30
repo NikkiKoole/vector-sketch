@@ -1,5 +1,7 @@
 # Codebase Cleanup — AI-Friendliness Pass
 
+status: parked
+
 Painpoints identified 2026-02-28. Work through top-to-bottom.
 
 ## 1. Extract repeated shape8 anchor logic

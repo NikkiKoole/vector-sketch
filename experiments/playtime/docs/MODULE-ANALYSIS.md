@@ -1,5 +1,7 @@
 # Module-by-Module Analysis
 
+status: reference
+
 Full codebase analysis covering every module in `src/`, with dependency mapping, issue inventory, and solidification ideas.
 
 ---

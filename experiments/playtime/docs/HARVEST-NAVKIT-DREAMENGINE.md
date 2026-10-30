@@ -1,5 +1,7 @@
 # Harvest: navkit and dreamengine — what Playtime could take
 
+status: reference
+
 **Written:** 2026-10-29 (a read-only survey; nothing ported yet).
 
 **What this is:** two of Nikki's other repos read for systems and ideas that fit Playtime's

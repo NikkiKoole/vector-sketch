@@ -1,6 +1,8 @@
 # Mipo spine: one torso picture over 2-3 bones
 
-**Status:** S1–S4 done (2026-10-29). Open: maybe have randomize turn it on for tall torsos.
+status: done
+
+S1–S4 done 2026-10-29. Maybe later: randomize turns it on for tall torsos.
 
 Tall torsos (P4re5) are one rigid body with one static picture. A spine splits the torso
 into 2-3 bones that bend a little against each other, and the one picture bends with them.

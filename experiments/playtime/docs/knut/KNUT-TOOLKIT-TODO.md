@@ -1,5 +1,7 @@
 # Knut Character Toolkit — Implementation Plan
 
+status: parked — the Knut commission fizzled (2026-04-22)
+
 ## Context
 
 Knut is a children's book character (yellow crocodile-person) currently hand-built in two scene files (`knut.playtime.json`, `knutjump.playtime.json`). The goal is a lightweight toolkit to assemble Knut (and other book characters) programmatically — much simpler than the mipo/humanoid editor.

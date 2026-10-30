@@ -1,5 +1,7 @@
 # Tooling Setup — External Tools for Code Quality
 
+status: reference
+
 Existing Lua and LÖVE tools that directly address the issues we've identified. These are mature, well-maintained projects — no need to reinvent the wheel.
 
 ---

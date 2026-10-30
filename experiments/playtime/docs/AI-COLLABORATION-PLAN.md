@@ -1,5 +1,7 @@
 # AI Collaboration Plan for Playtime
 
+status: done
+
 > **Status (Feb 2026):** Most items in this plan have been completed. See `PLAN-OF-ATTACK.md` for the current master plan with up-to-date status on all phases. This document is kept for historical context.
 
 ## What This Document Is

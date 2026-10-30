@@ -1,5 +1,7 @@
 # App #1 — Mipo's Bathhouse
 
+status: parked — Nikki no longer attached to Bathhouse (2026-10-27); the Puppetmaker follow-up comes first
+
 **Concept:** Mipo runs a bathhouse. Mud-caked blobs arrive at the bath. The kid scrubs the mud away to reveal a uniquely-generated Mipo hiding inside.
 
 **Tagline test (a 4-year-old can recognise this in one sentence):** *"Wash the mud blobs to discover what's hiding inside."* ✓

@@ -1,5 +1,7 @@
 # Save-File Size Analysis
 
+status: parked
+
 Scene `.playtime.json` files have grown large (hoop.playtime.json = 826 KB). Most of the bloat is in one field; a handful of cheap fixes could drop the file ~60%.
 
 ## Measurement

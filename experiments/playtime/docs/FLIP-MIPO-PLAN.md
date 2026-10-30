@@ -1,5 +1,7 @@
 # Mipo flip / stand-on-hands button
 
+status: done
+
 **Status:** BUILT 2026-05-22 (commit `e03c6905`, after the reverted first try below): the
 "flip: on/off" button in the Mipo editor's actions accordion, next to breathe / jump / ragdoll.
 It follows the "recommended next attempt" at the bottom. The actions still live inside

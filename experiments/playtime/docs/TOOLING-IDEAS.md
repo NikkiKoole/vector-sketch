@@ -1,5 +1,7 @@
 # Tooling Ideas: Instrumenting for AI Collaboration
 
+status: parked
+
 Tools to bridge the gap between "I can read code" and "I can understand what the app is doing at runtime." The app is a visual physics editor — most interesting state is runtime state that an AI collaborator can never see directly.
 
 ---

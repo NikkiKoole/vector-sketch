@@ -1,5 +1,7 @@
 # Claymation Shader Plan
 
+status: parked
+
 Roadmap for pushing the plasticine / hair shader look further, with a shared
 lighting system at the center. Scope is the shader/material layer only —
 motion stutter, film grain, post-processing, and contact shadows are separate.

@@ -1,5 +1,7 @@
 # Knut scene blockouts — implementation status
 
+status: parked — the Knut commission fizzled (2026-04-22)
+
 Tracking what's actually been built for each scene in `docs/knut/SCENES.md`.
 This is the "what's in the code" doc; `SCENES.md` is the "what the scene IS"
 design doc.

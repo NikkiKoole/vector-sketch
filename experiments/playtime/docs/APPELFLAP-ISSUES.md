@@ -1,5 +1,7 @@
 # Appelflap — Issue List
 
+status: parked — depends on the pricing decision (paid vs free + unlock)
+
 Repo: https://github.com/NikkiKoole/appelflap (LÖVE 11.x fork with iOS in-app purchase support, based on Bruce Hill's 2016 IAP code).
 
 Architecture (for reference): `IAPResponder` (Obj-C, `src/modules/purchase/InAppPurchase.{h,m}`) → `love::ios::*` C++ wrappers in `src/common/ios.{h,mm}` → Lua bindings exposed as `love.system.makePurchase / hasPurchase / restorePurchases` via `src/modules/system/{System,wrap_System}.{cpp,h}`.

@@ -1,5 +1,7 @@
 # Backdrops-as-UV-textures: fragility notes
 
+status: reference
+
 > **Update 2026-10-28:** most of this is fixed. A RESOURCE now owns its picture,
 > `extra.imageURL`, and the draw loads that file itself (`src/resource-link.lua`
 > `imageURL`, through the draw module's image cache). A backdrop is only the

@@ -1,6 +1,8 @@
 # Puppetmaker sound — how Mipo Puppetmaker 2 sounds, and bringing it here
 
-**Started:** 2026-10-28. **Status:** P1–P5 and P7 built (2026-10-29); P8 (voice size on the synth) next.
+status: active
+
+**Started:** 2026-10-28.
 
 **Goal:** Mipos that feel as alive as in Puppetmaker: the hmpfs when you touch
 or change them, the mi… po… chatter, and a band they sing along with and move to.

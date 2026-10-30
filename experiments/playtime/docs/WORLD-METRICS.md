@@ -1,5 +1,7 @@
 # World metrics: design the world around Mipo feet
 
+status: reference
+
 Measured 2026-10-27 on 20 random Mipos (scale 0.3, `randomizeMipoConstrained`, arm-reach
 rule on), standing on a flat floor with friction 0.9. World units.
 

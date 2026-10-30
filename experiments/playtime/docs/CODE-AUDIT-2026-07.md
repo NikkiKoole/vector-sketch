@@ -1,5 +1,7 @@
 # Code Audit — July 2026 (third pass)
 
+status: done
+
 Full-codebase audit after ~6 weeks away (last commit 2026-05-28). Follows up
 on `DEEPER-ISSUES.md` (second pass) — nothing here duplicates that doc; these
 are **new** findings. Three parallel review passes (core data layer, UI/input,

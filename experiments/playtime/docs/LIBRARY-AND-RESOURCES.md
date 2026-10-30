@@ -1,5 +1,7 @@
 # Library & Resource Concept — Plan
 
+status: parked — RESOURCE owns its picture since 2026-10-28; the bigger backdrop split is still open
+
 The current "backdrop" system conflates three roles into one type: reference image for tracing, scene background for decoration, texture source for UV mapping. Cleaning this up unblocks a bigger idea: a proper **Library** of reusable assets (textures, character rigs, props, behaviors), in the spirit of Flash's Library panel. Scenes become compositions of library references instead of blobs of raw data, and building new scenes gets dramatically more pleasant.
 
 This doc is the plan; the sibling doc `UV-BACKDROP-FRAGILITY.md` is the catalog of current symptoms.

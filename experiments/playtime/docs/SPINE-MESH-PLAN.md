@@ -1,5 +1,7 @@
 # Spine-Deformed Mesh — Plan
 
+status: done
+
 A hybrid between CONNECTED_TEXTURE (smooth bendy curve through joints) and MESHUSERT (arbitrary polygon with backdrop UVs). The goal: use limb-shaped traced meshes whose **silhouette** can be anything (traced from an illustration) and whose **deformation** comes from a live Bezier through the limb's joint anchors — no DQS weight painting, no manual Steiner-for-smoothness.
 
 **Started:** commit `78d7e127` (this plan). POC attempt followed in the same session.

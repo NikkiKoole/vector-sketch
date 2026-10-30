@@ -1,5 +1,7 @@
 # Plan of Attack
 
+status: done
+
 A concrete, ordered sequence of work. Each phase builds on the previous one. The ordering is designed to maximize safety: early phases make later phases less risky by adding verification tools.
 
 ---

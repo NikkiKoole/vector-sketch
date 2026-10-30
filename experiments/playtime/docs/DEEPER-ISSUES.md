@@ -1,5 +1,7 @@
 # Deeper Issues — Second Pass Findings
 
+status: reference
+
 Issues found by digging into cross-cutting concerns, runtime behavior, and code paths we accepted at face value in the first pass.
 
 ---

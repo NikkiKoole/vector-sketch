@@ -1,6 +1,8 @@
 # Editor: inspector + library (plan, 2026-10-27)
 
-**Status: done (2026-10-30, Nikki).** Inspector, right column (properties | on stage | library),
+status: done
+
+Done 2026-10-30 (Nikki). Inspector, right column (properties | on stage | library),
 library and left tool rail are built and kept. The leftovers at the end are polish, done when
 they get in the way, not a next step.
 

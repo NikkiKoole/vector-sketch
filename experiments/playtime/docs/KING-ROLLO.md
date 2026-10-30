@@ -1,5 +1,7 @@
 # King Rollo: the notebook for a season of Mipo shorts
 
+status: parked — a notebook, watching + collecting
+
 **Started:** 2026-10-02. **Status:** watching + collecting.
 
 **The spark:** *King Rollo* (1980, David McKee, King Rollo Films, narrated by

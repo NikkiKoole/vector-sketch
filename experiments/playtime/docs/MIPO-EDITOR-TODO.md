@@ -1,5 +1,7 @@
 # Mipo Editor TODO — Features from puppet-maker2
 
+status: parked — mostly done; the animation bucket is left
+
 Comparison of puppet-maker2 (app store app) vs playtime's mipo editor.
 Checked items = already supported in playtime.
 

@@ -10,6 +10,7 @@
 ./playtime.sh status   # check if running
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
+./playtime.sh todo     # the work board: active plans + next steps, parked plans, drift warnings
 METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ```
 
@@ -220,6 +221,10 @@ See `docs/DEEPER-ISSUES.md` for full details. Key remaining issues:
 - Backdrop/UV system: mostly fixed 2026-10-28 (imageURL + id link); what's left in `docs/UV-BACKDROP-FRAGILITY.md`
 
 ## Further documentation
+
+**Where the work stands:** `./playtime.sh todo` (also shown at session start). It's built from
+each doc's `status:` line and its checkboxes; the rules are in `docs/readme.md`. When a step is
+done, tick its box in the same commit and name its id (W2, P8) in the message.
 
 Deep-dive docs live in `docs/`:
 - `EDITOR-INSPECTOR-LIBRARY.md` — editor rework (inspector from data, tabbed right column, library, tool rail); done 2026-10-30; leftovers (joint drag A->B, icons, thumbnails) are polish

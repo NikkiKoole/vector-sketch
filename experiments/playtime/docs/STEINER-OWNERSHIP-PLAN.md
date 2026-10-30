@@ -1,5 +1,7 @@
 # Steiner-Point Ownership Refactor — Plan
 
+status: parked — phase 1 shipped, phase 3 next
+
 Path B from `CODEBASE-CLEANUP.md` item #8-ish. Move authored Steiner points from `ud.extra.extraSteiner` on RESOURCE sfixtures (authoring-world coords) to `thing.extraSteiner` on the body (body-local coords). Make the body-level overlay POC actually drive downstream triangulation.
 
 **Status:** Phase 1 shipped (`50114f05`). Phase 2 dropped (see section). Phase 3 next.

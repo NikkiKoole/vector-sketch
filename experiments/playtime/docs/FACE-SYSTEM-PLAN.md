@@ -1,5 +1,7 @@
 # Face System — Gap Analysis & Plan
 
+status: parked
+
 **Verdict:** 2–3 dev days (~1–2 calendar weeks part-time). Not a port, not a rebuild. Verified against the live codebase 2026-05-14.
 
 The face *rendering* pipeline in playtime is already complete and active — `appearance.face` is being created, decals are rendering live in the test scene. The gap is exclusively the *animation/controller* layer that drives blink, look-at, and mouth-state changes. The rendering reads tween values that nothing currently writes.

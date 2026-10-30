@@ -1,5 +1,7 @@
 # App Store ASO: Mipo Puppetmaker — keyword & metadata notes
 
+status: reference
+
 Parked reference (2026-07-03). A keyword/metadata analysis done while Mipo Puppetmaker was
 live on the App Store. **Not active work** — the app isn't being developed right now (and
 likely can't be compiled on the current machine). Captured so the findings aren't lost.

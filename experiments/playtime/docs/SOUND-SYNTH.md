@@ -1,5 +1,7 @@
 # Sound synth (dreamengine in Playtime)
 
+status: reference
+
 Playtime uses the synth from the user's own engine, dreamengine (`git@github.com:NikkiKoole/dreamengine-studio.git`), unchanged. It's called from LuaJIT through FFI. The synth plays the impact plonks, the box drums, the snap clicks and the background music.
 
 Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md). The Mipo voices, Puppetmaker 2's band and the voice lab (the sound-effects side): [PUPPETMAKER-SOUND.md](PUPPETMAKER-SOUND.md).

@@ -1,5 +1,7 @@
 # Deep Dive Notes: Pain Points
 
+status: reference
+
 Analysis of the three areas where development got stuck, with ideas for improvement.
 
 ---

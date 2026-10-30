@@ -1,5 +1,7 @@
 # Blind Spots & Undocumented Systems
 
+status: reference
+
 Things we discovered after the initial analysis that are important but weren't visible from just reading module APIs. This document exists so we can pick up where we left off.
 
 ---

@@ -1,5 +1,7 @@
 # Knut Scenes — Interactive Physics Toys
 
+status: parked — the Knut commission fizzled (2026-04-22)
+
 One-screen physics scenes based on the Kapitein Knut books by Victor Engbers (Boycott Books).
 Each scene is a self-contained interactive toy — tap, drag, fling, balance.
 

@@ -1,6 +1,8 @@
 # World building — grass, ground, sky and outside scenes
 
-**Started:** 2026-10-29 (survey + brainstorm). **Status:** G1 (grass edge) built 2026-10-29; G2 parked; the sky (G5) tried in `../sky-atmosphere/`; the rest not started.
+status: active
+
+**Started:** 2026-10-29 (survey + brainstorm).
 
 **Goal:** make an outside world quickly. Ground with grass along its edge, a sky with layers,
 hills, and a few Mipos in it, the way Puppetmaker 2's "outside" felt, without hand-drawing
@@ -150,7 +152,7 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
   - Settings: density, height, height variation, colour back/front, front share, sprite set
     (`sprieten.png` atlas or `spriet1-8`), sway.
   - Copy the sprites into `textures/world/` (with the asset sizes measured first).
-- [ ] **G2. Blades that react.** **Parked (Nikki, 2026-10-29: happy with the grass for now).** Blades near a body
+- [~] **G2. Blades that react.** **Parked (Nikki, 2026-10-29: happy with the grass for now).** Blades near a body
   (a Mipo's feet, a ball) bend away and spring back; a hard landing flattens them for a moment. This is
   the Sago bit; neither old version had it. The approach, worked out 2026-10-29:
   - Per blade a bend angle + bend speed (a damped spring toward a target, 0 when nothing is near),

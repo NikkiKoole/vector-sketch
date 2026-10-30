@@ -1,5 +1,7 @@
 # Blobs: textured soft bodies as real Playtime things
 
+status: parked — scoped 2026-10-29, not started
+
 Scope, 2026-10-29. A squishy body that wobbles, squashes and bounces back into shape, wearing
 the same OMP textures as the Mipos' heads and bodies. For jelly toys, pillows, puddings, a blob
 Mipo, a blob head on a normal Mipo.

@@ -1,3 +1,5 @@
+status: reference
+
 
 15:32
 Claude responded: Concrete pointers per category.

@@ -1,5 +1,7 @@
 # Rebuilding Other Experiments Inside Playtime
 
+status: parked
+
 Playtime has grown into a capable editor/runtime. Other experiments in `experiments/` duplicate effort that could live on top of playtime instead. This doc evaluates whether two specific experiments could be rebuilt as playtime scenes, and what's missing.
 
 Scope right now: `physics-testbed` (mipo-on-bike-downhill) and `puppet-maker2` (character editor + showcase). Both are known quantities; the goal is to identify the minimum gap list before deciding whether to port.
