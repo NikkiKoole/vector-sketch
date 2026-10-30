@@ -84,8 +84,8 @@ local function finish()
     end
     lines[#lines + 1] = string.format('garbage made           %7.1f KB a frame', run.garbage / n)
     local s = run.stats
-    lines[#lines + 1] = string.format('gpu: %d draw calls, %d shader switches, %.1f MB textures, %d images, %d canvases',
-        s.drawcalls, s.shaderswitches, s.texturememory / 1048576, s.images, s.canvases)
+    lines[#lines + 1] = string.format('gpu: %d draw calls, %d shader switches, %.1f MB textures, %d images, '
+        .. '%d canvases', s.drawcalls, s.shaderswitches, s.texturememory / 1048576, s.images, s.canvases)
     state.drawTimes = nil
     lib.report = table.concat(lines, '\n')
     print(lib.report)
