@@ -1,6 +1,6 @@
 # Splitting the big files (October 2026 review)
 
-status: active
+status: done
 
 Opened 2026-10-30, when the cleanup was done. Sizes in brackets are from the review; after the
 cleanup (2026-10-30): draw-textured 2897, music 2470, character-manager 2445, mipo-editor 1822,
@@ -38,10 +38,18 @@ each.
   randomize calls updatePart and rebuild all through, so building moved out of the front too and requires
   point one way (randomize -> build -> textures, balance, appearance -> dna). 6 seeded Mipos (new, randomized,
   part by part, mutated, saved and loaded: every body, fixture, joint, the DNA and pixels) identical.
-- [ ] **SPLIT3. `ui/mipo-editor.lua` (2020).** After CL15: `ui/mipo/widgets.lua`,
+- [x] **SPLIT3. `ui/mipo-editor.lua` (2020).** After CL15: `ui/mipo/widgets.lua`,
   `ui/mipo/body-panel.lua`, `ui/mipo/face-panel.lua`, `ui/mipo/look-panel.lua`; mipo-editor keeps the
   header and accordion order (~120). `getMirrorPart`, `getLimbRoot` and the faceOwner rule (twice,
   :1429, :1661) go to character-topology.
+  **Done 2026-10-30:** mipo-editor.lua 1822 -> 70 lines (title, symmetric toggle, the accordion order);
+  ui/mipo/body-panel (creation, positioners, actions, shape, dims, randomize), look-panel (skin, bodyhair,
+  haircut, connected skin and hair), face-panel (eyes, brows, nose, mouth), widgets (thumbnail grid,
+  palette, pattern controls, part-and-mirror, accordion state, the hmpf-on-edit ui). Each accordion is a
+  `draw...(p, y)` returning y; the bodies moved as they were. character-topology has `mirrorPart`,
+  `limbRoot` and `faceOwner` (the face/haircut owner rule was written twice). Checked: every ui call and
+  rectangle of 17 panel draws (9 parts, potato and not) and the DNA after each of 1578 forced clicks
+  identical; the seeded Mipos too.
 - [x] **SPLIT4. `ui/sfixture-editor.lua` (1886).** After CL14 and CL21 most of it is gone (686 now:
   maybe no split needed, look first). What's
   left: `ui/meshusert-panel.lua` (bind buttons, sliders, triangle painter; the plain sliders could be

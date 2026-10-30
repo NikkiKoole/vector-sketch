@@ -545,4 +545,27 @@ function lib.buildOrderedNames(topology)
     return names
 end
 
+
+-- The other side's part (lear -> rear, luarm -> ruarm, ...), or nil.
+local mirrors = {
+    lear = 'rear', rear = 'lear', lfoot = 'rfoot', rfoot = 'lfoot', lhand = 'rhand', rhand = 'lhand',
+    luleg = 'ruleg', ruleg = 'luleg', llleg = 'rlleg', rlleg = 'llleg',
+    luarm = 'ruarm', ruarm = 'luarm', llarm = 'rlarm', rlarm = 'llarm',
+}
+function lib.mirrorPart(partName) return mirrors[partName] end
+
+-- Connected textures (skin/hair) are defined on the upper limb but cover the whole limb: the
+-- upper limb that owns them for a lower one, or nil (hands and feet have their own skin).
+local limbRoots = { llarm = 'luarm', rlarm = 'ruarm', llleg = 'luleg', rlleg = 'ruleg' }
+function lib.limbRoot(partName) return limbRoots[partName] end
+
+-- The part that carries the face (and haircut) when `partName` is clicked: torso1 on a potato
+-- head (any torso band), else the head; nil for other parts.
+function lib.faceOwner(instance, partName)
+    local potato = instance.dna.creation.isPotatoHead
+    if potato and partName:match('^torso') then return 'torso1' end
+    if not potato and partName == 'head' then return 'head' end
+    return nil
+end
+
 return lib
