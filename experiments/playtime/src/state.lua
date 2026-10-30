@@ -1,8 +1,6 @@
 local state = {}
 local BT = require('src.body-types')
 
-state.positioningMesh = false
-
 state.scene = {
     sceneScript = nil,
     scriptPath = nil,
@@ -15,7 +13,6 @@ state.selection = {
     selectedJoint = nil,
     selectedSFixture = nil,
     selectedBodies = nil,
-    lastSelectedBody = nil, -- Maybe belongs here? Or separate interaction tracker?
 }
 
 state.interaction = { -- State directly related to ongoing user actions
@@ -50,8 +47,6 @@ state.editorPreferences = { -- Less volatile state
     lastUsedHeight = 40,
     lastUsedHeight2 = 40,
     saveName = 'untitled',
-    showTexFixtureDim = false,
-    axisEnabled = false,
     minPointDistance = 50, -- Could be editor config
 }
 
@@ -67,7 +62,6 @@ state.texFixtureEdit = {
     lockedVerts = true,
     tempVerts = nil,
     centroid = nil,
-    verts = {}
 }
 
 state.triangleEditor = {
@@ -77,12 +71,9 @@ state.triangleEditor = {
     brushSize = 20,         -- Radius for triangle selection brush (tested against tri centroid)
 }
 
---state.scrollers = {}    -- will be filled with scrollers ({value=0})
-
 -- Mode constants live in src/modes.lua — use modes.set/clear/is to manage this field
 state.currentMode = nil
 state.jointParams = nil
-state.jointLengthParams = {}
 state.showPaletteFunc = nil
 state.pickAutoRopifyModeHitted = nil
 
@@ -116,8 +107,6 @@ state.world = {
 -- sessions that open a pre-persistence scene inherit whatever is here.
 state.backdrops = {}
 
-
-
 state.snap = {
     snapDistance = 40, -- snap points click together when they nearly touch (140 grabbed from afar)
     jointBreakThreshold = 100000,
@@ -127,7 +116,5 @@ state.snap = {
 }
 
 state.physicsWorld = nil
-
-
 
 return state
