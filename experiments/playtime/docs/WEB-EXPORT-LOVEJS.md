@@ -40,8 +40,8 @@ Mipos and all, with no errors; no sound from the synth yet (see WEB2).
   - input from Lua (or slow drags from the page): the automated drag was too quick to grab a Mipo;
   - a headless run (Playwright) of build → load → click → audio check, so the web build gets
     tested without a person or a Chrome extension.
-- [ ] **WEB3. Check by hand**: grab and throw Mipos (an automated drag didn't take, probably too
-  fast for a frame), touch on an iPad, tab into the editor.
+- [ ] **WEB3. Check by hand**: grabbing Mipos works (Nikki, 2026-10-30; the automated drag was just
+  too fast for a frame). Still to try: touch on an iPad, tab into the editor.
 
 ## Quick start
 
