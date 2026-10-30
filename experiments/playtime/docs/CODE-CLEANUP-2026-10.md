@@ -19,7 +19,7 @@ L = more.
   code), with its require, its call and the commented `createCharacter` lines in `love.load`;
   `src/benchmarks.lua`; `tests/` and the `--test` branch at the top of `main.lua`.
   **Done 2026-10-30.**
-- [ ] **CL2. Unused functions.** **Done 2026-10-30:** `io.reload`, `uuid.uuid128` / `uuid64_base62` /
+- [x] **CL2. Unused functions.** **Done 2026-10-30:** `io.reload`, `uuid.uuid128` / `uuid64_base62` /
   `uuid128_base62`, draw-textured `setShrinkFactor` / `getShrinkFactor`, `ui.dropdown`,
   `ui.centeredLabel`, `playtime-ui` `assignTrianglesToGroup`, `utils.printTableKeys`, `Logger.new`,
   pointerjoints `onPressedFunc` and its empty connector loop. Not unused after all: `registry.print`
@@ -28,18 +28,17 @@ L = more.
   Later the same day: `updateShape8` and `mipoVoice.squeakBody` gone; character-manager's
   `getBoundingBox` is used, `instance.textures` / `positioners` were already gone.
   `music.stepAt` and `synth.isRunning` gone too (aeaddadc; music's `lib.trace` is used after all).
-  Left: on `state` (restart the game after:
-  hot-swapping state.lua unsettles it) `positioningMesh`, `jointLengthParams`, `lastSelectedBody`,
-  `axisEnabled`, `showTexFixtureDim`, `texFixtureEdit.verts`. S.
+  On `state`, done at a game restart (hot-swapping state.lua unsettles it): `positioningMesh`,
+  `jointLengthParams`, `lastSelectedBody`, `axisEnabled`, `showTexFixtureDim`, `texFixtureEdit.verts`. S.
 - [x] **CL3. Unused maths.** `math-utils.lua`: `unloosenVanillalineOLD` with `unpackNodePoints` /
   `evenlySpreadPath`, `slicePolygon` with `findIntersections` (`splitPoly` stays: `decompose` uses
   it). `polyline.lua` is `polyline.miter(coords, halfWidth)` now, 383 → 93 lines, same output (checked
   on 500 random lines). **Done 2026-10-30**, `spec/polyline_spec.lua`.
-- [ ] **CL4. Commented-out code.** **Done 2026-10-30** in src/ and main.lua: ~640 lines, found by
+- [x] **CL4. Commented-out code.** **Done 2026-10-30** in src/ and main.lua: ~640 lines, found by
   a script that takes a run of `--` lines as code only when the text compiles as Lua, then read
   through. Later the same day: character-manager, io.lua, mipo-voice (character-topology,
-  mipo-chatter and sound.lua had none; music.lua and synth.lua none either, aeaddadc). Left: state.lua
-  (restart the game after). S.
+  mipo-chatter and sound.lua had none; music.lua and synth.lua none either, aeaddadc). state.lua's one
+  line went with CL2's fields. S.
 - [x] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
   still runs every frame and the `whistle` patch keeps a synth slot. S.
   **Done 2026-10-30:** deleted (Nikki: "delete slide sound yes"), with its call in sound.lua and the
