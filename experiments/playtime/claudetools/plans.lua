@@ -79,6 +79,8 @@ local function untickedMentions(doc)
     local log = run('git log --since="' .. since .. '" --format="%h %s" -- . 2>/dev/null')
     local found = {}
     for line in log:gmatch('[^\n]+') do
+        -- a range ('V1-V6', 'W2–W5') names a group of steps, not one that got done
+        line = line:gsub('%u+%d+%a?%s*%-%s*%u+%d+%a?', ''):gsub('%u+%d+%a?%s*–%s*%u+%d+%a?', '')
         for id, state in pairs(doc.ids) do
             if state == 'open' and line:find('%f[%w]' .. id .. '%f[%W]') then
                 found[#found + 1] = id .. ' in ' .. line
