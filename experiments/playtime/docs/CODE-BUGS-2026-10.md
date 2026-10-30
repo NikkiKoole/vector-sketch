@@ -1,6 +1,6 @@
 # Code bugs — found in the October 2026 review
 
-status: active
+status: done
 
 Bugs a 7-agent read-only code review found on 2026-10-30 (rendering, characters, UI, save/load,
 input/plumbing, sound/world, cross-cutting). Every one was read in the code; none was run yet,
