@@ -17,6 +17,7 @@ local texfixtureParams = require('src.texfixture-params')
 local NT = require('src.node-types')
 local cdt = require('src.cdt')
 local meshusertBind = require('src.meshusert-bind')
+local utils = require('src.utils')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -313,14 +314,14 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                     local rextra = rud.extra
                                     local triIdx = rextra and rextra.triangles
                                     local allVerts = rextra
-                                        and (rextra.meshVertices or rv:getBody():getUserData().thing.vertices)
+                                        and (rextra.meshVertices or utils.thingOf(rv:getBody()).vertices)
                                     if triIdx and allVerts then
                                         -- Path B: Steiner points live on the body in body-local
                                         -- coords. allVerts may be either body-local (new code,
                                         -- meshVertices) or authoring-world (thing.vertices or
                                         -- legacy saves); subtracting its own centroid normalizes
                                         -- to body-local either way.
-                                        local bodyThing = rv:getBody():getUserData().thing
+                                        local bodyThing = utils.thingOf(rv:getBody())
                                         local ocenX, ocenY = mathutils.computeCentroid(allVerts)
                                         bodyThing.extraSteiner = bodyThing.extraSteiner or {}
                                         for _, t in ipairs(state.triangleEditor.selectedTriangles) do
@@ -554,7 +555,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                         if not rv:isDestroyed() then
                             local rud = rv:getUserData()
                             if rud then
-                                local rBodyThing = rv:getBody():getUserData().thing
+                                local rBodyThing = utils.thingOf(rv:getBody())
                                 if rBodyThing.extraSteiner and #rBodyThing.extraSteiner > 0 then
                                     local numSplits = #rBodyThing.extraSteiner / 2
                                     if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
@@ -664,7 +665,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
 
             -- Path B: Steiners live on the body, not the RESOURCE.
             local resBody = state.selection.selectedSFixture:getBody()
-            local resBodyThing = resBody and resBody:getUserData() and resBody:getUserData().thing
+            local resBodyThing = resBody and utils.thingOf(resBody)
             if resBodyThing and resBodyThing.extraSteiner and #resBodyThing.extraSteiner > 0 then
                 local numSplits = #resBodyThing.extraSteiner / 2
                 if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then

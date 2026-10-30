@@ -8,6 +8,7 @@ local registry = require 'src.registry'
 local mathutils = require 'src.math-utils'
 local JT = require 'src.joint-types'
 local SIDES = require('src.sides')
+local utils = require('src.utils')
 
 -- Updates offsetA of a joint based on a new LOCAL point (relative to body A)
 function lib.updateJointOffsetA(joint, localX, localY)
@@ -251,16 +252,16 @@ local function moveUntilEnd(from, dx, dy, visited, dir)
         local bodyA, bodyB = joints[i]:getBodies()
 
         if (dir == SIDES.A) then
-            if (not visited[bodyB:getUserData().thing.id]) then
+            if (not visited[utils.thingOf(bodyB).id]) then
                 tranlateBody(bodyB, dx, dy)
-                visited[bodyB:getUserData().thing.id] = true
+                visited[utils.thingOf(bodyB).id] = true
                 moveUntilEnd(bodyB, dx, dy, visited, dir)
             end
         end
         if dir == SIDES.B then
-            if (not visited[bodyA:getUserData().thing.id]) then
+            if (not visited[utils.thingOf(bodyA).id]) then
                 tranlateBody(bodyA, dx, dy)
-                visited[bodyA:getUserData().thing.id] = true
+                visited[utils.thingOf(bodyA).id] = true
                 moveUntilEnd(bodyA, dx, dy, visited, dir)
             end
         end
@@ -277,7 +278,7 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             local before = { x = data.offsetA.x, y = data.offsetA.y }
 
             local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
-            local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
+            local newx, newy = mathutils.repositionPointUsingWeights(weights, utils.thingOf(newBody).vertices)
 
             data.offsetA.x = newx
             data.offsetA.y = newy
@@ -287,7 +288,7 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             local rx, ry = mathutils.rotatePoint(
                 after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
             )
-            local id = data.otherBody:getUserData().thing.id
+            local id = utils.thingOf(data.otherBody).id
             if (not visited[id]) then
                 tranlateBody(data.otherBody, rx, ry)
                 visited[id] = true
@@ -300,7 +301,7 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             local before = { x = data.offsetB.x, y = data.offsetB.y }
 
             local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
-            local newx, newy = mathutils.repositionPointUsingWeights(weights, newBody:getUserData().thing.vertices)
+            local newx, newy = mathutils.repositionPointUsingWeights(weights, utils.thingOf(newBody).vertices)
 
             data.offsetB.x = newx
             data.offsetB.y = newy
@@ -310,7 +311,7 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             local rx, ry = mathutils.rotatePoint(
                 after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
             )
-            local id = data.otherBody:getUserData().thing.id
+            local id = utils.thingOf(data.otherBody).id
             if not visited[id] then
                 visited[id] = true
                 tranlateBody(data.otherBody, rx, ry)

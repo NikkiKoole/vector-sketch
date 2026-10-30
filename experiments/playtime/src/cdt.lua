@@ -21,6 +21,7 @@
 -- use triIdx as `data.triangles` directly.
 
 local lib = {}
+local utils = require('src.utils')
 
 ---------------------------------------------------------------------------
 -- Geometry helpers
@@ -458,7 +459,7 @@ end
 local meshInputs = setmetatable({}, { __mode = 'k' }) -- ud -> inputs of its last mesh
 
 local function inputsOf(ud, body, bd)
-    local thing = body:getUserData().thing
+    local thing = utils.thingOf(body)
     local parts = { tostring(body), body:getX(), body:getY(), body:getAngle(),
         bd.url or '', bd.x, bd.y, bd.w, bd.h, bd.scale or 1, thing.shapeType or '' }
     for _, list in ipairs({ thing.vertices or {}, thing.extraSteiner or {} }) do
@@ -471,7 +472,7 @@ end
 
 -- computeResourceMesh, but only when something it reads has changed.
 function lib.refreshResourceMesh(ud, body, bd)
-    if not (ud and ud.extra and body and bd and body:getUserData() and body:getUserData().thing) then
+    if not (ud and ud.extra and body and bd and utils.thingOf(body)) then
         return false
     end
     local inputs = inputsOf(ud, body, bd)

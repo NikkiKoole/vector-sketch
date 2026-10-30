@@ -1,5 +1,6 @@
 local lib = {}
 local registry = require 'src.registry'
+local utils = require('src.utils')
 local units = require('src.physics-units')
 local mathutils = require('src.math-utils')
 local contactTracker = require('src.physics.contact-tracker')
@@ -26,15 +27,15 @@ local deadbandParts = { luleg = true, ruleg = true, llleg = true, rlleg = true }
 -- needs full strength
 local function solidOtherMipo(own, other, otherBody, ownMipo)
     if own:isSensor() or other:isSensor() then return false end
-    local oud = otherBody:getUserData()
-    local otherMipo = oud and oud.thing and oud.thing.mipoId
+    local otherThing = utils.thingOf(otherBody)
+    local otherMipo = otherThing and otherThing.mipoId
     return otherMipo ~= nil and otherMipo ~= ownMipo
 end
 
 -- Touching another Mipo (props and floors are fine).
 local function touchingOthers(body)
-    local ud = body:getUserData()
-    return contactTracker.any(body, solidOtherMipo, ud and ud.thing and ud.thing.mipoId)
+    local thing = utils.thingOf(body)
+    return contactTracker.any(body, solidOtherMipo, thing and thing.mipoId)
 end
 
 -- PD controller on angular velocity
@@ -46,8 +47,8 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
 
     local omega = body:getAngularVelocity()
 
-    local ud = body:getUserData()
-    local partName = ud and ud.thing and ud.thing.mipoPartName
+    local thing = utils.thingOf(body)
+    local partName = thing and thing.mipoPartName
     if partName and deadbandParts[partName] and math.abs(diff) < lib.legDeadband then return end
 
     -- Tunables (or read from data)
@@ -83,13 +84,13 @@ end
 function lib.update(dt, hitted)
     local bods = registry.bodies
     for _, v in pairs(bods) do
-        local ud = v:getUserData()
-        if ud and ud.thing and ud.thing.behaviors then
-            local behaviors = ud.thing.behaviors
+        local thing = utils.thingOf(v)
+        if thing and thing.behaviors then
+            local behaviors = thing.behaviors
             local same = false
             if hitted and #hitted > 0 then
                 for i = 1, #hitted do
-                    if (hitted[i].id == ud.thing.id) then
+                    if (hitted[i].id == thing.id) then
                         same = true
                     end
                 end
@@ -99,9 +100,9 @@ function lib.update(dt, hitted)
                 -- figure out if im touching this body
 
                 -- thing.limp: temporarily slack (a held Mipo limb, see mipo-actions)
-                if vb.name == 'KEEP_ANGLE' and vb.enabled ~= false and not same and not ud.thing.limp then
+                if vb.name == 'KEEP_ANGLE' and vb.enabled ~= false and not same and not thing.limp then
 
-                    -- Drive the live registry body (v), not ud.thing.body —
+                    -- Drive the live registry body (v), not thing.body —
                     -- that ref can be stale after a recreate.
                     rotateBodyTowards(v, dt, vb.angle or 0, vb)
                 end

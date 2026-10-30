@@ -1424,9 +1424,9 @@ local function updateSinglePart(partName, data, instance)
 
     -- Re-select the new body if the old one was selected
     if wasSelected and instance.parts[partName] then
-        local ud = instance.parts[partName].body:getUserData()
-        if ud and ud.thing then
-            state.selection.selectedObj = ud.thing
+        local thing = utils.thingOf(instance.parts[partName].body)
+        if thing then
+            state.selection.selectedObj = thing
         end
     end
 
@@ -2365,10 +2365,10 @@ function lib.reconstructInstance(charData, partBodies)
     lib.applyNeck(instance) -- neck limits (bend budget) before the rest-pose limits below
     lib.applyTrunk(instance)
     for partName, body in pairs(partBodies) do
-        local ud = body:getUserData()
-        if ud and ud.thing then
-            instance.parts[partName] = ud.thing
-            applyFootMaterial(ud.thing, partName) -- scenes saved before feet had grip
+        local thing = utils.thingOf(body)
+        if thing then
+            instance.parts[partName] = thing
+            applyFootMaterial(thing, partName) -- scenes saved before feet had grip
             -- scenes saved when every nose was drawn at z 490, above the arms; and when
             -- torsos drew at the head's 200/210 (TORSO_SKIN_Z)
             for _, fixture in ipairs(body:getFixtures()) do

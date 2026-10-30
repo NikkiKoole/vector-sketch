@@ -9,6 +9,7 @@ local ui = require('src.ui.all')
 local box2dPointerJoints = require 'src.physics.box2d-pointerjoints'
 local uuid = require 'src.uuid'
 local registry = require 'src.registry'
+local utils = require('src.utils')
 local objectManager = require 'src.object-manager'
 local state = require 'src.state'
 local statemachine = require 'src.statemachine'
@@ -22,9 +23,9 @@ local snap = require('src.physics.snap')
 local function getObjectsByLabel(label)
     local objects = {}
     for _, body in pairs(state.physicsWorld:getBodies()) do
-        local userData = body:getUserData()
-        if (userData and userData.thing and userData.thing.label == label) then
-            table.insert(objects, userData.thing)
+        local thing = utils.thingOf(body)
+        if thing and thing.label == label then
+            table.insert(objects, thing)
         end
     end
     return objects

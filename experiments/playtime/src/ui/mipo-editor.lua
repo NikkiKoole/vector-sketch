@@ -3,6 +3,7 @@ local lib = {}
 local allUI = require('src.ui.all')
 local state = require('src.state')
 local mipoVoice = require('src.mipo-voice')
+local utils = require('src.utils')
 local mathutils = require('src.math-utils')
 
 -- The Mipo being edited hmpfs on every change (docs/PUPPETMAKER-SOUND.md P1):
@@ -1799,10 +1800,10 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         if ui.button(x + hw + 4, y, hw, 'dissolve') then
             for pName, part in pairs(instance.parts) do
                 if part and part.body and not part.body:isDestroyed() then
-                    local ud = part.body:getUserData()
-                    if ud and ud.thing then
-                        ud.thing.mipoId = nil
-                        ud.thing.mipoPartName = nil
+                    local thing = utils.thingOf(part.body)
+                    if thing then
+                        thing.mipoId = nil
+                        thing.mipoPartName = nil
                     end
                 end
                 local _ = pName

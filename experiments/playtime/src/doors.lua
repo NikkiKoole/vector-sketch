@@ -9,6 +9,7 @@
 local lib = {}
 
 local state = require('src.state')
+local utils = require('src.utils')
 local json = require('vendor.dkjson')
 local sceneIO = require('src.io')
 local mipoRegistry = require('src.mipo-registry')
@@ -81,8 +82,8 @@ function lib.mipoOn(body)
 end
 
 local function bodyId(body)
-    local ud = body:getUserData()
-    return ud and ud.thing and ud.thing.id
+    local thing = utils.thingOf(body)
+    return thing and thing.id
 end
 
 -- Called with the bodies under a press while playing (src/input-manager.lua).

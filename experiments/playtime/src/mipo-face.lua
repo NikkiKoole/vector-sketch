@@ -4,6 +4,7 @@
 -- thing (eyesOpen, l/rbrowYOffset, l/rbrowVec, mouthShapeVec), which the decals read when
 -- drawn. Moved out of box2d-draw-textured.lua: the renderer only draws.
 local mouthShapes = require('src.mouth-shapes')
+local utils = require('src.utils')
 local mipoRegistry = require('src.mipo-registry')
 local cam = require('src.camera').getInstance()
 
@@ -199,14 +200,13 @@ end
 function lib.update(world, dt)
     local now = love.timer.getTime()
     for _, body in ipairs(world:getBodies()) do
-        local ud = body:getUserData()
-        if ud and ud.thing then
-            local thing = ud.thing
+        local thing = utils.thingOf(body)
+        if thing then
             local s = blinkStates[thing]
             if not s then
                 s = { expiresAt = now + 2 + math.random() * 4 }
                 blinkStates[thing] = s
-                if isFaceOwner(ud.thing.label) then
+                if isFaceOwner(thing.label) then
                     initFaceDecals(body)
                     initBrowState(thing)
                 end
@@ -230,7 +230,7 @@ function lib.update(world, dt)
             else
                 thing.eyesOpen = 1
             end
-            if isFaceOwner(ud.thing.label) then
+            if isFaceOwner(thing.label) then
                 -- (a face pulled before faces were temporary has no end time: end it now)
                 if thing.browIsRandom and not thing.pulledFaceUntil then thing.pulledFaceUntil = now end
                 if thing.pulledFaceUntil and now >= thing.pulledFaceUntil then
@@ -250,15 +250,15 @@ function lib.update(world, dt)
         local mx, my = love.mouse.getPosition()
         local wmx, wmy = cam:getWorldCoordinates(mx, my)
         for _, body in ipairs(world:getBodies()) do
-            local ud = body:getUserData()
-            if ud and ud.thing and isFaceOwner(ud.thing.label) then
+            local thing = utils.thingOf(body)
+            if thing and isFaceOwner(thing.label) then
                 local bx, by = body:getPosition()
                 local dx, dy = wmx - bx, wmy - by
                 if dx * dx + dy * dy < 200 * 200 then
-                    randomizeBrows(ud.thing)
-                    randomizeMouth(ud.thing)
-                    ud.thing.browIsRandom = true
-                    ud.thing.pulledFaceUntil = love.timer.getTime() + PULLED_FACE_SECONDS
+                    randomizeBrows(thing)
+                    randomizeMouth(thing)
+                    thing.browIsRandom = true
+                    thing.pulledFaceUntil = love.timer.getTime() + PULLED_FACE_SECONDS
                 end
             end
         end

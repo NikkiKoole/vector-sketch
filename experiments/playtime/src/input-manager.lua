@@ -184,8 +184,8 @@ local function pressedJointCreation(cx, cy, hitted)
     if hitted2Bodies and (state.jointParams.body1 == nil) and (state.jointParams.body2 == nil) then
         -- if you click exactly where two bodies overlap,
         -- picking the one whose center is closest to your click as body1.
-        local b1 = hitted[1]:getBody():getUserData().thing.body
-        local b2 = hitted[2]:getBody():getUserData().thing.body
+        local b1 = utils.thingOf(hitted[1]:getBody()).body
+        local b2 = utils.thingOf(hitted[2]:getBody()).body
 
         local b1x, b1y = b1:getLocalPoint(cx, cy)
         local b2x, b2y = b2:getLocalPoint(cx, cy)
@@ -253,8 +253,7 @@ end
 -- What a press on bodies does while playing: the scene script, signals, doors, a Mipo's squeak.
 local function playPressed(hitted)
     local newHitted = utils.map(hitted, function(h)
-        local hud = (h:getBody() and h:getBody():getUserData())
-        local hthing = hud and hud.thing
+        local hthing = utils.thingOf(h:getBody())
         return hthing
     end)
     script.call('onPressed', newHitted)
@@ -290,14 +289,13 @@ end
 local function releasePointer(x, y, id)
     local releasedObjs = box2dPointerJoints.handlePointerReleased(x, y, id)
     if (#releasedObjs > 0) then
-        local newReleased = utils.map(releasedObjs,
-            function(h) return h:getUserData() and h:getUserData().thing end)
+        local newReleased = utils.map(releasedObjs, utils.thingOf)
 
         script.call('onReleased', newReleased)
         if recorder.isRecording and not state.world.paused then
             for _, obj in ipairs(releasedObjs) do
-                local ud = obj:getUserData() -- nil for a blob's rim
-                if ud and ud.thing then recorder:recordMouseJointFinish(id, ud.thing.id) end
+                local thing = utils.thingOf(obj) -- nil for a blob's rim
+                if thing then recorder:recordMouseJointFinish(id, thing.id) end
             end
         end
     end
@@ -420,7 +418,7 @@ local function handlePointer(x, y, id, action, button)
 
         if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
             and state.texFixtureEdit.lockedVerts == false then
-            local thing = state.selection.selectedSFixture:getBody():getUserData().thing
+            local thing = utils.thingOf(state.selection.selectedSFixture:getBody())
             local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
                 thing, 0, 0)
 
@@ -461,9 +459,9 @@ local function handlePointer(x, y, id, action, button)
         if #hitted > 0 and (not modes.is(modes.PICK_AUTO_ROPIFY)) then
             -- a blob's rim bodies have no thing: clicking the rim selects the blob
             local hitBody = blobs.ownerOf(hitted[1]:getBody()) or hitted[1]:getBody()
-            local ud = hitBody:getUserData()
-            if ud and ud.thing then
-                state.selection.selectedObj = ud.thing
+            local thing = utils.thingOf(hitBody)
+            if thing then
+                state.selection.selectedObj = thing
                 -- a blob shows its blob settings; clicking empty space goes to the body
                 local blobFixture = blobs.sfixtureOf(hitBody)
                 local sel = state.selection.selectedSFixture
@@ -523,7 +521,7 @@ local function handlePointer(x, y, id, action, button)
             if not wasOverUI and not wasSpawning then
                 if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then
                     local body = state.selection.selectedSFixture:getBody()
-                    local rthing = body:getUserData().thing
+                    local rthing = utils.thingOf(body)
 
                     state.selection.selectedObj = rthing
                     state.selection.selectedSFixture = nil
@@ -800,7 +798,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         state.polyEdit.tempVerts[index + 1] = state.polyEdit.tempVerts[index + 1] + dy2
     elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
         local index = state.texFixtureEdit.dragIdx
-        local obj = state.selection.selectedSFixture:getBody():getUserData().thing
+        local obj = utils.thingOf(state.selection.selectedSFixture:getBody())
 
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)

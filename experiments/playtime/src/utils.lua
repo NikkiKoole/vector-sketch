@@ -2,6 +2,12 @@
 local logger = require 'src.logger'
 
 local lib = {}
+
+-- The `thing` (runtime property bag) on a body's userData, nil when it has none.
+function lib.thingOf(body)
+    local ud = body:getUserData()
+    return ud and ud.thing
+end
 -- Utility function to concatenate two tables.
 
 -- Define the map function

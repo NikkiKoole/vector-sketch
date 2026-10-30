@@ -10,11 +10,7 @@ local camera = require('src.camera')
 local cameraFollow = require('src.camera-follow')
 local mipoRegistry = require('src.mipo-registry')
 local signals = require('src.signals')
-
-local function thingOf(body)
-    local ud = body:getUserData()
-    return ud and ud.thing
-end
+local thingOf = require('src.utils').thingOf
 
 local function labelOf(body)
     local thing = thingOf(body)

@@ -1,6 +1,7 @@
 --selection-rect.lua
 local lib = {}
 local logger = require 'src.logger'
+local utils = require('src.utils')
 local mathutils = require 'src.math-utils'
 
 -- Include the drawDottedLine function here
@@ -72,8 +73,7 @@ end
 function lib.selectWithin(world, rect)
     local bodiesInside = {}
     for _, body in pairs(world:getBodies()) do
-        local userData = body:getUserData()
-        local thing = userData and userData.thing
+        local thing = utils.thingOf(body)
         if thing then
             local fixtures = body:getFixtures()
             local allFixturesInside = true

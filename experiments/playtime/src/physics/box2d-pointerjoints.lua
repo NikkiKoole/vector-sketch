@@ -4,6 +4,7 @@ local state = require 'src.state'
 local BT = require('src.body-types')
 local mipoRegistry = require('src.mipo-registry')
 local units = require('src.physics-units')
+local utils = require('src.utils')
 local pointerJoints = {}
 
 local function getPointerPosition(id)
@@ -216,10 +217,8 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
         end
 
         if (allowMouseJointMaking) then
-            local udID = nil
-            if temp[1].body:getUserData() and temp[1].body:getUserData().thing.id then
-                udID = temp[1].body:getUserData().thing.id
-            end
+            local thing = utils.thingOf(temp[1].body)
+            local udID = thing and thing.id
             createdmousejointdata = {
                 pointerID = temp[1].id,
                 bodyID = udID,

@@ -7,6 +7,7 @@
 -- in src/ui/sfixture-editor.lua.
 local subtypes = require('src.subtypes')
 local texfixtureParams = require('src.texfixture-params')
+local utils = require('src.utils')
 
 local lib = {}
 
@@ -46,7 +47,7 @@ function lib.placeOnEdge(fixture, place)
     local mathutils = require('src.math-utils')
     local m = ({ N = { 0, -1 }, E = { 1, 0 }, S = { 0, 1 }, W = { -1, 0 }, C = { 0, 0 } })[place]
     local body = fixture:getBody()
-    local bounds = mathutils.getBoundingRect(body:getUserData().thing.vertices)
+    local bounds = mathutils.getBoundingRect(utils.thingOf(body).vertices)
     local points = { fixture:getShape():getPoints() }
     local cx, cy = mathutils.getCenterOfPoints(points)
     local relative = mathutils.makePolygonRelativeToCenter(points, cx, cy)
@@ -140,7 +141,7 @@ local stripLook = concat(texfixtureParams.texture,
 
 -- trace vertices: from which to which vertex of the body's outline (negative counts back)
 local function halfOutline(fixture)
-    return #(fixture:getBody():getUserData().thing.vertices or {}) / 2
+    return #(utils.thingOf(fixture:getBody()).vertices or {}) / 2
 end
 local function outlineIndex(key, label)
     return { key = label, kind = 'number', step = 1,

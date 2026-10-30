@@ -182,7 +182,7 @@ function lib.renderActiveEditorThings()
 
     if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
         and state.texFixtureEdit.lockedVerts == false then
-        local thing     = state.selection.selectedSFixture:getBody():getUserData().thing
+        local thing     = utils.thingOf(state.selection.selectedSFixture:getBody())
 
         local fixtureUD = state.selection.selectedSFixture:getUserData()
         local isMeta8   = fixtureUD.label == 'meta8'

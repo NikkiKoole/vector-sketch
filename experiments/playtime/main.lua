@@ -216,11 +216,7 @@ function love.update(dt)
         snap.update(scaled_dt)
         -- todo use pointerjoints instead!!!
         local interacted = box2dPointerJoints.getInteractedWithPointer()
-        local newHitted = utils.map(interacted, function(h)
-            local ud = (h:getUserData())
-            local thing = ud and ud.thing
-            return thing
-        end)
+        local newHitted = utils.map(interacted, utils.thingOf)
         keep_angle.update(scaled_dt, newHitted)
     end
     blobs.afterStep()
@@ -408,8 +404,7 @@ function love.wheelmoved(dx, dy)
         local wx, wy = cam:getWorldCoordinates(mx, my)
         local body = bodyRotate.findBodyAt(state.physicsWorld, wx, wy)
         if body then
-            local ud = body:getUserData()
-            local thing = ud and ud.thing
+            local thing = utils.thingOf(body)
             if thing and thing[resizeKey] then
                 local step = love.keyboard.isDown('lshift', 'rshift') and 1 or 4
                 local delta = dy * step

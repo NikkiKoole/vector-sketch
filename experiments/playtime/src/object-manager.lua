@@ -129,8 +129,7 @@ function lib.recreateThingFromBody(body, newSettings)
         logger:error("The body is already destroyed.")
         return nil
     end
-    local userData = body:getUserData()
-    local thing = userData and userData.thing -- Extract current properties
+    local thing = utils.thingOf(body) -- Extract current properties
 
     local x, y = body:getPosition()
     local angle = body:getAngle()
@@ -303,7 +302,7 @@ function lib.recreateThingFromBody(body, newSettings)
 end
 
 function lib.destroyBody(body)
-    local thing = body:getUserData().thing
+    local thing = utils.thingOf(body)
     local bjoints = body:getJoints()
     for i = 1, #bjoints do
         local ud = bjoints[i]:getUserData()
@@ -488,7 +487,7 @@ function lib.flipThing(thing, axis, recursive)
                     -- Determine the other body connected by the joint
                     local bodyA, bodyB = joint:getBodies()
                     local otherBody = (bodyA == currentBody) and bodyB or bodyA
-                    local otherThing = otherBody:getUserData() and otherBody:getUserData().thing
+                    local otherThing = utils.thingOf(otherBody)
 
                     if otherThing then
                         -- Recursively flip the connected body
@@ -523,8 +522,8 @@ function lib.flipThing(thing, axis, recursive)
 
                     -- Determine the connected bodies
                     local bodyA, bodyB = joint:getBodies()
-                    local thingA = bodyA:getUserData() and bodyA:getUserData().thing
-                    local thingB = bodyB:getUserData() and bodyB:getUserData().thing
+                    local thingA = utils.thingOf(bodyA)
+                    local thingB = utils.thingOf(bodyB)
 
                     if not thingA or not thingB then
                         logger:error("flipThing: One or both connected things are invalid.")

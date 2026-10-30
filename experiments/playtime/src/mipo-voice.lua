@@ -91,6 +91,7 @@ local playing = {}     -- [mipoId] = Source; a Mipo says one thing at a time
 -- [mipoId] = { thing, start, duration, from, target, amount, wide, restore }. On state: a hot
 -- reload emptied a local table mid-flap and left those mouths open for good.
 local state = require('src.state')
+local utils = require('src.utils')
 state.mipoFlaps = state.mipoFlaps or {}
 local flaps = state.mipoFlaps
 local impactPairs = {} -- [kind .. pairKey] = time
@@ -384,7 +385,7 @@ local function playImpact(kind, body1, body2, speed, source)
         local vol = mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume * 14
         local patch = sound.synth[love.math.random(#sound.synth)]
         local transpose = sound.transpose or 0
-        local thing = sound.perBody and source and source:getUserData().thing
+        local thing = sound.perBody and source and utils.thingOf(source)
         if thing then
             patch = sound.synth[hashString(thing.id or '') % #sound.synth + 1]
             local size = math.sqrt((thing.width or 0) * (thing.height or 0))
@@ -454,8 +455,8 @@ function lib.onEndContact(fix1, fix2)
 end
 
 local function hasLabel(body, label)
-    local ud = body:getUserData()
-    return ud and ud.thing and ud.thing.label == label
+    local thing = utils.thingOf(body)
+    return thing and thing.label == label
 end
 
 function lib.isSquishy(body)

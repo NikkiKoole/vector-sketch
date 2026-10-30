@@ -9,6 +9,7 @@ local mathutils = require('src.math-utils')
 local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
+local utils = require('src.utils')
 
 local lib = {}
 
@@ -250,7 +251,7 @@ function lib.worldVerts(ud, ownerBody)
     local mappert = resourceLink.find(ud)
     if not mappert then return nil end
     local mapperExtra = mappert:getUserData().extra
-    local verts = (mapperExtra and mapperExtra.meshVertices) or mappert:getBody():getUserData().thing.vertices
+    local verts = (mapperExtra and mapperExtra.meshVertices) or utils.thingOf(mappert:getBody()).vertices
     local vx, vy = mathutils.computeCentroid(verts)
     verts = mathutils.makePolygonRelativeToCenter(verts, vx, vy)
     if ud.extra.meshX or ud.extra.meshY then

@@ -6,6 +6,7 @@
 -- marks the texture dirty so the composite is rebuilt. Resizing replaces the
 -- fixture, so those sets return the new one. Ranges are the old panel's.
 local lib = {}
+local utils = require('src.utils')
 
 local function state() return require('src.state') end
 local function textured() return require('src.physics.box2d-draw-textured') end
@@ -62,7 +63,7 @@ lib.position = {
               w, h = imageSize(fixture)
               if not w then return end
               -- the old panel also stored the image size on a rectangle body (no rebuild)
-              local thing = fixture:getBody():getUserData().thing
+              local thing = utils.thingOf(fixture:getBody())
               if thing and thing.shapeType == 'rectangle' then thing.width, thing.height = w, h end
           end
           local newFixture = resize(fixture, w, h)

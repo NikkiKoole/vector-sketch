@@ -28,6 +28,7 @@ local faceDrawables = { decal = true, brow = true, ['mouth-backdrop'] = true, ['
 
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
 local mipoFace = require('src.mipo-face')
+local utils = require('src.utils')
 
 local function safeLoadImage(path)
     local info = love.filesystem.getInfo(path)
@@ -1678,7 +1679,7 @@ local function createDrawables()
                 type = 'trace-vertices',
                 z = composedZ,
                 extra = ud.extra,
-                thing = body:getUserData().thing
+                thing = utils.thingOf(body)
             })
         end
 
@@ -1688,13 +1689,13 @@ local function createDrawables()
                 type = 'tile-repeat',
                 z = composedZ,
                 extra = ud.extra,
-                thing = body:getUserData().thing
+                thing = utils.thingOf(body)
             })
         end
 
         if ud and subtypes.is(ud, subtypes.GRASS) then
             -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
-            local thing = body:getUserData() and body:getUserData().thing
+            local thing = utils.thingOf(body)
             table.insert(drawables, { type = 'grass', layer = 'back', z = composedZ,
                 extra = ud.extra, thing = thing, body = body })
             table.insert(drawables, { type = 'grass', layer = 'front', z = grass.FRONT_Z + (ud.extra.zOffset or 0),
@@ -1719,7 +1720,7 @@ local function createDrawables()
                     texfixture = fixture,
                     extra = ud.extra,
                     body = body,
-                    thing = body:getUserData().thing
+                    thing = utils.thingOf(body)
                 })
         end
         if ud and subtypes.is(ud, subtypes.MESHUSERT) then
@@ -1731,7 +1732,7 @@ local function createDrawables()
                     label = ud.label,
                     extra = ud.extra,
                     body = body,
-                    thing = body:getUserData().thing
+                    thing = utils.thingOf(body)
                 })
         end
         if ud and subtypes.is(ud, subtypes.UVUSERT) then
@@ -1743,7 +1744,7 @@ local function createDrawables()
                     label = ud.label,
                     extra = ud.extra,
                     body = body,
-                    thing = body:getUserData().thing
+                    thing = utils.thingOf(body)
                 })
         end
         if ud and subtypes.is(ud, subtypes.DECAL) then
@@ -1980,8 +1981,8 @@ end
 -- A mouth decal's 8 curve points as the face is now: the animated shape (mouthShapeVec on
 -- the face's thing, src/mipo-face.lua) scaled onto the face; nil while it isn't animating.
 local function animatedCurvePoints(extra, body)
-    local ud = body:getUserData()
-    local vec = ud and ud.thing and ud.thing.mouthShapeVec
+    local thing = utils.thingOf(body)
+    local vec = thing and thing.mouthShapeVec
     if not (vec and extra.mouthScaleX) then return nil end
     local points = {}
     for ci = 1, 16, 2 do
@@ -2597,8 +2598,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 if extra.lookAtMouse and extra.eyeW then
                     -- per-Mipo gaze (src/mipo-actions.lua) looks fully that way;
                     -- without one, follow the mouse with a distance falloff
-                    local bud = body:getUserData()
-                    local gazeThing = bud and bud.thing
+                    local gazeThing = utils.thingOf(body)
                     local ecx, ecy = body:getPosition()
                     local dx, dy, t
                     if gazeThing and gazeThing.gazeX then
@@ -2629,8 +2629,8 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 local dh = extra.h or 50
                 local mirrorX = extra.mirror and -1 or 1
                 if extra.isEye then
-                    local ud = body:getUserData()
-                    local eyesOpen = (ud and ud.thing and ud.thing.eyesOpen) or 1
+                    local bodyThing = utils.thingOf(body)
+                    local eyesOpen = (bodyThing and bodyThing.eyesOpen) or 1
                     dh = dh * eyesOpen
                 end
 
@@ -2674,8 +2674,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 if browImg then
                     local w = extra.w or 20
                     local h = extra.h or 10
-                    local bud = body:getUserData()
-                    local bodyThing = bud and bud.thing
+                    local bodyThing = utils.thingOf(body)
                     local vecKey = extra.browMirror and 'rbrowVec' or 'lbrowVec'
                     local bend = (bodyThing and bodyThing[vecKey]) or browBends[extra.browBend or 1] or browBends[1]
                     local bendMul = w / 5

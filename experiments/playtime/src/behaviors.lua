@@ -1,4 +1,5 @@
 local lib = {}
+local utils = require('src.utils')
 
 -- `params`: what the inspector (src/ui/inspector.lua) shows for a behavior, in
 -- order. Each row: { key, kind = 'text'|'number'|'bool'|'choice'|'action',
@@ -63,8 +64,8 @@ lib.allBehaviors = {
 -- A body's behaviors ({} for none, or a destroyed body).
 function lib.all(body)
     if body:isDestroyed() then return {} end
-    local ud = body:getUserData()
-    return ud and ud.thing and ud.thing.behaviors or {}
+    local thing = utils.thingOf(body)
+    return thing and thing.behaviors or {}
 end
 
 -- The body's behavior called `name`, or nil.
@@ -84,7 +85,7 @@ end
 -- (the selection, a Mipo's parts) still sees it. The panel used to put a copy of
 -- the whole userData on the body, and the selection kept the old thing (BUG9).
 function lib.add(body, name)
-    local thing = body:getUserData().thing
+    local thing = utils.thingOf(body)
     thing.behaviors = thing.behaviors or {}
     local added = { name = name }
     if name:find('^SIGNAL_') then added.signal = 'signal1' end

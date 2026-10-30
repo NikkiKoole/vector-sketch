@@ -10,6 +10,7 @@ local json = require('vendor.dkjson')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local camera = require('src.camera')
+local utils = require('src.utils')
 local mathutils = require('src.math-utils')
 
 local lib = {}
@@ -27,8 +28,8 @@ local function r(x) return math.floor(x * 100 + 0.5) / 100 end
 local function partName(body)
     local instance, name = mipoRegistry.getFromBody(body)
     if instance then return instance.id .. '.' .. name end
-    local ud = body:getUserData()
-    return (ud and ud.thing and (ud.thing.label or ud.thing.id)) or tostring(body)
+    local thing = utils.thingOf(body)
+    return (thing and (thing.label or thing.id)) or tostring(body)
 end
 
 local function capture(dt)

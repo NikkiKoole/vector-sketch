@@ -8,6 +8,7 @@
 local mipoRegistry = require('src.mipo-registry')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local units = require('src.physics-units')
+local utils = require('src.utils')
 local mathutils = require('src.math-utils')
 local behaviors = require('src.behaviors')
 local contactTracker = require('src.physics.contact-tracker')
@@ -33,13 +34,13 @@ end
 
 function lib.ensureKeepAngle(part, angle, kp)
     if not (part and part.body and not part.body:isDestroyed()) then return nil end
-    local ud = part.body:getUserData()
-    if not (ud and ud.thing) then return nil end
-    ud.thing.behaviors = ud.thing.behaviors or {}
+    local thing = utils.thingOf(part.body)
+    if not thing then return nil end
+    thing.behaviors = thing.behaviors or {}
     local b = lib.getKeepAngle(part)
     if b then return b end
     b = { name = 'KEEP_ANGLE', angle = angle or 0, kp = kp or 40, enabled = false }
-    table.insert(ud.thing.behaviors, b)
+    table.insert(thing.behaviors, b)
     return b
 end
 

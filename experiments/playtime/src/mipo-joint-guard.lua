@@ -30,6 +30,7 @@ local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local registry = require('src.registry')
+local utils = require('src.utils')
 local mathutils = require('src.math-utils')
 local units = require('src.physics-units') -- speeds below are as at 100 px per metre
 local contactTracker = require('src.physics.contact-tracker')
@@ -210,8 +211,7 @@ local function wallFixtureBetween(x1, y1, x2, y2)
 end
 
 local function fixtureLabel(fixture)
-    local ud = fixture:getBody():getUserData()
-    local thing = ud and ud.thing
+    local thing = utils.thingOf(fixture:getBody())
     return thing and (thing.label ~= '' and thing.label or thing.shapeType) or '?'
 end
 
@@ -314,8 +314,8 @@ end
 
 local function jointKey(joint)
     local _, bodyB = joint:getBodies()
-    local ud = bodyB:getUserData()
-    return ud and ud.thing and ud.thing.id
+    local thing = utils.thingOf(bodyB)
+    return thing and thing.id
 end
 
 local function ghost(joint, instance, childName, wall, distance, now)
@@ -410,8 +410,8 @@ local function isSplayed(instance)
     for _, name in ipairs(supportParts) do
         local part = instance.parts[name]
         if part and part.body and not part.body:isDestroyed() then
-            local ud = part.body:getUserData()
-            for _, behavior in ipairs(ud and ud.thing and ud.thing.behaviors or {}) do
+            local thing = utils.thingOf(part.body)
+            for _, behavior in ipairs(thing and thing.behaviors or {}) do
                 -- limp parts (held limb, idle slump) are slack on purpose
                 if behavior.name == 'KEEP_ANGLE' and behavior.enabled ~= false and not part.limp then
                     local diff = part.body:getAngle() - math.rad(behavior.angle or 0)

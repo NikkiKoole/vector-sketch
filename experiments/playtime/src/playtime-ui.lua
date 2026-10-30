@@ -327,7 +327,7 @@ function lib.drawUI()
                     function(baseX, baseY, listW, _h, offsetY)
                         local behaviorBody = state.panelVisibility.customBehavior.body
                         if lookup and lookup.params then
-                            local bodyThing = behaviorBody:getUserData().thing
+                            local bodyThing = utils.thingOf(behaviorBody)
                             local target
                             for _, behavior in ipairs(bodyThing.behaviors or {}) do
                                 if behavior.name == lookup.name then target = behavior end
@@ -355,7 +355,7 @@ function lib.drawUI()
                             for i = 1, #bodyJoints do
                                 local bodyA, bodyB = bodyJoints[i]:getBodies()
                                 local otherBody = bodyA == me and bodyB or bodyA
-                                table.insert(names, otherBody:getUserData().thing.label)
+                                table.insert(names, utils.thingOf(otherBody).label)
                             end
 
                             local maxY = 0
@@ -391,7 +391,7 @@ function lib.drawUI()
         love.graphics.setColor(1, 1, 1)
 
         local body = state.panelVisibility.addBehavior.body
-        local myBehaviors = body:getUserData().thing.behaviors or {}
+        local myBehaviors = utils.thingOf(body).behaviors or {}
 
         local function updatePossibleOptions()
             local possible_options = {}

@@ -128,8 +128,7 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                 return false
             end
 
-            local userData = body:getUserData()
-            local thing = userData and userData.thing
+            local thing = utils.thingOf(body)
             if thing then
                 local used, replaced = inspector.drawParams('body_' .. tostring(myID), bodyParams.rows, thing, body,
                     x, y, 270)

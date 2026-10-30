@@ -544,10 +544,10 @@ function lib.buildWorld(data, world, cam, opts)
     if data.characters and #data.characters > 0 then
         local bodyGroups = {}  -- { [mipoId] = { [partName] = body } }
         for _, body in ipairs(world:getBodies()) do
-            local ud = body:getUserData()
-            if ud and ud.thing and ud.thing.mipoId then
-                local mid = ud.thing.mipoId
-                local pname = ud.thing.mipoPartName
+            local thing = utils.thingOf(body)
+            if thing and thing.mipoId then
+                local mid = thing.mipoId
+                local pname = thing.mipoPartName
                 if not bodyGroups[mid] then bodyGroups[mid] = {} end
                 bodyGroups[mid][pname] = body
             end
@@ -768,9 +768,7 @@ function lib.gatherSaveData(world, camera)
         })
     end
     for _, body in pairs(world:getBodies()) do
-        local userData = body:getUserData()
-        local thing = userData and userData.thing
-
+        local thing = utils.thingOf(body)
         if thing and thing.id then
             local lvx, lvy = body:getLinearVelocity()
             local bodyData = {
@@ -924,8 +922,8 @@ function lib.gatherSaveData(world, camera)
             -- Get connected bodies
             local bodyA, bodyB = joint:getBodies()
 
-            local thingA = bodyA:getUserData() and bodyA:getUserData().thing
-            local thingB = bodyB:getUserData() and bodyB:getUserData().thing
+            local thingA = utils.thingOf(bodyA)
+            local thingB = utils.thingOf(bodyB)
 
             if thingA and thingB then
                 local x1, y1, x2, y2 = joint:getAnchors()

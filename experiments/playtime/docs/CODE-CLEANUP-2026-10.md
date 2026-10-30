@@ -55,9 +55,12 @@ L = more.
   slide-sound, CL5) and the plain scalar lerps use them. Left on purpose: music.lua and synth.lua
   (the music session's; integer note and volume bounds), 2D point lerps in geometry loops and
   vector lengths `math.sqrt(dx * dx + dy * dy)` (no clearer as a call), mipo-face's lerp closure.
-- [ ] **CL7. `thingOf(body)`.** `getUserData().thing` is written ~80 times in 26 files, 8 of them
+- [x] **CL7. `thingOf(body)`.** `getUserData().thing` is written ~80 times in 26 files, 8 of them
   calling `getUserData()` twice. `ui/on-stage.lua:14` already has a private `thingOf`; move it to
   registry or utils. M.
+  **Done 2026-10-30:** `utils.thingOf(body)` (utils: requires nothing but the logger, so no cycles);
+  every `getUserData().thing` and every `ud` that was only there for its thing, in 28 files, and
+  on-stage's copy. A `ud` that's also read for something else stays (`autoRopify(ud)`, `mud`).
 - [x] **CL8. `fixtures.findSFixture(body, subtype)` / `eachSFixture`.** 44 loops over
   `getFixtures()` in 20 files, several with `type(ud) == 'table' and subtypes.is(ud, X) and ud.extra`
   ladders (object-manager:608, 621, blob:409, input-manager:41, liquid). S-M.
