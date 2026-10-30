@@ -14,6 +14,7 @@ local sceneIO = require('src.io')
 local mipoRegistry = require('src.mipo-registry')
 local camera = require('src.camera')
 local logger = require('src.logger')
+local behaviors = require('src.behaviors')
 
 -- On state so a hot reload keeps the rooms you've been in.
 state.rooms = state.rooms or { saved = {}, openDoor = nil, pending = nil, fade = 0 }
@@ -23,21 +24,12 @@ local FADE_SECONDS = 0.5
 local DOOR_MARGIN = 40 -- a Mipo's torso this close to the door's box counts as on it
 local ARRIVE_CLEARANCE = 80 -- the lowest part's centre this far above the door's bottom
 
-local function doorOf(body)
-    if body:isDestroyed() then return nil end
-    local ud = body:getUserData()
-    for _, b in ipairs(ud and ud.thing and ud.thing.behaviors or {}) do
-        if b.name == 'DOOR' then return b end
-    end
-    return nil
-end
-
 -- Every door body in the world.
 function lib.doors()
     local found = {}
     if not state.physicsWorld then return found end
     for _, body in ipairs(state.physicsWorld:getBodies()) do
-        local b = doorOf(body)
+        local b = behaviors.find(body, 'DOOR')
         if b then table.insert(found, { body = body, door = b }) end
     end
     return found
@@ -97,7 +89,7 @@ end
 -- Returns true when a door took the tap.
 function lib.onPressed(bodies)
     for _, body in ipairs(bodies) do
-        local b = doorOf(body)
+        local b = behaviors.find(body, 'DOOR')
         if b then
             local id = bodyId(body)
             if R.openDoor ~= id then

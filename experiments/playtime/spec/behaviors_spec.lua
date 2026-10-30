@@ -39,6 +39,7 @@ describe('behaviors.add', function()
         return {
             getUserData = function() return ud end,
             getFixtures = function() return fixtures or {} end,
+            isDestroyed = function() return false end,
         }
     end
 
@@ -66,5 +67,31 @@ describe('behaviors.add', function()
         assert.is_true(shape.sensor)
         assert.is_false(sfixture.sensor)
         assert.are.equal(2, #thing.behaviors)
+    end)
+end)
+
+-- CL9: one way to look a behavior up (signals, doors, Mipo voice and actions had their own)
+describe('behaviors.find / all / isSignal', function()
+    local function body(list, destroyed)
+        local ud = { thing = { behaviors = list } }
+        return { getUserData = function() return ud end, isDestroyed = function() return destroyed end }
+    end
+
+    it('finds a behavior by name, nil when it has none', function()
+        local door = { name = 'DOOR', door = 'door1' }
+        assert.are.equal(door, behaviors.find(body({ { name = 'SQUISHY' }, door }), 'DOOR'))
+        assert.is_nil(behaviors.find(body({ { name = 'SQUISHY' } }), 'DOOR'))
+        assert.is_nil(behaviors.find(body(nil), 'DOOR'))
+        assert.is_nil(behaviors.find(body({ door }, true), 'DOOR'))
+    end)
+
+    it('lists none for a body without behaviors', function()
+        assert.are.same({}, behaviors.all(body(nil)))
+    end)
+
+    it('knows a signal behavior by its name and signal', function()
+        assert.is_true(behaviors.isSignal({ name = 'SIGNAL_GATE', signal = 'gate1' }))
+        assert.is_false(behaviors.isSignal({ name = 'SIGNAL_GATE' }))
+        assert.is_false(behaviors.isSignal({ name = 'DOOR', signal = 'x' }))
     end)
 end)

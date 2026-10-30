@@ -36,13 +36,10 @@ local steinerDragIdx = 0
 -- moved. Called from both discrete (add/remove) and continuous (drag
 -- release) Steiner edits.
 local function refreshResourceAfterSteinerChange(body)
-    for _, f in ipairs(body:getFixtures()) do
-        local fud = f:getUserData()
-        if type(fud) == 'table' and subtypes.is(fud, subtypes.RESOURCE) and fud.extra then
-            local bd = resourceLink.backdrop(fud)
-            if bd then
-                cdt.computeResourceMesh(fud, body, bd, mathutils)
-            end
+    for _, ud in ipairs(fixtures.sfixtureData(body, subtypes.RESOURCE)) do
+        local bd = resourceLink.backdrop(ud)
+        if bd then
+            cdt.computeResourceMesh(ud, body, bd, mathutils)
         end
     end
     for _, v in pairs(registry.sfixtures) do

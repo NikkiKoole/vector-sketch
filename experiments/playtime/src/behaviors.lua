@@ -60,6 +60,26 @@ lib.allBehaviors = {
       params = {} },
 }
 
+-- A body's behaviors ({} for none, or a destroyed body).
+function lib.all(body)
+    if body:isDestroyed() then return {} end
+    local ud = body:getUserData()
+    return ud and ud.thing and ud.thing.behaviors or {}
+end
+
+-- The body's behavior called `name`, or nil.
+function lib.find(body, name)
+    for _, b in ipairs(lib.all(body)) do
+        if b.name == name then return b end
+    end
+    return nil
+end
+
+-- A SIGNAL_* behavior that has its signal set.
+function lib.isSignal(b)
+    return b.signal ~= nil and b.name:find('^SIGNAL_') ~= nil
+end
+
 -- Add the behavior `name` to a body's thing, in place: whoever holds that thing
 -- (the selection, a Mipo's parts) still sees it. The panel used to put a copy of
 -- the whole userData on the body, and the selection kept the old thing (BUG9).

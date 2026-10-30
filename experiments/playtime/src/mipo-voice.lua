@@ -9,6 +9,7 @@
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 local units = require('src.physics-units')
+local behaviors = require('src.behaviors')
 
 local lib = {}
 
@@ -468,13 +469,7 @@ local function hasLabel(body, label)
 end
 
 function lib.isSquishy(body)
-    local ud = body:getUserData()
-    local behaviors = ud and ud.thing and ud.thing.behaviors
-    if not behaviors then return false end
-    for _, behavior in ipairs(behaviors) do
-        if behavior.name == 'SQUISHY' then return true end
-    end
-    return false
+    return behaviors.find(body, 'SQUISHY') ~= nil
 end
 
 -- Called from postSolve (first solve of a new contact only). A Mipo part that changes velocity plonks, and a hard

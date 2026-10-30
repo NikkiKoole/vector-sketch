@@ -52,12 +52,17 @@ L = more.
 - [ ] **CL7. `thingOf(body)`.** `getUserData().thing` is written ~80 times in 26 files, 8 of them
   calling `getUserData()` twice. `ui/on-stage.lua:14` already has a private `thingOf`; move it to
   registry or utils. M.
-- [ ] **CL8. `fixtures.findSFixture(body, subtype)` / `eachSFixture`.** 44 loops over
+- [x] **CL8. `fixtures.findSFixture(body, subtype)` / `eachSFixture`.** 44 loops over
   `getFixtures()` in 20 files, several with `type(ud) == 'table' and subtypes.is(ud, X) and ud.extra`
   ladders (object-manager:608, 621, blob:409, input-manager:41, liquid). S-M.
-- [ ] **CL9. `behaviors.find(body, name)`.** Written four times: signals:24 `findBehavior`,
+  **Done 2026-10-30:** `fixtures.sfixtureData(body, subtype)` (their userData), used in
+  object-manager (2) and input-manager. Most of the 44 loops want every fixture or several
+  subtypes at once, blob and liquid loop over the registry now, snap's one-liner stays (it's
+  in the registry/snap require cycle), draw-textured's decal loop goes with CL20.
+- [x] **CL9. `behaviors.find(body, name)`.** Written four times: signals:24 `findBehavior`,
   doors:26 `doorOf`, mipo-voice:470 `isSquishy`, mipo-actions:38. Plus `isSignal(b)` for the test
-  repeated 3x in signals. S.
+  repeated 3x in signals. S. **Done 2026-10-30:** `behaviors.all / find / isSignal`; a shadowed
+  `behaviors` loop variable in `signals.renameForCopy` renamed on the way.
 - [ ] **CL10. One list of shape dimension keys.** radius/width/width2/width3/height/height2-4 are
   copied ~10 times (io:422, 944, 1294, 1385; object-manager:327, 363, 409, 492, 590, 695) and the
   copies disagree (BUG3). Fix: `shapes.DIM_KEYS`, `copyDims(from, to)`, and a

@@ -77,7 +77,8 @@ describe("src.mipo-voice", function()
 
     describe("isSquishy", function()
         local function fakeBody(behaviors)
-            return { getUserData = function() return { thing = { behaviors = behaviors } } end }
+            return { getUserData = function() return { thing = { behaviors = behaviors } } end,
+                isDestroyed = function() return false end }
         end
 
         it("is true for a body with the SQUISHY behavior", function()

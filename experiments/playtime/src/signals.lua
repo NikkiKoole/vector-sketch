@@ -12,6 +12,7 @@
 local state = require('src.state')
 local units = require('src.physics-units')
 local contactTracker = require('src.physics.contact-tracker')
+local behaviors = require('src.behaviors')
 
 local lib = {}
 
@@ -20,18 +21,6 @@ lib.gateForce = 1e7      -- motor force: enough to hold up a skateboard with a M
                          -- metre; src/physics-units.lua makes it the same push at any meter)
 
 local triggerNames = { SIGNAL_BUTTON = true, SIGNAL_PLATE = true, SIGNAL_SOCKET = true }
-
-local function behaviorsOf(body)
-    local ud = body:getUserData()
-    return ud and ud.thing and ud.thing.behaviors or nil
-end
-
-local function findBehavior(body, name)
-    for _, b in ipairs(behaviorsOf(body) or {}) do
-        if b.name == name then return b end
-    end
-    return nil
-end
 
 local function prismaticOf(body)
     for _, joint in ipairs(body:getJoints()) do
@@ -77,7 +66,7 @@ local travelling = state.gatesTravelling
 -- Gate: a body on a prismatic joint; the motor drives it to the closed end or
 -- to the open (world-down) end of its limits.
 function lib.setGate(body, open)
-    local b = findBehavior(body, 'SIGNAL_GATE')
+    local b = behaviors.find(body, 'SIGNAL_GATE')
     local joint = prismaticOf(body)
     if not b or not joint then return end
     ensureGateLimits(body, joint)
@@ -105,7 +94,7 @@ function lib.emit(signal)
     if not signal or not state.physicsWorld then return 0 end
     local count = 0
     for _, body in ipairs(state.physicsWorld:getBodies()) do
-        for _, b in ipairs(behaviorsOf(body) or {}) do
+        for _, b in ipairs(behaviors.all(body)) do
             local receive = receivers[b.name]
             if receive and b.signal == signal then
                 receive(body, b)
@@ -133,7 +122,7 @@ end
 -- among them sends its signal.
 function lib.onPressed(bodies)
     for _, body in ipairs(bodies) do
-        local b = findBehavior(body, 'SIGNAL_BUTTON')
+        local b = behaviors.find(body, 'SIGNAL_BUTTON')
         if b then
             playClick()
             lib.emit(b.signal)
@@ -153,8 +142,8 @@ function lib.namesInUse(skip)
     if not state.physicsWorld then return names end
     for _, body in ipairs(state.physicsWorld:getBodies()) do
         if not (skip and skip[body]) then
-            for _, b in ipairs(behaviorsOf(body) or {}) do
-                if b.signal and b.name:find('^SIGNAL_') then names[b.signal] = true end
+            for _, b in ipairs(behaviors.all(body)) do
+                if behaviors.isSignal(b) then names[b.signal] = true end
             end
         end
     end
@@ -167,9 +156,9 @@ end
 -- keeps the name and joins that circuit. Renames the behaviors in place.
 function lib.renameForCopy(behaviorLists, inUse)
     local hasTrigger, hasReceiver = {}, {}
-    for _, behaviors in ipairs(behaviorLists) do
-        for _, b in ipairs(behaviors) do
-            if b.signal and b.name:find('^SIGNAL_') then
+    for _, list in ipairs(behaviorLists) do
+        for _, b in ipairs(list) do
+            if behaviors.isSignal(b) then
                 if triggerNames[b.name] then hasTrigger[b.signal] = true else hasReceiver[b.signal] = true end
             end
         end
@@ -184,9 +173,9 @@ function lib.renameForCopy(behaviorLists, inUse)
             taken[base .. n] = true
         end
     end
-    for _, behaviors in ipairs(behaviorLists) do
-        for _, b in ipairs(behaviors) do
-            if b.signal and renamed[b.signal] and b.name:find('^SIGNAL_') then b.signal = renamed[b.signal] end
+    for _, list in ipairs(behaviorLists) do
+        for _, b in ipairs(list) do
+            if behaviors.isSignal(b) and renamed[b.signal] then b.signal = renamed[b.signal] end
         end
     end
     return renamed
@@ -198,8 +187,8 @@ function lib.wires()
     if not state.physicsWorld then return wires end
     local triggers, listeners = {}, {}
     for _, body in ipairs(state.physicsWorld:getBodies()) do
-        for _, b in ipairs(behaviorsOf(body) or {}) do
-            if b.signal and b.name:find('^SIGNAL_') then
+        for _, b in ipairs(behaviors.all(body)) do
+            if behaviors.isSignal(b) then
                 local list = triggerNames[b.name] and triggers or listeners
                 list[b.signal] = list[b.signal] or {}
                 table.insert(list[b.signal], body)
@@ -298,7 +287,7 @@ local function triggerBodies(world)
     if triggers.world ~= world or triggers.bodyCount ~= count or triggers.steps <= 0 then
         local list = {}
         for _, body in ipairs(world:getBodies()) do
-            local socket, plate = findBehavior(body, 'SIGNAL_SOCKET'), findBehavior(body, 'SIGNAL_PLATE')
+            local socket, plate = behaviors.find(body, 'SIGNAL_SOCKET'), behaviors.find(body, 'SIGNAL_PLATE')
             if socket or plate then list[#list + 1] = body end
         end
         triggers.world, triggers.bodyCount, triggers.steps, triggers.list = world, count, lib.rescanSteps, list
@@ -320,12 +309,12 @@ function lib.update()
     end
     local snapJoints = nil
     for _, body in ipairs(triggerBodies(state.physicsWorld)) do
-        local socket = not body:isDestroyed() and findBehavior(body, 'SIGNAL_SOCKET')
+        local socket = not body:isDestroyed() and behaviors.find(body, 'SIGNAL_SOCKET')
         if socket then
             snapJoints = snapJoints or require('src.physics.snap').joints()
             edge(socketWasFilled, body, socket, socketIsFilled(body, socket, snapJoints))
         end
-        local plate = not body:isDestroyed() and findBehavior(body, 'SIGNAL_PLATE')
+        local plate = not body:isDestroyed() and behaviors.find(body, 'SIGNAL_PLATE')
         if plate then
             local touching = plateIsPressed(body)
             plateFreeFrames[body] = touching and 0 or (plateFreeFrames[body] or 0) + 1
@@ -341,7 +330,7 @@ end
 function lib.applySavedStates()
     if not state.physicsWorld then return end
     for _, body in ipairs(state.physicsWorld:getBodies()) do
-        local b = findBehavior(body, 'SIGNAL_GATE')
+        local b = behaviors.find(body, 'SIGNAL_GATE')
         if b then lib.setGate(body, b.open or false) end
     end
 end

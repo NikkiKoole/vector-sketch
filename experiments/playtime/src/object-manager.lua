@@ -551,11 +551,8 @@ function lib.recreateThingFromBody(body, newSettings)
     -- The draw loop caches thing._tris and extra._mesh on first draw and never rebuilds
     -- them, so stale data would persist until the scene is reloaded.
     thing._tris = nil
-    for _, f in ipairs(newBody:getFixtures()) do
-        local ud = f:getUserData()
-        if type(ud) == 'table' and subtypes.is(ud, subtypes.TILE_REPEAT) and ud.extra then
-            ud.extra._mesh = nil
-        end
+    for _, ud in ipairs(fixtures.sfixtureData(newBody, subtypes.TILE_REPEAT)) do
+        ud.extra._mesh = nil
     end
 
     -- If the polygon vertex count changed, any RESOURCE sfixture on this body
@@ -564,27 +561,24 @@ function lib.recreateThingFromBody(body, newSettings)
     -- and so MESHUSERT/UVUSERT render paths don't hand out stale mappings.
     -- See docs/UV-BACKDROP-FRAGILITY.md (fragility #6).
     if oldVertices and #oldVertices ~= #newVertices then
-        for _, f in ipairs(newBody:getFixtures()) do
-            local ud = f:getUserData()
-            if type(ud) == 'table' and subtypes.is(ud, subtypes.RESOURCE) and ud.extra then
-                ud.extra.uvs = nil
-                -- triangles/meshVertices/triangleGroups/triangleBones all
-                -- index into the old vertex count; any of them left behind
-                -- will crash the MESHUSERT / UVUSERT draw paths on the next
-                -- frame (bad argument to love.graphics.polygon). Drop them
-                -- all and let computeResourceMesh rebuild on next select.
-                ud.extra.triangles = nil
-                ud.extra.meshVertices = nil
-                ud.extra.triangleGroups = nil
-                ud.extra.triangleBones = nil
-                ud.extra.triangleOrderDirty = false
-            end
-            -- MESHUSERT spineBind.tsPerVert has 2 entries per polygon vert;
-            -- vert-count change invalidates the whole bind. Drop so the
-            -- next evaluate falls through to the no-deformation path.
-            if type(ud) == 'table' and subtypes.is(ud, subtypes.MESHUSERT) and ud.extra then
-                ud.extra.spineBind = nil
-            end
+        for _, ud in ipairs(fixtures.sfixtureData(newBody, subtypes.RESOURCE)) do
+            ud.extra.uvs = nil
+            -- triangles/meshVertices/triangleGroups/triangleBones all
+            -- index into the old vertex count; any of them left behind
+            -- will crash the MESHUSERT / UVUSERT draw paths on the next
+            -- frame (bad argument to love.graphics.polygon). Drop them
+            -- all and let computeResourceMesh rebuild on next select.
+            ud.extra.triangles = nil
+            ud.extra.meshVertices = nil
+            ud.extra.triangleGroups = nil
+            ud.extra.triangleBones = nil
+            ud.extra.triangleOrderDirty = false
+        end
+        -- MESHUSERT spineBind.tsPerVert has 2 entries per polygon vert;
+        -- vert-count change invalidates the whole bind. Drop so the
+        -- next evaluate falls through to the no-deformation path.
+        for _, ud in ipairs(fixtures.sfixtureData(newBody, subtypes.MESHUSERT)) do
+            ud.extra.spineBind = nil
         end
         -- Path B: thing.extraSteiner may reference positions that fall outside
         -- the new polygon. Drop per the plan (docs/STEINER-OWNERSHIP-PLAN.md).

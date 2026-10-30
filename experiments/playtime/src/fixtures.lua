@@ -10,7 +10,20 @@ local registry = require 'src.registry'
 local utils = require 'src.utils' -- Needed for shallowCopy
 local state = require 'src.state'
 local fixtureTypes = require('src.fixture-types')
+local subtypes = require('src.subtypes')
 local lib = {}
+
+-- The userData of every sfixture of this subtype on the body (those with an `extra`).
+function lib.sfixtureData(body, subtype)
+    local found = {}
+    for _, fixture in ipairs(body:getFixtures()) do
+        local ud = fixture:getUserData()
+        if type(ud) == 'table' and subtypes.is(ud, subtype) and ud.extra then
+            found[#found + 1] = ud
+        end
+    end
+    return found
+end
 
 -- Updates the position of an sfixture based on a new WORLD coordinate click
 function lib.updateSFixturePosition(sfixture, worldX, worldY)

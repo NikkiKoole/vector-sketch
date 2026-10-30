@@ -255,3 +255,32 @@ describe("fixtures with real Box2D (LÖVE integration)", function()
         end)
     end)
 end)
+
+-- CL8: one helper for "the sfixtures of this subtype on a body"
+describe("fixtures.sfixtureData", function()
+    local world
+
+    before_each(function()
+        world = love.physics.newWorld(0, 0, true)
+        registry.reset()
+    end)
+
+    after_each(function()
+        if world and not world:isDestroyed() then world:destroy() end
+    end)
+
+    it("gives the userData of each sfixture of that subtype, nothing else", function()
+        local body = love.physics.newBody(world, 0, 0, 'dynamic')
+        love.physics.newFixture(body, love.physics.newRectangleShape(40, 40)) -- a plain shape
+        fixtures.createSFixture(body, 0, 0, 'resource', { width = 20, height = 20 })
+        fixtures.createSFixture(body, 0, 0, 'snap', { radius = 10 })
+        fixtures.createSFixture(body, 0, 0, 'resource', { width = 10, height = 10 })
+        local found = fixtures.sfixtureData(body, 'resource')
+        assert.are.equal(2, #found)
+        for _, ud in ipairs(found) do
+            assert.are.equal('resource', ud.subtype)
+            assert.is_not_nil(ud.extra)
+        end
+        assert.are.same({}, fixtures.sfixtureData(body, 'liquid'))
+    end)
+end)
