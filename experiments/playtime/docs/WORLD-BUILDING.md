@@ -111,7 +111,9 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
   `lsystem.c`, see `HARVEST-NAVKIT-DREAMENGINE.md`).
 - `../level-ed/readme.md`: a checklist of what a level holds (mipos, hill generator, vehicles, sky,
   parallax layers, overlay, triggers).
-- Dead ends: `liquid`, `buoyancy` (no Box2D coupling, or a stub).
+- `../liquid`: cellular water drawn with marching squares, fixed 2026-10-28 (`WATER.md`); its grid
+  and drawing are the base of the burrow spike (`BURROW.md`).
+- Dead end: `buoyancy` (a stub, no Box2D coupling).
 - **Tweens:** `timer.lua` (hump), `flux.lua` and `tween.lua` are in the **repo-root** `vendor/` (`../../vendor/`),
   not in Playtime's `vendor/`. Playtime sets no `package.path` to reach them, so copy one into
   `vendor/` when sway or tween work needs it (DOLL-PLAY F3).
@@ -141,6 +143,20 @@ rubber-hose legs (`src/actor.lua`), not ragdolls.
   (`../../lib/gradient.lua` `makeSkyGradient`, for G5), drawings in `assets/` (doors `deurpaar*`,
   a digger, ground `grond1-4`), and `designdocs/`: a paper on touch gestures for children's apps
   (PDF), leaf placement, Tinybop's brand article, a 1950s artist brush pack.
+
+### 1f. Idea: building with big chunky parts (Fabuland)
+
+Nikki 2026-10-30: Fabuland is a big inspiration. Big chunky Lego/Duplo-like parts you snap
+together quickly to make a house, a windmill, a well, for the Mipos to live in and play with.
+It grows out of the click-in stacking above:
+
+- A small set of chunky parts: walls with a door or window, roof halves, a chimney, a wheel or
+  sails, posts, a bucket and rope.
+- Snap points where parts meet, stiff (weld) for building and revolute only where it should turn
+  (the windmill's sails, a well's winch, a door).
+- It clicks the moment parts touch the right spot: no fiddling, no toppling while you build. The
+  finished thing is a physics thing again (push it, a Mipo climbs it, it falls over if knocked).
+- Colours: vector-sketch's `../../src/palettes.lua` has a `fabuland` palette.
 
 ## 2. What Playtime has
 
