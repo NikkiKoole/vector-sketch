@@ -172,7 +172,7 @@ end
 
 -- Data lookups for the planner: a style names its form set, its riffs and its horn figures
 local FORMS = { lofi = D.lofiForms, buymode = D.buymodeForms }
-local RIFFS = { dumont = D.dumontRiffs }
+local RIFFS = { dumont = D.dumontRiffs, dusk = D.duskRiffs }
 local HORN_HITS = { citypop = D.cityHornHits }
 
 -- a loop style: one section, no chords and no tune

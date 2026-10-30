@@ -12,7 +12,8 @@
 --     stay off the held chord's semitones, and the tune sits above the chord.
 -- Styles are data (lib.styles): bossa (straight, Rhodes, clave), guaraldi (swung, a felt piano,
 -- open fifths in the left hand, brushes), island (Animal Crossing's hourly music: short loops, a
--- plinky marimba riff, a bouncy bass, a kalimba tune), dumont (Domenique Dumont's dubby synth-pop:
+-- plinky marimba riff, a bouncy bass, a kalimba tune), dusk (island in the evening: slower, a worn felt
+-- piano holding, a sparse kalimba riff, a flute tune), dumont (Domenique Dumont's dubby synth-pop:
 -- funky minor vamps, a busy syncopated bass, a marimba riff, a steel-pan tune, claps with an echo),
 -- supermarket (Mr. Lucky's ii7 - V11 vamp, staccato and bouncy, a marimba tune), herbs (MF DOOM's
 -- Special Herbs: a dusty swung boom-bap loop, chopped Rhodes, a sub bass on the kick), lofi (lofi
@@ -72,7 +73,7 @@ local lib = {}
 -- seen (picking a style did nothing until the song ended) and a reload reset it. On state, every
 -- copy of the module reads the same switch, and it survives a reload.
 --   enabled
---   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dumont',
+--   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dusk', 'dumont',
 --                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'buymode',
 --                  'satie', 'ambient', 'ballad'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'

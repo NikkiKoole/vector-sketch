@@ -258,6 +258,17 @@ local drumKits = {
         if kind == 'B' and rnd(100) < 40 then hit(14, 'kick', 36, 2, 120) end
         if fill then hit(10, 'rim', 79, 2, 40); hit(14, 'rim', 79, 3, 40); hit(15, 'rim', 79, 3, 40) end
     end,
+    -- dusk: island's kit, lazier: a kick on 1 (the and-of-3 now and then), a brush sweep every other
+    -- bar, one rim on 4, the shaker only on the off-beats; a conga in B
+    dusk = function(hit, rnd, kind, j, fill)
+        hit(0, 'kick', 36, 3, 150)
+        if rnd(100) < 50 then hit(10, 'kick', 36, 2, 120) end
+        if j % 2 == 0 then hit(0, 'brush', 70, 2, 900) end
+        hit(12, 'rim', 79, 3, 40)
+        for s = 2, 14, 4 do hit(s, 'shaker', 84, 1, 40) end
+        if kind == 'B' then hit(14, 'conga', 59, 2, 200) end
+        if fill then hit(13, 'conga', 64, 2, 200); hit(14, 'conga', 61, 3, 200); hit(15, 'conga', 59, 3, 200) end
+    end,
     -- a homemade drum machine, funky: kick on 1, the and-of-2 and the and-of-3, a flammed clap
     -- on 2 and 4 with a quiet echo, 16th hats leaning on the off-beats, a conga answering
     machine = function(hit, rnd, kind, _, fill)

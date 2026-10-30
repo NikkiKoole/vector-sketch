@@ -97,6 +97,15 @@ lib.patches = {
                   harmonics = 0.08, timbre = 0.45, morph = 0.55, reverb = 0.3, level = 2.8,
                   filter = { mode = 1, cutoff = 4200, resonance = 1 },
                   tape = { wow = 0.15, flutter = 0.03, saturation = 0, warble = 0 } },
+    -- the dusk style: the felt piano holding, darker and on a more worn cassette (it warbles now and then)
+    feltKeys = { fx = true, wave = 'PIANO', adsr = { 1, 0, 7, 1400 },
+                 harmonics = 0.08, timbre = 0.35, morph = 0.6, reverb = 0.35, level = 1.4,
+                 filter = { mode = 1, cutoff = 2800, resonance = 1 },
+                 tape = { wow = 0.3, flutter = 0.06, saturation = 0.15, warble = 0.15 } },
+    -- dusk's tune: a tongue drum (a tuned drumhead, harmonics 0, struck between centre and edge: a
+    -- pitched plonk)
+    tongueDrum = { pool = true, wave = 'MEMBRANE', adsr = { 0, 900, 0, 400 },
+                   harmonics = 0, timbre = 0.3, morph = 0.05, reverb = 0.35, level = 1.4 },
     -- the island style: a soft wooden marimba for the plinky riff (a mallet on a wooden bar,
     -- softer than the box 'wood' and ringing longer)
     marimba = { slot = 27, wave = 'MALLET', adsr = { 0, 500, 0, 250 },

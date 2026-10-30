@@ -5,8 +5,8 @@
 
 local D = {}
 
-D.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'satie',
-            'ambient', 'sesame', 'citypop', 'buymode', 'rollo' }
+D.set = { 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum',
+            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo' }
 D.lookahead = 0.3          -- seconds of music booked ahead
 D.activityHalfLife = 8     -- seconds for the play level to halve
 D.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -23,7 +23,7 @@ D.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10, 
                   sus = { 5, 7, 10, 14 },      -- 9sus4 (V11): a dominant that floats instead of pulls
                   maj7 = { 4, 7, 11, 12 }, m7 = { 3, 7, 10, 12 }, dom7 = { 0, 4, 7, 10 },
                   maj = { 0, 4, 7 }, min = { 0, 3, 7 }, maj6 = { 0, 4, 7, 9 },
-                  add9 = { 0, 7, 14, 16, stack = true }, sus2 = { 0, 2, 7 },
+                  add9 = { 0, 7, 14, 16, stack = true }, sus2 = { 0, 2, 7 }, sus4 = { 0, 5, 7 },
                   m11 = { 5, 10, 15, 19, stack = true }, -- So What: 11 b7 b3 5, fourths and a third
                   -- lofi's jazz on top of the rest: the dominant colours and the minor key's ii
                   n9 = { 4, 10, 14 }, b9 = { 4, 7, 10, 13 }, s9 = { 4, 7, 10, 15 },
@@ -150,6 +150,28 @@ D.styles = {
             { { 9, 'min', 4 }, { 8, 'maj', 4 }, { 5, 'maj', 4 }, { 7, 'sus2', 4 } },  -- vi bVI IV V, the odd one
         },
         comps = { { { 0, 14, 3 }, { 16, 14, 3 } } }, -- the Rhodes holds, quietly: the riff is the comp
+    },
+    -- dusk: island's second flavor, the island in the evening. The same band and the same jobs (the
+    -- keys only holding, a riff off the chord's voicing, a bouncy root and fifth, a tune that comes
+    -- back, the drums only when play is busy), slower and lazier, with more space: a worn felt piano
+    -- holding (and bouncing the bass), a sparser kalimba riff with holes in it, a tongue drum plonking
+    -- the tune, a kit of a kick, a brush sweep and one rim on 4. Its own
+    -- chords: open maj7s, add9 and sus4, the bVII and the bIII instead of island's iv and bVI.
+    dusk = {
+        bpm = { 86, 94 }, swing = 0.6, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 0, motifRepeat = 30,
+        strumMs = 25, keys = 'feltKeys', lead = 'tongueDrum', bass = 'bounce', drums = 'dusk', home = 'add9',
+        riff = 'kalimba', riffs = 'dusk', range = { 64, 81 },
+        A = {
+            { { 0, 'maj7' }, { 5, 'add9' }, { 0, 'maj7' }, { 5, 'add9' } },  -- I IV, rocking
+            { { 0, 'add9' }, { 10, 'maj' }, { 5, 'maj7' }, { 7, 'sus4' } },  -- I bVII IV Vsus
+            { { 5, 'maj7' }, { 4, 'min' }, { 2, 'min' }, { 0, 'add9' } },    -- IV iii ii I, walking down
+            { { 0, 'maj7' }, { 9, 'min' }, { 5, 'add9' }, { 7, 'sus4' } },   -- I vi IV Vsus
+        },
+        B = {
+            { { 9, 'min', 4 }, { 5, 'maj7', 4 }, { 0, 'add9', 4 }, { 7, 'sus4', 4 } },  -- vi IV I Vsus
+            { { 3, 'add9', 4 }, { 10, 'maj', 4 }, { 5, 'maj7', 4 }, { 7, 'sus4', 4 } }, -- bIII bVII IV V, the odd one
+        },
+        comps = { { { 0, 14, 3 }, { 16, 14, 3 } } }, -- the piano holds, quietly: the riff is the comp
     },
     -- Domenique Dumont (Comme Ca, 2015): funky, pastel synth-pop on a homemade drum machine, not
     -- slow. Two-chord dorian vamps (the IV is major), a busy syncopated bass with ghost notes and
@@ -527,6 +549,13 @@ D.riffs = {
     { 4, 0, 3, 1, 4, 0, 3, 2 },   -- hopping from the top
     { 1, 0, 3, 0, 2, 4, 0, 3 },   -- with holes
     { 2, 4, 0, 4, 1, 4, 0, 3 },   -- the top note keeps coming back
+}
+-- dusk's kalimba riffs: island's idea with more holes, the off-beats left to breathe
+D.duskRiffs = {
+    { 1, 0, 3, 0, 4, 0, 3, 0 },   -- on the beats only
+    { 0, 3, 4, 0, 0, 3, 2, 0 },   -- late, a pair and a pair
+    { 4, 3, 0, 0, 2, 0, 3, 0 },   -- falling, then a hole
+    { 1, 4, 0, 3, 0, 0, 4, 0 },   -- a leap, an answer, the top again
 }
 -- dumont's pan riffs: sparser, around the off-beats, the way a steel pan part sits in dub-pop
 D.dumontRiffs = {
