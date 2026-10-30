@@ -49,8 +49,17 @@ looks drawn. Nikki 2026-10-30: the idea is good, not sure this route is it.
   little width change. Seeded per shape so it stays put.
 - Line boil, switched on per shape: re-roll the wobble / texture offset 8-12 times a second, not
   every frame (the hand-animated "alive" shimmer).
-- Try it on the burrow rim first: generated outline, no textures in the way. Needs a few
-  scanned strokes from Nikki.
+- Try it on the burrow rim first: generated outline, no textures in the way.
+- Strokes we already have (white crayon on transparent, tint them):
+  - `textures/line1.png`, `line2.png` (66×486, 82×512): straight chunky strokes, rough
+    edges. Start with these, laid sideways and repeated along the outline.
+  - puppet-maker2 `assets/ui/interfaceparts/slider-track1.png`, `-track2.png`: a long thin
+    crayon line; its end caps could be the tapered ends.
+  - puppet-maker2 `assets/img/candyparts/*-line.png` (circle, rect, octa, capsule, ruit) and
+    `assets/ui/colorpick/uiline.png`: crayon outlines of whole shapes, the look to aim for.
+  - puppet-maker2 `assets/img/worldparts/ground3.png`, `ground52.png`: pencil and crayon
+    hatching, for the earth fill rather than the rim.
+  - More of Nikki's own scans (pencil, brush pen) only if we want other kinds of line.
 - Maybe with it: misregistration (the fill a few px off its outline, like old print).
 
 Considered and not picked: wobbly geometry alone (reads digital), stamped brush dabs, rough.js
