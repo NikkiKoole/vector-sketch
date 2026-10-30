@@ -6,6 +6,9 @@
 -- angles a spine bends), and comes back in torso1's local space, so the usual
 -- love.graphics.draw(mesh, body x, y, angle) still places it.
 local mipoRegistry = require('src.mipo-registry')
+local mathutils = require('src.math-utils')
+local shape8Dict = require('src.shape8-dict')
+local topology = require('src.character-topology')
 
 local lib = {}
 
@@ -28,8 +31,6 @@ function lib.bonesOf(body)
     local creation = instance.dna and instance.dna.creation
     local count = creation and creation.torsoSpine and creation.torsoSegments or 1
     if count < 2 then return nil end
-    local topology = require('src.character-topology')
-    local shape8Dict = require('src.shape8-dict')
     local partData = instance.dna.parts.torso1
     local raw = partData.shape8URL and shape8Dict[partData.shape8URL]
     if not raw then return nil end
@@ -143,7 +144,7 @@ function lib.drawFan(img, ring, bones, body, extra)
     local cache = byImg[img]
     if not cache or cache.key ~= key then
         local verts, map, rest = {}, {}, {}
-        local cx, cy = require('src.math-utils').getCenterOfPoints(ring)
+        local cx, cy = mathutils.getCenterOfPoints(ring)
         for r = 0, n do
             for c = 0, n do
                 local i = r * (n + 1) + c + 1

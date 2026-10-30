@@ -9,6 +9,11 @@ local joints = require('src.joints')
 local uuid = require('src.uuid')
 local JT = require('src.joint-types')
 local mathutils = require('src.math-utils')
+local fixtures = require('src.fixtures')
+local signals = require('src.signals')
+local snap = require('src.physics.snap')
+local state = require('src.state')
+local subtypes = require('src.subtypes')
 
 local lib = {}
 
@@ -29,8 +34,7 @@ end
 function lib.makeBlob(x, y, height)
     local thing = objectManager.addThing('circle', { x = x, y = y, radius = (height or 300) * 0.15, label = 'blob' })
     if not thing then return nil end
-    local subtypes = require('src.subtypes')
-    local fixture = require('src.fixtures').createSFixture(thing.body, 0, 0, subtypes.SOFTBODY, { radius = 20 })
+    local fixture = fixtures.createSFixture(thing.body, 0, 0, subtypes.SOFTBODY, { radius = 20 })
     if fixture and height then fixture:getUserData().extra.height = height end
     return thing
 end
@@ -47,8 +51,7 @@ local function makeContainer(x, y, w, h, wall, opts)
     local thing = objectManager.addThing('custom', { x = x, y = y, vertices = vertices,
         bodyType = opts.bodyType or 'dynamic', label = opts.label })
     if not thing then return nil end
-    local subtypes = require('src.subtypes')
-    local fixture = require('src.fixtures').createSFixture(thing.body, 0, 0, subtypes.LIQUID, { radius = 20 })
+    local fixture = fixtures.createSFixture(thing.body, 0, 0, subtypes.LIQUID, { radius = 20 })
     if fixture then
         local extra = fixture:getUserData().extra
         extra.fill = opts.fill or extra.fill
@@ -143,7 +146,6 @@ end
 -- Nearest static surface straight below (x, fromY), ignoring `ignoreBody`.
 -- Box2D reports ray hits in any order, so keep the closest one.
 function lib.floorBelow(x, fromY, ignoreBody)
-    local state = require('src.state')
     local best, bestY = math.huge, nil
     state.physicsWorld:rayCast(x, fromY, x, fromY + 20000, function(fixture, _, hy, _, _, fraction)
         local body = fixture:getBody()
@@ -217,7 +219,7 @@ function lib.makeGate(baseBody, x, surfaceY, signal, scale)
         joint:setLimits(-gateH - 10 * s, 0)
         joint:setLimitsEnabled(true)
     end
-    require('src.signals').setGate(gate.body, false)
+    signals.setGate(gate.body, false)
     return gate
 end
 
@@ -246,7 +248,7 @@ function lib.makeClimbingWall(x, floorY, scale)
                 x = hx, y = hy, width = 60 * s, height = 34 * s, bodyType = 'static', label = 'hold' })
             if hold then
                 makeSensor(hold)
-                require('src.physics.snap').addPoint(hold.body, 0, 0, 12 * s)
+                snap.addPoint(hold.body, 0, 0, 12 * s)
                 holds[#holds + 1] = hold
             end
         end
@@ -263,7 +265,7 @@ function lib.makeSocket(x, floorY, signal, accepts, mode, scale)
         x = x, y = floorY - h / 2, width = 140 * s, height = h, bodyType = 'static', label = 'socket' })
     if not socket then return nil end
     setMaterial(socket.body, 0.9, 0, nil)
-    require('src.physics.snap').addPoint(socket.body, 0, -h / 2, 12 * s)
+    snap.addPoint(socket.body, 0, -h / 2, 12 * s)
     socket.behaviors = { { name = 'SIGNAL_SOCKET', signal = signal or 'gate1', mode = mode or 'hold',
         accepts = accepts } }
     return socket
@@ -276,7 +278,7 @@ function lib.makeKey(x, y, scale)
     local key = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h, label = 'key' })
     if not key then return nil end
     setMaterial(key.body, 0.8, 0.1, 1)
-    require('src.physics.snap').addPoint(key.body, 0, h / 2, 12 * s)
+    snap.addPoint(key.body, 0, h / 2, 12 * s)
     return key
 end
 
@@ -289,7 +291,6 @@ function lib.makeSnapBlock(x, y, scale)
     if not block then return nil end
     setMaterial(block.body, 0.8, 0.1, 1)
     block.body:setBullet(true)
-    local snap = require('src.physics.snap')
     snap.addPoint(block.body, w / 2, 0)
     snap.addPoint(block.body, -w / 2, 0)
     snap.addPoint(block.body, 0, -h / 2)
@@ -306,7 +307,7 @@ function lib.makeWheel(x, y, scale)
     local wheel = objectManager.addThing('circle', { x = x, y = y, radius = 70 * s, label = 'wheel' })
     if not wheel then return nil end
     setMaterial(wheel.body, 0.9, 0.1, 1)
-    require('src.physics.snap').addPoint(wheel.body, 0, 0)
+    snap.addPoint(wheel.body, 0, 0)
     return wheel
 end
 
@@ -316,7 +317,6 @@ function lib.makePlank(x, y, scale)
     local plank = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h, label = 'plank' })
     if not plank then return nil end
     setMaterial(plank.body, 0.9, 0.1, 1)
-    local snap = require('src.physics.snap')
     snap.addPoint(plank.body, -w / 2 + 90 * s, h / 2)
     snap.addPoint(plank.body, w / 2 - 90 * s, h / 2)
     snap.addPoint(plank.body, -w / 2, 0)

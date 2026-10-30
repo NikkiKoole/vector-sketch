@@ -19,6 +19,12 @@ local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local FEXT = require('src.file-extensions')
 local JT = require('src.joint-types')
+local ST = require('src.shape-types')
+local cameraFollow = require('src.camera-follow')
+local cdt = require('src.cdt')
+local characterManager = require('src.character-manager')
+local mipoRegistry = require('src.mipo-registry')
+local roomMusic = require('src.room-music')
 
 -- Joints in a scene file: world anchors (anchorA, anchorB), and the properties the joint
 -- handlers read and set (src/joint-handlers.lua) with an axis as { x, y } and pulley
@@ -69,7 +75,6 @@ local function clearWorld(world)
         body:destroy()
     end
     registry.reset()
-    local mipoRegistry = require('src.mipo-registry')
     mipoRegistry.reset()
 end
 
@@ -280,8 +285,8 @@ function lib.buildWorld(data, world, cam, opts)
         snap.reset()
 
         -- the scene's camera settings (follow, bounds, zoom limits); none saved: the defaults
-        require('src.camera-follow').loadSettings(data.camera and data.camera.settings)
-        require('src.room-music').load(data.music) -- the room's music, cued on a phrase end
+        cameraFollow.loadSettings(data.camera and data.camera.settings)
+        roomMusic.load(data.music) -- the room's music (src/room-music.lua)
         if data.camera then
             cam:setTranslation(data.camera.x, data.camera.y)
             cam:setScale(data.camera.scale)
@@ -493,7 +498,6 @@ function lib.buildWorld(data, world, cam, opts)
     -- but no cached mesh. Without this, MESHUSERT meshes render untextured
     -- until the user manually selects the RESOURCE. Mode is auto-derived
     -- from body state in computeResourceMesh.
-    local cdt = require('src.cdt')
     for _, v in pairs(builtSFixtures) do
         if not v:isDestroyed() then
             local ud = v:getUserData()
@@ -535,9 +539,8 @@ function lib.buildWorld(data, world, cam, opts)
                 bodyGroups[mid][pname] = body
             end
         end
-        local CharacterManager = require('src.character-manager')
         for _, charData in ipairs(data.characters) do
-            CharacterManager.reconstructInstance(charData, bodyGroups[charData.id])
+            characterManager.reconstructInstance(charData, bodyGroups[charData.id])
         end
     end
     return builtThings
@@ -810,7 +813,7 @@ function lib.gatherSaveData(world, camera)
                 -- can we just delete it ?
                 local shape = first:getShape()
                 if shape:typeOf("CircleShape") then
-                    bodyData.sharedFixtureData.shapeType = require('src.shape-types').CIRCLE
+                    bodyData.sharedFixtureData.shapeType = ST.CIRCLE
                 elseif shape:typeOf("PolygonShape") then
                     bodyData.sharedFixtureData.shapeType = 'polygon'
                 end
@@ -880,8 +883,7 @@ function lib.gatherSaveData(world, camera)
     end
 
     -- Serialize character instances from the mipo registry
-    local CharacterManager = require('src.character-manager')
-    saveData.characters = CharacterManager.serializeCharacters()
+    saveData.characters = characterManager.serializeCharacters()
 
     -- Iterate through all joints in the world
     for _, joint in pairs(world:getJoints()) do
@@ -941,9 +943,9 @@ function lib.gatherSaveData(world, camera)
         x = camx,
         y = camy,
         scale = camera:getScale(),
-        settings = require('src.camera-follow').saveSettings(),
+        settings = cameraFollow.saveSettings(),
     }
-    saveData.music = require('src.room-music').save()
+    saveData.music = roomMusic.save()
     return saveData
 end
 

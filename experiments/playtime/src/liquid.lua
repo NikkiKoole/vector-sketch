@@ -368,6 +368,8 @@ local function updateWave(extra, body, level, width, maxHeight, dt)
 end
 
 local hexColor = require('src.color').hexToColor
+local registry = require('src.registry')
+local subtypes = require('src.subtypes')
 
 -- The two ends of the surface: the water polygon's points on the level line.
 local function surfaceEnds(poly, level)
@@ -455,8 +457,7 @@ end
 -- Once per frame after the physics step: while playing, every container spills what it can't hold.
 function lib.update(paused)
     if paused then return end
-    local subtypes = require('src.subtypes')
-    for _, fixture in pairs(require('src.registry').sfixtures) do
+    for _, fixture in pairs(registry.sfixtures) do
         if not fixture:isDestroyed() then
             local ud = fixture:getUserData()
             if type(ud) == 'table' and subtypes.is(ud, subtypes.LIQUID) then

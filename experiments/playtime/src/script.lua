@@ -19,6 +19,7 @@ local mipoActions = require('src.mipo-actions')
 local props = require('src.props')
 local signals = require('src.signals')
 local snap = require('src.physics.snap')
+local cameraFollow = require('src.camera-follow')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -44,7 +45,7 @@ local baseEnv = {
     objectManager            = objectManager,
     ui                       = ui,
     cam                      = cam,
-    camera                   = require('src.camera-follow').script, -- follow, setBounds, shake, zoomTo
+    camera                   = cameraFollow.script, -- follow, setBounds, shake, zoomTo
     mathutils                = mathutils,
     getPJAttachedTo          = box2dPointerJoints.getPointerJointAttachedTo,
     getInteractedWithPointer = box2dPointerJoints.getInteractedWithPointer,

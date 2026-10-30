@@ -8,6 +8,8 @@ local BT = require('src.body-types')
 local cdt = require('src.cdt')
 local mathutils = require('src.math-utils')
 local subtypes = require('src.subtypes')
+local NT = require('src.node-types')
+local registry = require('src.registry')
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
     ['sun']     = { 253 / 255, 215 / 255, 4 / 255 },   --#FFD700  sunshine yellow
@@ -135,8 +137,6 @@ end
 -- the first joint hangs off) and a textured blob's body and rim circles.
 function lib.coveredBodies()
     local covered = {}
-    local registry = require('src.registry')
-    local NT = require('src.node-types')
     for _, f in pairs(registry.sfixtures) do
         local ud = not f:isDestroyed() and f:getUserData()
         if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and hasURL(ud.extra) and ud.extra.nodes then

@@ -7,6 +7,7 @@ local utils = require('src.utils')
 local camera = require('src.camera')
 local SE = require('src.script-events')
 local FEXT = require('src.file-extensions')
+local signals = require('src.signals')
 local cam = camera.getInstance()
 
 local hotReloadTimer = 0
@@ -61,7 +62,7 @@ function lib.loadSceneData(data, name)
         state.scene.scriptPath = nil
     end
     sceneIO.load(data, state.physicsWorld, cam)
-    require('src.signals').applySavedStates() -- gates back to their saved open/closed
+    signals.applySavedStates() -- gates back to their saved open/closed
     logger:info("Scene loaded: " .. name)
     return data
 end

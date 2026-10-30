@@ -6,6 +6,7 @@
 local lib = {}
 
 local state = require('src.state')
+local ui = require('src.ui.all')
 
 local HINT_SECONDS = 2.5
 
@@ -19,7 +20,6 @@ function lib.enter()
     state.world.paused = false
     state.interaction.draggingObj = nil
     state.interaction.startSelection = nil
-    local ui = require('src.ui.all')
     ui.overPanel = false
     ui.focusedTextInputID = nil
 end
