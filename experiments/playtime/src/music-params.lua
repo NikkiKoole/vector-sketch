@@ -36,6 +36,16 @@ lib.rows = {
             'strum', 'rollo', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
             'ballad' }),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
+    -- the play level (music.bump) as a bar up to twice where the band joins, '|' marks the join
+    { key = 'play', kind = 'note',
+        label = function()
+            local level, withBand = music().playLevel()
+            local joins, width = music().bandJoins, 20
+            local filled = math.min(width, math.floor(level / (2 * joins) * width + 0.5))
+            local bar = ('#'):rep(filled) .. ('.'):rep(width - filled)
+            bar = bar:sub(1, width / 2) .. '|' .. bar:sub(width / 2 + 1)
+            return ('play %s %.1f%s'):format(bar, level, withBand and '  band in' or '')
+        end },
     field('upright', 'upright', 'bool'),
 }
 

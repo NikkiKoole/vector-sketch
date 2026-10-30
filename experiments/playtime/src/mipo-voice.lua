@@ -210,6 +210,7 @@ function lib.squeak(instance, emotionName, pitchMul)
     local jitter = 0.95 + love.math.random() * 0.1
 
     lastSqueak[instance.id] = t
+    music.bump(0.5) -- a Mipo squeaking is play too
     return lib.say(instance, pick.set, pick.key, emotion.pitch * jitter * (pitchMul or 1))
 end
 
@@ -388,7 +389,7 @@ local function playImpact(kind, body1, body2, speed, source)
             if size > sound.bigSize then transpose = transpose - 12 end
         end
         synth.hit(patch, notes[index] + transpose, vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
-        music.bump(1) -- busy play brings the upright into the background music
+        music.bump(mapInto(speed, sound.soft, sound.hard, 0.5, 2)) -- busy play brings the band in, hard hits more
         return
     end
     if not impactSources[kind] then

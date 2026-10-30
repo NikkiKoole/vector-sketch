@@ -124,6 +124,11 @@ function lib.bump(amount)
     M.activity = M.activity + (amount or 1)
 end
 
+-- The play level now, and whether the band is in (the settings panel's meter)
+function lib.playLevel()
+    return M.activity, M.withBand
+end
+
 -- One bar of a song, part by part, in this order (the parts share the bar's random stream and the
 -- performance jitter, so the order is part of the sound).
 local function bookBar(synth, t0, song, b)

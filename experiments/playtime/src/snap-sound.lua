@@ -36,6 +36,7 @@ function lib.update(synth)
             local x, y = joint:getAnchors()
             local notes = music.chordNotes(84, 98) or lib.notes -- in the music's chord
             synth.hit(lib.patch, notes[love.math.random(#notes)], lib.vol, 30, x, y)
+            music.bump(1) -- snapping parts together is play
         end
     end
 end
