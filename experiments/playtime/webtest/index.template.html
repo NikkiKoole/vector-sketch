@@ -93,11 +93,40 @@
         window.addEventListener(type, desoundStart);
       });
 
+      // Lua eval into the running game (src/web-bridge.lua): playtime.eval('return #state.mipos')
+      // resolves to {ok, data} or {ok: false, error}, like the desktop bridge's /eval. The code goes
+      // in as a file in the game's save directory; the answer comes back as an '@bridge' line.
+      var playtime = { dir: null, next: 0, waiting: {}, queued: [] };
+      function playtimeWrite(id, code) {
+        Module.FS_createDataFile(playtime.dir, id + '.lua', code, true, true);
+      }
+      playtime.eval = function (code) {
+        return new Promise(function (resolve) {
+          var id = String(++playtime.next).padStart(8, '0'); // sorted by name = run in order
+          playtime.waiting[id] = resolve;
+          if (playtime.dir) playtimeWrite(id, code);
+          else playtime.queued.push([id, code]);
+        });
+      };
+      function playtimeAnswer(line) {
+        var parts = line.split('\t');
+        var data = JSON.parse(parts[2]);
+        if (parts[1] === 'ready') {
+          playtime.dir = data.dir;
+          playtime.queued.forEach(function (q) { playtimeWrite(q[0], q[1]); });
+          playtime.queued = [];
+        } else if (playtime.waiting[parts[1]]) {
+          playtime.waiting[parts[1]](data);
+          delete playtime.waiting[parts[1]];
+        }
+      }
+
       var Module = {
         arguments: ['./game.love', '--play', '__SCENE__'],
         INITIAL_MEMORY: 268435456,
         print: function (line) {
           if (line.indexOf('@desound\t') === 0) desoundSend(line);
+          else if (line.indexOf('@bridge\t') === 0) playtimeAnswer(line);
           else console.log(line);
         },
         printErr: console.error.bind(console),

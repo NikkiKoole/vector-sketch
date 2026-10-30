@@ -68,7 +68,7 @@ if not IS_WEB then
         bridge.update()
     end
 else
-    bridge = { update = function() end, recordError = function() end }
+    bridge = require('src.web-bridge') -- eval from the page: playtime.eval(code)
     lurker = { update = function() end }
 end
 local _logger = require 'src.logger'      -- luacheck: ignore 211

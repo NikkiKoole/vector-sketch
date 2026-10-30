@@ -34,9 +34,13 @@ Mipos and all, with no errors; no sound from the synth yet (see WEB2).
   (port 8001) doesn't exist there. Worth having:
   - a page helper `playtime.audio()`: audio state, clock, output peak, calls/s, the engine's
     warnings, instead of hand-made AnalyserNodes;
-  - eval into the running Lua: the page drops code into love's filesystem (`Module.FS`), Lua polls
-    an inbox file each frame and prints the result back with an `@bridge` prefix, so `/eval`-style
-    checks work in the browser too (through Chrome's javascript tool or a small relay);
+  - [x] eval into the running Lua (2026-10-30): `await playtime.eval('return state.playMode')` in the
+    page (Chrome's javascript tool, or the console) gives `{ok, data}` / `{ok: false, error}` like
+    the desktop `/eval`, with the same locals. The page writes the code as a file into the save
+    directory's `web-bridge/` folder (`Module.FS_createDataFile`); `src/web-bridge.lua` (main.lua's
+    `bridge` on the web) runs and deletes them each frame and prints `@bridge` id json lines back.
+    Values go through `vendor/bridge-serialize.lua`, now shared with claude-bridge.
+    `spec/web-bridge_spec.lua`;
   - input from Lua (or slow drags from the page): the automated drag was too quick to grab a Mipo;
   - a headless run (Playwright) of build → load → click → audio check, so the web build gets
     tested without a person or a Chrome extension.
