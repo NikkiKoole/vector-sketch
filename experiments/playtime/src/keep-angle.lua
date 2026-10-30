@@ -80,7 +80,6 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
 end
 
 function lib.update(dt, hitted)
-    --logger:inspect(registry.sfixtures)
     local bods = registry.bodies
     for _, v in pairs(bods) do
         local ud = v:getUserData()
@@ -100,7 +99,6 @@ function lib.update(dt, hitted)
 
                 -- thing.limp: temporarily slack (a held Mipo limb, see mipo-actions)
                 if vb.name == 'KEEP_ANGLE' and vb.enabled ~= false and not same and not ud.thing.limp then
-                    -- if same then vb.kp = 0.15 end
 
                     -- Drive the live registry body (v), not ud.thing.body —
                     -- that ref can be stale after a recreate.
@@ -109,7 +107,6 @@ function lib.update(dt, hitted)
             end
         end
     end
-    --print('jo trying to keep angle for the ones that have')
 end
 
 return lib

@@ -80,12 +80,6 @@ function lib.tablelength(T)
     return count
 end
 
-function lib.printTableKeys(tbl)
-    for key, _ in pairs(tbl) do
-        logger:info(key)
-    end
-end
-
 function lib.tableConcat(t1, t2)
     for i = 1, #t2 do
         table.insert(t1, t2[i])

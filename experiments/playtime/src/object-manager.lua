@@ -15,12 +15,6 @@ local ST = require 'src.shape-types'
 local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local subtypes = require('src.subtypes')
--- local polyline = require 'src.polyline' -- unused
-
--- function lib.finalizePolygonAsBlob()
-
--- end
---
 
 local function segmentNormal(ax, ay, bx, by)
     local dx, dy = bx - ax, by - ay
@@ -92,20 +86,7 @@ function lib.finalizePath()
     if #state.interaction.polyVerts >= 6 and #unflat > 2 then
         local halfWidth = 40
         local verts = polylineRibbon(unflat, halfWidth)
-        -- logger:inspect(unflat)
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
-        --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
-
-
-
-
-        -- local vertices, indices, draw_mode = polyline.render('none', state.interaction.polyVerts, halfWidth)
-        -- local newVerts = {}
-        -- for i = 1, #vertices do
-        --     table.insert(newVerts, vertices[i][1])
-        --     table.insert(newVerts, vertices[i][2])
-        -- end
-
 
         local settings = {
             x = cx,
@@ -113,12 +94,6 @@ function lib.finalizePath()
             bodyType = state.editorPreferences.nextType,
             vertices = verts
         }
-        --logger:info('VERTS')
-        --logger:inspect(verts)
-        --logger:info('VERTICES')
-       -- logger:inspect(vertices)
-        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType,
-        --     nil, nil, nil, nil, '', state.interaction.polyVerts)
         result = lib.addThing(ST.RIBBON, settings)
     else
         -- Not enough vertices to form a polygon
@@ -135,7 +110,6 @@ function lib.finalizePolygon()
     local result = nil
     if #state.interaction.polyVerts >= 6 then
         local cx, cy = mathutils.computeCentroid(state.interaction.polyVerts)
-        --local cx, cy = mathutils.getCenterOfPoints(state.interaction.polyVerts)
         local settings = {
             x = cx,
             y = cy,
@@ -143,8 +117,6 @@ function lib.finalizePolygon()
             vertices = state.interaction
                 .polyVerts
         }
-        -- objectManager.addThing('custom', cx, cy, state.editorPreferences.nextType,
-        --     nil, nil, nil, nil, '', state.interaction.polyVerts)
         result = lib.addThing(ST.CUSTOM, settings)
     else
         -- Not enough vertices to form a polygon
@@ -174,10 +146,6 @@ end
 
 function lib.insertRibbonPair(x, y)
     local edge, px, py = getClosestEdge(x, y)
-    --logger:inspect(edge)
-    -- print(#state.polyEdit.tempVerts / 2)
-
-    --print(edge, otherEdge)
 
     mathutils.insertValuesAt(state.polyEdit.tempVerts, edge * 2 + 1, px, py)
     local otherEdge   = (#state.polyEdit.tempVerts / 2) - edge
@@ -215,7 +183,6 @@ function lib.removeRibbonPair(x, y)
                 -- Optionally, you can restore the removed vertex or prevent deletion
                 return
             end
-            --            logger:info(edge, otherEdge)
             mathutils.removeVertexAt(state.polyEdit.tempVerts, math.max(edge, otherEdge))
             mathutils.removeVertexAt(state.polyEdit.tempVerts, math.min(edge, otherEdge))
             lib.maybeUpdateCustomPolygonVertices()
@@ -234,11 +201,9 @@ end
 function lib.removeCustomPolygonVertex(x, y)
     -- Step 1: Convert world coordinates to local coordinates
 
-
     local edge, px, py = getClosestEdge(x, y)
     if edge then
         -- Step 2: Find the closest vertex index
-        --local closestVertexIndex = mathutils.findClosestVertex(state.polyEdit.tempVerts, px, py)
 
         if edge then
             -- Optional: Define a maximum allowable distance to consider for deletion
@@ -270,7 +235,6 @@ function lib.removeCustomPolygonVertex(x, y)
         else
             logger:error("No vertex found to delete.")
         end
-        -- mathutils.insertValuesAt(state.polyEdit.tempVerts, edge * 2 + 1, px, py)
     end
 end
 
@@ -290,7 +254,6 @@ function lib.maybeUpdateCustomPolygonVertices()
             { optionalVertices = state.polyEdit.tempVerts })
 
         state.polyEdit.tempVerts = utils.shallowCopy(state.selection.selectedObj.vertices)
-        -- state.selection.selectedObj.vertices = state.polyEdit.tempVerts
         state.polyEdit.centroid = { x = nx, y = ny }
     end
 end
@@ -315,11 +278,6 @@ local function createThing(shapeType, conf)
     --local function createThing(shapeType, x, y, bodyType, radius, width, width2, height, label, optionalVertices)
     -- Initialize default values
     local bodyType = conf.bodyType or BT.DYNAMIC
-    -- radius = radius or 20         -- Default radius for circular shapes
-    -- width = width or radius * 2   -- Default width for polygonal shapes
-    -- width2 = width2 or radius * 2 -- Default width for polygonal shapes
-    -- height = height or radius * 2 -- Default height for polygonal shapes
-    --label = label or "" -- Default label
 
     -- Create the physics body at the specified world coordinates
     local body = love.physics.newBody(state.physicsWorld, conf.x or 0, conf.y or 0, bodyType)
@@ -334,7 +292,6 @@ local function createThing(shapeType, conf)
         height3 = conf.height3,
         height4 = conf.height4,
         optionalVertices = conf.vertices or nil, --optionalVertices
-        --shape8URL = conf.shape8URL
 
     }
     local shapeList, vertices = shapes.createShape(shapeType, settings)
@@ -347,8 +304,6 @@ local function createThing(shapeType, conf)
     -- Attach fixtures to the body for each shape
     for _, shape in ipairs(shapeList) do
         local success, newFixture = pcall(love.physics.newFixture, body, shape, 1)
-        --print(success, newFixture)
-        --local fixture = love.physics.newFixture(body, shape, 1)
         if success then
             newFixture:setRestitution(0.3) -- Set bounciness
         else
@@ -403,7 +358,6 @@ function lib.startSpawn(shapeType, wx, wy)
     local height3 = tonumber(ep.lastUsedHeight3) or radius * 2 -- Default height for polygons
 
     local height4 = tonumber(ep.lastUsedHeight4) or radius * 2 -- Default height for polygons
-
 
     local bodyType = state.editorPreferences.nextType
     local settings = {
@@ -488,7 +442,6 @@ function lib.recreateThingFromBody(body, newSettings)
     newBody:setFixedRotation(fixedRotation) -- Reapply fixed rotation
     -- Create a new shape
 
-
     local settings = {
         radius = newSettings.radius or thing.radius,
         width = newSettings.width or thing.width,
@@ -553,8 +506,6 @@ function lib.recreateThingFromBody(body, newSettings)
                 -- todo specific positioning for mipo on behavors
                 -- but for mipos character we might just want to be very precise
                 -- and dending on behaviors and tags and dedicated rules.
-                --local params = mathutils.closestEdgeParams(centerX, centerY, thing.vertices)
-                --local new_px, new_py = mathutils.repositionPointClosestEdge(params, newVertices)
 
                 -- this general case isn working when the amount of points
                 -- change. (and im not sure if it wise otherwise)
@@ -570,7 +521,6 @@ function lib.recreateThingFromBody(body, newSettings)
                 end
             end
 
-
             local newFixture = love.physics.newFixture(newBody, abs, oldF:getDensity())
             newFixture:setRestitution(oldF:getRestitution())
             newFixture:setFriction(oldF:getFriction())
@@ -579,8 +529,6 @@ function lib.recreateThingFromBody(body, newSettings)
             registry.registerSFixture(oldF:getUserData().id, newFixture)
         end
     end
-
-
 
     -- Update the `thing` table
     thing.label = thing.label
@@ -660,7 +608,6 @@ function lib.destroyBody(body)
     for i = 1, #bjoints do
         local ud = bjoints[i]:getUserData()
         if ud and ud.id then
-            --  logger:trace(ud.id)
             registry.unregisterJoint(ud.id)
             bjoints[i]:destroy()
         end
@@ -672,8 +619,6 @@ function lib.destroyBody(body)
         local ud = f:getUserData()
         if ud and ud.id then
             fixtures.destroyFixture(f)
-            --registry.unregisterSFixture(ud.id)
-            --bfixtures[i]:destroy()
         end
     end
     registry.unregisterBody(thing.id)
@@ -708,7 +653,6 @@ function lib.autoRopify(ud)
                 }
 
                 local newthing = createThing(thing.shapeType, settings)
-                --print('todo, attach joint between these 2 things')
                 if newthing then
                     local data = {
                         jointType = JT.REVOLUTE,
@@ -719,7 +663,6 @@ function lib.autoRopify(ud)
                         --  p2 = { 0, 0 },
                     }
                     joints.createJoint(data)
-                    -- joint = jointHandlers['revolute'].create(data, settings.x, settings.y - thing.height / 2)
                 end
                 thing = newthing
             else
@@ -728,8 +671,6 @@ function lib.autoRopify(ud)
             end
         end
 
-        --  print('who knows!')
-        --  print('todo: make 10 copies place them all neatly under each other and joint them up')
     end
 end
 
@@ -751,9 +692,6 @@ function lib.flipThing(thing, axis, recursive)
     local toBeProcessedJoints = {}
     local centroidX, centroidY = thing.body:getPosition()
 
-
-
-    --print('calculating centroid')
     -- Phase 1: Flip All Bodies
     local function flipBody(currentThing)
         local currentBody = currentThing.body
@@ -796,9 +734,6 @@ function lib.flipThing(thing, axis, recursive)
         currentThing.body:setPosition(newX, newY)
         currentThing.body:setAngle(newAngle)
 
-
-        --currentThing.mirroredX = (currentThing.mirroredX or 1)
-
         if currentThing.vertices then
             local flippedVertices = utils.shallowCopy(currentThing.vertices)
             for i = 1, #currentThing.vertices, 2 do
@@ -812,13 +747,9 @@ function lib.flipThing(thing, axis, recursive)
         end
 
         -- Flip each fixture's shape
-        -- for _, fixture in ipairs(currentBody:getFixtures()) do
-        --     print(_, fixture:getUserData() ~= nil)
-        -- end
         local bodyFixtures = currentBody:getFixtures()
         -- if i do this backwards the fixtures end up being in the same order... !!
         for i = #bodyFixtures, 1, -1 do
-            -- for _, fixture in ipairs(currentBody:getFixtures()) do
             local fixture = bodyFixtures[i]
             local shape = fixture:getShape()
             if shape:typeOf("PolygonShape") then
@@ -830,7 +761,6 @@ function lib.flipThing(thing, axis, recursive)
                         points[pi + 1] = -points[pi + 1] -- Invert Y coordinate
                     end
                 end
-                -- currentThing.vertices = points;
                 -- Create a new shape with flipped vertices
                 local success, newShape = pcall(love.physics.newPolygonShape, unpack(points))
                 if not success then
@@ -850,16 +780,12 @@ function lib.flipThing(thing, axis, recursive)
                         registry.registerSFixture(fixture:getUserData().id, newFixture)
                     end
 
-
                     fixture:destroy()
                 end
             elseif shape:typeOf("CircleShape") then -- luacheck: ignore 542
                 -- No need to flip circle shapes — radius is symmetric
             end
         end
-        -- for _, fixture in ipairs(currentBody:getFixtures()) do
-        --     print(_, fixture:getUserData() ~= nil)
-        -- end
         -- Determine new angle based on flip axis
 
         -- If recursive, flip connected bodies first
@@ -947,7 +873,6 @@ function lib.flipThing(thing, axis, recursive)
     -- Phase 2: Flip All Joints
     flipJoints()
 
-    --print('************* Flip Completed *************')
     return thing
 end
 

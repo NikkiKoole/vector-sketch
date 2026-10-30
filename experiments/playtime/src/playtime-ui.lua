@@ -34,11 +34,6 @@ local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = ui.theme.rowWidth
 local BUTTON_SPACING = ui.theme.spacing
 
-
-
-function lib.assignTrianglesToGroup(...) return uiSFixtureEditor.assignTrianglesToGroup(...) end
-
-
 function lib.drawJointCreateUI()
     local text = '• ' .. (state.jointParams.jointType or 'joint') .. ': both bodies picked •'
     local clicked = ui.topPrompt(text, { 'create', 'cancel' })
@@ -98,7 +93,6 @@ function lib.drawSelectedBodiesUI(panelX, panelY, panelWidth, panelH)
         if ui.button(x, y, 260, 'destroy') then
             for i = #state.selection.selectedBodies, 1, -1 do
                 snap.destroySnapJointAboutBody(state.selection.selectedBodies[i].body)
-                --print('destroybody doesnt destroy the joint on it ?')
                 objectManager.destroyBody(state.selection.selectedBodies[i].body)
             end
 
@@ -127,7 +121,6 @@ function lib.drawSelectedBodiesUI(panelX, panelY, panelWidth, panelH)
             end
             ui.alignedLabel(x, y, ' groupid')
         end
-        -- end
         nextRow()
     end)
 end
@@ -205,7 +198,6 @@ function lib.drawUI()
         end)
     end
 
-
     if modes.is(modes.DRAW_CLICK) then
         local clicked = ui.topPrompt('• click to place points •', { 'finalize', 'uv-mappert' }, 140)
         if clicked == 'finalize' then
@@ -237,7 +229,6 @@ function lib.drawUI()
         ui.topPrompt('• click anchor or joint to add •')
     end
 
-
     if modes.is(modes.JOINT_CREATION)
         and ((state.jointParams.body1 == nil) or (state.jointParams.body2 == nil)) then
         local which = state.jointParams.body1 == nil and '1st' or '2nd'
@@ -251,7 +242,6 @@ function lib.drawUI()
     if state.panelVisibility.showPalette then
         w, h = love.graphics.getDimensions()
         ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
-            --ui.coloredRect()
             local cellHeight = 50
             local itemsPerRow = math.floor((w - 300) / cellHeight)
 
@@ -261,7 +251,6 @@ function lib.drawUI()
                 local x = column * cellHeight
                 local y = row * cellHeight
 
-                -- ui.coloredRect(0, 0, { 255, 0, 0 }, 40)
                 if ui.coloredRect(10 + x, h - 300 + y,
                     { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
                     state.showPaletteFunc(box2dDrawTextured.palette[i])
@@ -307,10 +296,6 @@ function lib.drawUI()
         end)
     end
 
-    --state.panelVisibility.customBehavior = { body = body, name = behavior.name }
-
-
-
     if state.panelVisibility.customBehavior then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
@@ -324,7 +309,6 @@ function lib.drawUI()
             function()
                 local lookup = utils.findByField(behaviors.allBehaviors, 'name',
                     state.panelVisibility.customBehavior.name)
-                --print(inspect(lookedup))
                 if lookup then
                     if ui.button(px + panelW - 40, py + 4, 30, '?') then
                         if state.panelVisibility.customBehaviorDescription then
@@ -334,7 +318,6 @@ function lib.drawUI()
                         end
                     end
                 end
-
 
                 ui.scrollableList('custombehaviors', px + 10, py + ui.theme.contentTop, panelW - 20,
                     panelH - ui.theme.contentTop - 10,
@@ -369,7 +352,6 @@ function lib.drawUI()
                             for i = 1, #bodyJoints do
                                 local bodyA, bodyB = bodyJoints[i]:getBodies()
                                 local otherBody = bodyA == me and bodyB or bodyA
-                                --print(inspect(otherBody:getUserData().thing.label))
                                 table.insert(names, otherBody:getUserData().thing.label)
                             end
 
@@ -381,24 +363,11 @@ function lib.drawUI()
                                 ui.textinput('limb_hub_vertexpicker' .. names[i], baseX + 100, elementY,
                                     50, BUTTON_HEIGHT, "vertex", 0)
                                 -- _id, x, y, width, height, placeholder, currentText
-                                --  ui.textinput()
                                 maxY = maxY + lineHeight
                             end
                             return maxY
                         end
-                        -- local maxY = 0
-                        -- local lineHeight = 40
-                        -- for i = 1, 28 do
-                        --     local elementY = (baseY + offsetY) + (i - 1) * lineHeight
-                        --     if elementY + lineHeight < baseY then
-                        --     elseif elementY > baseY + h then
-                        --     else
-                        --         ui.button(baseX, elementY, 100, 'test2' .. i)
-                        --     end
-                        --     maxY = maxY + lineHeight
-                        -- end
 
-                        -- return maxY
                     end
                 )
             end
@@ -413,19 +382,10 @@ function lib.drawUI()
         end, { .5, .5, .9 })
     end
 
-
     if state.panelVisibility.addBehavior then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
         love.graphics.setColor(1, 1, 1)
-
-        -- local all_options = {
-        --     'KEEP_ANGLE',
-        --     'LIMB_HUB'
-        -- }
-
-
-
 
         local body = state.panelVisibility.addBehavior.body
         local myBehaviors = body:getUserData().thing.behaviors or {}

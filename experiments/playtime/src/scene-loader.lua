@@ -133,11 +133,9 @@ end
 function lib.maybeHotReload(dt)
     -- Accumulate time
     hotReloadTimer = hotReloadTimer + dt
-    --state.scene.hotReloadTimer = state.scene.hotReloadTimer + dt
     -- Check if the accumulated time exceeds the interval
     --if state.scene.hotReloadTimer >= state.scene.hotReloadInterval then
     if hotReloadTimer >= hotReloadInterval then
-        -- state.scene.hotReloadTimer = state.scene.hotReloadTimer - state.scene.hotReloadInterval -- Reset timer
         hotReloadTimer = hotReloadTimer - hotReloadInterval
         if state.scene.scriptPath then
             local newModeTime = (getFileModificationTime(state.scene.scriptPath))

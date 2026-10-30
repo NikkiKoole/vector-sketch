@@ -9,7 +9,6 @@ local mathutils = require 'src.math-utils'
 local JT = require 'src.joint-types'
 local SIDES = require('src.sides')
 
-
 -- Updates offsetA of a joint based on a new LOCAL point (relative to body A)
 function lib.updateJointOffsetA(joint, localX, localY)
     if not joint or joint:isDestroyed() then
@@ -85,7 +84,6 @@ function lib.createJoint(data)
     local x1, y1 = bodyA:getPosition()
     local x2, y2 = bodyB:getPosition()
 
-
     if not (jointType == JT.ROPE or jointType == JT.DISTANCE) then
         -- i only want to do the positioning when im a rope joint..!
         -- that p1 and p2 is set when creating the joint by clicking on the bodies..
@@ -104,7 +102,6 @@ function lib.createJoint(data)
     local offsetB = data.offsetB or { x = data.p2[1], y = data.p2[2] }
     rx, ry = mathutils.rotatePoint(offsetB.x, offsetB.y, 0, 0, bodyB:getAngle())
     x2, y2 = x2 + rx, y2 + ry
-    --print(inspect(offsetA), inspect(offsetB))
     local handler = jointHandlers[jointType]
 
     if handler and handler.create then
@@ -205,8 +202,6 @@ function lib.recreateJoint(joint, newSettings)
     local offsetA = lib.getJointMetaSetting(joint, "offsetA") or { x = 0, y = 0 }
     local offsetB = lib.getJointMetaSetting(joint, "offsetB") or { x = 0, y = 0 }
 
-
-
     local data = {
         body1 = bodyA,
         body2 = bodyB,
@@ -245,7 +240,6 @@ end
 
 -- this one is only called from recreateThingFromBody
 
-
 local function tranlateBody(body, dx, dy)
     local x, y = body:getPosition()
     body:setPosition(x + dx, y + dy)
@@ -262,11 +256,6 @@ local function moveUntilEnd(from, dx, dy, visited, dir)
                 visited[bodyB:getUserData().thing.id] = true
                 moveUntilEnd(bodyB, dx, dy, visited, dir)
             end
-            -- if (not visited[bodyA:getUserData().thing.id]) then
-            --     tranlateBody(bodyA, -dx, -dy)
-            --     visited[bodyA:getUserData().thing.id] = true
-            --     moveUntilEnd(bodyA, -dx, -dy, visited, dir)
-            -- end
         end
         if dir == SIDES.B then
             if (not visited[bodyA:getUserData().thing.id]) then
@@ -274,11 +263,6 @@ local function moveUntilEnd(from, dx, dy, visited, dir)
                 visited[bodyA:getUserData().thing.id] = true
                 moveUntilEnd(bodyA, dx, dy, visited, dir)
             end
-            -- if (not visited[bodyB:getUserData().thing.id]) then
-            --     tranlateBody(bodyB, dx, dy)
-            --     visited[bodyB:getUserData().thing.id] = true
-            --     moveUntilEnd(bodyB, dx, dy, visited, dir)
-            -- end
         end
     end
 end
@@ -298,7 +282,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             data.offsetA.x = newx
             data.offsetA.y = newy
 
-
             local after = { x = data.offsetA.x, y = data.offsetA.y }
 
             local rx, ry = mathutils.rotatePoint(
@@ -307,8 +290,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             local id = data.otherBody:getUserData().thing.id
             if (not visited[id]) then
                 tranlateBody(data.otherBody, rx, ry)
-                --moveUntilEnd(from, dx, dy, visited)
-                --data.otherBody:setPosition(ox + rx, oy + ry)
                 visited[id] = true
                 moveUntilEnd(data.otherBody, rx, ry, visited, 'A')
             end
@@ -324,7 +305,6 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             data.offsetB.x = newx
             data.offsetB.y = newy
 
-
             local after = { x = data.offsetB.x, y = data.offsetB.y }
 
             local rx, ry = mathutils.rotatePoint(
@@ -334,22 +314,12 @@ function lib.reattachJoints(jointData, newBody, oldVertices)
             if not visited[id] then
                 visited[id] = true
                 tranlateBody(data.otherBody, rx, ry)
-                --data.otherBody:setPosition(ox + rx, oy + ry)
                 moveUntilEnd(data.otherBody, rx, ry, visited, 'B')
             end
 
-
             -- if true then -- this pushes back the other way!
-            --     local rx, ry = mathutils.rotatePoint(
-            --         after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
-            --     )
 
-            --     local nx, ny = newBody:getPosition()
-
-            --     newBody:setPosition(nx - rx, ny - ry)
-            -- end
         end
-
 
         lib.createJoint(data)
     end

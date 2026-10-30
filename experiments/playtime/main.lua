@@ -1,10 +1,3 @@
--- Test mode: run with 'love . --test'
-if arg[1] == '--test' or arg[2] == '--test' then
-    require('tests.run').run()
-    love.event.quit(0)
-    return
-end
-
 -- Spec mode: run busted specs inside LÖVE with 'love . --specs'
 if arg[1] == '--specs' or arg[2] == '--specs' then
     require('run-specs')
@@ -33,15 +26,6 @@ end
 --- for the 'vendor.jprof' to give clear result it needs to be off.
 --- when you are happy you can turn back on the jit to improve framerate.
 --- (manual_gc was removed 2026-10: Lua's own incremental GC is cheaper here, see love.update)
-
-
--- local ffi = require "ffi"
-
--- ffi.cdef [[
--- int printf(const char *fmt, ...);
--- ]]
-
--- ffi.C.printf("Hi hello from C!\n")
 
 local IS_WEB = love.system.getOS() == "Web"
 
@@ -106,10 +90,6 @@ local script = require 'src.script'
 local gameLoop = require('src.game-loop')
 local objectManager = require('src.object-manager')
 
-
---local moonshine = require 'moonshine'
-
-
 local utils = require 'src.utils'
 local box2dDraw = require 'src.physics.box2d-draw'
 local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
@@ -132,10 +112,8 @@ local cam = camera.getInstance()
 local _uuid = require 'src.uuid' -- luacheck: ignore 211
 
 local snap = require 'src.physics.snap'
-local characterExperiments = require 'src.character-experiments'
 local keep_angle = require 'src.keep-angle'
 local _registry = require 'src.registry' -- luacheck: ignore 211
-
 
 local _mathutils = require 'src.math-utils' -- luacheck: ignore 211
 
@@ -146,8 +124,6 @@ local sceneLoader = require 'src.scene-loader'
 local editorRenderer = require 'src.editor-render'
 local rightColumn = require('src.ui.right-column')
 
-
-
 -- Request window focus so mouse events work when launched from terminal
 love.window.requestAttention()
 
@@ -157,19 +133,7 @@ local FPS = require('src.physics-units').stepsPerSecond(
     require('src.physics-units').meterFromArgs(arg) or require('src.state').world.meter)
 local TICKRATE = 1 / FPS
 
-
-
-local humanoidInstance = nil -- uncomment a createCharacter call in love.load to enable character experiments
-
 function love.load(_args)
-    --
-    -- logger:info('random seed:', love.math.getRandomSeed())
-
-    --testGuid()
-
-
-    --love.math.setRandomSeed(love.timer.getTime())
-    -- logger:info('uuid:', uuid.generateID())
     local fontHeight = 25
     local font = love.graphics.newFont('assets/Arial Narrow.ttf', fontHeight)
 
@@ -186,17 +150,6 @@ function love.load(_args)
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
-    --objectManager.addThing('rectangle', { x = 200, y = 400, height = 100, width = 400 })
-
-    --objectManager.addThing('custom', { vertices = customVertices })
-    --objectManager.addThing('custom', 0, 0, 'dynamic', nil, nil, nil, nil, 'CustomShape', customVertices)
-
-
-
-    --effect = moonshine(moonshine.effects.dmg)
-    --.chain(moonshine.effects.vignette)
-    --effect.filmgrain.size = 2
-
     -- Wire physics callbacks so scene scripts can listen to beginContact /
     -- endContact / preSolve / postSolve. physics-callbacks.lua populates
     -- state.physicsCallbacks with {beginContact, endContact, preSolve, postSolve}.
@@ -209,7 +162,6 @@ function love.load(_args)
     end
     state.physicsWorld:setCallbacks(current(1), current(2), current(3), current(4))
 
-
     local startScene = 'miposhader'
     for i = 1, #arg do
         if arg[i] == '--scene' and arg[i + 1] then
@@ -220,50 +172,6 @@ function love.load(_args)
     local playScene = playMode.sceneFromArgs(arg) -- --play <scene>: straight into play mode
     sceneLoader.loadScriptAndScene(playScene or startScene)
     if playScene then playMode.enter() end
-    -- sceneLoader.loadAndRunScript(cwd .. '/scripts/mesh_test.playtime.lua')
-
-    --loadScriptAndScene('elasto')
-    --sceneLoader.loadScriptAndScene('water')
-    -- sceneLoader.loadScriptAndScene('straight')
-
-    --local cwd = love.filesystem.getWorkingDirectory()
-    --sceneLoader.loadScene(cwd .. '/scripts/scratch/empty2.playtime.json')
-    --   sceneLoader.loadScene(cwd .. '/scripts/knut/knutjump.playtime.json')
-
-
-    -- sceneLoader.loadScene(cwd .. '/scripts/limits.playtime.json')
-    --sceneLoader.loadScene(cwd .. '/scripts/limitsagain.playtime.json')
-    -- Dev scaffolding (off by default): a static ground at (300,550) and a
-    -- starter humanoid mipo. The mipo's DNA is what `c` in character-experiments
-    -- clones from, so leave this disabled for non-character scenes.
-    -- objectManager.addThing('rectangle',
-    --     { x = 300, y = 550, bodyType = 'static', width = 800, height = 30, label = 'ground' })
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 300, .3)
-    -- if humanoidInstance then
-    --     CharacterManager.randomizeMipo(humanoidInstance)
-    -- end
-
-
-    --humanoidInstance = CharacterManager.createCharacter("humanoid", 800, 300, .1)
-
-
-    -- if state.backdrop and state.backdrop.url then
-    --     state.backdrop.image = love.graphics.newImage(state.backdrop.url)
-    -- end
-
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 300, 800, .5)
-    --humanoidInstance = CharacterManager.createCharacter("humanoid", 500, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 700, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 900, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1100, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1300, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1500, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1700, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 1900, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2100, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2300, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2500, 300)
-    -- humanoidInstance = CharacterManager.createCharacter("humanoid", 2700, 300)
 end
 
 local _physicsCallbacks = require('src.physics.physics-callbacks') -- luacheck: ignore 211
@@ -274,10 +182,6 @@ function love.update(dt)
     bridge.update()
     lurker.update()
     prof.push('frame')
-
-    --if ProFi.has_started == true and ProFi.has_finished == false then
-    --    ProFi:checkMemory(0, "love.update")
-    -- end
 
     beginframetime = love.timer.getTime()
     if recorder.isRecording or recorder.isReplaying then
@@ -307,9 +211,6 @@ function love.update(dt)
         mipoChatter.update()
         mipoBand.update()
         flightRecorder.update(scaled_dt)
-        --for i = 1, #joints do
-        --correctJoint(joints[i])
-        --end
         snap.update(scaled_dt)
         -- todo use pointerjoints instead!!!
         local interacted = box2dPointerJoints.getInteractedWithPointer()
@@ -329,7 +230,6 @@ function love.update(dt)
     end
     prof.push('pointers')
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
-    --phys.handleUpdate(dt)
     prof.pop('pointers')
     cameraFollow.update(dt) -- while playing, follow the Mipo last touched
     if state.interaction.draggingObj then
@@ -361,9 +261,6 @@ end
 function love.draw()
     prof.push('frame')
 
-    --if ProFi.has_started == true and ProFi.has_finished == false then
-    --    ProFi:checkMemory(0, "love.draw")
-    --end
     Peeker.attach()
     local w, h = love.graphics.getDimensions()
 
@@ -376,19 +273,11 @@ function love.draw()
         love.graphics.clear(creamy)
     end
 
-
-
-    --for i = 1, 100 do
     box2dDrawTextured.makeCombinedImages()
     --end
-    --effect(function()
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
 
-
-    -- if state.backdrop and state.backdrop.show then
-    --     love.graphics.draw(state.backdrop.image, 0, 0)
-    -- end
     local function drawOneBackdrop(b)
         if b.url and b.image == nil then
             b.image = love.graphics.newImage(b.url)
@@ -447,15 +336,11 @@ function love.draw()
         end
     end
     cam:pop()
-    -- end)
-    -- love.graphics.print(string.format("%.1f", (love.timer.getTime() - now)), 0, 0)
-    --love.graphics.print(string.format("%03d", love.timer.getTime()), 100, 100)
 
     Peeker.detach()
     if editing and state.interaction.startSelection then
         selectrect.draw(state.interaction.startSelection)
     end
-
 
     doors.drawFade()
     if editing then playtimeui.drawUI() end
@@ -582,7 +467,6 @@ function love.textinput(t)
 end
 
 function love.resize(_w, _h)
-    --   effect.resize(w, h)
 end
 
 function love.keypressed(key)
@@ -596,10 +480,6 @@ function love.keypressed(key)
         return
     end
     InputManager.keyPressed(key)
-
-    if not ui.focusedTextInputID then
-        characterExperiments.handleKeyPress(key, humanoidInstance)
-    end
 end
 
 function love.mousemoved(x, y, dx, dy)

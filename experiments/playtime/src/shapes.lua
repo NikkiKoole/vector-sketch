@@ -55,7 +55,6 @@ local function torso(w1, w2, w3, h1, h2, h3, h4, x, y)
     }
 end
 
-
 local function approximateCircle(radius, centerX, centerY, segments)
     segments = segments or 32 -- Default to 32 segments if not specified
     local vertices = {}
@@ -129,48 +128,6 @@ local function ribbon(w, h, x, y, segments, direction)
 
     return verts
 end
--- local function ribbon(w, h, x, y, segments)
---     segments = segments or 4 -- default: 4 subdivisions
---     local halfW = w / 2
---     local halfH = h / 2
-
---     -- centerline goes from (x - halfW, y) to (x + halfW, y)
---     local top = {}
---     local bottom = {}
-
---     for i = 0, segments do
---         local t = i / segments
---         local cx = x - halfW + w * t
---         local cy = y
-
---         -- top edge (say “above” the centerline)
---         table.insert(top, cx)
---         table.insert(top, cy - halfH)
-
---         -- bottom edge
---         table.insert(bottom, cx)
---         table.insert(bottom, cy + halfH)
---     end
-
---     -- build polygon: all top points left→right, then bottom points right→left
---     local verts = {}
-
---     -- top edge in forward order
---     for i = 1, #top do
---         table.insert(verts, top[i])
---     end
-
---     -- bottom edge in reverse order
---     for i = #bottom, 1, -2 do
---         -- note: bottom is [x1,y1, x2,y2,...], so step by 2 backwards
---         local yb = bottom[i]
---         local xb = bottom[i - 1]
---         table.insert(verts, xb)
---         table.insert(verts, yb)
---     end
-
---     return verts
--- end
 
 local function rect(w, h, x, y)
     return {
@@ -202,7 +159,6 @@ local function cross(x1, y1, x2, y2, x3, y3)
     return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
 end
 
-
 local function sign(px, py, ax, ay, bx, by)
     return (px - bx) * (ay - by) - (ax - bx) * (py - by)
 end
@@ -229,7 +185,6 @@ local function splitTriangle(tris, triIndex, px, py)
 end
 
 function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
-    --logger:trace()
     -- when this is true we also solve, self intersecting and everythign
     local triangles = {}
     local result = {}
@@ -250,20 +205,11 @@ function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
             logger:error("Failed to triangulate part of the polygon: " .. tris)
         end
     end
-    -- internalPoints = { { 100, 100 }, { 0, 0 } }
     -- if internalPoints then
     --     -- Step 2: insert each internal point
     --     for _, p in ipairs(internalPoints) do
-    --         local px, py = p[1], p[2]
-
-    --         for i, t in ipairs(triangles) do
-    --             local ax, ay = t[1], t[2]
-    --             local bx, by = t[3], t[4]
-    --             local cx, cy = t[5], t[6]
 
     --             if pointInTriangle(px, py, ax, ay, bx, by, cx, cy) then
-    --                 splitTriangle(triangles, i, px, py)
-    --                 print('splitted!')
     --                 break -- go to next point once we split
     --             end
     --         end
@@ -279,7 +225,6 @@ local function makeShapeListFromPolygon(polygon)
 
     -- first figure out if we are maybe a simple polygon we can use -as is- by box2d
     if #polygon <= 16 and love.math.isConvex(polygon) then
-        --print('cause its simple!')
         local centroidX, centroidY = mathutils.computeCentroid(polygon)
         local localVertices = {}
         for i = 1, #polygon, 2 do
@@ -353,27 +298,6 @@ local function makeShapeListFromPolygon(polygon)
     return shapesList
 end
 
--- function shapes.getTriangles(polygon)
---     local triangles = {}
---     local result = {}
---     local success, err = pcall(function()
---         mathutils.decompose(polygon, result)
---     end)
-
-
---     for i = 1, #result do
---         local success, tris = pcall(love.math.triangulate, result[i])
---         if success then
---             utils.tableConcat(triangles, tris)
---         else
---             print("Failed to triangulate part of the polygon: " .. tris)
---         end
---     end
---     return triangles
--- end
-
-
-
 local function triangulateRibbon(vertices)
     -- number of (x,y) points
     local count = #vertices / 2
@@ -429,7 +353,6 @@ local function triangulateRibbon(vertices)
     return triangles
 end
 
-
 function shapes.createShape(shapeType, settings)
     if (settings.radius == 0) then settings.radius = 1 end
     if (settings.width == 0) then settings.width = 1 end
@@ -440,7 +363,6 @@ function shapes.createShape(shapeType, settings)
 
     if shapeType == ST.CIRCLE then
         vertices = approximateCircle(settings.radius, 0, 0, 20)
-        --table.insert(shapesList, love.physics.newPolygonShape(vertices))
         table.insert(shapesList, love.physics.newCircleShape(settings.radius))
     elseif shapeType == ST.RECTANGLE then
         vertices = rect(settings.width, settings.height, 0, 0)
@@ -450,7 +372,6 @@ function shapes.createShape(shapeType, settings)
             settings.height2,
             settings.height3, settings.height4, 0, 0)
         shapesList = makeShapeListFromPolygon(vertices) or {}
-        --table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == ST.CAPSULE then
         local radius = math.min(settings.width / (settings.width2 or 1), settings.height / (settings.width2 or 1))
         vertices = capsuleXY(settings.width, settings.height, radius, 0, 0)
@@ -462,15 +383,12 @@ function shapes.createShape(shapeType, settings)
         vertices = makeITriangle(settings.width, settings.height, 0, 0)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == ST.SHAPE8 then
-        --local v = makeTransformedVertices(settings.optionalVertices)
         vertices = settings.optionalVertices
 
         shapesList = makeShapeListFromPolygon(vertices) or {}
-        -- logger:info('lets start to make a thingie', inspect(settings))
     elseif shapeType == ST.RIBBON then
         vertices = settings.optionalVertices or ribbon(settings.width, settings.height * 10, 0, 0, 5, 'vertical')
         local tris = triangulateRibbon(vertices)
-
 
         local centroidX, centroidY = mathutils.computeCentroid(vertices)
         for _, triangle in ipairs(tris) do
@@ -491,8 +409,6 @@ function shapes.createShape(shapeType, settings)
             end
         end
 
-        --shapesList = makeShapeListFromPolygon(vertices) or {}
-        --table.insert(shapesList, love.physics.newRectangleShape(settings.width, settings.height))
     else
         local sides = ({
             [ST.TRIANGLE] = 3,
@@ -519,7 +435,6 @@ function shapes.createShape(shapeType, settings)
                 error('shapetype custom needs optionalVertices!')
             end
         else
-            --print(shapeType, radius, width, height, optionalVertices)
             error("Unknown shape type: " .. tostring(shapeType))
         end
     end

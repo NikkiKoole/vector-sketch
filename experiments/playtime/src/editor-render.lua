@@ -51,7 +51,6 @@ local function drawVertexHandles(verts, cx, cy, invZoom, labels)
     end
 end
 
-
 -- drawGrid renders in WORLD space so it must be called inside cam:push().
 -- Line width is divided by the camera scale so grid lines stay visually 1px
 -- regardless of zoom.
@@ -152,12 +151,9 @@ function lib.renderActiveEditorThings()
         end
     end
 
-
-
     if state.selection.selectedJoint and not state.selection.selectedJoint:isDestroyed() then
         box2dDraw.drawJointAnchors(state.selection.selectedJoint)
     end
-
 
     -- draw to be drawn polygon
     if modes.is(modes.DRAW_CLICK)
@@ -168,14 +164,12 @@ function lib.renderActiveEditorThings()
         end
     end
 
-
     -- draw mousehandlers for dragging vertices
     local rightShape = state.selection.selectedObj and
         (state.selection.selectedObj.shapeType == ST.CUSTOM or state.selection.selectedObj.shapeType == ST.RIBBON)
     if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
-
 
         local mx, my = love.mouse:getPosition()
         local cx, cy = cam:getWorldCoordinates(mx, my)
@@ -185,7 +179,6 @@ function lib.renderActiveEditorThings()
 
         drawVertexHandles(verts, cx, cy, invZoom, 'always')
     end
-
 
     if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
         and state.texFixtureEdit.lockedVerts == false then
@@ -238,7 +231,6 @@ function lib.renderActiveEditorThings()
         local node = inputmanager.showCloseNode()
 
         if node then
-            --  logger:info(node[1] - 5, node[2] - 5)
             love.graphics.rectangle('line', node[1] - 5, node[2] - 5, 10, 10)
         end
     end

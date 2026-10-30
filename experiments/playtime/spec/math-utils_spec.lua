@@ -336,36 +336,6 @@ describe("src.math-utils", function()
         end)
     end)
 
-    describe(".findIntersections()", function()
-        local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
-        it("should find two intersections for a line crossing the square", function()
-            local line = { x1 = -5, y1 = 5, x2 = 15, y2 = 5 }
-            local intersections = mathutils.findIntersections(square, line)
-            assert.are.equal(2, #intersections)
-            local found_y5_left = false
-            local found_y5_right = false
-            for _, inter in ipairs(intersections) do
-                assert.is_near(5, inter.y, epsilon, "Intersection Y coordinate")
-                if math.abs(inter.x - 0) < epsilon then found_y5_left = true end
-                if math.abs(inter.x - 10) < epsilon then found_y5_right = true end
-            end
-            assert.is_true(found_y5_left, "Intersection with left edge not found")
-            assert.is_true(found_y5_right, "Intersection with right edge not found")
-        end)
-        it("should find one intersection for a line hitting a corner", function()
-            local line = { x1 = -5, y1 = -5, x2 = 5, y2 = 5 }
-            local intersections = mathutils.findIntersections(square, line)
-            assert.are.equal(1, #intersections)
-            assert.is_near(0, intersections[1].x, epsilon)
-            assert.is_near(0, intersections[1].y, epsilon)
-        end)
-        it("should find no intersections for a line outside", function()
-            local line = { x1 = -5, y1 = 15, x2 = 15, y2 = 15 }
-            local intersections = mathutils.findIntersections(square, line)
-            assert.are.equal(0, #intersections)
-        end)
-    end)
-
     describe("MVC functions", function()
         local square = { 0, 0, 10, 0, 10, 10, 0, 10 }
         it(".getMeanValueCoordinatesWeights() should calculate weights", function()

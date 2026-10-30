@@ -326,19 +326,10 @@ lib.texturesCreated = 0
 lib.drawMeshOutline = false -- debug: draw wireframe over deformed MESHUSERT meshes
 lib.useRibbonMiterClamp = true -- A/B toggle: per-sample bend-aware half-width in texturedCurve
 
-
-lib.setShrinkFactor = function(value)
-    shrinkFactor = value
-end
-lib.getShrinkFactor = function()
-    return shrinkFactor
-end
-
 local function getLoveImage(path, settings)
     if not imageCache[path] then
         local info = love.filesystem.getInfo(path)
         if not info or info.type ~= 'file' then
-            --print("Warning: File not found - " .. path)
             return nil, nil, nil
         end
         local img = love.graphics.newImage(path)
@@ -359,7 +350,6 @@ local function getLoveImage(path, settings)
     end
 
     if imageCache[path] then
-        --  logger:trace()
         return imageCache[path].img, imageCache[path].imgw, imageCache[path].imgh
     else
         return nil, nil, nil
@@ -376,8 +366,6 @@ getLoveImage('textures/pat/type5.png', settings)
 getLoveImage('textures/pat/type6.png', settings)
 getLoveImage('textures/pat/type7.png', settings)
 getLoveImage('textures/pat/type8.png', settings)
-
-
 
 local base = {
     '020202', '4f3166', '69445D', '613D41', 'efebd8',
@@ -516,11 +504,8 @@ local function growLine(p1, p2, length)
     return p1[1] + length * dx * inv, p1[2] + length * dy * inv
 end
 
-
-
 --todo the things that have a hex, should have the rgba values directly so we dont have to calculate them every frame.
 -- fix this with something like function setBgColor(item, val)
---    item.bgHex = val
 --    item.bgR, item.bgG, item.bgB, item.bgA = ToColor(val)-
 --end
 
@@ -543,7 +528,6 @@ local function setPColor(item, val)
 end
 
 function lib.makeCached(item)
-    -- print(item.bgHex, item.fgHex, item.pHex)
     if not item.cached then item.cached = {} end
     setBgColor(item, item.bgHex)
     setFgColor(item, item.fgHex)
@@ -551,9 +535,7 @@ function lib.makeCached(item)
 end
 
 function lib.hexToColor(hex)
-    --logger:trace()
     if type(hex) ~= "string" then
-        -- print("Warning: hexToColor expected a string but got " .. type(hex))
         return 1, 1, 1, 1
     end
 
@@ -573,7 +555,6 @@ function lib.hexToColor(hex)
         -- Append alpha if missing.
         hex = hex .. "FF"
     elseif #hex ~= 8 then
-        -- print("Warning: invalid hex string length (" .. #hex .. ") for value: " .. hex)
         return 1, 1, 1, 1
     end
 
@@ -584,7 +565,6 @@ function lib.hexToColor(hex)
 
     -- If any conversion failed, return white.
     if not (r and g and b and a) then
-        -- print("Warning: invalid hex color value: " .. hex)
         return 1, 1, 1, 1
     end
 
@@ -1139,17 +1119,14 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
-
 -- todo /5 and *5 is dumb!
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
                                   flipx, flipy, patches)
-    --  logger:info(key)
 
     local lineartColor = lineColor or { 0, 0, 0, 1 }
     local lw, lh = lineart:getDimensions()
-        --  local dpiScale = 1 --love.graphics.getDPIScale()
         local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
 
         love.graphics.setCanvas({ canvas, stencil = false }) --<<<
@@ -1205,43 +1182,8 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             end
         end
 
-
-
         -- I want to know If we do this or not..
         -- if (true and renderPatch) then
-        --     love.graphics.setColorMask(true, true, true, false)
-        --     -- for i = 1, #renderPatch do
-        --     --     local p = renderPatch[i]
-
-        --     --     love.graphics.setColor(1, 1, 1, 1)
-        --     --     local image = love.graphics.newImage(p.)
-        --     --     local imgw, imgh = image:getDimensions();
-        --     --     local xOffset = p.tx * (imgw / 6) * shrinkFactor
-        --     --     local yOffset = p.ty * (imgh / 6) * shrinkFactor
-        --     --     love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
-        --     --         p.sx * shrinkFactor,
-        --     --         p.sy * shrinkFactor,
-        --     --         imgw / 2, imgh / 2)
-        --     --     --print(lw, lh)
-        --     --     if true then
-        --     --         local img = love.graphics.newImage('textures/eye4.png')
-        --     --         --local img = love.graphics.newImage('assets/test1.png')
-        --     --         --love.graphics.setBlendMode('subtract')
-
-        --     --         for i = 1, 13 do
-        --     --             love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
-        --     --             local s = 3 + love.math.random() * 3
-        --     --             love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(),
-        --     --                 love.math.random() * math.pi * 2,
-        --     --                 1 / s, 1 / s)
-        --     --         end
-
-        --     --         --love.graphics.setBlendMode("alpha")
-        --     --     end
-        --     -- end
-        --     love.graphics.setColorMask(true, true, true, true)
-        -- end
-
 
         love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
         local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
@@ -1417,9 +1359,7 @@ function lib.makeCombinedImages()
                 until true
             end
         end
-        --for i = 1, #fixtures do fixtures[i] = nil end
     end
-    --for i = 1, #bodies do bodies[i] = nil end
     if replaced then releaseReplacedImages(replaced, bodies) end
 end
 
@@ -1448,54 +1388,6 @@ local function makeSquishableUVsFromPoints(v)
     return verts
 end
 
-
--- local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
---     local canvasCache = guy.canvasCache
---     local dpi = 1 --love.graphics.getDPIScale()
---     local shrink = lib.getShrinkFactor()
---     if true then
---         if true or box2dGuy.hairNeedsRedo then
---             local img = canvasCache.hairCanvas
---             local w, h = img:getDimensions()
---             local f = faceData.metaPoints
---             -- todo parameter hair (beard, only top hair, sidehair)
---             --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
---             local hairLine = { f[7], f[8], f[1], f[2], f[3] }
---             -- local hairLine = { f[8], f[1], f[2] }
---             -- print(inspect(hairLine))
---             --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
---             local points = hairLine
---             local hairTension = .02
---             local spacing = 10 * multipliers.hair.sMultiplier
---             local coords
-
---             coords = border.unloosenVanillaline(points, hairTension, spacing)
-
---             local length = getLengthOfPath(hairLine)
---             local factor = (length / h)
---             local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
---             local width = (w * factor) * hairWidthMultiplier / 1 --30 --160 * 10
---             local verts, indices, draw_mode = polyline.render('none', coords, width)
-
---             local vertsWithUVs = {}
-
---             for i = 1, #verts do
---                 local u = (i % 2 == 1) and 0 or 1
---                 local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
---                 vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
---             end
-
---             local vertices = vertsWithUVs
---             local m = love.graphics.newMesh(vertices, "strip")
---             m:setTexture(img)
---             love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx * (dpi / shrink), sy * (dpi / shrink))
---         end
---     end
--- end
-
-
-
-
 local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
     -- grow once into a flat array (reuse a local)
     local nnums = #vertices         -- flat x,y,... array
@@ -1523,7 +1415,6 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices
     mesh:setVertices(buf) -- 1 call instead of creating a mesh
     love.graphics.draw(mesh, x, y, r, sx, sy)
 end
-
 
 -- Batched, no mesh:getVertex, 1x mesh:setVertices per call
 -- Per-sample scratch arrays for texturedCurve (reused across calls, single-threaded).
@@ -1633,39 +1524,6 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
     mesh:setVertices(verts)
 end
 
-
--- -- cache squish fan meshes per fixture (extra) + url (+ vertex layout)
--- local _fanMeshCache = setmetatable({}, { __mode = "k" })
-
--- local function _verticesSig(v)
---     -- cheap change detector: (#, sum, sumsq)
---     local n, s, s2 = #v, 0.0, 0.0
---     for i = 1, n do
---         local x = v[i]; s = s + x; s2 = s2 + x * x
---     end
---     return n, s, s2
--- end
-
--- local function _makeSquishMesh(img, vertices, growFactor)
---     -- scale once
---     local n = #vertices
---     local p = {}
---     for i = 1, n do p[i] = vertices[i] * growFactor end
-
---     -- reuse your helper to make perimeter UVs
---     local uvs = makeSquishableUVsFromPoints(p)
-
---     -- prepend center vertex (cx,cy,0.5,0.5) without table.insert
---     local cx, cy = mathutils.getCenterOfPoints(vertices)
---     for i = #uvs + 1, 2, -1 do uvs[i] = uvs[i - 1] end
---     uvs[1] = { cx, cy, 0.5, 0.5 }
-
---     local m = love.graphics.newMesh(uvs) -- default mode is 'fan' here
---     m:setTexture(img)
---     return m
--- end
-
-
 local function doubleControlPoints(points, duplications)
     local len = #points
     if len % 2 ~= 0 then
@@ -1704,7 +1562,6 @@ local function doubleControlPoints(points, duplications)
 
     return result
 end
-
 
 local function transformUV(x, y, cx, cy, opts)
     -- Translate point to origin (centroid or top-left)
@@ -1875,7 +1732,6 @@ local function sorter(a, b)
 end
 
 local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
-    -- print('jo!')
     local img = getLoveImage('textures/' .. url)
     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
     local bones = #vertices == 16 and spineSkin.bonesOf(texfixture:getBody()) -- a spine's bodyhair bends with it
@@ -1887,14 +1743,9 @@ local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
 
     if (vertices and img) then
         local body = texfixture:getBody()
-        --local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
         local sx = 1 --ww / imgw
         local sy = 1 --hh / imgh
-        --local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-        -- local r, g, b, a = lib.hexToColor(hex)
-        --logger:info(r, g, b, a)
         love.graphics.setColor(r, g, b, a)
-        --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
         drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
     end
 end
@@ -1911,20 +1762,16 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
             spineSkin.drawGrid(img, vertices, bones, body, extra)
             return
         end
-        -- local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
         local sx = 1 --ww / imgw
         local sy = 1 --hh / imgh
-
 
         love.graphics.setColor(1, 1, 1, 1)
 
         if (extra.main.tint) then
-            --                print('optimize this away, tint')
             local r, g, b, a = lib.hexToColor(extra.main.tint)
             love.graphics.setColor(r, g, b, a)
         end
 
-        --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
         drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
     end
 end
@@ -2328,8 +2175,6 @@ local function createDrawables()
         end
 
         if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
-            -- logger:inspect(ud)
-            --logger:info('got some new kind of combined drawing todo!')
             local points = {}
             for j = 1, #ud.extra.nodes do
                 local it = ud.extra.nodes[j]
@@ -2376,12 +2221,10 @@ local function createDrawables()
             if #points >= 6 then
                 -- todo here we might want to grow the curve... so it will stick a little bit from the sides
 
-
                 -- todo parameterize this
                 local growLength = ud.extra.growExtra or 20
                 points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
                 points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
-
 
                 -- bendiness controls control-point duplication for the bezier through
                 -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
@@ -2390,9 +2233,7 @@ local function createDrawables()
                 local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
                 points = doubleControlPoints(points, bendiness)
 
-
                 local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
-                --print(inspect(ud.extra))
                 table.insert(drawables,
                     {
                         z = composedZ,
@@ -2401,7 +2242,6 @@ local function createDrawables()
                         --texfixture = fixture,
                         extra = ud.extra,
                         --body = body,
-                        -- thing = body:getUserData().thing
                     })
             end
         end
@@ -2433,7 +2273,7 @@ local function traceVerticesMesh(extra, outline)
     local mesh
     if #points >= 2 then
         local coords = mathutils.unloosenVanillaline(points, extra.tension or .02, extra.spacing or 5)
-        local verts = polyline.render('miter', coords, extra.width or 100)
+        local verts = polyline.miter(coords, extra.width or 100)
         local cx, cy = mathutils.getCenterOfPoints(outline)
         local vertsWithUVs = {}
         for vi = 1, #verts do
@@ -2511,8 +2351,6 @@ function lib.drawTexturedWorld(world)
     local tCreate = times and tBuilt - tStart
     local tSort = times and love.timer.getTime() - tBuilt
 
-
-
     -- todo: these3 function look very much alike, we wnat to combine them all in otne,
     -- another issue here is that i dont really understand how to set the ox and oy correctly, (for the combined Image)
     -- and there is an issue with the center of the 'fan' mesh, it
@@ -2521,51 +2359,6 @@ function lib.drawTexturedWorld(world)
     -- onscreen 'd' button quite a distnace out of the actual physics body center.
     --
     -- local function drawImageLayerSquish(url, hex, extra, texfixture)
-    --     -- print('jo!')
-    --     local img, imgw, imgh = getLoveImage('textures/' .. url)
-    --     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-
-    --     if (vertices and img) then
-    --         local body = texfixture:getBody()
-    --         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-    --         local sx = 1 --ww / imgw
-    --         local sy = 1 --hh / imgh
-    --         local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-    --         local r, g, b, a = lib.hexToColor(hex)
-    --         love.graphics.setColor(r, g, b, a)
-    --         --  drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-    --         drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
-    --     end
-    -- end
-
-
-
-
-    -- local function drawImageLayerVanilla(url, hex, extra, texfixture)
-    --     local img, imgw, imgh = getLoveImage('textures/' .. url)
-    --     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-
-    --     if (vertices and img) then
-    --         local body = texfixture:getBody()
-    --         -- local body = texfixture:getBody()
-    --         local cx, cy, ww, hh = mathutils.getCenterOfPoints(vertices)
-    --         local sx = ww / imgw
-    --         local sy = hh / imgh
-    --         local rx, ry = mathutils.rotatePoint(cx, cy, 0, 0, body:getAngle())
-    --         local r, g, b, a = lib.hexToColor(hex)
-    --         love.graphics.setColor(r, g, b, a)
-
-    --         love.graphics.draw(img, body:getX() + rx, body:getY() + ry,
-    --             body:getAngle(), sx * 1, sy * 1,
-    --             (imgw) / 2, (imgh) / 2)
-
-
-
-    --         --drawSquishableHairOver(img, body:getX() + rx, body:getY() + ry, body:getAngle(), sx, sy, 1, vertices)
-    --     end
-    -- end
-
-
 
     for i = 1, #drawables do
         local t0 = times and love.timer.getTime()
@@ -2580,14 +2373,10 @@ function lib.drawTexturedWorld(world)
         end
 
         if drawables[i].type == subtypes.TEXFIXTURE then
-            --if texfixture then
             local extra = drawables[i].extra
-            --print(extra.dirty)
             local shaded = setSurfaceShader(extra, texfixture and texfixture:getBody() or nil)
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
-                -- local cached = main.cached
-                --print(inspect(main))
                 if main then
                     if not main.cached then
                         lib.makeCached(main)
@@ -2598,20 +2387,15 @@ function lib.drawTexturedWorld(world)
                     local cached = main.cached
 
                     if main and main.bgURL then
-                        --logger:inspect(extra.main.cached)
                         love.graphics.setColor(1, 0, 0)
                         drawImageLayerSquishRGBA(extra.main.bgURL,
                             cached.bgR, cached.bgG, cached.bgB, cached.bgA,
                             extra, texfixture)
-                        --  drawImageLayerSquish(extra.main.bgURL, extra.main.bgHex, extra, texfixture)
-                        --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                     end
                     if extra.main and extra.main.fgURL then
-                        --drawImageLayerSquish(extra.main.fgURL, extra.main.fgHex, extra, texfixture)
                         drawImageLayerSquishRGBA(extra.main.fgURL,
                             cached.fgR, cached.fgG, cached.fgB, cached.fgA,
                             extra, texfixture)
-                        --drawImageLayerVanilla(extra.bgURL, extra.bgHex, extra,  texfixture:getBody() )
                     end
                 end
             end
@@ -2620,47 +2404,14 @@ function lib.drawTexturedWorld(world)
                 if (texfixture and extra.ompImage) then
                     drawCombinedImageVanilla(extra.ompImage, extra, texfixture, thing)
                 end
-                --end
             end
             if shaded then
                 love.graphics.setShader()
             end
         end
 
-
         -- this is all wrong, the code works but this shouldbnt  be a responnsible in the drawloop, do this outside!
         -- really we want to do this on load or something.
-        -- local function fillBodiesInInfluences(influences, numVerts)
-        --     for vi = 1, numVerts do
-        --         local inflList = influences[vi]
-        --         for k = 1, #inflList do
-        --             local infl   = inflList[k]
-        --             --remove this to a preprocess step
-        --             if not infl.body then
-        --                 --print("infl.body is nil")
-        --                 --print(inspect(infl))
-        --                 if infl.nodeType == "anchor" then
-        --                     local b = registry.getSFixtureByID(infl.nodeId):getBody()
-        --                     infl.body = b
-        --                 end
-        --                 if infl.nodeType == "joint" then
-        --                     local a,b = registry.getJointByID(infl.nodeId):getBodies()
-        --                     if infl.side == "A" then
-        --                         infl.body = a
-        --                     else
-        --                         infl.body = b
-        --                     end
-        --                 end
-        --                 print("infl.body is now", infl.body)
-        --             end
-        --         end
-        --     end
-        --     return influences
-        -- end
-
-
-
-
 
         if drawables[i].type == subtypes.MESHUSERT then
             -- now we need to find a mapping file..
@@ -2676,7 +2427,6 @@ function lib.drawTexturedWorld(world)
                 -- stored aligned with whichever vertex source is in use.
                 local verts = data.meshVertices or bodyUD.thing.vertices
 
-
                 -- Centering origin: bbox center of the vertices — the same
                 -- value `makeShapeListFromPolygon` subtracts when building
                 -- Box2D fixtures. This is stable (doesn't change when the
@@ -2690,7 +2440,6 @@ function lib.drawTexturedWorld(world)
                 -- maybe here we deal with translate and scale ? (rotation?)
                 local x = drawables[i].extra.meshX or 0
                 local y = drawables[i].extra.meshY or 0
-                --print(x, y)
                 verts = mathutils.transformPolygonPoints(verts, x, y)
                 local sx = drawables[i].extra.scaleX or 1
                 local sy = drawables[i].extra.scaleY or 1
@@ -2699,7 +2448,6 @@ function lib.drawTexturedWorld(world)
                 if meshRot ~= 0 then
                     verts = mathutils.rotatePolygonPoints(verts, meshRot)
                 end
-
 
                 -- Auto-unbind when polygon vert count changed since bind —
                 -- stale influences / spine (t,s) would crash or misalign.
@@ -2750,15 +2498,6 @@ function lib.drawTexturedWorld(world)
                         drawables[i].extra.bindVerts, numVerts, drawables[i].body)
                     verts = newVerts
                 end
-
-
-
-                --    local rotation = drawables[i].rotation or 0
-
-
-                --logger:info(x, y)
-                --logger:inspect(verts)
-
 
                 local vertexFormat = {
                     { "VertexPosition", "float", 2 },
@@ -2983,11 +2722,6 @@ function lib.drawTexturedWorld(world)
                     love.graphics.pop()
                 end
 
-                -- love.graphics.push()
-                -- love.graphics.translate(body:getX(), body:getY())
-                -- love.graphics.rotate(body:getAngle())
-                --love.graphics.polygon("line", verts)
-                -- love.graphics.pop()
             end
         end
 
@@ -2997,14 +2731,10 @@ function lib.drawTexturedWorld(world)
             local mappert = resourceLink.find(drawables[i].texfixture:getUserData())
             local data = mappert and mappert:getUserData().extra
             if data and data.uvs then
-                --print(inspect(data))
-                --print('getting close')
-
 
                 local bx, by = drawables[i].body:getPosition()
                 local ba = drawables[i].body:getAngle()
                 local b = drawables[i].body:getUserData()
-                --print(inspect(b.thing.vertices))
 
                 local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
                 local verts = {}
@@ -3014,12 +2744,10 @@ function lib.drawTexturedWorld(world)
                     verts[vi + 1] = b.thing.vertices[vi + 1] - centerY
                 end
 
-
                 local p = {}
                 for vi = 1, #verts, 2 do
                     table.insert(p, { verts[vi], verts[vi + 1] })
                 end
-
 
                 local vertexFormat = {
                     { "VertexPosition", "float", 2 },
@@ -3027,13 +2755,6 @@ function lib.drawTexturedWorld(world)
                     { "VertexColor",    "byte",  4 },
                 }
                 local meshVertices = {}
-                -- for i = 1, #verts, 2 do
-                --     table.insert(meshVertices, {
-                --         verts[i], verts[i + 1],
-                --         data.uvs[i], data.uvs[i + 1],
-                --         255, 255, 255
-                --     })
-                -- end
                 local tris = shapes.makeTrianglesFromPolygon(verts)
 
                 local vertexIndex = buildPolyVertexIndex(verts)
@@ -3051,65 +2772,16 @@ function lib.drawTexturedWorld(world)
                     end
                 end
 
-
-                --print(inspect(tris))
-                -- print(#tris)
-
-
                 local mesh = love.graphics.newMesh(vertexFormat, meshVertices, 'triangles')
                 local url = resourceLink.imageURL(mappert:getUserData())
                 local img = url and getLoveImage(url)
                 if img then mesh:setTexture(img) end
 
-                --local mesh = love.graphics.newMesh(p)
                 love.graphics.setColor(1, 1, 1)
                 love.graphics.draw(mesh, bx, by, ba)
                 love.graphics.setColor(1, 1, 1)
             end
-            --print(inspect(mappert:getUserData().extra))
 
-
-            -- local findLabel = drawables[i].label
-            -- for k, v in pairs(registry.sfixtures) do
-            --     local ud = v:getUserData()
-            --     if (findLabel == ud.label and subtypes.is(ud, subtypes.RESOURCE)) then
-            --         --   print('fount the uvmappert for me.', findLabel)
-            --         -- this needs to have th euvdata and point me to the right bg image
-            --         --
-            --         --
-            --         local bx, by = drawables[i].body:getPosition()
-            --         local ba = drawables[i].body:getAngle()
-            --         local b = drawables[i].body:getUserData()
-            --         --print(inspect(b.thing.vertices))
-
-            --         local centerX, centerY = mathutils.getCenterOfPoints(b.thing.vertices)
-            --         local verts = {}
-            --         for i = 1, #b.thing.vertices, 2 do
-            --             verts[i] = b.thing.vertices[i] - centerX
-            --             verts[i + 1] = b.thing.vertices[i + 1] - centerY
-            --         end
-
-
-            --         local p = {}
-            --         for i = 1, #verts, 2 do
-            --             table.insert(p, { verts[i], verts[i + 1] })
-            --         end
-            --         local mesh = love.graphics.newMesh(p)
-            --         print('aybe start using the real uvs now?')
-            --         love.graphics.setColor(1, .5, .5)
-            --         love.graphics.draw(mesh, bx, by, ba)
-            --         love.graphics.setColor(1, 1, 1)
-            --         --print(inspect(b))
-            --         --print(inspect(ud))
-            --         --local b = v:getBody()
-            --         --local bud = b:getUserData()
-            --         --print(inspect(bud))
-            --     end
-
-            --     -- local mesh = love.graphics.newMesh()
-            --     -- love.graphics.draw(mesh)
-            -- end
-            --            print('uv rendering galore!')
         end
 
         if drawables[i].type == subtypes.CONNECTED_TEXTURE then
@@ -3119,21 +2791,16 @@ function lib.drawTexturedWorld(world)
             local shaded = setSurfaceShader(extra, nil)
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
-                -- local cached = main.cached
                 if not main.cached then
                     lib.makeCached(main)
-                    --print('Cached not found')
                 end
                 local cached = main.cached
-
 
                 if extra.main and extra.main.bgURL then
                     local img = getLoveImage('textures/' .. extra.main.bgURL)
                     if img then
-                        --local mesh = createTexturedTriangleStrip(img)
                         local mesh = getStrip(img, extra.main.wmul or 1)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
-                        --local olr, olg, olb, ola = lib.hexToColor(extra.main.bgHex)
                         love.graphics.setColor(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
                         love.graphics.draw(mesh)
                     end
@@ -3141,12 +2808,8 @@ function lib.drawTexturedWorld(world)
                 if extra.main and extra.main.fgURL then
                     local img = getLoveImage('textures/' .. extra.main.fgURL)
                     if img then
-                        --print(extra.main.wmul)
-                        --local mesh = createTexturedTriangleStrip(img)
                         local mesh = getStrip(img, extra.main.wmul or 1)
                         texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
-                        --local olr, olg, olb, ola = lib.hexToColor(extra.main.fgHex)
-                        -- love.graphics.setColor(olr, olg, olb, ola)
                         love.graphics.setColor(cached.fgR, cached.fgG, cached.fgB, cached.fgA)
                         love.graphics.draw(mesh)
                     end
@@ -3155,7 +2818,6 @@ function lib.drawTexturedWorld(world)
             if extra.OMP then
                 local img = extra.ompImage
                 if img then
-                    --local mesh = createTexturedTriangleStrip(img)
                     local mesh = getStrip(img, extra.main.wmul or 1)
                     texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
                     love.graphics.setColor(1, 1, 1, 1)
@@ -3196,7 +2858,6 @@ function lib.drawTexturedWorld(world)
                     local twm = drawables[i].extra.tileWidthM
                     local thm = drawables[i].extra.tileHeightM
                     local tr = drawables[i].extra.tileRotation
-                    --print(twm, thm, tr)
                     local uvParams = {
                         tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
                         tileHeight = texH * thm, --bb.height,  -- world units per tile vertically
@@ -3234,7 +2895,6 @@ function lib.drawTexturedWorld(world)
                     drawables[i].extra._mesh = mesh
                 end
 
-
                 local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
 
@@ -3250,7 +2910,6 @@ function lib.drawTexturedWorld(world)
             local m = traceVerticesMesh(drawables[i].extra,
                 hairBones and hairBones.outline or drawables[i].thing.vertices)
             if m then
-                --love.graphics.line(pointsflat)
                 --if drawables[i].extra.main.bgURL
                 local extra = drawables[i].extra
                 local useOMP = extra.OMP and extra.ompImage
@@ -3305,8 +2964,6 @@ function lib.drawTexturedWorld(world)
                 end
                 love.graphics.setColor(1, 1, 1, 1)
             end
-            --logger:inspect(points)
-            --logger:inspect()
             until true
         end
 
@@ -3700,9 +3357,6 @@ function lib.drawTexturedWorld(world)
         state.drawTimes.frames = state.drawTimes.frames + 1
     end
 
-    --  end)
-    --love.graphics.setShader()
-    --love.graphics.setDepthMode()
 end
 
 lib._test = { blinkStates = blinkStates, setSurfaceShader = setSurfaceShader } -- for specs, not part of the API

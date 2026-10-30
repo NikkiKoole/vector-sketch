@@ -27,7 +27,6 @@ local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = ui.theme.rowWidth
 local BUTTON_SPACING = ui.theme.spacing
 
-
 -- Per-MESHUSERT toggle: show transform sliders (meshX/Y, scaleX/Y) even when
 -- bound. They're baked into bindVerts, so toggling this on is "I want to
 -- adjust and re-bind." Keyed by sfixture id.
@@ -116,7 +115,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
     if state.selection.selectedSFixture:isDestroyed() then return end
     local ud = state.selection.selectedSFixture:getUserData()
 
-    --  local sfixtureType = (ud and ud.extra and ud.extra.type == 'texfixture') and 'texfixture' or 'sfixture'
     local sfixtureType = ud.subtype or ud.type -- the panel title: what kind of fixture
     local x, y
     -- Function to create an accordion
@@ -130,14 +128,10 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
         end
         y = y + BUTTON_HEIGHT + BUTTON_SPACING
 
-
         if accordionStatesSF[key] or forceOpen then
             contentFunc(clicked)
         end
     end
-
-
-
 
     local function drawContent()
         local padding = BUTTON_SPACING
@@ -303,10 +297,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
         layout.curY = y + used
         nextRow()
 
-
-
-
-
         if subtypes.is(ud, subtypes.TEXFIXTURE) then
             -- every setting from src/texfixture-params.lua, one inspector list per accordion
             local fixture = state.selection.selectedSFixture
@@ -339,9 +329,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 ud.extra.nodes = {}
             end
             nextRow()
-
-
-
 
             -- Triangulation mode toggle — A/B test ear-clipping vs
             -- CDT+Steiner. Flipping it recomputes the linked RESOURCE's mesh
@@ -393,9 +380,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             if ui.button(x, y, ROW_WIDTH, 'bind pose') then
                 local mappert = resourceLink.find(ud)
 
-
-
-                --print(label, mappert)
                 if mappert then
                     -- mappert is a thing completely outside of my body,
                     -- it's just a place where the mesh is stored.
@@ -628,7 +612,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                         end
                         return influences
                     end
-                    --logger:inspect(vertsToWorld(b, verts))
                     -- Capture bindVerts in the MESHUSERT-owning body's world
                     -- space (the bone), NOT the polygon's world space. The
                     -- pre-bind draw path renders the mesh at the bone's
@@ -686,7 +669,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                         ud.extra.rigidBindCoords = rigidBindCoords
                         -- Bind modes are mutually exclusive — clear any spine bind.
                         ud.extra.spineBind = nil
-                        --logger:inspect(influences)
                     end
                 end
             end
@@ -808,7 +790,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     ud.extra.spineBind = nil
                 end
             end
-
 
             -- TRIANGLE PAINTER — tag triangles with a group number. Groups
             -- drive triangle render order (lower group → drawn first → behind).
@@ -1273,8 +1254,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 local body = state.selection.selectedSFixture:getBody()
                 state.selection.selectedSFixture = fixtures.updateSFixturePosition(state.selection.selectedSFixture,
                     body:getX(), body:getY())
-                --local oldTexFixUD = state.selection.selectedSFixture:getUserData()
-                --state.texFixtureEdit.tempVerts = utils.shallowCopy(oldTexFixUD.extra.vertices)
             end
             nextRow()
         else
@@ -1513,7 +1492,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 ui.alignedLabel(x, y, 'bend')
                 nextRow()
 
-
                 if not e.OMP then
                     local dirty = function() oldTexFixUD.extra.dirty = true end
                     handlePaletteAndHex(myID, 'bgHex', x, y, 100, oldTexFixUD.extra.main.bgHex,
@@ -1556,7 +1534,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 oldTexFixUD.extra.width = oldTexFixUD.extra.width or 100
                 local body = state.selection.selectedSFixture:getBody()
                 local parentVerts = body:getUserData().thing.vertices
-                --print(#parentVerts)
                 nextRow()
                 nextRow()
                 ui.createSliderWithId(myID, 'startIndex', x, y, 160, -(#parentVerts / 2),
@@ -1780,7 +1757,6 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     end
                 end
                 nextRow()
-
 
                 if not e.OMP then
                     local dirty = function() oldTexFixUD.extra.dirty = true end

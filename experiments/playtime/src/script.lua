@@ -105,14 +105,10 @@ function script.call(method, ...)
 end
 
 function script.loadScript(data, filePath)
-    --print('>>>>> script environment api')
-    --printTableKeys(scriptEnv)
-    --print('>>>>>')
     local scriptContent = data
     if not scriptContent then
         error("Script not found: " .. filePath)
     end
-
 
     scriptEnv = freshEnv()
 

@@ -115,7 +115,6 @@ return function(ui)
     end
 
     function ui.handleTextInputForTextInput(t, state)
-        -- local state = ui.textInputs[ui.focusedTextInputID]
 
         if state.isNumeric and not tonumber(t) and t ~= "." and t ~= "-" then
             -- Ignore non-numeric input
@@ -149,7 +148,6 @@ return function(ui)
     end
 
     function ui.handleKeyPressForTextInput(key, state)
-        -- local state = ui.textInputs[ui.focusedTextInputID]
         local isCtrlDown = love.keyboard.isDown('lctrl', 'rctrl')
         local isShiftDown = love.keyboard.isDown('lshift', 'rshift')
         local isCMDDown = love.keyboard.isDown('lgui', 'rgui')
@@ -309,7 +307,6 @@ return function(ui)
                 end
             elseif key == "return" or key == "kpenter" then
                 -- Handle new line on enter key
-                --ui.handleTextInput("\n")
                 ui.handleTextInputForTextInput("\n", state)
             elseif key == "escape" then
                 ui.focusedTextInputID = nil
@@ -490,4 +487,3 @@ return function(ui)
         return state.text, state.text ~= currentText
     end
 end
---return ui

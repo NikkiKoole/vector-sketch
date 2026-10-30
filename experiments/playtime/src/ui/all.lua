@@ -163,7 +163,6 @@ function ui.startFrame()
     ui.mouseIsDown = down
 
     ui.mouseX, ui.mouseY = love.mouse.getPosition()
-    --  print('setting to false')
     ui.overPanel = false
 end
 
@@ -202,13 +201,10 @@ end
 
 ui._scrollers = {}
 
-
 function ui.scrollableList(id, x, y, w, h, drawFunc)
     local scrollY = ui._scrollers[id] or { value = 0 }
     ui.panel(x, y, w + 20, h, '', function()
         local contentHeight = ui.scrollArea(id, x, y, w, h, scrollY, drawFunc) --  drawFunc(x, y, w, h, -scrollY.value)
-        --  print(contentHeight)
-        --print(id)
         if contentHeight > h then
             local result = ui.slider(x + w, y, h, 20, 'vertical', (contentHeight) - h, 0, scrollY
                 .value,
@@ -240,7 +236,6 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
     scrollY.value = math.max(0, math.min(scrollY.value, maxContentY - h))
     ui.popClip()
     return maxContentY
-    -- -- love.graphics.pop()
 end
 
 --- Creates a horizontal slider with a numeric input field.
@@ -264,7 +259,6 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
         "Enter number...",
         "" .. value,
         true)
-
 
     if dirty then
         -- Clamp typed values to the slider's range and ignore garbage/NaN:
@@ -317,10 +311,8 @@ function ui.panel(x, y, width, height, label, drawFunc, optionalFillColor)
     end
 
     -- Disable scissor
-    -- love.graphics.setScissor()
 
     -- Reset color to white
-    -- love.graphics.setColor(1, 1, 1)
 end
 
 --- Where a prompt or small dialog goes: centred at the top, in the strip the old
@@ -373,7 +365,6 @@ function ui.checkbox(x, y, checked, label)
     love.graphics.print(label, x + size + 10, textY)
 
     -- Reset color to white
-    --love.graphics.setColor(1, 1, 1)
 
     -- Return the updated checked state
     local totalWidth = size + 10 + ui.font:getWidth(label)
@@ -425,7 +416,6 @@ function ui.toggleButton(x, y, width, height, labelOn, labelOff, isToggled)
     love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
-    --love.graphics.setColor(1, 1, 1)
 
     return used, isToggled
 end
@@ -470,7 +460,6 @@ function ui.header_button(x, y, width, label, opened)
     end
     local textHeight = ui.font:getHeight()
     love.graphics.print(label, x, y + (height - textHeight) / 2)
-    -- love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
     love.graphics.setColor(1, 1, 1, 1)
@@ -510,9 +499,6 @@ function ui.coloredRect(x, y, color, size)
         ui.activeElementID = nil
     end
 
-
-
-
     return clicked, pressed, released, isHover
 end
 
@@ -527,7 +513,6 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
 
     if pressed then
         ui.activeElementID = id
-        --print("Button pressed" .. id)
     end
     -- Draw the button with state-based colors
     if ui.activeElementID == id then
@@ -562,7 +547,6 @@ function ui.button(x, y, width, label, optionalHeight, optionalFillColor)
     love.graphics.printf(label, x, y + (height - textHeight) / 2, width, "center")
 
     -- Reset color
-    --love.graphics.setColor(1, 1, 1)
 
     local clicked = false
     local released = ui.mouseReleased and ui.activeElementID == id
@@ -623,7 +607,6 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
         love.graphics.rectangle("line", x, y, thickness, length, rxry, rxry)
     end
 
-
     -- Set scissor to restrict rendering to the track area
     ui.pushClip(x, y, isHorizontal and length or thickness, isHorizontal and thickness or length)
 
@@ -634,14 +617,7 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
     -- Remove scissor after rendering the thumb
     ui.popClip()
 
-
-
-    -- -- Render the thumb using the existing button function
-    -- local thumbLabel = ''
-    -- local clicked, pressed, released = ui.button(thumbX, thumbY, thickness, thumbLabel, thickness)
-
     -- Handle dragging
-    --  logger:info(ui.draggingSliderID)
     if pressed then
         ui.draggingSliderID = sliderID
         -- Calculate and store the offset
@@ -680,7 +656,6 @@ function ui.slider(x, y, length, thickness, orientation, min, max, value, extraI
         ui.dragOffset.y = 0
     end
     -- Reset color
-    -- love.graphics.setColor(1, 1, 1)
 
     -- Return the updated value if it has changed
     if inValue ~= value then
@@ -707,53 +682,15 @@ function ui.handleKeyPress(key)
     end
 end
 
---- Draws a text label at the specified position.
-function ui.centeredLabel(x, y, width, text)
-    love.graphics.setColor(ui.theme.general.text)
-
-    love.graphics.printf(text, x, y, width, "center")
-    -- love.graphics.setColor(1, 1, 1)
-end
-
 function ui.label(x, y, text, color)
     love.graphics.setColor(color or ui.theme.general.text)
     local yOffset = 0 --ui.font:getHeight(text) / 2
     love.graphics.print(text, x, y + yOffset)
-    --love.graphics.setColor(1, 1, 1)
 end
 
 --- Label vertically centered within a standard row height.
 function ui.alignedLabel(x, y, text, color)
     ui.label(x, y + (ui.theme.lineHeight - ui.fontHeight), text, color)
-end
-
---- Creates a dropdown menu.
-function ui.dropdown(x, y, width, options, currentSelection)
-    local id = ui.generateID()
-    local isOpen = ui.dropdownStates and ui.dropdownStates[id] or false
-    -- Draw the dropdown box
-    local clicked, pressed, released = ui.button(x, y, width, currentSelection)
-
-    -- Toggle dropdown state
-    if clicked then
-        isOpen = not isOpen
-    end
-    ui.dropdownStates = ui.dropdownStates or {}
-    ui.dropdownStates[id] = isOpen
-
-    -- Draw options if open
-    if isOpen then
-        for i, option in ipairs(options) do
-            local optionY = y + i * (theme.button.height + 10)
-            local optionClicked = ui.button(x + width, optionY, width, option)
-            if optionClicked then
-                currentSelection = option
-                ui.dropdownStates[id] = false -- Close dropdown
-                return currentSelection
-            end
-        end
-    end
-    return false, pressed, released
 end
 
 --- Slider with label and callback, keyed by id::label.

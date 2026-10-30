@@ -7,7 +7,6 @@ local function resizeCamera(self, w, h)
     local scaleW, scaleH = w / self.w, h / self.h
     local scale = math.min(scaleW, scaleH)
     -- the line below keeps aspect
-    --self.w, self.h = scale * self.w, scale * self.h
     -- the line below deosnt keep aspect
     self.w, self.h = scaleW * self.w, scaleH * self.h
     self.aspectRatio = self.w / w

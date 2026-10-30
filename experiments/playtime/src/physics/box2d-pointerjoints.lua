@@ -103,23 +103,10 @@ function lib.handlePointerUpdate(dt, cam)
                 wx, wy = lib.stepToward(tx, ty, wx, wy, lib.maxMipoDragSpeed * dt)
             end
             mj.joint:setTarget(wx, wy)
-
-            local fixtures = mj.jointBody:getFixtures()
-            for k = 1, #fixtures do
-                local f = fixtures[k]
-                if f:getUserData() and type(f:getUserData()) == 'table' and f:getUserData().bodyType then
-                    if f:getUserData().bodyType == 'connector' then -- luacheck: ignore 542
-                        -- TODO: connector system disabled
-                        --connect.maybeConnectThisConnector(f)
-                    end
-                end
-            end
         end
     end
 
     -- diconnect connectors
-    --connect.maybeBreakAnyConnectorBecauseForce(dt)
-    --connect.cleanupCoolDownList(dt)
 end
 
 function lib.getPointerJointAttachedTo(body)
@@ -157,7 +144,6 @@ function lib.handlePointerReleased(_x, _y, id)
     if pointerJoints then
         for i = 1, #pointerJoints do
             local mj = pointerJoints[i]
-            -- if false then
             if mj.id == id then
                 if mj.joint and mj.jointBody then
                     table.insert(released, mj.jointBody)
@@ -166,14 +152,11 @@ function lib.handlePointerReleased(_x, _y, id)
         end
         lib.killMouseJointIfPossible(id)
     end
-    --print('jo!', #released)
     return released
 end
 
 function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMaking)
     if allowMouseJointMaking == nil then allowMouseJointMaking = true end
-    -- local wx, wy = cam:getWorldCoordinates(x, y)
-    --
 
     local bodies = state.physicsWorld:getBodies()
     local temp = {}
@@ -181,7 +164,6 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
     for _, body in ipairs(bodies) do
         if body:getType() == BT.KINEMATIC then
             -- for the playitme editor i do want to be able to slect these..
-            -- local fixtures = body:getFixtures()
             local fixtures = body:getFixtures()
             for _, fixture in ipairs(fixtures) do
                 local hitThisOne = fixture:testPoint(wx, wy)
@@ -204,12 +186,6 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
                 if (hitThisOne and not isSensor) then
                     table.insert(temp,
                         { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
-
-                    if onPressedParams then
-                        if onPressedParams.onPressedFunc then
-                            onPressedParams.onPressedFunc(body)
-                        end
-                    end
                 end
             end
         end
@@ -221,7 +197,6 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
         if blobBody then
             table.insert(hitted, handle)
             table.insert(temp, { id = id, body = blobBody, wx = wx, wy = wy, prio = 1, fixture = handle })
-            if onPressedParams and onPressedParams.onPressedFunc then onPressedParams.onPressedFunc(blobBody) end
         end
     end
 
@@ -258,7 +233,6 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
                 lib.makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force, damp))
         end
     end
-    -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end
 
     return #temp > 0, hitted, createdmousejointdata

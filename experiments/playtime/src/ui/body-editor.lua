@@ -29,7 +29,6 @@ local accordionStatesSO = {
     textured = false,
 }
 
-
 -- Draw every accordion open (spec/ui-overflow_spec.lua measures the fully open panel).
 local forceOpen = false
 function lib.setAllAccordions(open) forceOpen = open end
@@ -47,7 +46,6 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
         local header = ui.theme.panelHeader
         ui.scrollPanel('body-panel', panelX, panelY + header, panelWidth, panelH - header - 5, function()
             local body = state.selection.selectedObj.body
-            -- local angleDegrees = body:getAngle() * 180 / math.pi
             local myID = state.selection.selectedObj.id
 
             -- Initialize Layout
@@ -146,28 +144,10 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
             if thing then
                 drawAccordion("behaviors",
                     function(_clicked)
-                        --local w = love.graphics.getFont():getWidth('straight') + 20
-                        -- ui.button(x, y, w, 'straight')
-                        --ui.toggleButton(x, y, w, BUTTON_HEIGHT, 'straight', 'straight', false)
 
                         -- what behaviors do i have ?
                         -- KEEP_ANGLE
                         -- LIMB_HUB
-                        -- HUB_PRESETS = {
-                        --   humanoid = {
-                        --     allowed = { "left_arm", "right_arm", "left_leg", "right_leg", "neck" }
-                        --   },
-                        --   upper_torso = {
-                        --     allowed = { "left_arm", "right_arm", "neck" }
-                        --   },
-                        --   lower_torso = {
-                        --     allowed = { "left_leg", "right_leg" }
-                        --   },
-                        --   potatohead = {
-                        --     allowed = { "limb1", "limb2", "limb3", "limb4" }
-                        --   }
-                        -- }
-                        -- print(inspect(userData))
                         if thing.behaviors then
                             for i = 1, #thing.behaviors do
                                 nextRow()
@@ -193,7 +173,6 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                             end
                         end
 
-                        --nextRow()
                     end)
                 nextRow()
 
@@ -222,8 +201,6 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                                         end
                                         if isHover then
                                             local x1, y1, x2, y2 = joint:getAnchors()
-                                            -- local centroid = fixtures.getCentroidOfFixture(body, myfixtures[i])
-                                            --  local x2, y2 = body:getLocalPoint(ud.offsetA.x, ud.offsetA.y)
                                             ui.onStage(function()
                                                 local ax3, ay3 = cam:getScreenCoordinates(x1, y1)
                                                 love.graphics.circle('line', ax3, ay3, 6)
@@ -245,7 +222,6 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                         function()
                             for i = 1, index do
                                 nextRow()
-                                --logger:inspect(myfixtures[i]:getUserData())
 
                                 local subtype = myfixtures[i]:getUserData().subtype
 

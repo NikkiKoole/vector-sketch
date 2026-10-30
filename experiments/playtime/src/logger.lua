@@ -7,12 +7,6 @@ Logger.__index = Logger
 -- Store original print function safely
 local _old_print = print
 
-function Logger.new(_self)
-    local instance = setmetatable({}, Logger)
-    -- You could add log levels, file output etc. here later
-    return instance
-end
-
 -- Generic log function
 function Logger._log(_self, level, ...)
     local info = debug.getinfo(3, "Sl") -- 3 levels up: _log -> info/warn/error -> caller
@@ -51,7 +45,6 @@ function Logger:debug(...)
     -- Add a flag check if you only want debug logs sometimes
     -- if DEBUG_ENABLED then
     self:_log("DEBUG", ...)
-    -- end
 end
 
 return Logger

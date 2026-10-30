@@ -115,8 +115,6 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
     return true
 end
 
-
-
 -- sfixture kinds that draw a texture over their own body (src/physics/box2d-draw-textured.lua);
 -- a connected-texture is a ribbon between joints, so it doesn't count
 local texturedKinds = {}
@@ -204,7 +202,6 @@ function lib.drawWorld(world, drawOutline)
     local skipTextured = state.world.showTextures and (state.world.textureOrBody or state.playMode == true)
     local covered = skipTextured and DRAW_BODIES and lib.coveredBodies()
 
-
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do repeat -- break = next body (no goto: the web build's Lua 5.1 has none)
             local bodyUD = body:getUserData()
@@ -245,14 +242,12 @@ function lib.drawWorld(world, drawOutline)
                             local typeColor = pal.orange
                             love.graphics.setColor(typeColor[1], typeColor[2], typeColor[3], alpha)
                         end
-                        --else
                         if state.world.drawFixtures then
                             love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
                         end
                     else
                         love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
                     end
-
 
                     local outlineColor = state.world.darkMode and pal.creamy or pal.dark
                     love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
@@ -400,7 +395,6 @@ function lib.drawWorld(world, drawOutline)
     end
     love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
-    --   love.graphics.setLineWidth(1)
 end
 
 function lib.drawJointAnchors(joint)
@@ -417,11 +411,8 @@ function lib.drawBodies(bodies)
     love.graphics.setLineWidth(6)
     love.graphics.setColor(1, 0, 1) -- Red outline for selection
     for i = 1, #bodies do
-        --for _, thing in ipairs(state.selection.selectedBodies) do
-        --local fixtures = body:getFixtures()
         local body = bodies[i]
         for _, fixture in ipairs(body:getFixtures()) do
-            --for fixture in pairs(fixtures) do
             local shape = fixture:getShape()
             love.graphics.push()
             love.graphics.translate(body:getX(), body:getY())

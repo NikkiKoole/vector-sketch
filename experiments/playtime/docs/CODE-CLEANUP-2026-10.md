@@ -15,28 +15,29 @@ L = more.
 
 ## Delete
 
-- [ ] **CL1. Dead modules.** `src/character-experiments.lua` (only reachable through commented-out
-  code: `humanoidInstance` is always nil, `main.lua:161`), with its require (:134), its call, and the
-  commented `createCharacter` lines in `love.load`. `src/benchmarks.lua` (nothing requires it; the
-  bridge has `/profile/benchmark`). `tests/` and the `--test` branch at the top of `main.lua`
-  (`spec/` replaced it). S.
-- [ ] **CL2. Unused functions** (grep found no callers in src/, main.lua, spec/, scripts/):
-  `character-manager` `updateShape8` (:1298) and `getBoundingBox` (:81, result thrown away at :1697),
-  `io.reload`, `io` `getNewId`, `registry.print`, `music.stepAt`, music `lib.trace`,
-  `mipoVoice.squeakBody`, `synth.isRunning`, `uuid.uuid128` / `uuid64_base62` / `uuid128_base62`,
-  draw-textured `setShrinkFactor` / `getShrinkFactor`, `ui.dropdown`, `ui.centeredLabel`,
-  `playtime-ui` `assignTrianglesToGroup`, `utils.printTableKeys`, `Logger.new`,
-  pointerjoints `onPressedFunc` and its empty connector loop (:107-116), `instance.textures` /
-  `instance.positioners` (set, never read). On `state`: `positioningMesh`, `jointLengthParams`,
-  `lastSelectedBody`, `axisEnabled`, `showTexFixtureDim`, `isRecordingPointers`,
-  `texFixtureEdit.verts`. S.
-- [ ] **CL3. Unused maths.** `math-utils.lua`: `unloosenVanillalineOLD` (:150-185) with
-  `unpackNodePoints` / `evenlySpreadPath`, and `slicePolygon` (:1028-1150) with `splitPoly` /
-  `findIntersections` (specs only), plus the test polygons in comments (~:990-1027). About 400
-  lines. `polyline.lua`: only `render('miter', ...)` is used; the bevel/none joins and the overdraw
-  path can go (383 → ~90 lines). S.
-- [ ] **CL4. Commented-out code**, about 435 lines: box2d-draw-textured (173), shapes (47, an old
-  `ribbon`), math-utils (37), object-manager (29), io (27), main (20). Git keeps it. S.
+- [x] **CL1. Dead modules.** `src/character-experiments.lua` (only reachable through commented-out
+  code), with its require, its call and the commented `createCharacter` lines in `love.load`;
+  `src/benchmarks.lua`; `tests/` and the `--test` branch at the top of `main.lua`.
+  **Done 2026-10-30.**
+- [ ] **CL2. Unused functions.** **Done 2026-10-30:** `io.reload`, `uuid.uuid128` / `uuid64_base62` /
+  `uuid128_base62`, draw-textured `setShrinkFactor` / `getShrinkFactor`, `ui.dropdown`,
+  `ui.centeredLabel`, `playtime-ui` `assignTrianglesToGroup`, `utils.printTableKeys`, `Logger.new`,
+  pointerjoints `onPressedFunc` and its empty connector loop. Not unused after all: `registry.print`
+  (world settings calls it through `require(...)`), `io` `getNewId` (load calls it; an identity
+  function, could be inlined), `isRecordingPointers` (the tool rail reads it, nothing sets it).
+  Left: `character-manager` `updateShape8`, `getBoundingBox`, `instance.textures` /
+  `instance.positioners` (after the ears work); `music.stepAt`, music `lib.trace`,
+  `mipoVoice.squeakBody`, `synth.isRunning` (with BUG7); on `state` (restart the game after:
+  hot-swapping state.lua unsettles it) `positioningMesh`, `jointLengthParams`, `lastSelectedBody`,
+  `axisEnabled`, `showTexFixtureDim`, `texFixtureEdit.verts`. S.
+- [x] **CL3. Unused maths.** `math-utils.lua`: `unloosenVanillalineOLD` with `unpackNodePoints` /
+  `evenlySpreadPath`, `slicePolygon` with `findIntersections` (`splitPoly` stays: `decompose` uses
+  it). `polyline.lua` is `polyline.miter(coords, halfWidth)` now, 383 → 93 lines, same output (checked
+  on 500 random lines). **Done 2026-10-30**, `spec/polyline_spec.lua`.
+- [ ] **CL4. Commented-out code.** **Done 2026-10-30** in src/ and main.lua: ~640 lines, found by
+  a script that takes a run of `--` lines as code only when the text compiles as Lua, then read
+  through. Left: character-manager, character-topology, io.lua (other work in them), state.lua,
+  and the sound files (with BUG7). S.
 - [ ] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
   still runs every frame and the `whistle` patch keeps a synth slot. S.
 

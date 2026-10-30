@@ -62,7 +62,6 @@ end
 local distanceSquared = function(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
-    --local distance = math.sqrt(dx * dx + dy * dy)
     return dx * dx + dy * dy
 end
 
@@ -413,7 +412,6 @@ local function handlePointer(x, y, id, action, button)
         local cx, cy = cam:getWorldCoordinates(x, y)
         local rightShape = state.selection.selectedObj and (state.selection.selectedObj.shapeType == ST.CUSTOM or
             state.selection.selectedObj.shapeType == ST.RIBBON)
-        -- print('hello??')
         if state.polyEdit.tempVerts and state.selection.selectedObj
             and rightShape and state.polyEdit.lockedVerts == false then
             local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
@@ -614,7 +612,6 @@ local function handlePointer(x, y, id, action, button)
 end
 
 function lib.handleDraggingObj()
-    --print('getshere')
     local mx, my = love.mouse.getPosition()
     local wx, wy = cam:getWorldCoordinates(mx, my)
     local offx = state.interaction.offsetDragging[1]
@@ -664,7 +661,6 @@ function lib.handleMousePressed(x, y, button, istouch)
 end
 
 function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
-    --handlePointer(x, y, id, 'pressed')
     if not playMode.isOn() and (modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH)) then
         -- Start capturing mouse movement
         state.interaction.capturingPoly = true
@@ -706,9 +702,6 @@ function lib.handleMouseMoved(x, y, dx, dy)
         if love.mouse.isDown(3) or love.mouse.isDown(2) then panCamera(dx, dy) end
         return
     end
-    --print('moved')
-    --
-    --
 
     -- Steiner drag: live-update the grabbed point's body-local position.
     -- RESOURCE refresh runs on release so we don't thrash bind data per
@@ -808,7 +801,6 @@ function lib.handleMouseMoved(x, y, dx, dy)
         end
     end
 
-
     if state.polyEdit.dragIdx and state.polyEdit.dragIdx > 0 then
         local index = state.polyEdit.dragIdx
         local obj = state.selection.selectedObj
@@ -822,7 +814,6 @@ function lib.handleMouseMoved(x, y, dx, dy)
         local index = state.texFixtureEdit.dragIdx
         local obj = state.selection.selectedSFixture:getBody():getUserData().thing
 
-
         local angle = obj.body:getAngle()
         local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
         dx2 = dx2 / cam.scale
@@ -831,11 +822,9 @@ function lib.handleMouseMoved(x, y, dx, dy)
         state.texFixtureEdit.tempVerts[index + 1] = state.texFixtureEdit.tempVerts[index + 1] + dy2
 
         local ud = state.selection.selectedSFixture:getUserData()
-        --logger:info(inspect(ud))
         ud.extra.vertices[index] = state.texFixtureEdit.tempVerts[index]
         ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
-        -- print(index)
     elseif state.interaction.capturingPoly
         and (modes.is(modes.DRAW_FREE_POLY)
             or modes.is(modes.DRAW_FREE_PATH))
@@ -900,13 +889,11 @@ function lib.handleKeyPressed(key)
         -- figure out where my mousecursor is, between what nodes?
 
         if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
-            -- logger:inspect(state.selection.selectedObj)
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             objectManager.insertRibbonPair(wx, wy)
             objectManager.maybeUpdateCustomPolygonVertices()
         else
-            -- print(inspect(state.polyEdit))
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             objectManager.insertCustomPolygonVertex(wx, wy)
@@ -916,7 +903,6 @@ function lib.handleKeyPressed(key)
     if key == 'd' and state.polyEdit.tempVerts then
         -- Remove a vertex
         if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
-            --logger:inspect(state.selection.selectedObj)
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             objectManager.removeRibbonPair(wx, wy)

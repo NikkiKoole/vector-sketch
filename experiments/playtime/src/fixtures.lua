@@ -1,6 +1,5 @@
 --fixtures.lua
 
-
 local logger = require 'src.logger'
 local inspect = require 'vendor.inspect'
 local mathutils = require 'src.math-utils'
@@ -12,7 +11,6 @@ local utils = require 'src.utils' -- Needed for shallowCopy
 local state = require 'src.state'
 local fixtureTypes = require('src.fixture-types')
 local lib = {}
-
 
 -- Updates the position of an sfixture based on a new WORLD coordinate click
 function lib.updateSFixturePosition(sfixture, worldX, worldY)
@@ -28,7 +26,6 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
     -- Convert world click to body's local coordinates for the new shape center
     local localX, localY = body:getLocalPoint(worldX, worldY)
     local oldUD = utils.deepCopy(sfixture:getUserData())
-    --  logger:info(oldUD.extra.vertices ,  { sfixture:getShape():getPoints() })
     local points = oldUD.extra.vertices or
         { sfixture:getShape():getPoints() } -- Existing local points
     local centerX, centerY = mathutils.getCenterOfPoints(points)
@@ -44,23 +41,16 @@ function lib.updateSFixturePosition(sfixture, worldX, worldY)
     -- Use deepCopy if 'extra' might contain tables
 
     if oldUD.extra and oldUD.extra.vertices then
-        -- logger:info('vertices found, need to adjust all of them:',#oldUD.extra.vertices,dx,dy)
-        -- logger:info(inspect(oldUD.extra.vertices))
         for i = 1, #oldUD.extra.vertices, 2 do
             oldUD.extra.vertices[i + 0] = oldUD.extra.vertices[i + 0] - dx
             oldUD.extra.vertices[i + 1] = oldUD.extra.vertices[i + 1] - dy
         end
-        --  logger:info(inspect(oldUD.extra.vertices))
     end
     local fixtureID = oldUD.id                   -- Keep the ID
     local fixtureDensity = sfixture:getDensity() -- Keep properties
     local fixtureFriction = sfixture:getFriction()
     local fixtureRestitution = sfixture:getRestitution()
     local fixtureGroupIndex = sfixture:getGroupIndex()
-
-    -- logger:info(string.format("Updating SFixture %s Position to World(%.2f, %.2f) -> Local(%.2f, %.2f)", fixtureID,
-    --     worldX,
-    --     worldY, localX, localY))
 
     -- Destroy old fixture and unregister
     sfixture:destroy()
@@ -119,8 +109,6 @@ local function rect8(w, h, x, y)
     }
 end
 
-
-
 function lib.destroyFixture(fixture)
     registry.unregisterSFixture(fixture:getUserData().id)
     fixture:destroy()
@@ -163,8 +151,6 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
     registry.registerSFixture(setId, fixture)
     return fixture
 end
-
---function lib.createTexFixtureShape(vertexCount)
 
 -- Build a vertIndex -> world (x, y) mapper for a MESHUSERT mesh preview:
 -- centered mesh verts transformed by the sfixture's meshX/Y, scaleX/Y and

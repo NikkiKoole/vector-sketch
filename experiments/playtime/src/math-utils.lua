@@ -2,30 +2,6 @@
 local lib = {}
 local logger = require 'src.logger'
 
-
-
-local function unpackNodePoints(points, noloop)
-    local unpacked = {}
-    if #points >= 1 then
-        for i = 0, #points - 1 do
-            unpacked[1 + (i * 2)] = points[i + 1][1]
-            unpacked[2 + (i * 2)] = points[i + 1][2]
-        end
-
-        -- make it go round
-        if noloop == nil then
-            unpacked[(#points * 2) + 1] = points[1][1]
-            unpacked[(#points * 2) + 2] = points[1][2]
-        end
-    end
-
-    return unpacked
-end
-
-local function lerp(a, b, t)
-    return a + (b - a) * t
-end
-
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -42,62 +18,6 @@ function lib.getLengthOfPath(path)
         result = result + getDistance(a[1], a[2], b[1], b[2])
     end
     return result
-end
-
--- local function evenlySpreadPath2(result, path, index, running, spacing)
---     -- Stop if there's no next segment
---     if index >= #path then return end
-
---     local hereX = path[index + 1]
---     local hereY = path[index + 2]
---     local thereX = path[index + 3]
---     local thereY = path[index + 4]
-
---     local d = getDistance(hereX, hereY, thereX, thereY)
-
---     -- Handle degenerate segment (zero length)
---     if d == 0 then
---         return evenlySpreadPath2(result, path, index + 2, running, spacing)
---     end
-
---     while running < d do
---         local t = running / d
---         local x = lerp(hereX, thereY, t)
---         local y = lerp(hereX, thereY, t)
---         -- table.insert(result, { x, y, { 1, 0, 1 } })
---         table.insert(result, x)
---         table.insert(result, y)
---         running = running + spacing
---     end
-
---     -- Carry leftover distance into next segment
---     return evenlySpreadPath2(result, path, index + 2, running - d, spacing)
--- end
-
-local function evenlySpreadPath(result, path, index, running, spacing)
-    -- Stop if there's no next segment
-    if index >= #path then return end
-
-    local here = path[index]
-    local there = path[index + 1]
-
-    local d = getDistance(here[1], here[2], there[1], there[2])
-
-    -- Handle degenerate segment (zero length)
-    if d == 0 then
-        return evenlySpreadPath(result, path, index + 1, running, spacing)
-    end
-
-    while running < d do
-        local t = running / d
-        local x = lerp(here[1], there[1], t)
-        local y = lerp(here[2], there[2], t)
-        table.insert(result, { x, y, { 1, 0, 1 } })
-        running = running + spacing
-    end
-
-    -- Carry leftover distance into next segment
-    return evenlySpreadPath(result, path, index + 1, running - d, spacing)
 end
 
 --https://love2d.org/forums/viewtopic.php?t=1401
@@ -145,44 +65,7 @@ local function GetSplinePos(tab, percent, tension) --returns the position at 'pe
     end
 end
 
-
 local sqrt = math.sqrt
-lib.unloosenVanillalineOLD = function(points, tension, spacing)
-    --todo unpackNodePointsLoop shows up in perfromance measures.
-    -- its a heavy hot looped
-    -- also unneeded, atleast below. if evenlySpreadPatch would not give me packed nodes to begin with
-    --logger:inspect(points)
-
-    local work = unpackNodePoints(points, true)
-    local output = {}
-    local amt = #points * 2
-    for i = 0, amt do
-        local t = (i / amt)
-        if t >= 1 then t = 0.99999999 end
-        if t == 0 then t = 0.00000001 end
-
-        local x, y = GetSplinePos(work, t, tension)
-        --table.insert(output, { x, y })
-        output[i] = { x, y }
-
-        --output2[(i * 2) + 1] = x
-        --output2[(i * 2) + 2] = y
-    end
-    --logger:inspect(output)
-    local rrr = {}
-    --logger:inspect(output)
-    --logger:inspect(output2)
-    evenlySpreadPath(rrr, output, 1, 0, spacing)
-
-    output = unpackNodePoints(rrr)
-    --logger:inspect(output)
-
-    -- what a hack ! the end is not good it looped back and i dont know how to solve it
-    -- in evenlyspreadpath....
-    table.remove(output, #output)
-    table.remove(output, #output)
-    return output
-end
 
 local function flattenPoints(points, closed, out)
     out = out or {}
@@ -292,7 +175,6 @@ lib.unloosenVanillaline = function(points, tension, spacing, samples, closed)
     end
 
     -- (optional) if you *want* the sample ring closed before spacing:
-    -- if closed then samp[j] = samp[1]; samp[j+1] = samp[2]; j = j + 2 end
 
     -- 3) Evenly re-space those samples, flat in/flat out, no hacks
     -- For a loop that shouldn’t duplicate the first point, use closed=true and include_first=false
@@ -303,7 +185,6 @@ end
 
 function lib.transformPolygonPoints(polygon, offX, offY)
     -- Calculate the center
-
 
     -- Shift all points to make them relative to the center
     local relativePolygon = {}
@@ -331,7 +212,6 @@ end
 function lib.scalePolygonPoints(polygon, scaleX, scaleY)
     -- Calculate the center
 
-
     -- Shift all points to make them relative to the center
     local relativePolygon = {}
     for i = 1, #polygon, 2 do
@@ -346,7 +226,6 @@ end
 
 function lib.makePolygonRelativeToCenter(polygon, centerX, centerY)
     -- Calculate the center
-
 
     -- Shift all points to make them relative to the center
     local relativePolygon = {}
@@ -383,7 +262,6 @@ function lib.getCenterOfPoints(points)
         if points[ip + 0] > brx then brx = points[ip + 0] end
         if points[ip + 1] > bry then bry = points[ip + 1] end
     end
-    --return tlx, tly, brx, bry
     local w = brx - tlx
     local h = bry - tly
     return tlx + w / 2, tly + h / 2, w, h
@@ -401,7 +279,6 @@ function lib.getCenterOfPoints2(points)
         if p.x > brx then brx = p.x end
         if p.y > bry then bry = p.y end
     end
-    --return tlx, tly, brx, bry
     local w = brx - tlx
     local h = bry - tly
     return tlx + w / 2, tly + h / 2
@@ -476,7 +353,6 @@ function lib.getCorners(polygon)
         end
     end
 
-
     local assigned_count = 0
     if corners.tl then assigned_count = assigned_count + 1 end
     if corners.tr then assigned_count = assigned_count + 1 end
@@ -496,7 +372,6 @@ function lib.getCorners(polygon)
             assignments[corner_v.id] = true
         end
     end
-
 
     if assigned_count ~= 4 or duplicates then
         logger:error("Warning: Could not assign all 4 corners uniquely using angle quadrants.")
@@ -598,7 +473,6 @@ function lib.normalizeAxis(x, y)
     if magnitude == 0 then
         return 1, 0 -- Default to (1, 0) if the vector is zero
     else
-        --   print('normalizing', x / magnitude, y / magnitude)
         return x / magnitude, y / magnitude
     end
 end
@@ -612,17 +486,7 @@ end
 function lib.computeCentroid(polygon)
     return lib.getCenterOfPoints(polygon)
 
-
     -- this is not a  correct way of doing it!!!!
-    -- local sumX, sumY = 0, 0
-    -- for i = 1, #polygon, 2 do
-    --     --for _, vertex in ipairs(vertices) do
-    --     sumX = sumX + polygon[i]
-    --     sumY = sumY + polygon[i + 1]
-    --     -- end
-    -- end
-    -- local count = (#polygon / 2)
-    -- return sumX / count, sumY / count
 end
 
 function lib.rotatePoint(x, y, originX, originY, angle)
@@ -667,8 +531,6 @@ end
 -- Function to convert world coordinates to local coordinates of a shape
 function lib.worldToLocal(worldX, worldY, angle, cx, cy)
     -- Get the body's position and angle
-    -- local offX, offY = obj.body:getPosition()
-    --local angle = obj.body:getAngle()
 
     -- Step 1: Translate the world point to the body's origin
     local translatedX = worldX -- offX
@@ -706,8 +568,6 @@ end
 
 -- decompose_complex.lua
 -- A module for decomposing complex polygons into simpler polygons by handling intersections.
-
-
 
 -- Function to find the intersection point between two line segments.
 local function getLineIntersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
@@ -775,7 +635,6 @@ local function getCollisions(poly)
 
     return collisions
 end
-
 
 local function tableConcat(t1, t2)
     for i = 1, #t2 do
@@ -851,7 +710,6 @@ end
 
 ---
 
-
 ---
 
 -- for the boyonce i prolly need thi algo:
@@ -894,42 +752,6 @@ function lib.polygonClip(subjectPolygon, clipPolygon)
         cp1 = cp2
     end
     return outputList
-end
-
-function lib.findIntersections(polygon, line)
-    local intersections = {}
-    local n = #polygon / 2 -- Number of vertices
-
-    for i = 1, n do
-        local j = (i % n) + 1 -- Next vertex index (wrap around)
-
-        -- Current edge points
-        local x1, y1 = polygon[(i - 1) * 2 + 1], polygon[(i - 1) * 2 + 2]
-        local x2, y2 = polygon[(j - 1) * 2 + 1], polygon[(j - 1) * 2 + 2]
-
-        -- Line to check against
-        local lx1, ly1, lx2, ly2 = line.x1, line.y1, line.x2, line.y2
-
-        -- Get intersection point
-        local Px, Py = getLineIntersection(x1, y1, x2, y2, lx1, ly1, lx2, ly2)
-
-        if Px and Py then
-            -- Check for duplicates
-            local duplicate = false
-            for _, inter in ipairs(intersections) do
-                if math.abs(inter.x - Px) < 1e-6 and math.abs(inter.y - Py) < 1e-6 then
-                    duplicate = true
-                    break
-                end
-            end
-
-            if not duplicate then
-                table.insert(intersections, { x = Px, y = Py, i1 = i, i2 = j })
-            end
-        end
-    end
-
-    return intersections
 end
 
 -- Function to split a polygon into two at a single given intersection point.
@@ -977,177 +799,9 @@ end
 -- Add or replace this function in your existing math-utils.lua
 -- Function to slice a polygon with a line defined by points p1 and p2
 
--- polygon = {
---         100, 100,
---         300, 100,
---         200, 200,
---         100, 200,
---     }
-
---     polygon = {
---         100, 100,
---         -300, 300,
---         300, 300,
---     }
-
---     polygon = {
---         100, 100, -- Vertex 1
---         200, 100, -- Vertex 2
---         200, 150, -- Vertex 3
---         150, 150, -- Vertex 4 (inward dent)
---         150, 200, -- Vertex 5
---         100, 200, -- Vertex 6
---     }
-
 -- Define slicing points (horizontal line at y = 150)
 
 -- Define slicing points
--- local p1 = { x = -5000, y = 150 }
--- local p2 = { x = 5000, y = 150 }
-
-
--- polygon = {
---     0, -100,    -- Vertex 1
---     23, -30,    -- Vertex 2
---     100, -30,   -- Vertex 3
---     38, 10,     -- Vertex 4
---     59, 80,     -- Vertex 5
---     0, 40,      -- Vertex 6
---     -59, 80,    -- Vertex 7
---     -38, 10,    -- Vertex 8
---     -100, -30,  -- Vertex 9
---     -23, -30,   -- Vertex 10
--- }
-
--- -- Define slicing points (diagonal line)
--- local p1 = { x = -150, y = 150 }
--- local p2 = { x = 150, y = -150 }
-
-
-
-function lib.slicePolygon(polygon, p1, p2)
-    -- p1 and p2 define the slicing line: {x = ..., y = ...}
-
-    -- Step 1: Find intersection points between the slice line and the polygon
-    local sliceLine = { x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y }
-    local intersections = lib.findIntersections(polygon, sliceLine)
-
-
-    --for _, inter in ipairs(intersections) do
-    --     print(string.format("Intersection at (%.2f, %.2f) on edge %d-%d", inter.x, inter.y, inter.i1, inter.i2))
-    --end
-
-    -- Ensure there are at least two unique intersection points
-    if #intersections < 2 then
-        return { polygon } -- Return the original polygon as a single-element table
-    end
-
-    -- Step 2: Sort intersections based on their order along the slice line
-    local function sortByDistance(a, b)
-        local dx = sliceLine.x2 - sliceLine.x1
-        local dy = sliceLine.y2 - sliceLine.y1
-        local distanceA = (a.x - sliceLine.x1) * dx + (a.y - sliceLine.y1) * dy
-        local distanceB = (b.x - sliceLine.x1) * dx + (b.y - sliceLine.y1) * dy
-        return distanceA < distanceB
-    end
-    table.sort(intersections, sortByDistance)
-
-    -- Step 3: Select two unique intersection points
-    local uniqueIntersections = {}
-    local threshold = 1e-6
-    for _, inter in ipairs(intersections) do
-        local isUnique = true
-        for _, unique in ipairs(uniqueIntersections) do
-            if math.abs(inter.x - unique.x) < threshold and math.abs(inter.y - unique.y) < threshold then
-                isUnique = false
-                break
-            end
-        end
-        if isUnique then
-            table.insert(uniqueIntersections, inter)
-            if #uniqueIntersections == 2 then break end
-        end
-    end
-
-    if #uniqueIntersections < 2 then
-        logger:error("Not enough unique intersections to slice the polygon.")
-        return { polygon }
-    end
-
-    local inter1, inter2 = uniqueIntersections[1], uniqueIntersections[2]
-
-    -- Step 4: Insert intersection points into the polygon's vertex list
-    -- To prevent index shifting issues, insert the intersection points in descending order of their insertion positions
-
-    -- Determine insertion positions
-    -- inter.i1 is the index of the first vertex of the edge where the intersection occurs
-    local insertPos1 = inter1.i1 * 2 -- Position in the flat array
-    local insertPos2 = inter2.i1 * 2 -- Position in the flat array
-
-    -- Sort insertion positions in descending order
-    if insertPos1 < insertPos2 then
-        insertPos1, insertPos2 = insertPos2, insertPos1
-        inter1, inter2 = inter2, inter1
-    end
-
-    -- Insert inter1 first
-    lib.insertValuesAt(polygon, insertPos1 + 1, inter1.x, inter1.y)
-    -- Insert inter2 next
-    lib.insertValuesAt(polygon, insertPos2 + 1, inter2.x, inter2.y)
-
-    -- Step 5: Find the new indices of the inserted intersection points
-    local function findVertexIndex(x, y)
-        for i = 1, #polygon, 2 do
-            if math.abs(polygon[i] - x) < threshold and math.abs(polygon[i + 1] - y) < threshold then
-                return (i + 1) / 2 -- Convert flat index to vertex index (1-based)
-            end
-        end
-        return nil
-    end
-
-    local newInter1Index = findVertexIndex(inter1.x, inter1.y)
-    local newInter2Index = findVertexIndex(inter2.x, inter2.y)
-
-    if not newInter1Index or not newInter2Index then
-        logger:error("Failed to find the new intersection indices after insertion.")
-        return { polygon }
-    end
-
-    -- Step 6: Traverse the polygon to create two new polygons
-    local function traverse(poly, startIdx, endIdx, direction)
-        local result = {}
-        local n = #poly / 2
-        local idx = startIdx
-
-        while true do
-            table.insert(result, poly[(idx - 1) * 2 + 1])
-            table.insert(result, poly[(idx - 1) * 2 + 2])
-
-            if idx == endIdx then
-                break
-            end
-
-            if direction == "clockwise" then
-                idx = idx % n + 1
-            else
-                idx = (idx - 2) % n + 1
-            end
-        end
-
-        return result
-    end
-
-    -- Create first polygon: traverse from inter1 to inter2 clockwise
-    local poly1 = traverse(polygon, newInter1Index, newInter2Index, "clockwise")
-    -- Create second polygon: traverse from inter2 to inter1 clockwise
-    local poly2 = traverse(polygon, newInter2Index, newInter1Index, "clockwise")
-
-    -- At this point, poly1 and poly2 already include the intersection points
-    -- There's no need to append inter1 and inter2 again, as it causes duplication
-
-
-    return { poly1, poly2 }
-end
 
 function lib.getMeanValueCoordinatesWeights(px, py, poly)
     local n = #poly / 2 -- number of vertices
@@ -1175,11 +829,9 @@ function lib.getMeanValueCoordinatesWeights(px, py, poly)
 
         local dx_prev = xprev - px
         local dy_prev = yprev - py
-        -- local d_prev = math.sqrt(dx_prev * dx_prev + dy_prev * dy_prev)
 
         local dx_next = xnext - px
         local dy_next = ynext - py
-        -- local d_next = math.sqrt(dx_next * dx_next + dy_next * dy_next)
 
         local d = math.sqrt(dx * dx + dy * dy) + 1e-10
         local d_prev = math.sqrt(dx_prev * dx_prev + dy_prev * dy_prev) + 1e-10

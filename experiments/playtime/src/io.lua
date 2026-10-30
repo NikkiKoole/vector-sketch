@@ -20,10 +20,6 @@ local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local FEXT = require('src.file-extensions')
 
-function lib.reload(data, world, cam)
-    lib.load(data, world, cam)
-end
-
 local function clearWorld(world)
     for _, body in pairs(world:getBodies()) do
         body:destroy()

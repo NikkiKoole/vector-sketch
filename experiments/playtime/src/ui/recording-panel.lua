@@ -126,11 +126,6 @@ function lib.drawRecordingUI()
             love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
         end
 
-        -- local peekerbutton2 = ui.button(x, y, width,
-        --     Peeker.get_status() and 'RECORDING video' or 'record vanilla video')
-        -- if peekerbutton2 then
-        --     videoing(false)
-        -- end
     end)
 end
 

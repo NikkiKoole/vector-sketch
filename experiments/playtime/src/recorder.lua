@@ -24,8 +24,6 @@ function recorder:startRecording(layerIndex)
     self.currentTime = 0
     self.startTime = love.timer.getTime()
     self.activeLayer = layerIndex or #self.recordings + 1
-    --self.events = {}
-    --self.recordings = {}
 
     self.replayIndices = {}
     self.recordingMouseJoints = {} -- here we save the mousejoints (or data to recreate them) whilst recording them
@@ -132,7 +130,6 @@ function recorder:recordMouseJointFinish(pointerid, bodyid)
 
         }
     }
-    --   print(inspect(event))
     self.recordingMouseJoints[pointerid .. bodyid .. self.activeLayer] = nil
     table.insert(self.events, event)
 end
@@ -160,7 +157,6 @@ function recorder:recordObjectSetPosition(bodyId, x, y)
             y = y
         }
     }
-    --print(inspect(event))
     table.insert(self.events, event)
 end
 
