@@ -61,7 +61,7 @@ setmetatable(lib, {
 })
 
 lib.set = { 'bossa', 'guaraldi', 'island', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'satie',
-            'ambient', 'sesame' }
+            'ambient', 'sesame', 'citypop' }
 lib.lookahead = 0.3          -- seconds of music booked ahead
 lib.activityHalfLife = 8     -- seconds for the play level to halve
 lib.bandJoins = 4            -- play level at which the rhythm section comes in...
