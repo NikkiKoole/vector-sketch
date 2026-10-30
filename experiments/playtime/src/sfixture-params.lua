@@ -41,7 +41,7 @@ lib.footer = {
 
 -- Move the sfixture to an edge (N/E/S/W) or the centre (C) of its body's
 -- bounding box, keeping its shape.
-local function placeOnEdge(fixture, place)
+function lib.placeOnEdge(fixture, place)
     local mathutils = require('src.math-utils')
     local m = ({ N = { 0, -1 }, E = { 1, 0 }, S = { 0, 1 }, W = { -1, 0 }, C = { 0, 0 } })[place]
     local body = fixture:getBody()
@@ -76,7 +76,7 @@ local position = {
           return require('src.fixtures').updateSFixtureDimensions(v, v)
       end },
     { key = 'place', kind = 'buttons', options = { 'N', 'E', 'S', 'W', 'C' }, advanced = true,
-      run = function(_, fixture, option) return placeOnEdge(fixture, option) end },
+      run = function(_, fixture, option) return lib.placeOnEdge(fixture, option) end },
 }
 
 local function concat(...)

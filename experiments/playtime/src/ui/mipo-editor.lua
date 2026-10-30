@@ -1246,7 +1246,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 ui.alignedLabel(x, y, s.label)
                                 local val = ui.sliderWithInput('mipo_' .. patchId .. '_' .. s.id,
                                     x + 30, y, 120, s.min, s.max, skin[patch][s.id] or s.default, false, s.step)
-                                if val ~= (skin[patch][s.id] or s.default) then
+                                if val and val ~= (skin[patch][s.id] or s.default) then -- nil: untouched
                                     CharacterManager.updateSkinOfPart(instance, partName, { [s.id] = val }, patch)
                                     if accordionStates.symmetricEditing then
                                         local mirror = getMirrorPart(partName)
@@ -2016,5 +2016,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
         return y - startY
     end)
 end
+
+lib._test = { accordionStates = accordionStates } -- for specs, not part of the API
 
 return lib

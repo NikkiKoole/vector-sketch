@@ -250,10 +250,11 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
     local returnValue = nil
 
     if panelSlider then
+        -- a number, rounded like the text field shows it (it used to be that string)
         if step and step == 1 then
-            value = string.format("%d", panelSlider)
+            value = math.floor(panelSlider + 0.5)
         else
-            value = string.format("%.2f", panelSlider)
+            value = tonumber(string.format("%.2f", panelSlider))
         end
         returnValue = value
     end

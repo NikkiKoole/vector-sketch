@@ -55,37 +55,43 @@ Each is small (under half an hour) unless it says otherwise.
   when `synthImpacts` is on, and main only calls it when the world isn't paused. Turning off impact
   sounds silences the music. Fix: a small `src/sound.lua` with `sound.update(dt)` called from main;
   mipo-voice keeps its flaps and cooldowns.
-- [ ] **BUG8. `debugIds` can be nil.** `physics/box2d-draw.lua:396` indexes `debugIds`, which is only
+- [x] **BUG8. `debugIds` can be nil.** `physics/box2d-draw.lua:396` indexes `debugIds`, which is only
   made in the body loop (:293). Show debug ids with no body ids drawn → error. Fix: create it at :188.
+  **Done 2026-10-30:** made once at the top of drawWorld. `spec/draw-debug_spec.lua`.
 - [ ] **BUG9. The add-behavior panel replaces the thing.** `playtime-ui.lua:430` deep-copies the
   body's userData every frame and `setUserData`s the copy on click, so
   `state.selection.selectedObj` points at the old thing. Fix: insert into
   `body:getUserData().thing.behaviors` directly.
-- [ ] **BUG10. `handleOffset` doesn't register the new fixture.** `ui/sfixture-editor.lua:1317-1336`
+- [x] **BUG10. `handleOffset` doesn't register the new fixture.** `ui/sfixture-editor.lua:1317-1336`
   (N/E/S/W/C buttons on connected texture and trace vertices) destroys and recreates the fixture
   but never calls `registry.registerSFixture`. `placeOnEdge` in `sfixture-params.lua:43` does it
   right; use it (or it goes away with CL14).
+  **Done 2026-10-30:** the buttons call `sfixtureParams.placeOnEdge`. `spec/inspector_spec.lua`.
 
 ## Looks wrong
 
-- [ ] **BUG11. Hair mottle depends on draw order.** Only the connected-texture branch
+- [x] **BUG11. Hair mottle depends on draw order.** Only the connected-texture branch
   (`box2d-draw-textured.lua:3116`) sends `mottleStrength`/`mottleScale` to the hairs shader; the
   texfixture (:2549) and trace-vertices (:3299) branches don't, so they reuse the last value sent.
   Fix: one `beginSurfaceShader(extra, body)` for all three (CL16).
-- [ ] **BUG12. Debug wireframe is on by default.** `box2d-draw-textured.lua:325`
+  **Done 2026-10-30:** one `setSurfaceShader(extra, body)`. `spec/draw-debug_spec.lua` spies on
+  what gets sent.
+- [x] **BUG12. Debug wireframe is on by default.** `box2d-draw-textured.lua:325`
   `lib.drawMeshOutline = true` draws green triangle edges over every MESHUSERT, in play mode too.
   Fix: default false.
+  **Done 2026-10-30.**
 - [ ] **BUG13. Offset circles ignore body rotation.** `physics/box2d-draw.lua:287` draws at
   `body_x + shape_x`; use `body:getWorldPoint(shape:getPoint())`. Also `:307`
   `setColor(255,255,255, alpha)` should be `1,1,1`. (Not checked by hand.)
 
 ## Slow
 
-- [ ] **BUG14. Mipo skin patch sliders rebuild the textures every frame.** `ui/mipo-editor.lua:1249`:
+- [x] **BUG14. Mipo skin patch sliders rebuild the textures every frame.** `ui/mipo-editor.lua:1249`:
   `ui.sliderWithInput` returns nil when nothing changed and `nil ~= value` is true, so
   `updateSkinOfPart` + `addTexturesFromInstance2` run every frame while the panel is open. Also
   `sliderWithInput` (`ui/all.lua:247-284`) returns a string when dragged and a number when typed,
   which is why there are `tonumber` calls everywhere. Fix: return `tonumber(...)`, and `if val and`.
+  **Done 2026-10-30:** both. `spec/mipo-editor_spec.lua` (5 rebuilds per frame before, 0 now).
 - [ ] **BUG15. Every save regenerates every OMP texture.** `io.lua:1041-1077` sets
   `extra.dirty = true` and drops `ompImage`/`_mesh` on the live userdata (library saves too, they
   gather the whole world). Fix: deepCopy first, clean only the copy.
@@ -96,5 +102,6 @@ Each is small (under half an hour) unless it says otherwise.
 - [ ] **BUG17. Blob rims scan every fixture every step.** `blob.lua:400-435` `beforeStep` walks all
   fixtures of all bodies (paused too) and calls `setMask` each step. Fix: loop over
   `registry.sfixtures` like `liquid.lua:461`.
-- [ ] **BUG18. `blinkStates` leaks.** `box2d-draw-textured.lua:32` is keyed by `thing` but not
+- [x] **BUG18. `blinkStates` leaks.** `box2d-draw-textured.lua:32` is keyed by `thing` but not
   weak-keyed, so every rebuilt thing stays. Fix: `setmetatable({}, { __mode = 'k' })`.
+  **Done 2026-10-30.** `spec/draw-debug_spec.lua`.

@@ -1038,6 +1038,44 @@ local function sendSharedLighting(shader, body, extra)
     sendLightsToShader(shader, body, extra)
 end
 
+local rimStyles = { off = 0, silhouette = 1, vignette = 2 }
+
+-- Set the hairs or plasticine shader for a drawable with these settings (hairs win
+-- when both are on) and send it everything it reads. Returns true when it set one.
+-- One place for texfixtures, ribbons and trace vertices: three copies had drifted,
+-- two never sent the hairs mottle, so it kept the last ribbon's value (BUG11).
+local function setSurfaceShader(extra, body)
+    if extra.hairs then
+        love.graphics.setShader(hairsShader)
+        hairsShader:send('strength',       extra.hairsStrength            or lib.hairsStrength)
+        hairsShader:send('density',        extra.hairsDensity             or lib.hairsDensity)
+        hairsShader:send('fuzz',           extra.hairsFuzz                or lib.hairsFuzz)
+        hairsShader:send('bush',           extra.hairsBush                or lib.hairsBush)
+        hairsShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
+        hairsShader:send('formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
+        hairsShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
+        hairsShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
+        sendSharedLighting(hairsShader, body, extra)
+        return true
+    end
+    if extra.plasticine then
+        love.graphics.setShader(plasticineShader)
+        plasticineShader:send('strength',       extra.plasticineStrength       or lib.plasticineStrength)
+        plasticineShader:send('scale',          extra.plasticineScale          or lib.plasticineScale)
+        plasticineShader:send('edgeDark',       extra.plasticineEdge           or lib.plasticineEdge)
+        plasticineShader:send('bumpAmp',        extra.plasticineBump           or lib.plasticineBump)
+        plasticineShader:send('formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
+        plasticineShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
+        plasticineShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
+        plasticineShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
+        plasticineShader:send('useForm',        (extra.plasticineForm ~= false) and 1 or 0)
+        plasticineShader:send('rimStyle',       rimStyles[extra.plasticineRimStyle or 'silhouette'])
+        sendSharedLighting(plasticineShader, body, extra)
+        return true
+    end
+    return false
+end
+
 -- Gather scene LIGHT sfixtures and rotate each world-space direction into the
 -- target body's local UV frame. Returns count + (buffers reused every call).
 -- Capped at MAX_LIGHTS; extras silently ignored.
@@ -2545,34 +2583,7 @@ function lib.drawTexturedWorld(world)
             --if texfixture then
             local extra = drawables[i].extra
             --print(extra.dirty)
-            local hairsOn = extra.hairs
-            local plasticineOn = extra.plasticine and not hairsOn
-            if hairsOn then
-                love.graphics.setShader(hairsShader)
-                hairsShader:send('strength',     extra.hairsStrength          or lib.hairsStrength)
-                hairsShader:send('density',      extra.hairsDensity           or lib.hairsDensity)
-                hairsShader:send('fuzz',         extra.hairsFuzz              or lib.hairsFuzz)
-                hairsShader:send('bush',         extra.hairsBush              or lib.hairsBush)
-                hairsShader:send('formRadius',   extra.plasticineFormRadius   or lib.plasticineFormRadius)
-                hairsShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
-                local hTexBody = texfixture and texfixture:getBody() or nil
-                sendSharedLighting(hairsShader, hTexBody, extra)
-            elseif plasticineOn then
-                love.graphics.setShader(plasticineShader)
-                plasticineShader:send('strength',     extra.plasticineStrength     or lib.plasticineStrength)
-                plasticineShader:send('scale',        extra.plasticineScale        or lib.plasticineScale)
-                plasticineShader:send('edgeDark',     extra.plasticineEdge         or lib.plasticineEdge)
-                plasticineShader:send('bumpAmp',      extra.plasticineBump         or lib.plasticineBump)
-                plasticineShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
-                plasticineShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
-                plasticineShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-                plasticineShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
-                plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
-                local rimMap = { off = 0, silhouette = 1, vignette = 2 }
-                plasticineShader:send('rimStyle', rimMap[extra.plasticineRimStyle or 'silhouette'])
-                local texBody = texfixture and texfixture:getBody() or nil
-                sendSharedLighting(plasticineShader, texBody, extra)
-            end
+            local shaded = setSurfaceShader(extra, texfixture and texfixture:getBody() or nil)
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
                 -- local cached = main.cached
@@ -2611,7 +2622,7 @@ function lib.drawTexturedWorld(world)
                 end
                 --end
             end
-            if plasticineOn or hairsOn then
+            if shaded then
                 love.graphics.setShader()
             end
         end
@@ -3105,34 +3116,7 @@ function lib.drawTexturedWorld(world)
             local curve = drawables[i].curve
             local derivate = curve:getDerivative()
             local extra = drawables[i].extra
-            local ctHairsOn = extra.hairs
-            local ctPlasticineOn = extra.plasticine and not ctHairsOn
-            if ctHairsOn then
-                love.graphics.setShader(hairsShader)
-                hairsShader:send('strength',     extra.hairsStrength          or lib.hairsStrength)
-                hairsShader:send('density',      extra.hairsDensity           or lib.hairsDensity)
-                hairsShader:send('fuzz',         extra.hairsFuzz              or lib.hairsFuzz)
-                hairsShader:send('bush',         extra.hairsBush              or lib.hairsBush)
-                hairsShader:send('formRadius',   extra.plasticineFormRadius   or lib.plasticineFormRadius)
-                hairsShader:send('formStrength',    extra.plasticineFormStrength   or lib.plasticineFormStrength)
-                hairsShader:send('mottleStrength',  extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-                hairsShader:send('mottleScale',     extra.plasticineMottleScale    or lib.plasticineMottleScale)
-                sendSharedLighting(hairsShader, nil, extra)
-            elseif ctPlasticineOn then
-                love.graphics.setShader(plasticineShader)
-                plasticineShader:send('strength',     extra.plasticineStrength     or lib.plasticineStrength)
-                plasticineShader:send('scale',        extra.plasticineScale        or lib.plasticineScale)
-                plasticineShader:send('edgeDark',     extra.plasticineEdge         or lib.plasticineEdge)
-                plasticineShader:send('bumpAmp',      extra.plasticineBump         or lib.plasticineBump)
-                plasticineShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
-                plasticineShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
-                plasticineShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-                plasticineShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
-                plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
-                local rimMap = { off = 0, silhouette = 1, vignette = 2 }
-                plasticineShader:send('rimStyle', rimMap[extra.plasticineRimStyle or 'silhouette'])
-                sendSharedLighting(plasticineShader, nil, extra)
-            end
+            local shaded = setSurfaceShader(extra, nil)
             if not extra.OMP then -- this is the BG and FG routine
                 local main = extra.main
                 -- local cached = main.cached
@@ -3178,7 +3162,7 @@ function lib.drawTexturedWorld(world)
                     love.graphics.draw(mesh)
                 end
             end
-            if ctPlasticineOn or ctHairsOn then
+            if shaded then
                 love.graphics.setShader()
             end
         end
@@ -3299,32 +3283,7 @@ function lib.drawTexturedWorld(world)
                         love.graphics.setColor(c.bgR, c.bgG, c.bgB, c.bgA)
                     end
                 end
-                local tvHairsOn = extra.hairs
-                local tvPlasticineOn = extra.plasticine and not tvHairsOn
-                if tvHairsOn then
-                    love.graphics.setShader(hairsShader)
-                    hairsShader:send('strength',     extra.hairsStrength          or lib.hairsStrength)
-                    hairsShader:send('density',      extra.hairsDensity           or lib.hairsDensity)
-                    hairsShader:send('fuzz',         extra.hairsFuzz              or lib.hairsFuzz)
-                    hairsShader:send('bush',         extra.hairsBush              or lib.hairsBush)
-                    hairsShader:send('formRadius',   extra.plasticineFormRadius   or lib.plasticineFormRadius)
-                    hairsShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
-                    sendSharedLighting(hairsShader, body, extra)
-                elseif tvPlasticineOn then
-                    love.graphics.setShader(plasticineShader)
-                    plasticineShader:send('strength',     extra.plasticineStrength     or lib.plasticineStrength)
-                    plasticineShader:send('scale',        extra.plasticineScale        or lib.plasticineScale)
-                    plasticineShader:send('edgeDark',     extra.plasticineEdge         or lib.plasticineEdge)
-                    plasticineShader:send('bumpAmp',      extra.plasticineBump         or lib.plasticineBump)
-                    plasticineShader:send('formStrength', extra.plasticineFormStrength or lib.plasticineFormStrength)
-                    plasticineShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
-                plasticineShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-                plasticineShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
-                    plasticineShader:send('useForm',      (extra.plasticineForm ~= false) and 1 or 0)
-                    local rimMap = { off = 0, silhouette = 1, vignette = 2 }
-                    plasticineShader:send('rimStyle', rimMap[extra.plasticineRimStyle or 'silhouette'])
-                    sendSharedLighting(plasticineShader, body, extra)
-                end
+                local shaded = setSurfaceShader(extra, body)
                 if hairBones then
                     -- the mesh is around the whole outline's centre: put that where the torso
                     -- shape's centre is on torso1, then bend with the spine at the top
@@ -3341,7 +3300,7 @@ function lib.drawTexturedWorld(world)
                 else
                     love.graphics.draw(m, body:getX(), body:getY(), body:getAngle())
                 end
-                if tvHairsOn or tvPlasticineOn then
+                if shaded then
                     love.graphics.setShader()
                 end
                 love.graphics.setColor(1, 1, 1, 1)
@@ -3746,6 +3705,6 @@ function lib.drawTexturedWorld(world)
     --love.graphics.setDepthMode()
 end
 
-lib._test = { blinkStates = blinkStates } -- for specs, not part of the API
+lib._test = { blinkStates = blinkStates, setSurfaceShader = setSurfaceShader } -- for specs, not part of the API
 
 return lib

@@ -283,6 +283,22 @@ describe('inspector', function()
         assert.is_true(math.abs(thing.body:getMass() - 2 * before) < 1e-3 * before)
     end)
 
+    -- Their hand-made panel had its own copy of N/E/S/W/C that forgot to register the
+    -- new fixture (BUG10); its buttons now call placeOnEdge.
+    for _, subtype in ipairs({ 'connected-texture', 'trace-vertices' }) do
+        it('sfixture (' .. subtype .. '): N/E/S/W/C keep it registered and selected', function()
+            local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 100, height = 100 })
+            local fixture = fixtures.createSFixture(thing.body, 0, 0, subtype, { radius = 20 })
+            local id = fixture:getUserData().id
+            for _, place in ipairs({ 'N', 'E', 'S', 'W', 'C' }) do
+                fixture = sfixtureParams.placeOnEdge(fixture, place)
+                assert.is_false(fixture:isDestroyed(), place)
+                assert.are.equal(fixture, registry.getSFixtureByID(id), place)
+                assert.are.equal(fixture, state.selection.selectedSFixture, place)
+            end
+        end)
+    end
+
     for subtype, subtypeRows in pairs(sfixtureParams.bySubtype) do
         local function makeFixture()
             local thing = objectManager.addThing('rectangle', { x = 300, y = 200, width = 100, height = 100 })

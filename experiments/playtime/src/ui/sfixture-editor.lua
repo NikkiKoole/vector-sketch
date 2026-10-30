@@ -1314,46 +1314,30 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                         end
 
                 nextRow()
-                local function handleOffset(xMultiplier, yMultiplier)
-                    local body = state.selection.selectedSFixture:getBody()
-                    local parentVerts = body:getUserData().thing.vertices
-                    local sfPoints = { state.selection.selectedSFixture:getShape():getPoints() }
-                    local centerX, centerY = mathutils.getCenterOfPoints(sfPoints)
-                    local bounds = mathutils.getBoundingRect(parentVerts)
-                    local relativePoints = mathutils.makePolygonRelativeToCenter(sfPoints, centerX, centerY)
-                    local newShape = mathutils.makePolygonAbsolute(relativePoints,
-                        ((bounds.width / 2) * xMultiplier),
-                        ((bounds.height / 2) * yMultiplier))
-
-                    local oldUD = utils.shallowCopy(state.selection.selectedSFixture:getUserData())
-                    state.selection.selectedSFixture:destroy()
-
-                    local shape = love.physics.newPolygonShape(newShape)
-                    local newfixture = love.physics.newFixture(body, shape)
-                    newfixture:setSensor(true) -- Sensor so it doesn't collide
-                    newfixture:setUserData(oldUD)
-                    state.selection.selectedSFixture = newfixture
+                -- N/E/S/W/C: to an edge or the centre of the body (and registered again, BUG10)
+                local function handleOffset(place)
+                    sfixtureParams.placeOnEdge(state.selection.selectedSFixture, place)
                 end
 
                 if not subtypes.is(state.selection.selectedSFixture:getUserData(), subtypes.TEXFIXTURE) then
                     if ui.button(x, y, 40, 'N') then
-                        handleOffset(0, -1)
+                        handleOffset('N')
                     end
                     slx, sly = ui.sameLine()
                     if ui.button(slx, sly, 40, 'E') then
-                        handleOffset(1, 0)
+                        handleOffset('E')
                     end
                     slx, sly = ui.sameLine()
                     if ui.button(slx, sly, 40, 'S') then
-                        handleOffset(0, 1)
+                        handleOffset('S')
                     end
                     slx, sly = ui.sameLine()
                     if ui.button(slx, sly, 40, 'W') then
-                        handleOffset(-1, 0)
+                        handleOffset('W')
                     end
                     slx, sly = ui.sameLine()
                     if ui.button(slx, sly, 40, 'C') then
-                        handleOffset(0, 0)
+                        handleOffset('C')
                     end
                 end
             end)
