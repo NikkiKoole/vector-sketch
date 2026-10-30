@@ -1,6 +1,6 @@
 # Code cleanup — simpler, less copy-paste (October 2026 review)
 
-status: active
+status: done
 
 From the 7-agent read-only review of 2026-10-30. The aim is plain, boring code: delete what's
 dead, write each small thing once, give modules one job. Line numbers as of commit 65c48eb8; a
@@ -255,7 +255,7 @@ L = more.
   called it); `j` → `joint` where it's a joint; `mud` gone (thingOf); `subtypes.MESHUSERT / DECAL`
   instead of the strings; topology's `instance`; signals' cache is `triggerScan`. `bud` went in CL7.
   Left: `fud` (fixture userData next to a body's `ud`: the two names keep them apart).
-- [ ] **CL26. Long functions in input and music.** `input-manager.lua` `handlePointer` (:333-614):
+- [x] **CL26. Long functions in input and music.** `input-manager.lua` `handlePointer` (:333-614):
   `pressedPlaceSteiner`, `findVertexNear` (polyEdit and texFixtureEdit loops are the same),
   `clearSelectionAndPanels` (":533, todo this is dumb"), `brushTriangles` (6 deep, :728-809),
   `pressedSetOffset(which)`; name the panel width 300 (4x), palette 400, grab radii 10/20/30.
@@ -267,7 +267,11 @@ L = more.
   `releasedPlaceSteiner`, `pressedOnPanel`, `pressedEditedCorner` (one `findVertexNear` for polygon and
   texfixture corners), `pressedSelect`, `clearSelectionAndPanels`, `finishBoxSelection`;
   `pressedSetOffset('A'/'B')`; `brushTriangles` out of handleMouseMoved; `PANEL_WIDTH`, `PALETTE_HEIGHT`
-  and the grab radii named. recorder: `addEvent` and one `jointKey`. Left: the music half (playtime-b5).
+  and the grab radii named. recorder: `addEvent` and one `jointKey`. **Music half (3ea00725, playtime-b5):**
+  `planSong` 178 -> 30 lines and `bookBar` 257 -> 30, as named steps (planChords, planForm, bookBass,
+  bookDrums, ...); styles carry data (FORMS / RIFFS / HORN_HITS, LOOP_PLANS, `groove = 'lofi'`,
+  guaraldi `bassLo = 38`). Every note of all 15 styles fingerprinted before and after: identical, apart
+  from lofiGroove's drum lanes, which ran in `pairs()` order (not stable) and now run S H K R.
 
 ## Leave alone
 
