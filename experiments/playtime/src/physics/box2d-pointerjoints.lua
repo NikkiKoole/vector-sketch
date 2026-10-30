@@ -7,7 +7,7 @@ local units = require('src.physics-units')
 local utils = require('src.utils')
 local pointerJoints = {}
 
-local function getPointerPosition(id)
+function lib.getPointerPosition(id)
     if id == 'mouse' then
         return love.mouse.getPosition()
     else
@@ -97,7 +97,7 @@ function lib.handlePointerUpdate(dt, cam)
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
         if (mj.joint) then
-            local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
+            local mx, my = lib.getPointerPosition(mj.id)
             local wx, wy = cam:getWorldCoordinates(mx, my)
             if lib.maxMipoDragSpeed and dt and mipoRegistry.getFromBody(mj.jointBody) then
                 local tx, ty = mj.joint:getTarget()

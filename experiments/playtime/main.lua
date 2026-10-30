@@ -425,19 +425,6 @@ function love.wheelmoved(dx, dy)
     ui.mouseWheelDy = dy
 end
 
-local function getRelativePath(absPath, cwd)
-    -- Normalize both so they don't end with a slash
-    cwd = cwd:gsub("/+$", "")
-    absPath = absPath:gsub("/+$", "")
-
-    -- Ensure absPath starts with cwd
-    if absPath:sub(1, #cwd) == cwd then
-        local rel = absPath:sub(#cwd + 1)
-        return rel ~= "" and rel or "/"
-    end
-
-    return nil -- not inside working directory
-end
 function love.filedropped(file)
     if rightColumn.fileDropped(file) then return end
     local name = file:getFilename()
@@ -455,7 +442,7 @@ function love.filedropped(file)
     local x, y = love.mouse:getPosition()
     local wx, wy = cam:getWorldCoordinates(x, y)
     local cwd = love.filesystem.getWorkingDirectory()
-    local relative = getRelativePath(name, cwd)
+    local relative = utils.getPathDifference(cwd, name)
     if relative then
         table.insert(state.backdrops, { x = wx, y = wy, url = relative })
     end

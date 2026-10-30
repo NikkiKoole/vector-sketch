@@ -18,6 +18,7 @@ local NT = require('src.node-types')
 local cdt = require('src.cdt')
 local meshusertBind = require('src.meshusert-bind')
 local utils = require('src.utils')
+local color = require('src.color')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -340,7 +341,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                         -- Re-triangulate with the new points included
                                         local bd = resourceLink.backdrop(rud)
                                         if bd then
-                                            cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
+                                            cdt.computeResourceMesh(rud, rv:getBody(), bd)
                                         end
                                         -- Invalidate bone assignments — topology changed
                                         meshusertBind.clearInfluences(ud.extra, true) -- topology changed
@@ -369,10 +370,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                         local isHover = ui.mouseX >= gbx and ui.mouseX <= gbx + btnW
                             and ui.mouseY >= y and ui.mouseY <= y + BUTTON_HEIGHT
                         if isHover then hoveredGroup = g end
-                        local gx = ((g * 73) % 256) / 255
-                        local gy = ((g * 151) % 256) / 255
-                        local gz = ((g * 211) % 256) / 255
-                        local col = isSel and { gx, gy, gz } or nil
+                        local col = isSel and { color.groupColor(g) } or nil
                         if ui.button(gbx, y, btnW, tostring(g), BUTTON_HEIGHT, col) then
                             state.triangleEditor.selectedGroup = g
                         end
@@ -423,10 +421,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                         local isHover = ui.mouseX >= bx and ui.mouseX <= bx + boneBtnW
                             and ui.mouseY >= y and ui.mouseY <= y + BUTTON_HEIGHT
                         if isHover then hoveredBone = b end
-                        local boneR = ((b * 97)  % 256) / 255
-                        local boneG = ((b * 163) % 256) / 255
-                        local boneB = ((b * 211) % 256) / 255
-                        local col = isSel and { boneR, boneG, boneB } or nil
+                        local col = isSel and { color.boneColor(b) } or nil
                         if ui.button(bx, y, boneBtnW, tostring(b), BUTTON_HEIGHT, col) then
                             state.triangleEditor.selectedBone = b
                         end
@@ -437,10 +432,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     if highlightBone and nodes[highlightBone] then
                         local wx, wy = nodeWorldPos(nodes[highlightBone])
                         if wx then
-                            local b = highlightBone
-                            local boneR = ((b * 97)  % 256) / 255
-                            local boneG = ((b * 163) % 256) / 255
-                            local boneB = ((b * 211) % 256) / 255
+                            local boneR, boneG, boneB = color.boneColor(highlightBone)
                             ui.onStage(function()
                                 local sx, sy = cam:getScreenCoordinates(wx, wy)
                                 love.graphics.setColor(boneR, boneG, boneB, 0.9)
@@ -562,7 +554,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                                         rBodyThing.extraSteiner = nil
                                         local bd = resourceLink.backdrop(rud)
                                         if bd then
-                                            cdt.computeResourceMesh(rud, rv:getBody(), bd, mathutils)
+                                            cdt.computeResourceMesh(rud, rv:getBody(), bd)
                                         end
                                         meshusertBind.clearInfluences(ud.extra, true) -- topology changed
                                     end

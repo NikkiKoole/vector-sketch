@@ -22,6 +22,7 @@
 
 local lib = {}
 local utils = require('src.utils')
+local mathutils = require('src.math-utils')
 
 ---------------------------------------------------------------------------
 -- Geometry helpers
@@ -369,7 +370,7 @@ local function ribbonStripIndices(polyVerts)
     return tris
 end
 
-function lib.computeResourceMesh(ud, body, bd, mathutils)
+function lib.computeResourceMesh(ud, body, bd)
     if not (ud and ud.extra and body and bd) then return false end
     local bodyUD = body:getUserData()
     if not (bodyUD and bodyUD.thing and bodyUD.thing.vertices) then return false end
@@ -380,13 +381,7 @@ function lib.computeResourceMesh(ud, body, bd, mathutils)
     -- built from), and read Steiner points from the body (thing.extraSteiner
     -- is already body-local). The rest of the pipeline returns body-local
     -- meshVerts. UV mapping just applies the body's current world transform.
-    local mathutils2 = mathutils or require('src.math-utils')
-    local centX, centY = mathutils2.computeCentroid(origVerts)
-    local localPolyVerts = {}
-    for i = 1, #origVerts, 2 do
-        localPolyVerts[i] = origVerts[i] - centX
-        localPolyVerts[i + 1] = origVerts[i + 1] - centY
-    end
+    local localPolyVerts = mathutils.makePolygonRelativeToCenter(origVerts, mathutils.computeCentroid(origVerts))
     local extraSteiner = bodyUD.thing.extraSteiner
 
     -- Mode is auto-derived from body state:
@@ -414,7 +409,7 @@ function lib.computeResourceMesh(ud, body, bd, mathutils)
         if not triIndices or #triIndices == 0 then
             mode = 'basic'
             meshVerts = localPolyVerts
-            triIndices = mathutils2.triangulateToIndices(localPolyVerts)
+            triIndices = mathutils.triangulateToIndices(localPolyVerts)
         end
     end
     if not triIndices or #triIndices == 0 then return false end

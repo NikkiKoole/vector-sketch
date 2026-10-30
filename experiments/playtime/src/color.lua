@@ -65,6 +65,15 @@ local function parse(hex)
     return r / 255, g / 255, b / 255, a / 255
 end
 
+-- A colour per index (bones, triangle groups): the same index always gets the same colour.
+function lib.boneColor(i)
+    return ((i * 97) % 256) / 255, ((i * 163) % 256) / 255, ((i * 211) % 256) / 255
+end
+
+function lib.groupColor(i)
+    return ((i * 73) % 256) / 255, ((i * 151) % 256) / 255, ((i * 211) % 256) / 255
+end
+
 -- hex -> r, g, b, a (0..1); white when it can't be read. Remembered: the renderer asks for
 -- the same few colours for every drawable, every frame.
 local parsed = {}

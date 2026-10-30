@@ -533,7 +533,7 @@ function lib.buildWorld(data, world, cam, opts)
                 local needsUVs = not ud.extra.uvs or #ud.extra.uvs == 0
                 local needsTris = not ud.extra.triangles or #ud.extra.triangles == 0
                 if bd and bd.image and bd.w and bd.h and (needsUVs or needsTris) then
-                    cdt.computeResourceMesh(ud, v:getBody(), bd, mathutils)
+                    cdt.computeResourceMesh(ud, v:getBody(), bd)
                 end
             end
         end

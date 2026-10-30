@@ -17,6 +17,7 @@ local resourceLink = require('src.resource-link')
 local ST = require 'src.shape-types'
 local NT = require('src.node-types')
 local cdt = require 'src.cdt'
+local colors = require('src.color')
 local lib = {}
 
 -- Grab handles for a flat vertex array, highlighting the one under the
@@ -269,19 +270,8 @@ function lib.renderActiveEditorThings()
                     local groups = mextra.triangleGroups
                     local numTris = math.floor(#triIdx / 3)
 
-                    -- Same hash as the group buttons in sfixture-editor.lua
-                    local function groupColor(g)
-                        return ((g * 73) % 256) / 255,
-                               ((g * 151) % 256) / 255,
-                               ((g * 211) % 256) / 255
-                    end
+                    local groupColor, boneColor = colors.groupColor, colors.boneColor
                     local paintMode = state.triangleEditor.paintMode or 'bones'
-
-                    local function boneColor(b)
-                        return ((b * 97)  % 256) / 255,
-                               ((b * 163) % 256) / 255,
-                               ((b * 211) % 256) / 255
-                    end
 
                     local targetBone     = state.triangleEditor.selectedBone or 1
                     local triangleBones  = ud.extra.triangleBones
@@ -436,12 +426,7 @@ function lib.renderSteinerOverlay()
     -- Polygon verts are stored in authoring-world coords; the rendered body
     -- uses `vert - centroid(thing.vertices)` as its body-local frame. Match
     -- that frame so the overlay tracks the body when it moves.
-    local cenX, cenY = mathutils.computeCentroid(thing.vertices)
-    local localPoly = {}
-    for i = 1, #thing.vertices, 2 do
-        localPoly[i] = thing.vertices[i] - cenX
-        localPoly[i + 1] = thing.vertices[i + 1] - cenY
-    end
+    local localPoly = mathutils.makePolygonRelativeToCenter(thing.vertices, mathutils.computeCentroid(thing.vertices))
 
     local meshVerts, triIdx = cdt.triangulatePolyWithSteiner(localPoly, thing.extraSteiner)
 

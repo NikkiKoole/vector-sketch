@@ -81,7 +81,7 @@ end
 
 -- Duplicate middle control points N times so the Bezier hugs them
 -- instead of smoothing them away. Mirrors what CONNECTED_TEXTURE does.
-local function doubleControlPoints(points, dups)
+function lib.doubleControlPoints(points, dups)
     local n = #points / 2
     if n <= 2 or dups <= 0 then return points end
     local out = {}
@@ -109,7 +109,7 @@ local function sampleChain(chain, bendiness, depth)
         -- 2-node chain: pad with midpoint so Bezier has >=3 control points.
         pts = { pts[1], pts[2], (pts[1] + pts[3]) / 2, (pts[2] + pts[4]) / 2, pts[3], pts[4] }
     end
-    local ctrl = doubleControlPoints(pts, bendiness)
+    local ctrl = lib.doubleControlPoints(pts, bendiness)
     local curve = love.math.newBezierCurve(ctrl)
     return curve:render(depth or 5)
 end

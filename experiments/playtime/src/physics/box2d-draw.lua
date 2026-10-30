@@ -54,12 +54,7 @@ local function drawCustomBodyFill(body, thing, fillColor, alpha, drawOutline)
     if not verts or #verts < 6 then return false end
 
     local extraSteiner = thing.extraSteiner
-    local cenX, cenY = mathutils.computeCentroid(verts)
-    local localPoly = {}
-    for i = 1, #verts, 2 do
-        localPoly[i] = verts[i] - cenX
-        localPoly[i + 1] = verts[i + 1] - cenY
-    end
+    local localPoly, cenX, cenY = mathutils.makePolygonRelativeToCenter(verts, mathutils.computeCentroid(verts))
 
     -- Match the MESHUSERT's triangulation so body fill and deformed render
     -- agree. With Steiners → outline + user points; without → ear-clip.

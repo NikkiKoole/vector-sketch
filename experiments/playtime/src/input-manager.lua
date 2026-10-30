@@ -40,7 +40,7 @@ local function refreshResourceAfterSteinerChange(body)
     for _, ud in ipairs(fixtures.sfixtureData(body, subtypes.RESOURCE)) do
         local bd = resourceLink.backdrop(ud)
         if bd then
-            cdt.computeResourceMesh(ud, body, bd, mathutils)
+            cdt.computeResourceMesh(ud, body, bd)
         end
     end
     for _, v in pairs(registry.sfixtures) do

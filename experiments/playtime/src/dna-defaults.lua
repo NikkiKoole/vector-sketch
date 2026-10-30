@@ -7,16 +7,7 @@
 -- This distinction is intentional — do not rename, as it would break saved scenes.
 
 local lib = {}
-
--- Deep-copy a table (simple, no cyclic ref handling needed for defaults)
-local function deepCopySimple(orig)
-    if type(orig) ~= 'table' then return orig end
-    local copy = {}
-    for k, v in pairs(orig) do
-        copy[k] = deepCopySimple(v)
-    end
-    return copy
-end
+local deepCopy = require('src.utils').deepCopy
 
 --- Fill missing keys in target from defaults, recursing into sub-tables.
 --- Checks `== nil` (not truthiness) so `false` values are preserved.
@@ -24,7 +15,7 @@ end
 function lib.ensureDefaults(target, defaults)
     for k, v in pairs(defaults) do
         if target[k] == nil then
-            target[k] = deepCopySimple(v)
+            target[k] = deepCopy(v)
         elseif type(v) == 'table' and type(target[k]) == 'table' then
             lib.ensureDefaults(target[k], v)
         end
@@ -73,13 +64,13 @@ lib.facePositioners = {
 
 -- Combined face default (all sub-structures)
 lib.face = {
-    eye = deepCopySimple(lib.eye),
-    pupil = deepCopySimple(lib.pupil),
-    brow = deepCopySimple(lib.brow),
-    nose = deepCopySimple(lib.nose),
-    teeth = deepCopySimple(lib.teeth),
-    mouth = deepCopySimple(lib.mouth),
-    positioners = deepCopySimple(lib.facePositioners),
+    eye = deepCopy(lib.eye),
+    pupil = deepCopy(lib.pupil),
+    brow = deepCopy(lib.brow),
+    nose = deepCopy(lib.nose),
+    teeth = deepCopy(lib.teeth),
+    mouth = deepCopy(lib.mouth),
+    positioners = deepCopy(lib.facePositioners),
 }
 
 -- Top-level positioners (leg, ear, nose placement on body)

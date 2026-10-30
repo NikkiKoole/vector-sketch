@@ -70,17 +70,10 @@ function recorder:update(dt)
     end
 end
 
-local function getPointerPosition(id)
-    if id == 'mouse' then
-        return love.mouse.getPosition()
-    else
-        return love.touch.getPosition(id)
-    end
-end
 function recorder:recordMouseJointUpdates(cam)
     for _, v in pairs(self.recordingMouseJoints) do
         if v.data.pointerId then
-            local x, y = getPointerPosition(v.data.pointerId)
+            local x, y = box2dPointerJoints.getPointerPosition(v.data.pointerId)
             local wx, wy = cam:getWorldCoordinates(x, y)
 
             local event = {

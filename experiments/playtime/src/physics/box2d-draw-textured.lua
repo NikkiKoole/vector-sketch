@@ -1209,45 +1209,6 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
     mesh:setVertices(verts)
 end
 
-local function doubleControlPoints(points, duplications)
-    local len = #points
-    if len % 2 ~= 0 then
-        error("Input array must have even number of elements (x, y pairs)")
-    end
-
-    local n = len / 2                     -- number of (x,y) points
-    local mids = (n > 2) and (n - 2) or 0 -- middle points count
-    local outLen = len + 2 * duplications * mids
-
-    local result = {}
-    result[outLen] = false -- pre-allocate array size (fills with nils)
-
-    local ri = 1           -- write index into result
-    local last = len - 1   -- last x index (so y is last+1)
-    local d = duplications -- localize for tight loop
-
-    for i = 1, len, 2 do
-        local x = points[i]
-        local y = points[i + 1]
-
-        -- always copy the original point once
-        result[ri] = x
-        result[ri + 1] = y
-        ri = ri + 2
-
-        -- duplicate if it's a middle point (not first or last)
-        if i > 2 and i < last then
-            for _ = 1, d do
-                result[ri] = x
-                result[ri + 1] = y
-                ri = ri + 2
-            end
-        end
-    end
-
-    return result
-end
-
 local function transformUV(x, y, cx, cy, opts)
     -- Translate point to origin (centroid or top-left)
     local dx = x - cx + opts.offsetX
@@ -1871,9 +1832,9 @@ local function createDrawables()
                 -- bendiness controls control-point duplication for the bezier through
                 -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
                 -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
-                -- pre-knob behaviour. See doubleControlPoints above.
+                -- pre-knob behaviour. See doubleControlPoints in src/spine-mesh.lua.
                 local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
-                points = doubleControlPoints(points, bendiness)
+                points = spineMesh.doubleControlPoints(points, bendiness)
 
                 table.insert(drawables,
                     {

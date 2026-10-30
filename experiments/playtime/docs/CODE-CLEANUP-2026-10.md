@@ -93,13 +93,20 @@ L = more.
   `part.body and not part.body:isDestroyed()` (a short readable line, also on plain things), the
   joint guard's `collectSubtree` (part names, not bodies), body-rotate's walk (any bodies), and the
   balance* density scaling (with CL18). `spec/mipo-registry_spec.lua`.
-- [ ] **CL12. Small copies.** `C.x[math.ceil(math.random() * #C.x)]` 31 times → `pick(list)`;
+- [x] **CL12. Small copies.** `C.x[math.ceil(math.random() * #C.x)]` 31 times → `pick(list)`;
   weighted pick 3 times (mipo-chatter:30, music:664, 719); `setting(extra, key)` in liquid, grass,
   blob; `hexColor` in liquid and grass (use `hexToColor`); `doubleControlPoints` in draw-textured:1629
   and spine-mesh:84; "subtract the centroid" in box2d-draw:56, editor-render:434, cdt:383 (use
   `makePolygonRelativeToCenter`); `getPointerPosition` in recorder:75 and pointerjoints:9; main's
   `getRelativePath` = `utils.getPathDifference`; dna-defaults `deepCopySimple` = `utils.deepCopy`;
   bone/group colour hash `(b*97)%256` in sfixture-editor and editor-render. S each.
+  **Done 2026-10-30:** `color.boneColor / groupColor`; `spineMesh.doubleControlPoints` (the renderer's
+  copy gone); the centroid loops through `makePolygonRelativeToCenter`; `pointerJoints.getPointerPosition`
+  (recorder uses it); main uses `utils.getPathDifference`; dna-defaults `utils.deepCopy`;
+  `cdt.computeResourceMesh` requires mathutils instead of taking it as an argument. Already gone:
+  `pick` (CL18), `hexColor` (CL20). Left: the index picks `math.ceil(math.random() * #C.x)` (a
+  `math.random(n)` would change the random draws), the weighted picks (one each in mipo-chatter and
+  music), `setting(extra, key)` (four lines, each module its own defaults).
 
 ## Bigger de-duplication
 
