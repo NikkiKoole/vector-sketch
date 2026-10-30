@@ -19,7 +19,6 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md). The Mipo voices, Puppetma
 | `src/synth.lua` | The FFI wrapper (cdef, patches, API) |
 | `src/mipo-voice.lua` | Impacts: plonks, the ball (upright pizz), boxes (conga/djembe/tabla per box). Starts the synth lazily. |
 | `src/snap-sound.lua` | A tiny click when a snap joint forms |
-| `src/slide-sound.lua` | The slide whistle, disabled (the user disliked it) |
 | `src/music.lua` | Generative background music, planned like dreamengine's lofi.c: a live set of styles (bossa, guaraldi, island, dumont, supermarket, herbs, lofi, puppetmaker, strum; `lib.set`), or one style. The styles are listed in [MUSIC-IDEAS.md](MUSIC-IDEAS.md) |
 | `claudetools/render-music.lua` | Renders the real `music.lua` + `synth.lua` offline to a WAV, no app needed |
 

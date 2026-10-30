@@ -39,8 +39,10 @@ L = more.
   through. Later the same day: character-manager, io.lua, mipo-voice (character-topology,
   mipo-chatter and sound.lua had none). Left: state.lua (restart the game after), music.lua and
   synth.lua (the music session's). S.
-- [ ] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
+- [x] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
   still runs every frame and the `whistle` patch keeps a synth slot. S.
+  **Done 2026-10-30:** deleted (Nikki: "delete slide sound yes"), with its call in sound.lua and the
+  `whistle` patch.
 
 ## Write small things once
 
