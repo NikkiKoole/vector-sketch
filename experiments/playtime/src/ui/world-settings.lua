@@ -10,6 +10,7 @@ local inspector = require('src.ui.inspector')
 local worldParams = require('src.world-params')
 local musicParams = require('src.music-params')
 local cameraParams = require('src.camera-params')
+local roomMusicParams = require('src.room-music-params')
 local voiceLabParams = require('src.voice-lab-params')
 
 local PANEL_WIDTH = ui.theme.panelWidth
@@ -87,6 +88,13 @@ function lib.drawWorldSettingsUI()
             clicked, y = sectionHeader(x, y, w, 'backdrops', pv.bgSettingsOpened)
             if clicked then pv.bgSettingsOpened = not pv.bgSettingsOpened end
             if pv.bgSettingsOpened then y = drawBackdrops(x, y, w) end
+
+            -- what this room's music turns into when you enter it (src/room-music.lua)
+            clicked, y = sectionHeader(x, y, w, 'room music', f.roomMusic)
+            if clicked then f.roomMusic = not f.roomMusic end
+            if f.roomMusic then
+                y = y + inspector.drawParams('roommusic', roomMusicParams.rows, roomMusicParams.target(), nil, x, y, w)
+            end
 
             clicked, y = sectionHeader(x, y, w, 'music', f.music)
             if clicked then f.music = not f.music end

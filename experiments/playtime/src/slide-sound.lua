@@ -4,7 +4,7 @@
 -- dragging a Mipo up and down plays it like a real slide whistle) and speed along the
 -- surface is the volume, so a rider at rest is quiet. The rider's own velocity is used,
 -- not the slip at the contact, so rolling things (balls, the skateboard) whistle too.
--- Driven by mipo-voice.update while synth impacts are on.
+-- Driven by src/sound.lua.
 
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')

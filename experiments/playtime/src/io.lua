@@ -281,6 +281,7 @@ function lib.buildWorld(data, world, cam, opts)
 
         -- the scene's camera settings (follow, bounds, zoom limits); none saved: the defaults
         require('src.camera-follow').loadSettings(data.camera and data.camera.settings)
+        require('src.room-music').load(data.music) -- the room's music, cued on a phrase end
         if data.camera then
             cam:setTranslation(data.camera.x, data.camera.y)
             cam:setScale(data.camera.scale)
@@ -968,6 +969,7 @@ function lib.gatherSaveData(world, camera)
         scale = camera:getScale(),
         settings = require('src.camera-follow').saveSettings(),
     }
+    saveData.music = require('src.room-music').save()
     return saveData
 end
 

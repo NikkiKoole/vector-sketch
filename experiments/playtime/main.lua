@@ -95,6 +95,7 @@ local utils = require 'src.utils'
 local box2dDraw = require 'src.physics.box2d-draw'
 local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 local mipoVoice = require('src.mipo-voice')
+local sound = require('src.sound')
 local mipoChatter = require('src.mipo-chatter')
 local mipoBand = require('src.mipo-band')
 local flightRecorder = require('src.flight-recorder')
@@ -208,7 +209,7 @@ function love.update(dt)
         mipoJointGuard.update()
         mipoActions.update()
         signals.update()
-        mipoVoice.update(scaled_dt)
+        mipoVoice.update()
         mipoChatter.update()
         mipoBand.update()
         flightRecorder.update(scaled_dt)
@@ -223,6 +224,7 @@ function love.update(dt)
         keep_angle.update(scaled_dt, newHitted)
     end
     blobs.afterStep()
+    sound.update(dt, state.world.paused) -- the synth and the music, paused or not (src/sound.lua)
     liquid.update(state.world.paused) -- containers spill what they can't hold (src/liquid.lua)
     prof.pop('physics-update')
 

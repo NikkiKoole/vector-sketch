@@ -1,7 +1,7 @@
 -- snap-sound.lua
 -- A tiny wooden click whenever a snap joint forms (src/physics/snap.lua), played where it
 -- formed. Watches snap.joints() from outside instead of hooking snap.lua: a joint it hasn't
--- seen before is a fresh snap. Driven by mipo-voice.update while synth impacts are on.
+-- seen before is a fresh snap. Driven by src/sound.lua.
 
 local state = require('src.state')
 local snap = require('src.physics.snap')

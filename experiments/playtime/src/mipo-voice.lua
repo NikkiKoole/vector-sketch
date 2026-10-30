@@ -341,15 +341,8 @@ local function tickFlaps()
     end
 end
 
-function lib.update(dt)
-    tickFlaps()
-    local synth = getSynth()
-    if synth then
-        synth.update(dt, require('src.camera').getInstance())
-        require('src.slide-sound').update(synth, now())
-        require('src.snap-sound').update(synth)
-        require('src.music').update(synth, now())
-    end
+function lib.update()
+    tickFlaps() -- the synth, music, snaps and slides are ticked by src/sound.lua
     local t = now()
     for key, at in pairs(impactPairs) do
         if t - at > lib.impactPairCooldown then impactPairs[key] = nil end

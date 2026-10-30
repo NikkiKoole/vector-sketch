@@ -50,11 +50,14 @@ Each is small (under half an hour) unless it says otherwise.
   motion, so the loop no longer looks at speed. `gameLoop.physicsSteps(dt, speed)` makes the step
   smaller for slow motion and takes more steps when fast (no Box2D step longer than dt).
   `spec/game-loop_spec.lua`.
-- [ ] **BUG7. Music and snap clicks hang off the Mipo voice.** `mipo-voice.lua:343-351`:
+- [x] **BUG7. Music and snap clicks hang off the Mipo voice.** `mipo-voice.lua:343-351`:
   `mipoVoice.update` starts and ticks the synth and runs music, snap-sound and slide-sound, but only
   when `synthImpacts` is on, and main only calls it when the world isn't paused. Turning off impact
   sounds silences the music. Fix: a small `src/sound.lua` with `sound.update(dt)` called from main;
   mipo-voice keeps its flaps and cooldowns.
+  **Done 2026-10-30:** `src/sound.lua`, called from main every frame: the synth and the music always
+  (paused, impacts off), slides and snaps while the world runs. Checked live: paused with impacts off,
+  the music went on (bar 3 → 6).
 - [x] **BUG8. `debugIds` can be nil.** `physics/box2d-draw.lua:396` indexes `debugIds`, which is only
   made in the body loop (:293). Show debug ids with no body ids drawn → error. Fix: create it at :188.
   **Done 2026-10-30:** made once at the top of drawWorld. `spec/draw-debug_spec.lua`.
