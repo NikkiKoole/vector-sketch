@@ -13,6 +13,7 @@ local stream = theory.stream
 local chordAtStep = theory.chordAtStep
 local chordPcs = theory.chordPcs
 local qualityOf = theory.qualityOf
+local voicedQuality = theory.voicedQuality
 
 local lib = {}
 
@@ -20,7 +21,12 @@ local lib = {}
 local function chordSets(song, chord)
     local root = (song.key + chord.degree) % 12
     local tones, guides, scale = {}, {}, {}
-    for _, pc in ipairs(chordPcs(song, chord)) do tones[pc] = true end
+    if song.comping == 'shell' then -- the root (the bass) and the shell the keys play
+        tones[root] = true
+        for _, i in ipairs(voicedQuality(song, chord)) do tones[(root + i) % 12] = true end
+    else
+        for _, pc in ipairs(chordPcs(song, chord)) do tones[pc] = true end
+    end
     local third, seventh
     for _, interval in ipairs(qualityOf(song, chord.quality)) do
         local i = interval % 12

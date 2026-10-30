@@ -132,6 +132,43 @@ local function qualityOf(song, name)
     return D.qualities[name]
 end
 
+-- A shell: the 3rd, the 7th and one colour on top (the 9th, a lydian's #11, a dom9's 13th; not a
+-- colour a semitone from the 3rd or 7th: then the 5th), what a bossa guitarist or a comping piano
+-- plays under a tune. A quality without a 3rd or a 7th, or a stacked one, keeps its full voicing.
+local shells = setmetatable({}, { __mode = 'k' })
+local function shellOf(intervals)
+    if intervals.stack then return intervals end
+    if shells[intervals] then return shells[intervals] end
+    local third, seventh
+    for _, i in ipairs(intervals) do
+        if i % 12 == 3 or i % 12 == 4 then third = i elseif i % 12 == 10 or i % 12 == 11 then seventh = i end
+    end
+    local shell = intervals
+    if third and seventh then
+        local function clear(i)
+            for _, g in ipairs({ third, seventh }) do
+                local d = (i - g) % 12
+                if d == 0 or d == 1 or d == 11 then return false end
+            end
+            return true
+        end
+        local colour = 7
+        for k = #intervals, 1, -1 do
+            if intervals[k] % 12 ~= 0 and clear(intervals[k]) then colour = intervals[k] break end
+        end
+        shell = { third, seventh, colour }
+    end
+    shells[intervals] = shell
+    return shell
+end
+
+-- the intervals the keys voice for a chord: the quality, or its shell in a song that comps in shells
+local function voicedQuality(song, chord)
+    local intervals = qualityOf(song, chord.quality)
+    if song.comping == 'shell' then return shellOf(intervals) end
+    return intervals
+end
+
 local function chordPcs(song, chord)
     local root = (song.key + chord.degree) % 12
     local pcs = { root }
@@ -234,6 +271,8 @@ lib.humanize = humanize
 lib.progAdd = progAdd
 lib.progTurnaround = progTurnaround
 lib.qualityOf = qualityOf
+lib.shellOf = shellOf
+lib.voicedQuality = voicedQuality
 lib.chordPcs = chordPcs
 lib.barChords = barChords
 lib.chordAtStep = chordAtStep

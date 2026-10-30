@@ -20,7 +20,7 @@ local inKey = theory.inKey
 local lib = {}
 
 -- songs carry this; a different one on state.music (an old save after a change) starts afresh
-local VERSION = 2
+local VERSION = 3
 
 local function nextStyleName()
     local style = state.musicSettings.style
@@ -253,6 +253,36 @@ local function planForm(song, style, rnd)
     song.bars = #song.barSection
 end
 
+-- A steady style decides once per song what the others roll per bar, and keeps to it: songs of the
+-- style differ, a song holds its groove. One comp cell for the A sections and one for B, the push a
+-- habit or not (always into a phrase's 4th bar), the side-step too, which of the cell's stabs are
+-- light, and the comping: shells (3rd, 7th, a colour) or the full 9ths. Its own stream: the planner's
+-- others keep their draws, so the other styles don't change.
+local function planSteady(song, style, weights, total)
+    local rnd = stream(song.seed, 14)
+    local function pickCell()
+        local u = rnd() * total
+        for i, w in ipairs(weights) do
+            if u < w then return i end
+            u = u - w
+        end
+        return #weights
+    end
+    local cells = { A = pickCell(), B = pickCell() }
+    song.pushes = rnd(100) < (style.pushOdds or 0) * 3
+    song.sidesteps = rnd(100) < (style.sidestepOdds or 0) * 2
+    song.lightMask = {}
+    for i, cell in ipairs(D.compsOf(style)) do
+        song.lightMask[i] = {}
+        for h = 1, #cell do song.lightMask[i][h] = rnd(100) < (style.lightOdds or 30) end
+    end
+    song.comping = rnd(100) < (style.shellOdds or 50) and 'shell' or 'full'
+    for b = 1, song.bars do
+        song.comp[b] = cells[song.barSection[b].kind] or cells.A
+        song.push[b] = song.pushes and song.barIndex[b] % 4 == 3
+    end
+end
+
 -- per bar, knowing the next: the comp cell (per two bars), the push and a fill
 local function planBars(song, style, between)
     song.comp, song.push, song.fill = {}, {}, {}
@@ -274,6 +304,7 @@ local function planBars(song, style, between)
         song.fill[b] = b < song.bars and section.roles.drums == 'full'
             and song.barIndex[b] == section.bars - 1 and rnd(100) < 60
     end
+    if style.steady then planSteady(song, style, weights, total) end
 end
 
 -- the tune: the motif rhythm and its cell's anchor pitches, the scale, and a ladder of the key's

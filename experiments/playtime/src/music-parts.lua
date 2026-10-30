@@ -14,6 +14,7 @@ local voiceChord = theory.voiceChord
 local inRange = theory.inRange
 local humanize = theory.humanize
 local qualityOf = theory.qualityOf
+local voicedQuality = theory.voicedQuality
 local chordAtStep = theory.chordAtStep
 local rubs = theory.rubs
 local stepTime = theory.stepTime
@@ -592,6 +593,12 @@ end
 -- The keys' hits in a bar: the comp cell clipped to the chords, held chords in the intro and outro,
 -- the push (the next chord on the and-of-4) or the side-step. Returns the hits, where the
 -- side-step starts and whether the bar pushes.
+-- where the keys' voicing starts: a shell sits up around middle C, the way a guitarist plays it,
+-- clear of the bass (lower, its 7th lands right under the bass's root)
+local function keysLo(song)
+    return song.comping == 'shell' and 53 or 48
+end
+
 local function keysHits(bar)
     local song, style, b, j, section, roles = bar.song, bar.style, bar.b, bar.j, bar.section, bar.roles
     local chords, nextChords, rnd = bar.chords, bar.nextChords, bar.rnd
@@ -605,16 +612,18 @@ local function keysHits(bar)
     elseif roles.keys == 'outro' then
         if j == 2 then hits[1] = { s = 0, len = (section.bars - 2) * 16, vol = 4, chord = chords[1], ring = true } end
     else
-        local cell = D.compsOf(style)[song.comp[b - j % 2] or 1]
+        local pick = song.comp[b - j % 2] or 1
+        local cell, lightMask = D.compsOf(style)[pick], song.lightMask and song.lightMask[pick]
         local half = (j % 2) * 16
         for _, chord in ipairs(chords) do
             local c0, c1, own = chord.s, chord.s + chord.len, 0
-            for _, h in ipairs(cell) do
+            for k, h in ipairs(cell) do
                 local s = h[1] - half
                 if s >= c0 and s < c1 and not (pushedInto and s == 0) and not (pushes and s >= 14) then
                     own = own + 1
-                    hits[#hits + 1] = { s = s, len = math.min(h[2], c1 - s), vol = h[3], chord = chord,
-                                        light = rnd(100) < (style.lightOdds or 30) }
+                    local light -- a steady song's stabs are light where its mask says, the others roll
+                    if lightMask then light = lightMask[k] else light = rnd(100) < (style.lightOdds or 30) end
+                    hits[#hits + 1] = { s = s, len = math.min(h[2], c1 - s), vol = h[3], chord = chord, light = light }
                 end
             end
             if own == 0 and not (pushedInto and c0 == 0) then -- a change always sounds
@@ -629,7 +638,8 @@ local function keysHits(bar)
             hits[#hits + 1] = { s = 14, len = 2 + math.min(nextChord.len, 6), vol = 4, chord = nextChord }
             song.pushed = song.pushed or {}
             song.pushed[b] = true
-        elseif nextChords and style.sidestepOdds and rnd(100) < style.sidestepOdds
+        elseif nextChords and style.sidestepOdds
+            and (song.sidesteps == nil and rnd(100) < style.sidestepOdds or song.sidesteps and j % 4 == 3)
             and nextChords[1].degree ~= chords[#chords].degree then
             -- the side-step: the bar's last stab is the next chord a half-step high, sliding into it
             local last = hits[#hits]
@@ -646,7 +656,7 @@ local function bookKeys(bar, hits)
     for _, h in ipairs(hits) do
         local chord = h.sidestep or h.chord
         local root = (song.key + chord.degree) % 12
-        local voicing = voiceChord(root, qualityOf(song, chord.quality), 48, 76, M.voicing)
+        local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing)
         if not h.sidestep then M.voicing = voicing end
         local t = stepTime(song, t0, h.s) + humanize(0.005)
         local strum = (style.strumMs or 8) / 1000
@@ -733,7 +743,7 @@ local function bookRiff(bar)
         if voice > 0 then
             local chord = chordAtStep(song, b, s)
             local root = (song.key + chord.degree) % 12
-            local voicing = voiceChord(root, qualityOf(song, chord.quality), 48, 76, M.voicing)
+            local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing)
             local note = voicing[math.min(voice, #voicing)]
             local vol = (s % 4 == 0) and 4 or 3
             local t = stepTime(song, t0, s) + humanize(0.004)
@@ -775,7 +785,7 @@ end
 -- the band plays the keys' own voicing of a chord (its notes never rub each other; the same
 -- chord voiced again elsewhere can put a 9th a b9 over the minor third, or a #9 over the third)
 local function keysVoicing(song, chord)
-    return voiceChord((song.key + chord.degree) % 12, qualityOf(song, chord.quality), 48, 76, M.voicing)
+    return voiceChord((song.key + chord.degree) % 12, voicedQuality(song, chord), keysLo(song), 76, M.voicing)
 end
 
 -- the horns: the song's shout in the bar the tune breathes (bar 3 of 4), the top of the chord

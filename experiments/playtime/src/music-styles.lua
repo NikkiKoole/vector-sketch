@@ -97,7 +97,8 @@ D.comps = {
 -- { degree, quality, beats } (B). Comps are two-bar cells { step, length, vol } in 16ths (0..31).
 D.styles = {
     bossa = {
-        bpm = 116, swing = 0.5, chordBars = { 2 }, lydianChance = 0.6, pushOdds = 15, sidestepOdds = 25,
+        bpm = { 108, 124 }, swing = 0.5, chordBars = { 2 }, lydianChance = 0.6, pushOdds = 15, sidestepOdds = 25,
+        steady = true, -- per song, not per bar: the comp, the push, the side-step, shells or 9ths (planSteady)
         strumMs = 8, keys = 'rhodes', lead = 'rhodesLead', bass = 'bossa', drums = 'bossa', home = 'maj9',
         A = {
             { { 0, 'maj9' }, { 2, 'dom9' }, { 2, 'm9' }, { 7, 'dom9' } },   -- Imaj7 II7 iim7 V7 (Ipanema)
